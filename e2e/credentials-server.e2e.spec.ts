@@ -32,35 +32,53 @@ import fetch from 'node-fetch';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
 
 import { findHomeDir } from '@/config/findHomeDir';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import paths from '@/utils/paths';
 let credStore = '';
+let dockerConfigPath = '';
+let originalDockerConfigContents: string|undefined;
+let plaintextConfigPath = '';
+let originalPlaintextConfigContents: string|undefined;
 
-// If credsStore is `none` there's no need to test that the helper is available in advance: we want
-// the tests to fail if it isn't available.
+interface entryType {
+  ServerURL: string;
+  Username: string;
+  Secret: string;
+}
+
+function makeEntry(url: string, username: string, secret: string): entryType {
+  return {
+    ServerURL: url, Username: username, Secret: secret,
+  };
+}
+
+/**
+ * This function does multiple-duty:
+ * 1. Skip all the tests if there is no working configured credential helper.
+ * 2. Assign values to the global variables declared after the above `import` statements.
+ *    This includes saving the current contents of the docker config files, to be restored at end.
+ */
 function haveCredentialServerHelper(): boolean {
-  // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const homeDir = findHomeDir() ?? '/';
   const dockerDir = path.join(homeDir, '.docker');
-  const dockerConfigPath = path.join(dockerDir, 'config.json');
 
+  dockerConfigPath = path.join(dockerDir, 'config.json');
+  plaintextConfigPath = path.join(dockerDir, 'plaintext-credentials.config.json');
   try {
-    const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
+    originalPlaintextConfigContents = fs.readFileSync(plaintextConfigPath).toString();
+  } catch { }
+  try {
+    originalDockerConfigContents = fs.readFileSync(dockerConfigPath).toString();
+    const configObject = JSON.parse(originalDockerConfigContents);
 
-    credStore = contents.credsStore;
+    credStore = configObject.credsStore;
     if (!credStore) {
-      if (process.env.CIRRUS_CI) {
-        contents.credsStore = 'none';
-        fs.writeFileSync(dockerConfigPath, JSON.stringify(contents, undefined, 2));
-
-        return true;
-      }
-
-      return false;
+      credStore = configObject.credsStore = 'none';
+      fs.writeFileSync(dockerConfigPath, JSON.stringify(configObject, undefined, 2));
     }
     if (credStore === 'none') {
       return true;
@@ -86,6 +104,7 @@ function haveCredentialServerHelper(): boolean {
 }
 
 const describeWithCreds = haveCredentialServerHelper() ? test.describe : test.describe.skip;
+const describeCredHelpers = credStore === 'none' ? test.describe.skip : test.describe;
 const testWin32 = os.platform() === 'win32' ? test : test.skip;
 const testUnix = os.platform() === 'win32' ? test.skip : test;
 
@@ -99,7 +118,7 @@ describeWithCreds('Credentials server', () => {
   const command = os.platform() === 'win32' ? 'curl.exe' : 'curl';
   const initialArgs: string[] = []; // Assigned once we have auth string on first use.
 
-  async function doRequest(path: string, body = '') {
+  async function doRequest(path: string, body = '', ignoreStderr = false) {
     const args = initialArgs.concat([`http://localhost:${ serverState.port }/${ path }`]);
 
     if (body.length) {
@@ -107,7 +126,13 @@ describeWithCreds('Credentials server', () => {
     }
     const { stdout, stderr } = await spawnFile(command, args, { stdio: 'pipe' });
 
-    expect(stderr).toEqual('');
+    if (stderr) {
+      if (ignoreStderr) {
+        console.log(`doRequest: spawn ${ command } ${ args.join(' ') } => ${ stderr }`);
+      } else {
+        expect(stderr).toEqual('');
+      }
+    }
 
     return stdout;
   }
@@ -121,6 +146,57 @@ describeWithCreds('Credentials server', () => {
     const { stderr } = await spawnFile(command, args, { stdio: 'pipe' });
 
     expect(stderr).toContain(`HTTP/1.1 ${ expectedStatus }`);
+  }
+
+  async function addEntry(helper: string, entry: entryType): Promise<void> {
+    const dcName = `docker-credential-${ helper }`;
+    const body = stream.Readable.from(JSON.stringify(entry));
+
+    await spawnFile(dcName, ['store'], { stdio: [body, 'pipe', 'pipe'] });
+  }
+
+  async function listEntries(helper: string, matcher: string): Promise<Record<string, string>> {
+    const { stdout } = await spawnFile(`docker-credential-${ helper }`, ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const entries: Record<string, string> = JSON.parse(stdout);
+
+    for (const k in entries) {
+      if (!k.includes(matcher)) {
+        delete entries[k];
+      }
+    }
+
+    return entries;
+  }
+
+  async function removeEntries(helper: string, matcher: string) {
+    const dcName = `docker-credential-${ helper }`;
+    const stdout = await tool(dcName, 'list');
+    const servers = Object.keys(JSON.parse(stdout));
+    let finalException: any | undefined;
+
+    for (const server of servers) {
+      if (!server.includes(matcher)) {
+        continue;
+      }
+      const body = stream.Readable.from(server ?? '');
+
+      try {
+        const { stdout } = await spawnFile(dcName, ['erase'], { stdio: [body, 'pipe', 'pipe'] });
+
+        if (stdout !== '') {
+          const msg = `Problem ${ helper }-deleting ${ server }: got output stdout: ${ stdout }`;
+
+          console.log(msg);
+          finalException ??= new Error(msg);
+        }
+      } catch (ex) {
+        console.log(`Error trying to ${ helper }-delete entry ${ server }: ${ ex }`);
+        finalException ??= ex;
+      }
+    }
+    if (finalException) {
+      throw finalException;
+    }
   }
 
   function rdctlPath() {
@@ -173,6 +249,21 @@ describeWithCreds('Credentials server', () => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
     await electronApp.close();
+
+    if (originalDockerConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
+      try {
+        await fs.promises.writeFile(dockerConfigPath, originalDockerConfigContents);
+      } catch (e: any) {
+        console.error(`Failed to restore config file ${ dockerConfigPath }: `, e);
+      }
+    }
+    if (originalPlaintextConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
+      try {
+        await fs.promises.writeFile(plaintextConfigPath, originalPlaintextConfigContents);
+      } catch (e: any) {
+        console.error(`Failed to restore config file ${ plaintextConfigPath }: `, e);
+      }
+    }
   });
 
   test('should emit connection information', async() => {
@@ -296,7 +387,7 @@ describeWithCreds('Credentials server', () => {
       args.splice(postIndex - 1, 2);
     }
     await expect(spawnFile(command, args, { stdio: 'pipe' })).resolves.toMatchObject({
-      stdout: 'Expecting a POST method for the credential-server list request, received GET',
+      stdout: expect.stringContaining('Expecting a POST method for the credential-server list request, received GET'),
       stderr: '',
     });
   });
@@ -423,6 +514,135 @@ describeWithCreds('Credentials server', () => {
         // playwright issue #15087.
         stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' }),
       });
+    });
+  });
+
+  // Skip these tests if config.credsStore and the credHelpers are both using 'none'
+  describeCredHelpers('handles credHelpers', () => {
+    const peopleEntries: Record<string, entryType> = {
+      bob:     makeEntry('https://bobs.fish/clams01', 'Bob', 'clams01'),
+      carol:   makeEntry('https://bobs.fish/clams02', 'Carol', 'clams02'),
+      ted:     makeEntry('https://bobs.fish/clams03', 'Ted', 'clams03'),
+      alice:   makeEntry('https://bobs.fish/clams04', 'Alice', 'clams04'),
+      fakeTed: makeEntry('https://bobs.fish/clams03', 'Fake-Ted', 'Fake-clams03'),
+    };
+    const dockerConfig = {
+      auths:          {},
+      credsStore:     '',
+      currentContext: 'rancher-desktop',
+      credHelpers:    {
+        'https://bobs.fish/clams03': 'none',
+        'https://bobs.fish/clams05': 'none',
+      },
+    };
+
+    test.beforeAll(async() => {
+      const platform = os.platform();
+
+      if (platform.startsWith('win')) {
+        dockerConfig.credsStore = 'wincred';
+      } else if (platform === 'darwin') {
+        dockerConfig.credsStore = 'osxkeychain';
+      } else if (platform === 'linux') {
+        dockerConfig.credsStore = 'pass';
+      } else {
+        throw new Error(`Unexpected platform of ${ platform }`);
+      }
+      await fs.promises.writeFile(dockerConfigPath, JSON.stringify(dockerConfig, undefined, 2));
+    });
+
+    // removeEntries and addEntry return Promise<void>,
+    // so the best we can do is assert that they don't throw an exception.
+
+    test.beforeEach(async() => {
+      await expect(removeEntries(dockerConfig.credsStore, 'https://bobs.fish/clams')).resolves.not.toThrow();
+      await expect(removeEntries('none', 'https://bobs.fish/clams')).resolves.not.toThrow();
+    });
+
+    test('reading pre-populated entries through d-c-rd', async() => {
+      await expect(addEntry(dockerConfig.credsStore, peopleEntries.bob)).resolves.not.toThrow();
+      await expect(addEntry(dockerConfig.credsStore, peopleEntries.carol)).resolves.not.toThrow();
+      await expect(addEntry('none', peopleEntries.ted)).resolves.not.toThrow();
+      // These two should not be found
+      await expect(addEntry('none', peopleEntries.alice)).resolves.not.toThrow();
+      await expect(addEntry(dockerConfig.credsStore, peopleEntries.fakeTed)).resolves.not.toThrow();
+
+      // Now verify that `rdctl dcrd list` gives 01 ... 03 but not Fake-Ted 03, and not 04 because it's not discoverable.
+
+      const entries = JSON.parse(await doRequest('list'));
+
+      expect(entries).toMatchObject({
+        [peopleEntries.bob.ServerURL]:   peopleEntries.bob.Username,
+        [peopleEntries.carol.ServerURL]: peopleEntries.carol.Username,
+        [peopleEntries.ted.ServerURL]:   peopleEntries.ted.Username,
+      });
+      expect(entries).not.toMatchObject({
+        [peopleEntries.alice.ServerURL]:   peopleEntries.alice.Username,
+        [peopleEntries.fakeTed.ServerURL]: peopleEntries.fakeTed.Username,
+      });
+
+      // Then verify we can dcrd-get clams01, 02, and 03, but not 04 or 05
+      for (const name of ['bob', 'carol', 'ted']) {
+        const record = JSON.parse(await doRequest('get', peopleEntries[name].ServerURL));
+
+        expect(record).toMatchObject(peopleEntries[name] as unknown as Record<string, string>);
+      }
+      if (dockerConfig.credsStore !== 'pass') {
+        // TODO: Stop testing for pass once we bring in d-c-pass 0.7.0 or higher
+        await expect(doRequest('get', peopleEntries.alice.ServerURL, true))
+          .resolves.toEqual('credentials not found in native keychain\n');
+        await expect(doRequest('get', 'https://bobs.fish/clams05', true))
+          .resolves.toEqual('credentials not found in native keychain\n');
+      }
+
+      // Then dcrd-delete all of them, and verify that dcrd-list is empty.
+      // But use lower-level dc helpers to show that clams04 and Fake-Ted clams03 are still around,
+      // and then delete them.
+      await expect(doRequest('erase', peopleEntries.bob.ServerURL)).resolves.toEqual('');
+      await expect(doRequest('erase', peopleEntries.carol.ServerURL)).resolves.toEqual('');
+      await expect(doRequest('erase', peopleEntries.ted.ServerURL)).resolves.toEqual('');
+      // Looks like different credential-helpers handle missing erase arguments differently, so don't check results
+      await doRequest('erase', peopleEntries.alice.ServerURL);
+      await doRequest('erase', peopleEntries.fakeTed.ServerURL);
+
+      const postDeleteEntries = JSON.parse(await doRequest('list'));
+
+      expect(postDeleteEntries).not.toMatchObject({
+        [peopleEntries.bob.ServerURL]:     peopleEntries.bob.Username,
+        [peopleEntries.carol.ServerURL]:   peopleEntries.carol.Username,
+        [peopleEntries.ted.ServerURL]:     peopleEntries.ted.Username,
+        [peopleEntries.alice.ServerURL]:   peopleEntries.alice.Username,
+      });
+      await expect(listEntries(dockerConfig.credsStore, 'https://bobs.fish/clams')).resolves
+        .toMatchObject({ [peopleEntries.fakeTed.ServerURL]: peopleEntries.fakeTed.Username });
+      await expect(listEntries('none', 'https://bobs.fish/clams')).resolves
+        .toMatchObject({ [peopleEntries.alice.ServerURL]: peopleEntries.alice.Username });
+    });
+
+    test('dcrd store uses credHelpers', async() => {
+      // Use dcrd-store to store clams 01 ... 04, and show that they ended up where expected.
+      // This is the inverse of the previous test.
+      await doRequestExpectStatus('store', JSON.stringify(peopleEntries.bob), 200);
+      await doRequestExpectStatus('store', JSON.stringify(peopleEntries.carol), 200);
+      await doRequestExpectStatus('store', JSON.stringify(peopleEntries.ted), 200);
+      await doRequestExpectStatus('store', JSON.stringify(peopleEntries.alice), 200);
+
+      await expect(listEntries(dockerConfig.credsStore, 'https://bobs.fish/clams')).resolves.toMatchObject({
+        [peopleEntries.bob.ServerURL]:   peopleEntries.bob.Username,
+        [peopleEntries.carol.ServerURL]: peopleEntries.carol.Username,
+        [peopleEntries.alice.ServerURL]: peopleEntries.alice.Username,
+      });
+      await expect(listEntries(dockerConfig.credsStore, 'https://bobs.fish/clams'))
+        .resolves.not.toMatchObject({ [peopleEntries.ted.ServerURL]: peopleEntries.ted.Username });
+
+      await expect(listEntries('none', 'https://bobs.fish/clams')).resolves
+        .toMatchObject({ [peopleEntries.ted.ServerURL]: peopleEntries.ted.Username });
+      await expect(listEntries('none', 'https://bobs.fish/clams'))
+        .resolves.not.toMatchObject({
+          [peopleEntries.bob.ServerURL]:   peopleEntries.bob.Username,
+          [peopleEntries.carol.ServerURL]: peopleEntries.carol.Username,
+          [peopleEntries.alice.ServerURL]: peopleEntries.alice.Username,
+        });
     });
   });
 });
