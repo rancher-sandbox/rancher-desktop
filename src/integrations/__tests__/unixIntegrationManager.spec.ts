@@ -75,7 +75,7 @@ describeUnix('UnixIntegrationManager', () => {
     await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
 
     await integrationManager.remove();
-    await expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
+    await expect(fs.promises.readdir(integrationDir)).rejects.toThrow('ENOENT');
     await expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
   });
 
@@ -244,7 +244,7 @@ describeUnix('manageSymlink', () => {
     await fs.promises.symlink(srcPath, dstPath);
     await manageSymlink(srcPath, dstPath, false);
 
-    return expect(fs.promises.readlink(dstPath)).rejects.toThrow();
+    return expect(fs.promises.readlink(dstPath)).rejects.toThrow('ENOENT');
   });
 
   test("shouldn't delete the file if the target path doesn't match", async() => {
@@ -298,6 +298,6 @@ describeUnix('manageSymlink', () => {
     await fs.promises.symlink(oldSrcPath, dstPath);
     await manageSymlink(srcPath, dstPath, false, customString);
 
-    return expect(fs.promises.readlink(dstPath)).rejects.toThrow();
+    return expect(fs.promises.readlink(dstPath)).rejects.toThrow('ENOENT');
   });
 });
