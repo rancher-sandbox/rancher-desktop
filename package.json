@@ -14,12 +14,13 @@
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
   },
   "scripts": {
+    "wix": "node scripts/ts-wrapper.js scripts/lib/installer-win32.tsx",
     "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
     "lint": "npm run lint:fix",
     "lint:fix": "npm run lint:typescript:fix && npm run lint:go:fix ",
     "lint:nofix": "npm run lint:typescript:nofix && npm run lint:go:nofix",
-    "lint:typescript:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
-    "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue .",
+    "lint:typescript:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --fix .",
+    "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue .",
     "lint:go:fix": "gofmt -w src/go",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",

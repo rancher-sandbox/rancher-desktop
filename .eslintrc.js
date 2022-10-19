@@ -235,7 +235,7 @@ Object.assign(module.exports.rules, {
 
 module.exports.overrides = [
   {
-    files: ['*.ts'],
+    files: ['*.ts', '*.tsx'],
     rules: {
       // For TypeScript, disable no-undef because the compiler checks it.
       // Also, it is unaware of TypeScript types.
