@@ -57,16 +57,17 @@ describeUnix('UnixIntegrationManager', () => {
 
   test('.enforce() should create dirs and symlinks properly', async() => {
     await integrationManager.enforce();
-    expect(fs.promises.readdir(integrationDir)).resolves.not.toThrow();
     for (const name of await fs.promises.readdir(resourcesDir)) {
       const integrationPath = path.join(integrationDir, name);
+      const expectedValue = path.join(resourcesDir, name);
 
-      expect(fs.promises.readlink(integrationPath, 'utf8')).resolves.not.toThrow();
+      await expect(fs.promises.readlink(integrationPath, 'utf8')).resolves.toEqual(expectedValue);
     }
     for (const name of await integrationManager.getDockerCliPluginNames()) {
       const pluginPath = path.join(dockerCliPluginDir, name);
+      const expectedValue = path.join(integrationDir, name);
 
-      expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.not.toThrow();
+      await expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.toEqual(expectedValue);
     }
   });
 
@@ -74,8 +75,8 @@ describeUnix('UnixIntegrationManager', () => {
     await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
 
     await integrationManager.remove();
-    expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
-    expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
+    await expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
+    await expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
   });
 
   test('.enforce() should not overwrite existing docker CLI plugins', async() => {
