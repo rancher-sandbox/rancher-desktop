@@ -2,11 +2,14 @@ import { app, dialog } from 'electron';
 
 import { webRoot, createWindow } from '.';
 
-export const preferencesTabs = [
-  'Application',
-  process.platform === 'win32' ? 'WSL' : 'Virtual Machine',
-  'Container Engine',
-  'Kubernetes',
+export const preferencesNavItems = [
+  {
+    name: 'Application',
+    tabs: ['behavior', 'environment'],
+  },
+  { name: process.platform === 'win32' ? 'WSL' : 'Virtual Machine' },
+  { name: 'Container Engine' },
+  { name: 'Kubernetes' },
 ];
 
 let isDirty = false;
