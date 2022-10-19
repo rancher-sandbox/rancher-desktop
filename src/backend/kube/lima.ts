@@ -412,10 +412,10 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       if (cfg.options.flannel) {
         const iface = await this.vm.getListeningInterface();
 
-        config.ADDITIONAL_ARGS += `flannel-iface ${ iface }`;
+        config.ADDITIONAL_ARGS += ` --flannel-iface ${ iface }`;
       } else {
         console.log(`Disabling flannel and network policy`);
-        config.ADDITIONAL_ARGS += '--flannel-backend=none --disable-network-policy';
+        config.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
       }
     }
     if (!cfg.options.traefik) {
