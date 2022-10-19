@@ -601,11 +601,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         100,
         this.updateBaseDisk(currentConfig),
       );
-      await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
+      await fs.promises.writeFile(configPath, yaml.stringify(config, { lineWidth: 0 }), 'utf-8');
     } else {
       // new configuration
       await fs.promises.mkdir(path.dirname(this.CONFIG_PATH), { recursive: true });
-      await fs.promises.writeFile(this.CONFIG_PATH, yaml.stringify(config));
+      await fs.promises.writeFile(this.CONFIG_PATH, yaml.stringify(config, { lineWidth: 0 }));
       if (os.platform().startsWith('darwin')) {
         try {
           await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
