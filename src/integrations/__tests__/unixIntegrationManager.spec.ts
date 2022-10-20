@@ -7,11 +7,9 @@ import UnixIntegrationManager, { manageSymlink } from '@/integrations/unixIntegr
 const INTEGRATION_DIR_NAME = 'integrationDir';
 const TMPDIR_PREFIX = 'rdtest-';
 
-const testUnix = os.platform() !== 'win32' ? test : test.skip;
+const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
 const resourcesDir = path.join('resources', os.platform(), 'bin');
 let testDir: string;
-let integrationDir: string;
-let dockerCliPluginDir: string;
 
 // Creates integration directory and docker CLI plugin directory with
 // relevant symlinks in them. Useful for testing removal parts
@@ -37,8 +35,6 @@ async function createTestSymlinks(resourcesDirectory: string, integrationDirecto
 
 beforeEach(async() => {
   testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), TMPDIR_PREFIX));
-  integrationDir = path.join(testDir, INTEGRATION_DIR_NAME);
-  dockerCliPluginDir = path.join(testDir, 'dockerCliPluginDir');
 });
 
 afterEach(async() => {
@@ -47,287 +43,261 @@ afterEach(async() => {
   }
 });
 
-testUnix('Ensure symlinks and dirs are created properly', async() => {
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
+describeUnix('UnixIntegrationManager', () => {
+  let integrationDir: string;
+  let dockerCliPluginDir: string;
+  let integrationManager: UnixIntegrationManager;
 
-  await integrationManager.enforce();
-  expect(fs.promises.readdir(integrationDir)).resolves.not.toThrow();
-  for (const name of await fs.promises.readdir(resourcesDir)) {
-    const integrationPath = path.join(integrationDir, name);
+  beforeEach(() => {
+    integrationDir = path.join(testDir, INTEGRATION_DIR_NAME);
+    dockerCliPluginDir = path.join(testDir, 'dockerCliPluginDir');
+    integrationManager = new UnixIntegrationManager(
+      resourcesDir, integrationDir, dockerCliPluginDir);
+  });
 
-    expect(fs.promises.readlink(integrationPath, 'utf8')).resolves.not.toThrow();
-  }
-  for (const name of await integrationManager.getDockerCliPluginNames()) {
-    const pluginPath = path.join(dockerCliPluginDir, name);
+  test('.enforce() should create dirs and symlinks properly', async() => {
+    await integrationManager.enforce();
+    for (const name of await fs.promises.readdir(resourcesDir)) {
+      const integrationPath = path.join(integrationDir, name);
+      const expectedValue = path.join(resourcesDir, name);
 
-    expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.not.toThrow();
-  }
+      await expect(fs.promises.readlink(integrationPath, 'utf8')).resolves.toEqual(expectedValue);
+    }
+    for (const name of await integrationManager.getDockerCliPluginNames()) {
+      const pluginPath = path.join(dockerCliPluginDir, name);
+      const expectedValue = path.join(integrationDir, name);
+
+      await expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.toEqual(expectedValue);
+    }
+  });
+
+  test('.remove() should remove symlinks and dirs properly', async() => {
+    await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
+
+    await integrationManager.remove();
+    await expect(fs.promises.readdir(integrationDir)).rejects.toThrow('ENOENT');
+    await expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
+  });
+
+  test('.enforce() should not overwrite existing docker CLI plugins', async() => {
+    // create existing plugin
+    const existingPluginPath = path.join(dockerCliPluginDir, 'docker-compose');
+    const existingPluginContents = 'meaningless contents';
+
+    await fs.promises.mkdir(dockerCliPluginDir, { mode: 0o755 });
+    await fs.promises.writeFile(existingPluginPath, existingPluginContents);
+
+    await integrationManager.enforce();
+
+    const newContents = await fs.promises.readFile(existingPluginPath, 'utf8');
+
+    expect(newContents).toEqual(existingPluginContents);
+  });
+
+  test('.remove() should not remove existing docker CLI plugins', async() => {
+    // create existing plugin
+    const existingPluginPath = path.join(dockerCliPluginDir, 'docker-compose');
+    const existingPluginContents = 'meaningless contents';
+
+    await fs.promises.mkdir(dockerCliPluginDir, { mode: 0o755 });
+    await fs.promises.writeFile(existingPluginPath, existingPluginContents);
+
+    await integrationManager.remove();
+
+    const newContents = await fs.promises.readFile(existingPluginPath, 'utf8');
+
+    expect(newContents).toEqual(existingPluginContents);
+  });
+
+  test('.enforce() should be idempotent', async() => {
+    await integrationManager.enforce();
+    const intDirAfterFirstCall = await fs.promises.readdir(integrationDir);
+    const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
+
+    await integrationManager.enforce();
+    const intDirAfterSecondCall = await fs.promises.readdir(integrationDir);
+    const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
+
+    expect(intDirAfterFirstCall).toEqual(intDirAfterSecondCall);
+    expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
+  });
+
+  test('.remove() should be idempotent', async() => {
+    await integrationManager.remove();
+    const testDirAfterFirstCall = await fs.promises.readdir(testDir);
+
+    expect(testDirAfterFirstCall).not.toContain(INTEGRATION_DIR_NAME);
+    const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
+
+    expect(dockerCliDirAfterFirstCall).toEqual([]);
+
+    await integrationManager.remove();
+    const testDirAfterSecondCall = await fs.promises.readdir(testDir);
+
+    expect(testDirAfterSecondCall).not.toContain(INTEGRATION_DIR_NAME);
+    const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
+
+    expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
+  });
+
+  test('.removeSymlinksOnly() should remove symlinks but not integration directory', async() => {
+    await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
+
+    await integrationManager.removeSymlinksOnly();
+    await expect(fs.promises.readdir(integrationDir)).resolves.toEqual([]);
+    await expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
+  });
 });
 
-testUnix('Ensure symlinks and dirs are removed properly', async() => {
-  await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
-
-  await integrationManager.remove();
-  expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
-  expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
-});
-
-testUnix('Existing docker CLI plugins should not be overwritten upon .enforce()', async() => {
-  // create existing plugin
-  const existingPluginPath = path.join(dockerCliPluginDir, 'docker-compose');
-  const existingPluginContents = 'meaningless contents';
-
-  await fs.promises.mkdir(dockerCliPluginDir, { mode: 0o755 });
-  await fs.promises.writeFile(existingPluginPath, existingPluginContents);
-
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
-
-  await integrationManager.enforce();
-
-  const newContents = await fs.promises.readFile(existingPluginPath, 'utf8');
-
-  expect(newContents).toEqual(existingPluginContents);
-});
-
-testUnix('Existing docker CLI plugins should not be removed upon .remove()', async() => {
-  // create existing plugin
-  const existingPluginPath = path.join(dockerCliPluginDir, 'docker-compose');
-  const existingPluginContents = 'meaningless contents';
-
-  await fs.promises.mkdir(dockerCliPluginDir, { mode: 0o755 });
-  await fs.promises.writeFile(existingPluginPath, existingPluginContents);
-
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
-
-  await integrationManager.remove();
-
-  const newContents = await fs.promises.readFile(existingPluginPath, 'utf8');
-
-  expect(newContents).toEqual(existingPluginContents);
-});
-
-testUnix('.enforce() should be idempotent', async() => {
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
-
-  await integrationManager.enforce();
-  const intDirAfterFirstCall = await fs.promises.readdir(integrationDir);
-  const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
-
-  await integrationManager.enforce();
-  const intDirAfterSecondCall = await fs.promises.readdir(integrationDir);
-  const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
-
-  expect(intDirAfterFirstCall).toEqual(intDirAfterSecondCall);
-  expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
-});
-
-testUnix('.remove() should be idempotent', async() => {
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
-
-  await integrationManager.remove();
-  const testDirAfterFirstCall = await fs.promises.readdir(testDir);
-
-  expect(testDirAfterFirstCall).not.toContain(INTEGRATION_DIR_NAME);
-  const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
-
-  expect(dockerCliDirAfterFirstCall).toEqual([]);
-
-  await integrationManager.remove();
-  const testDirAfterSecondCall = await fs.promises.readdir(testDir);
-
-  expect(testDirAfterSecondCall).not.toContain(INTEGRATION_DIR_NAME);
-  const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
-
-  expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
-});
-
-testUnix('.removeSymlinksOnly should remove symlinks but not integration directory', async() => {
-  await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
-  const integrationManager = new UnixIntegrationManager(
-    resourcesDir, integrationDir, dockerCliPluginDir);
-
-  await integrationManager.removeSymlinksOnly();
-  await expect(fs.promises.readdir(integrationDir)).resolves.toEqual([]);
-  await expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
-});
-
-testUnix("manageSymlink should create the symlink if it doesn't exist", async() => {
+describeUnix('manageSymlink', () => {
   const srcPath = path.join(resourcesDir, 'kubectl');
-  const dstPath = path.join(testDir, 'kubectl');
+  let dstPath: string;
 
-  const dirContentsBefore = await fs.promises.readdir(testDir);
+  beforeEach(() => {
+    dstPath = path.join(testDir, 'kubectl');
+  });
 
-  expect(dirContentsBefore).toEqual([]);
+  test("should create the symlink if it doesn't exist", async() => {
+    const dirContentsBefore = await fs.promises.readdir(testDir);
 
-  await manageSymlink(srcPath, dstPath, true);
+    expect(dirContentsBefore).toEqual([]);
 
-  return fs.promises.readlink(dstPath);
-});
+    await manageSymlink(srcPath, dstPath, true);
 
-testUnix('manageSymlink should do nothing if file is correct symlink', async() => {
-  const srcPath = path.join(resourcesDir, 'kubectl');
-  const dstPath = path.join(testDir, 'kubectl');
+    return fs.promises.readlink(dstPath);
+  });
 
-  await fs.promises.symlink(srcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, true);
+  test('should do nothing if file is correct symlink', async() => {
+    await fs.promises.symlink(srcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, true);
 
-  const newTarget = await fs.promises.readlink(dstPath);
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  expect(newTarget).toEqual(srcPath);
-});
+    expect(newTarget).toEqual(srcPath);
+  });
 
-testUnix('manageSymlink should correct a symlink with an incorrect target', async() => {
-  // create a file to target in the bad symlink
-  const badSrcDir = path.join(testDir, 'resources', os.platform(), 'bin');
-  const badSrcPath = path.join(badSrcDir, 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+  test('should correct a symlink with an incorrect target', async() => {
+    // create a file to target in the bad symlink
+    const badSrcDir = path.join(testDir, 'resources', os.platform(), 'bin');
+    const badSrcPath = path.join(badSrcDir, 'fakeKubectl');
 
-  await fs.promises.mkdir(badSrcDir, { recursive: true, mode: 0o755 });
-  await fs.promises.writeFile(badSrcPath, 'contents');
-  await fs.promises.symlink(badSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, true);
+    await fs.promises.mkdir(badSrcDir, { recursive: true, mode: 0o755 });
+    await fs.promises.writeFile(badSrcPath, 'contents');
+    await fs.promises.symlink(badSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, true);
 
-  const newTarget = await fs.promises.readlink(dstPath);
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  expect(newTarget).toEqual(srcPath);
-});
+    expect(newTarget).toEqual(srcPath);
+  });
 
-testUnix("manageSymlink should not touch the file if it isn't a symlink", async() => {
-  // create the non-symlink dst file
-  const contents = 'these contents should be kept';
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+  test("should not touch the file if it isn't a symlink", async() => {
+    // create the non-symlink dst file
+    const contents = 'these contents should be kept';
 
-  await fs.promises.writeFile(dstPath, contents);
-  await manageSymlink(srcPath, dstPath, true);
+    await fs.promises.writeFile(dstPath, contents);
+    await manageSymlink(srcPath, dstPath, true);
 
-  const newContents = await fs.promises.readFile(dstPath, 'utf8');
+    const newContents = await fs.promises.readFile(dstPath, 'utf8');
 
-  expect(newContents).toEqual(contents);
-});
+    expect(newContents).toEqual(contents);
+  });
 
-testUnix("manageSymlink should not touch the file if it isn't a symlink we own", async() => {
-  const oldSrcPath = path.join(testDir, 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+  test("should not touch the file if it isn't a symlink we own", async() => {
+    const oldSrcPath = path.join(testDir, 'fakeKubectl');
 
-  await fs.promises.writeFile(oldSrcPath, 'contents');
-  await fs.promises.symlink(oldSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, true);
+    await fs.promises.writeFile(oldSrcPath, 'contents');
+    await fs.promises.symlink(oldSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, true);
 
-  const newTarget = await fs.promises.readlink(dstPath);
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  expect(newTarget).toEqual(oldSrcPath);
-});
+    expect(newTarget).toEqual(oldSrcPath);
+  });
 
-testUnix("manageSymlink should not touch the file if custom string doesn't match", async() => {
-  const oldSrcPath = path.join(testDir, 'resources', os.platform(), 'bin', 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+  test("should not touch the file if custom string doesn't match", async() => {
+    const oldSrcPath = path.join(testDir, 'resources', os.platform(), 'bin', 'fakeKubectl');
 
-  await fs.promises.symlink(oldSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, true, path.join('another', 'dir'));
+    await fs.promises.symlink(oldSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, true, path.join('another', 'dir'));
 
-  const newTarget = await fs.promises.readlink(dstPath);
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  expect(newTarget).toEqual(oldSrcPath);
-});
+    expect(newTarget).toEqual(oldSrcPath);
+  });
 
-testUnix('manageSymlink should change the file if the custom string matches', async() => {
-  const customString = path.join('another', 'dir');
-  const oldSrcDir = path.join(testDir, customString);
-  const oldSrcPath = path.join(oldSrcDir, 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+  test('should change the file if the custom string matches', async() => {
+    const customString = path.join('another', 'dir');
+    const oldSrcDir = path.join(testDir, customString);
+    const oldSrcPath = path.join(oldSrcDir, 'fakeKubectl');
 
-  await fs.promises.mkdir(oldSrcDir, { recursive: true, mode: 0o755 });
-  await fs.promises.symlink(oldSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, true, customString);
+    await fs.promises.mkdir(oldSrcDir, { recursive: true, mode: 0o755 });
+    await fs.promises.symlink(oldSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, true, customString);
 
-  const newTarget = await fs.promises.readlink(dstPath);
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  expect(newTarget).toEqual(srcPath);
-});
+    expect(newTarget).toEqual(srcPath);
+  });
 
-testUnix('manageSymlink should delete the file if the target path matches', async() => {
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+  test('should delete the file if the target path matches', async() => {
+    await fs.promises.symlink(srcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, false);
 
-  await fs.promises.symlink(srcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, false);
+    return expect(fs.promises.readlink(dstPath)).rejects.toThrow('ENOENT');
+  });
 
-  return expect(fs.promises.readlink(dstPath)).rejects.toThrow();
-});
+  test("shouldn't delete the file if the target path doesn't match", async() => {
+    const oldSrcPath = path.join(testDir, 'fakeKubectl');
 
-testUnix("manageSymlink shouldn't delete the file if the target path doesn't match", async() => {
-  const oldSrcPath = path.join(testDir, 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+    await fs.promises.writeFile(oldSrcPath, 'contents');
+    await fs.promises.symlink(oldSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, false);
 
-  await fs.promises.writeFile(oldSrcPath, 'contents');
-  await fs.promises.symlink(oldSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, false);
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  const newTarget = await fs.promises.readlink(dstPath);
+    expect(newTarget).toEqual(oldSrcPath);
+  });
 
-  expect(newTarget).toEqual(oldSrcPath);
-});
+  test("shouldn't delete the file if it isn't a symlink", async() => {
+    const oldContents = "shouldn't be changed";
 
-testUnix("manageSymlink shouldn't delete the file if it isn't a symlink", async() => {
-  const oldContents = "shouldn't be changed";
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+    await fs.promises.writeFile(dstPath, oldContents);
+    await manageSymlink(srcPath, dstPath, false);
 
-  await fs.promises.writeFile(dstPath, oldContents);
-  await manageSymlink(srcPath, dstPath, false);
+    const newContents = await fs.promises.readFile(dstPath, 'utf8');
 
-  const newContents = await fs.promises.readFile(dstPath, 'utf8');
+    expect(newContents).toEqual(oldContents);
+  });
 
-  expect(newContents).toEqual(oldContents);
-});
+  test('should do nothing if file is not present', async() => {
+    const testDirContentsBefore = await fs.promises.readdir(testDir);
 
-testUnix('manageSymlink should do nothing if file is not present', async() => {
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+    expect(testDirContentsBefore).toEqual([]);
+    await manageSymlink(srcPath, dstPath, false);
+    const testDirContentsAfter = await fs.promises.readdir(testDir);
 
-  const testDirContentsBefore = await fs.promises.readdir(testDir);
+    return expect(testDirContentsAfter).toEqual([]);
+  });
 
-  expect(testDirContentsBefore).toEqual([]);
-  await manageSymlink(srcPath, dstPath, false);
-  const testDirContentsAfter = await fs.promises.readdir(testDir);
+  test("should not remove the file if custom string doesn't match", async() => {
+    const oldSrcPath = path.join(testDir, 'resources', os.platform(), 'bin', 'fakeKubectl');
 
-  return expect(testDirContentsAfter).toEqual([]);
-});
+    await fs.promises.symlink(oldSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, false, path.join('another', 'dir'));
 
-testUnix("manageSymlink should not remove the file if custom string doesn't match", async() => {
-  const oldSrcPath = path.join(testDir, 'resources', os.platform(), 'bin', 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
+    const newTarget = await fs.promises.readlink(dstPath);
 
-  await fs.promises.symlink(oldSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, false, path.join('another', 'dir'));
+    expect(newTarget).toEqual(oldSrcPath);
+  });
 
-  const newTarget = await fs.promises.readlink(dstPath);
+  test('should remove the file if the custom string matches', async() => {
+    const customString = path.join('another', 'dir');
+    const oldSrcPath = path.join(testDir, customString, 'fakeKubectl');
 
-  expect(newTarget).toEqual(oldSrcPath);
-});
+    await fs.promises.symlink(oldSrcPath, dstPath);
+    await manageSymlink(srcPath, dstPath, false, customString);
 
-testUnix('manageSymlink should remove the file if the custom string matches', async() => {
-  const customString = path.join('another', 'dir');
-  const oldSrcPath = path.join(testDir, customString, 'fakeKubectl');
-  const dstPath = path.join(testDir, 'kubectl');
-  const srcPath = path.join(resourcesDir, 'kubectl');
-
-  await fs.promises.symlink(oldSrcPath, dstPath);
-  await manageSymlink(srcPath, dstPath, false, customString);
-
-  return expect(fs.promises.readlink(dstPath)).rejects.toThrow();
+    return expect(fs.promises.readlink(dstPath)).rejects.toThrow('ENOENT');
+  });
 });
