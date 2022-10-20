@@ -3,8 +3,7 @@ name: e2e tests on Mac M1
 on:
   workflow_dispatch:
   schedule:
-  - cron: '0 9 * * 1-5'
-
+  - cron: '15 8 * * 1-5'
 
 jobs:
 
@@ -26,18 +25,33 @@ jobs:
           go-version: '^1.18'
       - name: Install dependencies
         run: npm ci
-        #The next 2 steps are a workaround for an unexpected failure in launching electron before running e2e tests
+        #The next steps is a workaround for an unexpected failure in launching electron before running e2e tests
         #Such failure is addressed in issue #2915
       - name: add tools to PATH
         run: |
-          mkdir -p ~/.rd/bin
-          cp -R ~/actions-runner/_work/rancher-desktop/rancher-desktop/resources/darwin/bin ~/.rd/bin
-          export PATH="~/.rd/bin:$PATH"
+          mkdir -p $HOME/.rd/bin
+          cp -rf $HOME/actions-runner/_work/rancher-desktop/rancher-desktop/resources/darwin/bin/ $HOME/.rd/bin/
+          export PATH="$HOME/.rd/bin:$PATH"
+      - name: Suppress sudo before start up
+        run: |
+          mkdir -p $HOME/Library/Preferences/rancher-desktop
+          touch $HOME/Library/Preferences/rancher-desktop/settings.json
+          cat <<EOF > $HOME/Library/Preferences/rancher-desktop/settings.json
+          {
+            "version": 4,
+            "kubernetes": {
+              "memoryInGB": 6,
+              "suppressSudo": true
+            },
+            "updater": false,
+            "pathManagementStrategy": "rcfiles"
+          }
+          EOF
       - name: Run Rancher Desktop in dev
         run: |
-          npm run dev --no-modal-dialogs &
-          sleep 300
-          ~/.rd/bin/rdctl shutdown
+          npm run dev -- --no-modal-dialogs &
+          sleep 200
+          $HOME/.rd/bin/rdctl shutdown
           wait
       - name: Run e2e Tests
         continue-on-error: false
@@ -51,8 +65,32 @@ jobs:
         with:
           name: e2etest-artifacts
           path: ./e2e/reports/*
-      - name: Clean all steps
-        uses: colpal/actions-clean@36e6ca1abd35efe61cb60f912bd7837f67887c8a
+      - name: Cleanup test environment
+        run: |
+          #set -x
+          cd $HOME/Library
+          pushd Logs/rancher-desktop
+          for x in *.log ; do
+           echo -n '' > $x
+          done
+          popd
+          rm -fr "Application Support/rancher-desktop"
+          rm -fr Preferences/rancher-desktop
+          rm -fr Caches/rancher-desktop/k3s-versions.json
+          cd $HOME/.rd/bin
+          for x in helm kim kubectl nerdctl docker ; do
+           if [[ -L $x ]] ; then # && $(readlink $x):]] ; then
+           rm -f $x
+           fi
+          done
+        if: always()
+      - name: End stray processes
+        run: |
+          for x in nuxt qemu ; do
+           echo $x
+           ps auxww | grep $x
+          done
+          ps auxww | grep rancher | grep -vi -e goland
         if: always()
 
 
