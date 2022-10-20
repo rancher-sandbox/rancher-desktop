@@ -51,6 +51,8 @@ export async function sign(workDir: string) {
   defaults(config.win, DEFAULT_WINDOWS_CONFIG);
 
   // Sign individual files.  See https://github.com/electron-userland/electron-builder/issues/5968
+  // We built this docker.exe, so we need to sign it
+
   const unpackedDir = path.join(workDir, 'unpacked');
   const resourcesRootDir = 'resources/resources/win32';
   const internalDir = path.join(resourcesRootDir, 'internal');
@@ -59,15 +61,8 @@ export async function sign(workDir: string) {
     '.':                ['Rancher Desktop.exe'],
     [resourcesRootDir]: ['wsl-helper.exe'],
     [internalDir]:      ['host-resolver.exe', 'privileged-service.exe', 'steve.exe', 'vtunnel.exe'],
-    [binDir]:           ['docker.exe', 'docker-credential-none.exe', 'kuberlr.exe', 'nerdctl.exe', 'rdctl.exe'],
+    [binDir]:           ['docker.exe', 'docker-credential-none.exe', 'nerdctl.exe', 'rdctl.exe'],
   };
-
-  // make privileged-service.exe available to the installer during signing
-  const privilegedServiceFile = 'privileged-service.exe';
-  const privilegedServiceFrom = path.join(unpackedDir, internalDir, privilegedServiceFile);
-  const privilegedServiceTo = path.join(process.cwd(), 'resources/win32/internal', privilegedServiceFile);
-
-  await fs.promises.copyFile(privilegedServiceFrom, privilegedServiceTo);
 
   const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
   const toolArgs = [
@@ -95,6 +90,13 @@ export async function sign(workDir: string) {
       await childProcess.spawnFile(toolPath, [...toolArgs, fullPath], { stdio: 'inherit' });
     }
   }
+
+  // make privileged-service.exe available to the installer during signing
+  const privilegedServiceFile = 'privileged-service.exe';
+  const privilegedServiceFrom = path.join(unpackedDir, internalDir, privilegedServiceFile);
+  const privilegedServiceTo = path.join(process.cwd(), 'resources/win32/internal', privilegedServiceFile);
+
+  await fs.promises.copyFile(privilegedServiceFrom, privilegedServiceTo);
 
   // Generate an electron-builder.yml forcing the use of the cert.
   const newConfigPath = path.join(workDir, 'electron-builder.yml');
