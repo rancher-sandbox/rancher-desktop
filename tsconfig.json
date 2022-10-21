@@ -12,6 +12,7 @@
     "allowJs": true,
     "sourceMap": true,
     "strict": true,
+    "experimentalDecorators": true,
     "baseUrl": ".",
     "paths": {
       "~/*": [
@@ -19,11 +20,19 @@
       ],
       "@/*": [
         "src/*"
+      ],
+      "@shell/*": [
+        "./node_modules/@rancher/shell/*"
       ]
     },
+    "typeRoots": [
+      "./node_modules",
+      "./node_modules/@types",
+      "./node_modules/@rancher/shell/types"
+    ],    
     "types": [
-      "node",
-      "jest"
+      "@types/node",
+      "@types/jest"
     ]
   },
   "exclude": [

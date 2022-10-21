@@ -40,7 +40,7 @@ export default {
   },
 
   get rendererSrcDir() {
-    return path.resolve(this.rootDir, 'src');
+    return path.resolve(this.rootDir, `${ process.env.RD_ENV_PLUGINS_DEV ? '' : 'src' }`);
   },
 
   /**

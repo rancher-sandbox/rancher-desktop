@@ -91,20 +91,25 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   return window;
 }
 
+const mainUrl = process.env.RD_ENV_PLUGINS_DEV ? 'https://localhost:8888' : `${ webRoot }/index.html`;
+
 /**
  * Open the main window; if it is already open, focus it.
  */
 export function openMain(showPreferencesModal = false) {
   console.debug('openMain() webRoot:', webRoot);
-  const window = createWindow('main', `${ webRoot }/index.html`, {
-    width:          940,
-    height:         600,
-    webPreferences: {
-      devTools:           !app.isPackaged,
-      nodeIntegration:    true,
-      contextIsolation:   false,
-    },
-  });
+  const window = createWindow(
+    'main',
+    mainUrl,
+    {
+      width:          940,
+      height:         600,
+      webPreferences: {
+        devTools:           !app.isPackaged,
+        nodeIntegration:    true,
+        contextIsolation:   false,
+      },
+    });
 
   app.dock?.show();
 

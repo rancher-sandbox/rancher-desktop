@@ -6,11 +6,17 @@
 
 import childProcess from 'child_process';
 import events from 'events';
+import https from 'https';
 import util from 'util';
 
 import fetch from 'node-fetch';
 
 import buildUtils from './lib/build-utils';
+
+interface RendererEnv {
+  home: string;
+  agent?: https.Agent | undefined;
+}
 
 class DevRunner extends events.EventEmitter {
   emitError(message: string, error: any) {
@@ -49,14 +55,31 @@ class DevRunner extends events.EventEmitter {
     return promise.child;
   }
 
+  /**
+   * Gets information about the renderer based on the environment variable
+   * RD_ENV_PLUGINS_DEV. For plugins development.
+   */
+  rendererEnv(): RendererEnv {
+    if (process.env.RD_ENV_PLUGINS_DEV) {
+      return {
+        home:  'https://localhost:8888/home',
+        agent: new https.Agent({ rejectUnauthorized: false }),
+      };
+    }
+
+    return { home: 'http://localhost:8888/pages/General' };
+  }
+
   #mainProcess: childProcess.ChildProcess | null = null;
   async startMainProcess() {
     try {
       await buildUtils.buildMain();
+      const rendererEnv = this.rendererEnv();
+
       // Wait for the renderer to finish, so that the output from nuxt doesn't
       // clobber debugging output.
       while (true) {
-        if ((await fetch('http://localhost:8888/pages/General')).ok) {
+        if ((await fetch(rendererEnv.home, { agent: rendererEnv.agent })).ok) {
           break;
         }
         await util.promisify(setTimeout)(1000);
@@ -88,10 +111,17 @@ class DevRunner extends events.EventEmitter {
    * Start the renderer process.
    */
   startRendererProcess(): Promise<void> {
-    this.#rendererProcess = this.spawn('Renderer process',
-      'node', 'node_modules/nuxt/bin/nuxt.js',
-      '--hostname', 'localhost',
-      '--port', this.rendererPort.toString(), buildUtils.rendererSrcDir);
+    this.#rendererProcess = this.spawn(
+      'Renderer process',
+      'node',
+      'node_modules/nuxt/bin/nuxt.js',
+      'dev',
+      '--hostname',
+      'localhost',
+      '--port',
+      this.rendererPort.toString(),
+      buildUtils.rendererSrcDir,
+    );
 
     return Promise.resolve();
   }
