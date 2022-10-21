@@ -1,12 +1,15 @@
 <script lang="ts">
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 
 import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
 import RdTabbed from '@/components/Tabbed/RdTabbed.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
 import { Settings } from '@/config/settings';
+import type { TransientSettings } from '@/config/transientSettings';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
@@ -24,13 +27,38 @@ export default Vue.extend({
       required: true,
     },
   },
-  data() {
-    return { activeTab: 'behavior' };
+  async fetch() {
+    await this.$store.dispatch('credentials/fetchCredentials');
   },
-  computed: { ...mapGetters('preferences', ['isPlatformWindows']) },
-  methods:    {
-    tabSelected({ tab }: { tab: Vue.Component }) {
-      this.activeTab = tab.name || '';
+  computed: {
+    ...mapGetters('preferences', ['isPlatformWindows']),
+    ...mapGetters('transientSettings', ['getActiveTab']),
+    ...mapState('credentials', ['credentials']),
+    activeTab(): string {
+      return this.getActiveTab || 'behavior';
+    },
+  },
+  methods: {
+    async tabSelected({ tab }: { tab: Vue.Component }) {
+      if (this.activeTab !== tab.name) {
+        await this.commitPreferences(tab.name || '');
+      }
+    },
+    async commitPreferences(tab: string) {
+      await this.$store.dispatch(
+        'transientSettings/commitPreferences',
+        {
+          ...this.credentials as ServerState,
+          payload: {
+            preferences: {
+              currentNavItem: {
+                name: 'Application',
+                tab,
+              },
+            },
+          } as RecursivePartial<TransientSettings>,
+        },
+      );
     },
   },
 });
@@ -42,6 +70,7 @@ export default Vue.extend({
     v-bind="$attrs"
     class="action-tabs"
     :no-content="true"
+    :default-tab="activeTab"
     @changed="tabSelected"
   >
     <template #tabs>

@@ -87,6 +87,26 @@ test.describe.serial('Main App Test', () => {
     await expect(application.pathManagement).toBeVisible();
   });
 
+  test('should render environment tab after close and reopen preferences modal', async() => {
+    test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
+    preferencesWindow.close();
+
+    await new NavPage(page).preferencesButton.click();
+    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+
+    expect(preferencesWindow).toBeDefined();
+
+    const { application } = new PreferencesPage(preferencesWindow);
+
+    await expect(application.nav).toHaveClass('preferences-nav-item active');
+    await expect(application.tabBehavior).toBeVisible();
+    await expect(application.tabEnvironment).toBeVisible();
+    await expect(application.administrativeAccess).not.toBeVisible();
+    await expect(application.automaticUpdates).not.toBeVisible();
+    await expect(application.statistics).not.toBeVisible();
+    await expect(application.pathManagement).toBeVisible();
+  });
+
   test('should navigate to virtual machine', async() => {
     test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
     const { virtualMachine, application } = new PreferencesPage(preferencesWindow);
@@ -103,6 +123,19 @@ test.describe.serial('Main App Test', () => {
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await containerEngine.nav.click();
+
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerEngine.containerEngine).toBeVisible();
+  });
+
+  test('should render container engine tab after close and reopen preferences modal', async() => {
+    preferencesWindow.close();
+
+    await new NavPage(page).preferencesButton.click();
+    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+
+    expect(preferencesWindow).toBeDefined();
+    const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
     await expect(containerEngine.containerEngine).toBeVisible();
