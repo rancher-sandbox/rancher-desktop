@@ -61,6 +61,15 @@ export const defaultSettings = {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
     },
+    imageAllowList: {
+      enabled:  false,
+      /**
+       *  List will be locked when patterns have been loaded from an admin controlled location.
+       *  `enabled` will always be true when `locked` is true.
+       */
+      locked:   false,
+      patterns: [] as Array<string>,
+    },
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {

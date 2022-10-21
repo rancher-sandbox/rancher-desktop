@@ -30,7 +30,7 @@ type ValidatorFunc<C, D> =
  */
 type SettingsValidationMapEntry<T> = {
   [k in keyof T]:
-  T[k] extends string | number | boolean ?
+  T[k] extends string | Array<string> | number | boolean ?
   ValidatorFunc<T[k], T[k]> :
   T[k] extends Record<string, infer V> ?
   SettingsValidationMapEntry<T[k]> | ValidatorFunc<T[k], Record<string, V>> :
@@ -69,6 +69,12 @@ export default class SettingsValidator {
         suppressSudo:               this.checkLima(this.checkBoolean),
         hostResolver:               this.checkPlatform('win32', this.checkBoolean),
         experimental:               { socketVMNet: this.checkPlatform('darwin', this.checkBoolean) },
+        imageAllowList:             {
+          // TODO (maybe): `patterns` and `enabled` should be immutable if `locked` is true
+          enabled:  this.checkBoolean,
+          locked:   this.checkUnchanged,
+          patterns: this.checkStringArray,
+        },
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
@@ -311,6 +317,16 @@ export default class SettingsValidator {
     }
 
     return errors.length === 0 && changed;
+  }
+
+  protected checkStringArray(currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
+    if (!Array.isArray(desiredValue) || desiredValue.some(s => typeof (s) !== 'string')) {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
   }
 
   protected checkPathManagementStrategy(currentValue: PathManagementStrategy,

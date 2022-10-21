@@ -265,6 +265,17 @@ components:
               properties:
                 socketVMNet:
                   type: boolean
+            imageAllowList:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                locked:
+                  type: boolean
+                patterns:
+                  type: array
+                  items:
+                    type: string
         portForwarding:
           type: object
           properties:

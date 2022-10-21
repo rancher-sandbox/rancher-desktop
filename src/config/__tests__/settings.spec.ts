@@ -29,7 +29,12 @@ describe('updateFromCommandLine', () => {
         },
         suppressSudo:             false,
         hostResolver:             true,
-        experimental: { socketVMNet: true },
+        experimental:   { socketVMNet: true },
+        imageAllowList: {
+          enabled:  false,
+          locked:   false,
+          patterns: [],
+        },
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {
