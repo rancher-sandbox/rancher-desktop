@@ -41,9 +41,13 @@ import (
 )
 
 var (
-	wslTarballName = "distro-0.21.tar"
-	wslTarballURL  = "https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.21/distro-0.21.tar"
-	wslDistroName  = "vtunnel-e2e-test"
+	tarbalVersion  = "0.27"
+	wslTarballName = fmt.Sprintf("distro-%s.tar", tarbalVersion)
+	wslTarballURL  = fmt.Sprintf(
+		"https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v%s/%s",
+		tarbalVersion,
+		wslTarballName)
+	wslDistroName = "vtunnel-e2e-test"
 	// TCP connect test ports
 	handShakePortT  = 9091
 	handShakePortT2 = 9092
@@ -263,28 +267,26 @@ func TestMain(m *testing.M) {
 	requireNoErrorf(err, "Failed building vtunnel")
 
 	tarballPath := filepath.Join(os.TempDir(), wslTarballName)
-	s, err := os.Stat(tarballPath)
-	// Only download the tarball if
-	// 1) it doesn't exist
-	// 2) the cache is expired > 60 min
-	if errors.Is(err, os.ErrNotExist) {
-		err = downloadFile(tarballPath, wslTarballURL)
-		requireNoErrorf(err, "Failed to download wsl distro tarball %v", wslTarballName)
-	} else {
-		if s.ModTime().Before(time.Now().Add(time.Hour * -1)) {
+	_, err = os.Stat(tarballPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
 			err = downloadFile(tarballPath, wslTarballURL)
-			requireNoErrorf(err, "Failed to download wsl distro tarball after cache expiry %v", wslTarballName)
+			requireNoErrorf(err, "Failed to download wsl distro tarball %v", wslTarballName)
 		}
+		requireNoErrorf(err, "Failed to retrieve file info for %v", tarballPath)
 	}
 
 	logrus.Infof("Creating %v wsl distro", wslDistroName)
+	// wsl --import <Distro> <InstallLocation> <FileName> --version 2
 	err = cmdExec(
 		tmpDir,
 		"wsl",
 		"--import",
 		wslDistroName,
 		".",
-		tarballPath).Run()
+		tarballPath,
+		"--version",
+		"2").Run()
 	requireNoErrorf(err, "Failed to install distro %v", wslDistroName)
 
 	// It takes a long time to start a new distro,
