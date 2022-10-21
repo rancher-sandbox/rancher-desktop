@@ -96,6 +96,12 @@ test.describe('Command server', () => {
     }
   }
 
+  function verifySettingsKeys(settings: Record<string, any>) {
+    expect(new Set(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry',
+      'updater', 'debug', 'pathManagementStrategy', 'diagnostics']))
+      .toEqual(new Set(Object.keys(settings)));
+  }
+
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
@@ -542,18 +548,7 @@ test.describe('Command server', () => {
             stderr: '',
             stdout: expect.stringContaining('"kubernetes":'),
           });
-          const settings = JSON.parse(stdout);
-
-          expect(settings).toMatchObject({
-            version:                expect.anything(),
-            kubernetes:             expect.anything(),
-            portForwarding:         expect.anything(),
-            images:                 expect.anything(),
-            telemetry:              expect.anything(),
-            updater:                expect.anything(),
-            debug:                  expect.anything(),
-            pathManagementStrategy: expect.anything(),
-          });
+          verifySettingsKeys(JSON.parse(stdout));
         });
         test("it complains when some parameters aren't specified", async() => {
           for (let idx = 0; idx < parameters.length; idx += 1) {
@@ -606,16 +601,7 @@ test.describe('Command server', () => {
       });
       const settings = JSON.parse(stdout);
 
-      expect(settings).toMatchObject({
-        version:                expect.anything(),
-        kubernetes:             expect.anything(),
-        portForwarding:         expect.anything(),
-        images:                 expect.anything(),
-        telemetry:              expect.anything(),
-        updater:                expect.anything(),
-        debug:                  expect.anything(),
-        pathManagementStrategy: expect.anything(),
-      });
+      verifySettingsKeys(settings);
 
       const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
         `--kubernetes-enabled=${ !!settings.kubernetes.enabled }`,
@@ -799,9 +785,7 @@ test.describe('Command server', () => {
                     stderr: '',
                     stdout: expect.stringMatching(/{.+}/s),
                   });
-                  const settings = JSON.parse(stdout);
-
-                  expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy', 'diagnostics']).toMatchObject(Object.keys(settings));
+                  verifySettingsKeys(JSON.parse(stdout));
                 });
               }
             }
