@@ -12,11 +12,10 @@ import semver from 'semver';
 import tar from 'tar-stream';
 
 import {
-  BackendError, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
+  BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
 import K3sHelper from './k3sHelper';
-import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 import DEPENDENCY_VERSIONS from '@/assets/dependencies.yaml';
@@ -48,6 +47,8 @@ import { wslHostIPv4Address } from '@/utils/networks';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+
+import type { KubernetesBackend } from './k8s';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -88,7 +89,7 @@ type wslExecOptions = execOptions & {
 };
 
 export default class WSLBackend extends events.EventEmitter implements VMBackend, VMExecutor {
-  constructor(kubeFactory: (backend: WSLBackend) => K8s.KubernetesBackend) {
+  constructor(kubeFactory: (backend: WSLBackend) => KubernetesBackend) {
     super();
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
@@ -141,7 +142,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    */
   protected resolverHostProcess: BackgroundProcess;
 
-  readonly kubeBackend: K8s.KubernetesBackend;
+  readonly kubeBackend: KubernetesBackend;
   readonly executor = this;
 
   /** Not used in wsl.ts */
@@ -1423,20 +1424,20 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   // #region Events
-  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
-    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  eventNames(): Array<keyof BackendEvents> {
+    return super.eventNames() as Array<keyof BackendEvents>;
   }
 
-  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+  listeners<eventName extends keyof BackendEvents>(
     event: eventName,
-  ): K8s.KubernetesBackendEvents[eventName][] {
-    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  ): BackendEvents[eventName][] {
+    return super.listeners(event) as BackendEvents[eventName][];
   }
 
-  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+  rawListeners<eventName extends keyof BackendEvents>(
     event: eventName,
-  ): K8s.KubernetesBackendEvents[eventName][] {
-    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  ): BackendEvents[eventName][] {
+    return super.rawListeners(event) as BackendEvents[eventName][];
   }
   // #endregion
 }

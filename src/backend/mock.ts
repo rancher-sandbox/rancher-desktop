@@ -5,7 +5,7 @@ import util from 'util';
 import semver from 'semver';
 
 import {
-  BackendSettings, execOptions, State, RestartReasons, VMExecutor,
+  BackendSettings, execOptions, State, RestartReasons, VMExecutor, BackendEvents,
 } from './backend';
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
@@ -138,20 +138,20 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
   // #endregion
 
   // #region Events
-  eventNames(): Array<keyof KubernetesBackendEvents> {
-    return super.eventNames() as Array<keyof KubernetesBackendEvents>;
+  eventNames(): Array<keyof BackendEvents> {
+    return super.eventNames() as Array<keyof BackendEvents>;
   }
 
-  listeners<eventName extends keyof KubernetesBackendEvents>(
+  listeners<eventName extends keyof BackendEvents>(
     event: eventName,
-  ): KubernetesBackendEvents[eventName][] {
-    return super.listeners(event) as KubernetesBackendEvents[eventName][];
+  ): BackendEvents[eventName][] {
+    return super.listeners(event) as BackendEvents[eventName][];
   }
 
-  rawListeners<eventName extends keyof KubernetesBackendEvents>(
+  rawListeners<eventName extends keyof BackendEvents>(
     event: eventName,
-  ): KubernetesBackendEvents[eventName][] {
-    return super.rawListeners(event) as KubernetesBackendEvents[eventName][];
+  ): BackendEvents[eventName][] {
+    return super.rawListeners(event) as BackendEvents[eventName][];
   }
   // #endregion
 }
