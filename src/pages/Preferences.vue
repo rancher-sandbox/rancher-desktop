@@ -22,10 +22,7 @@ export default Vue.extend({
   },
   layout: 'preferences',
   data() {
-    return {
-      currentNavItem:    this.$store.getters['transientSettings/getPreferences'].currentNavItem.name,
-      preferencesLoaded: false,
-    };
+    return { preferencesLoaded: false };
   },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
@@ -43,6 +40,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences', 'hasError']),
+    ...mapGetters('transientSettings', ['getCurrentNavItem']),
     ...mapState('credentials', ['credentials']),
     navItems(): string[] {
       return preferencesNavItems.map(({ name }) => name);
@@ -55,13 +53,12 @@ export default Vue.extend({
     window.removeEventListener('keydown', this.handleKeypress, true);
   },
   methods:  {
-    async navChanged(tabName: string) {
-      this.currentNavItem = tabName;
-
+    async navChanged(name: string) {
       await this.$store.dispatch(
-        'transientSettings/commitfix/2634
+        'transientSettings/commitPreferences',
+        {
           ...this.credentials as ServerState,
-          payload: { preferences: { currentNavItem: { name: this.currentNavItem } } } as RecursivePartial<TransientSettings>,
+          payload: { preferences: { currentNavItem: { name } } } as RecursivePartial<TransientSettings>,
         },
       );
     },
@@ -134,13 +131,13 @@ export default Vue.extend({
     <preferences-nav
       v-if="!hasError"
       class="preferences-nav"
-      :current-nav-item="currentNavItem"
+      :current-nav-item="getCurrentNavItem"
       :nav-items="navItems"
       @nav-changed="navChanged"
     />
     <preferences-body
       class="preferences-body"
-      :current-nav-item="currentNavItem"
+      :current-nav-item="getCurrentNavItem"
       :preferences="getPreferences"
       v-on="$listeners"
     >

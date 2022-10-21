@@ -27,21 +27,21 @@ export default Vue.extend({
       required: true,
     },
   },
-  data() {
-    return { activeTab: this.$store.getters['transientSettings/getPreferences'].currentNavItem.tab || 'behavior' };
-  },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
   },
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
+    ...mapGetters('transientSettings', ['getActiveTab']),
     ...mapState('credentials', ['credentials']),
+    activeTab(): string {
+      return this.getActiveTab || 'behavior';
+    },
   },
-  methods:    {
+  methods: {
     async tabSelected({ tab }: { tab: Vue.Component }) {
       if (this.activeTab !== tab.name) {
-        this.activeTab = tab.name || '';
-        await this.commitPreferences(this.activeTab);
+        await this.commitPreferences(tab.name || '');
       }
     },
     async commitPreferences(tab: string) {
