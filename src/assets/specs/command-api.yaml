@@ -18,6 +18,11 @@ paths:
                 keepSystemImages:
                   type: boolean
         required: true
+      responses:
+        '202':
+          description: The application is performing a factory reset.
+        '400':
+          description: An error occurred
 
   /v0/propose_settings:
     put:
@@ -173,8 +178,8 @@ paths:
               schema:
                 "$ref" : "#/components/schemas/diagnostics"
     post:
-      operationId: dianosticRunChecks
-      summay: Run all diagnostic checks, and return any results.
+      operationId: diagnosticRunChecks
+      summary: Run all diagnostic checks, and return any results.
       responses:
         '200':
           description: >-
