@@ -36,7 +36,18 @@ export const ContainerEngineNames: Record<ContainerEngine, string> = {
 };
 
 export const defaultSettings = {
-  version:    CURRENT_SETTINGS_VERSION,
+  version:         CURRENT_SETTINGS_VERSION,
+  containerEngine: {
+    imageAllowList: {
+      enabled:  false,
+      /**
+       *  List will be locked when patterns have been loaded from an admin controlled location.
+       *  `enabled` will always be true when `locked` is true.
+       */
+      locked:   false,
+      patterns: [] as Array<string>,
+    },
+  },
   kubernetes: {
     /** The version of Kubernetes to launch, as a semver (without v prefix). */
     version:                    '',

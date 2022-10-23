@@ -97,7 +97,7 @@ test.describe('Command server', () => {
   }
 
   function verifySettingsKeys(settings: Record<string, any>) {
-    expect(new Set(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry',
+    expect(new Set(['version', 'containerEngine', 'kubernetes', 'portForwarding', 'images', 'telemetry',
       'updater', 'debug', 'pathManagementStrategy', 'diagnostics']))
       .toEqual(new Set(Object.keys(settings)));
   }
