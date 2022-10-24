@@ -30,7 +30,7 @@ type ValidatorFunc<C, D> =
  */
 type SettingsValidationMapEntry<T> = {
   [k in keyof T]:
-  T[k] extends string | number | boolean ?
+  T[k] extends string | Array<string> | number | boolean ?
   ValidatorFunc<T[k], T[k]> :
   T[k] extends Record<string, infer V> ?
   SettingsValidationMapEntry<T[k]> | ValidatorFunc<T[k], Record<string, V>> :
@@ -55,7 +55,15 @@ export default class SettingsValidator {
   validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
     this.isKubernetesDesired = typeof newSettings.kubernetes?.enabled !== 'undefined' ? newSettings.kubernetes.enabled : currentSettings.kubernetes.enabled;
     this.allowedSettings ||= {
-      version:    this.checkUnchanged,
+      version:         this.checkUnchanged,
+      containerEngine: {
+        imageAllowList:             {
+          // TODO (maybe): `patterns` and `enabled` should be immutable if `locked` is true
+          enabled:  this.checkBoolean,
+          locked:   this.checkUnchanged,
+          patterns: this.checkStringArray,
+        },
+      },
       kubernetes: {
         version:                    this.checkKubernetesVersion,
         memoryInGB:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
@@ -306,6 +314,16 @@ export default class SettingsValidator {
     }
 
     return errors.length === 0 && changed;
+  }
+
+  protected checkStringArray(currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
+    if (!Array.isArray(desiredValue) || desiredValue.some(s => typeof (s) !== 'string')) {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+
+    return currentValue.length !== desiredValue.length || currentValue.some((v, i) => v !== desiredValue[i]);
   }
 
   protected checkPathManagementStrategy(currentValue: PathManagementStrategy,

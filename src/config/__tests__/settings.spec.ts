@@ -13,7 +13,14 @@ describe('updateFromCommandLine', () => {
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
     prefs = {
-      version:    4,
+      version:         4,
+      containerEngine: {
+        imageAllowList: {
+          enabled:  false,
+          locked:   false,
+          patterns: [],
+        },
+      },
       kubernetes: {
         version:                    '1.23.5',
         memoryInGB:                 4,
@@ -29,7 +36,7 @@ describe('updateFromCommandLine', () => {
         },
         suppressSudo:             false,
         hostResolver:             true,
-        experimental: { socketVMNet: true },
+        experimental:   { socketVMNet: true },
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {

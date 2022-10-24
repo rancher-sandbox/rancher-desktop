@@ -44,20 +44,37 @@ interface schemaInteger {
 interface schemaBoolean {
   type: 'boolean';
 }
+interface schemaArray {
+  type: 'array';
+  items: schemaNode;
+}
 interface schemaMissing {
   // This is not a real schema type; it's a stand-in for a missing property.
   type: '<missing>';
 }
-type schemaNode = schemaObject | schemaString | schemaInteger | schemaBoolean | schemaMissing;
+type schemaNode = schemaObject | schemaString | schemaInteger | schemaBoolean | schemaArray | schemaMissing;
 
 const blacklistedPaths = [
   'kubernetes.checkForExistingKimBuilder',
   'version',
 ];
 
+function makePath(pathParts: string[]): string {
+  switch (pathParts.length) {
+  case 0: return '';
+  case 1: return pathParts[0];
+  }
+
+  const copyParts = [...pathParts];
+  const lastItem = copyParts.pop() ?? '';
+  const lastSeparator = lastItem.startsWith('[') ? '' : '.';
+
+  return `${ copyParts.join('.') }${ lastSeparator }${ lastItem }`;
+}
+
 function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: string[] = [], allowMissing = false): string[] {
   const errors: string[] = [];
-  const pathString = path.join('.');
+  const pathString = makePath(path);
 
   function logTypeError(desiredType: schemaNode['type']) {
     errors.push(`${ pathString } has incorrect type "${ schema.type }", should be "${ desiredType }"`);
@@ -82,7 +99,18 @@ function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: 
   switch (typeof setting) {
   case 'object': {
     if (schema.type !== 'object') {
-      logTypeError('object');
+      if (schema.type === 'array') {
+        if (!Array.isArray(setting)) {
+          logTypeError('object');
+        } else {
+          // check the types of the array's children
+          for (let i = 0; i < setting.length; i++) {
+            errors.push(...checkObject(setting[i], schema.items, path.concat([`[${ i }]`])));
+          }
+        }
+      } else {
+        logTypeError('object');
+      }
       break;
     }
     const schemaProps = schema.properties ?? <Record<string, schemaNode>>{};
