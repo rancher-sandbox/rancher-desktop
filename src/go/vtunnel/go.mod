@@ -9,7 +9,7 @@ require (
 	github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220526041742-c1ed19db6a88
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	gopkg.in/yaml.v3 v3.0.1
