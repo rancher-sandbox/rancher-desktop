@@ -24,7 +24,14 @@ export interface Paths {
   wslDistro: string;
   /** Directory holding the WSL data distribution (Windows-specific). */
   wslDistroData: string;
-  /** Directory holding Lima state (macOS-specific). */
+  /** Directory holding Lima state (for macOS and Linux). */
+  actualLima: string,
+  /** A symbolic link to actualLima -- for cases where the username is so long
+   * that the path to the lima socket exceeds the system maximum (104 on macOS, 108 on Linux).
+   * User names exceeding a certain size (> 88 characters on macOS, 92 on Linux) still won't work,
+   * even with the shorter symbolic link. But they probably will run into other problems on their
+   * machines unrelated to Rancher Desktop.
+   */
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
@@ -54,7 +61,8 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
   logs = process.env.RD_LOGS_DIR ?? path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
-  lima = path.join(this.appHome, 'lima');
+  actualLima = path.join(this.appHome, 'lima');
+  lima = path.join(this.altAppHome, 'lima');
   oldIntegration = '/usr/local/bin';
   integration = path.join(this.altAppHome, 'bin');
 
@@ -82,6 +90,10 @@ export class Win32Paths extends ProvidesResources implements Paths {
   readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
   readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
 
+  get actualLima(): string {
+    throw new Error('actualLima not available for Windows');
+  }
+
   get lima(): string {
     throw new Error('lima not available for Windows');
   }
@@ -107,7 +119,8 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   readonly config = path.join(this.configHome, APP_NAME);
   readonly logs = process.env.RD_LOGS_DIR ?? path.join(this.dataHome, APP_NAME, 'logs');
   readonly cache = path.join(this.cacheHome, APP_NAME);
-  readonly lima = path.join(this.dataHome, APP_NAME, 'lima');
+  readonly actualLima = path.join(this.dataHome, APP_NAME, 'lima');
+  readonly lima = path.join(this.altAppHome, 'lima');
   readonly integration = path.join(this.altAppHome, 'bin');
   readonly oldIntegration = path.join(os.homedir(), '.local', 'bin');
 

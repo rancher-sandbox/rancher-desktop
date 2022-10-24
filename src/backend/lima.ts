@@ -237,7 +237,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   readonly kubeBackend: K8s.KubernetesBackend;
   readonly executor = this;
 
-  protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
+  protected readonly CONFIG_PATH = path.join(paths.actualLima, '_config', `${ MACHINE_NAME }.yaml`);
 
   protected cfg: BackendSettings | undefined;
 
@@ -603,6 +603,29 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           console.log('Failed to add exclusion to TimeMachine', ex);
         }
       }
+    }
+    await this.manageShorterLimaSymlink();
+  }
+
+  protected async manageShorterLimaSymlink(): Promise<void> {
+    let needNewLink = true;
+
+    try {
+      await fs.promises.access(paths.lima);
+      const currentLink = await this.evalSymlink(paths.lima);
+
+      if (currentLink === paths.actualLima) {
+        needNewLink = false;
+      } else {
+        // Clean out something called "lima" in ~/.rd -- this must have been created by the user,
+        // but we need to treat this directory as our own, and we have the right to remove things in it.
+        await fs.promises.rm(paths.lima, { force: true });
+      }
+    } catch { }
+
+    if (needNewLink) {
+      // If this fails we need to surface the error and shut down.
+      await fs.promises.symlink(paths.actualLima, paths.lima);
     }
   }
 

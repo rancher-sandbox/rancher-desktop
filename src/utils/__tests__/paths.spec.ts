@@ -58,10 +58,15 @@ describe('paths', () => {
       linux:  new Error('wslDistroData'),
       darwin: new Error('wslDistroData'),
     },
-    lima: {
+    actualLima: {
       win32:  new Error('lima'),
       linux:  '%HOME%/.local/share/rancher-desktop/lima/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
+    },
+    lima: {
+      win32:  new Error('lima'),
+      linux:  '%HOME%/.rd/lima/',
+      darwin: '%HOME%/.rd/lima/',
     },
     oldIntegration: {
       win32:   new Error('oldIntegration'),
@@ -129,12 +134,12 @@ describe('paths', () => {
     expect(paths).toBeInstanceOf(pathsConstructor[os.platform() as platform]);
   });
 
-  it('lima should be in one of the main subtrees', () => {
+  it('actualLima should be in one of the main subtrees', () => {
     const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
     const platform = os.platform();
 
     if (['darwin', 'linux'].includes(platform)) {
-      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toEqual(platform === 'darwin');
+      expect(pathsToDelete.some( dir => paths.actualLima.startsWith(dir))).toEqual(platform === 'darwin');
       expect(pathsToDelete.some( dir => '/bobs/friendly/llama/farm'.startsWith(dir))).toBeFalsy();
     }
   });
