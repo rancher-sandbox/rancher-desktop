@@ -259,14 +259,9 @@ export default class SettingsValidator {
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
     /**
-     * Kubernetes can be disabled but we still require a valid version or an
-     * empty string
+     * desiredVersion can be an empty string when Kubernetes is disabled, but otherwise it must be a valid version.
     */
-    if (!this.isKubernetesDesired && (desiredVersion === '' || this.k8sVersions.includes(desiredVersion))) {
-      return true;
-    }
-
-    if (!this.k8sVersions.includes(desiredVersion)) {
+    if ((this.isKubernetesDesired || desiredVersion !== '') && !this.k8sVersions.includes(desiredVersion)) {
       errors.push(`Kubernetes version "${ desiredVersion }" not found.`);
 
       return false;
