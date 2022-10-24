@@ -178,19 +178,19 @@ describeWithCreds('Credentials server', () => {
       if (!server.includes(matcher)) {
         continue;
       }
-      const body = stream.Readable.from(server ?? '');
+      const body = stream.Readable.from(server);
 
       try {
         const { stdout } = await spawnFile(dcName, ['erase'], { stdio: [body, 'pipe', 'pipe'] });
 
-        if (stdout !== '') {
-          const msg = `Problem ${ helper }-deleting ${ server }: got output stdout: ${ stdout }`;
+        if (stdout) {
+          const msg = `Problem deleting ${ server } using ${ dcName }: got output stdout: ${ stdout }`;
 
           console.log(msg);
           finalException ??= new Error(msg);
         }
       } catch (ex) {
-        console.log(`Error trying to ${ helper }-delete entry ${ server }: ${ ex }`);
+        console.log(`Problem deleting ${ server } using ${ dcName }: `, ex);
         finalException ??= ex;
       }
     }
@@ -246,10 +246,6 @@ describeWithCreds('Credentials server', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-
     if (originalDockerConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
       try {
         await fs.promises.writeFile(dockerConfigPath, originalDockerConfigContents);
@@ -264,6 +260,12 @@ describeWithCreds('Credentials server', () => {
         console.error(`Failed to restore config file ${ plaintextConfigPath }: `, e);
       }
     }
+  });
+
+  test.afterAll(async() => {
+    await context.tracing.stop({ path: reportAsset(__filename) });
+    await packageLogs(__filename);
+    await electronApp.close();
   });
 
   test('should emit connection information', async() => {
