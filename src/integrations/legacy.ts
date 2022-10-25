@@ -1,6 +1,6 @@
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
-
-import { manageSymlink } from '@/integrations/unixIntegrationManager';
 
 const LEGACY_INTEGRATION_NAMES = [
   'docker',
@@ -34,10 +34,23 @@ export class PermissionError {
 // of managing integrations. Ensures a clean transition to the new
 // strategy. Idempotent.
 export async function removeLegacySymlinks(legacyIntegrationDir: string): Promise<void> {
-  const settledPromises = await Promise.allSettled(LEGACY_INTEGRATION_NAMES.map((name) => {
+  const searchString = path.join('resources', os.platform(), 'bin');
+  const settledPromises = await Promise.allSettled(LEGACY_INTEGRATION_NAMES.map(async(name) => {
     const linkPath = path.join(legacyIntegrationDir, name);
+    let linkedTo: string;
 
-    return manageSymlink('', linkPath, false);
+    try {
+      linkedTo = await fs.promises.readlink(linkPath);
+    } catch (error: any) {
+      if (['EINVAL', 'ENOENT'].includes(error.code)) {
+        return;
+      }
+      throw error;
+    }
+
+    if (path.dirname(linkedTo).endsWith(searchString)) {
+      await fs.promises.unlink(linkPath);
+    }
   }));
 
   const permissionErrors = [];
