@@ -35,7 +35,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import paths from '@/utils/paths';
 import { setupProtocolHandler, protocolRegistered } from '@/utils/protocols';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import * as window from '@/window';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import { preferencesSetDirtyFlag } from '@/window/preferences';
@@ -408,7 +408,7 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
   preferencesSetDirtyFlag(dirtyFlag);
 });
 
-function writeSettings(arg: RecursivePartial<settings.Settings>) {
+function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);

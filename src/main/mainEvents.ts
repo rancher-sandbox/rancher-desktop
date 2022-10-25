@@ -8,7 +8,7 @@ import { EventEmitter } from 'events';
 import type { VMBackend } from '@/backend/backend';
 import type { Settings } from '@/config/settings';
 import type { TransientSettings } from '@/config/transientSettings';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 
 /**
  * MainEventNames describes the events available over the MainEvents event
@@ -42,7 +42,7 @@ interface MainEventNames {
    *
    * @param settings The settings to change.
    */
-  'settings-write'(settings: RecursivePartial<Settings>): void;
+  'settings-write'(settings: RecursivePartial<RecursiveReadonly<Settings>>): void;
 
   /**
    * Read the current transient settings.
