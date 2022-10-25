@@ -193,13 +193,13 @@ images:
         tag: Tag
         imageId: Image ID
         size: Size
-      action: 
+      action:
         push: Push
         delete: Delete
         scan: Scan...
   add:
     title: Add Image
-    action: 
+    action:
       build: Build
       pull: Pull
       pastTense:
@@ -208,7 +208,7 @@ images:
     loadingText: '{action}ing image...'
     successText: '{action} image'
     errorText: Error trying to { action } ''{ image }'' - see console output for more information
-  scan: 
+  scan:
     title: Scan details for ''{ image }''
     loadingText: Scanning ''{ image }''
     errorText: Error trying to scan ''{ image }'' - see console output for more information
@@ -229,7 +229,7 @@ images:
       description: Description
       primaryUrl: Primary URL
       references: References
-k8s: 
+k8s:
   title: Kubernetes Settings
   dialog:
     ok: OK
@@ -267,6 +267,9 @@ containerEngine:
     containerd:
       label: containerd
       description: Namespaces for container images; use with nerdctl.
+
+allowedImages:
+  label: Allowed Image Patterns
 
 pathManagement:
   label: Configure PATH
@@ -368,11 +371,11 @@ authConfig:
       homepage:
         label: Homepage URL
       instruction: 'Fill in the form with these values:'
-      prefix: 
+      prefix:
         1: <li><a href="{baseUrl}/settings/developers" target="_blank" rel="noopener noreferrer nofollow">Click here</a> to go to GitHub application settings in a new window.</li>
         2: <li>Click on the "OAuth Apps" tab.</li>
         3: <li>Click the "New OAuth App" button.</li>
-      suffix: 
+      suffix:
         1: <li>Click "Register application"</li>
         2: <li>Copy and paste the Client ID and Client Secret of your newly created OAuth app into the fields below</li>
     host:
@@ -406,7 +409,7 @@ authConfig:
         topPrivateDomain: 'Top private domain of:'
       2:
         title: 'Navigate to the "Credentials" tab to create your OAuth client ID'
-        body: 
+        body:
           1: 'Select the "Create Credentials" dropdown, and select "OAuth clientID", then select "Web application".'
           2: 'Authorized Javascript origins:'
           3: 'Authorized redirect URIs:'
@@ -474,16 +477,16 @@ authConfig:
     UID: UID Field
     adfs: Configure an AD FS account
     api: '{vendor} API Host'
-    cert: 
+    cert:
       label: Certificate
       placeholder: Paste in the certificate, starting with -----BEGIN CERTIFICATE-----
     displayName: Display Name Field
     groups: Groups Field
-    key: 
+    key:
       label: Private Key
       placeholder: Paste in the private key, typically starting with -----BEGIN RSA PRIVATE KEY-----
     keycloak: Configure a Keycloak account
-    metadata: 
+    metadata:
       label: Metadata XML
       placeholder: Paste in the IDP Metadata XML
     okta: Configure an Okta account
@@ -745,7 +748,7 @@ catalog:
       chartUrls: Chart
       keywords: Keywords
     errors:
-      clusterToolExists: This chart has a fixed namespace and name. A matching <a href="{url}">application</a> has been found and any changes will be made to it. 
+      clusterToolExists: This chart has a fixed namespace and name. A matching <a href="{url}">application</a> has been found and any changes will be made to it.
   charts:
     all: All
     categories:
@@ -1375,7 +1378,7 @@ grafanaDashboard:
   reload: Reload
   grafana: Grafana
 
-graphOptions: 
+graphOptions:
   detail: Detail
   summary: Summary
   refresh: Refresh
@@ -1554,7 +1557,7 @@ labels:
     title: Annotations
 
 landing:
-  clusters: 
+  clusters:
     title: Clusters
     provider: Provider
     kubernetesVersion: Kubernetes Version
@@ -2054,7 +2057,7 @@ monitoringReceiver:
       placeholder: e.g. http://my-proxy/
     sendResolved:
       label: Enable send resolved alerts
-    
+
 monitoringRoute:
   groups:
     label: Group By
@@ -2274,7 +2277,7 @@ persistentVolume:
     datasetName:
       label: Dataset Name
       placeholder: e.g. dataset
-    datasetUUID: 
+    datasetUUID:
       label: Dataset UUID
       placeholder: e.g. uuid
   glusterfs:
@@ -2361,10 +2364,10 @@ persistentVolume:
       label: SSL Enabled
   storageos:
     label: StorageOS (Unsupported)
-    volumeName: 
+    volumeName:
       label: Volume Name
       placeholder: e.g. vol
-    volumeNamespace: 
+    volumeNamespace:
       label: Volume Namespace
       placeholder: e.g. default
   nfs:
@@ -2483,7 +2486,7 @@ prefs:
   clusterToShow:
     label: Number of clusters to show in side menu
     value: |-
-      {count, number}    
+      {count, number}
   dateFormat:
     label: Date Format
   timeFormat:
@@ -2660,7 +2663,7 @@ rbac:
       yes: 'Yes: New bindings are not allowed to use this role'
       no: No
     tabs:
-      grantResources: 
+      grantResources:
         label: Grant Resources
         tableHeaders:
           verbs: Verbs
@@ -3049,7 +3052,7 @@ servicesPage:
 
 setup:
   welcome: Welcome to {vendor}!
-  setPassword: The first order of business is to set a strong password for the default <code>admin</code> user. We suggest using this random one generated just for you, but enter your own if you like. 
+  setPassword: The first order of business is to set a strong password for the default <code>admin</code> user. We suggest using this random one generated just for you, but enter your own if you like.
   newPassword: New Password
   confirmPassword: Confirm New Password
   useRandom: Use a randomly generated password
@@ -3064,7 +3067,7 @@ setup:
           Once enabled you can view exactly what data will be sent at <code>/v1-telemetry</code>.
           <a href="https://rancher.com/docs/rancher/v2.x/en/faq/telemetry/" target="_blank" rel="noopener noreferrer nofollow">More Info</a>'
   eula: I agree to the <a href="https://rancher.com/eula" target="_blank" rel="noopener noreferrer nofollow">terms and conditions</a> for using Rancher.
-  serverUrl: 
+  serverUrl:
     label: Server URL
     tip:  What URL should be used for this Rancher installation? All the nodes in your clusters will need to be able to reach this. You can skip setting this for now, and update it later in General Settings>Advanced Settings.
     skip: Skip
@@ -3242,7 +3245,7 @@ storageClass:
     availabilityZone:
       label: Availability Zone
       automatic: "Automatic: Zones the cluster has a node in"
-      manual: 
+      manual:
         label: "Manual: Choose specific zones"
         placeholder: e.g. nova
   rbd:
@@ -3285,7 +3288,7 @@ storageClass:
     quobyteApiServer:
       label: Quobyte API Server
       placeholder: "e.g. http://138.68.74.142:7860"
-    registry: 
+    registry:
       label: Registry
       placeholder: e.g. 138.68.74.142:7861
     adminSecretNamespace:
@@ -3631,7 +3634,7 @@ validation:
   required: '"{key}" is required'
   requiredOrOverride: '"{key}" is required or must allow override'
   roleTemplate:
-    roleTemplateRules: 
+    roleTemplateRules:
       missingVerb: You must specify at least one verb for each resource grant
       missingResource: You must specify a Resource for each resource grant
       missingApiGroup: You must specify an API Group for each resource grant
@@ -4567,7 +4570,7 @@ resourceQuota:
 ##############################
 ### Troubleshooting Page
 ##############################
-troubleshooting: 
+troubleshooting:
   title: Troubleshooting
   description: Use these tools to help identify and resolve issues.
   kubernetes:
@@ -4632,7 +4635,7 @@ preferences:
 ##############################
 ### Integrations Page
 ##############################
-integrations: 
+integrations:
   windows:
     title: WSL Integrations
     description: "Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros"
@@ -4648,7 +4651,7 @@ support:
     learnMore: Find out more about SUSE Rancher Support
     pricing: Contact us for pricing
   subscription:
-    haveSupport: Already have support? 
+    haveSupport: Already have support?
     addSubscription: Add a Subscription ID
     removeSubscription: Remove your Subscription ID
     addTitle: Add your SUSE Subscription ID

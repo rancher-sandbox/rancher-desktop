@@ -433,14 +433,14 @@ test.describe('Command server', () => {
     expect(refreshedSettings).toEqual(transientSettings);
   });
 
-  test('should not update values when the /transient_settings payload contains sub-tabs for a page not supporting sub-tabs: WSL / Virtual Machine', async() => {
+  test('should not update values when the /transient_settings payload has invalid sub-tabs for Container Engine preference page', async() => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
     const requestedSettings = _.merge(
       {},
       transientSettings,
-      { preferences: { navItem: { currentTabs: { [process.platform === 'win32' ? 'WSL' : 'Virtual Machine']: 'behavior' } } } },
+      { preferences: { navItem: { currentTabs: { 'Container Engine': 'behavior' } } } },
     );
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
@@ -454,14 +454,14 @@ test.describe('Command server', () => {
     expect(refreshedSettings).toEqual(transientSettings);
   });
 
-  test('should not update values when the /transient_settings payload contains sub-tabs for a page not supporting sub-tabs: Container Engine', async() => {
+  test('should not update values when the /transient_settings payload contains sub-tabs for a page not supporting sub-tabs: WSL / Virtual Machine', async() => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
     const requestedSettings = _.merge(
       {},
       transientSettings,
-      { preferences: { navItem: { currentTabs: { 'Container Engine': 'behavior' } } } },
+      { preferences: { navItem: { currentTabs: { [process.platform === 'win32' ? 'WSL' : 'Virtual Machine']: 'behavior' } } } },
     );
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
