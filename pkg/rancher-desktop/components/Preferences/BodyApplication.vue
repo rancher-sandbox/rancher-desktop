@@ -44,19 +44,12 @@ export default Vue.extend({
         await this.commitPreferences(tab.name || '');
       }
     },
-    async commitPreferences(tab: string) {
+    async commitPreferences(tabName: string) {
       await this.$store.dispatch(
         'transientSettings/commitPreferences',
         {
           ...this.credentials as ServerState,
-          payload: {
-            preferences: {
-              currentNavItem: {
-                name: 'Application',
-                tab,
-              },
-            },
-          } as RecursivePartial<TransientSettings>,
+          payload: { preferences: { navItem: { currentTabs: { Application: tabName } } } } as RecursivePartial<TransientSettings>,
         },
       );
     },

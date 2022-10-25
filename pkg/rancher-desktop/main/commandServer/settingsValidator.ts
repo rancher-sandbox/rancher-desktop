@@ -3,7 +3,7 @@ import os from 'os';
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@/config/settings';
-import { CurrentNavItem, TransientSettings } from '@/config/transientSettings';
+import { NavItemName, navItemNames, TransientSettings } from '@/config/transientSettings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { preferencesNavItems } from '@/window/preferences';
@@ -105,7 +105,12 @@ export default class SettingsValidator {
   ): [boolean, string[]] {
     this.allowedTransientSettings ||= {
       noModalDialogs: this.checkBoolean,
-      preferences:    { currentNavItem: this.checkPreferencesCurrentNavItem },
+      preferences:    {
+        navItem: {
+          current:     this.checkPreferencesNavItemCurrent,
+          currentTabs: this.checkPreferencesNavItemCurrentTabs,
+        },
+      },
     };
 
     this.canonicalizeSynonyms(currentTransientSettings);
@@ -347,41 +352,38 @@ export default class SettingsValidator {
     return false;
   }
 
-  protected checkPreferencesCurrentNavItem(
-    currentValue: CurrentNavItem,
-    desiredValue: any,
+  protected checkPreferencesNavItemCurrent(
+    currentValue: NavItemName,
+    desiredValue: NavItemName,
     errors: string[],
     fqname: string,
   ): boolean {
-    for (const k in desiredValue) {
-      if (!TransientSettings.validate('preferences.currentNavItem', k)) {
-        errors.push(`${ fqname }: property "${ k }" does not exists in 'currentNavItem'`);
-
-        return false;
-      }
-    }
-
-    const navItem = preferencesNavItems.find(f => f.name === desiredValue.name);
-
-    if (!navItem) {
-      if (desiredValue.name) {
-        errors.push(`${ fqname }: "${ desiredValue.name }" is not a valid page name for Preferences Dialog`);
-      } else {
-        errors.push(`${ fqname }: property 'currentNavItem.name' is not defined`);
-      }
+    if (!desiredValue || !navItemNames.includes(desiredValue)) {
+      errors.push(`${ fqname }: "${ desiredValue }" is not a valid page name for Preferences Dialog`);
 
       return false;
     }
 
-    if (desiredValue.tab) {
-      if (!navItem.tabs) {
-        errors.push(`${ fqname }: setting 'tab' property for "${ navItem.name }" Preferences page is not allowed`);
+    return currentValue !== desiredValue;
+  }
+
+  protected checkPreferencesNavItemCurrentTabs(
+    currentValue: Record<NavItemName, string | undefined>,
+    desiredValue: any,
+    errors: string[],
+    fqname: string,
+  ): boolean {
+    for (const k of Object.keys(desiredValue)) {
+      if (!navItemNames.includes(k as NavItemName)) {
+        errors.push(`${ fqname }: "${ k }" is not a valid page name for Preferences Dialog`);
 
         return false;
       }
 
-      if (!navItem.tabs.includes(desiredValue.tab)) {
-        errors.push(`${ fqname }: "${ desiredValue.tab }" is not a valid tab name for "${ navItem.name }" Preferences page`);
+      const navItem = preferencesNavItems.find(item => item.name === k);
+
+      if (!navItem?.tabs?.includes(desiredValue[k])) {
+        errors.push(`${ fqname }: tab name "${ desiredValue[k] }" is not a valid tab name for "${ k }" Preference page`);
 
         return false;
       }

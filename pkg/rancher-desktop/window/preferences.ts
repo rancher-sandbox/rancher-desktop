@@ -2,7 +2,14 @@ import { app, dialog } from 'electron';
 
 import { webRoot, createWindow } from '.';
 
-export const preferencesNavItems = [
+import { NavItemName } from '@/config/transientSettings';
+
+interface NavItems {
+  name: NavItemName;
+  tabs?: string[];
+}
+
+export const preferencesNavItems: NavItems[] = [
   {
     name: 'Application',
     tabs: ['behavior', 'environment'],

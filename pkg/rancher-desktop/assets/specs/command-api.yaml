@@ -352,10 +352,11 @@ components:
         preferences:
           type: object
           properties:
-            currentNavItem:
+            navItem:
               type: object
               properties:
-                name:
+                current:
                   type: string
-                tab:
-                  type: string
+                currentTabs:
+                  type: object
+                  additionalProperties: true

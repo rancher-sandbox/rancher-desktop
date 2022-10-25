@@ -382,11 +382,11 @@ test.describe('Command server', () => {
     });
   });
 
-  test('should not update values when the /transient_settings currentNavItem payload is invalid', async() => {
+  test('should not update values when the /transient_settings navItem payload is invalid', async() => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'foo', bar: 'bar' } } });
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { navItem: { current: 'foo', bar: 'bar' } } });
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
@@ -399,11 +399,11 @@ test.describe('Command server', () => {
     expect(refreshedSettings).toEqual(transientSettings);
   });
 
-  test('should not update values when the /transient_settings payload has invalid currentNavItem name', async() => {
+  test('should not update values when the /transient_settings payload has invalid current navItem name', async() => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'foo' } } });
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { navItem: { current: 'foo' } } });
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
@@ -416,11 +416,11 @@ test.describe('Command server', () => {
     expect(refreshedSettings).toEqual(transientSettings);
   });
 
-  test('should not update values when the /transient_settings payload has invalid currentNavItem tab', async() => {
+  test('should not update values when the /transient_settings payload has invalid sub-tabs for Application preference page', async() => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'Application', tab: 'bar' } } });
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { navItem: { current: 'Application', currentTabs: { Application: 'foo' } } } });
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
@@ -437,7 +437,11 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: process.platform === 'win32' ? 'WSL' : 'Virtual Machine', tab: 'behavior' } } });
+    const requestedSettings = _.merge(
+      {},
+      transientSettings,
+      { preferences: { navItem: { currentTabs: { [process.platform === 'win32' ? 'WSL' : 'Virtual Machine']: 'behavior' } } } },
+    );
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
@@ -454,7 +458,11 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'Container Engine', tab: 'environment' } } });
+    const requestedSettings = _.merge(
+      {},
+      transientSettings,
+      { preferences: { navItem: { currentTabs: { 'Container Engine': 'behavior' } } } },
+    );
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
@@ -471,7 +479,11 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'Kubernetes', tab: 'environment' } } });
+    const requestedSettings = _.merge(
+      {},
+      transientSettings,
+      { preferences: { navItem: { currentTabs: { Kubernetes: 'behavior' } } } },
+    );
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();

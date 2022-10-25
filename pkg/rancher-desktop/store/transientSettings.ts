@@ -79,9 +79,11 @@ export const getters: GetterTree<TransientSettings, TransientSettings> = {
     return state.noModalDialogs;
   },
   getCurrentNavItem(state: TransientSettings) {
-    return state.preferences?.currentNavItem?.name;
+    return state.preferences?.navItem?.current;
   },
   getActiveTab(state: TransientSettings) {
-    return state.preferences?.currentNavItem?.tab;
+    const currentNavItem = state.preferences?.navItem.current;
+
+    return state.preferences?.navItem?.currentTabs[currentNavItem];
   },
 };
