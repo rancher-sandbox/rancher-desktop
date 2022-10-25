@@ -46,6 +46,7 @@ export type DependencyVersions = {
   ECRCredentialHelper: string;
   hostResolver: string;
   mobyOpenAPISpec: string;
+  wix: string;
 };
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {
