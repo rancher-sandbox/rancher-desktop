@@ -70,9 +70,13 @@ export class Element {
 const Component = 'Component';
 const ComponentGroup = 'ComponentGroup';
 const ComponentGroupRef = 'ComponentGroupRef';
+const Condition = 'Condition';
 const Directory = 'Directory';
 const File = 'File';
 const Fragment = 'Fragment';
+const PermissionEx = 'PermissionEx';
+const ServiceControl = 'ServiceControl';
+const ServiceInstall = 'ServiceInstall';
 const Shortcut = 'Shortcut';
 const ShortcutProperty = 'ShortcutProperty';
 
@@ -151,7 +155,91 @@ function getDescendantDirs(d: directory): directory[] {
  */
 export default async function generateFileList(rootPath: string): Promise<string> {
   const rootDir = await walk(rootPath);
-  const descendantDirs = getDescendantDirs(rootDir);
+  const descendantDirs = getDescendantDirs(rootDir).filter(d => d.files.length > 0);
+
+  const specialComponents: Record<string, (d: directory, f: { name: string, id: string }) => Element> = {
+    'Rancher Desktop.exe': (d, f) => {
+      return <Component>
+        <File
+          Name={f.name}
+          Source={path.join('$(var.appDir)', f.name)}
+          ReadOnly="yes"
+          KeyPath="yes"
+          Id="mainExecutable">
+          <Shortcut
+            Id="desktopShortcut"
+            Directory="DesktopFolder"
+            Name="Rancher Desktop"
+            WorkingDirectory="APPLICATIONFOLDER"
+            Advertise="yes"
+            Icon="RancherDesktopIcon.exe" />
+          <Shortcut
+            Id="startMenuShortcut"
+            Directory="ProgramMenuFolder"
+            Name="Rancher Desktop"
+            WorkingDirectory="APPLICATIONFOLDER"
+            Advertise="yes"
+            Icon="RancherDesktopIcon.exe">
+            <ShortcutProperty
+              Key="System.AppUserModel.ID"
+              Value="io.rancherdesktop.app" />
+          </Shortcut>
+        </File>
+      </Component>;
+    },
+
+    'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
+      return <Component>
+        <Condition>NOT MSIINSTALLPERUSER</Condition>
+        <File
+          Name={f.name}
+          Source={path.join('$(var.appDir)', d.name, f.name)}
+          ReadOnly="yes"
+          KeyPath="yes"
+          Id={f.id}
+        />
+        <ServiceInstall
+          DisplayName="Rancher Desktop Privileged Service"
+          ErrorControl="ignore"
+          Name="RancherDesktopPrivilegedService"
+          Start="demand"
+          Type="ownProcess"
+        >
+          {/* SDDL explanation
+            * O:SY  // Owner: SDDL_LOCAL_SYSTEM
+            * D:()  // DACL (see ACE strings)
+            * A;    // ACE type: SDDL_ACCESS_ALLOWED
+            * ;     // ACE flags: none
+            * GRGX; // Rights: GENERIC_READ + GENERIC_EXECUTE
+            * ;     // Object GUID: none
+            * ;     // Inherit Object GUID: none
+            * IU    // Account SID: SDDL_INTERACTIVE
+            *       // Resource attribute: none
+            * And for the second ACE, needed for uninstall:
+            * A;    // ACE type: SDDL_ACCESS_ALLOWED
+            * ;     // ACE flags: none
+            * GA;   // Rights: GENERIC_ALL
+            * ;     // Object GUID: none
+            * ;     // Inherit Object GUID: none
+            * SY    // Accound SID: LOCAL_SYSTEM
+            *       // Resource attribute: none
+            */}
+          <PermissionEx Sddl="O:SYD:(A;;GRGX;;;IU)(A;;GA;;;SY)" />
+        </ServiceInstall>
+        {/* See https://learn.microsoft.com/en-us/windows/win32/msi/deleteservices-action
+          * We always run StopServices/DeleteServices/InstallFiles&c/InstallServices
+          * in that order; so it makes sense to have Remove="both".
+          */}
+        <ServiceControl
+          Id="RancherDesktopPrivilegedServiceControl"
+          Name="RancherDesktopPrivilegedService"
+          Stop="both"
+          Remove="both"
+          Wait="yes"
+        />
+      </Component>;
+    },
+  };
 
   return (<Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
@@ -176,35 +264,8 @@ export default async function generateFileList(rootPath: string): Promise<string
 
     <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER">
       {rootDir.files.map((f) => {
-        if (f.name === 'Rancher Desktop.exe') {
-          // Special case the main executable
-          return <Component>
-            <File
-              Name={f.name}
-              Source={path.join('$(var.appDir)', f.name)}
-              ReadOnly="yes"
-              KeyPath="yes"
-              Id="mainExecutable">
-              <Shortcut
-                Id="desktopShortcut"
-                Directory="DesktopFolder"
-                Name="Rancher Desktop"
-                WorkingDirectory="APPLICATIONFOLDER"
-                Advertise="yes"
-                Icon="RancherDesktopIcon.exe" />
-              <Shortcut
-                Id="startMenuShortcut"
-                Directory="ProgramMenuFolder"
-                Name="Rancher Desktop"
-                WorkingDirectory="APPLICATIONFOLDER"
-                Advertise="yes"
-                Icon="RancherDesktopIcon.exe">
-                <ShortcutProperty
-                  Key="System.AppUserModel.ID"
-                  Value="io.rancherdesktop.app" />
-              </Shortcut>
-            </File>
-          </Component>;
+        if (f.name in specialComponents) {
+          return specialComponents[f.name](rootDir, f);
         }
 
         return <Component>
@@ -221,16 +282,23 @@ export default async function generateFileList(rootPath: string): Promise<string
     </ComponentGroup>
 
     {descendantDirs.map(d => <ComponentGroup Id={d.id} Directory={d.id}>
-      {d.files.map(f => <Component>
-        <File
-          Name={f.name}
-          Source={path.join('$(var.appDir)', d.name, f.name)}
-          ReadOnly="yes"
-          KeyPath="yes"
-          Id={f.id}
-        />
-      </Component>,
-      )}
+      {d.files.map((f) => {
+        const relPath = path.join(d.name, f.name);
+
+        if (relPath in specialComponents) {
+          return specialComponents[relPath](d, f);
+        }
+
+        return <Component>
+          <File
+            Name={f.name}
+            Source={path.join('$(var.appDir)', d.name, f.name)}
+            ReadOnly="yes"
+            KeyPath="yes"
+            Id={f.id}
+          />
+        </Component>;
+      })}
     </ComponentGroup>,
     )}
   </Fragment>).toXML();
