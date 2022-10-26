@@ -1,21 +1,6 @@
-/*
-Copyright © 2021 SUSE LLC
+//go:build windows
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-// Package reset implements factory reset for Windows.
-package reset
+package factoryreset
 
 import (
 	"errors"
@@ -30,28 +15,22 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-const (
-	appName = "rancher-desktop"
-)
-
-// Factory reset deletes any Rancher Desktop user data.
-func FactoryReset(keepSystemImages bool) error {
-	dirs, err := getDirectoriesToDelete(keepSystemImages)
+func DeleteWindowsData(keepSystemImages bool, appName string) error {
+	dirs, err := getDirectoriesToDelete(keepSystemImages, appName)
 	if err != nil {
 		return err
 	}
 	for _, dir := range dirs {
 		logrus.WithField("path", dir).Trace("Removing directory")
-		if err := os.RemoveAll(dir); err != nil {
-			if !errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("could not remove %s: %w", dir, err)
-			}
+		err := os.RemoveAll(dir)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			fmt.Fprintf(os.Stderr, "Problem trying to delete %s: %s\n", dir, err)
 		}
 	}
 	return nil
 }
 
-func getDirectoriesToDelete(keepSystemImages bool) ([]string, error) {
+func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, error) {
 	// Ordered from least important to most, so that if delete fails we
 	// still keep some of the useful data.
 	appData, err := getKnownFolder(windows.FOLDERID_RoamingAppData)
@@ -96,6 +75,14 @@ func getDirectoriesToDelete(keepSystemImages bool) ([]string, error) {
 	}
 	dirs = append(dirs, path.Join(appData, appName))
 	return dirs, nil
+}
+
+func GetLockfilePath(appName string) (string, error) {
+	appData, err := getKnownFolder(windows.FOLDERID_RoamingAppData)
+	if err != nil {
+		return "", fmt.Errorf("could not get AppData folder: %w", err)
+	}
+	return path.Join(appData, appName, "lockfile"), nil
 }
 
 var (

@@ -31,7 +31,7 @@ var shutdownCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		result, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
+		result, err := doShutdown()
 		if err != nil {
 			return err
 		}
@@ -42,4 +42,8 @@ var shutdownCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(shutdownCmd)
+}
+
+func doShutdown() ([]byte, error) {
+	return processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
 }

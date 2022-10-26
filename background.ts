@@ -1,4 +1,5 @@
-import { spawnSync } from 'child_process';
+import { spawnSync, spawn as standardSpawn } from 'child_process';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -569,31 +570,25 @@ mainEvents.on('integration-update', (state) => {
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
  */
-async function doFactoryReset(keepSystemImages: boolean) {
-  await k8smanager.factoryReset(keepSystemImages);
-  await pathManager.remove();
-  await integrationManager.remove();
-  if (os.platform() === 'win32') {
-    // On Windows, we need to use a helper process in order to ensure we
-    // delete files in use.  Of course, we can't wait for that process to
-    // return - the whole point is for us to not be running.
-    childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
-      ['factory-reset', `--wait-pid=${ process.pid }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
-      { detached: true, windowsHide: true });
-    Electron.app.quit();
+function doFactoryReset(keepSystemImages: boolean) {
+  // Don't wait for this process to return -- the whole point is for us to not be running.
+  const tmpdir = os.tmpdir();
+  const outfile = fs.openSync(path.join(tmpdir, 'rdctl-stdout.txt'), 'w');
+  const errfile = fs.openSync(path.join(tmpdir, 'rdctl-stderr.txt'), 'w');
+  const rdctl = standardSpawn(path.join(paths.resources, os.platform(), 'bin', 'rdctl'),
+    ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`],
+    {
+      detached: true, windowsHide: true, stdio: ['ignore', outfile, errfile],
+    });
 
-    return;
-  }
-  // Remove app settings
-  await settings.clear();
+  rdctl.unref();
+  console.debug(`If factory-reset fails, the rdctl factory-reset output files are in ${ tmpdir }`);
 
   Electron.app.quit();
 }
 
 ipcMainProxy.on('factory-reset', (event, keepSystemImages) => {
-  doFactoryReset(keepSystemImages).catch((err) => {
-    console.error(err);
-  });
+  doFactoryReset(keepSystemImages);
 });
 
 ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
@@ -865,9 +860,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   factoryReset(keepSystemImages: boolean) {
-    doFactoryReset(keepSystemImages).catch((err) => {
-      console.error(err);
-    });
+    doFactoryReset(keepSystemImages);
   }
 
   /**

@@ -229,7 +229,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (!(process.env.NODE_ENV ?? '').includes('test')) {
       process.on('exit', async() => {
         // Attempt to shut down any stray qemu processes.
-        await this.lima('stop', '--force', MACHINE_NAME);
+        try {
+          await this.lima('stop', '--force', MACHINE_NAME);
+        } catch (ex: any) {
+          console.error('Ignoring error trying to stop lima: ', ex);
+        }
       });
     }
   }
@@ -473,7 +477,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       // This shouldn't be possible (it should only be running if we started it
       // in the same Rancher Desktop instance); but just in case, we still stop
       // the VM anyway.
-      await this.lima('stop', MACHINE_NAME);
+      try {
+        await this.lima('stop', MACHINE_NAME);
+      } catch (ex: any) {
+        console.error('Ignoring error trying to stop lima: ', ex);
+      }
     }
 
     const diskPath = path.join(paths.lima, MACHINE_NAME, 'basedisk');
@@ -1774,10 +1782,18 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
               console.error('Failed to stop k3s while stopping services: ', ex);
             }
           }
-          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
-          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
-          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
-          await this.lima('stop', MACHINE_NAME);
+          for (const service of ['buildkitd', 'docker', 'containerd']) {
+            try {
+              await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', service, 'stop');
+            } catch (ex: any) {
+              console.error(`Ignoring error trying to stop ${ service }: `, ex);
+            }
+          }
+          try {
+            await this.lima('stop', MACHINE_NAME);
+          } catch (ex: any) {
+            console.error('Ignoring error trying to stop lima: ', ex);
+          }
           await this.dockerDirManager.clearDockerContext();
         }
         await this.setState(State.STOPPED);
@@ -1818,32 +1834,6 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       await this.kubeBackend.reset();
       await this.start(config);
     });
-  }
-
-  async factoryReset(keepSystemImages: boolean): Promise<void> {
-    const promises: Array<Promise<void>> = [];
-    const pathList = [
-      paths.appHome,
-      paths.altAppHome,
-      paths.config,
-      paths.logs,
-    ];
-
-    if (!keepSystemImages) {
-      pathList.push(paths.cache);
-    }
-    if (!pathList.some(dir => paths.lima.startsWith(dir))) {
-      // Add lima if it isn't in any of the subtrees slated for deletion.
-      pathList.push(paths.lima);
-    }
-    const pathsToDelete = new Set(pathList);
-
-    await this.del(true);
-    for (const path of pathsToDelete) {
-      promises.push(fs.promises.rm(path, { recursive: true, force: true }));
-    }
-    promises.push(this.dockerDirManager.clearDockerContext());
-    await Promise.all(promises);
   }
 
   async requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
