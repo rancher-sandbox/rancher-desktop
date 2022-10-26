@@ -17,9 +17,24 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"strings"
+
+	rdconfig "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+type shutdownSettingsStruct struct {
+	Verbose         bool
+	WaitForShutdown bool
+}
+
+var commonShutdownSettings shutdownSettingsStruct
 
 // shutdownCmd represents the shutdown command
 var shutdownCmd = &cobra.Command{
@@ -27,19 +42,51 @@ var shutdownCmd = &cobra.Command{
 	Short: "Shuts down the running Rancher Desktop application",
 	Long:  `Shuts down the running Rancher Desktop application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := cobra.NoArgs(cmd, args)
+		if err := cobra.NoArgs(cmd, args); err != nil {
+			return err
+		}
+		if commonShutdownSettings.Verbose {
+			logrus.SetLevel(logrus.TraceLevel)
+		}
+		cmd.SilenceUsage = true
+		result, err := doShutdown(&commonShutdownSettings)
 		if err != nil {
 			return err
 		}
-		result, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
-		if err != nil {
-			return err
+		if result != nil {
+			fmt.Println(string(result))
 		}
-		fmt.Println(string(result))
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(shutdownCmd)
+	shutdownCmd.Flags().BoolVar(&commonShutdownSettings.Verbose, "verbose", false, "be verbose")
+	shutdownCmd.Flags().BoolVar(&commonShutdownSettings.WaitForShutdown, "wait", true, "wait for shutdown to be confirmed")
+}
+
+func doShutdown(shutdownSettings *shutdownSettingsStruct) ([]byte, error) {
+	output, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			if strings.Contains(err.Error(), rdconfig.DefaultConfigPath) {
+				logrus.Debugf("Can't find default config file %s, assuming Rancher Desktop isn't running.\n", rdconfig.DefaultConfigPath)
+				// It's probably not running, so shutdown is a no-op
+				return nil, nil
+			} else {
+				return nil, err
+			}
+		}
+		urlError := new(url.Error)
+		if errors.As(err, &urlError) {
+			return []byte("Rancher Desktop is currently not running (or can't be shutdown via this command)."), nil
+		}
+		return nil, err
+	}
+	if !shutdownSettings.WaitForShutdown {
+		return output, nil
+	}
+	err = shutdown.FinishShutdown()
+	return output, err
 }

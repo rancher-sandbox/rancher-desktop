@@ -27,8 +27,7 @@ var listSettingsCmd = &cobra.Command{
 	Short: "Lists the current settings.",
 	Long:  `Lists the current settings in JSON format.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := cobra.NoArgs(cmd, args)
-		if err != nil {
+		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
 		cmd.SilenceUsage = true

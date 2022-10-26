@@ -26,6 +26,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -37,8 +39,7 @@ var startCmd = &cobra.Command{
 If it's running, behaves the same as 'rdctl set ...'.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := cobra.NoArgs(cmd, args)
-		if err != nil {
+		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
 		return doStartOrSetCommand(cmd)
@@ -132,7 +133,7 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	}
 	// Include this output because there's a delay before the UI comes up.
 	// Without this line, it might look like the command doesn't work.
-	fmt.Fprintf(os.Stderr, "About to launch %s %s ...\n", commandName, strings.Join(args, " "))
+	logrus.Infof("About to launch %s %s ...\n", commandName, strings.Join(args, " "))
 	cmd := exec.Command(commandName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -155,39 +156,29 @@ func getWindowsRDPath(rdctlPath string) string {
 			return candidatePath
 		}
 	}
-	localAppDataGetters := []func() string{
-		func() string {
-			return os.Getenv("LOCALAPPDATA")
-		},
-		func() string {
-			homePath, err := os.UserHomeDir()
-			if err != nil || homePath == "" {
-				return ""
-			}
-			return path.Join(homePath, "AppData", "Local")
-		},
-		func() string {
-			homeDrive := os.Getenv("HOMEDRIVE")
-			if homeDrive == "" {
-				return ""
-			}
-			homePathPart := os.Getenv("HOMEPATH")
-			if homePathPart == "" {
-				return ""
-			}
-			return path.Join(homeDrive+homePathPart, "AppData", "Local")
-		},
-		func() string {
-			homePath := os.Getenv("HOME")
-			if homePath == "" {
-				return ""
-			}
-			return path.Join(homePath, "AppData", "Local")
-		},
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		homedir = ""
 	}
-	for _, localAppDataGetter := range localAppDataGetters {
-		localAppDataDir := localAppDataGetter()
-		candidatePath := checkExistence(path.Join(localAppDataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
+	dataPaths := []string{}
+	// %LOCALAPPDATA%
+	dir, err := directories.GetLocalAppDataDirectory()
+	if err == nil {
+		dataPaths = append(dataPaths, dir)
+	}
+	// %APPDATA%
+	dir, err = directories.GetRoamingAppDataDirectory()
+	if err == nil {
+		dataPaths = append(dataPaths, dir)
+	}
+	// Add these two paths if the above two fail to find where the program was installed
+	dataPaths = append(
+		dataPaths,
+		path.Join(homedir, "AppData", "Local"),
+		path.Join(homedir, "AppData", "Roaming"),
+	)
+	for _, dataDir := range dataPaths {
+		candidatePath := checkExistence(path.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
 		if candidatePath != "" {
 			return candidatePath
 		}

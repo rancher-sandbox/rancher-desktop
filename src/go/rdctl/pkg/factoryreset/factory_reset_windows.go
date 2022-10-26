@@ -1,11 +1,11 @@
 /*
-Copyright © 2021 SUSE LLC
+Copyright © 2022 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,58 +14,57 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package reset implements factory reset for Windows.
-package reset
+package factoryreset
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
-	"unsafe"
+	"syscall"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sys/windows"
+	"golang.org/x/text/encoding/unicode"
 )
 
-const (
-	appName = "rancher-desktop"
-)
+func PowershellKillWindows() {
+	cmd := exec.Command("taskkill", "/IM", "Rancher Desktop", "/T", "/F")
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	cmd.Run()
+}
 
-// Factory reset deletes any Rancher Desktop user data.
-func FactoryReset(keepSystemImages bool) error {
-	dirs, err := getDirectoriesToDelete(keepSystemImages)
+func deleteWindowsData(keepSystemImages bool, appName string) error {
+	dirs, err := getDirectoriesToDelete(keepSystemImages, appName)
 	if err != nil {
 		return err
 	}
 	for _, dir := range dirs {
 		logrus.WithField("path", dir).Trace("Removing directory")
 		if err := os.RemoveAll(dir); err != nil {
-			if !errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("could not remove %s: %w", dir, err)
-			}
+			logrus.Errorf("Problem trying to delete %s: %s\n", dir, err)
 		}
 	}
 	return nil
 }
 
-func getDirectoriesToDelete(keepSystemImages bool) ([]string, error) {
+func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, error) {
 	// Ordered from least important to most, so that if delete fails we
-	// still keep some of the useful data.
-	appData, err := getKnownFolder(windows.FOLDERID_RoamingAppData)
+	// still keep some useful data.
+	appData, err := directories.GetRoamingAppDataDirectory()
 	if err != nil {
 		return nil, fmt.Errorf("could not get AppData folder: %w", err)
 	}
-	localAppData, err := getKnownFolder(windows.FOLDERID_LocalAppData)
+	localAppData, err := directories.GetLocalAppDataDirectory()
 	if err != nil {
 		return nil, fmt.Errorf("could not get LocalAppData folder: %w", err)
 	}
 	dirs := []string{path.Join(localAppData, fmt.Sprintf("%s-updater", appName))}
 	localRDAppData := path.Join(localAppData, appName)
 	if keepSystemImages {
-		// We need to unpack the local appData dir so we don't delete the main cached downloads
+		// We need to unpack the local appData dir, so we don't delete the main cached downloads
 		// Specifically, don't delete .../cache/k3s & k3s-versions.json
 		files, err := ioutil.ReadDir(localRDAppData)
 		if err != nil {
@@ -98,36 +97,35 @@ func getDirectoriesToDelete(keepSystemImages bool) ([]string, error) {
 	return dirs, nil
 }
 
-var (
-	ole32Dll   = windows.MustLoadDLL("Ole32.dll")
-	shell32Dll = windows.MustLoadDLL("Shell32.dll")
-)
+const CREATE_NO_WINDOW = 0x08000000
 
-// getKnownFolder gets a Windows known folder.  See https://git.io/JMpgD
-func getKnownFolder(folder *windows.KNOWNFOLDERID) (string, error) {
-	SHGetKnownFolderPath, err := shell32Dll.FindProc("SHGetKnownFolderPath")
+func unregisterWSL() error {
+	cmd := exec.Command("wsl", "--list", "--quiet")
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	rawBytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("could not find SHGetKnownFolderPath: %w", err)
+		return fmt.Errorf("error getting current WSLs: %w", err)
 	}
-	CoTaskMemFree, err := ole32Dll.FindProc("CoTaskMemFree")
+	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
+	actualOutput, err := decoder.String(string(rawBytes))
 	if err != nil {
-		return "", fmt.Errorf("could not find CoTaskMemFree: %w", err)
+		return fmt.Errorf("error getting current WSLs: %w", err)
 	}
-	var result uintptr
-	hr, _, _ := SHGetKnownFolderPath.Call(
-		uintptr(unsafe.Pointer(folder)),
-		0,
-		uintptr(unsafe.Pointer(nil)),
-		uintptr(unsafe.Pointer(&result)),
-	)
-	// SHGetKnownFolderPath documentation says we _must_ free the result with
-	// CoTaskMemFree, even if the call failed.
-	defer CoTaskMemFree.Call(result)
-	if hr != 0 {
-		return "", windows.Errno(hr)
+	actualOutput = strings.ReplaceAll(actualOutput, "\r", "")
+	wsls := strings.Split(actualOutput, "\n")
+	wslsToKill := []string{}
+	for _, s := range wsls {
+		if s == "rancher-desktop" || s == "rancher-desktop-data" {
+			wslsToKill = append(wslsToKill, s)
+		}
 	}
 
-	// result at this point contains the path, as a PWSTR
-	// Note that `go vet` has a false positive here on "misuse of Pointer".
-	return windows.UTF16PtrToString((*uint16)(unsafe.Pointer(result))), nil
+	for _, wsl := range wslsToKill {
+		cmd := exec.Command("wsl", "--unregister", wsl)
+		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+		if err := cmd.Run(); err != nil {
+			logrus.Errorf("Error unregistering WSL %s: %s\n", wsl, err)
+		}
+	}
+	return nil
 }

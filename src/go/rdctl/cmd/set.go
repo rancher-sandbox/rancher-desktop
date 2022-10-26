@@ -47,8 +47,7 @@ var setCmd = &cobra.Command{
 	Short: "Update selected fields in the Rancher Desktop UI and restart the backend.",
 	Long:  `Update selected fields in the Rancher Desktop UI and restart the backend.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := cobra.NoArgs(cmd, args)
-		if err != nil {
+		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
 		return doSetCommand(cmd)
