@@ -35,7 +35,7 @@ export default {
       });
     },
   },
-  buildDir:            '../dist/nuxt',
+  buildDir:            '../../dist/nuxt',
   buildModules:        [
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
