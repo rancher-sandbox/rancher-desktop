@@ -160,7 +160,7 @@ module.exports = {
 // Desktop additions
 Object.assign(module.exports.parserOptions, {
   parser:              '@typescript-eslint/parser',
-  project:             ['./tsconfig.json', './src/tsconfig.json'],
+  project:             ['./tsconfig.json', './pkg/rancher-desktop/tsconfig.json'],
   extraFileExtensions: ['.vue', '.mjs'],
 });
 module.exports.plugins = ['@typescript-eslint', 'deprecation'];

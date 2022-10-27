@@ -36,7 +36,7 @@ updates:
 
   # Maintain dependencies for Golang
   - package-ecosystem: "gomod"
-    directory: "/src/go/docker-credential-none"
+    directory: "/pkg/rancher-desktop/go/docker-credential-none"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
@@ -44,7 +44,7 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
-    directory: "/src/go/mock-wsl"
+    directory: "/pkg/rancher-desktop/go/mock-wsl"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
@@ -52,7 +52,7 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
-    directory: "/src/go/nerdctl-stub"
+    directory: "/pkg/rancher-desktop/go/nerdctl-stub"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
@@ -60,7 +60,7 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
-    directory: "/src/go/rdctl"
+    directory: "/pkg/rancher-desktop/go/rdctl"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
@@ -68,7 +68,7 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
-    directory: "/src/go/vtunnel"
+    directory: "/pkg/rancher-desktop/go/vtunnel"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
@@ -76,7 +76,7 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
-    directory: "/src/go/wsl-helper"
+    directory: "/pkg/rancher-desktop/go/wsl-helper"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1

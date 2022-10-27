@@ -13,7 +13,7 @@ limitations under the License.
 
 package main
 
-import "github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/cmd"
+import "github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/vtunnel/cmd"
 
 func main() {
 	cmd.Execute()

@@ -1,6 +1,6 @@
 <!--
   - This layout is used by dialog boxes that do not want navigation.
-  - With the help of .../src/window/index.ts, this also handles automatic sizing
+  - With the help of .../pkg/rancher-desktop/window/index.ts, this also handles automatic sizing
   - of the dialog boxes, using the given events:
   - emit    'dialog/load':     the dialog has been mounted.
   - receive 'dialog/populate': any additional data for the dialog.

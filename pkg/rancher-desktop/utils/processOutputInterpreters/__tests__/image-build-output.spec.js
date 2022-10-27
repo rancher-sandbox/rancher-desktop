@@ -5,7 +5,7 @@ import ImageBuildOutputCuller from '@/utils/processOutputInterpreters/image-buil
 
 describe('image build output', () => {
   it('returns the raw text back', () => {
-    const buildOutputPath = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'build.txt');
+    const buildOutputPath = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'build.txt');
     const data = fs.readFileSync(buildOutputPath).toString();
     const culler = new ImageBuildOutputCuller();
 

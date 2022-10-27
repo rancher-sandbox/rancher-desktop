@@ -20,12 +20,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/process"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/process"
 
 	// Pull in to register the mungers
-	_ "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/mungers"
+	_ "github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/mungers"
 )
 
 var dockerproxyServeViper = viper.New()

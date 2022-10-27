@@ -111,7 +111,7 @@ test.describe('Command server', () => {
         appPath,
         '--disable-gpu',
         '--whitelisted-ips=',
-        // See src/utils/commandLine.ts before changing the next item.
+        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item.
         '--disable-dev-shm-usage',
         '--no-modal-dialogs',
       ],

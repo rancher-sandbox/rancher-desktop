@@ -17,7 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/cmd"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/rdctl/cmd"
 )
 
 func main() {

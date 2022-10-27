@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/schema",
-    "$id": "https://github.com/rancher-sandbox/rancher-desktop/src/go/mock-wsl/schema.json",
+    "$id": "https://github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/mock-wsl/schema.json",
     "title": "Rancher Desktop Mock WSL stub",
     "description": "mock-wsl configuration",
     "type": "object",

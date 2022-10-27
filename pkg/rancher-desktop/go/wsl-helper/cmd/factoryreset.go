@@ -23,8 +23,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/process"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/reset"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/process"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/reset"
 )
 
 var factoryResetViper = viper.New()

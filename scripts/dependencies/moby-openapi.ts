@@ -9,7 +9,7 @@ import { download } from '../lib/download';
 import { spawnFile } from '@/utils/childProcess';
 
 // This downloads the moby openAPI specification (for WSL-helper) and generates
-// ./src/go/wsl-helper/pkg/dockerproxy/models/...
+// ./pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/models/...
 export class MobyOpenAPISpec implements Dependency {
   name = 'mobyOpenAPISpec';
   githubOwner = 'moby';
@@ -18,11 +18,11 @@ export class MobyOpenAPISpec implements Dependency {
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://raw.githubusercontent.com/${ this.githubOwner }/${ this.githubRepo }/master/docs/api`;
     const url = `${ baseUrl }/v${ context.versions.mobyOpenAPISpec }.yaml`;
-    const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
+    const outPath = path.join(process.cwd(), 'pkg', 'rancher-desktop', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
 
     await download(url, outPath, { access: fs.constants.W_OK });
 
-    await spawnFile('go', ['generate', '-x', 'pkg/dockerproxy/generate.go'], { cwd: path.join(process.cwd(), 'src', 'go', 'wsl-helper'), stdio: 'inherit' });
+    await spawnFile('go', ['generate', '-x', 'pkg/dockerproxy/generate.go'], { cwd: path.join(process.cwd(), 'pkg', 'rancher-desktop', 'go', 'wsl-helper'), stdio: 'inherit' });
     console.log('Moby API swagger models generated.');
   }
 

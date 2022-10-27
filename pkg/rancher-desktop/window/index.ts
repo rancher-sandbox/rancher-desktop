@@ -163,7 +163,7 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
   const window = createWindow(
     id,
     // We use hash mode for the router, so `index.html#FirstRun` loads
-    // src/pages/FirstRun.vue.
+    // pkg/rancher-desktop/pages/FirstRun.vue.
     `${ webRoot }/index.html#${ id }`,
     {
       width:           100,

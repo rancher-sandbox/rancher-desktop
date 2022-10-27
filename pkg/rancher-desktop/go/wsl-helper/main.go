@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/cmd"
+import "github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/cmd"
 
 func main() {
 	cmd.Execute()

@@ -397,7 +397,7 @@ export default {
 
   .header-middle {
     display: flex;
-    align-items: end;
+    align-items: flex-end;
     gap: 1rem;
   }
 
@@ -406,9 +406,9 @@ export default {
   }
 
   .imagesTable::v-deep .search-box {
-    align-self: end;
+    align-self: flex-end;
   }
   .imagesTable::v-deep .bulk {
-    align-self: end;
+    align-self: flex-end;
   }
 </style>

@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/privileged-service/pkg/manage"
 )
 
 // stopCmd represents the stop command

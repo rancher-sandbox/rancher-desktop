@@ -135,7 +135,7 @@ async function checkDependencies(): Promise<void> {
   }
 
   // load current versions of dependencies
-  const depVersionsPath = path.join('src', 'assets', 'dependencies.yaml');
+  const depVersionsPath = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
   const currentVersions = await readDependencyVersions(depVersionsPath);
 
   // get a list of dependencies' version comparisons

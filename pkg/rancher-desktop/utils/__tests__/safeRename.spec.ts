@@ -8,7 +8,7 @@ import { remove as extraRemove } from 'fs-extra';
 import safeRename from '../safeRename';
 
 const fsPromises = fs.promises;
-const assetsDir = resolve('./src/utils/__tests__/assets/safeRename');
+const assetsDir = resolve('./pkg/rancher-desktop/utils/__tests__/assets/safeRename');
 
 /* input tar file contents:
  * rename1.txt

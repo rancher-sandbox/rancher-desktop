@@ -35,8 +35,8 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/sirupsen/logrus"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/models"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/platform"
 )
 
 // RequestContextValue contains things we attach to incoming requests

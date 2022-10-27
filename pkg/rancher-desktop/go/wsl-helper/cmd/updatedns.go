@@ -21,7 +21,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dnsupdater"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dnsupdater"
 )
 
 // updatednsCmd represents the update-dns command

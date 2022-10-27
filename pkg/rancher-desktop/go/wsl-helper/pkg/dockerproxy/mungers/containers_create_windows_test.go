@@ -25,9 +25,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/models"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/platform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -40,7 +40,7 @@ export default {
   },
 
   get rendererSrcDir() {
-    return path.resolve(this.rootDir, `${ process.env.RD_ENV_PLUGINS_DEV ? '' : 'src' }`);
+    return path.resolve(this.rootDir, `${ process.env.RD_ENV_PLUGINS_DEV ? '' : 'pkg/rancher-desktop' }`);
   },
 
   /**
@@ -130,7 +130,7 @@ export default {
       externals: [...Object.keys(this.packageMeta.dependencies)],
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
-        alias:      { '@': path.resolve(this.rootDir, 'src') },
+        alias:      { '@': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
         extensions: ['.ts', '.js', '.json'],
         modules:    ['node_modules'],
       },
@@ -217,7 +217,7 @@ export default {
       const outFile = path.join(this.rootDir, 'resources', platform, exeName);
 
       await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-        cwd: path.join(this.rootDir, 'src', 'go', 'wsl-helper'),
+        cwd: path.join(this.rootDir, 'pkg', 'rancher-desktop', 'go', 'wsl-helper'),
         env: {
           ...process.env,
           GOOS:        this.mapPlatformToGoOS(platform),
@@ -252,7 +252,7 @@ export default {
     }
     // The linux build produces both nerdctl-stub and nerdctl
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'src', 'go', 'nerdctl-stub'),
+      cwd: path.join(this.rootDir, 'pkg', 'rancher-desktop', 'go', 'nerdctl-stub'),
       env: {
         ...process.env,
         GOOS: os,
@@ -272,7 +272,7 @@ export default {
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'src', 'go', name),
+      cwd: path.join(this.rootDir, 'pkg', 'rancher-desktop', 'go', name),
       env: {
         ...process.env,
         GOOS: this.mapPlatformToGoOS(platform),

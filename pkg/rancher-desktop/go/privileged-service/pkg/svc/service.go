@@ -25,7 +25,7 @@ import (
 	"golang.org/x/sys/windows/svc/eventlog"
 
 	"github.com/pkg/errors"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/port"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/privileged-service/pkg/port"
 )
 
 // Run Service runs the Rancher Desktop Privileged Service in Windows services

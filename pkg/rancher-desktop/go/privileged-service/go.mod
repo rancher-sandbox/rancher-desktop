@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service
+module github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/privileged-service
 
 go 1.18
 

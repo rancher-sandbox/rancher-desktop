@@ -6,7 +6,7 @@ import ImageNonBuildOutputCuller from '@/utils/processOutputInterpreters/image-n
 describe('simple image output', () => {
   describe('push', () => {
     it('culls by SHA', () => {
-      const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'push.txt');
+      const fname = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'push.txt');
       const data = fs.readFileSync(fname).toString();
       const lines = data.split(/(\r?\n)/);
       const culler = new ImageNonBuildOutputCuller();
@@ -128,7 +128,7 @@ describe('simple image output', () => {
   });
   describe('pull', () => {
     it('culls by SHA', () => {
-      const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'pull.txt');
+      const fname = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'pull.txt');
       const data = fs.readFileSync(fname).toString();
       const lines = data.split(/(\r?\n)/);
       const culler = new ImageNonBuildOutputCuller();
@@ -226,7 +226,7 @@ describe('simple image output', () => {
   });
   describe('pull with nerdctl', () => {
     it('culls by SHA', () => {
-      const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'pull03.txt');
+      const fname = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'pull03.txt');
       const data = fs.readFileSync(fname).toString();
       const lines = data.split(/(\r?\n)/);
       const culler = new ImageNonBuildOutputCuller();

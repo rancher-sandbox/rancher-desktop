@@ -28,7 +28,7 @@ var configFile string
 func init() {
 	configFile = filepath.Join(dockerconfig.Dir(), configFileName)
 	credentials.Name = "docker-credential-none"
-	credentials.Package = "github.com/rancher-sandbox/rancher-desktop/src/go/docker-credential-none"
+	credentials.Package = "github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/docker-credential-none"
 	credentials.Version = VERSION
 }
 

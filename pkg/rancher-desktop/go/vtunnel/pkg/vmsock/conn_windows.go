@@ -27,7 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/registry"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/util"
 )
 
 const (

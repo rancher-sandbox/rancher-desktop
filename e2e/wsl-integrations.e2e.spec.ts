@@ -29,7 +29,7 @@ test.describe('WSL Integrations', () => {
   let page: Page;
 
   test.beforeAll(async() => {
-    const stubDir = path.resolve(__dirname, '..', 'src', 'go', 'mock-wsl');
+    const stubDir = path.resolve(__dirname, '..', 'pkg', 'rancher-desktop', 'go', 'mock-wsl');
 
     workdir = await fs.promises.mkdtemp(
       path.join(os.tmpdir(), 'rd-test-wsl-integration-'));
@@ -153,7 +153,7 @@ test.describe('WSL Integrations', () => {
         path.join(__dirname, '../'),
         '--disable-gpu',
         '--whitelisted-ips=',
-        // See src/utils/commandLine.ts before changing the next item as the final option.
+        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
         '--disable-dev-shm-usage',
         '--no-modal-dialogs',
       ],

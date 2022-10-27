@@ -21,8 +21,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/vtunnel/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/vtunnel/pkg/vmsock"
 )
 
 // hostCmd represents the host command

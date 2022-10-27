@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop/src/go/docker-credential-none
+module github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/docker-credential-none
 
 go 1.18
 

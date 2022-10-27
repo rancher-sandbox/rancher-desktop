@@ -31,8 +31,8 @@ import (
 	"github.com/linuxkit/virtsock/pkg/vsock"
 	"golang.org/x/sys/unix"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/wsl-helper/pkg/dockerproxy/util"
 )
 
 // defaultProxyEndpoint is the path on which dockerd should listen on, relative

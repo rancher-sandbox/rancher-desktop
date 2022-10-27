@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop/src/go/nerdctl-stub/generate
+module github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/nerdctl-stub/generate
 
 go 1.17
 

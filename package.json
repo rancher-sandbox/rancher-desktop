@@ -21,7 +21,7 @@
     "lint:nofix": "npm run lint:typescript:nofix && npm run lint:go:nofix",
     "lint:typescript:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --fix .",
     "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue .",
-    "lint:go:fix": "gofmt -w src/go",
+    "lint:go:fix": "gofmt -w pkg/rancher-desktop/go",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
     "build": "node scripts/ts-wrapper.js scripts/build.ts",
@@ -30,8 +30,8 @@
     "test:unit": "npm run test:unit:jest && npm run test:unit:nerdctl-stub && npm run test:unit:wsl-helper",
     "test:unit:jest": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
-    "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
-    "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
+    "test:unit:nerdctl-stub": "cd ./pkg/rancher-desktop/go/nerdctl-stub/ && go test ./...",
+    "test:unit:wsl-helper": "cd ./pkg/rancher-desktop/go/wsl-helper/ && go generate ./... && go test ./...",
     "test:extra": "npm run test:extra:api-schema",
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
     "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
@@ -156,14 +156,14 @@
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/dist",
-      "<rootDir>/src/dist",
+      "<rootDir>/pkg/rancher-desktop/dist",
       "<rootDir>/.git",
       "<rootDir>/e2e"
     ],
     "moduleNameMapper": {
-      "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js",
-      "^@/assets/": "<rootDir>/src/config/emptyStubForJSLinter.js",
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "\\.css$": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
+      "^@/assets/": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
+      "^@/(.*)$": "<rootDir>/pkg/rancher-desktop/$1"
     },
     "preset": "ts-jest/presets/js-with-babel",
     "testEnvironment": "jsdom"

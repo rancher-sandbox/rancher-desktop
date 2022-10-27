@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop/src/go/rdctl
+module github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/rdctl
 
 go 1.17
 

@@ -19,7 +19,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/privileged-service/pkg/manage"
 )
 
 // installCmd represents the install command

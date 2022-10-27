@@ -21,7 +21,7 @@ import (
 	"net"
 
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/command"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/privileged-service/pkg/command"
 )
 
 const netsh = "netsh"

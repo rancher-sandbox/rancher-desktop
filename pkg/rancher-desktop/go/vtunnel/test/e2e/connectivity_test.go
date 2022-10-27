@@ -37,7 +37,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/pkg/rancher-desktop/go/vtunnel/pkg/config"
 )
 
 var (
