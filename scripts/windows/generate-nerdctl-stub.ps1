@@ -4,7 +4,7 @@
 
 $ENV:GOOS = "linux"
 
-Set-Location pkg/rancher-desktop/go/nerdctl-stub/generate
+Set-Location src/go/nerdctl-stub/generate
 go build .
 wsl.exe -d rancher-desktop --exec ./generate
 Remove-Item ./generate

@@ -29,7 +29,7 @@ test.describe('WSL Integrations', () => {
   let page: Page;
 
   test.beforeAll(async() => {
-    const stubDir = path.resolve(__dirname, '..', 'pkg', 'rancher-desktop', 'go', 'mock-wsl');
+    const stubDir = path.resolve(__dirname, '..', 'src', 'go', 'mock-wsl');
 
     workdir = await fs.promises.mkdtemp(
       path.join(os.tmpdir(), 'rd-test-wsl-integration-'));

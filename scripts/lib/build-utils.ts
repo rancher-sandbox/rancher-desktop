@@ -217,7 +217,7 @@ export default {
       const outFile = path.join(this.rootDir, 'resources', platform, exeName);
 
       await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-        cwd: path.join(this.rootDir, 'pkg', 'rancher-desktop', 'go', 'wsl-helper'),
+        cwd: path.join(this.rootDir, 'src', 'go', 'wsl-helper'),
         env: {
           ...process.env,
           GOOS:        this.mapPlatformToGoOS(platform),
@@ -252,7 +252,7 @@ export default {
     }
     // The linux build produces both nerdctl-stub and nerdctl
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'pkg', 'rancher-desktop', 'go', 'nerdctl-stub'),
+      cwd: path.join(this.rootDir, 'src', 'go', 'nerdctl-stub'),
       env: {
         ...process.env,
         GOOS: os,
@@ -272,7 +272,7 @@ export default {
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'pkg', 'rancher-desktop', 'go', name),
+      cwd: path.join(this.rootDir, 'src', 'go', name),
       env: {
         ...process.env,
         GOOS: this.mapPlatformToGoOS(platform),
