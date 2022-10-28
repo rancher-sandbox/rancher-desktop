@@ -29,6 +29,7 @@ jobs:
         #Such failure is addressed in issue #2915
       - name: add tools to PATH
         run: |
+          rm -fr $HOME/.rd/bin
           mkdir -p $HOME/.rd/bin
           cp -rf $HOME/actions-runner/_work/rancher-desktop/rancher-desktop/resources/darwin/bin/ $HOME/.rd/bin/
           export PATH="$HOME/.rd/bin:$PATH"
