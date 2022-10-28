@@ -154,3 +154,16 @@ export function uniq(ary) {
 
   return out;
 }
+
+/**
+ * Can be used to compare array in loadash.mergeWith() function
+ *
+ * @param {*} objValue first array
+ * @param {*} srcValue second array
+ * @returns always second array (incoming value)
+ */
+export function arrayCustomizer(objValue, srcValue) {
+  if (isArray(objValue) && objValue.every(i => typeof i !== 'object')) {
+    return srcValue;
+  }
+}
