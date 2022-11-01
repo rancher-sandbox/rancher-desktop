@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - Main WiX source for the Rancher Desktop Installer
+  -
+  - This file is a Mustache template that is rendered via installer-win32.ts.
+  -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product
+      Id="*"
+      Name="Rancher Desktop"
+      UpgradeCode="{1F717D5A-A55B-5FE2-9103-C0D74F7FBDE3}"
+      Version="{{appVersion}}"
+      Language="1033"
+      Codepage="65001"
+      Manufacturer="SUSE">
+      <Package Compressed="yes" InstallerVersion="500" />
+      <!-- As of Windows 10/11, msiexec.exe is manifested for Windows 8.1 -->
+      <Condition Message="Windows 10 and above is required">
+        <![CDATA[ Installed OR VersionNT >= 603 ]]>
+      </Condition>
+      <MajorUpgrade
+        AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage='A newer version of Rancher Desktop is already installed.' />
+      <MediaTemplate CompressionLevel="{{compressionLevel}}" EmbedCab="yes" />
+      <UIRef Id="WixUI_RD" />
+
+      <Property Id="ApplicationFolderName" Value="Rancher Desktop" />
+      <Property Id="WixAppFolder" Value="WixPerUserFolder" />
+      <Icon
+        Id="RancherDesktopIcon.exe"
+        SourceFile="$(var.appDir)\Rancher Desktop.exe" />
+      <Property Id="ARPPRODUCTICON" Value="RancherDesktopIcon.exe" />
+      <Property Id="ARPNOMODIFY" Value="1" />
+      <Property Id="ARPURLINFOABOUT" Value="https://rancherdesktop.io/" />
+
+      <DirectoryRef Id="TARGETDIR" />
+
+      <Feature Id="ProductFeature" Absent="disallow">
+        <ComponentGroupRef Id="ProductComponents" />
+      </Feature>
+    </Product>
+    {{ &fileList }}
+</Wix>
