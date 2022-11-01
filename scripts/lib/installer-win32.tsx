@@ -39,7 +39,7 @@ async function getAppVersion(appDir: string): Promise<string> {
 export default async function buildInstaller(workDir: string, development = false) {
   const appDir = path.join(workDir, 'appDir');
   const appVersion = await getAppVersion(appDir);
-  const compressionLevel = development ? 'none' : 'high';
+  const compressionLevel = development ? 'mszip' : 'high';
   const fileList = await generateFileList(appDir);
   const template = await fs.promises.readFile(path.join(process.cwd(), 'build', 'wix', 'main.wxs'), 'utf-8');
   const output = Mustache.render(template, {
@@ -86,6 +86,8 @@ export default async function buildInstaller(workDir: string, development = fals
     '-out', path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`),
     '-pedantic',
     '-wx',
+    '-cc', path.join(process.cwd(), 'dist', 'wix-cache'),
+    '-reusecab',
     ...inputs.map(n => path.join(workDir, `${ path.basename(n, '.wxs') }.wixobj`)),
   ], { stdio: 'inherit' });
 }
