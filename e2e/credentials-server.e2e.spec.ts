@@ -32,7 +32,9 @@ import fetch from 'node-fetch';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
+import {
+  createDefaultSettings, getFullPathForTool, packageLogs, reportAsset, tool,
+} from './utils/TestUtils';
 
 import { findHomeDir } from '@/config/findHomeDir';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
@@ -149,14 +151,15 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function addEntry(helper: string, entry: entryType): Promise<void> {
-    const dcName = `docker-credential-${ helper }`;
+    const pathToHelper = getFullPathForTool(`docker-credential-${ helper }`);
     const body = stream.Readable.from(JSON.stringify(entry));
 
-    await spawnFile(dcName, ['store'], { stdio: [body, 'pipe', 'pipe'] });
+    await spawnFile(pathToHelper, ['store'], { stdio: [body, 'pipe', 'pipe'] });
   }
 
   async function listEntries(helper: string, matcher: string): Promise<Record<string, string>> {
-    const { stdout } = await spawnFile(`docker-credential-${ helper }`, ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const pathToHelper = getFullPathForTool(`docker-credential-${ helper }`);
+    const { stdout } = await spawnFile(pathToHelper, ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
     const entries: Record<string, string> = JSON.parse(stdout);
 
     for (const k in entries) {
@@ -181,7 +184,8 @@ describeWithCreds('Credentials server', () => {
       const body = stream.Readable.from(server);
 
       try {
-        const { stdout } = await spawnFile(dcName, ['erase'], { stdio: [body, 'pipe', 'pipe'] });
+        const pathToHelper = getFullPathForTool(dcName);
+        const { stdout } = await spawnFile(pathToHelper, ['erase'], { stdio: [body, 'pipe', 'pipe'] });
 
         if (stdout) {
           const msg = `Problem deleting ${ server } using ${ dcName }: got output stdout: ${ stdout }`;
@@ -200,7 +204,7 @@ describeWithCreds('Credentials server', () => {
   }
 
   function rdctlPath() {
-    return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
+    return getFullPathForTool('rdctl');
   }
 
   async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string }> {

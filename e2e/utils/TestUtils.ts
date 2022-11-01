@@ -86,13 +86,18 @@ export async function tearDownHelm() {
   await kubectl('delete', 'deploy', 'nginx-sample', '--namespace', 'default');
 }
 
+export function getFullPathForTool(tool: string): string {
+  const srcDir = path.dirname(__dirname);
+  const filename = os.platform().startsWith('win') ? `${ tool }.exe` : tool;
+
+  return path.join(srcDir, '..', 'resources', os.platform(), 'bin', filename);
+}
+
 /**
  * Run the given tool with the given arguments, returning its standard output.
  */
 export async function tool(tool: string, ...args: string[]): Promise<string> {
-  const srcDir = path.dirname(__dirname);
-  const filename = os.platform().startsWith('win') ? `${ tool }.exe` : tool;
-  const exe = path.join(srcDir, '..', 'resources', os.platform(), 'bin', filename);
+  const exe = getFullPathForTool(tool);
 
   try {
     const { stdout } = await childProcess.spawnFile(
