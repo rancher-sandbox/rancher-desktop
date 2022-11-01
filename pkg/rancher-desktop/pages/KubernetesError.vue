@@ -2,7 +2,7 @@
   <div class="container">
     <div class="page-body">
       <div class="error-header">
-        <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
+        <img id="logo" src="../../../resources/icons/logo-square-red@2x.png" />
         <span>
           <h2 data-test="k8s-error-header">
             Kubernetes Error

@@ -7,9 +7,9 @@ import { ExtraRequiresReasons } from './k3sHelper';
 import EventEmitter from '@/utils/eventEmitter';
 import { RecursivePartial } from '@/utils/typeUtils';
 
-export {
-  BackendSettings, FailureDetails, RestartReasons, State,
-  BackendError as KubernetesError, BackendProgress as KubernetesProgress,
+export { State, BackendError as KubernetesError } from './backend';
+export type {
+  BackendSettings, FailureDetails, RestartReasons, BackendProgress as KubernetesProgress,
 } from './backend';
 export type { ServiceEntry } from './client';
 

@@ -5,8 +5,8 @@ import TrivyScanImageOutputCuller from '@/utils/processOutputInterpreters/trivy-
 
 describe('trivy image output', () => {
   it('echoes a zero-vul image back', () => {
-    const inputPath = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-metric-server-input.txt');
-    const outputPath = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-metric-server-output.txt');
+    const inputPath = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-metric-server-input.txt');
+    const outputPath = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-metric-server-output.txt');
     const inputData = fs.readFileSync(inputPath).toString();
     const expectedOutputData = fs.readFileSync(outputPath).toString().replace(/\r/g, '');
     const culler = new TrivyScanImageOutputCuller();
@@ -18,8 +18,8 @@ describe('trivy image output', () => {
   });
 
   it('converts lines to records and handles inherited cells', () => {
-    const inputPath = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-postgres-input.txt');
-    const outputPath = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-postgres-output.txt');
+    const inputPath = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-postgres-input.txt');
+    const outputPath = path.join('./pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets', 'trivy-image-postgres-output.txt');
     const inputData = fs.readFileSync(inputPath).toString();
     const expectedOutputData = fs.readFileSync(outputPath).toString().replace(/\r/g, '');
     const culler = new TrivyScanImageOutputCuller();

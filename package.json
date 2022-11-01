@@ -156,14 +156,14 @@
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/dist",
-      "<rootDir>/src/dist",
+      "<rootDir>/pkg/rancher-desktop/dist",
       "<rootDir>/.git",
       "<rootDir>/e2e"
     ],
     "moduleNameMapper": {
-      "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js",
-      "^@/assets/": "<rootDir>/src/config/emptyStubForJSLinter.js",
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "\\.css$": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
+      "^@/assets/": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
+      "^@/(.*)$": "<rootDir>/pkg/rancher-desktop/$1"
     },
     "preset": "ts-jest/presets/js-with-babel",
     "testEnvironment": "jsdom"

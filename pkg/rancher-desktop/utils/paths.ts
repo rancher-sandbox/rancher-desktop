@@ -69,7 +69,7 @@ export class DarwinPaths extends ProvidesResources implements Paths {
 
 /**
  * Win32Paths implements paths for Windows.
- * Note that this should be kept in sync with .../src/go/wsl-helper/pkg/reset.
+ * Note that this should be kept in sync with .../pkg/rancher-desktop/go/wsl-helper/pkg/reset.
  */
 export class Win32Paths extends ProvidesResources implements Paths {
   protected readonly appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');

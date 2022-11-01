@@ -17,10 +17,10 @@
     "baseUrl": ".",
     "paths": {
       "~/*": [
-        "src/*"
+        "pkg/rancher-desktop/*"
       ],
       "@/*": [
-        "src/*"
+        "pkg/rancher-desktop/*"
       ],
       "@shell/*": [
         "./node_modules/@rancher/shell/*"

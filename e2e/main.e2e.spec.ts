@@ -24,7 +24,7 @@ test.describe.serial('Main App Test', () => {
         path.join(__dirname, '../'),
         '--disable-gpu',
         '--whitelisted-ips=',
-        // See src/utils/commandLine.ts before changing the next item as the final option.
+        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
         '--disable-dev-shm-usage',
         '--no-modal-dialogs',
       ],

@@ -40,7 +40,7 @@ export default {
   },
 
   get rendererSrcDir() {
-    return path.resolve(this.rootDir, `${ process.env.RD_ENV_PLUGINS_DEV ? '' : 'src' }`);
+    return path.resolve(this.rootDir, `${ process.env.RD_ENV_PLUGINS_DEV ? '' : 'pkg/rancher-desktop' }`);
   },
 
   /**
@@ -130,7 +130,7 @@ export default {
       externals: [...Object.keys(this.packageMeta.dependencies)],
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
-        alias:      { '@': path.resolve(this.rootDir, 'src') },
+        alias:      { '@': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
         extensions: ['.ts', '.js', '.json'],
         modules:    ['node_modules'],
       },

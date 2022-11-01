@@ -63,7 +63,7 @@ function downloadDependencies(context: DownloadContext, dependencies: Dependency
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
-  const depVersions = await readDependencyVersions(path.join('src', 'assets', 'dependencies.yaml'));
+  const depVersions = await readDependencyVersions(path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml'));
   const platform = os.platform();
 
   if (platform === 'linux' || platform === 'darwin') {

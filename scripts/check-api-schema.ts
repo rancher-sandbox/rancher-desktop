@@ -28,7 +28,7 @@ import yaml from 'yaml';
 import { defaultSettings } from '@/config/settings';
 import { RecursiveReadonly } from '@/utils/typeUtils';
 
-const schemaPath = 'src/assets/specs/command-api.yaml';
+const schemaPath = 'pkg/rancher-desktop/assets/specs/command-api.yaml';
 
 interface schemaObject {
   type: 'object';

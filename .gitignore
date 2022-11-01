@@ -11,7 +11,7 @@
 /dist/**
 /.idea/
 .nuxt/
-/src/node_modules/
+/pkg/rancher-desktop/node_modules/
 *~
 \#*
 /e2e/reports/*

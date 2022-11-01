@@ -2,8 +2,8 @@
 
 import _ from 'lodash';
 
-import babelConfig from '../babel.config';
-import * as packageMeta from '../package.json';
+import babelConfig from '../../babel.config';
+import * as packageMeta from '../../package.json';
 
 const isDevelopment = /^dev/i.test(process.env.NODE_ENV);
 const corejsVersion = parseFloat(/\d+\.\d+/.exec(packageMeta.dependencies['core-js']));
@@ -35,7 +35,7 @@ export default {
       });
     },
   },
-  buildDir:            '../dist/nuxt',
+  buildDir:            '../../dist/nuxt',
   buildModules:        [
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
