@@ -34,7 +34,7 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, packageLogs, reportAsset, tool, toolPath,
+  createDefaultSettings, getFullPathForTool, packageLogs, reportAsset, tool,
 } from './utils/TestUtils';
 
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -86,7 +86,7 @@ function haveCredentialServerHelper(): boolean {
     if (credStore === 'none') {
       return true;
     }
-    const result = spawnSync(toolPath(`docker-credential-${ credStore }`), ['list'], { stdio: 'pipe' });
+    const result = spawnSync(getFullPathForTool(`docker-credential-${ credStore }`), ['list'], { stdio: 'pipe' });
 
     return !result.error;
   } catch (err: any) {
@@ -152,15 +152,15 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function addEntry(helper: string, entry: entryType): Promise<void> {
-    const dcName = `docker-credential-${ helper }`;
+    const pathToHelper = getFullPathForTool(`docker-credential-${ helper }`);
     const body = stream.Readable.from(JSON.stringify(entry));
 
-    await spawnFile(toolPath(dcName), ['store'], { stdio: [body, 'pipe', 'pipe'] });
+    await spawnFile(pathToHelper, ['store'], { stdio: [body, 'pipe', 'pipe'] });
   }
 
   async function listEntries(helper: string, matcher: string): Promise<Record<string, string>> {
-    const dcName = `docker-credential-${ helper }`;
-    const { stdout } = await spawnFile(toolPath(dcName), ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const pathToHelper = getFullPathForTool(`docker-credential-${ helper }`);
+    const { stdout } = await spawnFile(pathToHelper, ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
     const entries: Record<string, string> = JSON.parse(stdout);
 
     for (const k in entries) {
@@ -185,7 +185,8 @@ describeWithCreds('Credentials server', () => {
       const body = stream.Readable.from(server);
 
       try {
-        const { stdout } = await spawnFile(toolPath(dcName), ['erase'], { stdio: [body, 'pipe', 'pipe'] });
+        const pathToHelper = getFullPathForTool(dcName);
+        const { stdout } = await spawnFile(pathToHelper, ['erase'], { stdio: [body, 'pipe', 'pipe'] });
 
         if (stdout) {
           const msg = `Problem deleting ${ server } using ${ dcName }: got output stdout: ${ stdout }`;
@@ -204,7 +205,7 @@ describeWithCreds('Credentials server', () => {
   }
 
   function rdctlPath() {
-    return toolPath('rdctl');
+    return getFullPathForTool('rdctl');
   }
 
   async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string }> {
