@@ -126,7 +126,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    */
   async install(config: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
     await this.progressTracker.action('Installing k3s', 50, async() => {
-      await this.deleteIncompatibleData(desiredVersion);
       await this.installK3s(desiredVersion);
       await this.writeServiceScript(config, allowSudo);
     });
@@ -399,11 +398,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     await this.vm.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
-  /**
-   * Delete k3s data that may cause issues if we were to move to the given
-   * version.
-   */
-  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+  async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {

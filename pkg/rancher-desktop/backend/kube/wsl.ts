@@ -96,11 +96,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     })();
   }
 
-  /**
-   * Delete k3s data that may cause issues if we were to move to the given
-   * version.
-   */
-  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+  async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {
@@ -188,18 +184,9 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
   }
 
-  /**
-   * Install K3s into the VM for execution.
-   * @param version The version to install.
-   */
-  protected async installK3s(version: semver.SemVer) {
+  async install(config: BackendSettings, version: semver.SemVer) {
     await this.vm.runInstallScript(INSTALL_K3S_SCRIPT,
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
-  }
-
-  async install(config: BackendSettings, desiredVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean) {
-    await this.deleteIncompatibleData(desiredVersion);
-    await this.installK3s(desiredVersion);
   }
 
   async start(config: BackendSettings, activeVersion: semver.SemVer): Promise<string> {

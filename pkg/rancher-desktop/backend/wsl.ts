@@ -1173,9 +1173,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         ];
 
         if (kubernetesVersion) {
+          const version = kubernetesVersion;
+
           installerActions.push(
-            this.progressTracker.action('Installing k3s', 100,
-              this.kubeBackend.install(config, kubernetesVersion, isDowngrade, false)));
+            this.progressTracker.action('Installing k3s', 100, async() => {
+              await this.kubeBackend.deleteIncompatibleData(version);
+              await this.kubeBackend.install(config, version, isDowngrade, false);
+            }));
         }
         try {
           await this.progressTracker.action('Running installer actions', 0, Promise.all(installerActions));

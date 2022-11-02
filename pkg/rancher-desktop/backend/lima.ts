@@ -1582,6 +1582,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           return;
         }
 
+        if (kubernetesVersion) {
+          await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
+        }
+
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
