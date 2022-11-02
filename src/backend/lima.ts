@@ -2239,21 +2239,15 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
    * @param version The version to install.
    */
   protected async installK3s(version: semver.SemVer) {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
+    const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
 
-    try {
-      const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
+    await this.vm.execCommand('mkdir', '-p', 'bin');
+    await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
+    await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
+    await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+    const profilePath = path.join(paths.resources, 'scripts', 'profile');
 
-      await this.vm.execCommand('mkdir', '-p', 'bin');
-      await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
-      await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
-      const profilePath = path.join(paths.resources, 'scripts', 'profile');
-
-      await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
-    }
+    await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
   }
 
   /**
