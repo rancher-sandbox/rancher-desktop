@@ -1594,6 +1594,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           return;
         }
 
+        if (kubernetesVersion) {
+          await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
+        }
+
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
@@ -2288,7 +2292,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
    * Delete k3s data that may cause issues if we were to move to the given
    * version.
    */
-  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+  async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {
