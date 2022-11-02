@@ -546,6 +546,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts: [
         { location: path.join(paths.cache, 'k3s'), writable: false },
+        { location: paths.logs, writable: true },
         { location: '~', writable: true },
         { location: '/tmp/rancher-desktop', writable: true },
       ],
@@ -2032,7 +2033,6 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
       // Run rc-update as we have dynamic dependencies.
       await this.vm.execCommand({ root: true }, '/sbin/rc-update', '--update');
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-      await this.followLogs();
     });
 
     await this.progressTracker.action(
@@ -2146,28 +2146,6 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     return k3sEndpoint;
   }
 
-  protected async followLogs() {
-    try {
-      this.logProcess?.kill('SIGTERM');
-    } catch (ex) { }
-    this.logProcess = this.vm.spawn(
-      { logStream: await Logging.k3s.fdStream },
-      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s.log');
-    this.logProcess.on('exit', (status, signal) => {
-      this.logProcess = null;
-      if (![Action.STARTING, Action.NONE].includes(this.vm.currentAction)) {
-        // Allow the log process to exit if we're stopping
-        return;
-      }
-      if (![State.STARTING, State.STARTED].includes(this.vm.state)) {
-        // Allow the log process to exit if we're not active.
-        return;
-      }
-      console.log(`Log process exited with ${ status }/${ signal }, restarting...`);
-      setTimeout(this.followLogs.bind(this), 1_000);
-    });
-  }
-
   async stop() {
     if (this.cfg?.enabled) {
       try {
@@ -2207,9 +2185,6 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   protected readonly k3sHelper: K3sHelper;
 
   protected client: KubeClient | null = null;
-
-  /** Process for tailing logs */
-  protected logProcess: childProcess.ChildProcess | null = null;
 
   protected get progressTracker() {
     return this.vm.progressTracker;
@@ -2289,6 +2264,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
       PORT:            this.desiredPort.toString(),
       ENGINE:          cfg.containerEngine ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: '',
+      LOG_DIR:         paths.logs,
     };
 
     if (allowSudo && os.platform() === 'darwin') {
