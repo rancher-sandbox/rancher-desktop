@@ -38,7 +38,8 @@
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
     "postuninstall": "electron-builder install-app-deps",
-    "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts"
+    "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts",
+    "ucmonitor": "node scripts/ts-wrapper.js scripts/unreleased-change-monitor.ts"
   },
   "main": "dist/app/background.js",
   "dependencies": {

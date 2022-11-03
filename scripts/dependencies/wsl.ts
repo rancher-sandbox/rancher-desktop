@@ -2,7 +2,9 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-import { DownloadContext, Dependency, GithubVersionGetter } from 'scripts/lib/dependencies';
+import {
+  DownloadContext, Dependency, UnreleasedChangeMonitor, GithubVersionGetter, hasUnreleasedChanges, HasUnreleasedChangesResult,
+} from 'scripts/lib/dependencies';
 
 import { download } from '../lib/download';
 
@@ -44,7 +46,7 @@ export class HostResolverPeer extends GithubVersionGetter implements Dependency 
   }
 }
 
-export class HostResolverHost extends GithubVersionGetter implements Dependency {
+export class HostResolverHost extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'hostResolver';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-host-resolver';
@@ -62,9 +64,13 @@ export class HostResolverHost extends GithubVersionGetter implements Dependency 
 
     extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
   }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  }
 }
 
-export class WSLDistro extends GithubVersionGetter implements Dependency {
+export class WSLDistro extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'WSLDistro';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-wsl-distro';
@@ -76,5 +82,9 @@ export class WSLDistro extends GithubVersionGetter implements Dependency {
     const destPath = path.join(context.resourcesDir, context.platform, tarName);
 
     await download(url, destPath, { access: fs.constants.W_OK });
+  }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
   }
 }

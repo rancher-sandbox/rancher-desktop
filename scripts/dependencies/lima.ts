@@ -6,12 +6,12 @@ import os from 'os';
 import path from 'path';
 
 import {
-  DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, getOctokit,
+  DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, getOctokit, UnreleasedChangeMonitor, hasUnreleasedChanges, HasUnreleasedChangesResult,
 } from 'scripts/lib/dependencies';
 
 import { download, getResource } from '../lib/download';
 
-export class LimaAndQemu extends GithubVersionGetter implements Dependency {
+export class LimaAndQemu extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'limaAndQemu';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'lima-and-qemu';
@@ -49,9 +49,13 @@ export class LimaAndQemu extends GithubVersionGetter implements Dependency {
       });
     });
   }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  }
 }
 
-export class AlpineLimaISO implements Dependency {
+export class AlpineLimaISO implements Dependency, UnreleasedChangeMonitor {
   name = 'alpineLimaISO';
   githubOwner = 'lima-vm';
   githubRepo = 'alpine-lima';
@@ -99,5 +103,9 @@ export class AlpineLimaISO implements Dependency {
       isoVersion,
       alpineVersion,
     };
+  }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
   }
 }
