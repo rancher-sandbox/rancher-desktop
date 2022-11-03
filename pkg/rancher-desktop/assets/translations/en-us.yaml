@@ -270,6 +270,10 @@ containerEngine:
 
 allowedImages:
   label: Allowed Image Patterns
+  patterns:
+    placeholder: Type the image pattern
+  locked:
+    tooltip: Patterns cannot be changed due to Organization's policy
 
 pathManagement:
   label: Configure PATH
