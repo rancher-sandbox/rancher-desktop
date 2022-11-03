@@ -8,7 +8,7 @@ import util from 'util';
 import semver from 'semver';
 import yaml from 'yaml';
 
-import { Architecture, BackendSettings, RestartReasons, State } from '../backend';
+import { Architecture, BackendSettings, RestartReasons } from '../backend';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action, MACHINE_NAME } from '../lima';
 
@@ -22,12 +22,13 @@ import * as K8s from '@/backend/k8s';
 import { ContainerEngine } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
 import { checkConnectivity } from '@/main/networking';
-import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { showMessageBox } from '@/window';
+
+const console = Logging.kube;
 
 export default class LimaKubernetesBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(arch: Architecture, vm: LimaBackend) {
@@ -125,7 +126,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    */
   async install(config: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
     await this.progressTracker.action('Installing k3s', 50, async() => {
-      await this.deleteIncompatibleData(desiredVersion);
       await this.installK3s(desiredVersion);
       await this.writeServiceScript(config, allowSudo);
     });
@@ -150,7 +150,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       // Run rc-update as we have dynamic dependencies.
       await this.vm.execCommand({ root: true }, '/sbin/rc-update', '--update');
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-      await this.followLogs();
     });
 
     await this.progressTracker.action(
@@ -264,28 +263,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     return k3sEndpoint;
   }
 
-  protected async followLogs() {
-    try {
-      this.logProcess?.kill('SIGTERM');
-    } catch (ex) { }
-    this.logProcess = this.vm.spawn(
-      { logStream: await Logging.k3s.fdStream },
-      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s.log');
-    this.logProcess.on('exit', (status, signal) => {
-      this.logProcess = null;
-      if (![Action.STARTING, Action.NONE].includes(this.vm.currentAction)) {
-        // Allow the log process to exit if we're stopping
-        return;
-      }
-      if (![State.STARTING, State.STARTED].includes(this.vm.state)) {
-        // Allow the log process to exit if we're not active.
-        return;
-      }
-      console.log(`Log process exited with ${ status }/${ signal }, restarting...`);
-      setTimeout(this.followLogs.bind(this), 1_000);
-    });
-  }
-
   async stop() {
     if (this.cfg?.enabled) {
       try {
@@ -322,9 +299,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected readonly k3sHelper: K3sHelper;
 
   protected client: KubeClient | null = null;
-
-  /** Process for tailing logs */
-  protected logProcess: childProcess.ChildProcess | null = null;
 
   protected get progressTracker() {
     return this.vm.progressTracker;
@@ -379,21 +353,15 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    * @param version The version to install.
    */
   protected async installK3s(version: semver.SemVer) {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
+    const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
 
-    try {
-      const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
+    await this.vm.execCommand('mkdir', '-p', 'bin');
+    await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
+    await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
+    await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+    const profilePath = path.join(paths.resources, 'scripts', 'profile');
 
-      await this.vm.execCommand('mkdir', '-p', 'bin');
-      await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
-      await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
-      const profilePath = path.join(paths.resources, 'scripts', 'profile');
-
-      await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
-    }
+    await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
   }
 
   /**
@@ -404,6 +372,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       PORT:            this.desiredPort.toString(),
       ENGINE:          cfg.containerEngine ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: '',
+      LOG_DIR:         paths.logs,
     };
 
     if (allowSudo && os.platform() === 'darwin') {
@@ -429,11 +398,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     await this.vm.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
-  /**
-   * Delete k3s data that may cause issues if we were to move to the given
-   * version.
-   */
-  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+  async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {

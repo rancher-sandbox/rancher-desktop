@@ -94,6 +94,12 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
   download(config: BackendSettings): Promise<readonly [semver.SemVer | undefined, boolean]>;
 
   /**
+   * Delete Kubernetes data that may cause issues if we were to move to the
+   * given version.
+   */
+  deleteIncompatibleData(desiredVersion: semver.SemVer): Promise<void>;
+
+  /**
    * Install a pre-downloaded version of Kubernetes.
    */
   install(config: BackendSettings, kubernetesVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean): Promise<void>;

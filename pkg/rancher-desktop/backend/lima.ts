@@ -536,6 +536,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts: [
         { location: path.join(paths.cache, 'k3s'), writable: false },
+        { location: paths.logs, writable: true },
         { location: '~', writable: true },
         { location: '/tmp/rancher-desktop', writable: true },
       ],
@@ -1579,6 +1580,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
           return;
+        }
+
+        if (kubernetesVersion) {
+          await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
         }
 
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());

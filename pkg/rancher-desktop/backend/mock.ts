@@ -181,6 +181,10 @@ class MockKubernetesBackend extends events.EventEmitter implements KubernetesBac
     return Promise.resolve([undefined, false] as const);
   }
 
+  deleteIncompatibleData() {
+    return Promise.resolve();
+  }
+
   install() {
     return Promise.resolve();
   }
