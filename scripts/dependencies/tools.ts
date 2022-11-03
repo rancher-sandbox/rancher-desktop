@@ -3,11 +3,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DownloadContext, Dependency, GithubVersionGetter } from 'scripts/lib/dependencies';
-
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
+
+import { DownloadContext, Dependency, GithubVersionGetter } from 'scripts/lib/dependencies';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';

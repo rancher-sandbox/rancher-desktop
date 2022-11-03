@@ -16,7 +16,20 @@ module.exports = {
     'plugin:vue/recommended',
     '@nuxtjs',
     'plugin:nuxt/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
   ],
+  settings: {
+    'import/resolver': {
+      typescript: true,
+      node:       true,
+    },
+    'import/extensions': [
+      '.js',
+      '.ts',
+      '.vue',
+    ],
+  },
   // add your custom rules here
   rules: {
     'dot-notation':             'off',
@@ -154,6 +167,7 @@ module.exports = {
         nonwords: false,
       },
     ],
+    'import/no-useless-path-segments': ['error', { noUselessIndex: true }],
   },
 };
 

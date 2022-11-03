@@ -8,8 +8,9 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import babelConfig from 'babel.config';
 import webpack from 'webpack';
+
+import babelConfig from 'babel.config';
 
 /**
  * A promise that is resolved when the child exits.
