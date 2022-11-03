@@ -546,6 +546,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts: [
         { location: path.join(paths.cache, 'k3s'), writable: false },
+        { location: paths.logs, writable: true },
         { location: '~', writable: true },
         { location: '/tmp/rancher-desktop', writable: true },
       ],
@@ -1593,6 +1594,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           return;
         }
 
+        if (kubernetesVersion) {
+          await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
+        }
+
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
@@ -2032,7 +2037,6 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
       // Run rc-update as we have dynamic dependencies.
       await this.vm.execCommand({ root: true }, '/sbin/rc-update', '--update');
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-      await this.followLogs();
     });
 
     await this.progressTracker.action(
@@ -2146,28 +2150,6 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     return k3sEndpoint;
   }
 
-  protected async followLogs() {
-    try {
-      this.logProcess?.kill('SIGTERM');
-    } catch (ex) { }
-    this.logProcess = this.vm.spawn(
-      { logStream: await Logging.k3s.fdStream },
-      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s.log');
-    this.logProcess.on('exit', (status, signal) => {
-      this.logProcess = null;
-      if (![Action.STARTING, Action.NONE].includes(this.vm.currentAction)) {
-        // Allow the log process to exit if we're stopping
-        return;
-      }
-      if (![State.STARTING, State.STARTED].includes(this.vm.state)) {
-        // Allow the log process to exit if we're not active.
-        return;
-      }
-      console.log(`Log process exited with ${ status }/${ signal }, restarting...`);
-      setTimeout(this.followLogs.bind(this), 1_000);
-    });
-  }
-
   async stop() {
     if (this.cfg?.enabled) {
       try {
@@ -2207,9 +2189,6 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   protected readonly k3sHelper: K3sHelper;
 
   protected client: KubeClient | null = null;
-
-  /** Process for tailing logs */
-  protected logProcess: childProcess.ChildProcess | null = null;
 
   protected get progressTracker() {
     return this.vm.progressTracker;
@@ -2264,21 +2243,15 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
    * @param version The version to install.
    */
   protected async installK3s(version: semver.SemVer) {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
+    const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
 
-    try {
-      const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
+    await this.vm.execCommand('mkdir', '-p', 'bin');
+    await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
+    await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
+    await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+    const profilePath = path.join(paths.resources, 'scripts', 'profile');
 
-      await this.vm.execCommand('mkdir', '-p', 'bin');
-      await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
-      await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
-      const profilePath = path.join(paths.resources, 'scripts', 'profile');
-
-      await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
-    }
+    await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
   }
 
   /**
@@ -2289,6 +2262,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
       PORT:            this.desiredPort.toString(),
       ENGINE:          cfg.containerEngine ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: '',
+      LOG_DIR:         paths.logs,
     };
 
     if (allowSudo && os.platform() === 'darwin') {
@@ -2318,7 +2292,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
    * Delete k3s data that may cause issues if we were to move to the given
    * version.
    */
-  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+  async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {
