@@ -274,6 +274,8 @@ allowedImages:
     placeholder: Type the image pattern
   locked:
     tooltip: Patterns cannot be changed due to Organization's policy
+  alert:
+    The image name need to match one of the patterns defined in the Allowed Images preference tab.
 
 pathManagement:
   label: Configure PATH
