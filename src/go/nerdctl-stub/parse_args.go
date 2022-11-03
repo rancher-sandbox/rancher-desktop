@@ -290,6 +290,8 @@ func init() {
 	registerArgHandler("compose", "-f", filePathArgHandler)
 	registerArgHandler("compose", "--project-directory", filePathArgHandler)
 	registerArgHandler("compose", "--env-file", filePathArgHandler)
+	registerArgHandler("compose run", "--volume", volumeArgHandler)
+	registerArgHandler("compose run", "-v", volumeArgHandler)
 	registerArgHandler("container create", "--cidfile", outputPathArgHandler)
 	registerArgHandler("container create", "--cosign-key", filePathArgHandler)
 	registerArgHandler("container create", "--env-file", filePathArgHandler)
