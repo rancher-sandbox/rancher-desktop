@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
+import { findHomeDir } from '@kubernetes/client-node';
+
 import K3sHelper from '@/backend/k3sHelper';
 import { State } from '@/backend/k8s';
-import { findHomeDir } from '@/config/findHomeDir';
 import { Settings, ContainerEngine, runInDebugMode } from '@/config/settings';
 import type { IntegrationManager } from '@/integrations/integrationManager';
 import mainEvents from '@/main/mainEvents';

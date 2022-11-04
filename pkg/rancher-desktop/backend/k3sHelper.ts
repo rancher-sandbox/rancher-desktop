@@ -7,7 +7,7 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
+import { CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import _ from 'lodash';
 import { Response } from 'node-fetch';
@@ -19,7 +19,6 @@ import { Architecture, VMExecutor } from './backend';
 import { KubeClient } from '@/backend/client';
 import * as K8s from '@/backend/k8s';
 import { loadFromString, exportConfig } from '@/backend/kubeconfig';
-import { findHomeDir } from '@/config/findHomeDir';
 import { checkConnectivity } from '@/main/networking';
 import { isUnixError } from '@/typings/unix.interface';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
@@ -857,7 +856,6 @@ export default class K3sHelper extends events.EventEmitter {
         }
       }
     }
-    // TODO: Replace with k8s.findHomeDir() after kubernetes-client/javascript/pull/748 lands
     const home = findHomeDir();
 
     if (home) {
