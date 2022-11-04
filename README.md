@@ -50,6 +50,13 @@ with an existing Windows installation.
    npm config set msbuild_path <path/to/MSBuild.exe>
    ```
 
+   For example for Visual Studio 2022:
+
+   ```
+   npm config set msvs_version 2022
+   npm config set msbuild_path "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+   ```
+
 You can now clone the repository and run `npm install`.
 
 [development virtual machine]: https://developer.microsoft.com/en-us/windows/downloads/virtual-machines/
@@ -64,6 +71,7 @@ You can now clone the repository and run `npm install`.
 4. Install git, go, nvm, and unzip via `scoop install git go nvm python unzip`.
    Check node version with `nvm list`. If node v16 is not installed or set as the current version, then install using `nvm install 16` and set as current using `nvm use 16.xx.xx`.
 5. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
+   The [Desktop development with C++] workload needs to be selected, too.
 6. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
 
    ```
@@ -71,12 +79,19 @@ You can now clone the repository and run `npm install`.
    npm config set msbuild_path <path/to/MSBuild.exe>
    ```
 
+   For example for Visual Studio 2022:
+
+   ```
+   npm config set msvs_version 2022
+   npm config set msbuild_path "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+   ```
+
 You can now clone the repository and run `npm install`.
 
 [Scoop]: https://scoop.sh/
 [Visual Studio docs]: https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio?view=vs-2022
 [Windows Subsystem for Linux (WSL)]: https://docs.microsoft.com/en-us/windows/wsl/install
-
+[Desktop development with C++]: https://learn.microsoft.com/en-us/visualstudio/install/modify-visual-studio?view=vs-2022#change-workloads-or-individual-components
 
 ### macOS
 
