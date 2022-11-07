@@ -33,6 +33,8 @@
       <Property Id="ARPNOMODIFY" Value="1" />
       <Property Id="ARPURLINFOABOUT" Value="https://rancherdesktop.io/" />
 
+      <WixVariable Id="AppGUID" Value="358d85cc-bb94-539e-a3cd-9231b877c7a4" />
+
       <DirectoryRef Id="TARGETDIR" />
 
       <!-- Check if the NSIS-based Rancher Desktop is installed, and uninstall if yes. -->
@@ -40,7 +42,7 @@
         <RegistrySearch
           Id="NSISInstalled"
           Root="HKCU"
-          Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\358d85cc-bb94-539e-a3cd-9231b877c7a4"
+          Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\!(wix.AppGUID)"
           Name="QuietUninstallString"
           Type="raw" />
       </Property>
@@ -67,8 +69,45 @@
         </Custom>
       </InstallExecuteSequence>
 
+      <!-- Setting the PATH variable -->
+      <Component Id="PathUser" Directory="APPLICATIONFOLDER">
+        <Condition>MSIINSTALLPERUSER</Condition>
+        <RegistryValue
+          Root="HKCU"
+          Key="SOFTWARE\!(wix.AppGUID)"
+          Name="EnvironmentVariablesSet"
+          Value="yes"
+          Type="string"
+          KeyPath="yes"
+        />
+        <Environment Id="PathWindowsUser" Name="PATH"
+          Action="set" Part="last" System="no" Permanent="no"
+          Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
+        <Environment Id="PathLinuxUser" Name="PATH"
+          Action="set" Part="last" System="no" Permanent="no"
+          Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
+      </Component>
+      <Component Id="PathSystem" Directory="APPLICATIONFOLDER">
+        <Condition>NOT MSIINSTALLPERUSER</Condition>
+        <RegistryValue
+          Root="HKLM"
+          Key="SOFTWARE\!(wix.AppGUID)"
+          Name="EnvironmentVariablesSet"
+          Value="yes"
+          Type="string"
+          KeyPath="yes"
+        />
+        <Environment Id="PathWindowsSystem" Name="PATH"
+          Action="set" Part="last" System="yes" Permanent="no"
+          Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
+        <Environment Id="PathLinuxSystem" Name="PATH"
+          Action="set" Part="last" System="yes" Permanent="no"
+          Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
+      </Component>
       <Feature Id="ProductFeature" Absent="disallow">
         <ComponentGroupRef Id="ProductComponents" />
+        <ComponentRef Id="PathUser" />
+        <ComponentRef Id="PathSystem" />
       </Feature>
     </Product>
     {{ &fileList }}
