@@ -34,6 +34,9 @@ export default Vue.extend({
     allowedImagesLockedTooltip() {
       return this.t('allowedImages.locked.tooltip');
     },
+    patternsErrorMessages() {
+      return { duplicate: this.t('allowedImages.errors.duplicate') };
+    },
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
@@ -74,6 +77,7 @@ export default Vue.extend({
       :placeholder="t('allowedImages.patterns.placeholder')"
       :readonly="!isAllowedImagesEnabled || isAllowedImagesLocked"
       :actions-position="'left'"
+      :error-messages="patternsErrorMessages"
       @change="onChange('containerEngine.imageAllowList.patterns', $event)"
     />
   </div>

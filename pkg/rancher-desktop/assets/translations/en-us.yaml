@@ -272,6 +272,8 @@ allowedImages:
   label: Allowed Image Patterns
   patterns:
     placeholder: Type the image pattern
+  errors:
+    duplicate: Error, item is duplicate.
   locked:
     tooltip: Patterns cannot be changed due to Organization's policy
   alert:
