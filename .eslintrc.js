@@ -167,7 +167,9 @@ module.exports = {
         nonwords: false,
       },
     ],
-    'import/no-useless-path-segments': ['error', { noUselessIndex: true }],
+    'import/no-useless-path-segments':   ['error', { noUselessIndex: true }],
+    'import/no-named-as-default-member': 0,
+    'import/no-named-as-default':        0,
   },
 };
 
