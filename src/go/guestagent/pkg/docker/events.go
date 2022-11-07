@@ -29,6 +29,8 @@ import (
 const (
 	startEvent = "start"
 	stopEvent  = "stop"
+	// die event is a confirmation of kill event.
+	dieEvent = "die"
 )
 
 // EventMonitor monitors the Docker engine's Event API
@@ -60,10 +62,13 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 		log.Errorf("failed to initialize existing container port mappings: %v", err)
 	}
 
-	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{Filters: filters.NewArgs(
-		filters.Arg("type", "container"),
-		filters.Arg("event", startEvent),
-		filters.Arg("event", stopEvent))})
+	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("type", "container"),
+			filters.Arg("event", startEvent),
+			filters.Arg("event", stopEvent),
+			filters.Arg("event", dieEvent)),
+	})
 
 	for {
 		select {
@@ -88,7 +93,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 						log.Errorf("adding port mapping to tracker failed: %w", err)
 					}
 				}
-			case stopEvent:
+			case stopEvent, dieEvent:
 				err := e.portTracker.Remove(container.ID)
 				if err != nil {
 					log.Errorf("remove port mapping from tracker failed: %w", err)
