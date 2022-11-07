@@ -14,7 +14,7 @@ module.exports = {
     'standard',
     'eslint:recommended',
     'plugin:vue/recommended',
-    '@nuxtjs',
+    '@nuxtjs/eslint-config-typescript',
     'plugin:nuxt/recommended',
   ],
   // add your custom rules here
@@ -202,6 +202,10 @@ Object.assign(module.exports.rules, {
     pathGroups:         [
       {
         pattern: '@/**',
+        group:   'internal',
+      },
+      {
+        pattern: '@pkg/**',
         group:   'internal',
       },
       {
