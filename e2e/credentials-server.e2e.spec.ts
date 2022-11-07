@@ -33,7 +33,9 @@ import fetch from 'node-fetch';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
+import {
+  createDefaultSettings, packageLogs, reportAsset, tool, toolPath,
+} from './utils/TestUtils';
 
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
@@ -83,7 +85,7 @@ function haveCredentialServerHelper(): boolean {
     if (credStore === 'none') {
       return true;
     }
-    const result = spawnSync(`docker-credential-${ credStore }`, ['list'], { stdio: 'pipe' });
+    const result = spawnSync(toolPath(`docker-credential-${ credStore }`), ['list'], { stdio: 'pipe' });
 
     return !result.error;
   } catch (err: any) {
@@ -115,7 +117,7 @@ describeWithCreds('Credentials server', () => {
   let authString: string;
   let page: Page;
   const appPath = path.join(__dirname, '../');
-  const command = os.platform() === 'win32' ? 'curl.exe' : 'curl';
+  const curlCommand = os.platform() === 'win32' ? 'curl.exe' : 'curl';
   const initialArgs: string[] = []; // Assigned once we have auth string on first use.
 
   async function doRequest(path: string, body = '', ignoreStderr = false) {
@@ -124,11 +126,11 @@ describeWithCreds('Credentials server', () => {
     if (body.length) {
       args.push('--data', body);
     }
-    const { stdout, stderr } = await spawnFile(command, args, { stdio: 'pipe' });
+    const { stdout, stderr } = await spawnFile(curlCommand, args, { stdio: 'pipe' });
 
     if (stderr) {
       if (ignoreStderr) {
-        console.log(`doRequest: spawn ${ command } ${ args.join(' ') } => ${ stderr }`);
+        console.log(`doRequest: spawn ${ curlCommand } ${ args.join(' ') } => ${ stderr }`);
       } else {
         expect(stderr).toEqual('');
       }
@@ -143,7 +145,7 @@ describeWithCreds('Credentials server', () => {
     if (body.length) {
       args.push('--data', body);
     }
-    const { stderr } = await spawnFile(command, args, { stdio: 'pipe' });
+    const { stderr } = await spawnFile(curlCommand, args, { stdio: 'pipe' });
 
     expect(stderr).toContain(`HTTP/1.1 ${ expectedStatus }`);
   }
@@ -152,11 +154,12 @@ describeWithCreds('Credentials server', () => {
     const dcName = `docker-credential-${ helper }`;
     const body = stream.Readable.from(JSON.stringify(entry));
 
-    await spawnFile(dcName, ['store'], { stdio: [body, 'pipe', 'pipe'] });
+    await spawnFile(toolPath(dcName), ['store'], { stdio: [body, 'pipe', 'pipe'] });
   }
 
   async function listEntries(helper: string, matcher: string): Promise<Record<string, string>> {
-    const { stdout } = await spawnFile(`docker-credential-${ helper }`, ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const dcName = `docker-credential-${ helper }`;
+    const { stdout } = await spawnFile(toolPath(dcName), ['list'], { stdio: ['ignore', 'pipe', 'pipe'] });
     const entries: Record<string, string> = JSON.parse(stdout);
 
     for (const k in entries) {
@@ -181,7 +184,7 @@ describeWithCreds('Credentials server', () => {
       const body = stream.Readable.from(server);
 
       try {
-        const { stdout } = await spawnFile(dcName, ['erase'], { stdio: [body, 'pipe', 'pipe'] });
+        const { stdout } = await spawnFile(toolPath(dcName), ['erase'], { stdio: [body, 'pipe', 'pipe'] });
 
         if (stdout) {
           const msg = `Problem deleting ${ server } using ${ dcName }: got output stdout: ${ stdout }`;
@@ -200,7 +203,7 @@ describeWithCreds('Credentials server', () => {
   }
 
   function rdctlPath() {
-    return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
+    return toolPath('rdctl');
   }
 
   async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string }> {
@@ -266,6 +269,13 @@ describeWithCreds('Credentials server', () => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
     await electronApp.close();
+  });
+
+  test('should start loading the background services and hide progress bar', async() => {
+    const navPage = new NavPage(page);
+
+    await navPage.progressBecomesReady();
+    await expect(navPage.progressBar).toBeHidden();
   });
 
   test('should emit connection information', async() => {
@@ -347,13 +357,6 @@ describeWithCreds('Credentials server', () => {
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
 
-  test('should start loading the background services and hide progress bar', async() => {
-    const navPage = new NavPage(page);
-
-    await navPage.progressBecomesReady();
-    await expect(navPage.progressBar).toBeHidden();
-  });
-
   // On Windows, we need to wait for the vtunnel proxy to be established.
   testWin32('ensure vtunnel proxy is ready', async() => {
     const args = ['--distribution', 'rancher-desktop', '--exec',
@@ -388,7 +391,7 @@ describeWithCreds('Credentials server', () => {
     if (postIndex > -1) {
       args.splice(postIndex - 1, 2);
     }
-    await expect(spawnFile(command, args, { stdio: 'pipe' })).resolves.toMatchObject({
+    await expect(spawnFile(curlCommand, args, { stdio: 'pipe' })).resolves.toMatchObject({
       stdout: expect.stringContaining('Expecting a POST method for the credential-server list request, received GET'),
       stderr: '',
     });
