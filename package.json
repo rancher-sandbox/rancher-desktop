@@ -46,7 +46,7 @@
     "css-loader": "4.3.0",
     "@kubernetes/client-node": "^0.17.1",
     "@nuxtjs/eslint-module": "^3.1.0",
-    "@rancher/components": "0.1.0-alpha.6",
+    "@rancher/components": "0.1.0-alpha.7",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.7",
     "cookie-universal-nuxt": "^2.2.2",
