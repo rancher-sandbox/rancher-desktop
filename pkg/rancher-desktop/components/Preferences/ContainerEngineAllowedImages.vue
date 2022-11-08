@@ -55,7 +55,7 @@ export default Vue.extend({
       :legend-text="t('allowedImages.label')"
     >
       <checkbox
-        label="Enable"
+        :label="t('allowedImages.enable')"
         :value="isAllowedImagesEnabled"
         :class="{
           'disabled': isAllowedImagesLocked
