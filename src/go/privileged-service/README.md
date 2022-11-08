@@ -14,7 +14,7 @@ On Linux or MacOs:
 GOOS=windows go build .
 ```
 
-On Windows
+On Windows:
 
 ```bash
 go build .
@@ -27,3 +27,8 @@ To run the Rancher Desktop Privileged Service you can use the following availabl
 ```pwsh
 .\privileged-service.exe install | start | stop | uninstall
 ```
+
+Note: the `install` and `uninstall` commands must be run as an administrator.
+
+Once installed successfully, the `Rancher Desktop Privileged Service` is listed as part
+of the Services app on Windows.
