@@ -402,6 +402,24 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   /**
+   * start/stop Privileged Service based on a given command [start|stop],
+   * also, it returns a boolean to indicate if privileged services
+   * is enabled.
+   */
+  protected async invokePrivilegedService(cmd: 'start' | 'stop'): Promise<boolean> {
+    const privilegedServicePath = path.join(paths.resources, 'win32', 'internal', 'privileged-service.exe');
+    let privilegedServiceEnabled = true;
+
+    try {
+      await childProcess.spawnFile(privilegedServicePath, [cmd]);
+    } catch (error) {
+      privilegedServiceEnabled = false;
+    }
+
+    return privilegedServiceEnabled;
+  }
+
+  /**
    * Return the Linux path to the host-resolver executable.
    */
   protected getHostResolverPeerPath(): Promise<string> {
@@ -705,15 +723,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
     let guestAgentConfig: Record<string, any>;
-    let privilegedServiceEnabled = true;
     const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
-    const privilegedServicePath = path.join(paths.resources, 'win32', 'internal', 'privileged-service.exe');
 
-    try {
-      await childProcess.spawnFile(privilegedServicePath, ['start']);
-    } catch (error) {
-      privilegedServiceEnabled = false;
-    }
+    const privilegedServiceEnabled = await this.invokePrivilegedService('start');
 
     if (privilegedServiceEnabled) {
       guestAgentConfig = {
@@ -1338,6 +1350,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         await this.vtun.stop();
         this.process?.kill('SIGTERM');
         await this.resolverHostProcess.stop();
+        await this.invokePrivilegedService('stop');
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
         }
