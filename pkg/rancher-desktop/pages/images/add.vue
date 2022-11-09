@@ -9,6 +9,12 @@
           @click="doImageAction"
         />
       </div>
+      <alert
+        v-if="allowedImagesAlert"
+        :icon="'icon-info'"
+        :banner-text="allowedImagesAlert"
+        :color="'info'"
+      />
     </image-add-tabs>
     <template v-if="showOutput">
       <hr>
@@ -26,7 +32,9 @@
 
 <script>
 import { ipcRenderer } from 'electron';
+import { mapState } from 'vuex';
 
+import Alert from '@/components/Alert.vue';
 import ImageAddTabs from '@/components/ImageAddTabs.vue';
 import ImagesFormAdd from '@/components/ImagesFormAdd.vue';
 import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
@@ -34,6 +42,7 @@ import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
   components: {
+    Alert,
     ImageAddTabs,
     ImagesFormAdd,
     ImagesOutputWindow,
@@ -47,12 +56,21 @@ export default {
       showOutput:                       false,
     };
   },
+  async fetch() {
+    const credentials = await this.$store.dispatch('credentials/fetchCredentials');
+
+    await this.$store.dispatch('preferences/fetchPreferences', credentials);
+  },
   computed: {
+    ...mapState('preferences', ['preferences']),
     imageToPullButtonDisabled() {
       return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
     },
     imageToPullTextFieldIsDisabled() {
       return this.currentCommand;
+    },
+    allowedImagesAlert() {
+      return this.preferences.containerEngine.imageAllowList.enabled ? this.t('allowedImages.alert') : '';
     },
   },
   mounted() {
@@ -111,6 +129,7 @@ export default {
     align-items: center;
     gap: 16px;
     padding-top: 0.5rem;
+    margin-left: 1px;
   }
 
   .image-input::v-deep .labeled-input {

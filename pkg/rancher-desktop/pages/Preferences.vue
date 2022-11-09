@@ -53,12 +53,12 @@ export default Vue.extend({
     window.removeEventListener('keydown', this.handleKeypress, true);
   },
   methods:  {
-    async navChanged(name: string) {
+    async navChanged(current: string) {
       await this.$store.dispatch(
         'transientSettings/commitPreferences',
         {
           ...this.credentials as ServerState,
-          payload: { preferences: { currentNavItem: { name } } } as RecursivePartial<TransientSettings>,
+          payload: { preferences: { navItem: { current } } } as RecursivePartial<TransientSettings>,
         },
       );
     },

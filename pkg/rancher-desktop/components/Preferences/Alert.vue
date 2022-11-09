@@ -1,15 +1,16 @@
 <script lang="ts">
-import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapState } from 'vuex';
 
-interface Alert {
+import Alert from '@/components/Alert.vue';
+
+interface AlertType {
   icon: string;
   bannerText: string;
   color: string;
 }
 
-type AlertMap = Record<'reset'|'restart'|'error', Alert>;
+type AlertMap = Record<'reset'|'restart'|'error', AlertType>;
 
 const alertMap: AlertMap = {
   reset: {
@@ -31,7 +32,7 @@ const alertMap: AlertMap = {
 
 export default Vue.extend({
   name:       'preferences-alert',
-  components: { Banner },
+  components: { Alert },
   computed:   {
     ...mapState('preferences', ['severities', 'preferencesError']),
     severity(): keyof AlertMap | undefined {
@@ -49,7 +50,7 @@ export default Vue.extend({
 
       return undefined;
     },
-    alert(): Alert | undefined {
+    alert(): AlertType | undefined {
       if (!this.severity) {
         return undefined;
       }
@@ -81,34 +82,10 @@ export default Vue.extend({
 </script>
 
 <template>
-  <transition
-    name="fade"
-    appear
-  >
-    <banner
-      v-if="alert"
-      class="banner-notify"
-      :color="alert.color"
-    >
-      <span
-        class="icon"
-        :class="alert.icon"
-      />
-      {{ bannerText }}
-    </banner>
-  </transition>
+  <alert
+    v-if="alert"
+    :icon="alert.icon"
+    :banner-text="bannerText"
+    :color="alert.color"
+  />
 </template>
-
-<style lang="scss" scoped>
-  .banner-notify {
-    margin: 0;
-  }
-
-  .fade-enter, .fade-leave-to {
-    opacity: 0;
-  }
-
-  .fade-active {
-    transition: all 0.25s ease-in;
-  }
-</style>

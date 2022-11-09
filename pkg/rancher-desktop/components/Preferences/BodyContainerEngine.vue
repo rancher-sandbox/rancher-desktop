@@ -1,53 +1,90 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapGetters, mapState } from 'vuex';
 
-import EngineSelector from '@/components/EngineSelector.vue';
-import RdFieldset from '@/components/form/RdFieldset.vue';
-import { ContainerEngine, Settings } from '@/config/settings';
-import { RecursiveTypes } from '@/utils/typeUtils';
+import PreferencesContainerEngineAllowedImages from '@/components/Preferences/ContainerEngineAllowedImages.vue';
+import PreferencesContainerEngineGeneral from '@/components/Preferences/ContainerEngineGeneral.vue';
+import RdTabbed from '@/components/Tabbed/RdTabbed.vue';
+import Tab from '@/components/Tabbed/Tab.vue';
+import { Settings } from '@/config/settings';
+import { TransientSettings } from '@/config/transientSettings';
+import { ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-container-engine',
-  components: { EngineSelector, RdFieldset },
+  components: {
+    PreferencesContainerEngineAllowedImages,
+    PreferencesContainerEngineGeneral,
+    RdTabbed,
+    Tab,
+  },
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
     },
   },
-  data() {
-    return { containerEngine: ContainerEngine.CONTAINERD };
+  computed: {
+    ...mapGetters('transientSettings', ['getActiveTab']),
+    ...mapState('credentials', ['credentials']),
+    activeTab(): string {
+      return this.getActiveTab || 'general';
+    },
   },
   methods: {
-    onChangeEngine(desiredEngine: ContainerEngine) {
-      this.containerEngine = desiredEngine;
-      this.$emit('container-engine-change', desiredEngine);
+    async tabSelected({ tab }: { tab: Vue.Component }) {
+      if (this.activeTab !== tab.name) {
+        await this.commitPreferences(tab.name || '');
+      }
     },
-    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
-      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    async commitPreferences(tabName: string) {
+      await this.$store.dispatch(
+        'transientSettings/commitPreferences',
+        {
+          ...this.credentials as ServerState,
+          payload: { preferences: { navItem: { currentTabs: { 'Container Engine': tabName } } } } as RecursivePartial<TransientSettings>,
+        },
+      );
     },
   },
 });
 </script>
 
 <template>
-  <div class="preference-body">
-    <rd-fieldset
-      data-test="containerEngine"
-      :legend-text="t('containerEngine.label')"
-    >
-      <engine-selector
-        :container-engine="preferences.kubernetes.containerEngine"
-        @change="onChange('kubernetes.containerEngine', $event)"
+  <rd-tabbed
+    v-bind="$attrs"
+    class="action-tabs"
+    :no-content="true"
+    :default-tab="activeTab"
+    @changed="tabSelected"
+  >
+    <template #tabs>
+      <tab
+        label="General"
+        name="general"
+        :weight="2"
       />
-    </rd-fieldset>
-  </div>
+      <tab
+        label="Allowed Images"
+        name="allowed-images"
+        :weight="1"
+      />
+    </template>
+    <div class="container-engine-content">
+      <component
+        :is="`preferences-container-engine-${ activeTab }`"
+        :preferences="preferences"
+        v-on="$listeners"
+      />
+    </div>
+  </rd-tabbed>
 </template>
 
 <style lang="scss" scoped>
-  .preference-body {
+  .container-engine-content {
     padding: var(--preferences-content-padding);
   }
 </style>

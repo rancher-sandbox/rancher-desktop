@@ -126,9 +126,12 @@ test.describe.serial('Main App Test', () => {
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
     await expect(containerEngine.containerEngine).toBeVisible();
+
+    await expect(containerEngine.tabGeneral).toBeVisible();
+    await expect(containerEngine.tabAllowedImages).toBeVisible();
   });
 
-  test('should render container engine tab after close and reopen preferences modal', async() => {
+  test('should render container engine page after close and reopen preferences modal', async() => {
     preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
@@ -139,6 +142,32 @@ test.describe.serial('Main App Test', () => {
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
     await expect(containerEngine.containerEngine).toBeVisible();
+
+    await expect(containerEngine.tabGeneral).toBeVisible();
+    await expect(containerEngine.tabAllowedImages).toBeVisible();
+  });
+
+  test('should render allowed images tab after click on allowed images tab', async() => {
+    const { containerEngine } = new PreferencesPage(preferencesWindow);
+
+    await containerEngine.tabAllowedImages.click();
+
+    await expect(containerEngine.allowedImages).toBeVisible();
+    await expect(containerEngine.containerEngine).not.toBeVisible();
+  });
+
+  test('should render allowed image tab in container engine page after close and reopen preferences modal', async() => {
+    preferencesWindow.close();
+
+    await new NavPage(page).preferencesButton.click();
+    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+
+    expect(preferencesWindow).toBeDefined();
+    const { containerEngine } = new PreferencesPage(preferencesWindow);
+
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerEngine.allowedImages).toBeVisible();
+    await expect(containerEngine.containerEngine).not.toBeVisible();
   });
 
   test('should navigate to kubernetes', async() => {
