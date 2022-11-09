@@ -2,11 +2,8 @@
 
 const fs = require('fs');
 const pth = require('path');
-// TODO: Uncomment after PR https://github.com/kubernetes-client/javascript/pull/748 lands
-// const k8s = require('@kubernetes/client-node');
 
-// TODO: Stop using the next module (and delete) after kubernetes-client/javascript/pull/748 lands
-const findHomeDir = require('@/config/findHomeDir');
+const k8s = require('@kubernetes/client-node');
 
 // Get the path to the kubeconfig file. This is dependent on where this is run.
 function path() {
@@ -19,18 +16,16 @@ function path() {
     }
   }
 
-  // TODO: Revert to using k8s.findHomeDir
-  // after PR https://github.com/kubernetes-client/javascript/pull/748 lands
-  const home = findHomeDir.findHomeDir();
+  const home = k8s.findHomeDir();
 
   if (home) {
-    const kube = pth.join(home, '.kube');
-    const cfg = pth.join(kube, 'config');
+    const kubeDir = pth.join(home, '.kube');
+    const cfg = pth.join(kubeDir, 'config');
 
     if (!hasAccess(cfg)) {
-      if (!hasAccess(kube)) {
-        console.log(`creating dir ${ kube }`);
-        fs.mkdirSync(kube);
+      if (!hasAccess(kubeDir)) {
+        console.log(`creating dir ${ kubeDir }`);
+        fs.mkdirSync(kubeDir);
       }
       console.log(`creating file ${ cfg }`);
       fs.writeFileSync(cfg, JSON.stringify({

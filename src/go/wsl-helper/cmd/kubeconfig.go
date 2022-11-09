@@ -27,6 +27,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/util/homedir"
 )
 
 var kubeconfigViper = viper.New()
@@ -55,7 +56,7 @@ var kubeconfigCmd = &cobra.Command{
 		}
 		cmd.SilenceUsage = true
 
-		configDir := path.Join(os.Getenv("HOME"), ".kube")
+		configDir := path.Join(homedir.HomeDir(), ".kube")
 		linkPath := path.Join(configDir, "config")
 		if show {
 			// The output is "true", "false", or an error message for UI.

@@ -5,7 +5,8 @@ import path from 'path';
 import stream from 'stream';
 import { URL } from 'url';
 
-import { findHomeDir } from '@/config/findHomeDir';
+import { findHomeDir } from '@kubernetes/client-node';
+
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import * as serverHelper from '@/main/serverHelper';
 import * as childProcess from '@/utils/childProcess';
