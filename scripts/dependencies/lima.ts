@@ -53,7 +53,7 @@ export class LimaAndQemu extends GithubVersionGetter implements Dependency {
 
 export class AlpineLimaISO implements Dependency {
   name = 'alpineLimaISO';
-  githubOwner = 'lima-vm';
+  githubOwner = 'rancher-sandbox';
   githubRepo = 'alpine-lima';
 
   async download(context: DownloadContext): Promise<void> {
