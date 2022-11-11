@@ -30,8 +30,13 @@ fi
 # Add images
 IMAGES="/var/lib/rancher/k3s/agent/images"
 mkdir -p "${IMAGES}"
-ln -s -f "${K3S_DIR}/k3s-airgap-images-${ARCH}.tar" "${IMAGES}"
-
+IMAGEPATH="${K3S_DIR}/k3s-airgap-images-${ARCH}"
+if [ -f "${IMAGEPATH}.tar.zst" ]; then
+    ln -s -f "${IMAGEPATH}.tar.zst" "${IMAGES}"
+fi
+if [ -f "${IMAGEPATH}.tar" ]; then
+    ln -s -f "${IMAGEPATH}.tar" "${IMAGES}"
+fi
 # Add k3s binary
 ln -s -f "${K3S_DIR}/${K3S}" /usr/local/bin/k3s
 # The file system may be readonly (on macOS)

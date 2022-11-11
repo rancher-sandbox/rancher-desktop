@@ -244,19 +244,21 @@ export default class K3sHelper extends events.EventEmitter {
     console.debug(`Wrote versions cache:`, cacheData);
   }
 
-  /** The files we need to download for the current architecture. */
+  /** The files we need to download for the current architecture.
+   *  images: an array of potential files in order of most preferred to least preferred
+   */
   protected get filenames() {
     switch (this.arch) {
     case 'x86_64':
       return {
         exe:      'k3s',
-        images:   'k3s-airgap-images-amd64.tar',
+        images:   ['k3s-airgap-images-amd64.tar.zst', 'k3s-airgap-images-amd64.tar'],
         checksum: 'sha256sum-amd64.txt',
       };
     case 'aarch64':
       return {
         exe:      'k3s-arm64',
-        images:   'k3s-airgap-images-arm64.tar',
+        images:   ['k3s-airgap-images-arm64.tar.zst', 'k3s-airgap-images-arm64.tar'],
         checksum: 'sha256sum-arm64.txt',
       };
     }
@@ -320,11 +322,20 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     // Check that this release has all the assets we expect.
-    if (Object.values(this.filenames).every(name => entry.assets.some(v => v.name === name))) {
-      console.debug(`Adding version ${ version.raw }`);
-      this.versions[version.version] = new VersionEntry(version);
-    } else {
-      console.debug(`Skipping version ${ version.raw } due to missing files`);
+    if (entry.assets.find(ea => ea.name === this.filenames.exe)) {
+      if (entry.assets.find(ea => ea.name === this.filenames.checksum)) {
+        let haveImage = false;
+
+        for (let index = 0; !haveImage && index < this.filenames.images.length; index++) {
+          if (entry.assets.find(ea => ea.name === this.filenames.images[index])) {
+            haveImage = true;
+            this.versions[version.version] = new VersionEntry(version);
+            console.log(`Adding version ${ version.raw } - ${ this.filenames.images[index] }`);
+          } else {
+            console.debug(`Skipping version ${ version.raw } due to missing files`);
+          }
+        }
+      }
     }
 
     return true;
@@ -677,7 +688,18 @@ export default class K3sHelper extends events.EventEmitter {
 
           sums[filename] = sum;
         }
-        const promises = [this.filenames.exe, this.filenames.images].map(async(filename) => {
+        let existingIndex;
+
+        for (let index = 0; existingIndex === undefined && index < this.filenames.images.length; index++) {
+          if (fs.existsSync(path.join(dir, this.filenames.images[index]))) {
+            existingIndex = index;
+          }
+        }
+        if (existingIndex === undefined) {
+          existingIndex = 0;
+        }
+
+        const promises = [this.filenames.exe, this.filenames.images[existingIndex]].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
@@ -719,11 +741,27 @@ export default class K3sHelper extends events.EventEmitter {
 
     try {
       await Promise.all(Object.entries(this.filenames).map(async([filekey, filename]) => {
-        const fileURL = `${ this.downloadUrl }/${ version.raw }/${ filename }`;
-        const outPath = path.join(workDir, filename);
+        let namearray = [''];
 
-        console.log(`Will download ${ filekey } ${ fileURL } to ${ outPath }`);
-        const response = await fetch(fileURL);
+        if (typeof filename === 'string') {
+          namearray = [filename];
+        } else {
+          namearray = filename;
+        }
+
+        let outPath;
+        let response;
+
+        let index = 0;
+
+        do {
+          const fileURL = `${ this.downloadUrl }/${ version.raw }/${ namearray[index] }`;
+
+          outPath = path.join(workDir, namearray[index]);
+          console.log(`Will attempt to download ${ filekey } ${ fileURL } to ${ outPath }`);
+          response = await fetch(fileURL);
+          index++;
+        } while (!response.ok && index < namearray.length);
 
         if (!response.ok) {
           throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
