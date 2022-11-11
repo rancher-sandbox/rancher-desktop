@@ -2,6 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { URL } from 'url';
+import util from 'util';
 
 import { newError, CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
@@ -252,8 +253,12 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       method: 'POST',
       body:   JSON.stringify(requestPayload),
     };
+
+    console.debug(`Checking for upgrades from ${ this.configuration.upgradeServer }`);
     const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
     const response = await responseRaw.json() as LonghornUpgraderResponse;
+
+    console.debug(`Upgrade server response:`, util.inspect(response, true, null));
     const latest = response.versions?.find(v => v.Tags.includes('latest'));
     const requestIntervalInMinutes = response.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
     const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
@@ -280,8 +285,11 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       }
       case 'linux':
         return (asset: GithubReleaseAsset) => asset.name.endsWith('AppImage');
-      case 'win32':
-        return (asset: GithubReleaseAsset) => asset.name.endsWith('.exe');
+      case 'win32': {
+        const useWix = !!parseInt(process.env.RD_FEAT_WIX ?? '0', 10);
+
+        return (asset: GithubReleaseAsset) => asset.name.endsWith(useWix ? '.msi' : '.exe');
+      }
       }
     })();
     const wantedAsset = releaseInfo.assets.find(assetFilter);

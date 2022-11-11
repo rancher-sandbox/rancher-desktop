@@ -21,7 +21,7 @@ export class Element {
    * Create a new element; this is used by the TypeScript JSX support.
    */
   static new(tag: string, attribs: Record<string, string> | null, ...children: (Element | Element[] | string)[]) {
-    return new Element(tag, attribs ?? {}, ...children.flat());
+    return new Element(tag, attribs ?? {}, ...children.flat().filter(x => x));
   }
 
   tag: string;
@@ -157,7 +157,7 @@ export default async function generateFileList(rootPath: string): Promise<string
   const rootDir = await walk(rootPath);
   const descendantDirs = getDescendantDirs(rootDir).filter(d => d.files.length > 0);
 
-  const specialComponents: Record<string, (d: directory, f: { name: string, id: string }) => Element> = {
+  const specialComponents: Record<string, (d: directory, f: { name: string, id: string }) => Element | null> = {
     'Rancher Desktop.exe': (d, f) => {
       return <Component>
         <File
@@ -186,6 +186,11 @@ export default async function generateFileList(rootPath: string): Promise<string
           </Shortcut>
         </File>
       </Component>;
+    },
+
+    'electron-builder.yml': () => {
+      // This files does not need to be packaged.
+      return null;
     },
 
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {

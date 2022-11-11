@@ -5,110 +5,127 @@
   - This file is a Mustache template that is rendered via installer-win32.ts.
   -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product
-      Id="*"
-      Name="Rancher Desktop"
-      UpgradeCode="{1F717D5A-A55B-5FE2-9103-C0D74F7FBDE3}"
-      Version="{{appVersion}}"
-      Language="1033"
-      Codepage="65001"
-      Manufacturer="SUSE">
-      <Package Compressed="yes" InstallerVersion="500" />
-      <!-- As of Windows 10/11, msiexec.exe is manifested for Windows 8.1 -->
-      <Condition Message="Windows 10 and above is required">
-        <![CDATA[ Installed OR VersionNT >= 603 ]]>
-      </Condition>
-      <MajorUpgrade
-        AllowSameVersionUpgrades="yes"
-        DowngradeErrorMessage='A newer version of Rancher Desktop is already installed.' />
-      <MediaTemplate CompressionLevel="{{compressionLevel}}" EmbedCab="yes" />
-      <UIRef Id="WixUI_RD" />
+  <Product
+    Id="*"
+    Name="Rancher Desktop"
+    UpgradeCode="{1F717D5A-A55B-5FE2-9103-C0D74F7FBDE3}"
+    Version="{{appVersion}}"
+    Language="1033"
+    Codepage="65001"
+    Manufacturer="SUSE">
+    <Package Compressed="yes" InstallerVersion="500" />
+    <!-- As of Windows 10/11, msiexec.exe is manifested for Windows 8.1 -->
+    <Condition Message="Windows 10 and above is required">
+      <![CDATA[ Installed OR VersionNT >= 603 ]]>
+    </Condition>
+    <MajorUpgrade
+      AllowSameVersionUpgrades="yes"
+      DowngradeErrorMessage='A newer version of [ProductName] is already installed.' />
+    <MediaTemplate CompressionLevel="{{compressionLevel}}" EmbedCab="yes" />
+    <UIRef Id="WixUI_RD" />
 
-      <Property Id="ApplicationFolderName" Value="Rancher Desktop" />
-      <Property Id="WixAppFolder" Value="WixPerUserFolder" />
-      <Icon
-        Id="RancherDesktopIcon.exe"
-        SourceFile="$(var.appDir)\Rancher Desktop.exe" />
-      <Property Id="ARPPRODUCTICON" Value="RancherDesktopIcon.exe" />
-      <Property Id="ARPNOMODIFY" Value="1" />
-      <Property Id="ARPURLINFOABOUT" Value="https://rancherdesktop.io/" />
+    <Property Id="ApplicationFolderName" Value="Rancher Desktop" />
+    <Property Id="WixAppFolder" Value="WixPerUserFolder" />
+    <Icon
+      Id="RancherDesktopIcon.exe"
+      SourceFile="$(var.appDir)\Rancher Desktop.exe" />
+    <Property Id="ARPPRODUCTICON" Value="RancherDesktopIcon.exe" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPURLINFOABOUT" Value="https://rancherdesktop.io/" />
 
-      <WixVariable Id="AppGUID" Value="358d85cc-bb94-539e-a3cd-9231b877c7a4" />
+    <WixVariable Id="AppGUID" Value="358d85cc-bb94-539e-a3cd-9231b877c7a4" />
 
-      <DirectoryRef Id="TARGETDIR" />
+    <DirectoryRef Id="TARGETDIR" />
 
-      <!-- Check if the NSIS-based Rancher Desktop is installed, and uninstall if yes. -->
-      <Property Id="NSISUNINSTALLCOMMAND">
-        <RegistrySearch
-          Id="NSISInstalled"
-          Root="HKCU"
-          Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\!(wix.AppGUID)"
-          Name="QuietUninstallString"
-          Type="raw" />
-      </Property>
-      <!--
-        - We use a CustomAction with a Directory= so we have full control of the
-        - execution (action type 34); a more obvious Property= (type 50) will
-        - interpret the whole string as the executable (argv[0]) and fail.
-        - Since this is run before anything is installed, we pick a random
-        - system directory as the working directory (i.e. Directory=).
-        - Note that this action *must* be run as the non-privileged user (so
-        - that it will clear out the uninstall registry key).
-        -->
-      <CustomAction
-        Id="UninstallNSIS"
-        ExeCommand="[NSISUNINSTALLCOMMAND]"
-        Execute="immediate"
-        Impersonate="yes"
-        Directory="ProgramFiles64Folder"
-        Return="check"
+    <!-- Check if the NSIS-based Rancher Desktop is installed, and uninstall if yes. -->
+    <Property Id="NSISUNINSTALLCOMMAND">
+      <RegistrySearch
+        Id="NSISInstalled"
+        Root="HKCU"
+        Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\!(wix.AppGUID)"
+        Name="QuietUninstallString"
+        Type="raw" />
+    </Property>
+    <!--
+      - We use a CustomAction with a Directory= so we have full control of the
+      - execution (action type 34); a more obvious Property= (type 50) will
+      - interpret the whole string as the executable (argv[0]) and fail.
+      - Since this is run before anything is installed, we pick a random
+      - system directory as the working directory (i.e. Directory=).
+      - Note that this action *must* be run as the non-privileged user (so
+      - that it will clear out the uninstall registry key).
+      -->
+    <CustomAction
+      Id="UninstallNSIS"
+      ExeCommand="[NSISUNINSTALLCOMMAND]"
+      Execute="immediate"
+      Impersonate="yes"
+      Directory="ProgramFiles64Folder"
+      Return="check"
+    />
+    <InstallExecuteSequence>
+      <Custom Action="UninstallNSIS" After="InstallInitialize">
+        NSISUNINSTALLCOMMAND AND NOT Installed
+      </Custom>
+    </InstallExecuteSequence>
+
+    <!-- Setting the PATH variable -->
+    <Component Id="PathUser" Directory="APPLICATIONFOLDER">
+      <Condition>MSIINSTALLPERUSER</Condition>
+      <RegistryValue
+        Root="HKCU"
+        Key="SOFTWARE\!(wix.AppGUID)"
+        Name="EnvironmentVariablesSet"
+        Value="yes"
+        Type="string"
+        KeyPath="yes"
       />
-      <InstallExecuteSequence>
-        <Custom Action="UninstallNSIS" After="InstallInitialize">
-          NSISUNINSTALLCOMMAND AND NOT Installed
-        </Custom>
-      </InstallExecuteSequence>
+      <Environment Id="PathWindowsUser" Name="PATH"
+        Action="set" Part="last" System="no" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
+      <Environment Id="PathLinuxUser" Name="PATH"
+        Action="set" Part="last" System="no" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
+    </Component>
+    <Component Id="PathSystem" Directory="APPLICATIONFOLDER">
+      <Condition>NOT MSIINSTALLPERUSER</Condition>
+      <RegistryValue
+        Root="HKLM"
+        Key="SOFTWARE\!(wix.AppGUID)"
+        Name="EnvironmentVariablesSet"
+        Value="yes"
+        Type="string"
+        KeyPath="yes"
+      />
+      <Environment Id="PathWindowsSystem" Name="PATH"
+        Action="set" Part="last" System="yes" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
+      <Environment Id="PathLinuxSystem" Name="PATH"
+        Action="set" Part="last" System="yes" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
+    </Component>
 
-      <!-- Setting the PATH variable -->
-      <Component Id="PathUser" Directory="APPLICATIONFOLDER">
-        <Condition>MSIINSTALLPERUSER</Condition>
-        <RegistryValue
-          Root="HKCU"
-          Key="SOFTWARE\!(wix.AppGUID)"
-          Name="EnvironmentVariablesSet"
-          Value="yes"
-          Type="string"
-          KeyPath="yes"
-        />
-        <Environment Id="PathWindowsUser" Name="PATH"
-          Action="set" Part="last" System="no" Permanent="no"
-          Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
-        <Environment Id="PathLinuxUser" Name="PATH"
-          Action="set" Part="last" System="no" Permanent="no"
-          Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
-      </Component>
-      <Component Id="PathSystem" Directory="APPLICATIONFOLDER">
-        <Condition>NOT MSIINSTALLPERUSER</Condition>
-        <RegistryValue
-          Root="HKLM"
-          Key="SOFTWARE\!(wix.AppGUID)"
-          Name="EnvironmentVariablesSet"
-          Value="yes"
-          Type="string"
-          KeyPath="yes"
-        />
-        <Environment Id="PathWindowsSystem" Name="PATH"
-          Action="set" Part="last" System="yes" Permanent="no"
-          Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
-        <Environment Id="PathLinuxSystem" Name="PATH"
-          Action="set" Part="last" System="yes" Permanent="no"
-          Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
-      </Component>
-      <Feature Id="ProductFeature" Absent="disallow">
-        <ComponentGroupRef Id="ProductComponents" />
-        <ComponentRef Id="PathUser" />
-        <ComponentRef Id="PathSystem" />
-      </Feature>
-    </Product>
-    {{ &fileList }}
+    <!-- If required, run the app after install (for updates) -->
+    <Property Id="RDRUNAFTERINSTALL" Secure="yes" />
+    <CustomAction
+      Id="RunApplication"
+      FileKey="mainExecutable"
+      ExeCommand=""
+      Execute="commit"
+      Impersonate="yes"
+      Return="asyncNoWait"
+    />
+    <InstallExecuteSequence>
+      <Custom Action="RunApplication" Before="InstallFinalize">
+        RDRUNAFTERINSTALL
+      </Custom>
+    </InstallExecuteSequence>
+
+    <Feature Id="ProductFeature" Absent="disallow">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="PathUser" />
+      <ComponentRef Id="PathSystem" />
+    </Feature>
+  </Product>
+  {{ &fileList }}
 </Wix>

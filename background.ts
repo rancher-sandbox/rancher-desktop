@@ -326,6 +326,8 @@ function isK8sError(object: any): object is K8sError {
 
 Electron.app.on('before-quit', async(event) => {
   if (gone) {
+    mainEvents.emit('quit');
+
     return;
   }
   event.preventDefault();

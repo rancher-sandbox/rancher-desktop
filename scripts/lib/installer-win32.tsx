@@ -11,24 +11,36 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import asar from '@electron/asar';
 import Mustache from 'mustache';
+import yaml from 'yaml';
 
 import generateFileList from './installer-win32-gen';
 
 import { spawnFile } from '@/utils/childProcess';
 
 /**
+ * Return the contents of package.json embbedded in the application.
+ */
+function getPackageJson(appDir: string): Record<string, any> {
+  const packageBytes = asar.extractFile(path.join(appDir, 'resources', 'app.asar'), 'package.json');
+
+  return JSON.parse(packageBytes.toString('utf-8'));
+}
+
+/**
  * Given an unpacked application directory, return the application version.
  */
-async function getAppVersion(appDir: string): Promise<string> {
-  const exePath = path.join(appDir, 'Rancher Desktop.exe');
-  const args = [
-    '-NoLogo', '-NoProfile', '-NonInteractive', '-Command',
-    `(Get-ChildItem "${ exePath }").VersionInfo.ProductVersion`,
-  ];
-  const { stdout } = await spawnFile('powershell.exe', args, { stdio: ['ignore', 'pipe', 'inherit'] });
+function getAppVersion(appDir: string): string {
+  const packageVersion = getPackageJson(appDir).version;
+  // We have a git describe style version, 1.2.3-1234-gabcdef
+  const [__, semver, offset] = /^v?(\d+\.\d+\.\d+)(?:-(\d+))?/.exec(packageVersion) ?? [];
 
-  return stdout.trim();
+  if (!semver) {
+    throw new Error(`Could not parse version string ${ packageVersion }`);
+  }
+
+  return offset ? `${ semver }.${ offset }` : semver;
 }
 
 /**
@@ -38,7 +50,7 @@ async function getAppVersion(appDir: string): Promise<string> {
  */
 export default async function buildInstaller(workDir: string, development = false) {
   const appDir = path.join(workDir, 'appDir');
-  const appVersion = await getAppVersion(appDir);
+  const appVersion = getAppVersion(appDir);
   const compressionLevel = development ? 'mszip' : 'high';
   const fileList = await generateFileList(appDir);
   const template = await fs.promises.readFile(path.join(process.cwd(), 'build', 'wix', 'main.wxs'), 'utf-8');
@@ -92,6 +104,33 @@ export default async function buildInstaller(workDir: string, development = fals
   ], { stdio: 'inherit' });
 }
 
+/**
+ * writeUpdateConfig writes out app-update.yml, because electron-builder won't
+ * create that for us if we're not building the NSIS installer.
+ * @param appDir The directory containing the extracted application.
+ * @postcondition The file <appDir>\resources\app-update.yml exists.
+ */
+async function writeUpdateConfig(appDir: string) {
+  const packageJson = getPackageJson(appDir);
+  const electronBuilderConfig = yaml.parse(await fs.promises.readFile(path.join(appDir, 'electron-builder.yml'), 'utf-8'));
+  const repoURL = new URL(packageJson.repository.url.replace(/\.git$/, ''));
+
+  if (repoURL.hostname !== 'github.com') {
+    throw new Error(`Unexpect repository reference ${ repoURL }`);
+  }
+
+  const [owner, repo] = repoURL.pathname.split('/').filter(x => x);
+  const result = {
+    owner,
+    repo,
+    updaterCacheDirName: packageJson.name, // AppData\Local\rancher-desktop\update-info.json
+    ...electronBuilderConfig.publish,
+  };
+
+  await fs.promises.writeFile(path.join(appDir, 'resources', 'app-update.yml'), yaml.stringify(result), 'utf-8');
+  console.log('app-update.yml written.');
+}
+
 async function main() {
   const distDir = path.join(process.cwd(), 'dist');
   const zipName = (await fs.promises.readdir(distDir, 'utf-8')).find(f => f.endsWith('-win.zip'));
@@ -106,6 +145,7 @@ async function main() {
 
   try {
     await spawnFile('unzip', ['-d', appDir, path.join(distDir, zipName)], { stdio: 'inherit' });
+    await writeUpdateConfig(appDir);
     await buildInstaller(workDir, true);
   } finally {
     await fs.promises.rm(workDir, { recursive: true });

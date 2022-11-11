@@ -27,6 +27,8 @@ win:
   target: [ nsis, zip ]
   signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
   requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
+  extraFiles:
+  - electron-builder.yml
 linux:
   category: Utility
   executableName: rancher-desktop

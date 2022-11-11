@@ -91,6 +91,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.18.9",
+    "@electron/asar": "^3.2.2",
     "@nuxt/types": "^2.15.2",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config": "^10.0.0",
