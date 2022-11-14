@@ -193,12 +193,9 @@ export class HttpCredentialHelperServer {
     let pathVar = process.env.PATH ?? '';
 
     // The PATH needs to contain our resources directory (on macOS that would
-    // not be in the application's PATH), as well as /usr/local/bin.
+    // not be in the application's PATH).
     // NOTE: This needs to match DockerDirManager.spawnFileWithExtraPath
     pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
-    if (platform === 'darwin') {
-      pathVar += `${ path.delimiter }/usr/local/bin`;
-    }
 
     const body = stream.Readable.from(data);
     const { stdout } = await childProcess.spawnFile(helperName, [commandName], {

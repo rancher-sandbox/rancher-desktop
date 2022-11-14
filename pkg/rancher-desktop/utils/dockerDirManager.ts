@@ -184,16 +184,13 @@ export default class DockerDirManager {
 
   protected async spawnFileWithExtraPath(command: string, args: string[]) {
     // The PATH needs to contain our resources directory (on macOS that would
-    // not be in the application's PATH), as well as /usr/local/bin.
+    // not be in the application's PATH).
     // NOTE: This needs to match HttpCredentialHelperServer.
 
     const platform = os.platform();
     let pathVar = process.env.PATH ?? ''; // This should always be set.
 
     pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
-    if (platform === 'darwin') {
-      pathVar += `${ path.delimiter }/usr/local/bin`;
-    }
 
     return await spawnFile(command, args, {
       env:   { ...process.env, PATH: pathVar },
