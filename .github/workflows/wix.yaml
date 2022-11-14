@@ -32,7 +32,8 @@ jobs:
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
     - run: npm ci
     - run: npm run build -- --win --publish=never
-    - run: npm run wix
+      env:
+        RD_FEAT_WIX: '1'
     - name: Upload Windows installer
       uses: actions/upload-artifact@v3
       with:

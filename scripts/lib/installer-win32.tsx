@@ -8,7 +8,6 @@
 /** @jsx Element.new */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 
 import asar from '@electron/asar';
@@ -45,13 +44,14 @@ function getAppVersion(appDir: string): string {
 
 /**
  * Given an unpacked build, produce a MSI installer.
- * @param workDir Working directory; the application is extracted in the
- *        subdirectory "appDir" within this directory.
+ * @param workDir Directory in which we can write temporary work files.
+ * @param appDir Directory containing extracted application zip file.
  */
-export default async function buildInstaller(workDir: string, development = false) {
-  const appDir = path.join(workDir, 'appDir');
+export default async function buildInstaller(workDir: string, appDir: string, development = false) {
   const appVersion = getAppVersion(appDir);
   const compressionLevel = development ? 'mszip' : 'high';
+
+  await writeUpdateConfig(appDir);
   const fileList = await generateFileList(appDir);
   const template = await fs.promises.readFile(path.join(process.cwd(), 'build', 'wix', 'main.wxs'), 'utf-8');
   const output = Mustache.render(template, {
@@ -61,7 +61,6 @@ export default async function buildInstaller(workDir: string, development = fals
 
   console.log('Writing out WiX definition...');
   await fs.promises.writeFile(path.join(workDir, 'project.wxs'), output);
-  await fs.promises.writeFile(path.join(process.cwd(), 'dist', 'project.wxs'), output);
   console.log('Compiling WiX...');
   const inputs = [
     path.join(workDir, 'project.wxs'),
@@ -72,7 +71,7 @@ export default async function buildInstaller(workDir: string, development = fals
     path.join(wixDir, 'candle.exe'),
     [
       '-arch', 'x64',
-      `-dappDir=${ path.join(workDir, 'appDir') }`,
+      `-dappDir=${ appDir }`,
       '-nologo',
       '-out', path.join(workDir, `${ path.basename(input, '.wxs') }.wixobj`),
       '-pedantic',
@@ -92,7 +91,7 @@ export default async function buildInstaller(workDir: string, development = fals
     // error LGHT1076 : ICE61: This product should remove only older versions of itself.
     // https://learn.microsoft.com/en-us/windows/win32/msi/ice61
     '-sice:ICE61',
-    `-dappDir=${ path.join(workDir, 'appDir') }`,
+    `-dappDir=${ appDir }`,
     '-ext', 'WixUIExtension',
     '-nologo',
     '-out', path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`),
@@ -130,29 +129,3 @@ async function writeUpdateConfig(appDir: string) {
   await fs.promises.writeFile(path.join(appDir, 'resources', 'app-update.yml'), yaml.stringify(result), 'utf-8');
   console.log('app-update.yml written.');
 }
-
-async function main() {
-  const distDir = path.join(process.cwd(), 'dist');
-  const zipName = (await fs.promises.readdir(distDir, 'utf-8')).find(f => f.endsWith('-win.zip'));
-
-  if (!zipName) {
-    throw new Error('Could not find zip file');
-  }
-  const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-wix-'), 'utf-8');
-  const appDir = path.join(workDir, 'appDir');
-
-  await fs.promises.mkdir(appDir);
-
-  try {
-    await spawnFile('unzip', ['-d', appDir, path.join(distDir, zipName)], { stdio: 'inherit' });
-    await writeUpdateConfig(appDir);
-    await buildInstaller(workDir, true);
-  } finally {
-    await fs.promises.rm(workDir, { recursive: true });
-  }
-}
-
-// hack
-main().catch((e) => {
-  console.error(e); process.exit(1);
-});
