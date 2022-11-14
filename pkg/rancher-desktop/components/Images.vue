@@ -7,6 +7,7 @@
       <SortableTable
         ref="imagesTable"
         class="imagesTable"
+        data-test="imagesTableRows"
         key-field="_key"
         default-sort-by="imageName"
         :headers="headers"

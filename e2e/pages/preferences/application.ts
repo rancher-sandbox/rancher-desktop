@@ -6,6 +6,7 @@ export class ApplicationNav {
   readonly tabEnvironment: Locator;
   readonly administrativeAccess: Locator;
   readonly automaticUpdates: Locator;
+  readonly automaticUpdatesCheckbox: Locator;
   readonly statistics: Locator;
   readonly pathManagement: Locator;
 
@@ -16,6 +17,7 @@ export class ApplicationNav {
     this.tabEnvironment = page.locator('.tab >> text=Environment');
     this.administrativeAccess = page.locator('[data-test="administrativeAccess"]');
     this.automaticUpdates = page.locator('[data-test="automaticUpdates"]');
+    this.automaticUpdatesCheckbox = page.locator('[data-test="automaticUpdatesCheckbox"]');
     this.statistics = page.locator('[data-test="statistics"]');
     this.pathManagement = page.locator('[data-test="pathManagement"]');
   }

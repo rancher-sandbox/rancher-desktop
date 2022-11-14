@@ -36,12 +36,16 @@
     "test:extra": "npm run test:extra:api-schema",
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
     "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
+    "test:e2e:screenshots": "node scripts/ts-wrapper.js scripts/e2e.ts --config=screenshots/playwright-config.ts",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
     "postuninstall": "electron-builder install-app-deps",
     "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts",
     "ucmonitor": "node scripts/ts-wrapper.js scripts/unreleased-change-monitor.ts",
-    "dcmonitor": "node scripts/ts-wrapper.js scripts/docker-cli-monitor.ts"
+    "dcmonitor": "node scripts/ts-wrapper.js scripts/docker-cli-monitor.ts",
+    "screenshots": "npm run screenshots:light && npm run screenshots:dark",
+    "screenshots:dark": "cross-env THEME=dark npm run test:e2e:screenshots",
+    "screenshots:light": "cross-env THEME=light npm run test:e2e:screenshots"
   },
   "main": "dist/app/background.js",
   "dependencies": {
