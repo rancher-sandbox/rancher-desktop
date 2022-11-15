@@ -213,7 +213,7 @@ func removePathManagement(dotFiles []string) error {
 		byteContents, err := os.ReadFile(dotFile)
 		if err != nil {
 			if errors.Is(err, syscall.ENOENT) {
-				// Nothing left to do here, since there is no cli-plugins dir
+				// Nothing left to do here, since the dotfile doesn't exist.
 				continue
 			}
 			logrus.Errorf("Error trying to read %s: %s\n", dotFile, err)
