@@ -37,6 +37,37 @@
 
     <DirectoryRef Id="TARGETDIR" />
 
+    <!-- Install WSL if the kernel is not already installed. -->
+    <Upgrade Id="{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}">
+      <UpgradeVersion OnlyDetect="yes" Property="WSLKERNELINSTALLED" Minimum="5.4.0" />
+    </Upgrade>
+    <SetProperty Id="ALLUSERS" Sequence="both" After="ValidateProductID" Value="1">
+      NOT WSLKERNELINSTALLED
+    </SetProperty>
+    <SetProperty Id="MSIINSTALLPERUSER" Sequence="both" After="ValidateProductID" Value="0">
+      NOT WSLKERNELINSTALLED
+    </SetProperty>
+    <SetProperty Id="PowerShellExe" Sequence="execute" Before="SetInstallWSL"
+      Value="&quot;[System64Folder]\WindowsPowerShell\v1.0\powershell.exe&quot;" />
+    <Property Id="PowerShellArgs"
+      Value="-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned" />
+    <SetProperty Id="InstallWSL" Sequence="execute" Before="InstallWSL"
+      Value="[PowerShellExe] [PowerShellArgs] -File &quot;[#f_install_wsl]&quot;">
+      NOT WSLKERNELINSTALLED
+    </SetProperty>
+    <CustomAction
+      Id="InstallWSL" BinaryKey="WixCA" DllEntry="WixQuietExec64"
+      Execute="deferred" Return="check" Impersonate="no"
+    />
+    <InstallExecuteSequence>
+      <Custom Action="InstallWSL" After="InstallFiles">
+        NOT WSLKERNELINSTALLED AND NOT REMOVE
+      </Custom>
+      <ScheduleReboot After="InstallWSL">
+        NOT WSLKERNELINSTALLED AND NOT REMOVE
+      </ScheduleReboot>
+    </InstallExecuteSequence>
+
     <!-- Check if the NSIS-based Rancher Desktop is installed, and uninstall if yes. -->
     <Property Id="NSISUNINSTALLCOMMAND">
       <RegistrySearch

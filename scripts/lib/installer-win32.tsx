@@ -93,6 +93,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     '-sice:ICE61',
     `-dappDir=${ appDir }`,
     '-ext', 'WixUIExtension',
+    '-ext', 'WixUtilExtension',
     '-nologo',
     '-out', path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`),
     '-pedantic',
