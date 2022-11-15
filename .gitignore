@@ -12,6 +12,7 @@
 /.idea/
 .nuxt/
 /pkg/rancher-desktop/node_modules/
+/src/go/rdctl/pkg/options/generated/*.go
 *~
 \#*
 /e2e/reports/*

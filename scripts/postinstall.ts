@@ -111,6 +111,10 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
 
 runScripts().then(() => {
   execFileSync('node', ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'], { stdio: 'inherit' });
+  execFileSync('node', ['scripts/ts-wrapper.js',
+    'scripts/generateCliCode.ts',
+    'pkg/rancher-desktop/assets/specs/command-api.yaml',
+    'src/go/rdctl/pkg/options/generated/options.go'], { stdio: 'inherit' });
 })
   .catch((e) => {
     console.error(e);

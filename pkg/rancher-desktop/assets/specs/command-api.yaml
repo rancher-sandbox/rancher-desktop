@@ -252,6 +252,9 @@ components:
           properties:
             version:
               type: string
+              x-rd-usage: Choose which version of kubernetes to run.
+              x-rd-aliases:
+                - "kubernetes-version"
             memoryInGB:
               type: integer
               minimum: 1
@@ -262,9 +265,15 @@ components:
               type: integer
             containerEngine:
               type: string
-              enum: ['containerd', 'moby', 'docker']
+              enum: ['containerd', 'docker', 'moby']
+              x-rd-usage: Set engine to containerd or moby (aka docker).
+              x-rd-aliases:
+                - "container-engine"
             enabled:
               type: boolean
+              x-rd-usage: Control whether kubernetes runs in the backend.
+              x-rd-aliases:
+                - "kubernetes-enabled"
             WSLIntegrations:
               type: object
               additionalProperties: true
@@ -275,6 +284,11 @@ components:
                   type: boolean
                 flannel:
                   type: boolean
+                  x-rd-usage: >-
+                    Control whether flannel is enabled.
+                    Use to disable flannel so you can install your own CNI.
+                  x-rd-aliases:
+                    - "flannel-enabled"
             suppressSudo:
               type: boolean
             hostResolver:
