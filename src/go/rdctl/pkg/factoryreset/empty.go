@@ -24,7 +24,7 @@ func GetLockfilePath(_ string) (string, error) {
 	return "", fmt.Errorf("internal error: GetLockfilePath shouldn't be called")
 }
 
-func PowershellKillWindows() {
+func KillRancherDesktop() {
 }
 
 func deleteWindowsData(_ bool, _ string) error {

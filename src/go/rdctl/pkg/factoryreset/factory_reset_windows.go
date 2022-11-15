@@ -30,7 +30,7 @@ import (
 	"golang.org/x/text/encoding/unicode"
 )
 
-func PowershellKillWindows() {
+func KillRancherDesktop() {
 	cmd := exec.Command("taskkill", "/IM", "Rancher Desktop", "/T", "/F")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	cmd.Run()

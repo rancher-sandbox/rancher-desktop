@@ -36,7 +36,7 @@ import (
 func DeleteData(removeKubernetesCache bool) error {
 	return map[string]func(bool) error{
 		"darwin":  deleteDarwinData,
-		"linux":   deleteLinuxData,
+		"linux":   deleteUnixData,
 		"windows": unregisterAndDeleteWindowsData,
 	}[runtime.GOOS](removeKubernetesCache)
 }
@@ -84,10 +84,10 @@ func deleteDarwinData(removeKubernetesCache bool) error {
 	if removeKubernetesCache {
 		pathList = append(pathList, cachePath)
 	}
-	return deleteLinuxLikeData(homeDir, altAppHomePath, path.Join(homeDir, ".config"), pathList)
+	return deleteUnixLikeData(homeDir, altAppHomePath, path.Join(homeDir, ".config"), pathList)
 }
 
-func deleteLinuxData(removeKubernetesCache bool) error {
+func deleteUnixData(removeKubernetesCache bool) error {
 	configHomePath, cacheHomePath, homeDir, err := getStandardDirs()
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func deleteLinuxData(removeKubernetesCache bool) error {
 	if removeKubernetesCache {
 		pathList = append(pathList, cachePath)
 	}
-	return deleteLinuxLikeData(homeDir, altAppHomePath, configHomePath, pathList)
+	return deleteUnixLikeData(homeDir, altAppHomePath, configHomePath, pathList)
 }
 
 func unregisterAndDeleteWindowsData(removeKubernetesCache bool) error {
@@ -133,7 +133,7 @@ func unregisterAndDeleteWindowsData(removeKubernetesCache bool) error {
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
 // or pull the path settings out of the shell profile files.
-func deleteLinuxLikeData(homeDir string, altAppHomePath string, configHomePath string, pathList []string) error {
+func deleteUnixLikeData(homeDir string, altAppHomePath string, configHomePath string, pathList []string) error {
 	if err := deleteLimaVM(); err != nil {
 		logrus.Errorf("Error trying to delete the Lima VM: %s\n", err)
 	}

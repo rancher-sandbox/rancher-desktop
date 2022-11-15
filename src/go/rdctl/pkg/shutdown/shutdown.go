@@ -39,7 +39,7 @@ func FinishShutdown() error {
 		doCheckWithTimeout(checkProcessQemu, pkillQemu, 15, 2, "qemu")
 		doCheckWithTimeout(checkProcessLinux, pkillLinux, 5, 1, "the app")
 	case "windows":
-		doCheckWithTimeout(checkProcessWindows, factoryreset.PowershellKillWindows, 15, 2, "the app")
+		doCheckWithTimeout(checkProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
 	default:
 		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
 	}
