@@ -33,15 +33,15 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
     console.debug(`${ this.id }: using ${ kubectl }`);
     console.debug(`${ this.id }: defaults to RD context? ${ passed }`);
     if (passed) {
-      description = 'Kubernetes is using the rancher-desktop context.';
+      description = 'Kubernetes is using the \`rancher-desktop\` context.';
     } else {
       const context = contexts.map(context => context.name).filter(c => c).shift();
 
       console.debug(`${ this.id }: current default context: ${ context }`);
       if (context) {
-        description = `Kubernetes is using context ${ context } instead of rancher-desktop.`;
+        description = `Kubernetes is using context \`${ context }\` instead of \`rancher-desktop\`.`;
       } else {
-        description = 'No active Kubernetes context found; should be rancher-desktop.';
+        description = 'No active Kubernetes context found; should be \`rancher-desktop\`.';
       }
     }
 

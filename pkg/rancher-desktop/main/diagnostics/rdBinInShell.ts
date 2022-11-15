@@ -52,11 +52,11 @@ export class RDBinInShellPath implements DiagnosticsChecker {
       const exe = path.basename(this.executable);
 
       passed = desiredDirs.length > 0;
-      description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
+      description = `The \`~/.rd/bin\` directory has not been added to the \`PATH\`, so command-line utilities are not configured in your **${ exe }** shell.`;
       if (passed) {
-        description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
+        description = `The \`~/.rd/bin\` directory is found in your \`PATH\` as seen from **${ exe }**.`;
       } else if (pathStrategy !== PathManagementStrategy.RcFiles) {
-        const description = `You have selected manual PATH configuration;
+        const description = `You have selected manual \`PATH\` configuration;
             consider letting Rancher Desktop automatically configure it.`;
 
         fixes.push({ description: description.replace(/\s+/gm, ' ') });

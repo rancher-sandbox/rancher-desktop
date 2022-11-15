@@ -17,7 +17,7 @@ type DiagnosticsFix = {
 export type DiagnosticsCheckerResult = {
   /* Link to documentation about this check. */
   documentation?: string,
-  /* User-visible description about this check. */
+  /* User-visible markdown description about this check. */
   description: string,
   /** If true, the check succeeded (no fixes need to be applied). */
   passed: boolean,

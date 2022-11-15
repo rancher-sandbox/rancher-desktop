@@ -22,7 +22,7 @@ class CheckTesting implements DiagnosticsChecker {
     return Promise.resolve({
       passed:        this.pass,
       documentation: 'https://www.example.com/not-a-valid-link',
-      description:   `This is a sample test that will ${ this.pass ? 'always' : 'never' } pass.`,
+      description:   `This is a \`sample\` test that will **${ this.pass ? 'always' : 'never' }** pass.`,
       fixes:         [],
     });
   }

@@ -77,30 +77,30 @@ describeUnix(CheckerDockerCLISymlink, () => {
     });
 
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(new RegExp(`${ path.join('~/\\.docker/cli-plugins', executable) } is a symlink to ${ appDirExecutable } through .*\.rd/bin/.*\.`)),
+      description: expect.stringMatching(new RegExp(`\`${ path.join('~/\\.docker/cli-plugins', executable) }\` is a symlink to \`${ appDirExecutable }\` through .*\.rd/bin/.*\.`)),
       passed:      true,
     }));
   });
 
   function wrongFirstLinkError(desc: string) {
-    return new RegExp(`${ executable } should be a symlink to ~/\\.rd/bin/${ executable }, ${ desc }\\.`);
+    return new RegExp(`${ executable }\` should be a symlink to \`~/\\.rd/bin/${ executable }\`, ${ desc }\\.`);
   }
 
   function badFirstLinkError(desc: string) {
-    return new RegExp(`${ executable } ${ desc }\\.\\s+It should be a symlink to ~/\\.rd/bin/${ executable }\\.$`);
+    return new RegExp(`${ executable }\` ${ desc }\\.\\s+It should be a symlink to \`~/\\.rd/bin/${ executable }\`\\.$`);
   }
 
   function badSecondLinkError(desc: string) {
-    return new RegExp(`${ executable } should be a symlink to ${ appDirExecutable }, ${ desc }\\.$`);
+    return new RegExp(`${ executable }\` should be a symlink to \`${ appDirExecutable }\`, ${ desc }\\.$`);
   }
 
   function problematicSecondLinkError(desc: string) {
-    return new RegExp(`${ executable } is a symlink to ${ appDirExecutable }, ${ desc }\\.`);
+    return new RegExp(`${ executable }\` is a symlink to \`${ appDirExecutable }\`, ${ desc }\\.`);
   }
 
   function intermediateFileNotSymlinkError(desc: string) {
     return new RegExp(
-      `${ executable } ${ desc }\\. It should be a symlink to ${ appDirExecutable }\\.`);
+      `${ executable }\` ${ desc }\\. It should be a symlink to \`${ appDirExecutable }\`\\.`);
   }
 
   it('should catch missing link', async() => {
@@ -147,7 +147,7 @@ describeUnix(CheckerDockerCLISymlink, () => {
       .mockRejectedValue({ code: 'EPONY' });
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(wrongFirstLinkError('but points to /usr/bin/true')),
+      description: expect.stringMatching(wrongFirstLinkError('but points to `/usr/bin/true`')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
@@ -161,7 +161,7 @@ describeUnix(CheckerDockerCLISymlink, () => {
       .mockResolvedValueOnce('/usr/bin/true');
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(badSecondLinkError('but points to /usr/bin/true')),
+      description: expect.stringMatching(badSecondLinkError('but points to `/usr/bin/true`')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();

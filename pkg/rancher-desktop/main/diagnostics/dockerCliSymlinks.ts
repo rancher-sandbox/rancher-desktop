@@ -48,7 +48,7 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
     const finalTarget = path.join(paths.resources, os.platform(), 'bin', this.name);
     const displayableFinalTarget = replaceHome(finalTarget);
     let state;
-    let description = `The file ${ displayableStartingPath }`;
+    let description = `The file \`${ displayableStartingPath }\``;
     let finalDescription = '';
 
     try {
@@ -58,7 +58,7 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
 
       if (link !== rdBinPath) {
         return {
-          description: `${ description } should be a symlink to ${ displayableRDBinPath }, but points to ${ replaceHome(link) }.`,
+          description: `${ description } should be a symlink to \`${ displayableRDBinPath }\`, but points to \`${ replaceHome(link) }\`.`,
           passed:      false,
           fixes:       [], // TODO: [{ description: `ln -sf ${ displayableRDBinPath } ${ displayableStartingPath }` }],
         };
@@ -75,19 +75,19 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
       }
 
       return {
-        description: `${ description } ${ state }. It should be a symlink to ${ displayableRDBinPath }.`,
+        description: `${ description } ${ state }. It should be a symlink to \`${ displayableRDBinPath }\`.`,
         passed:      false,
         fixes:       [],
       };
     }
 
-    description = `The file ${ displayableRDBinPath }`;
+    description = `The file \`${ displayableRDBinPath }\``;
     try {
       const link = await this.readlink(rdBinPath);
 
       if (link !== finalTarget) {
         return {
-          description: `${ description } should be a symlink to ${ displayableFinalTarget }, but points to ${ replaceHome(link) }.`,
+          description: `${ description } should be a symlink to \`${ displayableFinalTarget }\`, but points to \`${ replaceHome(link) }\`.`,
           passed:      false,
           fixes:       [],
         };
@@ -95,7 +95,7 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
       await this.access(link, fs.constants.X_OK);
 
       return {
-        description: `${ displayableStartingPath } is a symlink to ${ displayableFinalTarget } through ${ displayableRDBinPath }.`,
+        description: `\`${ displayableStartingPath }\` is a symlink to \`${ displayableFinalTarget }\` through \`${ displayableRDBinPath }\`.`,
         passed:      true,
         fixes:       [],
       };
@@ -103,19 +103,19 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
       const code = ex.code ?? '';
 
       if (code === 'ENOENT') {
-        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, which does not exist.`;
+        finalDescription = `${ description } is a symlink to \`${ displayableFinalTarget }\`, which does not exist.`;
       } else if (code === 'EINVAL') {
         state = `is not a symlink`;
       } else if (code === 'ELOOP') {
         state = `is a symlink with a loop`;
       } else if (code === 'EACCES') {
-        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, which is not executable.`;
+        finalDescription = `${ description } is a symlink to \`${ displayableFinalTarget }\`, which is not executable.`;
       } else {
-        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, but cannot be read (${ code || 'unknown error' }).`;
+        finalDescription = `${ description } is a symlink to \`${ displayableFinalTarget }\`, but cannot be read (${ code || 'unknown error' }).`;
       }
 
       return {
-        description: finalDescription || `${ description } ${ state }. It should be a symlink to ${ displayableFinalTarget }.`,
+        description: finalDescription || `${ description } ${ state }. It should be a symlink to \`${ displayableFinalTarget }\`.`,
         passed:      false,
         fixes:       [],
       };
