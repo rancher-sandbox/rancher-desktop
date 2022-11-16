@@ -689,8 +689,11 @@ export default class K3sHelper extends events.EventEmitter {
         let existingIndex;
 
         for (let index = 0; typeof existingIndex === 'undefined' && index < this.filenames.images.length; index++) {
-          if (fs.existsSync(path.join(dir, this.filenames.images[index]))) {
+          try {
+            await fs.promises.access(path.join(dir, this.filenames.images[index]), fs.constants.R_OK);
             existingIndex = index;
+          } catch {
+            // ignore access error and try next iteration, if any
           }
         }
         if (existingIndex === undefined) {
