@@ -1392,12 +1392,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     });
   }
 
-  async factoryReset(): Promise<void> {
-    // The main application data directories will be deleted by a helper
-    // application; we only need to unregister the WSL data.
-    await this.del();
-  }
-
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
   // a Promise.

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,18 +17,17 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var factoryResetData struct {
-	KeepSystemImages bool `json:"keepSystemImages"`
-}
-
 var removeKubernetesCache bool
+
+// Note that this command supports a `--remove-kubernetes-cache` flag,
+// but the server takes an optional flag meaning the opposite (as per issues
+// https://github.com/rancher-sandbox/rancher-desktop/issues/1701 and
+// https://github.com/rancher-sandbox/rancher-desktop/issues/2408)
 
 var factoryResetCmd = &cobra.Command{
 	Use:   "factory-reset",
@@ -36,27 +35,24 @@ var factoryResetCmd = &cobra.Command{
 	Long: `Clear all the Rancher Desktop state and shut it down.
 Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kubernetes images.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := cobra.NoArgs(cmd, args)
+		if err := cobra.NoArgs(cmd, args); err != nil {
+			return err
+		}
+		if commonShutdownSettings.Verbose {
+			logrus.SetLevel(logrus.TraceLevel)
+		}
+		cmd.SilenceUsage = true
+		_, err := doShutdown(&commonShutdownSettings)
 		if err != nil {
 			return err
 		}
-		// Note that this command's only flag is default to not remove k8s cache
-		// but the server takes an optional flag meaning the opposite (as per issues 1701 and 2408)
-		factoryResetData.KeepSystemImages = !removeKubernetesCache
-		jsonBuffer, err := json.Marshal(factoryResetData)
-		if err != nil {
-			return err
-		}
-		result, err := processRequestForUtility(doRequestWithPayload("PUT", versionCommand("", "factory_reset"), bytes.NewBuffer(jsonBuffer)))
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(result))
-		return nil
+		return factoryreset.DeleteData(removeKubernetesCache)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(factoryResetCmd)
 	factoryResetCmd.Flags().BoolVar(&removeKubernetesCache, "remove-kubernetes-cache", false, "If specified, also removes the cached Kubernetes images.")
+	factoryResetCmd.Flags().BoolVar(&commonShutdownSettings.Verbose, "verbose", false, "Be verbose")
+	factoryResetCmd.Flags().BoolVar(&commonShutdownSettings.WaitForShutdown, "wait", true, "Don't wait for shutdown to be confirmed")
 }

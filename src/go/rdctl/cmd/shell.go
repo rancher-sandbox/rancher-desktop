@@ -27,6 +27,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/encoding/unicode"
 )
@@ -70,8 +72,7 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 		}
 		args = append([]string{"--distribution", distroName}, args...)
 	} else {
-		err := setupLimaHome()
-		if err != nil {
+		if err := directories.SetupLimaHome(); err != nil {
 			return err
 		}
 		execPath, err := os.Executable()
@@ -96,24 +97,6 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 	return shellCommand.Run()
 }
 
-func setupLimaHome() error {
-	var candidatePath string
-	if runtime.GOOS == "linux" {
-		candidatePath = path.Join(os.Getenv("HOME"), ".local", "share", "rancher-desktop", "lima")
-	} else {
-		candidatePath = path.Join(os.Getenv("HOME"), "Library", "Application Support", "rancher-desktop", "lima")
-	}
-	stat, err := os.Stat(candidatePath)
-	if err != nil {
-		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)
-	}
-	if !stat.Mode().IsDir() {
-		return fmt.Errorf("path %q exists but isn't a directory", candidatePath)
-	}
-	os.Setenv("LIMA_HOME", candidatePath)
-	return nil
-}
-
 const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop application first"
 
 func checkLimaIsRunning(commandName string) bool {
@@ -123,9 +106,8 @@ func checkLimaIsRunning(commandName string) bool {
 	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run %q: %s\n", cmd, err)
+	if err := cmd.Run(); err != nil {
+		logrus.Errorf("Failed to run %q: %s\n", cmd, err)
 		return false
 	}
 	limaState := strings.TrimRight(stdout.String(), "\n")
@@ -140,7 +122,7 @@ func checkLimaIsRunning(commandName string) bool {
 	}
 	errorMsg := stderr.String()
 	if strings.Contains(errorMsg, "No instance matching 0 found.") {
-		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
+		logrus.Errorf("The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
 	} else if len(errorMsg) > 0 {
 		fmt.Fprintln(os.Stderr, errorMsg)
 	} else {
@@ -153,13 +135,13 @@ func checkWSLIsRunning(distroName string) bool {
 	// Ignore error messages; none are expected here
 	rawOutput, err := exec.Command("wsl", "--list", "--verbose").CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run 'wsl --list --verbose': %s\n", err)
+		logrus.Errorf("Failed to run 'wsl --list --verbose': %s\n", err)
 		return false
 	}
 	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
 	output, err := decoder.Bytes(rawOutput)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to read WSL output ([% q]...); error: %s\n", rawOutput[:12], err)
+		logrus.Errorf("Failed to read WSL output ([% q]...); error: %s\n", rawOutput[:12], err)
 		return false
 	}
 	isListed := false

@@ -77,10 +77,6 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
     return Promise.resolve();
   }
 
-  factoryReset(keepSystemImages: boolean): Promise<void> {
-    return Promise.resolve();
-  }
-
   ipAddress = Promise.resolve('192.0.2.1');
 
   getFailureDetails() {

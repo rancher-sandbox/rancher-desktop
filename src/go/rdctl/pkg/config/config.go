@@ -54,7 +54,7 @@ var (
 
 	configDir         string
 	configPath        string
-	defaultConfigPath string
+	DefaultConfigPath string
 )
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
@@ -70,8 +70,8 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 			log.Fatalf("Can't get config-dir: %v", err)
 		}
 	}
-	defaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
-	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", defaultConfigPath))
+	DefaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
+	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.User, "user", "", "overrides the user setting in the config file")
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Host, "host", "", "default is localhost; most useful for WSL")
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Port, "port", "", "overrides the port setting in the config file")
@@ -92,7 +92,7 @@ func GetConnectionInfo() (*ConnectionInfo, error) {
 
 func finishConnectionSettings() (error, bool) {
 	if configPath == "" {
-		configPath = defaultConfigPath
+		configPath = DefaultConfigPath
 	}
 	if connectionSettings.Host == "" {
 		connectionSettings.Host = "localhost"
@@ -102,13 +102,12 @@ func finishConnectionSettings() (error, bool) {
 		// If the default config file isn't available, it might not have been created yet,
 		// so don't complain if we don't need it.
 		// But if the user specified their own --config-path and it's not readable, complain immediately.
-		return err, configPath != defaultConfigPath
+		return err, configPath != DefaultConfigPath
 	}
 
 	var settings CLIConfig
-	err = json.Unmarshal(content, &settings)
-	if err != nil {
-		return fmt.Errorf("error in config file %s: %w", configPath, err), configPath != defaultConfigPath
+	if err = json.Unmarshal(content, &settings); err != nil {
+		return fmt.Errorf("error in config file %s: %w", configPath, err), configPath != DefaultConfigPath
 	}
 
 	if connectionSettings.User == "" {
@@ -146,8 +145,7 @@ func getAppDataPath() (string, error) {
 	// We are intentionally not using CombinedOutput and
 	// excluding the stderr since it could contain some
 	// warnings when rdctl is triggered from a non WSL mounted directory
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return "", err
 	}
 	return strings.TrimRight(outBuf.String(), "\r\n"), nil
@@ -161,8 +159,7 @@ func wslifyConfigDir() (string, error) {
 	var outBuf bytes.Buffer
 	cmd := exec.Command("/bin/wslpath", path)
 	cmd.Stdout = &outBuf
-	err = cmd.Run()
-	if err != nil {
+	if err = cmd.Run(); err != nil {
 		return "", err
 	}
 	return strings.TrimRight(outBuf.String(), "\r\n"), err

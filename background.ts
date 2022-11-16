@@ -1,4 +1,5 @@
-import { spawnSync } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -572,32 +573,27 @@ mainEvents.on('integration-update', (state) => {
  * Do a factory reset of the application.  This will stop the currently running
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
+ *
+ * We need to write out rdctl output to a temporary directory because the logs directory
+ * will get removed by the factory-reset. This code writes out (to background.log) where this file
+ * exists, but if the user isn't tailing that file they won't see the message.
  */
 async function doFactoryReset(keepSystemImages: boolean) {
-  await k8smanager.factoryReset(keepSystemImages);
-  await pathManager.remove();
-  await integrationManager.remove();
-  if (os.platform() === 'win32') {
-    // On Windows, we need to use a helper process in order to ensure we
-    // delete files in use.  Of course, we can't wait for that process to
-    // return - the whole point is for us to not be running.
-    childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
-      ['factory-reset', `--wait-pid=${ process.pid }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
-      { detached: true, windowsHide: true });
-    Electron.app.quit();
+  // Don't wait for this process to return -- the whole point is for us to not be running.
+  const tmpdir = os.tmpdir();
+  const outfile = await fs.promises.open(path.join(tmpdir, 'rdctl-stdout.txt'), 'w');
+  const rdctl = spawn(path.join(paths.resources, os.platform(), 'bin', 'rdctl'),
+    ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`],
+    {
+      detached: true, windowsHide: true, stdio: ['ignore', outfile.fd, outfile.fd],
+    });
 
-    return;
-  }
-  // Remove app settings
-  await settings.clear();
-
-  Electron.app.quit();
+  rdctl.unref();
+  console.debug(`If factory-reset fails, the rdctl factory-reset output files are in ${ tmpdir }`);
 }
 
 ipcMainProxy.on('factory-reset', (event, keepSystemImages) => {
-  doFactoryReset(keepSystemImages).catch((err) => {
-    console.error(err);
-  });
+  doFactoryReset(keepSystemImages);
 });
 
 ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
@@ -869,9 +865,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   factoryReset(keepSystemImages: boolean) {
-    doFactoryReset(keepSystemImages).catch((err) => {
-      console.error(err);
-    });
+    doFactoryReset(keepSystemImages);
   }
 
   /**
