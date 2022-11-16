@@ -42,7 +42,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
     this.emit('state-changed', state);
   }
 
-  async start(config: Settings['kubernetes']): Promise<void> {
+  async start(config: Settings): Promise<void> {
     if ([State.DISABLED, State.STARTING, State.STARTED].includes(this.state)) {
       await this.stop();
     }
@@ -73,7 +73,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
     await this.stop();
   }
 
-  reset(config: Settings['kubernetes']): Promise<void> {
+  reset(config: Settings): Promise<void> {
     return Promise.resolve();
   }
 

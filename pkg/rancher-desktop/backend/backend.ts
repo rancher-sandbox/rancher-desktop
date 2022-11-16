@@ -73,7 +73,7 @@ export interface BackendEvents {
 /**
  * Settings that KubernetesBackend can access.
  */
-export type BackendSettings = RecursiveReadonly<Settings['kubernetes']>;
+export type BackendSettings = RecursiveReadonly<Settings>;
 
 /**
  * Reasons that the backend might need to restart, as returned from

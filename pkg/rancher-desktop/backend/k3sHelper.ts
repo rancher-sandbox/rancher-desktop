@@ -1112,10 +1112,8 @@ export default class K3sHelper extends events.EventEmitter {
      * Check the given settings against the last-applied settings to see if we
      * need to restart the backend.
      * @param key The identifier to use for the UI.
-     * @param path The path in the Settings['kubernetes'] object to compare.
      */
-    function cmp<K extends keyof RecursiveTypes<K8s.BackendSettings>>(key: K, checker?: RequiresRestartSeverityChecker<K>) {
-      const fullKey = `kubernetes.${ key }` as keyof K8s.RestartReasons;
+    function cmp<K extends keyof K8s.RestartReasons>(key: K, checker?: RequiresRestartSeverityChecker<K>) {
       const current = _.get(currentSettings, key, NotFound);
       const desired = _.get(desiredSettings, key, NotFound);
 
@@ -1127,7 +1125,7 @@ export default class K3sHelper extends events.EventEmitter {
         return;
       }
       if (!_.isEqual(current, desired)) {
-        results[fullKey] = {
+        results[key] = {
           current, desired, severity: checker ? checker(current, desired) : 'restart',
         };
       }
@@ -1149,9 +1147,7 @@ export default class K3sHelper extends events.EventEmitter {
       const { current, severity } = entry;
 
       if (!_.isEqual(current, desired)) {
-        const fullKey = `kubernetes.${ key }` as keyof K8s.RestartReasons;
-
-        results[fullKey] = {
+        results[key as keyof K8s.RestartReasons] = {
           current, desired, severity: severity ? (severity as any)(current, desired) : 'restart',
         };
       }

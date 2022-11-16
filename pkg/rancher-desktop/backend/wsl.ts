@@ -35,7 +35,7 @@ import SERVICE_VTUNNEL_PEER from '@/assets/scripts/service-vtunnel-peer.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
-import { ContainerEngine, Settings } from '@/config/settings';
+import { ContainerEngine } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
@@ -46,7 +46,7 @@ import Logging from '@/utils/logging';
 import { wslHostIPv4Address } from '@/utils/networks';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import { defined, RecursivePartial } from '@/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
 
@@ -171,7 +171,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   writeSetting(changed: RecursivePartial<typeof this.cfg>) {
-    mainEvents.emit('settings-write', { kubernetes: changed });
+    if (changed) {
+      mainEvents.emit('settings-write', changed);
+    }
     this.cfg = _.merge({}, this.cfg, changed);
   }
 
@@ -682,7 +684,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
-      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+      if (this.cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD) {
         existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
@@ -733,8 +735,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
         GUESTAGENT_IPTABLES:           'false',
         GUESTAGENT_PRIVILEGED_SERVICE: 'true',
-        GUESTAGENT_CONTAINERD:         cfg?.containerEngine === ContainerEngine.CONTAINERD ? 'true' : 'false',
-        GUESTAGENT_DOCKER:             cfg?.containerEngine === ContainerEngine.MOBY ? 'true' : 'false',
+        GUESTAGENT_CONTAINERD:         cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD ? 'true' : 'false',
+        GUESTAGENT_DOCKER:             cfg?.kubernetes?.containerEngine === ContainerEngine.MOBY ? 'true' : 'false',
         GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
       };
     } else {
@@ -1049,9 +1051,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
   }
 
-  async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
+  async start(config_: BackendSettings): Promise<void> {
     const config = this.cfg = _.defaultsDeep(clone(config_),
-      { containerEngine: ContainerEngine.NONE }) as RecursiveReadonly<Settings['kubernetes']>;
+      { kubernetes: { containerEngine: ContainerEngine.NONE } }) as BackendSettings;
     let kubernetesVersion: semver.SemVer | undefined;
     let isDowngrade = false;
 
@@ -1067,14 +1069,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         })(),
         this.vtun.start()];
 
-        if (config.enabled) {
+        if (config.kubernetes.enabled) {
           prepActions.push((async() => {
             [kubernetesVersion, isDowngrade] = await this.kubeBackend.download(config);
           })());
         }
 
         await this.progressTracker.action('Preparing to start', 0, Promise.all(prepActions));
-        if (config.enabled && typeof (kubernetesVersion) === 'undefined') {
+        if (config.kubernetes.enabled && typeof (kubernetesVersion) === 'undefined') {
           // The desired version was unavailable, and the user declined a downgrade.
           this.setState(State.ERROR);
 
@@ -1119,7 +1121,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 });
                 // dnsmasq requires /var/lib/misc to exist
                 await this.execCommand('mkdir', '-p', '/var/lib/misc');
-                if (config.hostResolver) {
+                if (config.kubernetes.hostResolver) {
                   console.debug(`setting DNS to host-resolver`);
                   try {
                     this.resolverHostProcess.start();
@@ -1135,7 +1137,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
                 await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
                 await this.writeConf('cri-dockerd', {
-                  ENGINE:  config.containerEngine,
+                  ENGINE:  config.kubernetes.containerEngine,
                   LOG_DIR: logPath,
                 });
               }),
@@ -1143,7 +1145,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
                 await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
                 await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-                if (config.options.flannel) {
+                if (config.kubernetes.options.flannel) {
                   await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
                 }
               }),
@@ -1168,14 +1170,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
           this.progressTracker.action('Writing K3s configuration', 50, async() => {
             const k3sConf = {
-              PORT:                   config.port.toString(),
+              PORT:                   config.kubernetes.port.toString(),
               LOG_DIR:                await this.wslify(paths.logs),
               'export IPTABLES_MODE': 'legacy',
-              ENGINE:                 config.containerEngine,
-              ADDITIONAL_ARGS:        config.options.traefik ? '' : '--disable traefik',
+              ENGINE:                 config.kubernetes.containerEngine,
+              ADDITIONAL_ARGS:        config.kubernetes.options.traefik ? '' : '--disable traefik',
             };
 
-            if (!config.options.flannel) {
+            if (!config.kubernetes.options.flannel) {
               console.log(`Disabling flannel and network policy`);
               k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
             }
@@ -1200,17 +1202,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
-        await this.progressTracker.action('Starting container engine', 0, this.startService(config.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
+        await this.progressTracker.action('Starting container engine', 0, this.startService(config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
         if (kubernetesVersion) {
           await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
         }
-        if (config.containerEngine === ContainerEngine.CONTAINERD) {
+        if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
           await this.progressTracker.action('Starting buildkit', 0,
             this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
         }
 
-        await this.setState(config.enabled ? State.STARTED : State.DISABLED);
+        await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);
       } catch (ex) {
         await this.setState(State.ERROR);
         throw ex;
@@ -1377,7 +1379,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     });
   }
 
-  async reset(config: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
+  async reset(config: BackendSettings): Promise<void> {
     await this.progressTracker.action('Resetting Kubernetes state...', 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
