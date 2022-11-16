@@ -3,7 +3,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DownloadContext, Dependency, GithubVersionGetter } from 'scripts/lib/dependencies';
+import {
+  DownloadContext, Dependency, GithubVersionGetter, UnreleasedChangeMonitor, hasUnreleasedChanges, HasUnreleasedChangesResult,
+} from 'scripts/lib/dependencies';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
@@ -163,7 +165,7 @@ export class Helm extends GithubVersionGetter implements Dependency {
   }
 }
 
-export class DockerCLI extends GithubVersionGetter implements Dependency {
+export class DockerCLI extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'dockerCLI';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-docker-cli';
@@ -178,6 +180,10 @@ export class DockerCLI extends GithubVersionGetter implements Dependency {
     const expectedChecksum = await findChecksum(`${ baseURL }/sha256sum.txt`, executableName);
 
     await download(dockerURL, destPath, { expectedChecksum });
+  }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
   }
 }
 
@@ -248,7 +254,7 @@ export class Trivy extends GithubVersionGetter implements Dependency {
   }
 }
 
-export class Steve extends GithubVersionGetter implements Dependency {
+export class Steve extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'steve';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-steve';
@@ -269,9 +275,13 @@ export class Steve extends GithubVersionGetter implements Dependency {
         checksumAlgorithm: 'sha512',
       });
   }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  }
 }
 
-export class GuestAgent extends GithubVersionGetter implements Dependency {
+export class GuestAgent extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'guestAgent';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-agent';
@@ -284,9 +294,13 @@ export class GuestAgent extends GithubVersionGetter implements Dependency {
 
     await downloadTarGZ(url, destPath);
   }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  }
 }
 
-export class RancherDashboard extends GithubVersionGetter implements Dependency {
+export class RancherDashboard extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'dashboard';
@@ -339,6 +353,10 @@ export class RancherDashboard extends GithubVersionGetter implements Dependency 
       });
 
     fs.rmSync(destPath, { maxRetries: 10 });
+  }
+
+  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
+    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
   }
 }
 

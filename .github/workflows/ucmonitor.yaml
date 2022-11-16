@@ -1,0 +1,27 @@
+name: Check for unreleased changes
+on:
+  schedule:
+    - cron: '48 8 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+
+jobs:
+  check-unreleased-changes:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - run: npm ci
+
+      - run: npm run ucmonitor
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

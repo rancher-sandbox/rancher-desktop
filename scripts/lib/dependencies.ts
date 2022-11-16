@@ -68,8 +68,60 @@ export interface Dependency {
 }
 
 /**
+ * Types that implement UnreleasedChangeMonitor can tell you whether
+ * there have been any changes in their repository since their last release.
+ */
+export interface UnreleasedChangeMonitor {
+  hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult>
+}
+
+export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
+
+type GithubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
+
+async function getLatestPublishedRelease(githubOwner: string, githubRepo: string): Promise<GithubRelease> {
+  const response = await getOctokit().rest.repos.listReleases({ owner: githubOwner, repo: githubRepo });
+
+  for (const release of response.data) {
+    if (release.published_at !== null) {
+      return release;
+    }
+  }
+  throw new Error(`Did not find a published release for ${ githubOwner }/${ githubRepo }`);
+}
+
+/**
+ * Tells the caller whether the given github repo has any
+ * changes that have not been released.
+ */
+export async function hasUnreleasedChanges(githubOwner: string, githubRepo: string): Promise<HasUnreleasedChangesResult> {
+  const latestRelease = await getLatestPublishedRelease(githubOwner, githubRepo);
+
+  // Get the date of the commit that the release's tag points to.
+  // We can't use the publish date of the release, because that
+  // omits commits that were made after the commit that was tagged
+  // for the release, but before the actual release.
+  const result = await getOctokit().rest.repos.getCommit({
+    owner: githubOwner, repo: githubRepo, ref: latestRelease.tag_name,
+  });
+  const dateOfTaggedCommit = result.data.commit.committer?.date;
+
+  const response = await getOctokit().rest.repos.listCommits({
+    owner: githubOwner, repo: githubRepo, since: dateOfTaggedCommit,
+  });
+  const commits = response.data;
+
+  console.log(`Found ${ commits.length - 1 } unreleased commits for repository ${ githubOwner }/${ githubRepo }.`);
+
+  return {
+    latestReleaseTag:     latestRelease.tag_name,
+    hasUnreleasedChanges: commits.length > 1,
+  };
+}
+
+/**
  * A lot of dependencies are hosted on Github via Github releases,
- * so the logic to fetch the latest version is very similar for
+ * so the logic to fetch the latest version/tag is very similar for
  * these releases. This lets us eliminate some of the duplication.
  */
 export class GithubVersionGetter {
@@ -78,16 +130,14 @@ export class GithubVersionGetter {
   githubRepo?: string;
 
   async getLatestVersion(): Promise<string> {
-    // ease development of new Dependency
     if (!this.githubOwner) {
       throw new Error(`Must define property "githubOwner" for dependency ${ this.name }`);
     }
     if (!this.githubRepo) {
       throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`);
     }
-
-    const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
-    const latestVersionWithV = response.data[0].tag_name;
+    const release = await getLatestPublishedRelease(this.githubOwner, this.githubRepo);
+    const latestVersionWithV = release.tag_name;
 
     return latestVersionWithV.replace(/^v/, '');
   }
