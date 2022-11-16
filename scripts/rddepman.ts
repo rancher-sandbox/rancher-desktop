@@ -194,7 +194,7 @@ async function checkDependencies(): Promise<void> {
   // create a branch for each version update, make changes, and make a PR from the branch
   for (const { name, currentVersion, latestVersion } of needToCreatePR) {
     const branchName = getBranchName(name, currentVersion, latestVersion);
-    const commitMessage = `Bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
+    const commitMessage = `Bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
     const depVersions = await readDependencyVersions(depVersionsPath);
