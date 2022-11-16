@@ -36,7 +36,7 @@ import (
 func DeleteData(removeKubernetesCache bool) error {
 	return map[string]func(bool) error{
 		"darwin":  deleteDarwinData,
-		"linux":   deleteUnixData,
+		"linux":   deleteLinuxData,
 		"windows": unregisterAndDeleteWindowsData,
 	}[runtime.GOOS](removeKubernetesCache)
 }
@@ -87,7 +87,7 @@ func deleteDarwinData(removeKubernetesCache bool) error {
 	return deleteUnixLikeData(homeDir, altAppHomePath, path.Join(homeDir, ".config"), pathList)
 }
 
-func deleteUnixData(removeKubernetesCache bool) error {
+func deleteLinuxData(removeKubernetesCache bool) error {
 	configHomePath, cacheHomePath, homeDir, err := getStandardDirs()
 	if err != nil {
 		return err
