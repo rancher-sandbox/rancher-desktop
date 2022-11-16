@@ -324,16 +324,13 @@ export default class K3sHelper extends events.EventEmitter {
     // Check that this release has all the assets we expect.
     if (entry.assets.find(ea => ea.name === this.filenames.exe)) {
       if (entry.assets.find(ea => ea.name === this.filenames.checksum)) {
-        let haveImage = false;
+        const foundImage = this.filenames.images.find(name => entry.assets.some(v => v.name === name));
 
-        for (let index = 0; !haveImage && index < this.filenames.images.length; index++) {
-          if (entry.assets.find(ea => ea.name === this.filenames.images[index])) {
-            haveImage = true;
-            this.versions[version.version] = new VersionEntry(version);
-            console.log(`Adding version ${ version.raw } - ${ this.filenames.images[index] }`);
-          } else {
-            console.debug(`Skipping version ${ version.raw } due to missing files`);
-          }
+        if (foundImage) {
+          this.versions[version.version] = new VersionEntry(version);
+          console.log(`Adding version ${ version.raw } - ${ foundImage }`);
+        } else {
+          console.debug(`Skipping version ${ version.raw } due to missing files`);
         }
       }
     }
@@ -688,9 +685,10 @@ export default class K3sHelper extends events.EventEmitter {
 
           sums[filename] = sum;
         }
+
         let existingIndex;
 
-        for (let index = 0; existingIndex === undefined && index < this.filenames.images.length; index++) {
+        for (let index = 0; typeof existingIndex === 'undefined' && index < this.filenames.images.length; index++) {
           if (fs.existsSync(path.join(dir, this.filenames.images[index]))) {
             existingIndex = index;
           }
@@ -741,13 +739,7 @@ export default class K3sHelper extends events.EventEmitter {
 
     try {
       await Promise.all(Object.entries(this.filenames).map(async([filekey, filename]) => {
-        let namearray = [''];
-
-        if (typeof filename === 'string') {
-          namearray = [filename];
-        } else {
-          namearray = filename;
-        }
+        const namearray = Array.isArray(filename) ? filename : [filename];
 
         let outPath;
         let response;
