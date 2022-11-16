@@ -648,8 +648,8 @@ export class KubeClient extends events.EventEmitter {
         return {
           namespace,
           name,
-          portName:   port.name,
-          port:       portNumber,
+          portName: port.name,
+          port:     portNumber,
           listenPort,
         };
       });

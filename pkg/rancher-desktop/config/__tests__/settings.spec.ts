@@ -34,9 +34,9 @@ describe('updateFromCommandLine', () => {
           traefik: true,
           flannel: false,
         },
-        suppressSudo:             false,
-        hostResolver:             true,
-        experimental:   { socketVMNet: true },
+        suppressSudo: false,
+        hostResolver: true,
+        experimental: { socketVMNet: true },
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {

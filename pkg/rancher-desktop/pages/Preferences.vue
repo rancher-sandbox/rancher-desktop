@@ -52,7 +52,7 @@ export default Vue.extend({
   beforeDestroy() {
     window.removeEventListener('keydown', this.handleKeypress, true);
   },
-  methods:  {
+  methods: {
     async navChanged(current: string) {
       await this.$store.dispatch(
         'transientSettings/commitPreferences',

@@ -3,14 +3,14 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 export default Vue.extend({
-  name:       'preferences-actions',
-  computed:   {
+  name:     'preferences-actions',
+  computed: {
     ...mapGetters('preferences', ['canApply']),
     isDisabled(): boolean {
       return !this.canApply;
     },
   },
-  methods:  {
+  methods: {
     cancel() {
       this.$emit('cancel');
     },

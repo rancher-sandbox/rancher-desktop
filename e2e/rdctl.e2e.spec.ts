@@ -247,7 +247,7 @@ test.describe('Command server', () => {
 
   test('should return multiple error messages, settings request', async() => {
     const newSettings: Record<string, any> = {
-      kubernetes:     {
+      kubernetes: {
         WSLIntegrations: "ceci n'est pas un objet",
         stoinks:         'yikes!', // should be ignored
         memoryInGB:      'carl',
@@ -262,7 +262,7 @@ test.describe('Command server', () => {
     expect(resp2.status).toEqual(400);
     const body = resp2.body.read().toString();
     const expectedWSL = {
-      win32:  "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
+      win32: "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
       lima:  "Changing field kubernetes.WSLIntegrations via the API isn't supported.",
     }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedMemory = {
@@ -1036,9 +1036,9 @@ test.describe('Command server', () => {
           expect(stderr).toEqual('');
           expect(JSON.parse(stdout)).toMatchObject({
             checks: [{
-              id:            'CONNECTED_TO_INTERNET',
-              description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-              mute:          false,
+              id:          'CONNECTED_TO_INTERNET',
+              description: 'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+              mute:        false,
             }],
           });
         });
@@ -1049,12 +1049,12 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toMatchObject({
             checks: expect.arrayContaining([
               {
-                category:      'Networking',
-                id:            'CONNECTED_TO_INTERNET',
-                description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-                mute:          false,
-                fixes:         [],
-                passed:        expect.any(Boolean),
+                category:    'Networking',
+                id:          'CONNECTED_TO_INTERNET',
+                description: 'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+                mute:        false,
+                fixes:       [],
+                passed:      expect.any(Boolean),
               },
             ]),
           });
@@ -1066,20 +1066,20 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toEqual({
             checks: [
               {
-                category:      'Utilities',
-                id:            'RD_BIN_IN_BASH_PATH',
-                description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
-                mute:          false,
-                fixes:         [
+                category:    'Utilities',
+                id:          'RD_BIN_IN_BASH_PATH',
+                description: 'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
+                mute:        false,
+                fixes:       [
                   { description: 'You have selected manual PATH configuration. You can let Rancher Desktop automatically configure it.' },
                 ],
               },
               {
-                category:      'Utilities',
-                id:            'RD_BIN_SYMLINKS',
-                description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
-                mute:          false,
-                fixes:         [
+                category:    'Utilities',
+                id:          'RD_BIN_SYMLINKS',
+                description: 'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
+                mute:        false,
+                fixes:       [
                   { description: 'Replace existing files in ~/.rd/bin with symlinks to the application\'s internal utility directory.' },
                 ],
               },
@@ -1093,10 +1093,10 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toMatchObject({
             checks: [
               {
-                category:      'Networking',
-                id:            'CONNECTED_TO_INTERNET',
-                description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-                mute:          false,
+                category:    'Networking',
+                id:          'CONNECTED_TO_INTERNET',
+                description: 'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+                mute:        false,
               },
             ],
           });

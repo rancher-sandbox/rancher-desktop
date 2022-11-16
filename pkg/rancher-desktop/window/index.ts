@@ -105,9 +105,9 @@ export function openMain(showPreferencesModal = false) {
       width:          940,
       height:         600,
       webPreferences: {
-        devTools:           !app.isPackaged,
-        nodeIntegration:    true,
-        contextIsolation:   false,
+        devTools:         !app.isPackaged,
+        nodeIntegration:  true,
+        contextIsolation: false,
       },
     });
 
@@ -302,8 +302,8 @@ export async function openLegacyIntegrations(): Promise<void> {
   const window = openDialog(
     'LegacyIntegrationNotification',
     {
-      title:          'Rancher Desktop - Legacy Integrations',
-      parent:         getWindow('main') ?? undefined,
+      title:  'Rancher Desktop - Legacy Integrations',
+      parent: getWindow('main') ?? undefined,
     },
   );
 

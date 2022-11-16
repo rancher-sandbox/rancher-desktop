@@ -64,9 +64,9 @@ describe('paths', () => {
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
     },
     oldIntegration: {
-      win32:   new Error('oldIntegration'),
+      win32:  new Error('oldIntegration'),
       linux:  '%HOME%/.local/bin',
-      darwin:  '/usr/local/bin',
+      darwin: '/usr/local/bin',
     },
     integration: {
       win32:  new Error('integration'),

@@ -54,14 +54,14 @@ async function checkNetworkConnectivity(): Promise<boolean> {
  * internet (which is required for most operations).
  */
 const CheckConnectedToInternet: DiagnosticsChecker = {
-  id:         'CONNECTED_TO_INTERNET',
+  id:       'CONNECTED_TO_INTERNET',
   category: DiagnosticsCategory.Networking,
   applicable() {
     return Promise.resolve(true);
   },
   async check() {
     return Promise.resolve({
-      description:   'The application cannot reach the general internet for ' +
+      description: 'The application cannot reach the general internet for ' +
       'updated kubernetes versions and other components, but can still operate.',
       passed: await checkNetworkConnectivity(),
       fixes:  [],

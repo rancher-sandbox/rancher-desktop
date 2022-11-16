@@ -104,7 +104,7 @@ export default Vue.extend({
       },
     },
   },
-  props:      {
+  props: {
     services: {
       type:     Array as PropType<K8s.ServiceEntry[]>,
       required: true,

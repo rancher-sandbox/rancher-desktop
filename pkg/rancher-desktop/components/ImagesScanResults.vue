@@ -4,15 +4,15 @@ import { BadgeState } from '@rancher/components';
 import SortableTable from '@/components/SortableTable';
 
 const SEVERITY_MAP = {
-  LOW:      {
+  LOW: {
     color: 'bg-darker',
     id:    0,
   },
-  MEDIUM:   {
+  MEDIUM: {
     color: 'bg-info',
     id:    1,
   },
-  HIGH:     {
+  HIGH: {
     color: 'bg-warning',
     id:    2,
   },
@@ -43,9 +43,9 @@ export default {
     return {
       headers: [
         {
-          name:      'Severity',
-          label:     this.t('images.scan.results.headers.severity'),
-          sort:      ['SeverityId:desc', 'PkgName', 'InstalledVersion'],
+          name:  'Severity',
+          label: this.t('images.scan.results.headers.severity'),
+          sort:  ['SeverityId:desc', 'PkgName', 'InstalledVersion'],
         },
         {
           name:  'PkgName',

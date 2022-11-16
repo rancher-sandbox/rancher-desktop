@@ -455,7 +455,7 @@ describe(SettingsValidator, () => {
           enabled: true,
         },
         portForwarding: {
-          'kiwano // 8 1/2':          'cows',
+          'kiwano // 8 1/2':         'cows',
           includeKubernetesServices: cfg.portForwarding.includeKubernetesServices,
         },
         'feijoa - Alps': [],

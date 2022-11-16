@@ -40,7 +40,7 @@ export default Vue.extend({
       return this.preferences?.updater || false;
     },
   },
-  methods:  {
+  methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },

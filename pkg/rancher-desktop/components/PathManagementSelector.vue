@@ -15,7 +15,7 @@ export default Vue.extend({
     RadioGroup,
     RadioButton,
   },
-  props:      {
+  props: {
     value: {
       type:    String,
       default: PathManagementStrategy.RcFiles,

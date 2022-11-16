@@ -390,7 +390,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     }
     await this.vm.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
     await this.vm.writeConf('cri-dockerd', {
-      LOG_DIR:         paths.logs,
+      LOG_DIR: paths.logs,
       ENGINE:  cfg.containerEngine ?? ContainerEngine.NONE,
     });
     await this.vm.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);

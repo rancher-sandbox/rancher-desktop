@@ -37,9 +37,9 @@ export function openPreferences() {
     minimizable:     false,
     show:            false,
     webPreferences:  {
-      devTools:           !app.isPackaged,
-      nodeIntegration:    true,
-      contextIsolation:   false,
+      devTools:         !app.isPackaged,
+      nodeIntegration:  true,
+      contextIsolation: false,
     },
   });
 
