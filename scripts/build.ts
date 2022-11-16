@@ -10,6 +10,9 @@ import * as os from 'os';
 import * as path from 'path';
 
 import buildUtils from './lib/build-utils';
+import buildInstaller from './lib/installer-win32';
+
+import { spawnFile } from '@/utils/childProcess';
 
 class Builder {
   async cleanup() {
@@ -51,8 +54,8 @@ class Builder {
     const nuxtBin = 'node_modules/nuxt/bin/nuxt.js';
     const nuxtOutDir = path.join(buildUtils.rendererSrcDir, 'dist');
 
-    await buildUtils.spawn('node', nuxtBin, 'build', buildUtils.rendererSrcDir);
-    await buildUtils.spawn('node', nuxtBin, 'generate', buildUtils.rendererSrcDir);
+    await spawnFile('node', [nuxtBin, 'build', buildUtils.rendererSrcDir], { stdio: 'inherit' });
+    await spawnFile('node', [nuxtBin, 'generate', buildUtils.rendererSrcDir], { stdio: 'inherit' });
     await fs.rename(nuxtOutDir, buildUtils.appDir);
   }
 
@@ -87,7 +90,14 @@ class Builder {
 
     await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
     args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
-    await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args, { env });
+    await spawnFile('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { stdio: 'inherit', env });
+
+    if (process.env.RD_FEAT_WIX && process.platform === 'win32') {
+      const distDir = path.join(process.cwd(), 'dist');
+      const appDir = path.join(distDir, 'win-unpacked');
+
+      await buildInstaller(distDir, appDir);
+    }
   }
 
   async run() {

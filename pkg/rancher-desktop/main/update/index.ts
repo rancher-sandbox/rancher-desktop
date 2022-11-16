@@ -9,13 +9,13 @@ import timers from 'timers';
 import { CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import {
-  AppImageUpdater, MacUpdater, NsisUpdater,
-  AppUpdater, ProgressInfo, UpdateInfo,
+  AppImageUpdater, MacUpdater, NsisUpdater, AppUpdater, ProgressInfo, UpdateInfo,
 } from 'electron-updater';
 import { ElectronAppAdapter } from 'electron-updater/out/ElectronAppAdapter';
 import yaml from 'yaml';
 
 import LonghornProvider, { hasQueuedUpdate, LonghornUpdateInfo, setHasQueuedUpdate } from './LonghornProvider';
+import MsiUpdater from './MSIUpdater';
 
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
@@ -87,6 +87,8 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
       fileContents = await fs.promises.readFile(appUpdateConfigPath, { encoding: 'utf8' });
     } catch (ex) {
       if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
+        console.debug(`No update configuration found in ${ appUpdateConfigPath }`);
+
         return undefined;
       }
       throw ex;
@@ -96,9 +98,12 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     options.updateProvider = LonghornProvider;
 
     switch (os.platform()) {
-    case 'win32':
-      updater = new NsisUpdater(options);
+    case 'win32': {
+      const useWix = !!parseInt(process.env.RD_FEAT_WIX ?? '0', 10);
+
+      updater = useWix ? new MsiUpdater(options) : new NsisUpdater(options);
       break;
+    }
     case 'darwin':
       updater = new MacUpdater(options);
       break;
@@ -186,11 +191,13 @@ mainEvent.on('settings-update', (settings: Settings) => {
  * @returns Whether the update is being installed.
  */
 export default async function setupUpdate(enabled: boolean, doInstall = false): Promise<boolean> {
+  console.debug(`Setting up updater... enabled=${ enabled } doInstall=${ doInstall }`);
   if (state === State.UNCONFIGURED) {
     try {
       const newUpdater = await getUpdater();
 
       if (!newUpdater || !newUpdater.isUpdaterActive()) {
+        console.debug(`No update configuration found.`);
         state = State.NO_CONFIGURATION;
 
         return false;

@@ -103,6 +103,12 @@ interface MainEventNames {
    * checker).
    */
   'diagnostics-trigger'(id: string): void;
+
+  /**
+   * Emitted on application quit.  Note that at this point we're committed to
+   * quitting.
+   */
+  'quit'(): void;
 }
 
 /**

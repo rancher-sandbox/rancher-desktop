@@ -14,7 +14,6 @@
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
   },
   "scripts": {
-    "wix": "node scripts/ts-wrapper.js scripts/lib/installer-win32.tsx",
     "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
     "lint": "npm run lint:fix",
     "lint:fix": "npm run lint:typescript:fix && npm run lint:go:fix ",
@@ -92,6 +91,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.18.9",
+    "@electron/asar": "^3.2.2",
     "@nuxt/types": "^2.15.2",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config": "^10.0.0",
