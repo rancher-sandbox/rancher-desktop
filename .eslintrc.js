@@ -86,7 +86,7 @@ module.exports = {
         beforeColon: false,
         afterColon:  true,
         on:          'value',
-        mode:        'strict',
+        mode:        'minimum',
       },
       multiLine: {
         beforeColon: false,
@@ -232,6 +232,7 @@ Object.assign(module.exports.rules, {
   // There's currently too many violations to turn all of it on at once.
   '@typescript-eslint/await-thenable': 'error',
 });
+module.exports.rules['key-spacing'][1].align.mode = 'strict';
 
 module.exports.overrides = [
   {
