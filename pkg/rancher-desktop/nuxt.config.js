@@ -43,6 +43,8 @@ export default {
   ],
   // Global CSS
   css: [
+    // This @ alias is a nuxt-provided default
+    // https://nuxtjs.org/docs/configuration-glossary/configuration-alias/
     '@/assets/styles/app.scss',
   ],
   generate:         { devtools: isDevelopment },
