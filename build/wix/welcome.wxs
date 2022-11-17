@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This describes the welcome dialog -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <UI>
+      <Dialog Id="RDWelcomeDlg" Width="370" Height="270" Title="!(loc.WelcomeEulaDlg_Title)">
+        <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234"
+          TabSkip="no" Text="!(loc.WelcomeEulaDlgBitmap)" />
+        <Control Id="Title" Type="Text" X="130" Y="6" Width="225" Height="30"
+          Transparent="yes" NoPrefix="yes" Text="!(loc.WelcomeEulaDlgTitle)" />
+        <Control Id="BottomLine" Type="Line"
+          X="0" Y="234" Width="370" Height="0" />
+        <Control Id="LicenseAcceptedCheckBox" Type="CheckBox"
+          X="130" Y="207" Width="226" Height="18"
+          CheckBoxValue="1" Property="RDLicenseAccepted"
+          Text="!(loc.WelcomeEulaDlgLicenseAcceptedCheckBox)" />
+        <Control Id="Back" Type="PushButton" Disabled="yes"
+          X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+        <Control Id="Next" Type="PushButton" Default="yes"
+          X="236" Y="243" Width="56" Height="17" Text="!(loc.WixUINext)">
+          <Condition Action="disable">
+            <![CDATA[RDLicenseAccepted <> "1"]]>
+          </Condition>
+          <Condition Action="enable">RDLicenseAccepted = "1"</Condition>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" Cancel="yes"
+          X="304" Y="243" Width="56" Height="17" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+        <Control Id="LicenseText" Type="ScrollableText" Sunken="yes" TabSkip="no"
+          X="130" Y="36" Width="226" Height="162">
+          <Text SourceFile="$(var.licenseFile)" />
+        </Control>
+      </Dialog>
+    </UI>
+
+    <InstallUISequence>
+      <!-- Only show the welcome dialog if we're not repairing, upgrading, or removing. -->
+      <Show Dialog="RDWelcomeDlg" Before="ProgressDlg" Overridable="yes">NOT Installed AND NOT WIX_UPGRADE_DETECTED AND NOT REMOVE</Show>
+    </InstallUISequence>
+  </Fragment>
+</Wix>
