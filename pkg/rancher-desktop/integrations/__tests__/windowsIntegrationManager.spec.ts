@@ -1,6 +1,6 @@
 /** @jest-environment node */
 
-import WindowsIntegrationManager, { WSLDistro } from '@/integrations/windowsIntegrationManager';
+import WindowsIntegrationManager, { WSLDistro } from '@pkg/integrations/windowsIntegrationManager';
 
 describe('WindowsIntegrationManager', () => {
   let integrationManager: WindowsIntegrationManager;

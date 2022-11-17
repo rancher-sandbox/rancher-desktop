@@ -3,8 +3,8 @@ import { URL } from 'url';
 
 import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
 
-import { isDevEnv } from '@/utils/environment';
-import Latch from '@/utils/latch';
+import { isDevEnv } from '@pkg/utils/environment';
+import Latch from '@pkg/utils/latch';
 
 /**
  * Create a URL that consists of a base combined with the provided path

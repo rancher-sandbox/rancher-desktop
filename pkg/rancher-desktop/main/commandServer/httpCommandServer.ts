@@ -3,16 +3,16 @@ import http from 'http';
 import path from 'path';
 import { URL } from 'url';
 
-import type { Settings } from '@/config/settings';
-import type { TransientSettings } from '@/config/transientSettings';
-import type { DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
-import mainEvents from '@/main/mainEvents';
-import { getVtunnelInstance } from '@/main/networking/vtunnel';
-import * as serverHelper from '@/main/serverHelper';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { RecursivePartial } from '@/utils/typeUtils';
+import type { Settings } from '@pkg/config/settings';
+import type { TransientSettings } from '@pkg/config/transientSettings';
+import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
+import mainEvents from '@pkg/main/mainEvents';
+import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
+import * as serverHelper from '@pkg/main/serverHelper';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 export type ServerState = {
   user: string;

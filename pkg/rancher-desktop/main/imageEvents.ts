@@ -6,11 +6,11 @@ import path from 'path';
 
 import Electron from 'electron';
 
-import { ImageProcessor } from '@/backend/images/imageProcessor';
-import { getIpcMainProxy } from '@/main/ipcMain';
-import { isUnixError } from '@/typings/unix.interface';
-import Logging from '@/utils/logging';
-import * as window from '@/window';
+import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
+import { isUnixError } from '@pkg/typings/unix.interface';
+import Logging from '@pkg/utils/logging';
+import * as window from '@pkg/window';
 
 const console = Logging.images;
 const ipcMainProxy = getIpcMainProxy(console);

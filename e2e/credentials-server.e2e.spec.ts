@@ -37,9 +37,10 @@ import {
   createDefaultSettings, packageLogs, reportAsset, tool, toolPath,
 } from './utils/TestUtils';
 
-import { ServerState } from '@/main/commandServer/httpCommandServer';
-import { spawnFile } from '@/utils/childProcess';
-import paths from '@/utils/paths';
+import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { spawnFile } from '@pkg/utils/childProcess';
+import paths from '@pkg/utils/paths';
+
 let credStore = '';
 let dockerConfigPath = '';
 let originalDockerConfigContents: string|undefined;

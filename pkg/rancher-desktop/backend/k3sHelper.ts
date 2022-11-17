@@ -16,23 +16,22 @@ import yaml from 'yaml';
 
 import { Architecture, VMExecutor } from './backend';
 
-import { KubeClient } from '@/backend/client';
-import * as K8s from '@/backend/k8s';
-import { loadFromString, exportConfig } from '@/backend/kubeconfig';
-import { checkConnectivity } from '@/main/networking';
-import { isUnixError } from '@/typings/unix.interface';
-import DownloadProgressListener from '@/utils/DownloadProgressListener';
-import * as childProcess from '@/utils/childProcess';
-import fetch from '@/utils/fetch';
-import Latch from '@/utils/latch';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import resources from '@/utils/resources';
-import safeRename from '@/utils/safeRename';
-import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { defined, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
-// TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
-import { showMessageBox } from '@/window';
+import { KubeClient } from '@pkg/backend/client';
+import * as K8s from '@pkg/backend/k8s';
+import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
+import { checkConnectivity } from '@pkg/main/networking';
+import { isUnixError } from '@pkg/typings/unix.interface';
+import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
+import * as childProcess from '@pkg/utils/childProcess';
+import fetch from '@pkg/utils/fetch';
+import Latch from '@pkg/utils/latch';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
+import safeRename from '@pkg/utils/safeRename';
+import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import { defined, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
+import { showMessageBox } from '@pkg/window';
 
 import type Electron from 'electron';
 
@@ -1036,7 +1035,7 @@ export default class K3sHelper extends events.EventEmitter {
     const commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
 
     try {
-      const { stdout, stderr } = await childProcess.spawnFile(resources.executable('kubectl'),
+      const { stdout, stderr } = await childProcess.spawnFile(executable('kubectl'),
         commandArgs,
         { stdio: ['ignore', 'pipe', 'pipe'] });
 

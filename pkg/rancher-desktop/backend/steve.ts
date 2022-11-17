@@ -2,8 +2,8 @@ import { ChildProcess, spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
 
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const console = Logging.steve;
 

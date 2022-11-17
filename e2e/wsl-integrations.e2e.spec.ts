@@ -12,7 +12,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 
-import { spawnFile } from '@/utils/childProcess';
+import { spawnFile } from '@pkg/utils/childProcess';
 
 test.describe('WSL Integrations', () => {
   test.skip(true, 'TODO: https://github.com/rancher-sandbox/rancher-desktop/issues/2881');

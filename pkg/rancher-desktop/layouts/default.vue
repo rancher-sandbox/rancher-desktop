@@ -13,14 +13,15 @@
 </template>
 
 <script>
+
 import { ipcRenderer } from 'electron';
 import { mapGetters, mapState } from 'vuex';
 
-import ActionMenu from '@/components/ActionMenu.vue';
-import BackendProgress from '@/components/BackendProgress.vue';
-import Header from '@/components/Header.vue';
-import Nav from '@/components/Nav.vue';
-import TheTitle from '@/components/TheTitle.vue';
+import ActionMenu from '@pkg/components/ActionMenu.vue';
+import BackendProgress from '@pkg/components/BackendProgress.vue';
+import Header from '@pkg/components/Header.vue';
+import Nav from '@pkg/components/Nav.vue';
+import TheTitle from '@pkg/components/TheTitle.vue';
 
 export default {
   name:       'App',
@@ -101,7 +102,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/app.scss";
+@import "@pkg/assets/styles/app.scss";
 
 .wrapper {
   display: grid;

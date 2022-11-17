@@ -2,11 +2,11 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+import { download } from '../lib/download';
+
 import {
   DownloadContext, Dependency, UnreleasedChangeMonitor, GithubVersionGetter, hasUnreleasedChanges, HasUnreleasedChangesResult,
 } from 'scripts/lib/dependencies';
-
-import { download } from '../lib/download';
 
 function extract(resourcesPath: string, file: string, expectedFile: string): void {
   const systemRoot = process.env.SystemRoot;

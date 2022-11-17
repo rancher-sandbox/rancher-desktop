@@ -17,10 +17,10 @@ import yaml from 'yaml';
 import LonghornProvider, { hasQueuedUpdate, LonghornUpdateInfo, setHasQueuedUpdate } from './LonghornProvider';
 import MsiUpdater from './MSIUpdater';
 
-import { Settings } from '@/config/settings';
-import mainEvent from '@/main/mainEvents';
-import Logging from '@/utils/logging';
-import * as window from '@/window';
+import { Settings } from '@pkg/config/settings';
+import mainEvent from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
+import * as window from '@pkg/window';
 
 const console = Logging.update;
 

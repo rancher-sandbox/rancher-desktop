@@ -16,7 +16,7 @@ import yaml from 'yaml';
 
 import generateFileList from './installer-win32-gen';
 
-import { spawnFile } from '@/utils/childProcess';
+import { spawnFile } from '@pkg/utils/childProcess';
 
 /**
  * Return the contents of package.json embbedded in the application.

@@ -86,8 +86,8 @@
 import { Banner, Checkbox } from '@rancher/components';
 import Vue from 'vue';
 
-import * as K8s from '@/backend/k8s';
-import SortableTable from '@/components/SortableTable/index.vue';
+import * as K8s from '@pkg/backend/k8s';
+import SortableTable from '@pkg/components/SortableTable/index.vue';
 
 import type { PropType } from 'vue';
 

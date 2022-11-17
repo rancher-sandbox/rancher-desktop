@@ -3,9 +3,9 @@ import os from 'os';
 
 import Vue from 'vue';
 
-import SystemPreferences from '@/components/SystemPreferences.vue';
-import { defaultSettings, Settings } from '@/config/settings';
-import { RecursiveTypes } from '@/utils/typeUtils';
+import SystemPreferences from '@pkg/components/SystemPreferences.vue';
+import { defaultSettings, Settings } from '@pkg/config/settings';
+import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

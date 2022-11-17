@@ -24,9 +24,9 @@
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
-import type { ServiceEntry } from '@/backend/k8s';
-import PortForwarding from '@/components/PortForwarding.vue';
-import { defaultSettings, Settings } from '@/config/settings';
+import type { ServiceEntry } from '@pkg/backend/k8s';
+import PortForwarding from '@pkg/components/PortForwarding.vue';
+import { defaultSettings, Settings } from '@pkg/config/settings';
 
 export default Vue.extend({
   components: { PortForwarding },

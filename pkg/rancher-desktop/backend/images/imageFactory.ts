@@ -1,8 +1,8 @@
-import { VMExecutor } from '@/backend/backend';
-import { ImageProcessor } from '@/backend/images/imageProcessor';
-import MobyImageProcessor from '@/backend/images/mobyImageProcessor';
-import NerdctlImageProcessor from '@/backend/images/nerdctlImageProcessor';
-import { ContainerEngine } from '@/config/settings';
+import { VMExecutor } from '@pkg/backend/backend';
+import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
+import MobyImageProcessor from '@pkg/backend/images/mobyImageProcessor';
+import NerdctlImageProcessor from '@pkg/backend/images/nerdctlImageProcessor';
+import { ContainerEngine } from '@pkg/config/settings';
 
 const cachedImageProcessors: Partial<Record<ContainerEngine, ImageProcessor>> = { };
 

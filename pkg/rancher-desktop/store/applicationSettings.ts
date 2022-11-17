@@ -2,8 +2,8 @@ import { ipcRenderer } from 'electron';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { load as loadSettings } from '@/config/settings';
-import type { PathManagementStrategy } from '@/integrations/pathManager';
+import { load as loadSettings } from '@pkg/config/settings';
+import type { PathManagementStrategy } from '@pkg/integrations/pathManager';
 
 /**
  * State is the type of the state we are maintaining in this store.

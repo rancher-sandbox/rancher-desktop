@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { IntegrationManager } from '@/integrations/integrationManager';
+import { IntegrationManager } from '@pkg/integrations/integrationManager';
 
 /**
  * Manages integrations for Unix-like operating systems. Integrations take

@@ -12,7 +12,7 @@ import K3sHelper, {
   buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry,
 } from '../k3sHelper';
 
-import paths from '@/utils/paths';
+import paths from '@pkg/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
 const { Response: FetchResponse } = jest.requireActual('node-fetch');

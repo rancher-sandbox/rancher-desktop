@@ -1,7 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import Tabbed from '@/components/Tabbed/index.vue';
+import Tabbed from '@pkg/components/Tabbed/index.vue';
 
 export default Vue.extend({
   name:       'rd-tabbed',

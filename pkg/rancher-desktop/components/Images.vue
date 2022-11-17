@@ -79,13 +79,14 @@
 </template>
 
 <script>
+
+import SortableTable from '@pkg/components/SortableTable';
 import { Card, Checkbox } from '@rancher/components';
 import { ipcRenderer } from 'electron';
 
-import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
-import SortableTable from '@/components/SortableTable';
-import getImageOutputCuller from '@/utils/imageOutputCuller';
-import { parseSi } from '@/utils/units';
+import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
+import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
+import { parseSi } from '@pkg/utils/units';
 
 export default {
   components: {

@@ -2,8 +2,8 @@
 import $ from 'jquery';
 import { mapGetters } from 'vuex';
 
-import { isAlternate } from '@/utils/platform';
-import { AUTO, CENTER, fitOnScreen } from '@/utils/position';
+import { isAlternate } from '@pkg/utils/platform';
+import { AUTO, CENTER, fitOnScreen } from '@pkg/utils/position';
 
 const HIDDEN = 'hide';
 const CALC = 'calculate';

@@ -10,10 +10,10 @@ import {
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
 
-import { Settings } from '@/config/settings';
-import { ChildProcess } from '@/utils/childProcess';
-import Logging from '@/utils/logging';
-import { RecursivePartial } from '~/utils/typeUtils';
+import { Settings } from '@pkg/config/settings';
+import { ChildProcess } from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.mock;
 

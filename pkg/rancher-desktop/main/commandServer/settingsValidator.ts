@@ -2,11 +2,11 @@ import os from 'os';
 
 import _ from 'lodash';
 
-import { defaultSettings, Settings } from '@/config/settings';
-import { NavItemName, navItemNames, TransientSettings } from '@/config/transientSettings';
-import { PathManagementStrategy } from '@/integrations/pathManager';
-import { RecursivePartial } from '@/utils/typeUtils';
-import { preferencesNavItems } from '@/window/preferences';
+import { defaultSettings, Settings } from '@pkg/config/settings';
+import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { preferencesNavItems } from '@pkg/window/preferences';
 
 type settingsLike = Record<string, any>;
 

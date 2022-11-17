@@ -3,7 +3,7 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import DiagnosticsBody from '@/components/DiagnosticsBody.vue';
+import DiagnosticsBody from '@pkg/components/DiagnosticsBody.vue';
 
 export default Vue.extend({
   name:       'diagnostics',

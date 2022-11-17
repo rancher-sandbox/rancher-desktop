@@ -1,11 +1,12 @@
 <script lang="ts">
+
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import PathManagementSelector from '@/components/PathManagementSelector.vue';
-import RdFieldset from '@/components/form/RdFieldset.vue';
-import { Settings } from '@/config/settings';
-import { RecursiveTypes } from '@/utils/typeUtils';
+import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
+import RdFieldset from '@pkg/components/form/RdFieldset.vue';
+import { Settings } from '@pkg/config/settings';
+import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

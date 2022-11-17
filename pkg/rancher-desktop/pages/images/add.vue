@@ -31,14 +31,15 @@
 </template>
 
 <script>
+
 import { ipcRenderer } from 'electron';
 import { mapState } from 'vuex';
 
-import Alert from '@/components/Alert.vue';
-import ImageAddTabs from '@/components/ImageAddTabs.vue';
-import ImagesFormAdd from '@/components/ImagesFormAdd.vue';
-import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
-import getImageOutputCuller from '@/utils/imageOutputCuller';
+import Alert from '@pkg/components/Alert.vue';
+import ImageAddTabs from '@pkg/components/ImageAddTabs.vue';
+import ImagesFormAdd from '@pkg/components/ImagesFormAdd.vue';
+import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
+import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
 
 export default {
   components: {

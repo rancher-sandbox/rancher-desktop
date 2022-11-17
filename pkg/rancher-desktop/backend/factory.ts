@@ -7,7 +7,7 @@ import LimaBackend from './lima';
 import MockBackend from './mock';
 import WSLBackend from './wsl';
 
-import DockerDirManager from '@/utils/dockerDirManager';
+import DockerDirManager from '@pkg/utils/dockerDirManager';
 
 export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): VMBackend {
   const platform = os.platform();

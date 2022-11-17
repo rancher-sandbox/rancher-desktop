@@ -3,18 +3,18 @@ import path from 'path';
 
 import { findHomeDir } from '@kubernetes/client-node';
 
-import K3sHelper from '@/backend/k3sHelper';
-import { State } from '@/backend/k8s';
-import { Settings, ContainerEngine, runInDebugMode } from '@/config/settings';
-import type { IntegrationManager } from '@/integrations/integrationManager';
-import mainEvents from '@/main/mainEvents';
-import BackgroundProcess from '@/utils/backgroundProcess';
-import { spawn, spawnFile } from '@/utils/childProcess';
-import clone from '@/utils/clone';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import resources from '@/utils/resources';
-import { defined, RecursivePartial } from '@/utils/typeUtils';
+import K3sHelper from '@pkg/backend/k3sHelper';
+import { State } from '@pkg/backend/k8s';
+import { Settings, ContainerEngine, runInDebugMode } from '@pkg/config/settings';
+import type { IntegrationManager } from '@pkg/integrations/integrationManager';
+import mainEvents from '@pkg/main/mainEvents';
+import BackgroundProcess from '@pkg/utils/backgroundProcess';
+import { spawn, spawnFile } from '@pkg/utils/childProcess';
+import clone from '@pkg/utils/clone';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
+import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.integrations;
 
@@ -304,7 +304,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
     const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
     const cliPath = path.join(cliDir, 'docker-compose.exe');
-    const srcPath = resources.executable('docker-compose');
+    const srcPath = executable('docker-compose');
 
     console.debug(`Syncing host docker compose: ${ srcPath } -> ${ cliPath }`);
     await fs.promises.mkdir(cliDir, { recursive: true });

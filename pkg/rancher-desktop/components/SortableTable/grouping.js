@@ -1,4 +1,4 @@
-import { get } from '@/utils/object';
+import { get } from '@pkg/utils/object';
 
 export default {
   computed: {

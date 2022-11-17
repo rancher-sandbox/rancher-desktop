@@ -4,8 +4,8 @@
 
 import Electron from 'electron';
 
-import { ServiceEntry } from '@/backend/k8s';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { ServiceEntry } from '@pkg/backend/k8s';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -71,10 +71,10 @@ interface IpcMainEvents {
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
 interface IpcMainInvokeEvents {
-  'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
-  'transient-settings-fetch': () => import('@/config/transientSettings').TransientSettings;
-  'transient-settings-update': (arg: RecursivePartial<import('@/config/transientSettings').TransientSettings>) => void;
-  'service-fetch': (namespace?: string) => import('@/backend/k8s').ServiceEntry[];
+  'settings-write': (arg: RecursivePartial<import('@pkg/config/settings').Settings>) => void;
+  'transient-settings-fetch': () => import('@pkg/config/transientSettings').TransientSettings;
+  'transient-settings-update': (arg: RecursivePartial<import('@pkg/config/transientSettings').TransientSettings>) => void;
+  'service-fetch': (namespace?: string) => import('@pkg/backend/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
@@ -90,19 +90,19 @@ interface IpcMainInvokeEvents {
  * process, i.e. webContents.send() -> ipcRenderer.on().
  */
 export interface IpcRendererEvents {
-  'settings-update': (settings: import('@/config/settings').Settings) => void;
-  'settings-read': (settings: import('@/config/settings').Settings) => void;
+  'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
+  'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
-  'update-state': (state: import('@/main/update').UpdateState) => void;
+  'update-state': (state: import('@pkg/main/update').UpdateState) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
-  'k8s-check-state': (state: import('@/backend/k8s').State) => void;
-  'k8s-current-engine': (engine: import('@/config/settings').ContainerEngine) => void;
+  'k8s-check-state': (state: import('@pkg/backend/k8s').State) => void;
+  'k8s-current-engine': (engine: import('@pkg/config/settings').ContainerEngine) => void;
   'k8s-current-port': (port: number) => void;
-  'k8s-versions': (versions: import('@/backend/k8s').VersionEntry[], cachedOnly: boolean) => void;
+  'k8s-versions': (versions: import('@pkg/backend/k8s').VersionEntry[], cachedOnly: boolean) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'service-changed': (services: ServiceEntry[]) => void;
   'service-error': (service: ServiceEntry, errorMessage: string) => void;
-  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/backend/k8s').FailureDetails) => void;
+  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@pkg/backend/k8s').FailureDetails) => void;
   'update-network-status': (status: boolean) => void;
 
   // #region Images

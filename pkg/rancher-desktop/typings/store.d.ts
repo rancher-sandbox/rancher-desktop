@@ -1,9 +1,9 @@
-import type { actions as ApplicationSettingsActions } from '@/store/applicationSettings';
-import type { actions as CredentialsActions } from '@/store/credentials';
-import type { actions as DiagnosticsActions } from '@/store/diagnostics';
-import type { actions as PageActions } from '@/store/page';
-import type { actions as PreferencesActions } from '@/store/preferences';
-import type { actions as TransientSettingsActions } from '@/store/transientSettings';
+import type { actions as ApplicationSettingsActions } from '@pkg/store/applicationSettings';
+import type { actions as CredentialsActions } from '@pkg/store/credentials';
+import type { actions as DiagnosticsActions } from '@pkg/store/diagnostics';
+import type { actions as PageActions } from '@pkg/store/page';
+import type { actions as PreferencesActions } from '@pkg/store/preferences';
+import type { actions as TransientSettingsActions } from '@pkg/store/transientSettings';
 
 type Actions<
   store extends string,

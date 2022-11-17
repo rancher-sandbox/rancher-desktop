@@ -3,8 +3,8 @@ import findIndex from 'lodash/findIndex';
 import head from 'lodash/head';
 import isEmpty from 'lodash/isEmpty';
 
-import { addObject, removeObject, findBy } from '@/utils/array';
-import { sortBy } from '@/utils/sort';
+import { addObject, removeObject, findBy } from '@pkg/utils/array';
+import { sortBy } from '@pkg/utils/sort';
 
 export default {
   name: 'Tabbed',

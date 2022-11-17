@@ -1,0 +1,30 @@
+{
+  "name": "rancher-desktop",
+  "description": "Rancher Desktop",
+  "private": false,
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/cli-plugin-typescript": "^4.5.15"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "icon": "https://raw.githubusercontent.com/rancher/icons/master/svg/rancher-desktop.svg",
+  "rancher": true,
+  "license": "Apache-2.0",
+  "version": "1.6.0",
+  "author": {
+    "name": "SUSE",
+    "email": "containers@suse.com"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
+  }
+}

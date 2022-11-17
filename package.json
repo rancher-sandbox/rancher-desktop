@@ -43,11 +43,10 @@
   },
   "main": "dist/app/background.js",
   "dependencies": {
-    "@rancher/shell": "^0.1.2",
-    "css-loader": "4.3.0",
     "@kubernetes/client-node": "^0.17.1",
     "@nuxtjs/eslint-module": "^3.1.0",
     "@rancher/components": "0.1.0-alpha.8",
+    "@rancher/shell": "^0.1.2",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.7",
     "cookie-universal-nuxt": "^2.2.2",
@@ -96,6 +95,7 @@
     "@nuxt/types": "^2.15.2",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config": "^10.0.0",
+    "@nuxtjs/eslint-config-typescript": "^11.0.0",
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.2.1",
     "@octokit/rest": "^19.0.5",
@@ -118,6 +118,7 @@
     "@typescript-eslint/parser": "^5.42.1",
     "@vue/test-utils": "^1.1.2",
     "babel-core": "^7.0.0-bridge.0",
+    "css-loader": "4.3.0",
     "electron": "^18.3.6",
     "electron-builder": "^23.3.3",
     "electron-devtools-installer": "^3.2.0",
@@ -166,8 +167,8 @@
     ],
     "moduleNameMapper": {
       "\\.css$": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
-      "^@/assets/": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
-      "^@/(.*)$": "<rootDir>/pkg/rancher-desktop/$1"
+      "^@pkg/assets/": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
+      "^@pkg/(.*)$": "<rootDir>/pkg/rancher-desktop/$1"
     },
     "preset": "ts-jest/presets/js-with-babel",
     "testEnvironment": "jsdom"

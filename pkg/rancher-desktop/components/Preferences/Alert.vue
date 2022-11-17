@@ -2,7 +2,7 @@
 import Vue from 'vue';
 import { mapState } from 'vuex';
 
-import Alert from '@/components/Alert.vue';
+import Alert from '@pkg/components/Alert.vue';
 
 interface AlertType {
   icon: string;

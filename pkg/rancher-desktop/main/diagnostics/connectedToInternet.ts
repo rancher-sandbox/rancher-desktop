@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
-import Logging from '@/utils/logging';
+import Logging from '@pkg/utils/logging';
 
 const console = Logging.diagnostics;
 

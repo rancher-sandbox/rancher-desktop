@@ -19,7 +19,7 @@
       "~/*": [
         "pkg/rancher-desktop/*"
       ],
-      "@/*": [
+      "@pkg/*": [
         "pkg/rancher-desktop/*"
       ],
       "@shell/*": [
@@ -33,7 +33,8 @@
     ],    
     "types": [
       "@types/node",
-      "@types/jest"
+      "@types/jest",
+      "rancher"
     ]
   },
   "exclude": [
@@ -43,6 +44,10 @@
   ],
   "include": [
     "**/*",
+    "**/*.ts",
+    "**/*.d.ts",
+    "**/*.tsx",
+    "**/*.vue",
     ".eslintrc.js"
   ]
 }

@@ -53,7 +53,7 @@ export default Vue.extend({
 </style>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/app.scss";
+@import "@pkg/assets/styles/app.scss";
 
 .wrapper {
   background-color: var(--body-bg);

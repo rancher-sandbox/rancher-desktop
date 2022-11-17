@@ -25,8 +25,8 @@ import fs from 'fs';
 
 import yaml from 'yaml';
 
-import { defaultSettings } from '@/config/settings';
-import { RecursiveReadonly } from '@/utils/typeUtils';
+import { defaultSettings } from '@pkg/config/settings';
+import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 const schemaPath = 'pkg/rancher-desktop/assets/specs/command-api.yaml';
 

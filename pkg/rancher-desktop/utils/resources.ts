@@ -3,7 +3,7 @@ import path from 'path';
 
 import memoize from 'lodash/memoize';
 
-import paths from '@/utils/paths';
+import paths from '@pkg/utils/paths';
 
 /**
  * Gets the absolute path to an executable. Adds ".exe" to the end

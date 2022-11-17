@@ -1,9 +1,9 @@
 import stream from 'stream';
 
-import { Settings } from '@/config/settings';
-import * as childProcess from '@/utils/childProcess';
-import EventEmitter from '@/utils/eventEmitter';
-import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import { Settings } from '@pkg/config/settings';
+import * as childProcess from '@pkg/utils/childProcess';
+import EventEmitter from '@pkg/utils/eventEmitter';
+import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
 

@@ -9,16 +9,16 @@ import { KubeConfig } from '@kubernetes/client-node';
 import Electron from 'electron';
 import yaml from 'yaml';
 
-import { State } from '@/backend/k8s';
-import * as kubectl from '@/backend/kubectl';
-import kubeconfig from '@/config/kubeconfig.js';
-import { Settings, load } from '@/config/settings';
-import mainEvents from '@/main/mainEvents';
-import { checkConnectivity } from '@/main/networking';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import { openMain, send } from '@/window';
-import { openDashboard } from '@/window/dashboard';
+import { State } from '@pkg/backend/k8s';
+import * as kubectl from '@pkg/backend/kubectl';
+import kubeconfig from '@pkg/config/kubeconfig.js';
+import { Settings, load } from '@pkg/config/settings';
+import mainEvents from '@pkg/main/mainEvents';
+import { checkConnectivity } from '@pkg/main/networking';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { openMain, send } from '@pkg/window';
+import { openDashboard } from '@pkg/window/dashboard';
 
 const console = Logging.background;
 

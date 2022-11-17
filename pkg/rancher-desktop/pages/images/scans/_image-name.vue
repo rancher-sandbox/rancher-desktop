@@ -35,13 +35,14 @@
 </template>
 
 <script>
+
 import { Banner } from '@rancher/components';
 import { ipcRenderer } from 'electron';
 
-import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
-import ImagesScanResults from '@/components/ImagesScanResults.vue';
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
-import getImageOutputCuller from '@/utils/imageOutputCuller';
+import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
+import ImagesScanResults from '@pkg/components/ImagesScanResults.vue';
+import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
+import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
 
 export default {
   name: 'images-scan-details',

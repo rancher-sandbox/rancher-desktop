@@ -34,11 +34,12 @@
 </template>
 
 <script>
+
 import { ipcRenderer } from 'electron';
 
-import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
-import UpdateStatus from '@/components/UpdateStatus.vue';
-import { defaultSettings } from '@/config/settings';
+import TelemetryOptIn from '@pkg/components/TelemetryOptIn.vue';
+import UpdateStatus from '@pkg/components/UpdateStatus.vue';
+import { defaultSettings } from '@pkg/config/settings';
 
 export default {
   name:       'General',
@@ -47,7 +48,7 @@ export default {
   data() {
     return {
       settings:      defaultSettings,
-      /** @type import('@/main/update').UpdateState | null */
+      /** @type import('@pkg/main/update').UpdateState | null */
       updateState:   null,
       /** @type string */
       version:       '(checking...)',

@@ -1,7 +1,7 @@
 <script>
 import { RadioGroup } from '@rancher/components';
 
-import { ContainerEngine } from '@/config/settings';
+import { ContainerEngine } from '@pkg/config/settings';
 
 export default {
   components: { RadioGroup },

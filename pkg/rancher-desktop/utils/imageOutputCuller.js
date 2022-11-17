@@ -1,6 +1,6 @@
-import ImageBuildOutputCuller from '@/utils/processOutputInterpreters/image-build-output';
-import ImageNonBuildOutputCuller from '@/utils/processOutputInterpreters/image-non-build-output';
-import TrivyScanImageOutputCuller from '@/utils/processOutputInterpreters/trivy-image-output';
+import ImageBuildOutputCuller from '@pkg/utils/processOutputInterpreters/image-build-output';
+import ImageNonBuildOutputCuller from '@pkg/utils/processOutputInterpreters/image-non-build-output';
+import TrivyScanImageOutputCuller from '@pkg/utils/processOutputInterpreters/trivy-image-output';
 
 const cullersByName = {
   build:         ImageBuildOutputCuller,

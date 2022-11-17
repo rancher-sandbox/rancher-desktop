@@ -26,7 +26,7 @@ import util from 'util';
 
 import Electron from 'electron';
 
-import paths from '@/utils/paths';
+import paths from '@pkg/utils/paths';
 
 type consoleKey = 'log' | 'error' | 'info' | 'warn';
 type logLevel = 'debug' | 'info';

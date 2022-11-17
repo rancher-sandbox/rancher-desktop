@@ -7,7 +7,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
 
-import { Settings } from '@/config/settings';
+import { Settings } from '@pkg/config/settings';
 
 let page: Page;
 

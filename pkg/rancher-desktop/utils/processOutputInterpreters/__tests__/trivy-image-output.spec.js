@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import TrivyScanImageOutputCuller from '@/utils/processOutputInterpreters/trivy-image-output';
+import TrivyScanImageOutputCuller from '@pkg/utils/processOutputInterpreters/trivy-image-output';
 
 describe('trivy image output', () => {
   it('echoes a zero-vul image back', () => {

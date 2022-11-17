@@ -4,11 +4,11 @@ import timers from 'timers';
 
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
 
-import { VMExecutor } from '@/backend/backend';
-import mainEvents from '@/main/mainEvents';
-import { ChildProcess, ErrorCommand } from '@/utils/childProcess';
-import Logging from '@/utils/logging';
-import * as window from '@/window';
+import { VMExecutor } from '@pkg/backend/backend';
+import mainEvents from '@pkg/main/mainEvents';
+import { ChildProcess, ErrorCommand } from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
+import * as window from '@pkg/window';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const console = Logging.images;

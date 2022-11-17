@@ -2,9 +2,9 @@ import fs from 'fs';
 
 import * as settings from '../settings';
 
-import { TransientSettings } from '@/config/transientSettings';
-import { PathManagementStrategy } from '@/integrations/pathManager';
-import clone from '@/utils/clone';
+import { TransientSettings } from '@pkg/config/transientSettings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import clone from '@pkg/utils/clone';
 
 describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;

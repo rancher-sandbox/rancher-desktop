@@ -4,10 +4,10 @@ import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import { openPreferences } from './preferences';
 
-import * as K8s from '@/backend/k8s';
-import { IpcRendererEvents } from '@/typings/electron-ipc';
-import { isDevEnv } from '@/utils/environment';
-import Logging from '@/utils/logging';
+import * as K8s from '@pkg/backend/k8s';
+import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
+import { isDevEnv } from '@pkg/utils/environment';
+import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
 

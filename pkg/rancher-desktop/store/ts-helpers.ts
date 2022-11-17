@@ -1,4 +1,4 @@
-import type { UpperSnakeCase } from '@/utils/typeUtils';
+import type { UpperSnakeCase } from '@pkg/utils/typeUtils';
 
 import type { CommitOptions, Dispatch } from 'vuex';
 

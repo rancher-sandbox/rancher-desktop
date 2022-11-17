@@ -5,11 +5,11 @@ import { marked } from 'marked';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import DiagnosticsButtonRun from '@/components/DiagnosticsButtonRun.vue';
-import EmptyState from '@/components/EmptyState.vue';
-import SortableTable from '@/components/SortableTable/index.vue';
-import type { DiagnosticsResult } from '@/main/diagnostics/diagnostics';
-import { DiagnosticsCategory } from '@/main/diagnostics/types';
+import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
+import EmptyState from '@pkg/components/EmptyState.vue';
+import SortableTable from '@pkg/components/SortableTable/index.vue';
+import type { DiagnosticsResult } from '@pkg/main/diagnostics/diagnostics';
+import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 

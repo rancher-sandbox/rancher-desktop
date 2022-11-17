@@ -20,8 +20,8 @@ export default {
       // Override the webpack target, so that we get the correct mix of
       // electron (chrome) + nodejs modules (for ipcRenderer).
       webpackConfig.target = 'electron-renderer';
-      // Set a resolver alias for `./@` so that we can load things from @ in CSS
-      webpackConfig.resolve.alias['./@'] = __dirname;
+      // Set a resolver alias for `./@pkg` so that we can load things from @ in CSS
+      webpackConfig.resolve.alias['./@pkg'] = __dirname;
 
       // Add necessary loaders
       webpackConfig.module.rules.push({
@@ -43,6 +43,8 @@ export default {
   ],
   // Global CSS
   css: [
+    // This @ alias is a nuxt-provided default
+    // https://nuxtjs.org/docs/configuration-glossary/configuration-alias/
     '@/assets/styles/app.scss',
   ],
   generate:         { devtools: isDevelopment },

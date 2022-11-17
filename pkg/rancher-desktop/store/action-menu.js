@@ -1,4 +1,4 @@
-import { filterBy, isArray } from '@/utils/array';
+import { filterBy, isArray } from '@pkg/utils/array';
 
 export const state = function() {
   return {

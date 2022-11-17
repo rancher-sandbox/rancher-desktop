@@ -7,7 +7,7 @@ import _ from 'lodash';
 import ref from 'ref-napi';
 import refStructDi from 'ref-struct-di';
 
-import Logging from '@/utils/logging';
+import Logging from '@pkg/utils/logging';
 
 const console = Logging.networking;
 const Struct = refStructDi(ref);

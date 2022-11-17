@@ -25,7 +25,7 @@ export default Vue.extend({
 </template>
 
 <style lang="scss">
-  @import "@/assets/styles/app.scss";
+  @import "@pkg/assets/styles/app.scss";
 
   .wrapper {
     background-color: var(--body-bg);

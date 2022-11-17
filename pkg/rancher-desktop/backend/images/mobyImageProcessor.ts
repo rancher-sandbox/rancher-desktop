@@ -1,13 +1,13 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import { VMBackend, VMExecutor } from '@/backend/backend';
-import * as imageProcessor from '@/backend/images/imageProcessor';
-import * as K8s from '@/backend/k8s';
-import mainEvents from '@/main/mainEvents';
-import Logging from '@/utils/logging';
-import resources from '@/utils/resources';
-import * as window from '@/window';
+import { VMBackend, VMExecutor } from '@pkg/backend/backend';
+import * as imageProcessor from '@pkg/backend/images/imageProcessor';
+import * as K8s from '@pkg/backend/k8s';
+import mainEvents from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
+import { executable } from '@pkg/utils/resources';
+import * as window from '@pkg/window';
 
 const console = Logging.images;
 
@@ -31,7 +31,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
 
-    return await this.processChildOutput(spawn(resources.executable('docker'), args), subcommandName, sendNotifications);
+    return await this.processChildOutput(spawn(executable('docker'), args), subcommandName, sendNotifications);
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {

@@ -26,26 +26,26 @@ import K3sHelper from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
-import DEPENDENCY_VERSIONS from '@/assets/dependencies.yaml';
-import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
-import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
-import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
-import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
-import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
-import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
-import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
-import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
-import { ContainerEngine } from '@/config/settings';
-import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
-import mainEvents from '@/main/mainEvents';
-import * as childProcess from '@/utils/childProcess';
-import clone from '@/utils/clone';
-import DockerDirManager from '@/utils/dockerDirManager';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { defined, RecursivePartial } from '@/utils/typeUtils';
-import { openSudoPrompt } from '@/window';
+import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
+import DEFAULT_CONFIG from '@pkg/assets/lima-config.yaml';
+import NETWORKS_CONFIG from '@pkg/assets/networks-config.yaml';
+import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
+import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
+import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
+import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
+import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
+import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
+import { ContainerEngine } from '@pkg/config/settings';
+import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
+import mainEvents from '@pkg/main/mainEvents';
+import * as childProcess from '@pkg/utils/childProcess';
+import clone from '@pkg/utils/clone';
+import DockerDirManager from '@pkg/utils/dockerDirManager';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
+import { openSudoPrompt } from '@pkg/window';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.

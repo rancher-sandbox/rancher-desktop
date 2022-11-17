@@ -1,9 +1,9 @@
 import path from 'path';
 
-import mainEvents from '@/main/mainEvents';
-import { spawnFile } from '@/utils/childProcess';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import mainEvents from '@pkg/main/mainEvents';
+import { spawnFile } from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 import type { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
