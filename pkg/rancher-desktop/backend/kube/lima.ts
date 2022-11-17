@@ -142,7 +142,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     let k3sEndpoint = '';
 
     // Remove flannel config if necessary, before starting k3s
-    if (!config.options.flannel) {
+    if (!config.kubernetes.options.flannel) {
       await this.vm.execCommand({ root: true }, 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
     }
 
@@ -156,7 +156,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       'Waiting for Kubernetes API',
       100,
       async() => {
-        await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), config.port);
+        await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), config.kubernetes.port);
         while (true) {
           if (this.vm.currentAction !== Action.STARTING) {
             // User aborted
@@ -205,11 +205,11 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     );
 
     this.activeVersion = kubernetesVersion;
-    this.currentPort = config.port;
+    this.currentPort = config.kubernetes.port;
     this.emit('current-port-changed', this.currentPort);
 
     // Remove traefik if necessary.
-    if (!this.cfg?.options.traefik) {
+    if (!this.cfg?.kubernetes?.options.traefik) {
       await this.progressTracker.action(
         'Removing Traefik',
         50,
@@ -217,7 +217,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     }
 
     await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
-    if (this.cfg?.options.flannel) {
+    if (this.cfg?.kubernetes?.options.flannel) {
       await this.progressTracker.action(
         'Waiting for nodes',
         100,
@@ -252,11 +252,11 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
     //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
 
-    if (config.checkForExistingKimBuilder) {
+    if (config.kubernetes.checkForExistingKimBuilder) {
       this.client ??= new KubeClient();
-      await getImageProcessor(config.containerEngine, this.vm).removeKimBuilder(this.client.k8sClient);
+      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(this.client.k8sClient);
       // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ checkForExistingKimBuilder: false });
+      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
       this.emit('kim-builder-uninstalled');
     }
 
@@ -264,7 +264,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   }
 
   async stop() {
-    if (this.cfg?.enabled) {
+    if (this.cfg?.kubernetes?.enabled) {
       try {
         const script = 'if [ -e /etc/init.d/k3s ]; then /sbin/rc-service --ifstarted k3s stop; fi';
 
@@ -317,13 +317,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   }
 
   get desiredPort() {
-    return this.cfg?.port ?? 6443;
+    return this.cfg?.kubernetes?.port ?? 6443;
   }
 
   protected get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const storedVersion = semver.parse(this.cfg?.version);
+      const storedVersion = semver.parse(this.cfg?.kubernetes?.version);
       const version = storedVersion ?? availableVersions[0];
 
       if (!version) {
@@ -335,14 +335,14 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       if (matchedVersion) {
         if (!storedVersion) {
           // No (valid) stored version; save the selected one.
-          this.vm.writeSetting({ version: matchedVersion.version });
+          this.vm.writeSetting({ kubernetes: { version: matchedVersion.version } });
         }
 
         return matchedVersion;
       }
 
       console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
-      this.vm.writeSetting({ version: availableVersions[0].version });
+      this.vm.writeSetting({ kubernetes: { version: availableVersions[0].version } });
 
       return availableVersions[0];
     })();
@@ -370,13 +370,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected async writeServiceScript(cfg: BackendSettings, allowSudo: boolean) {
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
-      ENGINE:          cfg.containerEngine ?? ContainerEngine.NONE,
+      ENGINE:          cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: '',
       LOG_DIR:         paths.logs,
     };
 
     if (allowSudo && os.platform() === 'darwin') {
-      if (cfg.options.flannel) {
+      if (cfg.kubernetes.options.flannel) {
         const iface = await this.vm.getListeningInterface();
 
         config.ADDITIONAL_ARGS += ` --flannel-iface ${ iface }`;
@@ -385,13 +385,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         config.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
       }
     }
-    if (!cfg.options.traefik) {
+    if (!cfg.kubernetes.options.traefik) {
       config.ADDITIONAL_ARGS += ' --disable traefik';
     }
     await this.vm.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
     await this.vm.writeConf('cri-dockerd', {
       LOG_DIR:         paths.logs,
-      ENGINE:  cfg.containerEngine ?? ContainerEngine.NONE,
+      ENGINE:  cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
     });
     await this.vm.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.vm.writeConf('k3s', config);
@@ -420,19 +420,19 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       currentConfig,
       desiredConfig,
       {
-        version: (current: string, desired: string) => {
+        'kubernetes.version': (current: string, desired: string) => {
           if (semver.gt(current || '0.0.0', desired)) {
             return 'reset';
           }
 
           return 'restart';
         },
-        port:              undefined,
-        containerEngine:   undefined,
-        enabled:           undefined,
-        'options.traefik': undefined,
-        'options.flannel': undefined,
-        suppressSudo:      undefined,
+        'kubernetes.port':            undefined,
+        'kubernetes.containerEngine': undefined,
+        'kubernetes.enabled':         undefined,
+        'kubernetes.options.traefik': undefined,
+        'kubernetes.options.flannel': undefined,
+        'kubernetes.suppressSudo':    undefined,
       },
       extra,
     );

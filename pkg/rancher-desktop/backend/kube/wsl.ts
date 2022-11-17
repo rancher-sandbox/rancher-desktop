@@ -71,7 +71,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const storedVersion = semver.parse(this.cfg?.version);
+      const storedVersion = semver.parse(this.cfg?.kubernetes?.version);
       const version = storedVersion ?? availableVersions[0];
 
       if (!version) {
@@ -83,14 +83,14 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       if (matchedVersion) {
         if (!storedVersion) {
           // No (valid) stored version; save the selected one.
-          this.vm.writeSetting({ version: matchedVersion.version });
+          this.vm.writeSetting({ kubernetes: { version: matchedVersion.version } });
         }
 
         return matchedVersion;
       }
 
       console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
-      this.vm.writeSetting({ version: availableVersions[0].version });
+      this.vm.writeSetting({ kubernetes: { version: availableVersions[0].version } });
 
       return availableVersions[0];
     })();
@@ -112,7 +112,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   }
 
   get desiredPort() {
-    return this.cfg?.port ?? 6443;
+    return this.cfg?.kubernetes?.port ?? 6443;
   }
 
   /**
@@ -195,12 +195,12 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
     this.cfg = config;
 
-    const executable = config.containerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl';
+    const executable = config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl';
 
     await this.vm.verifyReady(executable, 'images');
 
     // Remove flannel config if necessary, before starting k3s
-    if (!config.options.flannel) {
+    if (!config.kubernetes.options.flannel) {
       await this.vm.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
     }
     await this.progressTracker.action('Starting k3s', 100, this.vm.startService('k3s'));
@@ -213,7 +213,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     await this.progressTracker.action(
       'Waiting for Kubernetes API',
       100,
-      this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.port));
+      this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.kubernetes?.port));
     await this.progressTracker.action(
       'Updating kubeconfig',
       100,
@@ -249,11 +249,11 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       });
 
     this.activeVersion = activeVersion;
-    this.currentPort = config.port;
+    this.currentPort = config.kubernetes.port;
     this.emit('current-port-changed', this.currentPort);
 
     // Remove traefik if necessary.
-    if (!config.options.traefik) {
+    if (!config.kubernetes.options.traefik) {
       await this.progressTracker.action(
         'Removing Traefik',
         50,
@@ -261,7 +261,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
 
     await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
-    if (config.options.flannel) {
+    if (config.kubernetes.options.flannel) {
       await this.progressTracker.action(
         'Waiting for nodes',
         100,
@@ -277,10 +277,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
 
     // See comments for this code in lima.ts:start()
-    if (config.checkForExistingKimBuilder) {
-      await getImageProcessor(config.containerEngine, this.vm).removeKimBuilder(client.k8sClient);
+    if (config.kubernetes.checkForExistingKimBuilder) {
+      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(client.k8sClient);
       // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ checkForExistingKimBuilder: false });
+      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
       this.emit('kim-builder-uninstalled');
     }
 
@@ -307,20 +307,20 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       oldConfig,
       newConfig,
       {
-        version: (current: string, desired: string) => {
+        'kubernetes.version': (current: string, desired: string) => {
           if (semver.gt(current || '0.0.0', desired)) {
             return 'reset';
           }
 
           return 'restart';
         },
-        port:              undefined,
-        containerEngine:   undefined,
-        enabled:           undefined,
-        WSLIntegrations:   undefined,
-        'options.traefik': undefined,
-        'options.flannel': undefined,
-        hostResolver:      undefined,
+        'kubernetes.port':            undefined,
+        'kubernetes.containerEngine': undefined,
+        'kubernetes.enabled':         undefined,
+        'kubernetes.WSLIntegrations': undefined,
+        'kubernetes.options.traefik': undefined,
+        'kubernetes.options.flannel': undefined,
+        'kubernetes.hostResolver':    undefined,
       },
       extras,
     ));

@@ -274,7 +274,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   currentAction: Action = Action.NONE;
 
   writeSetting(changed: RecursivePartial<typeof this.cfg>) {
-    mainEvents.emit('settings-write', { kubernetes: changed });
+    if (changed) {
+      mainEvents.emit('settings-write', changed);
+    }
     this.cfg = merge({}, this.cfg, changed);
   }
 
@@ -532,8 +534,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         location: this.baseDiskImage,
         arch:     this.arch,
       }],
-      cpus:   this.cfg?.numberCPUs || 4,
-      memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
+      cpus:   this.cfg?.kubernetes?.numberCPUs || 4,
+      memory: (this.cfg?.kubernetes?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts: [
         { location: path.join(paths.cache, 'k3s'), writable: false },
         { location: paths.logs, writable: true },
@@ -803,13 +805,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @return Whether the user wants to allow the prompt.
    */
   protected async showSudoReason(this: Readonly<this> & this, explanations: Record<string, string[]>): Promise<boolean> {
-    if (this.noModalDialogs || this.cfg?.suppressSudo) {
+    if (this.noModalDialogs || this.cfg?.kubernetes?.suppressSudo) {
       return false;
     }
     const neverAgain = await openSudoPrompt(explanations);
 
     if (neverAgain && this.cfg) {
-      this.writeSetting({ suppressSudo: true });
+      this.writeSetting({ kubernetes: { suppressSudo: true } });
 
       return false;
     }
@@ -1132,7 +1134,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async configureDockerSocket(this: Readonly<this> & this): Promise<SudoCommand | undefined> {
-    if (this.cfg?.containerEngine !== ContainerEngine.MOBY) {
+    if (this.cfg?.kubernetes?.containerEngine !== ContainerEngine.MOBY) {
       return;
     }
     const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
@@ -1334,7 +1336,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       await this.execCommand({ root: true }, 'mkdir', '-p', '/etc/cni/net.d');
 
-      if (this.cfg?.options.flannel) {
+      if (this.cfg?.kubernetes?.options.flannel) {
         await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
       }
       await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
@@ -1400,7 +1402,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     } else {
       const sharedIP = await this.getInterfaceAddr('rd1');
 
-      if (!this.cfg?.suppressSudo) {
+      if (!this.cfg?.kubernetes?.suppressSudo) {
         await this.noBridgedNetworkDialog(sharedIP);
       }
       if (sharedIP) {
@@ -1485,7 +1487,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @precondition The VM configuration is correct.
    */
   protected async startVM() {
-    const vmnet = this.cfg?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
+    const vmnet = this.cfg?.kubernetes?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
     let allowRoot = this.#allowSudo;
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
@@ -1530,7 +1532,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
-    this.#allowSudo = !config_.suppressSudo;
+    this.#allowSudo = !config_.kubernetes?.suppressSudo;
     await this.progressTracker.action('Starting Backend', 10, async() => {
       try {
         await this.ensureArchitectureMatch();
@@ -1549,7 +1551,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         await this.startVM();
 
-        if (config.enabled) {
+        if (config.kubernetes?.enabled) {
           [kubernetesVersion, isDowngrade] = await this.kubeBackend.download(config);
 
           if (typeof (kubernetesVersion) === 'undefined') {
@@ -1587,9 +1589,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
-        if (config.containerEngine === ContainerEngine.CONTAINERD) {
+        if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
-        } else if (config.containerEngine === ContainerEngine.MOBY) {
+        } else if (config.kubernetes.containerEngine === ContainerEngine.MOBY) {
           await this.startService('docker');
         }
         if (kubernetesVersion) {
@@ -1620,16 +1622,16 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           k3sEndpoint = await this.kubeBackend.start(config, kubernetesVersion);
         }
 
-        if (config.containerEngine === ContainerEngine.MOBY) {
+        if (config.kubernetes.containerEngine === ContainerEngine.MOBY) {
           await this.dockerDirManager.ensureDockerContextConfigured(
             this.#allowSudo,
             path.join(paths.altAppHome, 'docker.sock'),
             k3sEndpoint);
-        } else if (config.containerEngine === ContainerEngine.CONTAINERD) {
+        } else if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        await this.setState(config.enabled ? State.STARTED : State.DISABLED);
+        await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);
       } catch (err) {
         console.error('Error starting lima:', err);
         await this.setState(State.ERROR);
@@ -1744,7 +1746,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         existingConfig = {};
       }
       merge(existingConfig, defaultConfig);
-      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+      if (this.cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD) {
         existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
@@ -1772,7 +1774,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          if (this.cfg?.enabled) {
+          if (this.cfg?.kubernetes?.enabled) {
             try {
               await this.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             } catch (ex) {
@@ -1834,11 +1836,11 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       return reasons; // No need to restart if nothing exists
     }
     if (process.platform === 'darwin') {
-      if (typeof cfg.experimental?.socketVMNet !== 'undefined') {
-        if (this.cfg.experimental.socketVMNet !== cfg.experimental.socketVMNet) {
+      if (typeof cfg.kubernetes?.experimental?.socketVMNet !== 'undefined') {
+        if (this.cfg.kubernetes?.experimental.socketVMNet !== cfg.kubernetes.experimental.socketVMNet) {
           reasons['kubernetes.experimental.socketVMNet'] = {
-            current:  this.cfg.experimental.socketVMNet,
-            desired:  cfg.experimental.socketVMNet,
+            current:  this.cfg.kubernetes.experimental.socketVMNet,
+            desired:  cfg.kubernetes.experimental.socketVMNet,
             severity: 'restart',
           };
         }
@@ -1846,8 +1848,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     }
     if (limaConfig) {
       Object.assign(reasons, await this.kubeBackend.requiresRestartReasons(this.cfg, cfg, {
-        numberCPUs: { current: limaConfig.cpus ?? 2 },
-        memoryInGB: { current: (limaConfig.memory ?? 4 * GiB) / GiB },
+        'kubernetes.numberCPUs': { current: limaConfig.cpus ?? 2 },
+        'kubernetes.memoryInGB': { current: (limaConfig.memory ?? 4 * GiB) / GiB },
       }));
     }
 

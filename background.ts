@@ -283,7 +283,7 @@ async function startK8sManager() {
   if (changedContainerEngine) {
     setupImageProcessor();
   }
-  await k8smanager.start(cfg.kubernetes);
+  await k8smanager.start(cfg);
 }
 
 /**
@@ -486,7 +486,7 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart', context: Command
   try {
     switch (arg) {
     case 'fast':
-      await k8smanager.reset(cfg.kubernetes);
+      await k8smanager.reset(cfg);
       break;
     case 'fullRestart':
       await k8smanager.stop();
@@ -893,7 +893,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     }
 
     // Check if the newly applied preferences demands a restart of the backend.
-    const restartReasons = await k8smanager.requiresRestartReasons(cfg.kubernetes);
+    const restartReasons = await k8smanager.requiresRestartReasons(cfg);
 
     if (Object.keys(restartReasons).length === 0) {
       return ['settings updated; no restart required', ''];
@@ -919,7 +919,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     if (errors.length > 0) {
       return ['', `Errors in proposed settings:\n${ errors.join('\n') }`];
     }
-    const result = await k8smanager?.requiresRestartReasons(newSettings?.kubernetes ?? {}) ?? {};
+    const result = await k8smanager?.requiresRestartReasons(newSettings ?? {}) ?? {};
 
     return [JSON.stringify(result), ''];
   }
