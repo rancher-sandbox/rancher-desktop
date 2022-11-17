@@ -322,16 +322,15 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     // Check that this release has all the assets we expect.
-    if (entry.assets.find(ea => ea.name === this.filenames.exe)) {
-      if (entry.assets.find(ea => ea.name === this.filenames.checksum)) {
-        const foundImage = this.filenames.images.find(name => entry.assets.some(v => v.name === name));
+    if (entry.assets.find(ea => ea.name === this.filenames.exe) &&
+        entry.assets.find(ea => ea.name === this.filenames.checksum)) {
+      const foundImage = this.filenames.images.find(name => entry.assets.some(v => v.name === name));
 
-        if (foundImage) {
-          this.versions[version.version] = new VersionEntry(version);
-          console.log(`Adding version ${ version.raw } - ${ foundImage }`);
-        } else {
-          console.debug(`Skipping version ${ version.raw } due to missing files`);
-        }
+      if (foundImage) {
+        this.versions[version.version] = new VersionEntry(version);
+        console.log(`Adding version ${ version.raw } - ${ foundImage }`);
+      } else {
+        console.debug(`Skipping version ${ version.raw } due to missing files`);
       }
     }
 
