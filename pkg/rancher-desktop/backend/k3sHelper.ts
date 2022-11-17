@@ -685,21 +685,9 @@ export default class K3sHelper extends events.EventEmitter {
           sums[filename] = sum;
         }
 
-        let existingIndex;
+        const existsName = this.filenames.images.find(name => fs.existsSync(path.join(dir, name))) ?? '';
 
-        for (let index = 0; typeof existingIndex === 'undefined' && index < this.filenames.images.length; index++) {
-          try {
-            await fs.promises.access(path.join(dir, this.filenames.images[index]), fs.constants.R_OK);
-            existingIndex = index;
-          } catch {
-            // ignore access error and try next iteration, if any
-          }
-        }
-        if (existingIndex === undefined) {
-          existingIndex = 0;
-        }
-
-        const promises = [this.filenames.exe, this.filenames.images[existingIndex]].map(async(filename) => {
+        const promises = [this.filenames.exe, existsName].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
