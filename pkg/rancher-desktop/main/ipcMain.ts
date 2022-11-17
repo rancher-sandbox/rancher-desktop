@@ -1,6 +1,6 @@
 import Electron from 'electron';
 
-import { Log } from '@/utils/logging';
+import { Log } from '@pkg/utils/logging';
 
 // Intended to be passed to the replacer parameter in a JSON.stringify
 // call. Should rectify any circular references that the object you are

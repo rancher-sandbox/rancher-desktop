@@ -1,13 +1,14 @@
 <script lang="ts">
+
 import Vue from 'vue';
 
-import PreferencesAlert from '@/components/Preferences/Alert.vue';
-import PreferencesBodyApplication from '@/components/Preferences/BodyApplication.vue';
-import PreferencesBodyContainerEngine from '@/components/Preferences/BodyContainerEngine.vue';
-import PreferencesBodyKubernetes from '@/components/Preferences/BodyKubernetes.vue';
-import PreferencesBodyVirtualMachine from '@/components/Preferences/BodyVirtualMachine.vue';
-import PreferencesBodyWsl from '@/components/Preferences/BodyWsl.vue';
-import { Settings } from '@/config/settings';
+import PreferencesAlert from '@pkg/components/Preferences/Alert.vue';
+import PreferencesBodyApplication from '@pkg/components/Preferences/BodyApplication.vue';
+import PreferencesBodyContainerEngine from '@pkg/components/Preferences/BodyContainerEngine.vue';
+import PreferencesBodyKubernetes from '@pkg/components/Preferences/BodyKubernetes.vue';
+import PreferencesBodyVirtualMachine from '@pkg/components/Preferences/BodyVirtualMachine.vue';
+import PreferencesBodyWsl from '@pkg/components/Preferences/BodyWsl.vue';
+import { Settings } from '@pkg/config/settings';
 
 import type { PropType } from 'vue';
 

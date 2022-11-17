@@ -2,9 +2,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import manageLinesInFile from '@/integrations/manageLinesInFile';
-import mainEvents from '@/main/mainEvents';
-import paths from '@/utils/paths';
+import manageLinesInFile from '@pkg/integrations/manageLinesInFile';
+import mainEvents from '@pkg/main/mainEvents';
+import paths from '@pkg/utils/paths';
 
 /**
  * PathManager is the interface that anything that manages the

@@ -4,8 +4,8 @@ import _ from 'lodash';
 
 import SettingsValidator from '../settingsValidator';
 
-import * as settings from '@/config/settings';
-import { PathManagementStrategy } from '@/integrations/pathManager';
+import * as settings from '@pkg/config/settings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 
 const cfg = _.merge(
   {},

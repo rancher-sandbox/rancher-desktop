@@ -4,7 +4,7 @@ import path from 'path';
 
 import * as childProcess from '../childProcess';
 
-import { Log } from '@/utils/logging';
+import { Log } from '@pkg/utils/logging';
 
 describe(childProcess.spawnFile, () => {
   function makeArg(fn: () => void) {

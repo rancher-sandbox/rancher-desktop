@@ -66,7 +66,7 @@ const { toString } = Object.prototype;
 
   Examples:
 
-  import { typeOf } from '@/utils/type-of';
+  import { typeOf } from '@pkg/utils/type-of';
 
   typeOf();                       // 'undefined'
   typeOf(null);                   // 'null'

@@ -5,11 +5,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { download, getResource } from '../lib/download';
+
 import {
   DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, getOctokit, UnreleasedChangeMonitor, hasUnreleasedChanges, HasUnreleasedChangesResult,
 } from 'scripts/lib/dependencies';
-
-import { download, getResource } from '../lib/download';
 
 export class LimaAndQemu extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
   name = 'limaAndQemu';

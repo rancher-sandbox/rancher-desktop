@@ -2,9 +2,9 @@ import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { defaultTransientSettings, TransientSettings } from '@/config/transientSettings';
-import type { ServerState } from '@/main/commandServer/httpCommandServer';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { defaultTransientSettings, TransientSettings } from '@pkg/config/transientSettings';
+import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { GetterTree } from 'vuex';
 

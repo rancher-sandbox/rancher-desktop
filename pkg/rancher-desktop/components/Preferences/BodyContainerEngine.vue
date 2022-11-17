@@ -1,15 +1,16 @@
 <script lang="ts">
+
 import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
-import PreferencesContainerEngineAllowedImages from '@/components/Preferences/ContainerEngineAllowedImages.vue';
-import PreferencesContainerEngineGeneral from '@/components/Preferences/ContainerEngineGeneral.vue';
-import RdTabbed from '@/components/Tabbed/RdTabbed.vue';
-import Tab from '@/components/Tabbed/Tab.vue';
-import { Settings } from '@/config/settings';
-import { TransientSettings } from '@/config/transientSettings';
-import { ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
-import { RecursivePartial } from '@/utils/typeUtils';
+import PreferencesContainerEngineAllowedImages from '@pkg/components/Preferences/ContainerEngineAllowedImages.vue';
+import PreferencesContainerEngineGeneral from '@pkg/components/Preferences/ContainerEngineGeneral.vue';
+import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
+import Tab from '@pkg/components/Tabbed/Tab.vue';
+import { Settings } from '@pkg/config/settings';
+import { TransientSettings } from '@pkg/config/transientSettings';
+import { ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

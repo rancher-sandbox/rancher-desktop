@@ -2,9 +2,9 @@
 import { Checkbox, StringList } from '@rancher/components';
 import Vue from 'vue';
 
-import RdFieldset from '@/components/form/RdFieldset.vue';
-import { Settings } from '@/config/settings';
-import { RecursiveTypes } from '@/utils/typeUtils';
+import RdFieldset from '@pkg/components/form/RdFieldset.vue';
+import { Settings } from '@pkg/config/settings';
+import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

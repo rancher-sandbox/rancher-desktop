@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import ImageBuildOutputCuller from '@/utils/processOutputInterpreters/image-build-output';
+import ImageBuildOutputCuller from '@pkg/utils/processOutputInterpreters/image-build-output';
 
 describe('image build output', () => {
   it('returns the raw text back', () => {

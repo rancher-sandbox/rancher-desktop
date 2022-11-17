@@ -5,10 +5,10 @@ import path from 'path';
 
 import yaml from 'yaml';
 
-import BackgroundProcess from '@/utils/backgroundProcess';
-import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import BackgroundProcess from '@pkg/utils/backgroundProcess';
+import * as childProcess from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const vtunnelConfig = 'vtunnel-config.yaml';
 

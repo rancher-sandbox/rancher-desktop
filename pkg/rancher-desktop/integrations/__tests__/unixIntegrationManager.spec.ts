@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import UnixIntegrationManager, { ensureSymlink } from '@/integrations/unixIntegrationManager';
+import UnixIntegrationManager, { ensureSymlink } from '@pkg/integrations/unixIntegrationManager';
 
 const INTEGRATION_DIR_NAME = 'integrationDir';
 const TMPDIR_PREFIX = 'rdtest-';

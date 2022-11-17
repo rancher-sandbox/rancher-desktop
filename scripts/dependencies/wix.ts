@@ -4,7 +4,7 @@ import path from 'path';
 import { Dependency, DownloadContext, GithubVersionGetter } from '../lib/dependencies';
 import { download } from '../lib/download';
 
-import { spawnFile } from '@/utils/childProcess';
+import { spawnFile } from '@pkg/utils/childProcess';
 
 /**
  * Wix downloads the latest build of WiX3.

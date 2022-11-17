@@ -8,8 +8,9 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import babelConfig from 'babel.config';
 import webpack from 'webpack';
+
+import babelConfig from 'babel.config';
 
 /**
  * A promise that is resolved when the child exits.
@@ -130,7 +131,7 @@ export default {
       externals: [...Object.keys(this.packageMeta.dependencies)],
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
-        alias:      { '@': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
+        alias:      { '@pkg': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
         extensions: ['.ts', '.js', '.json'],
         modules:    ['node_modules'],
       },

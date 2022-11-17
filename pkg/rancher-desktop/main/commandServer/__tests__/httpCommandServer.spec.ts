@@ -5,7 +5,7 @@ import path from 'path';
 
 import { HttpCommandServer } from '../httpCommandServer';
 
-import { spawnFile } from '@/utils/childProcess';
+import { spawnFile } from '@pkg/utils/childProcess';
 
 describe(HttpCommandServer, () => {
   let itWindows = it;

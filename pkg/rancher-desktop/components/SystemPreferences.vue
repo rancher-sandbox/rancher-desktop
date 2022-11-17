@@ -1,5 +1,5 @@
 <script>
-import RdSlider from '@/components/form/RdSlider.vue';
+import RdSlider from '@pkg/components/form/RdSlider.vue';
 
 export default {
   components: { RdSlider },

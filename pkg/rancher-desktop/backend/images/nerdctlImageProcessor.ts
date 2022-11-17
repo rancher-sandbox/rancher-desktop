@@ -4,13 +4,13 @@ import path from 'path';
 import * as k8s from '@kubernetes/client-node';
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
 
-import { VMBackend, VMExecutor } from '@/backend/backend';
-import * as imageProcessor from '@/backend/images/imageProcessor';
-import * as K8s from '@/backend/k8s';
-import mainEvents from '@/main/mainEvents';
-import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
-import resources from '@/utils/resources';
+import { VMBackend, VMExecutor } from '@pkg/backend/backend';
+import * as imageProcessor from '@pkg/backend/images/imageProcessor';
+import * as K8s from '@pkg/backend/k8s';
+import mainEvents from '@pkg/main/mainEvents';
+import * as childProcess from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
+import { executable } from '@pkg/utils/resources';
 
 const console = Logging.images;
 
@@ -73,7 +73,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     const subcommandName = args[0];
     const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
 
-    return await this.processChildOutput(spawn(resources.executable('nerdctl'), namespacedArgs), subcommandName, sendNotifications);
+    return await this.processChildOutput(spawn(executable('nerdctl'), namespacedArgs), subcommandName, sendNotifications);
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
@@ -120,7 +120,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
   }
 
   async getNamespaces(): Promise<Array<string>> {
-    const { stdout, stderr } = await childProcess.spawnFile(resources.executable('nerdctl'),
+    const { stdout, stderr } = await childProcess.spawnFile(executable('nerdctl'),
       ['namespace', 'list', '--quiet'],
       { stdio: ['inherit', 'pipe', 'pipe'] });
 

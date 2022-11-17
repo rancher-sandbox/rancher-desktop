@@ -10,9 +10,9 @@ import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electr
 import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
 import semver from 'semver';
 
-import fetch from '@/utils/fetch';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import fetch from '@pkg/utils/fetch';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');

@@ -1,4 +1,4 @@
-import { ROWS_PER_PAGE } from '@/store/prefs';
+import { ROWS_PER_PAGE } from '@pkg/store/prefs';
 
 export default {
   computed: {

@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { removeLegacySymlinks } from '@/integrations/legacy';
+import { removeLegacySymlinks } from '@pkg/integrations/legacy';
 
 const TMPDIR_PREFIX = 'rdtest-';
 

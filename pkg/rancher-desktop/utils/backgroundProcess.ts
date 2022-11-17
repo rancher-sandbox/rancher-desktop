@@ -1,7 +1,7 @@
 import timers from 'timers';
 
-import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
+import * as childProcess from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
 

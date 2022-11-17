@@ -10,8 +10,8 @@ import { findFile } from 'electron-updater/out/providers/Provider';
 import { verifySignature } from 'electron-updater/out/windowsExecutableCodeSignatureVerifier';
 import { Lazy } from 'lazy-val';
 
-import mainEvents from '@/main/mainEvents';
-import paths from '@/utils/paths';
+import mainEvents from '@pkg/main/mainEvents';
+import paths from '@pkg/utils/paths';
 
 import type { AppAdapter } from 'electron-updater/out/AppAdapter';
 import type { DownloadUpdateOptions } from 'electron-updater/out/AppUpdater';

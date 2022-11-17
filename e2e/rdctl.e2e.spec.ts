@@ -32,11 +32,11 @@ import {
   createDefaultSettings, kubectl, packageLogs, reportAsset, tool,
 } from './utils/TestUtils';
 
-import { ContainerEngine, Settings } from '@/config/settings';
-import { ServerState } from '@/main/commandServer/httpCommandServer';
-import { spawnFile } from '@/utils/childProcess';
-import paths from '@/utils/paths';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { ContainerEngine, Settings } from '@pkg/config/settings';
+import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { spawnFile } from '@pkg/utils/childProcess';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;

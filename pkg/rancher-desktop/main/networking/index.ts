@@ -12,9 +12,9 @@ import getMacCertificates from './mac-ca';
 import ElectronProxyAgent from './proxy';
 import getWinCertificates from './win-ca';
 
-import mainEvents from '@/main/mainEvents';
-import Logging from '@/utils/logging';
-import { windowMapping } from '@/window';
+import mainEvents from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
+import { windowMapping } from '@pkg/window';
 
 const console = Logging.networking;
 

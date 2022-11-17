@@ -3,10 +3,10 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 
-import * as childProcess from '@/utils/childProcess';
-import DockerDirManager from '@/utils/dockerDirManager';
-import { Log } from '@/utils/logging';
-import paths from '@/utils/paths';
+import * as childProcess from '@pkg/utils/childProcess';
+import DockerDirManager from '@pkg/utils/dockerDirManager';
+import { Log } from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
 const itDarwin = os.platform() === 'darwin' ? it : it.skip;

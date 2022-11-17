@@ -8,11 +8,11 @@ import path from 'path';
 import { expect } from '@playwright/test';
 import _ from 'lodash';
 
-import { defaultSettings, Settings } from '@/config/settings';
-import { PathManagementStrategy } from '@/integrations/pathManager';
-import * as childProcess from '@/utils/childProcess';
-import paths from '@/utils/paths';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { defaultSettings, Settings } from '@pkg/config/settings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import * as childProcess from '@pkg/utils/childProcess';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 /**
  * Create empty default settings to bypass gracefully

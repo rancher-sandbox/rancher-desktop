@@ -7,11 +7,11 @@ import { dirname, join } from 'path';
 
 import _ from 'lodash';
 
-import { TransientSettings } from '@/config/transientSettings';
-import { PathManagementStrategy } from '@/integrations/pathManager';
-import clone from '@/utils/clone';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import { TransientSettings } from '@pkg/config/transientSettings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import clone from '@pkg/utils/clone';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const console = Logging.settings;
 

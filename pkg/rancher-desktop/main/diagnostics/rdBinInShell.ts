@@ -5,11 +5,11 @@ import which from 'which';
 
 import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
-import { PathManagementStrategy } from '@/integrations/pathManager';
-import mainEvents from '@/main/mainEvents';
-import { spawnFile } from '@/utils/childProcess';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import mainEvents from '@pkg/main/mainEvents';
+import { spawnFile } from '@pkg/utils/childProcess';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const console = Logging.diagnostics;
 const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH:';

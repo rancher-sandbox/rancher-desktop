@@ -12,7 +12,7 @@ import * as path from 'path';
 import buildUtils from './lib/build-utils';
 import buildInstaller from './lib/installer-win32';
 
-import { spawnFile } from '@/utils/childProcess';
+import { spawnFile } from '@pkg/utils/childProcess';
 
 class Builder {
   async cleanup() {

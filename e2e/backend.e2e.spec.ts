@@ -10,10 +10,10 @@ import semver from 'semver';
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 
-import { Settings, ContainerEngine } from '@/config/settings';
-import fetch from '@/utils/fetch';
-import paths from '@/utils/paths';
-import { RecursivePartial, RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+import { Settings, ContainerEngine } from '@pkg/config/settings';
+import fetch from '@pkg/utils/fetch';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial, RecursiveKeys, RecursiveTypes } from '@pkg/utils/typeUtils';
 
 test.describe.serial('KubernetesBackend', () => {
   let electronApp: ElectronApplication;

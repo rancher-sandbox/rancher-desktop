@@ -201,15 +201,7 @@ Object.assign(module.exports.rules, {
     'newlines-between': 'always',
     pathGroups:         [
       {
-        pattern: '@/**',
-        group:   'internal',
-      },
-      {
         pattern: '@pkg/**',
-        group:   'internal',
-      },
-      {
-        pattern: '~/**',
         group:   'internal',
       },
     ],

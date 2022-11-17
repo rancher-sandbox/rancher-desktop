@@ -46,7 +46,7 @@ import { marked } from 'marked';
 import Vue from 'vue';
 import Component from 'vue-class-component';
 
-import { UpdateState } from '@/main/update';
+import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
 

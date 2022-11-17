@@ -9,7 +9,7 @@ import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsCodeSign'
 import defaults from 'lodash/defaultsDeep';
 import yaml from 'yaml';
 
-import * as childProcess from '@/utils/childProcess';
+import * as childProcess from '@pkg/utils/childProcess';
 
 /**
  * Mandatory configuration for Windows.

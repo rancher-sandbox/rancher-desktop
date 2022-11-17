@@ -7,8 +7,8 @@ import { createProxyMiddleware, Options, RequestHandler } from 'http-proxy-middl
 
 import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
 
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const ProxyKeys = ['/k8s', '/pp', '/api', '/apis', '/v1', '/v3', '/v3-public', '/api-ui', '/meta', '/v1-*'] as const;
 

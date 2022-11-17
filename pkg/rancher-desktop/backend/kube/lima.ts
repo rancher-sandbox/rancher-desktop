@@ -12,21 +12,21 @@ import { Architecture, BackendSettings, RestartReasons } from '../backend';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action, MACHINE_NAME } from '../lima';
 
-import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
-import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
-import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
-import { KubeClient } from '@/backend/client';
-import { getImageProcessor } from '@/backend/images/imageFactory';
-import * as K8s from '@/backend/k8s';
-import { ContainerEngine } from '@/config/settings';
-import mainEvents from '@/main/mainEvents';
-import { checkConnectivity } from '@/main/networking';
-import clone from '@/utils/clone';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import { RecursivePartial } from '@/utils/typeUtils';
-import { showMessageBox } from '@/window';
+import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
+import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
+import SERVICE_CRI_DOCKERD_SCRIPT from '@pkg/assets/scripts/service-cri-dockerd.initd';
+import SERVICE_K3S_SCRIPT from '@pkg/assets/scripts/service-k3s.initd';
+import { KubeClient } from '@pkg/backend/client';
+import { getImageProcessor } from '@pkg/backend/images/imageFactory';
+import * as K8s from '@pkg/backend/k8s';
+import { ContainerEngine } from '@pkg/config/settings';
+import mainEvents from '@pkg/main/mainEvents';
+import { checkConnectivity } from '@pkg/main/networking';
+import clone from '@pkg/utils/clone';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { showMessageBox } from '@pkg/window';
 
 const console = Logging.kube;
 

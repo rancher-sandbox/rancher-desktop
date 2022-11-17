@@ -2,7 +2,7 @@ import { app, dialog } from 'electron';
 
 import { webRoot, createWindow } from '.';
 
-import { NavItemName } from '@/config/transientSettings';
+import { NavItemName } from '@pkg/config/transientSettings';
 
 interface NavItems {
   name: NavItemName;

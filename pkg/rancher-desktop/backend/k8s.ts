@@ -4,8 +4,8 @@ import { BackendSettings, RestartReasons } from './backend';
 import { ServiceEntry } from './client';
 import { ExtraRequiresReasons } from './k3sHelper';
 
-import EventEmitter from '@/utils/eventEmitter';
-import { RecursivePartial } from '@/utils/typeUtils';
+import EventEmitter from '@pkg/utils/eventEmitter';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 export { State, BackendError as KubernetesError } from './backend';
 export type {

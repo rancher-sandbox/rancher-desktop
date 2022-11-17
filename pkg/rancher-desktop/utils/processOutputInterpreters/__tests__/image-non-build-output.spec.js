@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import ImageNonBuildOutputCuller from '@/utils/processOutputInterpreters/image-non-build-output';
+import ImageNonBuildOutputCuller from '@pkg/utils/processOutputInterpreters/image-non-build-output';
 
 describe('simple image output', () => {
   describe('push', () => {

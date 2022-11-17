@@ -4,8 +4,8 @@ import path from 'path';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const console = Logging.diagnostics;
 

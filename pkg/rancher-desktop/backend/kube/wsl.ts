@@ -10,15 +10,15 @@ import { getImageProcessor } from '../images/imageFactory';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import WSLBackend, { Action } from '../wsl';
 
-import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import { BackendSettings, RestartReasons } from '@/backend/backend';
-import * as K8s from '@/backend/k8s';
-import { ContainerEngine } from '@/config/settings';
-import mainEvents from '@/main/mainEvents';
-import { checkConnectivity } from '@/main/networking';
-import paths from '@/utils/paths';
-import { RecursivePartial } from '@/utils/typeUtils';
-import { showMessageBox } from '@/window';
+import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
+import { BackendSettings, RestartReasons } from '@pkg/backend/backend';
+import * as K8s from '@pkg/backend/k8s';
+import { ContainerEngine } from '@pkg/config/settings';
+import mainEvents from '@pkg/main/mainEvents';
+import { checkConnectivity } from '@pkg/main/networking';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { showMessageBox } from '@pkg/window';
 
 export default class WSLKubernetesBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(vm: WSLBackend) {
