@@ -2,7 +2,6 @@
 
 import Vue from 'vue';
 
-import PreferencesAlert from '@pkg/components/Preferences/Alert.vue';
 import PreferencesBodyApplication from '@pkg/components/Preferences/BodyApplication.vue';
 import PreferencesBodyContainerEngine from '@pkg/components/Preferences/BodyContainerEngine.vue';
 import PreferencesBodyKubernetes from '@pkg/components/Preferences/BodyKubernetes.vue';
@@ -12,15 +11,17 @@ import { Settings } from '@pkg/config/settings';
 
 import type { PropType } from 'vue';
 
+import Help from '@/components/Help.vue';
+
 export default Vue.extend({
   name:       'preferences-body',
   components: {
+    Help,
     PreferencesBodyApplication,
     PreferencesBodyVirtualMachine,
     PreferencesBodyWsl,
     PreferencesBodyContainerEngine,
     PreferencesBodyKubernetes,
-    PreferencesAlert,
   },
   props:      {
     currentNavItem: {
@@ -52,9 +53,7 @@ export default Vue.extend({
         v-on="$listeners"
       />
     </slot>
-    <div class="preferences-alert">
-      <preferences-alert />
-    </div>
+    <help class="help" />
   </div>
 </template>
 
@@ -63,9 +62,8 @@ export default Vue.extend({
     display: flex;
     flex-direction: column;
 
-    .preferences-alert {
-      margin-top: auto;
-      padding: var(--preferences-content-padding);
+    .help {
+      margin: auto 0.75rem 0.75rem auto;
     }
   }
 </style>
