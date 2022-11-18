@@ -1,7 +1,8 @@
 import path from 'path';
 
-import { readDependencyVersions, getOctokit, RancherDesktopRepository, IssueOrPullRequest } from 'scripts/lib/dependencies';
 import semver from 'semver';
+
+import { readDependencyVersions, getOctokit, RancherDesktopRepository, IssueOrPullRequest } from 'scripts/lib/dependencies';
 
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
