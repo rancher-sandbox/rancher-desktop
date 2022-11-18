@@ -50,6 +50,7 @@ function getAppVersion(appDir: string): string {
 export default async function buildInstaller(workDir: string, appDir: string, development = false) {
   const appVersion = getAppVersion(appDir);
   const compressionLevel = development ? 'mszip' : 'high';
+  const outFile = path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`);
 
   await writeUpdateConfig(appDir);
   const fileList = await generateFileList(appDir);
@@ -93,14 +94,16 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     '-sice:ICE61',
     `-dappDir=${ appDir }`,
     '-ext', 'WixUIExtension',
+    '-ext', 'WixUtilExtension',
     '-nologo',
-    '-out', path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`),
+    '-out', outFile,
     '-pedantic',
     '-wx',
     '-cc', path.join(process.cwd(), 'dist', 'wix-cache'),
     '-reusecab',
     ...inputs.map(n => path.join(workDir, `${ path.basename(n, '.wxs') }.wixobj`)),
   ], { stdio: 'inherit' });
+  console.log(`Built Windows installer: ${ outFile }`);
 }
 
 /**
