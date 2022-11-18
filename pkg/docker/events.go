@@ -77,7 +77,6 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 			return
 		case event := <-msgCh:
-			log.Debugf("received an event: %+v", event)
 			container, err := e.dockerClient.ContainerInspect(ctx, event.ID)
 			if err != nil {
 				log.Errorf("inspecting container [%v] failed: %v", event.ID, err)
@@ -85,9 +84,15 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				continue
 			}
 
+			log.Debugf("received an event: {Status: %+v ContainerID: %+v Ports: %+v}",
+				event.Action,
+				event.ID,
+				container.NetworkSettings.NetworkSettingsBase.Ports)
+
 			switch event.Action {
 			case startEvent:
 				if len(container.NetworkSettings.NetworkSettingsBase.Ports) != 0 {
+					validatePortMapping(container.NetworkSettings.NetworkSettingsBase.Ports)
 					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
 					if err != nil {
 						log.Errorf("adding port mapping to tracker failed: %w", err)
@@ -151,6 +156,10 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 	portMap := make(nat.PortMap)
 
 	for _, port := range ports {
+		if port.IP == "" || port.PublicPort == 0 {
+			continue
+		}
+
 		portMapKey, err := nat.NewPort(port.Type, strconv.Itoa(int(port.PrivatePort)))
 		if err != nil {
 			return nil, err
@@ -169,4 +178,15 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 	}
 
 	return portMap, nil
+}
+
+// Removes entries in port mapping that do no hold any values
+// for IP and Port e.g 9000/tcp:[].
+func validatePortMapping(portMap nat.PortMap) {
+	for k, v := range portMap {
+		if len(v) == 0 {
+			log.Debugf("removing entry: %v from the portmappings: %v", k, portMap)
+			delete(portMap, k)
+		}
+	}
 }
