@@ -157,3 +157,42 @@ export function getOctokit() {
 
   return new Octokit({ auth: personalAccessToken });
 }
+
+export type IssueOrPullRequest = Awaited<ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>>['data']['items'][0];
+
+/**
+ * Represents the main Rancher Desktop repo (rancher-sandbox/rancher-desktop
+ * as of the time of writing) or one of its forks.
+ */
+export class RancherDesktopRepository {
+  owner: string;
+  repo: string;
+
+  constructor(owner: string, repo: string) {
+    this.owner = owner;
+    this.repo = repo;
+  }
+
+  async createIssue(title: string, body: string): Promise<void> {
+    const result = await getOctokit().rest.issues.create({
+      owner: this.owner, repo: this.repo, title, body,
+    });
+    const issue = result.data;
+
+    console.log(`Created issue #${ issue.number }: "${ issue.title }"`);
+  }
+
+  async reopenIssue(issue: IssueOrPullRequest): Promise<void> {
+    await getOctokit().rest.issues.update({
+      owner: this.owner, repo: this.repo, issue_number: issue.number, state: 'open',
+    });
+    console.log(`Reopened issue #${ issue.number }: "${ issue.title }"`);
+  }
+
+  async closeIssue(issue: IssueOrPullRequest): Promise<void> {
+    await getOctokit().rest.issues.update({
+      owner: this.owner, repo: this.repo, issue_number: issue.number, state: 'closed',
+    });
+    console.log(`Closed issue #${ issue.number }: "${ issue.title }"`);
+  }
+}
