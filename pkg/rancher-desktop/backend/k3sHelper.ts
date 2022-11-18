@@ -685,9 +685,20 @@ export default class K3sHelper extends events.EventEmitter {
           sums[filename] = sum;
         }
 
-        const existsName = this.filenames.images.find(name => fs.existsSync(path.join(dir, name))) ?? '';
+        let existsIndex;
 
-        const promises = [this.filenames.exe, existsName].map(async(filename) => {
+        for (let index = 0; typeof existsIndex === 'undefined' && index < this.filenames.images.length; index++) {
+          try {
+            await fs.promises.access(path.join(dir, this.filenames.images[index]), fs.constants.R_OK);
+            existsIndex = index;
+          } catch {
+            // ignore access error and try next iteration if any
+          }
+        }
+        if (typeof existsIndex === 'undefined') {
+          existsIndex = 0;
+        }
+        const promises = [this.filenames.exe, this.filenames.images[existsIndex]].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
@@ -734,20 +745,21 @@ export default class K3sHelper extends events.EventEmitter {
         let outPath;
         let response;
 
-        let index = 0;
+        for (const name of namearray) {
+          const fileURL = `${ this.downloadUrl }/${ version.raw }/${ name }`;
 
-        do {
-          const fileURL = `${ this.downloadUrl }/${ version.raw }/${ namearray[index] }`;
-
-          outPath = path.join(workDir, namearray[index]);
+          outPath = path.join(workDir, name);
           console.log(`Will attempt to download ${ filekey } ${ fileURL } to ${ outPath }`);
           response = await fetch(fileURL);
-          index++;
-        } while (!response.ok && index < namearray.length);
-
-        if (!response.ok) {
-          throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
+          if (response.ok) {
+            break;
+          }
         }
+
+        if (!response || !outPath) {
+          throw new Error(`Error downloading ${ filename } ${ version }: No ${ filekey }s found}`);
+        }
+
         const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
         const status = this.progress[progresskey];
 
