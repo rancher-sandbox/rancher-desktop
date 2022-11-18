@@ -598,7 +598,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * @param fileContents The contents of the file.
    * @param [options] An object with fields .permissions=0o644 (the file permissions); and .distro=INSTANCE_NAME (WSL distribution to write to).
    */
-  async writeFile(filePath: string, fileContents: string, options?: Partial<{ permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME }>) {
+  async writeFileWSL(filePath: string, fileContents: string, options?: Partial<{ permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
 
@@ -612,6 +612,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
+  }
+
+  /**
+   * Write the given contents to a given file name in the VM.
+   * The file will be owned by root.
+   * @param filePath The destination file path, in the VM.
+   * @param fileContents The contents of the file.
+   * @param permissions The file permissions.
+   */
+  async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
+    await this.writeFileWSL(filePath, fileContents, { permissions: permissions });
   }
 
   /**
@@ -666,7 +677,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
       await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
 
-      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, { permissions: 0o755 });
+      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
       await this.writeConf('vtunnel-peer', {
         VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
         LOG_DIR:             await this.wslify(paths.logs),
@@ -675,8 +686,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
-      await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, { permissions: 0o644 });
-      await this.writeFile(DOCKER_CREDENTIAL_PATH, DOCKER_CREDENTIAL_SCRIPT, { permissions: 0o755 });
+      await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, 0o644);
+      await this.writeFile(DOCKER_CREDENTIAL_PATH, DOCKER_CREDENTIAL_SCRIPT, 0o755);
       try {
         existingConfig = JSON.parse(await this.captureCommand('cat', ROOT_DOCKER_CONFIG_PATH));
       } catch (err: any) {
@@ -687,7 +698,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       if (this.cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD) {
         existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
-      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
+      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
     }
@@ -752,7 +763,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
     await Promise.all([
       this.wslInstall(guestAgentPath, '/usr/local/bin/'),
-      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
+      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
       this.writeConf('rancher-desktop-guestagent', guestAgentConfig),
     ]);
     await this.execCommand('/sbin/rc-update', 'add', 'rancher-desktop-guestagent', 'default');
@@ -956,7 +967,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } catch {
     }
 
-    await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, { permissions: 0o755 });
+    await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
@@ -1106,8 +1117,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.installCredentialHelper();
               }),
               this.progressTracker.action('DNS configuration', 50, async() => {
-                await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
-                await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+                await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, 0o755);
+                await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, 0o755);
                 // As `rc-update del …` fails if the service is already not in the run level, we add
                 // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
                 // don't actually want to ensure that the appropriate one will be active.
@@ -1134,14 +1145,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 }
               }),
               this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
-                await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
+                await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, 0o755);
                 await this.writeConf('cri-dockerd', {
                   ENGINE:  config.kubernetes.containerEngine,
                   LOG_DIR: logPath,
                 });
               }),
               this.progressTracker.action('Kubernetes components', 50, async() => {
-                await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
+                await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
                 await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
                 await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
                 if (config.kubernetes.options.flannel) {
@@ -1151,12 +1162,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               this.progressTracker.action('container engine components', 50, async() => {
                 await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
                 await this.writeConf('containerd', { log_owner: 'root' });
-                await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
+                await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
                 await this.writeConf('docker', {
                   WSL_HELPER_BINARY: await this.getWSLHelperPath(),
                   LOG_DIR:           logPath,
                 });
-                await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
+                await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
               this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),

@@ -1,4 +1,5 @@
 import events from 'events';
+import fs from 'fs';
 import os from 'os';
 import util from 'util';
 
@@ -129,6 +130,10 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
   spawn(options: execOptions, ...command: string[]): ChildProcess;
   spawn(optionsOrCommand: string | execOptions, ...command: string[]): ChildProcess {
     return null as unknown as ChildProcess;
+  }
+
+  writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644): Promise<void> {
+    return Promise.resolve();
   }
 
   // #endregion

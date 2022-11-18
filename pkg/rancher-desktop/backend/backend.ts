@@ -1,3 +1,4 @@
+import fs from 'fs';
 import stream from 'stream';
 
 import { Settings } from '@pkg/config/settings';
@@ -213,4 +214,7 @@ export interface VMExecutor {
    */
   spawn(...command: string[]): childProcess.ChildProcess;
   spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
+
+  writeFile(filePath: string, fileContents: string): Promise<void>;
+  writeFile(filePath: string, fileContents: string, permissions: fs.Mode): Promise<void>;
 }
