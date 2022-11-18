@@ -111,6 +111,23 @@ provision:
   script: |
     set -o errexit -o nounset -o xtrace
     usermod --append --groups docker "${LIMA_CIDATA_USER}"
+- # Install mkcert and prepare default/fallback cert for localhost
+  mode: system
+  script: |
+    export CAROOT=/run/mkcert
+    mkdir -p $CAROOT
+    cd $CAROOT
+    mkcert -install
+    mkcert localhost
+    chown -R nobody:nobody $CAROOT
+- # Configure HTTPS_PROXY to OpenResty
+  mode: system
+  script: |
+    set -o errexit -o nounset -o xtrace
+    for svc in containerd docker; do
+      sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/$svc
+      sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/$svc
+    done
 - # mount bpffs to allow containers to leverage bpf, and make both bpffs and
   # cgroupfs shared mounts so the pods can mount them correctly
   mode: system

@@ -7,6 +7,7 @@ import util from 'util';
 import Electron from 'electron';
 import _ from 'lodash';
 
+import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
 import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
@@ -893,6 +894,11 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       // Obviously if there are no settings to update, there's no need to restart.
       return ['no changes necessary', ''];
     }
+
+    const allowListConf = BackendHelper.createImageAllowListConf(cfg.containerEngine.imageAllowList);
+
+    await k8smanager.executor.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
+    await k8smanager.executor.execCommand({ root: true }, '/sbin/rc-service', 'openresty', 'reload');
 
     // Check if the newly applied preferences demands a restart of the backend.
     const restartReasons = await k8smanager.requiresRestartReasons(cfg);

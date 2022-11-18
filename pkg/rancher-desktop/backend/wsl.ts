@@ -622,7 +622,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * @param permissions The file permissions.
    */
   async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
-    await this.writeFileWSL(filePath, fileContents, { permissions: permissions });
+    await this.writeFileWSL(filePath, fileContents, { permissions });
   }
 
   /**
