@@ -46,8 +46,9 @@ function getAppVersion(appDir: string): string {
  * Given an unpacked build, produce a MSI installer.
  * @param workDir Directory in which we can write temporary work files.
  * @param appDir Directory containing extracted application zip file.
+ * @returns The path of the built installer.
  */
-export default async function buildInstaller(workDir: string, appDir: string, development = false) {
+export default async function buildInstaller(workDir: string, appDir: string, development = false): Promise<string> {
   const appVersion = getAppVersion(appDir);
   const compressionLevel = development ? 'mszip' : 'high';
   const outFile = path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`);
@@ -104,6 +105,8 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     ...inputs.map(n => path.join(workDir, `${ path.basename(n, '.wxs') }.wixobj`)),
   ], { stdio: 'inherit' });
   console.log(`Built Windows installer: ${ outFile }`);
+
+  return outFile;
 }
 
 /**
