@@ -66,6 +66,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
   const inputs = [
     path.join(workDir, 'project.wxs'),
     path.join(process.cwd(), 'build', 'wix', 'dialogs.wxs'),
+    path.join(process.cwd(), 'build', 'wix', 'welcome.wxs'),
   ];
 
   await Promise.all(inputs.map(input => spawnFile(
@@ -73,6 +74,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     [
       '-arch', 'x64',
       `-dappDir=${ appDir }`,
+      `-dlicenseFile=${ path.join(appDir, 'build', 'license.rtf') }`,
       '-nologo',
       '-out', path.join(workDir, `${ path.basename(input, '.wxs') }.wixobj`),
       '-pedantic',
@@ -93,6 +95,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     // https://learn.microsoft.com/en-us/windows/win32/msi/ice61
     '-sice:ICE61',
     `-dappDir=${ appDir }`,
+    `-dlicenseFile=${ path.join(appDir, 'build', 'license.rtf') }`,
     '-ext', 'WixUIExtension',
     '-ext', 'WixUtilExtension',
     '-nologo',

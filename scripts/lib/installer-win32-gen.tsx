@@ -188,6 +188,11 @@ export default async function generateFileList(rootPath: string): Promise<string
       </Component>;
     },
 
+    'build\\license.rtf': () => {
+      // This is used for the installer, and does not need to shipped.
+      return null;
+    },
+
     'electron-builder.yml': () => {
       // This files does not need to be packaged.
       return null;
