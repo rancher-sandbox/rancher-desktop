@@ -136,7 +136,7 @@
     "js-yaml-loader": "^1.2.2",
     "mustache": "^4.2.0",
     "nan": "^2.16.0",
-    "nuxt": "^2.14.12",
+    "nuxt": "^3.0.0",
     "octokit": "^2.0.7",
     "playwright": "^1.26.1",
     "raw-loader": "^4.0.2",
