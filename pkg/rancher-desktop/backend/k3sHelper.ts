@@ -330,8 +330,10 @@ export default class K3sHelper extends events.EventEmitter {
         this.versions[version.version] = new VersionEntry(version);
         console.log(`Adding version ${ version.raw } - ${ foundImage }`);
       } else {
-        console.debug(`Skipping version ${ version.raw } due to missing files`);
+        console.debug(`Skipping version ${ version.raw } due to missing image`);
       }
+    } else {
+      console.debug(`Skipping version ${ version.raw } due to missing files`);
     }
 
     return true;
