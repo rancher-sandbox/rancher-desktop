@@ -1,6 +1,6 @@
 class HelpImpl {
   url(key: string | undefined): string {
-    // ToDo , to map urls with key
+    // TODO: to map URLs with key
     return 'https://docs.rancherdesktop.io';
   }
 }

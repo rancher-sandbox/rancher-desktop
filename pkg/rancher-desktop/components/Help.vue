@@ -6,7 +6,7 @@ import { mapState } from 'vuex';
 export default Vue.extend({
   name:       'help',
   props:      {
-    defaultUrl: {
+    fixedUrl: {
       type:     String,
       default:  null,
     },
@@ -17,14 +17,17 @@ export default Vue.extend({
   },
   computed: {
     ...mapState('help', ['url']),
-    pageUrl(): string {
-      return this.defaultUrl ?? this.url;
+    helpUrl(): string {
+      return this.fixedUrl ?? this.url;
+    },
+    tooltipContent(): string | null {
+      return this.helpUrl ? this.tooltip : null;
     },
   },
   methods:  {
     openUrl() {
-      if (this.pageUrl) {
-        shell.openExternal(this.pageUrl);
+      if (this.helpUrl) {
+        shell.openExternal(this.helpUrl);
       }
     },
   },
@@ -35,19 +38,19 @@ export default Vue.extend({
   <div class="help-button">
     <button
       v-tooltip="{
-        content: pageUrl ? tooltip : null,
+        content: tooltipContent,
         placement: 'right'
       }"
       class="btn role-fab ripple"
       :class="{
-        disabled: !pageUrl
+        disabled: !helpUrl
       }"
       @click="openUrl"
     >
       <span
         class="icon icon-question-mark"
         :class="{
-          disabled: !pageUrl
+          disabled: !helpUrl
         }"
       />
     </button>
@@ -70,10 +73,13 @@ export default Vue.extend({
     .disabled {
       background: transparent !important;
       color: var(--body-text);
-      opacity: 0.4;
+      opacity: 0.2;
       cursor: default;
     }
 
+    // We make use of the term Floating Action Button (fab) here because the
+    // design of this button is reminiscent of floating actions buttons from
+    // Material Design
     .role-fab {
       all: revert;
       line-height: 0;
