@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from 'child_process';
+import { spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -128,7 +128,9 @@ Electron.app.whenReady().then(async() => {
 
     // Needs to happen before any file is written, otherwise that file
     // could be owned by root, which will lead to future problems.
-    await checkForRootPrivs();
+    if (['linux', 'darwin'].includes(os.platform())) {
+      await checkForRootPrivs();
+    }
 
     DashboardServer.getInstance().init();
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
@@ -957,28 +959,14 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 }
 
 /**
- * Checks if Rancher Desktop was run as root on macOS/Linux,
- * or as administrator on Windows.
+ * Checks if Rancher Desktop was run as root.
  */
 function isRoot(): boolean {
-  const platform = os.platform();
-  let isRoot = false;
+  const validPlatforms = ['linux', 'darwin'];
 
-  if (platform === 'linux' || platform === 'darwin') {
-    if (os.userInfo().uid === 0) {
-      isRoot = true;
-    }
-  } else if (platform === 'win32') {
-    // On windows, running `net session` will throw an error if the process
-    // is not run as administrator. See the following link for more info:
-    // https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights#11995662
-    const result = spawnSync('net', ['session'], { stdio: 'ignore' });
-
-    console.log(`status: ${ result.status }`);
-    if (result.status === 0) {
-      isRoot = true;
-    }
+  if (!['linux', 'darwin'].includes(os.platform())) {
+    throw new Error(`isRoot() can only be called on ${ validPlatforms }`);
   }
 
-  return isRoot;
+  return os.userInfo().uid === 0;
 }
