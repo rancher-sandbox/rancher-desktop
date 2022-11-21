@@ -44,12 +44,6 @@ export async function sign(workDir: string) {
     throw new Error(`CSC_FINGERPRINT environment variable not set; required to pick signing certificate.`);
   }
 
-  const configText = await fs.promises.readFile('electron-builder.yml', 'utf-8');
-  const config = yaml.parse(configText) as ElectronBuilderConfiguration;
-
-  config.win ??= {};
-  defaults(config.win, DEFAULT_WINDOWS_CONFIG);
-
   // Sign individual files.  See https://github.com/electron-userland/electron-builder/issues/5968
   // We built this docker.exe, so we need to sign it
 
@@ -63,6 +57,14 @@ export async function sign(workDir: string) {
     [internalDir]:      ['host-resolver.exe', 'privileged-service.exe', 'steve.exe', 'vtunnel.exe'],
     [binDir]:           ['docker.exe', 'docker-credential-none.exe', 'nerdctl.exe', 'rdctl.exe'],
   };
+
+  const configText = await fs.promises.readFile(path.join(unpackedDir, 'electron-builder.yml'), 'utf-8');
+  const config = yaml.parse(configText) as ElectronBuilderConfiguration;
+
+  config.win ??= {};
+  defaults(config.win, DEFAULT_WINDOWS_CONFIG);
+  Object.assign(config.win, REQUIRED_WINDOWS_CONFIG);
+  config.win.certificateSha1 = certFingerprint;
 
   const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
   const toolArgs = [
@@ -91,7 +93,40 @@ export async function sign(workDir: string) {
     }
   }
 
-  // make privileged-service.exe available to the installer during signing
+  if (process.env.RD_FEAT_WIX) {
+    await buildWiX(workDir, unpackedDir, config);
+  } else {
+    await buildNSIS(workDir, unpackedDir, config);
+  }
+}
+
+async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {
+  const buildInstaller = (await import('./installer-win32')).default;
+  const installerPath = await buildInstaller(workDir, unpackedDir);
+
+  if (!config.win?.certificateSha1) {
+    throw new Error(`Assertion error: certificate fingerprint not set`);
+  }
+
+  const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
+  const toolArgs = [
+    'sign',
+    '/debug',
+    '/sha1', config.win.certificateSha1,
+    '/fd', 'SHA256',
+    '/td', 'SHA256',
+    '/tr', config.win.rfc3161TimeStampServer as string,
+    '/du', 'https://rancherdesktop.io',
+    installerPath,
+  ];
+
+  await childProcess.spawnFile(toolPath, toolArgs, { stdio: 'inherit' });
+}
+
+async function buildNSIS(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {
+  const internalDir = 'resources/resources/win32/internal';
+
+  // Copy the signed privileged-service.exe for the installer build.
   const privilegedServiceFile = 'privileged-service.exe';
   const privilegedServiceFrom = path.join(unpackedDir, internalDir, privilegedServiceFile);
   const privilegedServiceTo = path.join(process.cwd(), 'resources/win32/internal', privilegedServiceFile);
@@ -101,8 +136,6 @@ export async function sign(workDir: string) {
   // Generate an electron-builder.yml forcing the use of the cert.
   const newConfigPath = path.join(workDir, 'electron-builder.yml');
 
-  Object.assign(config.win, REQUIRED_WINDOWS_CONFIG);
-  config.win.certificateSha1 = certFingerprint;
   await fs.promises.writeFile(newConfigPath, yaml.stringify(config), 'utf-8');
 
   // Rebuild the installer (automatically signing the installer & uninstaller).
