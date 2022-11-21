@@ -1,5 +1,6 @@
 import { Page, Locator } from 'playwright';
 
+import { DiagnosticsPage } from './diagnostics-page';
 import { ImagesPage } from './images-page';
 import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
@@ -12,6 +13,7 @@ const pageConstructors = {
   PortForwarding:  (page: Page) => new PortForwardPage(page),
   Images:          (page: Page) => new ImagesPage(page),
   Troubleshooting: (page: Page) => new TroubleshootingPage(page),
+  Diagnostics:     (page: Page) => new DiagnosticsPage(page),
 };
 
 export class NavPage {

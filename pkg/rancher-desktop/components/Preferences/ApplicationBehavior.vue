@@ -70,6 +70,7 @@ export default Vue.extend({
       legend-text="Automatic Updates"
     >
       <checkbox
+        data-test="automaticUpdatesCheckbox"
         label="Check for updates automatically"
         :value="canAutoUpdate"
         @input="onChange('updater', $event)"

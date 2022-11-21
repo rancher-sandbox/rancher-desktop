@@ -99,7 +99,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="diagnostics">
+  <div class="diagnostics" data-test="diagnostics">
     <div class="status">
       <div class="result-info">
         <div class="item-results">

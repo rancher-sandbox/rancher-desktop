@@ -16,3 +16,4 @@
 \#*
 /e2e/reports/*
 *.exe
+/screenshots/output/
