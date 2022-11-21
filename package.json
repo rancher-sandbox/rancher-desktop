@@ -169,7 +169,8 @@
       "<rootDir>/dist",
       "<rootDir>/pkg/rancher-desktop/dist",
       "<rootDir>/.git",
-      "<rootDir>/e2e"
+      "<rootDir>/e2e",
+      "<rootDir>/screenshots"
     ],
     "moduleNameMapper": {
       "\\.css$": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",

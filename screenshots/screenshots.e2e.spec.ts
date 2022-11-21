@@ -8,7 +8,7 @@ import { PreferencesPage } from '../e2e/pages/preferences';
 import { createDefaultSettings, packageLogs, reportAsset } from '../e2e/utils/TestUtils';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
-import { isWin } from '~/utils/platform';
+import { isWin } from '@pkg/utils/platform';
 
 const darkTheme = process.env.THEME === 'dark';
 const themePrefix = `${ darkTheme ? 'dark' : 'light' }`;
