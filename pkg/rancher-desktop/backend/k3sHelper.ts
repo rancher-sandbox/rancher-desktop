@@ -244,19 +244,21 @@ export default class K3sHelper extends events.EventEmitter {
     console.debug(`Wrote versions cache:`, cacheData);
   }
 
-  /** The files we need to download for the current architecture. */
+  /** The files we need to download for the current architecture.
+   *  images: an array of potential files in order of most preferred to least preferred
+   */
   protected get filenames() {
     switch (this.arch) {
     case 'x86_64':
       return {
         exe:      'k3s',
-        images:   'k3s-airgap-images-amd64.tar',
+        images:   ['k3s-airgap-images-amd64.tar.zst', 'k3s-airgap-images-amd64.tar'],
         checksum: 'sha256sum-amd64.txt',
       };
     case 'aarch64':
       return {
         exe:      'k3s-arm64',
-        images:   'k3s-airgap-images-arm64.tar',
+        images:   ['k3s-airgap-images-arm64.tar.zst', 'k3s-airgap-images-arm64.tar'],
         checksum: 'sha256sum-arm64.txt',
       };
     }
@@ -320,9 +322,16 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     // Check that this release has all the assets we expect.
-    if (Object.values(this.filenames).every(name => entry.assets.some(v => v.name === name))) {
-      console.debug(`Adding version ${ version.raw }`);
-      this.versions[version.version] = new VersionEntry(version);
+    if (entry.assets.find(ea => ea.name === this.filenames.exe) &&
+        entry.assets.find(ea => ea.name === this.filenames.checksum)) {
+      const foundImage = this.filenames.images.find(name => entry.assets.some(v => v.name === name));
+
+      if (foundImage) {
+        this.versions[version.version] = new VersionEntry(version);
+        console.log(`Adding version ${ version.raw } - ${ foundImage }`);
+      } else {
+        console.debug(`Skipping version ${ version.raw } due to missing image`);
+      }
     } else {
       console.debug(`Skipping version ${ version.raw } due to missing files`);
     }
@@ -677,7 +686,21 @@ export default class K3sHelper extends events.EventEmitter {
 
           sums[filename] = sum;
         }
-        const promises = [this.filenames.exe, this.filenames.images].map(async(filename) => {
+
+        let existsIndex;
+
+        for (let index = 0; typeof existsIndex === 'undefined' && index < this.filenames.images.length; index++) {
+          try {
+            await fs.promises.access(path.join(dir, this.filenames.images[index]), fs.constants.R_OK);
+            existsIndex = index;
+          } catch {
+            // ignore access error and try next iteration if any
+          }
+        }
+        if (typeof existsIndex === 'undefined') {
+          existsIndex = 0;
+        }
+        const promises = [this.filenames.exe, this.filenames.images[existsIndex]].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
@@ -719,15 +742,26 @@ export default class K3sHelper extends events.EventEmitter {
 
     try {
       await Promise.all(Object.entries(this.filenames).map(async([filekey, filename]) => {
-        const fileURL = `${ this.downloadUrl }/${ version.raw }/${ filename }`;
-        const outPath = path.join(workDir, filename);
+        const namearray = Array.isArray(filename) ? filename : [filename];
 
-        console.log(`Will download ${ filekey } ${ fileURL } to ${ outPath }`);
-        const response = await fetch(fileURL);
+        let outPath;
+        let response;
 
-        if (!response.ok) {
-          throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
+        for (const name of namearray) {
+          const fileURL = `${ this.downloadUrl }/${ version.raw }/${ name }`;
+
+          outPath = path.join(workDir, name);
+          console.log(`Will attempt to download ${ filekey } ${ fileURL } to ${ outPath }`);
+          response = await fetch(fileURL);
+          if (response.ok) {
+            break;
+          }
         }
+
+        if (!response || !outPath) {
+          throw new Error(`Error downloading ${ filename } ${ version }: No ${ filekey }s found}`);
+        }
+
         const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
         const status = this.progress[progresskey];
 

@@ -63,7 +63,11 @@ describe(K3sHelper, () => {
 
       if (hasAssets) {
         for (const name of Object.values(subject['filenames'])) {
-          assets.push({ name, browser_download_url: name });
+          if (typeof name === 'string') {
+            assets.push({ name, browser_download_url: name });
+          } else {
+            assets.push({ name: name[0], browser_download_url: name[0] });
+          }
         }
       }
 
@@ -152,8 +156,13 @@ describe(K3sHelper, () => {
 
   test('updateCache', async() => {
     const subject = new K3sHelper('x86_64');
-    const validAssets = Object.values(subject['filenames'])
-      .map(name => ({ name, browser_download_url: name }));
+    const validAssets = Object.values(subject['filenames']).map((name) => {
+      if (typeof name === 'string') {
+        return { name, browser_download_url: name };
+      } else {
+        return { name: name[0], browser_download_url: name[0] };
+      }
+    });
 
     // Override cache reading to return a fake existing cache.
     // The first read returns nothing to trigger a synchronous update;
