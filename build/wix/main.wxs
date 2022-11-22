@@ -156,6 +156,17 @@
       <ComponentRef Id="PathUser" />
       <ComponentRef Id="PathSystem" />
     </Feature>
+    <UI>
+       <Publish Dialog="ExitDialog"
+         Control="Finish"
+         Event="DoAction"
+         Value="LaunchApplication"
+       >WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+    </UI>
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run Rancher Desktop" />
+    <Property Id="WixShellExecTarget" Value="[#mainExecutable]" />
+    <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+
   </Product>
   {{ &fileList }}
 </Wix>
