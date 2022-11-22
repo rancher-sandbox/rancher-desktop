@@ -1,4 +1,4 @@
-limaAndQemu: "1.27"
+limaAndQemu: "1.28"
 alpineLimaISO:
   isoVersion: 0.2.25.rd2
   alpineVersion: 3.16.0
