@@ -176,6 +176,7 @@ export default Vue.extend({
         <td>
           <toggle-switch
             class="mute-toggle"
+            :data-test="`diagnostics-mute-row-${row.id}`"
             :value="row.mute"
             @input="muteRow($event, row)"
           />

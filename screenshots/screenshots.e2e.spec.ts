@@ -10,23 +10,18 @@ import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import { isWin } from '@pkg/utils/platform';
 
-const darkTheme = process.env.THEME === 'dark';
-const themePrefix = `${ darkTheme ? 'dark' : 'light' }`;
-
-async function setTheme(page: Page) {
-  if (darkTheme) {
-    await page.emulateMedia({ colorScheme: 'dark' });
-  }
-}
-
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   let page: Page;
   let navPage: NavPage;
 
-  test.beforeAll(async() => {
-    createDefaultSettings();
+  test.beforeAll(async({ colorScheme }) => {
+    createDefaultSettings({
+      updater:         true,
+      containerEngine: { imageAllowList: { enabled: true, patterns: ['rancher/example'] } },
+      diagnostics:     { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
+    });
 
     electronApp = await _electron.launch({
       args: [
@@ -47,7 +42,7 @@ test.describe.serial('Main App Test', () => {
     page = await electronApp.firstWindow();
     navPage = new NavPage(page);
 
-    await setTheme(page);
+    await page.emulateMedia({ colorScheme });
 
     await navPage.progressBecomesReady();
   });
@@ -58,8 +53,8 @@ test.describe.serial('Main App Test', () => {
     await electronApp.close();
   });
 
-  test('Main Page', async() => {
-    const screenshot = new MainWindowScreenshots(page, { directory: `${ themePrefix }/main` });
+  test('Main Page', async({ colorScheme }) => {
+    const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
 
     await screenshot.take('General');
     await screenshot.take('PortForwarding', navPage);
@@ -70,10 +65,18 @@ test.describe.serial('Main App Test', () => {
     await screenshot.take('Images');
 
     await screenshot.take('Troubleshooting', navPage);
-    await screenshot.take('Diagnostics', navPage);
+
+    const diagnosticsPage = await navPage.navigateTo('Diagnostics');
+
+    // show diagnostics badge
+    await expect(diagnosticsPage.diagnostics).toBeVisible();
+    diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
+    await page.waitForTimeout(200);
+
+    await screenshot.take('Diagnostics');
   });
 
-  test('Preferences Page', async() => {
+  test('Preferences Page', async({ colorScheme }) => {
     await navPage.preferencesButton.click();
 
     await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -81,10 +84,10 @@ test.describe.serial('Main App Test', () => {
     // gets full content of preferences window
     const preferencesPage = electronApp.windows()[1];
 
-    await setTheme(preferencesPage);
+    await preferencesPage.emulateMedia({ colorScheme });
 
     const e2ePreferences = new PreferencesPage(preferencesPage);
-    const screenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ themePrefix }/preferences` });
+    const screenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
 
     // enable Apply button
     await e2ePreferences.application.automaticUpdatesCheckbox.click();
