@@ -71,7 +71,11 @@ export default {
       return this.currentCommand;
     },
     allowedImagesAlert() {
-      return this.preferences.containerEngine.imageAllowList.enabled ? this.t('allowedImages.alert') : '';
+      if (this.activeTab === 'pull' && this.preferences.containerEngine.imageAllowList.enabled) {
+        return this.t('allowedImages.alert');
+      }
+
+      return '';
     },
   },
   mounted() {
