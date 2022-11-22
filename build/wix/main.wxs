@@ -25,7 +25,6 @@
     <UIRef Id="WixUI_RD" />
 
     <Property Id="ApplicationFolderName" Value="Rancher Desktop" />
-    <Property Id="WixAppFolder" Value="WixPerUserFolder" />
     <Icon
       Id="RancherDesktopIcon.exe"
       SourceFile="$(var.appDir)\Rancher Desktop.exe" />

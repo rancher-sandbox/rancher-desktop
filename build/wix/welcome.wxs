@@ -22,6 +22,11 @@
             <![CDATA[RDLicenseAccepted <> "1"]]>
           </Condition>
           <Condition Action="enable">RDLicenseAccepted = "1"</Condition>
+          <!-- If the kernel is not installed, the user doesn't have a choice
+            - and we can skip to the verify install dialog directly.
+            -->
+          <Publish Event="NewDialog" Order="1" Value="RDInstallScopeDlg">1</Publish>
+          <Publish Event="NewDialog" Order="2" Value="RDVerifyReadyDlg">NOT WSLKERNELINSTALLED</Publish>
         </Control>
         <Control Id="Cancel" Type="PushButton" Cancel="yes"
           X="304" Y="243" Width="56" Height="17" Text="!(loc.WixUICancel)">

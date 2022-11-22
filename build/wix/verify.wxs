@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <UI>
+      <Dialog Id="RDVerifyReadyDlg" Title="!(loc.VerifyReadyDlg_Title)"
+        Width="370" Height="270" TrackDiskSpace="yes">
+        <Control Id="InstallTitle" Type="Text" NoPrefix="yes"
+          X="15" Y="15" Width="300" Height="15" Transparent="yes"
+          Text="!(loc.VerifyReadyDlgInstallTitle)" />
+        <Control Id="BannerBitmap" Type="Bitmap"
+          X="0" Y="0" Width="370" Height="44"
+          Text="!(loc.VerifyReadyDlgBannerBitmap)" />
+        <Control Id="BannerLine" Type="Line"
+          X="0" Y="44" Width="370" Height="0" />
+
+        <Control Id="InstallText" Type="Text"
+          X="25" Y="70" Width="320" Height="80" Hidden="yes" NoPrefix="yes"
+          Text="!(loc.VerifyReadyDlgInstallText)">
+          <Condition Action="show">WSLKERNELINSTALLED</Condition>
+        </Control>
+        <Control Id="InstallKernelText" Type="Text"
+          X="25" Y="70" Width="320" Height="80" Hidden="yes" NoPrefix="yes"
+          Text="!(loc.VerifyReadyDlgKernelInstallText)">
+          <Condition Action="show">NOT WSLKERNELINSTALLED</Condition>
+        </Control>
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" X="156" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+          <Publish Order="1" Event="NewDialog" Value="RDInstallScopeDlg">1</Publish>
+          <Publish Order="2" Event="NewDialog" Value="RDWelcomeDlg">NOT WSLKERNELINSTALLED</Publish>
+        </Control>
+
+        <Control Id="Install" Type="PushButton" ElevationShield="yes"
+          X="212" Y="243" Width="80" Height="17"
+          Default="yes" Hidden="yes"
+          Text="!(loc.VerifyReadyDlgInstall)">
+          <Condition Action="show">ALLUSERS</Condition>
+          <Publish Event="EndDialog" Value="Return">
+            <![CDATA[OutOfDiskSpace <> 1]]>
+          </Publish>
+          <Publish Event="SpawnDialog" Value="OutOfRbDiskDlg">OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND (PROMPTROLLBACKCOST="P" OR NOT PROMPTROLLBACKCOST)</Publish>
+          <Publish Event="EndDialog" Value="Return">OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND PROMPTROLLBACKCOST="D"</Publish>
+          <Publish Event="EnableRollback" Value="False">OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND PROMPTROLLBACKCOST="D"</Publish>
+          <Publish Event="SpawnDialog" Value="OutOfDiskDlg">(OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 1) OR (OutOfDiskSpace = 1 AND PROMPTROLLBACKCOST="F")</Publish>
+        </Control>
+        <Control Id="InstallNoShield" Type="PushButton" ElevationShield="no"
+          X="212" Y="243" Width="80" Height="17"
+          Default="yes" Hidden="yes"
+          Text="!(loc.VerifyReadyDlgInstall)">
+          <Condition Action="show">NOT ALLUSERS</Condition>
+          <Publish Event="EndDialog" Value="Return">
+            <![CDATA[OutOfDiskSpace <> 1]]>
+          </Publish>
+          <Publish Event="SpawnDialog" Value="OutOfRbDiskDlg">OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND (PROMPTROLLBACKCOST="P" OR NOT PROMPTROLLBACKCOST)</Publish>
+          <Publish Event="EndDialog" Value="Return">OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND PROMPTROLLBACKCOST="D"</Publish>
+          <Publish Event="EnableRollback" Value="False">OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND PROMPTROLLBACKCOST="D"</Publish>
+          <Publish Event="SpawnDialog" Value="OutOfDiskDlg">(OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 1) OR (OutOfDiskSpace = 1 AND PROMPTROLLBACKCOST="F")</Publish>
+        </Control>
+
+        <Control Id="Cancel" Type="PushButton" Cancel="yes"
+          X="304" Y="243" Width="56" Height="17" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+      </Dialog>
+    </UI>
+  </Fragment>
+</Wix>

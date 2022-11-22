@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="en-US" Codepage="1252" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <!-- White space is preserved, so we must not line wrap. -->
+  <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] will be installed in a per-machine folder and be available for all users. This enables listening on non-loopback ports and other features that require additional privileges. You must have local Administrator privileges.</String>
+  <String Id="InstallScopeDlgPerUserDescription">[ProductName] will be installed in a per-user folder and be available just for your user account. You do not need local Administrator privileges. This will disable support for listening on non-loopback ports, and requires WSL2 to already be installed on your machine.</String>
+  <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] cannot be installed per-user, as Windows Subsystem for Linux 2 was not found. Continuing to install [ProductName] will also install WSL2.</String>
+  <String Id="VerifyReadyDlgKernelInstallText" Overridable="yes">[ProductName] will be installed in a per-machine folder and be available for all users. This enables listening on non-loopback ports and other features that require additional privileges.  Windows Subsystem for Linux 2 will also be installed as a prerequisite.</String>
+</WixLocalization>
