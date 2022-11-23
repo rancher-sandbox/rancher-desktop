@@ -42,6 +42,20 @@ export default Vue.extend({
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
+    onType(item: string) {
+      /**
+       *  When StringList lose focus, the emitted item is `null`;
+       *  this ensures that canApply is always restored to default value false, in preferences Vuex store.
+       */
+      const canApply = item !== null && item.trim().length > 0;
+
+      this.$store.dispatch('preferences/setCanApply', canApply);
+    },
+    onErrors(err: { duplicate: boolean }) {
+      if (err.duplicate) {
+        this.$store.dispatch('preferences/setCanApply', false);
+      }
+    },
   },
 });
 </script>
@@ -79,6 +93,8 @@ export default Vue.extend({
       :actions-position="'left'"
       :error-messages="patternsErrorMessages"
       @change="onChange('containerEngine.imageAllowList.patterns', $event)"
+      @type:item="onType($event)"
+      @errors="onErrors($event)"
     />
   </div>
 </template>
