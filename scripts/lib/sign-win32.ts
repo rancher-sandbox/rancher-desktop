@@ -33,6 +33,7 @@ const DEFAULT_WINDOWS_CONFIG = {
 };
 
 interface ElectronBuilderConfiguration {
+  files?: Array<string>,
   win?: Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
 }
 
@@ -93,11 +94,11 @@ export async function sign(workDir: string) {
     }
   }
 
-  if (process.env.RD_FEAT_WIX) {
-    await buildWiX(workDir, unpackedDir, config);
-  } else {
-    await buildNSIS(workDir, unpackedDir, config);
-  }
+  // For at least one release, we need to sign both NSIS (exe) and WiX (msi)
+  // installers, so that older versions can find the new exe installer to
+  // upgrade to.
+  await buildWiX(workDir, unpackedDir, config);
+  await buildNSIS(workDir, unpackedDir, config);
 }
 
 async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {

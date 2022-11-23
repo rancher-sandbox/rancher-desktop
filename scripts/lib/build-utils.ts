@@ -168,10 +168,7 @@ export default {
         ],
       },
       plugins: [
-        new webpack.EnvironmentPlugin({
-          NODE_ENV:    process.env.NODE_ENV || 'production',
-          RD_FEAT_WIX: process.env.RD_FEAT_WIX || '0',
-        }),
+        new webpack.EnvironmentPlugin({ NODE_ENV: process.env.NODE_ENV || 'production' }),
       ],
     };
   },

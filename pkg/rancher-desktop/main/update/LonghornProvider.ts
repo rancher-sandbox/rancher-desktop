@@ -286,9 +286,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       case 'linux':
         return (asset: GithubReleaseAsset) => asset.name.endsWith('AppImage');
       case 'win32': {
-        const useWix = !!parseInt(process.env.RD_FEAT_WIX ?? '0', 10);
-
-        return (asset: GithubReleaseAsset) => asset.name.endsWith(useWix ? '.msi' : '.exe');
+        return (asset: GithubReleaseAsset) => asset.name.endsWith('.msi');
       }
       }
     })();

@@ -68,12 +68,19 @@ jobs:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
-    - name: Upload Windows installer
+    - name: Upload Windows exe installer
       uses: actions/upload-artifact@v3
       if: matrix.platform == 'win'
       with:
         name: Rancher Desktop Setup.exe
         path: dist/Rancher Desktop*.exe
+        if-no-files-found: error
+    - name: Upload Windows installer
+      uses: actions/upload-artifact@v3
+      if: matrix.platform == 'win'
+      with:
+        name: Rancher Desktop Setup.msi
+        path: dist/Rancher Desktop*.msi
         if-no-files-found: error
     - name: Upload Windows zip
       uses: actions/upload-artifact@v3
@@ -159,10 +166,17 @@ jobs:
         $env:CSC_FINGERPRINT = $cert.Thumbprint
         # Run the signing script
         npm run sign -- (Get-Item "Rancher Desktop*-win.zip")
-        # Check that the file was signed by the expected cert
-        $usedCert = (Get-AuthenticodeSignature -FilePath 'dist\Rancher Desktop Setup*.exe').SignerCertificate
+        # Check that the msi file was signed by the expected cert
+        $usedCert = (Get-AuthenticodeSignature -FilePath 'dist\Rancher Desktop Setup*.msi').SignerCertificate
         Write-Output $usedCert
         if ($cert -ne $usedCert) {
           Write-Output "Expected Certificate" $cert "Actual Certificate" $usedCert
           Throw "Installer signed with wrong certicate"
+        }
+        # Check that the exe file was signed by the expected cert
+        $usedCert = (Get-AuthenticodeSignature -FilePath 'dist\Rancher Desktop Setup*.exe').SignerCertificate
+        Write-Output $usedCert
+        if ($cert -ne $usedCert) {
+          Write-Output "Expected Certificate" $cert "Actual Certificate" $usedCert
+          Throw "NSIS Installer signed with wrong certicate"
         }
