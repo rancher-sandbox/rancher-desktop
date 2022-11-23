@@ -7,6 +7,7 @@ import PreferencesContainerEngineAllowedImages from '@pkg/components/Preferences
 import PreferencesContainerEngineGeneral from '@pkg/components/Preferences/ContainerEngineGeneral.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
+import { Help } from '@pkg/config/help';
 import { Settings } from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
@@ -40,6 +41,7 @@ export default Vue.extend({
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }
+      await this.$store.dispatch('help/setUrl', Help.url(tab.name));
     },
     async commitPreferences(tabName: string) {
       await this.$store.dispatch(

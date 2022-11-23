@@ -2,6 +2,7 @@
 import Vue from 'vue';
 
 import PreferencesNavItem from '@pkg/components/Preferences/ModalNavItem.vue';
+import { Help } from '@pkg/config/help';
 
 export default Vue.extend({
   name:       'preferences-nav',
@@ -16,14 +17,23 @@ export default Vue.extend({
       required: true,
     },
   },
+
+  mounted() {
+    this.updateHelp(this.currentNavItem);
+  },
+
   methods: {
     navClicked(tabName: string) {
       if (tabName !== this.$props.currentNavItem) {
         this.$emit('nav-changed', tabName);
+        this.updateHelp(tabName);
       }
     },
     navToKebab(navItem: string): string {
       return `nav-${ navItem.toLowerCase().replaceAll(' ', '-') }`;
+    },
+    async updateHelp(navItem: string) {
+      await this.$store.dispatch('help/setUrl', Help.url(navItem));
     },
   },
 });
