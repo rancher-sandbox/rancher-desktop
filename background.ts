@@ -598,7 +598,7 @@ ipcMainProxy.on('factory-reset', (event, keepSystemImages) => {
   doFactoryReset(keepSystemImages);
 });
 
-ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
+ipcMainProxy.on('show-logs', async(event) => {
   const error = await Electron.shell.openPath(paths.logs);
 
   if (error) {

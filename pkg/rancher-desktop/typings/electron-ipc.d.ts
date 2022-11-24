@@ -60,7 +60,7 @@ interface IpcMainEvents {
   'preferences-close': () => void;
   // #endregion
 
-  'troubleshooting/show-logs': () => void;
+  'show-logs': () => void;
 
   'dashboard-open': () => void;
   'dashboard-close': () => void;
