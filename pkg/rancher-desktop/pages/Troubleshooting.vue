@@ -147,7 +147,7 @@ export default {
       ipcRenderer.send('factory-reset', keepImages);
     },
     showLogs() {
-      ipcRenderer.send('troubleshooting/show-logs');
+      ipcRenderer.send('show-logs');
     },
     updateDebug(value) {
       this.$data.isDebugging = runInDebugMode(value);
