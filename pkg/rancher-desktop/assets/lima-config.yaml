@@ -38,6 +38,12 @@ provision:
     fi
     umount /bootfs
     rmdir /bootfs
+- # return unused space from the data volume back to the host
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
+    fstrim /mnt/data
 - # Persist /root directory on data volume
   mode: system
   script: |
