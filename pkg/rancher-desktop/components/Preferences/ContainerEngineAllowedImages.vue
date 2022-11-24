@@ -49,12 +49,15 @@ export default Vue.extend({
        */
       const canApply = item !== null && item.trim().length > 0;
 
-      this.$store.dispatch('preferences/setCanApply', canApply);
+      this.setCanApply(canApply);
     },
-    onErrors(err: { duplicate: boolean }) {
-      if (err.duplicate) {
-        this.$store.dispatch('preferences/setCanApply', false);
+    onDuplicate(err: boolean) {
+      if (err) {
+        this.setCanApply(false);
       }
+    },
+    setCanApply(val: boolean) {
+      this.$store.dispatch('preferences/setCanApply', val);
     },
   },
 });
@@ -94,7 +97,7 @@ export default Vue.extend({
       :error-messages="patternsErrorMessages"
       @change="onChange('containerEngine.imageAllowList.patterns', $event)"
       @type:item="onType($event)"
-      @errors="onErrors($event)"
+      @errors="onDuplicate($event.duplicate)"
     />
   </div>
 </template>
