@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - This describes the install scope dialog; we are customizing this one to
+  - emphasize per-machine installation, as that is required for privileged
+  - service. (If WSL needs to be installed, this dialog is skipped and we
+  - always install per-machine.)
+  -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <UI>
+      <Dialog Id="RDInstallScopeDlg" Width="370" Height="270" Title="!(loc.InstallScopeDlg_Title)" KeepModeless="yes">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.InstallScopeDlgTitle)" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="20" Transparent="yes" NoPrefix="yes" Text="!(loc.InstallScopeDlgDescription)" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" Text="!(loc.InstallScopeDlgBannerBitmap)" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+
+        <Control Id="BothScopes" Type="RadioButtonGroup" Property="MSIINSTALLPERUSER"
+          X="20" Y="55" Width="330" Height="120" Hidden="yes">
+          <RadioButtonGroup Property="MSIINSTALLPERUSER">
+            <RadioButton Value="0"
+              Text="!(loc.InstallScopeDlgPerMachine)"
+              X="0" Y="0" Width="295" Height="16" />
+            <RadioButton Value="1"
+              Text="!(loc.InstallScopeDlgPerUser)"
+              X="0" Y="72" Width="295" Height="16" />
+          </RadioButtonGroup>
+          <Condition Action="show">Privileged AND WSLKERNELINSTALLED</Condition>
+        </Control>
+
+        <Control Id="PerMachineDescription" Type="Text" Hidden="yes"
+          NoPrefix="yes" Text="!(loc.InstallScopeDlgPerMachineDescription)"
+          X="33" Y="70" Width="300" Height="48">
+          <Condition Action="show">Privileged</Condition>
+        </Control>
+        <Control Id="PerUserDescription" Type="Text"
+          NoPrefix="yes" Text="!(loc.InstallScopeDlgPerUserDescription)"
+          X="33" Y="143" Width="300" Height="48" />
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" Text="!(loc.WixUIBack)"
+          X="180" Y="243" Width="56" Height="17">
+          <Publish Event="NewDialog" Value="RDWelcomeDlg">1</Publish>
+        </Control>
+        <Control Id="Next" Type="PushButton" Default="yes" Text="!(loc.WixUINext)"
+          X="236" Y="243" Width="56" Height="17">
+          <Publish Order="1" Property="MSIINSTALLPERUSER" Value="{}">MSIINSTALLPERUSER = 0</Publish>
+          <Publish Order="2" Property="ALLUSERS" Value="{}">MSIINSTALLPERUSER</Publish>
+          <Publish Order="3" Property="ALLUSERS" Value="1">NOT MSIINSTALLPERUSER</Publish>
+          <Publish Order="4" Event="NewDialog" Value="RDVerifyReadyDlg">1</Publish>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+      </Dialog>
+    </UI>
+  </Fragment>
+</Wix>
