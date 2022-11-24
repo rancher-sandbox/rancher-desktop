@@ -52,6 +52,7 @@ export const state: () => PreferencesState = () => (
 export const mutations: MutationsType<PreferencesState> = {
   SET_PREFERENCES(state, preferences) {
     state.preferences = preferences;
+    state.canApply = false;
   },
   SET_INITIAL_PREFERENCES(state, preferences) {
     state.initialPreferences = preferences;

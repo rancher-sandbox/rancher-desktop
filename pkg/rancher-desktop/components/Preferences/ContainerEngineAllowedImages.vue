@@ -43,13 +43,9 @@ export default Vue.extend({
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
     onType(item: string) {
-      /**
-       *  When StringList lose focus, the emitted item is `null`;
-       *  this ensures that canApply is always restored to default value false, in preferences Vuex store.
-       */
-      const canApply = item !== null && item.trim().length > 0;
-
-      this.setCanApply(canApply);
+      if (item !== null) {
+        this.setCanApply(item.trim().length > 0);
+      }
     },
     onDuplicate(err: boolean) {
       if (err) {
