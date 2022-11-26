@@ -22,11 +22,14 @@ import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
+import CONFIGURE_IMAGE_ALLOW_LIST from '@pkg/assets/scripts/configure-image-allow-list';
 import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@pkg/assets/scripts/dnsmasq-generate.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
+import NERDCTL from '@pkg/assets/scripts/nerdctl';
+import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@pkg/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_SCRIPT_HOST_RESOLVER from '@pkg/assets/scripts/service-host-resolver.initd';
@@ -1162,6 +1165,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               this.progressTracker.action('container engine components', 50, async() => {
                 await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
                 await this.writeConf('containerd', { log_owner: 'root' });
+                await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
                 await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
                 await this.writeConf('docker', {
                   WSL_HELPER_BINARY: await this.getWSLHelperPath(),
@@ -1169,6 +1173,16 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 });
                 await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
+              }),
+              this.progressTracker.action('Openresty configuration', 50, async() => {
+                const allowListConf = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+                const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
+
+                await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
+                await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
+                await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
+
+                await this.runInstallScript(CONFIGURE_IMAGE_ALLOW_LIST, 'configure-image-allow-list');
               }),
               this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);
@@ -1212,6 +1226,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
+        await this.progressTracker.action('Starting OpenResty', 100, this.startService('openresty'));
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
         if (kubernetesVersion) {

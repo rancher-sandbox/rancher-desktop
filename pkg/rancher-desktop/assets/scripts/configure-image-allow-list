@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# This script configures the VM for the image-allow-list feature.
+
+# shellcheck shell=ash
+
+set -o errexit -o nounset
+
+# Create nobody user and group for nginx.
+addgroup -S -g 65534 nobody 2>/dev/null || true
+adduser -S -D -H -h /dev/null -s /sbin/nologin -u 65534 -G nobody -g nobody nobody 2>/dev/null || true
+
+# Install mkcert and create default certs for localhost.
+export CAROOT=/run/mkcert
+mkdir -p $CAROOT
+cd $CAROOT
+mkcert -install
+mkcert localhost
+chown -R nobody:nobody $CAROOT
+
+# Configure dockerd to pull images via OpenResty proxy.
+sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/containerd
+sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/containerd
+
+# openresty is backgrounding itself (and writes its own pid file)
+sed -i 's/^command_background/#command_background/' /etc/init.d/openresty

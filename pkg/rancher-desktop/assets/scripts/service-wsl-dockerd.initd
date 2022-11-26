@@ -9,6 +9,7 @@ name="Rancher Desktop Docker Daemon"
 description="Starts dockerd for Rancher Desktop"
 
 supervisor=supervise-daemon
+supervise_daemon_args="-e HTTPS_PROXY=http:\/\/127.0.0.1:3128"
 command="'${WSL_HELPER_BINARY:-/usr/local/bin/wsl-helper}'"
 command_args="docker-proxy start"
 

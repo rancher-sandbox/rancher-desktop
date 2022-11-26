@@ -124,6 +124,10 @@ provision:
   mode: system
   script: |
     set -o errexit -o nounset -o xtrace
+
+    # openresty is backgrounding itself (and writes its own pid file)
+    sed -i 's/^command_background/#command_background/' /etc/init.d/openresty
+
     for svc in containerd docker; do
       sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/$svc
       sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/$svc

@@ -37,6 +37,10 @@ export default class BackendHelper {
         host = repo.shift() as string;
         if (host === 'docker.io') {
           host = 'registry-1.docker.io';
+          // 'docker.io/busybox' means 'registry-1.docker.io/library/busybox'
+          if (repo.length < 2) {
+            repo.unshift('library');
+          }
         }
         // registry without repo is the same as 'registry//'
         if (repo.length === 0) {

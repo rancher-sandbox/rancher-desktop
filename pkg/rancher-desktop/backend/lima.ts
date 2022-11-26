@@ -1464,8 +1464,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   protected async configureOpenResty(config: BackendSettings) {
     const allowListConf = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+    // TODO: don't use hardcoded IP address
+    const resolver = 'resolver 192.168.5.3 ipv6=off;\n';
 
     await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
+    await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
   }
 

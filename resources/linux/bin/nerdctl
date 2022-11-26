@@ -14,6 +14,6 @@ else
     echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl";
     exit 1
   else
-    LIMA_HOME="${limaloc}/lima" "${scriptdir}/../lima/bin/limactl" shell 0 sudo --preserve-env=CONTAINERD_ADDRESS nerdctl "$@"
+    "${scriptdir}/rdctl" shell sudo nerdctl "$@"
   fi
 fi
