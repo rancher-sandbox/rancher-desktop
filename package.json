@@ -120,7 +120,7 @@
     "@types/semver": "^7.3.10",
     "@types/tar-stream": "^2.2.1",
     "@types/which": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.42.1",
     "@vue/test-utils": "^1.1.2",
     "babel-core": "^7.0.0-bridge.0",
