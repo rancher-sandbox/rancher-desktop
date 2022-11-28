@@ -754,8 +754,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.wslInstall(guestAgentPath, '/usr/local/bin/'),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
       this.writeConf('rancher-desktop-guestagent', guestAgentConfig),
-      this.execCommand('/sbin/rc-update', 'add', 'rancher-desktop-guestagent', 'default'),
     ]);
+    await this.execCommand('/sbin/rc-update', 'add', 'rancher-desktop-guestagent', 'default');
   }
 
   /**
