@@ -23,6 +23,7 @@ interface PreferencesState {
   hasError: boolean;
   severities: Severities;
   preferencesError: string;
+  canApply: boolean;
 }
 
 interface CommitArgs extends ServerState {
@@ -44,12 +45,14 @@ export const state: () => PreferencesState = () => (
       reset: false, restart: false, error: false,
     },
     preferencesError: '',
+    canApply:         false,
   }
 );
 
 export const mutations: MutationsType<PreferencesState> = {
   SET_PREFERENCES(state, preferences) {
     state.preferences = preferences;
+    state.canApply = false;
   },
   SET_INITIAL_PREFERENCES(state, preferences) {
     state.initialPreferences = preferences;
@@ -68,6 +71,9 @@ export const mutations: MutationsType<PreferencesState> = {
   },
   SET_PREFERENCES_ERROR(state, error) {
     state.preferencesError = error;
+  },
+  SET_CAN_APPLY(state, canApply) {
+    state.canApply = canApply;
   },
 };
 
@@ -222,6 +228,9 @@ export const actions = {
       { root: true },
     );
   },
+  setCanApply({ commit }: PrefActionContext, canApply: boolean) {
+    commit('SET_CAN_APPLY', canApply);
+  },
 };
 
 export const getters: GetterTree<PreferencesState, PreferencesState> = {
@@ -245,7 +254,7 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
     return state.hasError;
   },
   canApply(state: PreferencesState, getters) {
-    return getters.isPreferencesDirty && state.preferencesError.length === 0;
+    return (getters.isPreferencesDirty && state.preferencesError.length === 0) || state.canApply;
   },
   showMuted(state: PreferencesState) {
     return state.preferences.diagnostics.showMuted;

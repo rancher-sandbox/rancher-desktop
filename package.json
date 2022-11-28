@@ -51,7 +51,7 @@
   "dependencies": {
     "@kubernetes/client-node": "^0.17.1",
     "@nuxtjs/eslint-module": "^3.1.0",
-    "@rancher/components": "0.1.0-alpha.8",
+    "@rancher/components": "0.1.0-alpha.9",
     "@rancher/shell": "^0.1.2",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.7",
