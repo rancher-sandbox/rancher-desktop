@@ -52,6 +52,7 @@ export class DiagnosticsManager {
         import('./dockerCliSymlinks'),
         import('./rdBinInShell'),
         import('./kubeContext'),
+        import('./wslFromStore'),
       ])).map(obj => obj.default);
 
       return (await Promise.all(imports)).flat();
@@ -134,6 +135,7 @@ export class DiagnosticsManager {
     console.debug(`Running check ${ checker.id }`);
     try {
       this.results[checker.id] = await checker.check();
+      console.debug(`Check ${ checker.id } result: ${ JSON.stringify(this.results[checker.id]) }`);
     } catch (e) {
       console.error(`ERROR checking ${ checker.id }`, { e });
     }
