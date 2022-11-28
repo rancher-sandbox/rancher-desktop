@@ -9,7 +9,7 @@ import timers from 'timers';
 import { CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import {
-  AppImageUpdater, MacUpdater, NsisUpdater, AppUpdater, ProgressInfo, UpdateInfo,
+  AppImageUpdater, MacUpdater, AppUpdater, ProgressInfo, UpdateInfo,
 } from 'electron-updater';
 import { ElectronAppAdapter } from 'electron-updater/out/ElectronAppAdapter';
 import yaml from 'yaml';
@@ -99,9 +99,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
 
     switch (os.platform()) {
     case 'win32': {
-      const useWix = !!parseInt(process.env.RD_FEAT_WIX ?? '0', 10);
-
-      updater = useWix ? new MsiUpdater(options) : new NsisUpdater(options);
+      updater = new MsiUpdater(options);
       break;
     }
     case 'darwin':

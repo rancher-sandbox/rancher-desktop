@@ -92,7 +92,7 @@ class Builder {
     args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
     await spawnFile('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { stdio: 'inherit', env });
 
-    if (process.env.RD_FEAT_WIX && process.platform === 'win32') {
+    if (process.platform === 'win32') {
       const distDir = path.join(process.cwd(), 'dist');
       const appDir = path.join(distDir, 'win-unpacked');
 
