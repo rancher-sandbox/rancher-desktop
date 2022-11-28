@@ -66,8 +66,8 @@ async function getInputFile(name: string) {
  * assetInfo describes information we need about one asset.
  */
 type assetInfo = {
-  /** file is the (full) path to the asset file. */
-  file: string;
+  /** filepath is the (full) path to the asset file. */
+  filepath: string;
   /** filename is the base name of the asset. */
   filename: string;
   /** length of the file */
@@ -84,10 +84,10 @@ type assetInfo = {
  * @returns File name and checksum data.
  */
 async function getChecksum(name: string, filenameOverride?: string): Promise<assetInfo> {
-  const filename = await getInputFile(name);
-  const outputName = filenameOverride || path.basename(filename);
-  const stat = await fs.promises.stat(filename);
-  const input = fs.createReadStream(filename);
+  const filepath = await getInputFile(name);
+  const outputName = filenameOverride || path.basename(filepath);
+  const stat = await fs.promises.stat(filepath);
+  const input = fs.createReadStream(filepath);
   const hasher = crypto.createHash('sha512');
   const promise = new Promise((resolve) => {
     input.on('end', resolve);
@@ -102,7 +102,7 @@ async function getChecksum(name: string, filenameOverride?: string): Promise<ass
   });
 
   return {
-    file:         filename,
+    filepath,
     filename:     outputName,
     length:       stat.size,
     checksum:     `${ hasher.read() }  ${ outputName }`,
@@ -205,12 +205,12 @@ async function updateRelease(octokit: Octokit, owner: string, repo: string, tag:
           'Content-Length': info.length,
           'Content-Type':   'application/octet-stream',
         },
-        data: fs.createReadStream(info.file),
+        data: fs.createReadStream(info.filepath),
         name: info.filename,
       }),
     ]);
   }));
-  console.log(`Relase ${ release.name } updated.`);
+  console.log(`Release ${ release.name } updated.`);
 
   return release.html_url;
 }
