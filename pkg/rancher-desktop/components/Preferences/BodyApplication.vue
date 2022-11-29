@@ -42,7 +42,7 @@ export default Vue.extend({
   },
   methods: {
     async tabSelected({ tab }: { tab: Vue.Component }) {
-      await this.$store.dispatch('help/setUrl', Help.url(tab.name));
+      await this.$store.dispatch('help/setUrl', Help.url(`Application-${ tab.name }`));
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }

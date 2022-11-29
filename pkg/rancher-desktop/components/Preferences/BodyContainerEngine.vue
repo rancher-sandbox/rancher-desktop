@@ -41,7 +41,7 @@ export default Vue.extend({
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }
-      await this.$store.dispatch('help/setUrl', Help.url(tab.name));
+      await this.$store.dispatch('help/setUrl', Help.url(`Container Engine-${ tab.name }`));
     },
     async commitPreferences(tabName: string) {
       await this.$store.dispatch(
