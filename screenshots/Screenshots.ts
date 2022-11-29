@@ -6,8 +6,6 @@ import { expect } from '@playwright/test';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 
-import { isWin, isMac } from '@pkg/utils/platform';
-
 import type { Page, PageScreenshotOptions } from '@playwright/test';
 
 interface ScreenshotsOptions {
@@ -43,10 +41,10 @@ export class Screenshots {
   }
 
   protected osCommand(path: string): string {
-    if (isMac) {
-      return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") prefs.png`;
+    if (os.platform() === 'darwin') {
+      return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ path }`;
     }
-    if (isWin) {
+    if (os.platform() === 'win32') {
       return `import -window root ${ path }`;
     }
 
