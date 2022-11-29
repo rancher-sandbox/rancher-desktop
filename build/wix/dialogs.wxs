@@ -28,6 +28,11 @@
       <DialogRef Id="RDWelcomeDlg" />
       <UIRef Id="WixUI_ErrorProgressText" />
 
+      <Publish Dialog="ExitDialog"
+         Control="Finish"
+         Event="DoAction"
+         Value="LaunchApplication"
+      >WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
 
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
@@ -39,6 +44,9 @@
       <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
     </UI>
 
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run Rancher Desktop" />
+    <Property Id="WixShellExecTarget" Value="[#mainExecutable]" />
+    <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
     <InstallUISequence>
       <Show Dialog="MaintenanceWelcomeDlg" Before="RDWelcomeDlg">Installed AND NOT RESUME AND NOT Preselected AND NOT PATCH</Show>
     </InstallUISequence>
