@@ -94,10 +94,6 @@ func main() {
 		cancel()
 	}()
 
-	if *enablePrivilegedService && *enableIptables {
-		log.Fatal("-privilegedService and -iptables are mutually exclusive; you can only enable one.")
-	}
-
 	tcpTracker := tcplistener.NewListenerTracker()
 
 	if *enablePrivilegedService {
