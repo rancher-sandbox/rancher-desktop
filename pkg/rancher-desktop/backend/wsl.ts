@@ -733,7 +733,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       guestAgentConfig = {
         LOG_DIR:                       await this.wslify(paths.logs),
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
-        GUESTAGENT_IPTABLES:           'false',
+        GUESTAGENT_IPTABLES:           enableKubernetes ? 'false' : 'true', // only enable IPTABLES for older K8s
         GUESTAGENT_PRIVILEGED_SERVICE: 'true',
         GUESTAGENT_CONTAINERD:         cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD ? 'true' : 'false',
         GUESTAGENT_DOCKER:             cfg?.kubernetes?.containerEngine === ContainerEngine.MOBY ? 'true' : 'false',
