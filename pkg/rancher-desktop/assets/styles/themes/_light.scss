@@ -525,4 +525,7 @@ BODY, .theme-light {
 
   --product-icon               : #{$darker};
   --product-icon-active        : #{$darkest};
+
+  --button-icon                : #{$dark};
+  --button-icon-bg             : #{$secondary};
 }
