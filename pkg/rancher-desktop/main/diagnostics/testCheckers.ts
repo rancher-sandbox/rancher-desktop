@@ -15,7 +15,7 @@ class CheckTesting implements DiagnosticsChecker {
 
   category = DiagnosticsCategory.Testing;
   applicable(): Promise<boolean> {
-    return Promise.resolve(/^dev|test/i.test(process.env.NODE_ENV ?? ''));
+    return Promise.resolve(/^dev|test/i.test(process.env.NODE_ENV ?? '') && !process.env.MOCK_FOR_SCREENSHOTS);
   }
 
   check() {

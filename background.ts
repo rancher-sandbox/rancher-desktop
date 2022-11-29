@@ -695,7 +695,11 @@ async function getDevVersion() {
 }
 
 async function getVersion() {
-  return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
+  if (process.env.NODE_ENV === 'production' || process.env.MOCK_FOR_SCREENSHOTS) {
+    return getProductionVersion();
+  }
+
+  return await getDevVersion();
 }
 
 function showErrorDialog(title: string, message: string, fatal?: boolean) {

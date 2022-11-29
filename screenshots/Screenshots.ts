@@ -37,9 +37,10 @@ export class Screenshots {
 }
 
 export class MainWindowScreenshots extends Screenshots {
-  async take(tabName: string, navPage?: NavPage) {
+  async take(tabName: string, navPage?: NavPage, timeout = 200) {
     if (navPage) {
       await navPage.navigateTo(tabName as any);
+      await this.page.waitForTimeout(timeout);
     }
     await this.screenshot(tabName);
   }

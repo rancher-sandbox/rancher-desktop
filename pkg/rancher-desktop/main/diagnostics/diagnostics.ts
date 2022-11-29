@@ -53,6 +53,7 @@ export class DiagnosticsManager {
         import('./rdBinInShell'),
         import('./kubeContext'),
         import('./wslFromStore'),
+        import('./mockForScreenshots'),
       ])).map(obj => obj.default);
 
       return (await Promise.all(imports)).flat();
