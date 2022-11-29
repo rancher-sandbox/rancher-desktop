@@ -1,3 +1,4 @@
+import childProcess from 'child_process';
 import os from 'os';
 
 import { expect } from '@playwright/test';
@@ -5,13 +6,22 @@ import { expect } from '@playwright/test';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 
+import { isWin, isMac } from '@pkg/utils/platform';
+
 import type { Page, PageScreenshotOptions } from '@playwright/test';
 
 interface ScreenshotsOptions {
   directory?: string;
+  isOsCommand?: boolean;
 }
 
 export class Screenshots {
+  private isOsCommand = true;
+
+  // used by Mac api
+  private appBundleTitle = 'Rancher Desktop';
+
+  protected windowTitle = '';
   private screenshotIndex = 0;
   readonly page: Page;
   readonly directory: string | undefined;
@@ -23,21 +33,53 @@ export class Screenshots {
 
       this.directory = directory === undefined || directory === null ? '' : `${ directory }/`;
     }
+    if (opt?.isOsCommand) {
+      this.isOsCommand = opt.isOsCommand;
+    }
   }
 
-  protected setPath(title: string, opt: PageScreenshotOptions = {}) {
-    return {
-      ...opt,
-      path: `screenshots/output/${ os.platform() }/${ this.directory }${ this.screenshotIndex++ }_${ title }.png`,
+  protected buildPath(title: string): string {
+    return `screenshots/output/${ os.platform() }/${ this.directory }${ this.screenshotIndex++ }_${ title }.png`;
+  }
+
+  protected osCommand(path: string): string {
+    if (isMac) {
+      return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") prefs.png`;
+    }
+    if (isWin) {
+      return `import -window root ${ path }`;
+    }
+
+    return `gnome-screenshot -w -f ${ path }`;
+  }
+
+  protected async screenshot(title: string) {
+    const options = {
+      fullPage: true,
+      path:     this.buildPath(title),
     };
-  }
 
-  protected async screenshot(path: string) {
-    await this.page.screenshot(this.setPath(path, { fullPage: true }));
+    await this.page.screenshot(options);
+
+    if (this.isOsCommand) {
+      const command = this.osCommand(options.path);
+
+      try {
+        childProcess.execSync(command);
+      } catch (e) {
+        console.error(`Error, command failed: ${ command }`);
+        process.exit(1);
+      }
+    }
   }
 }
 
 export class MainWindowScreenshots extends Screenshots {
+  constructor(page: Page, opt?: ScreenshotsOptions) {
+    super(page, opt);
+    this.windowTitle = 'Rancher Desktop';
+  }
+
   async take(tabName: string, navPage?: NavPage, timeout = 200) {
     if (navPage) {
       await navPage.navigateTo(tabName as any);
@@ -53,6 +95,7 @@ export class PreferencesScreenshots extends Screenshots {
   constructor(page: Page, preferencePage: PreferencesPage, opt?: ScreenshotsOptions) {
     super(page, opt);
     this.preferencePage = preferencePage;
+    this.windowTitle = 'Rancher Desktop - Preferences';
   }
 
   async take(tabName: string, subTabName?: string) {
