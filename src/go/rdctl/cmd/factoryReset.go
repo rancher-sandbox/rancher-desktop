@@ -42,6 +42,7 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 			logrus.SetLevel(logrus.TraceLevel)
 		}
 		cmd.SilenceUsage = true
+		commonShutdownSettings.WaitForShutdown = false
 		_, err := doShutdown(&commonShutdownSettings)
 		if err != nil {
 			return err
@@ -54,5 +55,4 @@ func init() {
 	rootCmd.AddCommand(factoryResetCmd)
 	factoryResetCmd.Flags().BoolVar(&removeKubernetesCache, "remove-kubernetes-cache", false, "If specified, also removes the cached Kubernetes images.")
 	factoryResetCmd.Flags().BoolVar(&commonShutdownSettings.Verbose, "verbose", false, "Be verbose")
-	factoryResetCmd.Flags().BoolVar(&commonShutdownSettings.WaitForShutdown, "wait", true, "Don't wait for shutdown to be confirmed")
 }
