@@ -18,9 +18,12 @@ mkcert -install
 mkcert localhost
 chown -R nobody:nobody $CAROOT
 
-# Configure dockerd to pull images via OpenResty proxy.
+# Configure containerd to pull images via OpenResty proxy.
 sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/containerd
 sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/containerd
+
+# Make sure openresty is started before containerd
+sed -i -E '/openresty/!s/^([ \t]*need.*)/\1 openresty/' /etc/init.d/containerd
 
 # openresty is backgrounding itself (and writes its own pid file)
 sed -i 's/^command_background/#command_background/' /etc/init.d/openresty

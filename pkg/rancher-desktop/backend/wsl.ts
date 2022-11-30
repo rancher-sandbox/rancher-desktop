@@ -1174,7 +1174,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
-              this.progressTracker.action('Openresty configuration', 50, async() => {
+              this.progressTracker.action('Configuring image proxy', 50, async() => {
                 const allowListConf = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
                 const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
 
@@ -1226,7 +1226,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
-        await this.progressTracker.action('Starting OpenResty', 100, this.startService('openresty'));
+        await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
         if (kubernetesVersion) {

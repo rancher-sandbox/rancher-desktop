@@ -131,6 +131,7 @@ provision:
     for svc in containerd docker; do
       sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/$svc
       sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/$svc
+      sed -i -E '/openresty/!s/^([ \t]*need.*)/\1 openresty/' /etc/init.d/$svc
     done
 - # mount bpffs to allow containers to leverage bpf, and make both bpffs and
   # cgroupfs shared mounts so the pods can mount them correctly

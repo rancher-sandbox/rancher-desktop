@@ -1,6 +1,6 @@
 import merge from 'lodash/merge';
 
-import { BackendSettings } from '~/backend/backend';
+import { BackendSettings } from '@pkg/backend/backend';
 
 export default class BackendHelper {
   /**
@@ -18,7 +18,15 @@ export default class BackendHelper {
    * Turn imageAllowList patterns into a list of nginx regex rules.
    */
   static createImageAllowListConf(imageAllowList: BackendSettings['containerEngine']['imageAllowList']): string {
+    /**
+     * The image allow list config file consists of one line for each pattern using nginx pattern matching syntax.
+     * It starts with '~*' for case-insensitive matching, followed by a regular expression, which should be
+     * anchored to the beginning and end of the string with '^...$'. The pattern must be followed by ' 0;' and
+     * a newline. The '0' means that this pattern is **not** forbidden (the table defaults to '1').
+     */
+
     if (!imageAllowList.enabled) {
+      // Return a pattern allowing **any** image name.
       return '~*^.*$ 0;\n';
     }
 
@@ -59,9 +67,10 @@ export default class BackendHelper {
       const match = repo[repo.length - 1].match(/^(?<image>.*?)(:(?<tag>.*?))?(@(?<digest>.*))?$/);
       let tag = '[^/]+';
 
-      // strip tag and digest from last fragment of the image name
-      // `match` and `match.groups` can't be `null`, but TypeScript doesn't know
-      if (match && match.groups && (match.groups.tag || match.groups.digest)) {
+      // Strip tag and digest from last fragment of the image name.
+      // `match` and `match.groups` can't be `null` because the regular expression will match the empty string,
+      // but TypeScript can't know that.
+      if (match?.groups?.tag || match?.groups?.digest) {
         repo.pop();
         repo.push(match.groups.image);
         // actual tag is ignored when a digest is specified
@@ -78,7 +87,7 @@ export default class BackendHelper {
           repo.push('[^/]+');
         }
       }
-      patterns += `~*^${ [host, 'v2', ...repo, 'manifests', tag].join('/') }$ 0;\n`;
+      patterns += `~*^${ host }/v2/${ repo.join('/') }/manifests/${ tag }$ 0;\n`;
     }
 
     return patterns;

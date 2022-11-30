@@ -427,8 +427,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // We had a typo in the name of the image; it was "alpline" instead of "alpine".
     // Image version may have a '+rd1' (or '.rd1') suffix after the upstream semver version.
     const versionMatch = images.map(i => /^alpl?ine-lima-v([0-9.]+)(?:[+.]rd(\d+))?-/.exec(i)).find(defined);
-    const existingVersion = semver.coerce(versionMatch ? versionMatch[1] : null);
-    const existingRDVersion = versionMatch ? versionMatch[2] : undefined;
+    const existingVersion = semver.coerce(versionMatch?.[1]);
+    const existingRDVersion = versionMatch?.[2];
 
     if (!existingVersion) {
       console.log(`Could not find base image version from ${ images }; skipping update of base images.`);
@@ -1619,8 +1619,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
         }
 
-        await this.progressTracker.action('Configuring openresty', 50, this.configureOpenResty(config));
-        await this.startService('openresty');
+        await this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config));
 
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {

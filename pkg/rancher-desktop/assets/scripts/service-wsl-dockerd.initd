@@ -20,7 +20,7 @@ error_log="'${DOCKER_LOGFILE}'"
 rc_ulimit="${DOCKER_ULIMIT:--c unlimited -n 1048576 -u unlimited}"
 
 depend() {
-    need sysfs cgroups
+    need sysfs cgroups openresty
     after iptables ip6tables
 }
 
