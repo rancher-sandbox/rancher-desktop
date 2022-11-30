@@ -1,3 +1,5 @@
+import { ipcRenderer } from 'electron';
+
 const baseUrl = 'https://docs.rancherdesktop.io';
 
 const paths: Record<string, string> = {
@@ -12,7 +14,19 @@ const paths: Record<string, string> = {
 };
 
 class HelpImpl {
-  readonly version = process.env.NODE_ENV === 'production' ? /\d+\.\d+/.exec(Electron.app.getVersion()) : 'next';
+  private version = 'next';
+
+  constructor() {
+    if (process.env.NODE_ENV !== 'production') {
+      return;
+    }
+
+    ipcRenderer.on('get-app-version', (_event, version) => {
+      this.version = /\d+\.\d+/.exec(version)?.toString() ?? 'next';
+    });
+
+    ipcRenderer.send('get-app-version');
+  }
 
   url(key: string | undefined): string {
     if (key) {
