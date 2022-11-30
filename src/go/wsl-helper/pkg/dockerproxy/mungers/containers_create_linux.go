@@ -61,6 +61,16 @@ const mountRoot = "rancher-desktop/run/docker-mounts"
 // context.  This only lasts for a single request/response pair.
 var contextKey = struct{}{}
 
+// container info is passed as the request/response context when creating a 
+// new container.
+type containerInfo struct {
+	// binds is the map of bind mounts
+	binds         *map[string]string
+
+	// containerName is the alias/name provided when creating the container
+	containerName string
+}
+
 // bindManager manages the binding data (but does not do binding itself)
 type bindManager struct {
 	// mountRoot is where we can keep our temporary mounts.
@@ -82,8 +92,9 @@ type bindManager struct {
 // empty, then the bind is incomplete (the container create failed) and it
 // should not be used.
 type bindManagerEntry struct {
-	ContainerId string
-	HostPath    string
+	ContainerId   string
+	ContainerName string
+	HostPath      string
 }
 
 func newBindManager() (*bindManager, error) {
@@ -177,6 +188,7 @@ type containersCreateRequestBody struct {
 
 // munge incoming request for POST /containers/create
 func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
+	containerName := req.URL.Query().Get("name")
 	body := containersCreateRequestBody{}
 	err := readRequestBodyJSON(req, &body)
 	if err != nil {
@@ -234,7 +246,11 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 		return nil
 	}
 
-	(*contextValue)[contextKey] = &binds
+	(*contextValue)[contextKey] = containerInfo{
+		binds:         &binds,
+		containerName: containerName,
+	}
+
 	buf, err := json.Marshal(&body)
 	if err != nil {
 		logrus.WithError(err).Error("could not re-serialize modified body")
@@ -256,8 +272,9 @@ type containersCreateResponseBody struct {
 
 // munge outgoing response for POST /containers/create
 func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
-	binds, ok := (*contextValue)[contextKey].(*map[string]string)
-	if !ok {
+	info := (*contextValue)[contextKey].(containerInfo)
+
+	if len(*info.binds) < 1 {
 		// No binds, meaning either the user didn't specify any, or we didn't need to remap.
 		return nil
 	}
@@ -265,7 +282,7 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 	if resp.StatusCode != http.StatusCreated {
 		// If the response wasn't a success; just clean up the bind mappings.
 		b.Lock()
-		for key := range *binds {
+		for key := range *info.binds {
 			delete(b.entries, key)
 		}
 		b.Unlock()
@@ -280,10 +297,11 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 	}
 
 	b.Lock()
-	for mountId, hostPath := range *binds {
+	for mountId, hostPath := range *info.binds {
 		b.entries[mountId] = bindManagerEntry{
-			ContainerId: body.Id,
-			HostPath:    hostPath,
+			ContainerId:   body.Id,
+			ContainerName: info.containerName,
+			HostPath:      hostPath,
 		}
 	}
 	err = b.persist()
@@ -293,7 +311,7 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 		return fmt.Errorf("could not write state: %w", err)
 	}
 
-	logrus.WithField("binds", binds).WithField("body", body).Debug("got stored binds")
+	logrus.WithField("binds", info.binds).WithField("body", body).Debug("got stored binds")
 	return nil
 }
 
@@ -305,7 +323,7 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 	mapping := make(map[string]string)
 	b.RLock()
 	for key, data := range b.entries {
-		if data.ContainerId == templates["id"] {
+		if data.ContainerId == templates["id"] || data.ContainerName == templates["id"] {
 			mapping[key] = data.HostPath
 		}
 	}
@@ -407,7 +425,7 @@ func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, context
 
 	var toDelete []string
 	for key, data := range b.entries {
-		if data.ContainerId == templates["id"] {
+		if data.ContainerId == templates["id"] || data.ContainerName == templates["id"] {
 			toDelete = append(toDelete, key)
 		}
 	}
