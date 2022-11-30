@@ -1,3 +1,4 @@
+import fs from 'fs';
 import stream from 'stream';
 
 import { Settings } from '@pkg/config/settings';
@@ -213,4 +214,14 @@ export interface VMExecutor {
    */
   spawn(...command: string[]): childProcess.ChildProcess;
   spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
+
+  /**
+   * Write the given contents to a given file name in the VM.
+   * The file will be owned by root.
+   * @param filePath The destination file path, in the VM.
+   * @param fileContents The contents of the file.
+   * @param permissions The file permissions. Defaults to 0o644.
+   */
+  writeFile(filePath: string, fileContents: string): Promise<void>;
+  writeFile(filePath: string, fileContents: string, permissions: fs.Mode): Promise<void>;
 }

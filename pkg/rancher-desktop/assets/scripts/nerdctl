@@ -1,0 +1,4 @@
+#!/bin/sh
+export CONTAINERD_ADDRESS=/run/k3s/containerd/containerd.sock
+export HTTPS_PROXY=http://127.0.0.1:3128
+exec /usr/local/libexec/nerdctl/nerdctl "$@"

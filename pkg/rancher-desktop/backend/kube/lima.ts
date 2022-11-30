@@ -10,7 +10,7 @@ import yaml from 'yaml';
 
 import { Architecture, BackendSettings, RestartReasons } from '../backend';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
-import LimaBackend, { Action, MACHINE_NAME } from '../lima';
+import LimaBackend, { Action } from '../lima';
 
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
@@ -359,9 +359,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     await this.vm.writeFile('bin/install-k3s', INSTALL_K3S_SCRIPT, 'a+x');
     await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
     await this.vm.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
-    const profilePath = path.join(paths.resources, 'scripts', 'profile');
-
-    await this.vm.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
   }
 
   /**

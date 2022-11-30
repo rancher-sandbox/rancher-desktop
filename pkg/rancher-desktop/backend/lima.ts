@@ -34,6 +34,8 @@ import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
+import NERDCTL from '@pkg/assets/scripts/nerdctl';
+import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
 import { ContainerEngine } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
@@ -423,8 +425,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     const images = currentConfig.images.map(i => path.basename(i.location));
     // We had a typo in the name of the image; it was "alpline" instead of "alpine".
-    const versionMatch = images.map(i => /^alpl?ine-lima-v([0-9.]+)-/.exec(i)).find(defined);
-    const existingVersion = semver.coerce(versionMatch ? versionMatch[1] : null);
+    // Image version may have a '+rd1' (or '.rd1') suffix after the upstream semver version.
+    const versionMatch = images.map(i => /^alpl?ine-lima-v([0-9.]+)(?:[+.]rd(\d+))?-/.exec(i)).find(defined);
+    const existingVersion = semver.coerce(versionMatch?.[1]);
+    const existingRDVersion = versionMatch?.[2];
 
     if (!existingVersion) {
       console.log(`Could not find base image version from ${ images }; skipping update of base images.`);
@@ -432,7 +436,26 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       return;
     }
 
-    const versionComparison = semver.coerce(IMAGE_VERSION)?.compare(existingVersion);
+    let versionComparison = semver.coerce(IMAGE_VERSION)?.compare(existingVersion);
+
+    // Compare RD patch versions if upstream semver are matching
+    if (versionComparison === 0) {
+      const rdVersionMatch = IMAGE_VERSION.match(/[+.]rd(\d+)/);
+
+      if (rdVersionMatch) {
+        if (existingRDVersion) {
+          if (parseInt(existingRDVersion) < parseInt(rdVersionMatch[1])) {
+            versionComparison = 1;
+          }
+        } else {
+          // If the new image has an RD patch version, but the old one doesn't, then the new version is newer.
+          versionComparison = 1;
+        }
+      } else if (existingRDVersion) {
+        // If the old image has an RD patch version, but the new one doesn't, then the new version is older.
+        versionComparison = -1;
+      }
+    }
 
     switch (versionComparison) {
     case undefined:
@@ -1330,9 +1353,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
-      const profilePath = path.join(paths.resources, 'scripts', 'profile');
-
-      await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
+      await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
 
       await this.execCommand({ root: true }, 'mkdir', '-p', '/etc/cni/net.d');
 
@@ -1439,6 +1460,16 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   protected async writeBuildkitScripts() {
     await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
     await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+  }
+
+  protected async configureOpenResty(config: BackendSettings) {
+    const allowListConf = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+    // TODO: don't use hardcoded IP address
+    const resolver = 'resolver 192.168.5.3 ipv6=off;\n';
+
+    await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
+    await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
+    await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
   }
 
   /**
@@ -1587,6 +1618,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         if (kubernetesVersion) {
           await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
         }
+
+        await this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config));
 
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
