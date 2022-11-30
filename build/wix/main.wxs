@@ -40,6 +40,18 @@
     <Upgrade Id="{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}">
       <UpgradeVersion OnlyDetect="yes" Property="WSLKERNELINSTALLED" Minimum="5.4.0" />
     </Upgrade>
+    <!--
+      - If doing a per-user upgrade, we can't detect WSL because Windows
+      - Installer refuses to find per-machine packages for a per-user install.
+      - We need to manually search for a previous version of RD and assume that
+      - it's set.
+      -->
+    <Upgrade Id="{1F717D5A-A55B-5FE2-9103-C0D74F7FBDE3}">
+      <UpgradeVersion OnlyDetect="yes" Property="RD_INSTALLED" Minimum="0.0.0" />
+    </Upgrade>
+    <SetProperty Id="WSLKERNELINSTALLED" Value="1" After="AppSearch">
+      (RD_INSTALLED OR NSISUNINSTALLCOMMAND) AND NOT WSLKERNELINSTALLED
+    </SetProperty>
     <SetProperty Id="ALLUSERS" Sequence="both" After="ValidateProductID" Value="1">
       NOT WSLKERNELINSTALLED AND NOT Installed
     </SetProperty>
