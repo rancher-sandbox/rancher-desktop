@@ -1,3 +1,5 @@
+import childProcess from 'child_process';
+import os from 'os';
 import * as path from 'path';
 
 import type { Config, PlaywrightTestOptions } from '@playwright/test';
@@ -18,5 +20,13 @@ const config: Config<PlaywrightTestOptions> = {
   reporter:      'list',
   use:           { colorScheme },
 };
+
+if (os.platform() === 'win32' && process.env.THEME === 'dark') {
+  // Switch to Dark mode
+  childProcess.execSync('reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize /v AppsUseLightTheme /t REG_DWORD /f /d 0');
+} else {
+  // Switch to Light mode
+  childProcess.execSync('reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize /v AppsUseLightTheme /t REG_DWORD /f /d 1');
+}
 
 export default config;
