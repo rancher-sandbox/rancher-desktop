@@ -56,6 +56,9 @@ export default Vue.extend({
     padding: var(--preferences-content-padding);
 
     .preferences-alert {
+      display: flex;
+      justify-content: right;
+      align-items: center;
       width: 100%;
       padding-right: var(--preferences-content-padding);
     }
