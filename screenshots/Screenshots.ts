@@ -1,7 +1,10 @@
 import childProcess from 'child_process';
+import fs from 'fs';
 import os from 'os';
+import path from 'path';
 
 import { expect } from '@playwright/test';
+import dayjs from 'dayjs';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
@@ -40,15 +43,15 @@ export class Screenshots {
     return `screenshots/output/${ os.platform() }/${ this.directory }${ this.screenshotIndex++ }_${ title }.png`;
   }
 
-  protected osCommand(path: string): string {
+  protected osCommand(file: string): string {
     if (os.platform() === 'darwin') {
-      return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ path }`;
+      return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ file }`;
     }
     if (os.platform() === 'win32') {
-      return `import -window root ${ path }`;
+      return `${ path.resolve(process.cwd(), 'resources', 'ShareX', 'sharex') } -p -s -ActiveWindow`;
     }
 
-    return `gnome-screenshot -w -f ${ path }`;
+    return `gnome-screenshot -w -f ${ file }`;
   }
 
   protected async screenshot(title: string) {
@@ -64,6 +67,21 @@ export class Screenshots {
 
       try {
         childProcess.execSync(command);
+
+        if (os.platform() === 'win32') {
+          // sleep for 1 second to allow ShareX to write screenshot
+          await (new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+          }));
+
+          const screenshotsPath = path.resolve(process.cwd(), 'resources', 'ShareX', 'ShareX', 'Screenshots', `${ dayjs().format('YYYY-MM') }`);
+          const screenshots = fs.readdirSync(screenshotsPath);
+
+          fs.renameSync(
+            path.resolve(screenshotsPath, screenshots?.[0]),
+            this.buildPath(title),
+          );
+        }
       } catch (e) {
         console.error(`Error, command failed: ${ command }`);
         process.exit(1);
