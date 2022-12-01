@@ -31,7 +31,7 @@ import (
 )
 
 func KillRancherDesktop() {
-	cmd := exec.Command("taskkill", "/IM", "Rancher Desktop", "/T", "/F")
+	cmd := exec.Command("taskkill", "/IM", "Rancher Desktop.exe", "/T", "/F")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	cmd.Run()
 }

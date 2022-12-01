@@ -139,7 +139,7 @@ func deleteUnixLikeData(homeDir string, altAppHomePath string, configHomePath st
 	}
 	for _, currentPath := range pathList {
 		if err := os.RemoveAll(currentPath); err != nil {
-			logrus.Errorf("Error trying to remove %s: %w", currentPath, err)
+			logrus.Errorf("Error trying to remove %s: %s", currentPath, err)
 		}
 	}
 	if err := clearDockerContext(); err != nil {

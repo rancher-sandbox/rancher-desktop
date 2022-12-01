@@ -30,24 +30,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func FinishShutdown() error {
+func FinishShutdown(waitForShutdown bool) error {
 	switch runtime.GOOS {
 	case "darwin":
-		doCheckWithTimeout(checkProcessQemu, pkillQemu, 15, 2, "qemu")
-		doCheckWithTimeout(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
+		doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
+		doCheckWithTimeout(checkProcessDarwin, pkillDarwin, waitForShutdown, 5, 1, "the app")
 	case "linux":
-		doCheckWithTimeout(checkProcessQemu, pkillQemu, 15, 2, "qemu")
-		doCheckWithTimeout(checkProcessLinux, pkillLinux, 5, 1, "the app")
+		doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
+		doCheckWithTimeout(checkProcessLinux, pkillLinux, waitForShutdown, 5, 1, "the app")
 	case "windows":
-		doCheckWithTimeout(checkProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
+		doCheckWithTimeout(checkProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app")
 	default:
 		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
 	}
 	return nil
 }
 
-func doCheckWithTimeout(checkFunc func() bool, killFunc func(), retryCount int, retryWait int, operation string) {
-	for iter := 0; iter < retryCount; iter++ {
+func doCheckWithTimeout(checkFunc func() bool, killFunc func(), waitForShutdown bool, retryCount int, retryWait int, operation string) {
+	for iter := 0; waitForShutdown && iter < retryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)
 			time.Sleep(time.Duration(retryWait) * time.Second)
@@ -111,13 +111,13 @@ func checkProcessQemu() bool {
 }
 
 func pkillQemu() {
-	exec.Command("pkill", "-f", RancherDesktopQemuCommand).Run()
+	exec.Command("pkill", "-9", "-f", RancherDesktopQemuCommand).Run()
 }
 
 func pkillDarwin() {
-	exec.Command("pkill", "-f", "Contents/MacOS/Rancher Desktop").Run()
+	exec.Command("pkill", "-9", "-f", "Contents/MacOS/Rancher Desktop").Run()
 }
 
 func pkillLinux() {
-	exec.Command("pkill", "rancher-desktop").Run()
+	exec.Command("pkill", "-9", "rancher-desktop").Run()
 }
