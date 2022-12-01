@@ -17,12 +17,10 @@ class HelpImpl {
   private version = 'next';
 
   constructor() {
-    if (process.env.NODE_ENV !== 'production') {
-      return;
-    }
-
     ipcRenderer.on('get-app-version', (_event, version) => {
-      this.version = /\d+\.\d+/.exec(version)?.toString() ?? 'next';
+      const releasePattern = /^(\d+\.\d+)\.\d+$/;
+
+      this.version = releasePattern.exec(version)?.[1] ?? 'next';
     });
 
     ipcRenderer.send('get-app-version');
