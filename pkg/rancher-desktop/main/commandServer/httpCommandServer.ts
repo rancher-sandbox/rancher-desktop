@@ -91,6 +91,7 @@ export class HttpCommandServer {
     }
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
+    await fs.promises.mkdir(paths.appHome, { recursive: true });
     await fs.promises.writeFile(statePath,
       jsonStringifyWithWhiteSpace(this.externalState),
       { mode: 0o600 });

@@ -24,8 +24,6 @@ import path from 'path';
 import stream from 'stream';
 import util from 'util';
 
-import Electron from 'electron';
-
 import paths from '@pkg/utils/paths';
 
 type consoleKey = 'log' | 'error' | 'info' | 'warn';
@@ -151,35 +149,27 @@ export default new Proxy<Module>({}, {
 });
 
 /**
- * Initialize logging, removing all existing logs.  This is only done in the
- * main process, and due to how imports work, only ever called once.
- *
- * This is only done if we have the electron single-instance lock, as we do not
- * want to delete logs for existing instances - this should not be an issue, as
- * we will quit shortly.
+ * Delete any existing log files from the logging directory, with the exception
+ * of those that are already in use by Rancher Desktop. Should only be run once
+ * we are certain that this is the only instance of Rancher Desktop running on
+ * the system, so that logs from another instance are not deleted.
  */
+export function clearLoggingDirectory(): void {
+  if (process.env.NODE_ENV === 'test' || process.type !== 'browser') {
+    return;
+  }
 
-if (process.env.NODE_ENV === 'test') {
-  // If we're running under test, just always ensure the directory can be used.
-  fs.mkdirSync(paths.logs, { recursive: true });
-} else if (process.type === 'browser') {
-  // The main process is 'browser', as opposed to 'renderer'.
-  // We can do this asynchronously, since we know which logs have been opened.
-  // However, we still need to create the directory synchronously.
-  if (Electron.app.requestSingleInstanceLock()) {
-    fs.mkdirSync(paths.logs, { recursive: true });
-    (async() => {
-      const entries = await fs.promises.readdir(paths.logs, { withFileTypes: true });
+  const entries = fs.readdirSync(paths.logs, { withFileTypes: true });
 
-      entries.map(async(entry) => {
-        if (entry.isFile() && entry.name.endsWith('.log')) {
-          const topic = path.basename(entry.name, '.log');
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith('.log')) {
+      const topic = path.basename(entry.name, '.log');
 
-          if (!logs.has(topic)) {
-            await fs.promises.unlink(path.join(paths.logs, entry.name));
-          }
-        }
-      });
-    })();
+      if (!logs.has(topic)) {
+        fs.unlinkSync(path.join(paths.logs, entry.name));
+      }
+    }
   }
 }
+
+fs.mkdirSync(paths.logs, { recursive: true });
