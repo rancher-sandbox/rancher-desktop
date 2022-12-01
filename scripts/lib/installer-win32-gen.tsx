@@ -213,7 +213,7 @@ export default async function generateFileList(rootPath: string): Promise<string
 
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>
-        <Condition>NOT MSIINSTALLPERUSER</Condition>
+        <Condition>{'MSIINSTALLPERUSER <> 1'}</Condition>
         <File
           Name={f.name}
           Source={path.join('$(var.appDir)', d.name, f.name)}
