@@ -45,7 +45,9 @@
           X="236" Y="243" Width="56" Height="17">
           <Publish Order="1" Property="MSIINSTALLPERUSER" Value="{}">MSIINSTALLPERUSER = 0</Publish>
           <Publish Order="2" Property="ALLUSERS" Value="{}">MSIINSTALLPERUSER</Publish>
-          <Publish Order="3" Property="ALLUSERS" Value="1">NOT MSIINSTALLPERUSER</Publish>
+          <Publish Order="3" Property="ALLUSERS" Value="1">
+            <![CDATA[MSIINSTALLPERUSER <> 1]]>
+          </Publish>
           <Publish Order="4" Event="NewDialog" Value="RDVerifyReadyDlg">1</Publish>
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">

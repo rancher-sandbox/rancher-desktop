@@ -113,7 +113,7 @@
 
     <!-- Setting the PATH variable -->
     <Component Id="PathUser" Directory="APPLICATIONFOLDER">
-      <Condition>MSIINSTALLPERUSER</Condition>
+      <Condition>MSIINSTALLPERUSER = 1</Condition>
       <RegistryValue
         Root="HKCU"
         Key="SOFTWARE\!(wix.AppGUID)"
@@ -130,7 +130,9 @@
         Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
     </Component>
     <Component Id="PathSystem" Directory="APPLICATIONFOLDER">
-      <Condition>NOT MSIINSTALLPERUSER</Condition>
+      <Condition>
+        <![CDATA[MSIINSTALLPERUSER <> 1]]>
+      </Condition>
       <RegistryValue
         Root="HKLM"
         Key="SOFTWARE\!(wix.AppGUID)"

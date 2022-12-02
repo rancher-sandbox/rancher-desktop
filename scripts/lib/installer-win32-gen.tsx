@@ -75,6 +75,8 @@ const Directory = 'Directory';
 const File = 'File';
 const Fragment = 'Fragment';
 const PermissionEx = 'PermissionEx';
+const RegistryKey = 'RegistryKey';
+const RegistryValue = 'RegistryValue';
 const ServiceControl = 'ServiceControl';
 const ServiceInstall = 'ServiceInstall';
 const Shortcut = 'Shortcut';
@@ -213,7 +215,7 @@ export default async function generateFileList(rootPath: string): Promise<string
 
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>
-        <Condition>NOT MSIINSTALLPERUSER</Condition>
+        <Condition>{'MSIINSTALLPERUSER <> 1'}</Condition>
         <File
           Name={f.name}
           Source={path.join('$(var.appDir)', d.name, f.name)}
@@ -260,6 +262,13 @@ export default async function generateFileList(rootPath: string): Promise<string
           Remove="both"
           Wait="yes"
         />
+        <RegistryKey
+          Root="HKLM"
+          Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\RancherDesktopPrivilegedService"
+        >
+          <RegistryValue Name="EventMessageFile" Type="expandable" Value="%SYSTEMROOT%\System32\EventCreate.exe" />
+          <RegistryValue Name="TypesSupported" Type="integer" Value="7" />{/* Error, warning, info */}
+        </RegistryKey>
       </Component>;
     },
   };
