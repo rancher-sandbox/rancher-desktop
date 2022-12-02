@@ -26,6 +26,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -45,7 +46,9 @@ const (
 // WatchServcies watches Kubernetes for NodePort and LoadBalancer services
 // and create listeners on 0.0.0.0 matching them.
 // Any connection errors are ignored and retried.
-func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string) error {
+func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string,
+	portTracker *tracker.PortTracker,
+) error {
 	// These variables are shared across the different states
 	var (
 		state     = stateNoConfig
@@ -100,7 +103,7 @@ func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker,
 				return fmt.Errorf("failed to create Kubernetes client: %w", err)
 			}
 
-			eventCh, errorCh, err = watchServices(watchContext, clientset)
+			eventCh, errorCh, err = watchServices(watchContext, clientset, portTracker)
 			if err != nil {
 				if isTimeout(err) {
 					// If it's a time out, the server may not be running yet
