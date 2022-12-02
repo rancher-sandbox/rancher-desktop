@@ -2,26 +2,12 @@
 import Vue from 'vue';
 import { mapState } from 'vuex';
 
-interface AlertType {
-  bannerText: string;
-  color: string;
-}
-
-type AlertMap = Record<'reset'|'restart'|'error', AlertType>;
+type AlertMap = Record<'reset'|'restart'|'error', string>;
 
 const alertMap: AlertMap = {
-  reset: {
-    bannerText: 'preferences.actions.banner.reset',
-    color:      'warning',
-  },
-  restart: {
-    bannerText: `preferences.actions.banner.restart`,
-    color:      'info',
-  },
-  error: {
-    bannerText: `preferences.actions.banner.error`,
-    color:      'error',
-  },
+  reset:   'preferences.actions.banner.reset',
+  restart: 'preferences.actions.banner.restart',
+  error:   'preferences.actions.banner.error',
 };
 
 export default Vue.extend({
@@ -43,32 +29,23 @@ export default Vue.extend({
 
       return undefined;
     },
-    alert(): AlertType | undefined {
+    alert(): string {
       if (!this.severity) {
-        return undefined;
+        return '';
       }
 
       return alertMap[this.severity];
     },
-    bannerText(): string | null {
+    alertText(): string | null {
       if (this.preferencesError) {
         return this.preferencesError;
       }
 
       if (this.alert) {
-        return this.t(this.alert.bannerText, { }, true);
+        return this.t(this.alert, { }, true);
       }
 
       return null;
-    },
-    errorSplit(): string[] {
-      return this.preferencesError.split(/\r?\n/);
-    },
-    errorTitle(): string {
-      return this.errorSplit[0];
-    },
-    errorRest(): string[] {
-      return this.errorSplit.slice(1, this.errorSplit.length);
     },
   },
 });
@@ -79,9 +56,8 @@ export default Vue.extend({
     <span
       v-if="alert"
       class="alert-text"
-      :class="alert.color"
     >
-      {{ bannerText }}
+      {{ alertText }}
     </span>
   </div>
 </template>
@@ -89,17 +65,7 @@ export default Vue.extend({
 <style lang="scss" scoped>
   .alert {
     .alert-text {
-      &.info {
-        color: var(--primary);
-      }
-
-      &.warning {
-        color: var(--warning);
-      }
-
-      &.error {
-        color: var(--error);
-      }
+      color: var(--body-text);
     }
   }
 </style>

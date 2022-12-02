@@ -59,6 +59,7 @@ export default Vue.extend({
       display: flex;
       justify-content: right;
       align-items: center;
+      height: 101%;
       width: 100%;
       padding-right: var(--preferences-content-padding);
     }
