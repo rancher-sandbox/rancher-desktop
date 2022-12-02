@@ -1,7 +1,8 @@
-import { app, dialog } from 'electron';
+import { app, dialog, globalShortcut } from 'electron';
 
 import { webRoot, createWindow } from '.';
 
+import { Help } from '@pkg/config/help';
 import { NavItemName } from '@pkg/config/transientSettings';
 
 interface NavItems {
@@ -43,6 +44,12 @@ export function openPreferences() {
     },
   });
 
+  globalShortcut.register(Help.shortcut, () => {
+    if (window && !window.isDestroyed() && window.isFocused()) {
+      Help.preferences.openUrl();
+    }
+  });
+
   window.webContents.on('ipc-message', (_event, channel) => {
     if (channel === 'preferences/load') {
       window.show();
@@ -50,6 +57,8 @@ export function openPreferences() {
   });
 
   window.on('close', (event) => {
+    globalShortcut.unregister(Help.shortcut);
+
     if (!isDirty) {
       return;
     }
