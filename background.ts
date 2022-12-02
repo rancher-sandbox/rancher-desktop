@@ -13,6 +13,7 @@ import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
 import { Steve } from '@pkg/backend/steve';
+import { Help } from '@pkg/config/help';
 import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
@@ -625,6 +626,10 @@ ipcMainProxy.on('diagnostics/run', () => {
 
 ipcMainProxy.on('get-app-version', async(event) => {
   event.reply('get-app-version', await getVersion());
+});
+
+ipcMainProxy.on('help/preferences/open-url', () => {
+  Help.preferences.openUrl();
 });
 
 ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {

@@ -7,21 +7,20 @@ import PreferencesBodyContainerEngine from '@pkg/components/Preferences/BodyCont
 import PreferencesBodyKubernetes from '@pkg/components/Preferences/BodyKubernetes.vue';
 import PreferencesBodyVirtualMachine from '@pkg/components/Preferences/BodyVirtualMachine.vue';
 import PreferencesBodyWsl from '@pkg/components/Preferences/BodyWsl.vue';
+import PreferencesHelp from '@pkg/components/Preferences/Help.vue';
 import { Settings } from '@pkg/config/settings';
 
 import type { PropType } from 'vue';
 
-import Help from '@/components/Help.vue';
-
 export default Vue.extend({
   name:       'preferences-body',
   components: {
-    Help,
     PreferencesBodyApplication,
     PreferencesBodyVirtualMachine,
     PreferencesBodyWsl,
     PreferencesBodyContainerEngine,
     PreferencesBodyKubernetes,
+    PreferencesHelp,
   },
   props:      {
     currentNavItem: {
@@ -53,7 +52,7 @@ export default Vue.extend({
         v-on="$listeners"
       />
     </slot>
-    <help class="help" />
+    <preferences-help class="help" />
   </div>
 </template>
 
