@@ -21,6 +21,10 @@ const config: Config<PlaywrightTestOptions> = {
   use:           { colorScheme },
 };
 
+if (os.platform() === 'darwin') {
+  childProcess.execSync(`osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to ${ colorScheme === 'dark' }'`);
+}
+
 if (os.platform() === 'win32') {
   const mode = process.env.THEME === 'dark' ? '0' : '1';
 
