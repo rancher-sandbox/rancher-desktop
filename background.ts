@@ -630,8 +630,8 @@ ipcMainProxy.on('get-app-version', async(event) => {
   event.reply('get-app-version', await getVersion());
 });
 
-ipcMainProxy.on('help/preferences/open-url', () => {
-  Help.preferences.openUrl();
+ipcMainProxy.on('help/preferences/open-url', async() => {
+  Help.preferences.openUrl(await getVersion());
 });
 
 ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {

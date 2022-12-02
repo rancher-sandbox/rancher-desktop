@@ -4,6 +4,7 @@ import { webRoot, createWindow } from '.';
 
 import { Help } from '@pkg/config/help';
 import { NavItemName } from '@pkg/config/transientSettings';
+import { getVersion } from '@pkg/utils/version';
 
 interface NavItems {
   name: NavItemName;
@@ -44,9 +45,9 @@ export function openPreferences() {
     },
   });
 
-  globalShortcut.register(Help.shortcut, () => {
+  globalShortcut.register(Help.shortcut, async() => {
     if (window && !window.isDestroyed() && window.isFocused()) {
-      Help.preferences.openUrl();
+      Help.preferences.openUrl(await getVersion());
     }
   });
 
