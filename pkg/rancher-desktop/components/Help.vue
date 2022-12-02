@@ -1,6 +1,14 @@
 <script lang="ts">
+import os from 'os';
+
 import { shell } from 'electron';
 import Vue from 'vue';
+
+const validateKey = (event: KeyboardEvent) => ({
+  darwin: event.metaKey && event.key === '?',
+  linux:  event.key === 'F1',
+  win32:  event.key === 'F1',
+} as Record<string, boolean>);
 
 export default Vue.extend({
   name:       'help',
@@ -18,8 +26,19 @@ export default Vue.extend({
       default: false,
     },
   },
+  mounted() {
+    window.addEventListener('keydown', this.onKeydown);
+  },
+  destroyed() {
+    window.removeEventListener('keydown', this.onKeydown);
+  },
   methods:  {
-    onClick() {
+    onKeydown(event: KeyboardEvent) {
+      if (validateKey(event)[os.platform()]) {
+        this.openUrl();
+      }
+    },
+    openUrl() {
       if (this.url) {
         shell.openExternal(this.url);
       } else {
@@ -41,7 +60,7 @@ export default Vue.extend({
       :class="{
         disabled
       }"
-      @click="onClick"
+      @click="openUrl"
     >
       <span
         class="icon icon-question-mark"

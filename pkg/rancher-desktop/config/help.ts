@@ -1,5 +1,3 @@
-import os from 'os';
-
 import { shell } from 'electron';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
@@ -48,10 +46,4 @@ class PreferencesHelp {
   }
 }
 
-class HelpImpl {
-  readonly shortcut = os.platform() === 'darwin' ? 'Command+?' : 'F1';
-
-  readonly preferences = new PreferencesHelp();
-}
-
-export const Help = new HelpImpl();
+export const Help = { preferences: new PreferencesHelp() };
