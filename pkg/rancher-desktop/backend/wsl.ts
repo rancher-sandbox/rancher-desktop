@@ -1226,7 +1226,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
-        await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
         if (kubernetesVersion) {
