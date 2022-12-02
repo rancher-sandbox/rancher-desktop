@@ -157,6 +157,10 @@ function getDescendantDirs(d: directory): directory[] {
  */
 export default async function generateFileList(rootPath: string): Promise<string> {
   const rootDir = await walk(rootPath);
+
+  // Drop the "build/" directory, those are files to build the installer.
+  rootDir.directories = rootDir.directories.filter(d => d.name !== 'build');
+
   const descendantDirs = getDescendantDirs(rootDir).filter(d => d.files.length > 0);
 
   const specialComponents: Record<string, (d: directory, f: { name: string, id: string }) => Element | null> = {
@@ -188,11 +192,6 @@ export default async function generateFileList(rootPath: string): Promise<string
           </Shortcut>
         </File>
       </Component>;
-    },
-
-    'build\\license.rtf': () => {
-      // This is used for the installer, and does not need to shipped.
-      return null;
     },
 
     'electron-builder.yml': () => {
