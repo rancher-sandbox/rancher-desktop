@@ -92,9 +92,11 @@ test.describe.serial('Main App Test', () => {
     await preferencesPage.waitForTimeout(200);
 
     if (!isWin) {
+      await screenshot.take('application', 'tabBehavior');
+
+      await e2ePreferences.application.nav.click();
       await e2ePreferences.application.tabEnvironment.click();
       await expect(e2ePreferences.application.pathManagement).toBeVisible();
-      await screenshot.take('application', 'tabBehavior');
       await screenshot.take('application', 'tabEnvironment');
 
       await screenshot.take('virtualMachine');
