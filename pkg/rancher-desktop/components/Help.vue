@@ -41,7 +41,7 @@ export default Vue.extend({
         content: tooltipContent,
         placement: 'right'
       }"
-      class="btn role-fab ripple"
+      class="btn role-fab"
       :class="{
         disabled: !helpUrl
       }"
@@ -63,11 +63,23 @@ export default Vue.extend({
 
     .icon {
       display: inline-block;
-      color: var(--primary);
-      font-size: 1.5rem;
-      width: 1.5rem;
-      height: 1.5rem;
+      background-color: var(--primary);
+      color: var(--body-bg);
+      font-size: 1.3rem;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
       cursor: pointer;
+
+      &:before{
+        padding-top: 5%;
+        padding-left: 2%;
+        display: block;
+      }
+
+      &:hover {
+        background: var(--primary-hover-bg);
+      }
     }
 
     .disabled {
@@ -82,29 +94,15 @@ export default Vue.extend({
     // Material Design
     .role-fab {
       all: revert;
-      line-height: 0;
+
       border: 0;
-      padding: 0.1rem;
-      background: none;
-      color: var(--body-text);
+      padding: 0;
+      background: transparent;
       transition: background 200ms;
       border-radius: 50%;
-    }
-
-    .ripple {
-      background-position: center;
-      transition: background 0.4s;
-
-      &:hover {
-        background: var(--tooltip-bg) radial-gradient(circle, transparent 1%, var(--tooltip-bg) 1%) center/15000%;
+      &.disabled {
+        border: 0;
       }
-
-      &:active {
-        background-color: var(--default);
-        background-size: 100%;
-        transition: background 0s;
-      }
-
     }
   }
 </style>
