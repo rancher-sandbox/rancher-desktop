@@ -18,7 +18,7 @@ class HelpImpl {
 
   constructor() {
     ipcRenderer.on('get-app-version', (_event, version) => {
-      const releasePattern = /^(\d+\.\d+)\.\d+$/;
+      const releasePattern = /^v?(\d+\.\d+)\.\d+$/;
 
       this.version = releasePattern.exec(version)?.[1] ?? 'next';
     });
