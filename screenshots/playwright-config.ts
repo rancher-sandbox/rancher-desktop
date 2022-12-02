@@ -21,12 +21,10 @@ const config: Config<PlaywrightTestOptions> = {
   use:           { colorScheme },
 };
 
-if (os.platform() === 'win32' && process.env.THEME === 'dark') {
-  // Switch to Dark mode
-  childProcess.execSync('reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize /v AppsUseLightTheme /t REG_DWORD /f /d 0');
-} else {
-  // Switch to Light mode
-  childProcess.execSync('reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize /v AppsUseLightTheme /t REG_DWORD /f /d 1');
+if (os.platform() === 'win32') {
+  const mode = process.env.THEME === 'dark' ? '0' : '1';
+
+  childProcess.execSync(`reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize /v AppsUseLightTheme /t REG_DWORD /f /d ${ mode }`);
 }
 
 export default config;
