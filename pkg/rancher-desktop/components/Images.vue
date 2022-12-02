@@ -126,7 +126,7 @@ export default {
 
   data() {
     return {
-      currentCommand:   null,
+      currentCommand: null,
       headers:
       [
         {

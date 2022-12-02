@@ -101,7 +101,7 @@
     "@nuxt/types": "^2.15.2",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config": "^10.0.0",
-    "@nuxtjs/eslint-config-typescript": "^12.0.0",
+    "@nuxtjs/eslint-config-typescript": "^11.0.0",
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.2.1",
     "@octokit/rest": "^19.0.5",

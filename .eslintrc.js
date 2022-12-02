@@ -206,6 +206,18 @@ Object.assign(module.exports.rules, {
       },
     ],
   }],
+  camelcase:                         'error',
+  'import/first':                    'error',
+  'import/no-named-as-default':      'error',
+  'n/no-callback-literal':           'error',
+  'no-control-regex':                'error',
+  'no-redeclare':                    'error',
+  'no-use-before-define':            'error',
+  'no-useless-constructor':          'error',
+  'prefer-const':                    'error',
+  'valid-typeof':                    'error',
+  '@typescript-eslint/ban-types':    'error',
+  '@typescript-eslint/no-namespace': 'error',
 
   // Existing code only follows a subset of settings for no-unused-vars.
   '@typescript-eslint/no-unused-vars':                 ['warn', {
