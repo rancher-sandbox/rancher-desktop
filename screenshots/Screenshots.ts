@@ -18,6 +18,7 @@ interface ScreenshotsOptions {
 
 export class Screenshots {
   private isOsCommand = true;
+  private sleepDuration = Number(process.env.RD_ENV_SCREENSHOT_SLEEP) || 1000;
 
   // used by Mac api
   private appBundleTitle = 'Rancher Desktop';
@@ -69,9 +70,9 @@ export class Screenshots {
         childProcess.execSync(command);
 
         if (os.platform() === 'win32') {
-          // sleep for 1 second to allow ShareX to write screenshot
+          // sleep to allow ShareX to write screenshot
           await (new Promise((resolve) => {
-            setTimeout(resolve, 1000);
+            setTimeout(resolve, this.sleepDuration);
           }));
 
           const screenshotsPath = path.resolve(process.cwd(), 'resources', 'ShareX', 'ShareX', 'Screenshots', `${ dayjs().format('YYYY-MM') }`);
@@ -83,7 +84,7 @@ export class Screenshots {
           );
         }
       } catch (e) {
-        console.error(`Error, command failed: ${ command }`);
+        console.error(`Error, command failed: ${ command }`, { error: e });
         process.exit(1);
       }
     }
