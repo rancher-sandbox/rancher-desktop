@@ -21,7 +21,7 @@ export class Screenshots {
   private sleepDuration = Number(process.env.RD_ENV_SCREENSHOT_SLEEP) || 1000;
 
   // used by Mac api
-  private appBundleTitle = 'Rancher Desktop';
+  private appBundleTitle = 'Electron';
 
   protected windowTitle = '';
   private screenshotIndex = 0;
