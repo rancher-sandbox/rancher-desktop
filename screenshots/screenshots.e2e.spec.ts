@@ -69,7 +69,8 @@ test.describe.serial('Main App Test', () => {
     // show diagnostics badge
     await expect(diagnosticsPage.diagnostics).toBeVisible();
     await diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
-    await page.waitForTimeout(200);
+    // wait for the red bullet to appear on the Diagnostics page label
+    await page.waitForTimeout(1000);
 
     await screenshot.take('Diagnostics');
   });
