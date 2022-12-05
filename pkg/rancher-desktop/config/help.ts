@@ -1,5 +1,7 @@
 import { ipcRenderer } from 'electron';
 
+import { parseDocsVersion } from '@pkg/utils/version';
+
 const baseUrl = 'https://docs.rancherdesktop.io';
 
 const paths: Record<string, string> = {
@@ -18,9 +20,7 @@ class HelpImpl {
 
   constructor() {
     ipcRenderer.on('get-app-version', (_event, version) => {
-      const releasePattern = /^v?(\d+\.\d+)\.\d+$/;
-
-      this.version = releasePattern.exec(version)?.[1] ?? 'next';
+      this.version = parseDocsVersion(version);
     });
 
     ipcRenderer.send('get-app-version');
