@@ -62,7 +62,7 @@ function getHelpMenu(isMac: boolean): MenuItem {
       { type: 'separator' } as MenuItemConstructorOptions,
     ] : []),
     {
-      label: 'Get &Help',
+      label: isMac ? 'Rancher Desktop &Help' : 'Get &Help',
       click: async() => {
         shell.openExternal(await versionedDocsUrl());
       },
