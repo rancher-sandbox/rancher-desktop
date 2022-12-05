@@ -144,7 +144,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 			}
 
 			if err := e.portTracker.Add(container.ID, portMap); err != nil {
-				log.Errorf("registring already running containers failed: %v", err)
+				log.Errorf("registering already running containers failed: %v", err)
 			}
 		}
 	}
@@ -180,7 +180,7 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 	return portMap, nil
 }
 
-// Removes entries in port mapping that do no hold any values
+// Removes entries in port mapping that do not hold any values
 // for IP and Port e.g 9000/tcp:[].
 func validatePortMapping(portMap nat.PortMap) {
 	for k, v := range portMap {
