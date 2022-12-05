@@ -55,6 +55,7 @@ export default {
       imageToPull:                      '',
       imageOutputCuller:                null,
       showOutput:                       false,
+      allowedImagesEnabled:             null,
     };
   },
   async fetch() {
@@ -71,11 +72,9 @@ export default {
       return this.currentCommand;
     },
     allowedImagesAlert() {
-      if (this.activeTab === 'pull' && this.preferences.containerEngine.imageAllowList.enabled) {
-        return this.t('allowedImages.alert');
-      }
+      const enabled = this.allowedImagesEnabled ?? this.preferences.containerEngine.imageAllowList.enabled;
 
-      return '';
+      return this.activeTab === 'pull' && enabled ? this.t('allowedImages.alert') : '';
     },
   },
   mounted() {
@@ -83,6 +82,9 @@ export default {
       'page/setHeader',
       { title: this.t('images.add.title') },
     );
+    ipcRenderer.on('settings-update', (_event, settings) => {
+      this.allowedImagesEnabled = settings.containerEngine.imageAllowList.enabled;
+    });
   },
   methods: {
     updateTabs(tabName) {
