@@ -1,6 +1,16 @@
 import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
+import { getVersion, parseDocsVersion } from '@pkg/utils/version';
 import { openMain } from '@pkg/window';
+
+const baseUrl = `https://docs.rancherdesktop.io`;
+
+const versionedDocsUrl = async() => {
+  const version = await getVersion();
+  const parsed = parseDocsVersion(version);
+
+  return `${ baseUrl }/${ parsed }`;
+};
 
 export default function buildApplicationMenu(): void {
   const menuItems: Array<MenuItem> = getApplicationMenu();
@@ -53,8 +63,8 @@ function getHelpMenu(isMac: boolean): MenuItem {
     ] : []),
     {
       label: 'Get &Help',
-      click() {
-        shell.openExternal('https://docs.rancherdesktop.io');
+      click: async() => {
+        shell.openExternal(await versionedDocsUrl());
       },
     },
     {
