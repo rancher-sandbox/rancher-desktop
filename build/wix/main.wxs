@@ -55,8 +55,8 @@
     <SetProperty Id="ALLUSERS" Sequence="both" After="ValidateProductID" Value="1">
       NOT WSLKERNELINSTALLED AND NOT Installed
     </SetProperty>
-    <SetProperty Id="MSIINSTALLPERUSER" Sequence="both" After="ValidateProductID" Value="0">
-      NOT Installed
+    <SetProperty Id="MSIINSTALLPERUSER" Sequence="first" After="ValidateProductID" Value="0">
+      (NOT WSLKERNELINSTALLED OR NOT MSIINSTALLPERUSER) AND NOT Installed
     </SetProperty>
     <SetProperty Id="PowerShellExe" Sequence="execute" Before="SetInstallWSL"
       Value="&quot;[System64Folder]\WindowsPowerShell\v1.0\powershell.exe&quot;" />
