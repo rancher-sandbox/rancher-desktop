@@ -2,37 +2,16 @@
 import Vue from 'vue';
 import { mapState } from 'vuex';
 
-import Alert from '@pkg/components/Alert.vue';
-
-interface AlertType {
-  icon: string;
-  bannerText: string;
-  color: string;
-}
-
-type AlertMap = Record<'reset'|'restart'|'error', AlertType>;
+type AlertMap = Record<'reset'|'restart'|'error', string>;
 
 const alertMap: AlertMap = {
-  reset: {
-    icon:       'icon-alert',
-    bannerText: 'preferences.actions.banner.reset',
-    color:      'warning',
-  },
-  restart: {
-    icon:       'icon-info',
-    bannerText: `preferences.actions.banner.restart`,
-    color:      'info',
-  },
-  error: {
-    icon:       'icon-warning',
-    bannerText: `preferences.actions.banner.error`,
-    color:      'error',
-  },
+  reset:   'preferences.actions.banner.reset',
+  restart: 'preferences.actions.banner.restart',
+  error:   'preferences.actions.banner.error',
 };
 
 export default Vue.extend({
   name:       'preferences-alert',
-  components: { Alert },
   computed:   {
     ...mapState('preferences', ['severities', 'preferencesError']),
     severity(): keyof AlertMap | undefined {
@@ -50,42 +29,43 @@ export default Vue.extend({
 
       return undefined;
     },
-    alert(): AlertType | undefined {
+    alert(): string {
       if (!this.severity) {
-        return undefined;
+        return '';
       }
 
       return alertMap[this.severity];
     },
-    bannerText(): string | null {
+    alertText(): string | null {
       if (this.preferencesError) {
         return this.preferencesError;
       }
 
       if (this.alert) {
-        return this.t(this.alert.bannerText, { }, true);
+        return this.t(this.alert, { }, true);
       }
 
       return null;
-    },
-    errorSplit(): string[] {
-      return this.preferencesError.split(/\r?\n/);
-    },
-    errorTitle(): string {
-      return this.errorSplit[0];
-    },
-    errorRest(): string[] {
-      return this.errorSplit.slice(1, this.errorSplit.length);
     },
   },
 });
 </script>
 
 <template>
-  <alert
-    v-if="alert"
-    :icon="alert.icon"
-    :banner-text="bannerText"
-    :color="alert.color"
-  />
+  <div class="alert">
+    <span
+      v-if="alert"
+      class="alert-text"
+    >
+      {{ alertText }}
+    </span>
+  </div>
 </template>
+
+<style lang="scss" scoped>
+  .alert {
+    .alert-text {
+      color: var(--body-text);
+    }
+  }
+</style>
