@@ -20,7 +20,8 @@
     </Condition>
     <MajorUpgrade
       AllowSameVersionUpgrades="yes"
-      DowngradeErrorMessage='A newer version of [ProductName] is already installed.' />
+      DowngradeErrorMessage='A newer version of [ProductName] is already installed.'
+      Schedule="afterInstallInitialize" />
     <MediaTemplate CompressionLevel="{{compressionLevel}}" EmbedCab="yes" />
     <UIRef Id="WixUI_RD" />
 
