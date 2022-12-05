@@ -401,10 +401,11 @@ export default {
     display: flex;
     align-items: flex-end;
     gap: 1rem;
+    height: 100%;
   }
 
   .all-images {
-    margin-bottom: 11px;
+    margin-bottom: 12px;
   }
 
   .imagesTable::v-deep .search-box {

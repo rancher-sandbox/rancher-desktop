@@ -22,12 +22,15 @@
       :row-actions-width="parseInt(95, 10)"
     >
       <template #header-middle>
-        <Checkbox
-          :label="'Include Kubernetes services'"
-          :value="includeKubernetesServices"
-          :disabled="!isRunning || kubernetesIsDisabled"
-          @input="handleCheckbox"
-        />
+        <div class="header-middle">
+          <Checkbox
+            class="kubernetes-services"
+            :label="'Include Kubernetes services'"
+            :value="includeKubernetesServices"
+            :disabled="!isRunning || kubernetesIsDisabled"
+            @input="handleCheckbox"
+          />
+        </div>
       </template>
       <template #col:listenPort="{row}">
         <div v-if="serviceBeingEditedIs(row)" class="listen-port-div">
@@ -224,20 +227,35 @@ export default Vue.extend({
 </script>
 
 <style>
-.action-div {
-  display: flex;
-  flex-direction: row-reverse;
-  gap: 0.5rem;
-}
-.listen-port-div {
-  height: 100%;
-  width: 6rem;
-}
-.listen-port-input {
-  max-height: 30px;
-  margin: 8px 0;
-}
-.listen-port-p {
-  margin: 15px 11px;
-}
+  .action-div {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 0.5rem;
+  }
+
+  .listen-port-div {
+    height: 100%;
+    width: 6rem;
+  }
+
+  .listen-port-input {
+    max-height: 30px;
+    margin: 8px 0;
+  }
+
+  .listen-port-p {
+    margin: 15px 11px;
+  }
+
+  .header-middle {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    height: 100%;
+  }
+
+  .kubernetes-services {
+    margin-bottom: 12px;
+  }
+
 </style>
