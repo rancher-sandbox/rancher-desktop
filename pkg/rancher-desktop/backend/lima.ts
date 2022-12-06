@@ -1822,9 +1822,9 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.dockerDirManager.clearDockerContext();
         }
         await this.setState(State.STOPPED);
-      } catch (ex) {
+      } catch (ex: any) {
         await this.setState(State.ERROR);
-        throw ex;
+        console.log(`Ignoring error while stopping lima: ${ ex }: `, ex);
       } finally {
         this.currentAction = Action.NONE;
       }
