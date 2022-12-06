@@ -5,12 +5,12 @@ import { openMain } from '@pkg/window';
 
 const baseUrl = `https://docs.rancherdesktop.io`;
 
-const versionedDocsUrl = async() => {
+async function versionedDocsUrl() {
   const version = await getVersion();
   const parsed = parseDocsVersion(version);
 
   return `${ baseUrl }/${ parsed }`;
-};
+}
 
 export default function buildApplicationMenu(): void {
   const menuItems: Array<MenuItem> = getApplicationMenu();
