@@ -111,11 +111,23 @@ func checkProcessQemu() bool {
 }
 
 func pkillQemu() {
-	exec.Command("pkill", "-9", "-f", RancherDesktopQemuCommand).Run()
+	cmd := exec.Command("pkill", "-9", "-f", RancherDesktopQemuCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		logrus.Errorf("Failed to kill qemu: %s", err)
+	}
 }
 
 func pkillDarwin() {
-	exec.Command("pkill", "-9", "-f", "Contents/MacOS/Rancher Desktop").Run()
+	cmd := exec.Command("/usr/bin/pkill", "-9", "-a", "-l", "-f", "Contents/MacOS/Rancher Desktop")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		logrus.Errorf("Failed to kill Rancher Desktop: %s", err)
+	}
 }
 
 func pkillLinux() {
