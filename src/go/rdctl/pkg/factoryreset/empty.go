@@ -18,10 +18,13 @@ limitations under the License.
 
 package factoryreset
 
-import "fmt"
+import (
+	"fmt"
+)
 
-func GetLockfilePath(_ string) (string, error) {
-	return "", fmt.Errorf("internal error: GetLockfilePath shouldn't be called")
+func CheckProcessWindows() bool {
+	fmt.Errorf("internal error: GetLockfilePath shouldn't be called")
+	return false
 }
 
 func KillRancherDesktop() {

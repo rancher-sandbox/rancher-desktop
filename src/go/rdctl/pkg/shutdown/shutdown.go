@@ -17,7 +17,6 @@ limitations under the License.
 package shutdown
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -39,7 +38,7 @@ func FinishShutdown(waitForShutdown bool) error {
 		doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
 		doCheckWithTimeout(checkProcessLinux, pkillLinux, waitForShutdown, 5, 1, "the app")
 	case "windows":
-		doCheckWithTimeout(checkProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app")
+		doCheckWithTimeout(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app")
 	default:
 		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
 	}
@@ -71,23 +70,6 @@ func checkProcessDarwin() bool {
 
 func checkProcessLinux() bool {
 	return checkProcessLinuxLike("rancher-desktop")
-}
-
-func checkProcessWindows() bool {
-	path, err := directories.GetLockfilePath("rancher-desktop")
-	if err != nil {
-		logrus.Errorf("Error trying to get the lockfile path: %s\n", err)
-		return false
-	}
-	logrus.Debugf("GetLockfilePath => %s\n", path)
-	if _, err = os.Stat(path); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			logrus.Errorf("Error trying to stat %s: %s\n", path, err)
-		}
-		// File either no longer exists or isn't "stat-table"
-		return false
-	}
-	return true
 }
 
 func checkProcessLinuxLike(commandPattern ...string) bool {

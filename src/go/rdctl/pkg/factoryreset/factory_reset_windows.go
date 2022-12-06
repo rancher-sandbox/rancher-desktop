@@ -17,6 +17,7 @@ limitations under the License.
 package factoryreset
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,6 +35,42 @@ func KillRancherDesktop() {
 	cmd := exec.Command("taskkill", "/IM", "Rancher Desktop.exe", "/T", "/F")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	cmd.Run()
+}
+
+//WARNING: This will fail if we localize the name of the app
+
+func CheckProcessWindows() bool {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.Command("tasklist", "/FI", "WINDOWTITLE eq Rancher Desktop", "/FO", "List")
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	allOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		logrus.Errorf("Failed to run %q: %s\n", cmd, err)
+		return false
+	}
+	if strings.HasPrefix(string(allOutput), "INFO: No tasks are running which match the specified criteria") {
+		logrus.Warnf("%s\n        %s\n%s",
+			"Looking to see if Rancher Desktop is running, got info message:",
+			string(allOutput),
+			"Assuming Rancher Desktop is no longer running.")
+		return false
+	}
+	r := csv.NewReader(strings.NewReader(string(allOutput)))
+	for {
+		record, err := r.Read()
+		if err != nil {
+			if err != io.EOF {
+				logrus.Errorf("Failed to csv-read the output for tasklist: %s", err)
+			}
+			break
+		}
+		if record[0] == "Rancher Desktop.exe" {
+			return true
+		}
+	}
+	return false
 }
 
 func deleteWindowsData(keepSystemImages bool, appName string) error {

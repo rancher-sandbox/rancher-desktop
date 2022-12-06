@@ -17,6 +17,8 @@ limitations under the License.
 package cmd
 
 import (
+	"runtime"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -42,7 +44,7 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 			logrus.SetLevel(logrus.TraceLevel)
 		}
 		cmd.SilenceUsage = true
-		commonShutdownSettings.WaitForShutdown = false
+		commonShutdownSettings.WaitForShutdown = runtime.GOOS == "windows"
 		_, err := doShutdown(&commonShutdownSettings)
 		if err != nil {
 			return err
