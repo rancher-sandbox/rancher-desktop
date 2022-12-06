@@ -33,7 +33,6 @@
 <script>
 
 import { ipcRenderer } from 'electron';
-import { mapState } from 'vuex';
 
 import Alert from '@pkg/components/Alert.vue';
 import ImageAddTabs from '@pkg/components/ImageAddTabs.vue';
@@ -55,15 +54,10 @@ export default {
       imageToPull:                      '',
       imageOutputCuller:                null,
       showOutput:                       false,
+      isAllowedImagesEnabled:           false,
     };
   },
-  async fetch() {
-    const credentials = await this.$store.dispatch('credentials/fetchCredentials');
-
-    await this.$store.dispatch('preferences/fetchPreferences', credentials);
-  },
   computed: {
-    ...mapState('preferences', ['preferences']),
     imageToPullButtonDisabled() {
       return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
     },
@@ -71,11 +65,7 @@ export default {
       return this.currentCommand;
     },
     allowedImagesAlert() {
-      if (this.activeTab === 'pull' && this.preferences.containerEngine.imageAllowList.enabled) {
-        return this.t('allowedImages.alert');
-      }
-
-      return '';
+      return this.activeTab === 'pull' && this.isAllowedImagesEnabled ? this.t('allowedImages.alert') : '';
     },
   },
   mounted() {
@@ -83,6 +73,13 @@ export default {
       'page/setHeader',
       { title: this.t('images.add.title') },
     );
+    ipcRenderer.once('settings-read', (_event, settings) => {
+      this.enableAllowedImages(settings);
+    });
+    ipcRenderer.on('settings-update', (_event, settings) => {
+      this.enableAllowedImages(settings);
+    });
+    ipcRenderer.send('settings-read');
   },
   methods: {
     updateTabs(tabName) {
@@ -123,6 +120,9 @@ export default {
     },
     toggleOutput(val) {
       this.showOutput = val;
+    },
+    enableAllowedImages(settings) {
+      this.isAllowedImagesEnabled = settings.containerEngine.imageAllowList.enabled;
     },
   },
 };
