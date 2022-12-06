@@ -33,7 +33,7 @@ import setupUpdate from '@pkg/main/update';
 import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import { arrayCustomizer } from '@pkg/utils/filters';
-import Logging, { setLogLevel } from '@pkg/utils/logging';
+import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { setupProtocolHandler, protocolRegistered } from '@pkg/utils/protocols';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
@@ -43,11 +43,17 @@ import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
 import { preferencesSetDirtyFlag } from '@pkg/window/preferences';
 
-Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+
+if (!Electron.app.requestSingleInstanceLock()) {
+  process.exit(201);
+}
+
+clearLoggingDirectory();
+
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
@@ -78,11 +84,6 @@ let pendingRestartContext: CommandWorkerInterface.CommandContext | undefined;
 let httpCommandServer: HttpCommandServer|null = null;
 const httpCredentialHelperServer = new HttpCredentialHelperServer();
 
-if (!Electron.app.requestSingleInstanceLock()) {
-  gone = true;
-  process.exit(201);
-}
-
 // Scheme must be registered before the app is ready
 Electron.protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
@@ -94,6 +95,11 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
   } else {
     console.error('UnhandledRejectionWarning:', reason);
   }
+});
+
+Electron.app.on('second-instance', async() => {
+  await protocolRegistered;
+  window.openMain();
 });
 
 // takes care of any propagation of settings we want to do
@@ -313,13 +319,6 @@ function setupImageProcessor() {
   window.send('k8s-current-engine', cfg.kubernetes.containerEngine);
 }
 
-Electron.app.on('second-instance', async() => {
-  // Someone tried to run another instance of Rancher Desktop,
-  // reveal and focus this window instead.
-  await protocolRegistered;
-  window.openMain();
-});
-
 interface K8sError {
   errCode: number | string
 }
@@ -359,11 +358,6 @@ Electron.app.on('before-quit', async(event) => {
 Electron.app.on('window-all-closed', () => {
   // On macOS, hide the dock icon.
   Electron.app.dock?.hide();
-  // On windows and macOS platforms, we only quit via the notification tray / menu bar.
-  // On Linux we close the application since not all distros support tray menu/icons
-  if (os.platform() === 'linux' && !settings.firstRunDialogNeeded()) {
-    Electron.app.quit();
-  }
 });
 
 Electron.app.on('activate', async() => {
