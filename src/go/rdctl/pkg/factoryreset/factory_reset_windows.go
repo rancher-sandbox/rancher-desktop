@@ -31,15 +31,18 @@ import (
 	"golang.org/x/text/encoding/unicode"
 )
 
-func KillRancherDesktop() {
+func KillRancherDesktop() error {
 	cmd := exec.Command("taskkill", "/IM", "Rancher Desktop.exe", "/T", "/F")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
-	cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("Failed to taskkill Rancher Desktop.exe: %w", err)
+	}
+	return nil
 }
 
 //WARNING: This will fail if we localize the name of the app
 
-func CheckProcessWindows() bool {
+func CheckProcessWindows() (bool, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -47,30 +50,29 @@ func CheckProcessWindows() bool {
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		logrus.Errorf("Failed to run %q: %s\n", cmd, err)
-		return false
+		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
 	}
 	if strings.HasPrefix(string(allOutput), "INFO: No tasks are running which match the specified criteria") {
 		logrus.Warnf("%s\n        %s\n%s",
 			"Looking to see if Rancher Desktop is running, got info message:",
 			string(allOutput),
 			"Assuming Rancher Desktop is no longer running.")
-		return false
+		return false, nil
 	}
 	r := csv.NewReader(strings.NewReader(string(allOutput)))
 	for {
 		record, err := r.Read()
 		if err != nil {
 			if err != io.EOF {
-				logrus.Errorf("Failed to csv-read the output for tasklist: %s", err)
+				return false, fmt.Errorf("Failed to csv-read the output for tasklist: %w", err)
 			}
 			break
 		}
 		if record[0] == "Rancher Desktop.exe" {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func deleteWindowsData(keepSystemImages bool, appName string) error {

@@ -22,12 +22,12 @@ import (
 	"fmt"
 )
 
-func CheckProcessWindows() bool {
-	fmt.Errorf("internal error: GetLockfilePath shouldn't be called")
-	return false
+func CheckProcessWindows() (bool, error) {
+	return false, fmt.Errorf("internal error: GetLockfilePath shouldn't be called")
 }
 
-func KillRancherDesktop() {
+func KillRancherDesktop() error {
+	return nil
 }
 
 func deleteWindowsData(_ bool, _ string) error {

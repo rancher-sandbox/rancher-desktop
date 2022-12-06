@@ -24,94 +24,110 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/sirupsen/logrus"
 )
 
 func FinishShutdown(waitForShutdown bool) error {
+	var err error
+
 	switch runtime.GOOS {
 	case "darwin":
-		doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
-		doCheckWithTimeout(checkProcessDarwin, pkillDarwin, waitForShutdown, 5, 1, "the app")
+		if err = waitForAppOrKillIt(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu"); err != nil {
+			return err
+		}
+		if err = waitForAppOrKillIt(checkProcessDarwin, pkillDarwin, waitForShutdown, 5, 1, "the app"); err != nil {
+			return err
+		}
 	case "linux":
-		doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
-		doCheckWithTimeout(checkProcessLinux, pkillLinux, waitForShutdown, 5, 1, "the app")
+		if err = waitForAppOrKillIt(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu"); err != nil {
+			return err
+		}
+		if err = waitForAppOrKillIt(checkProcessLinux, pkillLinux, waitForShutdown, 5, 1, "the app"); err != nil {
+			return err
+		}
 	case "windows":
-		doCheckWithTimeout(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app")
+		if err = waitForAppOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app"); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
 	}
 	return nil
 }
 
-func doCheckWithTimeout(checkFunc func() bool, killFunc func(), waitForShutdown bool, retryCount int, retryWait int, operation string) {
+func waitForAppOrKillIt(checkFunc func() (bool, error), killFunc func() error, waitForShutdown bool, retryCount int, retryWait int, operation string) error {
 	for iter := 0; waitForShutdown && iter < retryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)
 			time.Sleep(time.Duration(retryWait) * time.Second)
 		}
-		if !checkFunc() {
+		status, err := checkFunc()
+		if err != nil {
+			return fmt.Errorf("checking operation %s => error %w", err)
+		} else if !status {
 			logrus.Debugf("%s is no longer running\n", operation)
-			return
+			return nil
 		}
 	}
 	logrus.Debugf("About to force-kill %s\n", operation)
-	killFunc()
+	return killFunc()
 }
 
 /**
  * checkProcessX function returns true if it detects the app is still running, false otherwise
  */
 
-func checkProcessDarwin() bool {
+func checkProcessDarwin() (bool, error) {
 	return checkProcessLinuxLike("-f", "Contents/MacOS/Rancher Desktop")
 }
 
-func checkProcessLinux() bool {
+func checkProcessLinux() (bool, error) {
 	return checkProcessLinuxLike("rancher-desktop")
 }
 
-func checkProcessLinuxLike(commandPattern ...string) bool {
+func checkProcessLinuxLike(commandPattern ...string) (bool, error) {
 	result, err := exec.Command("pgrep", commandPattern...).CombinedOutput()
 	if err != nil {
-		return false
+		return false, err
 	}
-	ptn, err := regexp.Compile(`\A[0-9\s]+\z`)
-	if err != nil {
-		logrus.WithField("error", err).Warn("failed to compile pattern")
-		return false
-	}
-	return ptn.Match(result)
+	ptn := regexp.MustCompile(`\A[0-9\s]+\z`)
+	return ptn.Match(result), nil
 }
 
 // RancherDesktopQemuCommand - be specific to avoid killing other VM-based processes running qemu
 const RancherDesktopQemuCommand = "lima/bin/qemu-system.*rancher-desktop/lima/[0-9]/diffdisk"
 
-func checkProcessQemu() bool {
+func checkProcessQemu() (bool, error) {
 	return checkProcessLinuxLike("-f", RancherDesktopQemuCommand)
 }
 
-func pkillQemu() {
+func pkillQemu() error {
 	cmd := exec.Command("pkill", "-9", "-f", RancherDesktopQemuCommand)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		logrus.Errorf("Failed to kill qemu: %s", err)
+		return fmt.Errorf("Failed to kill qemu: %w", err)
 	}
+	return nil
 }
 
-func pkillDarwin() {
+func pkillDarwin() error {
 	cmd := exec.Command("/usr/bin/pkill", "-9", "-a", "-l", "-f", "Contents/MacOS/Rancher Desktop")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		logrus.Errorf("Failed to kill Rancher Desktop: %s", err)
+		return fmt.Errorf("Failed to kill qemu: %w", err)
 	}
+	return nil
 }
 
-func pkillLinux() {
-	exec.Command("pkill", "-9", "rancher-desktop").Run()
+func pkillLinux() error {
+	err := exec.Command("pkill", "-9", "rancher-desktop").Run()
+	if err != nil {
+		return fmt.Errorf("Failed to kill rancher-desktop: %w", err)
+	}
+	return nil
 }
