@@ -28,26 +28,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func FinishShutdown(waitForShutdown bool) error {
+type ShutdownInfo struct {
+	waitForShutdown bool
+}
+
+func NewShutdownInfo(waitForShutdown bool) *ShutdownInfo {
+	return &ShutdownInfo{waitForShutdown: waitForShutdown}
+}
+
+func (s *ShutdownInfo) FinishShutdown() error {
 	var err error
 
 	switch runtime.GOOS {
 	case "darwin":
-		if err = waitForAppOrKillIt(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu"); err != nil {
+		if err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu"); err != nil {
 			return err
 		}
-		if err = waitForAppOrKillIt(checkProcessDarwin, pkillDarwin, waitForShutdown, 5, 1, "the app"); err != nil {
+		if err = s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app"); err != nil {
 			return err
 		}
 	case "linux":
-		if err = waitForAppOrKillIt(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu"); err != nil {
+		if err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu"); err != nil {
 			return err
 		}
-		if err = waitForAppOrKillIt(checkProcessLinux, pkillLinux, waitForShutdown, 5, 1, "the app"); err != nil {
+		if err = s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app"); err != nil {
 			return err
 		}
 	case "windows":
-		if err = waitForAppOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app"); err != nil {
+		if err = s.waitForAppToDieOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app"); err != nil {
 			return err
 		}
 	default:
@@ -56,8 +64,8 @@ func FinishShutdown(waitForShutdown bool) error {
 	return nil
 }
 
-func waitForAppOrKillIt(checkFunc func() (bool, error), killFunc func() error, waitForShutdown bool, retryCount int, retryWait int, operation string) error {
-	for iter := 0; waitForShutdown && iter < retryCount; iter++ {
+func (s *ShutdownInfo) waitForAppToDieOrKillIt(checkFunc func() (bool, error), killFunc func() error, retryCount int, retryWait int, operation string) error {
+	for iter := 0; s.waitForShutdown && iter < retryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)
 			time.Sleep(time.Duration(retryWait) * time.Second)

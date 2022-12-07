@@ -17,8 +17,10 @@ limitations under the License.
 package factoryreset
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -40,13 +42,18 @@ func KillRancherDesktop() error {
 	return nil
 }
 
-//WARNING: This will fail if we localize the name of the app
+// CheckProcessWindows - returns true if Rancher Desktop is still running, false if it isn't
+// along with an error condition if there's a problem detecting that.
+//
+// It does this by calling `tasklist`, the Windows answer to ps(1)
+//
+// WARNING: This will fail if we localize the name of the app.
 
 func CheckProcessWindows() (bool, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.Command("tasklist", "/FI", "WINDOWTITLE eq Rancher Desktop", "/FO", "List")
+	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop", "/FO", "CSV")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {
