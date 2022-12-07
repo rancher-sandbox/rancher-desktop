@@ -121,12 +121,19 @@ func deleteLinuxData(removeKubernetesCache bool) error {
 
 func unregisterAndDeleteWindowsData(removeKubernetesCache bool) error {
 	if err := unregisterWSL(); err != nil {
+		logrus.Errorf("could not unregister WSL: %s", err)
 		return err
 	}
 	if err := deleteWindowsData(!removeKubernetesCache, "rancher-desktop"); err != nil {
+		logrus.Errorf("could not delete data: %s", err)
 		return err
 	}
-	return clearDockerContext()
+	if err := clearDockerContext(); err != nil {
+		logrus.Errorf("could not clear docker context: %s", err)
+		return err
+	}
+	logrus.Infoln("successfully cleared data.")
+	return nil
 }
 
 // Most of the errors in this function are reported, but we continue to try to delete things,

@@ -23,6 +23,13 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+func TestGetApplicationDirectory(t *testing.T) {
+	_, err := GetApplicationDirectory()
+	assert.NoError(t, err)
+	// `go test` makes a temporary directory, so we can't sensibly test the
+	// return value.
+}
+
 func TestGetKnownFolder(t *testing.T) {
 	t.Run("AppData", func(t *testing.T) {
 		expected := os.Getenv("APPDATA")
