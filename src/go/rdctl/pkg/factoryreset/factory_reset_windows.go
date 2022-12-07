@@ -38,6 +38,19 @@ func KillRancherDesktop() error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Failed to taskkill Rancher Desktop.exe: %w", err)
 	}
+	val, ok := os.Environ()["RANCHER_DESKTOP_CHILD"]
+	if !ok || val != "1" {
+		return nil
+	}
+	// Now verify that the taskkill really killed it.
+	stillRunning, err := CheckProcessWindows()
+	if err != nil {
+		return err
+	}
+	if stillRunning {
+		return fmt.Errorf("%s\n%s", "Encountering problems shutting down Rancher Desktop.",
+			"Please shut it down manually and then run `rdctl factory-reset` to clean up its files.")
+	}
 	return nil
 }
 

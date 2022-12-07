@@ -582,7 +582,10 @@ async function doFactoryReset(keepSystemImages: boolean) {
   const rdctl = spawn(path.join(paths.resources, os.platform(), 'bin', 'rdctl'),
     ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`],
     {
-      detached: true, windowsHide: true, stdio: ['ignore', outfile.fd, outfile.fd],
+      detached:    true,
+      windowsHide: true,
+      stdio:       ['ignore', outfile.fd, outfile.fd],
+      env:         { ...process.env, RANCHER_DESKTOP_CHILD: '1' },
     });
 
   rdctl.unref();
