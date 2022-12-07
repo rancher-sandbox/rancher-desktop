@@ -38,8 +38,8 @@ func KillRancherDesktop() error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Failed to taskkill Rancher Desktop.exe: %w", err)
 	}
-	val, ok := os.Environ()["RANCHER_DESKTOP_CHILD"]
-	if !ok || val != "1" {
+	val := os.Getenv("RANCHER_DESKTOP_CHILD")
+	if val != "1" {
 		return nil
 	}
 	// Now verify that the taskkill really killed it.
