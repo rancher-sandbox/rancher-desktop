@@ -18,6 +18,7 @@ package factoryreset
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -53,16 +54,16 @@ func CheckProcessWindows() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
 	}
-	r := csv.NewReader(strings.NewReader(string(allOutput)))
+	r := csv.NewReader(strings.NewReader(allOutput))
 	for {
 		record, err := r.Read()
 		if err != nil {
-			if err != io.EOF {
+			if !errors.Is(err, io.EOF) {
 				return false, fmt.Errorf("Failed to csv-read the output for tasklist: %w", err)
 			}
 			break
 		}
-		if record[0] == "Rancher Desktop.exe" {
+		if len(record) > 0 && record[0] == "Rancher Desktop.exe" {
 			return true, nil
 		}
 	}

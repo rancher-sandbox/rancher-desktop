@@ -28,15 +28,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ShutdownInfo struct {
+type shutdownData struct {
 	waitForShutdown bool
 }
 
-func NewShutdownInfo(waitForShutdown bool) *ShutdownInfo {
-	return &ShutdownInfo{waitForShutdown: waitForShutdown}
+func newShutdownData(waitForShutdown bool) *shutdownData {
+	return &shutdownData{waitForShutdown: waitForShutdown}
 }
 
-func (s *ShutdownInfo) FinishShutdown() error {
+func FinishShutdown(waitForShutdown bool) error {
+	s := newShutdownData(waitForShutdown)
 	var err error
 	switch runtime.GOOS {
 	case "darwin":
@@ -60,7 +61,7 @@ func (s *ShutdownInfo) FinishShutdown() error {
 	return nil
 }
 
-func (s *ShutdownInfo) waitForAppToDieOrKillIt(checkFunc func() (bool, error), killFunc func() error, retryCount int, retryWait int, operation string) error {
+func (s *shutdownData) waitForAppToDieOrKillIt(checkFunc func() (bool, error), killFunc func() error, retryCount int, retryWait int, operation string) error {
 	for iter := 0; s.waitForShutdown && iter < retryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)
@@ -68,7 +69,7 @@ func (s *ShutdownInfo) waitForAppToDieOrKillIt(checkFunc func() (bool, error), k
 		}
 		status, err := checkFunc()
 		if err != nil {
-			return fmt.Errorf("checking operation %s => error %w", operation, err)
+			return fmt.Errorf("while checking %s, found error: %w", operation, err)
 		}
 		if !status {
 			logrus.Debugf("%s is no longer running\n", operation)
@@ -81,7 +82,8 @@ func (s *ShutdownInfo) waitForAppToDieOrKillIt(checkFunc func() (bool, error), k
 
 /**
  * checkProcessX function returns [true, nil] if it detects the app is still running, [false, X] otherwise
- * Linux/macOS errors are always nil, Windows not so
+ * The Linux/macOS functions never return a non-nil error and that field can be ignored.
+ * If the Windows function returns a non-nil error, we can't conclude whether the specified process is running
  */
 
 func checkProcessDarwin() (bool, error) {
