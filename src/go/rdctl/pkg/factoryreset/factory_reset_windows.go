@@ -55,13 +55,6 @@ func CheckProcessWindows() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
 	}
-	if strings.HasPrefix(string(allOutput), "INFO: No tasks are running which match the specified criteria") {
-		logrus.Warnf("%s\n        %s\n%s",
-			"Looking to see if Rancher Desktop is running, got info message:",
-			string(allOutput),
-			"Assuming Rancher Desktop is no longer running.")
-		return false, nil
-	}
 	r := csv.NewReader(strings.NewReader(string(allOutput)))
 	for {
 		record, err := r.Read()
