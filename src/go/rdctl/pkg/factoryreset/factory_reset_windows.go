@@ -49,7 +49,7 @@ func KillRancherDesktop() error {
 // WARNING: This will fail if we localize the name of the app.
 
 func CheckProcessWindows() (bool, error) {
-	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop", "/FO", "CSV")
+	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop.exe", "/FO", "CSV")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {
