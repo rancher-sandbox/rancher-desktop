@@ -84,6 +84,6 @@ func doShutdown(shutdownSettings *shutdownSettingsStruct) ([]byte, error) {
 		}
 		return nil, err
 	}
-	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown)
+	err = shutdown.NewShutdownInfo(shutdownSettings.WaitForShutdown).FinishShutdown()
 	return output, err
 }

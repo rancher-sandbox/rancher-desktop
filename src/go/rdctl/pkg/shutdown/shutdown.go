@@ -17,7 +17,6 @@ limitations under the License.
 package shutdown
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,26 +24,33 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/sirupsen/logrus"
 )
 
-func FinishShutdown(waitForShutdown bool) error {
+type ShutdownInfo struct {
+	waitForShutdown bool
+}
+
+func NewShutdownInfo(waitForShutdown bool) *ShutdownInfo {
+	return &ShutdownInfo{waitForShutdown: waitForShutdown}
+}
+
+func (s *ShutdownInfo) FinishShutdown() error {
 	var err error
 	switch runtime.GOOS {
 	case "darwin":
-		err = doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
+		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
 		if err == nil {
-			err = doCheckWithTimeout(checkProcessDarwin, pkillDarwin, waitForShutdown, 5, 1, "the app")
+			err = s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
 		}
 	case "linux":
-		err = doCheckWithTimeout(checkProcessQemu, pkillQemu, waitForShutdown, 15, 2, "qemu")
+		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
 		if err == nil {
-			err = doCheckWithTimeout(checkProcessLinux, pkillLinux, waitForShutdown, 5, 1, "the app")
+			err = s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
 		}
 	case "windows":
-		err = doCheckWithTimeout(checkProcessWindows, factoryreset.KillRancherDesktop, waitForShutdown, 15, 2, "the app")
+		err = s.waitForAppToDieOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
 	default:
 		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
 	}
@@ -54,52 +60,36 @@ func FinishShutdown(waitForShutdown bool) error {
 	return nil
 }
 
-func doCheckWithTimeout(checkFunc func() bool, killFunc func() error, waitForShutdown bool, retryCount int, retryWait int, operation string) error {
-	for iter := 0; waitForShutdown && iter < retryCount; iter++ {
+func (s *ShutdownInfo) waitForAppToDieOrKillIt(checkFunc func() (bool, error), killFunc func() error, retryCount int, retryWait int, operation string) error {
+	for iter := 0; s.waitForShutdown && iter < retryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)
 			time.Sleep(time.Duration(retryWait) * time.Second)
 		}
-		if !checkFunc() {
+		status, err := checkFunc()
+		if err != nil {
+			return fmt.Errorf("checking operation %s => error %w", operation, err)
+		}
+		if !status {
 			logrus.Debugf("%s is no longer running\n", operation)
 			return nil
 		}
 	}
 	logrus.Debugf("About to force-kill %s\n", operation)
-	err := killFunc()
-	if err != nil {
-		return err
-	}
-	return nil
+	return killFunc()
 }
 
 /**
- * checkProcessX function returns true if it detects the app is still running, false otherwise
+ * checkProcessX function returns [true, nil] if it detects the app is still running, [false, X] otherwise
+ * Linux/macOS errors are always nil, Windows not so
  */
 
-func checkProcessDarwin() bool {
-	return checkProcessLinuxLike("-f", "Contents/MacOS/Rancher Desktop")
+func checkProcessDarwin() (bool, error) {
+	return checkProcessLinuxLike("-f", "Contents/MacOS/Rancher Desktop"), nil
 }
 
-func checkProcessLinux() bool {
-	return checkProcessLinuxLike("rancher-desktop")
-}
-
-func checkProcessWindows() bool {
-	path, err := directories.GetLockfilePath("rancher-desktop")
-	if err != nil {
-		logrus.Errorf("Error trying to get the lockfile path: %s\n", err)
-		return false
-	}
-	logrus.Debugf("GetLockfilePath => %s\n", path)
-	if _, err = os.Stat(path); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			logrus.Errorf("Error trying to stat %s: %s\n", path, err)
-		}
-		// File either no longer exists or isn't "stat-table"
-		return false
-	}
-	return true
+func checkProcessLinux() (bool, error) {
+	return checkProcessLinuxLike("rancher-desktop"), nil
 }
 
 func checkProcessLinuxLike(commandPattern ...string) bool {
@@ -107,19 +97,14 @@ func checkProcessLinuxLike(commandPattern ...string) bool {
 	if err != nil {
 		return false
 	}
-	ptn, err := regexp.Compile(`\A[0-9\s]+\z`)
-	if err != nil {
-		logrus.WithField("error", err).Warn("failed to compile pattern")
-		return false
-	}
-	return ptn.Match(result)
+	return regexp.MustCompile(`\A[0-9\s]+\z`).Match(result)
 }
 
 // RancherDesktopQemuCommand - be specific to avoid killing other VM-based processes running qemu
 const RancherDesktopQemuCommand = "lima/bin/qemu-system.*rancher-desktop/lima/[0-9]/diffdisk"
 
-func checkProcessQemu() bool {
-	return checkProcessLinuxLike("-f", RancherDesktopQemuCommand)
+func checkProcessQemu() (bool, error) {
+	return checkProcessLinuxLike("-f", RancherDesktopQemuCommand), nil
 }
 
 func pkillQemu() error {
