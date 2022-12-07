@@ -17,6 +17,7 @@ limitations under the License.
 package factoryreset
 
 import (
+	"bytes"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -54,7 +55,7 @@ func CheckProcessWindows() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
 	}
-	r := csv.NewReader(strings.NewReader(allOutput))
+	r := csv.NewReader(bytes.NewReader(allOutput))
 	for {
 		record, err := r.Read()
 		if err != nil {
