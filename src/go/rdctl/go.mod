@@ -4,10 +4,11 @@ go 1.17
 
 require (
 	github.com/docker/docker v20.10.21+incompatible
+	github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service v0.0.0-20221207202230-8eef0a706010
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
 	golang.org/x/text v0.5.0
 )
 
