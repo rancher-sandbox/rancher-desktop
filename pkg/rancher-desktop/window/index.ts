@@ -231,6 +231,25 @@ export async function openDenyRootDialog() {
   }));
 }
 
+export type reqMessageId = 'ok' | 'linux-nested' | 'win32-release' | 'macOS-release';
+
+/**
+ * Open a dialog to show reason Desktop will not start
+ * @param reasonId Specifies which message to show in dialog
+ */
+export async function openRequiredDialog(reasonId: reqMessageId) {
+  const window = openDialog('Required', { frame: true });
+
+  window.webContents.on('ipc-message', (event, channel) => {
+    if (channel === 'dialog/load') {
+      window.webContents.send('dialog/populate', reasonId);
+    }
+  });
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+}
+
 /**
  * Open the error message window as a modal window.
  */

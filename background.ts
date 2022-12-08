@@ -138,6 +138,8 @@ Electron.app.whenReady().then(async() => {
     if (['linux', 'darwin'].includes(os.platform())) {
       await checkForRootPrivs();
     }
+    // Check for required OS versions and features
+    await checkPrerequisites();
 
     DashboardServer.getInstance().init();
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
@@ -245,6 +247,56 @@ async function doFirstRunDialog() {
 async function checkForRootPrivs() {
   if (isRoot()) {
     await window.openDenyRootDialog();
+    gone = true;
+    Electron.app.quit();
+  }
+}
+
+async function checkPrerequisites() {
+  const osPlatform = os.platform();
+  let messageId: window.reqMessageId = 'ok';
+
+  switch (osPlatform) {
+  case 'win32': {
+    // Required: Windows 10-1909(build 18363) or newer
+    const winRel = os.release().split('.');
+
+    if (Number(winRel[0]) < 10 || (Number(winRel[0]) === 10 && Number(winRel[2]) < 18363)) {
+      messageId = 'win32-release';
+    }
+    break;
+  }
+  case 'linux': {
+    // Required: Nested virtualization enabled
+    const nestedFiles = [
+      '/sys/module/kvm_amd/parameters/nested',
+      '/sys/module/kvm_intel/parameters/nested'];
+    let nestedSupport = false;
+
+    for (let index = 0; index < nestedFiles.length && nestedSupport === false; index++) {
+      try {
+        const data = await fs.promises.readFile(nestedFiles[index], { encoding: 'utf8' });
+
+        if (data && data.toLowerCase()[0] === 'y' ) {
+          nestedSupport = true;
+        }
+      } catch {}
+    }
+    if (!nestedSupport) {
+      messageId = 'linux-nested';
+    }
+    break;
+  }
+  case 'darwin':
+    // Required: MacOS-10.15(Darwin-19) or newer
+    if (parseInt(os.release()) < 19) {
+      messageId = 'macOS-release';
+    }
+    break;
+  }
+
+  if (messageId !== 'ok') {
+    await window.openRequiredDialog(messageId);
     gone = true;
     Electron.app.quit();
   }

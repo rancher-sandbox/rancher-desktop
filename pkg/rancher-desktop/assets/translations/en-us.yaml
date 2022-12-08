@@ -314,6 +314,11 @@ sudoPrompt:
   explanation: 'This will modify the following paths:'
   buttonText: OK
 
+Required:
+  title: Unable to start Rancher Desktop
+  message: 'Missing Requirements:'
+  buttonText: OK
+
 accountAndKeys:
   title: Account and API Keys
   account:
