@@ -46,7 +46,7 @@ Two ways of specifying a body:
 2. --body|-b string: For the 'PUT /settings' endpoint, this must be a valid JSON string.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return doApiCommand(cmd, args)
+		return doAPICommand(cmd, args)
 	},
 }
 
@@ -57,7 +57,7 @@ func init() {
 	apiCmd.Flags().StringVarP(&apiSettings.Body, "body", "b", "", "JSON payload to upload")
 }
 
-func doApiCommand(cmd *cobra.Command, args []string) error {
+func doAPICommand(cmd *cobra.Command, args []string) error {
 	var result []byte
 	var contents []byte
 	var err error
@@ -124,7 +124,7 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 	}
 	errorPacketBytes, err := json.Marshal(*errorPacket)
 	if err != nil {
-		return fmt.Errorf("Error converting error message info: %v\n", err)
+		return fmt.Errorf("error converting error message info: %w", err)
 	}
 	fmt.Fprintln(os.Stdout, string(errorPacketBytes))
 	os.Exit(1)

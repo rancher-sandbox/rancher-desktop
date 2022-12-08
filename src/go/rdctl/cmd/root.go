@@ -30,9 +30,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 )
 
+// APIError - type for representing errors from API calls.
 type APIError struct {
 	Message          *string `json:"message,omitempty"`
-	DocumentationUrl *string `json:"documentation_url,omitempty"`
+	DocumentationURL *string `json:"documentation_url,omitempty"`
 }
 
 const clientVersion = "1.1.0"
@@ -137,10 +138,9 @@ func processRequestForAPI(response *http.Response, err error) ([]byte, *APIError
 	if err != nil {
 		if pErrorPacket != nil {
 			return nil, pErrorPacket, nil
-		} else {
-			// Only return this error if there is nothing else to report
-			return nil, nil, err
 		}
+		// Only return this error if there is nothing else to report
+		return nil, nil, err
 	}
 	return body, pErrorPacket, nil
 }
