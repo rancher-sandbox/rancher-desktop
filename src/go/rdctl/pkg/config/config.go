@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 // Package config handles all the config-related parts of rdctl
-
 package config
 
 import (
@@ -52,8 +51,9 @@ type ConnectionInfo struct {
 var (
 	connectionSettings ConnectionInfo
 
-	configDir         string
-	configPath        string
+	configDir  string
+	configPath string
+	// DefaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
 	DefaultConfigPath string
 )
 
@@ -83,14 +83,14 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 // So if the user runs an `rdctl` command after a factory reset, there is no config file (in the default location),
 // but it might not be necessary. So only use the error message for the missing file if it is actually needed.
 func GetConnectionInfo() (*ConnectionInfo, error) {
-	err, isImmediateError := finishConnectionSettings()
+	isImmediateError, err := finishConnectionSettings()
 	if err != nil && (isImmediateError || insufficientConnectionInfo()) {
 		return nil, err
 	}
 	return &connectionSettings, nil
 }
 
-func finishConnectionSettings() (error, bool) {
+func finishConnectionSettings() (bool, error) {
 	if configPath == "" {
 		configPath = DefaultConfigPath
 	}
@@ -102,12 +102,12 @@ func finishConnectionSettings() (error, bool) {
 		// If the default config file isn't available, it might not have been created yet,
 		// so don't complain if we don't need it.
 		// But if the user specified their own --config-path and it's not readable, complain immediately.
-		return err, configPath != DefaultConfigPath
+		return configPath != DefaultConfigPath, err
 	}
 
 	var settings CLIConfig
 	if err = json.Unmarshal(content, &settings); err != nil {
-		return fmt.Errorf("error in config file %s: %w", configPath, err), configPath != DefaultConfigPath
+		return configPath != DefaultConfigPath, fmt.Errorf("error in config file %s: %w", configPath, err)
 	}
 
 	if connectionSettings.User == "" {
@@ -119,7 +119,7 @@ func finishConnectionSettings() (error, bool) {
 	if connectionSettings.Port == "" {
 		connectionSettings.Port = strconv.Itoa(settings.Port)
 	}
-	return nil, false
+	return false, nil
 }
 
 func insufficientConnectionInfo() bool {

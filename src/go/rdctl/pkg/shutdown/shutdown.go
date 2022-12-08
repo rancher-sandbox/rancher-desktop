@@ -36,6 +36,8 @@ func newShutdownData(waitForShutdown bool) *shutdownData {
 	return &shutdownData{waitForShutdown: waitForShutdown}
 }
 
+// FinishShutdown - common function used by both the shutdown and factory-reset commands
+// to ensure rancher desktop is no longer running after sending it a shutdown command
 func FinishShutdown(waitForShutdown bool) error {
 	s := newShutdownData(waitForShutdown)
 	var err error
