@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"syscall"
 	"time"
 
@@ -75,7 +76,7 @@ func ControlService(name string, control svc.Cmd, desiredState svc.State) error 
 	for status.State != desiredState {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("timeout waiting for service to go to state=%d", desiredState)
+			return fmt.Errorf("timeout waiting for service to go to state=%d: %w", desiredState, os.ErrDeadlineExceeded)
 		case <-time.After(queryTimeout):
 			status, err = s.Query()
 			if err != nil {
