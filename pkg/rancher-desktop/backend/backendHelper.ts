@@ -15,6 +15,19 @@ export default class BackendHelper {
   }
 
   /**
+   * Replacer function for string.replaceAll(/(\\*)(")/g, this.#escapeChar)
+   * It will backslash-escape the specified character unless it is already
+   * preceded by an odd number of backslashes.
+   */
+  static #escapeChar(match: any, slashes: string, char: string) {
+    if (slashes.length % 2 === 0) {
+      slashes += '\\';
+    }
+
+    return `${ slashes }${ char }`;
+  }
+
+  /**
    * Turn imageAllowList patterns into a list of nginx regex rules.
    */
   static createImageAllowListConf(imageAllowList: BackendSettings['containerEngine']['imageAllowList']): string {
@@ -27,18 +40,19 @@ export default class BackendHelper {
 
     if (!imageAllowList.enabled) {
       // Return a pattern allowing **any** image name.
-      return '~*^.*$ 0;\n';
+      return '"~*^.*$" 0;\n';
     }
 
     // TODO: remove hard-coded defaultSandboxImage from cri-dockerd
-    let patterns = '~*^registry.k8s.io(:443)?/pause:[^/]+$ 0;\n';
+    let patterns = '"~*^registry\\.k8s\\.io(:443)?/pause:[^/]+$" 0;\n';
 
     // TODO: remove hard-coded sandbox_image from our /etc/containerd/config.toml
-    patterns += '~*^registry-1.docker.io(:443)?/rancher/mirrored-pause:[^/]+$ 0;\n';
+    patterns += '"~*^registry-1\\.docker\\.io(:443)?/rancher/mirrored-pause:[^/]+$" 0;\n';
 
     for (const pattern of imageAllowList.patterns) {
       let host = 'registry-1.docker.io';
-      let repo = pattern.split('/');
+      // escape all unescaped double-quotes because the final pattern will be quoted to avoid nginx syntax errors
+      let repo = pattern.replaceAll(/(\\*)(")/g, this.#escapeChar).split('/');
 
       // no special cases for 'localhost' and 'host-without-dot:port'; they won't work within the VM
       if (repo[0].includes('.')) {
@@ -58,6 +72,8 @@ export default class BackendHelper {
         repo.unshift('library');
       }
 
+      // all dots in the host name are literal dots, but don't escape them if they are already escaped
+      host = host.replaceAll(/(\\*)(\.)/g, this.#escapeChar);
       // matching against http_host header, which may or may not include the port
       if (!host.includes(':')) {
         host += '(:443)?';
@@ -87,7 +103,7 @@ export default class BackendHelper {
           repo.push('[^/]+');
         }
       }
-      patterns += `~*^${ host }/v2/${ repo.join('/') }/manifests/${ tag }$ 0;\n`;
+      patterns += `"~*^${ host }/v2/${ repo.join('/') }/manifests/${ tag }$" 0;\n`;
     }
 
     return patterns;
