@@ -102,7 +102,7 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
   /**
    * Install a pre-downloaded version of Kubernetes.
    */
-  install(config: BackendSettings, kubernetesVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean): Promise<void>;
+  install(config: BackendSettings, kubernetesVersion: semver.SemVer, allowSudo: boolean): Promise<void>;
 
   /**
    * Start running a pre-installed version of Kubernetes.

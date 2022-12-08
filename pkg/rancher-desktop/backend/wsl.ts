@@ -1068,7 +1068,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const config = this.cfg = _.defaultsDeep(clone(config_),
       { kubernetes: { containerEngine: ContainerEngine.NONE } }) as BackendSettings;
     let kubernetesVersion: semver.SemVer | undefined;
-    let isDowngrade = false;
 
     await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
@@ -1084,7 +1083,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
-            [kubernetesVersion, isDowngrade] = await this.kubeBackend.download(config);
+            [kubernetesVersion] = await this.kubeBackend.download(config);
           })());
         }
 
@@ -1216,7 +1215,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           installerActions.push(
             this.progressTracker.action('Installing k3s', 100, async() => {
               await this.kubeBackend.deleteIncompatibleData(version);
-              await this.kubeBackend.install(config, version, isDowngrade, false);
+              await this.kubeBackend.install(config, version, false);
             }));
         }
         try {
