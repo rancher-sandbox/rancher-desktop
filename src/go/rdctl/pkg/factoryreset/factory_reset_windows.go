@@ -17,7 +17,11 @@ limitations under the License.
 package factoryreset
 
 import (
+	"bytes"
+	"encoding/csv"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -38,6 +42,34 @@ var (
 	pKernel32      = windows.NewLazySystemDLL("kernel32.dll")
 	pEnumProcesses = pKernel32.NewProc("K32EnumProcesses")
 )
+
+// CheckProcessWindows - returns true if Rancher Desktop is still running, false if it isn't
+// along with an error condition if there's a problem detecting that.
+//
+// It does this by calling `tasklist`, the Windows answer to ps(1)
+
+func CheckProcessWindows() (bool, error) {
+	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop.exe", "/FO", "CSV")
+	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	allOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
+	}
+	r := csv.NewReader(bytes.NewReader(allOutput))
+	for {
+		record, err := r.Read()
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				return false, fmt.Errorf("Failed to csv-read the output for tasklist: %w", err)
+			}
+			break
+		}
+		if len(record) > 0 && record[0] == "Rancher Desktop.exe" {
+			return true, nil
+		}
+	}
+	return false, nil
+}
 
 // KillRancherDesktop terminates all processes where the executable is from the
 // Rancher Desktop application, excluding the current process.

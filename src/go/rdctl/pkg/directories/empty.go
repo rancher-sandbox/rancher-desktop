@@ -23,9 +23,6 @@ import "fmt"
 func GetLocalAppDataDirectory() (string, error) {
 	return "", fmt.Errorf("internal error: GetLocalAppDataDirectory shouldn't be called")
 }
-func GetLockfilePath(string) (string, error) {
-	return "", fmt.Errorf("internal error: GetLockfilePath shouldn't be called")
-}
 
 func GetRoamingAppDataDirectory() (string, error) {
 	return "", fmt.Errorf("internal error: GetRoamingAppDataDirectory shouldn't be called")

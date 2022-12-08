@@ -97,14 +97,6 @@ func GetRoamingAppDataDirectory() (string, error) {
 	return dir, nil
 }
 
-func GetLockfilePath(appName string) (string, error) {
-	appData, err := GetRoamingAppDataDirectory()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(appData, appName, "lockfile"), nil
-}
-
 var (
 	ole32Dll   = windows.MustLoadDLL("Ole32.dll")
 	shell32Dll = windows.MustLoadDLL("Shell32.dll")
