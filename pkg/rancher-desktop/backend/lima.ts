@@ -1628,7 +1628,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.startService('docker');
         }
         if (kubernetesVersion) {
-          await this.kubeBackend.install(config, kubernetesVersion, isDowngrade, this.#allowSudo);
+          await this.kubeBackend.install(config, kubernetesVersion, this.#allowSudo);
         }
 
         await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
