@@ -100,11 +100,13 @@ func deleteLinuxData(removeKubernetesCache bool) error {
 	altAppHomePath := path.Join(homeDir, ".rd")
 	cachePath := path.Join(cacheHomePath, "rancher-desktop")
 	configPath := path.Join(configHomePath, "rancher-desktop")
+	electronConfigPath := path.Join(configHomePath, "Rancher Desktop")
 	dataHomePath := path.Join(dataDir, "rancher-desktop")
 
 	pathList := []string{
 		altAppHomePath,
 		configPath,
+		electronConfigPath,
 		path.Join(homeDir, ".local", "state", "rancher-desktop"),
 	}
 	logsPath := os.Getenv("RD_LOGS_DIR")
