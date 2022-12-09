@@ -27,3 +27,6 @@ sed -i -E '/openresty/!s/^([ \t]*need.*)/\1 openresty/' /etc/init.d/containerd
 
 # openresty is backgrounding itself (and writes its own pid file)
 sed -i 's/^command_background/#command_background/' /etc/init.d/openresty
+
+# Make sure openresty log directory exists
+install -d -m755 /var/log/openresty

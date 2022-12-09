@@ -133,6 +133,9 @@ provision:
       sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/$svc
       sed -i -E '/openresty/!s/^([ \t]*need.*)/\1 openresty/' /etc/init.d/$svc
     done
+
+    # Make sure openresty log directory exists
+    install -d -m755 /var/log/openresty
 - # mount bpffs to allow containers to leverage bpf, and make both bpffs and
   # cgroupfs shared mounts so the pods can mount them correctly
   mode: system
