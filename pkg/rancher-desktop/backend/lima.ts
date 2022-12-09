@@ -1619,9 +1619,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
         }
 
-        await this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config));
+        await Promise.all([
+          this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+          this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
+          this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
+        ]);
 
-        await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
         } else if (config.kubernetes.containerEngine === ContainerEngine.MOBY) {
@@ -1634,7 +1637,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
         await Promise.all([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
-          this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
           this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(kubernetesVersion)),
           this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {
