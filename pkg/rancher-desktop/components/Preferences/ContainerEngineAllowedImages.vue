@@ -123,3 +123,9 @@ export default Vue.extend({
   }
 
 </style>
+
+<style lang="scss">
+  .string-list .string-list-box .item .label {
+    white-space: nowrap;
+  }
+</style>
