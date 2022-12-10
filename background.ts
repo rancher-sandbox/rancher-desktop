@@ -60,7 +60,7 @@ const k8smanager = newK8sManager();
 const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
 let cfg: settings.Settings;
-let waitForFirstRunDialogCompletion = true;
+let firstRunDialogComplete = false;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
@@ -99,7 +99,10 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 
 Electron.app.on('second-instance', async() => {
   await protocolRegistered;
-  window.openMain();
+  console.warn('A second instance was started');
+  if (firstRunDialogComplete) {
+    window.openMain();
+  }
 });
 
 // takes care of any propagation of settings we want to do
@@ -239,7 +242,7 @@ async function doFirstRunDialog() {
   if (settings.firstRunDialogNeeded()) {
     await window.openFirstRunDialog();
   }
-  waitForFirstRunDialogCompletion = false;
+  firstRunDialogComplete = true;
 }
 
 async function checkForRootPrivs() {
@@ -363,7 +366,7 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', async() => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (waitForFirstRunDialogCompletion) {
+  if (!firstRunDialogComplete) {
     console.log('Still processing the first-run dialog: not opening main window');
 
     return;
