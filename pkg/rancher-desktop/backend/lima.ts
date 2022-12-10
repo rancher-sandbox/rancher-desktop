@@ -34,6 +34,7 @@ import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
+import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
@@ -1470,6 +1471,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
+    await this.writeFile('/etc/logrotate.d/openresty', LOGROTATE_OPENRESTY_SCRIPT, 0o644);
   }
 
   /**
@@ -1619,9 +1621,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
         }
 
-        await this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config));
+        await Promise.all([
+          this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+          this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
+          this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
+        ]);
 
-        await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
         } else if (config.kubernetes.containerEngine === ContainerEngine.MOBY) {
@@ -1634,7 +1639,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
         await Promise.all([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
-          this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
           this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(kubernetesVersion)),
           this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {

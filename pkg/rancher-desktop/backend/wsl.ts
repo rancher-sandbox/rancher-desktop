@@ -28,6 +28,7 @@ import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-ranc
 import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
+import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
@@ -1180,6 +1181,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
                 await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
                 await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
+                await this.writeFile(`/etc/logrotate.d/openresty`, LOGROTATE_OPENRESTY_SCRIPT, 0o644);
 
                 await this.runInstallScript(CONFIGURE_IMAGE_ALLOW_LIST, 'configure-image-allow-list');
               }),
