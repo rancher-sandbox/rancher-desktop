@@ -42,6 +42,24 @@ factory_reset() {
     elif is_macos; then
         RD_CONFIG_FILE=$HOME/Library/Preferences/rancher-desktop/settings.json
     fi
+
+    # hack for tests/registry/creds.bats because we can't configure additional
+    # hosts via settings.yaml
+    override="$(lima_home)/_config/override.yaml"
+    touch "$override"
+    if ! grep -q registry.internal: "$override"; then
+        cat <<EOF >>"$override"
+
+hostResolver:
+  hosts:
+    registry.internal: 192.168.5.15
+EOF
+    fi
+
+    if [ "$RD_USE_IMAGE_ALLOW_LIST" != "false" ]; then
+        RD_USE_IMAGE_ALLOW_LIST=true
+    fi
+
     # Make sure supressSudo is true
     cat <<EOF > $RD_CONFIG_FILE
 {
@@ -51,7 +69,13 @@ factory_reset() {
     "suppressSudo": true
   },
   "updater": false,
-  "pathManagementStrategy": "rcfiles"
+  "pathManagementStrategy": "rcfiles",
+  "containerEngine": {
+    "imageAllowList": {
+      "enabled": $RD_USE_IMAGE_ALLOW_LIST,
+      "patterns": ["docker.io"]
+    }
+  }
 }
 EOF
 }
