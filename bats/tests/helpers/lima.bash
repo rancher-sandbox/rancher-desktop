@@ -1,9 +1,16 @@
 limactl() {
     if is_macos; then
-        LIMA_HOME="$HOME/Library/Application Support/rancher-desktop/lima" \
-                 "/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin/lima/bin/limactl" "$@"
+        RESOURCES="/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin"
     elif is_linux; then
-        LIMA_HOME="$HOME/.local/share/rancher-desktop/lima" \
-                 "/opt/rancher-desktop/resources/resources/linux/lima/bin/limactl" "$@"
+        RESOURCES="/opt/rancher-desktop/resources/resources/linux"
+    fi
+    LIMA_HOME="$(lima_home)" "${RESOURCES}/lima/bin/limactl" "$@"
+}
+
+lima_home() {
+    if is_macos; then
+        echo "${HOME}/Library/Application Support/rancher-desktop/lima"
+    elif is_linux; then
+        echo "${HOME}/.local/share/rancher-desktop/lima"
     fi
 }

@@ -4,9 +4,11 @@ if [ -n "$RD_USE_WINDOWS_EXE" ]; then
 fi
 
 HELM="helm$exe"
-KUBECTL="kubectl$exe --context rancher-desktop"
+KUBECTL_EXE="kubectl$exe"
+KUBECTL="$KUBECTL_EXE --context rancher-desktop"
 RDCTL="rdctl$exe"
-DOCKER="docker$exe --context rancher-desktop"
+DOCKER_EXE="docker$exe"
+DOCKER="$DOCKER_EXE --context rancher-desktop"
 NERDCTL="nerdctl$exe"
 
 if [ "$RD_CONTAINER_RUNTIME" == "containerd" ]; then

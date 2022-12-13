@@ -24,6 +24,9 @@ setup() {
            --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
 
     wait_for_apiserver "$RD_KUBERNETES_PREV_VERSION"
+    # the docker context "rancher-desktop" may not have been written
+    # even though the apiserver is already running
+    wait_for_container_runtime
 }
 
 @test 'deploy nginx' {
@@ -58,7 +61,7 @@ verify_wordpress() {
     # Load the homepage; that can take a while because all the pods are still restarting
     try --max 9 --delay 10 curl --silent --show-error "http://localhost:$output"
     assert_success
-    assert_output --partial "Just another WordPress site"
+    assert_output --regexp "(Just another WordPress site|<title>User&#039;s Blog!</title>)"
 }
 
 @test 'verify nginx before upgrade' {

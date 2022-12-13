@@ -20,7 +20,24 @@ setup() {
     #        --kubernetes-enabled=false \  <=== broken in 1.4.1
     #        --suppress-sudo               <=== not implemented
     start_container_runtime
+    # we rely on start_container_runtime to have added $REGISTRY_HOST to host
+    # resover config because it is not configurable via settings, and openresty
+    # will no use /etc/hosts to resolve upstream registry names.
     wait_for_shell
+    if [ "${RD_USE_IMAGE_ALLOW_LIST}" != "false" ]; then
+        $RDCTL api -X PUT -b "{\"containerEngine\":{\"imageAllowList\":{\"enabled\":true,\"patterns\":[\"$REGISTRY\",\"docker.io/registry\"]}}}" settings
+    fi
+}
+
+@test 'verify image-allow-list config' {
+    wait_for_container_runtime
+    run $CRCTL pull busybox
+    if [ "${RD_USE_IMAGE_ALLOW_LIST}" == "false" ]; then
+        assert_success
+    else
+        assert_failure
+        assert_output --regexp "(unauthorized|Forbidden)"
+    fi
 }
 
 @test 'configure registry hostname' {
@@ -65,7 +82,8 @@ wait_for_registry() {
     $CRCTL tag $REGISTRY_IMAGE $REGISTRY/$REGISTRY_IMAGE
     run $CRCTL push $REGISTRY/$REGISTRY_IMAGE
     assert_failure
-    assert_output --partial "certificate signed by unknown authority"
+    # we don't get cert errors when going through the proxy; they turn into 502's
+    assert_output --regexp "(certificate signed by unknown authority|502 Bad Gateway)"
 }
 
 @test 'install CA cert' {
@@ -75,6 +93,7 @@ wait_for_registry() {
 
 @test 'restart container runtime to refresh certs' {
     $RDSUDO rc-service "$CR_SERVICE" restart
+    $RDSUDO rc-service --ifstarted openresty restart
     wait_for_container_runtime
     # when Moby is stopped, the containers are stopped as well
     wait_for_registry
