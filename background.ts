@@ -866,11 +866,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       return ['no changes necessary', ''];
     }
 
+    // Update image allow list patterns, just in case the backend doesn't need restarting
     const allowListConf = BackendHelper.createImageAllowListConf(cfg.containerEngine.imageAllowList);
     const rcService = k8smanager.backend === 'wsl' ? 'wsl-service' : 'rc-service';
 
     await k8smanager.executor.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
-    await k8smanager.executor.execCommand({ root: true }, rcService, 'openresty', 'reload');
+    await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'openresty', 'reload');
 
     // Check if the newly applied preferences demands a restart of the backend.
     const restartReasons = await k8smanager.requiresRestartReasons(cfg);
