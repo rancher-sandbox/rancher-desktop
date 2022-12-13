@@ -111,11 +111,29 @@ func checkProcessQemu() (bool, error) {
 	return checkProcessLinuxLike("-f", RancherDesktopQemuCommand), nil
 }
 
-func pkillQemu() error {
-	cmd := exec.Command("pkill", "-9", "-f", RancherDesktopQemuCommand)
+func pkill(args ...string) error {
+	pkillBinary := "pkill"
+	if runtime.GOOS == "darwin" {
+		pkillBinary = "/usr/bin/pkill"
+	}
+	cmd := exec.Command(pkillBinary, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// don't throw an error if the process we are killing has already exited
+			if exitCode := exitError.ExitCode(); exitCode == 0 || exitCode == 1 {
+				return nil
+			}
+		}
+		return fmt.Errorf("error running pkill: %w", err)
+	}
+	return nil
+}
+
+func pkillQemu() error {
+	err := pkill("-9", "-f", RancherDesktopQemuCommand)
 	if err != nil {
 		return fmt.Errorf("failed to kill qemu: %w", err)
 	}
@@ -123,10 +141,7 @@ func pkillQemu() error {
 }
 
 func pkillDarwin() error {
-	cmd := exec.Command("/usr/bin/pkill", "-9", "-a", "-l", "-f", "Contents/MacOS/Rancher Desktop")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err := pkill("-9", "-a", "-l", "-f", "Contents/MacOS/Rancher Desktop")
 	if err != nil {
 		return fmt.Errorf("failed to kill Rancher Desktop: %w", err)
 	}
@@ -134,10 +149,8 @@ func pkillDarwin() error {
 }
 
 func pkillLinux() error {
-	cmd := exec.Command("pkill", "-9", "rancher-desktop")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+	err := pkill("-9", "rancher-desktop")
+	if err != nil {
 		return fmt.Errorf("failed to kill Rancher Desktop: %w", err)
 	}
 	return nil
