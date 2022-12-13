@@ -269,7 +269,7 @@ containerEngine:
       description: Namespaces for container images; use with nerdctl.
 
 allowedImages:
-  label: Allowed Image Patterns
+  label: Allowed Image Patterns (Experimental)
   patterns:
     placeholder: Type the image pattern
   errors:
