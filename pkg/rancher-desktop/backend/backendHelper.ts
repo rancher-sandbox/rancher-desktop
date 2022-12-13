@@ -38,16 +38,14 @@ export default class BackendHelper {
      * a newline. The '0' means that this pattern is **not** forbidden (the table defaults to '1').
      */
 
-    if (!imageAllowList.enabled) {
-      // Return a pattern allowing **any** image name.
-      return '"~*^.*$" 0;\n';
-    }
-
     // TODO: remove hard-coded defaultSandboxImage from cri-dockerd
-    let patterns = '"~*^registry\\.k8s\\.io(:443)?/pause:[^/]+$" 0;\n';
+    let patterns = '"~*^registry\\.k8s\\.io(:443)?/v2/pause/manifests/[^/]+$" 0;\n';
+
+    // TODO: remove hardcoded CDN redirect target for registry.k8s.io
+    patterns += '"~*^[^./]+\\.pkg\\.dev(:443)?/v2/.+/manifests/[^/]+$" 0;\n';
 
     // TODO: remove hard-coded sandbox_image from our /etc/containerd/config.toml
-    patterns += '"~*^registry-1\\.docker\\.io(:443)?/rancher/mirrored-pause:[^/]+$" 0;\n';
+    patterns += '"~*^registry-1\\.docker\\.io(:443)?/v2/rancher/mirrored-pause/manifests/[^/]+$" 0;\n';
 
     for (const pattern of imageAllowList.patterns) {
       let host = 'registry-1.docker.io';
@@ -60,7 +58,7 @@ export default class BackendHelper {
         if (host === 'docker.io') {
           host = 'registry-1.docker.io';
           // 'docker.io/busybox' means 'registry-1.docker.io/library/busybox'
-          if (repo.length < 2) {
+          if (repo.length === 1) {
             repo.unshift('library');
           }
         }

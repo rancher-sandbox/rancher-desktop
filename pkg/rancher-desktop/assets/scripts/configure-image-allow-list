@@ -18,12 +18,11 @@ mkcert -install
 mkcert localhost
 chown -R nobody:nobody $CAROOT
 
-# Configure containerd to pull images via OpenResty proxy.
-sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/containerd
-sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/containerd
-
-# Make sure openresty is started before containerd
-sed -i -E '/openresty/!s/^([ \t]*need.*)/\1 openresty/' /etc/init.d/containerd
+# configure proxy only when image-allow-list exists
+ial=/usr/local/openresty/nginx/conf/image-allow-list.conf
+setproxy="[ -f $ial ] && supervise_daemon_args=\"-e HTTPS_PROXY=http://127.0.0.1:3128 \$supervise_daemon_args\""
+sed -i "\#-f $ial#d" /etc/init.d/containerd
+sed -i "/^supervise_daemon_args/a $setproxy" /etc/init.d/containerd
 
 # openresty is backgrounding itself (and writes its own pid file)
 sed -i 's/^command_background/#command_background/' /etc/init.d/openresty

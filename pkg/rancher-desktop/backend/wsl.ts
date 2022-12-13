@@ -1175,15 +1175,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
               this.progressTracker.action('Configuring image proxy', 50, async() => {
-                const allowListConf = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+                const imageAllowListConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
                 const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
 
                 await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
                 await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
-                await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
                 await this.writeFile(`/etc/logrotate.d/openresty`, LOGROTATE_OPENRESTY_SCRIPT, 0o644);
 
                 await this.runInstallScript(CONFIGURE_IMAGE_ALLOW_LIST, 'configure-image-allow-list');
+                if (config.containerEngine.imageAllowList.enabled) {
+                  const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+
+                  await this.writeFile(imageAllowListConf, patterns, 0o644);
+                } else {
+                  await this.execCommand({ root: true }, 'rm', '-f', imageAllowListConf);
+                }
               }),
               this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);
@@ -1227,6 +1233,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
+        if (config.containerEngine.imageAllowList.enabled) {
+          await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
+        }
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
         if (kubernetesVersion) {
@@ -1365,6 +1374,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'openresty', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'rancher-desktop-guestagent', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
           try {

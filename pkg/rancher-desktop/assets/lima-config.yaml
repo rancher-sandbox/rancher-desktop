@@ -128,10 +128,12 @@ provision:
     # openresty is backgrounding itself (and writes its own pid file)
     sed -i 's/^command_background/#command_background/' /etc/init.d/openresty
 
+    # configure proxy only when image-allow-list exists
+    ial=/usr/local/openresty/nginx/conf/image-allow-list.conf
+    setproxy="[ -f $ial ] && supervise_daemon_args=\"-e HTTPS_PROXY=http://127.0.0.1:3128 \$supervise_daemon_args\""
     for svc in containerd docker; do
-      sed -i 's/-e HTTPS_PROXY.*--stderr/--stderr/' /etc/init.d/$svc
-      sed -i 's/--stderr/-e HTTPS_PROXY=http:\/\/127.0.0.1:3128 --stderr/' /etc/init.d/$svc
-      sed -i -E '/openresty/!s/^([ \t]*need.*)/\1 openresty/' /etc/init.d/$svc
+      sed -i "\#-f $ial#d" /etc/init.d/$svc
+      sed -i "/^supervise_daemon_args/a $setproxy" /etc/init.d/$svc
     done
 
     # Make sure openresty log directory exists

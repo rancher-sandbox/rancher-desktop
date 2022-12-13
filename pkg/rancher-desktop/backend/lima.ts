@@ -1464,14 +1464,20 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async configureOpenResty(config: BackendSettings) {
-    const allowListConf = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+    const imageAllowListConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
     // TODO: don't use hardcoded IP address
     const resolver = 'resolver 192.168.5.3 ipv6=off;\n';
 
     await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
-    await this.writeFile(`/usr/local/openresty/nginx/conf/image-allow-list.conf`, allowListConf, 0o644);
     await this.writeFile('/etc/logrotate.d/openresty', LOGROTATE_OPENRESTY_SCRIPT, 0o644);
+    if (config.containerEngine.imageAllowList.enabled) {
+      const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+
+      await this.writeFile(imageAllowListConf, patterns, 0o644);
+    } else {
+      await this.execCommand({ root: true }, 'rm', '-f', imageAllowListConf);
+    }
   }
 
   /**
@@ -1627,6 +1633,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
         ]);
 
+        if (config.containerEngine.imageAllowList.enabled) {
+          await this.startService('openresty');
+        }
         if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
         } else if (config.kubernetes.containerEngine === ContainerEngine.MOBY) {
@@ -1821,6 +1830,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'openresty', 'stop');
           await this.execCommand({ root: true }, '/sbin/fstrim', '/mnt/data');
           await this.lima('stop', MACHINE_NAME);
           await this.dockerDirManager.clearDockerContext();
