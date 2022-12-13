@@ -759,7 +759,7 @@ export default class K3sHelper extends events.EventEmitter {
         }
 
         if (!response || !outPath) {
-          throw new Error(`Error downloading ${ filename } ${ version }: No ${ filekey }s found}`);
+          throw new Error(`Error downloading ${ filename } ${ version }: No ${ filekey }s found`);
         }
 
         const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
