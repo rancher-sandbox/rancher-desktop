@@ -164,7 +164,7 @@ func deleteUnixLikeData(homeDir string, altAppHomePath string, configHomePath st
 		".profile",
 		".zshrc",
 		".cshrc",
-		".tshrc",
+		".tcshrc",
 	}
 	for i, s := range rawPaths {
 		rawPaths[i] = path.Join(homeDir, s)
