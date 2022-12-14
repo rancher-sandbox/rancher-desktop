@@ -10,7 +10,7 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
  */
-interface IpcMainEvents {
+export interface IpcMainEvents {
   'k8s-restart': () => void;
   'settings-read': () => void;
   'k8s-versions': () => void;
@@ -39,6 +39,7 @@ interface IpcMainEvents {
   'do-image-scan': (imageName: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
   'do-image-deletion': (imageName: string, imageID: string) => void;
+  'do-image-deletion-batch': (images: string[]) => void;
   'images-namespaces-read': () => void;
   // #endregion
 
@@ -58,26 +59,33 @@ interface IpcMainEvents {
   // #region Preferences
   'preferences-open': () => void;
   'preferences-close': () => void;
+  'preferences-set-dirty': (isDirty: boolean) => void;
   // #endregion
 
   'show-logs': () => void;
 
+  /** @deprecated */
+  'api-get-credentials': () => void;
+
   'dashboard-open': () => void;
   'dashboard-close': () => void;
+
+  'diagnostics/run': () => void;
 }
 
 /**
  * IpcMainInvokeEvents describes handlers describes RPC calls the renderer can
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
-interface IpcMainInvokeEvents {
+export interface IpcMainInvokeEvents {
   'settings-write': (arg: RecursivePartial<import('@pkg/config/settings').Settings>) => void;
   'transient-settings-fetch': () => import('@pkg/config/transientSettings').TransientSettings;
   'transient-settings-update': (arg: RecursivePartial<import('@pkg/config/transientSettings').TransientSettings>) => void;
   'service-fetch': (namespace?: string) => import('@pkg/backend/k8s').ServiceEntry[];
-  'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
+  'service-forward': (service: { namespace: string, name: string, port: string | number, listenPort?: number }, state: boolean) => void;
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
+  'api-get-credentials': () => { user: string, password: string, port: number };
 
   // #region main/imageEvents
   'images-mounted': (mounted: boolean) => {imageName: string, tag: string, imageID: string, size: string}[];
@@ -113,7 +121,6 @@ export interface IpcRendererEvents {
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
-  'dashboard-open': () => void;
   // #endregion
 
   // #endregion
@@ -123,6 +130,7 @@ export interface IpcRendererEvents {
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
   'dialog/close': (...args: any) => void;
+  'dashboard-open': () => void;
   // #endregion
 
   // #region api
@@ -133,57 +141,6 @@ export interface IpcRendererEvents {
 declare module 'electron' {
   // We mark the default signatures as deprecated, so that ESLint will throw an
   // error if they are used.
-
-  interface IpcMain {
-    on<eventName extends keyof IpcMainEvents>(
-      channel: eventName,
-      listener: (event: Electron.IpcMainEvent, ...args: globalThis.Parameters<IpcMainEvents[eventName]>) => void
-    ): this;
-    /** @deprecated */
-    on(channel: string, listener: (...args: any[]) => void): this;
-
-    once<eventName extends keyof IpcMainEvents>(
-      channel: eventName,
-      listener: (event: Electron.IpcMainEvent, ...args: globalThis.Parameters<IpcMainEvents[eventName]>) => void
-    ): this;
-    /** @deprecated */
-    once(channel: string, listener: (...args: any[]) => void): this;
-
-    removeListener<eventName extends keyof IpcMainEvents>(
-      channel: eventName,
-      listener: (event: Electron.IpcMainEvent, ...args: globalThis.Parameters<IpcMainEvents[eventName]>) => void
-    ): this;
-    /** @deprecated */
-    removeListener(channel: string, listener: (...args: any[]) => void): this;
-
-    removeAllListeners<eventName extends keyof IpcMainEvents>(channel?: eventName): this;
-    /** @deprecated */
-    removeAllListeners(channel: string): this;
-
-    handle<eventName extends keyof IpcMainInvokeEvents>(
-      channel: eventName,
-      listener: (
-        event: Electron.IpcMainInvokeEvent,
-        ...args: globalThis.Parameters<IpcMainInvokeEvents[eventName]>
-      ) => Promise<ReturnType<IpcMainInvokeEvents[eventName]>> | ReturnType<IpcMainInvokeEvents[eventName]>
-    ): this;
-    /** @deprecated */
-    handle(channel: string, listener: (...args: any[]) => any): this;
-
-    handleOnce<eventName extends keyof IpcMainInvokeEvents>(
-      channel: eventName,
-      listener: (
-        event: Electron.IpcMainInvokeEvent,
-        ...args: globalThis.Parameters<IpcMainInvokeEvents[eventName]>
-      ) => Promise<ReturnType<IpcMainInvokeEvents[eventName]>> | ReturnType<IpcMainInvokeEvents[eventName]>
-    ): this;
-    /** @deprecated */
-    handleOnce(channel: string, listener: (...args: any[]) => any): this;
-
-    removeHandler<eventName extends keyof IpcMainInvokeEvents>(channel: eventName): this;
-    /** @deprecated */
-    removeHandler(channel: string): this;
-  }
 
   interface IpcRenderer {
     on<eventName extends keyof IpcRendererEvents>(

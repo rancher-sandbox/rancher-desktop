@@ -1,5 +1,6 @@
 import Electron from 'electron';
 
+import type { IpcMainEvents, IpcMainInvokeEvents } from '@pkg/typings/electron-ipc';
 import { Log } from '@pkg/utils/logging';
 
 // Intended to be passed to the replacer parameter in a JSON.stringify
@@ -29,6 +30,38 @@ export function makeArgsPrintable(args: any[]): string[] {
   return printableArgs;
 }
 
+interface IpcMainProxy {
+  on<eventName extends keyof IpcMainEvents>(
+    channel: eventName,
+    listener: (event: Electron.IpcMainEvent, ...args: globalThis.Parameters<IpcMainEvents[eventName]>) => void
+  ): this;
+  once<eventName extends keyof IpcMainEvents>(
+    channel: eventName,
+    listener: (event: Electron.IpcMainEvent, ...args: globalThis.Parameters<IpcMainEvents[eventName]>) => void
+  ): this;
+  removeListener<eventName extends keyof IpcMainEvents>(
+    channel: eventName,
+    listener: (event: Electron.IpcMainEvent, ...args: globalThis.Parameters<IpcMainEvents[eventName]>) => void
+  ): this;
+  removeAllListeners<eventName extends keyof IpcMainEvents>(channel?: eventName): this;
+
+  handle<eventName extends keyof IpcMainInvokeEvents>(
+    channel: eventName,
+    listener: (
+      event: Electron.IpcMainInvokeEvent,
+      ...args: globalThis.Parameters<IpcMainInvokeEvents[eventName]>
+    ) => Promise<ReturnType<IpcMainInvokeEvents[eventName]>> | ReturnType<IpcMainInvokeEvents[eventName]>
+  ): void;
+  handleOnce<eventName extends keyof IpcMainInvokeEvents>(
+    channel: eventName,
+    listener: (
+      event: Electron.IpcMainInvokeEvent,
+      ...args: globalThis.Parameters<IpcMainInvokeEvents[eventName]>
+    ) => Promise<ReturnType<IpcMainInvokeEvents[eventName]>> | ReturnType<IpcMainInvokeEvents[eventName]>
+  ): void;
+  removeHandler<eventName extends keyof IpcMainInvokeEvents>(channel: eventName): void;
+}
+
 export function getIpcMainProxy(logger: Log) {
   return new Proxy(Electron.ipcMain, {
     get: (target, property) => {
@@ -53,11 +86,11 @@ export function getIpcMainProxy(logger: Log) {
             return listener(event, ...args);
           };
 
-          return target[property](channel, newListener);
+          target[property](channel, newListener);
         };
       }
 
       return Reflect.get(target, property);
     },
-  });
+  }) as IpcMainProxy;
 }
