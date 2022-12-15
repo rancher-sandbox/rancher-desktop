@@ -1,6 +1,7 @@
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name: 'preferences-layout',

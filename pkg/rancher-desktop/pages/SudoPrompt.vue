@@ -35,8 +35,9 @@
 
 <script lang="ts">
 import { Checkbox } from '@rancher/components';
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 type SudoReason = 'networking' | 'docker-socket';
 

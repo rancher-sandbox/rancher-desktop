@@ -14,7 +14,6 @@
 
 <script>
 
-import { ipcRenderer } from 'electron';
 import { mapGetters, mapState } from 'vuex';
 
 import ActionMenu from '@pkg/components/ActionMenu.vue';
@@ -22,6 +21,7 @@ import BackendProgress from '@pkg/components/BackendProgress.vue';
 import Header from '@pkg/components/Header.vue';
 import Nav from '@pkg/components/Nav.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'App',

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import paths from '@pkg/utils/paths';
 
 export default Vue.extend({

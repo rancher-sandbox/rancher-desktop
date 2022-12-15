@@ -62,15 +62,15 @@
 import os from 'os';
 
 import { Checkbox } from '@rancher/components';
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
-import { Settings } from '@pkg/config/settings';
+import type { Settings, ContainerEngine } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   components: {
@@ -148,7 +148,7 @@ export default Vue.extend({
       this.onChange();
       window.close();
     },
-    onChangeEngine(desiredEngine: string) {
+    onChangeEngine(desiredEngine: ContainerEngine) {
       try {
         ipcRenderer.invoke(
           'settings-write',

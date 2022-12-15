@@ -1,5 +1,4 @@
-import { ipcRenderer } from 'electron';
-
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { parseDocsVersion } from '@pkg/utils/version';
 
 const baseUrl = 'https://docs.rancherdesktop.io';

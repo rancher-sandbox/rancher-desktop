@@ -1,8 +1,8 @@
-import { ipcRenderer } from 'electron';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 interface CredentialsState {
   credentials: ServerState;

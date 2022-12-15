@@ -17,13 +17,13 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 import { mapGetters } from 'vuex';
 
 import { State as K8sState } from '@pkg/backend/backend';
 import Images from '@pkg/components/Images.vue';
 import { defaultSettings } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   components: { Images },
