@@ -1,4 +1,4 @@
-import { ipcRenderer } from 'electron';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export const state = () => ({ k8sState: ipcRenderer.sendSync('k8s-state') });
 

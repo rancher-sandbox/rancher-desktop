@@ -21,12 +21,12 @@
 </template>
 
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import PortForwarding from '@pkg/components/PortForwarding.vue';
 import { defaultSettings, Settings } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   components: { PortForwarding },
@@ -138,7 +138,9 @@ export default Vue.extend({
 
     handleUpdatePortForward(): void {
       this.errorMessage = null;
-      ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+      if (this.serviceBeingEdited) {
+        ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+      }
       this.serviceBeingEdited = null;
     },
 

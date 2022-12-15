@@ -32,13 +32,12 @@
 
 <script>
 
-import { ipcRenderer } from 'electron';
-
 import Alert from '@pkg/components/Alert.vue';
 import ImageAddTabs from '@pkg/components/ImageAddTabs.vue';
 import ImagesFormAdd from '@pkg/components/ImagesFormAdd.vue';
 import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
 import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   components: {

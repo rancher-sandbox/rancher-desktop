@@ -35,11 +35,10 @@
 
 <script>
 
-import { ipcRenderer } from 'electron';
-
 import TelemetryOptIn from '@pkg/components/TelemetryOptIn.vue';
 import UpdateStatus from '@pkg/components/UpdateStatus.vue';
 import { defaultSettings } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'General',

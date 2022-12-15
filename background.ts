@@ -548,12 +548,14 @@ ipcMainProxy.handle('service-fetch', (_, namespace) => {
 });
 
 ipcMainProxy.handle('service-forward', async(_, service, state) => {
+  const namespace = service.namespace ?? 'default';
+
   if (state) {
     const hostPort = service.listenPort ?? 0;
 
-    await k8smanager.kubeBackend.forwardPort(service.namespace, service.name, service.port, hostPort);
+    await k8smanager.kubeBackend.forwardPort(namespace, service.name, service.port, hostPort);
   } else {
-    await k8smanager.kubeBackend.cancelForward(service.namespace, service.name, service.port);
+    await k8smanager.kubeBackend.cancelForward(namespace, service.name, service.port);
   }
 });
 

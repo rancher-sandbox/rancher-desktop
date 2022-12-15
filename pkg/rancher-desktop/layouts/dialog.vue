@@ -18,8 +18,9 @@
 </template>
 
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 export default Vue.extend({
   head() {
     // If dark-mode is set to auto (follow system-prefs) this is all we need

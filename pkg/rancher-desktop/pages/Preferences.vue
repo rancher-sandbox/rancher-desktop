@@ -1,7 +1,6 @@
 <script lang="ts">
 import os from 'os';
 
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
@@ -11,6 +10,7 @@ import PreferencesHeader from '@pkg/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@pkg/components/Preferences/ModalNav.vue';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferences';
 

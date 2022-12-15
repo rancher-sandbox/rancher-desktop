@@ -83,10 +83,10 @@
 
 import SortableTable from '@pkg/components/SortableTable';
 import { Card, Checkbox } from '@rancher/components';
-import { ipcRenderer } from 'electron';
 
 import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
 import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { parseSi } from '@pkg/utils/units';
 
 export default {
