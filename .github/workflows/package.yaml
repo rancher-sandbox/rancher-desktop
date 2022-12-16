@@ -111,7 +111,7 @@ jobs:
         # remove slashes since they aren't valid in filenames
         no_slash_ref_name="${GITHUB_REF_NAME//\//-/}"
         zip_name="rancher-desktop-linux-${no_slash_ref_name}.zip"
-        echo "::set-output name=zip_name::${zip_name}"
+        echo "zip_name=${zip_name}" >> "${GITHUB_OUTPUT}"
     - name: Copy zip file to S3
       uses: prewk/s3-cp-action@74701625561055a306f92fa5c18e948f9d14a54a
       if: matrix.platform == 'linux' && steps.has_s3.outcome == 'success'
