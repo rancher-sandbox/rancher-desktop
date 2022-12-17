@@ -4,11 +4,11 @@ import Vue from 'vue';
 import { mapState } from 'vuex';
 
 export default Vue.extend({
-  name:       'help',
-  props:      {
+  name:  'help',
+  props: {
     fixedUrl: {
-      type:     String,
-      default:  null,
+      type:    String,
+      default: null,
     },
     tooltip: {
       type:    String,
@@ -24,7 +24,7 @@ export default Vue.extend({
       return this.helpUrl ? this.tooltip : null;
     },
   },
-  methods:  {
+  methods: {
     openUrl() {
       if (this.helpUrl) {
         shell.openExternal(this.helpUrl);

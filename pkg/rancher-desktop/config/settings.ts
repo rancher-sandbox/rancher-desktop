@@ -73,8 +73,8 @@ export const defaultSettings = {
       socketVMNet: false,
     },
   },
-  portForwarding:  { includeKubernetesServices: false },
-  images:          {
+  portForwarding: { includeKubernetesServices: false },
+  images:         {
     showAll:   true,
     namespace: 'k8s.io',
   },

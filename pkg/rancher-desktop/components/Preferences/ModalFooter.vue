@@ -6,14 +6,14 @@ import PreferencesAlert from '@/components/Preferences/Alert.vue';
 
 export default Vue.extend({
   name:       'preferences-footer',
-  components:  { PreferencesAlert },
+  components: { PreferencesAlert },
   computed:   {
     ...mapGetters('preferences', ['canApply']),
     isDisabled(): boolean {
       return !this.canApply;
     },
   },
-  methods:  {
+  methods: {
     cancel() {
       this.$emit('cancel');
     },

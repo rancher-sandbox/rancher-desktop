@@ -333,15 +333,15 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     const cache = await this.checkForUpdates();
 
     return {
-      files:   [{
+      files: [{
         url:                   cache.file.url,
         size:                  cache.file.size,
         sha512:                cache.file.checksum,
         isAdminRightsRequired: false,
       }],
       version:        cache.release.tag,
-      path:                     '',
-      sha512:                   '',
+      path:           '',
+      sha512:         '',
       releaseName:    cache.release.name,
       releaseNotes:   cache.release.notes,
       releaseDate:    cache.release.date,

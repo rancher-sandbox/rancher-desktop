@@ -30,16 +30,16 @@ export class DashboardServer {
 
   private proxies = (() => {
     const proxy: Record<ProxyKeys, Options> = {
-      '/k8s':          proxyWsOpts(this.api), // Straight to a remote cluster (/k8s/clusters/<id>/)
-      '/pp':           proxyWsOpts(this.api), // For (epinio) standalone API
-      '/api':          proxyWsOpts(this.api), // Management k8s API
-      '/apis':         proxyWsOpts(this.api), // Management k8s API
-      '/v1':           proxyWsOpts(this.api), // Management Steve API
-      '/v3':           proxyWsOpts(this.api), // Rancher API
-      '/v3-public':    proxyOpts(this.api), // Rancher Unauthed API
-      '/api-ui':       proxyOpts(this.api), // Browser API UI
-      '/meta':         proxyMetaOpts(this.api), // Browser API UI
-      '/v1-*':         proxyOpts(this.api), // SAML, KDM, etc
+      '/k8s':       proxyWsOpts(this.api), // Straight to a remote cluster (/k8s/clusters/<id>/)
+      '/pp':        proxyWsOpts(this.api), // For (epinio) standalone API
+      '/api':       proxyWsOpts(this.api), // Management k8s API
+      '/apis':      proxyWsOpts(this.api), // Management k8s API
+      '/v1':        proxyWsOpts(this.api), // Management Steve API
+      '/v3':        proxyWsOpts(this.api), // Rancher API
+      '/v3-public': proxyOpts(this.api), // Rancher Unauthed API
+      '/api-ui':    proxyOpts(this.api), // Browser API UI
+      '/meta':      proxyMetaOpts(this.api), // Browser API UI
+      '/v1-*':      proxyOpts(this.api), // SAML, KDM, etc
     };
 
     return Object.fromEntries(Object.entries(proxy)
