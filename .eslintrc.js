@@ -236,6 +236,7 @@ Object.assign(module.exports.rules, {
   'valid-typeof':                    'error',
   '@typescript-eslint/no-namespace': 'error',
 });
+module.exports.rules['key-spacing'][1].align.mode = 'strict';
 
 module.exports.overrides = [
   {
