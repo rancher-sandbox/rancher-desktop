@@ -9,7 +9,6 @@ import path from 'path';
  * Element is a class for interpreting JSX; we only need the bare basics to
  * generate a valid XML as input to the WiX toolchain.
  */
-
 export class Element {
   constructor(tag: string, attribs: Record<string, string>, ...children: (Element | string)[]) {
     this.tag = tag;
@@ -26,7 +25,6 @@ export class Element {
 
   tag: string;
   attribs: Record<string, string>;
-
   children: (Element | string)[];
 
   /** Convert the Element to serialized XML. */

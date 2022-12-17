@@ -44,10 +44,8 @@ const console = Logging.k8s;
 export type ShortVersion = string;
 
 export interface ReleaseAPIEntry {
-
   tag_name: string;
   assets: {
-
     browser_download_url: string;
     name: string;
   }[];

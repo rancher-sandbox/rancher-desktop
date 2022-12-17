@@ -142,7 +142,6 @@ export async function spawnFile(
 ): Promise<Record<string, never>>;
 
 /* eslint-enable no-redeclare */
-
 export async function spawnFile(
   command: string,
   args?: string[] | SpawnOptionsLog & SpawnOptionsEncoding,
