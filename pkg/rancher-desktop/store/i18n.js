@@ -74,7 +74,7 @@ export const getters = {
       }
 
       if ( typeof msg === 'object' ) {
-        console.error('Translation for', cacheKey, 'is an object'); // eslint-disable-line no-console
+        console.error('Translation for', cacheKey, 'is an object');
 
         return undefined;
       }

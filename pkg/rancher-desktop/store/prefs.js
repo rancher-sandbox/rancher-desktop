@@ -375,7 +375,7 @@ export const actions = {
 
       server = all?.[0];
     } catch (e) {
-      console.error('Error loading preferences', e); // eslint-disable-line no-console
+      console.error('Error loading preferences', e);
     }
 
     if ( !server?.data ) {
@@ -394,7 +394,7 @@ export const actions = {
         try {
           value = JSON.parse(value);
         } catch (err) {
-          console.error('Error parsing server pref', key, value, err); // eslint-disable-line no-console
+          console.error('Error parsing server pref', key, value, err);
           continue;
         }
       }

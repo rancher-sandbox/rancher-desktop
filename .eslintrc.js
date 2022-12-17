@@ -246,6 +246,10 @@ module.exports.overrides = [
       // TypeScript-specific one (and also TS/no-extra-semi).
       semi:                      'off',
       '@typescript-eslint/semi': 'warn',
+
+      'import/first':                    'error',
+      'valid-typeof':                    'error',
+      '@typescript-eslint/no-namespace': 'error',
     },
   },
 ];
