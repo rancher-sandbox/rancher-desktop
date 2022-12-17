@@ -228,6 +228,7 @@ Object.assign(module.exports.rules, {
   // There's currently too many violations to turn all of it on at once.
   '@typescript-eslint/await-thenable': 'error',
 });
+module.exports.rules['key-spacing'][1].align.mode = 'strict';
 
 module.exports.overrides = [
   {
