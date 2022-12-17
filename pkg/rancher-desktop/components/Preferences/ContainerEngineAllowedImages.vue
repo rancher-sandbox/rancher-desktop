@@ -15,7 +15,7 @@ export default Vue.extend({
     RdFieldset,
     StringList,
   },
-  props:      {
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,

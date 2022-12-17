@@ -159,10 +159,10 @@ test.describe('WSL Integrations', () => {
       ],
       env: {
         ...(process.env as Record<string, string>),
-        PATH:               path.join(workdir, 'system32') + path.delimiter + process.env.PATH,
-        RD_TEST_WSL_EXE:    path.join(workdir, 'system32', 'wsl.exe'),
-        RD_MOCK_WSL_DATA:   path.join(workdir, 'config.json'),
-        RD_MOCK_BACKEND:    '1',
+        PATH:             path.join(workdir, 'system32') + path.delimiter + process.env.PATH,
+        RD_TEST_WSL_EXE:  path.join(workdir, 'system32', 'wsl.exe'),
+        RD_MOCK_WSL_DATA: path.join(workdir, 'config.json'),
+        RD_MOCK_BACKEND:  '1',
         RD_LOGS_DIR:      reportAsset(__filename, 'log'),
       },
     });

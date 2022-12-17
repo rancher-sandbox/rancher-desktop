@@ -31,12 +31,12 @@ export default {
       });
       webpackConfig.module.rules.push({
         test:   /(?:^|[/\\])assets[/\\]scripts[/\\]/,
-        loader:  'raw-loader',
+        loader: 'raw-loader',
       });
     },
   },
-  buildDir:            '../../dist/nuxt',
-  buildModules:        [
+  buildDir:     '../../dist/nuxt',
+  buildModules: [
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
     '@nuxt/typescript-build',
@@ -54,7 +54,7 @@ export default {
   modules:          [
     'cookie-universal-nuxt',
   ],
-  plugins:          [
+  plugins: [
     // Third-party
     { src: '~/plugins/shortkey', ssr: false },
     '~/plugins/tooltip',

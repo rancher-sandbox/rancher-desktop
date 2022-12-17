@@ -63,9 +63,9 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      explanations:    {} as Partial<Record<SudoReason, string[]>>,
+      explanations: {} as Partial<Record<SudoReason, string[]>>,
       sized:        false,
-      suppress:        false,
+      suppress:     false,
       SUDO_REASON_DESCRIPTION,
     };
   },

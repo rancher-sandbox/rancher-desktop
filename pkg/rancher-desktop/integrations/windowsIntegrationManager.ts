@@ -452,7 +452,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const stdout = await this.captureCommand(
         {
           distro: distro.name,
-          env:      {
+          env:    {
             ...process.env,
             KUBECONFIG: kubeconfigPath,
             WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
