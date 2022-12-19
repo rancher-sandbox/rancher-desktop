@@ -244,16 +244,16 @@ module.exports.overrides = [
     rules: {
       // For TypeScript, disable no-undef because the compiler checks it.
       // Also, it is unaware of TypeScript types.
-      'no-undef':                        'off',
+      'no-undef':              'off',
       // For TypeScript, allow duplicate class members (function overloads).
-      'no-dupe-class-members':           'off',
+      'no-dupe-class-members': 'off',
       // For TypeScript, allow redeclarations (interface vs class).
-      'no-redeclare':                    'off',
+      'no-redeclare':          'off',
       // For TypeScript, TS does use-before-define statically.
-      'no-use-before-define':            'off',
+      'no-use-before-define':  'off',
       // For TypeScript, turn of the base "semi" rule as it conflicts with the
       // TypeScript-specific one (and also TS/no-extra-semi).
-      semi:                              'off',
+      semi:                    'off',
     },
   },
 ];
