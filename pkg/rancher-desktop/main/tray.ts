@@ -10,7 +10,6 @@ import Electron from 'electron';
 
 import { State } from '@pkg/backend/k8s';
 import * as kubeconfig from '@pkg/backend/kubeconfig';
-import * as kubectl from '@pkg/backend/kubectl';
 import { Settings, load } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
@@ -316,7 +315,7 @@ export class Tray {
    * @param {Electron.MenuItem} menuItem The menu item that was clicked.
    */
   protected contextClick(menuItem: Electron.MenuItem) {
-    kubectl.setCurrentContext(menuItem.label, () => {
+    kubeconfig.setCurrentContext(menuItem.label, () => {
       this.updateContexts();
       const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
