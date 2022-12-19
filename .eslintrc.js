@@ -39,49 +39,49 @@ module.exports = {
     'vue/no-v-html':            'off',
     'wrap-iife':                'off',
 
-    'array-bracket-spacing':          'warn',
-    'arrow-parens':                   'warn',
-    'arrow-spacing':                  ['warn', { before: true, after: true }],
-    'block-spacing':                  ['warn', 'always'],
-    'brace-style':                    ['warn', '1tbs'],
-    'comma-dangle':                   ['warn', 'always-multiline'],
-    'comma-spacing':                  'warn',
+    'array-bracket-spacing':         'warn',
+    'arrow-parens':                  'warn',
+    'arrow-spacing':                 ['warn', { before: true, after: true }],
+    'block-spacing':                 ['warn', 'always'],
+    'brace-style':                   ['warn', '1tbs'],
+    'comma-dangle':                  ['warn', 'always-multiline'],
+    'comma-spacing':                 'warn',
     curly:                           'warn',
     eqeqeq:                          'warn',
-    'func-call-spacing':              ['warn', 'never'],
-    'implicit-arrow-linebreak':       'warn',
+    'func-call-spacing':             ['warn', 'never'],
+    'implicit-arrow-linebreak':      'warn',
     indent:                          ['warn', 2],
-    'keyword-spacing':                'warn',
-    'lines-between-class-members':    ['warn', 'always', { exceptAfterSingleLine: true }],
-    'multiline-ternary':              ['warn', 'never'],
-    'newline-per-chained-call':       ['warn', { ignoreChainWithDepth: 4 }],
-    'no-caller':                      'warn',
-    'no-cond-assign':                 ['warn', 'except-parens'],
-    'no-console':                     'warn',
-    'no-debugger':                    'warn',
-    'no-eq-null':                     'warn',
-    'no-eval':                        'warn',
-    'no-trailing-spaces':             'warn',
-    'no-undef':                       'warn',
-    'no-unused-vars':                 'warn',
-    'no-whitespace-before-property':  'warn',
-    'object-curly-spacing':           ['warn', 'always'],
-    'object-property-newline':        'warn',
-    'object-shorthand':               'warn',
-    'padded-blocks':                  ['warn', 'never'],
-    'prefer-arrow-callback':          'warn',
-    'prefer-template':                'warn',
-    'quote-props':                    'warn',
-    'rest-spread-spacing':            'warn',
+    'keyword-spacing':               'warn',
+    'lines-between-class-members':   ['warn', 'always', { exceptAfterSingleLine: true }],
+    'multiline-ternary':             ['warn', 'never'],
+    'newline-per-chained-call':      ['warn', { ignoreChainWithDepth: 4 }],
+    'no-caller':                     'warn',
+    'no-cond-assign':                ['warn', 'except-parens'],
+    'no-console':                    'warn',
+    'no-debugger':                   'warn',
+    'no-eq-null':                    'warn',
+    'no-eval':                       'warn',
+    'no-trailing-spaces':            'warn',
+    'no-undef':                      'warn',
+    'no-unused-vars':                'warn',
+    'no-whitespace-before-property': 'warn',
+    'object-curly-spacing':          ['warn', 'always'],
+    'object-property-newline':       'warn',
+    'object-shorthand':              'warn',
+    'padded-blocks':                 ['warn', 'never'],
+    'prefer-arrow-callback':         'warn',
+    'prefer-template':               'warn',
+    'quote-props':                   'warn',
+    'rest-spread-spacing':           'warn',
     semi:                            ['warn', 'always'],
-    'space-before-function-paren':    ['warn', 'never'],
-    'space-infix-ops':                'warn',
-    'spaced-comment':                 'warn',
-    'switch-colon-spacing':           'warn',
-    'template-curly-spacing':         ['warn', 'always'],
-    'yield-star-spacing':             ['warn', 'both'],
+    'space-before-function-paren':   ['warn', 'never'],
+    'space-infix-ops':               'warn',
+    'spaced-comment':                'warn',
+    'switch-colon-spacing':          'warn',
+    'template-curly-spacing':        ['warn', 'always'],
+    'yield-star-spacing':            ['warn', 'both'],
 
-    'key-spacing':              ['warn', {
+    'key-spacing': ['warn', {
       align: {
         beforeColon: false,
         afterColon:  true,
@@ -94,12 +94,12 @@ module.exports = {
       },
     }],
 
-    'object-curly-newline':          ['warn', {
-      ObjectExpression:  {
+    'object-curly-newline': ['warn', {
+      ObjectExpression: {
         multiline:     true,
         minProperties: 3,
       },
-      ObjectPattern:     {
+      ObjectPattern: {
         multiline:     true,
         minProperties: 4,
       },
@@ -208,7 +208,7 @@ Object.assign(module.exports.rules, {
   }],
 
   // Existing code only follows a subset of settings for no-unused-vars.
-  '@typescript-eslint/no-unused-vars':                 ['warn', {
+  '@typescript-eslint/no-unused-vars': ['warn', {
     args: 'none', ignoreRestSiblings: true, varsIgnorePattern: '^_.',
   }],
 
@@ -236,6 +236,7 @@ Object.assign(module.exports.rules, {
   'valid-typeof':                    'error',
   '@typescript-eslint/no-namespace': 'error',
 });
+module.exports.rules['key-spacing'][1].align.mode = 'strict';
 
 module.exports.overrides = [
   {
@@ -243,16 +244,16 @@ module.exports.overrides = [
     rules: {
       // For TypeScript, disable no-undef because the compiler checks it.
       // Also, it is unaware of TypeScript types.
-      'no-undef':                        'off',
+      'no-undef':              'off',
       // For TypeScript, allow duplicate class members (function overloads).
-      'no-dupe-class-members':           'off',
+      'no-dupe-class-members': 'off',
       // For TypeScript, allow redeclarations (interface vs class).
-      'no-redeclare':                    'off',
+      'no-redeclare':          'off',
       // For TypeScript, TS does use-before-define statically.
-      'no-use-before-define':            'off',
+      'no-use-before-define':  'off',
       // For TypeScript, turn of the base "semi" rule as it conflicts with the
       // TypeScript-specific one (and also TS/no-extra-semi).
-      semi:                              'off',
+      semi:                    'off',
     },
   },
 ];

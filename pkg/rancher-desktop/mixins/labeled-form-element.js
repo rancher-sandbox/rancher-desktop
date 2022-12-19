@@ -12,17 +12,17 @@ export default {
     },
 
     label: {
-      type:     String,
+      type:    String,
       default: null,
     },
 
     labelKey: {
-      type:     String,
+      type:    String,
       default: null,
     },
 
     placeholderKey: {
-      type:     String,
+      type:    String,
       default: null,
     },
 
@@ -37,7 +37,7 @@ export default {
     },
 
     tooltipKey: {
-      type:     String,
+      type:    String,
       default: null,
     },
 

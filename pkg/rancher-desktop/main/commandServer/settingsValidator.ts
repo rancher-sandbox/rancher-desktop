@@ -57,7 +57,7 @@ export default class SettingsValidator {
     this.allowedSettings ||= {
       version:         this.checkUnchanged,
       containerEngine: {
-        imageAllowList:             {
+        imageAllowList: {
           // TODO (maybe): `patterns` and `enabled` should be immutable if `locked` is true
           enabled:  this.checkBoolean,
           locked:   this.checkUnchanged,

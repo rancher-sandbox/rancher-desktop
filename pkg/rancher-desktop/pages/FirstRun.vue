@@ -79,8 +79,8 @@ export default Vue.extend({
   layout: 'dialog',
   data() {
     return {
-      settings:           { kubernetes: {} } as Settings,
-      versions:           [] as VersionEntry[],
+      settings: { kubernetes: {} } as Settings,
+      versions: [] as VersionEntry[],
 
       // If cachedVersionsOnly is true, it means we're offline and showing only the versions in the cache,
       // not all the versions listed in <cache>/rancher-desktop/k3s-versions.json

@@ -11,8 +11,8 @@ const alertMap: AlertMap = {
 };
 
 export default Vue.extend({
-  name:       'preferences-alert',
-  computed:   {
+  name:     'preferences-alert',
+  computed: {
     ...mapState('preferences', ['severities', 'preferencesError']),
     severity(): keyof AlertMap | undefined {
       if (this.severities.error) {

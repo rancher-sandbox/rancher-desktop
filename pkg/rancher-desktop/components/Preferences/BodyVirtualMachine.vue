@@ -21,7 +21,7 @@ export default Vue.extend({
   data() {
     return { settings: defaultSettings };
   },
-  computed:   {
+  computed: {
     hasSystemPreferences(): boolean {
       return !os.platform().startsWith('win');
     },

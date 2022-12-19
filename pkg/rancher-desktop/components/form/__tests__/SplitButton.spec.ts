@@ -39,8 +39,8 @@ describe('SplitButton.vue', () => {
 
     beforeEach(async() => {
       wrapper = wrap({
-        value:    'top',
-        options:  ['hello', 'world', { id: 'lorem', icon: 'sun' }, 'ipsum'],
+        value:   'top',
+        options: ['hello', 'world', { id: 'lorem', icon: 'sun' }, 'ipsum'],
       });
       wrapper.element.ownerDocument.firstElementChild?.appendChild(wrapper.element);
       await wrapper.get({ ref: 'indicator' }).trigger('click');

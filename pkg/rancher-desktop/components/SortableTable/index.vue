@@ -70,7 +70,7 @@ export default {
     },
     keyField: {
       // Field that is unique for each row.
-      type:     String,
+      type:    String,
       default: '_key',
     },
 
@@ -369,10 +369,10 @@ export default {
 
     classObject() {
       return {
-        'top-divider':     this.topDivider,
-        'body-dividers':   this.bodyDividers,
-        'overflow-y':      this.overflowY,
-        'overflow-x':      this.overflowX,
+        'top-divider':   this.topDivider,
+        'body-dividers': this.bodyDividers,
+        'overflow-y':    this.overflowY,
+        'overflow-x':    this.overflowX,
       };
     },
 

@@ -614,10 +614,10 @@ describeWithCreds('Credentials server', () => {
       const postDeleteEntries = JSON.parse(await doRequest('list'));
 
       expect(postDeleteEntries).not.toMatchObject({
-        [peopleEntries.bob.ServerURL]:     peopleEntries.bob.Username,
-        [peopleEntries.carol.ServerURL]:   peopleEntries.carol.Username,
-        [peopleEntries.ted.ServerURL]:     peopleEntries.ted.Username,
-        [peopleEntries.alice.ServerURL]:   peopleEntries.alice.Username,
+        [peopleEntries.bob.ServerURL]:   peopleEntries.bob.Username,
+        [peopleEntries.carol.ServerURL]: peopleEntries.carol.Username,
+        [peopleEntries.ted.ServerURL]:   peopleEntries.ted.Username,
+        [peopleEntries.alice.ServerURL]: peopleEntries.alice.Username,
       });
       await expect(listEntries(dockerConfig.credsStore, 'https://bobs.fish/clams')).resolves
         .toMatchObject({ [peopleEntries.fakeTed.ServerURL]: peopleEntries.fakeTed.Username });
