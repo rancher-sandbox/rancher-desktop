@@ -84,10 +84,10 @@ export const METRIC = {
 };
 
 export const CATALOG = {
-  CLUSTER_REPO:   'catalog.cattle.io.clusterrepo',
-  OPERATION:      'catalog.cattle.io.operation',
-  APP:            'catalog.cattle.io.app',
-  REPO:           'catalog.cattle.io.repo',
+  CLUSTER_REPO: 'catalog.cattle.io.clusterrepo',
+  OPERATION:    'catalog.cattle.io.operation',
+  APP:          'catalog.cattle.io.app',
+  REPO:         'catalog.cattle.io.repo',
 };
 
 export const MONITORING = {
@@ -180,15 +180,15 @@ export const GATEKEEPER = {
 
 export const ISTIO = {
   VIRTUAL_SERVICE:  'networking.istio.io.virtualservice',
-  DESTINATION_RULE:  'networking.istio.io.destinationrule',
+  DESTINATION_RULE: 'networking.istio.io.destinationrule',
   GATEWAY:          'networking.istio.io.gateway',
 };
 
 export const RIO = {
-  CLUSTER_DOMAIN:   'admin.rio.cattle.io.clusterdomain',
-  FEATURE:          'admin.rio.cattle.io.feature',
-  INFO:             'admin.rio.cattle.io.rioinfo',
-  PUBLIC_DOMAIN:    'admin.rio.cattle.io.publicdomain',
+  CLUSTER_DOMAIN: 'admin.rio.cattle.io.clusterdomain',
+  FEATURE:        'admin.rio.cattle.io.feature',
+  INFO:           'admin.rio.cattle.io.rioinfo',
+  PUBLIC_DOMAIN:  'admin.rio.cattle.io.publicdomain',
 
   APP:              'rio.cattle.io.app',
   EXTERNAL_SERVICE: 'rio.cattle.io.externalservice',

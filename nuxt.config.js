@@ -79,7 +79,7 @@ c.build.extend = (config, { isClient, isDev }) => {
 
   // And substitute our own loader for images
   config.module.rules.unshift({
-    test:    /\.(png|jpe?g|gif|svg|webp)$/,
+    test: /\.(png|jpe?g|gif|svg|webp)$/,
     use:  [
       {
         loader:  'url-loader',
@@ -119,7 +119,7 @@ c.build.extend = (config, { isClient, isDev }) => {
 
   // Prevent warning in log with the md files in the content folder
   config.module.rules.push({
-    test:    /\.md$/,
+    test: /\.md$/,
     use:  [
       {
         loader:  'frontmatter-markdown-loader',

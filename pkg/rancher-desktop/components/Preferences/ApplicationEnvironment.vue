@@ -19,8 +19,8 @@ export default Vue.extend({
       required: true,
     },
   },
-  computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
-  methods:    {
+  computed: { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
+  methods:  {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },

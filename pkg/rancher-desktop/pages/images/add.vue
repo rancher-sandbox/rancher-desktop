@@ -48,12 +48,12 @@ export default {
   },
   data() {
     return {
-      activeTab:                        'pull',
-      currentCommand:                   null,
-      imageToPull:                      '',
-      imageOutputCuller:                null,
-      showOutput:                       false,
-      isAllowedImagesEnabled:           false,
+      activeTab:              'pull',
+      currentCommand:         null,
+      imageToPull:            '',
+      imageOutputCuller:      null,
+      showOutput:             false,
+      isAllowedImagesEnabled: false,
     };
   },
   computed: {

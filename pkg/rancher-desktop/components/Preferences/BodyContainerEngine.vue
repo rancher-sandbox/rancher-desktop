@@ -23,7 +23,7 @@ export default Vue.extend({
     RdTabbed,
     Tab,
   },
-  props:      {
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,

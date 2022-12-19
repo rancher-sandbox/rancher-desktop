@@ -1,7 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
 export default Vue.extend({
-  name:    'preferences-nav-item',
+  name:  'preferences-nav-item',
   props: {
     /**
      * Indicates if the nav item is active

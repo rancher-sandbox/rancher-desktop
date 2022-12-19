@@ -23,7 +23,7 @@ export default Vue.extend({
     PreferencesBodyContainerEngine,
     PreferencesBodyKubernetes,
   },
-  props:      {
+  props: {
     currentNavItem: {
       type:     String,
       required: true,

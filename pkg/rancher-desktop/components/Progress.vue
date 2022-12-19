@@ -28,8 +28,8 @@ export default Vue.extend({
     indicatorStyle(): Record<string, string> {
       if (this.indeterminate) {
         return {
-          width:       '200%',
-          background:  `repeating-linear-gradient(
+          width:      '200%',
+          background: `repeating-linear-gradient(
               -45deg,
               var(${ this.primaryColor }),
               transparent 6.25%,
