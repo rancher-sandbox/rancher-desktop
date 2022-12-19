@@ -24,7 +24,7 @@ type Option = {
   id: string;
   /** Optional icon */
   icon?: string;
-}
+};
 
 const SplitButtonProps = Vue.extend({
   props: {

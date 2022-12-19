@@ -48,7 +48,7 @@ export function get(obj, path) {
     try {
       return jsonpath.query(obj, path)[0];
     } catch (e) {
-      console.log('JSON Path error', e); // eslint-disable-line no-console
+      console.log('JSON Path error', e);
 
       return '(JSON Path err)';
     }

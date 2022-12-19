@@ -94,7 +94,7 @@ import SortableTable from '@pkg/components/SortableTable/index.vue';
 
 import type { PropType } from 'vue';
 
-type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
+type ServiceEntryWithKey = K8s.ServiceEntry & { key: string };
 
 export default Vue.extend({
   components: {

@@ -44,10 +44,10 @@ const console = Logging.k8s;
 export type ShortVersion = string;
 
 export interface ReleaseAPIEntry {
-  // eslint-disable-next-line camelcase -- Field name comes from JSON
+
   tag_name: string;
   assets: {
-    // eslint-disable-next-line camelcase -- Field name comes from JSON
+
     browser_download_url: string;
     name: string;
   }[];

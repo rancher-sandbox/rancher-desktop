@@ -8,10 +8,10 @@ jest.mock('crypto');
 // mock child process execution to return our own results.
 jest.mock('@pkg/utils/childProcess');
 
-// eslint-disable-next-line import/first, import/order -- need to be after jest.mock() call.
+// eslint-disable-next-line import/first -- need to be after jest.mock() call.
 import getMacCertificates from '../mac-ca';
 
-// eslint-disable-next-line import/first, import/order -- need to be after jest.mock() call.
+// eslint-disable-next-line import/first -- need to be after jest.mock() call.
 import { spawnFile } from '@pkg/utils/childProcess';
 
 /**

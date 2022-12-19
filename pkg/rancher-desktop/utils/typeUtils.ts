@@ -5,7 +5,7 @@
 export type RecursivePartial<T> = {
   [P in keyof T]?:
   T[P] extends (infer U)[] ? RecursivePartial<U>[] :
-    // eslint-disable-next-line @typescript-eslint/ban-types
+
     T[P] extends object ? RecursivePartial<T[P]> :
       T[P];
 };
@@ -13,7 +13,7 @@ export type RecursivePartial<T> = {
 export type RecursiveReadonly<T> = {
   readonly [P in keyof T]:
   T[P] extends (infer U)[] ? readonly RecursiveReadonly<U>[] :
-  // eslint-disable-next-line @typescript-eslint/ban-types
+
   T[P] extends object ? RecursiveReadonly<T[P]> :
   T[P];
 };

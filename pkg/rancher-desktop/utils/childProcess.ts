@@ -15,8 +15,6 @@ export {
  */
 export const ErrorCommand = Symbol('child-process.command');
 
-/* eslint-disable no-redeclare */
-
 interface SpawnOptionsWithStdioLog<
   Stdio extends IOType | Log
   > extends SpawnOptionsLog {
@@ -144,7 +142,7 @@ export async function spawnFile(
 ): Promise<Record<string, never>>;
 
 /* eslint-enable no-redeclare */
-// eslint-disable-next-line no-redeclare
+
 export async function spawnFile(
   command: string,
   args?: string[] | SpawnOptionsLog & SpawnOptionsEncoding,
