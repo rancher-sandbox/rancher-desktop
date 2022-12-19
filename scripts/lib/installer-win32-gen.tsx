@@ -9,7 +9,7 @@ import path from 'path';
  * Element is a class for interpreting JSX; we only need the bare basics to
  * generate a valid XML as input to the WiX toolchain.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Can't detect @jsx usage.
+
 export class Element {
   constructor(tag: string, attribs: Record<string, string>, ...children: (Element | string)[]) {
     this.tag = tag;
@@ -26,7 +26,7 @@ export class Element {
 
   tag: string;
   attribs: Record<string, string>;
-  // eslint-disable-next-line no-use-before-define -- ESLint gets confused by recursive references
+
   children: (Element | string)[];
 
   /** Convert the Element to serialized XML. */

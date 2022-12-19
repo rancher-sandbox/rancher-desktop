@@ -228,8 +228,10 @@ Object.assign(module.exports.rules, {
   // There's currently too many violations to turn all of it on at once.
   '@typescript-eslint/await-thenable': 'error',
 
-  // These next four directives are needed to ensure the disable-directives for them are actually used
-  '@typescript-eslint/semi':         'warn',
+  // Report missing semi-colons in non-js files
+  '@typescript-eslint/semi': 'warn',
+
+  // These next three directives are needed to ensure the disable-directives for them are actually used
   'import/first':                    'error',
   'valid-typeof':                    'error',
   '@typescript-eslint/no-namespace': 'error',

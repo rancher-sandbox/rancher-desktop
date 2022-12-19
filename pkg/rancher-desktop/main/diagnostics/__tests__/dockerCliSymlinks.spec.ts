@@ -26,7 +26,7 @@ jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
   return Promise.resolve([]);
 });
 
-// eslint-disable-next-line import/first, import/order -- Need to mock first.
+// eslint-disable-next-line import/first -- Need to mock first.
 import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
 const { mkdtemp, rm } = jest.requireActual('fs/promises');

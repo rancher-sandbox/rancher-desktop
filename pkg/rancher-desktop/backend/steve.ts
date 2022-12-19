@@ -16,7 +16,6 @@ export class Steve {
 
   private isRunning: boolean;
 
-  // eslint-disable-next-line no-useless-constructor
   private constructor() {
     this.isRunning = false;
   }
