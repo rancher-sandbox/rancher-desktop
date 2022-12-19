@@ -1,7 +1,11 @@
 // kubernetes-client/javascript doesn't have support for the `proxy-url` cluster field.
 // We are providing variants of loadFromString() and exportConfig() that do.
 
-import { KubeConfig } from '@kubernetes/client-node';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
+import { findHomeDir, KubeConfig } from '@kubernetes/client-node';
 import {
   ActionOnInvalid,
   ConfigOptions,
@@ -98,4 +102,36 @@ export function exportConfig(config : KubeConfig): string {
   };
 
   return JSON.stringify(configObj);
+}
+
+/**
+ * Get the paths to the kubernetes client config path.
+ * This is mainly useful for watching configuration changes.
+ */
+export async function configPath(): Promise<string[]> {
+  async function hasAccess(filePath: string): Promise<boolean> {
+    try {
+      await fs.promises.access(filePath, fs.constants.R_OK);
+    } catch {
+      return false;
+    }
+
+    return true;
+  }
+
+  if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
+    const results: string[] = [];
+
+    for (const filePath of process.env.KUBECONFIG.split(path.delimiter)) {
+      if (await hasAccess(filePath)) {
+        results.push(filePath);
+      }
+    }
+
+    return results;
+  }
+
+  // We do not support locating kubeconfig files inside WSL distros, nor
+  // in-cluster configs, so we only need to check the one path.
+  return [path.join(findHomeDir() ?? os.homedir(), '.kube', 'config')];
 }
