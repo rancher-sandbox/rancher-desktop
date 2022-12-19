@@ -111,7 +111,7 @@ export function exportConfig(config : KubeConfig): string {
  * Get the paths to the kubernetes client config path.
  * This is mainly useful for watching configuration changes.
  */
-export async function configPath(): Promise<string[]> {
+export async function getKubeConfigPaths(): Promise<string[]> {
   async function hasAccess(filePath: string): Promise<boolean> {
     try {
       await fs.promises.access(filePath, fs.constants.R_OK);

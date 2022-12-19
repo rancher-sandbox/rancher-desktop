@@ -116,7 +116,7 @@ export class Tray {
    */
   private async watchForChanges() {
     const abortController = new AbortController();
-    const paths = await kubeconfig.configPath();
+    const paths = await kubeconfig.getKubeConfigPaths();
     const options: fs.WatchOptions = {
       persistent: false,
       recursive:  true,
