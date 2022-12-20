@@ -110,7 +110,7 @@
     "@types/dompurify": "^2.3.3",
     "@types/ffi-napi": "^4.0.7",
     "@types/jest": "^27.4.1",
-    "@types/lodash": "^4.14.186",
+    "@types/lodash": "^4.14.191",
     "@types/marked": "^4.0.8",
     "@types/mustache": "^4.2.2",
     "@types/node": "^16.11.39",
