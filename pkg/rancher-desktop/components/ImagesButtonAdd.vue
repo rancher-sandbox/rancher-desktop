@@ -25,10 +25,6 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 
-  .btn {
-    margin-top: -3px;
-  }
-
   .btn-xs {
     min-height: 2.25rem;
     max-height: 2.25rem;
