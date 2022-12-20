@@ -5,7 +5,7 @@
     <ul>
       <li>{{ reason }}</li>
     </ul>
-    <p>{{  t('unmetPrerequisites.action') }}</p>
+    <p>{{ t('unmetPrerequisites.action') }}</p>
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         {{ t('unmetPrerequisites.buttonText') }}
