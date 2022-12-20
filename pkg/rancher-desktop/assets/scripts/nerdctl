@@ -3,4 +3,16 @@ export CONTAINERD_ADDRESS=/run/k3s/containerd/containerd.sock
 if [ -f /usr/local/openresty/nginx/conf/allowed-images.conf ]; then
   export HTTPS_PROXY=http://127.0.0.1:3128
 fi
+
+# On WSL, we need to enter the correct pid &c. namespace for nerdctl to work
+# correctly.
+
+if [ -r /run/wsl-init.pid ]; then
+  parent="$(cat /run/wsl-init.pid)"
+  pid="$(ps -o pid,ppid,comm | awk '$2 == "'"${parent}"'" && $3 == "init" { print $1 }')"
+  if [ -n "${pid}" ]; then
+    exec /usr/bin/nsenter -p -m -n -t "${pid}" /usr/local/libexec/nerdctl/nerdctl "$@"
+  fi
+fi
+
 exec /usr/local/libexec/nerdctl/nerdctl "$@"
