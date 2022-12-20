@@ -320,6 +320,7 @@ func init() {
 
 	// Set up command handlers
 	registerCommandHandler("image build", imageBuildHandler)
+	registerCommandHandler("container cp", containerCopyHandler)
 
 	// Set up aliases
 	aliasCommand("commit", "container commit")
