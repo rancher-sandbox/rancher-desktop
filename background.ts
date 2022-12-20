@@ -271,19 +271,17 @@ async function checkPrerequisites() {
     const nestedFiles = [
       '/sys/module/kvm_amd/parameters/nested',
       '/sys/module/kvm_intel/parameters/nested'];
-    let nestedSupport = false;
 
-    for (let index = 0; index < nestedFiles.length && nestedSupport === false; index++) {
+    messageId = 'linux-nested';
+    for (const nestedFile of nestedFiles) {
       try {
-        const data = await fs.promises.readFile(nestedFiles[index], { encoding: 'utf8' });
+        const data = await fs.promises.readFile(nestedFile, { encoding: 'utf8' });
 
         if (data && data.toLowerCase()[0] === 'y' ) {
-          nestedSupport = true;
+          messageId = 'ok';
+          break;
         }
       } catch {}
-    }
-    if (!nestedSupport) {
-      messageId = 'linux-nested';
     }
     break;
   }
@@ -296,7 +294,7 @@ async function checkPrerequisites() {
   }
 
   if (messageId !== 'ok') {
-    await window.openRequiredDialog(messageId);
+    await window.openUnmetPrerequisitesDialog(messageId);
     gone = true;
     Electron.app.quit();
   }

@@ -314,9 +314,10 @@ sudoPrompt:
   explanation: 'This will modify the following paths:'
   buttonText: OK
 
-Required:
-  title: Unable to start Rancher Desktop
-  message: 'Missing Requirements:'
+unmetPrerequisites:
+  title: Rancher Desktop is unable to start
+  message: 'Rancher Desktop cannot start because requirements are missing or not configured:'
+  action: 'Please ensure all requirements are met and try again. Rancher Desktop will now close'
   buttonText: OK
 
 accountAndKeys:

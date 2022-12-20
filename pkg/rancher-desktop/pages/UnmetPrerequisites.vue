@@ -1,11 +1,14 @@
 <template>
-  <div>
-    <h2>{{ t('Required.title') }}</h2>
-    <h3>{{ t('Required.message') }}</h3>
-    <p>{{ reason }}</p>
+  <div class="container">
+    <h2>{{ t('unmetPrerequisites.title') }}</h2>
+    <p>{{ t('unmetPrerequisites.message') }}</p>
+    <ul>
+      <li>{{ reason }}</li>
+    </ul>
+    <p>{{  t('unmetPrerequisites.action') }}</p>
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
-        {{ t('Required.buttonText') }}
+        {{ t('unmetPrerequisites.buttonText') }}
       </button>
     </div>
   </div>
@@ -24,7 +27,6 @@ export default Vue.extend({
     };
   },
   mounted() {
-    // ipcRenderer.send('dialog/ready');  // delete this
     ipcRenderer.on('dialog/populate', (event, reasonId) => {
       switch (reasonId) {
       case 'win32-release':
@@ -38,14 +40,9 @@ export default Vue.extend({
         break;
       }
     });
-    window.addEventListener('close', () => {
-      ipcRenderer.send('required-prompt/closed', this.suppress);
-    });
-    (this.$refs.accept as HTMLButtonElement)?.focus();
   },
   methods: {
     close() {
-      ipcRenderer.send('required-prompt/closed', this.suppress);
       window.close();
     },
   },
@@ -53,6 +50,9 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+  .container {
+    min-width: 30rem;
+  }
   .button-area {
     align-self: flex-end;
   }
