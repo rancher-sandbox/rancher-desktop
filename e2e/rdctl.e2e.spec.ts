@@ -1170,16 +1170,13 @@ test.describe('Command server', () => {
     test('should verify nerdctl can talk to containerd', async() => {
       const { stdout } = await rdctl(['list-settings']);
       const settings: Settings = JSON.parse(stdout);
-      const payloadObject: RecursivePartial<Settings> = {};
+      const payloadObject: RecursivePartial<Settings> = { };
 
-      payloadObject.kubernetes = {};
       if (settings.kubernetes.containerEngine !== ContainerEngine.CONTAINERD) {
+        payloadObject.kubernetes = {};
         payloadObject.kubernetes.containerEngine = ContainerEngine.CONTAINERD;
       }
-      if (!settings.kubernetes.suppressSudo) {
-        payloadObject.kubernetes.suppressSudo = true;
-      }
-      if (Object.keys(payloadObject.kubernetes).length > 0) {
+      if (Object.keys(payloadObject).length > 0) {
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v0/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
