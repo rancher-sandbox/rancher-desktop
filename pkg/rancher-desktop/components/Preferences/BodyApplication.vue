@@ -7,7 +7,6 @@ import PreferencesApplicationBehavior from '@pkg/components/Preferences/Applicat
 import PreferencesApplicationEnvironment from '@pkg/components/Preferences/ApplicationEnvironment.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
-import { Help } from '@pkg/config/help';
 import { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -42,7 +41,6 @@ export default Vue.extend({
   },
   methods: {
     async tabSelected({ tab }: { tab: Vue.Component }) {
-      await this.$store.dispatch('help/setUrl', Help.url(`Application-${ tab.name }`));
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }

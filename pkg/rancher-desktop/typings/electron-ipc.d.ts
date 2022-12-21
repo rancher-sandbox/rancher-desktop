@@ -77,6 +77,8 @@ export interface IpcMainEvents {
 
   /** Only for the preferences window */
   'preferences/load': () => void;
+
+  'help/preferences/open-url': () => void;
 }
 
 /**

@@ -1,12 +1,12 @@
 <script lang="ts">
+
 import { shell } from 'electron';
 import Vue from 'vue';
-import { mapState } from 'vuex';
 
 export default Vue.extend({
   name:  'help',
   props: {
-    fixedUrl: {
+    url: {
       type:    String,
       default: null,
     },
@@ -14,20 +14,17 @@ export default Vue.extend({
       type:    String,
       default: null,
     },
-  },
-  computed: {
-    ...mapState('help', ['url']),
-    helpUrl(): string {
-      return this.fixedUrl ?? this.url;
-    },
-    tooltipContent(): string | null {
-      return this.helpUrl ? this.tooltip : null;
+    disabled: {
+      type:    Boolean,
+      default: false,
     },
   },
   methods: {
     openUrl() {
-      if (this.helpUrl) {
-        shell.openExternal(this.helpUrl);
+      if (this.url) {
+        shell.openExternal(this.url);
+      } else {
+        this.$emit('open:url');
       }
     },
   },
@@ -38,19 +35,19 @@ export default Vue.extend({
   <div class="help-button">
     <button
       v-tooltip="{
-        content: tooltipContent,
+        content: tooltip,
         placement: 'right'
       }"
       class="btn role-fab"
       :class="{
-        disabled: !helpUrl
+        disabled
       }"
       @click="openUrl"
     >
       <span
         class="icon icon-question-mark"
         :class="{
-          disabled: !helpUrl
+          disabled
         }"
       />
     </button>
