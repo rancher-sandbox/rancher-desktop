@@ -26,7 +26,7 @@ export class MobyOpenAPISpec implements Dependency {
     console.log('Moby API swagger models generated.');
   }
 
-  async getLatestVersion(): Promise<string> {
+  async getAvailableVersions(): Promise<string[]> {
     // get list of files in repo directory
     const githubPath = 'docs/api';
     const args = {
@@ -44,15 +44,21 @@ export class MobyOpenAPISpec implements Dependency {
 
       if (match) {
         // to compare with semver we need to add .0 onto the end
-        versions.push(`${ match[1] }.0`);
+        versions.push(match[1]);
       }
     }
 
-    // get the latest version
-    const latestSemverVersion = versions.reduce((previous: string, current: string) => {
-      return semver.lt(previous, current) ? current : previous;
-    });
+    return versions;
+  }
 
-    return latestSemverVersion.split('.').slice(0, 2).join('.');
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semver1 = semver.coerce(version1);
+    const semver2 = semver.coerce(version2);
+
+    if (semver1 === null || semver2 === null) {
+      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+    }
+
+    return semver.rcompare(semver1, semver2);
   }
 }

@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { Dependency, DownloadContext, GithubVersionGetter } from '../lib/dependencies';
+import semver from 'semver';
+
+import { Dependency, DownloadContext, getPublishedReleaseTagNames } from '../lib/dependencies';
 import { download } from '../lib/download';
 
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -9,7 +11,7 @@ import { spawnFile } from '@pkg/utils/childProcess';
 /**
  * Wix downloads the latest build of WiX3.
  */
-export class Wix extends GithubVersionGetter implements Dependency {
+export class Wix implements Dependency {
   readonly name = 'wix';
 
   // Wix4 is packaged really oddly (involves NuGet), and while there's a sketchy
@@ -29,5 +31,33 @@ export class Wix extends GithubVersionGetter implements Dependency {
     await fs.promises.mkdir(wixDir, { recursive: true });
     await download(url, archivePath);
     await spawnFile('unzip', ['-o', archivePath, '-d', wixDir], { cwd: wixDir, stdio: 'inherit' });
+  }
+
+  async getAvailableVersions(): Promise<string[]> {
+    return await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+  }
+
+  private wixVersionToSemver(version: string): string {
+    let onlyNumbers = version.replace(/^wix/, '').replace(/rtm$/, '');
+
+    if (onlyNumbers.length === 3) {
+      onlyNumbers = `${ onlyNumbers }0`;
+    }
+    if (onlyNumbers.length !== 4) {
+      throw new Error(`Wix version "${ version }" is not in a recognized format`);
+    }
+    const major = Number(onlyNumbers[0]);
+    const minor = Number(onlyNumbers.slice(1, 3));
+    const patch = Number(onlyNumbers[3]);
+    const semverVersion = `${ major }.${ minor }.${ patch }`;
+
+    return semverVersion;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semverVersion1 = this.wixVersionToSemver(version1);
+    const semverVersion2 = this.wixVersionToSemver(version2);
+
+    return semver.rcompare(semverVersion1, semverVersion2);
   }
 }

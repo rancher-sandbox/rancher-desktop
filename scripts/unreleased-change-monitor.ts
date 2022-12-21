@@ -4,7 +4,7 @@ import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost } from 'scripts/dependencies/wsl';
 import {
-  Dependency, UnreleasedChangeMonitor, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository,
+  Dependency, GithubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository,
 } from 'scripts/lib/dependencies';
 
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
@@ -14,7 +14,7 @@ const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-des
 const UCMONITOR = 'ucmonitor';
 const mainRepo = new RancherDesktopRepository(GITHUB_OWNER, GITHUB_REPO);
 
-type UnreleasedChangeMonitoringDependency = Dependency & UnreleasedChangeMonitor;
+type UnreleasedChangeMonitoringDependency = Dependency & GithubDependency;
 
 type DependencyState = { dependency: UnreleasedChangeMonitoringDependency } & HasUnreleasedChangesResult;
 
@@ -38,13 +38,47 @@ async function getExistingIssuesFor(dependencyName: string): Promise<Issue[]> {
   return response.data.items;
 }
 
+/**
+ * Tells the caller whether the given dependency has any
+ * changes that have not been released.
+ */
+export async function hasUnreleasedChanges(dependency: Dependency & GithubDependency): Promise<HasUnreleasedChangesResult> {
+  const availableVersions = await dependency.getAvailableVersions();
+  const sortedVersions = availableVersions.sort((version1, version2) => {
+    return dependency.rcompareVersions(version1, version2);
+  });
+  const latestVersion = sortedVersions[0];
+  const latestTagName = dependency.versionToTagName(latestVersion);
+
+  // Get the date of the commit that the tag points to.
+  // We can't use the publish date of the release, because that
+  // omits commits that were made after the commit that was tagged
+  // for the release, but before the actual release.
+  const result = await getOctokit().rest.repos.getCommit({
+    owner: dependency.githubOwner, repo: dependency.githubRepo, ref: latestTagName,
+  });
+  const dateOfTaggedCommit = result.data.commit.committer?.date;
+
+  const response = await getOctokit().rest.repos.listCommits({
+    owner: dependency.githubOwner, repo: dependency.githubRepo, since: dateOfTaggedCommit,
+  });
+  const commits = response.data;
+
+  console.log(`Found ${ commits.length - 1 } unreleased commits for repository ${ dependency.githubOwner }/${ dependency.githubRepo }.`);
+
+  return {
+    latestReleaseTag:     latestTagName,
+    hasUnreleasedChanges: commits.length > 1,
+  };
+}
+
 // Creates issues in the main Rancher Desktop repo for external
 // depndencies that have changes that have not been released.
 // Also closes issues that were previously created by this script,
 // but that are no longer relevant.
 async function checkForUnreleasedChanges(): Promise<void> {
   const dependencyStates: DependencyState[] = await Promise.all(dependencies.map(async(dependency) => {
-    const result = await dependency.hasUnreleasedChanges();
+    const result = await hasUnreleasedChanges(dependency);
 
     return { ...result, dependency };
   }));

@@ -3,13 +3,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import semver from 'semver';
+
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
 
-import {
-  DownloadContext, Dependency, GithubVersionGetter, UnreleasedChangeMonitor, hasUnreleasedChanges, HasUnreleasedChangesResult,
-} from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames } from 'scripts/lib/dependencies';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
@@ -37,7 +37,7 @@ async function findChecksum(checksumURL: string, executableName: string): Promis
   throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
 }
 
-export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency {
+export class KuberlrAndKubectl implements Dependency {
   name = 'kuberlr';
   githubOwner = 'flavio';
   githubRepo = 'kuberlr';
@@ -146,9 +146,19 @@ export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency
     }
     await fs.promises.symlink('kuberlr', binKubectlPath);
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class Helm extends GithubVersionGetter implements Dependency {
+export class Helm implements Dependency {
   name = 'helm';
   githubOwner = 'helm';
   githubRepo = 'helm';
@@ -163,9 +173,19 @@ export class Helm extends GithubVersionGetter implements Dependency {
       entryName:        `${ context.goPlatform }-${ arch }/${ exeName(context, 'helm') }`,
     });
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class DockerCLI extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class DockerCLI implements Dependency, GithubDependency {
   name = 'dockerCLI';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-docker-cli';
@@ -182,12 +202,22 @@ export class DockerCLI extends GithubVersionGetter implements Dependency, Unrele
     await download(dockerURL, destPath, { expectedChecksum });
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
   }
 }
 
-export class DockerBuildx extends GithubVersionGetter implements Dependency {
+export class DockerBuildx implements Dependency, GithubDependency {
   name = 'dockerBuildx';
   githubOwner = 'docker';
   githubRepo = 'buildx';
@@ -208,9 +238,23 @@ export class DockerBuildx extends GithubVersionGetter implements Dependency {
     }
     await download(dockerBuildxURL, dockerBuildxPath, options);
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class DockerCompose extends GithubVersionGetter implements Dependency {
+export class DockerCompose implements Dependency, GithubDependency {
   name = 'dockerCompose';
   githubOwner = 'docker';
   githubRepo = 'compose';
@@ -225,9 +269,23 @@ export class DockerCompose extends GithubVersionGetter implements Dependency {
 
     await download(url, destPath, { expectedChecksum });
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class Trivy extends GithubVersionGetter implements Dependency {
+export class Trivy implements Dependency, GithubDependency {
   name = 'trivy';
   githubOwner = 'aquasecurity';
   githubRepo = 'trivy';
@@ -252,9 +310,23 @@ export class Trivy extends GithubVersionGetter implements Dependency {
     // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
     await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class Steve extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class Steve implements Dependency, GithubDependency {
   name = 'steve';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-steve';
@@ -276,12 +348,22 @@ export class Steve extends GithubVersionGetter implements Dependency, Unreleased
       });
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
   }
 }
 
-export class GuestAgent extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class GuestAgent implements Dependency, GithubDependency {
   name = 'guestAgent';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-agent';
@@ -295,15 +377,26 @@ export class GuestAgent extends GithubVersionGetter implements Dependency, Unrel
     await downloadTarGZ(url, destPath);
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
   }
 }
 
-export class RancherDashboard extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class RancherDashboard implements Dependency, GithubDependency {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'dashboard';
+  versionRegex = /^desktop-v([0-9]+\.[0-9]+\.[0-9]+)\.([0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+)$/;
 
   async download(context: DownloadContext): Promise<void> {
     const baseURL = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
@@ -355,12 +448,34 @@ export class RancherDashboard extends GithubVersionGetter implements Dependency,
     fs.rmSync(destPath, { maxRetries: 10 });
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    return await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+  }
+
+  versionToTagName(version: string): string {
+    return version;
+  }
+
+  versionToSemver(version: string): string {
+    const match = this.versionRegex.exec(version);
+
+    if (match === null) {
+      throw new Error(`${ this.name }: ${ version } does not match version regex ${ this.versionRegex }`);
+    }
+    const [, mainVersion, prereleaseVersion] = match;
+
+    return `${ mainVersion }-${ prereleaseVersion }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semver1 = this.versionToSemver(version1);
+    const semver2 = this.versionToSemver(version2);
+
+    return semver.rcompare(semver1, semver2);
   }
 }
 
-export class DockerProvidedCredHelpers extends GithubVersionGetter implements Dependency {
+export class DockerProvidedCredHelpers implements Dependency, GithubDependency {
   name = 'dockerProvidedCredentialHelpers';
   githubOwner = 'docker';
   githubRepo = 'docker-credential-helpers';
@@ -388,9 +503,23 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
 
     await Promise.all(promises);
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class ECRCredHelper extends GithubVersionGetter implements Dependency {
+export class ECRCredHelper implements Dependency, GithubDependency {
   name = 'ECRCredentialHelper';
   githubOwner = 'awslabs';
   githubRepo = 'amazon-ecr-credential-helper';
@@ -405,5 +534,19 @@ export class ECRCredHelper extends GithubVersionGetter implements Dependency {
     const destPath = path.join(context.binDir, binName);
 
     return await download(sourceUrl, destPath);
+  }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
   }
 }
