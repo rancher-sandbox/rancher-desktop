@@ -15,6 +15,8 @@ import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveKeys, RecursiveTypes } from '@pkg/utils/typeUtils';
 
+import type { GetFieldType } from 'lodash';
+
 test.describe.serial('KubernetesBackend', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
@@ -111,9 +113,10 @@ test.describe.serial('KubernetesBackend', () => {
       /**
        * getAlt returns the setting that isn't the same as the existing setting.
        */
-      const getAlt = <K extends keyof RecursiveTypes<Settings>>(setting: K, altOne: RecursiveTypes<Settings>[K], altTwo: RecursiveTypes<Settings>[K]) => {
+      const getAlt = <K extends keyof RecursiveTypes<Settings>>(setting: K, altOne: GetFieldType<Settings, K>, altTwo: GetFieldType<Settings, K>) => {
         return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
       };
+
       const newSettings: RecursivePartial<Settings> = {
         kubernetes: {
           version:         getAlt('kubernetes.version', '1.23.6', '1.23.5'),

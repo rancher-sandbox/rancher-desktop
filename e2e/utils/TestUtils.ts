@@ -20,7 +20,7 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
  */
 export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}) {
   const defaultOverrides: RecursivePartial<Settings> = {
-    kubernetes:             { enabled: true },
+    kubernetes:             { enabled: true, version: '1.25.4' },
     debug:                  true,
     pathManagementStrategy: PathManagementStrategy.Manual,
   };
