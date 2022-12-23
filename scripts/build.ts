@@ -1,16 +1,15 @@
 /**
- * This script builds the distributable packages.
+ * This script builds the javascript, without packaging it up for use.  This is
+ * mostly useful for more comprehensive checking.
  */
 
 'use strict';
 
-import childProcess from 'child_process';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 
 import buildUtils from './lib/build-utils';
-import buildInstaller from './lib/installer-win32';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
@@ -65,45 +64,9 @@ class Builder {
     await buildUtils.buildMain();
   }
 
-  async replaceInFile(srcFile: string, pattern: string | RegExp, replacement: string, dstFile?: string) {
-    dstFile = dstFile || srcFile;
-    await fs.stat(srcFile);
-    const data = await fs.readFile(srcFile, 'utf8');
-
-    await fs.writeFile(dstFile, data.replace(pattern, replacement));
-  }
-
-  async package() {
-    console.log('Packaging...');
-    const args = process.argv.slice(2).filter(x => x !== '--serial');
-    // On Windows, electron-builder will run the installer to generate the
-    // uninstall stub; however, we set the installer to be elevated, in order
-    // to ensure that we can install WSL if necessary.  To make it possible to
-    // build the installer as a non-administrator, we need to set the special
-    // environment variable `__COMPAT_LAYER=RunAsInvoker` to force the installer
-    // to run as the existing user.
-    const env = { ...process.env, __COMPAT_LAYER: 'RunAsInvoker' };
-    const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
-    const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
-    const appData = 'packaging/linux/rancher-desktop.appdata.xml';
-    const release = `<release version="${ finalBuildVersion }" date="${ new Date().toISOString() }"/>`;
-
-    await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
-    args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
-    await spawnFile('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { stdio: 'inherit', env });
-
-    if (process.platform === 'win32') {
-      const distDir = path.join(process.cwd(), 'dist');
-      const appDir = path.join(distDir, 'win-unpacked');
-
-      await buildInstaller(distDir, appDir);
-    }
-  }
-
   async run() {
     await this.cleanup();
     await this.build();
-    await this.package();
   }
 }
 

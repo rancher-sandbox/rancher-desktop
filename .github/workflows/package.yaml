@@ -53,7 +53,8 @@ jobs:
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
     - run: npm ci
-    - run: npm run build -- --${{ matrix.platform }} --publish=never
+    - run: npm run build
+    - run: npm run package -- --${{ matrix.platform }} --publish=never
     - name: Upload mac disk image
       uses: actions/upload-artifact@v3
       if: matrix.platform == 'mac'
