@@ -16,10 +16,12 @@
   </nav>
 </template>
 
-<script>
+<script lang="ts">
 import os from 'os';
 
+import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
+import { RouteRecordPublic } from 'vue-router';
 
 export default {
   components: { BadgeState },
@@ -27,8 +29,9 @@ export default {
     items: {
       type:      Array,
       required:  true,
-      validator: (value) => {
-        const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
+      validator: (value: {route: string, error?: number}[]) => {
+        const nuxt: NuxtApp = (global as any).$nuxt;
+        const routes = nuxt.$router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
           paths[route.path] = route;
 
           return paths;
@@ -47,10 +50,12 @@ export default {
     },
   },
   data() {
+    const nuxt: NuxtApp = (this as any).$nuxt;
+
     return {
       // Generate a route (path) to route entry mapping, so that we can pick out
       // their names based on the paths given.
-      routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
+      routes: nuxt.$router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
         paths[route.path] = route;
         if (route.name === 'Supporting Utilities' && os.platform() === 'win32') {
           route.name = 'WSL Integrations';
