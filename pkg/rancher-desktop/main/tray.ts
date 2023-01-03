@@ -7,11 +7,9 @@ import path from 'path';
 
 import { KubeConfig } from '@kubernetes/client-node';
 import Electron from 'electron';
-import yaml from 'yaml';
 
 import { State } from '@pkg/backend/k8s';
-import * as kubectl from '@pkg/backend/kubectl';
-import kubeconfig from '@pkg/config/kubeconfig.js';
+import * as kubeconfig from '@pkg/backend/kubeconfig';
 import { Settings, load } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
@@ -113,30 +111,35 @@ export class Tray {
   private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons;
 
   /**
-   * Create a watcher for the provided kubeconfigPath; when the change event is
-   * triggered, close the watcher and restart after a duration (1 second)
-   * @param kubeconfigPath The path to watch for Kubernetes config changes
+   * Watch for changes to the kubeconfig files; when the change event is
+   * triggered, close the watcher and restart after a duration (one second).
    */
-  private watchOnceAndRestart = (kubeconfigPath: string) => {
-    const watcher = fs.watch(kubeconfigPath);
+  private async watchForChanges() {
+    const abortController = new AbortController();
+    const paths = await kubeconfig.getKubeConfigPaths();
+    const options: fs.WatchOptions = {
+      persistent: false,
+      recursive:  true,
+      encoding:   'utf-8',
+      signal:     abortController.signal,
+    };
 
-    watcher.on('error', (err) => {
-      console.error(`Failed to fs.watch ${ kubeconfigPath }:`, err);
-    });
-
-    watcher.on('change', (eventType, _) => {
-      if (eventType === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
-        // File doesn't exist. Wait for it to be recreated
-        return;
+    paths.map(filepath => fs.watch(filepath, options, async(eventType) => {
+      if (eventType === 'rename') {
+        try {
+          await fs.promises.access(filepath);
+        } catch (ex) {
+          // File doesn't exist; wait for it to be recreated.
+          return;
+        }
       }
 
-      watcher.close();
+      abortController.abort();
+      this.buildFromConfig();
 
-      this.buildFromConfig(kubeconfigPath);
-
-      setTimeout(this.watchOnceAndRestart, 1000, kubeconfigPath);
-    });
-  };
+      setTimeout(this.watchForChanges.bind(this), 1_000);
+    }));
+  }
 
   constructor() {
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
@@ -146,29 +149,16 @@ export class Tray {
     try {
       this.updateContexts();
     } catch (err) {
-      if (err instanceof TypeError &&
-          err.message.includes("Cannot read property 'clusters' of undefined") &&
-          err.stack?.includes('loadFromFile')) {
-        Electron.dialog.showErrorBox('Error reading config file:',
-          'Please check your config file(s) for problems.');
-      } else {
-        Electron.dialog.showErrorBox('Error starting the app:',
-          `Error message: ${ err instanceof Error ? err.message : err }`);
-      }
+      Electron.dialog.showErrorBox('Error starting the app:',
+        `Error message: ${ err instanceof Error ? err.message : err }`);
     }
 
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
     this.trayMenu.setContextMenu(contextMenu);
 
-    const kubeconfigPath = kubeconfig.path();
-
-    if (!kubeconfigPath) {
-      throw new Error('No kubeconfig path found');
-    }
-    this.buildFromConfig(kubeconfigPath);
-
-    this.watchOnceAndRestart(kubeconfigPath);
+    this.buildFromConfig();
+    this.watchForChanges();
 
     mainEvents.on('k8s-check-state', (mgr) => {
       this.k8sStateChanged(mgr.state);
@@ -202,33 +192,8 @@ export class Tray {
     this.updateMenu();
   }
 
-  protected buildFromConfig(configPath: string) {
-    if (!kubeconfig.hasAccess(configPath)) {
-      return;
-    }
-
+  protected buildFromConfig() {
     try {
-      let parsedConfig;
-      const contents = fs.readFileSync(configPath).toString();
-
-      if (contents.length === 0) {
-        console.log('Config file is empty, will try to process it later');
-
-        return;
-      }
-
-      try {
-        parsedConfig = yaml.parse(contents);
-      } catch (err) {
-        console.log(`yaml parse failure: ${ err } on kubeconfig: contents ${ contents }., will retry later.`);
-        parsedConfig = null;
-      }
-
-      if ((parsedConfig?.clusters || []).length === 0) {
-        console.log('Config file has no clusters, will retry later');
-
-        return;
-      }
       this.updateContexts();
       const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
@@ -309,28 +274,22 @@ export class Tray {
     this.trayMenu.setImage(logo);
   }
 
-  protected verifyKubeConfig() {
-    if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
-      const originalFiles = process.env.KUBECONFIG.split(path.delimiter);
-      const filteredFiles = originalFiles.filter(kubeconfig.hasAccess);
-
-      if (filteredFiles.length < originalFiles.length) {
-        process.env.KUBECONFIG = filteredFiles.join(path.delimiter);
-      }
-    }
-  }
-
   protected updateDashboardState = (enabled = true) => this.contextMenuItems
     .map(item => item.id === 'dashboard' ? { ...item, enabled } : item);
 
   /**
    * Update the list of Kubernetes contexts in the tray menu.
+   * This does _not_ raise any exceptions if we fail to read the config.
    */
   protected updateContexts() {
     const kc = new KubeConfig();
 
-    this.verifyKubeConfig();
-    kc.loadFromDefault();
+    try {
+      kc.loadFromDefault();
+    } catch (ex) {
+      console.error('Failed to load kubeconfig, ignoring:', ex);
+      // Keep going, with no context set.
+    }
 
     const contextsMenu = this.contextMenuItems.find(item => item.id === 'contexts');
     const curr = kc.getCurrentContext();
@@ -356,7 +315,7 @@ export class Tray {
    * @param {Electron.MenuItem} menuItem The menu item that was clicked.
    */
   protected contextClick(menuItem: Electron.MenuItem) {
-    kubectl.setCurrentContext(menuItem.label, () => {
+    kubeconfig.setCurrentContext(menuItem.label, () => {
       this.updateContexts();
       const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
