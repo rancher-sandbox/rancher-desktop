@@ -61,6 +61,19 @@ function downloadDependencies(context: DownloadContext, dependencies: Dependency
   );
 }
 
+// TODO: Remove this function once an ffi-napi module is released that fixes
+// https://github.com/nodejs/abi-stable-node/issues/441
+// Until then we're using `@inigolabs/ffi-napi` to work around it.
+function installPatchedFFISync(): void {
+  for (const dir of ['ffi-napi', 'ref-napi']) {
+    const src = path.join('node_modules', '@inigolabs', dir);
+    const dst = path.join('node_modules', dir);
+
+    fs.rmSync(dst, { force: true, recursive: true });
+    fs.cpSync(src, dst, { force: true, recursive: true });
+  }
+}
+
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
   const depVersions = await readDependencyVersions(path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml'));
@@ -111,6 +124,7 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
 
 runScripts().then(() => {
   execFileSync('node', ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'], { stdio: 'inherit' });
+  installPatchedFFISync();
 })
   .catch((e) => {
     console.error(e);
