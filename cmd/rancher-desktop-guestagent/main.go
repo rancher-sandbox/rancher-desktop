@@ -147,6 +147,18 @@ func main() {
 				return nil
 			})
 		}
+
+		if *enableKubernetes {
+			group.Go(func() error {
+				// Watch for kube
+				err := kube.WatchForServices(ctx, tcpTracker, *configPath, portTracker)
+				if err != nil {
+					return fmt.Errorf("error watching services: %w", err)
+				}
+
+				return nil
+			})
+		}
 	}
 
 	if *enableIptables {
@@ -155,18 +167,6 @@ func main() {
 			err := iptables.ForwardPorts(ctx, tcpTracker, iptablesUpdateInterval)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)
-			}
-
-			return nil
-		})
-	}
-
-	if *enableKubernetes {
-		group.Go(func() error {
-			// Watch for kube
-			err := kube.WatchForServices(ctx, tcpTracker, *configPath)
-			if err != nil {
-				return fmt.Errorf("error watching services: %w", err)
 			}
 
 			return nil
