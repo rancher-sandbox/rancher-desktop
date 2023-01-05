@@ -126,7 +126,7 @@
     "@vue/test-utils": "^1.1.2",
     "babel-core": "^7.0.0-bridge.0",
     "css-loader": "4.3.0",
-    "electron": "^18.3.6",
+    "electron": "^20.3.8",
     "electron-builder": "^23.3.3",
     "electron-devtools-installer": "^3.2.0",
     "electron-notarize": "^1.2.1",
