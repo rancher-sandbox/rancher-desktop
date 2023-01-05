@@ -634,8 +634,12 @@ async function doFactoryReset(keepSystemImages: boolean) {
   // Don't wait for this process to return -- the whole point is for us to not be running.
   const tmpdir = os.tmpdir();
   const outfile = await fs.promises.open(path.join(tmpdir, 'rdctl-stdout.txt'), 'w');
-  const rdctl = spawn(path.join(paths.resources, os.platform(), 'bin', 'rdctl'),
-    ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`],
+  const args = ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`];
+
+  if (cfg.debug) {
+    args.push('--verbose=true');
+  }
+  const rdctl = spawn(path.join(paths.resources, os.platform(), 'bin', 'rdctl'), args,
     {
       detached: true, windowsHide: true, stdio: ['ignore', outfile.fd, outfile.fd],
     });
