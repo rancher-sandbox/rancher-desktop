@@ -81,6 +81,7 @@ export class RDBinInShellPath implements DiagnosticsChecker {
 
 // Use `bash -l` because `bash -i` causes RD to suspend
 const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-l', '-c');
-const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c');
+// Use `zsh -i -l` because we can't know if the user manually added the PATH in .zshrc or in .zprofile
+const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-l', '-c');
 
 export default [RDBinInBash, RDBinInZsh] as DiagnosticsChecker[];
