@@ -280,7 +280,7 @@ async function checkPrerequisites() {
       try {
         const data = await fs.promises.readFile(nestedFile, { encoding: 'utf8' });
 
-        if (data && data.toLowerCase()[0] === 'y' ) {
+        if (data && (data.toLowerCase()[0] === 'y' || data[0] === '1')) {
           messageId = 'ok';
           break;
         }
