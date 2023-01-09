@@ -23,110 +23,117 @@ afterEach(async() => {
   }
 });
 
-test("Create file when true and it doesn't yet exist", async() => {
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
-  const content = await fs.promises.readFile(rcFilePath, 'utf8');
-  const expectedContents = `${ START_LINE }
+describe('managedDotFiles', () => {
+  test("Create file when true and it doesn't yet exist", async() => {
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
+    const content = await fs.promises.readFile(rcFilePath, 'utf8');
+    const expectedContents = `${ START_LINE }
 ${ TEST_LINE_1 }
-${ END_LINE }`;
+${ END_LINE }
+`;
 
-  expect(content.replace(/\r\n/g, '\n')).toBe(expectedContents.replace(/\r\n/g, '\n'));
-});
+    expect(content.replace(/\r\n/g, '\n')).toBe(expectedContents.replace(/\r\n/g, '\n'));
+  });
 
-test('Delete file when false and it contains only the managed lines', async() => {
-  const data = `${ START_LINE }
+  test('Delete file when false and it contains only the managed lines', async() => {
+    const data = `${ START_LINE }
 ${ TEST_LINE_1 }
-${ END_LINE }`;
+${ END_LINE }
+`;
 
-  await fs.promises.writeFile(rcFilePath, data, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
-  expect(fs.promises.readFile(rcFilePath, 'utf8')).rejects.toHaveProperty('code', 'ENOENT');
-});
+    await fs.promises.writeFile(rcFilePath, data, { mode: 0o644 });
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
+    expect(fs.promises.readFile(rcFilePath, 'utf8')).rejects.toHaveProperty('code', 'ENOENT');
+  });
 
-test('Put lines in file that exists and has content', async() => {
-  const data = 'this is already present in the file\n';
+  test('Put lines in file that exists and has content', async() => {
+    const data = 'this is already present in the file\n';
 
-  await fs.promises.writeFile(rcFilePath, data, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
-  const content = await fs.promises.readFile(rcFilePath, 'utf8');
-  const expectedContents = `${ data }
+    await fs.promises.writeFile(rcFilePath, data, { mode: 0o644 });
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
+    const content = await fs.promises.readFile(rcFilePath, 'utf8');
+    const expectedContents = `${ data }
 ${ START_LINE }
 ${ TEST_LINE_1 }
-${ END_LINE }`;
+${ END_LINE }
+`;
 
-  expect(content.replace(/\r\n/g, '\n')).toBe(expectedContents.replace(/\r\n/g, '\n'));
-});
+    expect(content.replace(/\r\n/g, '\n')).toBe(expectedContents.replace(/\r\n/g, '\n'));
+  });
 
-test('Remove lines from file that exists and has content', async() => {
-  const unmanagedContents = 'this is already present in the file\n';
-  const contents = `${ unmanagedContents }
+  test('Remove lines from file that exists and has content', async() => {
+    const unmanagedContents = 'this is already present in the file\n';
+    const contents = `${ unmanagedContents }
 ${ START_LINE }
 ${ TEST_LINE_1 }
-${ END_LINE }`;
+${ END_LINE }
+`;
 
-  await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
-  const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
+    await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
+    const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
 
-  expect(newContents.replace(/\r\n/g, '\n')).toBe(unmanagedContents.replace(/\r\n/g, '\n'));
-});
+    expect(newContents.replace(/\r\n/g, '\n')).toBe(unmanagedContents.replace(/\r\n/g, '\n'));
+  });
 
-test('Update managed lines', async() => {
-  const topUnmanagedContents = 'this is at the top of the file\n';
-  const bottomUnmanagedContents = 'this is at the bottom of the file\n';
-  const contents = `${ topUnmanagedContents }
+  test('Update managed lines', async() => {
+    const topUnmanagedContents = 'this is at the top of the file\n';
+    const bottomUnmanagedContents = 'this is at the bottom of the file\n';
+    const contents = `${ topUnmanagedContents }
 ${ START_LINE }
 ${ TEST_LINE_1 }
 ${ END_LINE }
 ${ bottomUnmanagedContents }`;
 
-  await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1, TEST_LINE_2], true);
-  const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
-  const expectedNewContents = `${ topUnmanagedContents }
+    await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1, TEST_LINE_2], true);
+    const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
+    const expectedNewContents = `${ topUnmanagedContents }
 ${ START_LINE }
 ${ TEST_LINE_1 }
 ${ TEST_LINE_2 }
 ${ END_LINE }
 ${ bottomUnmanagedContents }`;
 
-  expect(newContents.replace(/\r\n/g, '\n')).toBe(expectedNewContents.replace(/\r\n/g, '\n'));
-});
+    expect(newContents.replace(/\r\n/g, '\n')).toBe(expectedNewContents.replace(/\r\n/g, '\n'));
+  });
 
-test('Remove managed lines from between unmanaged lines', async() => {
-  const topUnmanagedContents = 'this is at the top of the file\n';
-  const bottomUnmanagedContents = 'this is at the bottom of the file\n';
-  const contents = `${ topUnmanagedContents }
+  test('Remove managed lines from between unmanaged lines', async() => {
+    const topUnmanagedContents = 'this is at the top of the file\n';
+    const bottomUnmanagedContents = 'this is at the bottom of the file\n';
+    const contents = `${ topUnmanagedContents }
 ${ START_LINE }
 ${ TEST_LINE_1 }
 ${ END_LINE }
 ${ bottomUnmanagedContents }`;
 
-  await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
-  const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
-  const expectedNewContents = `${ topUnmanagedContents }
+    await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
+    const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
+    const expectedNewContents = `${ topUnmanagedContents }
 ${ bottomUnmanagedContents }`;
 
-  expect(newContents.replace(/\r\n/g, '\n')).toBe(expectedNewContents);
-});
+    expect(newContents.replace(/\r\n/g, '\n')).toBe(expectedNewContents);
+  });
 
-test('File mode should not be changed when updating a file', async() => {
-  const unmanagedContents = 'this is already present in the file\n';
-  const contents = `${ unmanagedContents }
+  test('File mode should not be changed when updating a file', async() => {
+    const unmanagedContents = 'this is already present in the file\n';
+    const contents = `${ unmanagedContents }
 ${ START_LINE }
 ${ TEST_LINE_1 }
-${ END_LINE }`;
+${ END_LINE }
+`;
 
-  await fs.promises.writeFile(rcFilePath, contents, { mode: 0o623 });
-  const oldFileMode = (await fs.promises.stat(rcFilePath)).mode;
+    await fs.promises.writeFile(rcFilePath, contents, { mode: 0o623 });
+    const oldFileMode = (await fs.promises.stat(rcFilePath)).mode;
 
-  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
-  const newFileMode = (await fs.promises.stat(rcFilePath)).mode;
+    await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
+    const newFileMode = (await fs.promises.stat(rcFilePath)).mode;
 
-  expect(newFileMode).toBe(oldFileMode);
-});
+    expect(newFileMode).toBe(oldFileMode);
+  });
 
-test('Do nothing when desiredPresent is false and file does not exist', async() => {
-  await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], false)).resolves.not.toThrow();
+  test('Do nothing when desiredPresent is false and file does not exist', async() => {
+    await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], false)).resolves.not.toThrow();
+  });
 });

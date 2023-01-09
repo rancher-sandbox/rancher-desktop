@@ -19,7 +19,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
     currentContent = await fs.promises.readFile(path, 'utf8');
   } catch (error: any) {
     if (error.code === 'ENOENT' && desiredPresent) {
-      const lines = buildFileLines([], desiredManagedLines, []);
+      const lines = buildFileLines([], desiredManagedLines, ['']);
       const content = lines.join(os.EOL);
 
       await fs.promises.writeFile(path, content, { mode: DEFAULT_FILE_MODE });
@@ -47,12 +47,20 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
 
   // make the changes
   if (desiredPresent && !isEqual(currentManagedLines, desiredManagedLines)) {
+    // This is needed to ensure the file ends with an EOL
+    if (after.length === 0) {
+      after = [''];
+    }
     const newLines = buildFileLines(before, desiredManagedLines, after);
     const newContent = newLines.join(os.EOL);
 
     await fs.promises.writeFile(path, newContent);
   }
   if (!desiredPresent) {
+    // Ignore the extra empty line that came from the managed block.
+    if (after.length === 1 && after[0] === '') {
+      after = [];
+    }
     if (before.length === 0 && after.length === 0) {
       await fs.promises.rm(path);
     } else {

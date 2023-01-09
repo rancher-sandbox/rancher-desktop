@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -218,32 +219,61 @@ func removeDockerCliPlugins(altAppHomePath string) error {
 }
 
 func removePathManagement(dotFiles []string) error {
+	const startTarget = `### MANAGED BY RANCHER DESKTOP START \(DO NOT EDIT\)`
+	const endTarget = `### MANAGED BY RANCHER DESKTOP END \(DO NOT EDIT\)`
+
+	// bash files etc. break if they contain \r's, so don't worry about them
+	ptn := regexp.MustCompile(fmt.Sprintf(`(?ms)^(?P<preMarkerText>.*?)(?P<preMarkerNewlines>\n*)^%s.*?^%s\s*?$(?P<postMarkerNewlines>\n*)(?P<postMarkerText>.*)$`, startTarget, endTarget))
+
 	for _, dotFile := range dotFiles {
 		byteContents, err := os.ReadFile(dotFile)
 		if err != nil {
-			if errors.Is(err, syscall.ENOENT) {
-				// Nothing left to do here, since the dotfile doesn't exist.
-				continue
+			if !errors.Is(err, syscall.ENOENT) {
+				logrus.Errorf("Error trying to read %s: %s\n", dotFile, err)
 			}
-			logrus.Errorf("Error trying to read %s: %s\n", dotFile, err)
 			continue
 		}
 		contents := string(byteContents)
-		startTarget := "### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)"
-		endTarget := "### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)"
-		startPoint := strings.LastIndex(contents, startTarget)
-		if startPoint == -1 {
+		parts := ptn.FindStringSubmatch(contents)
+		if len(parts) == 0 {
 			continue
 		}
-		relativeEndPoint := strings.Index(contents[startPoint:], endTarget)
-		if relativeEndPoint == -1 {
+
+		preMarkerTextIndex := ptn.SubexpIndex("preMarkerText")
+		preMarkerNewlineIndex := ptn.SubexpIndex("preMarkerNewlines")
+		postMarkerNewlineIndex := ptn.SubexpIndex("postMarkerNewlines")
+		postMarkerTextIndex := ptn.SubexpIndex("postMarkerText")
+		if len(parts[preMarkerTextIndex]) == 0 && len(parts[postMarkerTextIndex]) == 0 {
+			// Nothing of interest left in this file, so delete it
+			err = os.RemoveAll(dotFile)
+			if err != nil {
+				// but continue processing the other files
+				logrus.Errorf("Failed to delete file %s (error %s)\n", dotFile, err)
+			}
 			continue
 		}
-		newEndPoint := startPoint + relativeEndPoint + len(endTarget)
-		if len(contents) > newEndPoint && contents[newEndPoint] == '\n' {
-			newEndPoint += 1
+
+		newParts := []string{parts[preMarkerTextIndex]}
+
+		preMarkerNewlines := parts[preMarkerNewlineIndex]
+		postMarkerNewlines := parts[postMarkerNewlineIndex]
+		if len(preMarkerNewlines) == 1 {
+			newParts = append(newParts, preMarkerNewlines)
+		} else if len(preMarkerNewlines) > 1 {
+			// One of the newlines was inserted by the dotfile manager, but keep the others
+			newParts = append(newParts, preMarkerNewlines[1:])
 		}
-		newContents := contents[0:startPoint] + contents[newEndPoint:]
+		if len(parts[postMarkerTextIndex]) > 0 {
+			if len(postMarkerNewlines) > 1 {
+				// Either there was a newline before the marker block, and we have copied
+				// it into the new file,
+				// or the marker block was at the start of the file, in which case we can
+				// drop one of the post-marker block newlines
+				newParts = append(newParts, postMarkerNewlines[1:])
+			}
+			newParts = append(newParts, parts[postMarkerTextIndex])
+		}
+		newContents := strings.Join(newParts, "")
 		filestat, err := os.Stat(dotFile)
 		if err != nil {
 			return fmt.Errorf("error trying to stat %s: %w", dotFile, err)
