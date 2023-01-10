@@ -6,7 +6,9 @@ import semver from 'semver';
 
 import { download } from '../lib/download';
 
-import { DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames } from 'scripts/lib/dependencies';
+import {
+  DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames, getPublishedVersions,
+} from 'scripts/lib/dependencies';
 
 function extract(resourcesPath: string, file: string, expectedFile: string): void {
   const systemRoot = process.env.SystemRoot;
@@ -45,10 +47,8 @@ export class HostResolverPeer implements Dependency, GithubDependency {
     extract(context.internalDir, resolverVsockPeerPath, 'host-resolver');
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -79,10 +79,8 @@ export class HostResolverHost implements Dependency, GithubDependency {
     extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {

@@ -9,7 +9,9 @@ import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
 
-import { DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames } from 'scripts/lib/dependencies';
+import {
+  DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames, getPublishedVersions,
+} from 'scripts/lib/dependencies';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
@@ -147,10 +149,8 @@ export class KuberlrAndKubectl implements Dependency {
     await fs.promises.symlink('kuberlr', binKubectlPath);
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
@@ -174,10 +174,8 @@ export class Helm implements Dependency {
     });
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
@@ -202,10 +200,8 @@ export class DockerCLI implements Dependency, GithubDependency {
     await download(dockerURL, destPath, { expectedChecksum });
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -239,10 +235,8 @@ export class DockerBuildx implements Dependency, GithubDependency {
     await download(dockerBuildxURL, dockerBuildxPath, options);
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -270,10 +264,8 @@ export class DockerCompose implements Dependency, GithubDependency {
     await download(url, destPath, { expectedChecksum });
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -311,10 +303,8 @@ export class Trivy implements Dependency, GithubDependency {
     await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -348,10 +338,12 @@ export class Steve implements Dependency, GithubDependency {
       });
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  // Note that we set includePrerelease to true by default, which is different
+  // from the way other Dependency's work. There is a reason for this:
+  // as of the time of writing, all releases of steve are prerelease versions.
+  // If this changes, the default value of includePrelease should be changed to false.
+  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -377,10 +369,8 @@ export class GuestAgent implements Dependency, GithubDependency {
     await downloadTarGZ(url, destPath);
   }
 
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
@@ -504,10 +494,15 @@ export class DockerProvidedCredHelpers implements Dependency, GithubDependency {
     await Promise.all(promises);
   }
 
-  async getAvailableVersions(): Promise<string[]> {
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
     const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+    const allVersions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
 
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+    if (!includePrerelease) {
+      return allVersions.filter(version => semver.prerelease(version) === null);
+    }
+
+    return allVersions;
   }
 
   versionToTagName(version: string): string {
@@ -536,10 +531,15 @@ export class ECRCredHelper implements Dependency, GithubDependency {
     return await download(sourceUrl, destPath);
   }
 
-  async getAvailableVersions(): Promise<string[]> {
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
     const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+    const allVersions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
 
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+    if (!includePrerelease) {
+      return allVersions.filter(version => semver.prerelease(version) === null);
+    }
+
+    return allVersions;
   }
 
   versionToTagName(version: string): string {
