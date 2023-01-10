@@ -10,11 +10,14 @@ func unhandledArgHandler(arg string) (string, []cleanupFunc, error) {
 	panic("Platform is unsupported")
 }
 
-var volumeArgHandler = unhandledArgHandler
-var filePathArgHandler = unhandledArgHandler
-var outputPathArgHandler = unhandledArgHandler
-var mountArgHandler = unhandledArgHandler
-var builderCacheArgHandler = unhandledArgHandler
+// argHandlers is the table of argument handlers.
+var argHandlers = argHandlersType{
+	volumeArgHandler:       unhandledArgHandler,
+	filePathArgHandler:     unhandledArgHandler,
+	outputPathArgHandler:   unhandledArgHandler,
+	mountArgHandler:        unhandledArgHandler,
+	builderCacheArgHandler: unhandledArgHandler,
+}
 
 func spawn(opts spawnOptions) error {
 	panic("Platform is unsupported")
