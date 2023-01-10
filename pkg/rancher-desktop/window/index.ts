@@ -8,6 +8,7 @@ import * as K8s from '@pkg/backend/k8s';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
+import { Shortcuts } from '@pkg/utils/shortcuts';
 
 const console = Logging.background;
 
@@ -110,6 +111,23 @@ export function openMain(showPreferencesModal = false) {
         contextIsolation: false,
       },
     });
+
+  if (!Shortcuts.isRegistered(window)) {
+    Shortcuts.register(
+      window,
+      [{
+        key:      ',',
+        meta:     true,
+        platform: 'darwin',
+      }, {
+        key:      ',',
+        control:  true,
+        platform: ['linux', 'win32'],
+      }],
+      () => openMain(true),
+      'open preferences',
+    );
+  }
 
   app.dock?.show();
 

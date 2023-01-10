@@ -181,7 +181,7 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
     {
       label:               'Preferences',
       visible:             true,
-      registerAccelerator: true,
+      registerAccelerator: false,
       accelerator:         'CmdOrCtrl+,',
       click() {
         openMain(true);
