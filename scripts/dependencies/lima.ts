@@ -5,13 +5,15 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import semver from 'semver';
+
 import { download, getResource } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, getOctokit, UnreleasedChangeMonitor, hasUnreleasedChanges, HasUnreleasedChangesResult,
+  DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GithubDependency, getPublishedReleaseTagNames, GithubRelease,
 } from 'scripts/lib/dependencies';
 
-export class LimaAndQemu extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class LimaAndQemu implements Dependency, GithubDependency {
   name = 'limaAndQemu';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'lima-and-qemu';
@@ -50,15 +52,33 @@ export class LimaAndQemu extends GithubVersionGetter implements Dependency, Unre
     });
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semver1 = semver.coerce(version1);
+    const semver2 = semver.coerce(version2);
+
+    if (semver1 === null || semver2 === null) {
+      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+    }
+
+    return semver.rcompare(semver1, semver2);
   }
 }
 
-export class AlpineLimaISO implements Dependency, UnreleasedChangeMonitor {
+export class AlpineLimaISO implements Dependency, GithubDependency {
   name = 'alpineLimaISO';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'alpine-lima';
+  isoVersionRegex = /^[0-9]+\.[0-9]+\.[0-9]+\.rd[0-9]+$/;
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
@@ -79,18 +99,11 @@ export class AlpineLimaISO implements Dependency, UnreleasedChangeMonitor {
     });
   }
 
-  async getLatestVersion(): Promise<AlpineLimaISOVersion> {
-    // get latest isoVersion
-    const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
-    const latestRelease = response.data[0];
-    const latestVersionWithV = latestRelease.tag_name;
-    const isoVersion = latestVersionWithV.replace('v', '');
-
-    // get latest alpineVersion by parsing name of an asset on latest release
-    const matchingAsset = latestRelease.assets.find(asset => asset.name.includes('rd'));
+  assembleAlpineLimaISOVersionFromGithubRelease(release: GithubRelease): AlpineLimaISOVersion {
+    const matchingAsset = release.assets.find(asset => asset.name.includes('rd'));
 
     if (!matchingAsset) {
-      throw new Error(`Could not find matching asset name in set ${ latestRelease.assets }`);
+      throw new Error(`Could not find matching asset name in set ${ release.assets }`);
     }
     const nameMatch = matchingAsset.name.match(/alpine-lima-rd-([0-9]+\.[0-9]+\.[0-9])-.*/);
 
@@ -100,12 +113,40 @@ export class AlpineLimaISO implements Dependency, UnreleasedChangeMonitor {
     const alpineVersion = nameMatch[1];
 
     return {
-      isoVersion,
+      isoVersion: release.tag_name.replace(/^v/, ''),
       alpineVersion,
     };
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<AlpineLimaISOVersion[]> {
+    const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
+    const releases = response.data;
+    const versions = await Promise.all(releases.map(this.assembleAlpineLimaISOVersionFromGithubRelease));
+
+    return versions;
+  }
+
+  versionToTagName(version: AlpineLimaISOVersion): string {
+    return `v${ version.isoVersion }`;
+  }
+
+  versionToSemver(version: AlpineLimaISOVersion): string {
+    const isoVersion = version.isoVersion;
+    const isoVersionParts = isoVersion.split('.');
+
+    if (!this.isoVersionRegex.test(isoVersion)) {
+      throw new Error(`${ this.name }: version ${ version } is not in expected format ${ this.isoVersionRegex }`);
+    }
+    const normalVersion = isoVersionParts.slice(0, 3).join('.');
+    const prereleaseVersion = isoVersionParts[3].replace('rd', '');
+
+    return `${ normalVersion }-${ prereleaseVersion }`;
+  }
+
+  rcompareVersions(version1: AlpineLimaISOVersion, version2: AlpineLimaISOVersion): -1 | 0 | 1 {
+    const semverVersion1 = this.versionToSemver(version1);
+    const semverVersion2 = this.versionToSemver(version2);
+
+    return semver.rcompare(semverVersion1, semverVersion2);
   }
 }

@@ -64,84 +64,26 @@ export async function writeDependencyVersions(path: string, depVersions: Depende
 export interface Dependency {
   name: string,
   download(context: DownloadContext): Promise<void>
-  getLatestVersion(): Promise<string | AlpineLimaISOVersion>
+  getAvailableVersions(): Promise<string[] | AlpineLimaISOVersion[]>
+  // Returns -1 if version1 is higher, 0 if version1 and version2 are equal,
+  // and 1 if version2 is higher.
+  rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): -1 | 0 | 1
 }
 
 /**
- * Types that implement UnreleasedChangeMonitor can tell you whether
- * there have been any changes in their repository since their last release.
+ * A Dependency that is hosted in a Github repo.
  */
-export interface UnreleasedChangeMonitor {
-  hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult>
+export interface GithubDependency {
+  githubOwner: string
+  githubRepo: string
+  // Converts a version (of the format that is stored in dependencies.yaml)
+  // to a tag that is used in a Github release.
+  versionToTagName(version: string | AlpineLimaISOVersion): string
 }
 
 export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
 
-type GithubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
-
-async function getLatestPublishedRelease(githubOwner: string, githubRepo: string): Promise<GithubRelease> {
-  const response = await getOctokit().rest.repos.listReleases({ owner: githubOwner, repo: githubRepo });
-
-  for (const release of response.data) {
-    if (release.published_at !== null) {
-      return release;
-    }
-  }
-  throw new Error(`Did not find a published release for ${ githubOwner }/${ githubRepo }`);
-}
-
-/**
- * Tells the caller whether the given github repo has any
- * changes that have not been released.
- */
-export async function hasUnreleasedChanges(githubOwner: string, githubRepo: string): Promise<HasUnreleasedChangesResult> {
-  const latestRelease = await getLatestPublishedRelease(githubOwner, githubRepo);
-
-  // Get the date of the commit that the release's tag points to.
-  // We can't use the publish date of the release, because that
-  // omits commits that were made after the commit that was tagged
-  // for the release, but before the actual release.
-  const result = await getOctokit().rest.repos.getCommit({
-    owner: githubOwner, repo: githubRepo, ref: latestRelease.tag_name,
-  });
-  const dateOfTaggedCommit = result.data.commit.committer?.date;
-
-  const response = await getOctokit().rest.repos.listCommits({
-    owner: githubOwner, repo: githubRepo, since: dateOfTaggedCommit,
-  });
-  const commits = response.data;
-
-  console.log(`Found ${ commits.length - 1 } unreleased commits for repository ${ githubOwner }/${ githubRepo }.`);
-
-  return {
-    latestReleaseTag:     latestRelease.tag_name,
-    hasUnreleasedChanges: commits.length > 1,
-  };
-}
-
-/**
- * A lot of dependencies are hosted on Github via Github releases,
- * so the logic to fetch the latest version/tag is very similar for
- * these releases. This lets us eliminate some of the duplication.
- */
-export class GithubVersionGetter {
-  name = 'GithubVersionGetter';
-  githubOwner?: string;
-  githubRepo?: string;
-
-  async getLatestVersion(): Promise<string> {
-    if (!this.githubOwner) {
-      throw new Error(`Must define property "githubOwner" for dependency ${ this.name }`);
-    }
-    if (!this.githubRepo) {
-      throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`);
-    }
-    const release = await getLatestPublishedRelease(this.githubOwner, this.githubRepo);
-    const latestVersionWithV = release.tag_name;
-
-    return latestVersionWithV.replace(/^v/, '');
-  }
-}
+export type GithubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
 
 let _octokit: Octokit | undefined;
 
@@ -195,4 +137,14 @@ export class RancherDesktopRepository {
     });
     console.log(`Closed issue #${ issue.number }: "${ issue.title }"`);
   }
+}
+
+// For a github repository, get a list of releases that are published
+// and return the tags that they were made off of.
+export async function getPublishedReleaseTagNames(owner: string, repo: string) {
+  const response = await getOctokit().rest.repos.listReleases({ owner, repo });
+  const releases = response.data;
+  const publishedReleases = releases.filter(release => release.published_at !== null);
+
+  return publishedReleases.map(publishedRelease => publishedRelease.tag_name);
 }

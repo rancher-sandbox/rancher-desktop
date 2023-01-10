@@ -19,7 +19,7 @@ const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sa
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
 
 type VersionComparison = {
-  name: string;
+  dependency: Dependency;
   currentVersion: string | AlpineLimaISOVersion;
   latestVersion: string | AlpineLimaISOVersion;
 };
@@ -77,19 +77,6 @@ function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, l
   return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 }
 
-/**
- * Compares the versions of two dependencies, as defined in DependencyVersions.
- * @returns true if equal, false if not equal
- */
-function compareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): boolean {
-  if (typeof version1 === 'string' && typeof version2 === 'string') {
-    return version1 === version2;
-  } else if (typeof version1 !== 'string' && typeof version2 !== 'string') {
-    return version1.isoVersion === version2.isoVersion && version1.alpineVersion === version2.alpineVersion;
-  }
-  throw new Error(`Types of version1 (${ version1 }) and version2 (${ version2 }) differ.`);
-}
-
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
   const title = getTitle(name, currentVersion, latestVersion);
   const branchName = getBranchName(name, currentVersion, latestVersion);
@@ -141,36 +128,45 @@ async function checkDependencies(): Promise<void> {
 
   // get a list of dependencies' version comparisons
   const versionComparisons: VersionComparison[] = await Promise.all(dependencies.map(async(dependency) => {
+    const availableVersions = await dependency.getAvailableVersions();
+
+    const sortedVersions = availableVersions.sort((version1, version2) => {
+      return dependency.rcompareVersions(version1, version2);
+    });
+    const latestVersion = sortedVersions[0];
+
     return {
-      name:           dependency.name,
+      dependency,
       currentVersion: currentVersions[dependency.name as keyof DependencyVersions],
-      latestVersion:  await dependency.getLatestVersion(),
+      latestVersion,
     };
   }));
 
   // filter comparisons down to the ones that need an update
-  const updatesAvailable = versionComparisons.filter(({ name, currentVersion, latestVersion }) => {
-    const equal = compareVersions(currentVersion, latestVersion);
+  const updatesAvailable = versionComparisons.filter(({ dependency, currentVersion, latestVersion }) => {
+    const comparison = dependency.rcompareVersions(currentVersion, latestVersion);
 
-    if (equal) {
-      console.log(`${ name } is up to date.`);
+    if (comparison < 0) {
+      console.warn(`Latest version ${ latestVersion } of ${ dependency.name } is earlier than current version ${ currentVersion }`);
+    } else if (comparison === 0) {
+      console.log(`${ dependency.name } is up to date.`);
     } else {
-      console.log(`Can update ${ name } from ${ currentVersion } to ${ latestVersion }`);
+      console.log(`Can update ${ dependency.name } from ${ currentVersion } to ${ latestVersion }`);
     }
 
-    return !equal;
+    return comparison > 0;
   });
 
   // reconcile dependencies that need an update with state of repo's PRs
   const needToCreatePR: VersionComparison[] = [];
 
-  await Promise.all(updatesAvailable.map(async({ name, currentVersion, latestVersion }) => {
+  await Promise.all(updatesAvailable.map(async({ dependency, currentVersion, latestVersion }) => {
     // try to find PR for this combo of name, current version and latest version
-    const prs = await getPulls(name);
+    const prs = await getPulls(dependency.name);
 
     // we use title, rather than branch name, to filter pull requests
     // because branch name is not available from the search endpoint
-    const title = getTitle(name, currentVersion, latestVersion);
+    const title = getTitle(dependency.name, currentVersion, latestVersion);
     let prExists = false;
 
     await Promise.all(prs.map(async(pr) => {
@@ -187,25 +183,25 @@ async function checkDependencies(): Promise<void> {
     if (!prExists) {
       console.log(`Could not find PR "${ title }". Will create.`);
       needToCreatePR.push({
-        name, currentVersion, latestVersion,
+        dependency, currentVersion, latestVersion,
       });
     }
   }));
 
   // create a branch for each version update, make changes, and make a PR from the branch
-  for (const { name, currentVersion, latestVersion } of needToCreatePR) {
-    const branchName = getBranchName(name, currentVersion, latestVersion);
-    const commitMessage = `Bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
+  for (const { dependency, currentVersion, latestVersion } of needToCreatePR) {
+    const branchName = getBranchName(dependency.name, currentVersion, latestVersion);
+    const commitMessage = `Bump ${ dependency.name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
     const depVersions = await readDependencyVersions(depVersionsPath);
 
-    depVersions[name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
+    depVersions[dependency.name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
     await writeDependencyVersions(depVersionsPath, depVersions);
     git('add', depVersionsPath);
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
-    await createDependencyBumpPR(name, currentVersion, latestVersion);
+    await createDependencyBumpPR(dependency.name, currentVersion, latestVersion);
   }
 }
 

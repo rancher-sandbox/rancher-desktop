@@ -86,6 +86,10 @@ export function isArray(thing) {
   return Array.isArray(thing);
 }
 
+export function toArray(thing) {
+  return isArray(thing) ? thing : [thing];
+}
+
 export function removeAt(ary, idx, len = 1) {
   if ( idx < 0 ) {
     throw new Error('Index too low');
