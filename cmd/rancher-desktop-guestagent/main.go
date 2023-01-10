@@ -52,6 +52,8 @@ var (
 		"file path for Containerd socket address")
 	vtunnelAddr             = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
 	enablePrivilegedService = flag.Bool("privilegedService", false, "enable Privileged Service mode")
+	k8sServiceListenerAddr  = flag.String("k8sServiceListenerAddr", net.IPv4zero.String(),
+		"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
 )
 
 const (
@@ -150,8 +152,16 @@ func main() {
 
 		if *enableKubernetes {
 			group.Go(func() error {
+				k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
+
+				if k8sServiceListenerIP == nil || !(k8sServiceListenerIP.Equal(net.IPv4zero) ||
+					k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) { //nolint:gomnd // IPv4 addr localhost
+					log.Fatalf("empty or none valid input for Kubernetes service listener IP address %s. "+
+						"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
+				}
+
 				// Watch for kube
-				err := kube.WatchForServices(ctx, tcpTracker, *configPath, portTracker)
+				err := kube.WatchForServices(ctx, tcpTracker, *configPath, portTracker, k8sServiceListenerIP)
 				if err != nil {
 					return fmt.Errorf("error watching services: %w", err)
 				}

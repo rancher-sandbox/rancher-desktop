@@ -47,7 +47,7 @@ const (
 // and create listeners on 0.0.0.0 matching them.
 // Any connection errors are ignored and retried.
 func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string,
-	portTracker *tracker.PortTracker,
+	portTracker *tracker.PortTracker, k8sServiceListenerIP net.IP,
 ) error {
 	// These variables are shared across the different states
 	var (
@@ -60,7 +60,6 @@ func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker,
 	)
 
 	watchContext, watchCancel := context.WithCancel(ctx)
-	listenerAddr := net.IPv4zero
 
 	// Always cancel if we failed; however, we may clobber watchCancel, so we
 	// need a wrapper function to capture the variable reference.
@@ -103,7 +102,7 @@ func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker,
 				return fmt.Errorf("failed to create Kubernetes client: %w", err)
 			}
 
-			eventCh, errorCh, err = watchServices(watchContext, clientset, portTracker)
+			eventCh, errorCh, err = watchServices(watchContext, clientset, portTracker, k8sServiceListenerIP)
 			if err != nil {
 				if isTimeout(err) {
 					// If it's a time out, the server may not be running yet
@@ -133,7 +132,7 @@ func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker,
 				continue
 			case event := <-eventCh:
 				if event.deleted {
-					if err := tracker.Remove(ctx, listenerAddr, int(event.port)); err != nil {
+					if err := tracker.Remove(ctx, k8sServiceListenerIP, int(event.port)); err != nil {
 						log.Errorw("failed to close listener", log.Fields{
 							"error":     err,
 							"port":      event.port,
@@ -147,7 +146,7 @@ func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker,
 					log.Debugf("kuberentes service: deleted listener %s/%s:%d",
 						event.namespace, event.name, event.port)
 				} else {
-					if err := tracker.Add(ctx, listenerAddr, int(event.port)); err != nil {
+					if err := tracker.Add(ctx, k8sServiceListenerIP, int(event.port)); err != nil {
 						log.Errorw("failed to create listener", log.Fields{
 							"error":     err,
 							"port":      event.port,
