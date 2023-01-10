@@ -2,11 +2,11 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+import semver from 'semver';
+
 import { download } from '../lib/download';
 
-import {
-  DownloadContext, Dependency, UnreleasedChangeMonitor, GithubVersionGetter, hasUnreleasedChanges, HasUnreleasedChangesResult,
-} from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames } from 'scripts/lib/dependencies';
 
 function extract(resourcesPath: string, file: string, expectedFile: string): void {
   const systemRoot = process.env.SystemRoot;
@@ -26,7 +26,7 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
   fs.rmSync(file, { maxRetries: 10 });
 }
 
-export class HostResolverPeer extends GithubVersionGetter implements Dependency {
+export class HostResolverPeer implements Dependency, GithubDependency {
   name = 'hostResolver';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-host-resolver';
@@ -44,9 +44,23 @@ export class HostResolverPeer extends GithubVersionGetter implements Dependency 
 
     extract(context.internalDir, resolverVsockPeerPath, 'host-resolver');
   }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
 }
 
-export class HostResolverHost extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class HostResolverHost implements Dependency, GithubDependency {
   name = 'hostResolver';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-host-resolver';
@@ -65,12 +79,22 @@ export class HostResolverHost extends GithubVersionGetter implements Dependency,
     extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
   }
 }
 
-export class WSLDistro extends GithubVersionGetter implements Dependency, UnreleasedChangeMonitor {
+export class WSLDistro implements Dependency, GithubDependency {
   name = 'WSLDistro';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-wsl-distro';
@@ -84,7 +108,24 @@ export class WSLDistro extends GithubVersionGetter implements Dependency, Unrele
     await download(url, destPath, { access: fs.constants.W_OK });
   }
 
-  async hasUnreleasedChanges(): Promise<HasUnreleasedChangesResult> {
-    return await hasUnreleasedChanges(this.githubOwner, this.githubRepo);
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semver1 = semver.coerce(version1);
+    const semver2 = semver.coerce(version2);
+
+    if (semver1 === null || semver2 === null) {
+      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+    }
+
+    return semver.rcompare(semver1, semver2);
   }
 }
