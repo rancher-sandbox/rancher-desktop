@@ -50,6 +50,7 @@ func watchServices(
 	ctx context.Context,
 	client *kubernetes.Clientset,
 	portTracker *tracker.PortTracker,
+	k8sServiceListenerIP net.IP,
 ) (<-chan event, <-chan error, error) {
 	eventCh := make(chan event)
 	errorCh := make(chan error)
@@ -58,13 +59,13 @@ func watchServices(
 	sharedInformer := serviceInformer.Informer()
 	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			handleUpdate(nil, obj, eventCh, portTracker)
+			handleUpdate(nil, obj, eventCh, portTracker, k8sServiceListenerIP)
 		},
 		DeleteFunc: func(obj interface{}) {
-			handleUpdate(obj, nil, eventCh, portTracker)
+			handleUpdate(obj, nil, eventCh, portTracker, k8sServiceListenerIP)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			handleUpdate(oldObj, newObj, eventCh, portTracker)
+			handleUpdate(oldObj, newObj, eventCh, portTracker, k8sServiceListenerIP)
 		},
 	})
 
@@ -118,7 +119,7 @@ func watchServices(
 	// worry about the channel blocking.
 	go func() {
 		for _, svc := range services {
-			handleUpdate(nil, svc, eventCh, portTracker)
+			handleUpdate(nil, svc, eventCh, portTracker, k8sServiceListenerIP)
 		}
 	}()
 
@@ -127,7 +128,9 @@ func watchServices(
 
 // handleUpdate examines the old and new services, calculating the difference
 // and emitting events to the given channel.
-func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event, portTracker *tracker.PortTracker) {
+func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event, portTracker *tracker.PortTracker,
+	k8sServiceListenerIP net.IP,
+) {
 	deleted := make(map[int32]corev1.Protocol)
 	added := make(map[int32]corev1.Protocol)
 	oldSvc, _ := oldObj.(*corev1.Service)
@@ -200,7 +203,7 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event, portTracker 
 	}
 
 	if len(added) > 0 {
-		if portMapping, err := createPortMapping(added); err == nil {
+		if portMapping, err := createPortMapping(added, k8sServiceListenerIP); err == nil {
 			if existingPortMap := portTracker.Get(string(newSvc.UID)); existingPortMap != nil {
 				err = updatePortMapping(portMapping, existingPortMap, newSvc.UID, portTracker)
 			} else {
@@ -219,7 +222,7 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event, portTracker 
 	}
 }
 
-func createPortMapping(ports map[int32]corev1.Protocol) (nat.PortMap, error) {
+func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (nat.PortMap, error) {
 	portMap := make(nat.PortMap)
 
 	for port, proto := range ports {
@@ -230,7 +233,7 @@ func createPortMapping(ports map[int32]corev1.Protocol) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   net.IPv4zero.String(),
+			HostIP:   k8sServiceListenerIP.String(),
 			HostPort: strconv.Itoa(int(port)),
 		}
 
