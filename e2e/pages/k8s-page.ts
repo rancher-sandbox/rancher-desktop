@@ -1,4 +1,4 @@
-import { Page, Locator } from 'playwright';
+import { Page, Locator } from '@playwright/test';
 export class K8sPage {
   readonly page: Page;
   readonly engineRuntime: Locator;

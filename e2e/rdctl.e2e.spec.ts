@@ -22,10 +22,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect, test } from '@playwright/test';
+import {
+  test, expect, ElectronApplication, BrowserContext, _electron, Page,
+} from '@playwright/test';
 import _ from 'lodash';
 import fetch, { RequestInit } from 'node-fetch';
-import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
 import {

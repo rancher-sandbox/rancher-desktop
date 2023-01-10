@@ -1,7 +1,6 @@
 import os from 'os';
 
-import { expect } from '@playwright/test';
-import { Page, PageScreenshotOptions } from 'playwright';
+import { expect, Page, PageScreenshotOptions } from '@playwright/test';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';

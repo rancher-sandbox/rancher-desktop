@@ -1,7 +1,8 @@
 import path from 'path';
 
-import { test, expect } from '@playwright/test';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+import {
+  test, expect, ElectronApplication, BrowserContext, _electron, Page,
+} from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
