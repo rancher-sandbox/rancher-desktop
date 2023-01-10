@@ -2,9 +2,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { test, expect } from '@playwright/test';
+import {
+  test, expect, ElectronApplication, BrowserContext, _electron, Page,
+} from '@playwright/test';
 import _ from 'lodash';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
@@ -180,13 +181,11 @@ test.describe.serial('KubernetesBackend', () => {
       const expected: Record<string, {current: any, desired: any, severity: 'reset' | 'restart'}> = {};
 
       for (const [key, reset] of Object.entries(expectedDefinition)) {
-        const entry = {
+        expected[key] = {
           current:  _.get(currentSettings, key),
           desired:  _.get(newSettings, key),
           severity: reset ? 'reset' : 'restart' as 'reset' | 'restart',
         };
-
-        expected[key] = entry;
       }
 
       await expect(put('/v0/propose_settings', newSettings)).resolves.toEqual(expected);

@@ -1,4 +1,4 @@
-import { Page, Locator } from 'playwright';
+import { Page, Locator } from '@playwright/test';
 export class PortForwardPage {
   readonly page: Page;
   readonly fixedHeader: Locator;
