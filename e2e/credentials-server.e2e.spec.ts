@@ -177,7 +177,7 @@ describeWithCreds('Credentials server', () => {
     const dcName = `docker-credential-${ helper }`;
     const stdout = await tool(dcName, 'list');
     const servers = Object.keys(JSON.parse(stdout));
-    let finalException: any | undefined;
+    let finalException: any | null = null;
 
     for (const server of servers) {
       if (!server.includes(matcher)) {
