@@ -26,7 +26,7 @@ function exeName(context: DownloadContext, name: string) {
  */
 async function findChecksum(checksumURL: string, executableName: string): Promise<string> {
   const allChecksums = await getResource(checksumURL);
-  const desiredChecksums = allChecksums.split(/\r?\n/).filter(line => line.includes(executableName));
+  const desiredChecksums = allChecksums.split(/\r?\n/).filter(line => line.endsWith(executableName));
 
   if (desiredChecksums.length < 1) {
     throw new Error(`Couldn't find a matching SHA for [${ executableName }] in [${ allChecksums }]`);
@@ -337,7 +337,7 @@ export class Steve implements Dependency, GithubDependency {
     const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
     const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
     const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
-    const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
+    const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, `${ steveExecutable }.tar.gz`);
 
     await downloadTarGZ(
       steveURL,
@@ -403,7 +403,7 @@ export class RancherDashboard implements Dependency, GithubDependency {
     const executableName = 'rancher-dashboard-desktop-embed';
     const url = `${ baseURL }/${ executableName }.tar.gz`;
     const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
-    const expectedChecksum = await findChecksum(`${ url }.sha512sum`, executableName);
+    const expectedChecksum = await findChecksum(`${ url }.sha512sum`, `${ executableName }.tar.gz`);
     const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
 
     if (fs.existsSync(rancherDashboardDir)) {
