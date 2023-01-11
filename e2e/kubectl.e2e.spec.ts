@@ -1,5 +1,4 @@
 import path from 'path';
-import util from 'util';
 
 import {
   test, expect, ElectronApplication, BrowserContext, _electron, Page,
