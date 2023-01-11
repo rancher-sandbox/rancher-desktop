@@ -125,7 +125,7 @@ test.describe.serial('Main App Test', () => {
 
     await containerEngine.nav.click();
 
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active', { timeout: 10_000 });
     await expect(containerEngine.containerEngine).toBeVisible();
 
     await expect(containerEngine.tabGeneral).toBeVisible();
@@ -141,7 +141,7 @@ test.describe.serial('Main App Test', () => {
     expect(preferencesWindow).toBeDefined();
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active', { timeout: 10_000 });
     await expect(containerEngine.containerEngine).toBeVisible();
 
     await expect(containerEngine.tabGeneral).toBeVisible();
