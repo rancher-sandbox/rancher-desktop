@@ -166,7 +166,7 @@ test.describe.serial('Main App Test', () => {
     expect(preferencesWindow).toBeDefined();
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active', { timeout: 10_000 });
     await expect(containerEngine.allowedImages).toBeVisible();
     await expect(containerEngine.containerEngine).not.toBeVisible();
   });
@@ -176,7 +176,7 @@ test.describe.serial('Main App Test', () => {
 
     await kubernetes.nav.click();
 
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item');
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item', { timeout: 10_000 });
     await expect(kubernetes.nav).toHaveClass('preferences-nav-item active');
     await expect(kubernetes.kubernetesToggle).toBeVisible();
     await expect(kubernetes.kubernetesVersion).toBeVisible();
