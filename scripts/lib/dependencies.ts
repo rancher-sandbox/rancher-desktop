@@ -1,6 +1,7 @@
 import fs from 'fs';
 
 import { Octokit } from 'octokit';
+import semver from 'semver';
 import YAML from 'yaml';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
@@ -64,7 +65,9 @@ export async function writeDependencyVersions(path: string, depVersions: Depende
 export interface Dependency {
   name: string,
   download(context: DownloadContext): Promise<void>
-  getAvailableVersions(): Promise<string[] | AlpineLimaISOVersion[]>
+  // Returns the available versions of the Dependency.
+  // Includes prerelease versions if includePrerelease is true.
+  getAvailableVersions(includePrerelease?: boolean): Promise<string[] | AlpineLimaISOVersion[]>
   // Returns -1 if version1 is higher, 0 if version1 and version2 are equal,
   // and 1 if version2 is higher.
   rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): -1 | 0 | 1
@@ -147,4 +150,20 @@ export async function getPublishedReleaseTagNames(owner: string, repo: string) {
   const publishedReleases = releases.filter(release => release.published_at !== null);
 
   return publishedReleases.map(publishedRelease => publishedRelease.tag_name);
+}
+
+// Dependency's that adhere to the following criteria may use this function
+// to get a list of available versions:
+// - The Dependency is hosted at a github repository.
+// - Versions are gathered from the tag that is on each github release.
+// - Versions are in semver format.
+export async function getPublishedVersions(githubOwner: string, githubRepo: string, includePrerelease: boolean): Promise<string[]> {
+  const tagNames = await getPublishedReleaseTagNames(githubOwner, githubRepo);
+  const allVersions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+
+  if (!includePrerelease) {
+    return allVersions.filter(version => semver.prerelease(version) === null);
+  }
+
+  return allVersions;
 }
