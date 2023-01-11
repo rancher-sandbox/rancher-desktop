@@ -36,7 +36,7 @@ export default Vue.extend({
     <button
       v-tooltip="{
         content: tooltip,
-        placement: 'right'
+        placement: 'left'
       }"
       class="btn role-fab"
       :class="{
