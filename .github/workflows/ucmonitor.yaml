@@ -8,10 +8,18 @@ permissions:
   issues: write
 
 jobs:
-  check-unreleased-changes:
+  check-for-token:
+    outputs:
+      has-token: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
     runs-on: ubuntu-latest
     steps:
+    - run: 'true'
 
+  check-unreleased-changes:
+    needs: check-for-token
+    if: needs.check-for-token.outputs.has-token == 'true'
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
