@@ -2,7 +2,10 @@ import { app, dialog } from 'electron';
 
 import { webRoot, createWindow } from '.';
 
+import { Help } from '@pkg/config/help';
 import { NavItemName } from '@pkg/config/transientSettings';
+import { Shortcuts } from '@pkg/utils/shortcuts';
+import { getVersion } from '@pkg/utils/version';
 
 interface NavItems {
   name: NavItemName;
@@ -42,6 +45,24 @@ export function openPreferences() {
       contextIsolation: false,
     },
   });
+
+  if (!Shortcuts.isRegistered(window)) {
+    Shortcuts.register(
+      window,
+      [{
+        key:      '?',
+        meta:     true,
+        platform: 'darwin',
+      }, {
+        key:      'F1',
+        platform: ['win32', 'linux'],
+      }],
+      async() => {
+        Help.preferences.openUrl(await getVersion());
+      },
+      'preferences help',
+    );
+  }
 
   window.webContents.on('ipc-message', (_event, channel) => {
     if (channel === 'preferences/load') {
