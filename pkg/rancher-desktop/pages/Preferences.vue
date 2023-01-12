@@ -6,6 +6,7 @@ import { mapGetters, mapState } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
 import PreferencesBody from '@pkg/components/Preferences/ModalBody.vue';
+import PreferencesFooter from '@pkg/components/Preferences/ModalFooter.vue';
 import PreferencesHeader from '@pkg/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@pkg/components/Preferences/ModalNav.vue';
 import type { TransientSettings } from '@pkg/config/transientSettings';
@@ -13,8 +14,6 @@ import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferences';
-
-import PreferencesFooter from '@/components/Preferences/ModalFooter.vue';
 
 export default Vue.extend({
   name:       'preferences-modal',

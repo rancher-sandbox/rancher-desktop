@@ -2,7 +2,7 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import PreferencesAlert from '@/components/Preferences/Alert.vue';
+import PreferencesAlert from '@pkg/components/Preferences/Alert.vue';
 
 export default Vue.extend({
   name:       'preferences-footer',
