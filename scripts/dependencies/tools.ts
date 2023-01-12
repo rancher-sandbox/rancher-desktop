@@ -439,7 +439,12 @@ export class RancherDashboard implements Dependency, GithubDependency {
   }
 
   async getAvailableVersions(): Promise<string[]> {
-    return await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+    const versions = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    // Versions that contain .plugins. exist solely for testing during
+    // plugins development. For more info please see
+    // https://github.com/rancher-sandbox/rancher-desktop/issues/3757
+    return versions.filter(version => !version.includes('.plugins.'));
   }
 
   versionToTagName(version: string): string {
