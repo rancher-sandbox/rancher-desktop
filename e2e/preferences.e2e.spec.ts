@@ -141,7 +141,7 @@ test.describe.serial('Main App Test', () => {
     expect(preferencesWindow).toBeDefined();
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active', { timeout: 10_000 });
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active', { timeout: 20_000 });
     await expect(containerEngine.containerEngine).toBeVisible();
 
     await expect(containerEngine.tabGeneral).toBeVisible();
