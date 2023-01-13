@@ -276,14 +276,6 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         100, Promise.resolve({}));
     }
 
-    // See comments for this code in lima.ts:start()
-    if (config.kubernetes.checkForExistingKimBuilder) {
-      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(client.k8sClient);
-      // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
-      this.emit('kim-builder-uninstalled');
-    }
-
     return '';
   }
 

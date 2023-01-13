@@ -27,44 +27,6 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     });
   }
 
-  /**
-   * When upgrading to 1.0 from an earlier version, ensure we aren't running the old kim builder K8s resources.
-   */
-  async removeKimBuilder(client: KubeConfig): Promise<void> {
-    const api = client.makeApiClient(k8s.CoreV1Api);
-    const appsApi = client.makeApiClient(k8s.AppsV1Api);
-    const builderNamespace = 'kube-image';
-    const { body: serviceList } = await api.listNamespacedService('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
-
-    for (const service of serviceList.items) {
-      const { name } = service.metadata || {};
-
-      if (!name) {
-        continue;
-      }
-      try {
-        await api.deleteNamespacedService(name, builderNamespace);
-      } catch (e) {
-        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
-      }
-    }
-
-    const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet(builderNamespace, undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
-
-    for (const daemonSet of daemonsetList.items) {
-      const { name } = daemonSet.metadata || {};
-
-      if (!name) {
-        continue;
-      }
-      try {
-        await appsApi.deleteNamespacedDaemonSet(name, builderNamespace);
-      } catch (e) {
-        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
-      }
-    }
-  }
-
   protected get processorName() {
     return 'nerdctl';
   }
