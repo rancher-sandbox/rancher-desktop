@@ -6,7 +6,6 @@ import util from 'util';
 import semver from 'semver';
 
 import { KubeClient } from '../client';
-import { getImageProcessor } from '../images/imageFactory';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import WSLBackend, { Action } from '../wsl';
 
@@ -195,7 +194,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
     this.cfg = config;
 
-    const executable = config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl';
+    const executable = config.containerEngine.name === ContainerEngine.MOBY ? 'docker' : 'nerdctl';
 
     await this.vm.verifyReady(executable, 'images');
 
@@ -276,14 +275,6 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         100, Promise.resolve({}));
     }
 
-    // See comments for this code in lima.ts:start()
-    if (config.kubernetes.checkForExistingKimBuilder) {
-      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(client.k8sClient);
-      // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
-      this.emit('kim-builder-uninstalled');
-    }
-
     return '';
   }
 
@@ -315,12 +306,12 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
           return 'restart';
         },
         'kubernetes.port':                        undefined,
-        'kubernetes.containerEngine':             undefined,
+        'containerEngine.name':                   undefined,
         'kubernetes.enabled':                     undefined,
-        'kubernetes.WSLIntegrations':             undefined,
+        'WSL.integrations':                       undefined,
         'kubernetes.options.traefik':             undefined,
         'kubernetes.options.flannel':             undefined,
-        'kubernetes.hostResolver':                undefined,
+        'virtualMachine.hostResolver':            undefined,
         'containerEngine.imageAllowList.enabled': undefined,
       },
       extras,

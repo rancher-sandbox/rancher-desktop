@@ -17,7 +17,6 @@ import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import SERVICE_CRI_DOCKERD_SCRIPT from '@pkg/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_K3S_SCRIPT from '@pkg/assets/scripts/service-k3s.initd';
 import { KubeClient } from '@pkg/backend/client';
-import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
@@ -235,31 +234,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         });
     }
 
-    // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
-    // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
-    // Note that if the user's workflow is:
-    // A. Only containerd
-    // settings version 3: containerd (which installs buildkitd)
-    // upgrade to settings version 4, still on containerd:
-    //   - remove the old kim/buildkitd artifacts
-    //   - set config.kubernetes.checkForExistingKimBuilder to false (forever)
-
-    // B. Mix of containerd and moby
-    // settings version 3: containerd (which installs buildkitd)
-    // settings version 3: switch to moby (which will uninstall buildkitd)
-    // upgrade to settings version 4, still on moby: do nothing here
-    // settings version 4, switch to containerd
-    //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
-    //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
-
-    if (config.kubernetes.checkForExistingKimBuilder) {
-      this.client ??= new KubeClient();
-      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(this.client.k8sClient);
-      // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
-      this.emit('kim-builder-uninstalled');
-    }
-
     return k3sEndpoint;
   }
 
@@ -367,7 +341,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected async writeServiceScript(cfg: BackendSettings, allowSudo: boolean) {
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
-      ENGINE:          cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
+      ENGINE:          cfg.containerEngine.name ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
     };
@@ -388,7 +362,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     await this.vm.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
     await this.vm.writeConf('cri-dockerd', {
       LOG_DIR: paths.logs,
-      ENGINE:  cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
+      ENGINE:  cfg.containerEngine.name ?? ContainerEngine.NONE,
     });
     await this.vm.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.vm.writeConf('k3s', config);
@@ -424,13 +398,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
           return 'restart';
         },
+        'application.adminAccess':                undefined,
+        'containerEngine.imageAllowList.enabled': undefined,
+        'containerEngine.name':                   undefined,
         'kubernetes.port':                        undefined,
-        'kubernetes.containerEngine':             undefined,
         'kubernetes.enabled':                     undefined,
         'kubernetes.options.traefik':             undefined,
         'kubernetes.options.flannel':             undefined,
-        'kubernetes.suppressSudo':                undefined,
-        'containerEngine.imageAllowList.enabled': undefined,
       },
       extra,
     );

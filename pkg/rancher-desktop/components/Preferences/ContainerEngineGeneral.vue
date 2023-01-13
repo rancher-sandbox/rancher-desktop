@@ -39,8 +39,8 @@ export default Vue.extend({
       :legend-text="t('containerEngine.label')"
     >
       <engine-selector
-        :container-engine="preferences.kubernetes.containerEngine"
-        @change="onChange('kubernetes.containerEngine', $event)"
+        :container-engine="preferences.containerEngine.name"
+        @change="onChange('containerEngine.name', $event)"
       />
     </rd-fieldset>
   </div>

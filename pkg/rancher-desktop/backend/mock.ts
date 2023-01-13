@@ -14,7 +14,6 @@ import ProgressTracker from './progressTracker';
 import { Settings } from '@pkg/config/settings';
 import { ChildProcess } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.mock;
 
@@ -91,7 +90,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
 
   noModalDialogs = true;
 
-  requiresRestartReasons(config: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
+  requiresRestartReasons(config: BackendSettings): Promise<RestartReasons> {
     if (!this.cfg) {
       return Promise.resolve({});
     }

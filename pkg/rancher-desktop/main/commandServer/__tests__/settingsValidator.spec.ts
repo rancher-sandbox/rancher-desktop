@@ -11,8 +11,8 @@ const cfg = _.merge(
   {},
   settings.defaultSettings,
   {
-    kubernetes:             { version: '1.23.4' },
-    pathManagementStrategy: PathManagementStrategy.Manual,
+    kubernetes:  { version: '1.23.4' },
+    application: { pathManagementStrategy: PathManagementStrategy.Manual },
   });
 
 const subject = new SettingsValidator();
@@ -41,7 +41,7 @@ describe(SettingsValidator, () => {
     it('should want to apply changes when valid new settings are proposed', () => {
       const newEnabled = !cfg.kubernetes.enabled;
       const newVersion = subject.k8sVersions[1];
-      const newEngine = cfg.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+      const newEngine = cfg.containerEngine.name === 'moby' ? 'containerd' : 'moby';
       const newFlannelEnabled = !cfg.kubernetes.options.flannel;
       const newConfig = _.merge({}, cfg, {
         kubernetes:
@@ -64,21 +64,20 @@ describe(SettingsValidator, () => {
       // Special fields that cannot be checked here; this includes enums and maps.
       const specialFields = [
         ['containerEngine', 'imageAllowList', 'locked'],
-        ['kubernetes', 'checkForExistingKimBuilder'],
-        ['kubernetes', 'containerEngine'],
-        ['kubernetes', 'WSLIntegrations'],
+        ['containerEngine', 'name'],
+        ['WSL', 'integrations'],
         ['kubernetes', 'version'],
-        ['pathManagementStrategy'],
+        ['application', 'pathManagementStrategy'],
         ['version'],
       ];
 
       // Fields that can only be set on specific platforms.
       const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
-        'kubernetes.hostResolver':             'win32',
-        'kubernetes.memoryInGB':               'darwin',
-        'kubernetes.numberCPUs':               'linux',
-        'kubernetes.suppressSudo':             'linux',
-        'kubernetes.experimental.socketVMNet': 'darwin',
+        'virtualMachine.hostResolver':             'win32',
+        'virtualMachine.memoryInGB':               'darwin',
+        'virtualMachine.numberCPUs':               'linux',
+        'application.adminAccess':                 'linux',
+        'virtualMachine.experimental.socketVMNet': 'darwin',
       };
 
       const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
@@ -203,13 +202,13 @@ describe(SettingsValidator, () => {
       });
     });
 
-    describe('kubernetes.containerEngine', () => {
+    describe('containerEngine.name', () => {
       function configWithValue(value: string | settings.ContainerEngine): settings.Settings {
         return {
           ...cfg,
-          kubernetes: {
-            ...cfg.kubernetes,
-            containerEngine: value as settings.ContainerEngine,
+          containerEngine: {
+            ...cfg.containerEngine,
+            name: value as settings.ContainerEngine,
           },
         };
       }
@@ -221,7 +220,7 @@ describe(SettingsValidator, () => {
           const typedKey = key as keyof typeof settings.ContainerEngine;
           const [needToUpdate, errors] = subject.validateSettings(
             configWithValue(settings.ContainerEngine.NONE),
-            { kubernetes: { containerEngine: settings.ContainerEngine[typedKey] } },
+            { containerEngine: { name: settings.ContainerEngine[typedKey] } },
           );
 
           expect({ needToUpdate, errors }).toEqual({
@@ -232,11 +231,11 @@ describe(SettingsValidator, () => {
       });
 
       it('should reject setting to NONE', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: settings.ContainerEngine.NONE } });
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { containerEngine: { name: settings.ContainerEngine.NONE } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <"">;')],
+          errors:       [expect.stringContaining('Invalid value for containerEngine.name: <"">;')],
         });
       });
 
@@ -246,7 +245,7 @@ describe(SettingsValidator, () => {
         it.each(aliases)('%s', (alias) => {
           const [needToUpdate, errors] = subject.validateSettings(
             configWithValue(settings.ContainerEngine.NONE),
-            { kubernetes: { containerEngine: alias as settings.ContainerEngine } });
+            { containerEngine: { name: alias as settings.ContainerEngine } });
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: true,
@@ -256,56 +255,53 @@ describe(SettingsValidator, () => {
       });
 
       it('should reject invalid values', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: 'pikachu' as settings.ContainerEngine } });
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { containerEngine: { name: 'pikachu' as settings.ContainerEngine } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <"pikachu">;')],
+          errors:       [expect.stringContaining('Invalid value for containerEngine.name: <"pikachu">;')],
         });
       });
     });
 
-    describe('kubernetes.WSLIntegrations', () => {
+    describe('WSL.integrations', () => {
       beforeEach(() => {
         spyPlatform.mockReturnValue('win32');
       });
 
       it('should reject invalid values', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: 3 as unknown as Record<string, boolean> } });
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: 3 as unknown as Record<string, boolean> } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       ['Proposed field kubernetes.WSLIntegrations should be an object, got <3>.'],
+          errors:       ['Proposed field WSL.integrations should be an object, got <3>.'],
         });
       });
 
       it('should reject being set on non-Windows', () => {
         spyPlatform.mockReturnValue('haiku');
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: { foo: true } } });
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { foo: true } } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       ["Changing field kubernetes.WSLIntegrations via the API isn't supported."],
+          errors:       ["Changing field WSL.integrations via the API isn't supported."],
         });
       });
 
       it('should reject invalid configuration', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: { distribution: 3 as unknown as boolean } } });
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { distribution: 3 as unknown as boolean } } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       ['Invalid value for kubernetes.WSLIntegrations.distribution: <3>'],
+          errors:       ['Invalid value for WSL.integrations.distribution: <3>'],
         });
       });
 
       it('should allow being changed', () => {
         const [needToUpdate, errors] = subject.validateSettings({
           ...cfg,
-          kubernetes: {
-            ...cfg.kubernetes,
-            WSLIntegrations: { distribution: false },
-          },
-        }, { kubernetes: { WSLIntegrations: { distribution: true } } });
+          WSL: { integrations: { distribution: false } },
+        }, { WSL: { integrations: { distribution: true } } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: true,
@@ -367,8 +363,11 @@ describe(SettingsValidator, () => {
           const value = PathManagementStrategy[strategy as keyof typeof PathManagementStrategy];
           const [needToUpdate, errors] = subject.validateSettings({
             ...cfg,
-            pathManagementStrategy: PathManagementStrategy.NotSet,
-          }, { pathManagementStrategy: value });
+            application: {
+              ...cfg.application,
+              pathManagementStrategy: PathManagementStrategy.NotSet,
+            },
+          }, { application: { pathManagementStrategy: value } });
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: true,
@@ -378,32 +377,31 @@ describe(SettingsValidator, () => {
       });
 
       it('should reject invalid values', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { pathManagementStrategy: 'invalid value' as PathManagementStrategy });
+        const [needToUpdate, errors] = subject.validateSettings(cfg,
+          { application: { pathManagementStrategy: 'invalid value' as PathManagementStrategy } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [`pathManagementStrategy: "invalid value" is not a valid strategy`],
+          errors:       [`application.pathManagementStrategy: "invalid value" is not a valid strategy`],
         });
       });
 
       it('should reject setting as NotSet', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { pathManagementStrategy: PathManagementStrategy.NotSet });
+        const [needToUpdate, errors] = subject.validateSettings(cfg,
+          { application: { pathManagementStrategy: PathManagementStrategy.NotSet } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [`pathManagementStrategy: "notset" is not a valid strategy`],
+          errors:       [`application.pathManagementStrategy: "notset" is not a valid strategy`],
         });
       });
     });
 
     it('should complain about unchangeable fields', () => {
-      const unchangeableFieldsAndValues = {
-        'kubernetes.checkForExistingKimBuilder': !cfg.kubernetes.checkForExistingKimBuilder,
-        version:                                 -1,
-      };
+      const unchangeableFieldsAndValues = { version: -1 };
 
-      // Check that we _don't_ ask for update when we  have errors.
-      const input = { telemetry: !cfg.telemetry };
+      // Check that we _don't_ ask for update when we have errors.
+      const input = { application: { telemetry: { enabled: !cfg.application.telemetry.enabled } } };
 
       for (const [path, value] of Object.entries(unchangeableFieldsAndValues)) {
         _.set(input, path, value);
@@ -425,17 +423,17 @@ describe(SettingsValidator, () => {
       expect(errors[0]).toContain('Setting kubernetes should wrap an inner object, but got <5>');
 
       [needToUpdate, errors] = subject.validateSettings(cfg, {
-        kubernetes: {
-          containerEngine: { expected: 'a string' } as unknown as settings.ContainerEngine,
-          version:         { expected: 'a string' } as unknown as string,
-          options:         "ceci n'est pas un objet" as unknown as Record<string, boolean>,
-          enabled:         true,
+        containerEngine: { name: { expected: 'a string' } as unknown as settings.ContainerEngine },
+        kubernetes:      {
+          version: { expected: 'a string' } as unknown as string,
+          options: "ceci n'est pas un objet" as unknown as Record<string, boolean>,
+          enabled: true,
         },
       });
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(3);
       expect(errors).toEqual([
-        `Invalid value for kubernetes.containerEngine: <{"expected":"a string"}>; must be 'containerd', 'docker', or 'moby'`,
+        `Invalid value for containerEngine.name: <{"expected":"a string"}>; must be 'containerd', 'docker', or 'moby'`,
         'Kubernetes version "[object Object]" not found.',
         "Setting kubernetes.options should wrap an inner object, but got <ceci n'est pas un objet>.",
       ]);

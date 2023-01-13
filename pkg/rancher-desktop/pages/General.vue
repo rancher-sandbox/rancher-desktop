@@ -116,7 +116,7 @@ export default {
       this.$data.updateState = state;
     },
     updateTelemetry(value) {
-      ipcRenderer.invoke('settings-write', { telemetry: value });
+      ipcRenderer.invoke('settings-write', { application: { telemetry: { enabled: value } } });
     },
     onNetworkUpdate(status) {
       ipcRenderer.send('update-network-status', status);

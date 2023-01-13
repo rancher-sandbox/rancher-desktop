@@ -1,9 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import * as k8s from '@kubernetes/client-node';
-import { KubeConfig } from '@kubernetes/client-node/dist/config';
-
 import { VMBackend, VMExecutor } from '@pkg/backend/backend';
 import * as imageProcessor from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
@@ -25,44 +22,6 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
       this.isK8sReady = mgr.state === K8s.State.STARTED || mgr.state === K8s.State.DISABLED;
       this.updateWatchStatus();
     });
-  }
-
-  /**
-   * When upgrading to 1.0 from an earlier version, ensure we aren't running the old kim builder K8s resources.
-   */
-  async removeKimBuilder(client: KubeConfig): Promise<void> {
-    const api = client.makeApiClient(k8s.CoreV1Api);
-    const appsApi = client.makeApiClient(k8s.AppsV1Api);
-    const builderNamespace = 'kube-image';
-    const { body: serviceList } = await api.listNamespacedService('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
-
-    for (const service of serviceList.items) {
-      const { name } = service.metadata || {};
-
-      if (!name) {
-        continue;
-      }
-      try {
-        await api.deleteNamespacedService(name, builderNamespace);
-      } catch (e) {
-        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
-      }
-    }
-
-    const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet(builderNamespace, undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
-
-    for (const daemonSet of daemonsetList.items) {
-      const { name } = daemonSet.metadata || {};
-
-      if (!name) {
-        continue;
-      }
-      try {
-        await appsApi.deleteNamespacedDaemonSet(name, builderNamespace);
-      } catch (e) {
-        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
-      }
-    }
   }
 
   protected get processorName() {
