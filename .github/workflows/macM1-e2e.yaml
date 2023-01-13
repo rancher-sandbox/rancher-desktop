@@ -33,18 +33,20 @@ jobs:
           mkdir -p $HOME/.rd/bin
           cp -rf $HOME/actions-runner/_work/rancher-desktop/rancher-desktop/resources/darwin/bin/ $HOME/.rd/bin/
           export PATH="$HOME/.rd/bin:$PATH"
-      - name: Suppress sudo before start up
+      - name: Disable admin-access before start up
         run: |
           mkdir -p $HOME/Library/Preferences/rancher-desktop
           touch $HOME/Library/Preferences/rancher-desktop/settings.json
           cat <<EOF > $HOME/Library/Preferences/rancher-desktop/settings.json
           {
             "version": 4,
-            "kubernetes": {
-              "memoryInGB": 6,
-              "suppressSudo": true
+            "application": {
+              "adminAccess": false
+              "updater":  { "enabled": false },
             },
-            "updater": false,
+            "virtualMachine" {
+              "memoryInGB": 6,
+            },
             "pathManagementStrategy": "rcfiles"
           }
           EOF
@@ -79,7 +81,7 @@ jobs:
           rm -fr Preferences/rancher-desktop
           rm -fr Caches/rancher-desktop/k3s-versions.json
           cd $HOME/.rd/bin
-          for x in helm kim kubectl nerdctl docker ; do
+          for x in helm kubectl nerdctl docker ; do
            if [[ -L $x ]] ; then # && $(readlink $x):]] ; then
            rm -f $x
            fi

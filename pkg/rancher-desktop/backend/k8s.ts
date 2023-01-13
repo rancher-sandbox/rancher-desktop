@@ -5,7 +5,6 @@ import { ServiceEntry } from './client';
 import { ExtraRequiresReasons } from './k3sHelper';
 
 import EventEmitter from '@pkg/utils/eventEmitter';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 export { State, BackendError as KubernetesError } from './backend';
 export type {
@@ -49,11 +48,6 @@ export interface KubernetesBackendEvents {
    * Emitted when k8s is running on a new port
    */
   'current-port-changed'(port: number): void;
-
-  /**
-   * Emitted when the checkForExistingKimBuilder setting pref changes
-   */
-  'kim-builder-uninstalled'(): void;
 }
 
 export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>, KubernetesBackendPortForwarder {
@@ -128,7 +122,7 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
    * Calculate any reasons that may require us to restart the backend, had the
    * given new configuration been applied on top of the existing old configuration.
    */
-  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursivePartial<BackendSettings>, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
+  requiresRestartReasons(oldConfig: BackendSettings, newConfig: BackendSettings, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
 }
 
 export interface KubernetesBackendPortForwarder {
@@ -147,7 +141,6 @@ export interface KubernetesBackendPortForwarder {
    * @param namespace The namespace containing the service to forward.
    * @param service The name of the service to forward.
    * @param k8sPort The internal port of the service to forward.
-   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    */
   cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void>;
 }

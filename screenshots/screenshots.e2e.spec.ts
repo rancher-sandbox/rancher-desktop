@@ -18,7 +18,7 @@ test.describe.serial('Main App Test', () => {
 
   test.beforeAll(async({ colorScheme }) => {
     createDefaultSettings({
-      updater:         true,
+      application:     { updater: { enabled: true } },
       containerEngine: { imageAllowList: { enabled: true, patterns: ['rancher/example'] } },
       diagnostics:     { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
@@ -70,7 +70,7 @@ test.describe.serial('Main App Test', () => {
 
     // show diagnostics badge
     await expect(diagnosticsPage.diagnostics).toBeVisible();
-    diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
+    await diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
     await page.waitForTimeout(200);
 
     await screenshot.take('Diagnostics');
@@ -115,6 +115,6 @@ test.describe.serial('Main App Test', () => {
       await screenshot.take('wsl');
     }
 
-    preferencesPage.close({ runBeforeUnload: true });
+    await preferencesPage.close({ runBeforeUnload: true });
   });
 });

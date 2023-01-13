@@ -33,19 +33,19 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
-    isSudoAllowed(): boolean {
-      return !(this.preferences?.kubernetes?.suppressSudo ?? false);
+    hasAdminAccess(): boolean {
+      return this.preferences?.application?.adminAccess ?? true;
     },
     canAutoUpdate(): boolean {
-      return this.preferences?.updater || false;
+      return this.preferences?.application?.updater?.enabled || false;
     },
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
-    onSudoAllowedChange(val: boolean) {
-      this.$store.dispatch('applicationSettings/commitSudoAllowed', val);
+    onAdminAccessChange(val: boolean) {
+      this.$store.dispatch('applicationSettings/commitAdminAccess', val);
     },
   },
 });
@@ -61,8 +61,8 @@ export default Vue.extend({
     >
       <checkbox
         label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
-        :value="isSudoAllowed"
-        @input="onChange('kubernetes.suppressSudo', !$event)"
+        :value="hasAdminAccess"
+        @input="onChange('application.adminAccess', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -73,7 +73,7 @@ export default Vue.extend({
         data-test="automaticUpdatesCheckbox"
         label="Check for updates automatically"
         :value="canAutoUpdate"
-        @input="onChange('updater', $event)"
+        @input="onChange('application.updater.enabled', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -82,8 +82,8 @@ export default Vue.extend({
     >
       <checkbox
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
-        :value="preferences.telemetry"
-        @input="onChange('telemetry', $event)"
+        :value="preferences.application.telemetry.enabled"
+        @input="onChange('application.telemetry.enabled', $event)"
       />
     </rd-fieldset>
   </div>

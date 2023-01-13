@@ -97,8 +97,8 @@ test.describe('Command server', () => {
   }
 
   function verifySettingsKeys(settings: Record<string, any>) {
-    expect(new Set(['version', 'containerEngine', 'kubernetes', 'portForwarding', 'images', 'telemetry',
-      'updater', 'debug', 'pathManagementStrategy', 'diagnostics']))
+    expect(new Set(['version', 'application', 'containerEngine', 'virtualMachine',
+      'WSL', 'kubernetes', 'portForwarding', 'images', 'diagnostics']))
       .toEqual(new Set(Object.keys(settings)));
   }
 
@@ -222,15 +222,17 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/settings');
     const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
-    const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+    const desiredEngine = settings.containerEngine.name === 'moby' ? 'containerd' : 'moby';
     const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
     const requestedSettings = _.merge({}, settings, {
+      containerEngine: {
+        name:           { desiredEngine },
+        imageAllowList: { locked: !settings.containerEngine.imageAllowList.locked },
+      },
       kubernetes:
         {
-          enabled:                    desiredEnabled,
-          containerEngine:            desiredEngine,
-          version:                    desiredVersion,
-          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
+          enabled: desiredEnabled,
+          version: desiredVersion,
         },
     });
     const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');
@@ -247,14 +249,14 @@ test.describe('Command server', () => {
 
   test('should return multiple error messages, settings request', async() => {
     const newSettings: Record<string, any> = {
-      kubernetes: {
-        WSLIntegrations: "ceci n'est pas un objet",
-        stoinks:         'yikes!', // should be ignored
-        memoryInGB:      'carl',
-        containerEngine: { status: 'should be a scalar' },
+      application: {
+        stoinks:   'yikes!', // should be ignored
+        telemetry: { enabled: { oops: 15 } },
       },
-      portForwarding: 'bob',
-      telemetry:      { oops: 15 },
+      containerEngine: { name: { status: 'should be a scalar' } },
+      virtualMachine:  { memoryInGB: 'carl' },
+      WSL:             { integrations: "ceci n'est pas un objet" },
+      portForwarding:  'bob',
     };
     const resp2 = await doRequest('/v0/settings', JSON.stringify(newSettings), 'PUT');
 
@@ -262,19 +264,20 @@ test.describe('Command server', () => {
     expect(resp2.status).toEqual(400);
     const body = resp2.body.read().toString();
     const expectedWSL = {
-      win32: "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
-      lima:  "Changing field kubernetes.WSLIntegrations via the API isn't supported.",
+      win32: "Proposed field WSL.integrations should be an object, got <ceci n'est pas un objet>.",
+      lima:  "Changing field WSL.integrations via the API isn't supported.",
     }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedMemory = {
-      win32: "Changing field kubernetes.memoryInGB via the API isn't supported.",
-      lima:  'Invalid value for kubernetes.memoryInGB: <"carl">',
+      win32: "Changing field virtualMachine.memoryInGB via the API isn't supported.",
+      lima:  'Invalid value for virtualMachine.memoryInGB: <"carl">',
     }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedLines = [
+      'errors in attempt to update settings:',
       expectedWSL,
       expectedMemory,
-      `Invalid value for kubernetes.containerEngine: <{"status":"should be a scalar"}>; must be 'containerd', 'docker', or 'moby'`,
+      `Invalid value for containerEngine.name: <{"status":"should be a scalar"}>; must be 'containerd', 'docker', or 'moby'`,
       'Setting portForwarding should wrap an inner object, but got <bob>.',
-      'Invalid value for telemetry: <{"oops":15}>',
+      'Invalid value for application.telemetry.enabled: <{"oops":15}>',
     ];
 
     expect(body.split(/\r?\n/g)).toEqual(expect.arrayContaining(expectedLines));
@@ -312,11 +315,11 @@ test.describe('Command server', () => {
 
   test('should not restart on unrelated changes', async() => {
     let resp = await doRequest('/v0/settings');
-    let telemetry = false;
 
     expect(resp.ok).toBeTruthy();
-    telemetry = (await resp.json() as Settings).telemetry;
-    resp = await doRequest('/v0/settings', JSON.stringify({ telemetry: !telemetry }), 'PUT');
+    const telemetry = (await resp.json() as Settings).application.telemetry.enabled;
+
+    resp = await doRequest('/v0/settings', JSON.stringify({ application: { telemetry: { enabled: !telemetry } } }), 'PUT');
     expect(resp.ok).toBeTruthy();
     await expect(resp.text()).resolves.toContain('no restart required');
   });
@@ -615,7 +618,7 @@ test.describe('Command server', () => {
 
       verifySettingsKeys(settings);
 
-      const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
+      const args = ['set', '--container-engine', settings.containerEngine.name,
         `--kubernetes-enabled=${ !!settings.kubernetes.enabled }`,
         '--kubernetes-version', settings.kubernetes.version];
       const result = await rdctl(args);
@@ -675,7 +678,7 @@ test.describe('Command server', () => {
           stdout, stderr, error,
         }).toEqual({
           error:  expect.any(Error),
-          stderr: expect.stringContaining(`invalid value for option --container-engine: <"${ myEngine }">; must be 'containerd', 'docker', or 'moby'`),
+          stderr: expect.stringContaining(`Error: invalid value for option --container-engine: <"${ myEngine }">; must be 'containerd', 'moby', or 'docker'`),
           stdout: '',
         });
         expect(stderr).not.toContain('Error: errors in attempt to update settings:');
@@ -924,14 +927,14 @@ test.describe('Command server', () => {
             });
 
             test('invalid setting is specified', async() => {
-              const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
+              const newSettings = { containerEngine: { name: 'beefalo' } };
               const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
 
               expect({
                 stdout, stderr, error,
               }).toEqual({
                 error:  expect.any(Error),
-                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <"beefalo">; must be 'containerd', 'docker', or 'moby'/),
+                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for containerEngine.name: <"beefalo">; must be 'containerd', 'docker', or 'moby'/),
                 stdout: expect.stringMatching(/{.*}/s),
               });
               expect(stderr).not.toContain('Usage:');
@@ -1173,9 +1176,10 @@ test.describe('Command server', () => {
       const settings: Settings = JSON.parse(stdout);
       const payloadObject: RecursivePartial<Settings> = { };
 
-      if (settings.kubernetes.containerEngine !== ContainerEngine.CONTAINERD) {
+      if (settings.containerEngine.name !== ContainerEngine.CONTAINERD) {
         payloadObject.kubernetes = {};
-        payloadObject.kubernetes.containerEngine = ContainerEngine.CONTAINERD;
+        payloadObject.containerEngine ??= {};
+        payloadObject.containerEngine.name = ContainerEngine.CONTAINERD;
       }
       if (Object.keys(payloadObject).length > 0) {
         const navPage = new NavPage(page);

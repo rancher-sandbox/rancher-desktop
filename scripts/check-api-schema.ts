@@ -55,7 +55,6 @@ interface schemaMissing {
 type schemaNode = schemaObject | schemaString | schemaInteger | schemaBoolean | schemaArray | schemaMissing;
 
 const blacklistedPaths = [
-  'kubernetes.checkForExistingKimBuilder',
   'version',
 ];
 

@@ -16,7 +16,7 @@ const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH:';
 let pathStrategy = PathManagementStrategy.NotSet;
 
 mainEvents.on('settings-update', (cfg) => {
-  pathStrategy = cfg.pathManagementStrategy;
+  pathStrategy = cfg.application.pathManagementStrategy;
 });
 
 export class RDBinInShellPath implements DiagnosticsChecker {

@@ -4,7 +4,7 @@ import stream from 'stream';
 import { Settings } from '@pkg/config/settings';
 import * as childProcess from '@pkg/utils/childProcess';
 import EventEmitter from '@pkg/utils/eventEmitter';
-import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
+import { RecursiveKeys, RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
 
@@ -74,7 +74,7 @@ export interface BackendEvents {
 /**
  * Settings that KubernetesBackend can access.
  */
-export type BackendSettings = RecursiveReadonly<Settings>;
+export type BackendSettings = Settings;
 
 /**
  * Reasons that the backend might need to restart, as returned from
