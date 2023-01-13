@@ -55,7 +55,15 @@ export default class SettingsValidator {
   validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
     this.isKubernetesDesired = typeof newSettings.kubernetes?.enabled !== 'undefined' ? newSettings.kubernetes.enabled : currentSettings.kubernetes.enabled;
     this.allowedSettings ||= {
-      version:         this.checkUnchanged,
+      version:     this.checkUnchanged,
+      application: {
+        adminAccess:            this.checkLima(this.checkBoolean),
+        debug:                  this.checkBoolean,
+        pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
+        telemetry:              { enabled: this.checkBoolean },
+        /** Whether we should check for updates and apply them. */
+        updater:                { enabled: this.checkBoolean },
+      },
       containerEngine: {
         imageAllowList: {
           // TODO (maybe): `patterns` and `enabled` should be immutable if `locked` is true
@@ -63,31 +71,27 @@ export default class SettingsValidator {
           locked:   this.checkUnchanged,
           patterns: this.checkStringArray,
         },
+        name: this.checkContainerEngine,
       },
+      virtualMachine: {
+        memoryInGB:   this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
+        numberCPUs:   this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
+        hostResolver: this.checkPlatform('win32', this.checkBoolean),
+        experimental: { socketVMNet: this.checkPlatform('darwin', this.checkBoolean) },
+      },
+      WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },
       kubernetes: {
-        version:                    this.checkKubernetesVersion,
-        memoryInGB:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
-        numberCPUs:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
-        port:                       this.checkNumber(1, 65535),
-        containerEngine:            this.checkContainerEngine,
-        checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
-        enabled:                    this.checkBoolean,
-        WSLIntegrations:            this.checkPlatform('win32', this.checkBooleanMapping),
-        options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
-        suppressSudo:               this.checkLima(this.checkBoolean),
-        hostResolver:               this.checkPlatform('win32', this.checkBoolean),
-        experimental:               { socketVMNet: this.checkPlatform('darwin', this.checkBoolean) },
+        version: this.checkKubernetesVersion,
+        port:    this.checkNumber(1, 65535),
+        enabled: this.checkBoolean,
+        options: { traefik: this.checkBoolean, flannel: this.checkBoolean },
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
         showAll:   this.checkBoolean,
         namespace: this.checkString,
       },
-      telemetry:              this.checkBoolean,
-      updater:                this.checkBoolean,
-      debug:                  this.checkBoolean,
-      pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
-      diagnostics:            {
+      diagnostics: {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,
       },
@@ -398,10 +402,8 @@ export default class SettingsValidator {
 
   canonicalizeSynonyms(newSettings: settingsLike): void {
     this.synonymsTable ||= {
-      kubernetes: {
-        version:         this.canonicalizeKubernetesVersion,
-        containerEngine: this.canonicalizeContainerEngine,
-      },
+      containerEngine: { name: this.canonicalizeContainerEngine },
+      kubernetes:      { version: this.canonicalizeKubernetesVersion },
     };
     this.canonicalizeSettings(this.synonymsTable, newSettings, []);
   }

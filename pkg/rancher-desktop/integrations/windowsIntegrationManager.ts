@@ -73,7 +73,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   constructor() {
     mainEvents.on('settings-update', (settings) => {
-      this.wslHelperDebugArgs = runInDebugMode(settings.debug) ? ['--verbose'] : [];
+      this.wslHelperDebugArgs = runInDebugMode(settings.application.debug) ? ['--verbose'] : [];
       this.settings = clone(settings);
       this.sync();
     });
@@ -231,7 +231,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     const shouldRun =
       this.enforcing &&
       this.backendReady &&
-      this.settings.kubernetes?.containerEngine === ContainerEngine.MOBY;
+      this.settings.containerEngine?.name === ContainerEngine.MOBY;
 
     console.debug(`Syncing socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
     if (shouldRun) {
@@ -255,7 +255,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    */
   protected async syncDistroSocketProxy(distro: string, shouldRun: boolean) {
     console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
-    if (shouldRun && this.settings.kubernetes?.WSLIntegrations?.[distro] === true) {
+    if (shouldRun && this.settings.WSL?.integrations?.[distro] === true) {
       const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
       const logStream = Logging[`wsl-helper.${ distro }`];
 
@@ -283,7 +283,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       this.distroSocketProxyProcesses[distro].start();
     } else {
       await this.distroSocketProxyProcesses[distro]?.stop();
-      if (!(distro in (this.settings.kubernetes?.WSLIntegrations ?? {}))) {
+      if (!(distro in (this.settings.WSL?.integrations ?? {}))) {
         delete this.distroSocketProxyProcesses[distro];
       }
     }
@@ -323,7 +323,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     const srcPath = await this.getLinuxToolPath(distro, 'bin', 'docker-compose');
     const destDir = '$HOME/.docker/cli-plugins';
     const destPath = `${ destDir }/docker-compose`;
-    const state = this.settings.kubernetes?.WSLIntegrations?.[distro] === true;
+    const state = this.settings.WSL?.integrations?.[distro] === true;
 
     console.debug(`Syncing ${ distro } docker compose: ${ srcPath } -> ${ destDir }`);
     if (state) {
@@ -357,7 +357,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string) {
-    const state = this.settings.kubernetes?.WSLIntegrations?.[distro] === true;
+    const state = this.settings.WSL?.integrations?.[distro] === true;
 
     try {
       console.debug(`Syncing ${ distro } kubeconfig`);
@@ -444,7 +444,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${ distro.version }).`;
     }
     if (!this.settings.kubernetes?.enabled) {
-      return this.settings.kubernetes?.WSLIntegrations?.[distro.name] ?? false;
+      return this.settings.WSL?.integrations?.[distro.name] ?? false;
     }
     try {
       const executable = await this.getLinuxToolPath(distro.name, 'wsl-helper');

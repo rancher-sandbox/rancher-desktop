@@ -21,7 +21,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 4;
+const CURRENT_SETTINGS_VERSION = 5;
 
 export enum ContainerEngine {
   NONE = '',
@@ -36,7 +36,15 @@ export const ContainerEngineNames: Record<ContainerEngine, string> = {
 };
 
 export const defaultSettings = {
-  version:         CURRENT_SETTINGS_VERSION,
+  version:     CURRENT_SETTINGS_VERSION,
+  application: {
+    adminAccess:            true,
+    debug:                  false,
+    pathManagementStrategy: PathManagementStrategy.NotSet,
+    telemetry:              { enabled: true },
+    /** Whether we should check for updates and apply them. */
+    updater:                { enabled: true },
+  },
   containerEngine: {
     imageAllowList: {
       enabled:  false,
@@ -47,43 +55,38 @@ export const defaultSettings = {
       locked:   false,
       patterns: [] as Array<string>,
     },
+    name: ContainerEngine.CONTAINERD,
   },
-  kubernetes: {
-    /** The version of Kubernetes to launch, as a semver (without v prefix). */
-    version:                    '',
-    memoryInGB:                 2,
-    numberCPUs:                 2,
-    port:                       6443,
-    containerEngine:            ContainerEngine.CONTAINERD,
-    checkForExistingKimBuilder: false,
-    enabled:                    true,
-    WSLIntegrations:            {} as Record<string, boolean>,
-    options:                    { traefik: true, flannel: true },
-    suppressSudo:               false,
+  virtualMachine: {
+    memoryInGB:   2,
+    numberCPUs:   2,
     /**
      * when set to true Dnsmasq is disabled and all DNS resolution
      * is handled by host-resolver on Windows platform only.
      */
-    hostResolver:               true,
+    hostResolver: true,
     /**
      * Experimental settings - there should not be any UI for these.
      */
-    experimental:               {
+    experimental: {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
     },
+  },
+  WSL:        { integrations: {} as Record<string, boolean> },
+  kubernetes: {
+    /** The version of Kubernetes to launch, as a semver (without v prefix). */
+    version: '',
+    port:    6443,
+    enabled: true,
+    options: { traefik: true, flannel: true },
   },
   portForwarding: { includeKubernetesServices: false },
   images:         {
     showAll:   true,
     namespace: 'k8s.io',
   },
-  telemetry:              true,
-  /** Whether we should check for updates and apply them. */
-  updater:                true,
-  debug:                  false,
-  pathManagementStrategy: PathManagementStrategy.NotSet,
-  diagnostics:            {
+  diagnostics: {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
@@ -116,9 +119,9 @@ function loadFromDisk(): Settings {
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(clone(settings));
 
-  if (!Object.values(ContainerEngine).map(String).includes(cfg.kubernetes.containerEngine)) {
-    console.warn(`Replacing unrecognized saved container engine pref of '${ cfg.kubernetes.containerEngine }' with ${ ContainerEngine.CONTAINERD }`);
-    cfg.kubernetes.containerEngine = ContainerEngine.CONTAINERD;
+  if (!Object.values(ContainerEngine).map(String).includes(cfg.containerEngine.name)) {
+    console.warn(`Replacing unrecognized saved container engine pref of '${ cfg.containerEngine.name }' with ${ ContainerEngine.CONTAINERD }`);
+    cfg.containerEngine.name = ContainerEngine.CONTAINERD;
     save(cfg);
   } else if (!_.isEqual(cfg, settings)) {
     save(cfg);
@@ -288,11 +291,11 @@ export function load(): Settings {
         const totalMemoryInGB = os.totalmem() / 2 ** 30;
 
         // 25% of available ram up to a maximum of 6gb
-        settings.kubernetes.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
+        settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
       }
     }
     if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
-      settings.updater = false;
+      settings.application.updater.enabled = false;
     }
     save(settings);
   }
@@ -384,7 +387,7 @@ function parseSaveError(err: any) {
  * most changes will get picked up from the defaults.
  */
 const updateTable: Record<number, (settings: any) => void> = {
-  1: (settings) => {
+  1: (settings: any) => {
     // Implement setting change from version 3 to 4
     if ('rancherMode' in settings.kubernetes) {
       delete settings.kubernetes.rancherMode;
@@ -395,9 +398,39 @@ const updateTable: Record<number, (settings: any) => void> = {
     // The updater still wants to see an entry here (for updating ancient systems),
     // but will no longer delete obsolete files.
   },
-  3: (settings) => {
-    // Should stay true until the kim-based buildkit artifacts are removed -- see code in lima.ts:start()
-    settings.kubernetes.checkForExistingKimBuilder = true;
+  3: (_) => {
+    // With settings v5, all traces of the kim builder are gone now, so remove this line:
+    // settings.kubernetes.checkForExistingKimBuilder = true;
+  },
+  4: (settings: any) => {
+    settings.application = {
+      adminAccess:            !settings.kubernetes.suppressSudo,
+      debug:                  settings.debug,
+      pathManagementStrategy: settings.pathManagementStrategy,
+      telemetry:              { enabled: settings.telemetry },
+      updater:                { enabled: settings.updater },
+    };
+    settings.virtualMachine = {
+      experimental: settings.kubernetes.experimental,
+      hostResolver: settings.kubernetes.hostResolver,
+      memoryInGB:   settings.kubernetes.memoryInGB,
+      numberCPUs:   settings.kubernetes.numberCPUs,
+    };
+    settings.WSL = { integrations: settings.kubernetes.WSLIntegrations };
+    settings.containerEngine.name = settings.kubernetes.containerEngine;
+
+    delete settings.kubernetes.containerEngine;
+    delete settings.kubernetes.experimental;
+    delete settings.kubernetes.hostResolver;
+    delete settings.kubernetes.memoryInGB;
+    delete settings.kubernetes.numberCPUs;
+    delete settings.kubernetes.suppressSudo;
+    delete settings.kubernetes.WSLIntegrations;
+
+    delete settings.debug;
+    delete settings.pathManagementStrategy;
+    delete settings.telemetry;
+    delete settings.updater;
   },
 };
 

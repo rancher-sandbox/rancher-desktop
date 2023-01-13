@@ -233,9 +233,35 @@ components:
     preferences:
       type: object
       properties:
+        application:
+          type: object
+          properties:
+            adminAccess:
+              type: boolean
+            debug:
+              type: boolean
+            pathManagementStrategy:
+              type: string
+              enum: ['manual', 'rcfiles']
+            telemetry:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+            updater:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
         containerEngine:
           type: object
           properties:
+            name:
+              type: string
+              enum: ['containerd', 'moby', 'docker']
+              x-rd-usage: Set engine to containerd or moby (aka docker).
+              x-rd-aliases:
+                - "container-engine"
             imageAllowList:
               type: object
               properties:
@@ -247,6 +273,22 @@ components:
                   type: array
                   items:
                     type: string
+        virtualMachine:
+          type: object
+          properties:
+            memoryInGB:
+              type: integer
+              minimum: 1
+            numberCPUs:
+              type: integer
+              minimum: 1
+            hostResolver:
+              type: boolean
+            experimental:
+              type: object
+              properties:
+                socketVMNet:
+                  type: boolean
         kubernetes:
           type: object
           properties:
@@ -255,28 +297,13 @@ components:
               x-rd-usage: Choose which version of kubernetes to run.
               x-rd-aliases:
                 - "kubernetes-version"
-            memoryInGB:
-              type: integer
-              minimum: 1
-            numberCPUs:
-              type: integer
-              minimum: 1
             port:
               type: integer
-            containerEngine:
-              type: string
-              enum: ['containerd', 'docker', 'moby']
-              x-rd-usage: Set engine to containerd or moby (aka docker).
-              x-rd-aliases:
-                - "container-engine"
             enabled:
               type: boolean
               x-rd-usage: Control whether kubernetes runs in the backend.
               x-rd-aliases:
                 - "kubernetes-enabled"
-            WSLIntegrations:
-              type: object
-              additionalProperties: true
             options:
               type: object
               properties:
@@ -289,15 +316,12 @@ components:
                     Use to disable flannel so you can install your own CNI.
                   x-rd-aliases:
                     - "flannel-enabled"
-            suppressSudo:
-              type: boolean
-            hostResolver:
-              type: boolean
-            experimental:
+        WSL:
+          type: object
+          properties:
+            integrations:
               type: object
-              properties:
-                socketVMNet:
-                  type: boolean
+              additionalProperties: true
         portForwarding:
           type: object
           properties:
@@ -310,15 +334,6 @@ components:
               type: boolean
             namespace:
               type: string
-        telemetry:
-          type: boolean
-        updater:
-          type: boolean
-        debug:
-          type: boolean
-        pathManagementStrategy:
-          type: string
-          enum: ['manual', 'rcfiles']
         diagnostics:
           type: object
           properties:

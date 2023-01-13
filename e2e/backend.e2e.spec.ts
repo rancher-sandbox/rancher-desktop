@@ -114,12 +114,12 @@ test.describe.serial('KubernetesBackend', () => {
       };
 
       const newSettings: RecursivePartial<Settings> = {
-        kubernetes: {
-          version:         getAlt('kubernetes.version', '1.23.6', '1.23.5'),
-          port:            getAlt('kubernetes.port', 6443, 6444),
-          containerEngine: getAlt('kubernetes.containerEngine', ContainerEngine.CONTAINERD, ContainerEngine.MOBY),
-          enabled:         getAlt('kubernetes.enabled', true, false),
-          options:         {
+        containerEngine: { name: getAlt('containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
+        kubernetes:      {
+          version: getAlt('kubernetes.version', '1.23.6', '1.23.5'),
+          port:    getAlt('kubernetes.port', 6443, 6444),
+          enabled: getAlt('kubernetes.enabled', true, false),
+          options: {
             traefik: getAlt('kubernetes.options.traefik', true, false),
             flannel: getAlt('kubernetes.options.flannel', true, false),
           },
@@ -127,19 +127,19 @@ test.describe.serial('KubernetesBackend', () => {
       };
       /** Platform-specific changes to `newSettings`. */
       const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
-        win32:  { kubernetes: { hostResolver: getAlt('kubernetes.hostResolver', true, false) } },
-        darwin: { kubernetes: { experimental: { socketVMNet: getAlt('kubernetes.experimental.socketVMNet', true, false) } } },
+        win32:  { virtualMachine: { hostResolver: getAlt('virtualMachine.hostResolver', true, false) } },
+        darwin: { virtualMachine: { experimental: { socketVMNet: getAlt('virtualMachine.experimental.socketVMNet', true, false) } } },
       };
 
       _.merge(newSettings, platformSettings[process.platform] ?? {});
       if (['darwin', 'linux'].includes(process.platform)) {
         // Lima-specific changes to `newSettings`.
         _.merge(newSettings, {
-          kubernetes: {
-            numberCPUs:   getAlt('kubernetes.numberCPUs', 1, 2),
-            memoryInGB:   getAlt('kubernetes.memoryInGB', 3, 4),
-            suppressSudo: getAlt('kubernetes.suppressSudo', true, false),
+          virtualMachine: {
+            numberCPUs: getAlt('virtualMachine.numberCPUs', 1, 2),
+            memoryInGB: getAlt('virtualMachine.memoryInGB', 3, 4),
           },
+          application: { adminAccess: getAlt('application.adminAccess', false, true) },
         });
       }
 
@@ -152,7 +152,7 @@ test.describe.serial('KubernetesBackend', () => {
       const expectedDefinition: ExpectedDefinition = {
         'kubernetes.version':         semver.lt(newSettings.kubernetes?.version ?? '0.0.0', currentSettings.kubernetes.version),
         'kubernetes.port':            false,
-        'kubernetes.containerEngine': false,
+        'containerEngine.name':       false,
         'kubernetes.enabled':         false,
         'kubernetes.options.traefik': false,
         'kubernetes.options.flannel': false,
@@ -160,17 +160,17 @@ test.describe.serial('KubernetesBackend', () => {
 
       /** Platform-specific additions to `expectedDefinition`. */
       const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, ExpectedDefinition>> = {
-        win32:  { 'kubernetes.hostResolver': false },
-        darwin: { 'kubernetes.experimental.socketVMNet': false },
+        win32:  { 'virtualMachine.hostResolver': false },
+        darwin: { 'virtualMachine.experimental.socketVMNet': false },
       };
 
       _.merge(expectedDefinition, platformExpectedDefinitions[process.platform] ?? {});
 
       if (['darwin', 'linux'].includes(process.platform)) {
         // Lima additions to expectedDefinition
-        expectedDefinition['kubernetes.suppressSudo'] = false;
-        expectedDefinition['kubernetes.numberCPUs'] = false;
-        expectedDefinition['kubernetes.memoryInGB'] = false;
+        expectedDefinition['application.adminAccess'] = false;
+        expectedDefinition['virtualMachine.numberCPUs'] = false;
+        expectedDefinition['virtualMachine.memoryInGB'] = false;
       }
 
       const expected: Record<string, {current: any, desired: any, severity: 'reset' | 'restart'}> = {};
@@ -192,8 +192,8 @@ test.describe.serial('KubernetesBackend', () => {
       test.skip(os.platform() !== 'win32', 'WSL integration only supported on Windows');
       const random = `${ Date.now() }${ Math.random() }`;
       const newSettings: RecursivePartial<Settings> = {
-        kubernetes: {
-          WSLIntegrations: {
+        WSL: {
+          integrations: {
             [`true-${ random }`]:  true,
             [`false-${ random }`]: false,
           },
@@ -201,9 +201,9 @@ test.describe.serial('KubernetesBackend', () => {
       };
 
       await expect(put('/v0/propose_settings', newSettings)).resolves.toMatchObject({
-        'kubernetes.WSLIntegrations': {
+        'WSL.Integrations': {
           current: {},
-          desired: newSettings.kubernetes?.WSLIntegrations,
+          desired: newSettings.WSL?.integrations,
         },
       });
     });

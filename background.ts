@@ -110,7 +110,7 @@ Electron.app.on('second-instance', async() => {
 // when settings change
 mainEvents.on('settings-update', async(newSettings) => {
   console.log(`mainEvents settings-update: ${ JSON.stringify(newSettings) }`);
-  const runInDebugMode = settings.runInDebugMode(newSettings.debug);
+  const runInDebugMode = settings.runInDebugMode(newSettings.application.debug);
 
   if (runInDebugMode) {
     setLogLevel('debug');
@@ -119,9 +119,9 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   k8smanager.debug = runInDebugMode;
 
-  if (pathManager.strategy !== newSettings.pathManagementStrategy) {
+  if (pathManager.strategy !== newSettings.application.pathManagementStrategy) {
     await pathManager.remove();
-    pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
+    pathManager = getPathManagerFor(newSettings.application.pathManagementStrategy);
     await pathManager.enforce();
   }
 });
@@ -159,12 +159,12 @@ Electron.app.whenReady().then(async() => {
         console.log(`Failed to update command from argument ${ commandLineArgs } `, err);
       }
     }
-    pathManager = getPathManagerFor(cfg.pathManagementStrategy);
+    pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already
     // queued.
-    if (await setupUpdate(cfg.updater, true)) {
+    if (await setupUpdate(cfg.application.updater.enabled, true)) {
       gone = true;
       // The update code will trigger a restart; don't do it here, as it may not
       // be ready yet.
@@ -197,11 +197,11 @@ Electron.app.whenReady().then(async() => {
     dockerDirManager.ensureCredHelperConfigured();
 
     // Path management strategy will need to be selected after an upgrade
-    if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
+    if (!os.platform().startsWith('win') && cfg.application.pathManagementStrategy === PathManagementStrategy.NotSet) {
       if (!noModalDialogs) {
         await window.openPathUpdate();
       } else {
-        cfg.pathManagementStrategy = PathManagementStrategy.RcFiles;
+        cfg.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
       }
     }
 
@@ -219,7 +219,7 @@ Electron.app.whenReady().then(async() => {
 
     diagnostics.runChecks().catch(console.error);
 
-    await startBackend(cfg);
+    await startBackend();
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -306,10 +306,8 @@ async function checkBackendValid() {
 
 /**
  * Start the Kubernetes backend.
- *
- * @precondition cfg.kubernetes.version is set.
  */
-async function startBackend(cfg: settings.Settings) {
+async function startBackend() {
   await checkBackendValid();
   try {
     await startK8sManager();
@@ -324,9 +322,9 @@ async function startBackend(cfg: settings.Settings) {
  * @note Callers are responsible for handling errors thrown from here.
  */
 async function startK8sManager() {
-  const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
+  const changedContainerEngine = currentContainerEngine !== cfg.containerEngine.name;
 
-  currentContainerEngine = cfg.kubernetes.containerEngine;
+  currentContainerEngine = cfg.containerEngine.name;
   enabledK8s = cfg.kubernetes.enabled;
 
   if (changedContainerEngine) {
@@ -346,7 +344,7 @@ async function startK8sManager() {
  */
 
 function setupImageProcessor() {
-  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager.executor);
+  const imageProcessor = getImageProcessor(cfg.containerEngine.name, k8smanager.executor);
 
   currentImageProcessor?.deactivate();
   if (!imageEventHandler) {
@@ -356,7 +354,7 @@ function setupImageProcessor() {
   currentImageProcessor = imageProcessor;
   currentImageProcessor.activate();
   currentImageProcessor.namespace = cfg.images.namespace;
-  window.send('k8s-current-engine', cfg.kubernetes.containerEngine);
+  window.send('k8s-current-engine', cfg.containerEngine.name);
 }
 
 interface K8sError {
@@ -554,7 +552,7 @@ ipcMainProxy.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.kubeBackend.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe', { interactive: true });
-  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine || cfg.kubernetes.enabled !== enabledK8s) {
+  } else if (cfg.containerEngine.name !== currentContainerEngine || cfg.kubernetes.enabled !== enabledK8s) {
     return doK8sReset('fullRestart', { interactive: true });
   }
   try {
@@ -605,7 +603,7 @@ ipcMainProxy.on('k8s-integrations', async() => {
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
-  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
+  writeSettings({ WSL: { integrations: { [name]: newState } } });
 });
 
 mainEvents.on('integration-update', (state) => {
@@ -627,7 +625,7 @@ async function doFactoryReset(keepSystemImages: boolean) {
   const outfile = await fs.promises.open(path.join(tmpdir, 'rdctl-stdout.txt'), 'w');
   const args = ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`];
 
-  if (cfg.debug) {
+  if (cfg.application.debug) {
     args.push('--verbose=true');
   }
   const rdctl = spawn(path.join(paths.resources, os.platform(), 'bin', 'rdctl'), args,
@@ -822,10 +820,6 @@ function newK8sManager() {
     window.send('k8s-current-port', port);
   });
 
-  mgr.kubeBackend.on('kim-builder-uninstalled', () => {
-    writeSettings({ kubernetes: { checkForExistingKimBuilder: false } });
-  });
-
   mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
     console.debug(`service-changed: ${ JSON.stringify(services) }`);
     window.send('service-changed', services);
@@ -973,7 +967,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   ): Promise<[string, string]> {
     const [needToUpdate, errors] = this.settingsValidator.validateTransientSettings(TransientSettings.value, newTransientSettings);
 
-    return Promise.resolve((() => {
+    return Promise.resolve((():[string, string] => {
       if (errors.length > 0) {
         return ['', `errors in attempt to update Transient Settings:\n${ errors.join('\n') }`];
       }

@@ -22,7 +22,7 @@ export default Vue.extend({
   computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
   methods:  {
     onChange(distro: string, value: boolean) {
-      const property: keyof RecursiveTypes<Settings> = `kubernetes.WSLIntegrations["${ distro }"]` as any;
+      const property: keyof RecursiveTypes<Settings> = `WSL.integrations["${ distro }"]` as any;
 
       this.$store.dispatch('preferences/updateWslIntegrations', { distribution: `["${ distro }"]`, value });
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });

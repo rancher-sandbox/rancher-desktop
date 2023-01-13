@@ -54,16 +54,19 @@ EOF
     fi
 
     mkdir -p "$PATH_CONFIG"
+    # Make sure adminAccess is false
     cat <<EOF > "$PATH_CONFIG_FILE"
 {
-  "version": 4,
-  "kubernetes": {
-    "memoryInGB": 6,
-    "suppressSudo": true,
-    "WSLIntegrations": $wsl_integrations
+  "version": 5,
+  "application": {
+    "adminAccess":            false,
+    "pathManagementStrategy": "rcfiles",
+    "updater":                { "enabled": false },
   },
-  "updater": false,
-  "pathManagementStrategy": "$path_management",
+  "virtualMachine": {
+    "memoryInGB": 6,
+  },
+  "wsl": { "integrations": $wsl_integrations },
   "containerEngine": {
     "imageAllowList": {
       "enabled": $image_allow_list,

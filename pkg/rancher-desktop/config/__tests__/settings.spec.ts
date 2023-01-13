@@ -13,41 +13,45 @@ describe('updateFromCommandLine', () => {
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
     prefs = {
-      version:         4,
+      version:     4,
+      application: {
+        adminAccess:            true,
+        debug:                  true,
+        pathManagementStrategy: PathManagementStrategy.NotSet,
+        telemetry:              { enabled: true },
+        /** Whether we should check for updates and apply them. */
+        updater:                { enabled: true },
+      },
       containerEngine: {
         imageAllowList: {
           enabled:  false,
           locked:   false,
           patterns: [],
         },
+        name: settings.ContainerEngine.MOBY,
       },
+      virtualMachine: {
+        memoryInGB:   4,
+        numberCPUs:   2,
+        hostResolver: true,
+        experimental: { socketVMNet: true },
+      },
+      WSL:        { integrations: {} },
       kubernetes: {
-        version:                    '1.23.5',
-        memoryInGB:                 4,
-        numberCPUs:                 2,
-        port:                       6443,
-        containerEngine:            settings.ContainerEngine.MOBY,
-        checkForExistingKimBuilder: false,
-        enabled:                    true,
-        WSLIntegrations:            {},
-        options:                    {
+        version: '1.23.5',
+        port:    6443,
+        enabled: true,
+        options: {
           traefik: true,
           flannel: false,
         },
-        suppressSudo: false,
-        hostResolver: true,
-        experimental: { socketVMNet: true },
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {
         showAll:   true,
         namespace: 'k8s.io',
       },
-      telemetry:              true,
-      updater:                true,
-      debug:                  true,
-      pathManagementStrategy: PathManagementStrategy.NotSet,
-      diagnostics:            {
+      diagnostics: {
         showMuted:   false,
         mutedChecks: { },
       },
@@ -129,11 +133,11 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option set to implicit true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.suppressSudo']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.options.flannel']);
 
-    expect(origPrefs.kubernetes.suppressSudo).toBeFalsy();
-    expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
-    newPrefs.kubernetes.suppressSudo = false;
+    expect(origPrefs.kubernetes.options.flannel).toBeFalsy();
+    expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
+    newPrefs.kubernetes.options.flannel = false;
     expect(newPrefs).toEqual(origPrefs);
   });
 
@@ -158,22 +162,22 @@ describe('updateFromCommandLine', () => {
   test('should change several values (and no others)', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, [
       '--kubernetes.options.traefik=false',
-      '--kubernetes.suppressSudo',
+      '--application.adminAccess=false',
       '--portForwarding.includeKubernetesServices=true',
-      '--kubernetes.containerEngine=containerd',
+      '--containerEngine.name=containerd',
       '--kubernetes.port', '6444',
     ]);
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
-    expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
+    expect(newPrefs.application.adminAccess).toBeFalsy();
     expect(newPrefs.portForwarding.includeKubernetesServices).toBeTruthy();
-    expect(newPrefs.kubernetes.containerEngine).toBe('containerd');
+    expect(newPrefs.containerEngine.name).toBe('containerd');
     expect(newPrefs.kubernetes.port).toBe(6444);
 
     newPrefs.kubernetes.options.traefik = true;
-    newPrefs.kubernetes.suppressSudo = false;
+    newPrefs.application.adminAccess = true;
     newPrefs.portForwarding.includeKubernetesServices = false;
-    newPrefs.kubernetes.containerEngine = settings.ContainerEngine.MOBY;
+    newPrefs.containerEngine.name = settings.ContainerEngine.MOBY;
     newPrefs.kubernetes.port = 6443;
     expect(newPrefs).toEqual(origPrefs);
   });
@@ -233,7 +237,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should complain about a missing numeric value', () => {
-    const arg = '--kubernetes.memoryInGB';
+    const arg = '--virtualMachine.memoryInGB';
 
     expect(() => {
       settings.updateFromCommandLine(prefs, ['--kubernetes.version', '1.2.3', arg]);
@@ -260,7 +264,7 @@ describe('updateFromCommandLine', () => {
 
   test('should complain about type mismatches', () => {
     const optionList = [
-      ['--kubernetes.memoryInGB', 'true', 'boolean', 'number'],
+      ['--virtualMachine.memoryInGB', 'true', 'boolean', 'number'],
       ['--kubernetes.enabled', '7', 'number', 'boolean'],
     ];
 

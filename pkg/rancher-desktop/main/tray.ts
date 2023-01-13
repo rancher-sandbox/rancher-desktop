@@ -54,7 +54,7 @@ export class Tray {
     {
       id:      'container-engine',
       enabled: false,
-      label:   `Container engine: ${ this.settings.kubernetes.containerEngine }`,
+      label:   `Container engine: ${ this.settings.containerEngine.name }`,
       type:    'normal',
       icon:    '',
     },
@@ -265,7 +265,7 @@ export class Tray {
     const containerEngineMenu = this.contextMenuItems.find(item => item.id === 'container-engine');
 
     if (containerEngineMenu) {
-      const { containerEngine } = this.settings.kubernetes;
+      const containerEngine = this.settings.containerEngine.name;
 
       containerEngineMenu.label = containerEngine === 'containerd' ? containerEngine : `dockerd (${ containerEngine })`;
       containerEngineMenu.icon = containerEngine === 'containerd' ? path.join(paths.resources, 'icons', 'containerd-icon-color.png') : '';
