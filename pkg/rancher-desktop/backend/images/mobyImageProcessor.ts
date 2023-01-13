@@ -86,11 +86,6 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
     throw new Error("docker doesn't support namespaces");
   }
 
-  removeKimBuilder(): Promise<void> {
-    // nothing to do
-    return Promise.resolve();
-  }
-
   /**
    * Sample output (line-oriented JSON output, as opposed to one JSON document):
    *

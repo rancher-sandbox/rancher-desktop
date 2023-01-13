@@ -382,6 +382,4 @@ export abstract class ImageProcessor extends EventEmitter {
   abstract pushImage(taggedImageName: string): Promise<childResultType>;
 
   abstract getImages(): Promise<childResultType>;
-
-  abstract removeKimBuilder(client: KubeConfig): Promise<void>;
 }

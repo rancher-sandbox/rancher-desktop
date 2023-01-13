@@ -49,11 +49,6 @@ export interface KubernetesBackendEvents {
    * Emitted when k8s is running on a new port
    */
   'current-port-changed'(port: number): void;
-
-  /**
-   * Emitted when the checkForExistingKimBuilder setting pref changes
-   */
-  'kim-builder-uninstalled'(): void;
 }
 
 export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>, KubernetesBackendPortForwarder {
