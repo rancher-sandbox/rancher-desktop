@@ -33,16 +33,14 @@ export default {
     TheTitle,
   },
   async fetch() {
-    if (this.$config.featureDiagnostics) {
-      await this.$store.dispatch('credentials/fetchCredentials');
-      if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
-        console.log(`Credentials aren't ready for getting diagnostics -- will try later`);
+    await this.$store.dispatch('credentials/fetchCredentials');
+    if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
+      console.log(`Credentials aren't ready for getting diagnostics -- will try later`);
 
-        return;
-      }
-      await this.$store.dispatch('preferences/fetchPreferences', this.credentials);
-      await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
+      return;
     }
+    await this.$store.dispatch('preferences/fetchPreferences', this.credentials);
+    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
   },
 
   head() {
@@ -56,21 +54,13 @@ export default {
 
   computed: {
     routes() {
-      const routeTable = [
+      return [
         { route: '/General' },
         { route: '/PortForwarding' },
         { route: '/Images' },
         { route: '/Troubleshooting' },
+        { route: '/Diagnostics', error: this.errorCount },
       ];
-
-      if (this.featureDiagnostics) {
-        routeTable.push({ route: '/Diagnostics', error: this.errorCount });
-      }
-
-      return routeTable;
-    },
-    featureDiagnostics() {
-      return !!this.$config.featureDiagnostics;
     },
     errorCount() {
       return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
