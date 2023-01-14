@@ -1,9 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import * as k8s from '@kubernetes/client-node';
-import { KubeConfig } from '@kubernetes/client-node/dist/config';
-
 import { VMBackend, VMExecutor } from '@pkg/backend/backend';
 import * as imageProcessor from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';

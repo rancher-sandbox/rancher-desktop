@@ -20,7 +20,7 @@ test.describe.serial('Container Engine', () => {
   let context: BrowserContext;
 
   test.beforeAll(async() => {
-    createDefaultSettings({ kubernetes: { suppressSudo: true } });
+    createDefaultSettings({ application: { adminAccess: false } });
 
     electronApp = await _electron.launch({
       args: [
@@ -61,7 +61,7 @@ test.describe.serial('Container Engine', () => {
     // and then switch to the other.
     const navPage = new NavPage(page);
     const settings: Settings = JSON.parse(await tool('rdctl', 'list-settings'));
-    const engine = settings.kubernetes.containerEngine;
+    const engine = settings.containerEngine.name;
     const [otherEngine, toolName, otherToolName] = engine === 'containerd' ? ['moby', 'nerdctl', 'docker'] : ['containerd', 'docker', 'nerdctl'];
 
     // Run `uname -m` on two platforms using a more complex syntax
