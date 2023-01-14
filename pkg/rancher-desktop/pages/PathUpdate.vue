@@ -42,7 +42,7 @@ export default Vue.extend({
       window.close();
     },
     onSettingsUpdate(settings: Settings) {
-      this.$store.dispatch('applicationSettings/setSudoAllowed', !settings.kubernetes.suppressSudo);
+      this.$store.dispatch('applicationSettings/setAdminAccess', settings.application.adminAccess);
     },
   },
 });

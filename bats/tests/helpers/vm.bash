@@ -60,16 +60,18 @@ EOF
         RD_USE_IMAGE_ALLOW_LIST=true
     fi
 
-    # Make sure supressSudo is true
+    # Make sure adminAccess is false
     cat <<EOF > $RD_CONFIG_FILE
 {
   "version": 4,
-  "kubernetes": {
-    "memoryInGB": 6,
-    "suppressSudo": true
+  "application": {
+    "adminAccess":            false,
+    "pathManagementStrategy": "rcfiles",
+    "updater":                { "enabled": false },
   },
-  "updater": false,
-  "pathManagementStrategy": "rcfiles",
+  "virtualMachine": {
+    "memoryInGB": 6,
+  },
   "containerEngine": {
     "imageAllowList": {
       "enabled": $RD_USE_IMAGE_ALLOW_LIST,

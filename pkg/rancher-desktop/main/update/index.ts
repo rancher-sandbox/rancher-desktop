@@ -172,7 +172,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
 }
 
 mainEvent.on('settings-update', (settings: Settings) => {
-  if (settings.updater && state === State.CONFIGURED) {
+  if (settings.application.updater.enabled && state === State.CONFIGURED) {
     // We have a configured updater, but haven't done the actual check yet.
     // This means the setting was disabled when we configured the updater.
     // Start checking now.
