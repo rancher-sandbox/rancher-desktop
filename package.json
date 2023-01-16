@@ -135,7 +135,7 @@
     "eslint-plugin-deprecation": "1.3.3",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-nuxt": "4.0.0",
-    "eslint-plugin-vue": "9.7.0",
+    "eslint-plugin-vue": "9.9.0",
     "extract-zip": "2.0.1",
     "jest": "27.5.1",
     "js-yaml-loader": "1.2.2",
