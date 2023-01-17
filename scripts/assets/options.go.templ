@@ -11,7 +11,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,12 +48,12 @@ import (
  */
 
 type serverSettingsForJSON struct {
-  <%- linesForJSON %>
+	<%- linesForJSON %>
 }
 
 
 type serverSettings struct {
-  <%- linesWithoutJSON %>
+	<%- linesWithoutJSON %>
 }
 
 var specifiedSettings serverSettings
@@ -69,65 +69,66 @@ func enumStringCheck(option string, specified string, allowedValues []string) er
 		if specified == val {
 			return nil
 		}
-	  singleQuotedAllowedValues[i] = fmt.Sprintf("'%s'", val)
+		singleQuotedAllowedValues[i] = fmt.Sprintf("'%s'", val)
 	}
 	var allowedString string
 	if numVals == 1 {
-	  allowedString = singleQuotedAllowedValues[0]
+		allowedString = singleQuotedAllowedValues[0]
 	} else if numVals == 2 {
-	  allowedString = strings.Join(singleQuotedAllowedValues, " or ")
+		allowedString = strings.Join(singleQuotedAllowedValues, " or ")
 	} else {
-	  firstPart := strings.Join(singleQuotedAllowedValues[:numVals - 1], ", ")
-	  allowedString = fmt.Sprintf("%s, or %s", firstPart,  singleQuotedAllowedValues[numVals - 1])
+		firstPart := strings.Join(singleQuotedAllowedValues[:numVals - 1], ", ")
+		allowedString = fmt.Sprintf("%s, or %s", firstPart,  singleQuotedAllowedValues[numVals - 1])
 	}
 	return fmt.Errorf(`invalid value for option %s: <"%s">; must be %s`, option, specified, allowedString)
 }
 
 func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
-  <%_ for (const { flagType, capitalizedName, propertyName, defaultValue, usageNote, aliasFor } of commandFlags) {
-      const kebabPropertyName = kebabConvert(propertyName); _%>
-    cmd.Flags().<%- flagType %>Var(&specifiedSettings.<%- capitalizedName %>, "<%- kebabPropertyName %>", <%- defaultValue %>, "<%- usageNote %>")
-    <%_ if (aliasFor) { _%>
-    cmd.Flags().MarkHidden("<%- kebabPropertyName %>")
-    <%_ } _%>
-  <%_ } _%>
+	<%_ for (const { flagType, capitalizedName, propertyName, defaultValue, usageNote, aliasFor } of commandFlags) {
+			const kebabPropertyName = kebabCase(propertyName); _%>
+		cmd.Flags().<%- flagType %>Var(&specifiedSettings.<%- capitalizedName %>, "<%- kebabPropertyName %>", <%- defaultValue %>, "<%- usageNote %>")
+		<%_ if (aliasFor) { _%>
+		cmd.Flags().MarkHidden("<%- kebabPropertyName %>")
+		<%_ } _%>
+	<%_ } _%>
 }
 
 func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
-  var specifiedSettingsForJSON serverSettingsForJSON
+	var specifiedSettingsForJSON serverSettingsForJSON
 	changedSomething := false
 	<%_ for (const { propertyName, capitalizedName, enums }  of commandFlags) {
-	  const kebabPropertyName = kebabConvert(propertyName); _%>
-	  if flags.Changed("<%- kebabPropertyName %>") {
-	    <%_ if (enums) { _%>
-        if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
-          return nil, err
-        }
-	    <%_ } _%>
-	    specifiedSettingsForJSON.<%- capitalizedName %> = &specifiedSettings.<%- capitalizedName %>
-	    changedSomething = true
-    }
-  <% } %>
-  if changedSomething {
-    return &specifiedSettingsForJSON, nil
-  }
+		const kebabPropertyName = kebabCase(propertyName); _%>
+		if flags.Changed("<%- kebabPropertyName %>") {
+			<%_ if (enums) { _%>
+				if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
+					return nil, err
+				}
+			<%_ } _%>
+			specifiedSettingsForJSON.<%- capitalizedName %> = &specifiedSettings.<%- capitalizedName %>
+			changedSomething = true
+		}
+	<% } %>
+	if changedSomething {
+		return &specifiedSettingsForJSON, nil
+	}
 	return nil, nil
 }
 
 func GetCommandLineArgsForStartCommand(flags *pflag.FlagSet) ([]string, error) {
 	var commandLineArgs []string
-  <%_ for (const { propertyName, capitalizedName, aliasFor, enums, valuePart } of commandFlags) {
-      const kebabPropertyName = kebabConvert(propertyName);
-      const actualPropertyName = aliasFor || propertyName;
-  _%>
-    if flags.Changed("<%- kebabPropertyName %>") {
-	    <%_ if (enums) { _%>
-      if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
-        return commandLineArgs, err
-      }
-	    <%_ } _%>
-      commandLineArgs = append(commandLineArgs, "--<%- actualPropertyName %>"<%- valuePart %>)
-    }
-  <% } %>
+	<%_ for (const { propertyName, capitalizedName, aliasFor, enums, valuePart } of commandFlags) {
+			const kebabPropertyName = kebabCase(propertyName);
+			// The app and backend use dot-separated [Cc]amelCase names, not kebab-case, so pass in the camelCase name (a few lines down)
+			const actualPropertyName = aliasFor || propertyName;
+	_%>
+		if flags.Changed("<%- kebabPropertyName %>") {
+			<%_ if (enums) { _%>
+			if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
+				return commandLineArgs, err
+			}
+			<%_ } _%>
+			commandLineArgs = append(commandLineArgs, "--<%- actualPropertyName %>"<%- valuePart %>)
+		}
+	<% } %>
 	return commandLineArgs, nil
 }
