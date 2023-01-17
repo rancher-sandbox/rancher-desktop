@@ -237,10 +237,7 @@ class Generator {
     settingsTree[lastName(propertyName)] = { type: lcTypeName };
     this.commandFlags.push(newFlag);
     for (const alias of preference['x-rd-aliases'] ?? []) {
-      const aliasFlag = Object.assign({}, newFlag, { propertyName: alias, aliasFor: propertyName });
-
-      aliasFlag.usageNote = this.getFullUsageNote(usageNote, preference.enum);
-      this.commandFlags.push(aliasFlag);
+      this.commandFlags.push(Object.assign({}, newFlag, { propertyName: alias, aliasFor: propertyName }));
     }
   }
 
