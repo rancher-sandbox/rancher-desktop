@@ -95,6 +95,16 @@ function capitalizeParts(s: string) {
   return s.split('.').map(capitalize).join('.');
 }
 
+/**
+ * Replace each sequence of capital letters after a lower-case one with a "-"
+ * followed by its lower-case conversion. Different from lodash.kebabCase,
+ * which assumes the last upper-case letter in a squence starts the next
+ * inner word-part, and would convert `numberCPUs` to `number-cp-us`
+ */
+function kebabCase(s: string) {
+  return s.replace(/(?<=[a-z])([A-Z]+)/g, m => `-${ m.toLowerCase() }`);
+}
+
 function lastName(s: string): string {
   return s.split('.').pop() ?? '';
 }
@@ -142,6 +152,7 @@ class Generator {
       commandFlags:     this.commandFlags,
       linesForJSON:     linesForJSON.join('\n'),
       linesWithoutJSON: linesWithoutJSON.join('\n'),
+      kebabCase,
     };
     const renderedContent = await ejs.renderFile(templateFile, data, options);
 
