@@ -76,7 +76,7 @@ describe('updateFromCommandLine', () => {
       expect(accessor).toBe('kubernetes');
     });
     test('returns a partial pref with an internal accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'kubernetes-options-flannel') as [Record<string, any>, string];
+      const result = settings.getUpdatableNode(prefs, 'kubernetes.options.flannel') as [Record<string, any>, string];
 
       expect(result).not.toBeNull();
       const [lhs, accessor] = result;
@@ -100,7 +100,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('one option with embedded equal sign should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version=1.23.6']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.version=1.23.6']);
 
     expect(newPrefs.kubernetes.version).toBe('1.23.6');
     newPrefs.kubernetes.version = origPrefs.kubernetes.version;
@@ -108,7 +108,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('one option over two args should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.23.7']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.version', '1.23.7']);
 
     expect(newPrefs.kubernetes.version).toBe('1.23.7');
     newPrefs.kubernetes.version = origPrefs.kubernetes.version;
@@ -116,7 +116,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option to true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-flannel=true']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.options.flannel=true']);
 
     expect(origPrefs.kubernetes.options.flannel).toBeFalsy();
     expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
@@ -125,7 +125,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option set to implicit true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-suppressSudo']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.suppressSudo']);
 
     expect(origPrefs.kubernetes.suppressSudo).toBeFalsy();
     expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
@@ -134,7 +134,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option set to false should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-traefik=false']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.options.traefik=false']);
 
     expect(origPrefs.kubernetes.options.traefik).toBeTruthy();
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
@@ -143,7 +143,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('nothing after an = should set target to empty string', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--images-namespace=']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--images.namespace=']);
 
     expect(origPrefs.images.namespace).not.toBe('');
     expect(newPrefs.images.namespace).toBe('');
@@ -153,11 +153,11 @@ describe('updateFromCommandLine', () => {
 
   test('should change several values (and no others)', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, [
-      '--kubernetes-options-traefik=false',
-      '--kubernetes-suppressSudo',
-      '--portForwarding-includeKubernetesServices=true',
-      '--kubernetes-containerEngine=containerd',
-      '--kubernetes-port', '6444',
+      '--kubernetes.options.traefik=false',
+      '--kubernetes.suppressSudo',
+      '--portForwarding.includeKubernetesServices=true',
+      '--kubernetes.containerEngine=containerd',
+      '--kubernetes.port', '6444',
     ]);
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
@@ -175,21 +175,21 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should ignore non-option arguments', () => {
-    const arg = 'doesnt-start-with-dash-dash=some-value';
+    const arg = 'doesnt.start.with.dash.dash=some-value';
     const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
 
     expect(newPrefs).toEqual(origPrefs);
   });
 
   test('should ignore an unrecognized option', () => {
-    const arg = '--kubernetes-zipperhead';
+    const arg = '--kubernetes.zipperhead';
     const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
 
     expect(newPrefs).toEqual(origPrefs);
   });
 
   test('should ignore leading options and arguments', () => {
-    const args = ['--kubernetes-zipperhead', '--another-unknown-option', 'its-argument', '--dont-know-what-this-is-either'];
+    const args = ['--kubernetes.zipperhead', '--another.unknown.option', 'its.argument', '--dont.know.what.this.is.either'];
     const newPrefs = settings.updateFromCommandLine(prefs, args);
 
     expect(TransientSettings.value.noModalDialogs).toEqual(false);
@@ -197,7 +197,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should complain about an unrecognized ignore after a recognized one', () => {
-    const args = ['--ignore-this-one', '--kubernetes-enabled', '--complain-about-this'];
+    const args = ['--ignore.this.one', '--kubernetes.enabled', '--complain.about.this'];
 
     expect(() => {
       settings.updateFromCommandLine(prefs, args);
@@ -205,7 +205,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should complain about non-options after recognizing an option', () => {
-    const args = ['--kubernetes-enabled', 'doesnt-start-with-dash-dash=some-value'];
+    const args = ['--kubernetes.enabled', 'doesnt.start.with.dash.dash=some-value'];
 
     expect(() => {
       settings.updateFromCommandLine(prefs, args);
@@ -213,7 +213,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should refuse to overwrite a non-leaf node', () => {
-    const arg = '--kubernetes-options';
+    const arg = '--kubernetes.options';
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [arg, '33']);
@@ -221,7 +221,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should complain about a missing string value', () => {
-    const arg = '--kubernetes-version';
+    const arg = '--kubernetes.version';
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [arg]);
@@ -229,15 +229,15 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should complain about a missing numeric value', () => {
-    const arg = '--kubernetes-memoryInGB';
+    const arg = '--kubernetes.memoryInGB';
 
     expect(() => {
-      settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.2.3', arg]);
+      settings.updateFromCommandLine(prefs, ['--kubernetes.version', '1.2.3', arg]);
     }).toThrow(`No value provided for option ${ arg }`);
   });
 
   test('should complain about a non-boolean value', () => {
-    const arg = '--kubernetes-enabled';
+    const arg = '--kubernetes.enabled';
     const value = 'nope';
 
     expect(() => {
@@ -246,7 +246,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('should complain about a non-numeric value', () => {
-    const arg = '--kubernetes-port';
+    const arg = '--kubernetes.port';
     const value = 'angeles';
 
     expect(() => {
@@ -256,8 +256,8 @@ describe('updateFromCommandLine', () => {
 
   test('should complain about type mismatches', () => {
     const optionList = [
-      ['--kubernetes-memoryInGB', 'true', 'boolean', 'number'],
-      ['--kubernetes-enabled', '7', 'number', 'boolean'],
+      ['--kubernetes.memoryInGB', 'true', 'boolean', 'number'],
+      ['--kubernetes.enabled', '7', 'number', 'boolean'],
     ];
 
     for (const [arg, finalValue, currentType, desiredType] of optionList) {

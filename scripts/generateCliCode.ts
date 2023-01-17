@@ -95,6 +95,14 @@ function capitalizeParts(s: string) {
   return s.split('.').map(capitalize).join('.');
 }
 
+function kebabCase(s: string) {
+  return s.replace(/(?<=[a-z])([A-Z]+)/g, m => `-${ m.toLowerCase() }`);
+}
+
+function kebabConvert(s: string) {
+  return s.split('.').map(part => kebabCase(part)).join('.');
+}
+
 function lastName(s: string): string {
   return s.split('.').pop() ?? '';
 }
@@ -142,6 +150,7 @@ class Generator {
       commandFlags:     this.commandFlags,
       linesForJSON:     linesForJSON.join('\n'),
       linesWithoutJSON: linesWithoutJSON.join('\n'),
+      kebabConvert,
     };
     const renderedContent = await ejs.renderFile(templateFile, data, options);
 

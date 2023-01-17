@@ -84,10 +84,11 @@ func enumStringCheck(option string, specified string, allowedValues []string) er
 }
 
 func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
-  <%_ for (const { flagType, capitalizedName, propertyName, defaultValue, usageNote, aliasFor } of commandFlags) { _%>
-    cmd.Flags().<%- flagType %>Var(&specifiedSettings.<%- capitalizedName %>, "<%- propertyName %>", <%- defaultValue %>, "<%- usageNote %>")
+  <%_ for (const { flagType, capitalizedName, propertyName, defaultValue, usageNote, aliasFor } of commandFlags) {
+      const kebabPropertyName = kebabConvert(propertyName); _%>
+    cmd.Flags().<%- flagType %>Var(&specifiedSettings.<%- capitalizedName %>, "<%- kebabPropertyName %>", <%- defaultValue %>, "<%- usageNote %>")
     <%_ if (aliasFor) { _%>
-    cmd.Flags().MarkHidden("<%- propertyName %>")
+    cmd.Flags().MarkHidden("<%- kebabPropertyName %>")
     <%_ } _%>
   <%_ } _%>
 }
@@ -95,10 +96,11 @@ func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
 func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
   var specifiedSettingsForJSON serverSettingsForJSON
 	changedSomething := false
-	<%_ for (const { propertyName, capitalizedName, enums }  of commandFlags) { _%>
-	  if flags.Changed("<%- propertyName %>") {
+	<%_ for (const { propertyName, capitalizedName, enums }  of commandFlags) {
+	  const kebabPropertyName = kebabConvert(propertyName); _%>
+	  if flags.Changed("<%- kebabPropertyName %>") {
 	    <%_ if (enums) { _%>
-        if err := enumStringCheck("--<%- propertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
+        if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
           return nil, err
         }
 	    <%_ } _%>
@@ -115,11 +117,12 @@ func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
 func GetCommandLineArgsForStartCommand(flags *pflag.FlagSet) ([]string, error) {
 	var commandLineArgs []string
   <%_ for (const { propertyName, capitalizedName, aliasFor, enums, valuePart } of commandFlags) {
+      const kebabPropertyName = kebabConvert(propertyName);
       const actualPropertyName = aliasFor || propertyName;
   _%>
-    if flags.Changed("<%- propertyName %>") {
+    if flags.Changed("<%- kebabPropertyName %>") {
 	    <%_ if (enums) { _%>
-      if err := enumStringCheck("--<%- propertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
+      if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
         return commandLineArgs, err
       }
 	    <%_ } _%>

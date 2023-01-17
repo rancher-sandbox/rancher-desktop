@@ -155,7 +155,7 @@ export async function clear() {
  *  Clients calling this routine expect to use it like so:
  *  ```
  *  const prefsTree = {a: {b: c: {d: 1, e: 2}}};
- *  const result = getUpdatableNode(prefsTree, 'a-b-c-d');
+ *  const result = getUpdatableNode(prefsTree, 'a.b.c.d');
  *  expect(result).toEqual([{d: 1, e: 2}, 'd']);
  *  const [subtree, finalFieldName] = result;
  *  subtree[finalFieldName] = newValue;
@@ -170,7 +170,7 @@ export async function clear() {
  *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
  */
 export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
-  const optionParts = fqFieldAccessor.split('-');
+  const optionParts = fqFieldAccessor.split('.');
   const finalOptionPart = optionParts.pop() ?? '';
   let currentConfig: Record<string, any> = cfg;
 
