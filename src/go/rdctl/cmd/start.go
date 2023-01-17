@@ -23,10 +23,10 @@ import (
 	"os/exec"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ var applicationPath string
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-	updateCommonStartAndSetCommands(startCmd)
+	options.UpdateCommonStartAndSetCommands(startCmd)
 	startCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "Path to main executable.")
 }
 
@@ -80,19 +80,9 @@ func doStartOrSetCommand(cmd *cobra.Command) error {
 }
 
 func doStartCommand(cmd *cobra.Command) error {
-	var commandLineArgs []string
-
-	if cmd.Flags().Changed("container-engine") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-containerEngine", specifiedSettings.ContainerEngine)
-	}
-	if cmd.Flags().Changed("kubernetes-enabled") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-enabled="+strconv.FormatBool(specifiedSettings.Enabled))
-	}
-	if cmd.Flags().Changed("kubernetes-version") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-version", specifiedSettings.Version)
-	}
-	if cmd.Flags().Changed("flannel-enabled") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-options-flannel"+strconv.FormatBool(specifiedSettings.Flannel))
+	commandLineArgs, err := options.GetCommandLineArgsForStartCommand(cmd.Flags())
+	if err != nil {
+		return err
 	}
 	if applicationPath == "" {
 		pathLookupFuncs := map[string]func(rdctlPath string) string{
