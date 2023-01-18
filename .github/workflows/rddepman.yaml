@@ -11,10 +11,13 @@ permissions:
 jobs:
   check-for-token:
     outputs:
-      has-token: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+      has-token: ${{ steps.calc.outputs.HAS_SECRET }}
     runs-on: ubuntu-latest
     steps:
-    - run: 'true'
+    - id: calc
+      run: echo "HAS_SECRET=${HAS_SECRET}" >> "${GITHUB_OUTPUT}"
+      env:
+        HAS_SECRET: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
 
   check-update-versions:
     needs: check-for-token
