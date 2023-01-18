@@ -580,7 +580,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     // Alpine can boot via UEFI now
     if (config.firmware) {
-       config.firmware.legacyBIOS = false;
+      config.firmware.legacyBIOS = false;
     }
 
     // RD used to store additional keys in lima.yaml that are not supported by lima (and no longer used by RD).
