@@ -227,7 +227,7 @@ test.describe('Command server', () => {
     const requestedSettings = _.merge({}, settings, {
       containerEngine: {
         name:           { desiredEngine },
-        imageAllowList: { locked: !settings.containerEngine.imageAllowList.locked }
+        imageAllowList: { locked: !settings.containerEngine.imageAllowList.locked },
       },
       kubernetes:
         {
