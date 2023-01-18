@@ -383,7 +383,7 @@ function parseSaveError(err: any) {
  * most changes will get picked up from the defaults.
  */
 const updateTable: Record<number, (settings: any) => void> = {
-  1: (settings) => {
+  1: (settings: any) => {
     // Implement setting change from version 3 to 4
     if ('rancherMode' in settings.kubernetes) {
       delete settings.kubernetes.rancherMode;
@@ -398,8 +398,35 @@ const updateTable: Record<number, (settings: any) => void> = {
     // With settings v5, all traces of the kim builder are gone now, so remove this line:
     // settings.kubernetes.checkForExistingKimBuilder = true;
   },
-  4: (_) => {
-    console.log(`TODO: Implement this!`);
+  4: (settings: any) => {
+    settings.application = {
+      adminAccess:            !settings.kubernetes.suppressSudo,
+      debug:                  settings.debug,
+      pathManagementStrategy: settings.pathManagementStrategy,
+      telemetry:              { enabled: settings.telemetry },
+      updater:                { enabled: settings.updater },
+    };
+    settings.virtualMachine = {
+      experimental: settings.kubernetes.experimental,
+      hostResolver: settings.kubernetes.hostResolver,
+      memoryInGB:   settings.kubernetes.memoryInGB,
+      numberCPUs:   settings.kubernetes.numberCPUs,
+    };
+    settings.WSL = { integrations: settings.kubernetes.WSLIntegrations };
+    settings.containerEngine.name = settings.kubernetes.containerEngine;
+
+    delete settings.kubernetes.containerEngine;
+    delete settings.kubernetes.experimental;
+    delete settings.kubernetes.hostResolver;
+    delete settings.kubernetes.memoryInGB;
+    delete settings.kubernetes.numberCPUs;
+    delete settings.kubernetes.suppressSudo;
+    delete settings.kubernetes.WSLIntegrations;
+
+    delete settings.debug;
+    delete settings.pathManagementStrategy;
+    delete settings.telemetry;
+    delete settings.updater;
   },
 };
 
