@@ -3,7 +3,7 @@
 ssh:
   loadDotSSHPubKeys: false
 firmware:
-  legacyBIOS: true
+  legacyBIOS: false
 containerd:
   system: false
   user: false
