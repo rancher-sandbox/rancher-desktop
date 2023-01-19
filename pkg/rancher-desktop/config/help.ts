@@ -29,6 +29,7 @@ class PreferencesHelp {
     Application:                       'ui/preferences/application',
     'Application-behavior':            'ui/preferences/application#behavior',
     'Application-environment':         'ui/preferences/application#environment',
+    'Application-general':             'ui/preferences/application#general',
     'Virtual Machine':                 'ui/preferences/virtual-machine',
     'Container Engine-general':        'ui/preferences/container-engine#general',
     'Container Engine-allowed-images': 'ui/preferences/container-engine#allowed-images',
