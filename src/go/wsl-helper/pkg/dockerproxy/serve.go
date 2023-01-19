@@ -50,6 +50,8 @@ type containerInspectResponseBody struct {
 	Id string
 }
 
+const dockerAPIVersion = "v1.41.0"
+
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
 func Serve(endpoint string, dialer func() (net.Conn, error)) error {
@@ -194,9 +196,8 @@ func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn,
 
 	// ensure id is always the long container id
 	id, ok := templates["id"]
-	logEntry.WithField("id", id).Debug("id")
 	if ok {
-		inspect, err := m.InspectContainerRequest(req, id, dialer)
+		inspect, err := m.CanonicalizeContainerID(req, id, dialer)
 		if err != nil {
 			logEntry.WithField("id", id).WithError(err).Error("unable to resolve container id")
 		} else {
@@ -237,7 +238,7 @@ func (m *requestMunger) MungeResponse(resp *http.Response, dialer func() (net.Co
 	// ensure id is always the long container id
 	id, ok := templates["id"]
 	if ok {
-		inspect, err := m.InspectContainerRequest(resp.Request, id, dialer)
+		inspect, err := m.CanonicalizeContainerID(resp.Request, id, dialer)
 		if err != nil {
 			logEntry.WithField("id", id).WithError(err).Error("unable to resolve container id")
 		} else {
@@ -255,16 +256,18 @@ func (m *requestMunger) MungeResponse(resp *http.Response, dialer func() (net.Co
 	return nil
 }
 
-func (m *requestMunger) InspectContainerRequest(req *http.Request, id string, dialer func() (net.Conn, error)) (*containerInspectResponseBody, error) {
-	// extract version from request
-	match := m.apiDetectPattern.FindStringIndex(req.URL.Path)
-	version := "/"
-	if match != nil {
-		version = req.URL.Path[match[0]:match[1]]
-	}
-
+/*
+CanonicalizeContainerID makes a request upstream to inspect and resolve the full id of the container
+we use the provided id path template variable to make an upstream request to the docker engine api to inspect the container.
+Fortunately it supports both id or name as the container identifier.
+The Id returned will be the full long container id that is used to lookup in docker-binds.json.
+*/
+func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer func() (net.Conn, error)) (*containerInspectResponseBody, error) {
 	// url for inspecting container
-	inspectURL := fmt.Sprintf("%s://%s%scontainers/%s/json", req.URL.Scheme, req.URL.Host, version, id)
+	inspectURL, err := req.URL.Parse(fmt.Sprintf("/%s/containers/%s/json", dockerAPIVersion, id))
+	if err != nil {
+		return nil, err
+	}
 
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -275,7 +278,7 @@ func (m *requestMunger) InspectContainerRequest(req *http.Request, id string, di
 	}
 
 	// make the inspect request
-	inspectResponse, err := client.Get(inspectURL)
+	inspectResponse, err := client.Get(inspectURL.String())
 	if err != nil {
 		return nil, err
 	}
