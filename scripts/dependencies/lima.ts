@@ -22,10 +22,18 @@ export class LimaAndQemu implements Dependency, GithubDependency {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     let platform: string = context.platform;
 
+    // If the name of the forward compatible limactl binary changes or the
+    // binary is built with a newer version of xcode please update, the
+    // fwdCompatLimactlBin or fwdCompatLimactlDarwinVer
+    // constants in backend/lima.ts.
+    const fwdCompatLimactlBin = 'limactl.ventura';
+    let fwdCompatLimactlTarGz = fwdCompatLimactlBin;
+
     if (platform === 'darwin') {
       platform = 'macos';
       if (process.env.M1) {
         platform = `macos-aarch64`;
+        fwdCompatLimactlTarGz = `${ fwdCompatLimactlTarGz }-aarch64`;
       }
     }
     const url = `${ baseUrl }/v${ context.versions.limaAndQemu }/lima-and-qemu.${ platform }.tar.gz`;
@@ -50,6 +58,31 @@ export class LimaAndQemu implements Dependency, GithubDependency {
         }
       });
     });
+
+    // Download and install forward compatible limactl binary built for the newest Darwin versions
+    if (context.platform === 'darwin') {
+      const limactlUrl = `${ baseUrl }/v${ context.versions.limaAndQemu }/${ fwdCompatLimactlTarGz }.tar.gz`;
+      const limactlExpectedChecksum = (await getResource(`${ limactlUrl }.sha512sum`)).split(/\s+/)[0];
+      const limactlDir = path.join(context.resourcesDir, context.platform, 'lima', 'bin');
+      const limactlTarPath = path.join(context.resourcesDir, context.platform, `limactl-v${ context.versions.limaAndQemu }.tgz`);
+
+      await download(limactlUrl, limactlTarPath, {
+        expectedChecksum: limactlExpectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
+      });
+
+      const limactlChild = childProcess.spawn('/usr/bin/tar', ['-xf', limactlTarPath, '-s', `/limactl/${ fwdCompatLimactlBin }/`],
+        { cwd: limactlDir, stdio: 'inherit' });
+
+      await new Promise<void>((resolve, reject) => {
+        limactlChild.on('exit', (code, signal) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Limactl extract failed with ${ code || signal }`));
+          }
+        });
+      });
+    }
   }
 
   async getAvailableVersions(): Promise<string[]> {
