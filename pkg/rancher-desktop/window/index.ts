@@ -124,7 +124,7 @@ export function openMain(showPreferencesModal = false) {
         control:  true,
         platform: ['linux', 'win32'],
       }],
-      () => openMain(true),
+      () => openPreferences(),
       'open preferences',
     );
   }
