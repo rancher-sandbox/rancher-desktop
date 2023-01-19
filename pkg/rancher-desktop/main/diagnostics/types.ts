@@ -1,4 +1,5 @@
 export enum DiagnosticsCategory {
+  ContainerEngine = 'Container Engine',
   Kubernetes = 'Kubernetes',
   Networking = 'Networking',
   Utilities = 'Utilities',
