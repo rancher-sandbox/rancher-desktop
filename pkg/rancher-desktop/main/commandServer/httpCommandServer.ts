@@ -275,7 +275,7 @@ export class HttpCommandServer {
     response.write(jsonStringifyWithWhiteSpace(results));
   }
 
-  protected invalidAPIVersionCall(neededVersion: string, request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected invalidAPIVersionCall(neededVersion: string, request: http.IncomingMessage, response: http.ServerResponse, _: commandContext): Promise<void> {
     const method = request.method ?? 'GET';
     const url = new URL(request.url as string, `http://${ request.headers.host }`);
     const path = url.pathname;
@@ -289,10 +289,10 @@ export class HttpCommandServer {
 
     return Promise.resolve();
   }
+
   protected invalidAPIVersionCallNeedsV1(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     return this.invalidAPIVersionCall('v1', request, response, context);
   }
-
 
   protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     const settings = this.commandWorker.getSettings(context);
