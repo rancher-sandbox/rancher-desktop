@@ -13,7 +13,7 @@ describe('updateFromCommandLine', () => {
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
     prefs = {
-      version:     4,
+      version:     5,
       application: {
         adminAccess:            true,
         debug:                  true,

@@ -21,7 +21,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 5;
+const CURRENT_SETTINGS_VERSION = 5 as const;
 
 export enum ContainerEngine {
   NONE = '',
@@ -387,7 +387,7 @@ function parseSaveError(err: any) {
  * most changes will get picked up from the defaults.
  */
 const updateTable: Record<number, (settings: any) => void> = {
-  1: (settings: any) => {
+  1: (settings) => {
     // Implement setting change from version 3 to 4
     if ('rancherMode' in settings.kubernetes) {
       delete settings.kubernetes.rancherMode;
@@ -399,10 +399,9 @@ const updateTable: Record<number, (settings: any) => void> = {
     // but will no longer delete obsolete files.
   },
   3: (_) => {
-    // With settings v5, all traces of the kim builder are gone now, so remove this line:
-    // settings.kubernetes.checkForExistingKimBuilder = true;
+    // With settings v5, all traces of the kim builder are gone now, so no need to update it.
   },
-  4: (settings: any) => {
+  4: (settings) => {
     settings.application = {
       adminAccess:            !settings.kubernetes.suppressSudo,
       debug:                  settings.debug,

@@ -14,7 +14,7 @@ interface DiagnosticsState {
   inError: boolean;
 }
 
-const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }/v0/${ pathRemainder }`;
+const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }/v1/${ pathRemainder }`;
 
 /**
  * Updates the muted property for diagnostic results.

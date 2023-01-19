@@ -95,9 +95,9 @@ start_container_engine() {
     fi
 
     rdctl start \
-          --kubernetes.suppress-sudo \
-          --updater=false \
-          --container-engine="$RD_CONTAINER_ENGINE" \
+          --kubernetes.admin-access=false \
+          --application.updater.enabled=false \
+          --container-engine="$RD_CONTAINER_RUNTIME" \
           --kubernetes-enabled=false \
           "$@" \
           3>&-

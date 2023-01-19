@@ -3,7 +3,7 @@ info:
   title: "Rancher Desktop API"
   version: 0.0.1
 paths:
-  /v0/factory_reset:
+  /v1/factory_reset:
     put:
       operationId: factoryReset
       summary: Factory reset Rancher Desktop, losing user data
@@ -24,7 +24,7 @@ paths:
         '400':
           description: An error occurred
 
-  /v0/propose_settings:
+  /v1/propose_settings:
     put:
       operationId: proposeSettings
       summary: >-
@@ -65,7 +65,7 @@ paths:
                 type: string
 
 
-  /v0/settings:
+  /v1/settings:
     get:
       operationId: listSettings
       summary:  List the current preference settings
@@ -105,7 +105,7 @@ paths:
               schema:
                 type: string
 
-  /v0/shutdown:
+  /v1/shutdown:
     put:
       operationId: shutdownApp
       summary:  Shuts down Rancher Desktop
@@ -118,7 +118,7 @@ paths:
               schema:
                 type: string
 
-  /v0/diagnostic_categories:
+  /v1/diagnostic_categories:
     get:
       operationId: diagnosticCategories
       summary: >-
@@ -134,7 +134,7 @@ paths:
                 items:
                   type: string
 
-  /v0/diagnostic_ids:
+  /v1/diagnostic_ids:
     get:
       operationId: diagnosticIDsForCategory
       summary: >-
@@ -159,7 +159,7 @@ paths:
           description: The category is not recognized.
 
 
-  /v0/diagnostic_checks:
+  /v1/diagnostic_checks:
     get:
       operationId: diagnosticChecks
       summary: >-
@@ -189,7 +189,7 @@ paths:
               schema:
                 "$ref": "#/components/schemas/diagnostics"
 
-  /v0/transient_settings:
+  /v1/transient_settings:
     get:
       operationId: listTransientSettings
       summary:  List the current transient settings
@@ -258,7 +258,7 @@ components:
           properties:
             name:
               type: string
-              enum: ['containerd', 'moby', 'docker']
+              enum: ['containerd', 'docker', 'moby']
               x-rd-usage: Set engine to containerd or moby (aka docker).
               x-rd-aliases:
                 - "container-engine"

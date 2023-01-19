@@ -50,6 +50,23 @@ export class HttpCommandServer {
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
       GET: {
+        settings:              this.invalidAPIVersionCallNeedsV1,
+        diagnostic_categories: this.invalidAPIVersionCallNeedsV1,
+        diagnostic_ids:        this.invalidAPIVersionCallNeedsV1,
+        diagnostic_checks:     this.invalidAPIVersionCallNeedsV1,
+        transient_settings:    this.invalidAPIVersionCallNeedsV1,
+      },
+      POST: { diagnostic_checks: this.invalidAPIVersionCallNeedsV1 },
+      PUT:  {
+        factory_reset:      this.invalidAPIVersionCallNeedsV1,
+        shutdown:           this.invalidAPIVersionCallNeedsV1,
+        settings:           this.invalidAPIVersionCallNeedsV1,
+        propose_settings:   this.invalidAPIVersionCallNeedsV1,
+        transient_settings: this.invalidAPIVersionCallNeedsV1,
+      },
+    },
+    v1: {
+      GET: {
         settings:              this.listSettings,
         diagnostic_categories: this.diagnosticCategories,
         diagnostic_ids:        this.diagnosticIDsForCategory,
@@ -258,6 +275,25 @@ export class HttpCommandServer {
     response.write(jsonStringifyWithWhiteSpace(results));
   }
 
+  protected invalidAPIVersionCall(neededVersion: string, request: http.IncomingMessage, response: http.ServerResponse, _: commandContext): Promise<void> {
+    const method = request.method ?? 'GET';
+    const url = new URL(request.url as string, `http://${ request.headers.host }`);
+    const path = url.pathname;
+    const pathParts = path.split('/');
+
+    const msg = `Invalid version /${ pathParts[1] } for endpoint "${ method } ${ path }" - use "/${ neededVersion }/${ pathParts.slice(2).join('/') }"`;
+
+    console.log(`Error handling ${ request.url }`, msg);
+    response.writeHead(400, { 'Content-Type': 'text/plain' });
+    response.write(msg);
+
+    return Promise.resolve();
+  }
+
+  protected invalidAPIVersionCallNeedsV1(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    return this.invalidAPIVersionCall('v1', request, response, context);
+  }
+
   protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     const settings = this.commandWorker.getSettings(context);
 
@@ -280,7 +316,9 @@ export class HttpCommandServer {
     returnedPaths.push(['GET', `/${ version }`]);
     for (const method in paths) {
       for (const path in paths[method]) {
-        returnedPaths.push([method, ['', version, path].join('/')]);
+        if (paths[method][path] !== this.invalidAPIVersionCallNeedsV1) {
+          returnedPaths.push([method, ['', version, path].join('/')]);
+        }
       }
     }
 

@@ -105,7 +105,7 @@ test.describe.serial('KubernetesBackend', () => {
     }
 
     test('should detect changes', async() => {
-      const currentSettings = (await get('/v0/settings')) as Settings;
+      const currentSettings = (await get('/v1/settings')) as Settings;
       /**
        * getAlt returns the setting that isn't the same as the existing setting.
        */
@@ -185,7 +185,7 @@ test.describe.serial('KubernetesBackend', () => {
         expected[key] = entry;
       }
 
-      await expect(put('/v0/propose_settings', newSettings)).resolves.toEqual(expected);
+      await expect(put('/v1/propose_settings', newSettings)).resolves.toEqual(expected);
     });
 
     test('should handle WSL integrations', async() => {
@@ -200,10 +200,10 @@ test.describe.serial('KubernetesBackend', () => {
         },
       };
 
-      await expect(put('/v0/propose_settings', newSettings)).resolves.toMatchObject({
-        'WSL.Integrations': {
-          current: {},
-          desired: newSettings.WSL?.integrations,
+      await expect(put('/v1/propose_settings', newSettings)).resolves.toMatchObject({
+        'WSL.integrations': {
+          desired:  newSettings.WSL?.integrations,
+          severity: 'restart',
         },
       });
     });

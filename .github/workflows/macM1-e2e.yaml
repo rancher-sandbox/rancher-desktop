@@ -39,7 +39,7 @@ jobs:
           touch $HOME/Library/Preferences/rancher-desktop/settings.json
           cat <<EOF > $HOME/Library/Preferences/rancher-desktop/settings.json
           {
-            "version": 4,
+            "version": 5,
             "application": {
               "adminAccess": false
               "updater":  { "enabled": false },
