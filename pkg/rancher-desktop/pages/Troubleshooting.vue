@@ -89,7 +89,7 @@ export default {
   data:       () => ({
     state:           ipcRenderer.sendSync('k8s-state'),
     settings:        defaultSettings,
-    isDebugging:     runInDebugMode(defaultSettings.debug),
+    isDebugging:     runInDebugMode(defaultSettings.application.debug),
     alwaysDebugging: runInDebugMode(false),
   }),
   computed: {
@@ -107,7 +107,7 @@ export default {
     });
     ipcRenderer.on('settings-read', (_, newSettings) => {
       this.$data.settings = newSettings;
-      this.$data.isDebugging = runInDebugMode(newSettings.debug);
+      this.$data.isDebugging = runInDebugMode(newSettings.application.debug);
     });
     ipcRenderer.on('settings-update', (_, newSettings) => {
       this.$data.settings = newSettings;
@@ -151,7 +151,7 @@ export default {
     },
     updateDebug(value) {
       this.$data.isDebugging = runInDebugMode(value);
-      ipcRenderer.invoke('settings-write', { debug: value });
+      ipcRenderer.invoke('settings-write', { application: { debug: value } });
     },
     async resetKubernetes() {
       const cancelPosition = 1;
