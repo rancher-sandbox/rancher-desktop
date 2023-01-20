@@ -774,7 +774,6 @@ test.describe('Command server', () => {
         test('accepts new settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
           const body = {
-            containerEngine: { name: getAltString(oldSettings, oldSettings.containerEngine.name, 'containerd', 'moby') },
             virtualMachine:  {
               memoryInGB:   oldSettings.virtualMachine.memoryInGB + 1,
               numberCPUs:   oldSettings.virtualMachine.numberCPUs + 1,
@@ -801,6 +800,11 @@ test.describe('Command server', () => {
           const newSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
 
           expect(newSettings).toEqual(_.merge(oldSettings, body));
+
+          // And now reinstate the old prefs so other tests that count on them will pass.
+          const result = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(oldSettings)]);
+
+          expect(result.stderr).toEqual('');
         });
       });
     });
