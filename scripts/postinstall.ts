@@ -1,7 +1,8 @@
-import { execFileSync } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
@@ -109,14 +110,30 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
   return downloadContext;
 }
 
-runScripts().then(() => {
-  execFileSync('node', ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'], { stdio: 'inherit' });
-  execFileSync('node', ['scripts/ts-wrapper.js',
-    'scripts/generateCliCode.ts',
-    'pkg/rancher-desktop/assets/specs/command-api.yaml',
-    'src/go/rdctl/pkg/options/generated/options.go'], { stdio: 'inherit' });
-})
-  .catch((e) => {
-    console.error(e);
+(async() => {
+  const execFileP = util.promisify(execFile);
+  const optionsPath = 'src/go/rdctl/pkg/options/generated/options.go';
+
+  try {
+    await runScripts();
+    await execFileP('node', ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps']);
+    await execFileP('node', ['scripts/ts-wrapper.js',
+      'scripts/generateCliCode.ts',
+      'pkg/rancher-desktop/assets/specs/command-api.yaml',
+      optionsPath]);
+  } catch (e: any) {
+    console.error('POSTINSTALL ERROR: ', e);
     process.exit(1);
-  });
+  }
+  try {
+    fs.promises.access(optionsPath, fs.constants.R_OK);
+    console.error(`POSTINSTALL INFO: options code generation worked`);
+  } catch (ex: any) {
+    if (ex.code === 'ENOENT') {
+      console.error(`POSTINSTALL ERROR: options code generation didn't fail during run, but options file '${ optionsPath } wasn't generated: `, ex);
+    } else {
+      console.error('POSTINSTALL ERROR: options code file is unusable: ', ex);
+    }
+    process.exit(1);
+  }
+})();
