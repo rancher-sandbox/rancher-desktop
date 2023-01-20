@@ -14,7 +14,7 @@ interface CommitArgs extends ServerState {
   payload?: RecursivePartial<TransientSettings>;
 }
 
-const uri = (port: number) => `http://localhost:${ port }/v0/transient_settings`;
+const uri = (port: number) => `http://localhost:${ port }/v1/transient_settings`;
 
 export const state: () => TransientSettings = () => _.cloneDeep(defaultTransientSettings);
 

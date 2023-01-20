@@ -36,7 +36,6 @@ import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
@@ -774,7 +773,7 @@ test.describe('Command server', () => {
         test('accepts new settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
           const body = {
-            virtualMachine:  {
+            virtualMachine: {
               memoryInGB:   oldSettings.virtualMachine.memoryInGB + 1,
               numberCPUs:   oldSettings.virtualMachine.numberCPUs + 1,
               suppressSudo: oldSettings.application.adminAccess,
@@ -1294,14 +1293,9 @@ test.describe('Command server', () => {
     test('should verify nerdctl can talk to containerd', async() => {
       const { stdout } = await rdctl(['list-settings']);
       const settings: Settings = JSON.parse(stdout);
-      const payloadObject: RecursivePartial<Settings> = { };
 
       if (settings.containerEngine.name !== ContainerEngine.CONTAINERD) {
-        payloadObject.kubernetes = {};
-        payloadObject.containerEngine ??= {};
-        payloadObject.containerEngine.name = ContainerEngine.CONTAINERD;
-      }
-      if (Object.keys(payloadObject).length > 0) {
+        const payloadObject = { containerEngine: { name: ContainerEngine.CONTAINERD } };
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v1/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
