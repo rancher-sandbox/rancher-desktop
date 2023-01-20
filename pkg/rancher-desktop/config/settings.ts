@@ -395,7 +395,7 @@ const updateTable: Record<number, (settings: any) => void> = {
     // but will no longer delete obsolete files.
   },
   3: (_) => {
-    // With settings v5, all traces of the kim builder are gone now.
+    // With settings v5, all traces of the kim builder are gone now, so remove this line:
     // settings.kubernetes.checkForExistingKimBuilder = true;
   },
   4: (_) => {

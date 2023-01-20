@@ -231,9 +231,8 @@ test.describe('Command server', () => {
       },
       kubernetes:
         {
-          enabled:                    desiredEnabled,
-          version:                    desiredVersion,
-          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
+          enabled: desiredEnabled,
+          version: desiredVersion,
         },
     });
     const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');
