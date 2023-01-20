@@ -86,7 +86,7 @@ start_container_runtime() {
     local container_runtime="${1:-$RD_CONTAINER_RUNTIME}"
     if is_macos; then
         open -a "Rancher Desktop" --args \
-             --kubernetes-containerEngine "$container_runtime" \
+             --container-engine.name="$container_runtime" \
              --kubernetes-enabled=false
     elif is_linux; then
         $RDCTL start \

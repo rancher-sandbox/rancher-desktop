@@ -1070,7 +1070,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   async start(config_: BackendSettings): Promise<void> {
     const config = this.cfg = _.defaultsDeep(clone(config_),
-      { kubernetes: { containerEngine: ContainerEngine.NONE } }) as BackendSettings;
+      { containerEngine: { name: ContainerEngine.NONE } });
     let kubernetesVersion: semver.SemVer | undefined;
 
     await this.setState(State.STARTING);

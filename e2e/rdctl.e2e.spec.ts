@@ -545,6 +545,13 @@ test.describe('Command server', () => {
     });
   });
 
+  /**
+   * getAltString returns the setting that isn't the same as the existing setting.
+   */
+  const getAltString = (currentSettings: Settings, setting: string, altOne: string, altTwo: string) => {
+    return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
+  };
+
   test.describe('rdctl', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
@@ -722,6 +729,79 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).not.toContain('Usage:');
+      });
+
+      test.describe('settings v5 migration', () => {
+        test('rejects old settings', async() => {
+          const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+          const body: any = {
+            kubernetes: {
+              memoryInGB:      oldSettings.virtualMachine.memoryInGB + 1,
+              numberCPUs:      oldSettings.virtualMachine.numberCPUs + 1,
+              containerEngine: getAltString(oldSettings, oldSettings.containerEngine.name, 'containerd', 'moby'),
+              suppressSudo:    oldSettings.application.adminAccess,
+            },
+            telemetry:              !oldSettings.application.telemetry.enabled,
+            updater:                !oldSettings.application.updater.enabled,
+            debug:                  !oldSettings.application.debug,
+            pathManagementStrategy: getAltString(oldSettings, oldSettings.application.pathManagementStrategy, 'manual', 'rcfiles'),
+          };
+
+          switch (os.platform()) {
+          case 'darwin':
+            body.kubernetes.experimental ??= {};
+            body.kubernetes.experimental.socketVMNet = !oldSettings.virtualMachine.experimental.socketVMNet;
+            break;
+          case 'win32':
+            body.kubernetes.WSLIntegrations ??= {};
+            body.kubernetes.WSLIntegrations.bosco = true;
+            body.kubernetes.hostResolver = !oldSettings.virtualMachine.hostResolver;
+          }
+          const { stdout, stderr, error } = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(body)]);
+
+          expect({
+            stdout, stderr, error,
+          }).toEqual({
+            stdout: expect.stringContaining('no changes necessary'),
+            stderr: '',
+            error:  undefined,
+          });
+          const newSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+
+          expect(newSettings).toEqual(oldSettings);
+        });
+
+        test('accepts new settings', async() => {
+          const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+          const body = {
+            containerEngine: { name: getAltString(oldSettings, oldSettings.containerEngine.name, 'containerd', 'moby') },
+            virtualMachine:  {
+              memoryInGB:   oldSettings.virtualMachine.memoryInGB + 1,
+              numberCPUs:   oldSettings.virtualMachine.numberCPUs + 1,
+              suppressSudo: oldSettings.application.adminAccess,
+            },
+            application: {
+              // XXX: Can't change adminAccess until we can process the sudo-request dialog (and decline it)
+              // adminAccess: !oldSettings.application.adminAccess,
+              telemetry:              { enabled: !oldSettings.application.telemetry.enabled },
+              updater:                { enabled: !oldSettings.application.updater.enabled },
+              debug:                  !oldSettings.application.debug,
+              pathManagementStrategy: getAltString(oldSettings, oldSettings.application.pathManagementStrategy, 'manual', 'rcfiles'),
+            },
+          };
+          const { stdout, stderr, error } = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(body)]);
+
+          expect({
+            stdout, stderr, error,
+          }).toEqual({
+            stdout: expect.stringContaining('reconfiguring Rancher Desktop to apply changes'),
+            stderr: '',
+            error:  undefined,
+          });
+          const newSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+
+          expect(newSettings).toEqual(_.merge(oldSettings, body));
+        });
       });
     });
 

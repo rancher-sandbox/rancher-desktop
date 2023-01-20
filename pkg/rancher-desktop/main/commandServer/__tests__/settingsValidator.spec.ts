@@ -44,12 +44,12 @@ describe(SettingsValidator, () => {
       const newEngine = cfg.containerEngine.name === 'moby' ? 'containerd' : 'moby';
       const newFlannelEnabled = !cfg.kubernetes.options.flannel;
       const newConfig = _.merge({}, cfg, {
+        containerEngine: { name: newEngine },
         kubernetes:
           {
-            enabled:         newEnabled,
-            version:         newVersion,
-            containerEngine: newEngine,
-            options:         { flannel: newFlannelEnabled },
+            enabled: newEnabled,
+            version: newVersion,
+            options: { flannel: newFlannelEnabled },
           },
       });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
