@@ -54,6 +54,7 @@ export class DiagnosticsManager {
         import('./kubeContext'),
         import('./wslFromStore'),
         import('./mockForScreenshots'),
+        import('./limaDarwin'),
       ])).map(obj => obj.default);
 
       return (await Promise.all(imports)).flat();

@@ -205,6 +205,29 @@ const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 // Filename used in versions 1.0.0 and earlier:
 const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
+/** Forward compatible limactl binary allows for support of lima built for newer
+ * versions of Darwin/macOS.
+ *
+ * When the xcode version used to build the forward compatible limactl binary
+ * changes, update fwdCompatLimactlDarwinVer with the Darwin version
+ * that xcode version is usually installed on.
+ *
+ * Xcode version used to build forward compatible limactl can be found here:
+ * https://github.com/rancher-sandbox/lima-and-qemu/blob/main/.github/workflows/release.yml#L105
+ *
+ * Find which macOS the xcode version is installed on by default in the Xcode table:
+ * https://en.wikipedia.org/wiki/Xcode#Xcode_11.0_-_14.x_(since_SwiftUI_framework)
+ *
+ * Then match the macOS version to the Darwin version.
+ *
+ * For Ventura see the Release History table:
+ * https://en.wikipedia.org/wiki/MacOS_Ventura#Release_history
+ */
+// Name of the forward compatible limactl binary installed by the lima dependencies script.
+const fwdCompatLimactlBin = 'limactl.ventura';
+// Version of Darwin the forward compatible limactl binary was built for.
+const fwdCompatLimactlDarwinVer = '22.2.0';
+
 /**
  * LimaBackend implements all the Lima-specific functionality for Rancher
  * Desktop.  This is used on macOS and Linux.
@@ -580,7 +603,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     // Alpine can boot via UEFI now
     if (config.firmware) {
-       config.firmware.legacyBIOS = false;
+      config.firmware.legacyBIOS = false;
     }
 
     // RD used to store additional keys in lima.yaml that are not supported by lima (and no longer used by RD).
@@ -676,7 +699,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected static get limactl() {
-    return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
+    let limactlBin = 'limactl';
+
+    if (os.platform() === 'darwin' && semver.gte(os.release(), fwdCompatLimactlDarwinVer)) {
+      limactlBin = fwdCompatLimactlBin;
+    }
+
+    return path.join(paths.resources, os.platform(), 'lima', 'bin', limactlBin);
   }
 
   protected static get limaEnv() {
