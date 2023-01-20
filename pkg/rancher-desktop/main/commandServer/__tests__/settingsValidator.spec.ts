@@ -64,7 +64,6 @@ describe(SettingsValidator, () => {
       // Special fields that cannot be checked here; this includes enums and maps.
       const specialFields = [
         ['containerEngine', 'imageAllowList', 'locked'],
-        ['kubernetes', 'checkForExistingKimBuilder'],
         ['containerEngine', 'name'],
         ['WSL', 'integrations'],
         ['kubernetes', 'version'],
