@@ -1,3 +1,4 @@
+import os from 'os';
 import path from 'path';
 
 import { test, expect } from '@playwright/test';
@@ -7,6 +8,8 @@ import { NavPage } from './pages/nav-page';
 import {
   createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs,
 } from './utils/TestUtils';
+
+import { spawnFile } from '@pkg/utils/childProcess';
 
 let page: Page;
 
@@ -76,26 +79,18 @@ test.describe.serial('Helm Deployment Test', () => {
   });
   test('should install helm sample application and check if it was deployed', async() => {
     const helmInstall = await helm('upgrade', '--install', '--wait', '--timeout=20m',
-      '--version=13.2.9', 'nginx-sample', 'bitnami/nginx',
+      'nginx-sample', 'bitnami/nginx',
       '--set=service.type=NodePort', '--set=volumePermissions.enabled=true');
 
     expect(helmInstall).toContain('STATUS: deployed');
   });
   test('should verify if the application is working properly', async() => {
-    // Get Node IP address.
-    const nodeIpAddress = (await kubectl('get', 'nodes', '--output=jsonpath={.items[0].status.addresses[0].address}')).trim();
-
-    // Get Node Port number.
     const nodePortNumber = (await kubectl('get', '--namespace', 'default', '--output=jsonpath={.spec.ports[0].nodePort}', 'services', 'nginx-sample')).trim();
+    const curlCommand = os.platform() === 'win32' ? 'curl.exe' : 'curl';
 
-    const currentPodNames = (await kubectl('get', 'pods', '--output=name', '--namespace', 'default')).split(/\s+/);
-    const podName = currentPodNames.find(pod => pod.includes('pod/nginx-sample'))?.trim() ?? '';
-
-    expect(podName).not.toBe('');
-    // Check if the app is running
-    const checkAppStatus = await kubectl('exec', '--namespace', 'default',
-      podName, '--', 'curl', '--verbose', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
-
-    expect(checkAppStatus).toContain('Welcome to nginx!');
+    await expect(spawnFile(curlCommand, ['-s', `localhost:${ nodePortNumber }`], { stdio: 'pipe' })).resolves.toMatchObject({
+      stdout: expect.stringContaining('Welcome to nginx!'),
+      stderr: '',
+    });
   });
 });
