@@ -17,6 +17,7 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { openMain, send } from '@pkg/window';
 import { openDashboard } from '@pkg/window/dashboard';
+import { openPreferences } from '@pkg/window/preferences';
 
 const console = Logging.background;
 
@@ -59,21 +60,27 @@ export class Tray {
     },
     { type: 'separator' },
     {
+      id:    'main',
+      label: 'Show main window',
+      type:  'normal',
+      click() {
+        openMain();
+      },
+    },
+    {
+      id:    'preferences',
+      label: 'Show preferences dialog',
+      type:  'normal',
+      click: openPreferences,
+    },
+    {
       id:      'dashboard',
       enabled: false,
-      label:   'Dashboard',
+      label:   'Show cluster dashboard',
       type:    'normal',
       click:   openDashboard,
     },
     { type: 'separator' },
-    {
-      id:    'preferences',
-      label: 'Preferences',
-      type:  'normal',
-      click() {
-        openMain(true);
-      },
-    },
     {
       id:      'contexts',
       label:   'Kubernetes Contexts',
