@@ -594,6 +594,10 @@ ipcMainProxy.on('k8s-progress', () => {
   window.send('k8s-progress', k8smanager.progress);
 });
 
+ipcMainProxy.handle('k8s-progress', () => {
+  return k8smanager.progress;
+});
+
 ipcMainProxy.handle('service-fetch', (_, namespace) => {
   return k8smanager.kubeBackend.listServices(namespace);
 });
