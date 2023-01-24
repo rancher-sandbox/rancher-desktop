@@ -30,8 +30,8 @@ let isDirty = false;
 /**
  * Open the main window; if it is already open, focus it.
  */
-export function openPreferences() {
-  const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
+export async function openPreferences() {
+  const window = await createWindow('preferences', `${ webRoot }/index.html#preferences`, {
     title:           'Rancher Desktop - Preferences',
     width:           768,
     height:          512,

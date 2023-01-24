@@ -6,7 +6,7 @@ const dashboardURL = 'http://127.0.0.1:6120/c/local/explorer';
 
 const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
 
-export function openDashboard() {
+export async function openDashboard() {
   let window = getDashboardWindow();
 
   if (restoreWindow(window)) {
@@ -20,7 +20,7 @@ export function openDashboard() {
     show:   false,
   });
 
-  window.loadURL(dashboardURL);
+  await window.loadURL(dashboardURL);
 
   windowMapping['dashboard'] = window.id;
 

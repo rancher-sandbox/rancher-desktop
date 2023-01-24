@@ -102,7 +102,7 @@ Electron.app.on('second-instance', async() => {
   await protocolRegistered;
   console.warn('A second instance was started');
   if (firstRunDialogComplete) {
-    window.openMain();
+    await window.openMain();
   }
 });
 
@@ -193,9 +193,9 @@ Electron.app.whenReady().then(async() => {
     });
 
     setupTray();
-    window.openMain();
+    await window.openMain();
 
-    dockerDirManager.ensureCredHelperConfigured();
+    await dockerDirManager.ensureCredHelperConfigured();
 
     // Path management strategy will need to be selected after an upgrade
     if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
@@ -423,7 +423,7 @@ Electron.app.on('activate', async() => {
     return;
   }
   await protocolRegistered;
-  window.openMain();
+  await window.openMain();
 });
 
 ipcMainProxy.on('settings-read', (event) => {
@@ -443,16 +443,16 @@ ipcMainProxy.on('images-namespaces-read', (event) => {
   }
 });
 
-ipcMainProxy.on('dashboard-open', () => {
-  openDashboard();
+ipcMainProxy.on('dashboard-open', async () => {
+  await openDashboard();
 });
 
 ipcMainProxy.on('dashboard-close', () => {
   closeDashboard();
 });
 
-ipcMainProxy.on('preferences-open', () => {
-  window.openMain(true);
+ipcMainProxy.on('preferences-open', async () => {
+  await window.openMain(true);
 });
 
 ipcMainProxy.on('preferences-close', () => {
@@ -693,7 +693,7 @@ ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOpt
 Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.MessageBoxOptions, modal = false) => {
   const mainWindow = modal ? window.getWindow('main') : null;
 
-  const dialog = window.openDialog(
+  const dialog = await window.openDialog(
     'Dialog',
     {
       modal,

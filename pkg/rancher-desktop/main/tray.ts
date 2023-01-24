@@ -63,8 +63,8 @@ export class Tray {
       id:    'main',
       label: 'Show main window',
       type:  'normal',
-      click() {
-        openMain();
+      async click() {
+        await openMain();
       },
     },
     {

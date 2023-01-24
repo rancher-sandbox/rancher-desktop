@@ -54,7 +54,7 @@ export function getWindow(name: string): Electron.BrowserWindow | null {
  * @param options A hash of options used by `new BrowserWindow(options)`
  * @param prefs Options to control the new window.
  */
-export function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
+export async function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
   let window = getWindow(name);
 
   if (restoreWindow(window)) {
@@ -86,7 +86,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
     console.log(`Failed to load ${ url }: ${ errorCode } (${ errorDescription })`);
   });
   console.debug('createWindow() name:', name, ' url:', url);
-  window.loadURL(url);
+  await window.loadURL(url);
   windowMapping[name] = window.id;
 
   return window;
@@ -97,9 +97,9 @@ const mainUrl = process.env.RD_ENV_PLUGINS_DEV ? 'https://localhost:8888' : `${ 
 /**
  * Open the main window; if it is already open, focus it.
  */
-export function openMain(showPreferencesModal = false) {
+export async function openMain(showPreferencesModal = false) {
   console.debug('openMain() webRoot:', webRoot);
-  const window = createWindow(
+  const window = await createWindow(
     'main',
     mainUrl,
     {
@@ -132,7 +132,7 @@ export function openMain(showPreferencesModal = false) {
   app.dock?.show();
 
   if (showPreferencesModal) {
-    openPreferences();
+    await openPreferences();
   }
 
   window.webContents.on('ipc-message', (_event, channel) => {
@@ -176,9 +176,9 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
  * @returns The opened window
  */
-export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
+export async function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
   console.debug('openDialog() id: ', id);
-  const window = createWindow(
+  const window = await createWindow(
     id,
     // We use hash mode for the router, so `index.html#FirstRun` loads
     // pkg/rancher-desktop/pages/FirstRun.vue.
@@ -226,7 +226,7 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
  * configuration required.
  */
 export async function openFirstRunDialog() {
-  const window = openDialog('FirstRun', { frame: true });
+  const window = await openDialog('FirstRun', { frame: true });
 
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
@@ -238,7 +238,7 @@ export async function openFirstRunDialog() {
  * and return once the user has acknowledged this.
  */
 export async function openDenyRootDialog() {
-  const window = openDialog('DenyRoot', {
+  const window = await openDialog('DenyRoot', {
     frame:  true,
     width:  336,
     height: 170,
@@ -256,7 +256,7 @@ export type reqMessageId = 'ok' | 'linux-nested' | 'win32-release' | 'macOS-rele
  * @param reasonId Specifies which message to show in dialog
  */
 export async function openUnmetPrerequisitesDialog(reasonId: reqMessageId) {
-  const window = openDialog('UnmetPrerequisites', { frame: true });
+  const window = await openDialog('UnmetPrerequisites', { frame: true });
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'dialog/load') {
@@ -272,7 +272,7 @@ export async function openUnmetPrerequisitesDialog(reasonId: reqMessageId) {
  * Open the error message window as a modal window.
  */
 export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
-  const window = openDialog('KubernetesError', {
+  const window = await openDialog('KubernetesError', {
     title:  `Rancher Desktop - Kubernetes Error`,
     width:  800,
     height: 494,
@@ -299,7 +299,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
  *   again.
  */
 export async function openSudoPrompt(explanations: Record<string, string[]>): Promise<boolean> {
-  const window = openDialog('SudoPrompt', { parent: getWindow('main') ?? undefined });
+  const window = await openDialog('SudoPrompt', { parent: getWindow('main') ?? undefined });
 
   /**
    * The result of the dialog; this is true if the user asked to never be
@@ -322,7 +322,7 @@ export async function openSudoPrompt(explanations: Record<string, string[]>): Pr
 }
 
 export async function openPathUpdate(): Promise<void> {
-  const window = openDialog(
+  const window = await openDialog(
     'PathUpdate',
     {
       title:  'Rancher Desktop - Update',
@@ -336,7 +336,7 @@ export async function openPathUpdate(): Promise<void> {
 }
 
 export async function openLegacyIntegrations(): Promise<void> {
-  const window = openDialog(
+  const window = await openDialog(
     'LegacyIntegrationNotification',
     {
       title:  'Rancher Desktop - Legacy Integrations',
