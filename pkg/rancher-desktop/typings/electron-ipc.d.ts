@@ -94,6 +94,7 @@ export interface IpcMainInvokeEvents {
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
   'api-get-credentials': () => { user: string, password: string, port: number, pid: number };
+  'k8s-progress': () => Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>;
 
   // #region main/imageEvents
   'images-mounted': (mounted: boolean) => {imageName: string, tag: string, imageID: string, size: string}[];

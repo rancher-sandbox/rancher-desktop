@@ -107,6 +107,10 @@ class BackendProgress extends Vue {
         this.progressDuration = '';
       }
     });
+
+    ipcRenderer.invoke('k8s-progress').then((progress) => {
+      this.progress = progress;
+    });
   }
 }
 export default BackendProgress;
