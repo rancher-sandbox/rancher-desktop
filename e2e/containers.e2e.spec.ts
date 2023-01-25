@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
+import { createDefaultSettings, reportAsset, teardown, tool } from './utils/TestUtils';
 
 import { Settings } from '@pkg/config/settings';
 
@@ -42,11 +42,7 @@ test.describe.serial('Container Engine', () => {
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('wait for the container engine to be ready', async() => {
     const navPage = new NavPage(page);
