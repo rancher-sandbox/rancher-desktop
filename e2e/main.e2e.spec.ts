@@ -1,10 +1,11 @@
 import path from 'path';
 
-import { test, expect } from '@playwright/test';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+
+import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 let page: Page;
 
