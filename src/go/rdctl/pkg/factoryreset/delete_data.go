@@ -30,11 +30,16 @@ import (
 	"syscall"
 
 	dockerconfig "github.com/docker/docker/cli/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/sirupsen/logrus"
 )
 
 func DeleteData(removeKubernetesCache bool) error {
+	if err := autostart.EnsureAutostart(false); err != nil {
+		return fmt.Errorf("Failed to remove autostart configuration: %w", err)
+	}
+
 	return map[string]func(bool) error{
 		"darwin":  deleteDarwinData,
 		"linux":   deleteLinuxData,
