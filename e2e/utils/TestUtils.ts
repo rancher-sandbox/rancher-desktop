@@ -144,7 +144,7 @@ async function forceShutdown() {
       // Not so important to fix this, as CI doesn't run on Windows (currently).
       await tool('rdctl', 'shutdown', '--verbose');
     } catch (ex: any) {
-      console.error('rdctl shutdown failed: ', ex);
+      console.log('rdctl shutdown failed: ', ex);
     }
   } else {
     const RancherDesktopQemuCommand = 'lima/bin/qemu-system.*rancher-desktop/lima/[0-9]/diffdisk';
@@ -157,7 +157,7 @@ async function forceShutdown() {
       try {
         await childProcess.spawnFile('pkill', args.concat(cmd));
       } catch (ex: any) {
-        console.error(`pkill ${ cmd } failed: `, ex);
+        console.log(`pkill ${ cmd } failed: `, ex);
       }
     }
   }
