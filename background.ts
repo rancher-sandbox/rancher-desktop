@@ -31,8 +31,10 @@ import buildApplicationMenu from '@pkg/main/mainmenu';
 import setupNetworking from '@pkg/main/networking';
 import setupTray from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
+import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
+import { isDevEnv } from '@pkg/utils/environment';
 import { arrayCustomizer } from '@pkg/utils/filters';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -124,6 +126,8 @@ mainEvents.on('settings-update', async(newSettings) => {
     pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
     await pathManager.enforce();
   }
+
+  await runRdctlSetup(newSettings);
 });
 
 mainEvents.handle('settings-fetch', () => {
@@ -999,4 +1003,20 @@ function isRoot(): boolean {
   }
 
   return os.userInfo().uid === 0;
+}
+
+async function runRdctlSetup(newSettings: settings.Settings): Promise<void> {
+  // don't do anything with auto-start configuration if running in development
+  if (isDevEnv) {
+    return;
+  }
+
+  const rdctlPath = path.join(paths.resources, os.platform(), 'bin', 'rdctl');
+  const args = ['setup', `--application.auto-start=${ newSettings.autoStart }`];
+
+  if (newSettings.debug) {
+    args.push('--verbose=true');
+  }
+
+  await spawnFile(rdctlPath, args);
 }
