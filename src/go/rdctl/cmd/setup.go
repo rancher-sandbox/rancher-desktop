@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +15,7 @@ var setupCmd = &cobra.Command{
 	Short:  "Configure the system without modifying settings",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if cmd.Flags().Changed("application.auto-start") {
-			fmt.Printf("Setting autostart to %t", setupSettings.AutoStart)
+			return autostart.EnsureAutostart(setupSettings.AutoStart)
 		}
 		return nil
 	},
