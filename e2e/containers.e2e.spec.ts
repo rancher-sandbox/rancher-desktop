@@ -48,7 +48,7 @@ test.describe.serial('Container Engine', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await shutdown();
+    await shutdown(electronApp);
   });
 
   test('wait for the container engine to be ready', async() => {

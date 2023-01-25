@@ -137,12 +137,48 @@ export async function helm(...args: string[] ): Promise<string> {
   return await tool('helm', '--kube-context', 'rancher-desktop', ...args);
 }
 
-export async function shutdown(): Promise<void> {
+async function forceShutdown() {
+  console.log('Doing a forced shutdown...');
+  if (os.platform() === 'win32') {
+    try {
+      // Not so important to fix this, as CI doesn't run on Windows (currently).
+      await tool('rdctl', 'shutdown', '--verbose');
+    } catch (ex: any) {
+      console.error('rdctl shutdown failed: ', ex);
+    }
+  } else {
+    const RancherDesktopQemuCommand = 'lima/bin/qemu-system.*rancher-desktop/lima/[0-9]/diffdisk';
+    const electronCommand = 'node_modules/electron/dist/electron.*zygote';
+    const nuxtCommand = 'node_modules/nuxt/bin/nuxt\\.js';
+    const commandsToKill = [RancherDesktopQemuCommand, electronCommand, nuxtCommand];
+    const args = os.platform() === 'darwin' ? ['-9', '-a', '-l', '-f'] : ['-9', '-f'];
+
+    for (const cmd of commandsToKill) {
+      try {
+        await childProcess.spawnFile('pkill', args.concat(cmd));
+      } catch (ex: any) {
+        console.error(`pkill ${ cmd } failed: `, ex);
+      }
+    }
+  }
+}
+
+export async function shutdown(electronApp: ElectronApplication): Promise<void> {
+  let finished = false;
+  const timerID = setTimeout(async() => {
+    if (!finished) {
+      await forceShutdown();
+    }
+  }, 60_000);
+
   try {
-    await tool('rdctl', 'shutdown', '--verbose');
+    await electronApp.close();
+    finished = true;
+    clearTimeout(timerID);
 
     return;
   } catch (ex: any) {
     console.error('rdctl shutdown failed: ', ex);
+  } finally {
   }
 }

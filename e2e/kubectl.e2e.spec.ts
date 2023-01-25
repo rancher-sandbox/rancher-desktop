@@ -41,7 +41,7 @@ test.describe.serial('K8s Deployment Test', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await shutdown();
+    await shutdown(electronApp);
   });
 
   test('should start loading the background services', async() => {

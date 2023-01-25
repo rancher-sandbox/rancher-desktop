@@ -51,7 +51,7 @@ test.describe.serial('Main App Test', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await shutdown();
+    await shutdown(electronApp);
   });
 
   test('should open preferences modal', () => {
