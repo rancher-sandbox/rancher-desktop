@@ -35,7 +35,7 @@ import fetch from 'node-fetch';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getFullPathForTool, packageLogs, reportAsset, tool,
+  createDefaultSettings, getFullPathForTool, packageLogs, reportAsset, shutdown, tool,
 } from './utils/TestUtils';
 
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -271,7 +271,7 @@ describeWithCreds('Credentials server', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should start loading the background services and hide progress bar', async() => {

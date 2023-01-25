@@ -30,7 +30,7 @@ import fetch, { RequestInit } from 'node-fetch';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, packageLogs, reportAsset, tool,
+  createDefaultSettings, kubectl, packageLogs, reportAsset, shutdown, tool,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -133,7 +133,7 @@ test.describe('Command server', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should load Kubernetes API', async() => {

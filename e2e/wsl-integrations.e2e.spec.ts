@@ -11,7 +11,7 @@ import {
 } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset, shutdown } from './utils/TestUtils';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
@@ -175,7 +175,7 @@ test.describe('WSL Integrations', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should list integrations', async() => {

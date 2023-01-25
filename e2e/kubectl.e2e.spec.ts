@@ -5,7 +5,9 @@ import {
 } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, kubectl, packageLogs, reportAsset } from './utils/TestUtils';
+import {
+  createDefaultSettings, kubectl, packageLogs, reportAsset, shutdown,
+} from './utils/TestUtils';
 
 let page: Page;
 
@@ -39,7 +41,7 @@ test.describe.serial('K8s Deployment Test', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should start loading the background services', async() => {

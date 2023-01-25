@@ -6,7 +6,9 @@ import {
 } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
+import {
+  createDefaultSettings, packageLogs, reportAsset, shutdown, tool,
+} from './utils/TestUtils';
 
 import { Settings } from '@pkg/config/settings';
 
@@ -46,7 +48,7 @@ test.describe.serial('Container Engine', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('wait for the container engine to be ready', async() => {

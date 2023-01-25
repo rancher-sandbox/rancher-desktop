@@ -5,7 +5,7 @@ import {
 } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset, shutdown } from './utils/TestUtils';
 
 let page: Page;
 
@@ -43,7 +43,7 @@ test.describe.serial('Main App Test', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should start loading the background services and hide progress bar', async() => {

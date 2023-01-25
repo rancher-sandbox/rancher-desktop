@@ -5,7 +5,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect } from '@playwright/test';
+import { ElectronApplication, expect } from '@playwright/test';
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@pkg/config/settings';
@@ -135,4 +135,14 @@ export async function kubectl(...args: string[] ): Promise<string> {
  */
 export async function helm(...args: string[] ): Promise<string> {
   return await tool('helm', '--kube-context', 'rancher-desktop', ...args);
+}
+
+export async function shutdown(): Promise<void> {
+  try {
+    await tool('rdctl', 'shutdown', '--verbose');
+
+    return;
+  } catch (ex: any) {
+    console.error('rdctl shutdown failed: ', ex);
+  }
 }

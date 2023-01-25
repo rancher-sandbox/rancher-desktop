@@ -6,7 +6,7 @@ import {
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs,
+  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs, shutdown,
 } from './utils/TestUtils';
 
 let page: Page;
@@ -40,7 +40,7 @@ test.describe.serial('Helm Deployment Test', () => {
 
   /**
    * helm teardown
-   * It should run outside of the electronApp.close(), just to make sure the teardown won't
+   * It should run outside of the shutdown process, just to make sure the teardown won't
    * affect the shutdown process in case of exceptions/errors.
    */
   test.afterAll(tearDownHelm);
@@ -48,7 +48,7 @@ test.describe.serial('Helm Deployment Test', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should start loading the background services', async() => {

@@ -7,7 +7,7 @@ import {
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset, shutdown } from './utils/TestUtils';
 
 let page: Page;
 
@@ -51,7 +51,7 @@ test.describe.serial('Main App Test', () => {
   test.afterAll(async() => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
-    await electronApp.close();
+    await shutdown();
   });
 
   test('should open preferences modal', () => {
