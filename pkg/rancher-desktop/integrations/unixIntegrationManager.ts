@@ -97,6 +97,18 @@ export default class UnixIntegrationManager implements IntegrationManager {
         await fs.promises.rm(integrationPath, { force: true });
       }
     }
+
+    // manage the special rancher-desktop integration; this symlink
+    // exists so that rdctl can find the path to the AppImage
+    // that Rancher Desktop is running from
+    const rancherDesktopPath = path.join(this.integrationDir, 'rancher-desktop');
+    const appImagePath = process.env['APPIMAGE'];
+
+    if (desiredPresent && appImagePath) {
+      await ensureSymlink(appImagePath, rancherDesktopPath);
+    } else {
+      await fs.promises.rm(rancherDesktopPath, { force: true });
+    }
   }
 
   protected async ensureDockerCliSymlinks(desiredPresent: boolean): Promise<void> {

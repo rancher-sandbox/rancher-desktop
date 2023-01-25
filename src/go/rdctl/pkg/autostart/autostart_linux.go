@@ -133,14 +133,11 @@ func findApplicationFilePath() (string, error) {
 // Gathers the info that is needed to fill out the autostart .desktop
 // file template.
 func getAutostartFileData() (autostartFileData, error) {
-	// This assumes that:
-	// - rdctl is being called as a subprocess of the main node process
-	// - the main node process has been run from an AppImage
-	// If this is the case, the APPIMAGE environment variable should
-	// be inherited from the parent environment.
-	appImagePath, ok := os.LookupEnv("APPIMAGE")
-	if !ok {
-		return autostartFileData{}, errors.New("APPIMAGE environment variable not defined")
+	// TODO: update this code once paths tracking is moved into rdctl
+	rancherDesktopSymlinkPath := filepath.Join(xdg.Home, ".rd", "bin", "rancher-desktop")
+	appImagePath, err := filepath.EvalSymlinks(rancherDesktopSymlinkPath)
+	if err != nil {
+		return autostartFileData{}, fmt.Errorf("failed to resolve %s: %w", rancherDesktopSymlinkPath, err)
 	}
 
 	return autostartFileData{
