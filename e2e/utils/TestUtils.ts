@@ -148,16 +148,25 @@ async function forceShutdown() {
     }
   } else {
     const RancherDesktopQemuCommand = 'lima/bin/qemu-system.*rancher-desktop/lima/[0-9]/diffdisk';
-    const electronCommand = 'node_modules/electron/dist/electron.*zygote';
     const nuxtCommand = 'node_modules/nuxt/bin/nuxt\\.js';
-    const commandsToKill = [RancherDesktopQemuCommand, electronCommand, nuxtCommand];
-    const args = os.platform() === 'darwin' ? ['-9', '-a', '-l', '-f'] : ['-9', '-f'];
+    const commandsToKill = [RancherDesktopQemuCommand, nuxtCommand];
 
     for (const cmd of commandsToKill) {
+      let pids: RegExpMatchArray = [];
+
       try {
-        await childProcess.spawnFile('pkill', args.concat(cmd));
+        const { stdout } = await childProcess.spawnFile('pgrep', ['-f', cmd], { stdio: 'pipe' });
+
+        pids = stdout.match(/\d+/g) ?? [];
       } catch (ex: any) {
         console.log(`pkill ${ cmd } failed: `, ex);
+      }
+      for (const pid of pids) {
+        try {
+          await childProcess.spawnFile('kill', ['-9', pid]);
+        } catch (ex) {
+          console.log(`kill ${ cmd } failed: `, ex);
+        }
       }
     }
   }
