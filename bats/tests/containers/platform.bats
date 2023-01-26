@@ -1,6 +1,7 @@
 setup() {
     load '../helpers/load'
 }
+
 @test 'factory reset' {
     factory_reset
 }
