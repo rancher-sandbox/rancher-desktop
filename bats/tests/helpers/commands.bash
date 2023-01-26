@@ -29,4 +29,6 @@ RDSHELL="$RDCTL shell"
 RDSUDO="$RDSHELL sudo"
 
 #After running factory reset, we need to call rdctl from resources as it was removed from the path
-RDCTL_resources="$(resources_dir)/bin/rdctl"
+rdctl() {
+    "$(resources_dir)/bin/rdctl" "$@"
+}

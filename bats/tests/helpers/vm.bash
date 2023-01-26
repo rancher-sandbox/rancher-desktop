@@ -66,24 +66,18 @@ EOF
 }
 
 start_container_runtime() {
-    local container_runtime="${1:-$RD_CONTAINER_RUNTIME}"
-    if is_macos; then
-        open -a "Rancher Desktop" --args \
-             --kubernetes-containerEngine "$container_runtime" \
-             --kubernetes-enabled=false
-    elif is_linux; then
-        $RDCTL start \
-               --container-engine="$container_runtime" \
-               --kubernetes-enabled=false 3>&-
-    fi
+    rdctl start \
+          --path-management-strategy rcfiles \
+          --kubernetes.suppress-sudo \
+          --updater=false \
+          --container-engine="$RD_CONTAINER_RUNTIME" \
+          --kubernetes-enabled=false \
+          "$@" \
+          3>&-
 }
 
-start_application() {
-    "$RDCTL_resources" start \
-           --container-engine "$RD_CONTAINER_RUNTIME" \
-           --kubernetes-enabled \
-           --kubernetes-version "$RD_KUBERNETES_PREV_VERSION" \
-           --path-management-strategy rcfiles \
-           --kubernetes.suppress-sudo \
-           --updater=false
+start_kubernetes() {
+    start_container_runtime \
+        --kubernetes-enabled \
+        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
 }

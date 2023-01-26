@@ -3,8 +3,8 @@ setup() {
 }
 
 @test 'factory-reset when Rancher Desktop is not running' {
-    start_application
-    wait_for_apiserver "$RD_KUBERNETES_PREV_VERSION"
+    start_kubernetes
+    wait_for_apiserver
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_runtime
@@ -14,8 +14,8 @@ setup() {
 }
 
 @test 'factory reset - keep cached k8s images' {
-    start_application
-    wait_for_apiserver "$RD_KUBERNETES_PREV_VERSION"
+    start_kubernetes
+    wait_for_apiserver
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_runtime
@@ -24,8 +24,8 @@ setup() {
 }
 
 @test 'factory reset - delete cached k8s images' {
-    start_application
-    wait_for_apiserver "$RD_KUBERNETES_PREV_VERSION"
+    start_kubernetes
+    wait_for_apiserver
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_runtime
