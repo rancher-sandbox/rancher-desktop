@@ -134,7 +134,6 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
-    installDevtools();
     setupProtocolHandler();
 
     // Needs to happen before any file is written, otherwise that file
@@ -227,19 +226,6 @@ Electron.app.whenReady().then(async() => {
     Electron.app.quit();
   }
 });
-
-function installDevtools() {
-  if (Electron.app.isPackaged) {
-    return;
-  }
-
-  const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
-
-  // No need to wait for it to complete, but handle any errors asynchronously
-  installExtension(VUEJS_DEVTOOLS).catch((err: any) => {
-    console.log(`Error installing VUEJS_DEVTOOLS: ${ err }`);
-  });
-}
 
 async function doFirstRunDialog() {
   if (settings.firstRunDialogNeeded()) {
