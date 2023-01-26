@@ -368,7 +368,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
       ENGINE:          cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
-      ADDITIONAL_ARGS: '',
+      ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
     };
 

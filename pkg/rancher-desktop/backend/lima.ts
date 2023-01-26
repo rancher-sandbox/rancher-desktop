@@ -397,33 +397,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
   }
 
-  /** Get the IPv4 address of the VM, assuming it's already up */
+  /**
+   * Get the IPv4 address of the VM, assuming it's already up.
+   * In Lima the slirp IP is hard-coded to 192.168.5.15.
+   */
   get ipAddress(): Promise<string | undefined> {
-    return (async() => {
-      // Get the routing map structure
-      const state = await this.execCommand({ capture: true }, 'cat', '/proc/net/fib_trie');
-
-      // We look for the IP address by:
-      // 1. Convert the structure (text) into lines.
-      // 2. Look for lines followed by "/32 host LOCAL".
-      //    This gives interface addresses.
-      const lines = state
-        .split(/\r?\n+/)
-        .filter((_, i, array) => (array[i + 1] || '').includes('/32 host LOCAL'));
-      // 3. Filter for lines with the shortest prefix; this is needed to reject
-      //    the CNI interfaces.
-      const lengths: [number, string][] = lines.map(line => [line.length - line.trimStart().length, line]);
-      const minLength = Math.min(...lengths.map(([length]) => length));
-      // 4. Drop the tree formatting ("    |-- ").  The result are IP addresses.
-      // 5. Reject loopback addresses.
-      const addresses = lengths
-        .filter(([length]) => length === minLength)
-        .map(([_, address]) => address.replace(/^\s+\|--/, '').trim())
-        .filter(address => !address.startsWith('127.'));
-
-      // Assume any of the addresses works to connect to the apiserver, so pick the first one.
-      return addresses[0];
-    })();
+    return Promise.resolve('192.168.5.15');
   }
 
   getBackendInvalidReason(): Promise<BackendError | null> {
