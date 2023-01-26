@@ -1,6 +1,5 @@
 limactl() {
-    RESOURCES=$(set_resources)
-    LIMA_HOME="$(lima_home)" "${RESOURCES}/lima/bin/limactl" "$@"
+    LIMA_HOME="$(lima_home)" "$(resources_dir)/lima/bin/limactl" "$@"
 }
 
 lima_home() {
@@ -11,11 +10,10 @@ lima_home() {
     fi
 }
 
-set_resources() {
+resources_dir() {
     if is_macos; then
-        _RESOURCES="/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin"
+        echo "/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin"
     elif is_linux; then
-        _RESOURCES="/opt/rancher-desktop/resources/resources/linux"
+        echo "/opt/rancher-desktop/resources/resources/linux"
     fi
-    echo "$_RESOURCES"
 }

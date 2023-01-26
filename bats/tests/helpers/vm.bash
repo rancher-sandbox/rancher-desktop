@@ -43,6 +43,7 @@ EOF
     if [ "$RD_USE_IMAGE_ALLOW_LIST" != "false" ]; then
         RD_USE_IMAGE_ALLOW_LIST=true
     fi
+
     mkdir -p $(dirname $RD_CONFIG_FILE)
     # Make sure supressSudo is true
     cat <<EOF > $RD_CONFIG_FILE
