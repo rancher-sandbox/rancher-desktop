@@ -78,6 +78,16 @@ describe('paths', () => {
       linux:  RESOURCES_PATH,
       darwin: RESOURCES_PATH,
     },
+    deploymentProfileSystem: {
+      win32:  '',
+      linux:  '/etc/rancher-desktop',
+      darwin: '/Library/Preferences',
+    },
+    deploymentProfileUser: {
+      win32:  '',
+      linux:  '%HOME%/.config/rancher-desktop',
+      darwin: '%HOME%/Library/Preferences',
+    },
   };
 
   const table = Object.entries(cases).flatMap(
