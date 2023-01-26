@@ -6,6 +6,7 @@ import os from 'os';
 import { dirname, join } from 'path';
 
 import _ from 'lodash';
+import plist from 'plist';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -14,6 +15,8 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
 const console = Logging.settings;
+const PROFILE_PLIST = 'io.rancherdesktop.profile.plist';
+const PROFILE_JSON = 'profile.json';
 
 // Settings versions are independent of app versions.
 // Any time a version changes, increment its version by 1.
@@ -423,3 +426,103 @@ function updateSettings(settings: Settings) {
 // Imported from dashboard/config/settings.js
 // Setting IDs
 export const SETTING = { PL_RANCHER_VALUE: 'rancher' };
+
+/**
+ * Read and validate the json formatted deployment profile.
+ * Returns the system profile if it exists, otherwise the user profile if it exists.
+ * @returns A settings profile stripped of all fields not found in the schema.
+ */
+export function readDeploymentProfile() {
+  let profileData;
+  let profile;
+
+  switch (os.platform()) {
+  case 'win32':
+    break;
+  case 'linux':
+    try {
+      profileData = fs.readFileSync(join(paths.deploymentProfileSystem, PROFILE_JSON), 'utf8');
+    } catch {
+      try {
+        profileData = fs.readFileSync(join(paths.deploymentProfileUser, PROFILE_JSON), 'utf8');
+      } catch {}
+    }
+    if (typeof profileData !== 'undefined') {
+      profile = JSON.parse(profileData);
+    }
+    break;
+  case 'darwin':
+    try {
+      profileData = fs.readFileSync(join(paths.deploymentProfileSystem, PROFILE_PLIST), 'utf8');
+    } catch {
+      try {
+        profileData = fs.readFileSync(join(paths.deploymentProfileUser, PROFILE_PLIST), 'utf8');
+      } catch {}
+    }
+    if (typeof profileData !== 'undefined') {
+      profile = plist.parse(profileData);
+    }
+    break;
+  }
+
+  return validateDeploymentProfile(profile, defaultSettings);
+}
+
+function validateDeploymentProfile(profile: any, schema: any) {
+  if (typeof profile === 'undefined') {
+    return undefined;
+  }
+
+  Object.keys(profile).forEach((key) => {
+    if (key in schema) {
+      if (typeof profile[key] === typeof schema[key]) {
+        if (typeof profile[key] === 'object') {
+          validateDeploymentProfile(profile[key], schema[key]);
+        }
+      } else {
+        console.log(`Deployment Profile ignoring '${ key }'. Wrong type.`);
+        delete profile[key];
+      }
+    } else {
+      console.log(`Deployment Profile ignoring '${ key }'. Not in schema.`);
+      delete profile[key];
+    }
+  });
+
+  return profile;
+}
+
+/**
+ * Merge profile into config and return result.
+ * @param {*} config The config settings file.
+ * @param {*} profile The deployment profile.
+ * @param {*} lockedOnly Only overwrite settings for locked profile values.
+ * @return {*} The merged configuration file.
+ */
+export function mergeDeploymentProfile(config: any, profile: any, lockedOnly: boolean): any {
+  if (typeof config === 'undefined' || typeof profile === 'undefined') {
+    return (profile || config);
+  }
+
+  if (lockedOnly === true) {
+    config = _.mergeWith(config, profile, (configObj, profileObj) => {
+      for (const key of Object.keys(profileObj)) {
+        if (typeof profileObj[key] === 'object') {
+          for (const [k, v] of Object.entries(profileObj[key])) {
+            if (k === 'locked' && v === true) {
+              console.log(`Deployment Profile overriding locked '${ key }'`);
+
+              return profileObj;
+            }
+          }
+        }
+      }
+
+      return configObj; // keep config settings
+    });
+  } else {
+    config = _.merge(config, profile);
+  }
+
+  return config;
+}
