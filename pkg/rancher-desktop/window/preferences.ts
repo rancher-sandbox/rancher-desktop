@@ -15,7 +15,7 @@ interface NavItems {
 export const preferencesNavItems: NavItems[] = [
   {
     name: 'Application',
-    tabs: ['behavior', 'environment'],
+    tabs: ['general', 'behavior', 'environment'],
   },
   { name: process.platform === 'win32' ? 'WSL' : 'Virtual Machine' },
   {

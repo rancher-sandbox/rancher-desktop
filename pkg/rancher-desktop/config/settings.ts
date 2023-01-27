@@ -87,6 +87,10 @@ export const defaultSettings = {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
+  autoStart:            false,
+  startInBackground:    false,
+  hideNotificationIcon: false,
+  window:               { quitOnClose: false },
 };
 
 export type Settings = typeof defaultSettings;

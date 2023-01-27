@@ -32,7 +32,7 @@ import {
   createDefaultSettings, kubectl, packageLogs, reportAsset, tool,
 } from './utils/TestUtils';
 
-import { ContainerEngine, Settings } from '@pkg/config/settings';
+import { ContainerEngine, Settings, defaultSettings } from '@pkg/config/settings';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
@@ -97,9 +97,7 @@ test.describe('Command server', () => {
   }
 
   function verifySettingsKeys(settings: Record<string, any>) {
-    expect(new Set(['version', 'containerEngine', 'kubernetes', 'portForwarding', 'images', 'telemetry',
-      'updater', 'debug', 'pathManagementStrategy', 'diagnostics']))
-      .toEqual(new Set(Object.keys(settings)));
+    expect(Object.keys(defaultSettings)).toEqual(Object.keys(settings));
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -638,7 +636,7 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
-        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(26);
+        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(30);
       });
 
       test('complains when option value missing', async() => {

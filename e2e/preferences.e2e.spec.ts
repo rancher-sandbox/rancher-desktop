@@ -57,21 +57,35 @@ test.describe.serial('Main App Test', () => {
     expect(preferencesWindow).toBeDefined();
   });
 
-  test('should show application page', async() => {
+  test('should show application page and render general tab', async() => {
     const { application } = new PreferencesPage(preferencesWindow);
 
     await expect(application.nav).toHaveClass('preferences-nav-item active');
 
     if (!os.platform().startsWith('win')) {
-      await expect(application.tabBehavior).toHaveText('Behavior');
-      await expect(application.administrativeAccess).toBeVisible();
+      await expect(application.tabEnvironment).toBeVisible();
     } else {
-      await expect(application.tabBehavior).not.toBeVisible();
       await expect(application.tabEnvironment).not.toBeVisible();
     }
 
+    await expect(application.tabGeneral).toHaveText('General');
+    await expect(application.tabBehavior).toBeVisible();
+
     await expect(application.automaticUpdates).toBeVisible();
     await expect(application.statistics).toBeVisible();
+    await expect(application.autoStart).not.toBeVisible();
+    await expect(application.pathManagement).not.toBeVisible();
+  });
+
+  test('should render behavior tab', async() => {
+    const { application } = new PreferencesPage(preferencesWindow);
+
+    await application.tabBehavior.click();
+
+    await expect(application.autoStart).toBeVisible();
+    await expect(application.background).toBeVisible();
+    await expect(application.notificationIcon).toBeVisible();
+    await expect(application.administrativeAccess).not.toBeVisible();
     await expect(application.pathManagement).not.toBeVisible();
   });
 

@@ -260,6 +260,24 @@ about:
   downloadCLI:
     title: CLI Downloads
 
+application:
+  behavior:
+    autoStart:
+      legendText: Startup
+      label: Automatically start at login
+    background:
+      legendText: Background
+      legendTooltip: >
+        Hide the app window when Rancher Desktop is running in the background.
+        It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+    startInBackground:
+      label: Start in the background
+    windowQuitOnClose:
+      label: Keep running in the background when closing application window
+    notificationIcon:
+      legendText: Notification Icon
+      label: Hide Notification Icon
+
 containerEngine:
   label: Container Engine
   options:

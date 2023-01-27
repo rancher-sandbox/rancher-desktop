@@ -5,6 +5,7 @@ import { mapGetters, mapState } from 'vuex';
 
 import PreferencesApplicationBehavior from '@pkg/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@pkg/components/Preferences/ApplicationEnvironment.vue';
+import PreferencesApplicationGeneral from '@pkg/components/Preferences/ApplicationGeneral.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
@@ -21,6 +22,7 @@ export default Vue.extend({
     Tab,
     PreferencesApplicationBehavior,
     PreferencesApplicationEnvironment,
+    PreferencesApplicationGeneral,
   },
   props: {
     preferences: {
@@ -60,7 +62,6 @@ export default Vue.extend({
 
 <template>
   <rd-tabbed
-    v-if="!isPlatformWindows"
     v-bind="$attrs"
     class="action-tabs"
     :no-content="true"
@@ -69,6 +70,7 @@ export default Vue.extend({
   >
     <template #tabs>
       <tab
+        v-if="!isPlatformWindows"
         label="Environment"
         name="environment"
         :weight="1"
@@ -77,6 +79,11 @@ export default Vue.extend({
         label="Behavior"
         name="behavior"
         :weight="2"
+      />
+      <tab
+        label="General"
+        name="general"
+        :weight="3"
       />
     </template>
     <div class="application-content">
@@ -87,12 +94,6 @@ export default Vue.extend({
       />
     </div>
   </rd-tabbed>
-  <div v-else class="application-content">
-    <preferences-application-behavior
-      :preferences="preferences"
-      v-on="$listeners"
-    />
-  </div>
 </template>
 
 <style lang="scss" scoped>
