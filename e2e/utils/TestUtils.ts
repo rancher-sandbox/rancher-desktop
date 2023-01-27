@@ -6,7 +6,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import { ElectronApplication, expect } from '@playwright/test';
+import { expect, _electron, ElectronApplication, Page } from '@playwright/test';
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@pkg/config/settings';
@@ -65,7 +65,7 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
   return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
 }
 
-async function packageLogs(testPath: string) {
+export async function packageLogs(testPath: string) {
   if (!process.env.CIRRUS_CI) {
     console.log('Skipping packaging logs, not running in Cirrus CI');
 
@@ -170,4 +170,36 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
       await util.promisify(setTimeout)(delay);
     }
   }
+}
+
+/**
+ * Run Rancher Desktop; return promise that resolves to commonly-used
+ * playwright objects when it has started.
+ * @param testPath The path to the test file.
+ * @param tracing Whether to start tracing.
+ */
+export async function startRancherDesktop(testPath: string, tracing: boolean): Promise<{electronApp: ElectronApplication, page: Page}> {
+  const electronApp = await _electron.launch({
+    args: [
+      path.join(__dirname, '../../'),
+      '--disable-gpu',
+      '--whitelisted-ips=',
+      // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
+      '--disable-dev-shm-usage',
+      '--no-modal-dialogs',
+    ],
+    env: {
+      ...process.env,
+      RD_LOGS_DIR:     reportAsset(testPath, 'log'),
+      RD_MOCK_BACKEND: '1',
+    },
+  });
+
+  if (tracing) {
+    electronApp.context().tracing.start({ screenshots: true, snapshots: true });
+  }
+
+  const page = await electronApp.firstWindow();
+
+  return { electronApp, page };
 }
