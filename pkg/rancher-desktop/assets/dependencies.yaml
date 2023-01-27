@@ -6,7 +6,7 @@ WSLDistro: "0.32"
 kuberlr: 0.4.2
 helm: 3.11.0
 dockerCLI: 20.10.23
-dockerBuildx: 0.10.0
+dockerBuildx: 0.10.1
 dockerCompose: 2.15.1
 trivy: 0.36.1
 steve: 0.1.0-beta9
