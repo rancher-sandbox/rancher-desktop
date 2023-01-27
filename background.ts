@@ -192,7 +192,10 @@ Electron.app.whenReady().then(async() => {
     });
 
     setupTray();
-    window.openMain();
+
+    if (!cfg.startInBackground) {
+      window.openMain();
+    }
 
     dockerDirManager.ensureCredHelperConfigured();
 
