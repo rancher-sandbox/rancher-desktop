@@ -4,7 +4,7 @@ import stream from 'stream';
 import { Settings } from '@pkg/config/settings';
 import * as childProcess from '@pkg/utils/childProcess';
 import EventEmitter from '@pkg/utils/eventEmitter';
-import { RecursiveKeys, RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
 
@@ -74,7 +74,7 @@ export interface BackendEvents {
 /**
  * Settings that KubernetesBackend can access.
  */
-export type BackendSettings = Settings;
+export type BackendSettings = RecursiveReadonly<Settings>;
 
 /**
  * Reasons that the backend might need to restart, as returned from
@@ -198,7 +198,7 @@ export type execOptions = childProcess.CommonOptions & {
 export interface VMExecutor {
   /**
    * execCommand runs the given command in the virtual machine.
-   * @param options Execution options.  If capture is set, standard output is
+   * @param execOptions Execution options.  If capture is set, standard output is
    *    returned.
    * @param command The command to execute.
    */

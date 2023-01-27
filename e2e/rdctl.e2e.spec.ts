@@ -727,10 +727,11 @@ test.describe('Command server', () => {
       });
 
       test.describe('settings v5 migration', () => {
-        /** Note issue https://github.com/rancher-sandbox/rancher-desktop/issues/3829
-         *  calls for removing unrecognized fields in the existings settings.json file
-         *  Currently we're ignoring unrecognized fields in the PUT payload -- to complain about
-         *  them calls for another issue.
+        /**
+         * Note issue https://github.com/rancher-sandbox/rancher-desktop/issues/3829
+         * calls for removing unrecognized fields in the existings settings.json file
+         * Currently we're ignoring unrecognized fields in the PUT payload -- to complain about
+         * them calls for another issue.
          */
         test('rejects old settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);

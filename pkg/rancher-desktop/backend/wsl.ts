@@ -132,10 +132,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return path.join(paths.resources, os.platform(), `distro-${ DISTRO_VERSION }.tar`);
   }
 
-  /**
-   * Initialize this field to `defaultSettings` instead of `undefined` to avoid `?.` sequences everywhere we use it.
-   */
-  protected cfg: BackendSettings = defaultSettings;
+  /** The current config state. */
+  protected cfg: BackendSettings | undefined;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -702,7 +700,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
-      if (this.cfg.containerEngine.name === ContainerEngine.CONTAINERD) {
+      if (this.cfg?.containerEngine.name === ContainerEngine.CONTAINERD) {
         existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);

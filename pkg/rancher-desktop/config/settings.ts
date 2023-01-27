@@ -421,6 +421,7 @@ const updateTable: Record<number, (settings: any) => void> = {
     delete settings.kubernetes.containerEngine;
     delete settings.kubernetes.experimental;
     delete settings.kubernetes.hostResolver;
+    delete settings.kubernetes.checkForExistingKimBuilder;
     delete settings.kubernetes.memoryInGB;
     delete settings.kubernetes.numberCPUs;
     delete settings.kubernetes.suppressSudo;

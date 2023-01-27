@@ -265,10 +265,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
-  /**
-   * Initialize this field to `defaultSettings` instead of `undefined` to avoid `?.` sequences everywhere we use it.
-   */
-  protected cfg: BackendSettings = defaultSettings;
+  /** The current config state. */
+  protected cfg: BackendSettings | undefined;
 
   /** The current architecture. */
   protected readonly arch: Architecture;
@@ -563,8 +561,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         location: this.baseDiskImage,
         arch:     this.arch,
       }],
-      cpus:   this.cfg.virtualMachine.numberCPUs || 4,
-      memory: (this.cfg.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
+      cpus:   this.cfg?.virtualMachine.numberCPUs || 4,
+      memory: (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts: [
         { location: path.join(paths.cache, 'k3s'), writable: false },
         { location: paths.logs, writable: true },
@@ -845,7 +843,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @return Whether the user wants to allow the prompt.
    */
   protected async showSudoReason(this: Readonly<this> & this, explanations: Record<string, string[]>): Promise<boolean> {
-    if (this.noModalDialogs || !this.cfg.application.adminAccess) {
+    if (this.noModalDialogs || !this.cfg?.application.adminAccess) {
       return false;
     }
     const neverAgain = await openSudoPrompt(explanations);
@@ -1174,7 +1172,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async configureDockerSocket(this: Readonly<this> & this): Promise<SudoCommand | undefined> {
-    if (this.cfg.containerEngine.name !== ContainerEngine.MOBY) {
+    if (this.cfg?.containerEngine.name !== ContainerEngine.MOBY) {
       return;
     }
     const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
@@ -1374,7 +1372,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       await this.execCommand({ root: true }, 'mkdir', '-p', '/etc/cni/net.d');
 
-      if (this.cfg.kubernetes.options.flannel) {
+      if (this.cfg?.kubernetes.options.flannel) {
         await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
       }
       await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
@@ -1440,7 +1438,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     } else {
       const sharedIP = await this.getInterfaceAddr('rd1');
 
-      if (this.cfg.application.adminAccess) {
+      if (this.cfg?.application.adminAccess) {
         await this.noBridgedNetworkDialog(sharedIP);
       }
       if (sharedIP) {
@@ -1542,7 +1540,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @precondition The VM configuration is correct.
    */
   protected async startVM() {
-    const vmnet = this.cfg.virtualMachine?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
+    const vmnet = this.cfg?.virtualMachine?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
     let allowRoot = this.#adminAccess;
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
@@ -1808,7 +1806,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         existingConfig = {};
       }
       merge(existingConfig, defaultConfig);
-      if (this.cfg.containerEngine.name === ContainerEngine.CONTAINERD) {
+      if (this.cfg?.containerEngine.name === ContainerEngine.CONTAINERD) {
         existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
@@ -1836,7 +1834,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          if (this.cfg.kubernetes.enabled) {
+          if (this.cfg?.kubernetes.enabled) {
             try {
               await this.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             } catch (ex) {
