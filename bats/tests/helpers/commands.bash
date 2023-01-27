@@ -1,5 +1,5 @@
 exe=""
-if [ -n "$RD_USE_WINDOWS_EXE" ]; then
+if [ -n "${RD_USE_WINDOWS_EXE:-}" ]; then
    exe=".exe"
 fi
 
@@ -27,3 +27,8 @@ fi
 
 RDSHELL="$RDCTL shell"
 RDSUDO="$RDSHELL sudo"
+
+#After running factory reset, we need to call rdctl from resources as it was removed from the path
+rdctl() {
+    "$(resources_dir)/bin/rdctl" "$@"
+}

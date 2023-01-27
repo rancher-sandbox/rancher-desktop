@@ -18,12 +18,8 @@ setup() {
 }
 
 @test 'start rancher desktop' {
-    $RDCTL start \
-           --container-engine "$RD_CONTAINER_RUNTIME" \
-           --kubernetes-enabled \
-           --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
-
-    wait_for_apiserver "$RD_KUBERNETES_PREV_VERSION"
+    start_kubernetes
+    wait_for_apiserver
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_runtime
@@ -87,7 +83,7 @@ verify_wordpress() {
 
 @test 'downgrade kubernetes' {
     $RDCTL set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
-    wait_for_apiserver "$RD_KUBERNETES_PREV_VERSION"
+    wait_for_apiserver
 }
 
 @test 'verify nginx after downgrade' {

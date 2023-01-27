@@ -19,24 +19,7 @@ wait_for_shutdown() {
 }
 
 factory_reset() {
-    run $RDCTL shutdown
-    if [ $status -eq 0 ]; then
-        wait_for_shutdown
-    fi
-    if [ $status -ne 0 ]; then
-        if is_macos; then
-            run osascript -e 'tell application "Rancher Desktop" to quit'
-            wait_for_shutdown
-        fi
-        # terminate with extreme prejudice
-        if is_linux; then
-            run pkill rancher-desktop
-        elif is_macos; then
-            # needs -f option because pkill doesn't cope with spaces in process names
-            run pkill -f "Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
-        fi
-    fi
-    limactl delete -f 0
+    $RDCTL factory-reset
     if is_linux; then
         RD_CONFIG_FILE=$HOME/.config/rancher-desktop/settings.json
     elif is_macos; then
@@ -45,6 +28,7 @@ factory_reset() {
 
     # hack for tests/registry/creds.bats because we can't configure additional
     # hosts via settings.yaml
+    mkdir -p "$(lima_home)/_config"
     override="$(lima_home)/_config/override.yaml"
     touch "$override"
     if ! grep -q registry.internal: "$override"; then
@@ -60,6 +44,7 @@ EOF
         RD_USE_IMAGE_ALLOW_LIST=true
     fi
 
+    mkdir -p $(dirname $RD_CONFIG_FILE)
     # Make sure supressSudo is true
     cat <<EOF > $RD_CONFIG_FILE
 {
@@ -81,14 +66,18 @@ EOF
 }
 
 start_container_runtime() {
-    local container_runtime="${1:-$RD_CONTAINER_RUNTIME}"
-    if is_macos; then
-        open -a "Rancher Desktop" --args \
-             --kubernetes-containerEngine "$container_runtime" \
-             --kubernetes-enabled=false
-    elif is_linux; then
-        $RDCTL start \
-               --container-engine="$container_runtime" \
-               --kubernetes-enabled=false 3>&-
-    fi
+    rdctl start \
+          --path-management-strategy rcfiles \
+          --kubernetes.suppress-sudo \
+          --updater=false \
+          --container-engine="$RD_CONTAINER_RUNTIME" \
+          --kubernetes-enabled=false \
+          "$@" \
+          3>&-
+}
+
+start_kubernetes() {
+    start_container_runtime \
+        --kubernetes-enabled \
+        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
 }
