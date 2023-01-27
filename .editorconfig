@@ -5,8 +5,6 @@
 root = true
 
 [*]
-
-# Change these settings to your own preference
 charset = utf-8
 end_of_line = lf
 indent_size = 2
@@ -14,3 +12,8 @@ indent_style = space
 insert_final_newline = true
 quote_type = single
 trim_trailing_whitespace = true
+
+[*.{sh,bash,bats}]
+indent_size = 4
+# shfmt option
+keep_padding = true
