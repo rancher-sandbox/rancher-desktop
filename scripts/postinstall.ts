@@ -1,8 +1,8 @@
-import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { spawnFile } from '@pkg/utils/childProcess';
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -109,14 +109,27 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
   return downloadContext;
 }
 
-runScripts().then(() => {
-  execFileSync('node', ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'], { stdio: 'inherit' });
-  execFileSync('node', ['scripts/ts-wrapper.js',
-    'scripts/generateCliCode.ts',
-    'pkg/rancher-desktop/assets/specs/command-api.yaml',
-    'src/go/rdctl/pkg/options/generated/options.go'], { stdio: 'inherit' });
-})
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+// The main purpose of this setTimeout is to keep the script waiting until the main async function finishes
+const keepScriptAlive = setTimeout(() => { }, 24 * 3600 * 1000);
+
+(async() => {
+  let exitCode = 2;
+
+  try {
+    await runScripts();
+    await spawnFile('node',
+      ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'],
+      { stdio: 'inherit' });
+    await spawnFile('node', ['scripts/ts-wrapper.js',
+      'scripts/generateCliCode.ts',
+      'pkg/rancher-desktop/assets/specs/command-api.yaml',
+      'src/go/rdctl/pkg/options/generated/options.go'],
+    { stdio: 'inherit' });
+    exitCode = 0;
+  } catch (e: any) {
+    console.error('POSTINSTALL ERROR: ', e);
+  } finally {
+    clearTimeout(keepScriptAlive);
+    process.exit(exitCode);
+  }
+})();
