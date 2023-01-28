@@ -5,7 +5,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
-import { createDefaultSettings, packageLogs, reportAsset } from '../e2e/utils/TestUtils';
+import { createDefaultSettings, reportAsset, teardown } from '../e2e/utils/TestUtils';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import { isWin } from '@pkg/utils/platform';
@@ -47,11 +47,7 @@ test.describe.serial('Main App Test', () => {
     await navPage.progressBecomesReady();
   });
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('Main Page', async({ colorScheme }) => {
     const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });

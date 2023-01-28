@@ -8,7 +8,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
 
 import { Settings, ContainerEngine } from '@pkg/config/settings';
 import fetch from '@pkg/utils/fetch';
@@ -45,11 +45,7 @@ test.describe.serial('KubernetesBackend', () => {
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);

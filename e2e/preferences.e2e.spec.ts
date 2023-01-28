@@ -6,7 +6,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
 
 let page: Page;
 
@@ -47,11 +47,7 @@ test.describe.serial('Main App Test', () => {
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('should open preferences modal', () => {
     expect(preferencesWindow).toBeDefined();

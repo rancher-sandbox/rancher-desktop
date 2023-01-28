@@ -5,7 +5,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs,
+  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, teardown,
 } from './utils/TestUtils';
 
 let page: Page;
@@ -44,11 +44,7 @@ test.describe.serial('Helm Deployment Test', () => {
    */
   test.afterAll(tearDownHelm);
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('should start loading the background services', async() => {
     const navPage = new NavPage(page);

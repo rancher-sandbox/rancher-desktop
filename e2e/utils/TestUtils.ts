@@ -5,7 +5,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect } from '@playwright/test';
+import { ElectronApplication, expect } from '@playwright/test';
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@pkg/config/settings';
@@ -64,7 +64,7 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
   return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
 }
 
-export async function packageLogs(testPath: string) {
+async function packageLogs(testPath: string) {
   if (!process.env.CIRRUS_CI) {
     console.log('Skipping packaging logs, not running in Cirrus CI');
 
@@ -75,6 +75,22 @@ export async function packageLogs(testPath: string) {
 
   console.log(`Packaging logs to ${ outputPath }...`);
   await childProcess.spawnFile('tar', ['cfh', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
+}
+
+export async function teardown(app: ElectronApplication, filename: string) {
+  const context = app.context();
+  const proc = app.process();
+  const pid = proc.pid;
+
+  try {
+    await context.tracing.stop({ path: reportAsset(__filename) });
+    await packageLogs(filename);
+    await app.close();
+  } finally {
+    if (proc.kill('SIGTERM') || proc.kill('SIGKILL')) {
+      console.log(`Manually stopped process ${ pid }`);
+    }
+  }
 }
 
 /**

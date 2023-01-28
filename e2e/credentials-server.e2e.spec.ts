@@ -34,7 +34,7 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getFullPathForTool, packageLogs, reportAsset, tool,
+  createDefaultSettings, getFullPathForTool, reportAsset, teardown, tool,
 } from './utils/TestUtils';
 
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -267,11 +267,7 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);

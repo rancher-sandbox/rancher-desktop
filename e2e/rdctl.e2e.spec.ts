@@ -29,7 +29,7 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, packageLogs, reportAsset, tool,
+  createDefaultSettings, kubectl, reportAsset, teardown, tool,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings, defaultSettings } from '@pkg/config/settings';
@@ -127,11 +127,7 @@ test.describe('Command server', () => {
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(async() => {
-    await context.tracing.stop({ path: reportAsset(__filename) });
-    await packageLogs(__filename);
-    await electronApp.close();
-  });
+  test.afterAll(() => teardown(electronApp, __filename));
 
   test('should load Kubernetes API', async() => {
     const navPage = new NavPage(page);
