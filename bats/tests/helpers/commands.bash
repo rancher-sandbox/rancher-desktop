@@ -3,20 +3,16 @@ if [ -n "${RD_USE_WINDOWS_EXE:-}" ]; then
    exe=".exe"
 fi
 
-HELM="helm$exe"
-KUBECTL_EXE="kubectl$exe"
-KUBECTL="$KUBECTL_EXE --context rancher-desktop"
-RDCTL="rdctl$exe"
-DOCKER_EXE="docker$exe"
-DOCKER="$DOCKER_EXE --context rancher-desktop"
-NERDCTL="nerdctl$exe"
-
-if [ "$RD_CONTAINER_RUNTIME" == "containerd" ]; then
-    CRCTL=$NERDCTL
-    CR_SERVICE=containerd
+if using_containerd; then
+    CONTAINER_ENGINE_SERVICE=containerd
 else
-    CRCTL=$DOCKER
-    CR_SERVICE=docker
+    CONTAINER_ENGINE_SERVICE=docker
+fi
+
+if is_unix; then
+    RC_SERVICE=rc-service
+elif is_windows; then
+    RC_SERVICE=wsl-service
 fi
 
 if is_macos; then
@@ -25,10 +21,40 @@ elif is_linux; then
     CRED_HELPER="docker-credential-pass"
 fi
 
-RDSHELL="$RDCTL shell"
-RDSUDO="$RDSHELL sudo"
-
-#After running factory reset, we need to call rdctl from resources as it was removed from the path
+ctrctl() {
+    if using_docker; then
+        docker "$@"
+    else
+        nerdctl "$@"
+    fi
+}
+docker() {
+    docker_exe --context rancher-desktop "$@"
+}
+docker_exe() {
+    "$PATH_RESOURCES/bin/docker$exe" "$@"
+}
+helm() {
+    "$PATH_RESOURCES/bin/helm$exe" "$@"
+}
+kubectl() {
+    kubectl_exe --context rancher-desktop "$@"
+}
+kubectl_exe() {
+    "$PATH_RESOURCES/bin/kubectl$exe" "$@"
+}
+limactl() {
+    LIMA_HOME="$LIMA_HOME" "$PATH_RESOURCES/lima/bin/limactl" "$@"
+}
+nerdctl() {
+    "$PATH_RESOURCES/bin/nerdctl$exe" "$@"
+}
 rdctl() {
-    "$(resources_dir)/bin/rdctl" "$@"
+    "$PATH_RESOURCES/bin/rdctl$exe" "$@"
+}
+rdshell() {
+    rdctl shell "$@"
+}
+rdsudo() {
+    rdshell sudo "$@"
 }

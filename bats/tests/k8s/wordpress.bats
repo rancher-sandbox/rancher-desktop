@@ -13,8 +13,8 @@ setup() {
 }
 
 @test 'add helm repo' {
-    $HELM repo add bitnami https://charts.bitnami.com/bitnami
-    $HELM repo update bitnami
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm repo update bitnami
 }
 
 @test 'start rancher desktop' {
@@ -22,12 +22,12 @@ setup() {
     wait_for_apiserver
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
-    wait_for_container_runtime
+    wait_for_container_engine
 }
 
 @test 'deploy nginx' {
-    $CRCTL pull nginx
-    $CRCTL run -d -p 8585:80 --restart=always --name nginx nginx
+    ctrctl pull nginx
+    ctrctl run -d -p 8585:80 --restart=always --name nginx nginx
 }
 
 verify_nginx() {
@@ -37,7 +37,7 @@ verify_nginx() {
 }
 
 @test 'deploy wordpress' {
-    $HELM install wordpress bitnami/wordpress \
+    helm install wordpress bitnami/wordpress \
           --wait \
           --timeout 20m \
           --set service.type=NodePort \
@@ -46,12 +46,12 @@ verify_nginx() {
 }
 
 verify_wordpress() {
-    run $HELM list
+    run helm list
     assert_success
     assert_line --regexp "$(printf '^wordpress[ \t]+default')"
 
     # Fetch wordpress port
-    run $KUBECTL get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services wordpress
+    run kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services wordpress
     assert_success
 
     # Load the homepage; that can take a while because all the pods are still restarting
@@ -69,7 +69,7 @@ verify_wordpress() {
 }
 
 @test 'upgrade kubernetes' {
-    $RDCTL set --kubernetes-version "$RD_KUBERNETES_VERSION"
+    rdctl set --kubernetes-version "$RD_KUBERNETES_VERSION"
     wait_for_apiserver "$RD_KUBERNETES_VERSION"
 }
 
@@ -82,7 +82,7 @@ verify_wordpress() {
 }
 
 @test 'downgrade kubernetes' {
-    $RDCTL set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
+    rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
     wait_for_apiserver
 }
 
@@ -93,7 +93,7 @@ verify_wordpress() {
 
 @test 'verify wordpress is gone after downgrade' {
     # downgrading kubernetes deletes all workloads
-    run $HELM list
+    run helm list
     assert_success
     refute_line --regexp "$(printf '^wordpress[ \t]+default')"
     #verify_wordpress
@@ -102,9 +102,9 @@ verify_wordpress() {
 teardown_file() {
     load '../helpers/load'
 
-    run $CRCTL rm -f nginx
+    run ctrctl rm -f nginx
 
-    run $HELM uninstall wordpress --wait
+    run helm uninstall wordpress --wait
     # The database PVC doesn't get deleted by `helm uninstall`.
-    run $KUBECTL delete pvc data-wordpress-mariadb-0
+    run kubectl delete pvc data-wordpress-mariadb-0
 }

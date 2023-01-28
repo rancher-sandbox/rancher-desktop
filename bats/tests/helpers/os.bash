@@ -3,7 +3,9 @@ ARCH=$(uname -m)
 
 case $UNAME in
     Darwin)
-        OS=macos
+        # OS matches the directory name of the PATH_RESOURCES directory,
+        # so uses "darwin" and not "macos".
+        OS=darwin
         ;;
     Linux)
         if [[ $(uname -a) =~ microsoft ]]; then
@@ -26,9 +28,9 @@ is_linux() {
 }
 is_macos() {
     if [ -z "${1:-}" ]; then
-        test "$OS" = macos
+        test "$OS" = darwin
     else
-        test "$OS" = macos -a "$ARCH" = "$1"
+        test "$OS" = darwin -a "$ARCH" = "$1"
     fi
 }
 is_windows() {
@@ -37,4 +39,7 @@ is_windows() {
     else
         test "$OS" = windows -a "$ARCH" = "$1"
     fi
+}
+is_unix() {
+    ! is_windows
 }

@@ -5,7 +5,7 @@ setup() {
 @test 'factory-reset when Rancher Desktop is not running' {
     rdctl factory-reset --verbose
     start_application
-    $RDCTL shutdown
+    rdctl shutdown
     rdctl_factory_reset --remove-kubernetes-cache=false --verbose
     check_installation
 }
@@ -28,8 +28,8 @@ start_application() {
 
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
-    if [ "$RD_CONTAINER_RUNTIME" != "containerd" ]; then
-        wait_for_container_runtime
+    if using_docker; then
+        wait_for_container_engine
     fi
 
     # BUG BUG BUG
@@ -42,18 +42,12 @@ start_application() {
 }
 
 rdctl_factory_reset() {
-    if is_macos; then
-        k8s_cache_dir="$HOME/Library/Caches/rancher-desktop"
-    elif is_linux; then
-        k8s_cache_dir="$HOME/.local/cache/rancher-desktop"
-    fi
-
-    $RDCTL factory-reset "$@"
+    rdctl factory-reset "$@"
 
     if [[ "$1" == "--remove-kubernetes-cache=true" ]]; then
-        refute [ -e "$k8s_cache_dir" ]
+        refute [ -e "$PATH_CACHE" ]
     else
-        assert [ -e "$k8s_cache_dir" ]
+        assert [ -e "$PATH_CACHE" ]
     fi
 }
 
@@ -71,25 +65,21 @@ check_installation() {
     fi
 
     # Check if all expected directories were deleted and k8s cache was preserved
-    if is_macos; then
-        delete_dir=("$HOME/.rd"
-                    "$HOME/Library/Application Support/rancher-desktop"
-                    "$HOME/Library/Preferences/rancher-desktop"
-                    "$HOME/Library/Logs/rancher-desktop"
-                   )
-        # TODO (not implemented by `rdctl factory-reset`)
+    delete_dir=("$PATH_APP_HOME" "$PATH_CONFIG")
+    if is_unix; then
+        delete_dir+=("$HOME/.rd")
+        if is_macos; then
+            # LIMA_HOME is under PATH_APP_HOME
+            delete_dir+=("$PATH_LOGS")
+        elif is_linux; then
+            # Both PATH_LOGS and LIMA_HOME are under PATH_DATA
+            delete_dir+=("$PATH_DATA")
+        fi
+        # TODO on macOS (not implemented by `rdctl factory-reset`)
         # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
         # this one only exists after an update has been downloaded
         # ~/Library/Application Support/Caches/rancher-desktop-updater
-        k8s_cache_dir="$HOME/Library/Caches/rancher-desktop"
-    elif is_linux; then
-        delete_dir=("$HOME/.rd"
-                    "$HOME/.local/share/rancher-desktop"
-                    "$HOME/.config/rancher-desktop"
-                   )
-        k8s_cache_dir="$HOME/.local/cache/rancher-desktop"
     fi
-
     for dir in "${delete_dir[@]}"; do
         echo "$assert that $dir does not exist"
         $assert [ ! -e "$dir" ]
@@ -102,7 +92,7 @@ check_installation() {
     done
 
     # Check if ./rd/bin was removed from the path
-    if [[ is_macos || is_linux ]]; then
+    if is_unix; then
         # TODO add check for config.fish
         env_profiles=("$HOME/.bashrc"
                       "$HOME/.zshrc"
@@ -129,8 +119,8 @@ check_installation() {
     done
 
     # Check if the rancher-desktop docker context has been removed
-    if [ "$RD_CONTAINER_RUNTIME" != "containerd" ]; then
-        if [[ is_macos || is_linux ]]; then
+    if using_docker; then
+        if is_unix; then
             echo "$assert that the docker context rancher-desktop does not exist"
             run grep -r rancher-desktop $HOME/.docker/contexts/meta
             ${assert}_failure
@@ -138,7 +128,7 @@ check_installation() {
     fi
 
     # Check if VM was killed
-    if [[ is_macos || is_linux ]]; then
+    if is_unix; then
         run limactl ls
         ${assert}_output --partial "No instance found"
     fi
