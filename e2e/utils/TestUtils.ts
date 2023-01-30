@@ -83,7 +83,7 @@ export async function teardown(app: ElectronApplication, filename: string) {
   const pid = proc.pid;
 
   try {
-    await context.tracing.stop({ path: reportAsset(__filename) });
+    await context.tracing.stop({ path: reportAsset(filename) });
     await packageLogs(filename);
     await app.close();
   } finally {
