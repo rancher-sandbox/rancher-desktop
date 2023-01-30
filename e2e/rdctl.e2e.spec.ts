@@ -31,10 +31,11 @@ import {
   createDefaultSettings, kubectl, reportAsset, retry, teardown, tool,
 } from './utils/TestUtils';
 
-import { ContainerEngine, Settings, defaultSettings } from '@pkg/config/settings';
+import { ContainerEngine, Settings, defaultSettings, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -220,6 +221,7 @@ test.describe('Command server', () => {
     const desiredEngine = settings.containerEngine.name === 'moby' ? 'containerd' : 'moby';
     const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
     const requestedSettings = _.merge({}, settings, {
+      version:         CURRENT_SETTINGS_VERSION,
       containerEngine: {
         name:           { desiredEngine },
         imageAllowList: { locked: !settings.containerEngine.imageAllowList.locked },
@@ -244,6 +246,7 @@ test.describe('Command server', () => {
 
   test('should return multiple error messages, settings request', async() => {
     const newSettings: Record<string, any> = {
+      version:     CURRENT_SETTINGS_VERSION,
       application: {
         stoinks:   'yikes!', // should be ignored
         telemetry: { enabled: { oops: 15 } },
@@ -314,9 +317,41 @@ test.describe('Command server', () => {
     expect(resp.ok).toBeTruthy();
     const telemetry = (await resp.json() as Settings).application.telemetry.enabled;
 
-    resp = await doRequest('/v1/settings', JSON.stringify({ application: { telemetry: { enabled: !telemetry } } }), 'PUT');
+    resp = await doRequest('/v1/settings', JSON.stringify({ version: CURRENT_SETTINGS_VERSION, application: { telemetry: { enabled: !telemetry } } }), 'PUT');
     expect(resp.ok).toBeTruthy();
     await expect(resp.text()).resolves.toContain('no restart required');
+  });
+
+  test('should complain about a missing version field', async() => {
+    let resp = await doRequest('/v1/settings');
+
+    expect(resp.ok).toBeTruthy();
+
+    const body: RecursivePartial<Settings> = await resp.json() as Settings;
+
+    delete body.version;
+    if (body?.application?.telemetry) {
+      body.application.telemetry.enabled = !body.application.telemetry.enabled;
+    }
+    resp = await doRequest('/v1/settings', JSON.stringify(body), 'PUT');
+    expect(resp.ok).toBeFalsy();
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but no version was specified`);
+  });
+
+  test('should complain about an invalid version field', async() => {
+    let resp = await doRequest('/v1/settings');
+
+    expect(resp.ok).toBeTruthy();
+
+    const body: RecursivePartial<Settings> = await resp.json() as Settings;
+
+    body.version = body.version ? body.version - 1 : -1;
+    if (body?.application?.telemetry) {
+      body.application.telemetry.enabled = !body.application.telemetry.enabled;
+    }
+    resp = await doRequest('/v1/settings', JSON.stringify(body), 'PUT');
+    expect(resp.ok).toBeFalsy();
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but received version ${ CURRENT_SETTINGS_VERSION - 1 }`);
   });
 
   test('should require authentication, transient settings request', async() => {
@@ -738,6 +773,7 @@ test.describe('Command server', () => {
           const body: any = {
             // type 'any' because as far as the current configuration code is concerned,
             // it's an object with random fields and values
+            version:    CURRENT_SETTINGS_VERSION,
             kubernetes: {
               memoryInGB:      oldSettings.virtualMachine.memoryInGB + 1,
               numberCPUs:      oldSettings.virtualMachine.numberCPUs + 1,
@@ -789,6 +825,7 @@ test.describe('Command server', () => {
                 numberCPUs: oldSettings.virtualMachine.numberCPUs + 1,
               },
             }),
+            version:     CURRENT_SETTINGS_VERSION,
             application: {
               // XXX: Can't change adminAccess until we can process the sudo-request dialog (and decline it)
               // adminAccess: !oldSettings.application.adminAccess,
@@ -1049,7 +1086,7 @@ test.describe('Command server', () => {
             });
 
             test('invalid setting is specified', async() => {
-              const newSettings = { containerEngine: { name: 'beefalo' } };
+              const newSettings = { version: CURRENT_SETTINGS_VERSION, containerEngine: { name: 'beefalo' } };
               const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
 
               expect({
@@ -1308,7 +1345,10 @@ test.describe('Command server', () => {
       const settings: Settings = JSON.parse(stdout);
 
       if (settings.containerEngine.name !== ContainerEngine.CONTAINERD) {
-        const payloadObject = { containerEngine: { name: ContainerEngine.CONTAINERD } };
+        const payloadObject = {
+          version:         CURRENT_SETTINGS_VERSION,
+          containerEngine: { name: ContainerEngine.CONTAINERD },
+        };
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v1/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
