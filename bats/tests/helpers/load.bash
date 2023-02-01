@@ -1,11 +1,16 @@
-source "$(dirname "${BASH_SOURCE[0]}")/../../bats-support/load.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/../../bats-assert/load.bash"
+helpers="$(dirname "${BASH_SOURCE[0]}")"
+topdir="$helpers/../.."
+
+source "$topdir/bats-support/load.bash"
+source "$topdir/bats-assert/load.bash"
+
 # "defaults.bash" *must* be sourced before the rest of the files
-source "$(dirname "${BASH_SOURCE[0]}")/defaults.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/os.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/lima.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/commands.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/containers.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/kubernetes.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/try.bash"
-source "$(dirname "${BASH_SOURCE[0]}")/vm.bash"
+source "$helpers/defaults.bash"
+source "$helpers/os.bash"
+source "$helpers/paths.bash"
+
+# "vm.bash" must be loaded first to define `using_containerd` etc
+source "$helpers/vm.bash"
+source "$helpers/kubernetes.bash"
+source "$helpers/commands.bash"
+source "$helpers/try.bash"

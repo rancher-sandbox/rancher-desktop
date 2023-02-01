@@ -6,19 +6,19 @@ setup() {
     factory_reset
 }
 
-@test 'start container runtime' {
-    start_container_runtime
-    wait_for_container_runtime
+@test 'start container engine' {
+    start_container_engine
+    wait_for_container_engine
 }
 
 check_uname() {
     local platform="linux/$1"
     local cpu="$2"
 
-    # Pull container separately because `$CRCTL run` doesn't have a --quiet option
-    $CRCTL pull --quiet --platform "$platform" busybox
+    # Pull container separately because `ctrctl run` doesn't have a --quiet option
+    ctrctl pull --quiet --platform "$platform" busybox
 
-    run $CRCTL run --platform "$platform" busybox uname -m
+    run ctrctl run --platform "$platform" busybox uname -m
     if [ "${assert_success:-true}" = "true" ]; then
         assert_success
         assert_output "$cpu"
@@ -30,7 +30,16 @@ check_uname() {
 }
 
 @test 'deploy arm64 container' {
+    if is_windows; then
+        # TODO why don't we do this?
+        skip "aarch64 emulation is not included in the Windows version"
+    fi
     check_uname arm64 aarch64
+}
+
+@test 'uninstall s390x emulator' {
+    # On WSL the emulator might still be installed from a previous run
+    ctrctl run --privileged --rm tonistiigi/binfmt --uninstall qemu-s390x
 }
 
 @test 'deploy s390x container does not work' {
@@ -40,7 +49,7 @@ check_uname() {
 }
 
 @test 'install s390x emulator' {
-    $CRCTL run --privileged --rm tonistiigi/binfmt --install s390x
+    ctrctl run --privileged --rm tonistiigi/binfmt --install s390x
 }
 
 @test 'deploy s390x container' {
