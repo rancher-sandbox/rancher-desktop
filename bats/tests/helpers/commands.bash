@@ -1,6 +1,11 @@
-exe=""
-if [ -n "${RD_USE_WINDOWS_EXE:-}" ]; then
-   exe=".exe"
+EXE=""
+PLATFORM=$OS
+if is_windows; then
+    PLATFORM=linux
+    if [ -n "${RD_USE_WINDOWS_EXE:-}" ]; then
+        exe=".exe"
+        platform=win32
+    fi
 fi
 
 if using_containerd; then
@@ -21,6 +26,12 @@ elif is_linux; then
     CRED_HELPER="docker-credential-pass"
 fi
 
+if is_windows; then
+    RD_DOCKER_CONTEXT=default
+else
+    RD_DOCKER_CONTEXT=rancher-desktop
+fi
+
 ctrctl() {
     if using_docker; then
         docker "$@"
@@ -29,28 +40,32 @@ ctrctl() {
     fi
 }
 docker() {
-    docker_exe --context rancher-desktop "$@"
+    docker_exe --context $RD_DOCKER_CONTEXT "$@"
 }
 docker_exe() {
-    "$PATH_RESOURCES/bin/docker$exe" "$@"
+    "$PATH_RESOURCES/$PLATFORM/bin/docker$EXE" "$@"
 }
 helm() {
-    "$PATH_RESOURCES/bin/helm$exe" "$@"
+    "$PATH_RESOURCES/$PLATFORM/bin/helm$EXE" "$@"
 }
 kubectl() {
     kubectl_exe --context rancher-desktop "$@"
 }
 kubectl_exe() {
-    "$PATH_RESOURCES/bin/kubectl$exe" "$@"
+    "$PATH_RESOURCES/$PLATFORM/bin/kubectl$EXE" "$@"
 }
 limactl() {
-    LIMA_HOME="$LIMA_HOME" "$PATH_RESOURCES/lima/bin/limactl" "$@"
+    LIMA_HOME="$LIMA_HOME" "$PATH_RESOURCES/$PLATFORM/lima/bin/limactl" "$@"
 }
 nerdctl() {
-    "$PATH_RESOURCES/bin/nerdctl$exe" "$@"
+    "$PATH_RESOURCES/$PLATFORM/bin/nerdctl$EXE" "$@"
 }
 rdctl() {
-    "$PATH_RESOURCES/bin/rdctl$exe" "$@"
+    if is_windows; then
+        "$PATH_RESOURCES/win32/bin/rdctl.exe" "$@"
+    else
+        "$PATH_RESOURCES/$PLATFORM/bin/rdctl$EXE" "$@"
+    fi
 }
 rdshell() {
     rdctl shell "$@"

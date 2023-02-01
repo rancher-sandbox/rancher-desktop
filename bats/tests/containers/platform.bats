@@ -6,7 +6,7 @@ setup() {
     factory_reset
 }
 
-@test 'start container runtime' {
+@test 'start container engine' {
     start_container_engine
     wait_for_container_engine
 }
@@ -30,7 +30,16 @@ check_uname() {
 }
 
 @test 'deploy arm64 container' {
+    if is_windows; then
+        # TODO why don't we do this?
+        skip "aarch64 emulation is not included in the Windows version"
+    fi
     check_uname arm64 aarch64
+}
+
+@test 'uninstall s390x emulator' {
+    # On WSL the emulator might still be installed from a previous run
+    ctrctl run --privileged --rm tonistiigi/binfmt --uninstall qemu-s390x
 }
 
 @test 'deploy s390x container does not work' {

@@ -20,7 +20,15 @@ wait_for_shutdown() {
 
 factory_reset() {
     rdctl factory-reset
+    if is_unix; then
+        factory_reset_lima
+    fi
+    if is_windows; then
+        factory_reset_windows
+    fi
+}
 
+factory_reset_lima() {
     # hack for tests/registry/creds.bats because we can't configure additional
     # hosts via settings.yaml
     mkdir -p "$LIMA_HOME/_config"
@@ -64,9 +72,24 @@ EOF
 EOF
 }
 
+factory_reset_windows() {
+    run sudo ip link delete docker0
+    run sudo ip link delete nerdctl0
+
+    sudo iptables -F
+    sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
+}
+
 start_container_engine() {
+    # TODO why is --path option required for Windows
+    if is_windows; then
+        set - --path "$(wslpath -w "$PATH_EXECUTABLE")" "$@"
+    fi
+    if is_unix; then
+        set - --path-management-strategy rcfiles "$@"
+    fi
+
     rdctl start \
-          --path-management-strategy rcfiles \
           --kubernetes.suppress-sudo \
           --updater=false \
           --container-engine="$RD_CONTAINER_ENGINE" \
@@ -84,7 +107,7 @@ start_kubernetes() {
 wait_for_container_engine() {
     if using_docker; then
         # TODO: use `try` instead of an endless loop
-        until docker_exe context ls -q | grep -q ^rancher-desktop$; do
+        until docker_exe context ls -q | grep -q "^${RD_DOCKER_CONTEXT}$"; do
             sleep 3
         done
     fi
