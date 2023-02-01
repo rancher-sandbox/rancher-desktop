@@ -4,7 +4,9 @@ import { test, expect } from '@playwright/test';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, kubectl, reportAsset, teardown } from './utils/TestUtils';
+import {
+  createDefaultSettings, kubectl, reportAsset, retry, teardown,
+} from './utils/TestUtils';
 
 let page: Page;
 
@@ -45,7 +47,7 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
-    const output = await kubectl('cluster-info');
+    const output = await retry(() => kubectl('cluster-info'));
 
     expect(output).toMatch(/is running at ./);
   });

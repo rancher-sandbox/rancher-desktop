@@ -4,6 +4,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import { ElectronApplication, expect } from '@playwright/test';
 import _ from 'lodash';
@@ -151,4 +152,22 @@ export async function kubectl(...args: string[] ): Promise<string> {
  */
 export async function helm(...args: string[] ): Promise<string> {
   return await tool('helm', '--kube-context', 'rancher-desktop', ...args);
+}
+
+export async function retry<T>(proc: () => Promise<T>, options?: { delay?: number, tries?: number }): Promise<T> {
+  const delay = options?.delay ?? 500;
+  const tries = options?.tries ?? 30;
+
+  for (let i = 1; ; ++i) {
+    try {
+      return await proc();
+    } catch (ex) {
+      if (i >= tries) {
+        console.log(`${ tries } tries exceeding, failing.`);
+        throw ex;
+      }
+      console.error(`${ ex }, retrying... (${ i }/${ tries })`);
+      await util.promisify(setTimeout)(delay);
+    }
+  }
 }

@@ -29,7 +29,7 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, reportAsset, teardown, tool,
+  createDefaultSettings, kubectl, reportAsset, retry, teardown, tool,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings, defaultSettings } from '@pkg/config/settings';
@@ -1190,7 +1190,7 @@ test.describe('Command server', () => {
       await expect(navPage.progressBar).not.toBeHidden();
       await navPage.progressBecomesReady();
       await expect(navPage.progressBar).toBeHidden();
-      const output = await tool('docker', 'info');
+      const output = await retry(() => tool('docker', 'info'));
 
       expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });
