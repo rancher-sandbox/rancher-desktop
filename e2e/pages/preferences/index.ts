@@ -1,10 +1,11 @@
-import { Page } from 'playwright';
 
 import { ApplicationNav } from './application';
 import { ContainerEngineNav } from './containerEngine';
 import { KubernetesNav } from './kubernetes';
 import { VirtualMachineNav } from './virtualMachine';
 import { WslNav } from './wsl';
+
+import type { Page } from '@playwright/test';
 
 export class PreferencesPage {
   readonly page: Page;

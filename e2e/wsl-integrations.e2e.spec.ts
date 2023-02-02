@@ -6,13 +6,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect, test } from '@playwright/test';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+import { expect, test, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
 
 import { spawnFile } from '@pkg/utils/childProcess';
+
+import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 test.describe('WSL Integrations', () => {
   test.skip(true, 'TODO: https://github.com/rancher-sandbox/rancher-desktop/issues/2881');

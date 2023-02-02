@@ -1,7 +1,6 @@
 import path from 'path';
 
-import { test, expect } from '@playwright/test';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
@@ -9,6 +8,8 @@ import { createDefaultSettings, reportAsset, teardown } from '../e2e/utils/TestU
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import { isWin } from '@pkg/utils/platform';
+
+import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;

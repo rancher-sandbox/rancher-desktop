@@ -1,10 +1,11 @@
 import os from 'os';
 
 import { expect } from '@playwright/test';
-import { Page, PageScreenshotOptions } from 'playwright';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
+
+import type { Page, PageScreenshotOptions } from '@playwright/test';
 
 interface ScreenshotsOptions {
   directory?: string;

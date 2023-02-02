@@ -1,4 +1,3 @@
-import { Page, Locator } from 'playwright';
 
 import { DiagnosticsPage } from './diagnostics-page';
 import { ImagesPage } from './images-page';
@@ -6,6 +5,8 @@ import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
 import { TroubleshootingPage } from './troubleshooting-page';
 import { WSLIntegrationsPage } from './wsl-integrations-page';
+
+import type { Page, Locator } from '@playwright/test';
 
 const pageConstructors = {
   K8s:             (page: Page) => new K8sPage(page),

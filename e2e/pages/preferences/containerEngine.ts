@@ -1,4 +1,4 @@
-import { Page, Locator } from 'playwright';
+import type { Page, Locator } from '@playwright/test';
 
 export class ContainerEngineNav {
   readonly page: Page;

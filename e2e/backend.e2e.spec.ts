@@ -2,9 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { test, expect } from '@playwright/test';
+import { test, expect, _electron } from '@playwright/test';
 import _ from 'lodash';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
@@ -15,6 +14,7 @@ import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveKeys, RecursiveTypes } from '@pkg/utils/typeUtils';
 
+import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 import type { GetFieldType } from 'lodash';
 
 test.describe.serial('KubernetesBackend', () => {

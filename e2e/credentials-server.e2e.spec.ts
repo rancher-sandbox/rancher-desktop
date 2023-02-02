@@ -28,9 +28,8 @@ import stream from 'stream';
 import util from 'util';
 
 import { findHomeDir } from '@kubernetes/client-node';
-import { expect, test } from '@playwright/test';
+import { expect, test, _electron } from '@playwright/test';
 import fetch from 'node-fetch';
-import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
 import {
@@ -40,6 +39,8 @@ import {
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
+
+import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 let credStore = '';
 let dockerConfigPath = '';
