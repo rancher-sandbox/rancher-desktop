@@ -3,7 +3,9 @@ import path from 'path';
 import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, kubectl, reportAsset, teardown } from './utils/TestUtils';
+import {
+  createDefaultSettings, kubectl, reportAsset, retry, teardown,
+} from './utils/TestUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -46,7 +48,7 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
-    const output = await kubectl('cluster-info');
+    const output = await retry(() => kubectl('cluster-info'));
 
     expect(output).toMatch(/is running at ./);
   });

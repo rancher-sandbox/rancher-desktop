@@ -4,7 +4,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, teardown,
+  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, teardown, retry,
 } from './utils/TestUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
@@ -55,7 +55,7 @@ test.describe.serial('Helm Deployment Test', () => {
   });
 
   test('should check kubernetes API is ready', async() => {
-    const output = await kubectl('cluster-info');
+    const output = await retry(() => kubectl('cluster-info'));
 
     expect(output).toMatch(/is running at ./);
   });
