@@ -1,7 +1,9 @@
 wait_for_shell() {
-    try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
-    # wait until sshfs mounts are done
-    try --max 12 --delay 5 rdctl shell test -d $HOME/.rd
+    if is_unix; then
+        try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
+        # wait until sshfs mounts are done
+        try --max 12 --delay 5 rdctl shell test -d $HOME/.rd
+    fi
     rdctl shell sync
 }
 
@@ -20,51 +22,51 @@ wait_for_shutdown() {
 
 factory_reset() {
     rdctl factory-reset
+
     if is_unix; then
-        factory_reset_lima
-    fi
-    if is_windows; then
-        factory_reset_windows
-    fi
-}
+        mkdir -p "$LIMA_HOME/_config"
+        override="$LIMA_HOME/_config/override.yaml"
+        if [ ! -f "$override" ]; then
+            touch "$override"
+            if [ -f "${RD_OVERRIDE:-/no such file}" ]; then
+                cp "$RD_OVERRIDE" "$override"
+            fi
+        fi
 
-factory_reset_lima() {
-    # hack for tests/registry/creds.bats because we can't configure additional
-    # hosts via settings.yaml
-    mkdir -p "$LIMA_HOME/_config"
-    override="$LIMA_HOME/_config/override.yaml"
-    touch "$override"
-    if [ -f "${RD_OVERRIDE:-/no such file}" ]; then
-        cp "$RD_OVERRIDE" "$override"
-    fi
-
-    if ! grep -q registry.internal: "$override"; then
-        cat <<EOF >>"$override"
+        # hack for tests/registry/creds.bats because we can't configure additional
+        # hosts via settings.yaml
+        if ! grep -q registry.internal: "$override"; then
+            cat <<EOF >>"$override"
 
 hostResolver:
   hosts:
     registry.internal: 192.168.5.15
 EOF
+        fi
     fi
 
-    if [ "$RD_USE_IMAGE_ALLOW_LIST" != "false" ]; then
-        RD_USE_IMAGE_ALLOW_LIST=true
+    image_allow_list="$(bool $RD_USE_IMAGE_ALLOW_LIST)"
+    path_management="rcfiles"
+    wsl_integrations="{}"
+    if is_windows; then
+        path_management="notset"
+        wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
     fi
 
     mkdir -p "$PATH_CONFIG"
-    # Make sure supressSudo is true
     cat <<EOF > "$PATH_CONFIG_FILE"
 {
   "version": 4,
   "kubernetes": {
     "memoryInGB": 6,
-    "suppressSudo": true
+    "suppressSudo": true,
+    "WSLIntegrations": $wsl_integrations
   },
   "updater": false,
-  "pathManagementStrategy": "rcfiles",
+  "pathManagementStrategy": "$path_management",
   "containerEngine": {
     "imageAllowList": {
-      "enabled": $RD_USE_IMAGE_ALLOW_LIST,
+      "enabled": $image_allow_list,
       "patterns": ["docker.io"]
     }
   }
@@ -104,14 +106,23 @@ start_kubernetes() {
         --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
 }
 
+container_engine_info() {
+    run ctrctl info
+    assert_success
+    assert_output --partial "Server Version:"
+}
+
+docker_context_exists() {
+    run docker_exe context ls -q
+    assert_success
+    assert_line $RD_DOCKER_CONTEXT
+}
+
 wait_for_container_engine() {
+    try --max 12 --delay 10 container_engine_info
     if using_docker; then
-        # TODO: use `try` instead of an endless loop
-        until docker_exe context ls -q | grep -q "^${RD_DOCKER_CONTEXT}$"; do
-            sleep 3
-        done
+        try --max 30 --delay 5 docker_context_exists
     fi
-    try --max 12 --delay 10 ctrctl info
 }
 
 using_containerd() {
