@@ -87,8 +87,14 @@ export class Win32Paths extends ProvidesResources implements Paths {
   readonly cache = path.join(this.localAppData, APP_NAME, 'cache');
   readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
   readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
-  readonly deploymentProfileSystem = ''; // Win32 profiles will be read from Registry.
-  readonly deploymentProfileUser = ''; // Win32 profiles will be read from Registry.
+
+  get deploymentProfileSystem(): string {
+    throw new Error('Internal error: Windows profiles will be read from Registry');
+  }
+
+  get deploymentProfileUser(): string {
+    throw new Error('Internal error: Windows profiles will be read from Registry');
+  }
 
   get lima(): string {
     throw new Error('lima not available for Windows');

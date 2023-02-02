@@ -480,7 +480,7 @@ export function readDeploymentProfile() {
 }
 
 function readRegistryDeploymentProfile() {
-  /* Not implemented */
+  throw new Error('INTERNAL ERROR: readRegistryDeploymentProfile not yet implemented.');
 }
 
 function validateDeploymentProfile(profile: any, schema: any) {
@@ -525,7 +525,7 @@ export function mergeDeploymentProfile(config: any, profile: any, lockedOnly: bo
         if (typeof profileObj[key] === 'object') {
           for (const [k, v] of Object.entries(profileObj[key])) {
             if (k === 'locked' && v === true) {
-              console.log(`Deployment Profile overriding locked '${ key }'`);
+              console.debug(`Deployment Profile overriding locked '${ key }'`);
 
               return profileObj;
             }
