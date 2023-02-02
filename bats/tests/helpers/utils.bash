@@ -1,3 +1,23 @@
+is_true() {
+    # case-insensitive check; false values: '', '0', 'no', and 'false'
+    if [[ "${1,,}" =~ ^(0|no|false)?$ ]]; then
+        false
+    else
+        true
+    fi
+}
+is_false() {
+    ! is_true "$1"
+}
+
+bool() {
+    if is_true $1; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 try() {
     local max=24
     local delay=5

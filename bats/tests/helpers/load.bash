@@ -1,11 +1,14 @@
 helpers="$(dirname "${BASH_SOURCE[0]}")"
 topdir="$helpers/../.."
 
+set -o errexit -o nounset -o pipefail
+
 source "$topdir/bats-support/load.bash"
 source "$topdir/bats-assert/load.bash"
 
 # "defaults.bash" *must* be sourced before the rest of the files
 source "$helpers/defaults.bash"
+source "$helpers/utils.bash"
 source "$helpers/os.bash"
 source "$helpers/paths.bash"
 
@@ -13,4 +16,3 @@ source "$helpers/paths.bash"
 source "$helpers/vm.bash"
 source "$helpers/kubernetes.bash"
 source "$helpers/commands.bash"
-source "$helpers/try.bash"
