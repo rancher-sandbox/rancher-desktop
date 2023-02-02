@@ -25,7 +25,6 @@ import os from 'os';
 import path from 'path';
 import process from 'process';
 import stream from 'stream';
-import util from 'util';
 
 import { findHomeDir } from '@kubernetes/client-node';
 import { expect, test } from '@playwright/test';
@@ -34,7 +33,7 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getFullPathForTool, reportAsset, teardown, tool,
+  createDefaultSettings, getFullPathForTool, reportAsset, retry, teardown, tool,
 } from './utils/TestUtils';
 
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -356,23 +355,28 @@ describeWithCreds('Credentials server', () => {
   });
 
   // On Windows, we need to wait for the vtunnel proxy to be established.
-  testWin32('ensure vtunnel proxy is ready', async() => {
+  testWin32('ensure vtunnel proxy is ready', () => {
     const args = ['--distribution', 'rancher-desktop', '--exec',
       'curl', '--verbose', '--user', `${ serverState.user }:${ serverState.password }`,
       'http://localhost:3030/'];
 
-    for (let attempt = 0; attempt < 30; ++attempt) {
+    return retry(async() => {
       try {
         await spawnFile('wsl.exe', args);
-        break;
+
+        return;
       } catch (ex: any) {
-        if (ex.code !== 56) {
+        const curlExitReason = {
+          7:  'Failed to connect to host',
+          56: 'Failure in receiving network data',
+        };
+
+        if (!curlExitReason) {
           throw ex;
         }
-        console.debug(`Attempt ${ attempt } failed with ${ ex }, retrying...`);
-        await util.promisify(setTimeout)(1_000);
+        throw new Error(`curl failed with ${ ex } (${ curlExitReason })`);
       }
-    }
+    });
   });
 
   test('it should complain about an unrecognized command', async() => {
