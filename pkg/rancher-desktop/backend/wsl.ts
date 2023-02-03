@@ -797,7 +797,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       options = optionsOrArg;
     }
     try {
-      const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
+      let stream = options.logStream;
+
+      if (!stream) {
+        const logFile = Logging['wsl-exec'];
+
+        // Write a duplicate log line so we can line up the log files.
+        logFile.log(`Running: wsl.exe ${ args.join(' ') }`);
+        stream = await logFile.fdStream;
+      }
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
@@ -962,7 +970,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * This manages {this.process}.
    */
   protected async runInit() {
-    const stream = await Logging['wsl-exec'].fdStream;
+    // /sbin/init actually seeks to the start of the file before writing its
+    // logs, so we have to give it a unique file to avoid other logs being
+    // clobbered.
+    const stream = await Logging['wsl-init'].fdStream;
     const PID_FILE = '/var/run/wsl-init.pid';
 
     // Delete any stale wsl-init PID file
