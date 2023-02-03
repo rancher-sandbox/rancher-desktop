@@ -54,13 +54,12 @@ EOF
     fi
 
     mkdir -p "$PATH_CONFIG"
-    # Make sure adminAccess is false
     cat <<EOF > "$PATH_CONFIG_FILE"
 {
   "version": 5,
   "application": {
     "adminAccess":            false,
-    "pathManagementStrategy": "rcfiles",
+    "pathManagementStrategy": "$path_management",
     "updater":                { "enabled": false },
   },
   "virtualMachine": {
@@ -97,7 +96,7 @@ start_container_engine() {
     rdctl start \
           --kubernetes.admin-access=false \
           --application.updater.enabled=false \
-          --container-engine="$RD_CONTAINER_RUNTIME" \
+          --container-engine="$RD_CONTAINER_ENGINE" \
           --kubernetes-enabled=false \
           "$@" \
           3>&-
