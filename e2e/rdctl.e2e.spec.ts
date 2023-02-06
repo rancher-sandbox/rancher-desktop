@@ -222,10 +222,9 @@ test.describe('Command server', () => {
     const requestedSettings = _.merge({}, settings, {
       kubernetes:
         {
-          enabled:                    desiredEnabled,
-          containerEngine:            desiredEngine,
-          version:                    desiredVersion,
-          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
+          enabled:         desiredEnabled,
+          containerEngine: desiredEngine,
+          version:         desiredVersion,
         },
     });
     const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');

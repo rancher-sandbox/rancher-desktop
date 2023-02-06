@@ -395,9 +395,8 @@ const updateTable: Record<number, (settings: any) => void> = {
     // The updater still wants to see an entry here (for updating ancient systems),
     // but will no longer delete obsolete files.
   },
-  3: (settings) => {
-    // Should stay true until the kim-based buildkit artifacts are removed -- see code in lima.ts:start()
-    settings.kubernetes.checkForExistingKimBuilder = true;
+  3: (_) => {
+    // With settings v5, all traces of the kim builder are gone now, so no need to update it.
   },
 };
 

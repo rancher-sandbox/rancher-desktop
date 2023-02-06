@@ -64,7 +64,6 @@ describe(SettingsValidator, () => {
       // Special fields that cannot be checked here; this includes enums and maps.
       const specialFields = [
         ['containerEngine', 'imageAllowList', 'locked'],
-        ['kubernetes', 'checkForExistingKimBuilder'],
         ['kubernetes', 'containerEngine'],
         ['kubernetes', 'WSLIntegrations'],
         ['kubernetes', 'version'],
@@ -397,10 +396,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should complain about unchangeable fields', () => {
-      const unchangeableFieldsAndValues = {
-        'kubernetes.checkForExistingKimBuilder': !cfg.kubernetes.checkForExistingKimBuilder,
-        version:                                 -1,
-      };
+      const unchangeableFieldsAndValues = { version: -1 };
 
       // Check that we _don't_ ask for update when we  have errors.
       const input = { telemetry: !cfg.telemetry };

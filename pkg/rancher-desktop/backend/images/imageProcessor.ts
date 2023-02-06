@@ -2,8 +2,6 @@ import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
 import timers from 'timers';
 
-import { KubeConfig } from '@kubernetes/client-node/dist/config';
-
 import { VMExecutor } from '@pkg/backend/backend';
 import mainEvents from '@pkg/main/mainEvents';
 import { ChildProcess, ErrorCommand } from '@pkg/utils/childProcess';
@@ -382,6 +380,4 @@ export abstract class ImageProcessor extends EventEmitter {
   abstract pushImage(taggedImageName: string): Promise<childResultType>;
 
   abstract getImages(): Promise<childResultType>;
-
-  abstract removeKimBuilder(client: KubeConfig): Promise<void>;
 }

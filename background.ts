@@ -822,10 +822,6 @@ function newK8sManager() {
     window.send('k8s-current-port', port);
   });
 
-  mgr.kubeBackend.on('kim-builder-uninstalled', () => {
-    writeSettings({ kubernetes: { checkForExistingKimBuilder: false } });
-  });
-
   mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
     console.debug(`service-changed: ${ JSON.stringify(services) }`);
     window.send('service-changed', services);

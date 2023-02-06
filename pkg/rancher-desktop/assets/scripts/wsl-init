@@ -5,7 +5,7 @@
 # WSL shared mount (/mnt/wsl/rancher/desktop/) and that can have issues with
 # lingering tmpfs mounts after we exit.  This means we need to run this script
 # under unshare (to get a private mount namespace), and then we can mark various
-# mount points as shared (for kim / buildkit).  Kubelet will internally do some
+# mount points as shared (for buildkit).  Kubelet will internally do some
 # tmpfs mounts for volumes (secrets, etc.), which will stay private and go away
 # once k3s exits, so that we can delete the data as necessary.
 
