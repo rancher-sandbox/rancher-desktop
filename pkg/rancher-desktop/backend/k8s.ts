@@ -5,7 +5,7 @@ import { ServiceEntry } from './client';
 import { ExtraRequiresReasons } from './k3sHelper';
 
 import EventEmitter from '@pkg/utils/eventEmitter';
-import { RecursiveReadonly } from '@pkg/utils/typeUtils';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 export { State, BackendError as KubernetesError } from './backend';
 export type {
@@ -123,7 +123,7 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
    * Calculate any reasons that may require us to restart the backend, had the
    * given new configuration been applied on top of the existing old configuration.
    */
-  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursiveReadonly<BackendSettings>, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
+  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursivePartial<BackendSettings>, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
 }
 
 export interface KubernetesBackendPortForwarder {
