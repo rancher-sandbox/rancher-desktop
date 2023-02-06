@@ -12,18 +12,18 @@ Below is the json schema for PortMapping:
   "$defs": {
     "ConnectAddrs": {
       "properties": {
-        "Network": {
+        "network": {
           "type": "string"
         },
-        "Addr": {
+        "addr": {
           "type": "string"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "Network",
-        "Addr"
+        "network",
+        "addr"
       ]
     },
     "PortBinding": {
@@ -55,13 +55,13 @@ Below is the json schema for PortMapping:
     },
     "PortMapping": {
       "properties": {
-        "Remove": {
+        "remove": {
           "type": "boolean"
         },
-        "Ports": {
+        "ports": {
           "$ref": "#/$defs/PortMap"
         },
-        "ConnectAddrs": {
+        "connectAddrs": {
           "items": {
             "$ref": "#/$defs/ConnectAddrs"
           },
@@ -71,9 +71,9 @@ Below is the json schema for PortMapping:
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "Remove",
-        "Ports",
-        "ConnectAddrs"
+        "remove",
+        "ports",
+        "connectAddrs"
       ]
     }
   }
