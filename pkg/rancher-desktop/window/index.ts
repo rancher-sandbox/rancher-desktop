@@ -97,7 +97,7 @@ const mainUrl = process.env.RD_ENV_PLUGINS_DEV ? 'https://localhost:8888' : `${ 
 /**
  * Open the main window; if it is already open, focus it.
  */
-export function openMain(showPreferencesModal = false) {
+export function openMain() {
   console.debug('openMain() webRoot:', webRoot);
   const window = createWindow(
     'main',
@@ -130,16 +130,6 @@ export function openMain(showPreferencesModal = false) {
   }
 
   app.dock?.show();
-
-  if (showPreferencesModal) {
-    openPreferences();
-  }
-
-  window.webContents.on('ipc-message', (_event, channel) => {
-    if (channel === 'app-ready' && showPreferencesModal) {
-      openPreferences();
-    }
-  });
 }
 
 /**

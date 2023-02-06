@@ -42,7 +42,7 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { getVersion } from '@pkg/utils/version';
 import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
-import { preferencesSetDirtyFlag } from '@pkg/window/preferences';
+import { openPreferences, preferencesSetDirtyFlag } from '@pkg/window/preferences';
 
 Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
@@ -192,7 +192,10 @@ Electron.app.whenReady().then(async() => {
     });
 
     setupTray();
-    window.openMain();
+
+    if (!cfg.startInBackground) {
+      window.openMain();
+    }
 
     dockerDirManager.ensureCredHelperConfigured();
 
@@ -438,7 +441,7 @@ ipcMainProxy.on('dashboard-close', () => {
 });
 
 ipcMainProxy.on('preferences-open', () => {
-  window.openMain(true);
+  openPreferences();
 });
 
 ipcMainProxy.on('preferences-close', () => {

@@ -23,7 +23,6 @@ export interface IpcMainEvents {
   'k8s-integration-set': (name: string, newState: boolean) => void;
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
-  'app-ready': () => void;
   'update-network-status': (status: boolean) => void;
 
   // #region main/update
