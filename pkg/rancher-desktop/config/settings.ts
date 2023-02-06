@@ -50,25 +50,24 @@ export const defaultSettings = {
   },
   kubernetes: {
     /** The version of Kubernetes to launch, as a semver (without v prefix). */
-    version:                    '',
-    memoryInGB:                 2,
-    numberCPUs:                 2,
-    port:                       6443,
-    containerEngine:            ContainerEngine.CONTAINERD,
-    checkForExistingKimBuilder: false,
-    enabled:                    true,
-    WSLIntegrations:            {} as Record<string, boolean>,
-    options:                    { traefik: true, flannel: true },
-    suppressSudo:               false,
+    version:         '',
+    memoryInGB:      2,
+    numberCPUs:      2,
+    port:            6443,
+    containerEngine: ContainerEngine.CONTAINERD,
+    enabled:         true,
+    WSLIntegrations: {} as Record<string, boolean>,
+    options:         { traefik: true, flannel: true },
+    suppressSudo:    false,
     /**
      * when set to true Dnsmasq is disabled and all DNS resolution
      * is handled by host-resolver on Windows platform only.
      */
-    hostResolver:               true,
+    hostResolver:    true,
     /**
      * Experimental settings - there should not be any UI for these.
      */
-    experimental:               {
+    experimental:    {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
     },
