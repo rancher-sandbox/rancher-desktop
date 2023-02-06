@@ -21,7 +21,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-export const CURRENT_SETTINGS_VERSION = 5 as const;
+export const CURRENT_SETTINGS_VERSION = 5;
 
 export enum ContainerEngine {
   NONE = '',
@@ -400,6 +400,37 @@ const updateTable: Record<number, (settings: any) => void> = {
   },
   3: (_) => {
     // With settings v5, all traces of the kim builder are gone now, so no need to update it.
+  },
+  4: (settings) => {
+    settings.application = {
+      adminAccess:            !settings.kubernetes.suppressSudo,
+      debug:                  settings.debug,
+      pathManagementStrategy: settings.pathManagementStrategy,
+      telemetry:              { enabled: settings.telemetry },
+      updater:                { enabled: settings.updater },
+    };
+    settings.virtualMachine = {
+      experimental: settings.kubernetes.experimental,
+      hostResolver: settings.kubernetes.hostResolver,
+      memoryInGB:   settings.kubernetes.memoryInGB,
+      numberCPUs:   settings.kubernetes.numberCPUs,
+    };
+    settings.WSL = { integrations: settings.kubernetes.WSLIntegrations };
+    settings.containerEngine.name = settings.kubernetes.containerEngine;
+
+    delete settings.kubernetes.containerEngine;
+    delete settings.kubernetes.experimental;
+    delete settings.kubernetes.hostResolver;
+    delete settings.kubernetes.checkForExistingKimBuilder;
+    delete settings.kubernetes.memoryInGB;
+    delete settings.kubernetes.numberCPUs;
+    delete settings.kubernetes.suppressSudo;
+    delete settings.kubernetes.WSLIntegrations;
+
+    delete settings.debug;
+    delete settings.pathManagementStrategy;
+    delete settings.telemetry;
+    delete settings.updater;
   },
 };
 
