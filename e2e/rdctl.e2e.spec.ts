@@ -136,7 +136,7 @@ test.describe('Command server', () => {
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
 
-    expect(await kubectl('cluster-info')).toContain('is running at');
+    expect(await retry(() => kubectl('cluster-info'))).toContain('is running at');
   });
 
   test('should emit connection information', async() => {
