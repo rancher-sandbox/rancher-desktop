@@ -31,7 +31,7 @@ import {
   createDefaultSettings, kubectl, reportAsset, retry, teardown, tool,
 } from './utils/TestUtils';
 
-import { ContainerEngine, Settings, defaultSettings } from '@pkg/config/settings';
+import { ContainerEngine, Settings, defaultSettings, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
@@ -221,6 +221,7 @@ test.describe('Command server', () => {
     const desiredEngine = 'flip';
     const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
     const requestedSettings = _.merge({}, settings, {
+      version:         CURRENT_SETTINGS_VERSION,
       containerEngine: {
         name:           { desiredEngine },
         imageAllowList: { locked: !settings.containerEngine.imageAllowList.locked },
@@ -244,6 +245,7 @@ test.describe('Command server', () => {
 
   test('should return multiple error messages, settings request', async() => {
     const newSettings: Record<string, any> = {
+      version:     CURRENT_SETTINGS_VERSION,
       application: {
         stoinks:   'yikes!', // should be ignored
         telemetry: { enabled: { oops: 15 } },
@@ -314,9 +316,41 @@ test.describe('Command server', () => {
     expect(resp.ok).toBeTruthy();
     const telemetry = (await resp.json() as Settings).application.telemetry.enabled;
 
-    resp = await doRequest('/v0/settings', JSON.stringify({ application: { telemetry: { enabled: !telemetry } } }), 'PUT');
+    resp = await doRequest('/v0/settings', JSON.stringify({ version: CURRENT_SETTINGS_VERSION, application: { telemetry: { enabled: !telemetry } } }), 'PUT');
     expect(resp.ok).toBeTruthy();
     await expect(resp.text()).resolves.toContain('no restart required');
+  });
+
+  test('should complain about a missing version field', async() => {
+    let resp = await doRequest('/v0/settings');
+
+    expect(resp.ok).toBeTruthy();
+
+    const body: RecursivePartial<Settings> = await resp.json() as Settings;
+
+    delete body.version;
+    if (body?.application?.telemetry) {
+      body.application.telemetry.enabled = !body.application.telemetry.enabled;
+    }
+    resp = await doRequest('/v0/settings', JSON.stringify(body), 'PUT');
+    expect(resp.ok).toBeFalsy();
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but no version was specified`);
+  });
+
+  test('should complain about an invalid version field', async() => {
+    let resp = await doRequest('/v0/settings');
+
+    expect(resp.ok).toBeTruthy();
+
+    const body: RecursivePartial<Settings> = await resp.json() as Settings;
+
+    body.version = body.version ? body.version - 1 : -1;
+    if (body?.application?.telemetry) {
+      body.application.telemetry.enabled = !body.application.telemetry.enabled;
+    }
+    resp = await doRequest('/v0/settings', JSON.stringify(body), 'PUT');
+    expect(resp.ok).toBeFalsy();
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but received version ${ CURRENT_SETTINGS_VERSION - 1 }`);
   });
 
   test('should require authentication, transient settings request', async() => {
@@ -514,6 +548,13 @@ test.describe('Command server', () => {
     expect(body).toContain('no settings specified in the request');
   });
 
+  /**
+   * getAltString returns the setting that isn't the same as the existing setting.
+   */
+  const getAltString = (currentSettings: Settings, setting: string, altOne: string, altTwo: string) => {
+    return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
+  };
+
   test.describe('rdctl', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
@@ -691,6 +732,102 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).not.toContain('Usage:');
+      });
+
+      test.describe('settings v5 migration', () => {
+        /**
+         * Note issue https://github.com/rancher-sandbox/rancher-desktop/issues/3829
+         * calls for removing unrecognized fields in the existings settings.json file
+         * Currently we're ignoring unrecognized fields in the PUT payload -- to complain about
+         * them calls for another issue.
+         */
+        test('rejects old settings', async() => {
+          const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+          const body: any = {
+            // type 'any' because as far as the current configuration code is concerned,
+            // it's an object with random fields and values
+            version:    CURRENT_SETTINGS_VERSION,
+            kubernetes: {
+              memoryInGB:      oldSettings.virtualMachine.memoryInGB + 1,
+              numberCPUs:      oldSettings.virtualMachine.numberCPUs + 1,
+              containerEngine: getAltString(oldSettings, oldSettings.containerEngine.name, 'containerd', 'moby'),
+              suppressSudo:    oldSettings.application.adminAccess,
+            },
+            telemetry:              !oldSettings.application.telemetry.enabled,
+            updater:                !oldSettings.application.updater.enabled,
+            debug:                  !oldSettings.application.debug,
+            pathManagementStrategy: getAltString(oldSettings, oldSettings.application.pathManagementStrategy, 'manual', 'rcfiles'),
+          };
+
+          // if (os.platform() !== 'win32') {
+          //   // Otherwise we get a different error message.
+          //   body.kubernetes.memoryInGB = oldSettings.virtualMachine.memoryInGB + 1;
+          //   body.kubernetes.numberCPUs = oldSettings.virtualMachine.numberCPUs + 1;
+          // }
+
+          switch (os.platform()) {
+          case 'darwin':
+            body.kubernetes.experimental ??= {};
+            body.kubernetes.experimental.socketVMNet = !oldSettings.virtualMachine.experimental.socketVMNet;
+            break;
+          case 'win32':
+            body.kubernetes.WSLIntegrations ??= {};
+            body.kubernetes.WSLIntegrations.bosco = true;
+            body.kubernetes.hostResolver = !oldSettings.virtualMachine.hostResolver;
+          }
+          const { stdout, stderr, error } = await rdctl(['api', '/v0/settings', '-X', 'PUT', '-b', JSON.stringify(body)]);
+
+          expect({
+            stdout, stderr, error,
+          }).toEqual({
+            stdout: expect.stringContaining('no changes necessary'),
+            stderr: '',
+            error:  undefined,
+          });
+          const newSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+
+          expect(newSettings).toEqual(oldSettings);
+        });
+
+        test('accepts new settings', async() => {
+          const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+          const body = {
+            ...(os.platform() === 'win32' ? {} : {
+              virtualMachine: {
+                memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
+                numberCPUs: oldSettings.virtualMachine.numberCPUs + 1,
+              },
+            }),
+            version:     CURRENT_SETTINGS_VERSION,
+            application: {
+              // XXX: Can't change adminAccess until we can process the sudo-request dialog (and decline it)
+              // adminAccess: !oldSettings.application.adminAccess,
+              telemetry:              { enabled: !oldSettings.application.telemetry.enabled },
+              updater:                { enabled: !oldSettings.application.updater.enabled },
+              debug:                  !oldSettings.application.debug,
+              pathManagementStrategy: getAltString(oldSettings, oldSettings.application.pathManagementStrategy, 'manual', 'rcfiles'),
+            },
+            // This field is in to force a restart
+            kubernetes: { port: oldSettings.kubernetes.port + 1 },
+          };
+          const { stdout, stderr, error } = await rdctl(['api', '/v0/settings', '-X', 'PUT', '-b', JSON.stringify(body)]);
+
+          expect({
+            stdout, stderr, error,
+          }).toEqual({
+            stdout: expect.stringContaining('reconfiguring Rancher Desktop to apply changes'),
+            stderr: '',
+            error:  undefined,
+          });
+          const newSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
+
+          expect(newSettings).toEqual(_.merge(oldSettings, body));
+
+          // And now reinstate the old prefs so other tests that count on them will pass.
+          const result = await rdctl(['api', '/v0/settings', '-X', 'PUT', '-b', JSON.stringify(oldSettings)]);
+
+          expect(result.stderr).toEqual('');
+        });
       });
     });
 
@@ -922,7 +1059,7 @@ test.describe('Command server', () => {
             });
 
             test('invalid setting is specified', async() => {
-              const newSettings = { containerEngine: { name: 'beefalo' } };
+              const newSettings = { version: CURRENT_SETTINGS_VERSION, containerEngine: { name: 'beefalo' } };
               const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
 
               expect({
@@ -1171,7 +1308,10 @@ test.describe('Command server', () => {
       const settings: Settings = JSON.parse(stdout);
 
       if (settings.containerEngine.name !== ContainerEngine.CONTAINERD) {
-        const payloadObject: RecursivePartial<Settings> = { containerEngine: { name: ContainerEngine.CONTAINERD } };
+        const payloadObject: RecursivePartial<Settings> = {
+          version:         CURRENT_SETTINGS_VERSION,
+          containerEngine: { name: ContainerEngine.CONTAINERD },
+        };
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v0/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));

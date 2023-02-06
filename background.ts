@@ -896,6 +896,16 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     doFactoryReset(keepSystemImages);
   }
 
+  protected buildSettingsVersionError(newSettings: RecursivePartial<settings.Settings>): string {
+    const firstPart = `updating settings requires specifying version = ${ settings.CURRENT_SETTINGS_VERSION }`;
+
+    if (!('version' in newSettings)) {
+      return `${ firstPart }, but no version was specified`;
+    } else {
+      return `${ firstPart }, but received version ${ newSettings.version }`;
+    }
+  }
+
   /**
    * Check semantics of SET commands:
    * - verify that setting names are recognized, and validate provided values
@@ -908,6 +918,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   async updateSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
     const [needToUpdate, errors] = await this.validateSettings(cfg, newSettings);
 
+    if (newSettings.version !== settings.CURRENT_SETTINGS_VERSION) {
+      errors.unshift(this.buildSettingsVersionError(newSettings));
+    }
     if (errors.length > 0) {
       return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];
     }
