@@ -114,12 +114,12 @@ test.describe.serial('KubernetesBackend', () => {
       };
 
       const newSettings: RecursivePartial<Settings> = {
-        kubernetes: {
-          version:         getAlt('kubernetes.version', '1.23.6', '1.23.5'),
-          port:            getAlt('kubernetes.port', 6443, 6444),
-          containerEngine: getAlt('kubernetes.containerEngine', ContainerEngine.CONTAINERD, ContainerEngine.MOBY),
-          enabled:         getAlt('kubernetes.enabled', true, false),
-          options:         {
+        containerEngine: { name: getAlt('containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
+        kubernetes:      {
+          version: getAlt('kubernetes.version', '1.23.6', '1.23.5'),
+          port:    getAlt('kubernetes.port', 6443, 6444),
+          enabled: getAlt('kubernetes.enabled', true, false),
+          options: {
             traefik: getAlt('kubernetes.options.traefik', true, false),
             flannel: getAlt('kubernetes.options.flannel', true, false),
           },

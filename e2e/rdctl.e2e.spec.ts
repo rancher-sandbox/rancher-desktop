@@ -35,7 +35,6 @@ import { ContainerEngine, Settings, defaultSettings } from '@pkg/config/settings
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -1171,9 +1170,7 @@ test.describe('Command server', () => {
       const settings: Settings = JSON.parse(stdout);
 
       if (settings.containerEngine.name !== ContainerEngine.CONTAINERD) {
-        const payloadObject = {
-          containerEngine: { name: ContainerEngine.CONTAINERD },
-        };
+        const payloadObject = { containerEngine: { name: ContainerEngine.CONTAINERD } };
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v0/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
