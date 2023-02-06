@@ -341,7 +341,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected async writeServiceScript(cfg: BackendSettings, allowSudo: boolean) {
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
-      ENGINE:          cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
+      ENGINE:          cfg.containerEngine.name ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
     };
@@ -362,7 +362,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     await this.vm.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
     await this.vm.writeConf('cri-dockerd', {
       LOG_DIR: paths.logs,
-      ENGINE:  cfg.kubernetes.containerEngine ?? ContainerEngine.NONE,
+      ENGINE:  cfg.containerEngine.name ?? ContainerEngine.NONE,
     });
     await this.vm.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.vm.writeConf('k3s', config);
@@ -398,13 +398,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
           return 'restart';
         },
+        'application.adminAccess':                undefined,
+        'containerEngine.imageAllowList.enabled': undefined,
+        'containerEngine.name':                   undefined,
         'kubernetes.port':                        undefined,
-        'kubernetes.containerEngine':             undefined,
         'kubernetes.enabled':                     undefined,
         'kubernetes.options.traefik':             undefined,
         'kubernetes.options.flannel':             undefined,
-        'kubernetes.suppressSudo':                undefined,
-        'containerEngine.imageAllowList.enabled': undefined,
       },
       extra,
     );

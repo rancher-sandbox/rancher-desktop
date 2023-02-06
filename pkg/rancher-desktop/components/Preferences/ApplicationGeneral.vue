@@ -34,10 +34,10 @@ export default Vue.extend({
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
     isSudoAllowed(): boolean {
-      return !(this.preferences?.kubernetes?.suppressSudo ?? false);
+      return !(this.preferences?.application?.adminAccess ?? true);
     },
     canAutoUpdate(): boolean {
-      return this.preferences?.updater || false;
+      return this.preferences?.application.updater.enabled ?? false;
     },
   },
   methods: {
@@ -59,7 +59,7 @@ export default Vue.extend({
       <checkbox
         label="Allow to acquire administrative credentials (sudo access)"
         :value="isSudoAllowed"
-        @input="onChange('kubernetes.suppressSudo', !$event)"
+        @input="onChange('application.adminAccess', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -70,7 +70,7 @@ export default Vue.extend({
         data-test="automaticUpdatesCheckbox"
         label="Check for updates automatically"
         :value="canAutoUpdate"
-        @input="onChange('updater', $event)"
+        @input="onChange('application.updater.enabled', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -79,8 +79,8 @@ export default Vue.extend({
     >
       <checkbox
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
-        :value="preferences.telemetry"
-        @input="onChange('telemetry', $event)"
+        :value="preferences.application.telemetry.enabled"
+        @input="onChange('application.telemetry.enabled', $event)"
       />
     </rd-fieldset>
   </div>

@@ -56,14 +56,16 @@ EOF
     mkdir -p "$PATH_CONFIG"
     cat <<EOF > "$PATH_CONFIG_FILE"
 {
-  "version": 4,
-  "kubernetes": {
-    "memoryInGB": 6,
-    "suppressSudo": true,
-    "WSLIntegrations": $wsl_integrations
+  "version": 5,
+  "application": {
+    "adminAccess":            false,
+    "pathManagementStrategy": "$path_management",
+    "updater":                { "enabled": false },
   },
-  "updater": false,
-  "pathManagementStrategy": "$path_management",
+  "virtualMachine": {
+    "memoryInGB": 6,
+  },
+  "wsl": { "integrations": $wsl_integrations },
   "containerEngine": {
     "imageAllowList": {
       "enabled": $image_allow_list,
@@ -92,8 +94,8 @@ start_container_engine() {
     fi
 
     rdctl start \
-          --kubernetes.suppress-sudo \
-          --updater=false \
+          --kubernetes.admin-access=false \
+          --application.updater.enabled=false \
           --container-engine="$RD_CONTAINER_ENGINE" \
           --kubernetes-enabled=false \
           "$@" \

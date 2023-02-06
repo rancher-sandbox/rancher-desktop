@@ -15,7 +15,7 @@
     </div>
     <hr>
     <update-status
-      :enabled="settings.updater"
+      :enabled="settings.application.updater.enabled"
       :update-state="updateState"
       :version="version"
       @enabled="onUpdateEnabled"
@@ -23,7 +23,7 @@
     />
     <hr>
     <telemetry-opt-in
-      :telemetry="settings.telemetry"
+      :telemetry="settings.application.telemetry.enabled"
       @updateTelemetry="updateTelemetry"
     />
     <hr>
@@ -107,7 +107,7 @@ export default {
       this.$data.settings = settings;
     },
     onUpdateEnabled(value) {
-      ipcRenderer.invoke('settings-write', { updater: value });
+      ipcRenderer.invoke('settings-write', { application: { telemetry: { updater: value } } });
     },
     onUpdateApply() {
       ipcRenderer.send('update-apply');
@@ -116,7 +116,7 @@ export default {
       this.$data.updateState = state;
     },
     updateTelemetry(value) {
-      ipcRenderer.invoke('settings-write', { telemetry: value });
+      ipcRenderer.invoke('settings-write', { application: { telemetry: { enabled: value } } });
     },
     onNetworkUpdate(status) {
       ipcRenderer.send('update-network-status', status);

@@ -9,10 +9,10 @@ import Logging from '@pkg/utils/logging';
 
 const console = Logging.diagnostics;
 
-let kubernetesMemory = Number.POSITIVE_INFINITY;
+let virtualMachineMemory = Number.POSITIVE_INFINITY;
 
 mainEvents.on('settings-update', (cfg) => {
-  kubernetesMemory = cfg.kubernetes.memoryInGB;
+  virtualMachineMemory = cfg.virtualMachine.memoryInGB;
 });
 
 /**
@@ -49,7 +49,7 @@ const CheckLimaDarwin: DiagnosticsChecker = {
         result.description = `There was an error determining your macOS version.  Virtual memory may be limited to 3GiB.`;
       }
     }
-    if (Math.ceil(kubernetesMemory) <= 3) {
+    if (Math.ceil(virtualMachineMemory) <= 3) {
       // If we're not using more than 3GB of memory, consider this a pass.
       result.passed = true;
     }

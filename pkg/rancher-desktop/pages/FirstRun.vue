@@ -38,7 +38,7 @@
       </select>
     </label>
     <engine-selector
-      :container-engine="settings.kubernetes.containerEngine"
+      :container-engine="settings.containerEngine.name"
       @change="onChangeEngine"
     />
     <path-management-selector
@@ -127,7 +127,7 @@ export default Vue.extend({
       ipcRenderer.send('dialog/ready');
     });
     ipcRenderer.on('settings-update', (event, config) => {
-      this.settings.kubernetes.containerEngine = config.kubernetes.containerEngine;
+      this.settings.containerEngine.name = config.containerEngine.name;
       this.settings.kubernetes.enabled = config.kubernetes.enabled;
     });
     ipcRenderer.send('k8s-versions');
@@ -140,8 +140,8 @@ export default Vue.extend({
       ipcRenderer.invoke(
         'settings-write',
         {
-          kubernetes:             { version: this.settings.kubernetes.version },
-          pathManagementStrategy: this.pathManagementStrategy,
+          kubernetes:  { version: this.settings.kubernetes.version },
+          application: { pathManagementStrategy: this.pathManagementStrategy },
         });
     },
     close() {
@@ -152,7 +152,7 @@ export default Vue.extend({
       try {
         ipcRenderer.invoke(
           'settings-write',
-          { kubernetes: { containerEngine: desiredEngine } },
+          { containerEngine: { name: desiredEngine } },
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
