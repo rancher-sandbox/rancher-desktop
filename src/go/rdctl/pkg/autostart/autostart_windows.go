@@ -1,36 +1,37 @@
 package autostart
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"golang.org/x/sys/windows/registry"
 )
 
-const regPath = `C:\Windows\system32\reg.exe`
-
 func EnsureAutostart(autostartDesired bool) error {
+	autostartKey, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Run`, registry.SET_VALUE)
+	if err != nil {
+		return fmt.Errorf("failed to open registry key: %w", err)
+	}
+	defer autostartKey.Close()
+
 	if autostartDesired {
 		rancherDesktopPath, err := getRancherDesktopPath()
 		if err != nil {
-			return fmt.Errorf("Failed to get Rancher Desktop path: %w", err)
+			return fmt.Errorf("failed to get path to Rancher Desktop: %w", err)
 		}
-		cmd := exec.Command(regPath, "add", `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, "/f", "/v", "RancherDesktop", "/d", rancherDesktopPath)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to configure registry entry for autostart: %w", err)
+		err = autostartKey.SetStringValue("RancherDesktop", rancherDesktopPath)
+		if err != nil {
+			return fmt.Errorf("failed to set RancherDesktop value: %w", err)
 		}
 	} else {
-		cmd := exec.Command(regPath, "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, "/f", "/v", "RancherDesktop")
-		if output, err := cmd.CombinedOutput(); err != nil {
-			trimmedOutput := strings.TrimSpace(string(output))
-			if trimmedOutput == "ERROR: The system was unable to find the specified registry key or value." {
-				// the key is not present or was already deleted
-				return nil
-			}
-			return fmt.Errorf("failed to remove registry entry for autostart: %w", err)
+		err = autostartKey.DeleteValue("RancherDesktop")
+		if err != nil && !errors.Is(err, registry.ErrNotExist) {
+			return fmt.Errorf("failed to remove RancherDesktop value: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -39,18 +40,18 @@ func EnsureAutostart(autostartDesired bool) error {
 func getRancherDesktopPath() (string, error) {
 	rdctlSymlinkPath, err := os.Executable()
 	if err != nil {
-		return "", fmt.Errorf("Failed to get path to rdctl: %w", err)
+		return "", fmt.Errorf("failed to get path to rdctl: %w", err)
 	}
 
 	rdctlPath, err := filepath.EvalSymlinks(rdctlSymlinkPath)
 	if err != nil {
-		return "", fmt.Errorf("Failed to resolve possible symlink path %s: %w", rdctlSymlinkPath, err)
+		return "", fmt.Errorf("failed to resolve possible symlink path %s: %w", rdctlSymlinkPath, err)
 	}
 
 	rdctlDirectory := filepath.Dir(rdctlPath)
 	rancherDesktopPath, err := recurseBackwardsToFindFile(rdctlDirectory, "Rancher Desktop.exe")
 	if err != nil {
-		return "", fmt.Errorf("Failed to get Rancher Desktop.exe path: %w", err)
+		return "", fmt.Errorf("failed to get Rancher Desktop.exe path: %w", err)
 	}
 	return rancherDesktopPath, nil
 }
@@ -64,7 +65,7 @@ func recurseBackwardsToFindFile(currentDirectory string, name string) (string, e
 	// search dir for file of name `name`
 	dirEntries, err := os.ReadDir(currentDirectory)
 	if err != nil {
-		return "", fmt.Errorf("Failed to read directory %s: %w", currentDirectory, err)
+		return "", fmt.Errorf("failed to read directory %s: %w", currentDirectory, err)
 	}
 	for _, dirEntry := range dirEntries {
 		if dirEntry.Name() == name {
@@ -75,7 +76,7 @@ func recurseBackwardsToFindFile(currentDirectory string, name string) (string, e
 	// return error if current directory is root directory
 	rootDirectory := filepath.VolumeName(currentDirectory) + string(filepath.Separator)
 	if rootDirectory == currentDirectory {
-		return "", fmt.Errorf("Failed to find file %s", name)
+		return "", fmt.Errorf("failed to find file %s", name)
 	}
 
 	parentDirectory := filepath.Dir(currentDirectory)

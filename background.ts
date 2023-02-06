@@ -1012,11 +1012,7 @@ async function runRdctlSetup(newSettings: settings.Settings): Promise<void> {
   }
 
   const rdctlPath = path.join(paths.resources, os.platform(), 'bin', 'rdctl');
-  const args = ['setup', `--application.auto-start=${ newSettings.autoStart }`];
-
-  if (newSettings.debug) {
-    args.push('--verbose=true');
-  }
+  const args = ['setup', `--auto-start=${ newSettings.autoStart }`];
 
   await spawnFile(rdctlPath, args);
 }

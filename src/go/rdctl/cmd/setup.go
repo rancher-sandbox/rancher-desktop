@@ -14,7 +14,7 @@ var setupCmd = &cobra.Command{
 	Use:    "setup",
 	Short:  "Configure the system without modifying settings",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if cmd.Flags().Changed("application.auto-start") {
+		if cmd.Flags().Changed("auto-start") {
 			return autostart.EnsureAutostart(setupSettings.AutoStart)
 		}
 		return nil
@@ -23,5 +23,5 @@ var setupCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(setupCmd)
-	setupCmd.Flags().BoolVar(&setupSettings.AutoStart, "application.auto-start", false, "Whether to start Rancher Desktop at login")
+	setupCmd.Flags().BoolVar(&setupSettings.AutoStart, "auto-start", false, "Whether to start Rancher Desktop at login")
 }
