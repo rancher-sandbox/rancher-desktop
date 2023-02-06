@@ -797,7 +797,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       options = optionsOrArg;
     }
     try {
-      const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
+      let stream = options.logStream;
+
+      if (!stream) {
+        const logFile = Logging['wsl-exec'];
+
+        // Write a duplicate log line so we can line up the log files.
+        logFile.log(`Running: wsl.exe ${ args.join(' ') }`);
+        stream = await logFile.fdStream;
+      }
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
@@ -962,7 +970,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * This manages {this.process}.
    */
   protected async runInit() {
-    const stream = await Logging['wsl-exec'].fdStream;
+    // /sbin/init actually seeks to the start of the file before writing its
+    // logs, so we have to give it a unique file to avoid other logs being
+    // clobbered.
+    const stream = await Logging['wsl-init'].fdStream;
     const PID_FILE = '/var/run/wsl-init.pid';
 
     // Delete any stale wsl-init PID file
@@ -1328,29 +1339,25 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       (async() => {
         const linuxPath = await this.wslify(provisioningPath);
 
-        await this.execCommand('/bin/sh', '-c', `
-          set -o errexit -o nounset
+        // Stop the service if it's already running for some reason.
+        // This should never be the case (because we tore down init).
+        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
 
-          # Stop the service if it's already running for some reason.
-          # This should never be the case (because we tore down init).
-          /usr/local/bin/wsl-service --ifstarted local stop
+        // Clobber /etc/local.d and replace it with a symlink to our desired
+        // path.  This is needed as /etc/init.d/local does not support
+        // overriding the script directory.
+        await this.execCommand('rm', '-r', '-f', '/etc/local.d');
+        await this.execCommand('ln', '-s', '-f', '-T', linuxPath, '/etc/local.d');
 
-          # Clobber /etc/local.d and replace it with a symlink to our desired
-          # path.  This is needed as /etc/init.d/local does not support
-          # overriding the script directory.
-          rm -r -f /etc/local.d
-          ln -s -f -T "${ linuxPath }" /etc/local.d
+        // Ensure all scripts are executable; Windows mounts are unlikely to
+        // have it set by default.
+        await this.execCommand('/usr/bin/find',
+          '/etc/local.d',
+          '(', '-name', '*.start', '-o', '-name', '*.stop', ')',
+          '-print', '-exec', 'chmod', 'a+x', '{}', ';');
 
-          # Ensure all scripts are executable; Windows mounts are unlikely to
-          # have it set by default.
-          /usr/bin/find \
-            /etc/local.d/ \
-            '(' -name '*.start' -o -name '*.stop' ')' \
-            -print -exec chmod a+x '{}' ';'
-
-          # Run the script.
-          exec /usr/local/bin/wsl-service local start
-        `.replace(/\r/g, ''));
+        // Run the script.
+        await this.execCommand('/usr/local/bin/wsl-service', 'local', 'start');
       })(),
     ]);
   }

@@ -228,13 +228,18 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   protected async syncSocketProxy(): Promise<void> {
-    const shouldRun =
-      this.enforcing &&
-      this.backendReady &&
-      this.settings.kubernetes?.containerEngine === ContainerEngine.MOBY;
+    let reason = '';
 
-    console.debug(`Syncing socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
-    if (shouldRun) {
+    if (!this.enforcing) {
+      reason = 'not enforcing';
+    } else if (!this.backendReady) {
+      reason = 'backend not ready';
+    } else if (this.settings.kubernetes?.containerEngine !== ContainerEngine.MOBY) {
+      reason = `unsupported container engine ${ this.settings.kubernetes?.containerEngine }`;
+    }
+
+    console.debug(`Syncing Win32 socket proxy: ${ reason ? `should not run (${ reason })` : 'should run' }`);
+    if (!reason) {
       this.windowsSocketProxyProcess.start();
     } else {
       await this.windowsSocketProxyProcess.stop();
@@ -242,7 +247,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
     await Promise.all(
       (await this.supportedDistros).map((distro) => {
-        return this.syncDistroSocketProxy(distro.name, shouldRun);
+        return this.syncDistroSocketProxy(distro.name, !reason);
       }),
     );
   }
