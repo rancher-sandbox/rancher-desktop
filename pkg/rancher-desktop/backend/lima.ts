@@ -1898,8 +1898,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       return reasons; // No need to restart if nothing exists
     }
     if (process.platform === 'darwin') {
-      if (typeof cfg.virtualMachine?.experimental.socketVMNet !== 'undefined') {
-        if (this.cfg.virtualMachine?.experimental.socketVMNet !== cfg.virtualMachine?.experimental.socketVMNet) {
+      if (typeof cfg.virtualMachine?.experimental?.socketVMNet !== 'undefined') {
+        if (this.cfg.virtualMachine?.experimental.socketVMNet !== cfg.virtualMachine.experimental.socketVMNet) {
           reasons['virtualMachine.experimental.socketVMNet'] = {
             current:  this.cfg.virtualMachine.experimental.socketVMNet,
             desired:  cfg.virtualMachine.experimental.socketVMNet,
