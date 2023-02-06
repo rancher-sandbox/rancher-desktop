@@ -95,6 +95,8 @@ export function openPreferences() {
       event.preventDefault();
     }
   });
+
+  app.dock?.show();
 }
 
 export function preferencesSetDirtyFlag(dirtyFlag: boolean) {
