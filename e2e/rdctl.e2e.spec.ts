@@ -217,15 +217,14 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/settings');
     const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
-    const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+    const desiredEngine = 'flip';
     const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
     const requestedSettings = _.merge({}, settings, {
       kubernetes:
         {
-          enabled:                    desiredEnabled,
-          containerEngine:            desiredEngine,
-          version:                    desiredVersion,
-          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
+          enabled:         desiredEnabled,
+          containerEngine: desiredEngine,
+          version:         desiredVersion,
         },
     });
     const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');

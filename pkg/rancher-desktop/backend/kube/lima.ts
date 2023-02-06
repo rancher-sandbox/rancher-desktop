@@ -17,7 +17,6 @@ import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import SERVICE_CRI_DOCKERD_SCRIPT from '@pkg/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_K3S_SCRIPT from '@pkg/assets/scripts/service-k3s.initd';
 import { KubeClient } from '@pkg/backend/client';
-import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
@@ -233,31 +232,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         async() => {
           await new Promise(resolve => setTimeout(resolve, 5000));
         });
-    }
-
-    // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
-    // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
-    // Note that if the user's workflow is:
-    // A. Only containerd
-    // settings version 3: containerd (which installs buildkitd)
-    // upgrade to settings version 4, still on containerd:
-    //   - remove the old kim/buildkitd artifacts
-    //   - set config.kubernetes.checkForExistingKimBuilder to false (forever)
-
-    // B. Mix of containerd and moby
-    // settings version 3: containerd (which installs buildkitd)
-    // settings version 3: switch to moby (which will uninstall buildkitd)
-    // upgrade to settings version 4, still on moby: do nothing here
-    // settings version 4, switch to containerd
-    //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
-    //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
-
-    if (config.kubernetes.checkForExistingKimBuilder) {
-      this.client ??= new KubeClient();
-      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(this.client.k8sClient);
-      // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
-      this.emit('kim-builder-uninstalled');
     }
 
     return k3sEndpoint;

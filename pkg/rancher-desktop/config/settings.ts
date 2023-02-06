@@ -50,25 +50,24 @@ export const defaultSettings = {
   },
   kubernetes: {
     /** The version of Kubernetes to launch, as a semver (without v prefix). */
-    version:                    '',
-    memoryInGB:                 2,
-    numberCPUs:                 2,
-    port:                       6443,
-    containerEngine:            ContainerEngine.CONTAINERD,
-    checkForExistingKimBuilder: false,
-    enabled:                    true,
-    WSLIntegrations:            {} as Record<string, boolean>,
-    options:                    { traefik: true, flannel: true },
-    suppressSudo:               false,
+    version:         '',
+    memoryInGB:      2,
+    numberCPUs:      2,
+    port:            6443,
+    containerEngine: ContainerEngine.CONTAINERD,
+    enabled:         true,
+    WSLIntegrations: {} as Record<string, boolean>,
+    options:         { traefik: true, flannel: true },
+    suppressSudo:    false,
     /**
      * when set to true Dnsmasq is disabled and all DNS resolution
      * is handled by host-resolver on Windows platform only.
      */
-    hostResolver:               true,
+    hostResolver:    true,
     /**
      * Experimental settings - there should not be any UI for these.
      */
-    experimental:               {
+    experimental:    {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
     },
@@ -395,9 +394,8 @@ const updateTable: Record<number, (settings: any) => void> = {
     // The updater still wants to see an entry here (for updating ancient systems),
     // but will no longer delete obsolete files.
   },
-  3: (settings) => {
-    // Should stay true until the kim-based buildkit artifacts are removed -- see code in lima.ts:start()
-    settings.kubernetes.checkForExistingKimBuilder = true;
+  3: (_) => {
+    // With settings v5, all traces of the kim builder are gone now, so no need to update it.
   },
 };
 

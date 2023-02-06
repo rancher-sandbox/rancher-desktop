@@ -6,7 +6,6 @@ import util from 'util';
 import semver from 'semver';
 
 import { KubeClient } from '../client';
-import { getImageProcessor } from '../images/imageFactory';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import WSLBackend, { Action } from '../wsl';
 
@@ -274,14 +273,6 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       await this.progressTracker.action(
         'Skipping node checks, flannel is disabled',
         100, Promise.resolve({}));
-    }
-
-    // See comments for this code in lima.ts:start()
-    if (config.kubernetes.checkForExistingKimBuilder) {
-      await getImageProcessor(config.kubernetes.containerEngine, this.vm).removeKimBuilder(client.k8sClient);
-      // No need to remove kim builder components ever again.
-      this.vm.writeSetting({ kubernetes: { checkForExistingKimBuilder: false } });
-      this.emit('kim-builder-uninstalled');
     }
 
     return '';

@@ -22,15 +22,14 @@ describe('updateFromCommandLine', () => {
         },
       },
       kubernetes: {
-        version:                    '1.23.5',
-        memoryInGB:                 4,
-        numberCPUs:                 2,
-        port:                       6443,
-        containerEngine:            settings.ContainerEngine.MOBY,
-        checkForExistingKimBuilder: false,
-        enabled:                    true,
-        WSLIntegrations:            {},
-        options:                    {
+        version:         '1.23.5',
+        memoryInGB:      4,
+        numberCPUs:      2,
+        port:            6443,
+        containerEngine: settings.ContainerEngine.MOBY,
+        enabled:         true,
+        WSLIntegrations: {},
+        options:         {
           traefik: true,
           flannel: false,
         },
