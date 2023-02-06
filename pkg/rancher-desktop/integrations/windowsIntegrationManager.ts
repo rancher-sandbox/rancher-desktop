@@ -235,7 +235,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } else if (!this.backendReady) {
       reason = 'backend not ready';
     } else if (this.settings.containerEngine?.name !== ContainerEngine.MOBY) {
-      reason = `unsupported container engine ${ this.settings.kubernetes?.containerEngine }`;
+      reason = `unsupported container engine ${ this.settings.containerEngine?.name }`;
     }
 
     console.debug(`Syncing Win32 socket proxy: ${ reason ? `should not run (${ reason })` : 'should run' }`);
