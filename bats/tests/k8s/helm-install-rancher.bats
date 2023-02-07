@@ -32,7 +32,6 @@ get_host() {
     else
         echo "localhost"
     fi
-    return 0
 }
 
 @test 'deploy rancher' {
