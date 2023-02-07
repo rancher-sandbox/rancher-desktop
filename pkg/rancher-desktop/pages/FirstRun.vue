@@ -68,7 +68,8 @@ import { mapGetters } from 'vuex';
 import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
-import type { Settings, ContainerEngine } from '@pkg/config/settings';
+import { defaultSettings } from '@pkg/config/settings';
+import type { ContainerEngine } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -79,7 +80,7 @@ export default Vue.extend({
   layout: 'dialog',
   data() {
     return {
-      settings: { kubernetes: {} } as Settings,
+      settings: defaultSettings,
       versions: [] as VersionEntry[],
 
       // If cachedVersionsOnly is true, it means we're offline and showing only the versions in the cache,
