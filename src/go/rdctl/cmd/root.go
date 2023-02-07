@@ -37,7 +37,7 @@ type APIError struct {
 }
 
 const clientVersion = "1.1.0"
-const apiVersion = "v0"
+const apiVersion = "v1"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
