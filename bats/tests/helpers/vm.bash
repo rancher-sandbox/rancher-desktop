@@ -65,7 +65,7 @@ EOF
   "virtualMachine": {
     "memoryInGB": 6,
   },
-  "wsl": { "integrations": $wsl_integrations },
+  "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
     "imageAllowList": {
       "enabled": $image_allow_list,
