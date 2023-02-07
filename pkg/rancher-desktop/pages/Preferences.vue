@@ -46,12 +46,6 @@ export default Vue.extend({
       return preferencesNavItems.map(({ name }) => name);
     },
   },
-  beforeMount() {
-    window.addEventListener('keydown', this.handleKeypress, true);
-  },
-  beforeDestroy() {
-    window.removeEventListener('keydown', this.handleKeypress, true);
-  },
   methods: {
     async navChanged(current: string) {
       await this.$store.dispatch(
@@ -113,11 +107,6 @@ export default Vue.extend({
     },
     reloadPreferences() {
       window.location.reload();
-    },
-    handleKeypress(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        this.closePreferences();
-      }
     },
   },
 });

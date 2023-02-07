@@ -62,6 +62,15 @@ export function openPreferences() {
       },
       'preferences help',
     );
+
+    Shortcuts.register(
+      window,
+      { key: 'Escape' },
+      () => {
+        window.close();
+      },
+      'close preferences dialog',
+    );
   }
 
   window.webContents.on('ipc-message', (_event, channel) => {
