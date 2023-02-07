@@ -34,7 +34,7 @@ export default Vue.extend({
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
     isSudoAllowed(): boolean {
-      return !(this.preferences?.application?.adminAccess ?? true);
+      return this.preferences?.application?.adminAccess ?? false;
     },
     canAutoUpdate(): boolean {
       return this.preferences?.application.updater.enabled ?? false;
