@@ -9,7 +9,7 @@ setup() {
 }
 
 @test 'start k8s' {
-    start_kubernetes
+    start_kubernetes --kubernetes.options.traefik=true
     wait_for_apiserver
 }
 
@@ -31,9 +31,9 @@ assert_traefik_pods_are_down() {
         [[ "$output" != *"Completed"* ]] && \
         [[ "$output" != *"Terminating"* ]] && \
         [[ "$output" != *"traefik"* ]]; then
-        exit 0
+        return 0
     else
-        exit 1
+        return 1
     fi
 }
 
@@ -46,21 +46,27 @@ assert_traefik_pods_are_up() {
         [[ "$output" != *"Pending"* ]] && \
         [[ "$output" != *"Terminating"* ]] && \
         [[ "$output" =~ "traefik" ]]; then
-        exit 0
+        return 0
     else
-        exit 1
+        return 1
     fi
 }
 
 @test 'disable traefik' {
+    # First check whether the traefik pods are up from the first launch
+    try --max 30 --delay 10 assert_traefik_pods_are_up
+    # Disable traefik
     run rdctl set --kubernetes.options.traefik=FALSE
     wait_for_apiserver
+    # Check if the traefik pods go down
     try --max 30 --delay 10 assert_traefik_pods_are_down
 }
 
 @test 'enable traefik' {
+     # Enable traefik
      run rdctl set --kubernetes.options.traefik=TRUE
      wait_for_apiserver
+     # Check if the traefik pods come up
      try --max 30 --delay 10 assert_traefik_pods_are_up
      run curl "http://$(get_host):80"
      [ "$status" -ne 0 ]
