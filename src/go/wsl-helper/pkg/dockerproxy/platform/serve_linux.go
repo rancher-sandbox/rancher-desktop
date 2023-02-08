@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/user"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -85,14 +83,6 @@ func Listen(endpoint string) (net.Listener, error) {
 		return nil, fmt.Errorf("could not listen on %s: %w", endpoint, err)
 	}
 
-	group, err := user.LookupGroup("docker")
-	if err != nil {
-		// If we fail to look up the "docker" group, just skip fixing up the
-		// permissions on the socket
-		logrus.WithError(err).Info("could not look up docker user group, not setting permissions")
-		return listener, nil
-	}
-
 	success := false
 	defer func() {
 		if !success {
@@ -100,34 +90,17 @@ func Listen(endpoint string) (net.Listener, error) {
 		}
 	}()
 
-	gid, err := strconv.Atoi(group.Gid)
-	if err != nil {
-		return nil, fmt.Errorf("could not convert group id %s: %w", group.Gid, err)
-	}
-
 	var stat unix.Stat_t
 	err = unix.Stat(filepath, &stat)
 	if err != nil {
 		return nil, fmt.Errorf("could not get socket %s permissions: %w", filepath, err)
 	}
 
-	err = os.Chown(filepath, int(stat.Uid), gid)
-	if err != nil {
-		return nil, fmt.Errorf("could not change socket %s ownership: %w", filepath, err)
-	}
-
-	desiredPerms := os.FileMode(stat.Mode | 0o020)
+	desiredPerms := os.FileMode(stat.Mode | 0o777)
 	err = os.Chmod(filepath, desiredPerms)
 	if err != nil {
 		return nil, fmt.Errorf("could not change socket %s permissions: %w", filepath, err)
 	}
-
-	logrus.WithFields(logrus.Fields{
-		"file":        filepath,
-		"owner":       stat.Uid,
-		"group":       gid,
-		"permissions": desiredPerms,
-	}).Debug("successfully set docker socket permissions")
 
 	success = true
 	return listener, nil
