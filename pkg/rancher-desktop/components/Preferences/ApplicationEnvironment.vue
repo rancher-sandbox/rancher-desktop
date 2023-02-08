@@ -36,8 +36,8 @@ export default Vue.extend({
   >
     <path-management-selector
       :show-label="false"
-      :value="preferences.pathManagementStrategy"
-      @input="onChange('pathManagementStrategy', $event)"
+      :value="preferences.application.pathManagementStrategy"
+      @input="onChange('application.pathManagementStrategy', $event)"
     />
   </rd-fieldset>
 </template>

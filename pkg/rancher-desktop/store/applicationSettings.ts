@@ -10,7 +10,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
  */
 type State = {
   pathManagementStrategy: PathManagementStrategy;
-  sudoAllowed: boolean;
+  adminAccess: boolean;
 };
 
 export const state: () => State = () => {
@@ -19,8 +19,8 @@ export const state: () => State = () => {
   const cfg = loadSettings();
 
   return {
-    pathManagementStrategy: cfg.pathManagementStrategy,
-    sudoAllowed:            !cfg.kubernetes.suppressSudo,
+    pathManagementStrategy: cfg.application.pathManagementStrategy,
+    adminAccess:            cfg.application.adminAccess,
   };
 };
 
@@ -28,8 +28,8 @@ export const mutations: MutationsType<State> = {
   SET_PATH_MANAGEMENT_STRATEGY(state: State, strategy: PathManagementStrategy) {
     state.pathManagementStrategy = strategy;
   },
-  SET_SUDO_ALLOWED(state: State, allowed: boolean) {
-    state.sudoAllowed = allowed;
+  SET_ADMIN_ACCESS(state: State, allowed: boolean) {
+    state.adminAccess = allowed;
   },
 } as const;
 
@@ -41,17 +41,17 @@ export const actions = {
   },
   async commitPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
-    await ipcRenderer.invoke('settings-write', { pathManagementStrategy: strategy });
+    await ipcRenderer.invoke('settings-write', { application: { pathManagementStrategy: strategy } });
   },
-  setSudoAllowed({ commit, state }: AppActionContext, allowed: boolean) {
-    if (allowed !== state.sudoAllowed) {
-      commit('SET_SUDO_ALLOWED', allowed);
+  setAdminAccess({ commit, state }: AppActionContext, allowed: boolean) {
+    if (allowed !== state.adminAccess) {
+      commit('SET_ADMIN_ACCESS', allowed);
     }
   },
-  async commitSudoAllowed({ commit, state }: AppActionContext, allowed: boolean) {
-    if (allowed !== state.sudoAllowed) {
-      commit('SET_SUDO_ALLOWED', allowed);
-      await ipcRenderer.invoke('settings-write', { kubernetes: { suppressSudo: !allowed } });
+  async commitAdminAccess({ commit, state }: AppActionContext, allowed: boolean) {
+    if (allowed !== state.adminAccess) {
+      commit('SET_ADMIN_ACCESS', allowed);
+      await ipcRenderer.invoke('settings-write', { application: { adminAccess: allowed } });
     }
   },
 };
@@ -60,7 +60,7 @@ export const getters = {
   pathManagementStrategy({ pathManagementStrategy }: State) {
     return pathManagementStrategy;
   },
-  sudoAllowed({ sudoAllowed }: State) {
-    return sudoAllowed;
+  adminAccess({ adminAccess }: State) {
+    return adminAccess;
   },
 };

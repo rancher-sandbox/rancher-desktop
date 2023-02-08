@@ -44,14 +44,14 @@ export default Vue.extend({
   <div class="preferences-content">
     <system-preferences
       v-if="hasSystemPreferences"
-      :memory-in-g-b="preferences.kubernetes.memoryInGB"
-      :number-c-p-us="preferences.kubernetes.numberCPUs"
+      :memory-in-g-b="preferences.virtualMachine.memoryInGB"
+      :number-c-p-us="preferences.virtualMachine.numberCPUs"
       :avail-memory-in-g-b="availMemoryInGB"
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
-      @update:memory="onChange('kubernetes.memoryInGB', $event)"
-      @update:cpu="onChange('kubernetes.numberCPUs', $event)"
+      @update:memory="onChange('virtualMachine.memoryInGB', $event)"
+      @update:cpu="onChange('virtualMachine.numberCPUs', $event)"
     />
   </div>
 </template>

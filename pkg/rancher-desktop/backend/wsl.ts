@@ -132,6 +132,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return path.join(paths.resources, os.platform(), `distro-${ DISTRO_VERSION }.tar`);
   }
 
+  /** The current config state. */
   protected cfg: BackendSettings | undefined;
 
   /**
@@ -174,7 +175,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return 'wsl';
   }
 
-  writeSetting(changed: RecursivePartial<typeof this.cfg>) {
+  writeSetting(changed: RecursivePartial<BackendSettings>) {
     if (changed) {
       mainEvents.emit('settings-write', changed);
     }
@@ -699,7 +700,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
-      if (this.cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD) {
+      if (this.cfg?.containerEngine.name === ContainerEngine.CONTAINERD) {
         existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
@@ -750,8 +751,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
         GUESTAGENT_IPTABLES:           enableKubernetes ? 'false' : 'true', // only enable IPTABLES for older K8s
         GUESTAGENT_PRIVILEGED_SERVICE: 'true',
-        GUESTAGENT_CONTAINERD:         cfg?.kubernetes?.containerEngine === ContainerEngine.CONTAINERD ? 'true' : 'false',
-        GUESTAGENT_DOCKER:             cfg?.kubernetes?.containerEngine === ContainerEngine.MOBY ? 'true' : 'false',
+        GUESTAGENT_CONTAINERD:         cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
+        GUESTAGENT_DOCKER:             cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
         GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
       };
     } else {
@@ -1078,7 +1079,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   async start(config_: BackendSettings): Promise<void> {
     const config = this.cfg = _.defaultsDeep(clone(config_),
-      { kubernetes: { containerEngine: ContainerEngine.NONE } }) as BackendSettings;
+      { containerEngine: { name: ContainerEngine.NONE } });
     let kubernetesVersion: semver.SemVer | undefined;
 
     await this.setState(State.STARTING);
@@ -1145,7 +1146,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 });
                 // dnsmasq requires /var/lib/misc to exist
                 await this.execCommand('mkdir', '-p', '/var/lib/misc');
-                if (config.kubernetes.hostResolver) {
+                if (config.virtualMachine.hostResolver) {
                   console.debug(`setting DNS to host-resolver`);
                   try {
                     this.resolverHostProcess.start();
@@ -1161,7 +1162,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
                 await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, 0o755);
                 await this.writeConf('cri-dockerd', {
-                  ENGINE:  config.kubernetes.containerEngine,
+                  ENGINE:  config.containerEngine.name,
                   LOG_DIR: logPath,
                 });
               }),
@@ -1215,7 +1216,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               PORT:                   config.kubernetes.port.toString(),
               LOG_DIR:                await this.wslify(paths.logs),
               'export IPTABLES_MODE': 'legacy',
-              ENGINE:                 config.kubernetes.containerEngine,
+              ENGINE:                 config.containerEngine.name,
               ADDITIONAL_ARGS:        config.kubernetes.options.traefik ? '' : '--disable traefik',
             };
 
@@ -1247,12 +1248,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         if (config.containerEngine.imageAllowList.enabled) {
           await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
         }
-        await this.progressTracker.action('Starting container engine', 0, this.startService(config.kubernetes.containerEngine === ContainerEngine.MOBY ? 'docker' : 'containerd'));
+        await this.progressTracker.action('Starting container engine', 0, this.startService(config.containerEngine.name === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
         if (kubernetesVersion) {
           await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
         }
-        if (config.kubernetes.containerEngine === ContainerEngine.CONTAINERD) {
+        if (config.containerEngine.name === ContainerEngine.CONTAINERD) {
           await this.progressTracker.action('Starting buildkit', 0,
             this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
         }
