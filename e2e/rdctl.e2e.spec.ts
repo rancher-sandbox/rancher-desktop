@@ -315,7 +315,7 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/settings');
 
     expect(resp.ok).toBeTruthy();
-    const telemetry = (await resp.json() as Settings).application.telemetry.enabled;
+    const telemetry = (await resp.json()).application.telemetry.enabled;
 
     resp = await doRequest('/v0/settings', JSON.stringify({ version: CURRENT_SETTINGS_VERSION, application: { telemetry: { enabled: !telemetry } } }), 'PUT');
     expect(resp.ok).toBeTruthy();
