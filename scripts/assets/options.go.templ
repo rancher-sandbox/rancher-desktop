@@ -109,8 +109,8 @@ func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
 		}
 	<% } %>
 	if changedSomething {
-	  specifiedSettings.Version = <%- settingsVersion %>
-	  specifiedSettingsForJSON.Version = &specifiedSettings.Version;
+		specifiedSettings.Version = <%- settingsVersion %>
+		specifiedSettingsForJSON.Version = &specifiedSettings.Version;
 		return &specifiedSettingsForJSON, nil
 	}
 	return nil, nil

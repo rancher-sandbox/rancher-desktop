@@ -28,10 +28,11 @@ import fetch, { RequestInit } from 'node-fetch';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, reportAsset, retry, teardown, tool,
+  createDefaultSettings, getAlternateSetting, kubectl, reportAsset, retry, teardown, tool,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings, defaultSettings, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
@@ -314,7 +315,7 @@ test.describe('Command server', () => {
     let resp = await doRequest('/v0/settings');
 
     expect(resp.ok).toBeTruthy();
-    const telemetry = (await resp.json() as Settings).application.telemetry.enabled;
+    const telemetry = (await resp.json()).application.telemetry.enabled;
 
     resp = await doRequest('/v0/settings', JSON.stringify({ version: CURRENT_SETTINGS_VERSION, application: { telemetry: { enabled: !telemetry } } }), 'PUT');
     expect(resp.ok).toBeTruthy();
@@ -326,7 +327,7 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeTruthy();
 
-    const body: RecursivePartial<Settings> = await resp.json() as Settings;
+    const body: RecursivePartial<Settings> = await resp.json();
 
     delete body.version;
     if (body?.application?.telemetry) {
@@ -342,9 +343,11 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeTruthy();
 
-    const body: RecursivePartial<Settings> = await resp.json() as Settings;
+    const body: RecursivePartial<Settings> = await resp.json();
 
-    body.version = body.version ? body.version - 1 : -1;
+    // Override typescript's checking so we can verify that the server rejects the
+    // invalid value for the `version` field.
+    body.version = (body.version ? body.version - 1 : -1) as any;
     if (body?.application?.telemetry) {
       body.application.telemetry.enabled = !body.application.telemetry.enabled;
     }
@@ -548,13 +551,6 @@ test.describe('Command server', () => {
     expect(body).toContain('no settings specified in the request');
   });
 
-  /**
-   * getAltString returns the setting that isn't the same as the existing setting.
-   */
-  const getAltString = (currentSettings: Settings, setting: string, altOne: string, altTwo: string) => {
-    return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
-  };
-
   test.describe('rdctl', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
@@ -750,20 +746,17 @@ test.describe('Command server', () => {
             kubernetes: {
               memoryInGB:      oldSettings.virtualMachine.memoryInGB + 1,
               numberCPUs:      oldSettings.virtualMachine.numberCPUs + 1,
-              containerEngine: getAltString(oldSettings, oldSettings.containerEngine.name, 'containerd', 'moby'),
+              containerEngine: getAlternateSetting(oldSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY),
               suppressSudo:    oldSettings.application.adminAccess,
             },
             telemetry:              !oldSettings.application.telemetry.enabled,
             updater:                !oldSettings.application.updater.enabled,
             debug:                  !oldSettings.application.debug,
-            pathManagementStrategy: getAltString(oldSettings, oldSettings.application.pathManagementStrategy, 'manual', 'rcfiles'),
+            pathManagementStrategy: getAlternateSetting(oldSettings,
+              'application.pathManagementStrategy',
+              PathManagementStrategy.Manual,
+              PathManagementStrategy.RcFiles),
           };
-
-          // if (os.platform() !== 'win32') {
-          //   // Otherwise we get a different error message.
-          //   body.kubernetes.memoryInGB = oldSettings.virtualMachine.memoryInGB + 1;
-          //   body.kubernetes.numberCPUs = oldSettings.virtualMachine.numberCPUs + 1;
-          // }
 
           switch (os.platform()) {
           case 'darwin':
@@ -805,7 +798,7 @@ test.describe('Command server', () => {
               telemetry:              { enabled: !oldSettings.application.telemetry.enabled },
               updater:                { enabled: !oldSettings.application.updater.enabled },
               debug:                  !oldSettings.application.debug,
-              pathManagementStrategy: getAltString(oldSettings, oldSettings.application.pathManagementStrategy, 'manual', 'rcfiles'),
+              pathManagementStrategy: getAlternateSetting(oldSettings, 'application.pathManagementStrategy', PathManagementStrategy.Manual, PathManagementStrategy.RcFiles),
             },
             // This field is in to force a restart
             kubernetes: { port: oldSettings.kubernetes.port + 1 },

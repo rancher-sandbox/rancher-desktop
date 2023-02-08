@@ -7,13 +7,13 @@ import path from 'path';
 import util from 'util';
 
 import { expect, _electron, ElectronApplication, Page } from '@playwright/test';
-import _ from 'lodash';
+import _, { GetFieldType } from 'lodash';
 
 import { defaultSettings, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
 /**
  * Create empty default settings to bypass gracefully
@@ -50,6 +50,13 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
       console.log(`Failed to process ${ settingsFullPath }: ${ err }`);
     }
   }
+}
+
+/**
+ * getAlternateSetting returns the setting that isn't the same as the existing setting.
+ */
+export function getAlternateSetting<K extends keyof RecursiveTypes<Settings>>(currentSettings: Settings, setting: K, altOne: GetFieldType<Settings, K>, altTwo: GetFieldType<Settings, K>) {
+  return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
 }
 
 /**
