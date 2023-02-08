@@ -688,6 +688,24 @@ test.describe('Command server', () => {
     });
 
     test.describe('set', () => {
+      const unsupportedPrefsByPlatform = {
+        win32: [
+          ['application.admin-access', true],
+          ['application.path-management-strategy', 'rcfiles'],
+          ['virtual-machine.memory-in-gb', 10],
+          ['virtual-machine.number-cpus', 10],
+          ['virtual-machine.experimental.socket-vmnet', true],
+        ],
+        darwin: [
+          ['virtual-machine.host-resolver', true],
+        ],
+        linux: [
+          ['virtual-machine.host-resolver', true],
+          ['virtual-machine.experimental.socket-vmnet', true],
+        ],
+      };
+      const unsupportedOptions = unsupportedPrefsByPlatform[os.platform() as 'win32'|'darwin'|'linux'];
+
       test('complains when no args are given', async() => {
         const { stdout, stderr, error } = await rdctl(['set']);
 
@@ -699,7 +717,7 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
-        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(30);
+        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(30 - unsupportedOptions.length);
       });
 
       test('complains when option value missing', async() => {
@@ -847,6 +865,16 @@ test.describe('Command server', () => {
 
           expect(result.stderr).toEqual('');
         });
+      });
+
+      test('complains about options not intended for current platform', async() => {
+        // See https://github.com/microsoft/playwright/issues/7036 for the explanation
+        // why I'm not doing `test.describe(... set up the array ... test.each(array)...
+
+        for (const [option, newValue] of unsupportedOptions) {
+          await expect(rdctl(['set', `--${ option }=${ newValue }`])).resolves
+            .toMatchObject({ stderr: expect.stringContaining(`Error: option --${ option } is not available on`) });
+        }
       });
     });
 
