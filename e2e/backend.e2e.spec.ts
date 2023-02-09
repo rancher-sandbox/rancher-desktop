@@ -104,7 +104,7 @@ test.describe.serial('KubernetesBackend', () => {
     }
 
     test('should detect changes', async() => {
-      const currentSettings = (await get('/v0/settings')) as Settings;
+      const currentSettings = (await get('/v1/settings')) as Settings;
 
       const newSettings: RecursivePartial<Settings> = {
         containerEngine: { name: getAlternateSetting(currentSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
