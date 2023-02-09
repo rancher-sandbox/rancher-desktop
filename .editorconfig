@@ -13,6 +13,9 @@ insert_final_newline = true
 quote_type = single
 trim_trailing_whitespace = true
 
+[*.go]
+indent_style = tab
+
 [*.{sh,bash,bats}]
 indent_size = 4
 # shfmt option
