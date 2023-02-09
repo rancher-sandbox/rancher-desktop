@@ -1,3 +1,4 @@
+import os from 'os';
 import path from 'path';
 
 import { test, expect, _electron } from '@playwright/test';
@@ -7,9 +8,9 @@ import { PreferencesPage } from '../e2e/pages/preferences';
 import { createDefaultSettings, reportAsset, teardown } from '../e2e/utils/TestUtils';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
-import { isWin } from '@pkg/utils/platform';
-
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+
+const isWin = os.platform() === 'win32';
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
