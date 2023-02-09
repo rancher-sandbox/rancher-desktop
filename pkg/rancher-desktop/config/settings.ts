@@ -12,6 +12,7 @@ import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
 
@@ -284,7 +285,7 @@ export function load(): Settings {
   try {
     settings ??= loadFromDisk();
   } catch (err: any) {
-    settings = defaultSettings;
+    settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
       _isFirstRun = true;
       if (os.platform() === 'darwin' || os.platform() === 'linux') {
@@ -297,6 +298,14 @@ export function load(): Settings {
     if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
       settings.application.updater.enabled = false;
     }
+
+    const appVersion = getProductionVersion();
+
+    // Auo-update doesn't work for CI or local builds, so don't enable it by default
+    if (appVersion.includes('-') || appVersion.includes('?')) {
+      settings.application.updater.enabled = false;
+    }
+
     save(settings);
   }
 

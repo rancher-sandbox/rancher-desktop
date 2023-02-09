@@ -2,7 +2,7 @@ import { app } from 'electron';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
-function getProductionVersion() {
+export function getProductionVersion() {
   try {
     return app.getVersion();
   } catch (err) {
