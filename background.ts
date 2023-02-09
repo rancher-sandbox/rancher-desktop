@@ -39,6 +39,7 @@ import { arrayCustomizer } from '@pkg/utils/filters';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { setupProtocolHandler, protocolRegistered } from '@pkg/utils/protocols';
+import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { getVersion } from '@pkg/utils/version';
@@ -1011,7 +1012,7 @@ async function runRdctlSetup(newSettings: settings.Settings): Promise<void> {
     return;
   }
 
-  const rdctlPath = path.join(paths.resources, os.platform(), 'bin', 'rdctl');
+  const rdctlPath = executable('rdctl');
   const args = ['setup', `--auto-start=${ newSettings.autoStart }`];
 
   await spawnFile(rdctlPath, args);
