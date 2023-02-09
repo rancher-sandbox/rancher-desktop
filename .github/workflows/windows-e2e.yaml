@@ -11,18 +11,16 @@ jobs:
 
   e2e-tests:
     timeout-minutes: 90
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: [self-hosted, Windows, X64, win11]
     steps:
       - run: wsl --unregister rancher-desktop
         continue-on-error: true
       - run: wsl --unregister rancher-desktop-data
         continue-on-error: true
-      - run: >
-          Remove-Item -Path "~/AppData/Local/rancher-desktop" -Recurse -Force -ErrorAction Ignore
-      - run: >
-          Remove-Item -Path "~/AppData/Roaming/rancher-desktop" -Recurse -Force -ErrorAction Ignore
+      - run: Remove-Item -Path "$HOME/AppData/Local/rancher-desktop" -Recurse -Force -ErrorAction Ignore
+      - run: Remove-Item -Path "$HOME/AppData/Roaming/rancher-desktop" -Recurse -Force -ErrorAction Ignore
       - name: Remove golang module cache
-        run: Remove-Item -Path ~/go/pkg/mod -Recurse -Force -ErrorAction Ignore
+        run: Remove-Item -Path "$HOME/go/pkg/mod" -Recurse -Force -ErrorAction Ignore
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
