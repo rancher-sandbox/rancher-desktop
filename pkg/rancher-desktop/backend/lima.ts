@@ -568,6 +568,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         { location: paths.logs, writable: true },
         { location: '~', writable: true },
         { location: '/tmp/rancher-desktop', writable: true },
+        ...(os.platform() === 'darwin') ? [
+          { location: '/Volumes', writable: true },
+          { location: '/var/folders', writable: true },
+        ] : [],
       ],
       ssh:          { localPort: await this.sshPort },
       hostResolver: {
