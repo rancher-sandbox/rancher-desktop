@@ -119,15 +119,10 @@ export function openMain() {
   if (!Shortcuts.isRegistered(window)) {
     Shortcuts.register(
       window,
-      [{
-        key:      ',',
-        meta:     true,
-        platform: 'darwin',
-      }, {
-        key:      ',',
-        control:  true,
-        platform: ['linux', 'win32'],
-      }],
+      {
+        ...CommandOrControl,
+        key: ',',
+      },
       () => openPreferences(),
       'open preferences',
     );

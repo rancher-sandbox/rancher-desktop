@@ -19,7 +19,7 @@ export interface Shortcut {
   shift?: boolean;
   control?: boolean;
   alt?: boolean;
-  key: string;
+  key: string | number;
 }
 
 interface ShortcutExt extends Shortcut {
@@ -33,6 +33,11 @@ function matchPlatform(shortcut: Shortcut): boolean {
 
   return true;
 }
+
+export const CommandOrControl = {
+  meta:    os.platform() === 'darwin' ? true : undefined,
+  control: os.platform() !== 'darwin' ? true : undefined,
+};
 
 class WindowShortcuts {
   private window: BrowserWindow;
