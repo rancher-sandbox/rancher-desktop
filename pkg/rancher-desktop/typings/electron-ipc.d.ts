@@ -132,8 +132,6 @@ export interface IpcRendererEvents {
   'images-namespaces': (namespaces: string[]) => void;
   // #endregion
 
-  // #endregion
-
   // #region dialog
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
@@ -143,5 +141,9 @@ export interface IpcRendererEvents {
 
   // #region api
   'api-credentials': (credentials: {user: string, password: string, port: number}) => void;
+  // #endregion
+
+  // #region tab navigation
+  'route': (route: { name?: string, path?: string }) => void;
   // #endregion
 }

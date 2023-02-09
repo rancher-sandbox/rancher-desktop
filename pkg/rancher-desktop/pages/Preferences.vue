@@ -46,8 +46,16 @@ export default Vue.extend({
       return preferencesNavItems.map(({ name }) => name);
     },
   },
+  beforeMount() {
+    ipcRenderer.on('route', async(event, { name }) => {
+      await this.commitNavItem(name as string);
+    });
+  },
   methods: {
     async navChanged(current: string) {
+      await this.commitNavItem(current);
+    },
+    async commitNavItem(current: string) {
       await this.$store.dispatch(
         'transientSettings/commitPreferences',
         {

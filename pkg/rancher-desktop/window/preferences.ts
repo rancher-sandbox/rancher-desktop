@@ -7,7 +7,7 @@ import { webRoot, createWindow } from '.';
 import { Help } from '@pkg/config/help';
 import { NavItemName } from '@pkg/config/transientSettings';
 import paths from '@pkg/utils/paths';
-import { Shortcuts } from '@pkg/utils/shortcuts';
+import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
 import { getVersion } from '@pkg/utils/version';
 
 interface NavItems {
@@ -75,6 +75,18 @@ export function openPreferences() {
       },
       'Close preferences dialog',
     );
+
+    preferencesNavItems.forEach(({ name }, index) => {
+      Shortcuts.register(
+        window,
+        {
+          ...CommandOrControl,
+          key: index + 1,
+        },
+        () => window.webContents.send('route', { name }),
+        `switch preferences tabs ${ name }`,
+      );
+    });
   }
 
   window.webContents.on('ipc-message', (_event, channel) => {

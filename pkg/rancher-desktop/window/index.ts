@@ -3,14 +3,13 @@ import path from 'path';
 
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
-import { openPreferences } from './preferences';
-
 import * as K8s from '@pkg/backend/k8s';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import { Shortcuts } from '@pkg/utils/shortcuts';
+import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
+import { openPreferences } from '@pkg/window/preferences';
 
 const console = Logging.background;
 
@@ -21,6 +20,14 @@ const console = Logging.background;
 export const windowMapping: Record<string, number> = {};
 
 export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
+
+export const mainRoutes = [
+  { route: '/General' },
+  { route: '/PortForwarding' },
+  { route: '/Images' },
+  { route: '/Troubleshooting' },
+  { route: '/Diagnostics' },
+];
 
 /**
  * Restore or focus a window if it is already open
@@ -126,6 +133,18 @@ export function openMain() {
       () => openPreferences(),
       'open preferences',
     );
+
+    mainRoutes.forEach(({ route }, index) => {
+      Shortcuts.register(
+        window,
+        {
+          ...CommandOrControl,
+          key: index + 1,
+        },
+        () => window.webContents.send('route', { path: route }),
+        `switch main tabs ${ route }`,
+      );
+    });
   }
 
   app.dock?.show();

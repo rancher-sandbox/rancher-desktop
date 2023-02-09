@@ -22,6 +22,7 @@ import Header from '@pkg/components/Header.vue';
 import Nav from '@pkg/components/Nav.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { mainRoutes } from '@pkg/window';
 
 export default {
   name:       'App',
@@ -54,13 +55,7 @@ export default {
 
   computed: {
     routes() {
-      return [
-        { route: '/General' },
-        { route: '/PortForwarding' },
-        { route: '/Images' },
-        { route: '/Troubleshooting' },
-        { route: '/Diagnostics', error: this.errorCount },
-      ];
+      return mainRoutes.map(route => route === '/Diagnostics' ? { ...route, error: this.errorCount } : route);
     },
     errorCount() {
       return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
@@ -72,6 +67,9 @@ export default {
   beforeMount() {
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
+    });
+    ipcRenderer.on('route', (event, { path }) => {
+      this.$router.push({ path });
     });
   },
 
