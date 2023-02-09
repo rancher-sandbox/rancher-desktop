@@ -87,6 +87,26 @@ export function openPreferences() {
         `switch preferences tabs ${ name }`,
       );
     });
+
+    Shortcuts.register(
+      window,
+      {
+        ...CommandOrControl,
+        key: ']',
+      },
+      () => window.webContents.send('route', { direction: 'forward' }),
+      'switch preferences tabs by cycle [forward]',
+    );
+
+    Shortcuts.register(
+      window,
+      {
+        ...CommandOrControl,
+        key: '[',
+      },
+      () => window.webContents.send('route', { direction: 'back' }),
+      'switch preferences tabs by cycle [back]',
+    );
   }
 
   window.webContents.on('ipc-message', (_event, channel) => {

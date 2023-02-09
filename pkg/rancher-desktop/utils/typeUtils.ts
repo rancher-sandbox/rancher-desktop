@@ -89,3 +89,5 @@ export type RecursiveTypes<T extends Record<string, any>> =
 export function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
+
+export type Direction = 'back' | 'forward';

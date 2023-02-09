@@ -57,6 +57,9 @@ export default {
     routes() {
       return mainRoutes.map(route => route === '/Diagnostics' ? { ...route, error: this.errorCount } : route);
     },
+    paths() {
+      return mainRoutes.map(r => r.route);
+    },
     errorCount() {
       return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
     },
@@ -68,8 +71,8 @@ export default {
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
     });
-    ipcRenderer.on('route', (event, { path }) => {
-      this.$router.push({ path });
+    ipcRenderer.on('route', (event, args) => {
+      this.goToRoute(args);
     });
   },
 
@@ -80,6 +83,24 @@ export default {
   methods: {
     openPreferences() {
       ipcRenderer.send('preferences-open');
+    },
+    goToRoute(args) {
+      const { path, direction } = args;
+
+      if (path) {
+        this.$router.push({ path });
+
+        return;
+      }
+
+      if (direction) {
+        const dir = (direction === 'forward' ? 1 : -1);
+        const idx = this.paths.indexOf(this.$router.currentRoute.path) + dir;
+
+        if (idx >= 0 && idx < this.paths.length) {
+          this.$router.push({ path: this.paths[idx] });
+        }
+      }
     },
   },
 };

@@ -145,6 +145,26 @@ export function openMain() {
         `switch main tabs ${ route }`,
       );
     });
+
+    Shortcuts.register(
+      window,
+      {
+        ...CommandOrControl,
+        key: ']',
+      },
+      () => window.webContents.send('route', { direction: 'forward' }),
+      'switch preferences tabs by cycle [forward]',
+    );
+
+    Shortcuts.register(
+      window,
+      {
+        ...CommandOrControl,
+        key: '[',
+      },
+      () => window.webContents.send('route', { direction: 'back' }),
+      'switch preferences tabs by cycle [back]',
+    );
   }
 
   app.dock?.show();
