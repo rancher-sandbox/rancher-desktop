@@ -577,13 +577,6 @@ test.describe('Command server', () => {
     });
   });
 
-  /**
-   * getAltString returns the setting that isn't the same as the existing setting.
-   */
-  const getAltString = (currentSettings: Settings, setting: string, altOne: string, altTwo: string) => {
-    return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
-  };
-
   test.describe('rdctl', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
