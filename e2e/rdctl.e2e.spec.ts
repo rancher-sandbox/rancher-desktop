@@ -688,7 +688,7 @@ test.describe('Command server', () => {
     });
 
     test.describe('set', () => {
-      const unsupportedPrefsByPlatform = {
+      const unsupportedPrefsByPlatform: {[x in NodeJS.Platform] ?: [string, any][]} = {
         win32: [
           ['application.admin-access', true],
           ['application.path-management-strategy', 'rcfiles'],
@@ -704,7 +704,7 @@ test.describe('Command server', () => {
           ['virtual-machine.experimental.socket-vmnet', true],
         ],
       };
-      const unsupportedOptions = unsupportedPrefsByPlatform[os.platform() as 'win32'|'darwin'|'linux'];
+      const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
 
       test('complains when no args are given', async() => {
         const { stdout, stderr, error } = await rdctl(['set']);
@@ -868,8 +868,8 @@ test.describe('Command server', () => {
       });
 
       test('complains about options not intended for current platform', async() => {
-        // See https://github.com/microsoft/playwright/issues/7036 for the explanation
-        // why I'm not doing `test.describe(... set up the array ... test.each(array)...
+        // playwright doesn't support test.each
+        // See https://github.com/microsoft/playwright/issues/7036 for the discussion
 
         for (const [option, newValue] of unsupportedOptions) {
           await expect(rdctl(['set', `--${ option }=${ newValue }`])).resolves
@@ -1376,7 +1376,7 @@ test.describe('Command server', () => {
         await navPage.progressBecomesReady();
         await expect(navPage.progressBar).toBeHidden();
       }
-      const output = await tool('nerdctl', 'info');
+      const output = await retry(() => tool('nerdctl', 'info'));
 
       expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });

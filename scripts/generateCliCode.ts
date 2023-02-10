@@ -22,7 +22,6 @@ limitations under the License.
 
 import { execFileSync } from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 
 import ejs from 'ejs';
@@ -272,7 +271,7 @@ class Generator {
     settingsTree: settingsTreeType): void {
     const platforms = preference['x-rd-platforms'] ?? [];
 
-    notAvailable ||= platforms.length > 0 && !platforms.includes(os.platform());
+    notAvailable ||= platforms.length > 0 && !platforms.includes(process.platform);
     switch (preference.type) {
     case 'object':
       return this.walkPropertyObject(propertyName, preference, notAvailable, settingsTree);
