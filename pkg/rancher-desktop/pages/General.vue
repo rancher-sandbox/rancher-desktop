@@ -107,7 +107,7 @@ export default {
       this.$data.settings = settings;
     },
     onUpdateEnabled(value) {
-      ipcRenderer.invoke('settings-write', { application: { telemetry: { updater: value } } });
+      ipcRenderer.invoke('settings-write', { application: { updater: { enabled: value } } });
     },
     onUpdateApply() {
       ipcRenderer.send('update-apply');
