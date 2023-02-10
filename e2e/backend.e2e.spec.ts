@@ -7,15 +7,14 @@ import _ from 'lodash';
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
+import { createDefaultSettings, getAlternateSetting, reportAsset, teardown } from './utils/TestUtils';
 
 import { Settings, ContainerEngine } from '@pkg/config/settings';
 import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial, RecursiveKeys, RecursiveTypes } from '@pkg/utils/typeUtils';
+import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
-import type { GetFieldType } from 'lodash';
 
 test.describe.serial('KubernetesBackend', () => {
   let electronApp: ElectronApplication;
@@ -106,29 +105,23 @@ test.describe.serial('KubernetesBackend', () => {
 
     test('should detect changes', async() => {
       const currentSettings = (await get('/v0/settings')) as Settings;
-      /**
-       * getAlt returns the setting that isn't the same as the existing setting.
-       */
-      const getAlt = <K extends keyof RecursiveTypes<Settings>>(setting: K, altOne: GetFieldType<Settings, K>, altTwo: GetFieldType<Settings, K>) => {
-        return _.get(currentSettings, setting) === altOne ? altTwo : altOne;
-      };
 
       const newSettings: RecursivePartial<Settings> = {
-        containerEngine: { name: getAlt('containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
+        containerEngine: { name: getAlternateSetting(currentSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
         kubernetes:      {
-          version: getAlt('kubernetes.version', '1.23.6', '1.23.5'),
-          port:    getAlt('kubernetes.port', 6443, 6444),
-          enabled: getAlt('kubernetes.enabled', true, false),
+          version: getAlternateSetting(currentSettings, 'kubernetes.version', '1.23.6', '1.23.5'),
+          port:    getAlternateSetting(currentSettings, 'kubernetes.port', 6443, 6444),
+          enabled: getAlternateSetting(currentSettings, 'kubernetes.enabled', true, false),
           options: {
-            traefik: getAlt('kubernetes.options.traefik', true, false),
-            flannel: getAlt('kubernetes.options.flannel', true, false),
+            traefik: getAlternateSetting(currentSettings, 'kubernetes.options.traefik', true, false),
+            flannel: getAlternateSetting(currentSettings, 'kubernetes.options.flannel', true, false),
           },
         },
       };
       /** Platform-specific changes to `newSettings`. */
       const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
-        win32:  { virtualMachine: { hostResolver: getAlt('virtualMachine.hostResolver', true, false) } },
-        darwin: { virtualMachine: { experimental: { socketVMNet: getAlt('virtualMachine.experimental.socketVMNet', true, false) } } },
+        win32:  { virtualMachine: { hostResolver: getAlternateSetting(currentSettings, 'virtualMachine.hostResolver', true, false) } },
+        darwin: { virtualMachine: { experimental: { socketVMNet: getAlternateSetting(currentSettings, 'virtualMachine.experimental.socketVMNet', true, false) } } },
       };
 
       _.merge(newSettings, platformSettings[process.platform] ?? {});
@@ -136,10 +129,10 @@ test.describe.serial('KubernetesBackend', () => {
         // Lima-specific changes to `newSettings`.
         _.merge(newSettings, {
           virtualMachine: {
-            numberCPUs: getAlt('virtualMachine.numberCPUs', 1, 2),
-            memoryInGB: getAlt('virtualMachine.memoryInGB', 3, 4),
+            numberCPUs: getAlternateSetting(currentSettings, 'virtualMachine.numberCPUs', 1, 2),
+            memoryInGB: getAlternateSetting(currentSettings, 'virtualMachine.memoryInGB', 3, 4),
           },
-          application: { adminAccess: getAlt('application.adminAccess', false, true) },
+          application: { adminAccess: getAlternateSetting(currentSettings, 'application.adminAccess', false, true) },
         });
       }
 

@@ -27,6 +27,8 @@ import path from 'path';
 import ejs from 'ejs';
 import yaml from 'yaml';
 
+import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
+
 interface commandFlagType {
   /**
    * The capitalized name of the final part of a dotted property name,
@@ -98,7 +100,7 @@ function capitalizeParts(s: string) {
 /**
  * Replace each sequence of capital letters after a lower-case one with a "-"
  * followed by its lower-case conversion. Different from lodash.kebabCase,
- * which assumes the last upper-case letter in a squence starts the next
+ * which assumes the last upper-case letter in a sequence starts the next
  * inner word-part, and would convert `numberCPUs` to `number-cp-us`
  */
 function kebabCase(s: string) {
@@ -112,7 +114,7 @@ function lastName(s: string): string {
 class Generator {
   constructor() {
     this.commandFlags = [];
-    this.settingsTree = {};
+    this.settingsTree = { version: { type: 'int' } };
   }
 
   commandFlags: Array<commandFlagType>;
@@ -152,6 +154,7 @@ class Generator {
       commandFlags:     this.commandFlags,
       linesForJSON:     linesForJSON.join('\n'),
       linesWithoutJSON: linesWithoutJSON.join('\n'),
+      settingsVersion:  CURRENT_SETTINGS_VERSION,
       kebabCase,
     };
     const renderedContent = await ejs.renderFile(templateFile, data, options);
@@ -228,9 +231,12 @@ class Generator {
     return usageParts.join(' ').trim();
   }
 
-  protected updateLeaf(propertyName: string, capitalizedName: string,
-    lcTypeName: goTypeName, flagType: goCmdFlagTypeName,
-    defaultValue: string, preference: yamlObject,
+  protected updateLeaf(propertyName: string,
+    capitalizedName: string,
+    lcTypeName: goTypeName,
+    flagType: goCmdFlagTypeName,
+    defaultValue: string,
+    preference: yamlObject,
     settingsTree: settingsTreeType) {
     const enums = this.convertStringsToGolang(preference.enum);
     const usageNote = preference['x-rd-usage'] ?? '';
