@@ -1,6 +1,8 @@
 import merge from 'lodash/merge';
+import semver from 'semver';
 
 import { BackendSettings } from '@pkg/backend/backend';
+import { ContainerEngine } from '@pkg/config/settings';
 
 export default class BackendHelper {
   /**
@@ -105,5 +107,13 @@ export default class BackendHelper {
     }
 
     return patterns;
+  }
+
+  /**
+   * k3s versions 1.24.1 to 1.24.3 don't support the --docker option and need to talk to
+   * a cri_dockerd endpoint when using the moby engine.
+   */
+  static requiresCRIDockerd(engineName: string, kubeVersion: string | semver.SemVer): boolean {
+    return engineName === ContainerEngine.MOBY && semver.gte(kubeVersion, '1.24.1') && semver.lte(kubeVersion, '1.24.3');
   }
 }

@@ -1218,6 +1218,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               'export IPTABLES_MODE': 'legacy',
               ENGINE:                 config.containerEngine.name,
               ADDITIONAL_ARGS:        config.kubernetes.options.traefik ? '' : '--disable traefik',
+              USE_CRI_DOCKERD:        BackendHelper.requiresCRIDockerd(config.containerEngine.name, config.kubernetes.version).toString(),
             };
 
             if (!config.kubernetes.options.flannel) {

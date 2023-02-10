@@ -23,9 +23,10 @@ fi
 
 # ENGINE configuration variable is either "moby" or "containerd"
 ENGINE="${ENGINE:-containerd}"
+USE_CRI_DOCKERD="${USE_CRI_DOCKERD:-false}"
 
 depend() {
-  if [ "${ENGINE}" == "moby" ]; then
+  if [ "${USE_CRI_DOCKERD}" == "true" ]; then
       need cri-dockerd
   fi
   after network-online
@@ -60,7 +61,11 @@ name=k3s
 command=/usr/local/bin/k3s
 command_args="server --https-listen-port ${PORT} ${ADDITIONAL_ARGS:-}"
 if [ "${ENGINE}" == "moby" ]; then
-  command_args="${command_args} --container-runtime-endpoint /run/cri-dockerd.sock"
+  if [ "${USE_CRI_DOCKERD}" == "true" ]; then
+    command_args="${command_args} --container-runtime-endpoint /run/cri-dockerd.sock"
+  else
+    command_args="${command_args} --docker"
+  fi
 elif [ "${ENGINE}" == "containerd" ]; then
   command_args="${command_args} --container-runtime-endpoint /run/k3s/containerd/containerd.sock"
 fi
