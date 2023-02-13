@@ -1,8 +1,8 @@
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
 import Help from '@pkg/components/Help.vue';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name:       'preferences-help',

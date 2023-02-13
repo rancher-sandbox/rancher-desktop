@@ -79,8 +79,7 @@ import { Checkbox } from '@rancher/components';
 
 import TroubleshootingLineItem from '@pkg/components/TroubleshootingLineItem.vue';
 import { defaultSettings, runInDebugMode } from '@pkg/config/settings';
-
-const { ipcRenderer } = require('electron');
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'Troubleshooting',

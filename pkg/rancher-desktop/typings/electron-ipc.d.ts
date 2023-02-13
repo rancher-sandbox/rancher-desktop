@@ -91,7 +91,8 @@ export interface IpcMainInvokeEvents {
   'service-fetch': (namespace?: string) => import('@pkg/backend/k8s').ServiceEntry[];
   'service-forward': (service: ServiceEntry, state: boolean) => void;
   'get-app-version': () => string;
-  'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
+  'show-message-box': (options: Electron.MessageBoxOptions) => Electron.MessageBoxReturnValue;
+  'show-message-box-rd': (options: Electron.MessageBoxOptions, modal?: boolean) => any;
   'api-get-credentials': () => { user: string, password: string, port: number, pid: number };
   'k8s-progress': () => Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>;
 
