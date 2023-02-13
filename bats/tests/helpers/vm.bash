@@ -91,12 +91,14 @@ start_container_engine() {
         set - --path-management-strategy rcfiles "$@"
     fi
 
+    # Detach `rdctl start` because on Windows the process may not exit until
+    # Rancher Desktop itself quits.
     rdctl start \
           --application.updater.enabled=false \
           --container-engine="$RD_CONTAINER_ENGINE" \
           --kubernetes-enabled=false \
           "$@" \
-          3>&-
+          &
 }
 
 start_kubernetes() {
