@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -134,19 +134,19 @@ func getMacOSRDPath(rdctlPath string) string {
 		// we're at .../Applications/R D.app (could have a different name)/Contents/Resources/resources/darwin/bin
 		// and want to move to the "R D.app" part
 		RDAppParentPath := utils.MoveToParent(rdctlPath, 6)
-		if utils.CheckExistence(path.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 0o111) != "" {
+		if utils.CheckExistence(filepath.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 0o111) != "" {
 			return RDAppParentPath
 		}
 	}
 	// This fallback is mostly for running `npm run dev` and using the installed app because there is no app
 	// that rdctl would launch directly in dev mode.
-	return utils.CheckExistence(path.Join("/Applications", "Rancher Desktop.app"), 0)
+	return utils.CheckExistence(filepath.Join("/Applications", "Rancher Desktop.app"), 0)
 }
 
 func getLinuxRDPath(rdctlPath string) string {
 	if rdctlPath != "" {
 		normalParentPath := utils.MoveToParent(rdctlPath, 5)
-		candidatePath := utils.CheckExistence(path.Join(normalParentPath, "rancher-desktop"), 0o111)
+		candidatePath := utils.CheckExistence(filepath.Join(normalParentPath, "rancher-desktop"), 0o111)
 		if candidatePath != "" {
 			return candidatePath
 		}

@@ -3,7 +3,7 @@ package utils
 import (
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
@@ -11,9 +11,9 @@ import (
 // Get the parent (or grandparent, or great-grandparent...) directory of fullPath.
 // numberTimes is the number of steps to ascend in the directory hierarchy.
 func MoveToParent(fullPath string, numberTimes int) string {
-	fullPath = path.Clean(fullPath)
+	fullPath = filepath.Clean(fullPath)
 	for ; numberTimes > 0; numberTimes-- {
-		fullPath = path.Dir(fullPath)
+		fullPath = filepath.Dir(fullPath)
 	}
 	return fullPath
 }
@@ -41,7 +41,7 @@ func CheckExistence(candidatePath string, modeBits fs.FileMode) string {
 func GetWindowsRDPath(rdctlPath string) string {
 	if rdctlPath != "" {
 		normalParentPath := MoveToParent(rdctlPath, 5)
-		candidatePath := CheckExistence(path.Join(normalParentPath, "Rancher Desktop.exe"), 0)
+		candidatePath := CheckExistence(filepath.Join(normalParentPath, "Rancher Desktop.exe"), 0)
 		if candidatePath != "" {
 			return candidatePath
 		}
@@ -64,11 +64,11 @@ func GetWindowsRDPath(rdctlPath string) string {
 	// Add these two paths if the above two fail to find where the program was installed
 	dataPaths = append(
 		dataPaths,
-		path.Join(homedir, "AppData", "Local"),
-		path.Join(homedir, "AppData", "Roaming"),
+		filepath.Join(homedir, "AppData", "Local"),
+		filepath.Join(homedir, "AppData", "Roaming"),
 	)
 	for _, dataDir := range dataPaths {
-		candidatePath := CheckExistence(path.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
+		candidatePath := CheckExistence(filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
 		if candidatePath != "" {
 			return candidatePath
 		}
