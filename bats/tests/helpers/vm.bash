@@ -63,10 +63,10 @@ EOF
   "application": {
     "adminAccess":            false,
     "pathManagementStrategy": "$path_management",
-    "updater":                { "enabled": false },
+    "updater":                { "enabled": false }
   },
   "virtualMachine": {
-    "memoryInGB": 6,
+    "memoryInGB": 6
   },
   "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
