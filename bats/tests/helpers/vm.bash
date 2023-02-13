@@ -32,14 +32,9 @@ factory_reset() {
     fi
 
     if is_unix; then
-        mkdir -p "$LIMA_HOME/_config"
         override="$LIMA_HOME/_config/override.yaml"
-        if [ ! -f "$override" ]; then
-            touch "$override"
-            if [ -f "${RD_OVERRIDE:-/no such file}" ]; then
-                cp "$RD_OVERRIDE" "$override"
-            fi
-        fi
+        mkdir -p "$(dirname "$override")"
+        touch "$override"
 
         # hack for tests/registry/creds.bats because we can't configure additional
         # hosts via settings.yaml
