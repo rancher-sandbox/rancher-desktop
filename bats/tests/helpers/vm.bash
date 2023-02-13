@@ -89,12 +89,14 @@ start_container_engine() {
     if is_windows; then
         set - --path "$(wslpath -w "$PATH_EXECUTABLE")" "$@"
     fi
+    if is_macos; then
+        set - --application.admin-access=false "$@"
+    fi
     if is_unix; then
         set - --path-management-strategy rcfiles "$@"
     fi
 
     rdctl start \
-          --kubernetes.admin-access=false \
           --application.updater.enabled=false \
           --container-engine="$RD_CONTAINER_ENGINE" \
           --kubernetes-enabled=false \
