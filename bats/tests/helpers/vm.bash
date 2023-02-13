@@ -23,6 +23,14 @@ wait_for_shutdown() {
 factory_reset() {
     rdctl factory-reset
 
+    if is_windows; then
+        run sudo ip link delete docker0
+        run sudo ip link delete nerdctl0
+
+        sudo iptables -F
+        sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
+    fi
+
     if is_unix; then
         mkdir -p "$LIMA_HOME/_config"
         override="$LIMA_HOME/_config/override.yaml"
@@ -74,14 +82,6 @@ EOF
   }
 }
 EOF
-}
-
-factory_reset_windows() {
-    run sudo ip link delete docker0
-    run sudo ip link delete nerdctl0
-
-    sudo iptables -F
-    sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
 }
 
 start_container_engine() {
