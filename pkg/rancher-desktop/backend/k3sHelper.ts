@@ -16,8 +16,8 @@ import yaml from 'yaml';
 
 import { Architecture, VMExecutor } from './backend';
 
-import { KubeClient } from '@pkg/backend/client';
 import * as K8s from '@pkg/backend/k8s';
+import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
 import { checkConnectivity } from '@pkg/main/networking';
 import { isUnixError } from '@pkg/typings/unix.interface';

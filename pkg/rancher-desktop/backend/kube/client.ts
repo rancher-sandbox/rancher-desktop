@@ -7,13 +7,10 @@ import util from 'util';
 
 import * as k8s from '@kubernetes/client-node';
 
-import Logging from '../utils/logging';
+import Logging from '@pkg/utils/logging';
+import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.k8s;
-
-function defined<T>(input: T | undefined | null): input is T {
-  return typeof input !== 'undefined' && input !== null;
-}
 
 interface clientError {
   error: string;
