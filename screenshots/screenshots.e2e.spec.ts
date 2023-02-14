@@ -68,7 +68,7 @@ test.describe.serial('Main App Test', () => {
 
     // show diagnostics badge
     await expect(diagnosticsPage.diagnostics).toBeVisible();
-    diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
+    await diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
     await page.waitForTimeout(200);
 
     await screenshot.take('Diagnostics');
@@ -113,6 +113,6 @@ test.describe.serial('Main App Test', () => {
       await screenshot.take('wsl');
     }
 
-    preferencesPage.close({ runBeforeUnload: true });
+    await preferencesPage.close({ runBeforeUnload: true });
   });
 });

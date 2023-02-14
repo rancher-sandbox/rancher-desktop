@@ -251,6 +251,7 @@ export abstract class ImageProcessor extends EventEmitter {
    * @param child
    * @param subcommandName - used for error messages only
    * @param sendNotifications
+   * @param args - used to support running `trivy` with this method.
    */
   async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean, args?: string[]): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
