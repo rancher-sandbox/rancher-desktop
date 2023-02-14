@@ -12,8 +12,8 @@ process.env.MOCK_FOR_SCREENSHOTS = 'true';
 const config: Config<PlaywrightTestOptions> = {
   testDir,
   outputDir,
-  timeout:       300_000 * timeScale,
-  globalTimeout: 900_000 * timeScale,
+  timeout:       5 * 60 * 1000 * timeScale,
+  globalTimeout: 30 * 60 * 1000 * timeScale,
   workers:       1,
   reporter:      'list',
   use:           { colorScheme },

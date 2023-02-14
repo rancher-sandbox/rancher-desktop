@@ -989,7 +989,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   ): Promise<[string, string]> {
     const [needToUpdate, errors] = this.settingsValidator.validateTransientSettings(TransientSettings.value, newTransientSettings);
 
-    return Promise.resolve((() => {
+    return Promise.resolve(((): [string, string] => {
       if (errors.length > 0) {
         return ['', `errors in attempt to update Transient Settings:\n${ errors.join('\n') }`];
       }
