@@ -30,9 +30,9 @@ interface CommitArgs extends ServerState {
   payload?: RecursivePartial<Settings>;
 }
 
-const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
+const uri = (port: number) => `http://localhost:${ port }/v1/settings`;
 
-const proposedSettings = (port: number) => `http://localhost:${ port }/v0/propose_settings`;
+const proposedSettings = (port: number) => `http://localhost:${ port }/v1/propose_settings`;
 
 export const state: () => PreferencesState = () => (
   {

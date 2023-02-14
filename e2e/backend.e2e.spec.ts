@@ -104,7 +104,7 @@ test.describe.serial('KubernetesBackend', () => {
     }
 
     test('should detect changes', async() => {
-      const currentSettings = (await get('/v0/settings')) as Settings;
+      const currentSettings = (await get('/v1/settings')) as Settings;
 
       const newSettings: RecursivePartial<Settings> = {
         containerEngine: { name: getAlternateSetting(currentSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
@@ -178,7 +178,7 @@ test.describe.serial('KubernetesBackend', () => {
         expected[key] = entry;
       }
 
-      await expect(put('/v0/propose_settings', newSettings)).resolves.toEqual(expected);
+      await expect(put('/v1/propose_settings', newSettings)).resolves.toEqual(expected);
     });
 
     test('should handle WSL integrations', async() => {
@@ -193,10 +193,10 @@ test.describe.serial('KubernetesBackend', () => {
         },
       };
 
-      await expect(put('/v0/propose_settings', newSettings)).resolves.toMatchObject({
+      await expect(put('/v1/propose_settings', newSettings)).resolves.toMatchObject({
         'WSL.integrations': {
-          current: {},
-          desired: newSettings.WSL?.integrations,
+          desired:  newSettings.WSL?.integrations,
+          severity: 'restart',
         },
       });
     });
