@@ -23,15 +23,18 @@ wait_for_shutdown() {
 factory_reset() {
     rdctl factory-reset
 
+    if is_windows; then
+        run sudo ip link delete docker0
+        run sudo ip link delete nerdctl0
+
+        sudo iptables -F
+        sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
+    fi
+
     if is_unix; then
-        mkdir -p "$LIMA_HOME/_config"
         override="$LIMA_HOME/_config/override.yaml"
-        if [ ! -f "$override" ]; then
-            touch "$override"
-            if [ -f "${RD_OVERRIDE:-/no such file}" ]; then
-                cp "$RD_OVERRIDE" "$override"
-            fi
-        fi
+        mkdir -p "$(dirname "$override")"
+        touch "$override"
 
         # hack for tests/registry/creds.bats because we can't configure additional
         # hosts via settings.yaml
@@ -60,10 +63,10 @@ EOF
   "application": {
     "adminAccess":            false,
     "pathManagementStrategy": "$path_management",
-    "updater":                { "enabled": false },
+    "updater":                { "enabled": false }
   },
   "virtualMachine": {
-    "memoryInGB": 6,
+    "memoryInGB": 6
   },
   "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
@@ -76,30 +79,26 @@ EOF
 EOF
 }
 
-factory_reset_windows() {
-    run sudo ip link delete docker0
-    run sudo ip link delete nerdctl0
-
-    sudo iptables -F
-    sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
-}
-
 start_container_engine() {
     # TODO why is --path option required for Windows
     if is_windows; then
         set - --path "$(wslpath -w "$PATH_EXECUTABLE")" "$@"
     fi
+    if is_macos; then
+        set - --application.admin-access=false "$@"
+    fi
     if is_unix; then
         set - --path-management-strategy rcfiles "$@"
     fi
 
+    # Detach `rdctl start` because on Windows the process may not exit until
+    # Rancher Desktop itself quits.
     rdctl start \
-          --kubernetes.admin-access=false \
           --application.updater.enabled=false \
           --container-engine="$RD_CONTAINER_ENGINE" \
           --kubernetes-enabled=false \
           "$@" \
-          3>&-
+          &
 }
 
 start_kubernetes() {
