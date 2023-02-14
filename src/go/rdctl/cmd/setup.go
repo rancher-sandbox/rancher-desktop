@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +19,7 @@ var setupCmd = &cobra.Command{
 		if cmd.Flags().Changed("auto-start") {
 			return autostart.EnsureAutostart(setupSettings.AutoStart)
 		}
-		return nil
+		return errors.New("no changes were specified")
 	},
 }
 
