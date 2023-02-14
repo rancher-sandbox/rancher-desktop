@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 
-import type { Page, PageScreenshotOptions } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 interface ScreenshotsOptions {
   directory?: string;
