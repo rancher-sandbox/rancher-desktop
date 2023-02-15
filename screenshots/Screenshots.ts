@@ -61,32 +61,33 @@ export class Screenshots {
       path:     this.buildPath(title),
     };
 
-    await this.page.screenshot(options);
+    if (!this.isOsCommand) {
+      await this.page.screenshot(options);
+      return;
+    }
 
-    if (this.isOsCommand) {
-      const command = this.osCommand(options.path);
+    const command = this.osCommand(options.path);
 
-      try {
-        childProcess.execSync(command);
+    try {
+      childProcess.execSync(command);
 
-        if (os.platform() === 'win32') {
-          // sleep to allow ShareX to write screenshot
-          await (new Promise((resolve) => {
-            setTimeout(resolve, this.sleepDuration);
-          }));
+      if (os.platform() === 'win32') {
+        // sleep to allow ShareX to write screenshot
+        await (new Promise((resolve) => {
+          setTimeout(resolve, this.sleepDuration);
+        }));
 
-          const screenshotsPath = path.resolve(process.cwd(), 'resources', 'ShareX', 'ShareX', 'Screenshots', `${ dayjs().format('YYYY-MM') }`);
-          const screenshots = fs.readdirSync(screenshotsPath);
+        const screenshotsPath = path.resolve(process.cwd(), 'resources', 'ShareX', 'ShareX', 'Screenshots', `${ dayjs().format('YYYY-MM') }`);
+        const screenshots = fs.readdirSync(screenshotsPath);
 
-          fs.renameSync(
-            path.resolve(screenshotsPath, screenshots?.[0]),
-            this.buildPath(title),
-          );
-        }
-      } catch (e) {
-        console.error(`Error, command failed: ${ command }`, { error: e });
-        process.exit(1);
+        fs.renameSync(
+          path.resolve(screenshotsPath, screenshots?.[0]),
+          this.buildPath(title),
+        );
       }
+    } catch (e) {
+      console.error(`Error, command failed: ${ command }`, { error: e });
+      process.exit(1);
     }
   }
 }
