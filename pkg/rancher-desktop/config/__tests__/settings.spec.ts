@@ -34,10 +34,10 @@ describe('updateFromCommandLine', () => {
         memoryInGB:   4,
         numberCPUs:   2,
         hostResolver: true,
-        experimental: { socketVMNet: true },
       },
-      WSL:        { integrations: {} },
-      kubernetes: {
+      experimental: { virtualMachine: { socketVMNet: true } },
+      WSL:          { integrations: {} },
+      kubernetes:   {
         version: '1.23.5',
         port:    6443,
         enabled: true,

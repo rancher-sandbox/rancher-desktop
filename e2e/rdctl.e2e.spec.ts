@@ -694,14 +694,14 @@ test.describe('Command server', () => {
           ['application.path-management-strategy', 'rcfiles'],
           ['virtual-machine.memory-in-gb', 10],
           ['virtual-machine.number-cpus', 10],
-          ['virtual-machine.experimental.socket-vmnet', true],
+          ['experimental.virtual-machine.socket-vmnet', true],
         ],
         darwin: [
           ['virtual-machine.host-resolver', true],
         ],
         linux: [
           ['virtual-machine.host-resolver', true],
-          ['virtual-machine.experimental.socket-vmnet', true],
+          ['experimental.virtual-machine.socket-vmnet', true],
         ],
       };
       const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
@@ -805,7 +805,7 @@ test.describe('Command server', () => {
           switch (os.platform()) {
           case 'darwin':
             body.kubernetes.experimental ??= {};
-            body.kubernetes.experimental.socketVMNet = !oldSettings.virtualMachine.experimental.socketVMNet;
+            body.kubernetes.experimental.socketVMNet = !oldSettings.experimental.virtualMachine.socketVMNet;
             break;
           case 'win32':
             body.kubernetes.WSLIntegrations ??= {};
