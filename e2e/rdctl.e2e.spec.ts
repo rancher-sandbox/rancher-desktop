@@ -834,7 +834,7 @@ test.describe('Command server', () => {
 
         test('accepts new settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
-          const body: any = {
+          const body: RecursivePartial<Settings> = {
             ...(os.platform() === 'win32' ? {} : {
               virtualMachine: {
                 memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
@@ -853,7 +853,7 @@ test.describe('Command server', () => {
             kubernetes: { port: oldSettings.kubernetes.port + 1 },
           };
 
-          if (process.platform !== 'win32') {
+          if (process.platform !== 'win32' && body.application !== undefined) {
             body.application.pathManagementStrategy = getAlternateSetting(oldSettings,
               'application.pathManagementStrategy',
               PathManagementStrategy.Manual,
