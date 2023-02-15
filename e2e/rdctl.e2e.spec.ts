@@ -793,19 +793,25 @@ test.describe('Command server', () => {
               containerEngine: getAlternateSetting(oldSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY),
               suppressSudo:    oldSettings.application.adminAccess,
             },
-            telemetry:              !oldSettings.application.telemetry.enabled,
-            updater:                !oldSettings.application.updater.enabled,
-            debug:                  !oldSettings.application.debug,
-            pathManagementStrategy: getAlternateSetting(oldSettings,
+            telemetry: !oldSettings.application.telemetry.enabled,
+            updater:   !oldSettings.application.updater.enabled,
+            debug:     !oldSettings.application.debug,
+          };
+          const addPathManagementStrategy = (oldSettings: Settings, body: any) => {
+            body.pathManagementStrategy = getAlternateSetting(oldSettings,
               'application.pathManagementStrategy',
               PathManagementStrategy.Manual,
-              PathManagementStrategy.RcFiles),
+              PathManagementStrategy.RcFiles);
           };
 
           switch (os.platform()) {
           case 'darwin':
             body.kubernetes.experimental ??= {};
             body.kubernetes.experimental.socketVMNet = !oldSettings.experimental.virtualMachine.socketVMNet;
+            addPathManagementStrategy(oldSettings, body);
+            break;
+          case 'linux':
+            addPathManagementStrategy(oldSettings, body);
             break;
           case 'win32':
             body.kubernetes.WSLIntegrations ??= {};
@@ -828,7 +834,7 @@ test.describe('Command server', () => {
 
         test('accepts new settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
-          const body = {
+          const body: any = {
             ...(os.platform() === 'win32' ? {} : {
               virtualMachine: {
                 memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
@@ -839,14 +845,20 @@ test.describe('Command server', () => {
             application: {
               // XXX: Can't change adminAccess until we can process the sudo-request dialog (and decline it)
               // adminAccess: !oldSettings.application.adminAccess,
-              telemetry:              { enabled: !oldSettings.application.telemetry.enabled },
-              updater:                { enabled: !oldSettings.application.updater.enabled },
-              debug:                  !oldSettings.application.debug,
-              pathManagementStrategy: getAlternateSetting(oldSettings, 'application.pathManagementStrategy', PathManagementStrategy.Manual, PathManagementStrategy.RcFiles),
+              telemetry: { enabled: !oldSettings.application.telemetry.enabled },
+              updater:   { enabled: !oldSettings.application.updater.enabled },
+              debug:     !oldSettings.application.debug,
             },
             // This field is in to force a restart
             kubernetes: { port: oldSettings.kubernetes.port + 1 },
           };
+
+          if (process.platform !== 'win32') {
+            body.application.pathManagementStrategy = getAlternateSetting(oldSettings,
+              'application.pathManagementStrategy',
+              PathManagementStrategy.Manual,
+              PathManagementStrategy.RcFiles);
+          }
           const { stdout, stderr, error } = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(body)]);
 
           expect({
