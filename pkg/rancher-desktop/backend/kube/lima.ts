@@ -9,6 +9,7 @@ import semver from 'semver';
 import yaml from 'yaml';
 
 import { Architecture, BackendSettings, RestartReasons } from '../backend';
+import BackendHelper from '../backendHelper';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action } from '../lima';
 
@@ -344,6 +345,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       ENGINE:          cfg.containerEngine.name ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
+      USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, cfg.kubernetes.version).toString(),
     };
 
     if (allowSudo && os.platform() === 'darwin') {
