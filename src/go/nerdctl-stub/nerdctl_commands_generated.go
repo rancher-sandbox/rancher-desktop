@@ -136,7 +136,6 @@ var commands = map[string]commandDefinition{
 			"--cache-to":      ignoredArgHandler,
 			"--file":          ignoredArgHandler,
 			"--iidfile":       ignoredArgHandler,
-			"--ipfs":          nil,
 			"--label":         ignoredArgHandler,
 			"--no-cache":      nil,
 			"--output":        ignoredArgHandler,
@@ -158,10 +157,39 @@ var commands = map[string]commandDefinition{
 	"builder": {
 		commandPath: "builder",
 		subcommands: map[string]struct{}{
+			"build": {},
 			"debug": {},
 			"prune": {},
 		},
 		options: map[string]argHandler{},
+	},
+
+	"builder build": {
+		commandPath: "builder build",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--build-arg":     ignoredArgHandler,
+			"--buildkit-host": ignoredArgHandler,
+			"--cache-from":    ignoredArgHandler,
+			"--cache-to":      ignoredArgHandler,
+			"--file":          ignoredArgHandler,
+			"--iidfile":       ignoredArgHandler,
+			"--label":         ignoredArgHandler,
+			"--no-cache":      nil,
+			"--output":        ignoredArgHandler,
+			"--platform":      ignoredArgHandler,
+			"--progress":      ignoredArgHandler,
+			"--quiet":         nil,
+			"--rm":            nil,
+			"--secret":        ignoredArgHandler,
+			"--ssh":           ignoredArgHandler,
+			"--tag":           ignoredArgHandler,
+			"--target":        ignoredArgHandler,
+			"-f":              ignoredArgHandler,
+			"-o":              ignoredArgHandler,
+			"-q":              nil,
+			"-t":              ignoredArgHandler,
+		},
 	},
 
 	"builder debug": {
@@ -249,13 +277,24 @@ var commands = map[string]commandDefinition{
 		subcommands: map[string]struct{}{
 			"build":   {},
 			"config":  {},
+			"create":  {},
 			"down":    {},
+			"exec":    {},
+			"images":  {},
 			"kill":    {},
 			"logs":    {},
+			"pause":   {},
+			"port":    {},
 			"ps":      {},
 			"pull":    {},
 			"push":    {},
+			"restart": {},
+			"rm":      {},
 			"run":     {},
+			"start":   {},
+			"stop":    {},
+			"top":     {},
+			"unpause": {},
 			"up":      {},
 			"version": {},
 		},
@@ -263,6 +302,7 @@ var commands = map[string]commandDefinition{
 			"--env-file":          ignoredArgHandler,
 			"--f":                 ignoredArgHandler,
 			"--file":              ignoredArgHandler,
+			"--ipfs-address":      ignoredArgHandler,
 			"--project-directory": ignoredArgHandler,
 			"--project-name":      ignoredArgHandler,
 			"-f":                  ignoredArgHandler,
@@ -275,7 +315,6 @@ var commands = map[string]commandDefinition{
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
 			"--build-arg": ignoredArgHandler,
-			"--ipfs":      nil,
 			"--no-cache":  nil,
 			"--progress":  ignoredArgHandler,
 		},
@@ -293,12 +332,55 @@ var commands = map[string]commandDefinition{
 		},
 	},
 
+	"compose create": {
+		commandPath: "compose create",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--build":          nil,
+			"--force-recreate": nil,
+			"--no-build":       nil,
+			"--no-recreate":    nil,
+			"--pull":           ignoredArgHandler,
+		},
+	},
+
 	"compose down": {
 		commandPath: "compose down",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--volumes": ignoredArgHandler,
-			"-v":        ignoredArgHandler,
+			"--remove-orphans": nil,
+			"--volumes":        ignoredArgHandler,
+			"-v":               ignoredArgHandler,
+		},
+	},
+
+	"compose exec": {
+		commandPath: "compose exec",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--detach":      nil,
+			"--env":         ignoredArgHandler,
+			"--index":       ignoredArgHandler,
+			"--interactive": nil,
+			"--privileged":  nil,
+			"--tty":         nil,
+			"--user":        ignoredArgHandler,
+			"--workdir":     ignoredArgHandler,
+			"-d":            nil,
+			"-e":            ignoredArgHandler,
+			"-i":            nil,
+			"-t":            nil,
+			"-u":            ignoredArgHandler,
+			"-w":            ignoredArgHandler,
+		},
+	},
+
+	"compose images": {
+		commandPath: "compose images",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--quiet": nil,
+			"-q":      nil,
 		},
 	},
 
@@ -325,10 +407,27 @@ var commands = map[string]commandDefinition{
 		},
 	},
 
+	"compose pause": {
+		commandPath: "compose pause",
+		subcommands: map[string]struct{}{},
+		options:     map[string]argHandler{},
+	},
+
+	"compose port": {
+		commandPath: "compose port",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--index":    ignoredArgHandler,
+			"--protocol": ignoredArgHandler,
+		},
+	},
+
 	"compose ps": {
 		commandPath: "compose ps",
 		subcommands: map[string]struct{}{},
-		options:     map[string]argHandler{},
+		options: map[string]argHandler{
+			"--format": ignoredArgHandler,
+		},
 	},
 
 	"compose pull": {
@@ -346,6 +445,28 @@ var commands = map[string]commandDefinition{
 		options:     map[string]argHandler{},
 	},
 
+	"compose restart": {
+		commandPath: "compose restart",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--timeout": ignoredArgHandler,
+			"-t":        ignoredArgHandler,
+		},
+	},
+
+	"compose rm": {
+		commandPath: "compose rm",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--force":   nil,
+			"--stop":    nil,
+			"--volumes": nil,
+			"-f":        nil,
+			"-s":        nil,
+			"-v":        nil,
+		},
+	},
+
 	"compose run": {
 		commandPath: "compose run",
 		subcommands: map[string]struct{}{},
@@ -355,7 +476,6 @@ var commands = map[string]commandDefinition{
 			"--entrypoint":     ignoredArgHandler,
 			"--env":            ignoredArgHandler,
 			"--interactive":    nil,
-			"--ipfs":           nil,
 			"--label":          ignoredArgHandler,
 			"--name":           ignoredArgHandler,
 			"--no-build":       nil,
@@ -378,6 +498,33 @@ var commands = map[string]commandDefinition{
 			"-v":               ignoredArgHandler,
 			"-w":               ignoredArgHandler,
 		},
+	},
+
+	"compose start": {
+		commandPath: "compose start",
+		subcommands: map[string]struct{}{},
+		options:     map[string]argHandler{},
+	},
+
+	"compose stop": {
+		commandPath: "compose stop",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--timeout": ignoredArgHandler,
+			"-t":        ignoredArgHandler,
+		},
+	},
+
+	"compose top": {
+		commandPath: "compose top",
+		subcommands: map[string]struct{}{},
+		options:     map[string]argHandler{},
+	},
+
+	"compose unpause": {
+		commandPath: "compose unpause",
+		subcommands: map[string]struct{}{},
+		options:     map[string]argHandler{},
 	},
 
 	"compose up": {
@@ -467,6 +614,7 @@ var commands = map[string]commandDefinition{
 			"--cap-add":            ignoredArgHandler,
 			"--cap-drop":           ignoredArgHandler,
 			"--cgroup-conf":        ignoredArgHandler,
+			"--cgroup-parent":      ignoredArgHandler,
 			"--cgroupns":           ignoredArgHandler,
 			"--cidfile":            ignoredArgHandler,
 			"--cosign-key":         ignoredArgHandler,
@@ -492,6 +640,8 @@ var commands = map[string]commandDefinition{
 			"--interactive":        nil,
 			"--ip":                 ignoredArgHandler,
 			"--ipc":                ignoredArgHandler,
+			"--ipfs-address":       ignoredArgHandler,
+			"--isolation":          ignoredArgHandler,
 			"--kernel-memory":      ignoredArgHandler,
 			"--label":              ignoredArgHandler,
 			"--label-file":         ignoredArgHandler,
@@ -531,6 +681,7 @@ var commands = map[string]commandDefinition{
 			"--ulimit":             ignoredArgHandler,
 			"--umask":              ignoredArgHandler,
 			"--user":               ignoredArgHandler,
+			"--uts":                ignoredArgHandler,
 			"--verify":             ignoredArgHandler,
 			"--volume":             ignoredArgHandler,
 			"--workdir":            ignoredArgHandler,
@@ -679,6 +830,7 @@ var commands = map[string]commandDefinition{
 			"--cap-add":            ignoredArgHandler,
 			"--cap-drop":           ignoredArgHandler,
 			"--cgroup-conf":        ignoredArgHandler,
+			"--cgroup-parent":      ignoredArgHandler,
 			"--cgroupns":           ignoredArgHandler,
 			"--cidfile":            ignoredArgHandler,
 			"--cosign-key":         ignoredArgHandler,
@@ -705,6 +857,8 @@ var commands = map[string]commandDefinition{
 			"--interactive":        nil,
 			"--ip":                 ignoredArgHandler,
 			"--ipc":                ignoredArgHandler,
+			"--ipfs-address":       ignoredArgHandler,
+			"--isolation":          ignoredArgHandler,
 			"--kernel-memory":      ignoredArgHandler,
 			"--label":              ignoredArgHandler,
 			"--label-file":         ignoredArgHandler,
@@ -744,6 +898,7 @@ var commands = map[string]commandDefinition{
 			"--ulimit":             ignoredArgHandler,
 			"--umask":              ignoredArgHandler,
 			"--user":               ignoredArgHandler,
+			"--uts":                ignoredArgHandler,
 			"--verify":             ignoredArgHandler,
 			"--volume":             ignoredArgHandler,
 			"--workdir":            ignoredArgHandler,
@@ -801,6 +956,7 @@ var commands = map[string]commandDefinition{
 			"--memory-reservation": ignoredArgHandler,
 			"--memory-swap":        ignoredArgHandler,
 			"--pids-limit":         ignoredArgHandler,
+			"--restart":            ignoredArgHandler,
 			"-m":                   ignoredArgHandler,
 		},
 	},
@@ -829,6 +985,7 @@ var commands = map[string]commandDefinition{
 			"--cap-add":            ignoredArgHandler,
 			"--cap-drop":           ignoredArgHandler,
 			"--cgroup-conf":        ignoredArgHandler,
+			"--cgroup-parent":      ignoredArgHandler,
 			"--cgroupns":           ignoredArgHandler,
 			"--cidfile":            ignoredArgHandler,
 			"--cosign-key":         ignoredArgHandler,
@@ -854,6 +1011,8 @@ var commands = map[string]commandDefinition{
 			"--interactive":        nil,
 			"--ip":                 ignoredArgHandler,
 			"--ipc":                ignoredArgHandler,
+			"--ipfs-address":       ignoredArgHandler,
+			"--isolation":          ignoredArgHandler,
 			"--kernel-memory":      ignoredArgHandler,
 			"--label":              ignoredArgHandler,
 			"--label-file":         ignoredArgHandler,
@@ -893,6 +1052,7 @@ var commands = map[string]commandDefinition{
 			"--ulimit":             ignoredArgHandler,
 			"--umask":              ignoredArgHandler,
 			"--user":               ignoredArgHandler,
+			"--uts":                ignoredArgHandler,
 			"--verify":             ignoredArgHandler,
 			"--volume":             ignoredArgHandler,
 			"--workdir":            ignoredArgHandler,
@@ -987,7 +1147,6 @@ var commands = map[string]commandDefinition{
 			"--cache-to":      ignoredArgHandler,
 			"--file":          ignoredArgHandler,
 			"--iidfile":       ignoredArgHandler,
-			"--ipfs":          nil,
 			"--label":         ignoredArgHandler,
 			"--no-cache":      nil,
 			"--output":        ignoredArgHandler,
@@ -1010,15 +1169,30 @@ var commands = map[string]commandDefinition{
 		commandPath: "image convert",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--all-platforms":             nil,
-			"--estargz":                   nil,
-			"--estargz-chunk-size":        ignoredArgHandler,
-			"--estargz-compression-level": ignoredArgHandler,
-			"--estargz-record-in":         ignoredArgHandler,
-			"--oci":                       nil,
-			"--platform":                  ignoredArgHandler,
-			"--uncompress":                nil,
-			"--zstdchunked":               nil,
+			"--all-platforms":                 nil,
+			"--estargz":                       nil,
+			"--estargz-chunk-size":            ignoredArgHandler,
+			"--estargz-compression-level":     ignoredArgHandler,
+			"--estargz-external-toc":          nil,
+			"--estargz-keep-diff-id":          nil,
+			"--estargz-min-chunk-size":        ignoredArgHandler,
+			"--estargz-record-in":             ignoredArgHandler,
+			"--format":                        ignoredArgHandler,
+			"--nydus":                         nil,
+			"--nydus-builder-path":            ignoredArgHandler,
+			"--nydus-compressor":              ignoredArgHandler,
+			"--nydus-prefetch-patterns":       ignoredArgHandler,
+			"--nydus-work-dir":                ignoredArgHandler,
+			"--oci":                           nil,
+			"--overlaybd":                     nil,
+			"--overlaybd-dbstr":               ignoredArgHandler,
+			"--overlaybd-fs-type":             ignoredArgHandler,
+			"--platform":                      ignoredArgHandler,
+			"--uncompress":                    nil,
+			"--zstdchunked":                   nil,
+			"--zstdchunked-chunk-size":        ignoredArgHandler,
+			"--zstdchunked-compression-level": ignoredArgHandler,
+			"--zstdchunked-record-in":         ignoredArgHandler,
 		},
 	},
 
@@ -1117,6 +1291,7 @@ var commands = map[string]commandDefinition{
 		options: map[string]argHandler{
 			"--all-platforms": nil,
 			"--cosign-key":    ignoredArgHandler,
+			"--ipfs-address":  ignoredArgHandler,
 			"--platform":      ignoredArgHandler,
 			"--quiet":         nil,
 			"--unpack":        ignoredArgHandler,
@@ -1230,17 +1405,9 @@ var commands = map[string]commandDefinition{
 	"ipfs registry": {
 		commandPath: "ipfs registry",
 		subcommands: map[string]struct{}{
-			"down":  {},
 			"serve": {},
-			"up":    {},
 		},
 		options: map[string]argHandler{},
-	},
-
-	"ipfs registry down": {
-		commandPath: "ipfs registry down",
-		subcommands: map[string]struct{}{},
-		options:     map[string]argHandler{},
 	},
 
 	"ipfs registry serve": {
@@ -1248,16 +1415,6 @@ var commands = map[string]commandDefinition{
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
 			"--ipfs-address":    ignoredArgHandler,
-			"--listen-registry": ignoredArgHandler,
-			"--read-retry-num":  ignoredArgHandler,
-			"--read-timeout":    ignoredArgHandler,
-		},
-	},
-
-	"ipfs registry up": {
-		commandPath: "ipfs registry up",
-		subcommands: map[string]struct{}{},
-		options: map[string]argHandler{
 			"--listen-registry": ignoredArgHandler,
 			"--read-retry-num":  ignoredArgHandler,
 			"--read-timeout":    ignoredArgHandler,
@@ -1477,6 +1634,7 @@ var commands = map[string]commandDefinition{
 		options: map[string]argHandler{
 			"--all-platforms": nil,
 			"--cosign-key":    ignoredArgHandler,
+			"--ipfs-address":  ignoredArgHandler,
 			"--platform":      ignoredArgHandler,
 			"--quiet":         nil,
 			"--unpack":        ignoredArgHandler,
@@ -1545,6 +1703,7 @@ var commands = map[string]commandDefinition{
 			"--cap-add":            ignoredArgHandler,
 			"--cap-drop":           ignoredArgHandler,
 			"--cgroup-conf":        ignoredArgHandler,
+			"--cgroup-parent":      ignoredArgHandler,
 			"--cgroupns":           ignoredArgHandler,
 			"--cidfile":            ignoredArgHandler,
 			"--cosign-key":         ignoredArgHandler,
@@ -1571,6 +1730,8 @@ var commands = map[string]commandDefinition{
 			"--interactive":        nil,
 			"--ip":                 ignoredArgHandler,
 			"--ipc":                ignoredArgHandler,
+			"--ipfs-address":       ignoredArgHandler,
+			"--isolation":          ignoredArgHandler,
 			"--kernel-memory":      ignoredArgHandler,
 			"--label":              ignoredArgHandler,
 			"--label-file":         ignoredArgHandler,
@@ -1610,6 +1771,7 @@ var commands = map[string]commandDefinition{
 			"--ulimit":             ignoredArgHandler,
 			"--umask":              ignoredArgHandler,
 			"--user":               ignoredArgHandler,
+			"--uts":                ignoredArgHandler,
 			"--verify":             ignoredArgHandler,
 			"--volume":             ignoredArgHandler,
 			"--workdir":            ignoredArgHandler,
@@ -1742,6 +1904,7 @@ var commands = map[string]commandDefinition{
 			"--memory-reservation": ignoredArgHandler,
 			"--memory-swap":        ignoredArgHandler,
 			"--pids-limit":         ignoredArgHandler,
+			"--restart":            ignoredArgHandler,
 			"-m":                   ignoredArgHandler,
 		},
 	},
