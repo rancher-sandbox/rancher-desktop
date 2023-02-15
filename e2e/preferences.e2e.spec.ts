@@ -13,7 +13,7 @@ let page: Page;
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
- * Playwright executes test in parallel by default and it will not work for our app backend loading process.
+ * Playwright executes test in parallel by default, and it will not work for our app backend loading process.
  * */
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
