@@ -18,15 +18,14 @@ package cmd
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -86,7 +85,7 @@ func doStartCommand(cmd *cobra.Command) error {
 	}
 	if applicationPath == "" {
 		pathLookupFuncs := map[string]func(rdctlPath string) string{
-			"windows": getWindowsRDPath,
+			"windows": utils.GetWindowsRDPath,
 			"linux":   getLinuxRDPath,
 			"darwin":  getMacOSRDPath,
 		}
@@ -130,91 +129,27 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	return cmd.Start()
 }
 
-func moveToParent(fullPath string, numberTimes int) string {
-	fullPath = path.Clean(fullPath)
-	for ; numberTimes > 0; numberTimes-- {
-		fullPath = path.Dir(fullPath)
-	}
-	return fullPath
-}
-
-func getWindowsRDPath(rdctlPath string) string {
-	if rdctlPath != "" {
-		normalParentPath := moveToParent(rdctlPath, 5)
-		candidatePath := checkExistence(path.Join(normalParentPath, "Rancher Desktop.exe"), 0)
-		if candidatePath != "" {
-			return candidatePath
-		}
-	}
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		homedir = ""
-	}
-	dataPaths := []string{}
-	// %LOCALAPPDATA%
-	dir, err := directories.GetLocalAppDataDirectory()
-	if err == nil {
-		dataPaths = append(dataPaths, dir)
-	}
-	// %APPDATA%
-	dir, err = directories.GetRoamingAppDataDirectory()
-	if err == nil {
-		dataPaths = append(dataPaths, dir)
-	}
-	// Add these two paths if the above two fail to find where the program was installed
-	dataPaths = append(
-		dataPaths,
-		path.Join(homedir, "AppData", "Local"),
-		path.Join(homedir, "AppData", "Roaming"),
-	)
-	for _, dataDir := range dataPaths {
-		candidatePath := checkExistence(path.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
-		if candidatePath != "" {
-			return candidatePath
-		}
-	}
-	return ""
-}
-
 func getMacOSRDPath(rdctlPath string) string {
 	if rdctlPath != "" {
 		// we're at .../Applications/R D.app (could have a different name)/Contents/Resources/resources/darwin/bin
 		// and want to move to the "R D.app" part
-		RDAppParentPath := moveToParent(rdctlPath, 6)
-		if checkExistence(path.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 0o111) != "" {
+		RDAppParentPath := utils.MoveToParent(rdctlPath, 6)
+		if utils.CheckExistence(filepath.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 0o111) != "" {
 			return RDAppParentPath
 		}
 	}
 	// This fallback is mostly for running `npm run dev` and using the installed app because there is no app
 	// that rdctl would launch directly in dev mode.
-	return checkExistence(path.Join("/Applications", "Rancher Desktop.app"), 0)
+	return utils.CheckExistence(filepath.Join("/Applications", "Rancher Desktop.app"), 0)
 }
 
 func getLinuxRDPath(rdctlPath string) string {
 	if rdctlPath != "" {
-		normalParentPath := moveToParent(rdctlPath, 5)
-		candidatePath := checkExistence(path.Join(normalParentPath, "rancher-desktop"), 0o111)
+		normalParentPath := utils.MoveToParent(rdctlPath, 5)
+		candidatePath := utils.CheckExistence(filepath.Join(normalParentPath, "rancher-desktop"), 0o111)
 		if candidatePath != "" {
 			return candidatePath
 		}
 	}
-	return checkExistence("/opt/rancher-desktop/rancher-desktop", 0o111)
-}
-
-/**
- * Verify the path exists. For Linux pass in mode bits to guarantee the file is executable (for at least one
- * category of user). Note that on macOS the candidate is a directory, so never pass in mode bits.
- * And mode bits don't make sense on Windows.
- */
-func checkExistence(candidatePath string, modeBits fs.FileMode) string {
-	stat, err := os.Stat(candidatePath)
-	if err != nil {
-		return ""
-	}
-	if modeBits != 0 && (!stat.Mode().IsRegular() || stat.Mode().Perm()&modeBits == 0) {
-		// The modeBits check is only for executability -- we only care if at least one of the three
-		// `x` mode bits is on. So this check isn't used for a general permission-mode-bit check.
-		return ""
-	}
-	return candidatePath
+	return utils.CheckExistence("/opt/rancher-desktop/rancher-desktop", 0o111)
 }
