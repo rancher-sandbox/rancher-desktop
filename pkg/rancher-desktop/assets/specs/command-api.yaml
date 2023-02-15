@@ -289,12 +289,6 @@ components:
             hostResolver:
               type: boolean
               x-rd-platforms: ['win32']
-            experimental:
-              type: object
-              properties:
-                socketVMNet:
-                  type: boolean
-                  x-rd-platforms: ['darwin']
         kubernetes:
           type: object
           properties:
@@ -322,6 +316,15 @@ components:
                     Use to disable flannel so you can install your own CNI.
                   x-rd-aliases:
                     - "flannel-enabled"
+        experimental:
+          type: object
+          properties:
+            virtualMachine:
+              type: object
+              properties:
+                socketVMNet:
+                  type: boolean
+                  x-rd-platforms: ['darwin']
         WSL:
           type: object
           x-rd-platforms: ['win32']

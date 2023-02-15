@@ -69,13 +69,6 @@ export const defaultSettings = {
      * is handled by host-resolver on Windows platform only.
      */
     hostResolver: true,
-    /**
-     * Experimental settings - there should not be any UI for these.
-     */
-    experimental: {
-      /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
-      socketVMNet: false,
-    },
   },
   WSL:        { integrations: {} as Record<string, boolean> },
   kubernetes: {
@@ -98,6 +91,15 @@ export const defaultSettings = {
   startInBackground:    false,
   hideNotificationIcon: false,
   window:               { quitOnClose: false },
+  /**
+   * Experimental settings - there should not be any UI for these.
+   */
+  experimental:         {
+    virtualMachine: {
+      /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
+      socketVMNet: false,
+    },
+  },
 };
 
 export type Settings = typeof defaultSettings;
@@ -422,11 +424,11 @@ const updateTable: Record<number, (settings: any) => void> = {
       updater:                { enabled: settings.updater },
     };
     settings.virtualMachine = {
-      experimental: settings.kubernetes.experimental,
       hostResolver: settings.kubernetes.hostResolver,
       memoryInGB:   settings.kubernetes.memoryInGB,
       numberCPUs:   settings.kubernetes.numberCPUs,
     };
+    settings.experimental = { virtualMachine: { socketVMNet: settings.kubernetes.experimental.socketVMNet } };
     settings.WSL = { integrations: settings.kubernetes.WSLIntegrations };
     settings.containerEngine.name = settings.kubernetes.containerEngine;
 

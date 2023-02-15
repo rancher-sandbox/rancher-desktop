@@ -77,7 +77,7 @@ describe(SettingsValidator, () => {
         'virtualMachine.memoryInGB':               'darwin',
         'virtualMachine.numberCPUs':               'linux',
         'application.adminAccess':                 'linux',
-        'virtualMachine.experimental.socketVMNet': 'darwin',
+        'experimental.virtualMachine.socketVMNet': 'darwin',
       };
 
       const spyValidateSettings = jest.spyOn(subject, 'validateSettings');

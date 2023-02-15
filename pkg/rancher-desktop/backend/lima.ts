@@ -1544,7 +1544,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @precondition The VM configuration is correct.
    */
   protected async startVM() {
-    const vmnet = this.cfg?.virtualMachine?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
+    const vmnet = this.cfg?.experimental?.virtualMachine?.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
     let allowRoot = this.#adminAccess;
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
@@ -1902,11 +1902,11 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       return reasons; // No need to restart if nothing exists
     }
     if (process.platform === 'darwin') {
-      if (typeof cfg.virtualMachine?.experimental?.socketVMNet !== 'undefined') {
-        if (this.cfg.virtualMachine?.experimental.socketVMNet !== cfg.virtualMachine.experimental.socketVMNet) {
-          reasons['virtualMachine.experimental.socketVMNet'] = {
-            current:  this.cfg.virtualMachine.experimental.socketVMNet,
-            desired:  cfg.virtualMachine.experimental.socketVMNet,
+      if (typeof cfg.experimental?.virtualMachine?.socketVMNet !== 'undefined') {
+        if (this.cfg.experimental?.virtualMachine?.socketVMNet !== cfg.experimental.virtualMachine.socketVMNet) {
+          reasons['experimental.virtualMachine.socketVMNet'] = {
+            current:  this.cfg.experimental.virtualMachine.socketVMNet,
+            desired:  cfg.experimental.virtualMachine.socketVMNet,
             severity: 'restart',
           };
         }
