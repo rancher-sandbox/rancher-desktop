@@ -12,11 +12,14 @@ import util from 'util';
 import fetch from 'node-fetch';
 
 import buildUtils from './lib/build-utils';
+import { patchCrypto } from './crypto-patch';
 
 interface RendererEnv {
   home: string;
   agent?: https.Agent | undefined;
 }
+
+patchCrypto();
 
 class DevRunner extends events.EventEmitter {
   emitError(message: string, error: any) {

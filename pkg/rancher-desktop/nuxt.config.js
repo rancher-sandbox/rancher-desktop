@@ -4,12 +4,15 @@ import _ from 'lodash';
 
 import babelConfig from '../../babel.config';
 import * as packageMeta from '../../package.json';
+import { patchCrypto } from '../../scripts/crypto-patch';
 
 const isDevelopment = /^dev/i.test(process.env.NODE_ENV);
 const corejsVersion = parseFloat(/\d+\.\d+/.exec(packageMeta.dependencies['core-js']));
 const modifiedBabelConfig = _.cloneDeep(babelConfig);
 
 modifiedBabelConfig.presets.unshift(['@nuxt/babel-preset-app', { corejs: { version: corejsVersion } }]);
+
+patchCrypto();
 
 export default {
   build: {
