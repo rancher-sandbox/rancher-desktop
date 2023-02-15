@@ -688,6 +688,24 @@ test.describe('Command server', () => {
     });
 
     test.describe('set', () => {
+      const unsupportedPrefsByPlatform: {[x in NodeJS.Platform] ?: [string, any][]} = {
+        win32: [
+          ['application.admin-access', true],
+          ['application.path-management-strategy', 'rcfiles'],
+          ['virtual-machine.memory-in-gb', 10],
+          ['virtual-machine.number-cpus', 10],
+          ['virtual-machine.experimental.socket-vmnet', true],
+        ],
+        darwin: [
+          ['virtual-machine.host-resolver', true],
+        ],
+        linux: [
+          ['virtual-machine.host-resolver', true],
+          ['virtual-machine.experimental.socket-vmnet', true],
+        ],
+      };
+      const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
+
       test('complains when no args are given', async() => {
         const { stdout, stderr, error } = await rdctl(['set']);
 
@@ -699,7 +717,7 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
-        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(30);
+        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(30 - unsupportedOptions.length);
       });
 
       test('complains when option value missing', async() => {
@@ -847,6 +865,16 @@ test.describe('Command server', () => {
 
           expect(result.stderr).toEqual('');
         });
+      });
+
+      test('complains about options not intended for current platform', async() => {
+        // playwright doesn't support test.each
+        // See https://github.com/microsoft/playwright/issues/7036 for the discussion
+
+        for (const [option, newValue] of unsupportedOptions) {
+          await expect(rdctl(['set', `--${ option }=${ newValue }`])).resolves
+            .toMatchObject({ stderr: expect.stringContaining(`Error: option --${ option } is not available on`) });
+        }
       });
     });
 
@@ -1348,7 +1376,7 @@ test.describe('Command server', () => {
         await navPage.progressBecomesReady();
         await expect(navPage.progressBar).toBeHidden();
       }
-      const output = await tool('nerdctl', 'info');
+      const output = await retry(() => tool('nerdctl', 'info'));
 
       expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });

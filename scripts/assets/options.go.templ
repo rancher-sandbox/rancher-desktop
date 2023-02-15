@@ -24,6 +24,9 @@ package options
 
 import (
 	"fmt"
+	"os"
+	"regexp"
+	"runtime"
 	"strings"
 	"strconv"
 
@@ -83,11 +86,37 @@ func enumStringCheck(option string, specified string, allowedValues []string) er
 	return fmt.Errorf(`invalid value for option %s: <"%s">; must be %s`, option, specified, allowedString)
 }
 
+func qualifiedPlatformName() string {
+	if runtime.GOOS == "darwin" {
+		return "macOS"
+	}
+	if runtime.GOOS == "windows" {
+		return "Windows"
+	}
+	if runtime.GOOS != "linux" {
+		return runtime.GOOS
+	}
+	// Special case if it's running in a WSL partition, return "Linux in a WSL partition"
+	contents, err := os.ReadFile("/proc/version")
+	if err != nil {
+		return "Linux"
+	}
+	ptn, err := regexp.Compile(`^Linux version \S+?-microsoft-standard-WSL2`)
+	if err != nil {
+		return "Linux"
+	}
+	match := ptn.Match(contents)
+	if match && err == nil {
+		return "Linux in a WSL partition"
+	}
+	return "Linux"
+}
+
 func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
-	<%_ for (const { flagType, capitalizedName, propertyName, defaultValue, usageNote, aliasFor } of commandFlags) {
-			const kebabPropertyName = kebabCase(propertyName); _%>
-		cmd.Flags().<%- flagType %>Var(&specifiedSettings.<%- capitalizedName %>, "<%- kebabPropertyName %>", <%- defaultValue %>, "<%- usageNote %>")
-		<%_ if (aliasFor) { _%>
+	<%_ for (const flag of commandFlags) {
+			const kebabPropertyName = kebabCase(flag.propertyName); _%>
+		cmd.Flags().<%- flag.flagType %>Var(&specifiedSettings.<%- flag.capitalizedName %>, "<%- kebabPropertyName %>", <%- flag.defaultValue %>, "<%- flag.usageNote %>")
+		<%_ if (flag.aliasFor || flag.notAvailable) { _%>
 		cmd.Flags().MarkHidden("<%- kebabPropertyName %>")
 		<%_ } _%>
 	<%_ } _%>
@@ -96,16 +125,20 @@ func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
 func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
 	var specifiedSettingsForJSON serverSettingsForJSON
 	changedSomething := false
-	<%_ for (const { propertyName, capitalizedName, enums }  of commandFlags) {
-		const kebabPropertyName = kebabCase(propertyName); _%>
+	<%_ for (const flag of commandFlags) {
+	const kebabPropertyName = kebabCase(flag.propertyName); _%>
 		if flags.Changed("<%- kebabPropertyName %>") {
-			<%_ if (enums) { _%>
-				if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
-					return nil, err
-				}
+			<%_ if (flag.notAvailable) { _%>
+				return nil, fmt.Errorf("option --<%- kebabPropertyName %> is not available on %s", qualifiedPlatformName())
+			<%_ } else { _%>
+				<%_ if (flag.enums) { _%>
+					if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- flag.capitalizedName %>, <%- flag.enums %>) ; err != nil {
+						return nil, err
+					}
+				<%_ } _%>
+				specifiedSettingsForJSON.<%- flag.capitalizedName %> = &specifiedSettings.<%- flag.capitalizedName %>
+				changedSomething = true
 			<%_ } _%>
-			specifiedSettingsForJSON.<%- capitalizedName %> = &specifiedSettings.<%- capitalizedName %>
-			changedSomething = true
 		}
 	<% } %>
 	if changedSomething {
@@ -118,18 +151,22 @@ func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
 
 func GetCommandLineArgsForStartCommand(flags *pflag.FlagSet) ([]string, error) {
 	var commandLineArgs []string
-	<%_ for (const { propertyName, capitalizedName, aliasFor, enums, valuePart } of commandFlags) {
-			const kebabPropertyName = kebabCase(propertyName);
+	<%_ for (const flag of commandFlags) {
+			const kebabPropertyName = kebabCase(flag.propertyName);
 			// The app and backend use dot-separated [Cc]amelCase names, not kebab-case, so pass in the camelCase name (a few lines down)
-			const actualPropertyName = aliasFor || propertyName;
+			const actualPropertyName = flag.aliasFor || flag.propertyName;
 	_%>
 		if flags.Changed("<%- kebabPropertyName %>") {
-			<%_ if (enums) { _%>
-			if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- capitalizedName %>, <%- enums %>) ; err != nil {
-				return commandLineArgs, err
-			}
-			<%_ } _%>
-			commandLineArgs = append(commandLineArgs, "--<%- actualPropertyName %>"<%- valuePart %>)
+			<%_ if (flag.notAvailable) { _%>
+				return nil, fmt.Errorf("option --<%- kebabPropertyName %> is not available on %s", qualifiedPlatformName())
+			<% } else { _%>
+				<%_ if (flag.enums) { _%>
+				if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- flag.capitalizedName %>, <%- flag.enums %>) ; err != nil {
+					return commandLineArgs, err
+				}
+				<%_ } _%>
+				commandLineArgs = append(commandLineArgs, "--<%- actualPropertyName %>"<%- flag.valuePart %>)
+				<%_ } _%>
 		}
 	<% } %>
 	return commandLineArgs, nil

@@ -238,11 +238,13 @@ components:
           properties:
             adminAccess:
               type: boolean
+              x-rd-platforms: ['darwin', 'linux'] # Only in the specified platforms
             debug:
               type: boolean
             pathManagementStrategy:
               type: string
               enum: ['manual', 'rcfiles']
+              x-rd-platforms: ['darwin', 'linux']
             telemetry:
               type: object
               properties:
@@ -279,16 +281,20 @@ components:
             memoryInGB:
               type: integer
               minimum: 1
+              x-rd-platforms: ['darwin', 'linux']
             numberCPUs:
               type: integer
               minimum: 1
+              x-rd-platforms: ['darwin', 'linux']
             hostResolver:
               type: boolean
+              x-rd-platforms: ['win32']
             experimental:
               type: object
               properties:
                 socketVMNet:
                   type: boolean
+                  x-rd-platforms: ['darwin']
         kubernetes:
           type: object
           properties:
@@ -318,6 +324,7 @@ components:
                     - "flannel-enabled"
         WSL:
           type: object
+          x-rd-platforms: ['win32']
           properties:
             integrations:
               type: object

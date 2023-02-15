@@ -73,6 +73,10 @@ interface commandFlagType {
    * Used to format the specified value for a command-line option depending on the value's golang type.
    */
   valuePart: string;
+  /**
+   * The option is not available for the current platform
+   */
+  notAvailable: boolean;
 }
 
 type yamlObject = any;
@@ -140,7 +144,7 @@ class Generator {
     assert(preferences.type === 'object', `Expected preferences.type = 'object', got ${ preferences.type }`);
     assert(Object.keys(preferences.properties).length > 0, `Not a properties object: ${ preferences.properties }`);
     for (const propertyName of Object.keys(preferences.properties)) {
-      this.walkProperty(propertyName, preferences.properties[propertyName], this.settingsTree);
+      this.walkProperty(propertyName, preferences.properties[propertyName], false, this.settingsTree);
     }
   }
 
@@ -237,6 +241,7 @@ class Generator {
     flagType: goCmdFlagTypeName,
     defaultValue: string,
     preference: yamlObject,
+    notAvailable: boolean,
     settingsTree: settingsTreeType) {
     const enums = this.convertStringsToGolang(preference.enum);
     const usageNote = preference['x-rd-usage'] ?? '';
@@ -248,6 +253,7 @@ class Generator {
       enums,
       aliasFor:  '',
       valuePart: this.getCommandLineArgValue(flagType, capitalizedName),
+      notAvailable,
     };
 
     newFlag.usageNote = this.getFullUsageNote(usageNote, preference.enum);
@@ -258,16 +264,23 @@ class Generator {
     }
   }
 
-  protected walkProperty(propertyName: string, preference: yamlObject, settingsTree: settingsTreeType): void {
+  protected walkProperty(
+    propertyName: string,
+    preference: yamlObject,
+    notAvailable: boolean,
+    settingsTree: settingsTreeType): void {
+    const platforms = preference['x-rd-platforms'] ?? [];
+
+    notAvailable ||= platforms.length > 0 && !platforms.includes(process.platform);
     switch (preference.type) {
     case 'object':
-      return this.walkPropertyObject(propertyName, preference, settingsTree);
+      return this.walkPropertyObject(propertyName, preference, notAvailable, settingsTree);
     case 'boolean':
-      return this.walkPropertyBoolean(propertyName, preference, settingsTree);
+      return this.walkPropertyBoolean(propertyName, preference, notAvailable, settingsTree);
     case 'string':
-      return this.walkPropertyString(propertyName, preference, settingsTree);
+      return this.walkPropertyString(propertyName, preference, notAvailable, settingsTree);
     case 'integer':
-      return this.walkPropertyInteger(propertyName, preference, settingsTree);
+      return this.walkPropertyInteger(propertyName, preference, notAvailable, settingsTree);
     case 'array':
       return this.walkPropertyArray(propertyName);
     default:
@@ -282,28 +295,33 @@ class Generator {
   protected walkPropertyBoolean(
     propertyName: string,
     preference: yamlObject,
+    notAvailable: boolean,
     settingsTree: settingsTreeType,
   ): void {
     this.updateLeaf(propertyName, capitalizeParts(propertyName),
       'bool', 'Bool', 'false',
       preference,
+      notAvailable,
       settingsTree);
   }
 
   protected walkPropertyInteger(
     propertyName: string,
     preference: yamlObject,
+    notAvailable: boolean,
     settingsTree: settingsTreeType,
   ): void {
     this.updateLeaf(propertyName, capitalizeParts(propertyName),
       'int', 'Int', '0',
       preference,
+      notAvailable,
       settingsTree);
   }
 
   protected walkPropertyObject(
     propertyName: string,
     preference: yamlObject,
+    notAvailable: boolean,
     settingsTree: settingsTreeType): void {
     if (preference.additionalProperties) {
       console.log(`Skipping ${ propertyName }: not settable from the command-line.`);
@@ -316,7 +334,7 @@ class Generator {
     const innerSetting: settingsTreeType = {};
 
     for (const innerName in properties) {
-      this.walkProperty(`${ propertyName }.${ innerName }`, properties[innerName], innerSetting);
+      this.walkProperty(`${ propertyName }.${ innerName }`, properties[innerName], notAvailable, innerSetting);
     }
 
     settingsTree[lastName(propertyName)] = { type: innerSetting };
@@ -325,11 +343,13 @@ class Generator {
   protected walkPropertyString(
     propertyName: string,
     preference: yamlObject,
+    notAvailable: boolean,
     settingsTree: settingsTreeType,
   ): void {
     this.updateLeaf(propertyName, capitalizeParts(propertyName),
       'string', 'String', '""',
       preference,
+      notAvailable,
       settingsTree);
   }
 
