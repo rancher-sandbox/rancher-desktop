@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { findHomeDir } from '@kubernetes/client-node';
@@ -50,7 +51,7 @@ export class WSLDistro {
  * This includes:
  * - Docker socket forwarding.
  * - Kubeconfig.
- * - Docker-compose executable (WSL distributions only).
+ * - docker CLI plugin executables (WSL distributions only).
  */
 export default class WindowsIntegrationManager implements IntegrationManager {
   /** A snapshot of the application-wide settings. */
@@ -116,7 +117,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     try {
       await Promise.all([
         this.syncSocketProxy(),
-        this.syncDockerCompose(),
+        this.syncDockerPlugins(),
         this.syncKubeconfig(),
       ]);
     } finally {
@@ -294,24 +295,49 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
-  protected async syncDockerCompose() {
-    await Promise.all([
-      this.syncHostDockerCompose(),
-      ...(await this.supportedDistros).map(distro => this.syncDistroDockerCompose(distro.name)),
-    ]);
+  protected async syncDockerPlugins() {
+    const wslPluginNames = await this.getWslDockerCliPluginNames();
+    const hostPluginNames = await this.getHostDockerCliPluginNames();
+
+    const promises: Promise<void>[] = hostPluginNames.map(hostPluginName => this.syncHostDockerPlugin(hostPluginName) );
+
+    for (const wslPluginName of wslPluginNames) {
+      promises.push(
+        ...(await this.supportedDistros).map(distro => this.syncDistroDockerPlugin(distro.name, wslPluginName )),
+      );
+    }
+    await Promise.all(promises);
   }
 
-  protected async syncHostDockerCompose() {
+  protected async getWslDockerCliPluginNames(): Promise<string[]> {
+    const resourcesBinDir = path.join(paths.resources, 'linux', 'bin');
+
+    return (await fs.promises.readdir(resourcesBinDir)).filter((name) => {
+      return name.startsWith('docker-') && !name.startsWith('docker-credential-');
+    });
+  }
+
+  protected async getHostDockerCliPluginNames(): Promise<string[]> {
+    const resourcesBinDir = path.join(paths.resources, os.platform(), 'bin');
+
+    const pluginNamesWithExe = (await fs.promises.readdir(resourcesBinDir)).filter((name) => {
+      return name.startsWith('docker-') && !name.startsWith('docker-credential-');
+    });
+
+    return pluginNamesWithExe.map(pluginName => pluginName.replace(/\.exe$/, ''));
+  }
+
+  protected async syncHostDockerPlugin(pluginName: string) {
     const homeDir = findHomeDir();
 
     if (!homeDir) {
       throw new Error("Can't find home directory");
     }
     const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
-    const cliPath = path.join(cliDir, 'docker-compose.exe');
-    const srcPath = executable('docker-compose');
+    const srcPath = executable(pluginName);
+    const cliPath = path.join(cliDir, path.basename(srcPath));
 
-    console.debug(`Syncing host docker compose: ${ srcPath } -> ${ cliPath }`);
+    console.debug(`Syncing host ${ pluginName }: ${ srcPath } -> ${ cliPath }`);
     await fs.promises.mkdir(cliDir, { recursive: true });
     try {
       await fs.promises.copyFile(
@@ -324,13 +350,13 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
-  protected async syncDistroDockerCompose(distro: string) {
-    const srcPath = await this.getLinuxToolPath(distro, 'bin', 'docker-compose');
+  protected async syncDistroDockerPlugin(distro: string, pluginName: string) {
+    const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
     const destDir = '$HOME/.docker/cli-plugins';
-    const destPath = `${ destDir }/docker-compose`;
+    const destPath = `${ destDir }/${ pluginName }`;
     const state = this.settings.WSL?.integrations?.[distro] === true;
 
-    console.debug(`Syncing ${ distro } docker compose: ${ srcPath } -> ${ destDir }`);
+    console.debug(`Syncing ${ distro } ${ pluginName }: ${ srcPath } -> ${ destDir }`);
     if (state) {
       await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
       await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
