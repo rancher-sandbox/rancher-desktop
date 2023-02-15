@@ -683,11 +683,11 @@ ipcMainProxy.on('help/preferences/open-url', async() => {
   Help.preferences.openUrl(await getVersion());
 });
 
-ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
-  return window.showMessageBox(options, modal);
+ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {
+  return window.showMessageBox(options, false);
 });
 
-Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.MessageBoxOptions, modal = false) => {
+ipcMainProxy.handle('show-message-box-rd', async(_event, options: Electron.MessageBoxOptions, modal = false) => {
   const mainWindow = modal ? window.getWindow('main') : null;
 
   const dialog = window.openDialog(
