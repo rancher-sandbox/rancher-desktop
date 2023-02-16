@@ -30,7 +30,7 @@ func EnsureAutostart(autostartDesired bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to get path to rdctl: %w", err)
 		}
-		rancherDesktopPath := utils.GetWindowsRDPath(rdctlPath)
+		rancherDesktopPath := utils.GetRDPath(rdctlPath)
 		if rancherDesktopPath == "" {
 			return errors.New("failed to get path to Rancher Desktop.exe")
 		}

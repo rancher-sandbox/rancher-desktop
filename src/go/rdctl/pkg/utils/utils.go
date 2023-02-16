@@ -4,8 +4,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
 // Get the parent (or grandparent, or great-grandparent...) directory of fullPath.
@@ -34,58 +32,4 @@ func CheckExistence(candidatePath string, modeBits fs.FileMode) string {
 		return ""
 	}
 	return candidatePath
-}
-
-// Returns the absolute path to the Rancher Desktop executable.
-// Returns an empty string if the executable was not found.
-func GetWindowsRDPath(rdctlPath string) string {
-	if rdctlPath != "" {
-		normalParentPath := MoveToParent(rdctlPath, 5)
-		candidatePath := CheckExistence(filepath.Join(normalParentPath, "Rancher Desktop.exe"), 0)
-		if candidatePath != "" {
-			return candidatePath
-		}
-	}
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		homedir = ""
-	}
-	dataPaths := []string{}
-	// %LOCALAPPDATA%
-	dir, err := directories.GetLocalAppDataDirectory()
-	if err == nil {
-		dataPaths = append(dataPaths, dir)
-	}
-	// %APPDATA%
-	dir, err = directories.GetRoamingAppDataDirectory()
-	if err == nil {
-		dataPaths = append(dataPaths, dir)
-	}
-	// Add these two paths if the above two fail to find where the program was installed
-	dataPaths = append(
-		dataPaths,
-		filepath.Join(homedir, "AppData", "Local"),
-		filepath.Join(homedir, "AppData", "Roaming"),
-	)
-	for _, dataDir := range dataPaths {
-		candidatePath := CheckExistence(filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
-		if candidatePath != "" {
-			return candidatePath
-		}
-	}
-	return ""
-}
-
-func GetDarwinRDPath(rdctlPath string) string {
-	if rdctlPath != "" {
-		// we're at .../Applications/R D.app (could have a different name)/Contents/Resources/resources/darwin/bin
-		// and want to move to the "R D.app" part
-		RDAppParentPath := MoveToParent(rdctlPath, 6)
-		if CheckExistence(filepath.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 0o111) != "" {
-			return RDAppParentPath
-		}
-	}
-	// This fallback is mostly for running `npm run dev` and using the installed app because there is no app
-	// that rdctl would launch directly in dev mode.
-	return CheckExistence(filepath.Join("/Applications", "Rancher Desktop.app"), 0)
 }
