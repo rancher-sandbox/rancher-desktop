@@ -3,7 +3,6 @@ package autostart
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"golang.org/x/sys/windows/registry"
@@ -26,11 +25,7 @@ func EnsureAutostart(autostartDesired bool) error {
 	defer autostartKey.Close()
 
 	if autostartDesired {
-		rdctlPath, err := os.Executable()
-		if err != nil {
-			return fmt.Errorf("failed to get path to rdctl: %w", err)
-		}
-		rancherDesktopPath := utils.GetRDPath(rdctlPath)
+		rancherDesktopPath := utils.GetRDPath()
 		if rancherDesktopPath == "" {
 			return errors.New("failed to get path to Rancher Desktop.exe")
 		}
