@@ -6,6 +6,7 @@ import os from 'os';
 import { dirname, join } from 'path';
 
 import _ from 'lodash';
+import * as nativeReg from 'native-reg';
 import plist from 'plist';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
@@ -16,8 +17,6 @@ import paths from '@pkg/utils/paths';
 import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
-const PROFILE_PLIST = 'io.rancherdesktop.profile.plist';
-const PROFILE_JSON = 'profile.json';
 
 // Settings versions are independent of app versions.
 // Any time a version changes, increment its version by 1.
@@ -474,114 +473,142 @@ function updateSettings(settings: Settings) {
 // Imported from dashboard/config/settings.js
 // Setting IDs
 export const SETTING = { PL_RANCHER_VALUE: 'rancher' };
+const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
 
 /**
- * Read and validate the json formatted deployment profile.
- * Returns the system profile if it exists, otherwise the user profile if it exists.
- * @returns A settings profile stripped of all fields not found in the schema.
+ * Read and validate deployment profiles, giving system level profiles
+ * priority over user level profiles.  If the system directory contains a
+ * defaults or locked profile, the user directory will not be read.
+ * @returns undefined, or type validated defaults and locked deployment profiles.
  */
-export function readDeploymentProfile() {
-  let profileData;
-  let profile;
+export function readDeploymentProfiles() {
+  let defaults;
+  let locked;
 
   switch (os.platform()) {
   case 'win32':
-    try {
-      profile = readRegistryDeploymentProfile(); // TODO: call with path to system profile
-    } catch {
-      try {
-        profile = readRegistryDeploymentProfile(); // TODO: call with path to user profile
-      } catch {}
+    for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
+      const registryKey = nativeReg.openKey(key, REGISTRY_PATH_PROFILE.join('\\'), nativeReg.Access.READ);
+
+      if (registryKey !== null) {
+        defaults = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Defaults']);
+        locked = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Locked']);
+        nativeReg.closeKey(registryKey);
+        if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+          break;
+        }
+      }
     }
     break;
   case 'linux':
-    try {
-      profileData = fs.readFileSync(join(paths.deploymentProfileSystem, PROFILE_JSON), 'utf8');
-    } catch {
+    for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
       try {
-        profileData = fs.readFileSync(join(paths.deploymentProfileUser, PROFILE_JSON), 'utf8');
+        const defaultsData = fs.readFileSync(join(rootPath, 'defaults.json'), 'utf8');
+
+        defaults = JSON.parse(defaultsData);
       } catch {}
-    }
-    if (typeof profileData !== 'undefined') {
-      profile = JSON.parse(profileData);
+      try {
+        const lockedData = fs.readFileSync(join(rootPath, 'locked.json'), 'utf8');
+
+        locked = JSON.parse(lockedData);
+      } catch {}
+
+      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+        break;
+      }
     }
     break;
   case 'darwin':
-    try {
-      profileData = fs.readFileSync(join(paths.deploymentProfileSystem, PROFILE_PLIST), 'utf8');
-    } catch {
+    for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
       try {
-        profileData = fs.readFileSync(join(paths.deploymentProfileUser, PROFILE_PLIST), 'utf8');
+        const defaultsData = fs.readFileSync(join(rootPath, 'io.rancherdesktop.profile.defaults.plist'), 'utf8');
+
+        defaults = plist.parse(defaultsData);
       } catch {}
-    }
-    if (typeof profileData !== 'undefined') {
-      profile = plist.parse(profileData);
+      try {
+        const lockedData = fs.readFileSync(join(rootPath, 'io.rancherdesktop.profile.locked.plist'), 'utf8');
+
+        locked = plist.parse(lockedData);
+      } catch {}
+
+      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+        break;
+      }
     }
     break;
   }
+  defaults = validateDeploymentProfile(defaults, defaultSettings);
+  locked = validateDeploymentProfile(locked, defaultSettings);
 
-  return validateDeploymentProfile(profile, defaultSettings);
-}
-
-function readRegistryDeploymentProfile() {
-  throw new Error('INTERNAL ERROR: readRegistryDeploymentProfile not yet implemented.');
-}
-
-function validateDeploymentProfile(profile: any, schema: any) {
-  if (typeof profile === 'undefined') {
-    return undefined;
-  }
-
-  Object.keys(profile).forEach((key) => {
-    if (key in schema) {
-      if (typeof profile[key] === typeof schema[key]) {
-        if (typeof profile[key] === 'object') {
-          validateDeploymentProfile(profile[key], schema[key]);
-        }
-      } else {
-        console.log(`Deployment Profile ignoring '${ key }'. Wrong type.`);
-        delete profile[key];
-      }
-    } else {
-      console.log(`Deployment Profile ignoring '${ key }'. Not in schema.`);
-      delete profile[key];
-    }
-  });
-
-  return profile;
+  return { defaults, locked };
 }
 
 /**
- * Merge profile into config and return result.
- * @param {*} config The config settings file.
- * @param {*} profile The deployment profile.
- * @param {*} lockedOnly Only overwrite settings for locked profile values.
- * @return {*} The merged configuration file.
+ * Windows only. Read settings values from registry using schemaObj as a template.
+ * @param object null - used for recursion.
+ * @param schemaObj the object used as a template for navigating registry.
+ * @param regKey the registry key obtained from nativeReg.openKey().
+ * @param regPath the path to the object relative to regKey.
+ * @returns undefined, or the registry data as an object.
  */
-export function mergeDeploymentProfile(config: any, profile: any, lockedOnly: boolean): any {
-  if (typeof config === 'undefined' || typeof profile === 'undefined') {
-    return (profile || config);
-  }
+function readRegistryUsingSchema(object: any, schemaObj: any, regKey: nativeReg.HKEY, regPath: string[]): any {
+  let regValue;
+  let newObject;
 
-  if (lockedOnly === true) {
-    config = _.mergeWith(config, profile, (configObj, profileObj) => {
-      for (const key of Object.keys(profileObj)) {
-        if (typeof profileObj[key] === 'object') {
-          for (const [k, v] of Object.entries(profileObj[key])) {
-            if (k === 'locked' && v === true) {
-              console.debug(`Deployment Profile overriding locked '${ key }'`);
+  for (const [schemaKey, schemaVal] of Object.entries(schemaObj)) {
+    if (typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
+      regValue = readRegistryUsingSchema(object, schemaVal, regKey, regPath.concat(schemaKey));
+    } else {
+      regValue = nativeReg.getValue(regKey, regPath.join('\\'), schemaKey);
+    }
 
-              return profileObj;
-            }
-          }
+    if (typeof regValue !== 'undefined' && regValue !== null) {
+      if (typeof newObject === 'undefined') {
+        newObject = Object.create(null);
+      }
+      if (typeof schemaVal === 'boolean') {
+        if (typeof regValue === 'number' && regValue !== 0) {
+          regValue = true;
+        } else {
+          regValue = false;
         }
       }
-
-      return configObj; // keep config settings
-    });
-  } else {
-    config = _.merge(config, profile);
+      newObject[schemaKey] = regValue;
+    }
   }
 
-  return config;
+  return newObject;
+}
+
+/**
+ * Do simple type validation of a deployment profile
+ * @param profile The profile to be validated
+ * @param schema The structure (usually defaultSettings) used as a template
+ * @returns The original profile, less any invalid fields
+ */
+function validateDeploymentProfile(profile: any, schema: any) {
+  if (typeof profile !== 'undefined') {
+    Object.keys(profile).forEach((key) => {
+      if (key in schema) {
+        if (typeof profile[key] === typeof schema[key]) {
+          if (typeof profile[key] === 'object') {
+            if (Array.isArray(profile[key] !== Array.isArray(schema[key]))) {
+              console.log(`Deployment Profile ignoring '${ key }'. Array type mismatch.`);
+              delete profile[key];
+            } else if (!Array.isArray(profile[key])) {
+              validateDeploymentProfile(profile[key], schema[key]);
+            }
+          }
+        } else {
+          console.log(`Deployment Profile ignoring '${ key }'. Wrong type.`);
+          delete profile[key];
+        }
+      } else {
+        console.log(`Deployment Profile ignoring '${ key }'. Not in schema.`);
+        delete profile[key];
+      }
+    });
+  }
+
+  return profile;
 }
