@@ -69,7 +69,7 @@ export function openPreferences() {
       () => {
         window.close();
       },
-      'close preferences dialog',
+      'Close preferences dialog',
     );
   }
 
