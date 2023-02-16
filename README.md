@@ -44,7 +44,7 @@ with an existing Windows installation.
 
 4. Close the privileged PowerShell prompt.
 5. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
-   
+
    ```
    npm config set msvs_version <visual-studio-version-number>
    npm config set msbuild_path <path/to/MSBuild.exe>
@@ -286,6 +286,17 @@ This works even if you already have a version of Rancher Desktop installed.
 There are no repositories for AppImages, but you can access the latest development
 AppImage builds [here](https://download.opensuse.org/repositories/isv:/Rancher:/dev/AppImage/).
 
+## API
+
+Rancher Desktop supports a limited HTTP-based API. The API is defined in
+`pkg/rancher-desktop/assets/specs/command-api.yaml`, and you can see examples of how its
+invoked in the client code at `go/src/rdctl`.
+
+### Stability
+
+The API is currently at version 1, but is still considered internal and experimental, and
+is subject to change without any advance notice. At some point we expect that necessary
+changes to the API will go through a warning and deprecation notice.
 
 ## Contributing
 

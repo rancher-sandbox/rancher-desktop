@@ -1147,6 +1147,7 @@ test.describe('Command server', () => {
             'GET /',
             'GET /v0',
             'GET /v1',
+            'GET /v1/about',
             'GET /v1/diagnostic_categories',
             'GET /v1/diagnostic_checks',
             'POST /v1/diagnostic_checks',
@@ -1176,6 +1177,7 @@ test.describe('Command server', () => {
           expect(stderr).toEqual('');
           expect(JSON.parse(stdout)).toEqual([
             'GET /v1',
+            'GET /v1/about',
             'GET /v1/diagnostic_categories',
             'GET /v1/diagnostic_checks',
             'POST /v1/diagnostic_checks',
@@ -1313,6 +1315,15 @@ test.describe('Command server', () => {
           const { stdout, stderr } = await rdctl(['api', '/v1/diagnostic_checks?&id=blip']);
 
           expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
+        });
+      });
+
+      test.describe('other endpoints', () => {
+        test('it can find the about text', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v1/about']);
+
+          expect(stderr).toEqual('');
+          expect(stdout).toMatch(/\w+/);
         });
       });
     });
