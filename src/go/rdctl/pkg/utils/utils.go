@@ -8,7 +8,7 @@ import (
 
 // Get the parent (or grandparent, or great-grandparent...) directory of fullPath.
 // numberTimes is the number of steps to ascend in the directory hierarchy.
-func MoveToParent(fullPath string, numberTimes int) string {
+func getParentDir(fullPath string, numberTimes int) string {
 	fullPath = filepath.Clean(fullPath)
 	for ; numberTimes > 0; numberTimes-- {
 		fullPath = filepath.Dir(fullPath)

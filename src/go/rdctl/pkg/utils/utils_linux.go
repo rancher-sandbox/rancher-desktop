@@ -8,7 +8,7 @@ import (
 // Returns an empty string if the executable was not found.
 func GetRDPath(rdctlPath string) string {
 	if rdctlPath != "" {
-		normalParentPath := MoveToParent(rdctlPath, 5)
+		normalParentPath := getParentDir(rdctlPath, 5)
 		candidatePath := CheckExistence(filepath.Join(normalParentPath, "rancher-desktop"), 0o111)
 		if candidatePath != "" {
 			return candidatePath
