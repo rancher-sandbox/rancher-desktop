@@ -44,6 +44,13 @@ provision:
     #!/bin/sh
     set -o errexit -o nounset -o xtrace
     fstrim /mnt/data
+- # allow more than 10 sessions over the master control path
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
+    sed -i 's/#MaxSessions 10/MaxSessions 25/g' /etc/ssh/sshd_config
+    rc-service --ifstarted sshd reload
 - # Persist /root directory on data volume
   mode: system
   script: |
