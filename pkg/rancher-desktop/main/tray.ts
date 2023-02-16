@@ -99,6 +99,10 @@ export class Tray {
     return os.platform() === 'darwin';
   };
 
+  private isLinux = () => {
+    return os.platform() === 'linux';
+  };
+
   private readonly trayIconsMacOs = {
     stopped:  path.join(paths.resources, 'icons', 'logo-tray-stopped-Template@2x.png'),
     starting: path.join(paths.resources, 'icons', 'logo-tray-starting-Template@2x.png'),
@@ -126,7 +130,7 @@ export class Tray {
     const paths = await kubeconfig.getKubeConfigPaths();
     const options: fs.WatchOptions = {
       persistent: false,
-      recursive:  true,
+      recursive:  !this.isLinux(), // Recursive not implemented in Linux
       encoding:   'utf-8',
       signal:     abortController.signal,
     };
