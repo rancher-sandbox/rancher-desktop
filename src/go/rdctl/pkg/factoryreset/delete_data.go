@@ -37,7 +37,7 @@ import (
 
 func DeleteData(removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
-		return fmt.Errorf("failed to remove autostart configuration: %w", err)
+		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
 
 	return map[string]func(bool) error{
