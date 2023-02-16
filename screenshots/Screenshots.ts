@@ -12,7 +12,7 @@ import { PreferencesPage } from '../e2e/pages/preferences';
 import type { Page } from '@playwright/test';
 
 interface ScreenshotsOptions {
-  directory?: string;
+  directory: string;
   isOsCommand?: boolean;
 }
 
@@ -26,37 +26,29 @@ export class Screenshots {
   protected windowTitle = '';
   private screenshotIndex = 0;
   readonly page: Page;
-  readonly directory: string | undefined;
-  readonly screenshotDirectory: string | undefined;
+  readonly directory: string;
 
-  constructor(page: Page, opt?: ScreenshotsOptions) {
+  constructor(page: Page, opt: ScreenshotsOptions) {
     this.page = page;
-    if (opt?.directory) {
-      const { directory } = opt;
+    const { directory } = opt;
 
-      this.directory = directory === undefined || directory === null ? '' : `${ directory }/`;
-      this.screenshotDirectory = path.resolve(__dirname, 'output', os.platform(), this.directory);
-    }
+    this.directory = path.resolve(__dirname, 'output', os.platform(), directory);
     if (opt?.isOsCommand) {
       this.isOsCommand = opt.isOsCommand;
     }
   }
 
   protected buildPath(title: string): string {
-    if (!this.screenshotDirectory) {
-      return '';
-    }
-
-    return path.resolve(this.screenshotDirectory, `${ this.screenshotIndex++ }_${ title }.png`);
+    return path.resolve(this.directory, `${ this.screenshotIndex++ }_${ title }.png`);
   }
 
   protected async createScreenshotsDirectory() {
-    if (!this.screenshotDirectory) {
+    if (!this.directory) {
       return;
     }
 
     await fs.promises.mkdir(
-      this.screenshotDirectory,
+      this.directory,
       { recursive: true },
     );
   }
@@ -111,7 +103,7 @@ export class Screenshots {
 }
 
 export class MainWindowScreenshots extends Screenshots {
-  constructor(page: Page, opt?: ScreenshotsOptions) {
+  constructor(page: Page, opt: ScreenshotsOptions) {
     super(page, opt);
     this.windowTitle = 'Rancher Desktop';
   }
@@ -130,7 +122,7 @@ export class MainWindowScreenshots extends Screenshots {
 export class PreferencesScreenshots extends Screenshots {
   readonly preferencePage: PreferencesPage;
 
-  constructor(page: Page, preferencePage: PreferencesPage, opt?: ScreenshotsOptions) {
+  constructor(page: Page, preferencePage: PreferencesPage, opt: ScreenshotsOptions) {
     super(page, opt);
     this.preferencePage = preferencePage;
     this.windowTitle = 'Rancher Desktop - Preferences';
