@@ -208,6 +208,19 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
     }
   });
 
+  if (Shortcuts.isRegistered(window)) {
+    return window;
+  }
+
+  Shortcuts.register(
+    window,
+    { key: 'Escape' },
+    () => {
+      window.close();
+    },
+    'Close dialog',
+  );
+
   return window;
 }
 
