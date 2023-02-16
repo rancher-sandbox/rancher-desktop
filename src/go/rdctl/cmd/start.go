@@ -82,10 +82,10 @@ func doStartCommand(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	if applicationPath == "" {
-		applicationPath = utils.GetRDPath()
-		if applicationPath == "" {
-			return fmt.Errorf("could not locate main Rancher Desktop executable; please retry with the --path option")
+	if !cmd.Flags().Changed("path") {
+		applicationPath, err = utils.GetRDPath()
+		if err != nil {
+			return fmt.Errorf("failed to locate main Rancher Desktop executable: %w\nplease retry with the --path option", err)
 		}
 	}
 	return launchApp(applicationPath, commandLineArgs)

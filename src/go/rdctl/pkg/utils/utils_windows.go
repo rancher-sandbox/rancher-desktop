@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -9,15 +10,21 @@ import (
 
 // Returns the absolute path to the Rancher Desktop executable.
 // Returns an empty string if the executable was not found.
-func GetRDPath() string {
-	rdctlPath, err := os.Executable()
-	if err == nil {
-		normalParentPath := getParentDir(rdctlPath, 5)
-		candidatePath := CheckExistence(filepath.Join(normalParentPath, "Rancher Desktop.exe"), 0)
-		if candidatePath != "" {
-			return candidatePath
-		}
+func GetRDPath() (string, error) {
+	rdctlSymlinkPath, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("failed to get path to rdctl: %w", err)
 	}
+	rdctlPath, err := filepath.EvalSymlinks(rdctlSymlinkPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
+	}
+	normalParentPath := getParentDir(rdctlPath, 5)
+	candidatePath := CheckExistence(filepath.Join(normalParentPath, "Rancher Desktop.exe"), 0)
+	if candidatePath != "" {
+		return candidatePath
+	}
+
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		homedir = ""

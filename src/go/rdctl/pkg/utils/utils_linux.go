@@ -1,20 +1,32 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
-// Returns the absolute path to the Rancher Desktop executable.
-// Returns an empty string if the executable was not found.
-func GetRDPath() string {
-	rdctlPath, err := os.Executable()
-	if err == nil {
-		normalParentPath := getParentDir(rdctlPath, 5)
-		candidatePath := CheckExistence(filepath.Join(normalParentPath, "rancher-desktop"), 0o111)
-		if candidatePath != "" {
-			return candidatePath
+// Returns the absolute path to the Rancher Desktop executable,
+// or an error if it was unable to find Rancher Desktop.
+func GetRDPath() (string, error) {
+	rdctlSymlinkPath, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("failed to get path to rdctl: %w", err)
+	}
+	rdctlPath, err := filepath.EvalSymlinks(rdctlSymlinkPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
+	}
+	normalParentPath := getParentDir(rdctlPath, 5)
+	candidatePaths := []string{
+		filepath.Join(normalParentPath, "rancher-desktop"),
+		"/opt/rancher-desktop/rancher-desktop",
+	}
+	for _, candidatePath := range candidatePaths {
+		if len(CheckExistence(candidatePath, 0o111)) > 0 {
+			return candidatePath, nil
 		}
 	}
-	return CheckExistence("/opt/rancher-desktop/rancher-desktop", 0o111)
+	return "", errors.New("search locations exhausted")
 }
