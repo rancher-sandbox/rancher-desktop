@@ -27,6 +27,7 @@ export class Screenshots {
   private screenshotIndex = 0;
   readonly page: Page;
   readonly directory: string | undefined;
+  readonly screenshotDirectory: string | undefined;
 
   constructor(page: Page, opt?: ScreenshotsOptions) {
     this.page = page;
@@ -34,6 +35,7 @@ export class Screenshots {
       const { directory } = opt;
 
       this.directory = directory === undefined || directory === null ? '' : `${ directory }/`;
+      this.screenshotDirectory = path.resolve(__dirname, 'output', os.platform(), this.directory);
     }
     if (opt?.isOsCommand) {
       this.isOsCommand = opt.isOsCommand;
@@ -41,16 +43,20 @@ export class Screenshots {
   }
 
   protected buildPath(title: string): string {
-    return `screenshots/output/${ os.platform() }/${ this.directory }${ this.screenshotIndex++ }_${ title }.png`;
+    if (!this.screenshotDirectory) {
+      return '';
+    }
+
+    return path.resolve(this.screenshotDirectory, `${ this.screenshotIndex++ }_${ title }.png`);
   }
 
   protected async createScreenshotsDirectory() {
-    if (!this.directory) {
+    if (!this.screenshotDirectory) {
       return;
     }
 
     await fs.promises.mkdir(
-      path.resolve(__dirname, this.directory),
+      this.screenshotDirectory,
       { recursive: true },
     );
   }
