@@ -44,6 +44,17 @@ export class Screenshots {
     return `screenshots/output/${ os.platform() }/${ this.directory }${ this.screenshotIndex++ }_${ title }.png`;
   }
 
+  protected async createScreenshotsDirectory() {
+    if (!this.directory) {
+      return;
+    }
+
+    await fs.promises.mkdir(
+      path.resolve(__dirname, this.directory),
+      { recursive: true },
+    );
+  }
+
   protected osCommand(file: string): string {
     if (os.platform() === 'darwin') {
       return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ file }`;
@@ -63,6 +74,7 @@ export class Screenshots {
 
     if (!this.isOsCommand) {
       await this.page.screenshot(options);
+
       return;
     }
 
@@ -103,6 +115,8 @@ export class MainWindowScreenshots extends Screenshots {
       await navPage.navigateTo(tabName as any);
       await this.page.waitForTimeout(timeout);
     }
+
+    this.createScreenshotsDirectory();
     await this.screenshot(tabName);
   }
 }
@@ -123,6 +137,7 @@ export class PreferencesScreenshots extends Screenshots {
     await expect(tab.nav).toHaveClass('preferences-nav-item active');
     const path = subTabName ? `${ tabName }_${ subTabName }` : tabName;
 
+    this.createScreenshotsDirectory();
     await this.screenshot(path);
   }
 }
