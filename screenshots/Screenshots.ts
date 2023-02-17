@@ -55,7 +55,7 @@ export class Screenshots {
 
   protected osCommand(file: string): string {
     if (os.platform() === 'darwin') {
-      return `screencapture -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ file }`;
+      return `screencapture -o -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ file }`;
     }
     if (os.platform() === 'win32') {
       return `${ path.resolve(process.cwd(), 'resources', 'ShareX', 'sharex') } -p -s -ActiveWindow`;
