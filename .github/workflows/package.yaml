@@ -152,6 +152,9 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version: '^1.18'
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '16.x'
     - run: npm ci
     - uses: actions/download-artifact@v3
       if: runner.os == 'Windows'
