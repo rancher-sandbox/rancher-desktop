@@ -2,7 +2,7 @@ EXE=""
 PLATFORM=$OS
 if is_windows; then
     PLATFORM=linux
-    if [ -n "${RD_USE_WINDOWS_EXE:-}" ]; then
+    if using_windows_exe; then
         EXE=".exe"
         PLATFORM=win32
     fi
@@ -21,9 +21,15 @@ elif is_windows; then
 fi
 
 if is_macos; then
-    CRED_HELPER="docker-credential-osxkeychain"
+    CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-osxkeychain"
 elif is_linux; then
-    CRED_HELPER="docker-credential-pass"
+    CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-pass"
+elif is_windows; then
+    if using_windows_exe; then
+        CRED_HELPER="$PATH_RESOURCES/win32/bin/docker-credential-wincred.exe"
+    else
+        CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-pass"
+    fi
 fi
 
 if is_windows; then
@@ -75,4 +81,7 @@ rdshell() {
 }
 rdsudo() {
     rdshell sudo "$@"
+}
+rc_service() {
+    rdsudo $RC_SERVICE "$@"
 }
