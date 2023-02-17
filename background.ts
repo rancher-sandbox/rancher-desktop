@@ -165,6 +165,7 @@ Electron.app.whenReady().then(async() => {
       }
     }
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
+    await integrationManager.enforce();
     mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already
@@ -178,7 +179,6 @@ Electron.app.whenReady().then(async() => {
       return;
     }
 
-    await integrationManager.enforce();
     await doFirstRunDialog();
 
     if (gone) {
