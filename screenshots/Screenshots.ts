@@ -33,7 +33,7 @@ export class Screenshots {
     const { directory } = opt;
 
     this.directory = path.resolve(__dirname, 'output', os.platform(), directory);
-    if (opt?.isOsCommand) {
+    if (typeof (opt?.isOsCommand) !== 'undefined' ) {
       this.isOsCommand = opt.isOsCommand;
     }
   }
