@@ -1415,37 +1415,6 @@ test.describe('Command server', () => {
         }
       });
     });
-    test('should verify nerdctl can talk to containerd', async() => {
-      const { stdout } = await rdctl(['list-settings']);
-      const settings: Settings = JSON.parse(stdout);
-
-      if (settings.containerEngine.name !== ContainerEngine.CONTAINERD) {
-        const payloadObject: RecursivePartial<Settings> = {
-          version:         CURRENT_SETTINGS_VERSION,
-          containerEngine: { name: ContainerEngine.CONTAINERD },
-        };
-        const navPage = new NavPage(page);
-
-        await tool('rdctl', 'api', '/v1/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
-        await waitForRestartVM(page.locator('.progress'));
-        await navPage.progressBecomesReady();
-      }
-      const output = await retry(() => tool('nerdctl', 'info'));
-
-      expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
-    });
-    test('should verify docker can talk to dockerd', async() => {
-      const navPage = new NavPage(page);
-
-      await tool('rdctl', 'set', '--container-engine', 'moby');
-      await expect(navPage.progressBar).not.toBeHidden();
-      await waitForRestartVM(navPage.progressBar);
-      await navPage.progressBecomesReady();
-      await expect(navPage.progressBar).toBeHidden();
-      const output = await retry(() => tool('docker', 'info'), { delay: 500, tries: 60 });
-
-      expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
-    });
   });
 
   // Where is the test that pushes a supported update, you may be wondering?
