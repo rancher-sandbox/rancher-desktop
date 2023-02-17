@@ -7,9 +7,14 @@ while [ -L "${scriptname}" ]; do
 done
 scriptdir="$(cd "$(dirname "${scriptname}")" && pwd)"
 
-if ! LIMA_HOME="$HOME/Library/Application Support/rancher-desktop/lima" "${scriptdir}/../lima/bin/limactl" ls --json | grep '"name":"0"' | grep -q '"status":"Running"'; then
-  echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl";
-  exit 1
-else
-  "${scriptdir}/rdctl" shell sudo nerdctl "$@"
-fi
+export LIMA_HOME="$HOME/Library/Application Support/rancher-desktop/lima"
+
+status=$( "${scriptdir}/../lima/bin/limactl" ls 0 -f '{{.Status}}' 2>/dev/null)
+case "${status:-Nonexistent}" in
+  Running) "${scriptdir}/rdctl" shell sudo nerdctl "$@" ;;
+  Nonexistent) echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl" ;;
+  Stopped) echo "The Rancher Desktop VM is currently stopped. Either Rancher Desktop is not running, or [Troubleshooting|Restart] should be run." ;;
+  Broken) echo 'The Rancher Desktop VM is corrupted. Running `rdctl factory-reset` should fix it (workloads will be deleted).' ;;
+  *) echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl";
+     echo "Unexpected VM status of ${status}" ;;
+esac
