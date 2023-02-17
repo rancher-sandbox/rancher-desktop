@@ -1,3 +1,5 @@
+import childProcess from 'child_process';
+import os from 'os';
 import * as path from 'path';
 
 import type { Config, PlaywrightTestOptions } from '@playwright/test';
@@ -18,5 +20,15 @@ const config: Config<PlaywrightTestOptions> = {
   reporter:      'list',
   use:           { colorScheme },
 };
+
+if (os.platform() === 'darwin') {
+  childProcess.execSync(`osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to ${ colorScheme === 'dark' }'`);
+}
+
+if (os.platform() === 'win32') {
+  const mode = process.env.THEME === 'dark' ? '0' : '1';
+
+  childProcess.execSync(`reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize /v AppsUseLightTheme /t REG_DWORD /f /d ${ mode }`);
+}
 
 export default config;

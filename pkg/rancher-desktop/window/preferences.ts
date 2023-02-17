@@ -1,9 +1,12 @@
+import path from 'path';
+
 import { app, dialog } from 'electron';
 
 import { webRoot, createWindow } from '.';
 
 import { Help } from '@pkg/config/help';
 import { NavItemName } from '@pkg/config/transientSettings';
+import paths from '@pkg/utils/paths';
 import { Shortcuts } from '@pkg/utils/shortcuts';
 import { getVersion } from '@pkg/utils/version';
 
@@ -39,6 +42,7 @@ export function openPreferences() {
     resizable:       false,
     minimizable:     false,
     show:            false,
+    icon:            path.join(paths.resources, 'icons', 'logo-square-512.png'),
     webPreferences:  {
       devTools:         !app.isPackaged,
       nodeIntegration:  true,

@@ -1,4 +1,5 @@
 import os from 'os';
+import path from 'path';
 
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
@@ -8,6 +9,7 @@ import * as K8s from '@pkg/backend/k8s';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 import { Shortcuts } from '@pkg/utils/shortcuts';
 
 const console = Logging.background;
@@ -105,6 +107,8 @@ export function openMain() {
     {
       width:          940,
       height:         600,
+      resizable:      !process.env.MOCK_FOR_SCREENSHOTS, // remove window's shadows while taking screenshots
+      icon:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
       webPreferences: {
         devTools:         !app.isPackaged,
         nodeIntegration:  true,

@@ -69,7 +69,8 @@ test.describe.serial('Main App Test', () => {
     // show diagnostics badge
     await expect(diagnosticsPage.diagnostics).toBeVisible();
     await diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
-    await page.waitForTimeout(200);
+    // wait for the red bullet to appear on the Diagnostics page label
+    await page.waitForTimeout(1000);
 
     await screenshot.take('Diagnostics');
   });
@@ -91,18 +92,22 @@ test.describe.serial('Main App Test', () => {
     await e2ePreferences.application.automaticUpdatesCheckbox.click();
     await preferencesPage.waitForTimeout(200);
 
-    await screenshot.take('application', 'tabBehavior');
-
     if (!isWin) {
+      await screenshot.take('application', 'tabBehavior');
+
+      await e2ePreferences.application.nav.click();
       await e2ePreferences.application.tabEnvironment.click();
       await expect(e2ePreferences.application.pathManagement).toBeVisible();
       await screenshot.take('application', 'tabEnvironment');
 
       await screenshot.take('virtualMachine');
+    } else {
+      await screenshot.take('application');
     }
 
     await screenshot.take('containerEngine', 'tabGeneral');
 
+    await e2ePreferences.containerEngine.nav.click();
     await e2ePreferences.containerEngine.tabAllowedImages.click();
     await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
     await screenshot.take('containerEngine', 'tabAllowedImages');
