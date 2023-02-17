@@ -49,7 +49,7 @@ provision:
   script: |
     #!/bin/sh
     set -o errexit -o nounset -o xtrace
-    sed -i 's/#MaxSessions 10/MaxSessions 25/g' /etc/ssh/sshd_config
+    sed -i -E 's/^#?MaxSessions +[0-9]+/MaxSessions 25/g' /etc/ssh/sshd_config
     rc-service --ifstarted sshd reload
 - # Persist /root directory on data volume
   mode: system
