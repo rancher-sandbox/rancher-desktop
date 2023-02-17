@@ -25,9 +25,9 @@ func EnsureAutostart(autostartDesired bool) error {
 	defer autostartKey.Close()
 
 	if autostartDesired {
-		rancherDesktopPath := utils.GetRDPath()
-		if rancherDesktopPath == "" {
-			return errors.New("failed to get path to Rancher Desktop.exe")
+		rancherDesktopPath, err := utils.GetRDPath()
+		if err != nil {
+			return fmt.Errorf("failed to get path to Rancher Desktop.exe: %w", err)
 		}
 		err = autostartKey.SetStringValue(nameValue, rancherDesktopPath)
 		if err != nil {

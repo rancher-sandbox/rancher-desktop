@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,9 +21,13 @@ func GetRDPath() (string, error) {
 		return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
 	}
 	normalParentPath := getParentDir(rdctlPath, 5)
-	candidatePath := CheckExistence(filepath.Join(normalParentPath, "Rancher Desktop.exe"), 0)
-	if candidatePath != "" {
-		return candidatePath
+	candidatePath := filepath.Join(normalParentPath, "Rancher Desktop.exe")
+	usable, err := checkUsability(candidatePath, false)
+	if err != nil {
+		return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
+	}
+	if usable {
+		return candidatePath, nil
 	}
 
 	homedir, err := os.UserHomeDir()
@@ -40,17 +45,21 @@ func GetRDPath() (string, error) {
 	if err == nil {
 		dataPaths = append(dataPaths, dir)
 	}
-	// Add these two paths if the above two fail to find where the program was installed
 	dataPaths = append(
 		dataPaths,
 		filepath.Join(homedir, "AppData", "Local"),
 		filepath.Join(homedir, "AppData", "Roaming"),
 	)
 	for _, dataDir := range dataPaths {
-		candidatePath := CheckExistence(filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
-		if candidatePath != "" {
-			return candidatePath
+		candidatePath := filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
+		usable, err := checkUsability(candidatePath, false)
+		if err != nil {
+			return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
+		}
+		if usable {
+			return candidatePath, nil
 		}
 	}
-	return ""
+
+	return "", errors.New("search locations exhausted")
 }

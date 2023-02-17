@@ -1,35 +1,49 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-// Get the parent (or grandparent, or great-grandparent...) directory of fullPath.
-// numberTimes is the number of steps to ascend in the directory hierarchy.
-func getParentDir(fullPath string, numberTimes int) string {
+// Get the steps-th parent directory of fullPath.
+func getParentDir(fullPath string, steps int) string {
 	fullPath = filepath.Clean(fullPath)
-	for ; numberTimes > 0; numberTimes-- {
+	for ; steps > 0; steps-- {
 		fullPath = filepath.Dir(fullPath)
 	}
 	return fullPath
 }
 
-/**
- * Verify the path exists. For Linux pass in mode bits to guarantee the file is executable (for at least one
- * category of user). Note that on macOS the candidate is a directory, so never pass in mode bits.
- * And mode bits don't make sense on Windows.
- */
-func CheckExistence(candidatePath string, modeBits fs.FileMode) string {
-	stat, err := os.Stat(candidatePath)
+// Verify that the candidatePath is usable as a Rancher Desktop "executable". This means:
+//   - check that candidatePath exists
+//   - if checkExecutability is true, check that candidatePath is a regular file,
+//     and that it is executable
+//
+// Note that candidatePath may not always be a file; in macOS, it may be a
+// .app directory.
+func checkUsability(candidatePath string, checkExecutability bool) (bool, error) {
+	statResult, err := os.Stat(candidatePath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	}
 	if err != nil {
-		return ""
+		return false, fmt.Errorf("failed to get info on %q: %w", candidatePath, err)
 	}
-	if modeBits != 0 && (!stat.Mode().IsRegular() || stat.Mode().Perm()&modeBits == 0) {
-		// The modeBits check is only for executability -- we only care if at least one of the three
-		// `x` mode bits is on. So this check isn't used for a general permission-mode-bit check.
-		return ""
+
+	if !checkExecutability {
+		return true, nil
 	}
-	return candidatePath
+
+	if !statResult.Mode().IsRegular() {
+		return false, nil
+	}
+
+	if statResult.Mode().Perm()&0o111 == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

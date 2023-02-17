@@ -89,9 +89,9 @@ func getDesiredLaunchAgentFileContents() ([]byte, error) {
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get path to rdctl: %w", err)
 	}
-	rancherDesktopPath := utils.GetDarwinRDPath(rdctlPath)
-	if rancherDesktopPath == "" {
-		return []byte{}, errors.New("failed to get path to main Rancher Desktop executable")
+	rancherDesktopPath, err := utils.GetRDPath()
+	if err != nil {
+		return []byte{}, errors.New("failed to get path to main Rancher Desktop executable: %w", err)
 	}
 
 	// get desired contents of LaunchAgent file

@@ -24,7 +24,11 @@ func GetRDPath() (string, error) {
 		"/opt/rancher-desktop/rancher-desktop",
 	}
 	for _, candidatePath := range candidatePaths {
-		if len(CheckExistence(candidatePath, 0o111)) > 0 {
+		usable, err := checkUsability(candidatePath, true)
+		if err != nil {
+			return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
+		}
+		if usable {
 			return candidatePath, nil
 		}
 	}
