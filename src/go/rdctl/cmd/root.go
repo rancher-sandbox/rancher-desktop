@@ -71,7 +71,10 @@ func init() {
 
 func versionCommand(version string, command string) string {
 	if version == "" {
-		return fmt.Sprintf("%s/%s", apiVersion, command)
+		version = apiVersion
+	}
+	if strings.HasPrefix(command, "/") {
+		return fmt.Sprintf("%s%s", version, command)
 	}
 	return fmt.Sprintf("%s/%s", version, command)
 }
