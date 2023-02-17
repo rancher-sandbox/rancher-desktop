@@ -7,8 +7,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"strings"
 )
+
+func runCleanups(cleanups []cleanupFunc) error {
+	var errors *multierror.Error
+
+	for _, cleanup := range cleanups {
+		if err := cleanup(); err != nil {
+			errors = multierror.Append(errors, err)
+		}
+	}
+
+	return errors.ErrorOrNil()
+}
 
 // mountArgProcessor implements the details for handling the argument for
 // `nerdctl run --mount=...`
@@ -49,4 +62,49 @@ func mountArgProcessor(arg string, mounter func(string) (string, error)) (string
 		result = fmt.Sprintf("%s,%s", result, strings.Join(chunk, "="))
 	}
 	return result[1:], nil, nil // Skip the initial "," we added
+}
+
+// builderCacheProcessor implements the details for handling the argument for
+// `nerdctl builder build --cache-from=...` and
+// `nerdctl builder builder --cache-to=...`
+func builderCacheProcessor(arg string, inputMounter, outputMounter func(string) (string, []cleanupFunc, error)) (string, []cleanupFunc, error) {
+	var cleanups []cleanupFunc
+
+	// The arg is comma-separated args, with `type=` and `src=`, `dest=`
+	// If no type is given, nerdctl assume `type=registry`, which we can ignore.
+	// ref: https://github.com/containerd/nerdctl/blob/v1.2.0/pkg/cmd/builder/build.go#L333-L345
+	// Otherwise, for `src=` it's an input, and `dest=` is an output.
+	var parts []string
+	for _, part := range strings.Split(arg, ",") {
+		if strings.HasPrefix(part, "src=") {
+			srcPath := part[len("src="):]
+			fixedPath, newCleanups, err := inputMounter(srcPath)
+			if err != nil {
+				errors := multierror.Append(err, runCleanups(newCleanups))
+				if errors.Len() > 1 {
+					return "", nil, errors
+				}
+				return "", nil, errors.Unwrap()
+			}
+			parts = append(parts, "src="+fixedPath)
+			cleanups = append(cleanups, newCleanups...)
+		} else if strings.HasPrefix(part, "dest=") {
+			destPath := part[len("dest="):]
+			fixedPath, newCleanups, err := outputMounter(destPath)
+			if err != nil {
+				errors := multierror.Append(err, runCleanups(newCleanups))
+				if errors.Len() > 1 {
+					return "", nil, errors
+				}
+				return "", nil, errors.Unwrap()
+			}
+			parts = append(parts, "dest="+fixedPath)
+			cleanups = append(cleanups, newCleanups...)
+		} else {
+			parts = append(parts, part)
+		}
+	}
+
+	resultArg := strings.Join(parts, ",")
+	return resultArg, cleanups, nil
 }

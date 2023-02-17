@@ -225,3 +225,9 @@ func outputPathArgHandler(arg string) (string, []cleanupFunc, error) {
 	}
 	return file.Name(), []cleanupFunc{callback}, nil
 }
+
+// builderCacheArgHandler handles arguments for
+// `nerdctl builder build --cache-from=` and `nerdctl builder build --cache-to=`
+func builderCacheArgHandler(arg string) (string, []cleanupFunc, error) {
+	return builderCacheProcessor(arg, filePathArgHandler, outputPathArgHandler)
+}

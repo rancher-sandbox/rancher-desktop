@@ -284,6 +284,10 @@ func aliasCommand(alias, target string) {
 
 func init() {
 	// Set up the argument handlers
+	registerArgHandler("builder build", "--cache-from", builderCacheArgHandler)
+	registerArgHandler("builder build", "--cache-to", builderCacheArgHandler)
+	registerArgHandler("builder build", "--file", filePathArgHandler)
+	registerArgHandler("builder build", "--iidfile", outputPathArgHandler)
 	registerArgHandler("builder debug", "--file", filePathArgHandler)
 	registerArgHandler("builder debug", "-f", filePathArgHandler)
 	registerArgHandler("compose", "--file", filePathArgHandler)
