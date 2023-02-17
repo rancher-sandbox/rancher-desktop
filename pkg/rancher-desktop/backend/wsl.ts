@@ -1211,29 +1211,29 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
           this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
-          this.progressTracker.action('Writing K3s configuration', 50, async() => {
-            const k3sConf = {
-              PORT:                   config.kubernetes.port.toString(),
-              LOG_DIR:                await this.wslify(paths.logs),
-              'export IPTABLES_MODE': 'legacy',
-              ENGINE:                 config.containerEngine.name,
-              ADDITIONAL_ARGS:        config.kubernetes.options.traefik ? '' : '--disable traefik',
-              USE_CRI_DOCKERD:        BackendHelper.requiresCRIDockerd(config.containerEngine.name, config.kubernetes.version).toString(),
-            };
-
-            if (!config.kubernetes.options.flannel) {
-              console.log(`Disabling flannel and network policy`);
-              k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
-            }
-
-            await this.writeConf('k3s', k3sConf);
-          }),
         ];
 
         if (kubernetesVersion) {
           const version = kubernetesVersion;
 
           installerActions.push(
+            this.progressTracker.action('Writing K3s configuration', 50, async() => {
+              const k3sConf = {
+                PORT:                   config.kubernetes.port.toString(),
+                LOG_DIR:                await this.wslify(paths.logs),
+                'export IPTABLES_MODE': 'legacy',
+                ENGINE:                 config.containerEngine.name,
+                ADDITIONAL_ARGS:        config.kubernetes.options.traefik ? '' : '--disable traefik',
+                USE_CRI_DOCKERD:        BackendHelper.requiresCRIDockerd(config.containerEngine.name, version).toString(),
+              };
+
+              if (!config.kubernetes.options.flannel) {
+                console.log(`Disabling flannel and network policy`);
+                k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
+              }
+
+              await this.writeConf('k3s', k3sConf);
+            }),
             this.progressTracker.action('Installing k3s', 100, async() => {
               await this.kubeBackend.deleteIncompatibleData(version);
               await this.kubeBackend.install(config, version, false);
