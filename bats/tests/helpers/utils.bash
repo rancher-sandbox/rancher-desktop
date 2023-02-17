@@ -1,6 +1,7 @@
 is_true() {
     # case-insensitive check; false values: '', '0', 'no', and 'false'
-    if [[ "${1,,}" =~ ^(0|no|false)?$ ]]; then
+    local value="$(echo "$1" | tr '[A-Z]' '[a-z]')"
+    if [[ "$value" =~ ^(0|no|false)?$ ]]; then
         false
     else
         true

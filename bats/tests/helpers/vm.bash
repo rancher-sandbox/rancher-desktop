@@ -7,19 +7,6 @@ wait_for_shell() {
     rdctl shell sync
 }
 
-assert_rd_is_stopped() {
-    if is_macos; then
-        # ! pgrep -f "Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
-        osascript -e 'if application "Rancher Desktop" is running then error 1' 2>/dev/null
-    elif is_linux; then
-        ! pgrep rancher-desktop &>/dev/null
-    fi
-}
-
-wait_for_shutdown() {
-    try --max 18 --delay 5 assert_rd_is_stopped
-}
-
 factory_reset() {
     rdctl factory-reset
 
@@ -29,23 +16,6 @@ factory_reset() {
 
         sudo iptables -F
         sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
-    fi
-
-    if is_unix; then
-        override="$LIMA_HOME/_config/override.yaml"
-        mkdir -p "$(dirname "$override")"
-        touch "$override"
-
-        # hack for tests/registry/creds.bats because we can't configure additional
-        # hosts via settings.yaml
-        if ! grep -q registry.internal: "$override"; then
-            cat <<EOF >>"$override"
-
-hostResolver:
-  hosts:
-    registry.internal: 192.168.5.15
-EOF
-        fi
     fi
 
     image_allow_list="$(bool $RD_USE_IMAGE_ALLOW_LIST)"
@@ -88,17 +58,15 @@ start_container_engine() {
         set - --application.admin-access=false "$@"
     fi
     if is_unix; then
-        set - --path-management-strategy rcfiles "$@"
+        set - --application.path-management-strategy rcfiles "$@"
     fi
-
     # Detach `rdctl start` because on Windows the process may not exit until
     # Rancher Desktop itself quits.
     rdctl start \
           --application.updater.enabled=false \
           --container-engine="$RD_CONTAINER_ENGINE" \
           --kubernetes-enabled=false \
-          "$@" \
-          &
+          "$@" &
 }
 
 start_kubernetes() {
