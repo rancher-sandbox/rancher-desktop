@@ -92,17 +92,20 @@ test.describe.serial('Main App Test', () => {
     await e2ePreferences.application.automaticUpdatesCheckbox.click();
     await preferencesPage.waitForTimeout(200);
 
-    if (!isWin) {
-      await screenshot.take('application', 'tabBehavior');
+    await screenshot.take('application', 'tabGeneral');
 
+    await e2ePreferences.application.nav.click();
+    await e2ePreferences.application.tabBehavior.click();
+    await expect(e2ePreferences.application.autoStart).toBeVisible();
+    await screenshot.take('application', 'tabBehavior');
+
+    if (!isWin) {
       await e2ePreferences.application.nav.click();
       await e2ePreferences.application.tabEnvironment.click();
       await expect(e2ePreferences.application.pathManagement).toBeVisible();
       await screenshot.take('application', 'tabEnvironment');
 
       await screenshot.take('virtualMachine');
-    } else {
-      await screenshot.take('application');
     }
 
     await screenshot.take('containerEngine', 'tabGeneral');
