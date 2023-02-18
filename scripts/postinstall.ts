@@ -40,12 +40,12 @@ const windowsDependencies = [
 // Dependencies that are specific to WSL.
 const wslDependencies = [
   new HostResolverPeer(),
+  new tools.GuestAgent(),
 ];
 
 // Dependencies that are specific to WSL and Lima VMs.
 const vmDependencies = [
   new tools.Trivy(),
-  new tools.GuestAgent(),
 ];
 
 // Dependencies that are specific to hosts.

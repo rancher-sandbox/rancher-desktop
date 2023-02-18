@@ -22,7 +22,6 @@ import {
   Architecture, BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
-import K3sHelper from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
@@ -37,7 +36,6 @@ import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
-import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
 import { ContainerEngine } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
@@ -1516,28 +1514,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.execCommand({ root: true }, 'mv', './trivy', '/usr/local/bin/trivy');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined) {
-    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
-
-    await Promise.all([
-      (async() => {
-        await this.lima('copy', guestAgentPath, `${ MACHINE_NAME }:./rancher-desktop-guestagent`);
-        await this.execCommand({ root: true }, 'mv', './rancher-desktop-guestagent', '/usr/local/bin/rancher-desktop-guestagent');
-      })(),
-      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
-      (async() => {
-        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
-
-        await this.writeConf('rancher-desktop-guestagent', {
-          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
-          GUESTAGENT_IPTABLES:   'false',
-          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
-        });
-      })(),
-    ]);
-    await this.execCommand({ root: true }, '/sbin/rc-service', 'rancher-desktop-guestagent', 'restart');
-  }
-
   /**
    * Start the VM.  If the machine is already started, this does nothing.
    * Note that this does not start k3s.
@@ -1667,7 +1643,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await Promise.all([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
-          this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(kubernetesVersion)),
           this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {
             await this.writeFile('/etc/conf.d/qemu-binfmt', 'binfmt_flags="POCF"');
             await this.execCommand({ root: true }, '/sbin/rc-service', 'qemu-binfmt', 'restart');
