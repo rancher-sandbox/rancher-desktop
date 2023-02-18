@@ -1127,7 +1127,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               .replace('/var/log', logPath);
 
             await Promise.all([
-              await this.progressTracker.action('Installing the docker-credential helper', 10, async() => {
+              this.progressTracker.action('Installing the docker-credential helper', 10, async() => {
                 // This must run after /etc/rancher is mounted
                 await this.installCredentialHelper();
               }),
