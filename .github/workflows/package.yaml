@@ -52,6 +52,11 @@ jobs:
     - name: Flag build for M1
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
+    - name: Upgrade npm
+      # We do this to avoid https://github.com/npm/cli/issues/3079
+      run: |
+        npm install -g npm@9
+        npm --version
     - run: npm ci
     - run: npm run build
     - run: npm run package -- --${{ matrix.platform }} --publish=never
