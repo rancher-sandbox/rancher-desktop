@@ -27,6 +27,10 @@ export default Vue.extend({
     flex-direction: column;
     max-height: 100%;
 
+    ::v-deep .tabs:focus .tab.active {
+      text-decoration: none;
+    }
+
     ::v-deep .tabs {
       border-bottom: 1px solid var(--border);
 
