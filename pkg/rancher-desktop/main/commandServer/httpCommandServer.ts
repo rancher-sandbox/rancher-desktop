@@ -67,6 +67,7 @@ export class HttpCommandServer {
     },
     v1: {
       GET: {
+        about:                 this.about,
         settings:              this.listSettings,
         diagnostic_categories: this.diagnosticCategories,
         diagnostic_ids:        this.diagnosticIDsForCategory,
@@ -292,6 +293,16 @@ export class HttpCommandServer {
 
   protected invalidAPIVersionCallNeedsV1(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     return this.invalidAPIVersionCall('v1', request, response, context);
+  }
+
+  protected about(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    const msg = 'The API is currently at version 1, but is still considered internal and experimental, and is subject to change without any advance notice.';
+
+    console.debug('about: succeeded 200');
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.write(msg);
+
+    return Promise.resolve();
   }
 
   protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {

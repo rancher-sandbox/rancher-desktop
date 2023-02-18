@@ -44,6 +44,9 @@ Two ways of specifying a body:
 1. --input FILE: For example, '--input .../rancher-desktop/settings.json'. Specify '-' for standard input.
 
 2. --body|-b string: For the 'PUT /settings' endpoint, this must be a valid JSON string.
+
+The API is currently at version 1, but is still considered internal and experimental, and
+is subject to change without any advance notice.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return doAPICommand(cmd, args)
