@@ -1150,6 +1150,21 @@ test.describe('Command server', () => {
         expect(stderr).not.toContain('Usage:');
       });
 
+      test('complains on invalid unversioned endpoint', async() => {
+        const endpoint = '/v1/shazbat';
+        const { stdout, stderr, error } = await rdctl(['api', endpoint]);
+
+        expect({
+          stdout, stderr, error,
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringContaining(`Unknown command: GET ${ endpoint }`),
+          stdout: expect.stringMatching(/{".+?":".+"}/),
+        });
+        expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found' });
+        expect(stderr).not.toContain('Usage:');
+      });
+
       test.describe('getting endpoints', () => {
         test('no paths should return all supported endpoints', async() => {
           const { stdout, stderr } = await rdctl(['api', '/']);
