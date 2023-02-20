@@ -109,6 +109,7 @@ export default class SettingsValidator {
         port:    this.checkNumber(1, 65535),
         enabled: this.checkBoolean,
         options: { traefik: this.checkBoolean, flannel: this.checkBoolean },
+        ingress: { localhostOnly: this.checkPlatform('win32', this.checkBoolean) },
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {

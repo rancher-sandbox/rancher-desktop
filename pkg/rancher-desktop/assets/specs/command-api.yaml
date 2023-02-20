@@ -320,6 +320,15 @@ components:
                   type: boolean
                   x-rd-aliases: [flannel-enabled]
                   x-rd-usage: use flannel networking; disable to install your own CNI
+            ingress:
+              type: object
+              properties:
+                localhostOnly:
+                  type: boolean
+                  x-rd-platforms: ['win32']
+                  x-rd-usage: >-
+                    Control whether K8s services are bound to 127.0.0.1 only or 0.0.0.0.
+                    Applies to NodePort and LoadBalancer types, only.
         experimental:
           type: object
           properties:

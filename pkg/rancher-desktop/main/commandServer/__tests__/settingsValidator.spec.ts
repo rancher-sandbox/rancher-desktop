@@ -83,6 +83,7 @@ describe(SettingsValidator, () => {
       'application.adminAccess':                      'linux',
       'experimental.virtualMachine.socketVMNet':      'darwin',
       'experimental.virtualMachine.networkingTunnel': 'win32',
+      'kubernetes.ingress.localhostOnly':             'win32',
       'virtualMachine.hostResolver':                  'win32',
       'virtualMachine.memoryInGB':                    'darwin',
       'virtualMachine.numberCPUs':                    'linux',

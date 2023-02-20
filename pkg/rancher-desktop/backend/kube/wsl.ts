@@ -315,6 +315,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         'kubernetes.options.flannel':            undefined,
         'virtualMachine.hostResolver':           undefined,
         'containerEngine.allowedImages.enabled': undefined,
+        'kubernetes.ingress.localhostOnly':      undefined,
       },
       extras,
     ));
