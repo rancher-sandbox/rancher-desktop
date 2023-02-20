@@ -95,11 +95,9 @@ export default {
 
       if (direction) {
         const dir = (direction === 'forward' ? 1 : -1);
-        const idx = this.paths.indexOf(this.$router.currentRoute.path) + dir;
+        const idx = (this.paths.length + this.paths.indexOf(this.$router.currentRoute.path) + dir) % this.paths.length;
 
-        if (idx >= 0 && idx < this.paths.length) {
-          this.$router.push({ path: this.paths[idx] });
-        }
+        this.$router.push({ path: this.paths[idx] });
       }
     },
   },

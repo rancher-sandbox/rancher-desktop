@@ -134,11 +134,9 @@ export default Vue.extend({
 
       if (direction) {
         const dir = (direction === 'forward' ? 1 : -1);
-        const idx = this.navItems.indexOf(this.getCurrentNavItem) + dir;
+        const idx = (this.navItems.length + this.navItems.indexOf(this.getCurrentNavItem) + dir) % this.navItems.length;
 
-        if (idx >= 0 && idx < this.navItems.length) {
-          await this.commitNavItem(this.navItems[idx]);
-        }
+        await this.commitNavItem(this.navItems[idx]);
       }
     },
   },
