@@ -99,7 +99,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "7.19.1",
-    "@electron/asar": "3.2.2",
+    "@electron/asar": "3.2.3",
     "@nuxt/types": "2.15.8",
     "@nuxt/typescript-build": "2.1.0",
     "@nuxtjs/eslint-config": "10.0.0",
