@@ -191,11 +191,7 @@ class ShortcutsImpl {
       return false;
     }
 
-    if (this.windows[id]) {
-      return true;
-    }
-
-    return false;
+    return !!this.windows[id];
   }
 }
 
