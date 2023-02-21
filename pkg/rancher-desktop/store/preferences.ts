@@ -34,6 +34,36 @@ const uri = (port: number) => `http://localhost:${ port }/v1/settings`;
 
 const proposedSettings = (port: number) => `http://localhost:${ port }/v1/propose_settings`;
 
+/**
+ * Creates an object composed of active WSL Integrations.
+ * @param integrations: The source collection, containing all WSL integrations.
+ * @returns Returns a new object, containing only active WSL Integrations.
+ */
+const pickWslIntegrations = (integrations: Record<string, boolean>) => {
+  const someVal = Object.fromEntries(
+    Object
+      .entries(integrations)
+      .filter(([_key, val]) => val === true),
+  );
+
+  return someVal;
+};
+
+/**
+ * Normalizes preferences for consistent usage between API and UI
+ * @param preferences: The preferences object to normalize.
+ * @returns Returns a new object, containing normalized preferences data.
+ */
+const normalizePreferences = (preferences: Settings) => {
+  return {
+    ...preferences,
+    WSL: {
+      ...preferences.WSL,
+      integrations: pickWslIntegrations(preferences.WSL.integrations),
+    },
+  };
+};
+
 export const state: () => PreferencesState = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
@@ -110,7 +140,7 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }: PrefActionContext, args: CommitArgs) {
+  async commitPreferences({ dispatch, getters }: PrefActionContext, args: CommitArgs) {
     const {
       port, user, password, payload,
     } = args;
@@ -123,7 +153,7 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(payload ?? state.preferences),
+        body: JSON.stringify(payload ?? getters.getPreferencesNormalized),
       });
 
     await dispatch(
@@ -144,17 +174,13 @@ export const actions = {
   }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): Promise<void> {
     const { property, value } = args;
 
-    const newPreferences = _.set(_.cloneDeep(state.preferences), property, value);
+    commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
 
     await dispatch(
       'preferences/proposePreferences',
-      {
-        ...rootState.credentials.credentials as ServerState,
-        preferences: newPreferences,
-      },
+      { ...rootState.credentials.credentials as ServerState },
       { root: true },
     );
-    commit('SET_PREFERENCES', newPreferences);
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);
@@ -162,7 +188,9 @@ export const actions = {
   updateWslIntegrations({ commit, state }: PrefActionContext, args: {distribution: string, value: boolean}) {
     const { distribution, value } = args;
 
-    commit('SET_WSL_INTEGRATIONS', _.set(_.cloneDeep(state.wslIntegrations), distribution, value));
+    const integrations = _.set(_.cloneDeep(state.wslIntegrations), distribution, value);
+
+    commit('SET_WSL_INTEGRATIONS', integrations);
   },
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
@@ -178,12 +206,12 @@ export const actions = {
    * associated with the the preferences.
    */
   async proposePreferences(
-    { commit, state }: PrefActionContext,
+    { commit, state, getters }: PrefActionContext,
     {
       port, user, password, preferences,
     }: ProposePreferencesPayload,
   ): Promise<Severities> {
-    const proposal = preferences || state.preferences;
+    const proposal = preferences || getters.getPreferencesNormalized;
 
     const result = await fetch(
       proposedSettings(port),
@@ -237,8 +265,11 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   getPreferences(state: PreferencesState) {
     return state.preferences;
   },
-  isPreferencesDirty(state: PreferencesState) {
-    const isDirty = !_.isEqual(state.initialPreferences, state.preferences);
+  isPreferencesDirty(state: PreferencesState, getters) {
+    const isDirty = !_.isEqual(
+      state.initialPreferences,
+      getters.getPreferencesNormalized,
+    );
 
     ipcRenderer.send('preferences-set-dirty', isDirty);
 
@@ -258,5 +289,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   showMuted(state: PreferencesState) {
     return state.preferences.diagnostics.showMuted;
+  },
+  getPreferencesNormalized(state: PreferencesState) {
+    return normalizePreferences(state.preferences);
   },
 };
