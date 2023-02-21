@@ -23,13 +23,13 @@ export default Vue.extend({
   },
   computed: {
     patterns() {
-      return this.preferences.containerEngine.imageAllowList.patterns;
+      return this.preferences.containerEngine.allowedImages.patterns;
     },
     isAllowedImagesEnabled(): boolean {
-      return this.preferences.containerEngine.imageAllowList.enabled;
+      return this.preferences.containerEngine.allowedImages.enabled;
     },
     isAllowedImagesLocked(): boolean {
-      return this.preferences.containerEngine.imageAllowList.locked;
+      return this.preferences.containerEngine.allowedImages.locked;
     },
     allowedImagesLockedTooltip() {
       return this.t('allowedImages.locked.tooltip');
@@ -73,7 +73,7 @@ export default Vue.extend({
         :class="{
           'disabled': isAllowedImagesLocked
         }"
-        @input="onChange('containerEngine.imageAllowList.enabled', $event)"
+        @input="onChange('containerEngine.allowedImages.enabled', $event)"
       />
       <i
         v-if="isAllowedImagesLocked"
@@ -91,7 +91,7 @@ export default Vue.extend({
       :readonly="!isAllowedImagesEnabled || isAllowedImagesLocked"
       :actions-position="'left'"
       :error-messages="patternsErrorMessages"
-      @change="onChange('containerEngine.imageAllowList.patterns', $event)"
+      @change="onChange('containerEngine.allowedImages.patterns', $event)"
       @type:item="onType($event)"
       @errors="onDuplicate($event.duplicate)"
     />

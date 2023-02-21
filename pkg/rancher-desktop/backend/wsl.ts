@@ -22,7 +22,7 @@ import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
-import CONFIGURE_IMAGE_ALLOW_LIST from '@pkg/assets/scripts/configure-image-allow-list';
+import CONFIGURE_IMAGE_ALLOW_LIST from '@pkg/assets/scripts/configure-allowed-images';
 import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@pkg/assets/scripts/dnsmasq-generate.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers';
@@ -1187,20 +1187,20 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
               this.progressTracker.action('Configuring image proxy', 50, async() => {
-                const imageAllowListConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
+                const allowedImagesConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
                 const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
 
                 await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
                 await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
                 await this.writeFile(`/etc/logrotate.d/openresty`, LOGROTATE_OPENRESTY_SCRIPT, 0o644);
 
-                await this.runInstallScript(CONFIGURE_IMAGE_ALLOW_LIST, 'configure-image-allow-list');
-                if (config.containerEngine.imageAllowList.enabled) {
-                  const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+                await this.runInstallScript(CONFIGURE_IMAGE_ALLOW_LIST, 'configure-allowed-images');
+                if (config.containerEngine.allowedImages.enabled) {
+                  const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.allowedImages);
 
-                  await this.writeFile(imageAllowListConf, patterns, 0o644);
+                  await this.writeFile(allowedImagesConf, patterns, 0o644);
                 } else {
-                  await this.execCommand({ root: true }, 'rm', '-f', imageAllowListConf);
+                  await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
                 }
               }),
               this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
@@ -1246,7 +1246,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
-        if (config.containerEngine.imageAllowList.enabled) {
+        if (config.containerEngine.allowedImages.enabled) {
           await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
         }
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.containerEngine.name === ContainerEngine.MOBY ? 'docker' : 'containerd'));

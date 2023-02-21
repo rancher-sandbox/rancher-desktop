@@ -85,7 +85,7 @@ skip_for_insecure_registry() {
         rdctl api -X PUT -b <<EOF settings
 {
   "containerEngine": {
-    "imageAllowList": {
+    "allowedImages": {
       "enabled": true,
       "patterns": ["$REGISTRY", "docker.io/registry"]
     }
@@ -99,7 +99,7 @@ EOF
     wait_for_container_engine
 }
 
-@test 'verify image-allow-list config' {
+@test 'verify allowed-images config' {
     run ctrctl pull --quiet busybox
     if using_image_allow_list; then
         assert_failure

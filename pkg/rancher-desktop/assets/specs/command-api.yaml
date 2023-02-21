@@ -264,7 +264,7 @@ components:
               x-rd-usage: Set engine to containerd or moby (aka docker).
               x-rd-aliases:
                 - "container-engine"
-            imageAllowList:
+            allowedImages:
               type: object
               properties:
                 enabled:

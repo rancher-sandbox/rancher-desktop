@@ -25,7 +25,7 @@ const PROFILE_JSON = 'profile.json';
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-export const CURRENT_SETTINGS_VERSION = 5 as const;
+export const CURRENT_SETTINGS_VERSION = 6 as const;
 
 export enum ContainerEngine {
   NONE = '',
@@ -50,7 +50,7 @@ export const defaultSettings = {
     updater:                { enabled: true },
   },
   containerEngine: {
-    imageAllowList: {
+    allowedImages: {
       enabled:  false,
       /**
        *  List will be locked when patterns have been loaded from an admin controlled location.
@@ -445,6 +445,11 @@ const updateTable: Record<number, (settings: any) => void> = {
     delete settings.pathManagementStrategy;
     delete settings.telemetry;
     delete settings.updater;
+  },
+  5: (settings) => {
+    settings.containerEngine.allowedImages = {};
+    _.assign(settings.containerEngine.allowedImages, settings.containerEngine.imageAllowList);
+    delete settings.containerEngine.imageAllowList;
   },
 };
 

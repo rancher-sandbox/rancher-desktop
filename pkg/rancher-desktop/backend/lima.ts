@@ -1480,19 +1480,19 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async configureOpenResty(config: BackendSettings) {
-    const imageAllowListConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
+    const allowedImagesConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
     // TODO: don't use hardcoded IP address
     const resolver = 'resolver 192.168.5.3 ipv6=off;\n';
 
     await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
     await this.writeFile('/etc/logrotate.d/openresty', LOGROTATE_OPENRESTY_SCRIPT, 0o644);
-    if (config.containerEngine.imageAllowList.enabled) {
-      const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.imageAllowList);
+    if (config.containerEngine.allowedImages.enabled) {
+      const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.allowedImages);
 
-      await this.writeFile(imageAllowListConf, patterns, 0o644);
+      await this.writeFile(allowedImagesConf, patterns, 0o644);
     } else {
-      await this.execCommand({ root: true }, 'rm', '-f', imageAllowListConf);
+      await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
     }
   }
 
@@ -1627,7 +1627,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
         ]);
 
-        if (config.containerEngine.imageAllowList.enabled) {
+        if (config.containerEngine.allowedImages.enabled) {
           await this.startService('openresty');
         }
         if (config.containerEngine.name === ContainerEngine.CONTAINERD) {

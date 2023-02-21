@@ -121,7 +121,7 @@ export default {
       this.showOutput = val;
     },
     enableAllowedImages(settings) {
-      this.isAllowedImagesEnabled = settings.containerEngine.imageAllowList.enabled;
+      this.isAllowedImagesEnabled = settings.containerEngine.allowedImages.enabled;
     },
   },
 };

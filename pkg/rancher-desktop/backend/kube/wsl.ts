@@ -305,14 +305,14 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
 
           return 'restart';
         },
-        'kubernetes.port':                        undefined,
-        'containerEngine.name':                   undefined,
-        'kubernetes.enabled':                     undefined,
-        'WSL.integrations':                       undefined,
-        'kubernetes.options.traefik':             undefined,
-        'kubernetes.options.flannel':             undefined,
-        'virtualMachine.hostResolver':            undefined,
-        'containerEngine.imageAllowList.enabled': undefined,
+        'kubernetes.port':                       undefined,
+        'containerEngine.name':                  undefined,
+        'kubernetes.enabled':                    undefined,
+        'WSL.integrations':                      undefined,
+        'kubernetes.options.traefik':            undefined,
+        'kubernetes.options.flannel':            undefined,
+        'virtualMachine.hostResolver':           undefined,
+        'containerEngine.allowedImages.enabled': undefined,
       },
       extras,
     ));
