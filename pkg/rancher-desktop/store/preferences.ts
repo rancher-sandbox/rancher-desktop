@@ -156,8 +156,16 @@ export const actions = {
     );
     commit('SET_PREFERENCES', newPreferences);
   },
-  setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
-    commit('SET_WSL_INTEGRATIONS', integrations);
+  setWslIntegrations({ commit, state }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
+    /**
+     * Merge integrations if they exist during initialization.
+     *
+     * Issue #3232: First-time render of tabs causes the entire DOM tree to
+     * refresh, causing Preferences to initialize more than once.
+     */
+    const updatedIntegrations = _.merge({}, integrations, state.wslIntegrations);
+
+    commit('SET_WSL_INTEGRATIONS', updatedIntegrations);
   },
   updateWslIntegrations({ commit, state }: PrefActionContext, args: {distribution: string, value: boolean}) {
     const { distribution, value } = args;
