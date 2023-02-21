@@ -171,42 +171,7 @@ func volumeArgHandler(arg string) (string, []cleanupFunc, error) {
 
 // mountArgHandler handles the argument for `nerdctl run --mount=...`
 func mountArgHandler(arg string) (string, []cleanupFunc, error) {
-	var chunks [][]string
-	isBind := false
-	for _, chunk := range strings.Split(arg, ",") {
-		parts := strings.SplitN(chunk, "=", 2)
-		if len(parts) != 2 {
-			// Got something with no value, e.g. --mount=...,readonly,...
-			chunks = append(chunks, []string{chunk})
-			continue
-		}
-		if parts[0] == "type" && parts[1] == "bind" {
-			isBind = true
-		}
-		chunks = append(chunks, parts)
-	}
-	if !isBind {
-		// Not a bind mount; don't attempt to fix anything
-		return arg, nil, nil
-	}
-	for _, chunk := range chunks {
-		if len(chunk) != 2 {
-			continue
-		}
-		if chunk[0] != "source" && chunk[0] != "src" {
-			continue
-		}
-		mountDir, err := doBindMount(chunk[1])
-		if err != nil {
-			return "", nil, err
-		}
-		chunk[1] = mountDir
-	}
-	result := ""
-	for _, chunk := range chunks {
-		result = fmt.Sprintf("%s,%s", result, strings.Join(chunk, "="))
-	}
-	return result[1:], nil, nil // Skip the initial "," we added
+	return mountArgProcessor(arg, doBindMount)
 }
 
 // filePathArgHandler handles arguments that take a file path for input
@@ -259,4 +224,10 @@ func outputPathArgHandler(arg string) (string, []cleanupFunc, error) {
 		return nil
 	}
 	return file.Name(), []cleanupFunc{callback}, nil
+}
+
+// builderCacheArgHandler handles arguments for
+// `nerdctl builder build --cache-from=` and `nerdctl builder build --cache-to=`
+func builderCacheArgHandler(arg string) (string, []cleanupFunc, error) {
+	return builderCacheProcessor(arg, filePathArgHandler, outputPathArgHandler)
 }

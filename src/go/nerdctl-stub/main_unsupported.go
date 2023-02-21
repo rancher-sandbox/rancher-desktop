@@ -14,6 +14,7 @@ var volumeArgHandler = unhandledArgHandler
 var filePathArgHandler = unhandledArgHandler
 var outputPathArgHandler = unhandledArgHandler
 var mountArgHandler = unhandledArgHandler
+var builderCacheArgHandler = unhandledArgHandler
 
 func spawn(opts spawnOptions) error {
 	panic("Platform is unsupported")
