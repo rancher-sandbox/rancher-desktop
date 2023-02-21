@@ -21,7 +21,7 @@ func GetRDPath() (string, error) {
 
 	// we're at .../Applications/R D.app (could have a different name)/Contents/Resources/resources/darwin/bin/rdctl
 	// and want to move to the "R D.app" part
-	RDAppParentPath := getParentDir(rdctlPath, 6)
+	RDAppParentPath := GetParentDir(rdctlPath, 6)
 	executablePath := filepath.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop")
 	usable, err := checkUsableApplication(executablePath, true)
 	if err != nil {

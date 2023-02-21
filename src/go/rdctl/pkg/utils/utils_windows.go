@@ -23,7 +23,7 @@ func GetRDPath() (string, error) {
 	}
 	// rdctl should be at <installDir>/resources/resources/win32/bin/rdctl.exe.
 	// rancher-desktop should be 5 directories up from that, at <installDir>/Rancher Desktop.exe.
-	normalParentPath := getParentDir(rdctlPath, 5)
+	normalParentPath := GetParentDir(rdctlPath, 5)
 	candidatePath := filepath.Join(normalParentPath, "Rancher Desktop.exe")
 	_, err = os.Stat(candidatePath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
