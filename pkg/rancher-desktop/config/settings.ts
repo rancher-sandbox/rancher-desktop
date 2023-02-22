@@ -480,11 +480,14 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  * Read and validate deployment profiles, giving system level profiles
  * priority over user level profiles.  If the system directory contains a
  * defaults or locked profile, the user directory will not be read.
- * @returns undefined, or type validated defaults and locked deployment profiles.
+ * @returns type validated defaults and locked deployment profiles, and throws
+ *          an error if there is an error parsing the locked profile.
  */
 export function readDeploymentProfiles() {
-  let defaults;
-  let locked;
+  const profiles = {
+    defaults: undefined,
+    locked:   undefined,
+  };
 
   switch (os.platform()) {
   case 'win32':
@@ -493,60 +496,72 @@ export function readDeploymentProfiles() {
 
       try {
         if (registryKey !== null) {
-          defaults = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Defaults']);
-          locked = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Locked']);
+          profiles.defaults = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Defaults']);
+          profiles.locked = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Locked']);
         }
       } catch (err) {
         console.error( `Error reading deployment profile: ${ err }`);
       } finally {
-        if (registryKey !== null) {
-          nativeReg.closeKey(registryKey);
-        }
+        nativeReg.closeKey(registryKey);
       }
-      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+      if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
       }
     }
     break;
   case 'linux':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      try {
-        const defaultsData = fs.readFileSync(join(rootPath, 'defaults.json'), 'utf8');
+      const profiles = readProfileFiles(rootPath, 'defaults.json', 'locked.json', JSON);
 
-        defaults = JSON.parse(defaultsData);
-      } catch {}
-      try {
-        const lockedData = fs.readFileSync(join(rootPath, 'locked.json'), 'utf8');
-
-        locked = JSON.parse(lockedData);
-      } catch {}
-
-      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+      if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
       }
     }
     break;
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      try {
-        const defaultsData = fs.readFileSync(join(rootPath, 'io.rancherdesktop.profile.defaults.plist'), 'utf8');
+      const profiles = readProfileFiles(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist', plist);
 
-        defaults = plist.parse(defaultsData);
-      } catch {}
-      try {
-        const lockedData = fs.readFileSync(join(rootPath, 'io.rancherdesktop.profile.locked.plist'), 'utf8');
-
-        locked = plist.parse(lockedData);
-      } catch {}
-
-      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+      if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
       }
     }
     break;
   }
-  defaults = validateDeploymentProfile(defaults, defaultSettings);
-  locked = validateDeploymentProfile(locked, defaultSettings);
+
+  profiles.defaults = validateDeploymentProfile(profiles.defaults, defaultSettings) ?? {};
+  profiles.locked = validateDeploymentProfile(profiles.locked, defaultSettings) ?? {};
+
+  return profiles;
+}
+
+/**
+ * Read and parse deployment profile files.
+ * @param rootPath the system or user directory containing profiles.
+ * @param defaultsPath the file path to the 'defaults' file.
+ * @param lockedPath the file path to the 'locked' file.
+ * @param parser the parser (JSON or plist) for parsing the files read.
+ * @returns the defaults and/or locked objects if they exist, or
+ *          throws an exception if there is an error parsing the locked file.
+ */
+function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: string, parser: any) {
+  let defaults;
+  let locked;
+
+  try {
+    const defaultsData = fs.readFileSync(join(rootPath, defaultsPath), 'utf8');
+
+    defaults = parser.parse(defaultsData);
+  } catch {}
+  try {
+    const lockedData = fs.readFileSync(join(rootPath, lockedPath), 'utf8');
+
+    locked = parser.parse(lockedData);
+  } catch (ex: any) {
+    if (ex.code !== 'ENOENT') {
+      throw new Error(`Error parsing locked deployment profile: ${ ex }`);
+    }
+  }
 
   return { defaults, locked };
 }
