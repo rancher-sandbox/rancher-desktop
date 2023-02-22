@@ -71,12 +71,14 @@ func validateSubnet(s string) (*subnet, error) {
 
 func gatewayIP(ip net.IP) string {
 	// Gateway is always x.x.x.1
-	return net.IPv4(ip[0], ip[1], ip[2], 1).String()
+	gatewayLastBit := 1
+	return net.IPv4(ip[0], ip[1], ip[2], byte(gatewayLastBit)).String()
 }
 
 func staticDHCP(ip net.IP) map[string]string {
 	// Static DHCP Lease is always x.x.x.2
-	tapDevIP := net.IPv4(ip[0], ip[1], ip[2], 2).String()
+	staticDHCPLastBit := 2
+	tapDevIP := net.IPv4(ip[0], ip[1], ip[2], byte(staticDHCPLastBit)).String()
 	return map[string]string{
 		tapDevIP: tapDeviceMacAddr,
 	}
@@ -84,7 +86,8 @@ func staticDHCP(ip net.IP) map[string]string {
 
 func staticDNSHost(ip net.IP) string {
 	// Static DNS Host is always x.x.x.254
-	return net.IPv4(ip[0], ip[1], ip[2], 254).String()
+	staticHostLastBit := 254
+	return net.IPv4(ip[0], ip[1], ip[2], byte(staticHostLastBit)).String()
 }
 
 // parsePortForwarding converts the input format of HostIP:Port=GuestIP:Port
