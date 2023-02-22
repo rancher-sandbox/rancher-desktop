@@ -103,6 +103,19 @@ export const defaultSettings = {
 
 export type Settings = typeof defaultSettings;
 
+/**
+ * Lockable default settings used for validating deployment profiles.
+ * Data values are ignored, but types are used for validation.
+ */
+const lockableDefaultSettings = {
+  containerEngine: {
+    imageAllowList: {
+      enabled:  true,
+      patterns: [] as Array<string>,
+    },
+  },
+};
+
 let _isFirstRun = false;
 let settings: Settings | undefined;
 
@@ -496,8 +509,8 @@ export function readDeploymentProfiles() {
 
       try {
         if (registryKey !== null) {
-          profiles.defaults = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Defaults']);
-          profiles.locked = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Locked']);
+          profiles.defaults = readRegistryUsingSchema(defaultSettings, registryKey, ['Defaults']);
+          profiles.locked = readRegistryUsingSchema(defaultSettings, registryKey, ['Locked']);
         }
       } catch (err) {
         console.error( `Error reading deployment profile: ${ err }`);
@@ -530,7 +543,7 @@ export function readDeploymentProfiles() {
   }
 
   profiles.defaults = validateDeploymentProfile(profiles.defaults, defaultSettings) ?? {};
-  profiles.locked = validateDeploymentProfile(profiles.locked, defaultSettings) ?? {};
+  profiles.locked = validateDeploymentProfile(profiles.locked, lockableDefaultSettings) ?? {};
 
   return profiles;
 }
@@ -568,19 +581,18 @@ function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: st
 
 /**
  * Windows only. Read settings values from registry using schemaObj as a template.
- * @param object null - used for recursion.
  * @param schemaObj the object used as a template for navigating registry.
  * @param regKey the registry key obtained from nativeReg.openKey().
  * @param regPath the path to the object relative to regKey.
  * @returns undefined, or the registry data as an object.
  */
-function readRegistryUsingSchema(object: any, schemaObj: any, regKey: nativeReg.HKEY, regPath: string[]): any {
+function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY, regPath: string[]): any {
   let regValue;
   let newObject: any;
 
   for (const [schemaKey, schemaVal] of Object.entries(schemaObj)) {
     if (typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
-      regValue = readRegistryUsingSchema(object, schemaVal, regKey, regPath.concat(schemaKey));
+      regValue = readRegistryUsingSchema(schemaVal, regKey, regPath.concat(schemaKey));
     } else {
       regValue = nativeReg.getValue(regKey, regPath.join('\\'), schemaKey);
     }
