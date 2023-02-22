@@ -273,7 +273,7 @@ application:
     startInBackground:
       label: Start in the background
     windowQuitOnClose:
-      label: Keep running in the background when closing application window
+      label: Quit when closing application window
     notificationIcon:
       legendText: Notification Icon
       label: Hide Notification Icon
