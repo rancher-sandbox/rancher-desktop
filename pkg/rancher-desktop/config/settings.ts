@@ -609,8 +609,8 @@ function readRegistryUsingSchema(object: any, schemaObj: any, regKey: nativeReg.
  * @returns The original profile, less any invalid fields
  */
 function validateDeploymentProfile(profile: any, schema: any) {
-  if (typeof profile !== 'undefined') {
-    Object.keys(profile).forEach((key) => {
+  if (typeof profile === 'object') {
+    for (const key in profile) {
       if (key in schema) {
         if (typeof profile[key] === typeof schema[key]) {
           if (typeof profile[key] === 'object') {
@@ -629,7 +629,7 @@ function validateDeploymentProfile(profile: any, schema: any) {
         console.log(`Deployment Profile ignoring '${ key }'. Not in schema.`);
         delete profile[key];
       }
-    });
+    }
   }
 
   return profile;
