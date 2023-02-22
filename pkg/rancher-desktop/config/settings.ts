@@ -473,6 +473,7 @@ function updateSettings(settings: Settings) {
 // Imported from dashboard/config/settings.js
 // Setting IDs
 export const SETTING = { PL_RANCHER_VALUE: 'rancher' };
+
 const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
 
 /**
@@ -490,13 +491,20 @@ export function readDeploymentProfiles() {
     for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
       const registryKey = nativeReg.openKey(key, REGISTRY_PATH_PROFILE.join('\\'), nativeReg.Access.READ);
 
-      if (registryKey !== null) {
-        defaults = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Defaults']);
-        locked = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Locked']);
-        nativeReg.closeKey(registryKey);
-        if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
-          break;
+      try {
+        if (registryKey !== null) {
+          defaults = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Defaults']);
+          locked = readRegistryUsingSchema(null, defaultSettings, registryKey, ['Locked']);
         }
+      } catch (err) {
+        console.error( `Error reading deployment profile: ${ err }`);
+      } finally {
+        if (registryKey !== null) {
+          nativeReg.closeKey(registryKey);
+        }
+      }
+      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+        break;
       }
     }
     break;
@@ -553,7 +561,7 @@ export function readDeploymentProfiles() {
  */
 function readRegistryUsingSchema(object: any, schemaObj: any, regKey: nativeReg.HKEY, regPath: string[]): any {
   let regValue;
-  let newObject;
+  let newObject: any;
 
   for (const [schemaKey, schemaVal] of Object.entries(schemaObj)) {
     if (typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
@@ -563,13 +571,12 @@ function readRegistryUsingSchema(object: any, schemaObj: any, regKey: nativeReg.
     }
 
     if (typeof regValue !== 'undefined' && regValue !== null) {
-      if (typeof newObject === 'undefined') {
-        newObject = Object.create(null);
-      }
+      newObject ??= {};
       if (typeof schemaVal === 'boolean') {
-        if (typeof regValue === 'number' && regValue !== 0) {
-          regValue = true;
+        if (typeof regValue === 'number') {
+          regValue = regValue !== 0;
         } else {
+          console.debug(`Deployment Profile expected boolean value for ${ regPath.concat(schemaKey) }`);
           regValue = false;
         }
       }
