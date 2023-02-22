@@ -3,9 +3,15 @@ LDFLAGS = -ldflags '-s -w'
 .PHONY: build
 build: host-switch
 
+bin/host-switch.exe:
+	GOOS=windows go build $(LDFLAGS) -o $@ ./cmd/host
+
 .PHONY: host-switch
-host-switch:
-			GOOS=windows go build $(LDFLAGS) -o bin/host-switch.exe ./cmd/host
+host-switch: bin/host-switch.exe
+
+.PHONY: fmt
+fmt:
+	gofmt -l -s -w .
 
 .PHONY: clean
 clean:
