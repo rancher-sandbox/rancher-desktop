@@ -27,12 +27,15 @@ import (
 )
 
 const (
-	captureFile      = "capture.pcap"
-	localHost        = "127.0.0.1"
-	tapDeviceMacAddr = "5a:94:ef:e4:0c:ee"
-	gatewayMacAddr   = "5a:94:ef:e4:0c:dd"
-	defaultSubnet    = "192.168.127.0/24"
-	defaultMTU       = 1500
+	captureFile        = "capture.pcap"
+	localHost          = "127.0.0.1"
+	tapDeviceMacAddr   = "5a:94:ef:e4:0c:ee"
+	gatewayMacAddr     = "5a:94:ef:e4:0c:dd"
+	defaultSubnet      = "192.168.127.0/24"
+	defaultMTU         = 1500
+	gatewayLastByte    = 1
+	staticDHCPLastByte = 2
+	staticHostLastByte = 254
 )
 
 type arrayFlags []string
@@ -71,12 +74,12 @@ func validateSubnet(s string) (*subnet, error) {
 
 func gatewayIP(ip net.IP) string {
 	// Gateway is always x.x.x.1
-	return net.IPv4(ip[0], ip[1], ip[2], 1).String()
+	return net.IPv4(ip[0], ip[1], ip[2], gatewayLastByte).String()
 }
 
 func staticDHCP(ip net.IP) map[string]string {
 	// Static DHCP Lease is always x.x.x.2
-	tapDevIP := net.IPv4(ip[0], ip[1], ip[2], 2).String()
+	tapDevIP := net.IPv4(ip[0], ip[1], ip[2], staticDHCPLastByte).String()
 	return map[string]string{
 		tapDevIP: tapDeviceMacAddr,
 	}
@@ -84,7 +87,7 @@ func staticDHCP(ip net.IP) map[string]string {
 
 func staticDNSHost(ip net.IP) string {
 	// Static DNS Host is always x.x.x.254
-	return net.IPv4(ip[0], ip[1], ip[2], 254).String()
+	return net.IPv4(ip[0], ip[1], ip[2], staticHostLastByte).String()
 }
 
 // parsePortForwarding converts the input format of HostIP:Port=GuestIP:Port

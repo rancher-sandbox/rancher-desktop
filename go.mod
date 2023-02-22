@@ -7,11 +7,12 @@ require (
 	github.com/containers/gvisor-tap-vsock v0.5.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
-	github.com/pkg/errors v0.9.1
 	github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5
 	github.com/sirupsen/logrus v1.9.0
 	golang.org/x/sync v0.1.0
 )
+
+require github.com/pkg/errors v0.9.1 // indirect
 
 require (
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect

@@ -49,8 +49,10 @@ const (
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
-	flag.StringVar(&virtualSubnet, "subnet", defaultSubnet, fmt.Sprintf("Subnet range with CIDR suffix for virtual network, e,g: %s", defaultSubnet))
-	flag.Var(&staticPortForward, "port-forward", "List of ports that needs to be pre forwarded to the WSL VM in Host:Port=Guest:Port format e.g: 127.0.0.1:2222=192.168.127.2:22")
+	flag.StringVar(&virtualSubnet, "subnet", defaultSubnet,
+		fmt.Sprintf("Subnet range with CIDR suffix for virtual network, e,g: %s", defaultSubnet))
+	flag.Var(&staticPortForward, "port-forward",
+		"List of ports that needs to be pre forwarded to the WSL VM in Host:Port=Guest:Port format e.g: 127.0.0.1:2222=192.168.127.2:22")
 	flag.Parse()
 
 	if debug {
@@ -81,7 +83,7 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("creating vsock listener for hostSwitch failed: %v", err)
 	}
-	logrus.Debugf("attempting to start a virutal network with the following config: %+v", config)
+	logrus.Debugf("attempting to start a virtual network with the following config: %+v", config)
 	groupErrs.Go(func() error {
 		return run(ctx, groupErrs, &config, ln)
 	})
@@ -138,12 +140,13 @@ func run(ctx context.Context, g *errgroup.Group, config *types.Configuration, ln
 	httpServe(ctx, g, vnLn, mux)
 	logrus.Infof("port forwarding API server is running on: %s", apiServer)
 
+	logInterval := time.Second * 5
 	if debug {
 		g.Go(func() error {
 		debugLog:
 			for {
 				select {
-				case <-time.After(5 * time.Second):
+				case <-time.After(logInterval):
 					logrus.Debugf("%v sent to the VM, %v received from the VM", humanize.Bytes(vn.BytesSent()), humanize.Bytes(vn.BytesReceived()))
 				case <-ctx.Done():
 					break debugLog
@@ -176,11 +179,11 @@ func httpServe(ctx context.Context, g *errgroup.Group, ln net.Listener, mux http
 
 func vsockListener(handshakePort, vsockListenPort uint32, seed string) (net.Listener, error) {
 	bailout := time.After(time.Second * timeoutSeconds)
-	vmGUID, err := vsock.GetVMGUID(seed, vsockHandshakePort, bailout)
+	vmGUID, err := vsock.GetVMGUID(seed, handshakePort, bailout)
 	if err != nil {
 		return nil, fmt.Errorf("trying to find WSL GUID faild: %w", err)
 	}
-	logrus.Info("successfull handshake, listening for incoming connection from: %v", vmGUID.String())
+	logrus.Infof("successful handshake, listening for incoming connection from: %v", vmGUID.String())
 
 	return vmsock.Listen(vmGUID, vsockListenPort)
 }
