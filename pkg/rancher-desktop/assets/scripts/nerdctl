@@ -1,6 +1,6 @@
 #!/bin/sh
 export CONTAINERD_ADDRESS=/run/k3s/containerd/containerd.sock
-if [ -f /usr/local/openresty/nginx/conf/image-allow-list.conf ]; then
+if [ -f /usr/local/openresty/nginx/conf/allowed-images.conf ]; then
   export HTTPS_PROXY=http://127.0.0.1:3128
 fi
 exec /usr/local/libexec/nerdctl/nerdctl "$@"

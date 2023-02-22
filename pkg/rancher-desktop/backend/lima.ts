@@ -1480,7 +1480,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async configureOpenResty(config: BackendSettings) {
-    const allowedImagesConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
+    const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
     // TODO: don't use hardcoded IP address
     const resolver = 'resolver 192.168.5.3 ipv6=off;\n';
 
@@ -1488,12 +1488,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
     await this.writeFile('/etc/logrotate.d/openresty', LOGROTATE_OPENRESTY_SCRIPT, 0o644);
     if (config.containerEngine.allowedImages.enabled) {
-      const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.allowedImages);
+      const patterns = BackendHelper.createAllowedImageListConf(config.containerEngine.allowedImages);
 
       await this.writeFile(allowedImagesConf, patterns, 0o644);
     } else {
       await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
     }
+    const obsoleteIALConfFile = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
+
+    await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
   }
 
   /**

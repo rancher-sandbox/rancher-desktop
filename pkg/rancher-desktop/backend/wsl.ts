@@ -1187,7 +1187,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
               this.progressTracker.action('Configuring image proxy', 50, async() => {
-                const allowedImagesConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
+                const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
                 const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
 
                 await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
@@ -1196,12 +1196,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                 await this.runInstallScript(CONFIGURE_IMAGE_ALLOW_LIST, 'configure-allowed-images');
                 if (config.containerEngine.allowedImages.enabled) {
-                  const patterns = BackendHelper.createImageAllowListConf(config.containerEngine.allowedImages);
+                  const patterns = BackendHelper.createAllowedImageListConf(config.containerEngine.allowedImages);
 
                   await this.writeFile(allowedImagesConf, patterns, 0o644);
                 } else {
                   await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
                 }
+                const obsoleteIALConfFile = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
+
+                await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
               }),
               this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);

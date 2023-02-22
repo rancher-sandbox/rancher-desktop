@@ -32,7 +32,7 @@ export default class BackendHelper {
   /**
    * Turn allowedImages patterns into a list of nginx regex rules.
    */
-  static createImageAllowListConf(allowedImages: BackendSettings['containerEngine']['allowedImages']): string {
+  static createAllowedImageListConf(allowedImages: BackendSettings['containerEngine']['allowedImages']): string {
     /**
      * The image allow list config file consists of one line for each pattern using nginx pattern matching syntax.
      * It starts with '~*' for case-insensitive matching, followed by a regular expression, which should be
