@@ -5,7 +5,7 @@
 import Electron from 'electron';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
-import type { RecursivePartial } from '@pkg/utils/typeUtils';
+import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -132,8 +132,6 @@ export interface IpcRendererEvents {
   'images-namespaces': (namespaces: string[]) => void;
   // #endregion
 
-  // #endregion
-
   // #region dialog
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
@@ -143,5 +141,9 @@ export interface IpcRendererEvents {
 
   // #region api
   'api-credentials': (credentials: {user: string, password: string, port: number}) => void;
+  // #endregion
+
+  // #region tab navigation
+  'route': (route: { name?: string, path?: string, direction?: Direction }) => void;
   // #endregion
 }

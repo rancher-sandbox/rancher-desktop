@@ -12,7 +12,7 @@ import PreferencesNav from '@pkg/components/Preferences/ModalNav.vue';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferences';
 
 export default Vue.extend({
@@ -46,8 +46,23 @@ export default Vue.extend({
       return preferencesNavItems.map(({ name }) => name);
     },
   },
+  beforeMount() {
+    ipcRenderer.on('route', async(event, args) => {
+      await this.navigateToTab(args);
+    });
+  },
+  beforeDestroy() {
+    /**
+     * Removing the listeners resolves the issue of receiving duplicated messages from 'route' channel.
+     * Originated by: https://github.com/rancher-sandbox/rancher-desktop/issues/3232
+     */
+    ipcRenderer.removeAllListeners('route');
+  },
   methods: {
     async navChanged(current: string) {
+      await this.commitNavItem(current);
+    },
+    async commitNavItem(current: string) {
       await this.$store.dispatch(
         'transientSettings/commitPreferences',
         {
@@ -107,6 +122,22 @@ export default Vue.extend({
     },
     reloadPreferences() {
       window.location.reload();
+    },
+    async navigateToTab(args: { name?: string, direction?: Direction}) {
+      const { name, direction } = args;
+
+      if (name) {
+        await this.commitNavItem(name);
+
+        return;
+      }
+
+      if (direction) {
+        const dir = (direction === 'forward' ? 1 : -1);
+        const idx = (this.navItems.length + this.navItems.indexOf(this.getCurrentNavItem) + dir) % this.navItems.length;
+
+        await this.commitNavItem(this.navItems[idx]);
+      }
     },
   },
 });

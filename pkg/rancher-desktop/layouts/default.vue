@@ -22,6 +22,7 @@ import Header from '@pkg/components/Header.vue';
 import Nav from '@pkg/components/Nav.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { mainRoutes } from '@pkg/window';
 
 export default {
   name:       'App',
@@ -54,13 +55,10 @@ export default {
 
   computed: {
     routes() {
-      return [
-        { route: '/General' },
-        { route: '/PortForwarding' },
-        { route: '/Images' },
-        { route: '/Troubleshooting' },
-        { route: '/Diagnostics', error: this.errorCount },
-      ];
+      return mainRoutes.map(route => route === '/Diagnostics' ? { ...route, error: this.errorCount } : route);
+    },
+    paths() {
+      return mainRoutes.map(r => r.route);
     },
     errorCount() {
       return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
@@ -73,6 +71,9 @@ export default {
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
     });
+    ipcRenderer.on('route', (event, args) => {
+      this.goToRoute(args);
+    });
   },
 
   beforeDestroy() {
@@ -82,6 +83,22 @@ export default {
   methods: {
     openPreferences() {
       ipcRenderer.send('preferences-open');
+    },
+    goToRoute(args) {
+      const { path, direction } = args;
+
+      if (path) {
+        this.$router.push({ path });
+
+        return;
+      }
+
+      if (direction) {
+        const dir = (direction === 'forward' ? 1 : -1);
+        const idx = (this.paths.length + this.paths.indexOf(this.$router.currentRoute.path) + dir) % this.paths.length;
+
+        this.$router.push({ path: this.paths[idx] });
+      }
     },
   },
 };

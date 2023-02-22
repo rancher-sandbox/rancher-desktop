@@ -7,7 +7,7 @@ import { webRoot, createWindow } from '.';
 import { Help } from '@pkg/config/help';
 import { NavItemName } from '@pkg/config/transientSettings';
 import paths from '@pkg/utils/paths';
-import { Shortcuts } from '@pkg/utils/shortcuts';
+import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
 import { getVersion } from '@pkg/utils/version';
 
 interface NavItems {
@@ -74,6 +74,38 @@ export function openPreferences() {
         window.close();
       },
       'Close preferences dialog',
+    );
+
+    preferencesNavItems.forEach(({ name }, index) => {
+      Shortcuts.register(
+        window,
+        {
+          ...CommandOrControl,
+          key: index + 1,
+        },
+        () => window.webContents.send('route', { name }),
+        `switch preferences tabs ${ name }`,
+      );
+    });
+
+    Shortcuts.register(
+      window,
+      {
+        ...CommandOrControl,
+        key: ']',
+      },
+      () => window.webContents.send('route', { direction: 'forward' }),
+      'switch preferences tabs by cycle [forward]',
+    );
+
+    Shortcuts.register(
+      window,
+      {
+        ...CommandOrControl,
+        key: '[',
+      },
+      () => window.webContents.send('route', { direction: 'back' }),
+      'switch preferences tabs by cycle [back]',
     );
   }
 
