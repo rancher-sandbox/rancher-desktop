@@ -484,7 +484,7 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  *          an error if there is an error parsing the locked profile.
  */
 export function readDeploymentProfiles() {
-  const profiles = {
+  let profiles = {
     defaults: undefined,
     locked:   undefined,
   };
@@ -511,7 +511,7 @@ export function readDeploymentProfiles() {
     break;
   case 'linux':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      const profiles = readProfileFiles(rootPath, 'defaults.json', 'locked.json', JSON);
+      profiles = readProfileFiles(rootPath, 'defaults.json', 'locked.json', JSON);
 
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
@@ -520,7 +520,7 @@ export function readDeploymentProfiles() {
     break;
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      const profiles = readProfileFiles(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist', plist);
+      profiles = readProfileFiles(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist', plist);
 
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
