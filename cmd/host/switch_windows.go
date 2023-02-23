@@ -28,10 +28,12 @@ import (
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/containers/gvisor-tap-vsock/pkg/virtualnetwork"
 	"github.com/dustin/go-humanize"
-	"github.com/rancher-sandbox/rancher-desktop-host-resolver/pkg/vmsock"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/vsock"
+	"github.com/linuxkit/virtsock/pkg/hvsock"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/rancher-sandbox/rancher-desktop-host-resolver/pkg/vmsock"
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/vsock"
 )
 
 var (
@@ -41,9 +43,8 @@ var (
 )
 
 const (
-	vsockListenPort    = 6655
+	vsockListenPort    = 6656
 	vsockHandshakePort = 6669
-	seedPhrase         = "github.com/rancher-sandbox/rancher-desktop-networking"
 	timeoutSeconds     = 5 * 60
 )
 
@@ -79,10 +80,11 @@ func main() {
 
 	config := newConfig(*subnet, portForwarding, debug)
 
-	ln, err := vsockListener(vsockHandshakePort, vsockListenPort, seedPhrase)
+	ln, err := vsockHandshake(ctx, vsockHandshakePort, vsock.SignaturePhrase)
 	if err != nil {
-		logrus.Fatalf("creating vsock listener for hostSwitch failed: %v", err)
+		logrus.Fatalf("handshake with peer process failed: %v", err)
 	}
+
 	logrus.Debugf("attempting to start a virtual network with the following config: %+v", config)
 	groupErrs.Go(func() error {
 		return run(ctx, groupErrs, &config, ln)
@@ -177,13 +179,34 @@ func httpServe(ctx context.Context, g *errgroup.Group, ln net.Listener, mux http
 	})
 }
 
-func vsockListener(handshakePort, vsockListenPort uint32, seed string) (net.Listener, error) {
+func vsockHandshake(ctx context.Context, handshakePort uint32, signature string) (net.Listener, error) {
 	bailout := time.After(time.Second * timeoutSeconds)
-	vmGUID, err := vsock.GetVMGUID(seed, handshakePort, bailout)
+	vmGUID, err := vsock.GetVMGUID(ctx, signature, handshakePort, bailout)
 	if err != nil {
 		return nil, fmt.Errorf("trying to find WSL GUID faild: %w", err)
 	}
-	logrus.Infof("successful handshake, listening for incoming connection from: %v", vmGUID.String())
+	logrus.Infof("successful handshake, waiting for a vsock connection from VMGUID: %v on Port: %v", vmGUID.String(), vsockListenPort)
+	ln, err := vmsock.Listen(vmGUID, vsockListenPort)
+	if err != nil {
+		return nil, fmt.Errorf("creating vsock listener for host-switch failed: %w", err)
+	}
+	err = signalVsockListenerReady(vmGUID, vsockHandshakePort)
+	if err != nil {
+		return nil, fmt.Errorf("sending %s signal to peer process failed: %w", vsock.ReadySignal, err)
+	}
+	return ln, nil
+}
 
-	return vmsock.Listen(vmGUID, vsockListenPort)
+func signalVsockListenerReady(vmGUID hvsock.GUID, peerPort uint32) error {
+	conn, err := vsock.GetVsockConnection(vmGUID, peerPort)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	_, err = conn.Write([]byte(vsock.ReadySignal))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
