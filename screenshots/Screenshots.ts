@@ -114,7 +114,7 @@ export class MainWindowScreenshots extends Screenshots {
       await this.page.waitForTimeout(timeout);
     }
 
-    this.createScreenshotsDirectory();
+    await this.createScreenshotsDirectory();
     await this.screenshot(tabName);
   }
 }
@@ -135,7 +135,7 @@ export class PreferencesScreenshots extends Screenshots {
     await expect(tab.nav).toHaveClass('preferences-nav-item active');
     const path = subTabName ? `${ tabName }_${ subTabName }` : tabName;
 
-    this.createScreenshotsDirectory();
+    await this.createScreenshotsDirectory();
     await this.screenshot(path);
   }
 }
