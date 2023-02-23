@@ -142,6 +142,10 @@ export function save(cfg: Settings) {
     const rawdata = JSON.stringify(cfg);
 
     fs.writeFileSync(join(paths.config, 'settings.json'), rawdata);
+
+    // update the in-memory copy so subsequent calls to settings.load() will
+    // return an up to date settings object
+    settings = cfg;
   } catch (err) {
     if (err) {
       const { dialog } = require('electron');

@@ -4,6 +4,7 @@ import path from 'path';
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
+import { load as loadSettings } from '@pkg/config/settings';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
@@ -166,6 +167,17 @@ export function openMain() {
       'switch preferences tabs by cycle [back]',
     );
   }
+
+  window.on('closed', () => {
+    const cfg = loadSettings();
+
+    if (cfg.window.quitOnClose) {
+      BrowserWindow.getAllWindows().forEach((window) => {
+        window.close();
+      });
+      app.quit();
+    }
+  });
 
   app.dock?.show();
 }

@@ -406,10 +406,6 @@ Electron.app.on('before-quit', async(event) => {
 });
 
 Electron.app.on('window-all-closed', () => {
-  if (cfg.window.quitOnClose) {
-    Electron.app.quit();
-  }
-
   // On macOS, hide the dock icon.
   Electron.app.dock?.hide();
 });
