@@ -13,7 +13,7 @@ describe('updateFromCommandLine', () => {
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
     prefs = {
-      version:     5,
+      version:     6,
       application: {
         adminAccess:            true,
         debug:                  true,
@@ -23,7 +23,7 @@ describe('updateFromCommandLine', () => {
         updater:                { enabled: true },
       },
       containerEngine: {
-        imageAllowList: {
+        allowedImages: {
           enabled:  false,
           locked:   false,
           patterns: [],

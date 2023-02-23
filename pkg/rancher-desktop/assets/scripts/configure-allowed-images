@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script configures the VM for the image-allow-list feature.
+# This script configures the VM for the allowed-images feature.
 
 # shellcheck shell=ash
 
@@ -18,8 +18,8 @@ mkcert -install
 mkcert localhost
 chown -R nobody:nobody $CAROOT
 
-# configure proxy only when image-allow-list exists
-ial=/usr/local/openresty/nginx/conf/image-allow-list.conf
+# configure proxy only when allowed-images exists
+ial=/usr/local/openresty/nginx/conf/allowed-images.conf
 setproxy="[ -f $ial ] && supervise_daemon_args=\"-e HTTPS_PROXY=http://127.0.0.1:3128 \$supervise_daemon_args\""
 sed -i "\#-f $ial#d" /etc/init.d/containerd
 sed -i "/^supervise_daemon_args/a $setproxy" /etc/init.d/containerd

@@ -40,7 +40,7 @@ factory_reset() {
   },
   "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
-    "imageAllowList": {
+    "allowedImages": {
       "enabled": $image_allow_list,
       "patterns": ["docker.io"]
     }

@@ -940,19 +940,19 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       return ['no changes necessary', ''];
     }
 
-    const imageAllowListConf = '/usr/local/openresty/nginx/conf/image-allow-list.conf';
+    const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
     const rcService = k8smanager.backend === 'wsl' ? 'wsl-service' : 'rc-service';
 
-    // Update image allow list patterns, just in case the backend doesn't need restarting
+    // Update allowed-images patterns, just in case the backend doesn't need restarting
     // TODO: review why this block is needed at all
-    if (cfg.containerEngine.imageAllowList.enabled) {
-      const allowListConf = BackendHelper.createImageAllowListConf(cfg.containerEngine.imageAllowList);
+    if (cfg.containerEngine.allowedImages.enabled) {
+      const allowListConf = BackendHelper.createAllowedImageListConf(cfg.containerEngine.allowedImages);
 
-      await k8smanager.executor.writeFile(imageAllowListConf, allowListConf, 0o644);
+      await k8smanager.executor.writeFile(allowedImagesConf, allowListConf, 0o644);
       await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'openresty', 'reload');
     } else {
       await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'openresty', 'stop');
-      await k8smanager.executor.execCommand({ root: true }, 'rm', '-f', imageAllowListConf);
+      await k8smanager.executor.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
     }
 
     // Check if the newly applied preferences demands a restart of the backend.

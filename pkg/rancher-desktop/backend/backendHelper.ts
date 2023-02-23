@@ -30,9 +30,9 @@ export default class BackendHelper {
   }
 
   /**
-   * Turn imageAllowList patterns into a list of nginx regex rules.
+   * Turn allowedImages patterns into a list of nginx regex rules.
    */
-  static createImageAllowListConf(imageAllowList: BackendSettings['containerEngine']['imageAllowList']): string {
+  static createAllowedImageListConf(allowedImages: BackendSettings['containerEngine']['allowedImages']): string {
     /**
      * The image allow list config file consists of one line for each pattern using nginx pattern matching syntax.
      * It starts with '~*' for case-insensitive matching, followed by a regular expression, which should be
@@ -49,7 +49,7 @@ export default class BackendHelper {
     // TODO: remove hard-coded sandbox_image from our /etc/containerd/config.toml
     patterns += '"~*^registry-1\\.docker\\.io(:443)?/v2/rancher/mirrored-pause/manifests/[^/]+$" 0;\n';
 
-    for (const pattern of imageAllowList.patterns) {
+    for (const pattern of allowedImages.patterns) {
       let host = 'registry-1.docker.io';
       // escape all unescaped double-quotes because the final pattern will be quoted to avoid nginx syntax errors
       let repo = pattern.replaceAll(/(\\*)(")/g, this.#escapeChar).split('/');
