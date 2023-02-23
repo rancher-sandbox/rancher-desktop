@@ -200,6 +200,8 @@ Electron.app.whenReady().then(async() => {
 
     if (!cfg.startInBackground) {
       window.openMain();
+    } else if (Electron.app.dock) {
+      Electron.app.dock.hide();
     }
 
     dockerDirManager.ensureCredHelperConfigured();
