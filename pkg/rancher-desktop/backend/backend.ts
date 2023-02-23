@@ -6,7 +6,7 @@ import * as childProcess from '@pkg/utils/childProcess';
 import EventEmitter from '@pkg/utils/eventEmitter';
 import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 
-import type { ContainerEngineClient } from './containerEngine';
+import type { ContainerEngineClient } from './containerClient';
 import type { KubernetesBackend } from './k8s';
 
 export enum State {

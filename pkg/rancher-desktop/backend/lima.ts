@@ -22,10 +22,8 @@ import {
   Architecture, BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
-import { ContainerEngineClient } from './containerEngine';
+import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
 import * as K8s from './k8s';
-import MobyClient from './mobyClient';
-import NerdctlClient from './nerdctlClient';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';

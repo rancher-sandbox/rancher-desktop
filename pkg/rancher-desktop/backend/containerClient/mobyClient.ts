@@ -2,8 +2,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
+
 import { VMExecutor } from '@pkg/backend/backend';
-import { ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from '@pkg/backend/containerEngine';
 import { ErrorCommand, spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import { executable } from '@pkg/utils/resources';
@@ -11,7 +12,7 @@ import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.moby;
 
-export default class MobyClient implements ContainerEngineClient {
+export class MobyClient implements ContainerEngineClient {
   constructor(vm: VMExecutor, endpoint: string) {
     this.vm = vm;
     this.endpoint = endpoint;

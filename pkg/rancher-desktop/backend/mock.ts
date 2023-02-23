@@ -8,7 +8,7 @@ import semver from 'semver';
 import {
   BackendSettings, execOptions, State, RestartReasons, VMExecutor, BackendEvents,
 } from './backend';
-import { ContainerEngineClient } from './containerEngine';
+import { ContainerEngineClient } from './containerClient';
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
 

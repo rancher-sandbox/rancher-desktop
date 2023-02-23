@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
+import { ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
+
 import { VMExecutor } from '@pkg/backend/backend';
-import { ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from '@pkg/backend/containerEngine';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import { executable } from '@pkg/utils/resources';
@@ -13,7 +14,7 @@ const console = Logging.nerdctl;
 /**
  * NerdctlClient manages nerdctl/containerd.
  */
-export default class NerdctlClient implements ContainerEngineClient {
+export class NerdctlClient implements ContainerEngineClient {
   constructor(vm: VMExecutor) {
     this.vm = vm;
   }
