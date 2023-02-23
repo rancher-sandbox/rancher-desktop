@@ -39,6 +39,7 @@ import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
 import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
 import { executable } from '@pkg/utils/resources';
@@ -343,12 +344,19 @@ async function checkPrerequisites() {
     }
     break;
   }
-  case 'darwin':
+  case 'darwin': {
     // Required: MacOS-10.15(Darwin-19) or newer
-    if (parseInt(os.release()) < 19) {
+    const macOsVersion = await getMacOsVersion(console);
+
+    if (macOsVersion === null) {
+      console.warn('failed to get macOS version');
+      break;
+    }
+    if (semver.gt('10.15.0', macOsVersion)) {
       messageId = 'macOS-release';
     }
     break;
+  }
   }
 
   if (messageId !== 'ok') {

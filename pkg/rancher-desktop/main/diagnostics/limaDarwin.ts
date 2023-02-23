@@ -4,8 +4,8 @@ import semver from 'semver';
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 import mainEvents from '@pkg/main/mainEvents';
-import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
 
 const console = Logging.diagnostics;
 
@@ -36,8 +36,7 @@ const CheckLimaDarwin: DiagnosticsChecker = {
       passed:      false,
       fixes:       [] as { description: string }[],
     };
-    const { stdout } = await spawnFile('/usr/bin/sw_vers', ['-productVersion'], { stdio: ['ignore', 'pipe', console] });
-    const currentVersion = semver.coerce(stdout.trim());
+    const currentVersion = await getMacOsVersion(console);
 
     result.passed = !!currentVersion && semver.gte(currentVersion, '12.4.0', { loose: true });
     result.description = `This machine is running macOS ${ currentVersion }.`;
