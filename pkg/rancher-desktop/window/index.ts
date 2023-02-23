@@ -58,15 +58,6 @@ export function getWindow(name: string): Electron.BrowserWindow | null {
 }
 
 /**
- * Close all open windows.
- */
-function closeAll() {
-  for (const name in windowMapping) {
-    getWindow(name)?.close();
-  }
-}
-
-/**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
  * @param url The URL to load into the window.
@@ -181,7 +172,9 @@ export function openMain() {
     const cfg = loadSettings();
 
     if (cfg.window.quitOnClose) {
-      closeAll();
+      BrowserWindow.getAllWindows().forEach((window) => {
+        window.close();
+      });
       app.quit();
     }
   });
