@@ -6,6 +6,7 @@ import * as childProcess from '@pkg/utils/childProcess';
 import EventEmitter from '@pkg/utils/eventEmitter';
 import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 
+import type { ContainerEngineClient } from './containerEngine';
 import type { KubernetesBackend } from './k8s';
 
 export enum State {
@@ -175,6 +176,7 @@ export interface VMBackend extends EventEmitter<BackendEvents> {
 
   readonly executor: VMExecutor;
   readonly kubeBackend: KubernetesBackend;
+  readonly containerEngineClient: ContainerEngineClient;
 }
 
 /**
@@ -216,6 +218,16 @@ export interface VMExecutor {
   spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
 
   /**
+   * Read the contents of the given file.  If the file is a symlink, the target
+   * will be read instead.
+   * @param filePath The path inside the VM to read.
+   * @param [options.encoding='utf-8'] The encoding of the file.
+   * @returns The contents of the file.
+   */
+  readFile(filePath: string): Promise<string>;
+  readFile(filePath: string, options: Partial<{ encoding: BufferEncoding }>): Promise<string>;
+
+  /**
    * Write the given contents to a given file name in the VM.
    * The file will be owned by root.
    * @param filePath The destination file path, in the VM.
@@ -224,4 +236,12 @@ export interface VMExecutor {
    */
   writeFile(filePath: string, fileContents: string): Promise<void>;
   writeFile(filePath: string, fileContents: string, permissions: fs.Mode): Promise<void>;
+
+  /**
+   * Copy the given file from the VM into the host.
+   * @param vmPath The source path, inside the VM.
+   * @param hostPath The destination path, on the host.
+   * @note The behaviour of copying a directory is undefined.
+   */
+  copyFileOut(vmPath: string, hostPath: string): Promise<void>;
 }
