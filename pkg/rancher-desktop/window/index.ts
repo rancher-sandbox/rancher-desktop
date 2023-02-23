@@ -4,6 +4,7 @@ import path from 'path';
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
+import { load as loadSettings } from '@pkg/config/settings';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
@@ -54,6 +55,15 @@ export const restoreWindow = (window: Electron.BrowserWindow | null): window is 
  */
 export function getWindow(name: string): Electron.BrowserWindow | null {
   return (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+}
+
+/**
+ * Close all open windows.
+ */
+function closeAll() {
+  for (const name in windowMapping) {
+    getWindow(name)?.close();
+  }
 }
 
 /**
@@ -166,6 +176,15 @@ export function openMain() {
       'switch preferences tabs by cycle [back]',
     );
   }
+
+  window.on('closed', () => {
+    const cfg = loadSettings();
+
+    if (cfg.window.quitOnClose) {
+      closeAll();
+      app.quit();
+    }
+  });
 
   app.dock?.show();
 }
