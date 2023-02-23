@@ -515,7 +515,9 @@ export function readDeploymentProfiles() {
       } catch (err) {
         console.error( `Error reading deployment profile: ${ err }`);
       } finally {
-        nativeReg.closeKey(registryKey);
+        if (typeof registryKey !== 'undefined') {
+          nativeReg.closeKey(registryKey);
+        }
       }
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
