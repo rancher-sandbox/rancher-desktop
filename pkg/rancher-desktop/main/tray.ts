@@ -61,7 +61,7 @@ export class Tray {
     { type: 'separator' },
     {
       id:    'main',
-      label: 'Show main window',
+      label: 'Open main window',
       type:  'normal',
       click() {
         openMain();
@@ -69,14 +69,14 @@ export class Tray {
     },
     {
       id:    'preferences',
-      label: 'Show preferences dialog',
+      label: 'Open preferences dialog',
       type:  'normal',
       click: openPreferences,
     },
     {
       id:      'dashboard',
       enabled: false,
-      label:   'Show cluster dashboard',
+      label:   'Open cluster dashboard',
       type:    'normal',
       click:   openDashboard,
     },
