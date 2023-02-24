@@ -3,7 +3,7 @@ import { GetterTree } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { Settings } from '@pkg/config/settings';
+import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -122,7 +122,10 @@ export const actions = {
       'preferences/commitPreferences',
       {
         ...rootState.credentials.credentials as ServerState,
-        payload: { diagnostics: { mutedChecks: { [rowToUpdate.id]: isMuted } } } as RecursivePartial<Settings>,
+        payload: {
+          version:     CURRENT_SETTINGS_VERSION,
+          diagnostics: { mutedChecks: { [rowToUpdate.id]: isMuted } },
+        } as RecursivePartial<Settings>,
       },
       { root: true },
     );
