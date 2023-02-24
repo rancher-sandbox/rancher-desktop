@@ -12,6 +12,7 @@ import { VMBackend } from '@pkg/backend/backend';
 import { State } from '@pkg/backend/k8s';
 import * as kubeconfig from '@pkg/backend/kubeconfig';
 import { Settings, load } from '@pkg/config/settings';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
 import Logging from '@pkg/utils/logging';
@@ -21,6 +22,7 @@ import { openDashboard } from '@pkg/window/dashboard';
 import { openPreferences } from '@pkg/window/preferences';
 
 const console = Logging.background;
+const ipcMainProxy = getIpcMainProxy(console);
 
 enum networkStatus {
   CHECKING = 'checking...',
@@ -183,11 +185,7 @@ export class Tray {
      *
      * This system isn't perfect -- if the renderer window is closed when connection status changes, the info is lost.
      */
-    Electron.ipcMain.on('update-network-status', (_, status: boolean) => {
-      this.handleUpdateNetworkStatus(status).catch((err:any) => {
-        console.log('Error updating network status: ', err);
-      });
-    });
+    ipcMainProxy.on('update-network-status', this.updateNetworkStatusEvent);
   }
 
   private k8sStateChangedEvent = (mgr: VMBackend) => {
@@ -197,6 +195,12 @@ export class Tray {
   private settingsUpdateEvent = (cfg: Settings) => {
     this.settings = cfg;
     this.settingsChanged();
+  };
+
+  private updateNetworkStatusEvent = (_: Electron.IpcMainEvent, status: boolean) => {
+    this.handleUpdateNetworkStatus(status).catch((err:any) => {
+      console.log('Error updating network status: ', err);
+    });
   };
 
   /**
@@ -216,6 +220,7 @@ export class Tray {
     this.trayMenu.destroy();
     mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.off('settings-update', this.settingsUpdateEvent);
+    ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
   }
 
   /**
