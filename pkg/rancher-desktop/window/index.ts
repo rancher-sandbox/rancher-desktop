@@ -171,7 +171,7 @@ export function openMain() {
   window.on('closed', () => {
     const cfg = loadSettings();
 
-    if (cfg.window.quitOnClose) {
+    if (cfg.application.window.quitOnClose) {
       BrowserWindow.getAllWindows().forEach((window) => {
         window.close();
       });

@@ -33,8 +33,8 @@ export default Vue.extend({
     >
       <checkbox
         :label="t('application.behavior.autoStart.label')"
-        :value="preferences.autoStart"
-        @input="onChange('autoStart', $event)"
+        :value="preferences.application.autoStart"
+        @input="onChange('application.autoStart', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -45,13 +45,13 @@ export default Vue.extend({
     >
       <checkbox
         :label="t('application.behavior.startInBackground.label')"
-        :value="preferences.startInBackground"
-        @input="onChange('startInBackground', $event)"
+        :value="preferences.application.startInBackground"
+        @input="onChange('application.startInBackground', $event)"
       />
       <checkbox
         :label="t('application.behavior.windowQuitOnClose.label')"
-        :value="preferences.window.quitOnClose"
-        @input="onChange('window.quitOnClose', $event)"
+        :value="preferences.application.window.quitOnClose"
+        @input="onChange('application.window.quitOnClose', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -60,8 +60,8 @@ export default Vue.extend({
     >
       <checkbox
         :label="t('application.behavior.notificationIcon.label')"
-        :value="preferences.hideNotificationIcon"
-        @input="onChange('hideNotificationIcon', $event)"
+        :value="preferences.application.hideNotificationIcon"
+        @input="onChange('application.hideNotificationIcon', $event)"
       />
     </rd-fieldset>
   </div>
