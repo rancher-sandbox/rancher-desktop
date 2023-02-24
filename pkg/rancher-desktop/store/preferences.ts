@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { defaultSettings, Settings } from '@pkg/config/settings';
+import { CURRENT_SETTINGS_VERSION, defaultSettings, Settings } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
@@ -231,7 +231,10 @@ export const actions = {
       'preferences/commitPreferences',
       {
         ...rootState.credentials.credentials as ServerState,
-        payload: { diagnostics: { showMuted: isMuted } },
+        payload: {
+          version:     CURRENT_SETTINGS_VERSION,
+          diagnostics: { showMuted: isMuted },
+        },
       },
       { root: true },
     );
