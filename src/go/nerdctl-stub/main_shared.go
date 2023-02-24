@@ -1,7 +1,4 @@
-//go:build linux || windows
-// +build linux windows
-
-// This file contains routines shared between Windows and Linux.
+// This file contains shared routines for managing arguments.
 
 package main
 
