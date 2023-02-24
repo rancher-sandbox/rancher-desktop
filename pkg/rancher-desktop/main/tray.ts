@@ -8,6 +8,7 @@ import path from 'path';
 import { KubeConfig } from '@kubernetes/client-node';
 import Electron from 'electron';
 
+import { VMBackend } from '@pkg/backend/backend';
 import { State } from '@pkg/backend/k8s';
 import * as kubeconfig from '@pkg/backend/kubeconfig';
 import { Settings, load } from '@pkg/config/settings';
@@ -172,13 +173,8 @@ export class Tray {
     this.buildFromConfig();
     this.watchForChanges();
 
-    mainEvents.on('k8s-check-state', (mgr) => {
-      this.k8sStateChanged(mgr.state);
-    });
-    mainEvents.on('settings-update', (cfg) => {
-      this.settings = cfg;
-      this.settingsChanged();
-    });
+    mainEvents.on('k8s-check-state', this.k8sStateChangedEvent);
+    mainEvents.on('settings-update', this.settingsUpdateEvent);
 
     /**
      * This event is called from the renderer, at startup with status based on the navigator object's onLine field,
@@ -193,6 +189,15 @@ export class Tray {
       });
     });
   }
+
+  private k8sStateChangedEvent = (mgr: VMBackend) => {
+    this.k8sStateChanged(mgr.state);
+  };
+
+  private settingsUpdateEvent = (cfg: Settings) => {
+    this.settings = cfg;
+    this.settingsChanged();
+  };
 
   /**
    * Checks for an existing instance of Tray. If one does not
@@ -209,6 +214,8 @@ export class Tray {
    */
   public hide() {
     this.trayMenu.destroy();
+    mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
+    mainEvents.off('settings-update', this.settingsUpdateEvent);
   }
 
   /**
