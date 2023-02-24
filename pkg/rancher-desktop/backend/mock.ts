@@ -8,6 +8,7 @@ import semver from 'semver';
 import {
   BackendSettings, execOptions, State, RestartReasons, VMExecutor, BackendEvents,
 } from './backend';
+import { ContainerEngineClient } from './containerClient';
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
 
@@ -33,6 +34,10 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
   });
 
   debug = false;
+
+  get containerEngineClient(): ContainerEngineClient {
+    throw new Error('not implemented');
+  }
 
   getBackendInvalidReason(): Promise<KubernetesError | null> {
     return Promise.resolve(null);
@@ -132,8 +137,16 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
     return null as unknown as ChildProcess;
   }
 
+  readFile(filePath: string, options: { encoding?: BufferEncoding } = {}): Promise<string> {
+    return Promise.reject('MockBackend#readFile() not implemented');
+  }
+
   writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644): Promise<void> {
     return Promise.resolve();
+  }
+
+  copyFileOut(vmPath: string, hostPath: string): Promise<void> {
+    return Promise.reject('MockBackend#copyFileOut() not implemented');
   }
 
   // #endregion

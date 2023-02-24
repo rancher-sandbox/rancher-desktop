@@ -15,6 +15,7 @@ import {
   BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
+import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
 import K3sHelper from './k3sHelper';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
@@ -53,6 +54,8 @@ import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
+
+/* eslint @typescript-eslint/switch-exhaustiveness-check: "error" */
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -149,6 +152,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   readonly kubeBackend: KubernetesBackend;
   readonly executor = this;
+  #containerEngineClient: ContainerEngineClient | undefined;
+
+  get containerEngineClient() {
+    if (this.#containerEngineClient) {
+      return this.#containerEngineClient;
+    }
+
+    throw new Error('Invalid state, no container engine client available.');
+  }
 
   /** Not used in wsl.ts */
   get noModalDialogs() {
@@ -197,6 +209,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     case State.ERROR:
     case State.DISABLED:
       await this.kubeBackend.stop();
+      break;
+    case State.STARTING:
+    case State.STARTED:
+      /* nothing */
     }
   }
 
@@ -580,14 +596,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   async readFile(filePath: string, options?: Partial<{
     distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
     encoding: BufferEncoding,
-    resolveSymlinks: true,
   }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const encoding = options?.encoding ?? 'utf-8';
 
-    if (options?.resolveSymlinks ?? true) {
-      filePath = (await this.execCommand({ distro, capture: true }, 'busybox', 'readlink', '-f', filePath)).trim();
-    }
+    filePath = (await this.execCommand({ distro, capture: true }, 'busybox', 'readlink', '-f', filePath)).trim();
 
     // Run wslpath here, to ensure that WSL generates any files we need.
     const windowsPath = (await this.execCommand({
@@ -628,6 +641,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    */
   async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
     await this.writeFileWSL(filePath, fileContents, { permissions });
+  }
+
+  async copyFileOut(vmPath: string, hostPath: string): Promise<void> {
+    const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
+
+    await fs.promises.copyFile(windowsPath, hostPath);
   }
 
   /**
@@ -1084,6 +1103,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
     await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
+    this.#containerEngineClient = undefined;
     await this.progressTracker.action('Initializing Rancher Desktop', 10, async() => {
       try {
         const prepActions = [(async() => {
@@ -1262,6 +1282,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
         }
 
+        switch (config.containerEngine.name) {
+        case ContainerEngine.CONTAINERD:
+          this.#containerEngineClient = new NerdctlClient(this);
+          break;
+        case ContainerEngine.MOBY:
+          this.#containerEngineClient = new MobyClient(this, 'npipe:////./pipe/docker_engine');
+          break;
+        }
+
         await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);
       } catch (ex) {
         await this.setState(State.ERROR);
@@ -1380,6 +1409,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     try {
       await this.setState(State.STOPPING);
       await this.kubeBackend.stop();
+      this.#containerEngineClient = undefined;
 
       await this.progressTracker.action('Shutting Down...', 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {

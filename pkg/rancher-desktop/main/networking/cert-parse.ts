@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import forge, { asn1 } from 'node-forge';
 
 import Logging from '@pkg/utils/logging';
+import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.background;
 
@@ -165,10 +166,6 @@ function parseIssuer(encoded: any): Record<string, string> {
   }
 
   return result;
-}
-
-function defined<T>(input: T | undefined | null): input is T {
-  return typeof input !== 'undefined' && input !== null;
 }
 
 /**
