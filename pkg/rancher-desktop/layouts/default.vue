@@ -55,7 +55,7 @@ export default {
 
   computed: {
     routes() {
-      return mainRoutes.map(route => route === '/Diagnostics' ? { ...route, error: this.errorCount } : route);
+      return mainRoutes.map(route => route.route === '/Diagnostics' ? { ...route, error: this.errorCount } : route);
     },
     paths() {
       return mainRoutes.map(r => r.route);
