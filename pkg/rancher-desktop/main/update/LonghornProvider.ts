@@ -12,6 +12,7 @@ import semver from 'semver';
 
 import fetch from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
 
 const console = Logging.update;
@@ -58,6 +59,11 @@ export interface LonghornUpdateInfo extends UpdateInfo {
    * an update.
    */
   nextUpdateTime: number;
+  /**
+   * Whether there is an unsupported version of Rancher Desktop that is
+   * newer than the latest supported version.
+   */
+  unsupportedUpgradeAvailable: boolean;
 }
 
 /**
@@ -68,6 +74,7 @@ interface LonghornUpgraderResponse {
   versions: {
     Name: string;
     ReleaseDate: Date;
+    Supported: boolean | undefined;
     Tags: string[];
   }[];
   /**
@@ -112,6 +119,11 @@ interface GithubReleaseInfo {
 interface LonghornCache {
   /** The minimum time (in Unix epoch) we should next check for an update. */
   nextUpdateTime: number;
+  /**
+   * Whether there is an unsupported version of Rancher Desktop that is
+   * newer than the latest supported version.
+   */
+  unsupportedUpgradeAvailable: boolean;
   /** Whether the recorded release is an installable update */
   isInstallable: boolean;
   release: {
@@ -186,6 +198,30 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
   }
 }
 
+async function getPlatformVersion(): Promise<string> {
+  const platform = os.platform();
+
+  switch (platform) {
+  case 'win32':
+    return os.release();
+  case 'darwin': {
+    const macOsVersion = await getMacOsVersion(console);
+
+    if (macOsVersion === null) {
+      throw new Error('failed to get macOS version');
+    }
+
+    return macOsVersion.toString();
+  }
+  case 'linux':
+    // OS version is hard to get on Linux. Luckily, automatic updates
+    // are not supported on Linux as of the time of writing. "unknown"
+    // should suffice.
+    return 'unknown';
+  }
+  throw new Error(`Platform "${ platform }" is not supported`);
+}
+
 /**
  * LonghornProvider is a Provider that interacts with Longhorn's
  * [Upgrade Responder](https://github.com/longhorn/upgrade-responder) server to
@@ -222,6 +258,43 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
   }
 
   /**
+   * Fetch info on available versions of Rancher Desktop from the Upgrade
+   * Responder server.
+   * @returns Array of available versions.
+   */
+  async fetchUpgraderResponse(): Promise<LonghornUpgraderResponse> {
+    const requestPayload = {
+      appVersion: this.updater.currentVersion.format(),
+      extraInfo:  {
+        platform:        `${ os.platform() }-${ os.arch() }`,
+        platformVersion: await getPlatformVersion(),
+      },
+    };
+    // If we are using anything on `github.io` as the update server, we're
+    // trying to run a simplified test.  In that case, break the protocol and do
+    // a HTTP GET instead of the HTTP POST with data we should do for actual
+    // longhorn upgrade-responder servers.
+    const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(this.configuration.upgradeServer) ? { method: 'GET' } : {
+      method: 'POST',
+      body:   JSON.stringify(requestPayload),
+    };
+
+    console.debug(`Checking for upgrades from ${ this.configuration.upgradeServer }`);
+    const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
+    const response = await responseRaw.json() as LonghornUpgraderResponse;
+
+    console.debug(`Upgrade server response:`, util.inspect(response, true, null));
+
+    // If the upgrade responder does not send the Supported field,
+    // assume that the version is supported.
+    for (const version of response.versions) {
+      version.Supported = version.Supported ?? true;
+    }
+
+    return response;
+  }
+
+  /**
    * Check for updates, possibly returning the cached information if it is still
    * applicable.
    */
@@ -240,33 +313,21 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       }
     }
 
-    // Get the latest release from the upgrade responder.
-    const requestPayload = {
-      appVersion: this.updater.currentVersion.format(),
-      extraInfo:  { platform: `${ os.platform() }-${ os.arch() }` },
-    };
-    // If we are using anything on `github.io` as the update server, we're
-    // trying to run a simplified test.  In that case, break the protocol and do
-    // a HTTP GET instead of the HTTP POST with data we should do for actual
-    // longhorn upgrade-responder servers.
-    const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(this.configuration.upgradeServer) ? { method: 'GET' } : {
-      method: 'POST',
-      body:   JSON.stringify(requestPayload),
-    };
+    const response = await this.fetchUpgraderResponse();
+    const allVersions = response.versions;
 
-    console.debug(`Checking for upgrades from ${ this.configuration.upgradeServer }`);
-    const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
-    const response = await responseRaw.json() as LonghornUpgraderResponse;
+    allVersions.sort((version1, version2) => semver.rcompare(version1.Name, version2.Name));
+    const supportedVersions = allVersions.filter(version => version.Supported);
 
-    console.debug(`Upgrade server response:`, util.inspect(response, true, null));
-    const latest = response.versions?.find(v => v.Tags.includes('latest'));
+    if (supportedVersions.length === 0) {
+      throw newError('Could not find latest version', 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND');
+    }
+    const latest = supportedVersions[0];
+    const unsupportedUpgradeAvailable = allVersions[0].Name !== latest.Name;
+
     const requestIntervalInMinutes = response.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
     const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
     const nextRequestTime = Date.now() + requestIntervalInMs;
-
-    if (!latest) {
-      throw newError('Could not find latest version', 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND');
-    }
 
     // Get release information from GitHub releases.
     const { owner, repo, vPrefixedTagName } = this.configuration;
@@ -312,6 +373,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
 
     const cache: LonghornCache = {
       nextUpdateTime: nextRequestTime,
+      unsupportedUpgradeAvailable,
       isInstallable:  false, // Always false, we'll update this later.
       release:        {
         tag,
@@ -342,13 +404,14 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
         sha512:                cache.file.checksum,
         isAdminRightsRequired: false,
       }],
-      version:        cache.release.tag,
-      path:           '',
-      sha512:         '',
-      releaseName:    cache.release.name,
-      releaseNotes:   cache.release.notes,
-      releaseDate:    cache.release.date,
-      nextUpdateTime: cache.nextUpdateTime,
+      version:                     cache.release.tag,
+      path:                        '',
+      sha512:                      '',
+      releaseName:                 cache.release.name,
+      releaseNotes:                cache.release.notes,
+      releaseDate:                 cache.release.date,
+      nextUpdateTime:              cache.nextUpdateTime,
+      unsupportedUpgradeAvailable: cache.unsupportedUpgradeAvailable,
     };
   }
 

@@ -54,7 +54,7 @@ export type UpdateState = {
   available: boolean;
   downloaded: boolean;
   error?: Error;
-  info?: UpdateInfo;
+  info?: LonghornUpdateInfo;
   progress?: ProgressInfo;
 };
 const updateState: UpdateState = {
@@ -71,6 +71,10 @@ Electron.ipcMain.on('update-apply', () => {
   }
   autoUpdater.quitAndInstall();
 });
+
+function isLonghornUpdateInfo(info: UpdateInfo | LonghornUpdateInfo): info is LonghornUpdateInfo {
+  return (info as LonghornUpdateInfo).nextUpdateTime !== undefined;
+}
 
 /**
  * Return a new AppUpdater; if no update configuration is available, returns
@@ -132,6 +136,9 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     setHasQueuedUpdate(false);
   });
   updater.on('update-available', (info) => {
+    if (!isLonghornUpdateInfo(info)) {
+      throw new Error('updater: event update-available: info is not of type LonghornUpdateInfo');
+    }
     console.debug('update: update available:', info);
     updateState.available = true;
     updateState.info = info;
@@ -139,6 +146,9 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     window.send('update-state', updateState);
   });
   updater.on('update-not-available', (info) => {
+    if (!isLonghornUpdateInfo(info)) {
+      throw new Error('updater: event update-not-available: info is not of type LonghornUpdateInfo');
+    }
     console.debug('update: not available:', info);
     updateState.available = false;
     updateState.info = info;
@@ -155,6 +165,9 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     window.send('update-state', updateState);
   });
   updater.on('update-downloaded', (info) => {
+    if (!isLonghornUpdateInfo(info)) {
+      throw new Error('updater: event update-not-available: info is not of type LonghornUpdateInfo');
+    }
     if (state === State.DOWNLOADING) {
       state = State.UPDATE_PENDING;
     }
@@ -266,7 +279,10 @@ async function triggerUpdateCheck() {
       return;
     }
 
-    const updateInfo = result.updateInfo as LonghornUpdateInfo;
+    if (!isLonghornUpdateInfo(result.updateInfo)) {
+      throw new Error('result.updateInfo is not of type LonghornUpdateInfo');
+    }
+    const updateInfo = result.updateInfo;
     const givenTimeDelta = (updateInfo.nextUpdateTime || 0) - Date.now();
 
     // Enforce at least one minute between checks, even if the server is reporting
