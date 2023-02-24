@@ -14,14 +14,14 @@ test.describe.serial('quitOnClose setting', () => {
   });
 
   test('should quit when quitOnClose is true and window is closed', async() => {
-    createDefaultSettings({ window: { quitOnClose: true } });
+    createDefaultSettings({ application: { window: { quitOnClose: true } } });
     const { electronApp } = await startRancherDesktop(__filename, false);
 
     await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(true);
   });
 
   test('should not quit when quitOnClose is false and window is closed', async() => {
-    createDefaultSettings({ window: { quitOnClose: false } });
+    createDefaultSettings({ application: { window: { quitOnClose: false } } });
     const { electronApp } = await startRancherDesktop(__filename, true);
 
     await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(false);

@@ -198,7 +198,7 @@ Electron.app.whenReady().then(async() => {
 
     setupTray();
 
-    if (!cfg.startInBackground) {
+    if (!cfg.application.startInBackground) {
       window.openMain();
     } else if (Electron.app.dock) {
       Electron.app.dock.hide();
@@ -1035,7 +1035,7 @@ async function runRdctlSetup(newSettings: settings.Settings): Promise<void> {
   }
 
   const rdctlPath = executable('rdctl');
-  const args = ['setup', `--auto-start=${ newSettings.autoStart }`];
+  const args = ['setup', `--auto-start=${ newSettings.application.autoStart }`];
 
   await spawnFile(rdctlPath, args);
 }

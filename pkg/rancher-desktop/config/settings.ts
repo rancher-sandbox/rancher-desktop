@@ -48,6 +48,10 @@ export const defaultSettings = {
     telemetry:              { enabled: true },
     /** Whether we should check for updates and apply them. */
     updater:                { enabled: true },
+    autoStart:              false,
+    startInBackground:      false,
+    hideNotificationIcon:   false,
+    window:                 { quitOnClose: false },
   },
   containerEngine: {
     allowedImages: {
@@ -87,14 +91,10 @@ export const defaultSettings = {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
-  autoStart:            false,
-  startInBackground:    false,
-  hideNotificationIcon: false,
-  window:               { quitOnClose: false },
   /**
    * Experimental settings - there should not be any UI for these.
    */
-  experimental:         {
+  experimental: {
     virtualMachine: {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,

@@ -63,6 +63,10 @@ export default class SettingsValidator {
         telemetry:              { enabled: this.checkBoolean },
         /** Whether we should check for updates and apply them. */
         updater:                { enabled: this.checkBoolean },
+        autoStart:              this.checkBoolean,
+        startInBackground:      this.checkBoolean,
+        hideNotificationIcon:   this.checkBoolean,
+        window:                 { quitOnClose: this.checkBoolean },
       },
       containerEngine: {
         allowedImages: {
@@ -95,10 +99,6 @@ export default class SettingsValidator {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,
       },
-      autoStart:            this.checkBoolean,
-      startInBackground:    this.checkBoolean,
-      hideNotificationIcon: this.checkBoolean,
-      window:               { quitOnClose: this.checkBoolean },
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];

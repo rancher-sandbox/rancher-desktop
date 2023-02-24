@@ -255,6 +255,17 @@ components:
               properties:
                 enabled:
                   type: boolean
+            autoStart:
+              type: boolean
+            startInBackground:
+              type: boolean
+            hideNotificationIcon:
+              type: boolean
+            window:
+              type: object
+              properties:
+                quitOnClose:
+                  type: boolean
         containerEngine:
           type: object
           properties:
@@ -352,17 +363,6 @@ components:
             mutedChecks:
               type: object
               additionalProperties: true
-        autoStart:
-          type: boolean
-        startInBackground:
-          type: boolean
-        hideNotificationIcon:
-          type: boolean
-        window:
-          type: object
-          properties:
-            quitOnClose:
-              type: boolean
 
     diagnostics:
       type: object

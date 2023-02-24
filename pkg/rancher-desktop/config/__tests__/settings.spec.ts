@@ -21,6 +21,10 @@ describe('updateFromCommandLine', () => {
         telemetry:              { enabled: true },
         /** Whether we should check for updates and apply them. */
         updater:                { enabled: true },
+        autoStart:              false,
+        startInBackground:      false,
+        hideNotificationIcon:   false,
+        window:                 { quitOnClose: false },
       },
       containerEngine: {
         allowedImages: {
@@ -55,10 +59,6 @@ describe('updateFromCommandLine', () => {
         showMuted:   false,
         mutedChecks: { },
       },
-      autoStart:            false,
-      startInBackground:    false,
-      hideNotificationIcon: false,
-      window:               { quitOnClose: false },
     };
     origPrefs = clone(prefs);
   });
