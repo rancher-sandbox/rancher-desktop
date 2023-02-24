@@ -101,19 +101,6 @@ export const defaultSettings = {
 
 export type Settings = typeof defaultSettings;
 
-/**
- * Lockable default settings used for validating deployment profiles.
- * Data values are ignored, but types are used for validation.
- */
-export const lockableDefaultSettings = {
-  containerEngine: {
-    imageAllowList: {
-      enabled:  true,
-      patterns: [] as Array<string>,
-    },
-  },
-};
-
 let _isFirstRun = false;
 let settings: Settings | undefined;
 

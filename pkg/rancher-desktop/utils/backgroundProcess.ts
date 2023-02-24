@@ -149,6 +149,20 @@ export default class BackgroundProcess {
 }
 
 const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
+
+/**
+ * Lockable default settings used for validating deployment profiles.
+ * Data values are ignored, but types are used for validation.
+ */
+const lockableDefaultSettings = {
+  containerEngine: {
+    imageAllowList: {
+      enabled:  true,
+      patterns: [] as Array<string>,
+    },
+  },
+};
+
 /**
  * Read and validate deployment profiles, giving system level profiles
  * priority over user level profiles.  If the system directory contains a
@@ -160,7 +174,7 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  *       located in the main process.
  */
 
-export function deploymentProfilesReader() {
+export function readDeploymentProfiles() {
   let profiles = {
     defaults: undefined,
     locked:   undefined,
@@ -209,7 +223,7 @@ export function deploymentProfilesReader() {
   }
 
   profiles.defaults = validateDeploymentProfile(profiles.defaults, settings.defaultSettings) ?? {};
-  profiles.locked = validateDeploymentProfile(profiles.locked, settings.lockableDefaultSettings) ?? {};
+  profiles.locked = validateDeploymentProfile(profiles.locked, lockableDefaultSettings) ?? {};
 
   return profiles;
 }
