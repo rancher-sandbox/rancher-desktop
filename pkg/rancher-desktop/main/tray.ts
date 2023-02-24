@@ -35,6 +35,7 @@ export class Tray {
   protected kubernetesState = State.STOPPED;
   private settings: Settings = load();
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
+  private static instance: Tray;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -152,7 +153,7 @@ export class Tray {
     }));
   }
 
-  constructor() {
+  private constructor() {
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
     this.trayMenu.setToolTip('Rancher Desktop');
 
@@ -193,6 +194,29 @@ export class Tray {
     });
   }
 
+  /**
+   * Checks for an existing instance of Tray. If one does not
+   * exist, instantiate a new one.
+   */
+  public static getInstance(): Tray {
+    Tray.instance ??= new Tray();
+
+    return Tray.instance;
+  }
+
+  /**
+   * Destroy the tray menu.
+   */
+  public destroy() {
+    this.trayMenu.destroy();
+  }
+
+  public setup() {
+    if (this.trayMenu.isDestroyed()) {
+      Tray.instance = new Tray();
+    }
+  }
+
   protected async handleUpdateNetworkStatus(status: boolean) {
     if (!status) {
       this.currentNetworkStatus = networkStatus.OFFLINE;
@@ -231,6 +255,10 @@ export class Tray {
   }
 
   protected updateMenu() {
+    if (this.trayMenu.isDestroyed()) {
+      return;
+    }
+
     const labels = {
       [State.STOPPED]:  'Kubernetes is stopped',
       [State.STARTING]: 'Kubernetes is starting',
@@ -333,8 +361,4 @@ export class Tray {
       this.trayMenu.setContextMenu(contextMenu);
     });
   }
-}
-
-export default function setupTray() {
-  new Tray();
 }

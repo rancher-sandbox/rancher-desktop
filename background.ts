@@ -29,7 +29,7 @@ import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
 import setupNetworking from '@pkg/main/networking';
-import setupTray from '@pkg/main/tray';
+import { Tray } from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
 import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
@@ -196,7 +196,9 @@ Electron.app.whenReady().then(async() => {
       iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
     });
 
-    setupTray();
+    if (!cfg.hideNotificationIcon) {
+      Tray.getInstance().setup();
+    }
 
     if (!cfg.application.startInBackground) {
       window.openMain();
