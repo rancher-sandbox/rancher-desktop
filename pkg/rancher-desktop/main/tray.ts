@@ -205,13 +205,16 @@ export class Tray {
   }
 
   /**
-   * Destroy the tray menu.
+   * Hide the tray menu.
    */
-  public destroy() {
+  public hide() {
     this.trayMenu.destroy();
   }
 
-  public setup() {
+  /**
+   * Show the tray menu.
+   */
+  public show() {
     if (this.trayMenu.isDestroyed()) {
       Tray.instance = new Tray();
     }
