@@ -13,6 +13,7 @@ require (
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
+	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.4.0
 	gvisor.dev/gvisor v0.0.0-20221216231429-a78e892a26d2
@@ -26,7 +27,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220712232929-bac01a348036 // indirect
 	github.com/u-root/uio v0.0.0-20210528114334-82958018845c // indirect
-	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/net v0.4.0 // indirect

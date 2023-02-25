@@ -33,11 +33,14 @@ import (
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
+
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
 )
 
 var (
 	debug    bool
 	tapIface string
+	logFile  string
 )
 
 const (
@@ -49,7 +52,12 @@ const (
 func main() {
 	flag.BoolVar(&debug, "debug", true, "enable debug flag")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
+	flag.StringVar(&logFile, "logfile", "/var/log/vm-switch.log", "path to vm-switch process logfile")
 	flag.Parse()
+
+	if err := log.SetOutputFile(logFile, logrus.StandardLogger()); err != nil {
+		logrus.Fatalf("setting logger's output file failed: %v", err)
+	}
 
 	if debug {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -62,7 +70,6 @@ func main() {
 	// AF_VSOCK is affected by network namespaces, therefore we need
 	// to open it before entering a new namespace (via unshare/nsenter)
 	connFile := os.NewFile(uintptr(3), "vsock connection")
-	connFile.Close()
 
 	logrus.Debugf("using a AF_VSOCK connection file from default namespace: %v", connFile)
 
@@ -83,6 +90,7 @@ func main() {
 		case s := <-sigChan:
 			logrus.Errorf("signal caught: %v", s)
 			cancel()
+			connFile.Close()
 			os.Exit(1)
 		case <-retryTicker.C:
 			if err := run(ctx, cancel, connFile); err != nil {

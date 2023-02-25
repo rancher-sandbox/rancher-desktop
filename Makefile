@@ -1,7 +1,7 @@
 LDFLAGS = -ldflags '-s -w'
 
 .PHONY: build
-build: host-switch vm-switch
+build: host-switch vm-switch network-setup
 
 bin/host-switch.exe:
 	GOOS=windows go build $(LDFLAGS) -o $@ ./cmd/host
@@ -14,6 +14,12 @@ bin/vm-switch:
 
 .PHONY: vm-switch
 vm-switch: bin/vm-switch
+
+bin/network-setup:
+	GOOS=linux go build $(LDFLAGS) -o $@ ./cmd/network
+
+.PHONY: network-setup
+network-setup: bin/network-setup
 
 .PHONY: fmt
 fmt:
