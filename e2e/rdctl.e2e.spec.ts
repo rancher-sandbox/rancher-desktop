@@ -31,7 +31,9 @@ import {
   createDefaultSettings, getAlternateSetting, kubectl, reportAsset, retry, teardown, tool,
 } from './utils/TestUtils';
 
-import { ContainerEngine, Settings, defaultSettings, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
+import {
+  ContainerEngine, Settings, defaultSettings, CURRENT_SETTINGS_VERSION, MountType,
+} from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -273,7 +275,7 @@ test.describe('Command server', () => {
       'errors in attempt to update settings:',
       expectedWSL,
       expectedMemory,
-      `Invalid value for containerEngine.name: <{"status":"should be a scalar"}>; must be 'containerd', 'docker', or 'moby'`,
+      `Invalid value for containerEngine.name: <{"status":"should be a scalar"}>`,
       'Setting portForwarding should wrap an inner object, but got <bob>.',
       'Invalid value for application.telemetry.enabled: <{"oops":15}>',
     ];
@@ -676,7 +678,8 @@ test.describe('Command server', () => {
 
       verifySettingsKeys(settings);
 
-      const args = ['set', '--container-engine', settings.containerEngine.name,
+      const args = ['set',
+        '--container-engine', settings.containerEngine.name,
         `--kubernetes-enabled=${ !!settings.kubernetes.enabled }`,
         '--kubernetes-version', settings.kubernetes.version];
       const result = await rdctl(args);
@@ -692,16 +695,21 @@ test.describe('Command server', () => {
         win32: [
           ['application.admin-access', true],
           ['application.path-management-strategy', 'rcfiles'],
+          ['experimental.virtual-machine.mount.9p.cache-mode', 'mmap'],
+          ['experimental.virtual-machine.mount.9p.msize-in-kb', 128],
+          ['experimental.virtual-machine.mount.9p.protocol-version', '9p2000.L'],
+          ['experimental.virtual-machine.mount.9p.security-model', 'none'],
+          ['experimental.virtual-machine.mount.type', MountType.NINEP],
+          ['experimental.virtual-machine.socket-vmnet', true],
           ['virtual-machine.memory-in-gb', 10],
           ['virtual-machine.number-cpus', 10],
-          ['experimental.virtual-machine.socket-vmnet', true],
         ],
         darwin: [
           ['virtual-machine.host-resolver', true],
         ],
         linux: [
-          ['virtual-machine.host-resolver', true],
           ['experimental.virtual-machine.socket-vmnet', true],
+          ['virtual-machine.host-resolver', true],
         ],
       };
       const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
@@ -717,7 +725,7 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
-        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(30 - unsupportedOptions.length);
+        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(35 - unsupportedOptions.length);
       });
 
       test('complains when option value missing', async() => {
@@ -1125,7 +1133,7 @@ test.describe('Command server', () => {
                 stdout, stderr, error,
               }).toEqual({
                 error:  expect.any(Error),
-                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for containerEngine.name: <"beefalo">; must be 'containerd', 'docker', or 'moby'/),
+                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for containerEngine.name: <"beefalo">; must be one of \["containerd","moby","docker"\]/),
                 stdout: expect.stringMatching(/{.*}/s),
               });
               expect(stderr).not.toContain('Usage:');

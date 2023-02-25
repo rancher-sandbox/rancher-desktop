@@ -271,7 +271,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected currentPort = 0;
 
   /** Helper object to manage available K3s versions. */
-  protected readonly k3sHelper: K3sHelper;
+  readonly k3sHelper: K3sHelper;
 
   protected client: KubeClient | null = null;
 

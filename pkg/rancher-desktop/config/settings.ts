@@ -30,6 +30,10 @@ export enum ContainerEngine {
   MOBY = 'moby',
 }
 
+export enum MountType {
+  NINEP = '9p',
+  REVERSE_SSHFS = 'reverse-sshfs',
+}
 export const ContainerEngineNames: Record<ContainerEngine, string> = {
   [ContainerEngine.NONE]:       '',
   [ContainerEngine.CONTAINERD]: 'containerd',
@@ -95,6 +99,15 @@ export const defaultSettings = {
     virtualMachine: {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
+      mount:       {
+        type: MountType.REVERSE_SSHFS,
+        '9p': {
+          securityModel:   'none',
+          protocolVersion: '9p2000.L',
+          msizeInKB:       128,
+          cacheMode:       'mmap',
+        },
+      },
     },
   },
 };

@@ -336,6 +336,28 @@ components:
                 socketVMNet:
                   type: boolean
                   x-rd-platforms: ['darwin']
+                mount:
+                  type: object
+                  x-rd-platforms: ['darwin', 'linux']
+                  properties:
+                    type:
+                      type: string
+                      enum: ['reverse-sshfs', '9p']
+                    9p:
+                      type: object
+                      properties:
+                        securityModel:
+                          type: string
+                          enum: ['passthrough', 'mapped-xattr', 'mapped-file', 'none']
+                        protocolVersion:
+                          type: string
+                          enum: ['9p2000', '9p2000.u', '9p2000.L']
+                        msizeInKB:
+                          type: integer
+                          minimum: 4
+                        cacheMode:
+                          type: string
+                          enum: ['none', 'loose', 'fscache', 'mmap']
         WSL:
           type: object
           x-rd-platforms: ['win32']

@@ -93,8 +93,12 @@ function assert(predicate: boolean, error: string) {
   }
 }
 
+const digit = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+
 function capitalize(s: string) {
-  return s[0].toUpperCase() + s.substring(1);
+  // Also turn a leading digit into a string so '9p' becomes 'NineP'
+  return s.replace(/^(\d?)(.)(.*)/,
+    (_, maybeDigit, first, rest) => (digit[maybeDigit] || '') + first.toUpperCase() + rest);
 }
 
 function capitalizeParts(s: string) {
@@ -229,7 +233,7 @@ class Generator {
     const usageParts = [usageNote];
 
     if (rawEnums) {
-      usageParts.push(`(Allowed values: [${ rawEnums.join(', ' ) }].)`);
+      usageParts.push(`(Allowed values: [${ rawEnums.join(', ' ) }])`);
     }
 
     return usageParts.join(' ').trim();

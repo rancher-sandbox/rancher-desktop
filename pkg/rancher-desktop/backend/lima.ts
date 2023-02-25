@@ -37,7 +37,7 @@ import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
-import { ContainerEngine } from '@pkg/config/settings';
+import { ContainerEngine, MountType } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
 import * as childProcess from '@pkg/utils/childProcess';
@@ -71,6 +71,17 @@ enum VMNet {
 /**
  * Lima configuration
  */
+export type LimaMount = {
+  location: string;
+  writable?: boolean;
+  '9p'?: {
+    securityModel: string;
+    protocolVersion: string;
+    msize: string;
+    cache: string;
+  }
+};
+
 export type LimaConfiguration = {
   arch?: 'x86_64' | 'aarch64';
   images: {
@@ -81,10 +92,8 @@ export type LimaConfiguration = {
   cpus?: number;
   memory?: number;
   disk?: number;
-  mounts?: {
-    location: string;
-    writable?: boolean;
-  }[];
+  mounts?: LimaMount[];
+  mountType: string;
   ssh: {
     localPort: number;
     loadDotSSHPubKeys?: boolean;
@@ -561,6 +570,33 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     })();
   }
 
+  protected getMounts(): LimaConfiguration['mounts'] {
+    let mounts: LimaConfiguration['mounts'] = [];
+    let locations = [path.join(paths.cache, 'k3s'), paths.logs, '~', '/tmp/rancher-desktop'];
+
+    if (os.platform() === 'darwin') {
+      locations = locations.concat('/Volumes', '/var/folders');
+    }
+
+    for (const location of locations) {
+      const mount: LimaMount = { location, writable: true };
+
+      if (this.cfg?.experimental.virtualMachine.mount.type === MountType.NINEP) {
+        const nineP = this.cfg.experimental.virtualMachine.mount['9p'];
+
+        mount['9p'] = {
+          securityModel:   nineP.securityModel,
+          protocolVersion: nineP.protocolVersion,
+          msize:           `${ nineP.msizeInKB }KiB`,
+          cache:           nineP.cacheMode,
+        };
+      }
+      mounts = mounts.concat(mount);
+    }
+
+    return mounts;
+  }
+
   /**
    * Update the Lima configuration.  This may stop the VM if the base disk image
    * needs to be changed.
@@ -575,18 +611,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         location: this.baseDiskImage,
         arch:     this.arch,
       }],
-      cpus:   this.cfg?.virtualMachine.numberCPUs || 4,
-      memory: (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts: [
-        { location: path.join(paths.cache, 'k3s'), writable: false },
-        { location: paths.logs, writable: true },
-        { location: '~', writable: true },
-        { location: '/tmp/rancher-desktop', writable: true },
-        ...(os.platform() === 'darwin') ? [
-          { location: '/Volumes', writable: true },
-          { location: '/var/folders', writable: true },
-        ] : [],
-      ],
+      cpus:         this.cfg?.virtualMachine.numberCPUs || 4,
+      memory:       (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
+      mounts:       this.getMounts(),
+      mountType:    this.cfg?.experimental.virtualMachine.mount.type,
       ssh:          { localPort: await this.sshPort },
       hostResolver: {
         hosts: {
@@ -1975,21 +2003,20 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     if (!this.cfg) {
       return reasons; // No need to restart if nothing exists
     }
+    Object.assign(reasons, this.kubeBackend.k3sHelper.requiresRestartReasons(this.cfg, cfg, {
+      'experimental.virtualMachine.mount.9p.cacheMode':       undefined,
+      'experimental.virtualMachine.mount.9p.msizeInKB':       undefined,
+      'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
+      'experimental.virtualMachine.mount.9p.securityModel':   undefined,
+      'experimental.virtualMachine.mount.type':               undefined,
+    }));
     if (process.platform === 'darwin') {
-      if (typeof cfg.experimental?.virtualMachine?.socketVMNet !== 'undefined') {
-        if (this.cfg.experimental?.virtualMachine?.socketVMNet !== cfg.experimental.virtualMachine.socketVMNet) {
-          reasons['experimental.virtualMachine.socketVMNet'] = {
-            current:  this.cfg.experimental.virtualMachine.socketVMNet,
-            desired:  cfg.experimental.virtualMachine.socketVMNet,
-            severity: 'restart',
-          };
-        }
-      }
+      Object.assign(reasons, this.kubeBackend.k3sHelper.requiresRestartReasons(this.cfg, cfg, { 'experimental.virtualMachine.socketVMNet': undefined }));
     }
     if (limaConfig) {
       Object.assign(reasons, await this.kubeBackend.requiresRestartReasons(this.cfg, cfg, {
-        'virtualMachine.numberCPUs': { current: limaConfig.cpus ?? 2 },
         'virtualMachine.memoryInGB': { current: (limaConfig.memory ?? 4 * GiB) / GiB },
+        'virtualMachine.numberCPUs': { current: limaConfig.cpus ?? 2 },
       }));
     }
 

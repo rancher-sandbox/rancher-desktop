@@ -12,6 +12,7 @@ import { ContainerEngineClient } from './containerClient';
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
 
+import K3sHelper from '@pkg/backend/k3sHelper';
 import { Settings } from '@pkg/config/settings';
 import { ChildProcess } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
@@ -174,6 +175,8 @@ class MockKubernetesBackend extends events.EventEmitter implements KubernetesBac
   readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0'), channels: ['latest'] }]);
   version = '';
   desiredPort = 9443;
+
+  readonly k3sHelper = new K3sHelper('x86_64');
 
   cachedVersionsOnly(): Promise<boolean> {
     return Promise.resolve(false);
