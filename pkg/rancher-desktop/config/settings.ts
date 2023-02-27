@@ -79,11 +79,6 @@ export const defaultSettings = {
   containerEngine: {
     allowedImages: {
       enabled:  false,
-      /**
-       *  List will be locked when patterns have been loaded from an admin controlled location.
-       *  `enabled` will always be true when `locked` is true.
-       */
-      locked:   false,
       patterns: [] as Array<string>,
     },
     name: ContainerEngine.CONTAINERD,

@@ -280,8 +280,6 @@ components:
               properties:
                 enabled:
                   type: boolean
-                locked:
-                  type: boolean
                 patterns:
                   type: array
                   items:

@@ -29,7 +29,10 @@ export default Vue.extend({
       return this.preferences.containerEngine.allowedImages.enabled;
     },
     isAllowedImagesLocked(): boolean {
-      return this.preferences.containerEngine.allowedImages.locked;
+      return false;
+      // TODO: Incorporate new locked fields!  Something like this:
+      // This is a temporary setback in order to keep the PRs smaller.
+      // return _.get(this.lockedSettings, containerEngine.allowedImages.patterns)
     },
     allowedImagesLockedTooltip() {
       return this.t('allowedImages.locked.tooltip');

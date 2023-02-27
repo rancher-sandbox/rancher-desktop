@@ -71,9 +71,7 @@ export default class SettingsValidator {
       },
       containerEngine: {
         allowedImages: {
-          // TODO (maybe): `patterns` and `enabled` should be immutable if `locked` is true
           enabled:  this.checkBoolean,
-          locked:   this.checkUnchanged,
           patterns: this.checkStringArray,
         },
         // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message

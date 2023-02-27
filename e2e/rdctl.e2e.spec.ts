@@ -233,7 +233,7 @@ test.describe('Command server', () => {
       version:         CURRENT_SETTINGS_VERSION,
       containerEngine: {
         name:          { desiredEngine },
-        allowedImages: { locked: !settings.containerEngine.allowedImages.locked },
+        allowedImages: { enabled: !settings.containerEngine.allowedImages.enabled },
       },
       kubernetes: {
         enabled: desiredEnabled,
