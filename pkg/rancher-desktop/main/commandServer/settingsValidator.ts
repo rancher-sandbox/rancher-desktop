@@ -2,7 +2,9 @@ import os from 'os';
 
 import _ from 'lodash';
 
-import { defaultSettings, MountType, Settings } from '@pkg/config/settings';
+import {
+  CacheMode, defaultSettings, MountType, ProtocolVersion, SecurityModel, Settings,
+} from '@pkg/config/settings';
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -87,10 +89,10 @@ export default class SettingsValidator {
           mount: {
             type: this.checkLima(this.checkEnum(...Object.values(MountType))),
             '9p': {
-              securityModel:   this.checkLima(this.check9P(this.checkEnum('passthrough', 'mapped-xattr', 'mapped-file', 'none'))),
-              protocolVersion: this.checkLima(this.check9P(this.checkEnum('9p2000', '9p2000.u', '9p2000.L'))),
+              securityModel:   this.checkLima(this.check9P(this.checkEnum(...Object.values(SecurityModel)))),
+              protocolVersion: this.checkLima(this.check9P(this.checkEnum(...Object.values(ProtocolVersion)))),
               msizeInKB:       this.checkLima(this.check9P(this.checkNumber(4, Number.POSITIVE_INFINITY))),
-              cacheMode:       this.checkLima(this.check9P(this.checkEnum('none', 'loose', 'fscache', 'mmap'))),
+              cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
           },
           socketVMNet: this.checkPlatform('darwin', this.checkBoolean),
@@ -194,14 +196,18 @@ export default class SettingsValidator {
       } else if (typeof (newSettings[k]) === 'object') {
         if (typeof allowedSettings[k] === 'function') {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = allowedSettings[k].call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+          const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
+
+          changeNeeded = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
           errors.push(`Setting ${ fqname } should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
         }
       } else if (typeof allowedSettings[k] === 'function') {
-        changeNeeded = allowedSettings[k].call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+        const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
+
+        changeNeeded = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
       } else {
         errors.push(this.notSupported(fqname));
       }
@@ -250,15 +256,13 @@ export default class SettingsValidator {
     return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
       if (!_.isEqual(currentValue, desiredValue)) {
         if (mergedSettings.experimental.virtualMachine.mount.type !== MountType.NINEP) {
-          errors.push(`Field ${ fqname } can only be changed when experimental.virtualMachine.mount.type is "${ MountType.NINEP }".`);
+          errors.push(`Setting ${ fqname } can only be changed when experimental.virtualMachine.mount.type is "${ MountType.NINEP }".`);
 
           return false;
         }
       }
 
-      // any changed settings must be valid, even if we ignore them because the mount.type is not 9p
-      return validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname) &&
-        mergedSettings.experimental.virtualMachine.mount.type === MountType.NINEP;
+      return validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
     };
   }
 

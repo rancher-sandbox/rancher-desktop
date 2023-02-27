@@ -69,7 +69,7 @@ enum VMNet {
 }
 
 /**
- * Lima configuration
+ * Lima mount
  */
 export type LimaMount = {
   location: string;
@@ -82,6 +82,9 @@ export type LimaMount = {
   }
 };
 
+/**
+ * Lima configuration
+ */
 export type LimaConfiguration = {
   arch?: 'x86_64' | 'aarch64';
   images: {
@@ -570,12 +573,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     })();
   }
 
-  protected getMounts(): LimaConfiguration['mounts'] {
-    let mounts: LimaConfiguration['mounts'] = [];
-    let locations = [path.join(paths.cache, 'k3s'), paths.logs, '~', '/tmp/rancher-desktop'];
+  protected getMounts(): LimaMount[] {
+    const mounts: LimaMount[] = [];
+    const locations = [path.join(paths.cache, 'k3s'), paths.logs, '~', '/tmp/rancher-desktop'];
 
     if (os.platform() === 'darwin') {
-      locations = locations.concat('/Volumes', '/var/folders');
+      locations.push('/Volumes', '/var/folders');
     }
 
     for (const location of locations) {
@@ -591,7 +594,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           cache:           nineP.cacheMode,
         };
       }
-      mounts = mounts.concat(mount);
+      mounts.push(mount);
     }
 
     return mounts;

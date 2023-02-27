@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 import * as settings from '../settings';
-import { MountType } from '../settings';
+import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '../settings';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -45,10 +45,10 @@ describe('updateFromCommandLine', () => {
           mount: {
             type: MountType.REVERSE_SSHFS,
             '9p': {
-              securityModel:   'none',
-              protocolVersion: '9p2000.L',
+              securityModel:   SecurityModel.NONE,
+              protocolVersion: ProtocolVersion.NINEP2000_L,
               msizeInKB:       128,
-              cacheMode:       'mmap',
+              cacheMode:       CacheMode.MMAP,
             },
           },
           socketVMNet: true,

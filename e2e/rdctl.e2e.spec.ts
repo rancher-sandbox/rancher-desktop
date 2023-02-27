@@ -32,7 +32,14 @@ import {
 } from './utils/TestUtils';
 
 import {
-  ContainerEngine, Settings, defaultSettings, CURRENT_SETTINGS_VERSION, MountType,
+  ContainerEngine,
+  Settings,
+  defaultSettings,
+  CURRENT_SETTINGS_VERSION,
+  MountType,
+  CacheMode,
+  ProtocolVersion,
+  SecurityModel,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -695,10 +702,10 @@ test.describe('Command server', () => {
         win32: [
           ['application.admin-access', true],
           ['application.path-management-strategy', 'rcfiles'],
-          ['experimental.virtual-machine.mount.9p.cache-mode', 'mmap'],
+          ['experimental.virtual-machine.mount.9p.cache-mode', CacheMode.MMAP],
           ['experimental.virtual-machine.mount.9p.msize-in-kb', 128],
-          ['experimental.virtual-machine.mount.9p.protocol-version', '9p2000.L'],
-          ['experimental.virtual-machine.mount.9p.security-model', 'none'],
+          ['experimental.virtual-machine.mount.9p.protocol-version', ProtocolVersion.NINEP2000_L],
+          ['experimental.virtual-machine.mount.9p.security-model', SecurityModel.NONE],
           ['experimental.virtual-machine.mount.type', MountType.NINEP],
           ['experimental.virtual-machine.socket-vmnet', true],
           ['virtual-machine.memory-in-gb', 10],
