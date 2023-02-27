@@ -8,12 +8,57 @@ import util from 'util';
 
 import { expect, _electron, ElectronApplication } from '@playwright/test';
 import _, { GetFieldType } from 'lodash';
+import plist from 'plist';
 
-import { defaultSettings, Settings } from '@pkg/config/settings';
+import { defaultSettings, LockedSettingsType, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
+
+export async function createUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
+
+  if (platform === 'win32') {
+    throw new Error(`Not doing win32 profiles yet`);
+  } else if (platform === 'linux') {
+    return await createLinuxUserProfile(userProfile, lockedFields);
+  } else {
+    return await createDarwinUserProfile(userProfile, lockedFields);
+  }
+}
+
+async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+  const userProfilePath = path.join(paths.deploymentProfileUser, 'profile.json');
+  const userLocksPath = path.join(paths.deploymentProfileUser, 'locked.json');
+
+  if (userProfile && Object.keys(userProfile).length > 0) {
+    await fs.promises.writeFile(userProfilePath, JSON.stringify(userProfile, undefined, 2));
+  } else {
+    await fs.promises.rm(userProfilePath, { force: true });
+  }
+  if (lockedFields && Object.keys(lockedFields).length > 0) {
+    await fs.promises.writeFile(userLocksPath, JSON.stringify(lockedFields, undefined, 2));
+  } else {
+    await fs.promises.rm(userLocksPath, { force: true });
+  }
+}
+
+async function createDarwinUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+  const userProfilePath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.defaults.plist');
+  const userLocksPath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.locked.plist');
+
+  if (userProfile && Object.keys(userProfile).length > 0) {
+    await fs.promises.writeFile(userProfilePath, plist.build(userProfile));
+  } else {
+    await fs.promises.rm(userProfilePath, { force: true });
+  }
+  if (lockedFields && Object.keys(lockedFields).length > 0) {
+    await fs.promises.writeFile(userLocksPath, plist.build(lockedFields));
+  } else {
+    await fs.promises.rm(userLocksPath, { force: true });
+  }
+}
 
 /**
  * Create empty default settings to bypass gracefully

@@ -11,7 +11,7 @@ import Electron from 'electron';
 import { VMBackend } from '@pkg/backend/backend';
 import { State } from '@pkg/backend/k8s';
 import * as kubeconfig from '@pkg/backend/kubeconfig';
-import { Settings, load } from '@pkg/config/settings';
+import { Settings } from '@pkg/config/settings';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
@@ -36,7 +36,7 @@ enum networkStatus {
 export class Tray {
   protected trayMenu: Electron.Tray;
   protected kubernetesState = State.STOPPED;
-  private settings: Settings = load({ defaults: {}, locked: {} });
+  private settings: Settings;
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
   private static instance: Tray;
   private abortController: AbortController | undefined;
@@ -61,7 +61,7 @@ export class Tray {
     {
       id:      'container-engine',
       enabled: false,
-      label:   `Container engine: ${ this.settings.containerEngine.name }`,
+      label:   '?',
       type:    'normal',
       icon:    '',
     },
@@ -159,9 +159,15 @@ export class Tray {
     }));
   }
 
-  private constructor() {
+  private constructor(settings: Settings) {
+    this.settings = settings;
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
     this.trayMenu.setToolTip('Rancher Desktop');
+    const menuItem = this.contextMenuItems.find(item => item.id === 'container-engine');
+
+    if (menuItem) {
+      menuItem.label = `Container engine: ${ this.settings.containerEngine.name }`;
+    }
 
     // Discover k8s contexts
     try {
@@ -220,8 +226,8 @@ export class Tray {
    * Checks for an existing instance of Tray. If one does not
    * exist, instantiate a new one.
    */
-  public static getInstance(): Tray {
-    Tray.instance ??= new Tray();
+  public static getInstance(settings: Settings): Tray {
+    Tray.instance ??= new Tray(settings);
 
     return Tray.instance;
   }
@@ -243,7 +249,7 @@ export class Tray {
    */
   public show() {
     if (this.trayMenu.isDestroyed()) {
-      Tray.instance = new Tray();
+      Tray.instance = new Tray(this.settings);
     }
   }
 

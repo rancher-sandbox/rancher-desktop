@@ -85,6 +85,7 @@ export interface IpcMainEvents {
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
 export interface IpcMainInvokeEvents {
+  'get-locked-fields': () => import('@pkg/config/settings').LockedSettingsType;
   'settings-write': (arg: RecursivePartial<import('@pkg/config/settings').Settings>) => void;
   'transient-settings-fetch': () => import('@pkg/config/transientSettings').TransientSettings;
   'transient-settings-update': (arg: RecursivePartial<import('@pkg/config/transientSettings').TransientSettings>) => void;
