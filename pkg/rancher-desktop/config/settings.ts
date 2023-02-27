@@ -437,6 +437,10 @@ export function firstRunDialogNeeded() {
   return _isFirstRun;
 }
 
+export function turnFirstRunOff() {
+  _isFirstRun = false;
+}
+
 function safeFileTest(path: string, conditions: number) {
   try {
     fs.accessSync(path, conditions);

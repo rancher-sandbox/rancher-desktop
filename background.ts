@@ -13,6 +13,7 @@ import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
 import { Steve } from '@pkg/backend/steve';
+import { LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import { Help } from '@pkg/config/help';
 import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
@@ -171,10 +172,16 @@ Electron.app.whenReady().then(async() => {
 
     if (commandLineArgs.length) {
       try {
-        cfg = settings.updateFromCommandLine(cfg, commandLineArgs);
+        cfg = updateFromCommandLine(cfg, settings.getLockedSettings(), commandLineArgs);
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       } catch (err) {
-        console.log(`Failed to update command from argument ${ commandLineArgs } `, err);
+        if (err instanceof LockedFieldError) {
+          // Doesn't return
+          handleFailure(err).catch((err2: any) => {
+            console.log('Internal error trying to show a failure dialog: ', err2);
+          });
+        }
+        console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
       }
     }
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
@@ -529,6 +536,10 @@ Electron.ipcMain.handle('api-get-credentials', () => {
   });
 });
 
+ipcMainProxy.on('get-locked-fields', () => {
+  window.send('locked-fields-read', settings.getLockedSettings());
+});
+
 mainEvents.on('api-credentials', (credentials) => {
   window.send('api-credentials', credentials);
 });
@@ -760,6 +771,8 @@ async function handleFailure(payload: any) {
 
   if (payload instanceof K8s.KubernetesError) {
     ({ name: titlePart, message } = payload);
+  } else if (payload instanceof LockedFieldError) {
+    showErrorDialog(titlePart, payload.message, true);
   } else if (payload instanceof Error) {
     secondaryMessage = payload.toString();
   } else if (typeof payload === 'number') {
@@ -887,7 +900,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       this.settingsValidator.k8sVersions = this.k8sVersions;
     }
 
-    return this.settingsValidator.validateSettings(existingSettings, newSettings);
+    return this.settingsValidator.validateSettings(existingSettings, newSettings, settings.getLockedSettings());
   }
 
   getSettings() {

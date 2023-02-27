@@ -3,7 +3,8 @@ import { Checkbox, StringList } from '@rancher/components';
 import Vue from 'vue';
 
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
-import { Settings } from '@pkg/config/settings';
+import { LockedSettingsType, Settings } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
@@ -21,6 +22,9 @@ export default Vue.extend({
       required: true,
     },
   },
+  data() {
+    return { lockedFields: {} as LockedSettingsType };
+  },
   computed: {
     patterns() {
       return this.preferences.containerEngine.allowedImages.patterns;
@@ -28,11 +32,11 @@ export default Vue.extend({
     isAllowedImagesEnabled(): boolean {
       return this.preferences.containerEngine.allowedImages.enabled;
     },
-    isAllowedImagesLocked(): boolean {
-      return false;
-      // TODO: Incorporate new locked fields!  Something like this:
-      // This is a temporary setback in order to keep the PRs smaller.
-      // return _.get(this.lockedSettings, containerEngine.allowedImages.patterns)
+    isEnabledFieldLocked(): boolean {
+      return this.lockedFields.containerEngine?.allowedImages?.enabled ?? false;
+    },
+    isPatternsFieldLocked(): boolean {
+      return this.lockedFields.containerEngine?.allowedImages?.patterns || !this.isAllowedImagesEnabled;
     },
     allowedImagesLockedTooltip() {
       return this.t('allowedImages.locked.tooltip');
@@ -40,6 +44,12 @@ export default Vue.extend({
     patternsErrorMessages() {
       return { duplicate: this.t('allowedImages.errors.duplicate') };
     },
+  },
+  mounted() {
+    ipcRenderer.send('get-locked-fields');
+    ipcRenderer.on('locked-fields-read', (_event, lockedFields: LockedSettingsType) => {
+      this.lockedFields = lockedFields;
+    });
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
@@ -74,12 +84,12 @@ export default Vue.extend({
         :label="t('allowedImages.enable')"
         :value="isAllowedImagesEnabled"
         :class="{
-          'disabled': isAllowedImagesLocked
+          'disabled': isEnabledFieldLocked
         }"
         @input="onChange('containerEngine.allowedImages.enabled', $event)"
       />
       <i
-        v-if="isAllowedImagesLocked"
+        v-if="isEnabledFieldLocked"
         v-tooltip="{
           content: allowedImagesLockedTooltip,
           placement: 'right'
@@ -91,7 +101,7 @@ export default Vue.extend({
       :items="patterns"
       :case-sensitive="false"
       :placeholder="t('allowedImages.patterns.placeholder')"
-      :readonly="!isAllowedImagesEnabled || isAllowedImagesLocked"
+      :readonly="isPatternsFieldLocked"
       :actions-position="'left'"
       :error-messages="patternsErrorMessages"
       @change="onChange('containerEngine.allowedImages.patterns', $event)"

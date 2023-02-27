@@ -3,7 +3,7 @@ import os from 'os';
 import _ from 'lodash';
 
 import {
-  CacheMode, defaultSettings, MountType, ProtocolVersion, SecurityModel, Settings,
+  CacheMode, defaultSettings, LockedSettingsType, MountType, ProtocolVersion, SecurityModel, Settings,
 } from '@pkg/config/settings';
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -53,8 +53,15 @@ export default class SettingsValidator {
   allowedSettings: SettingsValidationMap | null = null;
   allowedTransientSettings: TransientSettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
+  isKubernetesDesired = false;
+  lockedSettings: LockedSettingsType|null = null;
 
-  validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
+  validateSettings(
+    currentSettings: Settings,
+    newSettings: RecursivePartial<Settings>,
+    lockedSettings: LockedSettingsType|null): [boolean, string[]] {
+    this.lockedSettings = lockedSettings;
+    this.isKubernetesDesired = typeof newSettings.kubernetes?.enabled !== 'undefined' ? newSettings.kubernetes.enabled : currentSettings.kubernetes.enabled;
     this.allowedSettings ||= {
       version:     this.checkUnchanged,
       application: {
@@ -177,11 +184,10 @@ export default class SettingsValidator {
     newSettings: settingsLike,
     errors: string[],
     prefix: string): boolean {
-    // Note the "busy-evaluation" form below is used to call functions for the side-effect of error-detection:
-    // changeNeeded = f(...) || changeNeeded
-    let changeNeeded = false;
+    let changeNeeded = false; // can only be set to true once we have a change to make, never back to false
 
     for (const k in newSettings) {
+      let changeNeededHere = false;
       const fqname = prefix ? `${ prefix }.${ k }` : k;
 
       if (!(k in allowedSettings)) {
@@ -197,7 +203,7 @@ export default class SettingsValidator {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
           const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
 
-          changeNeeded = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+          changeNeededHere = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname);
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
@@ -206,9 +212,19 @@ export default class SettingsValidator {
       } else if (typeof allowedSettings[k] === 'function') {
         const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
 
-        changeNeeded = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+        changeNeededHere = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname);
       } else {
         errors.push(this.notSupported(fqname));
+      }
+      if (changeNeededHere) {
+        const isLocked = _.get(this.lockedSettings ?? {}, `${ prefix }.${ k }`);
+
+        if (isLocked) {
+          // A delayed error condition, raised only if we try to change a field in a locked object
+          errors.push(`field '${ prefix }.${ k }' is locked`);
+        } else {
+          changeNeeded = true;
+        }
       }
     }
 
@@ -300,13 +316,15 @@ export default class SettingsValidator {
 
   protected checkEnum(...validValues: string[]) {
     return <S>(mergedSettings: S, currentValue: string, desiredValue: string, errors: string[], fqname: string) => {
+      const explanation = `must be one of ${ JSON.stringify(validValues) }`;
+
       if (typeof desiredValue !== 'string') {
-        errors.push(this.invalidSettingMessage(fqname, desiredValue));
+        errors.push(`${ this.invalidSettingMessage(fqname, desiredValue) }; ${ explanation }`);
 
         return false;
       }
       if (!validValues.includes(desiredValue)) {
-        errors.push(`Invalid value for ${ fqname }: <${ JSON.stringify(desiredValue) }>; must be one of ${ JSON.stringify(validValues) }`);
+        errors.push(`Invalid value for ${ fqname }: <${ JSON.stringify(desiredValue) }>; ${ explanation }`);
 
         return false;
       }

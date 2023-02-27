@@ -23,6 +23,8 @@ export interface IpcMainEvents {
   'k8s-integration-set': (name: string, newState: boolean) => void;
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
+  'get-locked-fields': () => void;
+  'app-ready': () => void;
   'update-network-status': (status: boolean) => void;
 
   // #region main/update
@@ -110,6 +112,7 @@ export interface IpcRendererEvents {
   'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
+  'locked-fields-read': (lockedFields: import('@pkg/config/settings').LockedSettingsType) => void;
   'update-state': (state: import('@pkg/main/update').UpdateState) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@pkg/backend/k8s').State) => void;

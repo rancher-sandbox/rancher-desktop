@@ -256,12 +256,10 @@ describe('settings', () => {
       },
       diagnostics: {
         showMuted:   false,
-        mutedChecks: {},
+        mutedChecks: { },
       },
     };
     origPrefs = clone(prefs);
-    // Need to clear the lockedSettings field in tests because settings.load assumes it's initally an empty object.
-    settings.clearLockedSettings();
   });
   afterEach(() => {
     mock.mockRestore();
