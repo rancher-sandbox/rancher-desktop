@@ -39,6 +39,7 @@ export class Tray {
   private settings: Settings = load();
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
   private static instance: Tray;
+  private abortController: AbortController | undefined;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -130,13 +131,13 @@ export class Tray {
    * triggered, close the watcher and restart after a duration (one second).
    */
   private async watchForChanges() {
-    const abortController = new AbortController();
+    this.abortController = new AbortController();
     const paths = await kubeconfig.getKubeConfigPaths();
     const options: fs.WatchOptions = {
       persistent: false,
       recursive:  !this.isLinux(), // Recursive not implemented in Linux
       encoding:   'utf-8',
-      signal:     abortController.signal,
+      signal:     this.abortController.signal,
     };
 
     paths.map(filepath => fs.watch(filepath, options, async(eventType) => {
@@ -149,7 +150,7 @@ export class Tray {
         }
       }
 
-      abortController.abort();
+      this.abortController?.abort();
       this.buildFromConfig();
 
       setTimeout(this.watchForChanges.bind(this), 1_000);
@@ -218,6 +219,7 @@ export class Tray {
    */
   public hide() {
     this.trayMenu.destroy();
+    this.abortController?.abort();
     mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.off('settings-update', this.settingsUpdateEvent);
     ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
