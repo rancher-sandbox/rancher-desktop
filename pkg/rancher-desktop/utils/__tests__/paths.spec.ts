@@ -81,12 +81,12 @@ describe('paths', () => {
     deploymentProfileSystem: {
       win32:  new Error('Windows profiles will be read from Registry'),
       linux:  '/etc/rancher-desktop',
-      darwin: '/Library/Preferences',
+      darwin: '/Library/Preferences/rancher-desktop',
     },
     deploymentProfileUser: {
       win32:  new Error('Windows profiles will be read from Registry'),
       linux:  '%HOME%/.config/rancher-desktop',
-      darwin: '%HOME%/Library/Preferences',
+      darwin: '%HOME%/Library/Preferences/rancher-desktop',
     },
   };
 

@@ -16,7 +16,7 @@ import K3sHelper from '@pkg/backend/k3sHelper';
 import { Settings } from '@pkg/config/settings';
 import { ChildProcess } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
-import { RecursiveReadonly } from '@pkg/utils/typeUtils';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.mock;
 
@@ -97,7 +97,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
 
   noModalDialogs = true;
 
-  requiresRestartReasons(config: RecursiveReadonly<BackendSettings>): Promise<RestartReasons> {
+  requiresRestartReasons(config: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     if (!this.cfg) {
       return Promise.resolve({});
     }

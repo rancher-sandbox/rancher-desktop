@@ -124,7 +124,7 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
    * Calculate any reasons that may require us to restart the backend, had the
    * given new configuration been applied on top of the existing old configuration.
    */
-  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursivePartial<BackendSettings>, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
+  requiresRestartReasons(oldConfig: RecursivePartial<BackendSettings>, newConfig: RecursivePartial<BackendSettings>, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
 
   readonly k3sHelper: K3sHelper;
 }

@@ -1,15 +1,192 @@
 import fs from 'fs';
 
+import _ from 'lodash';
+
 import * as settings from '../settings';
 import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '../settings';
 
-import { TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
+import paths from '@pkg/utils/paths';
 
-describe('updateFromCommandLine', () => {
+class FakeFSError extends Error {
+  public message = '';
+  public code = '';
+  constructor(message: string, code: string) {
+    super(message);
+    this.message = message;
+    this.code = code;
+  }
+}
+
+describe('settings', () => {
   let prefs: settings.Settings;
   let origPrefs: settings.Settings;
+  const jsonProfile = JSON.stringify({
+    ignoreThis:      { soups: ['gazpacho', 'turtle'] },
+    containerEngine: {
+      imageAllowList: {
+        enabled:  true,
+        patterns: ["Shouldn't see this"],
+      },
+    },
+    kubernetes: { version: "Shouldn't see this" },
+  });
+  const plistProfile = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>containerEngine</key>
+    <dict>
+      <key>imageAllowList</key>
+      <dict>
+        <key>enabled</key>
+        <true/>
+        <key>not_schema</key>
+        <true/>
+        <key>locked</key>
+        <true/>
+        <key>patterns</key>
+        <array/>
+      </dict>
+    </dict>
+    <key>kubernetes</key>
+    <dict>
+      <key>version</key>
+      <string>1.23.15</string>
+      <key>containerEngine</key>
+      <string>moby</string>
+      <key>enabled</key>
+      <true/>
+    </dict>
+    <key>testSettings</key>
+    <dict>
+      <key>testTitle</key>
+      <string>test-title</string>
+      <key>testStruct</key>
+      <dict>
+        <key>title</key>
+        <string>test-struct</string>
+        <key>subStruct</key>
+        <dict>
+          <key>title</key>
+          <string>sub-title</string>
+          <key>locked</key>
+          <true/>
+          <key>subvar</key>
+          <string>sub-var</string>
+        </dict>
+      </dict>
+    </dict>
+    <key>debug</key>
+    <true/>
+    <key>diagnostics</key>
+    <dict>
+      <key>showMuted</key>
+      <false/>
+      <key>locked</key>
+      <true/>
+      <key>mutedChecks</key>
+      <dict/>
+    </dict>
+  </dict>
+</plist>`;
+  const unlockedJSONProfile = JSON.stringify({
+    ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
+    containerEngine: { name: 'should be ignored' },
+    kubernetes:      { version: "Shouldn't see this" },
+  });
+  const lockedJSONProfile = JSON.stringify({
+    ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
+    containerEngine: {
+      imageAllowList: {
+        enabled:  true,
+        patterns: ['nginx', 'alpine'],
+      },
+    },
+    kubernetes: { version: "Shouldn't see this" },
+  });
+  const unlockedPlistProfile = `
+  <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>kubernetes</key>
+    <dict>
+      <key>version</key>
+      <string>Should be ignored</string>
+    </dict>
+  </dict>
+</plist>
+`;
+  const lockedPlistProfile = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>version</key>
+    <integer>4</integer>
+    <key>containerEngine</key>
+    <dict>
+      <key>imageAllowList</key>
+      <dict>
+        <key>enabled</key>
+        <true/>
+        <key>not_schema</key>
+        <true/>
+        <key>patterns</key>
+        <array>
+        <string>nginx</string>
+        <string>alpine</string>
+        </array>
+      </dict>
+    </dict>
+    <key>kubernetes</key>
+    <dict>
+      <key>version</key>
+      <string>1.23.15</string>
+      <key>containerEngine</key>
+      <string>moby</string>
+      <key>enabled</key>
+      <true/>
+    </dict>
+    <key>testSettings</key>
+    <dict>
+      <key>testTitle</key>
+      <string>test-title</string>
+      <key>testStruct</key>
+      <dict>
+        <key>title</key>
+        <string>test-struct</string>
+        <key>subStruct</key>
+        <dict>
+          <key>title</key>
+          <string>sub-title</string>
+          <key>locked</key>
+          <true/>
+          <key>subvar</key>
+          <string>sub-var</string>
+        </dict>
+      </dict>
+    </dict>
+    <key>debug</key>
+    <true/>
+    <key>diagnostics</key>
+    <dict>
+      <key>showMuted</key>
+      <false/>
+      <key>locked</key>
+      <true/>
+      <key>mutedChecks</key>
+      <dict/>
+    </dict>
+  </dict>
+</plist>
+  `;
+  const lockedAccessors = ['containerEngine.imageAllowList.enabled', 'containerEngine.imageAllowList.patterns'];
+  let mock: any;
+  // TODO: Stop doing this once profiles are implemented on windows
+  const describeNotWindows = process.platform === 'win32' ? describe.skip : describe;
+  const actualSyncReader = fs.readFileSync;
 
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
@@ -30,7 +207,6 @@ describe('updateFromCommandLine', () => {
       containerEngine: {
         allowedImages: {
           enabled:  false,
-          locked:   false,
           patterns: [],
         },
         name: settings.ContainerEngine.MOBY,
@@ -72,10 +248,255 @@ describe('updateFromCommandLine', () => {
       },
       diagnostics: {
         showMuted:   false,
-        mutedChecks: { },
+        mutedChecks: {},
       },
     };
     origPrefs = clone(prefs);
+    // Need to clear the lockedSettings field in tests because settings.load assumes it's initally an empty object.
+    settings.clearLockedSettings();
+  });
+
+  describe('profiles', () => {
+    describeNotWindows('locked fields', () => {
+      function verifyAllFieldsAreLocked(lockedFields: settings.LockedSettingsType) {
+        for (const acc of lockedAccessors) {
+          expect(_.get(lockedFields, acc)).toBeTruthy();
+        }
+      }
+
+      function verifyAllFieldsAreUnlocked(lockedFields: settings.LockedSettingsType) {
+        for (const acc of lockedAccessors) {
+          expect(_.get(lockedFields, acc)).toBeFalsy();
+        }
+      }
+
+      // 0: no profile
+      // 1: profile, unlocked
+      // 2: profile: locked
+
+      function createMocker(useSystemProfile: number, usePersonalProfile: number): (inputPath: any, unused: any) => any {
+        return (inputPath: any, unused: any): any => {
+          if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem)) {
+            return actualSyncReader(inputPath, 'utf-8');
+          }
+          const action = inputPath.startsWith(paths.deploymentProfileSystem) ? useSystemProfile : usePersonalProfile;
+
+          if (action === 0) {
+            throw new FakeFSError(`File ${ inputPath } not found`, 'ENOENT');
+          }
+          if (inputPath.endsWith('defaults.json')) {
+            return jsonProfile;
+          }
+          if (inputPath.endsWith('defaults.plist')) {
+            return plistProfile;
+          }
+          switch (action) {
+          case 1:
+            if (inputPath.endsWith('locked.json')) {
+              return unlockedJSONProfile;
+            } else if (inputPath.endsWith('locked.plist')) {
+              return unlockedPlistProfile;
+            }
+            break;
+          case 2:
+            if (inputPath.endsWith('locked.json')) {
+              return lockedJSONProfile;
+            } else if (inputPath.endsWith('locked.plist')) {
+              return lockedPlistProfile;
+            }
+          }
+          throw new Error("Shouldn't get here.");
+        };
+      }
+
+      describe('when there is no profile', () => {
+        beforeEach(() => {
+          mock = jest.spyOn(fs, 'readFileSync')
+            .mockImplementation(createMocker(0, 0));
+        });
+        afterEach(() => {
+          mock.mockRestore();
+        });
+        test('all fields are unlocked', () => {
+          settings.load();
+          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+        });
+      });
+
+      describe('when there is only a user profile with unlocked imageList', () => {
+        beforeEach(() => {
+          mock = jest.spyOn(fs, 'readFileSync')
+            .mockImplementation(createMocker(0, 1));
+        });
+        afterEach(() => {
+          mock.mockRestore();
+        });
+        test('all fields are unlocked', () => {
+          settings.load();
+          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+        });
+      });
+
+      describe('when there is only a user profile with locked imageList', () => {
+        beforeEach(() => {
+          mock = jest.spyOn(fs, 'readFileSync')
+            .mockImplementation(createMocker(0, 2));
+        });
+        afterEach(() => {
+          mock.mockRestore();
+        });
+        test('all fields are locked', () => {
+          settings.load();
+          verifyAllFieldsAreLocked(settings.getLockedSettings());
+        });
+      });
+
+      describe('when there is only a system profile with unlocked imageList', () => {
+        beforeEach(() => {
+          mock = jest.spyOn(fs, 'readFileSync')
+            .mockImplementation(createMocker(1, 0));
+        });
+        afterEach(() => {
+          mock.mockRestore();
+        });
+        test('all fields are unlocked', () => {
+          settings.load();
+          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+        });
+      });
+
+      describe('when both profiles exit, both with unlocked imageList', () => {
+        beforeEach(() => {
+          mock = jest.spyOn(fs, 'readFileSync')
+            .mockImplementation(createMocker(1, 1));
+        });
+        afterEach(() => {
+          mock.mockRestore();
+        });
+        test('all fields are locked', () => {
+          settings.load();
+          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+        });
+      });
+
+      describe('when the system profile is unlocked and the user profile is locked', () => {
+        beforeEach(() => {
+          mock = jest.spyOn(fs, 'readFileSync')
+            .mockImplementation(createMocker(1, 2));
+        });
+        afterEach(() => {
+          mock.mockRestore();
+        });
+        test('all fields are locked', () => {
+          settings.load();
+          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+        });
+
+        describe('when there is only a system profile with locked imageList', () => {
+          beforeEach(() => {
+            mock = jest.spyOn(fs, 'readFileSync')
+              .mockImplementation(createMocker(2, 0));
+          });
+          afterEach(() => {
+            mock.mockRestore();
+          });
+          test('all fields are locked', () => {
+            settings.load();
+            verifyAllFieldsAreLocked(settings.getLockedSettings());
+          });
+        });
+
+        describe('when both profiles exit, system locked, user unlocked', () => {
+          beforeEach(() => {
+            mock = jest.spyOn(fs, 'readFileSync')
+              .mockImplementation(createMocker(2, 1));
+          });
+          afterEach(() => {
+            mock.mockRestore();
+          });
+          test('all fields are locked', () => {
+            settings.load();
+            verifyAllFieldsAreLocked(settings.getLockedSettings());
+          });
+        });
+
+        describe('when both profiles exist and are locked', () => {
+          beforeEach(() => {
+            mock = jest.spyOn(fs, 'readFileSync')
+              .mockImplementation(createMocker(2, 2));
+          });
+          afterEach(() => {
+            mock.mockRestore();
+          });
+          test('all fields are locked', () => {
+            settings.load();
+            verifyAllFieldsAreLocked(settings.getLockedSettings());
+          });
+        });
+      });
+    });
+  });
+
+  describe('lockableFields', () => {
+    test('flattens an object with only allowed-image settings', () => {
+      const lockedSettings = {
+        containerEngine: {
+          imageAllowList: {
+            enabled:  true,
+            patterns: ["Shouldn't see this"],
+          },
+        },
+      };
+      const expectedLockedFields = {
+        containerEngine: {
+          imageAllowList: {
+            enabled:  true,
+            patterns: true,
+          },
+        },
+      };
+      const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
+
+      expect(calculatedLockedFields).toEqual(expectedLockedFields);
+    });
+    test('flattens a complex object', () => {
+      const lockedSettings = {
+        virtualMachine: {
+          memoryInGB: 2,
+          numberCPUs: 2,
+        },
+        containerEngine: {
+          imageAllowList: {
+            enabled:  true,
+            patterns: ["Shouldn't see this"],
+          },
+        },
+        kubernetes: { version: '1.2.3' },
+      };
+      const expectedLockedFields = {
+        virtualMachine: {
+          memoryInGB: true,
+          numberCPUs: true,
+        },
+        containerEngine: {
+          imageAllowList: {
+            enabled:  true,
+            patterns: true,
+          },
+        },
+        kubernetes: { version: true },
+      };
+      const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
+
+      expect(calculatedLockedFields).toEqual(expectedLockedFields);
+    });
+    test('flattens an empty object', () => {
+      const lockedSettings = { };
+      const expectedLockedFields = { };
+      const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
+
+      expect(calculatedLockedFields).toEqual(expectedLockedFields);
+    });
   });
 
   describe('getUpdatableNode', () => {
@@ -116,198 +537,32 @@ describe('updateFromCommandLine', () => {
     });
   });
 
-  test('no command-line args should leave prefs unchanged', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, []);
-
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('one option with embedded equal sign should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.version=1.23.6']);
-
-    expect(newPrefs.kubernetes.version).toBe('1.23.6');
-    newPrefs.kubernetes.version = origPrefs.kubernetes.version;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('one option over two args should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.version', '1.23.7']);
-
-    expect(newPrefs.kubernetes.version).toBe('1.23.7');
-    newPrefs.kubernetes.version = origPrefs.kubernetes.version;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('boolean option to true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.options.flannel=true']);
-
-    expect(origPrefs.kubernetes.options.flannel).toBeFalsy();
-    expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
-    newPrefs.kubernetes.options.flannel = false;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('boolean option set to implicit true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.options.flannel']);
-
-    expect(origPrefs.kubernetes.options.flannel).toBeFalsy();
-    expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
-    newPrefs.kubernetes.options.flannel = false;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('boolean option set to false should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes.options.traefik=false']);
-
-    expect(origPrefs.kubernetes.options.traefik).toBeTruthy();
-    expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
-    newPrefs.kubernetes.options.traefik = true;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('nothing after an = should set target to empty string', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--images.namespace=']);
-
-    expect(origPrefs.images.namespace).not.toBe('');
-    expect(newPrefs.images.namespace).toBe('');
-    newPrefs.images.namespace = origPrefs.images.namespace;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('should change several values (and no others)', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, [
-      '--kubernetes.options.traefik=false',
-      '--application.adminAccess=false',
-      '--portForwarding.includeKubernetesServices=true',
-      '--containerEngine.name=containerd',
-      '--kubernetes.port', '6444',
-    ]);
-
-    expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
-    expect(newPrefs.application.adminAccess).toBeFalsy();
-    expect(newPrefs.portForwarding.includeKubernetesServices).toBeTruthy();
-    expect(newPrefs.containerEngine.name).toBe('containerd');
-    expect(newPrefs.kubernetes.port).toBe(6444);
-
-    newPrefs.kubernetes.options.traefik = true;
-    newPrefs.application.adminAccess = true;
-    newPrefs.portForwarding.includeKubernetesServices = false;
-    newPrefs.containerEngine.name = settings.ContainerEngine.MOBY;
-    newPrefs.kubernetes.port = 6443;
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('should ignore non-option arguments', () => {
-    const arg = 'doesnt.start.with.dash.dash=some-value';
-    const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
-
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('should ignore an unrecognized option', () => {
-    const arg = '--kubernetes.zipperhead';
-    const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
-
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('should ignore leading options and arguments', () => {
-    const args = ['--kubernetes.zipperhead', '--another.unknown.option', 'its.argument', '--dont.know.what.this.is.either'];
-    const newPrefs = settings.updateFromCommandLine(prefs, args);
-
-    expect(TransientSettings.value.noModalDialogs).toEqual(false);
-    expect(newPrefs).toEqual(origPrefs);
-  });
-
-  test('should complain about an unrecognized ignore after a recognized one', () => {
-    const args = ['--ignore.this.one', '--kubernetes.enabled', '--complain.about.this'];
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, args);
-    }).toThrow(`Can't evaluate command-line argument ${ args[2] } -- no such entry in current settings`);
-  });
-
-  test('should complain about non-options after recognizing an option', () => {
-    const args = ['--kubernetes.enabled', 'doesnt.start.with.dash.dash=some-value'];
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, args);
-    }).toThrow(`Unexpected argument '${ args[1] }'`);
-  });
-
-  test('should refuse to overwrite a non-leaf node', () => {
-    const arg = '--kubernetes.options';
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, [arg, '33']);
-    }).toThrow(`Can't overwrite existing setting ${ arg }`);
-  });
-
-  test('should complain about a missing string value', () => {
-    const arg = '--kubernetes.version';
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, [arg]);
-    }).toThrow(`No value provided for option ${ arg }`);
-  });
-
-  test('should complain about a missing numeric value', () => {
-    const arg = '--virtualMachine.memoryInGB';
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, ['--kubernetes.version', '1.2.3', arg]);
-    }).toThrow(`No value provided for option ${ arg }`);
-  });
-
-  test('should complain about a non-boolean value', () => {
-    const arg = '--kubernetes.enabled';
-    const value = 'nope';
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, [`${ arg }=${ value }`]);
-    }).toThrow(`Can't evaluate ${ arg }=${ value } as boolean`);
-  });
-
-  test('should complain about a non-numeric value', () => {
-    const arg = '--kubernetes.port';
-    const value = 'angeles';
-
-    expect(() => {
-      settings.updateFromCommandLine(prefs, [`${ arg }=${ value }`]);
-    }).toThrow(`Can't evaluate ${ arg }=${ value } as number: SyntaxError: Unexpected token a in JSON at position 0`);
-  });
-
-  test('should complain about type mismatches', () => {
-    const optionList = [
-      ['--virtualMachine.memoryInGB', 'true', 'boolean', 'number'],
-      ['--kubernetes.enabled', '7', 'number', 'boolean'],
-    ];
-
-    for (const [arg, finalValue, currentType, desiredType] of optionList) {
-      expect(() => {
-        settings.updateFromCommandLine(prefs, [`${ arg }=${ finalValue }`]);
-      }).toThrow(`Type of '${ finalValue }' is ${ currentType }, but current type of ${ arg.substring(2) } is ${ desiredType } `);
-    }
-  });
-
-  describe('--no-modal-dialogs', () => {
-    test('sets the value accordingly', () => {
-      TransientSettings.update({ noModalDialogs: false });
-      settings.updateFromCommandLine(prefs, ['--no-modal-dialogs']);
-      expect(TransientSettings.value.noModalDialogs).toBeTruthy();
-      TransientSettings.update({ noModalDialogs: false });
-      settings.updateFromCommandLine(prefs, ['--no-modal-dialogs=true']);
-      expect(TransientSettings.value.noModalDialogs).toBeTruthy();
-      settings.updateFromCommandLine(prefs, ['--no-modal-dialogs=false']);
-      expect(TransientSettings.value.noModalDialogs).toBeFalsy();
+  describe('getObjectRepresentation', () => {
+    test('handles more than 2 dots', () => {
+      expect(settings.getObjectRepresentation('a.b.c.d', 3))
+        .toMatchObject({ a: { b: { c: { d: 3 } } } });
     });
-
-    test('complains about an invalid argument', () => {
-      const arg = '--no-modal-dialogs=42';
-
+    test('handles 2 dots', () => {
+      expect(settings.getObjectRepresentation('a.b.c', false))
+        .toMatchObject({ a: { b: { c: false } } });
+    });
+    test('handles 1 dot', () => {
+      expect(settings.getObjectRepresentation('first.last', 'middle'))
+        .toMatchObject({ first: { last: 'middle' } });
+    });
+    test('handles 0 dots', () => {
+      expect(settings.getObjectRepresentation('version', 4))
+        .toMatchObject({ version: 4 });
+    });
+    test('complains about an invalid accessor', () => {
       expect(() => {
-        settings.updateFromCommandLine(prefs, [arg]);
-      }).toThrow(`Invalid associated value for ${ arg }: must be unspecified (set to true), true or false`);
+        settings.getObjectRepresentation('application.', 4);
+      }).toThrow("Unrecognized command-line option ends with a dot ('.')");
+    });
+    test('complains about an empty-string accessor', () => {
+      expect(() => {
+        settings.getObjectRepresentation('', 4);
+      }).toThrow("Invalid command-line option: can't be the empty string.");
     });
   });
 });

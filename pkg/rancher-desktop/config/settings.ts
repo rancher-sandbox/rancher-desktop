@@ -9,6 +9,7 @@ import _ from 'lodash';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -133,6 +134,11 @@ export const defaultSettings = {
 
 export type Settings = typeof defaultSettings;
 
+// A settings-like type with a subset of all of the fields of defaultSettings,
+// but all leaves are set to `true`.
+export type LockedSettingsType = Record<string, any>;
+let lockedSettings: LockedSettingsType = {};
+
 export interface DeploymentProfileType {
   defaults: RecursivePartial<Settings>;
   locked: RecursivePartial<Settings>;
@@ -216,21 +222,49 @@ export async function clear() {
  *  `result` would be null if the accessor doesn't point to a node in the Settings subtree.
  *
  * @param cfg: the settings object
- * @param fqFieldAccessor: a multi-component dashed name representing a path to a node in the settings object.
+ * @param fqFieldAccessor: a multi-component dotted name representing a path to a node in the settings object.
  * @returns [internal node in cfg, final accessor name], or
  *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
  */
 export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
+  // Given an accessor like a.b.c.d:
+  // If `a.b.c` is found in cfg, return `[cfg[a][b][c], d]`.
+  // Otherwise return null.
+  // Need a special case where the accessor has no dots (i.e. is top-level).
   const optionParts = fqFieldAccessor.split('.');
   const finalOptionPart = optionParts.pop() ?? '';
-  let currentConfig: Record<string, any> = cfg;
+  const currentConfig = optionParts.length === 0 ? cfg : _.get(cfg, optionParts.join('.'));
 
+  return (finalOptionPart in (currentConfig || {})) ? [currentConfig, finalOptionPart] : null;
+}
+
+// This is similar to `lodash.set({}, fqFieldAccessor, finalValue)
+// but it also does some error checking.
+// On the happy path, it's exactly like `lodash.set`
+export function getObjectRepresentation(fqFieldAccessor: string, finalValue: boolean|number|string): RecursivePartial<Settings> {
+  if (!fqFieldAccessor) {
+    throw new Error("Invalid command-line option: can't be the empty string.");
+  }
+  const optionParts: string[] = fqFieldAccessor.split('.');
+
+  if (optionParts.length === 1) {
+    return { [fqFieldAccessor]: finalValue };
+  }
+  const lastField: string|undefined = optionParts.pop();
+
+  if (!lastField) {
+    throw new Error("Unrecognized command-line option ends with a dot ('.')");
+  }
+  let newConfig: RecursivePartial<Settings> = { [lastField]: finalValue };
+
+  optionParts.reverse();
   for (const field of optionParts) {
-    currentConfig = currentConfig[field] || {};
+    newConfig = { [field]: newConfig };
   }
 
-  return (finalOptionPart in currentConfig) ? [currentConfig, finalOptionPart] : null;
+  return newConfig;
 }
+
 export function updateFromCommandLine(cfg: Settings, commandLineArgs: string[]): Settings {
   const lim = commandLineArgs.length;
   let processingExternalArguments = true;
@@ -320,39 +354,88 @@ export function updateFromCommandLine(cfg: Settings, commandLineArgs: string[]):
 
   return cfg;
 }
+
 /**
  * Load the settings file or create it if not present.  If the settings have
  * already been loaded, return it without re-loading from disk.
  */
 export function load(): Settings {
+  let deploymentProfiles: DeploymentProfileType = { defaults: {}, locked: {} };
+  let setDefaultMemory = false;
+
+  try {
+    deploymentProfiles = readDeploymentProfiles();
+  } catch { }
   try {
     settings ??= loadFromDisk();
   } catch (err: any) {
     settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
-      _isFirstRun = true;
-      if (os.platform() === 'darwin' || os.platform() === 'linux') {
-        const totalMemoryInGB = os.totalmem() / 2 ** 30;
+      if (Object.keys(deploymentProfiles.defaults).length) {
+        _.merge(settings, deploymentProfiles.defaults);
+        if (!_.has(deploymentProfiles.defaults, 'virtualMachine.memoryInGB')) {
+          setDefaultMemory = true;
+        }
+        const requiredSettings = [
+          'kubernetes.enabled',
+          'kubernetes.version',
+          'containerEngine.name',
+        ];
 
-        // 25% of available ram up to a maximum of 6gb
-        settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
+        if (os.platform() !== 'win32') {
+          requiredSettings.push('application.pathManagementStrategy');
+        }
+        if (!requiredSettings.every(setting => _.has(deploymentProfiles.defaults, setting))) {
+          _isFirstRun = true;
+        }
+      } else {
+        _isFirstRun = true;
+        setDefaultMemory = true;
       }
+    }
+    if (setDefaultMemory && (os.platform() === 'darwin' || os.platform() === 'linux')) {
+      const totalMemoryInGB = os.totalmem() / 2 ** 30;
+
+      // 25% of available ram up to a maximum of 6gb
+      settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
     }
     if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
       settings.application.updater.enabled = false;
+    } else {
+      const appVersion = getProductionVersion();
+
+      // Auto-update doesn't work for CI or local builds, so don't enable it by default
+      if (appVersion.includes('-') || appVersion.includes('?')) {
+        settings.application.updater.enabled = false;
+      }
     }
-
-    const appVersion = getProductionVersion();
-
-    // Auo-update doesn't work for CI or local builds, so don't enable it by default
-    if (appVersion.includes('-') || appVersion.includes('?')) {
-      settings.application.updater.enabled = false;
-    }
-
-    save(settings);
   }
+  _.merge(settings, deploymentProfiles.locked);
+  save(settings);
+  lockedSettings = determineLockedFields(deploymentProfiles.locked) as LockedSettingsType;
 
   return settings;
+}
+export function getLockedSettings(): LockedSettingsType {
+  return lockedSettings;
+}
+
+export function clearLockedSettings() {
+  lockedSettings = {};
+}
+
+/**
+ * Returns an object that mirrors `lockedProfileSettings` but all leaves are `true`.
+ * @param lockedProfileSettings
+ */
+export function determineLockedFields(lockedProfileSettings: LockedSettingsType): LockedSettingsType {
+  function isLockedSettingsType(input: any): input is LockedSettingsType {
+    return typeof input === 'object' && !Array.isArray(input) && input !== null;
+  }
+
+  return Object.fromEntries(Object.entries(lockedProfileSettings).map(([k, v]) => {
+    return [k, isLockedSettingsType(v) ? determineLockedFields(v) : true];
+  }));
 }
 
 export function firstRunDialogNeeded() {
