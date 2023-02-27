@@ -10,7 +10,6 @@ permissions:
   contents: read
 
 env:
-  ZIP_FILE: rancher-desktop-networking-${{ github.ref_name }}.zip
   TAR_FILE: rancher-desktop-networking-${{ github.ref_name }}.tar.gz
 
 jobs:
@@ -30,7 +29,7 @@ jobs:
           CGO_ENABLED: "0"
       - name: create tarball
         run: |
-          tar --exclude=*.exe -czf $TAR_FILE ./bin
+          tar -C ./bin -czf $TAR_FILE .
           md5sum $TAR_FILE > $TAR_FILE.md5
       - uses: actions/upload-artifact@v3
         with:
@@ -41,19 +40,6 @@ jobs:
         with:
           name: rancher-desktop-networking.tar.gz.md5
           path: rancher-desktop-networking-${{ github.ref_name }}.tar.gz.md5
-          if-no-files-found: error
-      - run: |
-          zip $ZIP_FILE ./bin/*.exe
-          md5sum $ZIP_FILE > $ZIP_FILE.md5
-      - uses: actions/upload-artifact@v3
-        with:
-          name: rancher-desktop-networking.zip
-          path: rancher-desktop-networking-${{ github.ref_name }}.zip
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v3
-        with:
-          name: rancher-desktop-networking.zip.md5
-          path: rancher-desktop-networking-${{ github.ref_name }}.zip.md5
           if-no-files-found: error
   release:
     needs: build
@@ -69,14 +55,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: rancher-desktop-networking.tar.gz.md5
-      - name: Download zip artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: rancher-desktop-networking.zip
-      - name: Download zip md5 artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: rancher-desktop-networking.zip.md5
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,8 +63,6 @@ jobs:
           "${{ github.ref_name }}"
           $TAR_FILE
           $TAR_FILE.md5
-          $ZIP_FILE
-          $ZIP_FILE.md5
           --draft
           --title "${{ github.ref_name }}"
           --repo ${{ github.repository }}
