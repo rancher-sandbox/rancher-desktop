@@ -490,9 +490,23 @@ const updateTable: Record<number, (settings: any) => void> = {
     delete settings.updater;
   },
   5: (settings) => {
-    settings.containerEngine.allowedImages = {};
-    _.assign(settings.containerEngine.allowedImages, settings.containerEngine.imageAllowList);
-    delete settings.containerEngine.imageAllowList;
+    if (settings.containerEngine.imageAllowList) {
+      settings.containerEngine.allowedImages = settings.containerEngine.imageAllowList;
+      delete settings.containerEngine.imageAllowList;
+    }
+    if (settings.virtualMachine.experimental) {
+      if ('socketVMNet' in settings.virtualMachine.experimental) {
+        settings.experimental = { virtualMachine: { socketVMNet: settings.virtualMachine.experimental.socketVMNet } };
+        delete settings.virtualMachine.experimental.socketVMNet;
+      }
+      delete settings.virtualMachine.experimental;
+    }
+    for (const field of ['autoStart', 'hideNotificationIcon', 'startInBackground', 'window']) {
+      if (field in settings) {
+        settings.application[field] = settings[field];
+        delete settings[field];
+      }
+    }
   },
 };
 
