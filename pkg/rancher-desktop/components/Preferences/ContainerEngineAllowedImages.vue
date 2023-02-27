@@ -43,7 +43,7 @@ export default Vue.extend({
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
     onType(item: string) {
-      if (item !== null) {
+      if (item) {
         this.setCanApply(item.trim().length > 0);
       }
     },

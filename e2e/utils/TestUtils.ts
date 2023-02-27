@@ -205,7 +205,7 @@ export async function startRancherDesktop(testPath: string, tracing: boolean): P
   });
 
   if (tracing) {
-    electronApp.context().tracing.start({ screenshots: true, snapshots: true });
+    await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
   }
 
   const page = await electronApp.firstWindow();
