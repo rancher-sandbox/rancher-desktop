@@ -267,7 +267,7 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   isPreferencesDirty(state: PreferencesState, getters) {
     const isDirty = !_.isEqual(
-      state.initialPreferences,
+      normalizePreferences(state.initialPreferences),
       getters.getPreferencesNormalized,
     );
 
