@@ -8,9 +8,11 @@ import path from 'path';
 import { KubeConfig } from '@kubernetes/client-node';
 import Electron from 'electron';
 
+import { VMBackend } from '@pkg/backend/backend';
 import { State } from '@pkg/backend/k8s';
 import * as kubeconfig from '@pkg/backend/kubeconfig';
 import { Settings, load } from '@pkg/config/settings';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
 import Logging from '@pkg/utils/logging';
@@ -20,6 +22,7 @@ import { openDashboard } from '@pkg/window/dashboard';
 import { openPreferences } from '@pkg/window/preferences';
 
 const console = Logging.background;
+const ipcMainProxy = getIpcMainProxy(console);
 
 enum networkStatus {
   CHECKING = 'checking...',
@@ -35,6 +38,8 @@ export class Tray {
   protected kubernetesState = State.STOPPED;
   private settings: Settings = load();
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
+  private static instance: Tray;
+  private abortController: AbortController | undefined;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -126,13 +131,13 @@ export class Tray {
    * triggered, close the watcher and restart after a duration (one second).
    */
   private async watchForChanges() {
-    const abortController = new AbortController();
+    this.abortController = new AbortController();
     const paths = await kubeconfig.getKubeConfigPaths();
     const options: fs.WatchOptions = {
       persistent: false,
       recursive:  !this.isLinux(), // Recursive not implemented in Linux
       encoding:   'utf-8',
-      signal:     abortController.signal,
+      signal:     this.abortController.signal,
     };
 
     paths.map(filepath => fs.watch(filepath, options, async(eventType) => {
@@ -145,14 +150,14 @@ export class Tray {
         }
       }
 
-      abortController.abort();
+      this.abortController?.abort();
       this.buildFromConfig();
 
       setTimeout(this.watchForChanges.bind(this), 1_000);
     }));
   }
 
-  constructor() {
+  private constructor() {
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
     this.trayMenu.setToolTip('Rancher Desktop');
 
@@ -171,13 +176,8 @@ export class Tray {
     this.buildFromConfig();
     this.watchForChanges();
 
-    mainEvents.on('k8s-check-state', (mgr) => {
-      this.k8sStateChanged(mgr.state);
-    });
-    mainEvents.on('settings-update', (cfg) => {
-      this.settings = cfg;
-      this.settingsChanged();
-    });
+    mainEvents.on('k8s-check-state', this.k8sStateChangedEvent);
+    mainEvents.on('settings-update', this.settingsUpdateEvent);
 
     /**
      * This event is called from the renderer, at startup with status based on the navigator object's onLine field,
@@ -186,11 +186,52 @@ export class Tray {
      *
      * This system isn't perfect -- if the renderer window is closed when connection status changes, the info is lost.
      */
-    Electron.ipcMain.on('update-network-status', (_, status: boolean) => {
-      this.handleUpdateNetworkStatus(status).catch((err:any) => {
-        console.log('Error updating network status: ', err);
-      });
+    ipcMainProxy.on('update-network-status', this.updateNetworkStatusEvent);
+  }
+
+  private k8sStateChangedEvent = (mgr: VMBackend) => {
+    this.k8sStateChanged(mgr.state);
+  };
+
+  private settingsUpdateEvent = (cfg: Settings) => {
+    this.settings = cfg;
+    this.settingsChanged();
+  };
+
+  private updateNetworkStatusEvent = (_: Electron.IpcMainEvent, status: boolean) => {
+    this.handleUpdateNetworkStatus(status).catch((err:any) => {
+      console.log('Error updating network status: ', err);
     });
+  };
+
+  /**
+   * Checks for an existing instance of Tray. If one does not
+   * exist, instantiate a new one.
+   */
+  public static getInstance(): Tray {
+    Tray.instance ??= new Tray();
+
+    return Tray.instance;
+  }
+
+  /**
+   * Hide the tray menu.
+   */
+  public hide() {
+    this.trayMenu.destroy();
+    this.abortController?.abort();
+    mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
+    mainEvents.off('settings-update', this.settingsUpdateEvent);
+    ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
+  }
+
+  /**
+   * Show the tray menu.
+   */
+  public show() {
+    if (this.trayMenu.isDestroyed()) {
+      Tray.instance = new Tray();
+    }
   }
 
   protected async handleUpdateNetworkStatus(status: boolean) {
@@ -231,6 +272,10 @@ export class Tray {
   }
 
   protected updateMenu() {
+    if (this.trayMenu.isDestroyed()) {
+      return;
+    }
+
     const labels = {
       [State.STOPPED]:  'Kubernetes is stopped',
       [State.STARTING]: 'Kubernetes is starting',
@@ -333,8 +378,4 @@ export class Tray {
       this.trayMenu.setContextMenu(contextMenu);
     });
   }
-}
-
-export default function setupTray() {
-  new Tray();
 }

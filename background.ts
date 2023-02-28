@@ -29,7 +29,7 @@ import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
 import setupNetworking from '@pkg/main/networking';
-import setupTray from '@pkg/main/tray';
+import { Tray } from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
 import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
@@ -128,6 +128,13 @@ mainEvents.on('settings-update', async(newSettings) => {
     await pathManager.enforce();
   }
 
+  if (newSettings.application.hideNotificationIcon) {
+    Tray.getInstance().hide();
+  } else {
+    Tray.getInstance().show();
+    mainEvents.emit('k8s-check-state', k8smanager);
+  }
+
   await runRdctlSetup(newSettings);
 });
 
@@ -196,7 +203,9 @@ Electron.app.whenReady().then(async() => {
       iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
     });
 
-    setupTray();
+    if (!cfg.application.hideNotificationIcon) {
+      Tray.getInstance().show();
+    }
 
     if (!cfg.application.startInBackground) {
       window.openMain();
