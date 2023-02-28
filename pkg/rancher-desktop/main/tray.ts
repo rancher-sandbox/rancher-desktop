@@ -41,6 +41,7 @@ export class Tray {
   private static instance: Tray;
   private abortController: AbortController | undefined;
   private networkState: boolean | undefined;
+  private networkInterval: NodeJS.Timer;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -185,7 +186,7 @@ export class Tray {
      * updates the network status in the tray if there's a change in the network
      * state.
      */
-    setInterval(async() => {
+    this.networkInterval = setInterval(async() => {
       const networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
 
       if (this.networkState === networkDiagnostic?.passed) {
@@ -234,6 +235,7 @@ export class Tray {
     mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.off('settings-update', this.settingsUpdateEvent);
     ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
+    clearInterval(this.networkInterval);
   }
 
   /**
