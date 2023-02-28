@@ -35,6 +35,7 @@ const windowsDependencies = [
   new WSLDistro(),
   new HostResolverHost(),
   new Wix(),
+  new HostSwitch(),
 ];
 
 // Dependencies that are specific to WSL.

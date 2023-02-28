@@ -2,7 +2,7 @@ import { Octokit } from 'octokit';
 
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import * as tools from 'scripts/dependencies/tools';
-import { WSLDistro, HostResolverHost } from 'scripts/dependencies/wsl';
+import { WSLDistro, HostResolverHost, HostSwitch } from 'scripts/dependencies/wsl';
 import {
   Dependency, GithubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository,
 } from 'scripts/lib/dependencies';
@@ -27,6 +27,7 @@ const dependencies: UnreleasedChangeMonitoringDependency[] = [
   new tools.RancherDashboard(),
   new AlpineLimaISO(),
   new HostResolverHost(), // we only need one of HostResolverHost and HostResolverPeer
+  new HostSwitch(),
 ];
 
 type Issue = Awaited<ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>>['data']['items'][0];
