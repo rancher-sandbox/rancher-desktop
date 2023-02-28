@@ -1,6 +1,7 @@
 import fs from 'fs';
 
 import * as settings from '../settings';
+import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '../settings';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -39,9 +40,22 @@ describe('updateFromCommandLine', () => {
         numberCPUs:   2,
         hostResolver: true,
       },
-      experimental: { virtualMachine: { socketVMNet: true } },
-      WSL:          { integrations: {} },
-      kubernetes:   {
+      experimental: {
+        virtualMachine: {
+          mount: {
+            type: MountType.REVERSE_SSHFS,
+            '9p': {
+              securityModel:   SecurityModel.NONE,
+              protocolVersion: ProtocolVersion.NINEP2000_L,
+              msizeInKB:       128,
+              cacheMode:       CacheMode.MMAP,
+            },
+          },
+          socketVMNet: true,
+        },
+      },
+      WSL:        { integrations: {} },
+      kubernetes: {
         version: '1.23.5',
         port:    6443,
         enabled: true,

@@ -34,7 +34,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   protected cfg: BackendSettings | undefined;
   protected vm: WSLBackend;
   /** Helper object to manage available K3s versions. */
-  protected k3sHelper = new K3sHelper('x86_64');
+  readonly k3sHelper = new K3sHelper('x86_64');
   protected client: KubeClient | null = null;
 
   /** The version of Kubernetes currently running. */

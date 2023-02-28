@@ -63,21 +63,26 @@ describe(SettingsValidator, () => {
     describe('all standard fields', () => {
       // Special fields that cannot be checked here; this includes enums and maps.
       const specialFields = [
+        ['application', 'pathManagementStrategy'],
         ['containerEngine', 'allowedImages', 'locked'],
         ['containerEngine', 'name'],
-        ['WSL', 'integrations'],
+        ['experimental', 'virtualMachine', 'mount', '9p', 'cacheMode'],
+        ['experimental', 'virtualMachine', 'mount', '9p', 'msizeInKB'],
+        ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
+        ['experimental', 'virtualMachine', 'mount', '9p', 'securityModel'],
+        ['experimental', 'virtualMachine', 'mount', 'type'],
         ['kubernetes', 'version'],
-        ['application', 'pathManagementStrategy'],
         ['version'],
+        ['WSL', 'integrations'],
       ];
 
       // Fields that can only be set on specific platforms.
       const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
+        'application.adminAccess':                 'linux',
+        'experimental.virtualMachine.socketVMNet': 'darwin',
         'virtualMachine.hostResolver':             'win32',
         'virtualMachine.memoryInGB':               'darwin',
         'virtualMachine.numberCPUs':               'linux',
-        'application.adminAccess':                 'linux',
-        'experimental.virtualMachine.socketVMNet': 'darwin',
       };
 
       const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
@@ -259,7 +264,7 @@ describe(SettingsValidator, () => {
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [expect.stringContaining('Invalid value for containerEngine.name: <"pikachu">;')],
+          errors:       [expect.stringContaining('Invalid value for containerEngine.name: <"pikachu">; must be one of ["containerd","moby","docker"]')],
         });
       });
     });
@@ -433,7 +438,7 @@ describe(SettingsValidator, () => {
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(3);
       expect(errors).toEqual([
-        `Invalid value for containerEngine.name: <{"expected":"a string"}>; must be 'containerd', 'docker', or 'moby'`,
+        `Invalid value for containerEngine.name: <{"expected":"a string"}>`,
         'Kubernetes version "[object Object]" not found.',
         "Setting kubernetes.options should wrap an inner object, but got <ceci n'est pas un objet>.",
       ]);

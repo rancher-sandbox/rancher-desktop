@@ -36,6 +36,31 @@ export const ContainerEngineNames: Record<ContainerEngine, string> = {
   [ContainerEngine.MOBY]:       'dockerd',
 };
 
+export enum MountType {
+  NINEP = '9p',
+  REVERSE_SSHFS = 'reverse-sshfs',
+}
+
+export enum ProtocolVersion {
+  NINEP2000 = '9p2000',
+  NINEP2000_U = '9p2000.u',
+  NINEP2000_L = '9p2000.L',
+}
+
+export enum SecurityModel {
+  PASSTHROUGH ='passthrough',
+  MAPPED_XATTR = 'mapped-xattr',
+  MAPPED_FILE = 'mapped-file',
+  NONE = 'none',
+}
+
+export enum CacheMode {
+  NONE = 'none',
+  LOOSE = 'loose',
+  FSCACHE = 'fscache',
+  MMAP = 'mmap',
+}
+
 export const defaultSettings = {
   version:     CURRENT_SETTINGS_VERSION,
   application: {
@@ -95,6 +120,15 @@ export const defaultSettings = {
     virtualMachine: {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
+      mount:       {
+        type: MountType.REVERSE_SSHFS,
+        '9p': {
+          securityModel:   SecurityModel.NONE,
+          protocolVersion: ProtocolVersion.NINEP2000_L,
+          msizeInKB:       128,
+          cacheMode:       CacheMode.MMAP,
+        },
+      },
     },
   },
 };
