@@ -80,6 +80,7 @@ describe(SettingsValidator, () => {
       const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
         'application.adminAccess':                 'linux',
         'experimental.virtualMachine.socketVMNet': 'darwin',
+        'experimental.rdNetworking':               'win32',
         'virtualMachine.hostResolver':             'win32',
         'virtualMachine.memoryInGB':               'darwin',
         'virtualMachine.numberCPUs':               'linux',

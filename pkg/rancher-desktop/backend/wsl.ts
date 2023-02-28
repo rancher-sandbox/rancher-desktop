@@ -169,7 +169,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   protected resolverHostProcess: BackgroundProcess;
 
   /**
-   * Windows-side process for the Rancher Desktop Networking, it is used to provide DNS, DHCP and Port Forwarding
+   * Windows-side process for the Rancher Desktop Networking,
+   * it is used to provide DNS, DHCP and Port Forwarding
    * to the vm-switch that is running in the WSL VM.
    */
   protected hostSwitchProcess: BackgroundProcess;
@@ -1027,22 +1028,22 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } catch {
     }
 
-    if (this.cfg?.experimental.rdNetworking === false) {
-      await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
-    } else {
+    if (this.cfg?.experimental.rdNetworking) {
       await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_RD_NETWORKING_SCRIPT, 0o755);
+    } else {
+      await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
     }
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
     this.process = childProcess.spawn('wsl.exe',
-      ['--distribution', INSTANCE_NAME, '--exec', `/usr/local/bin/wsl-init`],
+      ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/wsl-init'],
       {
         env: {
           ...process.env,
-          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:${ process.env.WSLENV }:LOG_DIR`,
+          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:LOG_DIR/p`,
           DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
-          LOG_DIR:          await this.wslify(paths.logs),
+          LOG_DIR:          paths.logs,
         },
         stdio:       ['ignore', stream, stream],
         windowsHide: true,
@@ -1182,7 +1183,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.installCredentialHelper();
               }),
               this.progressTracker.action('DNS configuration', 50, async() => {
-                if (this.cfg?.experimental.rdNetworking === true) {
+                if (this.cfg?.experimental.rdNetworking) {
                   console.debug(`setting DNS server to 192.168.127.1 for rancher desktop networking`);
                   try {
                     this.hostSwitchProcess.start();

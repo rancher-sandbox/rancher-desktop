@@ -130,7 +130,7 @@ export const defaultSettings = {
         },
       },
     },
-    /** windows only: if set, use switch off host-resolver and use gvisor based network. */
+    /** windows only: if set, use gvisor based network rather than host-resolver/dnsmasq. */
     rdNetworking: false,
   },
 };

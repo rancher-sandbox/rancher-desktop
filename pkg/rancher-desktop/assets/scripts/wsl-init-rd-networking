@@ -1,7 +1,8 @@
 #!/bin/sh
 
-# This script is used to launch (busybox) init on WSL2.  This is necessary as
-# we need to do some mount namespace shenanigans, since we store the data on the
+# This script is used to launch (busybox) init on WSL2 through network-setup process.
+# The network-setup process starts the vm-switch and unshare as its sub processes. this
+# is necessary since we need to do some mount namespace, since we store the data on the
 # WSL shared mount (/mnt/wsl/rancher/desktop/) and that can have issues with
 # lingering tmpfs mounts after we exit.  This means we need to run this script
 # under unshare (to get a private mount namespace), and then we can mark various
@@ -11,14 +12,16 @@
 
 set -o errexit -o nounset -o xtrace
 
-NETWORK_SETUP_LOG_DIR="${LOG_DIR}/network-setup.log"
-VM_SWITCH_LOG_DIR="${LOG_DIR}/vm-switch.log"
+NETWORK_SETUP_LOG="${LOG_DIR}/network-setup.log"
+VM_SWITCH_LOG="${LOG_DIR}/vm-switch.log"
 
 
 if [ $$ -ne "1" ]; then
     # This is not running as PID 1; this means that this is a normal invocation
     # from WSL.
-    exec /usr/local/bin/network-setup --logfile $NETWORK_SETUP_LOG_DIR --vm-switch-path /usr/local/bin/vm-switch --vm-switch-logfile $VM_SWITCH_LOG_DIR --unshare-arg "${0}"
+    exec /usr/local/bin/network-setup --logfile $NETWORK_SETUP_LOG \
+    --vm-switch-path /usr/local/bin/vm-switch --vm-switch-logfile \
+    $VM_SWITCH_LOG --unshare-arg "${0}"
 fi
 
 # Mark directories that we will need to bind mount as shared mounts.

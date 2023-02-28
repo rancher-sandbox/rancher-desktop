@@ -97,7 +97,7 @@ export default class SettingsValidator {
           },
           socketVMNet: this.checkPlatform('darwin', this.checkBoolean),
         },
-        rdNetworking: this.checkBoolean,
+        rdNetworking: this.checkPlatform('win32', this.checkBoolean),
       },
       WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },
       kubernetes: {
