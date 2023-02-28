@@ -36,16 +36,15 @@
         <span v-else></span>
       </template>
     </card>
-    <card v-else-if="unsupportedUpgradeAvailable" ref="osUpdateRequired" :show-highlight-border="false">
+    <card v-else-if="unsupportedUpgradeAvailable" :show-highlight-border="false">
       <template #title>
         <div class="type-title">
-          <h3>Operating System Upgrade Required</h3>
+          <h3>Latest Version Not Supported</h3>
         </div>
       </template>
       <template #body>
         <p>
-          A newer version of Rancher Desktop is available, but not supported on the current version
-          of your operating system. Please upgrade your operating system to run it.
+          A newer version of Rancher Desktop is available, but not supported on your system.
         </p>
         <br>
         <p>
@@ -53,7 +52,9 @@
           <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
         </p>
       </template>
-      <template #actions><div></div></template>
+      <template #actions>
+        <div></div>
+      </template>
     </card>
   </div>
 </template>

@@ -71,17 +71,25 @@ export interface LonghornUpdateInfo extends UpdateInfo {
  * responder service.
  */
 interface LonghornUpgraderResponse {
-  versions: {
-    Name: string;
-    ReleaseDate: Date;
-    Supported: boolean | undefined;
-    Tags: string[];
-  }[];
+  versions: UpgradeResponderVersion[];
   /**
    * The number of minutes before the next upgrade check should be performed.
    */
   requestIntervalInMinutes: number;
 }
+
+type UpgradeResponderVersion = {
+    Name: string;
+    ReleaseDate: Date;
+    Supported?: boolean;
+    Tags: string[];
+};
+
+type UpgradeResponderQueryResult = {
+  latest: UpgradeResponderVersion;
+  requestIntervalInMinutes: number,
+  unsupportedUpgradeAvailable: boolean,
+};
 
 export interface GithubReleaseAsset {
   url: string;
@@ -199,9 +207,7 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
 }
 
 async function getPlatformVersion(): Promise<string> {
-  const platform = os.platform();
-
-  switch (platform) {
+  switch (process.platform) {
   case 'win32':
     return os.release();
   case 'darwin': {
@@ -219,7 +225,58 @@ async function getPlatformVersion(): Promise<string> {
     // should suffice.
     return 'unknown';
   }
-  throw new Error(`Platform "${ platform }" is not supported`);
+  throw new Error(`Platform "${ process.platform }" is not supported`);
+}
+
+/**
+ * Fetch info on available versions of Rancher Desktop, as well as other
+ * things, from the Upgrade Responder server.
+ */
+export async function queryUpgradeResponder(url: string, currentVersion: semver.SemVer): Promise<UpgradeResponderQueryResult> {
+  const requestPayload = {
+    appVersion: currentVersion,
+    extraInfo:  {
+      platform:        `${ process.platform }-${ os.arch() }`,
+      platformVersion: await getPlatformVersion(),
+    },
+  };
+  // If we are using anything on `github.io` as the update server, we're
+  // trying to run a simplified test.  In that case, break the protocol and do
+  // a HTTP GET instead of the HTTP POST with data we should do for actual
+  // longhorn upgrade-responder servers.
+  const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(url) ? { method: 'GET' } : {
+    method: 'POST',
+    body:   JSON.stringify(requestPayload),
+  };
+
+  console.debug(`Checking for upgrades from ${ url }`);
+  const responseRaw = await fetch(url, requestOptions);
+  const response = await responseRaw.json() as LonghornUpgraderResponse;
+
+  console.debug(`Upgrade server response:`, util.inspect(response, true, null));
+
+  const allVersions = response.versions;
+
+  // If the upgrade responder does not send the Supported field,
+  // assume that the version is supported.
+  for (const version of allVersions) {
+    version.Supported ??= true;
+  }
+
+  allVersions.sort((version1, version2) => semver.rcompare(version1.Name, version2.Name));
+  const supportedVersions = allVersions.filter(version => version.Supported);
+
+  if (supportedVersions.length === 0) {
+    throw newError('Could not find latest version', 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND');
+  }
+  const latest = supportedVersions[0];
+  const unsupportedUpgradeAvailable = allVersions[0].Name !== latest.Name;
+
+  return {
+    latest,
+    requestIntervalInMinutes: response.requestIntervalInMinutes,
+    unsupportedUpgradeAvailable,
+  };
 }
 
 /**
@@ -258,43 +315,6 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
   }
 
   /**
-   * Fetch info on available versions of Rancher Desktop from the Upgrade
-   * Responder server.
-   * @returns Array of available versions.
-   */
-  async fetchUpgraderResponse(): Promise<LonghornUpgraderResponse> {
-    const requestPayload = {
-      appVersion: this.updater.currentVersion.format(),
-      extraInfo:  {
-        platform:        `${ os.platform() }-${ os.arch() }`,
-        platformVersion: await getPlatformVersion(),
-      },
-    };
-    // If we are using anything on `github.io` as the update server, we're
-    // trying to run a simplified test.  In that case, break the protocol and do
-    // a HTTP GET instead of the HTTP POST with data we should do for actual
-    // longhorn upgrade-responder servers.
-    const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(this.configuration.upgradeServer) ? { method: 'GET' } : {
-      method: 'POST',
-      body:   JSON.stringify(requestPayload),
-    };
-
-    console.debug(`Checking for upgrades from ${ this.configuration.upgradeServer }`);
-    const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
-    const response = await responseRaw.json() as LonghornUpgraderResponse;
-
-    console.debug(`Upgrade server response:`, util.inspect(response, true, null));
-
-    // If the upgrade responder does not send the Supported field,
-    // assume that the version is supported.
-    for (const version of response.versions) {
-      version.Supported = version.Supported ?? true;
-    }
-
-    return response;
-  }
-
-  /**
    * Check for updates, possibly returning the cached information if it is still
    * applicable.
    */
@@ -313,19 +333,9 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       }
     }
 
-    const response = await this.fetchUpgraderResponse();
-    const allVersions = response.versions;
-
-    allVersions.sort((version1, version2) => semver.rcompare(version1.Name, version2.Name));
-    const supportedVersions = allVersions.filter(version => version.Supported);
-
-    if (supportedVersions.length === 0) {
-      throw newError('Could not find latest version', 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND');
-    }
-    const latest = supportedVersions[0];
-    const unsupportedUpgradeAvailable = allVersions[0].Name !== latest.Name;
-
-    const requestIntervalInMinutes = response.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
+    const queryResult = await queryUpgradeResponder(this.configuration.upgradeServer, this.updater.currentVersion);
+    const { latest, unsupportedUpgradeAvailable } = queryResult;
+    const requestIntervalInMinutes = queryResult.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
     const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
     const nextRequestTime = Date.now() + requestIntervalInMs;
 

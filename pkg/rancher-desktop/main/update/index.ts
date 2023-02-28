@@ -166,7 +166,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   });
   updater.on('update-downloaded', (info) => {
     if (!isLonghornUpdateInfo(info)) {
-      throw new Error('updater: event update-not-available: info is not of type LonghornUpdateInfo');
+      throw new Error('updater: event update-downloaded: info is not of type LonghornUpdateInfo');
     }
     if (state === State.DOWNLOADING) {
       state = State.UPDATE_PENDING;
