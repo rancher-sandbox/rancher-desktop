@@ -103,15 +103,6 @@ interface MainEventNames {
    * @note This does not update the last run time (since it only runs a single
    * checker).
    */
-  'diagnostics-trigger'(id: string): void;
-
-  /**
-   * Force trigger diagnostics with the given id.
-   * This is used when something has changed that might affect whether the given
-   * diagnostic needs to be re-run.
-   * @note This does not update the last run time (since it only runs a single
-   * checker).
-   */
   'diagnostics-trigger'(id: string): DiagnosticsCheckerResult | undefined;
 
   /**
