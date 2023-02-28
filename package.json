@@ -132,7 +132,7 @@
     "css-loader": "4.3.0",
     "ejs": "3.1.8",
     "electron": "20.3.8",
-    "electron-builder": "23.3.3",
+    "electron-builder": "23.6.0",
     "electron-notarize": "1.2.1",
     "eslint": "8.23.1",
     "eslint-import-resolver-typescript": "3.5.2",
