@@ -109,7 +109,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         const exe = path.join(paths.resources, 'win32', 'internal', 'host-switch.exe');
         const stream = await Logging['host-switch'].fdStream;
         const k8sPort = 6443;
-        const k8sPortForwarding = `127.0.0.1:${ k8sPort }=192.168.127.2:${ k8sPort }`;
+        const gatewayIP = '192.168.127.2';
+        const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ gatewayIP }:${ k8sPort }`;
 
         return childProcess.spawn(exe, ['--port-forward', k8sPortForwarding], {
           stdio:       ['ignore', stream, stream],
@@ -1039,7 +1040,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       {
         env: {
           ...process.env,
-          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS` + ':' + `${ process.env.WSLENV }:LOG_DIR`,
+          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:${ process.env.WSLENV }:LOG_DIR`,
           DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
           LOG_DIR:          await this.wslify(paths.logs),
         },
