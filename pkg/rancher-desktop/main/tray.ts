@@ -40,6 +40,7 @@ export class Tray {
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
   private static instance: Tray;
   private abortController: AbortController | undefined;
+  private networkState: boolean | undefined;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -187,7 +188,13 @@ export class Tray {
     setInterval(async() => {
       const networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
 
-      this.handleUpdateNetworkStatus(networkDiagnostic?.passed || false).catch((err: any) => {
+      if (this.networkState === networkDiagnostic?.passed) {
+        return; // network state hasn't changed since last check
+      }
+
+      this.networkState = !!networkDiagnostic?.passed;
+
+      this.handleUpdateNetworkStatus(this.networkState).catch((err: any) => {
         console.log('Error updating network status: ', err);
       });
     }, 5000);
