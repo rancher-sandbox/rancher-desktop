@@ -53,6 +53,7 @@ describe('updateFromCommandLine', () => {
           },
           socketVMNet: true,
         },
+        rdNetworking: false,
       },
       WSL:        { integrations: {} },
       kubernetes: {

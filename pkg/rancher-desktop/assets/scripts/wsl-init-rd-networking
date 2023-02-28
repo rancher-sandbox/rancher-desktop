@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# This script is used to launch (busybox) init on WSL2.  This is necessary as
+# we need to do some mount namespace shenanigans, since we store the data on the
+# WSL shared mount (/mnt/wsl/rancher/desktop/) and that can have issues with
+# lingering tmpfs mounts after we exit.  This means we need to run this script
+# under unshare (to get a private mount namespace), and then we can mark various
+# mount points as shared (for buildkit).  Kubelet will internally do some
+# tmpfs mounts for volumes (secrets, etc.), which will stay private and go away
+# once k3s exits, so that we can delete the data as necessary.
+
+set -o errexit -o nounset -o xtrace
+
+NETWORK_SETUP_LOG_DIR="${LOG_DIR}/network-setup.log"
+VM_SWITCH_LOG_DIR="${LOG_DIR}/vm-switch.log"
+
+
+if [ $$ -ne "1" ]; then
+    # This is not running as PID 1; this means that this is a normal invocation
+    # from WSL.
+    exec /usr/local/bin/network-setup --logfile $NETWORK_SETUP_LOG_DIR --vm-switch-path /usr/local/bin/vm-switch --vm-switch-logfile $VM_SWITCH_LOG_DIR --unshare-arg "${0}"
+fi
+
+# Mark directories that we will need to bind mount as shared mounts.
+(
+    IFS=:
+    for dir in / ${DISTRO_DATA_DIRS}; do
+        mount --make-shared "${dir}"
+    done
+)
+
+# mount bpffs to allow containers to leverage bpf, and make both bpffs and
+# cgroupfs shared mounts so the pods can mount them correctly
+mount bpffs -t bpf /sys/fs/bpf
+mount --make-shared /sys/fs/bpf
+mount --make-shared /sys/fs/cgroup
+
+if [ -f /var/lib/resolv.conf ]; then
+    ln -s -f /var/lib/resolv.conf /etc/resolv.conf
+fi
+
+# Run init (which never exits).
+exec /sbin/init

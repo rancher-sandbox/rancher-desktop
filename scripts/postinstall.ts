@@ -7,7 +7,7 @@ import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
+import { WSLDistro, HostResolverHost, HostResolverPeer, HostSwitch } from 'scripts/dependencies/wsl';
 import {
   DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
 } from 'scripts/lib/dependencies';
