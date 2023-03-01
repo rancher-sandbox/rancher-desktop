@@ -84,14 +84,9 @@ func EnsureAutostart(autostartDesired bool) error {
 }
 
 func getDesiredLaunchAgentFileContents() ([]byte, error) {
-	// get path to main Rancher Desktop executable
-	rdctlPath, err := os.Executable()
-	if err != nil {
-		return []byte{}, fmt.Errorf("failed to get path to rdctl: %w", err)
-	}
 	rancherDesktopPath, err := utils.GetRDPath()
 	if err != nil {
-		return []byte{}, errors.New("failed to get path to main Rancher Desktop executable: %w", err)
+		return []byte{}, fmt.Errorf("failed to get path to main Rancher Desktop executable: %w", err)
 	}
 
 	// get desired contents of LaunchAgent file
