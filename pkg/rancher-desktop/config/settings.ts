@@ -13,7 +13,7 @@ import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursiveKeys, RecursivePartial } from '@pkg/utils/typeUtils';
 import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
@@ -241,7 +241,7 @@ export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Recor
 // This is similar to `lodash.set({}, fqFieldAccessor, finalValue)
 // but it also does some error checking.
 // On the happy path, it's exactly like `lodash.set`
-export function getObjectRepresentation(fqFieldAccessor: string, finalValue: boolean|number|string): RecursivePartial<Settings> {
+export function getObjectRepresentation(fqFieldAccessor: RecursiveKeys<Settings>, finalValue: boolean|number|string): RecursivePartial<Settings> {
   if (!fqFieldAccessor) {
     throw new Error("Invalid command-line option: can't be the empty string.");
   }
@@ -255,14 +255,14 @@ export function getObjectRepresentation(fqFieldAccessor: string, finalValue: boo
   if (!lastField) {
     throw new Error("Unrecognized command-line option ends with a dot ('.')");
   }
-  let newConfig: RecursivePartial<Settings> = { [lastField]: finalValue };
+  let newConfig: Record<string, any> = { [lastField]: finalValue };
 
   optionParts.reverse();
   for (const field of optionParts) {
     newConfig = { [field]: newConfig };
   }
 
-  return newConfig;
+  return newConfig as RecursivePartial<Settings>;
 }
 
 export function updateFromCommandLine(cfg: Settings, commandLineArgs: string[]): Settings {

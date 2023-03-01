@@ -8,6 +8,7 @@ import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '../setting
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
 import paths from '@pkg/utils/paths';
+import { RecursiveKeys } from '@pkg/utils/typeUtils';
 
 class FakeFSError extends Error {
   public message = '';
@@ -539,15 +540,15 @@ describe('settings', () => {
 
   describe('getObjectRepresentation', () => {
     test('handles more than 2 dots', () => {
-      expect(settings.getObjectRepresentation('a.b.c.d', 3))
+      expect(settings.getObjectRepresentation('a.b.c.d' as RecursiveKeys<settings.Settings>, 3))
         .toMatchObject({ a: { b: { c: { d: 3 } } } });
     });
     test('handles 2 dots', () => {
-      expect(settings.getObjectRepresentation('a.b.c', false))
+      expect(settings.getObjectRepresentation('a.b.c' as RecursiveKeys<settings.Settings>, false))
         .toMatchObject({ a: { b: { c: false } } });
     });
     test('handles 1 dot', () => {
-      expect(settings.getObjectRepresentation('first.last', 'middle'))
+      expect(settings.getObjectRepresentation('first.last' as RecursiveKeys<settings.Settings>, 'middle'))
         .toMatchObject({ first: { last: 'middle' } });
     });
     test('handles 0 dots', () => {
@@ -556,12 +557,12 @@ describe('settings', () => {
     });
     test('complains about an invalid accessor', () => {
       expect(() => {
-        settings.getObjectRepresentation('application.', 4);
+        settings.getObjectRepresentation('application.' as RecursiveKeys<settings.Settings>, 4);
       }).toThrow("Unrecognized command-line option ends with a dot ('.')");
     });
     test('complains about an empty-string accessor', () => {
       expect(() => {
-        settings.getObjectRepresentation('', 4);
+        settings.getObjectRepresentation('' as RecursiveKeys<settings.Settings>, 4);
       }).toThrow("Invalid command-line option: can't be the empty string.");
     });
   });
