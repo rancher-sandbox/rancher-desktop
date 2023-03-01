@@ -3,6 +3,8 @@ import http from 'http';
 import path from 'path';
 import { URL } from 'url';
 
+import express from 'express';
+
 import type { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
@@ -21,7 +23,8 @@ export type ServerState = {
   pid: number;
 };
 
-type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse, context: commandContext) => Promise<void>;
+type DispatchFunctionType = (request: express.Request, response: express.Response, context: commandContext) => Promise<void>;
+type HttpMethod = 'get' | 'put' | 'post';
 
 const console = Logging.server;
 const SERVER_PORT = 6107;
@@ -31,6 +34,7 @@ const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 export class HttpCommandServer {
   protected vtun = getVtunnelInstance();
   protected server = http.createServer();
+  protected app = express();
   protected readonly externalState: ServerState = {
     user:     'user',
     password: serverHelper.randomStr(),
@@ -47,41 +51,22 @@ export class HttpCommandServer {
 
   protected commandWorker: CommandWorkerInterface;
 
-  protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
-    v0: {
-      GET: {
-        settings:              this.invalidAPIVersionCallNeedsV1,
-        diagnostic_categories: this.invalidAPIVersionCallNeedsV1,
-        diagnostic_ids:        this.invalidAPIVersionCallNeedsV1,
-        diagnostic_checks:     this.invalidAPIVersionCallNeedsV1,
-        transient_settings:    this.invalidAPIVersionCallNeedsV1,
-      },
-      POST: { diagnostic_checks: this.invalidAPIVersionCallNeedsV1 },
-      PUT:  {
-        factory_reset:      this.invalidAPIVersionCallNeedsV1,
-        shutdown:           this.invalidAPIVersionCallNeedsV1,
-        settings:           this.invalidAPIVersionCallNeedsV1,
-        propose_settings:   this.invalidAPIVersionCallNeedsV1,
-        transient_settings: this.invalidAPIVersionCallNeedsV1,
-      },
+  protected dispatchTable: Record<HttpMethod, Record<string, [number, DispatchFunctionType]>> = {
+    get: {
+      '/v1/about':                 [1, this.about],
+      '/v1/settings':              [0, this.listSettings],
+      '/v1/diagnostic_categories': [0, this.diagnosticCategories],
+      '/v1/diagnostic_ids':        [0, this.diagnosticIDsForCategory],
+      '/v1/diagnostic_checks':     [0, this.diagnosticChecks],
+      '/v1/transient_settings':    [0, this.listTransientSettings],
     },
-    v1: {
-      GET: {
-        about:                 this.about,
-        settings:              this.listSettings,
-        diagnostic_categories: this.diagnosticCategories,
-        diagnostic_ids:        this.diagnosticIDsForCategory,
-        diagnostic_checks:     this.diagnosticChecks,
-        transient_settings:    this.listTransientSettings,
-      },
-      POST: { diagnostic_checks: this.diagnosticRunChecks },
-      PUT:  {
-        factory_reset:      this.factoryReset,
-        shutdown:           this.wrapShutdown,
-        settings:           this.updateSettings,
-        propose_settings:   this.proposeSettings,
-        transient_settings: this.updateTransientSettings,
-      },
+    post: { '/v1/diagnostic_checks': [0, this.diagnosticRunChecks] },
+    put:  {
+      '/v1/factory_reset':      [0, this.factoryReset],
+      '/v1/shutdown':           [0, this.wrapShutdown],
+      '/v1/settings':           [0, this.updateSettings],
+      '/v1/propose_settings':   [0, this.proposeSettings],
+      '/v1/transient_settings': [0, this.updateTransientSettings],
     },
   };
 
@@ -113,15 +98,79 @@ export class HttpCommandServer {
     await fs.promises.writeFile(statePath,
       jsonStringifyWithWhiteSpace(this.externalState),
       { mode: 0o600 });
-    this.server.on('request', this.handleRequest.bind(this));
-    this.server.on('error', (err) => {
-      console.log(`Error: ${ err }`);
-    });
-    this.server.listen(SERVER_PORT, localHost);
+
+    this.server = this.app
+      .disable('etag')
+      .disable('x-powered-by')
+      .use(this.handleCORS)
+      .use(this.checkAuth)
+      .listen(SERVER_PORT, localHost)
+      .on('error', (err) => {
+        console.log(`Error: ${ err }`);
+      });
+
+    this.setupRoutes();
     console.log('CLI server is now ready.');
   }
 
-  protected checkAuth(request: http.IncomingMessage): UserType | false {
+  /**
+   * Set up HTTP routes for express.
+   * This takes the information from the route decorators and applies it to the
+   * express application, handling the extra routes for backwards compatibility
+   * and API listings.
+   */
+  protected setupRoutes() {
+    let maxVersion = 0;
+
+    for (const [untypedMethod, data] of Object.entries(this.dispatchTable)) {
+      const method = untypedMethod as HttpMethod;
+
+      for (const [route, [since, handler]] of Object.entries(data)) {
+        const [, versionString, path] = /^\/v(\d+)\/(.*)$/.exec(route) ?? [];
+        const version = parseInt(versionString || '0', 10);
+
+        if (!versionString || !path) {
+          throw new Error(`Could not parse HTTP route ${ route }`);
+        }
+        maxVersion = Math.max(version, maxVersion);
+
+        this.app[method](`/v${ version }/${ path }`, (req, resp, next) => {
+          const context: commandContext = { interactive: resp.locals.interactive };
+
+          handler.call(this, req, resp, context).catch(next);
+        });
+
+        // Add routes for older API versions
+        for (let oldVersion = since; oldVersion < version; ++oldVersion) {
+          this.app[method](`/v${ oldVersion }/${ path }`, (req, resp, next) => {
+            this.invalidAPIVersionCall(version, req, resp).catch(next);
+          });
+        }
+      }
+    }
+
+    // Add versioned endpoints that list API endpoints
+    for (let listVersion = 0; listVersion <= maxVersion; ++listVersion) {
+      this.app.get(`/v${ listVersion }`, (req, resp) => {
+        this.listEndpoints(listVersion.toString(), req, resp);
+      });
+    }
+
+    this.app.get('/', (req, resp) => {
+      this.listEndpoints('', req, resp);
+    });
+    // Set up catch-all handler for customized HTTP 404 message.
+    this.app.all('*', ({ method, path }, resp) => {
+      console.log(`404: No handler for URL ${ method } ${ path }.`);
+      resp.status(404).type('txt').send(`Unknown command: ${ method } ${ path }`);
+    });
+
+    // The error handler must be set after everything else.
+    this.app.use(this.handleError.bind(this));
+  }
+
+  /** checkAuth is middleware to verify authentication. */
+  protected checkAuth = (request: express.Request, response: express.Response, next: express.NextFunction) => {
     const authHeader = request.headers.authorization ?? '';
     const userDB = {
       [this.externalState.user]:    this.externalState.password,
@@ -130,112 +179,74 @@ export class HttpCommandServer {
 
     switch (serverHelper.basicAuth(userDB, authHeader)) {
     case this.externalState.user:
-      return 'api';
+      response.locals.interactive = false;
+      break;
     case this.interactiveState.user:
-      return 'interactive';
+      response.locals.interactive = true;
+      break;
     default:
-      return false;
+      response.type('txt').sendStatus(401);
+
+      return;
+    }
+    next();
+  };
+
+  /**
+   * Calculate the headers needed for CORS, and set them on the response.
+   */
+  protected handleCORS(request: express.Request, response: express.Response, next: express.NextFunction): void {
+    response.set({
+      'Access-Control-Allow-Headers': 'Authorization',
+      'Access-Control-Allow-Methods': 'GET, PUT',
+      'Access-Control-Allow-Origin':  '*',
+    });
+
+    if (request.method === 'OPTIONS') {
+      response.sendStatus(204);
+    } else {
+      next();
     }
   }
 
   /**
-   * Calculate the headers needed for CORS, and sets them on the response.
-   * @returns true if the request has been completely handled.
+   * handleError is middleware to handle unexpected errors, logging the error to
+   * the log file and returning a simpler HTTP internal server error response.
    */
-  protected handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    response.setHeader('Access-Control-Allow-Headers', 'Authorization');
-    response.setHeader('Access-Control-Allow-Methods', 'GET, PUT');
-    response.setHeader('Access-Control-Allow-Origin', '*');
-
-    if (request.method === 'OPTIONS') {
-      response.writeHead(204);
-
-      return true;
+  protected handleError(err: Error, request: express.Request, response: express.Response, next: express.NextFunction): void {
+    if (!err) {
+      next();
     }
 
-    return false;
+    console.log(`Error handling ${ request.path }`, err);
+    response.type('txt').sendStatus(500);
   }
 
-  protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-    try {
-      if (this.handleCORS(request, response)) {
-        return;
-      }
-      const userType = this.checkAuth(request);
-
-      if (!userType) {
-        response.writeHead(401, { 'Content-Type': 'text/plain' });
-
-        return;
-      }
-
-      const method = request.method ?? 'GET';
-      const url = new URL(request.url as string, `http://${ request.headers.host }`);
-      const path = url.pathname;
-      const pathParts = path.split('/');
-
-      console.debug(`Processing request ${ method } ${ path }`);
-      if (pathParts.shift()) {
-        response.writeHead(400, { 'Content-Type': 'text/plain' });
-        response.write(`Unexpected data before first / in URL ${ path }`);
-
-        return;
-      }
-      const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
-
-      if (!command) {
-        console.log(`404: No handler for URL ${ method } ${ path }.`);
-        response.writeHead(404, { 'Content-Type': 'text/plain' });
-        response.write(`Unknown command: ${ method } ${ path }`);
-
-        return;
-      }
-      await command.call(this, request, response, { interactive: userType === 'interactive' });
-    } catch (err) {
-      console.log(`Error handling ${ request.url }`, err);
-      response.writeHead(500, { 'Content-Type': 'text/plain' });
-      response.write('Error processing request.');
-    } finally {
-      response.end();
-    }
-  }
-
-  protected lookupCommand(version: string, method: string, commandName: string) {
-    if (commandName) {
-      return this.dispatchTable[version]?.[method]?.[commandName];
-    }
-    if (version === '' || version in this.dispatchTable) {
-      return this.listEndpoints.bind(this, version);
-    }
-
-    return undefined;
-  }
-
-  protected diagnosticCategories(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected diagnosticCategories(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const categories = this.commandWorker.getDiagnosticCategories(context);
 
     if (categories) {
       console.debug('diagnosticCategories: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.write(jsonStringifyWithWhiteSpace(categories));
+      response.type('json').status(200)
+        .send(jsonStringifyWithWhiteSpace(categories));
     } else {
       console.debug('diagnosticCategories: failed 404');
-      response.writeHead(404, { 'Content-Type': 'text/plain' });
-      response.write('No diagnostic categories found');
+      response.type('text').status(404)
+        .send('No diagnostic categories found');
     }
 
     return Promise.resolve();
   }
 
-  protected diagnosticIDsForCategory(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected diagnosticIDsForCategory(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const url = new URL(`http://${ request.url }`);
     const searchParams = url.searchParams;
     const category = searchParams.get('category');
 
     if (!category) {
       console.debug('diagnostic_ids: failed 400');
-      response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.write('diagnostic_ids: no category specified');
+      response.type('txt').status(400)
+        .send('diagnostic_ids: no category specified');
 
       return Promise.resolve();
     }
@@ -243,18 +254,18 @@ export class HttpCommandServer {
 
     if (checkIDs) {
       console.debug('diagnostic_ids: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.write(jsonStringifyWithWhiteSpace(checkIDs));
+      response.type('json').status(200)
+        .send(jsonStringifyWithWhiteSpace(checkIDs));
     } else {
       console.debug('diagnostic_ids: failed 404');
-      response.writeHead(404, { 'Content-Type': 'text/plain' });
-      response.write(`No diagnostic checks found in category ${ category }`);
+      response.type('txt').status(404)
+        .send(`No diagnostic checks found in category ${ category }`);
     }
 
     return Promise.resolve();
   }
 
-  protected async diagnosticChecks(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected async diagnosticChecks(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const url = new URL(`http://localhost/${ request.url }`);
     const searchParams = url.searchParams;
     const category = searchParams.get('category');
@@ -262,100 +273,92 @@ export class HttpCommandServer {
     const checks = await this.commandWorker.getDiagnosticChecks(category, id, context);
 
     console.debug('diagnostic_checks: succeeded 200');
-    response.writeHead(200, { 'Content-Type': 'application/json' });
-    response.write(jsonStringifyWithWhiteSpace(checks));
-
-    return Promise.resolve();
+    response.type('json').status(200)
+      .send(jsonStringifyWithWhiteSpace(checks));
   }
 
-  protected async diagnosticRunChecks(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected async diagnosticRunChecks(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const results = await this.commandWorker.runDiagnosticChecks(context);
 
     console.debug('diagnostic_run: succeeded 200');
-    response.writeHead(200, { 'Content-Type': 'application/json' });
-    response.write(jsonStringifyWithWhiteSpace(results));
+    response.status(200).type('json')
+      .send(jsonStringifyWithWhiteSpace(results));
   }
 
-  protected invalidAPIVersionCall(neededVersion: string, request: http.IncomingMessage, response: http.ServerResponse, _: commandContext): Promise<void> {
-    const method = request.method ?? 'GET';
-    const url = new URL(request.url as string, `http://${ request.headers.host }`);
-    const path = url.pathname;
+  protected invalidAPIVersionCall(neededVersion: number, request: express.Request, response: express.Response): Promise<void> {
+    const method = request.method;
+    const path = request.path;
     const pathParts = path.split('/');
 
-    const msg = `Invalid version /${ pathParts[1] } for endpoint "${ method } ${ path }" - use "/${ neededVersion }/${ pathParts.slice(2).join('/') }"`;
+    const msg = `Invalid version /${ pathParts[1] } for endpoint "${ method } ${ path }" - use "/v${ neededVersion }/${ pathParts.slice(2).join('/') }"`;
 
     console.log(`Error handling ${ request.url }`, msg);
-    response.writeHead(400, { 'Content-Type': 'text/plain' });
-    response.write(msg);
+    response.status(400).type('txt').send(msg);
 
     return Promise.resolve();
   }
 
-  protected invalidAPIVersionCallNeedsV1(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
-    return this.invalidAPIVersionCall('v1', request, response, context);
-  }
-
-  protected about(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected about(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const msg = 'The API is currently at version 1, but is still considered internal and experimental, and is subject to change without any advance notice.';
 
     console.debug('about: succeeded 200');
-    response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.write(msg);
+    response.status(200).type('txt').send(msg);
 
     return Promise.resolve();
   }
 
-  protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected listSettings(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const settings = this.commandWorker.getSettings(context);
 
     if (settings) {
       console.debug('listSettings: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(settings);
+      response.status(200).type('txt').send(settings);
     } else {
       console.debug('listSettings: failed 200');
-      response.writeHead(404, { 'Content-Type': 'text/plain' });
-      response.write('No settings found');
+      response.status(404).type('txt').send('No settings found');
     }
 
     return Promise.resolve();
   }
 
-  protected getPathsForVersion(version: string, returnedPaths: Array<string[]>): Array<string[]> {
-    const paths = this.dispatchTable[version];
+  protected listEndpoints(version: string, request: express.Request, response: express.Response): Promise<void> {
+    // Determine all API paths, possibly filtered by the requested version.
+    const apiPaths: [Uppercase<HttpMethod>, string][] = [];
+    let maxVersion = 0;
 
-    returnedPaths.push(['GET', `/${ version }`]);
-    for (const method in paths) {
-      for (const path in paths[method]) {
-        if (paths[method][path] !== this.invalidAPIVersionCallNeedsV1) {
-          returnedPaths.push([method, ['', version, path].join('/')]);
+    for (const [method, data] of Object.entries(this.dispatchTable)) {
+      for (const route of Object.keys(data)) {
+        const [, commandVersion] = /\/v(\d+)\//.exec(route) ?? [];
+
+        maxVersion = Math.max(parseInt(commandVersion, 10), maxVersion);
+        if (version && version !== commandVersion) {
+          continue;
         }
+
+        apiPaths.push([method.toUpperCase() as Uppercase<HttpMethod>, route]);
       }
     }
-
-    return returnedPaths;
-  }
-
-  protected listEndpoints(version: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    const returnedPaths: Array<string[]> = [];
 
     if (version) {
-      this.getPathsForVersion(version, returnedPaths);
+      // If version given, ensure the version endpoint itself is listed.
+      apiPaths.push(['GET', `/v${ version }`]);
     } else {
-      returnedPaths.push(['GET', '/']);
-      for (const version in this.dispatchTable) {
-        this.getPathsForVersion(version, returnedPaths);
+      // If no version is given, provide the unversioned API to list APIs.
+      apiPaths.push(['GET', '/']);
+      for (let listVersion = 0; listVersion <= maxVersion; ++listVersion) {
+        apiPaths.push(['GET', `/v${ listVersion }`]);
       }
     }
-    this.sortFavoringGetMethod(returnedPaths);
+
+    this.sortFavoringGetMethod(apiPaths);
     console.debug('listEndpoints: succeeded 200');
-    response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.write(JSON.stringify(returnedPaths.map(entry => entry.join(' '))));
+    response.status(200).type('json')
+      .send(JSON.stringify(apiPaths.map(entry => entry.join(' '))));
 
     return Promise.resolve();
   }
 
-  protected sortFavoringGetMethod(returnedPaths: Array<string[]>) {
+  protected sortFavoringGetMethod(returnedPaths: [Uppercase<HttpMethod>, string][]) {
     returnedPaths.sort(([methodA, pathA], [methodB, pathB]) => {
       if (pathA === pathB) {
         if (methodA === 'GET') {
@@ -372,7 +375,7 @@ export class HttpCommandServer {
   }
 
   protected async readRequestSettings<T>(
-    request: http.IncomingMessage,
+    request: express.Request,
     functionName: string,
   ): Promise<[number, string] | RecursivePartial<T>> {
     const [data, payloadError, payloadErrorCode] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
@@ -409,7 +412,7 @@ export class HttpCommandServer {
    *
    * The incoming payload is expected to be a subset of the settings.Settings object
    */
-  async updateSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  async updateSettings(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     let error: string;
     let errorCode = 400;
     let result = '';
@@ -429,16 +432,14 @@ export class HttpCommandServer {
 
     if (error) {
       console.debug(`updateSettings: write back status ${ errorCode }, error: ${ error }`);
-      response.writeHead(errorCode, { 'Content-Type': 'text/plain' });
-      response.write(error);
+      response.status(errorCode).type('txt').send(error);
     } else {
       console.debug(`updateSettings: write back status 202, result: ${ result }`);
-      response.writeHead(202, { 'Content-Type': 'text/plain' });
-      response.write(result);
+      response.status(202).type('txt').send(result);
     }
   }
 
-  async proposeSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext) {
+  async proposeSettings(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     let error: string;
     let errorCode = 400;
     let result = '';
@@ -458,16 +459,14 @@ export class HttpCommandServer {
     }
     if (error) {
       console.error(`proposeSettings: write back status ${ errorCode }, error: ${ error }`);
-      response.writeHead(errorCode, { 'Content-Type': 'text/plain' });
-      response.write(error);
+      response.status(errorCode).type('txt').send(error);
     } else {
       console.error(`proposeSettings: write back status 200, result: ${ result }`);
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.write(result);
+      response.status(200).type('json').send(result);
     }
   }
 
-  async factoryReset(request: http.IncomingMessage, response: http.ServerResponse, _: commandContext): Promise<void> {
+  async factoryReset(request: express.Request, response: express.Response, _: commandContext): Promise<void> {
     let values: Record<string, any> = {};
     const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
     let error = '';
@@ -490,23 +489,20 @@ export class HttpCommandServer {
     }
     if (!error) {
       console.debug('factory reset: succeeded 202');
-      response.writeHead(202, { 'Content-Type': 'text/plain' });
-      response.write('Doing a full factory reset....');
+      response.status(202).type('txt').send('Doing a full factory reset....');
       setImmediate(() => {
         this.closeServer();
         this.commandWorker.factoryReset(keepSystemImages);
       });
     } else {
       console.debug(`factoryReset: write back status 400, error: ${ error }`);
-      response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.write(error);
+      response.status(400).type('txt').send(error);
     }
   }
 
-  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  wrapShutdown(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     console.debug('shutdown: succeeded 202');
-    response.writeHead(202, { 'Content-Type': 'text/plain' });
-    response.write('Shutting down.');
+    response.status(202).type('txt').send('Shutting down.');
     setImmediate(() => {
       this.closeServer();
       this.commandWorker.requestShutdown(context);
@@ -519,22 +515,17 @@ export class HttpCommandServer {
     this.server.close();
   }
 
-  protected listTransientSettings(
-    request: http.IncomingMessage,
-    response: http.ServerResponse,
-    context: commandContext,
-  ): Promise<void> {
+  protected listTransientSettings(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const transientSettings = this.commandWorker.getTransientSettings(context);
 
-    response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.write(transientSettings);
+    response.status(200).type('json').send(transientSettings);
 
     return Promise.resolve();
   }
 
   protected async updateTransientSettings(
-    request: http.IncomingMessage,
-    response: http.ServerResponse,
+    request: express.Request,
+    response: express.Response,
     context: commandContext,
   ): Promise<void> {
     let error: string;
@@ -556,17 +547,14 @@ export class HttpCommandServer {
 
     if (error) {
       console.debug(`updateTransientSettings: write back status ${ errorCode }, error: ${ error }`);
-      response.writeHead(errorCode, { 'Content-Type': 'text/plain' });
-      response.write(error);
+      response.status(errorCode).type('txt').send(error);
     } else {
       console.debug(`updateTransientSettings: write back status 202, result: ${ result }`);
-      response.writeHead(202, { 'Content-Type': 'text/plain' });
-      response.write(result);
+      response.status(202).type('txt').send(result);
     }
   }
 }
 
-type UserType = 'api' | 'interactive';
 interface commandContext {
   interactive: boolean;
 }
