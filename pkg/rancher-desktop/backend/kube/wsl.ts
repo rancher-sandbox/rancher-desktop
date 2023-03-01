@@ -228,8 +228,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
           }
           await util.promisify(timers.setTimeout)(1_000);
         }
+        const rdNetworking = `--rd-networking=${ config?.experimental.rdNetworking }`;
+
         await this.k3sHelper.updateKubeconfig(
-          async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig'));
+          async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig', rdNetworking));
       });
 
     const client = this.client = new KubeClient();
