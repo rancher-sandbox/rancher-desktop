@@ -1521,7 +1521,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       return Promise.resolve({});
     }
 
-    return Promise.resolve(this.kubeBackend.requiresRestartReasons(this.cfg, cfg));
+    return Promise.resolve(this.kubeBackend.requiresRestartReasons(this.cfg, cfg, { 'experimental.rdNetworking': undefined }));
   }
 
   /**
