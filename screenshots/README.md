@@ -28,6 +28,10 @@ Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that t
 
 ## Running
 
+> ℹ️ SETTING THE VERSION NUMBER
+>
+> Customize the version displayed by updating the version in `package.json` before running screenshots. This is useful for populating documentation before release activities are finalized.
+
 First, install dependencies with:
 
 ```
