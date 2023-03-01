@@ -40,6 +40,8 @@ export class Tray {
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
   private static instance: Tray;
   private abortController: AbortController | undefined;
+  private networkState: boolean | undefined;
+  private networkInterval: NodeJS.Timer;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -180,13 +182,23 @@ export class Tray {
     mainEvents.on('settings-update', this.settingsUpdateEvent);
 
     /**
-     * This event is called from the renderer, at startup with status based on the navigator object's onLine field,
-     * and on window.online/offline events.
-     * The main process actually checks connectivity to `k3s.io` to verify an online status.
-     *
-     * This system isn't perfect -- if the renderer window is closed when connection status changes, the info is lost.
+     * This triggers the CONNECTED_TO_INTERNET diagnostic at a set interval and
+     * updates the network status in the tray if there's a change in the network
+     * state.
      */
-    ipcMainProxy.on('update-network-status', this.updateNetworkStatusEvent);
+    this.networkInterval = setInterval(async() => {
+      const networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
+
+      if (this.networkState === networkDiagnostic?.passed) {
+        return; // network state hasn't changed since last check
+      }
+
+      this.networkState = !!networkDiagnostic?.passed;
+
+      this.handleUpdateNetworkStatus(this.networkState).catch((err: any) => {
+        console.log('Error updating network status: ', err);
+      });
+    }, 5000);
   }
 
   private k8sStateChangedEvent = (mgr: VMBackend) => {
@@ -223,6 +235,7 @@ export class Tray {
     mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.off('settings-update', this.settingsUpdateEvent);
     ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
+    clearInterval(this.networkInterval);
   }
 
   /**

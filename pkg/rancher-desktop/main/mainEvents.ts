@@ -8,6 +8,7 @@ import { EventEmitter } from 'events';
 import type { VMBackend } from '@pkg/backend/backend';
 import type { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
+import { DiagnosticsCheckerResult } from '@pkg/main/diagnostics/types';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 /**
@@ -102,7 +103,7 @@ interface MainEventNames {
    * @note This does not update the last run time (since it only runs a single
    * checker).
    */
-  'diagnostics-trigger'(id: string): void;
+  'diagnostics-trigger'(id: string): DiagnosticsCheckerResult | undefined;
 
   /**
    * Emitted on application quit.  Note that at this point we're committed to

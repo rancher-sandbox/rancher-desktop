@@ -65,11 +65,14 @@ export class DiagnosticsManager {
         this.checkerIdByCategory[checker.category]?.push(checker.id);
       }
     });
-    mainEvents.on('diagnostics-trigger', async(id) => {
+
+    mainEvents.handle('diagnostics-trigger', async(id) => {
       const checker = (await this.checkers).find(checker => checker.id === id);
 
       if (checker) {
         await this.runChecker(checker);
+
+        return this.results[checker.id];
       }
     });
   }
