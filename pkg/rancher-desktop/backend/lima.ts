@@ -575,8 +575,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   protected getMounts(): LimaMount[] {
     const mounts: LimaMount[] = [];
-    const locations = [path.join(paths.cache, 'k3s'), paths.logs, '~', '/tmp/rancher-desktop'];
+    const locations = ['~', '/tmp/rancher-desktop'];
+    const homeDir = `${ os.homedir() }/`;
 
+    if (!paths.cache.startsWith(homeDir)) {
+      locations.push(path.join(paths.cache), 'k3s');
+    }
+    if (!paths.logs.startsWith(homeDir)) {
+      locations.push(paths.logs);
+    }
     if (os.platform() === 'darwin') {
       locations.push('/Volumes', '/var/folders');
     }
