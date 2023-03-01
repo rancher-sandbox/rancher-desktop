@@ -12,6 +12,7 @@ import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
@@ -136,6 +137,11 @@ export const defaultSettings = {
 };
 
 export type Settings = typeof defaultSettings;
+
+export interface DeploymentProfileType {
+  defaults: RecursivePartial<Settings>;
+  locked: RecursivePartial<Settings>;
+}
 
 let _isFirstRun = false;
 let settings: Settings | undefined;
