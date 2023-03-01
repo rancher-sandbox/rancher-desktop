@@ -19,6 +19,8 @@ Screenshots are either produced in light & dark mode.
 
 `ShareX` is required. See https://github.com/ShareX/ShareX
 
+Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that the `ShareX.exe` is located under `{path-to-rancher-desktop}\resources\ShareX\ShareX.exe`. 
+
 ### Linux
 
 `gnome-screenshot` is required. See https://github.com/GNOME/gnome-screenshot
@@ -48,6 +50,14 @@ Dark mode only:
 
 ```
 npm run screenshots:dark
+```
+
+### Windows
+
+Use the `RD_ENV_SCREENSHOT_SLEEP` environment variable to allow the script enough time to write and copy each screenshot before moving to the next:
+
+```
+$Env:RD_ENV_SCREENSHOT_SLEEP = 5000; npm run screenshots
 ```
 
 ## Output
