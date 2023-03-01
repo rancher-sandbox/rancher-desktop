@@ -18,13 +18,15 @@ func GetRDPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
 	}
+	// rdctl should be at <installDir>/resources/resources/linux/bin/rdctl.
+	// rancher-desktop should be 5 directories up from that, at <installDir>/rancher-desktop.
 	normalParentPath := getParentDir(rdctlPath, 5)
 	candidatePaths := []string{
 		filepath.Join(normalParentPath, "rancher-desktop"),
 		"/opt/rancher-desktop/rancher-desktop",
 	}
 	for _, candidatePath := range candidatePaths {
-		usable, err := checkUsability(candidatePath, true)
+		usable, err := checkUsableApplication(candidatePath, true)
 		if err != nil {
 			return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
 		}

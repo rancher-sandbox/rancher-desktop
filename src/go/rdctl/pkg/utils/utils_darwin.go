@@ -23,7 +23,7 @@ func GetRDPath() (string, error) {
 	// and want to move to the "R D.app" part
 	RDAppParentPath := getParentDir(rdctlPath, 6)
 	executablePath := filepath.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop")
-	usable, err := checkUsability(executablePath, true)
+	usable, err := checkUsableApplication(executablePath, true)
 	if err != nil {
 		return "", fmt.Errorf("failed to check usability of %q: %w", executablePath, err)
 	}
@@ -34,7 +34,7 @@ func GetRDPath() (string, error) {
 	// This fallback is mostly for running `npm run dev` and using the installed app because there is no app
 	// that rdctl would launch directly in dev mode.
 	candidatePath := filepath.Join("/Applications", "Rancher Desktop.app")
-	usable, err = checkUsability(candidatePath, false)
+	usable, err = checkUsableApplication(candidatePath, false)
 	if err != nil {
 		return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
 	}

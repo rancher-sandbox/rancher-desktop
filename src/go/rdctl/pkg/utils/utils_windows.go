@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -20,13 +21,15 @@ func GetRDPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
 	}
+	// rdctl should be at <installDir>/resources/resources/win32/bin/rdctl.exe.
+	// rancher-desktop should be 5 directories up from that, at <installDir>/Rancher Desktop.exe.
 	normalParentPath := getParentDir(rdctlPath, 5)
 	candidatePath := filepath.Join(normalParentPath, "Rancher Desktop.exe")
-	usable, err := checkUsability(candidatePath, false)
-	if err != nil {
-		return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
+	_, err = os.Stat(candidatePath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return "", fmt.Errorf("failed to check existence of %q: %w", candidatePath, err)
 	}
-	if usable {
+	if err == nil {
 		return candidatePath, nil
 	}
 
@@ -52,11 +55,11 @@ func GetRDPath() (string, error) {
 	)
 	for _, dataDir := range dataPaths {
 		candidatePath := filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
-		usable, err := checkUsability(candidatePath, false)
-		if err != nil {
-			return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
+		_, err := os.Stat(candidatePath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return "", fmt.Errorf("failed to check existence of %q: %w", candidatePath, err)
 		}
-		if usable {
+		if err == nil {
 			return candidatePath, nil
 		}
 	}
