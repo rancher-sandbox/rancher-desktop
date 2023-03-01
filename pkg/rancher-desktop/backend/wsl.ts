@@ -40,6 +40,7 @@ import SERVICE_VTUNNEL_PEER from '@pkg/assets/scripts/service-vtunnel-peer.initd
 import SERVICE_SCRIPT_DOCKERD from '@pkg/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@pkg/assets/scripts/wsl-data.conf';
 import WSL_INIT_SCRIPT from '@pkg/assets/scripts/wsl-init';
+import WSL_INIT_RD_NETWORKING_SCRIPT from '@pkg/assets/scripts/wsl-init-rd-networking';
 import { ContainerEngine } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
@@ -102,6 +103,23 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.progress = progress;
       this.emit('progress');
     });
+
+    this.hostSwitchProcess = new BackgroundProcess('host-switch.exe', {
+      spawn: async() => {
+        const exe = path.join(paths.resources, 'win32', 'internal', 'host-switch.exe');
+        const stream = await Logging['host-switch'].fdStream;
+        const k8sPort = 6443;
+        const gatewayIP = '192.168.127.2';
+        const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ gatewayIP }:${ k8sPort }`;
+
+        return childProcess.spawn(exe, ['--port-forward', k8sPortForwarding], {
+          stdio:       ['ignore', stream, stream],
+          windowsHide: true,
+        });
+      },
+      shouldRun: () => Promise.resolve([State.STARTING, State.STARTED, State.DISABLED].includes(this.state)),
+    });
+
     this.resolverHostProcess = new BackgroundProcess('host-resolver vsock host', {
       spawn: async() => {
         const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
@@ -149,6 +167,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * Windows-side process for the host resolver, used to proxy DNS requests via the system APIs.
    */
   protected resolverHostProcess: BackgroundProcess;
+
+  /**
+   * Windows-side process for the Rancher Desktop Networking,
+   * it is used to provide DNS, DHCP and Port Forwarding
+   * to the vm-switch that is running in the WSL VM.
+   */
+  protected hostSwitchProcess: BackgroundProcess;
 
   readonly kubeBackend: KubernetesBackend;
   readonly executor = this;
@@ -560,6 +585,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
       this.resolverHostProcess.stop(),
+      this.hostSwitchProcess.stop(),
     ]);
   }
 
@@ -1002,7 +1028,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } catch {
     }
 
-    await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
+    if (this.cfg?.experimental.rdNetworking) {
+      await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_RD_NETWORKING_SCRIPT, 0o755);
+    } else {
+      await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
+    }
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
@@ -1011,8 +1041,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       {
         env: {
           ...process.env,
-          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS`,
+          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:LOG_DIR/p`,
           DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
+          LOG_DIR:          paths.logs,
         },
         stdio:       ['ignore', stream, stream],
         windowsHide: true,
@@ -1152,31 +1183,40 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.installCredentialHelper();
               }),
               this.progressTracker.action('DNS configuration', 50, async() => {
-                await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, 0o755);
-                await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, 0o755);
-                // As `rc-update del …` fails if the service is already not in the run level, we add
-                // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
-                // don't actually want to ensure that the appropriate one will be active.
-                await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
-                await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
-                await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
-                await this.writeConf('host-resolver', {
-                  RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
-                  LOG_DIR:              logPath,
-                });
-                // dnsmasq requires /var/lib/misc to exist
-                await this.execCommand('mkdir', '-p', '/var/lib/misc');
-                if (config.virtualMachine.hostResolver) {
-                  console.debug(`setting DNS to host-resolver`);
+                if (this.cfg?.experimental.rdNetworking) {
+                  console.debug(`setting DNS server to 192.168.127.1 for rancher desktop networking`);
                   try {
-                    this.resolverHostProcess.start();
+                    this.hostSwitchProcess.start();
                   } catch (error) {
-                    console.error('Failed to run host-resolver vsock-host process:', error);
+                    console.error('Failed to run rancher desktop networking host-switch.exe process:', error);
                   }
-                  await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
-                  await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
                 } else {
-                  await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
+                  await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, 0o755);
+                  await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, 0o755);
+                  // As `rc-update del …` fails if the service is already not in the run level, we add
+                  // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
+                  // don't actually want to ensure that the appropriate one will be active.
+                  await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
+                  await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
+                  await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
+                  await this.writeConf('host-resolver', {
+                    RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
+                    LOG_DIR:              logPath,
+                  });
+                  // dnsmasq requires /var/lib/misc to exist
+                  await this.execCommand('mkdir', '-p', '/var/lib/misc');
+                  if (config.virtualMachine.hostResolver) {
+                    console.debug(`setting DNS to host-resolver`);
+                    try {
+                      this.resolverHostProcess.start();
+                    } catch (error) {
+                      console.error('Failed to run host-resolver vsock-host process:', error);
+                    }
+                    await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
+                    await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
+                  } else {
+                    await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
+                  }
                 }
               }),
               this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
@@ -1429,6 +1469,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         await this.vtun.stop();
         this.process?.kill('SIGTERM');
         await this.resolverHostProcess.stop();
+        await this.hostSwitchProcess.stop();
         await this.invokePrivilegedService('stop');
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
