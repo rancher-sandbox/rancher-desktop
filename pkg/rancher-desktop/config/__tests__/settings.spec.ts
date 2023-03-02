@@ -20,13 +20,19 @@ class FakeFSError extends Error {
   }
 }
 
+enum ProfileTypes {
+  None = 0,
+  Unlocked,
+  Locked
+}
+
 describe('settings', () => {
   let prefs: settings.Settings;
   let origPrefs: settings.Settings;
   const jsonProfile = JSON.stringify({
     ignoreThis:      { soups: ['gazpacho', 'turtle'] },
     containerEngine: {
-      imageAllowList: {
+      allowedImages: {
         enabled:  true,
         patterns: ["Shouldn't see this"],
       },
@@ -39,7 +45,7 @@ describe('settings', () => {
   <dict>
     <key>containerEngine</key>
     <dict>
-      <key>imageAllowList</key>
+      <key>allowedImages</key>
       <dict>
         <key>enabled</key>
         <true/>
@@ -100,7 +106,7 @@ describe('settings', () => {
   const lockedJSONProfile = JSON.stringify({
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
     containerEngine: {
-      imageAllowList: {
+      allowedImages: {
         enabled:  true,
         patterns: ['nginx', 'alpine'],
       },
@@ -128,7 +134,7 @@ describe('settings', () => {
     <integer>4</integer>
     <key>containerEngine</key>
     <dict>
-      <key>imageAllowList</key>
+      <key>allowedImages</key>
       <dict>
         <key>enabled</key>
         <true/>
@@ -275,14 +281,14 @@ describe('settings', () => {
       // 1: profile, unlocked
       // 2: profile: locked
 
-      function createMocker(useSystemProfile: number, usePersonalProfile: number): (inputPath: any, unused: any) => any {
+      function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes): (inputPath: any, unused: any) => any {
         return (inputPath: any, unused: any): any => {
           if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem)) {
             return actualSyncReader(inputPath, 'utf-8');
           }
           const action = inputPath.startsWith(paths.deploymentProfileSystem) ? useSystemProfile : usePersonalProfile;
 
-          if (action === 0) {
+          if (action === ProfileTypes.None) {
             throw new FakeFSError(`File ${ inputPath } not found`, 'ENOENT');
           }
           if (inputPath.endsWith('defaults.json')) {
@@ -292,14 +298,14 @@ describe('settings', () => {
             return plistProfile;
           }
           switch (action) {
-          case 1:
+          case ProfileTypes.Unlocked:
             if (inputPath.endsWith('locked.json')) {
               return unlockedJSONProfile;
             } else if (inputPath.endsWith('locked.plist')) {
               return unlockedPlistProfile;
             }
             break;
-          case 2:
+          case ProfileTypes.Locked:
             if (inputPath.endsWith('locked.json')) {
               return lockedJSONProfile;
             } else if (inputPath.endsWith('locked.plist')) {
@@ -313,7 +319,7 @@ describe('settings', () => {
       describe('when there is no profile', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(0, 0));
+            .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.None));
         });
         afterEach(() => {
           mock.mockRestore();
@@ -327,7 +333,7 @@ describe('settings', () => {
       describe('when there is only a user profile with unlocked imageList', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(0, 1));
+            .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
         });
         afterEach(() => {
           mock.mockRestore();
@@ -341,7 +347,7 @@ describe('settings', () => {
       describe('when there is only a user profile with locked imageList', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(0, 2));
+            .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Locked));
         });
         afterEach(() => {
           mock.mockRestore();
@@ -355,7 +361,7 @@ describe('settings', () => {
       describe('when there is only a system profile with unlocked imageList', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(1, 0));
+            .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.None));
         });
         afterEach(() => {
           mock.mockRestore();
@@ -369,7 +375,7 @@ describe('settings', () => {
       describe('when both profiles exit, both with unlocked imageList', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(1, 1));
+            .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.Unlocked));
         });
         afterEach(() => {
           mock.mockRestore();
@@ -383,12 +389,12 @@ describe('settings', () => {
       describe('when the system profile is unlocked and the user profile is locked', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(1, 2));
+            .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.Locked));
         });
         afterEach(() => {
           mock.mockRestore();
         });
-        test('all fields are locked', () => {
+        test('all fields are unlocked', () => {
           settings.load();
           verifyAllFieldsAreUnlocked(settings.getLockedSettings());
         });
@@ -396,7 +402,7 @@ describe('settings', () => {
         describe('when there is only a system profile with locked imageList', () => {
           beforeEach(() => {
             mock = jest.spyOn(fs, 'readFileSync')
-              .mockImplementation(createMocker(2, 0));
+              .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.None));
           });
           afterEach(() => {
             mock.mockRestore();
@@ -410,7 +416,7 @@ describe('settings', () => {
         describe('when both profiles exit, system locked, user unlocked', () => {
           beforeEach(() => {
             mock = jest.spyOn(fs, 'readFileSync')
-              .mockImplementation(createMocker(2, 1));
+              .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.Unlocked));
           });
           afterEach(() => {
             mock.mockRestore();
@@ -424,7 +430,7 @@ describe('settings', () => {
         describe('when both profiles exist and are locked', () => {
           beforeEach(() => {
             mock = jest.spyOn(fs, 'readFileSync')
-              .mockImplementation(createMocker(2, 2));
+              .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.Locked));
           });
           afterEach(() => {
             mock.mockRestore();
@@ -442,7 +448,7 @@ describe('settings', () => {
     test('flattens an object with only allowed-image settings', () => {
       const lockedSettings = {
         containerEngine: {
-          imageAllowList: {
+          allowedImages: {
             enabled:  true,
             patterns: ["Shouldn't see this"],
           },
@@ -450,7 +456,7 @@ describe('settings', () => {
       };
       const expectedLockedFields = {
         containerEngine: {
-          imageAllowList: {
+          allowedImages: {
             enabled:  true,
             patterns: true,
           },
@@ -467,7 +473,7 @@ describe('settings', () => {
           numberCPUs: 2,
         },
         containerEngine: {
-          imageAllowList: {
+          allowedImages: {
             enabled:  true,
             patterns: ["Shouldn't see this"],
           },
@@ -480,7 +486,7 @@ describe('settings', () => {
           numberCPUs: true,
         },
         containerEngine: {
-          imageAllowList: {
+          allowedImages: {
             enabled:  true,
             patterns: true,
           },

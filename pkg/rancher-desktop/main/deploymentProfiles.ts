@@ -19,7 +19,7 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  */
 const lockableDefaultSettings = {
   containerEngine: {
-    imageAllowList: {
+    allowedImages: {
       enabled:  true,
       patterns: [] as Array<string>,
     },
