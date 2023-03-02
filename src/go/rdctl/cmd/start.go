@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -83,23 +82,10 @@ func doStartCommand(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	if applicationPath == "" {
-		pathLookupFuncs := map[string]func(rdctlPath string) string{
-			"windows": utils.GetWindowsRDPath,
-			"linux":   getLinuxRDPath,
-			"darwin":  utils.GetDarwinRDPath,
-		}
-		getPathFunc, ok := pathLookupFuncs[runtime.GOOS]
-		if !ok {
-			return fmt.Errorf("don't know how to find the path to Rancher Desktop on OS %s", runtime.GOOS)
-		}
-		rdctlPath, err := os.Executable()
+	if !cmd.Flags().Changed("path") {
+		applicationPath, err = utils.GetRDPath()
 		if err != nil {
-			rdctlPath = ""
-		}
-		applicationPath = getPathFunc(rdctlPath)
-		if applicationPath == "" {
-			return fmt.Errorf("could not locate main Rancher Desktop executable; please retry with the --path option")
+			return fmt.Errorf("failed to locate main Rancher Desktop executable: %w\nplease retry with the --path option", err)
 		}
 	}
 	return launchApp(applicationPath, commandLineArgs)
@@ -127,14 +113,4 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Start()
-}
-func getLinuxRDPath(rdctlPath string) string {
-	if rdctlPath != "" {
-		normalParentPath := utils.MoveToParent(rdctlPath, 5)
-		candidatePath := utils.CheckExistence(filepath.Join(normalParentPath, "rancher-desktop"), 0o111)
-		if candidatePath != "" {
-			return candidatePath
-		}
-	}
-	return utils.CheckExistence("/opt/rancher-desktop/rancher-desktop", 0o111)
 }
