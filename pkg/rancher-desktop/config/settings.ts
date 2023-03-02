@@ -24,6 +24,10 @@ const console = Logging.settings;
 
 export const CURRENT_SETTINGS_VERSION = 6 as const;
 
+export enum VMType {
+  QEMU = 'qemu',
+  VZ = 'vz',
+}
 export enum ContainerEngine {
   NONE = '',
   CONTAINERD = 'containerd',
@@ -114,6 +118,10 @@ export const defaultSettings = {
    */
   experimental: {
     virtualMachine: {
+      /** can only be set to VMType.VZ on macOS Ventura and later */
+      type:        VMType.QEMU,
+      /** can only be used when type is VMType.VZ, and only on aarch64 */
+      useRosetta:  false,
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
       mount:       {

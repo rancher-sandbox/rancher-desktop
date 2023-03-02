@@ -37,7 +37,7 @@ import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
-import { ContainerEngine, MountType } from '@pkg/config/settings';
+import { ContainerEngine, MountType, VMType } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
 import * as childProcess from '@pkg/utils/childProcess';
@@ -86,6 +86,11 @@ export type LimaMount = {
  * Lima configuration
  */
 export type LimaConfiguration = {
+  vmType?: 'qemu' | 'vz';
+  rosetta?: {
+    enabled?: boolean;
+    binfmt?: boolean;
+  },
   arch?: 'x86_64' | 'aarch64';
   images: {
     location: string;
@@ -96,7 +101,7 @@ export type LimaConfiguration = {
   memory?: number;
   disk?: number;
   mounts?: LimaMount[];
-  mountType: string;
+  mountType: 'reverse-sshfs' | '9p' | 'virtiofs';
   ssh: {
     localPort: number;
     loadDotSSHPubKeys?: boolean;
@@ -160,6 +165,7 @@ interface LimaListResult {
   status: 'Broken' | 'Stopped' | 'Running';
   dir: string;
   arch: 'x86_64' | 'aarch64';
+  vmType?: 'qemu' | 'vz';
   sshLocalPort?: number;
   hostAgentPID?: number;
   qemuPID?: number;
@@ -617,6 +623,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // We use {} as the first argument because merge() modifies
     // it, and it would be less safe to modify baseConfig.
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
+      vmType:  this.cfg?.experimental.virtualMachine.type,
+      rosetta: {
+        enabled: this.cfg?.experimental.virtualMachine.useRosetta,
+        binfmt:  this.cfg?.experimental.virtualMachine.useRosetta,
+      },
       images: [{
         location: this.baseDiskImage,
         arch:     this.arch,
@@ -1703,9 +1714,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           return;
         }
 
-        // Start the VM; if it's already running, this does nothing.
-        const isVMAlreadyRunning = (await this.status)?.status === 'Running';
+        const vmStatus = await this.status;
+        const isVMAlreadyRunning = vmStatus?.status === 'Running';
 
+        // Start the VM; if it's already running, this does nothing.
         await this.startVM();
 
         if (config.kubernetes.enabled) {
@@ -1960,7 +1972,18 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'openresty', 'stop');
           await this.execCommand({ root: true }, '/sbin/fstrim', '/mnt/data');
-          await this.lima('stop', MACHINE_NAME);
+
+          // TODO: Remove try/catch once https://github.com/lima-vm/lima/issues/1381 is fixed
+          // The first time a new VM running on VZ is stopped, it dies with a "panic".
+          try {
+            await this.lima('stop', MACHINE_NAME);
+          } catch (ex) {
+            if (status.vmType === VMType.VZ) {
+              console.log(`limactl stop failed with ${ ex }`);
+            } else {
+              throw ex;
+            }
+          }
           await this.dockerDirManager.clearDockerContext();
         }
         await this.setState(State.STOPPED);
@@ -2013,6 +2036,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
       'experimental.virtualMachine.mount.type':               undefined,
+      'experimental.virtualMachine.useRosetta':               undefined,
+      'experimental.virtualMachine.type':                     undefined,
     }));
     if (process.platform === 'darwin') {
       Object.assign(reasons, this.kubeBackend.k3sHelper.requiresRestartReasons(this.cfg, cfg, { 'experimental.virtualMachine.socketVMNet': undefined }));
