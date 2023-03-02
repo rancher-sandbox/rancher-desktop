@@ -6,7 +6,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import { expect, _electron, ElectronApplication, Page } from '@playwright/test';
+import { expect, _electron, ElectronApplication } from '@playwright/test';
 import _, { GetFieldType } from 'lodash';
 
 import { defaultSettings, Settings } from '@pkg/config/settings';
@@ -187,7 +187,7 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
  * @param testPath The path to the test file.
  * @param tracing Whether to start tracing.
  */
-export async function startRancherDesktop(testPath: string, tracing: boolean): Promise<{electronApp: ElectronApplication, page: Page}> {
+export async function startRancherDesktop(testPath: string, tracing: boolean): Promise<ElectronApplication> {
   const electronApp = await _electron.launch({
     args: [
       path.join(__dirname, '../../'),
@@ -208,7 +208,5 @@ export async function startRancherDesktop(testPath: string, tracing: boolean): P
     electronApp.context().tracing.start({ screenshots: true, snapshots: true });
   }
 
-  const page = await electronApp.firstWindow();
-
-  return { electronApp, page };
+  return electronApp;
 }
