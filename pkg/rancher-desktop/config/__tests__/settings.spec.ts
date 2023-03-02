@@ -280,10 +280,6 @@ describe('settings', () => {
         }
       }
 
-      // 0: no profile
-      // 1: profile, unlocked
-      // 2: profile: locked
-
       function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes): (inputPath: any, unused: any) => any {
         return (inputPath: any, unused: any): any => {
           if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem)) {
