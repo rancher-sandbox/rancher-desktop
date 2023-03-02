@@ -1028,7 +1028,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } catch {
     }
 
-    if (this.cfg?.experimental.rdNetworking) {
+    if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
       await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_RD_NETWORKING_SCRIPT, 0o755);
     } else {
       await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
@@ -1183,7 +1183,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.installCredentialHelper();
               }),
               this.progressTracker.action('DNS configuration', 50, async() => {
-                if (this.cfg?.experimental.rdNetworking) {
+                if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
                   console.debug(`setting DNS server to 192.168.127.1 for rancher desktop networking`);
                   try {
                     this.hostSwitchProcess.start();
@@ -1521,7 +1521,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       return Promise.resolve({});
     }
 
-    return Promise.resolve(this.kubeBackend.requiresRestartReasons(this.cfg, cfg, { 'experimental.rdNetworking': undefined }));
+    return Promise.resolve(this.kubeBackend.requiresRestartReasons(this.cfg, cfg, { 'experimental.virtualMachine.networkingTunnel': undefined }));
   }
 
   /**

@@ -130,9 +130,9 @@ export const defaultSettings = {
           cacheMode:       CacheMode.MMAP,
         },
       },
+      /** windows only: if set, use gvisor based network rather than host-resolver/dnsmasq. */
+      networkingTunnel: false,
     },
-    /** windows only: if set, use gvisor based network rather than host-resolver/dnsmasq. */
-    rdNetworking: false,
   },
 };
 

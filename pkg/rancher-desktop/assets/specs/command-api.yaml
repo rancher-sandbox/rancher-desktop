@@ -358,10 +358,9 @@ components:
                         cacheMode:
                           type: string
                           enum: ['none', 'loose', 'fscache', 'mmap']
-            rdNetworking:
-              type: boolean
-              x-rd-platforms: ['win32']
-
+                networkingTunnel:
+                  type: boolean
+                  x-rd-platforms: ['win32']
         WSL:
           type: object
           x-rd-platforms: ['win32']
