@@ -115,7 +115,7 @@ export function openMain() {
     {
       width:          940,
       height:         600,
-      resizable:      !process.env.MOCK_FOR_SCREENSHOTS, // remove window's shadows while taking screenshots
+      resizable:      !process.env.RD_MOCK_FOR_SCREENSHOTS, // remove window's shadows while taking screenshots
       icon:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
       webPreferences: {
         devTools:         !app.isPackaged,
