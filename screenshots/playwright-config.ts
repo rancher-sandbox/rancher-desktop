@@ -9,7 +9,7 @@ const testDir = path.join(__dirname, '..', 'screenshots');
 const timeScale = process.env.CI ? 2 : 1;
 const colorScheme = (process.env.THEME || 'light') as PlaywrightTestOptions['colorScheme'];
 
-process.env.MOCK_FOR_SCREENSHOTS = 'true';
+process.env.RD_MOCK_FOR_SCREENSHOTS = 'true';
 
 const config: Config<PlaywrightTestOptions> = {
   testDir,

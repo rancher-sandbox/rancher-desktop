@@ -10,7 +10,7 @@ class MockChecker implements DiagnosticsChecker {
 
   category = DiagnosticsCategory.Utilities;
   applicable(): Promise<boolean> {
-    return Promise.resolve(!!process.env.MOCK_FOR_SCREENSHOTS);
+    return Promise.resolve(!!process.env.RD_MOCK_FOR_SCREENSHOTS);
   }
 
   check() {
