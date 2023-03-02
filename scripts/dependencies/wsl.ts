@@ -35,12 +35,12 @@ export class HostSwitch implements Dependency, GithubDependency {
 
   async download(context: DownloadContext): Promise<void> {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    const tarName = `rancher-desktop-networking-v${ context.versions.rdNetworking }.tar.gz`;
-    const rdNetworkingURL = `${ baseURL }/v${ context.versions.rdNetworking }/${ tarName }`;
+    const tarName = `rancher-desktop-networking-v${ context.versions.hostSwitch }.tar.gz`;
+    const hostSwitchURL = `${ baseURL }/v${ context.versions.hostSwitch }/${ tarName }`;
     const hostSwitchPath = path.join(context.internalDir, tarName);
 
     await download(
-      rdNetworkingURL,
+      hostSwitchURL,
       hostSwitchPath,
       { access: fs.constants.W_OK });
 
