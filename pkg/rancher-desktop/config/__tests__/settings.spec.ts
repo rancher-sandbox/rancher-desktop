@@ -262,6 +262,9 @@ describe('settings', () => {
     // Need to clear the lockedSettings field in tests because settings.load assumes it's initally an empty object.
     settings.clearLockedSettings();
   });
+  afterEach(() => {
+    mock.mockRestore();
+  });
 
   describe('profiles', () => {
     describeNotWindows('locked fields', () => {
@@ -321,9 +324,6 @@ describe('settings', () => {
           mock = jest.spyOn(fs, 'readFileSync')
             .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.None));
         });
-        afterEach(() => {
-          mock.mockRestore();
-        });
         test('all fields are unlocked', () => {
           settings.load();
           verifyAllFieldsAreUnlocked(settings.getLockedSettings());
@@ -349,9 +349,6 @@ describe('settings', () => {
           mock = jest.spyOn(fs, 'readFileSync')
             .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Locked));
         });
-        afterEach(() => {
-          mock.mockRestore();
-        });
         test('all fields are locked', () => {
           settings.load();
           verifyAllFieldsAreLocked(settings.getLockedSettings());
@@ -362,9 +359,6 @@ describe('settings', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
             .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.None));
-        });
-        afterEach(() => {
-          mock.mockRestore();
         });
         test('all fields are unlocked', () => {
           settings.load();
@@ -377,9 +371,6 @@ describe('settings', () => {
           mock = jest.spyOn(fs, 'readFileSync')
             .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.Unlocked));
         });
-        afterEach(() => {
-          mock.mockRestore();
-        });
         test('all fields are locked', () => {
           settings.load();
           verifyAllFieldsAreUnlocked(settings.getLockedSettings());
@@ -390,9 +381,6 @@ describe('settings', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
             .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.Locked));
-        });
-        afterEach(() => {
-          mock.mockRestore();
         });
         test('all fields are unlocked', () => {
           settings.load();
@@ -418,9 +406,6 @@ describe('settings', () => {
             mock = jest.spyOn(fs, 'readFileSync')
               .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.Unlocked));
           });
-          afterEach(() => {
-            mock.mockRestore();
-          });
           test('all fields are locked', () => {
             settings.load();
             verifyAllFieldsAreLocked(settings.getLockedSettings());
@@ -431,9 +416,6 @@ describe('settings', () => {
           beforeEach(() => {
             mock = jest.spyOn(fs, 'readFileSync')
               .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.Locked));
-          });
-          afterEach(() => {
-            mock.mockRestore();
           });
           test('all fields are locked', () => {
             settings.load();
