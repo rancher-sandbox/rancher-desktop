@@ -25,6 +25,10 @@ async function getDevVersion() {
 }
 
 export async function getVersion() {
+  if (process.env.RD_MOCK_VERSION) {
+    return process.env.RD_MOCK_VERSION;
+  }
+
   if (process.env.NODE_ENV === 'production' || process.env.MOCK_FOR_SCREENSHOTS) {
     return getProductionVersion();
   }
