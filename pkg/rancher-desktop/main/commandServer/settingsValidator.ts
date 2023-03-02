@@ -95,9 +95,9 @@ export default class SettingsValidator {
               cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
           },
-          socketVMNet: this.checkPlatform('darwin', this.checkBoolean),
+          socketVMNet:      this.checkPlatform('darwin', this.checkBoolean),
+          networkingTunnel: this.checkPlatform('win32', this.checkBoolean),
         },
-        rdNetworking: this.checkPlatform('win32', this.checkBoolean),
       },
       WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },
       kubernetes: {

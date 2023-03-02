@@ -51,9 +51,9 @@ describe('updateFromCommandLine', () => {
               cacheMode:       CacheMode.MMAP,
             },
           },
-          socketVMNet: true,
+          socketVMNet:      true,
+          networkingTunnel: false,
         },
-        rdNetworking: false,
       },
       WSL:        { integrations: {} },
       kubernetes: {
