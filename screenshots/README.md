@@ -19,7 +19,7 @@ Screenshots are either produced in light & dark mode.
 
 `ShareX` is required. See https://github.com/ShareX/ShareX
 
-Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that the `ShareX.exe` is located under `{path-to-rancher-desktop}\resources\ShareX\ShareX.exe`. 
+Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that the `ShareX.exe` is located under `{path-to-rancher-desktop}\resources\ShareX\ShareX.exe`.
 
 ### Linux
 
@@ -27,10 +27,6 @@ Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that t
 
 
 ## Running
-
-> ℹ️ SETTING THE VERSION NUMBER
->
-> Customize the version displayed by updating the version in `package.json` before running screenshots. This is useful for populating documentation before release activities are finalized.
 
 First, install dependencies with:
 
@@ -56,13 +52,22 @@ Dark mode only:
 npm run screenshots:dark
 ```
 
-### Windows
 
-Use the `RD_ENV_SCREENSHOT_SLEEP` environment variable to allow the script enough time to write and copy each screenshot before moving to the next:
+## Environment Variables
 
-```
-$Env:RD_ENV_SCREENSHOT_SLEEP = 5000; npm run screenshots
-```
+- RD_ENV_SCREENSHOT_SLEEP
+
+  To use in `Windows`, allow the script enough time to write and copy each screenshot before moving to the next:
+  ```
+  $Env:RD_ENV_SCREENSHOT_SLEEP = 5000; npm run screenshots
+  ```
+
+- RD_MOCK_VERSION
+
+  Customize the app version, this is useful for populating documentation before release activities are finalized.
+  ```
+  export RD_MOCK_VERSION=1.0.0; npm run screenshots
+  ```
 
 ## Output
 
