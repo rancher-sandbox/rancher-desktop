@@ -412,7 +412,7 @@ export function load(): Settings {
   }
   _.merge(settings, deploymentProfiles.locked);
   save(settings);
-  lockedSettings = determineLockedFields(deploymentProfiles.locked) as LockedSettingsType;
+  lockedSettings = determineLockedFields(deploymentProfiles.locked);
 
   return settings;
 }

@@ -133,7 +133,7 @@ export class AlpineLimaISO implements Dependency, GithubDependency {
   }
 
   assembleAlpineLimaISOVersionFromGithubRelease(release: GithubRelease): AlpineLimaISOVersion {
-    const matchingAsset = release.assets.find((asset: any) => asset.name.includes('rd'));
+    const matchingAsset = release.assets.find((asset: { name: string }) => asset.name.includes('rd'));
 
     if (!matchingAsset) {
       throw new Error(`Could not find matching asset name in set ${ release.assets }`);
