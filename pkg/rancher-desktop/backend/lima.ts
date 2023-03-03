@@ -1695,7 +1695,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await this.ensureArchitectureMatch();
         await Promise.all([
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
-          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig()),
+          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(this.#adminAccess)),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
