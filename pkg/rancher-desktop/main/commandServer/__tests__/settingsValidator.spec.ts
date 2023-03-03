@@ -84,7 +84,6 @@ describe(SettingsValidator, () => {
       'application.adminAccess':                      'linux',
       'experimental.virtualMachine.socketVMNet':      'darwin',
       'experimental.virtualMachine.networkingTunnel': 'win32',
-      'experimental.rdNetworking':                    'win32',
       'virtualMachine.hostResolver':                  'win32',
       'virtualMachine.memoryInGB':                    'darwin',
       'virtualMachine.numberCPUs':                    'linux',
@@ -425,7 +424,7 @@ describe(SettingsValidator, () => {
   });
 
   describe('containerEngine.allowedImages', () => {
-    const ialCfg: settings.Settings = _.merge({}, cfg, {
+    const allowedImageListConfig: settings.Settings = _.merge({}, cfg, {
       containerEngine: {
         allowedImages: {
           enabled:  false,
@@ -435,21 +434,21 @@ describe(SettingsValidator, () => {
     });
 
     describe('when a field is locked', () => {
-      it("locked IAL:enabled-field can't be changed", () => {
+      it("locked allowedImages:enabled-field can't be changed", () => {
         const lockedSettings = { containerEngine: { allowedImages: { enabled: true } } };
         const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
-        const [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
           errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
         });
       });
-      it('locked IAL:enabled-field can be set to the same value', () => {
+      it('locked allowedImages:enabled-field can be set to the same value', () => {
         const lockedSettings = { containerEngine: { allowedImages: { enabled: true } } };
-        const currentEnabled = ialCfg.containerEngine.allowedImages.enabled;
+        const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
         const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: currentEnabled } } };
-        const [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -457,16 +456,16 @@ describe(SettingsValidator, () => {
         });
       });
 
-      it("locked IAL:patterns-field can't be changed by adding a pattern", () => {
+      it("locked allowedImages:patterns-field can't be changed by adding a pattern", () => {
         const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
         const input: RecursivePartial<settings.Settings> = {
           containerEngine: {
             allowedImages: { // eslint-disable object-curly-newline
-              patterns: ialCfg.containerEngine.allowedImages.patterns.concat('pattern3'),
+              patterns: allowedImageListConfig.containerEngine.allowedImages.patterns.concat('pattern3'),
             },
           },
         };
-        const [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -474,16 +473,16 @@ describe(SettingsValidator, () => {
         });
       });
 
-      it("locked IAL:patterns-field can't be changed by removing a pattern", () => {
+      it("locked allowedImages:patterns-field can't be changed by removing a pattern", () => {
         const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
         const input: RecursivePartial<settings.Settings> = {
           containerEngine: {
             allowedImages: { // eslint-disable object-curly-newline
-              patterns: ialCfg.containerEngine.allowedImages.patterns.slice(1),
+              patterns: allowedImageListConfig.containerEngine.allowedImages.patterns.slice(1),
             },
           },
         };
-        const [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -491,16 +490,16 @@ describe(SettingsValidator, () => {
         });
       });
 
-      it("locked IAL:patterns-field can't be changed by removing a pattern", () => {
+      it("locked allowedImages:patterns-field can't be changed by removing a pattern", () => {
         let input = { containerEngine: { allowedImages: { patterns: ['pattern1'] } } };
-        let [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: true,
           errors:       [],
         });
         input = { containerEngine: { allowedImages: { patterns: ['pattern1', 'pattern2', 'pattern3'] } } };
-        ([needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings));
+        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: true,
@@ -508,10 +507,10 @@ describe(SettingsValidator, () => {
         });
       });
     });
-    it('locked IAL:patterns-field can be set to the same value', () => {
+    it('locked allowedImages:patterns-field can be set to the same value', () => {
       const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
-      const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { patterns: ialCfg.containerEngine.allowedImages.patterns } } };
-      const [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+      const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { patterns: allowedImageListConfig.containerEngine.allowedImages.patterns } } };
+      const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -529,25 +528,25 @@ describe(SettingsValidator, () => {
         },
       },
     };
-    const ialCfg: settings.Settings = _.merge({}, cfg, ceSettings);
+    const allowedImageListConfig: settings.Settings = _.merge({}, cfg, ceSettings);
 
     describe('when unlocked', () => {
       it('allows changes', () => {
         const lockedSettings = { containerEngine: { allowedImages: { patterns: false } } };
         let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
-        let [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
 
         input = { containerEngine: { allowedImages: { patterns: ['pattern1'] } } };
-        ([needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings));
+        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: true,
           errors:       [],
         });
         input = { containerEngine: { allowedImages: { patterns: ['pattern1', 'pattern2', 'pattern3'] } } };
-        ([needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings));
+        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: true,
@@ -567,10 +566,10 @@ describe(SettingsValidator, () => {
       };
 
       it('disallows changes', () => {
-        const currentEnabled = ialCfg.containerEngine.allowedImages.enabled;
-        const currentPatterns = ialCfg.containerEngine.allowedImages.patterns;
+        const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
+        const currentPatterns = allowedImageListConfig.containerEngine.allowedImages.patterns;
         let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: !currentEnabled } } };
-        let [needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings);
+        let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -578,14 +577,14 @@ describe(SettingsValidator, () => {
         });
 
         input = { containerEngine: { allowedImages: { patterns: ['picasso'].concat(currentPatterns) } } };
-        ([needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings));
+        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
           errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
         });
 
         input = { containerEngine: { allowedImages: { patterns: currentPatterns.slice(1) } } };
-        ([needToUpdate, errors] = subject.validateSettings(ialCfg, input, lockedSettings));
+        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -594,7 +593,7 @@ describe(SettingsValidator, () => {
       });
 
       it("doesn't complain when no locked fields change", () => {
-        const [needToUpdate, errors] = subject.validateSettings(ialCfg, ceSettings, lockedSettings);
+        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, ceSettings, lockedSettings);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,

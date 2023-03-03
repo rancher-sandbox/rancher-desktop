@@ -24,7 +24,6 @@ export interface IpcMainEvents {
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
   'get-locked-fields': () => void;
-  'app-ready': () => void;
   'update-network-status': (status: boolean) => void;
 
   // #region main/update

@@ -281,7 +281,7 @@ test.describe('Command server', () => {
       'errors in attempt to update settings:',
       expectedWSL,
       expectedMemory,
-      `Invalid value for containerEngine.name: <{"status":"should be a scalar"}>`,
+      `Invalid value for containerEngine.name: <{"status":"should be a scalar"}>; must be one of ["containerd","moby","docker"]`,
       'Setting portForwarding should wrap an inner object, but got <bob>.',
       'Invalid value for application.telemetry.enabled: <{"oops":15}>',
     ];

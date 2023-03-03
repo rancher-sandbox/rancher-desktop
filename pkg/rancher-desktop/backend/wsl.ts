@@ -1523,7 +1523,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
   // a Promise.
-  requiresRestartReasons(cfg: BackendSettings): Promise<RestartReasons> {
+  requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     if (!this.cfg) {
       // No need to restart if nothing exists
       return Promise.resolve({});
