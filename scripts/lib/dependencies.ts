@@ -48,7 +48,7 @@ export type DependencyVersions = {
   hostResolver: string;
   mobyOpenAPISpec: string;
   wix: string;
-  rdNetworking: string;
+  hostSwitch: string;
 };
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {
