@@ -200,7 +200,7 @@ export type execOptions = childProcess.CommonOptions & {
 export interface VMExecutor {
   /**
    * execCommand runs the given command in the virtual machine.
-   * @param options Execution options.  If capture is set, standard output is
+   * @param execOptions Execution options.  If capture is set, standard output is
    *    returned.
    * @param command The command to execute.
    */

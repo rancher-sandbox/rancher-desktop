@@ -875,13 +875,13 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * Use the settings validator to validate settings after doing any
    * initialization.
    */
-  protected async validateSettings(...args: Parameters<SettingsValidator['validateSettings']>) {
+  protected async validateSettings(existingSettings: settings.Settings, newSettings: RecursivePartial<settings.Settings>) {
     if (this.k8sVersions.length === 0) {
       this.k8sVersions = (await k8smanager.kubeBackend.availableVersions).map(entry => entry.version.version);
       this.settingsValidator.k8sVersions = this.k8sVersions;
     }
 
-    return this.settingsValidator.validateSettings(...args);
+    return this.settingsValidator.validateSettings(existingSettings, newSettings);
   }
 
   getSettings() {

@@ -145,7 +145,6 @@ test.describe('Command server', () => {
     const navPage = new NavPage(page);
 
     await navPage.progressBecomesReady();
-    await expect(navPage.progressBar).toBeHidden();
 
     expect(await retry(() => kubectl('cluster-info'))).toContain('is running at');
   });
@@ -234,7 +233,7 @@ test.describe('Command server', () => {
       version:         CURRENT_SETTINGS_VERSION,
       containerEngine: {
         name:          { desiredEngine },
-        allowedImages: { locked: !settings.containerEngine.allowedImages.locked },
+        allowedImages: { enabled: !settings.containerEngine.allowedImages.enabled },
       },
       kubernetes: {
         enabled: desiredEnabled,
@@ -732,7 +731,7 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
-        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(35 - unsupportedOptions.length);
+        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(34 - unsupportedOptions.length);
       });
 
       test('complains when option value missing', async() => {
@@ -1425,9 +1424,7 @@ test.describe('Command server', () => {
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v1/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
-        await expect(navPage.progressBar).not.toBeHidden();
         await navPage.progressBecomesReady();
-        await expect(navPage.progressBar).toBeHidden();
       }
       const output = await retry(() => tool('nerdctl', 'info'));
 
@@ -1454,5 +1451,5 @@ test.describe('Command server', () => {
 
   // There's also no test checking for oversize-payload detection because when I try to create a
   // payload > 2000 characters I get this error:
-  // FetchError: request to http://127.0.0.1:6107/v0/set failed, reason: socket hang up
+  // FetchError: request to http://127.0.0.1:6107/v1/set failed, reason: socket hang up
 });

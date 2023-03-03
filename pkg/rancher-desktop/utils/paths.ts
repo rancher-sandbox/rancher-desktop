@@ -61,8 +61,8 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   lima = path.join(this.appHome, 'lima');
   oldIntegration = '/usr/local/bin';
   integration = path.join(this.altAppHome, 'bin');
-  readonly deploymentProfileSystem = path.join('/Library', 'Preferences');
-  readonly deploymentProfileUser = path.join(os.homedir(), 'Library', 'Preferences');
+  readonly deploymentProfileSystem = path.join('/Library', 'Preferences', APP_NAME);
+  readonly deploymentProfileUser = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
 
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
@@ -88,14 +88,6 @@ export class Win32Paths extends ProvidesResources implements Paths {
   readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
   readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
 
-  get deploymentProfileSystem(): string {
-    throw new Error('Internal error: Windows profiles will be read from Registry');
-  }
-
-  get deploymentProfileUser(): string {
-    throw new Error('Internal error: Windows profiles will be read from Registry');
-  }
-
   get lima(): string {
     throw new Error('lima not available for Windows');
   }
@@ -106,6 +98,14 @@ export class Win32Paths extends ProvidesResources implements Paths {
 
   get integration(): string {
     throw new Error('Internal error: integration path not available for Windows');
+  }
+
+  get deploymentProfileSystem(): string {
+    throw new Error('Internal error: Windows profiles will be read from Registry');
+  }
+
+  get deploymentProfileUser(): string {
+    throw new Error('Internal error: Windows profiles will be read from Registry');
   }
 }
 

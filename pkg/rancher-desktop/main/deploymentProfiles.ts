@@ -19,7 +19,7 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  */
 const lockableDefaultSettings = {
   containerEngine: {
-    imageAllowList: {
+    allowedImages: {
       enabled:  true,
       patterns: [] as Array<string>,
     },
@@ -105,12 +105,12 @@ function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: st
   let locked;
 
   try {
-    const defaultsData = fs.readFileSync(join(rootPath, defaultsPath), 'utf8');
+    const defaultsData = fs.readFileSync(join(rootPath, defaultsPath), 'utf-8');
 
     defaults = parser.parse(defaultsData);
   } catch {}
   try {
-    const lockedData = fs.readFileSync(join(rootPath, lockedPath), 'utf8');
+    const lockedData = fs.readFileSync(join(rootPath, lockedPath), 'utf-8');
 
     locked = parser.parse(lockedData);
   } catch (ex: any) {
