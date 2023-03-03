@@ -283,7 +283,7 @@ describe('settings', () => {
       function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes): (inputPath: any, unused: any) => any {
         return (inputPath: any, unused: any): any => {
           if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem)) {
-            return actualSyncReader(inputPath, 'utf-8');
+            return actualSyncReader(inputPath, unused);
           }
           const action = inputPath.startsWith(paths.deploymentProfileSystem) ? useSystemProfile : usePersonalProfile;
 
@@ -330,9 +330,6 @@ describe('settings', () => {
         beforeEach(() => {
           mock = jest.spyOn(fs, 'readFileSync')
             .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
-        });
-        afterEach(() => {
-          mock.mockRestore();
         });
         test('all fields are unlocked', () => {
           settings.load();
