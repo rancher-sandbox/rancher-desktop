@@ -6,12 +6,6 @@ import (
 	"testing"
 )
 
-const fakeResourcesPath = "fakepath"
-
-func mockGetResourcesPath() (string, error) {
-	return fakeResourcesPath, nil
-}
-
 func TestGetPaths(t *testing.T) {
 	t.Run("should return correct paths without environment variables set", func(t *testing.T) {
 		// Ensure that these variables are not set in the testing environment
