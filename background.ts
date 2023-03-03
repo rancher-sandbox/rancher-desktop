@@ -568,13 +568,9 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart', context: Command
       await startK8sManager();
       break;
     case 'wipe':
-      await k8smanager.stop();
-
-      console.log(`Stopped Kubernetes backend cleanly.`);
       console.log('Deleting VM to reset...');
       await k8smanager.del();
       console.log(`Deleted VM to reset exited cleanly.`);
-
       await startK8sManager();
       break;
     }

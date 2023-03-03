@@ -1973,17 +1973,13 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     });
   }
 
-  async del(force = false): Promise<void> {
+  async del(): Promise<void> {
     try {
-      const delArgs = ['delete'];
-
-      force ? delArgs.push('--force', MACHINE_NAME) : delArgs.push(MACHINE_NAME);
       if (await this.isRegistered) {
-        await this.stop();
         await this.progressTracker.action(
-          'Deleting Kubernetes VM',
+          'Deleting virtual machine',
           10,
-          this.lima(...delArgs));
+          this.lima('delete', '--force', MACHINE_NAME));
       }
     } catch (ex) {
       await this.setState(State.ERROR);
