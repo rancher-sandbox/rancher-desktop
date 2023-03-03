@@ -105,6 +105,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.emit('progress');
     });
 
+    this.privilegedInstall = false;
     this.hostSwitchProcess = new BackgroundProcess('host-switch.exe', {
       spawn: async() => {
         const exe = path.join(paths.resources, 'win32', 'internal', 'host-switch.exe');
@@ -158,6 +159,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   /** The current config state. */
   protected cfg: BackendSettings | undefined;
+
+  /** Indicates wherther the current installation is a privileged install or not. */
+  protected privilegedInstall: boolean;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -806,11 +810,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
     let guestAgentConfig: Record<string, any>;
     const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
-
     const rdNetworking = !!cfg?.experimental.virtualMachine.networkingTunnel;
-    const privilegedServiceEnabled = rdNetworking ? false : await this.invokePrivilegedService('start');
 
-    if (privilegedServiceEnabled) {
+    if (this.privilegedInstall) {
       guestAgentConfig = {
         LOG_DIR:                       await this.wslify(paths.logs),
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
@@ -828,6 +830,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         GUESTAGENT_PRIVILEGED_SERVICE: 'false',
         GUESTAGENT_IPTABLES:           'true',
         GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
+        GUESTAGENT_K8S_SVC_ADDR:       '127.0.0.1', // always use localhost for non-privileged installation/user
       };
     }
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
@@ -1176,6 +1179,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.vtun.start();
         }
 
+        const rdNetworking = !!config?.experimental.virtualMachine.networkingTunnel;
+
+        this.privilegedInstall = rdNetworking ? false : await this.invokePrivilegedService('start');
+
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
             [kubernetesVersion] = await this.kubeBackend.download(config);
@@ -1361,6 +1368,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         case ContainerEngine.MOBY:
           this.#containerEngineClient = new MobyClient(this, 'npipe:////./pipe/docker_engine');
           break;
+        }
+
+        // If it's not a privileged installation preset guestAgent
+        // port binding address to localhost only.
+        if (!this.privilegedInstall && !config.kubernetes.ingress.localhostOnly) {
+          this.writeSetting({ kubernetes: { ingress: { localhostOnly: true } } });
         }
 
         await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);

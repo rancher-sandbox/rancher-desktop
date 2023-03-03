@@ -328,7 +328,7 @@ components:
                   x-rd-platforms: ['win32']
                   x-rd-usage: >-
                     Control whether K8s services are bound to 127.0.0.1 only or 0.0.0.0.
-                    Applies to NodePort and LoadBalancer types, only.
+                    Applies to NodePort and LoadBalancer types only.
         experimental:
           type: object
           properties:
