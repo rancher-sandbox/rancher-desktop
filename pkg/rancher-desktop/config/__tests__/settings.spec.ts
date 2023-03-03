@@ -21,9 +21,9 @@ class FakeFSError extends Error {
 }
 
 enum ProfileTypes {
-  None = 0,
-  Unlocked,
-  Locked
+  None = 'none',
+  Unlocked = 'unlocked',
+  Locked = 'locked'
 }
 
 describe('settings', () => {
@@ -325,95 +325,36 @@ describe('settings', () => {
           verifyAllFieldsAreUnlocked(settings.getLockedSettings());
         });
       });
+      describe('when there is a profile', () => {
+        describe('all possible situations of (system,user) x (locked,unlocked)', () => {
+          const testCases: {system: ProfileTypes, user: ProfileTypes, shouldLock: boolean, msg: string}[] = [];
 
-      describe('when there is only a user profile with unlocked imageList', () => {
-        beforeEach(() => {
-          mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
-        });
-        test('all fields are unlocked', () => {
-          settings.load();
-          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
-        });
-      });
+          for (const system of Object.values(ProfileTypes)) {
+            for (const user of Object.values(ProfileTypes)) {
+              let shouldLock = system === ProfileTypes.Locked;
 
-      describe('when there is only a user profile with locked imageList', () => {
-        beforeEach(() => {
-          mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Locked));
-        });
-        test('all fields are locked', () => {
-          settings.load();
-          verifyAllFieldsAreLocked(settings.getLockedSettings());
-        });
-      });
+              if (system === ProfileTypes.None) {
+                shouldLock = user === ProfileTypes.Locked;
+              }
 
-      describe('when there is only a system profile with unlocked imageList', () => {
-        beforeEach(() => {
-          mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.None));
-        });
-        test('all fields are unlocked', () => {
-          settings.load();
-          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
-        });
-      });
+              const msg = shouldLock ? 'should lock' : 'should not lock';
 
-      describe('when both profiles exit, both with unlocked imageList', () => {
-        beforeEach(() => {
-          mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.Unlocked));
-        });
-        test('all fields are locked', () => {
-          settings.load();
-          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
-        });
-      });
-
-      describe('when the system profile is unlocked and the user profile is locked', () => {
-        beforeEach(() => {
-          mock = jest.spyOn(fs, 'readFileSync')
-            .mockImplementation(createMocker(ProfileTypes.Unlocked, ProfileTypes.Locked));
-        });
-        test('all fields are unlocked', () => {
-          settings.load();
-          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
-        });
-
-        describe('when there is only a system profile with locked imageList', () => {
-          beforeEach(() => {
-            mock = jest.spyOn(fs, 'readFileSync')
-              .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.None));
-          });
-          afterEach(() => {
-            mock.mockRestore();
-          });
-          test('all fields are locked', () => {
-            settings.load();
-            verifyAllFieldsAreLocked(settings.getLockedSettings());
-          });
-        });
-
-        describe('when both profiles exit, system locked, user unlocked', () => {
-          beforeEach(() => {
-            mock = jest.spyOn(fs, 'readFileSync')
-              .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.Unlocked));
-          });
-          test('all fields are locked', () => {
-            settings.load();
-            verifyAllFieldsAreLocked(settings.getLockedSettings());
-          });
-        });
-
-        describe('when both profiles exist and are locked', () => {
-          beforeEach(() => {
-            mock = jest.spyOn(fs, 'readFileSync')
-              .mockImplementation(createMocker(ProfileTypes.Locked, ProfileTypes.Locked));
-          });
-          test('all fields are locked', () => {
-            settings.load();
-            verifyAllFieldsAreLocked(settings.getLockedSettings());
-          });
+              testCases.push({
+                system, user, shouldLock, msg,
+              });
+            }
+          }
+          test.each(testCases)('system profile $system user profile $user $msg',
+            ({ system, user, shouldLock }) => {
+              mock = jest.spyOn(fs, 'readFileSync')
+                .mockImplementation(createMocker(system, user));
+              settings.load();
+              if (shouldLock) {
+                verifyAllFieldsAreLocked(settings.getLockedSettings());
+              } else {
+                verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+              }
+            });
         });
       });
     });
