@@ -6,6 +6,7 @@ import * as settings from '../settings';
 import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '../settings';
 
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import clone from '@pkg/utils/clone';
 import paths from '@pkg/utils/paths';
 import { RecursiveKeys } from '@pkg/utils/typeUtils';
@@ -321,7 +322,9 @@ describe('settings', () => {
             .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.None));
         });
         test('all fields are unlocked', () => {
-          settings.load();
+          const deploymentProfile = readDeploymentProfiles();
+
+          settings.load(deploymentProfile);
           verifyAllFieldsAreUnlocked(settings.getLockedSettings());
         });
       });
@@ -348,7 +351,9 @@ describe('settings', () => {
             ({ system, user, shouldLock }) => {
               mock = jest.spyOn(fs, 'readFileSync')
                 .mockImplementation(createMocker(system, user));
-              settings.load();
+              const deploymentProfile = readDeploymentProfiles();
+
+              settings.load(deploymentProfile);
               if (shouldLock) {
                 verifyAllFieldsAreLocked(settings.getLockedSettings());
               } else {

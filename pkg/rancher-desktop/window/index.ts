@@ -169,7 +169,7 @@ export function openMain() {
   }
 
   window.on('closed', () => {
-    const cfg = loadSettings();
+    const cfg = loadSettings({ defaults: {}, locked: {} });
 
     if (cfg.application.window.quitOnClose) {
       BrowserWindow.getAllWindows().forEach((window) => {

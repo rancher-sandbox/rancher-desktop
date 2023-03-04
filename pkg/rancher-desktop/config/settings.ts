@@ -9,7 +9,6 @@ import _ from 'lodash';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
-import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -359,13 +358,9 @@ export function updateFromCommandLine(cfg: Settings, commandLineArgs: string[]):
  * Load the settings file or create it if not present.  If the settings have
  * already been loaded, return it without re-loading from disk.
  */
-export function load(): Settings {
-  let deploymentProfiles: DeploymentProfileType = { defaults: {}, locked: {} };
+export function load(deploymentProfiles: DeploymentProfileType): Settings {
   let setDefaultMemory = false;
 
-  try {
-    deploymentProfiles = readDeploymentProfiles();
-  } catch { }
   try {
     settings ??= loadFromDisk();
   } catch (err: any) {

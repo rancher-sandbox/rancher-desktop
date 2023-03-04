@@ -36,7 +36,7 @@ enum networkStatus {
 export class Tray {
   protected trayMenu: Electron.Tray;
   protected kubernetesState = State.STOPPED;
-  private settings: Settings = load();
+  private settings: Settings = load({ defaults: {}, locked: {} });
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
   private static instance: Tray;
   private abortController: AbortController | undefined;
