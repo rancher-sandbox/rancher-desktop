@@ -15,6 +15,21 @@ const console = Logging.settings;
 
 export class LockedFieldError extends Error {}
 
+/**
+ * Takes an array of strings, presumably from a command-line used to launch the app.
+ * Key operations:
+ * * All options start with '--'.
+ * * Ignore leading unrecognized options.
+ * * Complain about any unrecognized options after a recognized option has been processed.
+ * * This calls the same settings-validator as used by `rdctl set` and the API to catch
+ *   any attempts to update a locked field.
+ *
+ *  * All errors are fatal as this function is like an API for launching the application.
+ * @param cfg
+ * @param lockedFields
+ * @param commandLineArgs
+ * @return updated cfg
+ */
 export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSettingsType, commandLineArgs: string[]): Settings {
   const lim = commandLineArgs.length;
   let processingExternalArguments = true;
