@@ -296,7 +296,7 @@ describe('updateFromCommandLine', () => {
     expect(newPrefs).toEqual(origPrefs);
   });
 
-  test('should complain about an unrecognized ignore after a recognized one', () => {
+  test('should complain about an unrecognized option after a recognized one', () => {
     const args = ['--ignore.this.one', '--kubernetes.enabled', '--complain.about.this'];
 
     expect(() => {

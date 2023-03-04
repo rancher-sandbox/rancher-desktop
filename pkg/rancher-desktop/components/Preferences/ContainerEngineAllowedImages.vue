@@ -46,8 +46,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    ipcRenderer.send('get-locked-fields');
-    ipcRenderer.on('locked-fields-read', (_event, lockedFields: LockedSettingsType) => {
+    ipcRenderer.invoke('get-locked-fields').then((lockedFields: LockedSettingsType) => {
       this.lockedFields = lockedFields;
     });
   },

@@ -17,7 +17,7 @@ import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
 export async function createUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
-  const platform: 'win32' | 'darwin' | 'linux' = os.platform() as 'win32' | 'darwin' | 'linux';
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
   if (platform === 'win32') {
     throw new Error(`Not doing win32 profiles yet`);

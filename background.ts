@@ -536,9 +536,7 @@ Electron.ipcMain.handle('api-get-credentials', () => {
   });
 });
 
-ipcMainProxy.on('get-locked-fields', () => {
-  window.send('locked-fields-read', settings.getLockedSettings());
-});
+ipcMainProxy.handle('get-locked-fields', () => settings.getLockedSettings());
 
 mainEvents.on('api-credentials', (credentials) => {
   window.send('api-credentials', credentials);

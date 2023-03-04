@@ -15,17 +15,18 @@ limitations under the License.
 */
 
 /**
- * This file includes end-to-end testing for the HTTP control interface
+ * Integration tests that verify that the deployment profile reader is finding locked fields,
+ * and that rdctl can't change those locked preferences.
  */
 
 import os from 'os';
 import path from 'path';
 
-import { expect, test, _electron } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, createUserProfile, kubectl, reportAsset, teardown,
+  createDefaultSettings, createUserProfile, kubectl, startRancherDesktop, teardown,
 } from './utils/TestUtils';
 
 import type { LockedSettingsType, DeploymentProfileType } from '@pkg/config/settings';
@@ -59,13 +60,12 @@ test.describe('Command server', () => {
   }
 
   async function saveUserProfile() {
-    try {
-      const result: DeploymentProfileType = readDeploymentProfiles();
+    // If there's an error in this code, let it bubble up and the user can deal with it.
+    const result: DeploymentProfileType = readDeploymentProfiles();
 
-      userSettingsProfile = Object.keys(result.defaults).length === 0 ? null : result.defaults;
-      userLocksProfile = Object.keys(result.locked).length === 0 ? null : result.locked;
-      await createUserProfile(userSettingsProfile, userLocksProfile);
-    } catch { }
+    userSettingsProfile = Object.keys(result.defaults).length === 0 ? null : result.defaults;
+    userLocksProfile = Object.keys(result.locked).length === 0 ? null : result.locked;
+    await createUserProfile(userSettingsProfile, userLocksProfile);
   }
 
   async function restoreUserProfile() {
@@ -85,20 +85,7 @@ test.describe('Command server', () => {
       { containerEngine: { allowedImages: { enabled: true } } },
       { containerEngine: { allowedImages: { enabled: true } } },
     );
-    electronApp = await _electron.launch({
-      args: [
-        appPath,
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR: reportAsset(__filename, 'log'),
-      },
-    });
+    electronApp = await startRancherDesktop(__filename, true);
     context = electronApp.context();
 
     await context.tracing.start({
@@ -110,13 +97,11 @@ test.describe('Command server', () => {
 
   test.afterAll(() => teardown(electronApp, __filename));
 
-  test('should load Kubernetes API', async() => {
+  test('should start up', async() => {
     const navPage = new NavPage(page);
 
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
-
-    expect(await kubectl('cluster-info')).toContain('is running at');
   });
 
   test('should not allow a locked field to be changed via rdctl set', async() => {

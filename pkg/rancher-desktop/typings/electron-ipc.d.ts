@@ -6,6 +6,7 @@ import Electron from 'electron';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
+import { LockedSettingsType } from '~/config/settings';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -23,7 +24,6 @@ export interface IpcMainEvents {
   'k8s-integration-set': (name: string, newState: boolean) => void;
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
-  'get-locked-fields': () => void;
   'update-network-status': (status: boolean) => void;
 
   // #region main/update
@@ -86,6 +86,7 @@ export interface IpcMainEvents {
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
 export interface IpcMainInvokeEvents {
+  'get-locked-fields': () => import('@pkg/config/settings').LockedSettingsType;
   'settings-write': (arg: RecursivePartial<import('@pkg/config/settings').Settings>) => void;
   'transient-settings-fetch': () => import('@pkg/config/transientSettings').TransientSettings;
   'transient-settings-update': (arg: RecursivePartial<import('@pkg/config/transientSettings').TransientSettings>) => void;
