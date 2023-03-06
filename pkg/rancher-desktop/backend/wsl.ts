@@ -136,15 +136,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       shouldRun: () => Promise.resolve([State.STARTING, State.STARTED, State.DISABLED].includes(this.state)),
     });
 
-    // Register a new tunnel for RD Guest Agent
-    this.vtun.addTunnel({
-      name:                  'Rancher Desktop Privileged Service',
-      handshakePort:         17382,
-      vsockHostPort:         17381,
-      peerAddress:           '127.0.0.1',
-      peerPort:              3040,
-      upstreamServerAddress: 'npipe:////./pipe/rancher_desktop/privileged_service',
-    });
+    if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+      // Register a new tunnel for RD Guest Agent
+      this.vtun.addTunnel({
+        name:                  'Rancher Desktop Privileged Service',
+        handshakePort:         17382,
+        vsockHostPort:         17381,
+        peerAddress:           '127.0.0.1',
+        peerPort:              3040,
+        upstreamServerAddress: 'npipe:////./pipe/rancher_desktop/privileged_service',
+      });
+    }
 
     this.kubeBackend = kubeFactory(this);
   }
@@ -1266,7 +1268,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                 await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
               }),
-              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
+              async() => {
+                // we do not want to run the guest agent for the new rancher desktop networking
+                // since this can cause port forwarding duplication and clobber the current process.
+                if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+                  await this.progressTracker.action('Rancher Desktop guest agent', 50, () => this.installGuestAgent(kubernetesVersion, this.cfg));
+                }
+              },
             ]);
 
             await this.runInit();
