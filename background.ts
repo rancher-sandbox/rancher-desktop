@@ -176,7 +176,9 @@ Electron.app.whenReady().then(async() => {
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       } catch (err) {
         if (err instanceof LockedFieldError) {
-          // Doesn't return
+          // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
+          // and the `fatal` part means we're expecting the app to shutdown.
+          // Trying to change a locked-field via the command-line is a fatal error.
           handleFailure(err).catch((err2: any) => {
             console.log('Internal error trying to show a failure dialog: ', err2);
           });
