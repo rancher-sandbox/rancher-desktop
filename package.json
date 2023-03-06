@@ -51,6 +51,7 @@
   },
   "main": "dist/app/background.js",
   "dependencies": {
+    "@docker/extension-api-client-types": "0.3.4",
     "@kubernetes/client-node": "0.18.0",
     "@nuxtjs/eslint-module": "3.1.0",
     "@rancher/components": "0.1.0-alpha.10",
