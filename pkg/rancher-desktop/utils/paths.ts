@@ -1,15 +1,14 @@
 /**
  * This module describes the various paths we use to store state & data.
  */
-
+import { spawnSync } from 'child_process';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
 import electron from 'electron';
 
-const APP_NAME = 'rancher-desktop';
-
-export interface Paths {
+interface Paths {
   /** appHome: the location of the main appdata directory. */
   appHome: string;
   /** altAppHome is a secondary directory for application data. */
@@ -20,77 +19,59 @@ export interface Paths {
   logs: string;
   /** Directory which holds caches that may be removed. */
   cache: string;
-  /** Directory holding the WSL distribution (Windows-specific). */
-  wslDistro: string;
-  /** Directory holding the WSL data distribution (Windows-specific). */
-  wslDistroData: string;
+  /** Directory that holds resource files in the RD installation. */
+  resources: string;
   /** Directory holding Lima state (macOS-specific). */
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
   /** The directory that used to hold provided binary integrations */
   oldIntegration: string;
-  /** Directory that holds resource files in the RD installation. */
-  resources: string;
   /** Deployment Profile System-wide startup settings path. */
   deploymentProfileSystem: string;
   /** Deployment Profile User startup settings path. */
   deploymentProfileUser: string;
   /** Directory that will hold extension data. */
   readonly extensionRoot: string;
+  /** Directory holding the WSL distribution (Windows-specific). */
+  wslDistro: string;
+  /** Directory holding the WSL data distribution (Windows-specific). */
+  wslDistroData: string;
 }
 
-/**
- * Provides the `resources` key for any class that extends it.
- */
-class ProvidesResources {
-  get resources(): string {
-    const basePath = electron.app.isPackaged ? process.resourcesPath : electron.app.getAppPath();
-
-    return path.join(basePath, 'resources');
-  }
-}
-
-/**
- * DarwinPaths implements paths for Darwin / macOS.
- */
-export class DarwinPaths extends ProvidesResources implements Paths {
-  appHome = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME);
-  altAppHome = path.join(os.homedir(), '.rd');
-  config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
-  logs = process.env.RD_LOGS_DIR ?? path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
-  cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
-  lima = path.join(this.appHome, 'lima');
-  oldIntegration = '/usr/local/bin';
-  integration = path.join(this.altAppHome, 'bin');
-  readonly deploymentProfileSystem = path.join('/Library', 'Preferences');
-  readonly deploymentProfileUser = path.join(os.homedir(), 'Library', 'Preferences');
-  readonly extensionRoot = path.join(this.appHome, 'extensions');
+export class UnixPaths implements Paths {
+  appHome = '';
+  altAppHome = '';
+  config = '';
+  logs = '';
+  cache = '';
+  resources = '';
+  lima = '';
+  oldIntegration = '';
+  integration = '';
+  deploymentProfileSystem = '';
+  deploymentProfileUser = '';
+  extensionRoot = '';
 
   get wslDistro(): string {
-    throw new Error('wslDistro not available for darwin');
+    throw new Error('wslDistro not available for Unix');
   }
 
   get wslDistroData(): string {
-    throw new Error('wslDistro not available for darwin');
+    throw new Error('wslDistroData not available for Unix');
   }
 }
 
-/**
- * Win32Paths implements paths for Windows.
- * Note that this should be kept in sync with .../pkg/rancher-desktop/go/wsl-helper/pkg/reset.
- */
-export class Win32Paths extends ProvidesResources implements Paths {
-  protected readonly appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
-  protected readonly localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
-  readonly appHome = path.join(this.appData, APP_NAME);
-  readonly altAppHome = this.appHome;
-  readonly config = path.join(this.appData, APP_NAME);
-  readonly logs = process.env.RD_LOGS_DIR ?? path.join(this.localAppData, APP_NAME, 'logs');
-  readonly cache = path.join(this.localAppData, APP_NAME, 'cache');
-  readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
-  readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
-  readonly extensionRoot = path.join(this.localAppData, APP_NAME, 'extensions');
+export class WindowsPaths implements Paths {
+  appHome = '';
+  altAppHome = '';
+  config = '';
+  logs = '';
+  cache = '';
+  resources = '';
+  extensionRoot = '';
+  wslDistro = '';
+  wslDistroData = '';
 
   get lima(): string {
     throw new Error('lima not available for Windows');
@@ -113,50 +94,55 @@ export class Win32Paths extends ProvidesResources implements Paths {
   }
 }
 
-/**
- * LinuxPaths implements paths for Linux.
- */
-export class LinuxPaths extends ProvidesResources implements Paths {
-  protected readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
-  protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
-  protected readonly cacheHome = process.env['XDG_CACHE_HOME'] || path.join(os.homedir(), '.cache');
-  readonly appHome = path.join(this.configHome, APP_NAME);
-  readonly altAppHome = path.join(os.homedir(), '.rd');
-  readonly config = path.join(this.configHome, APP_NAME);
-  readonly logs = process.env.RD_LOGS_DIR ?? path.join(this.dataHome, APP_NAME, 'logs');
-  readonly cache = path.join(this.cacheHome, APP_NAME);
-  readonly lima = path.join(this.dataHome, APP_NAME, 'lima');
-  readonly integration = path.join(this.altAppHome, 'bin');
-  readonly oldIntegration = path.join(os.homedir(), '.local', 'bin');
-  readonly deploymentProfileSystem = path.join('/etc', APP_NAME);
-  readonly deploymentProfileUser = path.join(this.configHome);
-  readonly extensionRoot = path.join(this.dataHome, APP_NAME, 'extensions');
+// Gets the path to rdctl. Returns null if rdctl cannot be found.
+function getRdctlPath(): string | null {
+  let basePath: string;
 
-  get wslDistro(): string {
-    throw new Error('wslDistro not available for Linux');
+  // If we are running as a script (i.e. npm run postinstall), electron.app is undefined
+  if (electron.app === undefined) {
+    basePath = process.cwd();
+  } else {
+    basePath = electron.app.isPackaged ? process.resourcesPath : electron.app.getAppPath();
+  }
+  const osSpecificName = os.platform().startsWith('win') ? `rdctl.exe` : 'rdctl';
+  const rdctlPath = path.join(basePath, 'resources', os.platform(), 'bin', osSpecificName);
+
+  if (!fs.existsSync(rdctlPath)) {
+    return null;
   }
 
-  get wslDistroData(): string {
-    throw new Error('wslDistro not available for Linux');
-  }
+  return rdctlPath;
 }
 
-const UnsupportedPaths: Paths = new Proxy({} as Paths, {
-  get(target, prop) {
-    throw new Error(`Paths ${ String(prop) } not available for ${ os.platform() }`);
-  },
-});
-
 function getPaths(): Paths {
-  switch (os.platform()) {
+  const rdctlPath = getRdctlPath();
+  let pathsData: Partial<Paths>;
+
+  if (rdctlPath) {
+    const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
+
+    if (result.status !== 0) {
+      throw new Error(`rdctl paths failed: ${ JSON.stringify(result) }`);
+    }
+    pathsData = JSON.parse(result.stdout);
+  } else {
+    // If rdctl hasn't been compiled yet, we can't use it to get paths.
+    // Define defaults that assume that we are running a script.
+    pathsData = {
+      resources: path.join(process.cwd(), 'resources'),
+      logs:      path.join(process.cwd(), 'script_logs'),
+    };
+  }
+
+  switch (process.platform) {
   case 'darwin':
-    return new DarwinPaths();
-  case 'win32':
-    return new Win32Paths();
+    return pathsData as UnixPaths;
   case 'linux':
-    return new LinuxPaths();
+    return pathsData as UnixPaths;
+  case 'win32':
+    return pathsData as WindowsPaths;
   default:
-    return UnsupportedPaths;
+    throw new Error(`Platform "${ process.platform }" is not supported.`);
   }
 }
 
