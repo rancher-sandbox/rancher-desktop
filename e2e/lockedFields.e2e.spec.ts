@@ -25,11 +25,9 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import {
-  createDefaultSettings, createUserProfile, kubectl, startRancherDesktop, teardown,
-} from './utils/TestUtils';
+import { createDefaultSettings, createUserProfile, startRancherDesktop, teardown } from './utils/TestUtils';
 
-import type { LockedSettingsType, DeploymentProfileType } from '@pkg/config/settings';
+import type { LockedSettingsType } from '@pkg/config/settings';
 import { Settings } from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -60,8 +58,8 @@ test.describe('Command server', () => {
   }
 
   async function saveUserProfile() {
-    // If there's an error in this code, let it bubble up and the user can deal with it.
-    const result: DeploymentProfileType = readDeploymentProfiles();
+    // If there's an error in this code, let it bubble up for the caller to deal with it.
+    const result = readDeploymentProfiles();
 
     userSettingsProfile = Object.keys(result.defaults).length === 0 ? null : result.defaults;
     userLocksProfile = Object.keys(result.locked).length === 0 ? null : result.locked;
