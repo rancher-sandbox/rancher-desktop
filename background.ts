@@ -23,6 +23,7 @@ import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServ
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
+import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
@@ -161,7 +162,12 @@ Electron.app.whenReady().then(async() => {
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
     await setupNetworking();
-    cfg = settings.load();
+    let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
+
+    try {
+      deploymentProfiles = readDeploymentProfiles();
+    } catch { }
+    cfg = settings.load(deploymentProfiles);
 
     if (commandLineArgs.length) {
       try {

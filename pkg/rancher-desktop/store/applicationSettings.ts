@@ -16,7 +16,7 @@ type State = {
 export const state: () => State = () => {
   // While we load the settings from disk here, we only otherwise interact with
   // the settings only via ipcRenderer.
-  const cfg = loadSettings();
+  const cfg = loadSettings({ defaults: {}, locked: {} });
 
   return {
     pathManagementStrategy: cfg.application.pathManagementStrategy,
