@@ -28,7 +28,7 @@ export async function createUserProfile(userProfile: RecursivePartial<Settings>|
   }
 }
 
-export async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'profile.json');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'locked.json');
 
@@ -44,7 +44,7 @@ export async function createLinuxUserProfile(userProfile: RecursivePartial<Setti
   }
 }
 
-export async function createDarwinUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function createDarwinUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.defaults.plist');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.locked.plist');
 
