@@ -181,6 +181,7 @@ Electron.app.whenReady().then(async() => {
           // Trying to change a locked-field via the command-line is a fatal error.
           handleFailure(err).catch((err2: any) => {
             console.log('Internal error trying to show a failure dialog: ', err2);
+            process.exit(2);
           });
         }
         console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
