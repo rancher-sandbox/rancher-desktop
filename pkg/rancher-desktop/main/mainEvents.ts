@@ -155,14 +155,10 @@ interface MainEvents extends EventEmitter {
     event: IsHandler<eventName> extends false ? eventName : never,
     ...args: Parameters<MainEventNames[eventName]>
   ): boolean;
-  /** @deprecated */ // Via eslint deprecation/deprecation: prevent usage of unrecognized events.
-  emit(eventName: string | symbol, ...args: any[]): boolean;
   on<eventName extends keyof MainEventNames>(
     event: IsHandler<eventName> extends false ? eventName : never,
     listener: (...args: Parameters<MainEventNames[eventName]>) => void
   ): this;
-  /** @deprecated */ // Via eslint deprecation/deprecation: prevent usage of unrecognized events.
-  on(event: string | symbol, listener: (...args: any[]) => void): this;
 
   /**
    * Invoke a handler that returns a promise of a result.
@@ -184,6 +180,24 @@ class MainEventsImpl extends EventEmitter implements MainEvents {
   handlers: {
     [eventName in keyof MainEventNames]?: HandlerType<eventName> | undefined;
   } = {};
+
+  emit<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    ...args: Parameters<MainEventNames[eventName]>
+  ): boolean;
+
+  emit(eventName: string, ...args: any[]): boolean {
+    return super.emit(eventName, ...args);
+  }
+
+  on<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    listener: (...args: Parameters<MainEventNames[eventName]>) => void
+  ): this;
+
+  on(eventName: string, listener: (...args: any[]) => void) {
+    return super.on(eventName, listener);
+  }
 
   async invoke<eventName extends keyof MainEventNames>(
     event: IsHandler<eventName> extends true ? eventName : never,
