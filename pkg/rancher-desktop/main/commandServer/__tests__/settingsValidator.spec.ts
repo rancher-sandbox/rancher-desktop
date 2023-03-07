@@ -30,7 +30,7 @@ afterEach(() => {
 subject.k8sVersions = ['1.23.4', '1.0.0'];
 describe(SettingsValidator, () => {
   it('should do nothing when given existing settings', () => {
-    const [needToUpdate, errors] = subject.validateSettings(cfg, cfg, lockedSettings);
+    const [needToUpdate, errors] = subject.validateSettings(cfg, cfg, null);
 
     expect({ needToUpdate, errors }).toEqual({
       needToUpdate: false,
@@ -52,7 +52,7 @@ describe(SettingsValidator, () => {
           options: { flannel: newFlannelEnabled },
         },
     });
-    const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig, lockedSettings);
+    const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig, null);
 
     expect({ needToUpdate, errors }).toEqual({
       needToUpdate: true,
@@ -122,7 +122,7 @@ describe(SettingsValidator, () => {
 
         it('should allow no change', () => {
           const input = _.set({}, keyPath, _.get(cfg, keyPath));
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input, lockedSettings);
+          const [needToUpdate, errors] = subject.validateSettings(cfg, input, null);
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: false,
@@ -152,7 +152,7 @@ describe(SettingsValidator, () => {
           }
 
           const input = _.set({}, keyPath, newValue);
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input, lockedSettings);
+          const [needToUpdate, errors] = subject.validateSettings(cfg, input, null);
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: true,
@@ -170,7 +170,7 @@ describe(SettingsValidator, () => {
           }
 
           const input = _.set({}, keyPath, invalidValue);
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input, lockedSettings);
+          const [needToUpdate, errors] = subject.validateSettings(cfg, input, null);
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: false,
@@ -181,7 +181,7 @@ describe(SettingsValidator, () => {
         if (typeof defaultSettings[key] === 'boolean') {
           it('should accept string true', () => {
             const orig = _.merge({}, cfg, _.set({}, keyPath, false));
-            const [needToUpdate, errors] = subject.validateSettings(orig, _.set({}, keyPath, 'true'), lockedSettings);
+            const [needToUpdate, errors] = subject.validateSettings(orig, _.set({}, keyPath, 'true'), null);
 
             expect({ needToUpdate, errors }).toEqual({
               needToUpdate: true,
@@ -190,7 +190,7 @@ describe(SettingsValidator, () => {
           });
           it('should accept string false', () => {
             const orig = _.merge({}, cfg, _.set({}, keyPath, true));
-            const [needToUpdate, errors] = subject.validateSettings(orig, _.set({}, keyPath, 'false'), lockedSettings);
+            const [needToUpdate, errors] = subject.validateSettings(orig, _.set({}, keyPath, 'false'), null);
 
             expect({ needToUpdate, errors }).toEqual({
               needToUpdate: true,
@@ -227,7 +227,7 @@ describe(SettingsValidator, () => {
         const [needToUpdate, errors] = subject.validateSettings(
           configWithValue(settings.ContainerEngine.NONE),
           { containerEngine: { name: settings.ContainerEngine[typedKey] } },
-          lockedSettings,
+          null,
         );
 
         expect({ needToUpdate, errors }).toEqual({
@@ -238,7 +238,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject setting to NONE', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { containerEngine: { name: settings.ContainerEngine.NONE } }, lockedSettings);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, { containerEngine: { name: settings.ContainerEngine.NONE } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -253,7 +253,7 @@ describe(SettingsValidator, () => {
         const [needToUpdate, errors] = subject.validateSettings(
           configWithValue(settings.ContainerEngine.NONE),
           { containerEngine: { name: alias as settings.ContainerEngine } },
-          lockedSettings,
+          null,
         );
 
         expect({ needToUpdate, errors }).toEqual({
@@ -267,7 +267,7 @@ describe(SettingsValidator, () => {
       const [needToUpdate, errors] = subject.validateSettings(
         cfg,
         { containerEngine: { name: 'pikachu' as settings.ContainerEngine } },
-        lockedSettings,
+        null,
       );
 
       expect({ needToUpdate, errors }).toEqual({
@@ -283,7 +283,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject invalid values', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: 3 as unknown as Record<string, boolean> } }, lockedSettings);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: 3 as unknown as Record<string, boolean> } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -293,7 +293,7 @@ describe(SettingsValidator, () => {
 
     it('should reject being set on non-Windows', () => {
       spyPlatform.mockReturnValue('haiku');
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { foo: true } } }, lockedSettings);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { foo: true } } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -302,7 +302,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject invalid configuration', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { distribution: 3 as unknown as boolean } } }, lockedSettings);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { distribution: 3 as unknown as boolean } } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -314,7 +314,7 @@ describe(SettingsValidator, () => {
       const [needToUpdate, errors] = subject.validateSettings({
         ...cfg,
         WSL: { integrations: { distribution: false } },
-      }, { WSL: { integrations: { distribution: true } } }, lockedSettings);
+      }, { WSL: { integrations: { distribution: true } } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: true,
@@ -325,7 +325,7 @@ describe(SettingsValidator, () => {
 
   describe('kubernetes.version', () => {
     it('should accept a valid version', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '1.0.0' } }, lockedSettings);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '1.0.0' } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: true,
@@ -339,7 +339,7 @@ describe(SettingsValidator, () => {
           version: '3.2.1',
           enabled: true,
         },
-      }, lockedSettings);
+      }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -350,7 +350,7 @@ describe(SettingsValidator, () => {
     it('should normalize the version', () => {
       const [needToUpdate, errors] = subject.validateSettings(
         cfg,
-        { kubernetes: { version: 'v1.0.0+k3s12345' } }, lockedSettings);
+        { kubernetes: { version: 'v1.0.0+k3s12345' } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: true,
@@ -366,7 +366,7 @@ describe(SettingsValidator, () => {
             version: 'pikachu',
             enabled: true,
           },
-        }, lockedSettings);
+        }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -390,7 +390,7 @@ describe(SettingsValidator, () => {
             ...cfg.application,
             pathManagementStrategy: PathManagementStrategy.NotSet,
           },
-        }, { application: { pathManagementStrategy: value } }, lockedSettings);
+        }, { application: { pathManagementStrategy: value } }, null);
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: true,
@@ -401,7 +401,7 @@ describe(SettingsValidator, () => {
 
     it('should reject invalid values', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg,
-        { application: { pathManagementStrategy: 'invalid value' as PathManagementStrategy } }, lockedSettings);
+        { application: { pathManagementStrategy: 'invalid value' as PathManagementStrategy } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -411,7 +411,7 @@ describe(SettingsValidator, () => {
 
     it('should reject setting as NotSet', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg,
-        { application: { pathManagementStrategy: PathManagementStrategy.NotSet } }, lockedSettings);
+        { application: { pathManagementStrategy: PathManagementStrategy.NotSet } }, null);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
@@ -420,181 +420,170 @@ describe(SettingsValidator, () => {
     });
   });
 
-  describe('containerEngine.allowedImages', () => {
-    const allowedImageListConfig: settings.Settings = _.merge({}, cfg, {
-      containerEngine: {
-        allowedImages: {
-          enabled:  false,
-          patterns: ['morisot', 'cassatt', 'kahlo'],
-        },
-      },
-    });
-
-    describe('when a field is locked', () => {
-      it("locked allowedImages:enabled-field can't be changed", () => {
-        const lockedSettings = { containerEngine: { allowedImages: { enabled: true } } };
-        const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
-        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
-        });
-      });
-      it('locked allowedImages:enabled-field can be set to the same value', () => {
-        const lockedSettings = { containerEngine: { allowedImages: { enabled: true } } };
-        const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
-        const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: currentEnabled } } };
-        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       [],
-        });
-      });
-
-      it("locked allowedImages:patterns-field can't be changed by adding a pattern", () => {
-        const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
-        const input: RecursivePartial<settings.Settings> = {
-          containerEngine: {
-            allowedImages: { // eslint-disable object-curly-newline
-              patterns: allowedImageListConfig.containerEngine.allowedImages.patterns.concat('pattern3'),
-            },
-          },
-        };
-        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
-        });
-      });
-
-      it("locked allowedImages:patterns-field can't be changed by removing a pattern", () => {
-        const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
-        const input: RecursivePartial<settings.Settings> = {
-          containerEngine: {
-            allowedImages: { // eslint-disable object-curly-newline
-              patterns: allowedImageListConfig.containerEngine.allowedImages.patterns.slice(1),
-            },
-          },
-        };
-        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
-        });
-      });
-
-      it("locked allowedImages:patterns-field can't be changed by removing a pattern", () => {
-        let input = { containerEngine: { allowedImages: { patterns: ['pattern1'] } } };
-        let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: true,
-          errors:       [],
-        });
-        input = { containerEngine: { allowedImages: { patterns: ['pattern1', 'pattern2', 'pattern3'] } } };
-        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: true,
-          errors:       [],
-        });
-      });
-    });
-    it('locked allowedImages:patterns-field can be set to the same value', () => {
-      const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
-      const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { patterns: allowedImageListConfig.containerEngine.allowedImages.patterns } } };
-      const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-      expect({ needToUpdate, errors }).toEqual({
-        needToUpdate: false,
-        errors:       [],
-      });
-    });
-  });
-
-  describe('checking locks', () => {
-    const ceSettings: RecursivePartial<settings.Settings> = {
-      containerEngine: {
-        allowedImages: {
-          enabled:  false,
-          patterns: ['pattern1', 'pattern2'],
-        },
-      },
-    };
-    const allowedImageListConfig: settings.Settings = _.merge({}, cfg, ceSettings);
-
-    describe('when unlocked', () => {
-      it('allows changes', () => {
-        const lockedSettings = { containerEngine: { allowedImages: { patterns: false } } };
-        let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
-        let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
-
-        expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
-
-        input = { containerEngine: { allowedImages: { patterns: ['pattern1'] } } };
-        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: true,
-          errors:       [],
-        });
-        input = { containerEngine: { allowedImages: { patterns: ['pattern1', 'pattern2', 'pattern3'] } } };
-        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: true,
-          errors:       [],
-        });
-      });
-    });
-
-    describe('when locked', () => {
-      const lockedSettings = {
+  describe('locked fields', () => {
+    describe('containerEngine.allowedImages', () => {
+      const allowedImageListConfig: settings.Settings = _.merge({}, cfg, {
         containerEngine: {
           allowedImages: {
-            enabled:  true,
-            patterns: true,
+            enabled:  false,
+            patterns: ['pattern1', 'pattern2', 'pattern3'],
+          },
+        },
+      });
+
+      describe('when a field is locked', () => {
+        describe('locking allowedImages.enabled', () => {
+          const lockedSettings = { containerEngine: { allowedImages: { enabled: true } } };
+
+          it("locked allowedImages:enabled-field can't be changed", () => {
+            const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
+            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
+            });
+          });
+          it('locked allowedImages:enabled-field can be set to the same value', () => {
+            const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
+            const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: currentEnabled } } };
+            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       [],
+            });
+          });
+        });
+
+        describe('locking allowedImages.patterns', () => {
+          const lockedSettings = { containerEngine: { allowedImages: { patterns: true } } };
+
+          it("locked allowedImages:patterns-field can't be changed by adding a pattern", () => {
+            const input: RecursivePartial<settings.Settings> = {
+              containerEngine: {
+                allowedImages: { // eslint-disable object-curly-newline
+                  patterns: allowedImageListConfig.containerEngine.allowedImages.patterns.concat('pattern4'),
+                },
+              },
+            };
+            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+            });
+          });
+
+          it("locked allowedImages:patterns-field can't be changed by removing a pattern", () => {
+            const input: RecursivePartial<settings.Settings> = {
+              containerEngine: {
+                allowedImages: { // eslint-disable object-curly-newline
+                  patterns: allowedImageListConfig.containerEngine.allowedImages.patterns.slice(1),
+                },
+              },
+            };
+            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+            });
+          });
+
+          it('locked allowedImages:patterns-field can be set to the same value', () => {
+            const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { patterns: allowedImageListConfig.containerEngine.allowedImages.patterns } } };
+            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       [],
+            });
+          });
+        });
+      });
+    });
+
+    describe('checking locks', () => {
+      const ceSettings: RecursivePartial<settings.Settings> = {
+        containerEngine: {
+          allowedImages: {
+            enabled:  false,
+            patterns: ['pattern1', 'pattern2'],
           },
         },
       };
+      const allowedImageListConfig: settings.Settings = _.merge({}, cfg, ceSettings);
 
-      it('disallows changes', () => {
-        const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
-        const currentPatterns = allowedImageListConfig.containerEngine.allowedImages.patterns;
-        let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: !currentEnabled } } };
-        let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+      describe('when unlocked', () => {
+        it('allows changes', () => {
+          const lockedSettings = { containerEngine: { allowedImages: { patterns: false } } };
+          let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
+          let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
-        });
+          expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
 
-        input = { containerEngine: { allowedImages: { patterns: ['picasso'].concat(currentPatterns) } } };
-        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
-        });
+          input = { containerEngine: { allowedImages: { patterns: ['pattern1'] } } };
+          ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
-        input = { containerEngine: { allowedImages: { patterns: currentPatterns.slice(1) } } };
-        ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: true,
+            errors:       [],
+          });
+          input = { containerEngine: { allowedImages: { patterns: ['pattern1', 'pattern2', 'pattern3'] } } };
+          ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: true,
+            errors:       [],
+          });
         });
       });
 
-      it("doesn't complain when no locked fields change", () => {
-        const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, ceSettings, lockedSettings);
+      describe('when locked', () => {
+        const lockedSettings = {
+          containerEngine: {
+            allowedImages: {
+              enabled:  true,
+              patterns: true,
+            },
+          },
+        };
 
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       [],
+        it('disallows changes', () => {
+          const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
+          const currentPatterns = allowedImageListConfig.containerEngine.allowedImages.patterns;
+          let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: !currentEnabled } } };
+          let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: false,
+            errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
+          });
+
+          input = { containerEngine: { allowedImages: { patterns: ['picasso'].concat(currentPatterns) } } };
+          ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: false,
+            errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+          });
+
+          input = { containerEngine: { allowedImages: { patterns: currentPatterns.slice(1) } } };
+          ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: false,
+            errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+          });
+        });
+
+        it("doesn't complain when no locked fields change", () => {
+          const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, ceSettings, lockedSettings);
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: false,
+            errors:       [],
+          });
         });
       });
     });
@@ -610,7 +599,7 @@ describe(SettingsValidator, () => {
       _.set(input, path, value);
     }
 
-    const [needToUpdate, errors] = subject.validateSettings(cfg, input, lockedSettings);
+    const [needToUpdate, errors] = subject.validateSettings(cfg, input, null);
 
     expect({ needToUpdate, errors }).toEqual({
       needToUpdate: false,
@@ -619,7 +608,7 @@ describe(SettingsValidator, () => {
   });
 
   it('complains about mismatches between objects and scalars', () => {
-    let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: 5 as unknown as Record<string, number> }, lockedSettings);
+    let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: 5 as unknown as Record<string, number> }, null);
 
     expect(needToUpdate).toBeFalsy();
     expect(errors).toHaveLength(1);
@@ -632,7 +621,7 @@ describe(SettingsValidator, () => {
         options: "ceci n'est pas un objet" as unknown as Record<string, boolean>,
         enabled: true,
       },
-    }, lockedSettings);
+    }, null);
     expect(needToUpdate).toBeFalsy();
     expect(errors).toHaveLength(3);
     expect(errors).toEqual([
@@ -661,7 +650,7 @@ describe(SettingsValidator, () => {
       },
       'feijoa - Alps': [],
     } as unknown as settings.Settings,
-    lockedSettings);
+    null);
 
     expect({ needToUpdate, errors }).toEqual({
       needToUpdate: false,
@@ -677,7 +666,7 @@ describe(SettingsValidator, () => {
           version: '',
           enabled: false,
         },
-      }, lockedSettings);
+      }, null);
 
     expect(needToUpdate).toBeTruthy();
     expect(errors).toHaveLength(0);
@@ -692,7 +681,7 @@ describe(SettingsValidator, () => {
           version: '',
           enabled: true,
         },
-      }, lockedSettings);
+      }, null);
 
     expect(needToUpdate).toBeFalsy();
     expect(errors).toHaveLength(1);
