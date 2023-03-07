@@ -5,7 +5,6 @@ import _ from 'lodash';
 import SettingsValidator from '../settingsValidator';
 
 import * as settings from '@pkg/config/settings';
-import { LockedSettingsType } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
@@ -19,11 +18,9 @@ const cfg = _.merge(
 
 const subject = new SettingsValidator();
 let spyPlatform: jest.SpiedFunction<typeof os.platform>;
-let lockedSettings: LockedSettingsType|null = null;
 
 beforeEach(() => {
   spyPlatform = jest.spyOn(os, 'platform');
-  lockedSettings = null;
 });
 
 afterEach(() => {

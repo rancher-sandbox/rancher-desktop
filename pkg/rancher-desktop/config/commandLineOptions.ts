@@ -2,9 +2,7 @@ import { join } from 'path';
 
 import _ from 'lodash';
 
-import {
-  getObjectRepresentation, getUpdatableNode, LockedSettingsType, save, Settings, turnFirstRunOff,
-} from '@pkg/config/settings';
+import { LockedSettingsType, save, Settings, turnFirstRunOff } from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import Logging from '@pkg/utils/logging';
@@ -148,4 +146,59 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
   }
 
   return cfg;
+}
+
+// This is similar to `lodash.set({}, fqFieldAccessor, finalValue)
+// but it also does some error checking.
+// On the happy path, it's exactly like `lodash.set`
+// exported for unit tests only
+export function getObjectRepresentation(fqFieldAccessor: RecursiveKeys<Settings>, finalValue: boolean|number|string): RecursivePartial<Settings> {
+  if (!fqFieldAccessor) {
+    throw new Error("Invalid command-line option: can't be the empty string.");
+  }
+  const optionParts: string[] = fqFieldAccessor.split('.');
+
+  if (optionParts.length === 1) {
+    return { [fqFieldAccessor]: finalValue };
+  }
+  const lastField: string|undefined = optionParts.pop();
+
+  if (!lastField) {
+    throw new Error("Unrecognized command-line option ends with a dot ('.')");
+  }
+
+  return _.set({}, fqFieldAccessor, finalValue) as RecursivePartial<Settings>;
+}
+
+/** Walks the settings object given a fully-qualified accessor,
+ *  returning an updatable subtree of the settings object, along with the final subfield
+ *  in the accessor.
+ *
+ *  Clients calling this routine expect to use it like so:
+ *  ```
+ *  const prefsTree = {a: {b: c: {d: 1, e: 2}}};
+ *  const result = getUpdatableNode(prefsTree, 'a.b.c.d');
+ *  expect(result).toEqual([{d: 1, e: 2}, 'd']);
+ *  const [subtree, finalFieldName] = result;
+ *  subtree[finalFieldName] = newValue;
+ *  ```
+ *  and update that part of the preferences Config.
+ *
+ *  `result` would be null if the accessor doesn't point to a node in the Settings subtree.
+ *
+ * @param cfg: the settings object
+ * @param fqFieldAccessor: a multi-component dotted name representing a path to a node in the settings object.
+ * @returns [internal node in cfg, final accessor name], or
+ *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
+ */
+export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
+  // Given an accessor like a.b.c.d:
+  // If `a.b.c` is found in cfg, return `[cfg[a][b][c], d]`.
+  // Otherwise return null.
+  // Need a special case where the accessor has no dots (i.e. is top-level).
+  const optionParts = fqFieldAccessor.split('.');
+  const finalOptionPart = optionParts.pop() ?? '';
+  const currentConfig = optionParts.length === 0 ? cfg : _.get(cfg, optionParts.join('.'));
+
+  return (finalOptionPart in (currentConfig || {})) ? [currentConfig, finalOptionPart] : null;
 }
