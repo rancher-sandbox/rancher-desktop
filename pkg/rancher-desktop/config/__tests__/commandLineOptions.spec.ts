@@ -3,7 +3,7 @@ import os from 'os';
 
 import _ from 'lodash';
 
-import { getObjectRepresentation, getUpdatableNode, LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
+import { getObjectRepresentation, LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import clone from '@pkg/utils/clone';
@@ -372,44 +372,6 @@ describe('commandLineOptions', () => {
       expect(() => {
         getObjectRepresentation('' as RecursiveKeys<settings.Settings>, 4);
       }).toThrow("Invalid command-line option: can't be the empty string.");
-    });
-  });
-
-  describe('getUpdatableNode', () => {
-    test('returns null on an invalid top level accessor', () => {
-      const result = getUpdatableNode(prefs, 'blah-blah-blah');
-
-      expect(result).toBeNull();
-    });
-    test('returns null on an invalid internal accessor', () => {
-      const result = getUpdatableNode(prefs, 'kubernetes-options-blah');
-
-      expect(result).toBeNull();
-    });
-    test('returns the full pref with a top-level accessor', () => {
-      const result = getUpdatableNode(prefs, 'kubernetes') as [Record<string, any>, string];
-
-      expect(result).not.toBeNull();
-      const [lhs, accessor] = result;
-
-      expect(lhs).toEqual(prefs);
-      expect(accessor).toBe('kubernetes');
-    });
-    test('returns a partial pref with an internal accessor', () => {
-      const result = getUpdatableNode(prefs, 'kubernetes.options.flannel') as [Record<string, any>, string];
-
-      expect(result).not.toBeNull();
-      const [lhs, accessor] = result;
-      const flannelNow = prefs.kubernetes.options.flannel;
-      const flannelAfter = !flannelNow;
-
-      expect(lhs).toEqual({
-        ...origPrefs.kubernetes.options,
-        flannel: flannelNow,
-      });
-      expect(accessor).toBe('flannel');
-      lhs[accessor] = flannelAfter;
-      expect(prefs.kubernetes.options.flannel).toBe(flannelAfter);
     });
   });
 });

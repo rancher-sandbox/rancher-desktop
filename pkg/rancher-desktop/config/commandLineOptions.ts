@@ -31,7 +31,6 @@ export class LockedFieldError extends Error {}
 export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSettingsType, commandLineArgs: string[]): Settings {
   const lim = commandLineArgs.length;
   let processingExternalArguments = true;
-  const updatedCfg = _.merge({}, cfg);
   let newSettings: RecursivePartial<Settings> = {};
 
   // As long as processingExternalArguments is true, ignore anything we don't recognize.
@@ -64,17 +63,17 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
       processingExternalArguments = false;
       continue;
     }
-    const lhsInfo = getUpdatableNode(updatedCfg, fqFieldName);
+    const currentValue: boolean|string|number|object|undefined = _.get(cfg, fqFieldName);
 
-    if (!lhsInfo) {
+    if (currentValue === undefined) {
+      // Ignore unrecognized command-line options until we get to one we recognize
       if (processingExternalArguments) {
         continue;
       }
       throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
     }
+
     processingExternalArguments = false;
-    const [lhs, finalFieldName] = lhsInfo;
-    const currentValue: boolean|string|number|object = lhs[finalFieldName];
     const currentValueType = typeof currentValue;
     let finalValue: any = value;
 
@@ -110,7 +109,6 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
         throw new TypeError(`Type of '${ finalValue }' is ${ typeof finalValue }, but current type of ${ fqFieldName } is ${ currentValueType } `);
       }
     }
-    lhs[finalFieldName] = finalValue;
     newSettings = _.merge(newSettings, getObjectRepresentation(fqFieldName as RecursiveKeys<Settings>, finalValue));
   }
   if (lim > 0) {
@@ -134,8 +132,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     }
     if (needToUpdate || deferredSettings.kubernetes) {
       if (deferredSettings.kubernetes) {
-        newSettings.kubernetes ??= {}; // for typescript
-        newSettings.kubernetes.version = deferredSettings.kubernetes.version;
+        _.merge(newSettings, deferredSettings);
       }
       cfg = _.merge(cfg, newSettings);
       save(cfg);
@@ -168,37 +165,4 @@ export function getObjectRepresentation(fqFieldAccessor: RecursiveKeys<Settings>
   }
 
   return _.set({}, fqFieldAccessor, finalValue) as RecursivePartial<Settings>;
-}
-
-/** Walks the settings object given a fully-qualified accessor,
- *  returning an updatable subtree of the settings object, along with the final subfield
- *  in the accessor.
- *
- *  Clients calling this routine expect to use it like so:
- *  ```
- *  const prefsTree = {a: {b: c: {d: 1, e: 2}}};
- *  const result = getUpdatableNode(prefsTree, 'a.b.c.d');
- *  expect(result).toEqual([{d: 1, e: 2}, 'd']);
- *  const [subtree, finalFieldName] = result;
- *  subtree[finalFieldName] = newValue;
- *  ```
- *  and update that part of the preferences Config.
- *
- *  `result` would be null if the accessor doesn't point to a node in the Settings subtree.
- *
- * @param cfg: the settings object
- * @param fqFieldAccessor: a multi-component dotted name representing a path to a node in the settings object.
- * @returns [internal node in cfg, final accessor name], or
- *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
- */
-export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
-  // Given an accessor like a.b.c.d:
-  // If `a.b.c` is found in cfg, return `[cfg[a][b][c], d]`.
-  // Otherwise return null.
-  // Need a special case where the accessor has no dots (i.e. is top-level).
-  const optionParts = fqFieldAccessor.split('.');
-  const finalOptionPart = optionParts.pop() ?? '';
-  const currentConfig = optionParts.length === 0 ? cfg : _.get(cfg, optionParts.join('.'));
-
-  return (finalOptionPart in (currentConfig || {})) ? [currentConfig, finalOptionPart] : null;
 }
