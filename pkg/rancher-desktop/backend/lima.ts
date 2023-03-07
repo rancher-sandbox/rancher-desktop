@@ -134,6 +134,15 @@ export type LimaConfiguration = {
 };
 
 /**
+ * Options passed to spawnWithCapture method
+ */
+type SpawnOptions = {
+  expectFailure?: boolean,
+  stderr?: boolean,
+  env?: NodeJS.ProcessEnv,
+};
+
+/**
  * Lima networking configuration.
  * @see https://github.com/lima-vm/lima/blob/v0.8.0/pkg/networks/networks.go
  */
@@ -786,36 +795,44 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   /**
    * Run `limactl` with the given arguments, and return stdout.
    */
-  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string>;
-  protected async limaWithCapture(this: Readonly<this>, options: { expectFailure?: true }, ...args: string[]): Promise<string>;
-  protected async limaWithCapture(this: Readonly<this>, options: { expectFailure?: true, stderr: true }, ...args: string[]): Promise<{stdout: string, stderr: string}>;
-  protected async limaWithCapture(this: Readonly<this>, argOrOptions: string | { expectFailure?: true, stderr?: true }, ...args: string[]): Promise<string | {stdout: string, stderr: string}> {
-    let expectFailure = false;
-    let captureStderr = false;
+  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<{stdout: string, stderr: string}>;
+  protected async limaWithCapture(this: Readonly<this>, options: SpawnOptions, ...args: string[]): Promise<{stdout: string, stderr: string}>;
+  protected async limaWithCapture(this: Readonly<this>, argOrOptions: string | SpawnOptions, ...args: string[]): Promise<{stdout: string, stderr: string}> {
+    let options: SpawnOptions = {};
 
     if (typeof argOrOptions === 'string') {
-      args = [argOrOptions].concat(args);
-      expectFailure = false;
+      args.unshift(argOrOptions);
     } else {
-      expectFailure = !!argOrOptions.expectFailure;
-      captureStderr = !!argOrOptions.stderr;
+      options = clone(argOrOptions);
     }
-    args = this.debug ? ['--debug'].concat(args) : args;
+    if (this.debug) {
+      args.unshift('--debug');
+    }
+    options['env'] = LimaBackend.limaEnv;
+
+    return await this.spawnWithCapture(LimaBackend.limactl, options, ...args);
+  }
+
+  async spawnWithCapture(this: Readonly<this>, cmd: string, argOrOptions: string | SpawnOptions, ...args: string[]): Promise<{stdout: string, stderr: string}> {
+    let options: SpawnOptions = {};
+
+    if (typeof argOrOptions === 'string') {
+      args.unshift(argOrOptions);
+    } else {
+      options = clone(argOrOptions);
+    }
+    options.env ??= process.env;
+
     try {
-      const { stdout, stderr } = await childProcess.spawnFile(LimaBackend.limactl, args,
-        { env: LimaBackend.limaEnv, stdio: ['ignore', 'pipe', 'pipe'] });
+      const { stdout, stderr } = await childProcess.spawnFile(cmd, args, { env: options.env, stdio: ['ignore', 'pipe', 'pipe'] });
       const formatBreak = stderr || stdout ? '\n' : '';
 
-      console.log(`> limactl ${ args.join(' ') }${ formatBreak }${ stderr }${ stdout }`);
+      console.log(`> ${ cmd } ${ args.join(' ') }${ formatBreak }${ stderr }${ stdout }`);
 
-      if (captureStderr) {
-        return { stdout, stderr };
-      }
-
-      return stdout;
+      return { stdout, stderr };
     } catch (ex: any) {
-      if (!expectFailure) {
-        console.error(`> limactl ${ args.join(' ') }\n$`, ex);
+      if (!options?.expectFailure) {
+        console.error(`> ${ cmd } ${ args.join(' ') }\n$`, ex);
         if (this.debug && 'stdout' in ex) {
           console.error(ex.stdout);
         }
@@ -866,7 +883,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     try {
       // Print a slightly different message if execution fails.
-      const stdout = await this.limaWithCapture({ expectFailure: true }, 'shell', '--workdir=.', MACHINE_NAME, ...command);
+      const { stdout } = await this.limaWithCapture({ expectFailure: true }, 'shell', '--workdir=.', MACHINE_NAME, ...command);
 
       if (options.capture) {
         return stdout;
@@ -907,8 +924,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   protected get status(): Promise<LimaListResult | undefined> {
     return (async() => {
       try {
-        const text = await this.limaWithCapture('list', '--json');
-        const lines = text.split(/\r?\n/).filter(x => x.trim());
+        const { stdout } = await this.limaWithCapture('list', '--json');
+        const lines = stdout.split(/\r?\n/).filter(x => x.trim());
         const entries = lines.map(line => JSON.parse(line) as LimaListResult);
 
         return entries.find(entry => entry.name === MACHINE_NAME);
@@ -1187,7 +1204,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     // Rewrite the network configuration to use application directory executables.
     await this.installCustomLimaNetworkConfig(vmnet, true, true);
-    const unsafeSudoers = await this.limaWithCapture('sudoers');
+    const { stdout: unsafeSudoers } = await this.limaWithCapture('sudoers');
     const sudoers = this.replaceVMNetExecutables(unsafeSudoers);
     let updateSudoers = false;
 
