@@ -415,10 +415,6 @@ export function getLockedSettings(): LockedSettingsType {
   return lockedSettings;
 }
 
-export function clearLockedSettings() {
-  lockedSettings = {};
-}
-
 /**
  * Returns an object that mirrors `lockedProfileSettings` but all leaves are `true`.
  * @param lockedProfileSettings

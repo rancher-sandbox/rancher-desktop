@@ -131,9 +131,9 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
 
   if (newSettings.application.hideNotificationIcon) {
-    Tray.getInstance().hide();
+    Tray.getInstance(cfg).hide();
   } else {
-    Tray.getInstance().show();
+    Tray.getInstance(cfg).show();
     mainEvents.emit('k8s-check-state', k8smanager);
   }
 
@@ -220,7 +220,7 @@ Electron.app.whenReady().then(async() => {
     });
 
     if (!cfg.application.hideNotificationIcon) {
-      Tray.getInstance().show();
+      Tray.getInstance(cfg).show();
     }
 
     if (!cfg.application.startInBackground) {
