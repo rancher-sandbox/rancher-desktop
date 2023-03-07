@@ -134,6 +134,21 @@ export type LimaConfiguration = {
 };
 
 /**
+ * QEMU Image formats
+ */
+enum ImageFormat {
+  QCOW2 = 'qcow2',
+  RAW = 'raw',
+}
+
+/**
+ * QEMU Image Information as returned by `qemu-img info --output=json ...`
+ */
+type QEMUImageInfo = {
+  format: string;
+};
+
+/**
  * Options passed to spawnWithCapture method
  */
 type SpawnOptions = {
@@ -764,6 +779,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return path.join(paths.resources, os.platform(), 'lima', 'bin', limactlBin);
   }
 
+  protected static get qemuImg() {
+    return path.join(paths.resources, os.platform(), 'lima', 'bin', 'qemu-img');
+  }
+
   protected static get limaEnv() {
     const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
     const VMNETDir = path.join(VMNET_DIR, 'bin');
@@ -934,6 +953,28 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         return undefined;
       }
+    })();
+  }
+
+  protected imageInfo(fileName: string): Promise<QEMUImageInfo> {
+    return (async() => {
+      try {
+        const { stdout } = await this.spawnWithCapture(LimaBackend.qemuImg, 'info', '--output=json', '--force-share', fileName);
+
+        return JSON.parse(stdout) as QEMUImageInfo;
+      } catch {
+        return { format: 'unknown' } as QEMUImageInfo;
+      }
+    })();
+  }
+
+  protected convertToRaw(fileName: string): Promise<void> {
+    return (async() => {
+      const rawFileName = `${ fileName }.raw`;
+
+      await this.spawnWithCapture(LimaBackend.qemuImg, 'convert', fileName, rawFileName);
+      await fs.promises.unlink(fileName);
+      await fs.promises.rename(rawFileName, fileName);
     })();
   }
 
@@ -1732,8 +1773,21 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         const vmStatus = await this.status;
-        const isVMAlreadyRunning = vmStatus?.status === 'Running';
+        let isVMAlreadyRunning = vmStatus?.status === 'Running';
 
+        // Virtualization Framework only supports RAW disks
+        if (vmStatus && config.experimental.virtualMachine.type === VMType.VZ) {
+          const diffdisk = path.join(paths.lima, MACHINE_NAME, 'diffdisk');
+          const { format } = await this.imageInfo(diffdisk);
+
+          if (format === ImageFormat.QCOW2) {
+            if (isVMAlreadyRunning) {
+              await this.lima('stop', MACHINE_NAME);
+              isVMAlreadyRunning = false;
+            }
+            await this.convertToRaw(diffdisk);
+          }
+        }
         // Start the VM; if it's already running, this does nothing.
         await this.startVM();
 
