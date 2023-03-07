@@ -27,11 +27,9 @@ import { expect, test } from '@playwright/test';
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, createUserProfile, startRancherDesktop, teardown } from './utils/TestUtils';
 
-import type { LockedSettingsType } from '@pkg/config/settings';
-import { Settings } from '@pkg/config/settings';
+import type { DeploymentProfileType } from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -40,8 +38,7 @@ test.describe('Command server', () => {
   let context: BrowserContext;
   let page: Page;
   const appPath = path.join(__dirname, '../');
-  let userSettingsProfile: RecursivePartial<Settings>|null = null;
-  let userLocksProfile: LockedSettingsType|null = null;
+  let deploymentProfile: DeploymentProfileType|null = null;
 
   function rdctlPath() {
     return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
@@ -57,17 +54,16 @@ test.describe('Command server', () => {
     }
   }
 
-  async function saveUserProfile() {
+  function saveUserProfile() {
     // If there's an error in this code, let it bubble up for the caller to deal with it.
-    const result = readDeploymentProfiles();
-
-    userSettingsProfile = Object.keys(result.defaults).length === 0 ? null : result.defaults;
-    userLocksProfile = Object.keys(result.locked).length === 0 ? null : result.locked;
-    await createUserProfile(userSettingsProfile, userLocksProfile);
+    deploymentProfile = readDeploymentProfiles();
   }
 
   async function restoreUserProfile() {
-    await createUserProfile(userSettingsProfile, userLocksProfile);
+    // the test for a non-null is to satisfy typescript
+    if (deploymentProfile) {
+      await createUserProfile(deploymentProfile.defaults, deploymentProfile.locked);
+    }
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -78,7 +74,7 @@ test.describe('Command server', () => {
 
   test.beforeAll(async() => {
     createDefaultSettings();
-    await saveUserProfile();
+    saveUserProfile();
     await createUserProfile(
       { containerEngine: { allowedImages: { enabled: true } } },
       { containerEngine: { allowedImages: { enabled: true } } },

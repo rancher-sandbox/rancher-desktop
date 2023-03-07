@@ -32,12 +32,12 @@ async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|nu
   const userProfilePath = path.join(paths.deploymentProfileUser, 'profile.json');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'locked.json');
 
-  if (userProfile) {
+  if (userProfile && Object.keys(userProfile).length > 0) {
     await fs.promises.writeFile(userProfilePath, JSON.stringify(userProfile, undefined, 2));
   } else {
     await fs.promises.rm(userProfilePath, { force: true });
   }
-  if (lockedFields) {
+  if (lockedFields && Object.keys(lockedFields).length > 0) {
     await fs.promises.writeFile(userLocksPath, JSON.stringify(lockedFields, undefined, 2));
   } else {
     await fs.promises.rm(userLocksPath, { force: true });
@@ -48,12 +48,12 @@ async function createDarwinUserProfile(userProfile: RecursivePartial<Settings>|n
   const userProfilePath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.defaults.plist');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.locked.plist');
 
-  if (userProfile) {
+  if (userProfile && Object.keys(userProfile).length > 0) {
     await fs.promises.writeFile(userProfilePath, plist.build(userProfile));
   } else {
     await fs.promises.rm(userProfilePath, { force: true });
   }
-  if (lockedFields) {
+  if (lockedFields && Object.keys(lockedFields).length > 0) {
     await fs.promises.writeFile(userLocksPath, plist.build(lockedFields));
   } else {
     await fs.promises.rm(userLocksPath, { force: true });
