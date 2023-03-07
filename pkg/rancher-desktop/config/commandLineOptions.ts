@@ -74,7 +74,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     }
     processingExternalArguments = false;
     const [lhs, finalFieldName] = lhsInfo;
-    const currentValue: 'boolean'|'string'|'number'|'object' = lhs[finalFieldName];
+    const currentValue: boolean|string|number|object = lhs[finalFieldName];
     const currentValueType = typeof currentValue;
     let finalValue: any = value;
 
