@@ -26,6 +26,7 @@ import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCrede
 import { DashboardServer } from '@pkg/main/dashboardServer';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
+import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
@@ -368,6 +369,10 @@ async function startK8sManager() {
     setupImageProcessor();
   }
   await k8smanager.start(cfg);
+
+  const getEM = (await import('@pkg/main/extensions/manager')).default;
+
+  await getEM(k8smanager.containerEngineClient, cfg);
 }
 
 /**
@@ -1037,6 +1042,61 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
       return ['No changes necessary', ''];
     })());
+  }
+
+  listExtensions(): Promise<Record<string, true>> {
+    const entries = Object.entries(cfg.extensions).filter(([k, v]) => v) as [string, true][];
+
+    return Promise.resolve(Object.fromEntries(entries));
+  }
+
+  async installExtension(id: string, state: boolean): Promise<{status: number, data?: any}> {
+    const getEM = (await import('@pkg/main/extensions/manager')).default;
+    const em = await getEM();
+    const extension = em?.getExtension(id);
+
+    if (!extension) {
+      console.debug(`Failed to install extension ${ id }: could not get extension.`);
+
+      return { status: 503 };
+    }
+    if (state) {
+      console.debug(`Installing extension ${ id }...`);
+      try {
+        if (await extension.install()) {
+          return { status: 201 };
+        } else {
+          return { status: 204 };
+        }
+      } catch (ex: any) {
+        if (isExtensionError(ex)) {
+          switch (ex.code) {
+          case ExtensionErrorCode.INVALID_METADATA:
+            return { status: 422, data: `The image ${ id } has invalid extension metadata` };
+          case ExtensionErrorCode.FILE_NOT_FOUND:
+            return { status: 422, data: `The image ${ id } failed to install: ${ ex.message }` };
+          }
+        }
+        throw ex;
+      }
+    } else {
+      console.debug(`Uninstalling extension ${ id }...`);
+      try {
+        if (await extension.uninstall()) {
+          return { status: 201 };
+        } else {
+          return { status: 204 };
+        }
+      } catch (ex: any) {
+        if (isExtensionError(ex)) {
+          switch (ex.code) {
+          case ExtensionErrorCode.INVALID_METADATA:
+            return { status: 422, data: `The image ${ id } has invalid extension metadata` };
+          }
+        }
+        throw ex;
+      }
+    }
   }
 }
 
