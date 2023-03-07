@@ -61,7 +61,7 @@ export default class SettingsValidator {
     newSettings: RecursivePartial<Settings>,
     lockedSettings: LockedSettingsType|null): [boolean, string[]] {
     this.lockedSettings = lockedSettings;
-    this.isKubernetesDesired = typeof newSettings.kubernetes?.enabled !== 'undefined' ? newSettings.kubernetes.enabled : currentSettings.kubernetes.enabled;
+    this.isKubernetesDesired = newSettings.kubernetes?.enabled ?? currentSettings.kubernetes.enabled;
     this.allowedSettings ||= {
       version:     this.checkUnchanged,
       application: {

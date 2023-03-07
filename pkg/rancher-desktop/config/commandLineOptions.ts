@@ -23,7 +23,7 @@ export class LockedFieldError extends Error {}
  *   any attempts to update a locked field.
  *
  *  * All errors are fatal as this function is like an API for launching the application.
- * @param cfg
+ * @param cfg {Settings} - current loaded settings - this is updated and also returned
  * @param lockedFields
  * @param commandLineArgs
  * @return updated cfg
