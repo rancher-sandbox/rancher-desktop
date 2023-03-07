@@ -5,9 +5,7 @@ import _ from 'lodash';
 
 import { LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import * as settings from '@pkg/config/settings';
-import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
-import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
 
 describe('updateFromCommandLine', () => {
@@ -17,20 +15,8 @@ describe('updateFromCommandLine', () => {
 
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
-    prefs = {
-      version:     6,
-      application: {
-        adminAccess:            true,
-        debug:                  true,
-        pathManagementStrategy: PathManagementStrategy.NotSet,
-        telemetry:              { enabled: true },
-        /** Whether we should check for updates and apply them. */
-        updater:                { enabled: true },
-        autoStart:              false,
-        startInBackground:      false,
-        hideNotificationIcon:   false,
-        window:                 { quitOnClose: false },
-      },
+    prefs = _.merge({}, settings.defaultSettings, {
+      application:     { telemetry: { enabled: true } },
       containerEngine: {
         allowedImages: {
           enabled:  false,
@@ -38,12 +24,6 @@ describe('updateFromCommandLine', () => {
         },
         name: settings.ContainerEngine.MOBY,
       },
-      virtualMachine: {
-        memoryInGB:   4,
-        numberCPUs:   2,
-        hostResolver: true,
-      },
-      WSL:        { integrations: {} },
       kubernetes: {
         version: '1.23.5',
         port:    6443,
@@ -54,30 +34,7 @@ describe('updateFromCommandLine', () => {
         },
       },
       portForwarding: { includeKubernetesServices: false },
-      images:         {
-        showAll:   true,
-        namespace: 'k8s.io',
-      },
-      diagnostics: {
-        showMuted:   false,
-        mutedChecks: { },
-      },
-      experimental: {
-        virtualMachine: {
-          socketVMNet: true,
-          mount:       {
-            type: MountType.REVERSE_SSHFS,
-            '9p': {
-              securityModel:   SecurityModel.NONE,
-              protocolVersion: ProtocolVersion.NINEP2000_L,
-              msizeInKB:       128,
-              cacheMode:       CacheMode.MMAP,
-            },
-          },
-          networkingTunnel: false,
-        },
-      },
-    };
+    });
     origPrefs = clone(prefs);
     lockedSettings = { };
   });
