@@ -435,7 +435,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * Write out /etc/hosts in the main distribution, copying the bulk of the
    * contents from the data distribution.
    */
-  protected async writeHostsFile() {
+  protected async writeHostsFile(config: BackendSettings) {
+    const rdNetworking = config.experimental.virtualMachine.networkingTunnel;
+    const virtualNetworkHostAddr = '192.168.127.254';
+    const hostIPAddr = rdNetworking ? virtualNetworkHostAddr : wslHostIPv4Address();
+
     await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
       const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`, 'utf-8');
       const lines = contents.split(/\r?\n/g)
@@ -443,7 +447,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
       const extra = [
         '# BEGIN Rancher Desktop configuration.',
-        `${ wslHostIPv4Address() } ${ hosts.join(' ') }`,
+        `${ hostIPAddr } ${ hosts.join(' ') }`,
         '# END Rancher Desktop configuration.',
       ].map(l => `${ l }\n`).join('');
 
@@ -1150,7 +1154,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         const prepActions = [(async() => {
           await this.ensureDistroRegistered();
           await this.upgradeDistroAsNeeded();
-          await this.writeHostsFile();
+          await this.writeHostsFile(config);
           await this.writeResolvConf();
         })()];
 
