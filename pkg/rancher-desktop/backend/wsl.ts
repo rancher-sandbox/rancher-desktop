@@ -1529,7 +1529,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       return Promise.resolve({});
     }
 
-    return Promise.resolve(this.kubeBackend.requiresRestartReasons(this.cfg, cfg, { 'experimental.virtualMachine.networkingTunnel': undefined }));
+    return Promise.resolve(this.kubeBackend.requiresRestartReasons(
+      this.cfg, cfg, { 'experimental.virtualMachine.networkingTunnel': { current: this.cfg.experimental.virtualMachine.networkingTunnel } }));
   }
 
   /**
