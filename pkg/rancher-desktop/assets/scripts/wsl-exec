@@ -16,4 +16,7 @@ if [ -z "${pid}" ]; then
     exit 1
 fi
 
+if [ $# -eq 0 ]; then
+  set -- /bin/sh
+fi
 exec /usr/bin/nsenter -n -p -m -t "${pid}" "$@"
