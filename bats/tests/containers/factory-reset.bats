@@ -36,8 +36,8 @@ start_application() {
     # Looks like the rcfiles don't get updated via `rdctl start`
     # BUG BUG BUG
     if is_unix; then
-        rdctl set --path-management-strategy manual
-        rdctl set --path-management-strategy rcfiles
+        rdctl set --application.path-management-strategy manual
+        rdctl set --application.path-management-strategy rcfiles
     fi
 
     check_installation before
