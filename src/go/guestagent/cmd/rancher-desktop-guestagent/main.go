@@ -11,9 +11,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Rancher-desktop-guestagent implements an agent that runs instead of the
-// Rancher Desktop VM (whether WSL-based on Windows, or Lima-based on mac/Linux).
-// It is currently used to handle port forwarding issues.
+// Rancher-desktop-guestagent runs inside the WSL VM on Windows. It is
+// primarily used to monitor and forward Kubernetes Service Ports
+// (NodePorts and LoadBalancers) to the host. Also, it can be configured
+// to perform port forwarding for the exposed container ports on both
+// Moby and Containerd backends.
 package main
 
 import (
