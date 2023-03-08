@@ -366,22 +366,13 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
   } catch (err: any) {
     settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
+      // An empty deployment profile is considered the same as an absent one,
+      // because on Windows it's impossible to have an empty set of registry keys
+      // but still have a deployment profile. Linux and macOS can have empty files, but we'll ignore those.
       if (Object.keys(deploymentProfiles.defaults).length) {
         _.merge(settings, deploymentProfiles.defaults);
         if (!_.has(deploymentProfiles.defaults, 'virtualMachine.memoryInGB')) {
           setDefaultMemory = true;
-        }
-        const requiredSettings = [
-          'kubernetes.enabled',
-          'kubernetes.version',
-          'containerEngine.name',
-        ];
-
-        if (os.platform() !== 'win32') {
-          requiredSettings.push('application.pathManagementStrategy');
-        }
-        if (!requiredSettings.every(setting => _.has(deploymentProfiles.defaults, setting))) {
-          _isFirstRun = true;
         }
       } else {
         _isFirstRun = true;
