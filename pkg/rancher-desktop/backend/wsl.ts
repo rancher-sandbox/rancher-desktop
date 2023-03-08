@@ -713,14 +713,16 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const credsPath = getServerCredentialsPath();
 
     try {
-      const vtunnelPeerServer = '127.0.0.1:3030';
+      const vtunnelPeerServerAddr = '127.0.0.1:3030';
+      const credentialServerAddr = '192.168.127.254:6109';
+      const credForwarderURL = this.cfg?.experimental.virtualMachine.networkingTunnel ? credentialServerAddr : vtunnelPeerServerAddr;
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'");
       // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
       const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
       const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
-      CREDFWD_URL='http://${ vtunnelPeerServer }'
+      CREDFWD_URL='http://${ credForwarderURL }'
       `;
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
