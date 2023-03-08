@@ -1,0 +1,10 @@
+{
+  "icon": "extension-icon.svg",
+  "ui": {
+    "dashboard-tab": {
+      "title": "Sample Extension",
+      "root": "/ui",
+      "src": "index.html"
+    }
+  }
+}
