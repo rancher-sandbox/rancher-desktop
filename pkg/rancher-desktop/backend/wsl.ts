@@ -1269,13 +1269,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                 await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
               }),
-              async() => {
-                // we do not want to run the guest agent for the new rancher desktop networking
-                // since this can cause port forwarding duplication and clobber the current process.
-                if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
-                  await this.progressTracker.action('Rancher Desktop guest agent', 50, () => this.installGuestAgent(kubernetesVersion, this.cfg));
+              await this.progressTracker.action('Rancher Desktop guest agent', 50, async() => {
+                if (!config.experimental.virtualMachine.networkingTunnel) {
+                  // we do not want to run the guest agent for the new rancher desktop networking
+                  // since this can cause port forwarding duplication and clobber the current process.
+                  await this.installGuestAgent(kubernetesVersion, this.cfg);
                 }
-              },
+              }),
             ]);
 
             await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
