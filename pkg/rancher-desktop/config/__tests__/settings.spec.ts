@@ -46,18 +46,16 @@ describe('settings', () => {
         <true/>
         <key>not_schema</key>
         <true/>
-        <key>locked</key>
-        <true/>
         <key>patterns</key>
         <array/>
+        <key>containerEngine</key>
+        <string>moby</string>
       </dict>
     </dict>
     <key>kubernetes</key>
     <dict>
       <key>version</key>
       <string>1.23.15</string>
-      <key>containerEngine</key>
-      <string>moby</string>
       <key>enabled</key>
       <true/>
     </dict>
