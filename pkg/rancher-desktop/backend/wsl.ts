@@ -732,13 +732,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
       await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
 
-      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
-      await this.writeConf('vtunnel-peer', {
-        VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
-        LOG_DIR:             await this.wslify(paths.logs),
-        CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
-      });
-      await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
+      if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+        await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
+        await this.writeConf('vtunnel-peer', {
+          VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
+          LOG_DIR:             await this.wslify(paths.logs),
+          CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
+        });
+        await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
+      }
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, 0o644);
@@ -1147,8 +1149,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.upgradeDistroAsNeeded();
           await this.writeHostsFile();
           await this.writeResolvConf();
-        })(),
-        this.vtun.start()];
+        })()];
+
+        if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+          await this.vtun.start();
+        }
 
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
@@ -1478,7 +1483,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             console.error('Failed to run user provisioning scripts on stopping:', ex);
           }
         }
-        await this.vtun.stop();
+        if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+          await this.vtun.stop();
+        }
         this.process?.kill('SIGTERM');
         await this.resolverHostProcess.stop();
         await this.hostSwitchProcess.stop();
