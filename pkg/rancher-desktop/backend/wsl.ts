@@ -715,6 +715,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     try {
       const vtunnelPeerServerAddr = '127.0.0.1:3030';
       const credentialServerAddr = '192.168.127.254:6109';
+      // When networkTunnel is enabled we talk directly to the host which is assigned
+      // with 192.168.127.254 static address. Otherwise, we talk to the vtunnel peer
+      // which is listening in the WSL VM on 127.0.0.1:3030.
       const credForwarderURL = this.cfg?.experimental.virtualMachine.networkingTunnel ? credentialServerAddr : vtunnelPeerServerAddr;
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
