@@ -39,6 +39,7 @@ import SERVICE_SCRIPT_K3S from '@pkg/assets/scripts/service-k3s.initd';
 import SERVICE_VTUNNEL_PEER from '@pkg/assets/scripts/service-vtunnel-peer.initd';
 import SERVICE_SCRIPT_DOCKERD from '@pkg/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@pkg/assets/scripts/wsl-data.conf';
+import WSL_EXEC from '@pkg/assets/scripts/wsl-exec';
 import WSL_INIT_SCRIPT from '@pkg/assets/scripts/wsl-init';
 import WSL_INIT_RD_NETWORKING_SCRIPT from '@pkg/assets/scripts/wsl-init-rd-networking';
 import { ContainerEngine } from '@pkg/config/settings';
@@ -1277,6 +1278,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               },
             ]);
 
+            await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
             await this.runInit();
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),

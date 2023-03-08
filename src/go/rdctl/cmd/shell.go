@@ -70,7 +70,10 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 			// No further output wanted, so just exit with the desired status.
 			os.Exit(1)
 		}
-		args = append([]string{"--distribution", distroName}, args...)
+		args = append([]string{
+			"--distribution", distroName,
+			"--exec", "/usr/local/bin/wsl-exec"},
+			args...)
 	} else {
 		if err := directories.SetupLimaHome(); err != nil {
 			return err

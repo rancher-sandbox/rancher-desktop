@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# wsl-exec is used to execute user-issued shell commands from
+# rdctl shell ... in a correct namespace. If the experimental
+# rancher desktop networking is enabled all the resulting
+# shell from rdctl shell will be executed in the new namespace
+# associated with the rd networking, otherwise, it will be executed
+# in the default namespace.
+
+set -o errexit -o nounset
+
+pid="$(cat /run/wsl-init.pid)"
+
+if [ -z "${pid}" ]; then
+    echo "Could not find wsl-init process" >&2
+    exit 1
+fi
+
+if [ $# -eq 0 ]; then
+  set -- /bin/sh
+fi
+exec /usr/bin/nsenter -n -p -m -t "${pid}" "$@"
