@@ -1,6 +1,6 @@
-openapi: "3.0.0"
+openapi: 3.0.0
 info:
-  title: "Rancher Desktop API"
+  title: Rancher Desktop API
   version: 0.0.1
 paths:
   /v1/factory_reset:
@@ -8,8 +8,7 @@ paths:
       operationId: factoryReset
       summary: Factory reset Rancher Desktop, losing user data
       requestBody:
-        description: >-
-          JSON block giving factory reset options.
+        description: JSON block giving factory reset options.
         content:
           application/json:
             schema:
@@ -41,11 +40,9 @@ paths:
         required: true
       responses:
         '202':
-          description: >-
-            A description of the effects of the proposed settings on the
-            backend.
+          description: A description of the effects of the proposed settings on the backend.
           content:
-            "application/json":
+            application/json:
               schema:
                 type: object
                 additionalProperties:
@@ -57,10 +54,9 @@ paths:
                       type: string
                       enum: [ restart, reset ]
         '400':
-          description: >-
-            The proposed settings were not valid.
+          description: The proposed settings were not valid.
           content:
-            "text/plain":
+            text/plain:
               schema:
                 type: string
 
@@ -71,8 +67,7 @@ paths:
       summary:  List the current preference settings
       responses:
         '200':
-          description: >-
-            The current preferences in JSON format
+          description: The current preferences in JSON format
           content:
             application/json:
               schema:
@@ -91,17 +86,15 @@ paths:
         required: true
       responses:
         '202':
-          description: >-
-            The settings were accepted.
+          description: The settings were accepted.
           content:
-            "text/plain":
+            text/plain:
               schema:
                 type: string
         '400':
-          description: >-
-            The proposed settings were not valid.
+          description: The proposed settings were not valid.
           content:
-            "text/plain":
+            text/plain:
               schema:
                 type: string
 
@@ -111,24 +104,21 @@ paths:
       summary:  Shuts down Rancher Desktop
       responses:
         '202':
-          description: >-
-            The application is in the process of shutting down.
+          description: The application is in the process of shutting down.
           content:
-            "text/plain":
+            text/plain:
               schema:
                 type: string
 
   /v1/diagnostic_categories:
     get:
       operationId: diagnosticCategories
-      summary: >-
-        Return a list of the category names for the Diagnostics component. Takes no parameters.
+      summary: Return a list of the category names for the Diagnostics component. Takes no parameters.
       responses:
         '200':
-          description: >-
-            A list of the category names.
+          description: A list of the category names.
           content:
-            "application/json":
+            application/json:
               schema:
                 type: array
                 items:
@@ -143,14 +133,13 @@ paths:
         Specifying an exiting category with no checks
         will return status code 200 and an empty array.
       parameters:
-        - in: query
-          name: category
+      - in: query
+        name: category
       responses:
         '200':
-          description: >-
-            A list of the check IDs for the specified category.
+          description: A list of the check IDs for the specified category.
           content:
-            "application/json":
+            application/json:
               schema:
                 type: array
                 items:
@@ -162,17 +151,15 @@ paths:
   /v1/diagnostic_checks:
     get:
       operationId: diagnosticChecks
-      summary: >-
-        Return all the checks, optionally filtered by specified category and/or checkID.
+      summary: Return all the checks, optionally filtered by specified category and/or checkID.
       parameters:
-        - in: query
-          name: category
-        - in: query
-          name: checkID
+      - in: query
+        name: category
+      - in: query
+        name: checkID
       responses:
         '200':
-          description: >-
-            A list of check objects. An invalid or unrecognized query parameter returns (200, empty array)
+          description: A list of check objects. An invalid or unrecognized query parameter returns (200, empty array)
           content:
             application/json:
               schema:
@@ -182,8 +169,7 @@ paths:
       summary: Run all diagnostic checks, and return any results.
       responses:
         '200':
-          description: >-
-            A list of check results.
+          description: A list of check results.
           content:
             application/json:
               schema:
@@ -195,8 +181,7 @@ paths:
       summary:  List the current transient settings
       responses:
         '200':
-          description: >-
-            The current transient settings in JSON format
+          description: The current transient settings in JSON format
           content:
             application/json:
               schema:
@@ -205,8 +190,7 @@ paths:
       operationId: updateTransientSettings
       summary:  Updates application transient settings
       requestBody:
-        description: >-
-          JSON block consisting of transient settings
+        description: JSON block consisting of transient settings
         content:
           application/json:
             schema:
@@ -214,17 +198,15 @@ paths:
         required: true
       responses:
         '202':
-          description: >-
-            The settings were accepted.
+          description: The settings were accepted.
           content:
-            "text/plain":
+            text/plain:
               schema:
                 type: string
         '400':
-          description: >-
-            The proposed transient settings were not valid.
+          description: The proposed transient settings were not valid.
           content:
-            "text/plain":
+            text/plain:
               schema:
                 type: string
 
@@ -238,50 +220,63 @@ components:
           properties:
             adminAccess:
               type: boolean
-              x-rd-platforms: ['darwin', 'linux'] # Only in the specified platforms
+              x-rd-platforms: [darwin, linux] # Only in the specified platforms
+              x-rd-usage: enable privileged operations
             debug:
               type: boolean
+              x-rd-usage: generate more verbose logging
             pathManagementStrategy:
               type: string
-              enum: ['manual', 'rcfiles']
-              x-rd-platforms: ['darwin', 'linux']
+              enum: [manual, rcfiles]
+              x-rd-platforms: [darwin, linux]
+              x-rd-usage: update PATH to include ~/.rd/bin
             telemetry:
               type: object
               properties:
                 enabled:
                   type: boolean
+                  x-rd-usage: allow collection of anonymous statistics
             updater:
               type: object
               properties:
                 enabled:
                   type: boolean
+                  x-rd-usage: automatically update to the latest release
             autoStart:
               type: boolean
+              x-rd-usage: start app when logging in
             startInBackground:
               type: boolean
+              x-rd-usage: start app without window
             hideNotificationIcon:
               type: boolean
+              x-rd-usage: don't show notification icon
             window:
               type: object
               properties:
                 quitOnClose:
                   type: boolean
+                  x-rd-usage: terminate app when the main window is closed
         containerEngine:
           type: object
           properties:
             name:
               type: string
-              enum: ['containerd', 'docker', 'moby']
-              x-rd-usage: Set engine to containerd or moby (aka docker).
-              x-rd-aliases:
-                - "container-engine"
+              # TODO "docker" setting should be a hidden alias of "moby".
+              # Why have two values for exactly the same thing?
+              enum: [containerd, docker, moby]
+              x-rd-aliases: [container-engine]
+              x-rd-usage: set engine
             allowedImages:
               type: object
               properties:
                 enabled:
                   type: boolean
+                  x-rd-usage: only allow images to be pulled that match the allowed patterns
                 patterns:
                   type: array
+                  # TODO It is not yet possible to specify array/list values with `rdctl set`
+                  x-rd-usage: allowed image names
                   items:
                     type: string
         virtualMachine:
@@ -290,41 +285,41 @@ components:
             memoryInGB:
               type: integer
               minimum: 1
-              x-rd-platforms: ['darwin', 'linux']
+              x-rd-platforms: [darwin, linux]
+              x-rd-usage: reserved RAM size
             numberCPUs:
               type: integer
               minimum: 1
-              x-rd-platforms: ['darwin', 'linux']
+              x-rd-platforms: [darwin, linux]
+              x-rd-usage: reserved number of CPUs
             hostResolver:
               type: boolean
-              x-rd-platforms: ['win32']
+              x-rd-platforms: [win32]
+              x-rd-usage: resolve DNS queries on the host and not inside the VM
         kubernetes:
           type: object
           properties:
             version:
               type: string
-              x-rd-usage: Choose which version of kubernetes to run.
-              x-rd-aliases:
-                - "kubernetes-version"
+              x-rd-aliases: [kubernetes-version]
+              x-rd-usage: choose which version of Kubernetes to run
             port:
               type: integer
+              x-rd-usage: apiserver port
             enabled:
               type: boolean
-              x-rd-usage: Control whether kubernetes runs in the backend.
-              x-rd-aliases:
-                - "kubernetes-enabled"
+              x-rd-aliases: [kubernetes-enabled]
+              x-rd-usage: run Kubernetes
             options:
               type: object
               properties:
                 traefik:
                   type: boolean
+                  x-rd-usage: install and run traefik
                 flannel:
                   type: boolean
-                  x-rd-usage: >-
-                    Control whether flannel is enabled.
-                    Use to disable flannel so you can install your own CNI.
-                  x-rd-aliases:
-                    - "flannel-enabled"
+                  x-rd-aliases: [flannel-enabled]
+                  x-rd-usage: use flannel networking; disable to install your own CNI
         experimental:
           type: object
           properties:
@@ -333,35 +328,41 @@ components:
               properties:
                 socketVMNet:
                   type: boolean
-                  x-rd-platforms: ['darwin']
+                  x-rd-platforms: [darwin]
+                  x-rd-usage: use socket-vmnet instead of vde-vmnet
                 mount:
                   type: object
-                  x-rd-platforms: ['darwin', 'linux']
+                  x-rd-platforms: [darwin, linux]
                   properties:
                     type:
                       type: string
-                      enum: ['reverse-sshfs', '9p']
+                      enum: [reverse-sshfs, 9p]
+                      x-rd-usage: how directories are shared
                     9p:
                       type: object
                       properties:
                         securityModel:
                           type: string
-                          enum: ['passthrough', 'mapped-xattr', 'mapped-file', 'none']
+                          enum: [passthrough, mapped-xattr, mapped-file, none]
                         protocolVersion:
                           type: string
-                          enum: ['9p2000', '9p2000.u', '9p2000.L']
+                          enum: [9p2000, 9p2000.u, 9p2000.L]
                         msizeInKB:
                           type: integer
                           minimum: 4
+                          x-rd-usage: maximum packet size
                         cacheMode:
                           type: string
-                          enum: ['none', 'loose', 'fscache', 'mmap']
+                          enum: [none, loose, fscache, mmap]
                 networkingTunnel:
                   type: boolean
-                  x-rd-platforms: ['win32']
+                  x-rd-platforms: [win32]
+                  x-rd-usage: tunnel networking so it originates from the host
         WSL:
           type: object
-          x-rd-platforms: ['win32']
+          x-rd-platforms: [win32]
+          # TODO It is not yet possible to configure this via `rdctl set`.
+          x-rd-usage: make container engine and Kubernetes available in these WSL2 distros
           properties:
             integrations:
               type: object
@@ -371,20 +372,26 @@ components:
           properties:
             includeKubernetesServices:
               type: boolean
+              x-rd-usage: show Kubernetes system services on Port Forwarding page
         images:
           type: object
           properties:
             showAll:
               type: boolean
+              x-rd-usage: show system images on Images page
             namespace:
               type: string
+              x-rd-usage: select only images from this namespace (containerd only)
         diagnostics:
           type: object
           properties:
             showMuted:
               type: boolean
+              x-rd-usage: unhide muted diagnostics
             mutedChecks:
               type: object
+              # TODO It is not possible to modify this setting via `rdctl set`.
+              x-rd-usage: diagnostic ids that have been muted
               additionalProperties: true
 
     diagnostics:
