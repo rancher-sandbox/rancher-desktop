@@ -713,14 +713,19 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const credsPath = getServerCredentialsPath();
 
     try {
-      const vtunnelPeerServer = '127.0.0.1:3030';
+      const vtunnelPeerServerAddr = '127.0.0.1:3030';
+      const credentialServerAddr = '192.168.127.254:6109';
+      // When networkTunnel is enabled we talk directly to the host which is assigned
+      // with 192.168.127.254 static address. Otherwise, we talk to the vtunnel peer
+      // which is listening in the WSL VM on 127.0.0.1:3030.
+      const credForwarderURL = this.cfg?.experimental.virtualMachine.networkingTunnel ? credentialServerAddr : vtunnelPeerServerAddr;
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'");
       // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
       const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
       const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
-      CREDFWD_URL='http://${ vtunnelPeerServer }'
+      CREDFWD_URL='http://${ credForwarderURL }'
       `;
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
@@ -730,13 +735,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
       await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
 
-      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
-      await this.writeConf('vtunnel-peer', {
-        VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
-        LOG_DIR:             await this.wslify(paths.logs),
-        CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
-      });
-      await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
+      if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+        await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
+        await this.writeConf('vtunnel-peer', {
+          VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
+          LOG_DIR:             await this.wslify(paths.logs),
+          CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
+        });
+        await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
+      }
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, 0o644);
@@ -1145,8 +1152,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.upgradeDistroAsNeeded();
           await this.writeHostsFile();
           await this.writeResolvConf();
-        })(),
-        this.vtun.start()];
+        })()];
+
+        if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+          await this.vtun.start();
+        }
 
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
@@ -1476,7 +1486,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             console.error('Failed to run user provisioning scripts on stopping:', ex);
           }
         }
-        await this.vtun.stop();
+        if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
+          await this.vtun.stop();
+        }
         this.process?.kill('SIGTERM');
         await this.resolverHostProcess.stop();
         await this.hostSwitchProcess.stop();
