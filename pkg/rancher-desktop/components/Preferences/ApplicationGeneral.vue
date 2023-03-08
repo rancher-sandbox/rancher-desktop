@@ -1,18 +1,16 @@
 <script lang="ts">
-import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
+import { required, minLength, between } from 'vuelidate/lib/validators';
 import { mapGetters } from 'vuex';
 
-import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
 export default Vue.extend({
-  name:       'preferences-application-general',
-  components: { Checkbox, RdFieldset },
-  props:      {
+  name:  'preferences-application-general',
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
@@ -20,6 +18,11 @@ export default Vue.extend({
   },
   data() {
     return {
+
+      // vuelidate example
+      name: '',
+      age:  null,
+
       sudoAllowedTooltip: `
         If checked, Rancher Desktop will attempt to acquire administrative
         credentials ("sudo access") when starting for some operations.  This
@@ -31,6 +34,15 @@ export default Vue.extend({
       statistics:       false,
     };
   },
+
+  validations: {
+    name: {
+      required,
+      minLength: minLength(4),
+    },
+    age: { between: between(20, 30) },
+  },
+
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
     isSudoAllowed(): boolean {
@@ -40,6 +52,7 @@ export default Vue.extend({
       return this.preferences?.application.updater.enabled ?? false;
     },
   },
+
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
@@ -50,39 +63,43 @@ export default Vue.extend({
 
 <template>
   <div class="application-general">
-    <rd-fieldset
-      v-if="!isPlatformWindows"
-      data-test="administrativeAccess"
-      legend-text="Administrative Access"
-      :legend-tooltip="sudoAllowedTooltip"
-    >
-      <checkbox
-        label="Allow to acquire administrative credentials (sudo access)"
-        :value="isSudoAllowed"
-        @input="onChange('application.adminAccess', $event)"
-      />
-    </rd-fieldset>
-    <rd-fieldset
-      data-test="automaticUpdates"
-      legend-text="Automatic Updates"
-    >
-      <checkbox
-        data-test="automaticUpdatesCheckbox"
-        label="Check for updates automatically"
-        :value="canAutoUpdate"
-        @input="onChange('application.updater.enabled', $event)"
-      />
-    </rd-fieldset>
-    <rd-fieldset
-      data-test="statistics"
-      legend-text="Statistics"
-    >
-      <checkbox
-        label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
-        :value="preferences.application.telemetry.enabled"
-        @input="onChange('application.telemetry.enabled', $event)"
-      />
-    </rd-fieldset>
+    <div id="name_field" class="field">
+      <div class="form-group" :class="{ 'form-group--error': $v.name.$error }">
+        <label class="form__label">Name</label>
+        <input
+          v-model.trim="$v.name.$model"
+          class="form__input"
+        />
+        <div
+          v-if="!$v.name.required"
+          class="error"
+        >
+          Field is required
+        </div>
+        <div
+          v-if="!$v.name.minLength"
+          class="error"
+        >
+          Name must have at least {{ $v.name.$params.minLength.min }} letters.
+        </div>
+      </div>
+    </div>
+
+    <div id="age_field" class="field">
+      <div class="form-group" :class="{ 'form-group--error': $v.age.$error }">
+        <label class="form__label">Age</label>
+        <input
+          v-model.trim="$v.age.$model"
+          class="form__input"
+        />
+        <div
+          v-if="!$v.age.between"
+          class="error"
+        >
+          Must be between {{ $v.age.$params.between.min }} and {{ $v.age.$params.between.max }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -91,5 +108,26 @@ export default Vue.extend({
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .field {
+    margin-top: 2px;
+  }
+
+  .form__input {
+    margin: 5px;
+  }
+
+  .form-group--error {
+    color: red;
+
+    .form__input {
+      border-color: red;
+
+      outline-color: none;
+      outline-style: none;
+      outline-width: none;
+
+    }
   }
 </style>

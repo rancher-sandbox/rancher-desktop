@@ -60,6 +60,7 @@ export default {
     '~/plugins/tooltip',
     '~/plugins/v-select',
     '~/plugins/vue-js-modal',
+    '~/plugins/vuelidate',
 
     // First-party
     '~/plugins/i18n',
