@@ -735,14 +735,19 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
       await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
 
-      if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
-        await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
-        await this.writeConf('vtunnel-peer', {
-          VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
-          LOG_DIR:             await this.wslify(paths.logs),
-          CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
-        });
-        await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
+      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, 0o755);
+      await this.writeConf('vtunnel-peer', {
+        VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
+        LOG_DIR:             await this.wslify(paths.logs),
+        CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
+      });
+      await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
+
+      // Stop the service if RD Networking is enabled. We need to add it
+      // first as rc-service del … fails if the service is not enabled,
+      // but rc-service add … handles an already-enabled service fine.
+      if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
+        await this.execCommand('/sbin/rc-update', 'del', 'vtunnel-peer', 'default');
       }
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
@@ -798,7 +803,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     let guestAgentConfig: Record<string, any>;
     const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
 
-    const privilegedServiceEnabled = await this.invokePrivilegedService('start');
+    const rdNetworking = !!cfg?.experimental.virtualMachine.networkingTunnel;
+    const privilegedServiceEnabled = rdNetworking ? false : await this.invokePrivilegedService('start');
 
     if (privilegedServiceEnabled) {
       guestAgentConfig = {
@@ -827,6 +833,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.writeConf('rancher-desktop-guestagent', guestAgentConfig),
     ]);
     await this.execCommand('/sbin/rc-update', 'add', 'rancher-desktop-guestagent', 'default');
+
+    // Stop the service if RD Networking is enabled. We need to add it
+    // first as rc-service del … fails if the service is not enabled,
+    // but rc-service add … handles an already-enabled service fine.
+    if (rdNetworking) {
+      await this.execCommand('/sbin/rc-update', 'del', 'rancher-desktop-guestagent', 'default');
+    }
   }
 
   /**
@@ -1279,13 +1292,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                 await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
               }),
-              await this.progressTracker.action('Rancher Desktop guest agent', 50, async() => {
-                if (!config.experimental.virtualMachine.networkingTunnel) {
-                  // we do not want to run the guest agent for the new rancher desktop networking
-                  // since this can cause port forwarding duplication and clobber the current process.
-                  await this.installGuestAgent(kubernetesVersion, this.cfg);
-                }
-              }),
+              await this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);
 
             await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
