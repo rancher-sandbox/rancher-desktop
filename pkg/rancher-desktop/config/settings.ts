@@ -368,7 +368,8 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
     if (err.code === 'ENOENT') {
       // An empty deployment profile is considered the same as an absent one,
       // because on Windows it's impossible to have an empty set of registry keys
-      // but still have a deployment profile. Linux and macOS can have empty files, but we'll ignore those.
+      // but still have a deployment profile.
+      // Linux and macOS can have empty files, but we'll ignore those.
       if (Object.keys(deploymentProfiles.defaults).length) {
         _.merge(settings, deploymentProfiles.defaults);
         if (!_.has(deploymentProfiles.defaults, 'virtualMachine.memoryInGB')) {
