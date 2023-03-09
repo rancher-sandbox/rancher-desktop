@@ -1549,8 +1549,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   /**
-   * Get the network interface to listen on for services; used for flannel
-   * configuration.
+   * Get the network interface name and address to listen on for services;
+   * used for flannel configuration.
    */
   async getListeningInterface() {
     const bridgedIP = await this.getInterfaceAddr('rd0');
@@ -1558,23 +1558,21 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (bridgedIP) {
       console.log(`Using ${ bridgedIP } on bridged network rd0`);
 
-      return 'rd0';
-    } else {
-      const sharedIP = await this.getInterfaceAddr('rd1');
-
-      if (this.cfg?.application.adminAccess) {
-        await this.noBridgedNetworkDialog(sharedIP);
-      }
-      if (sharedIP) {
-        console.log(`Using ${ sharedIP } on shared network rd1`);
-
-        return 'rd1';
-      } else {
-        console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
-
-        return 'eth0';
-      }
+      return { iface: 'rd0', addr: bridgedIP };
     }
+    const sharedIP = await this.getInterfaceAddr('rd1');
+
+    if (this.cfg?.application.adminAccess) {
+      await this.noBridgedNetworkDialog(sharedIP);
+    }
+    if (sharedIP) {
+      console.log(`Using ${ sharedIP } on shared network rd1`);
+
+      return { iface: 'rd1', addr: sharedIP };
+    }
+    console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
+
+    return { iface: 'eth0', addr: await this.ipAddress };
   }
 
   /**

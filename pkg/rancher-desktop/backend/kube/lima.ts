@@ -350,9 +350,12 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
     if (allowSudo && os.platform() === 'darwin') {
       if (cfg.kubernetes.options.flannel) {
-        const iface = await this.vm.getListeningInterface();
+        const { iface, addr } = await this.vm.getListeningInterface();
 
         config.ADDITIONAL_ARGS += ` --flannel-iface ${ iface }`;
+        if (addr) {
+          config.ADDITIONAL_ARGS += ` --node-external-ip ${ addr }`;
+        }
       } else {
         console.log(`Disabling flannel and network policy`);
         config.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
