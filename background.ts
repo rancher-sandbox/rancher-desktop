@@ -528,22 +528,9 @@ ipcMainProxy.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg, { interactive: true });
 });
 
-ipcMainProxy.on('api-get-credentials', () => {
-  mainEvents.emit('api-get-credentials');
-});
-
-Electron.ipcMain.handle('api-get-credentials', () => {
-  return new Promise<void>((resolve) => {
-    mainEvents.once('api-credentials', resolve);
-    mainEvents.emit('api-get-credentials');
-  });
-});
+ipcMainProxy.handle('api-get-credentials', () => mainEvents.invoke('api-get-credentials'));
 
 ipcMainProxy.handle('get-locked-fields', () => settings.getLockedSettings());
-
-mainEvents.on('api-credentials', (credentials) => {
-  window.send('api-credentials', credentials);
-});
 
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);

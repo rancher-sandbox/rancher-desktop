@@ -26,7 +26,9 @@ interface PreferencesState {
   canApply: boolean;
 }
 
-interface CommitArgs extends ServerState {
+type Credentials = Omit<ServerState, 'pid'>;
+
+interface CommitArgs extends Credentials {
   payload?: RecursivePartial<Settings>;
 }
 
@@ -118,7 +120,7 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: ServerState) {
+  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: Credentials) {
     const { port, user, password } = args;
 
     const response = await fetch(
@@ -178,7 +180,7 @@ export const actions = {
 
     await dispatch(
       'preferences/proposePreferences',
-      { ...rootState.credentials.credentials as ServerState },
+      { ...rootState.credentials.credentials as Credentials },
       { root: true },
     );
   },
@@ -258,7 +260,7 @@ export const actions = {
     await dispatch(
       'preferences/commitPreferences',
       {
-        ...rootState.credentials.credentials as ServerState,
+        ...rootState.credentials.credentials as Credentials,
         payload: {
           version:     CURRENT_SETTINGS_VERSION,
           diagnostics: { showMuted: isMuted },

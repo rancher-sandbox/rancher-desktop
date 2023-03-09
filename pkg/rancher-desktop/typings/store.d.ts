@@ -28,14 +28,11 @@ declare module 'vuex/types' {
         type: action,
         payload: Parameters<storeActions[action]>[0],
         options?: DispatchOptions
-      ): Promise<ReturnType<storeActions[action]>>;
+      ): Promise<Awaited<ReturnType<storeActions[action]>>>;
 
     <action extends keyof storeActions>
       (
         type: action,
-      ): Promise<ReturnType<storeActions[action]>>;
-
-    /** @deprecated */
-    (type: string, payload?: any, options?: DispatchOptions): Promise<any>;
+      ): Promise<Awaited<ReturnType<storeActions[action]>>>;
   }
 }

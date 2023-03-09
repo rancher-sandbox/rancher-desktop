@@ -72,9 +72,7 @@ export class HttpCommandServer {
 
   constructor(commandWorker: CommandWorkerInterface) {
     this.commandWorker = commandWorker;
-    mainEvents.on('api-get-credentials', () => {
-      mainEvents.emit('api-credentials', this.interactiveState);
-    });
+    mainEvents.handle('api-get-credentials', () => Promise.resolve(this.interactiveState));
   }
 
   async init() {

@@ -5,14 +5,13 @@ import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 interface CredentialsState {
-  credentials: ServerState;
+  credentials: Omit<ServerState, 'pid'>;
 }
 
 export const state: () => CredentialsState = () => (
   {
     credentials: {
       password: '',
-      pid:      0,
       port:     0,
       user:     '',
     },
@@ -28,7 +27,7 @@ export const mutations: MutationsType<CredentialsState> = {
 type CredActionContext = ActionContext<CredentialsState>;
 
 export const actions = {
-  async fetchCredentials({ commit }: CredActionContext): Promise<ServerState> {
+  async fetchCredentials({ commit }: CredActionContext): Promise<Omit<ServerState, 'pid'>> {
     const result = await ipcRenderer.invoke('api-get-credentials');
 
     commit('SET_CREDENTIALS', result);

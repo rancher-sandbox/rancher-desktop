@@ -66,9 +66,6 @@ export interface IpcMainEvents {
 
   'show-logs': () => void;
 
-  /** @deprecated */
-  'api-get-credentials': () => void;
-
   'dashboard-open': () => void;
   'dashboard-close': () => void;
 
@@ -94,7 +91,7 @@ export interface IpcMainInvokeEvents {
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Electron.MessageBoxReturnValue;
   'show-message-box-rd': (options: Electron.MessageBoxOptions, modal?: boolean) => any;
-  'api-get-credentials': () => { user: string, password: string, port: number, pid: number };
+  'api-get-credentials': () => { user: string, password: string, port: number };
   'k8s-progress': () => Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>;
 
   // #region main/imageEvents
@@ -138,10 +135,6 @@ export interface IpcRendererEvents {
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
   'dashboard-open': () => void;
-  // #endregion
-
-  // #region api
-  'api-credentials': (credentials: {user: string, password: string, port: number}) => void;
   // #endregion
 
   // #region tab navigation
