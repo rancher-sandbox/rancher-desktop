@@ -3,13 +3,9 @@ import fs from 'fs';
 import _ from 'lodash';
 
 import * as settings from '../settings';
-import { CacheMode, MountType, ProtocolVersion, SecurityModel } from '../settings';
 
-import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
-import clone from '@pkg/utils/clone';
 import paths from '@pkg/utils/paths';
-import { RecursiveKeys } from '@pkg/utils/typeUtils';
 
 class FakeFSError extends Error {
   public message = '';
@@ -28,8 +24,6 @@ enum ProfileTypes {
 }
 
 describe('settings', () => {
-  let prefs: settings.Settings;
-  let origPrefs: settings.Settings;
   const jsonProfile = JSON.stringify({
     ignoreThis:      { soups: ['gazpacho', 'turtle'] },
     containerEngine: {
@@ -52,18 +46,16 @@ describe('settings', () => {
         <true/>
         <key>not_schema</key>
         <true/>
-        <key>locked</key>
-        <true/>
         <key>patterns</key>
         <array/>
+        <key>containerEngine</key>
+        <string>moby</string>
       </dict>
     </dict>
     <key>kubernetes</key>
     <dict>
       <key>version</key>
       <string>1.23.15</string>
-      <key>containerEngine</key>
-      <string>moby</string>
       <key>enabled</key>
       <true/>
     </dict>
@@ -198,70 +190,6 @@ describe('settings', () => {
 
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
-    prefs = {
-      version:     6,
-      application: {
-        adminAccess:            true,
-        debug:                  true,
-        pathManagementStrategy: PathManagementStrategy.NotSet,
-        telemetry:              { enabled: true },
-        /** Whether we should check for updates and apply them. */
-        updater:                { enabled: true },
-        autoStart:              false,
-        startInBackground:      false,
-        hideNotificationIcon:   false,
-        window:                 { quitOnClose: false },
-      },
-      containerEngine: {
-        allowedImages: {
-          enabled:  false,
-          patterns: [],
-        },
-        name: settings.ContainerEngine.MOBY,
-      },
-      virtualMachine: {
-        memoryInGB:   4,
-        numberCPUs:   2,
-        hostResolver: true,
-      },
-      experimental: {
-        virtualMachine: {
-          mount: {
-            type: MountType.REVERSE_SSHFS,
-            '9p': {
-              securityModel:   SecurityModel.NONE,
-              protocolVersion: ProtocolVersion.NINEP2000_L,
-              msizeInKB:       128,
-              cacheMode:       CacheMode.MMAP,
-            },
-          },
-          socketVMNet:      true,
-          networkingTunnel: false,
-        },
-      },
-      WSL:        { integrations: {} },
-      kubernetes: {
-        version: '1.23.5',
-        port:    6443,
-        enabled: true,
-        options: {
-          traefik: true,
-          flannel: false,
-        },
-      },
-      portForwarding: { includeKubernetesServices: false },
-      images:         {
-        showAll:   true,
-        namespace: 'k8s.io',
-      },
-      diagnostics: {
-        showMuted:   false,
-        mutedChecks: {},
-      },
-    };
-    origPrefs = clone(prefs);
-    // Need to clear the lockedSettings field in tests because settings.load assumes it's initally an empty object.
-    settings.clearLockedSettings();
   });
   afterEach(() => {
     mock.mockRestore();
@@ -424,73 +352,6 @@ describe('settings', () => {
       const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
 
       expect(calculatedLockedFields).toEqual(expectedLockedFields);
-    });
-  });
-
-  describe('getUpdatableNode', () => {
-    test('returns null on an invalid top level accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'blah-blah-blah');
-
-      expect(result).toBeNull();
-    });
-    test('returns null on an invalid internal accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'kubernetes-options-blah');
-
-      expect(result).toBeNull();
-    });
-    test('returns the full pref with a top-level accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'kubernetes') as [Record<string, any>, string];
-
-      expect(result).not.toBeNull();
-      const [lhs, accessor] = result;
-
-      expect(lhs).toEqual(prefs);
-      expect(accessor).toBe('kubernetes');
-    });
-    test('returns a partial pref with an internal accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'kubernetes.options.flannel') as [Record<string, any>, string];
-
-      expect(result).not.toBeNull();
-      const [lhs, accessor] = result;
-      const flannelNow = prefs.kubernetes.options.flannel;
-      const flannelAfter = !flannelNow;
-
-      expect(lhs).toEqual({
-        ...origPrefs.kubernetes.options,
-        flannel: flannelNow,
-      });
-      expect(accessor).toBe('flannel');
-      lhs[accessor] = flannelAfter;
-      expect(prefs.kubernetes.options.flannel).toBe(flannelAfter);
-    });
-  });
-
-  describe('getObjectRepresentation', () => {
-    test('handles more than 2 dots', () => {
-      expect(settings.getObjectRepresentation('a.b.c.d' as RecursiveKeys<settings.Settings>, 3))
-        .toMatchObject({ a: { b: { c: { d: 3 } } } });
-    });
-    test('handles 2 dots', () => {
-      expect(settings.getObjectRepresentation('a.b.c' as RecursiveKeys<settings.Settings>, false))
-        .toMatchObject({ a: { b: { c: false } } });
-    });
-    test('handles 1 dot', () => {
-      expect(settings.getObjectRepresentation('first.last' as RecursiveKeys<settings.Settings>, 'middle'))
-        .toMatchObject({ first: { last: 'middle' } });
-    });
-    test('handles 0 dots', () => {
-      expect(settings.getObjectRepresentation('version', 4))
-        .toMatchObject({ version: 4 });
-    });
-    test('complains about an invalid accessor', () => {
-      expect(() => {
-        settings.getObjectRepresentation('application.' as RecursiveKeys<settings.Settings>, 4);
-      }).toThrow("Unrecognized command-line option ends with a dot ('.')");
-    });
-    test('complains about an empty-string accessor', () => {
-      expect(() => {
-        settings.getObjectRepresentation('' as RecursiveKeys<settings.Settings>, 4);
-      }).toThrow("Invalid command-line option: can't be the empty string.");
     });
   });
 });
