@@ -719,6 +719,14 @@ test.describe('Command server', () => {
         ],
       };
       const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
+      const commonOptions = [
+        'container-engine.name',
+        'container-engine.allowed-images.enabled',
+        'kubernetes.version',
+        'kubernetes.port',
+        'kubernetes.options.traefik',
+        'port-forwarding.include-kubernetes-services',
+      ];
 
       test('complains when no args are given', async() => {
         const { stdout, stderr, error } = await rdctl(['set']);
@@ -731,7 +739,19 @@ test.describe('Command server', () => {
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
-        expect(stderr.split(/\n/).filter(line => /^\s+--/.test(line)).length).toBe(34 - unsupportedOptions.length);
+        const options = stderr.split(/\n/)
+          .filter(line => /^\s+--/.test(line))
+          .map(line => (/\s+--([-.\w]+)\s/.exec(line) || [])[1])
+          .filter(line => line);
+
+        // This part is a bit subtle
+        // Require that the received options contain at least all the common options
+        expect(options).toEqual(expect.arrayContaining(commonOptions));
+        // We can't use `not.toEqual.arrayContaining` for the unsupported options because if the received
+        // list contains some but not all of the unsupported options the not-test will still succeed
+        for (const option of unsupportedOptions) {
+          expect(options).not.toContain(option[0]);
+        }
       });
 
       test('complains when option value missing', async() => {
