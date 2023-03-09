@@ -74,36 +74,36 @@ func containerCopyHandler(c *commandDefinition, args []string, argHandlers argHa
 		return nil, err
 	}
 
-	hostPathDeterminerFuncs := []func(i int, p string) (hostPathResult, error){
-		func(i int, p string) (hostPathResult, error) {
+	hostPathDeterminerFuncs := []func(i int, p string) hostPathResult{
+		func(i int, p string) hostPathResult {
 			if p == "-" {
 				// If one argument is "-", the other must be a container path, so
 				// neither needs to be modified.
-				return hostPathNeither, nil
+				return hostPathNeither
 			}
-			return hostPathUnknown, nil
+			return hostPathUnknown
 		},
-		func(i int, p string) (hostPathResult, error) {
+		func(i int, p string) hostPathResult {
 			colon := strings.Index(p, ":")
 			if colon < 1 {
 				// If there's no colon in the path specification at all, or if the
 				// string starts with a colon (which is invalid), then this must not be
 				// a container path (and therefore the other one is).
-				return hostPathCurrent, nil
+				return hostPathCurrent
 			}
-			return hostPathUnknown, nil
+			return hostPathUnknown
 		},
-		func(i int, p string) (hostPathResult, error) {
+		func(i int, p string) hostPathResult {
 			colon := strings.Index(p, ":")
 			if colon > 1 {
 				// There's multiple characters before the first colon; this is a container
 				// path specification (foo:/path/in/container), so the other must be a
 				// host path specification.
-				return hostPathOther, nil
+				return hostPathOther
 			}
-			return hostPathUnknown, nil
+			return hostPathUnknown
 		},
-		func(i int, p string) (hostPathResult, error) {
+		func(i int, p string) hostPathResult {
 			colon := strings.Index(p, ":")
 			if colon != 1 {
 				// Shouldn't get here -- one of the two previous functions should have
@@ -112,19 +112,16 @@ func containerCopyHandler(c *commandDefinition, args []string, argHandlers argHa
 			}
 			// Fall back: the first element should be treated as the container path.
 			if i == 0 {
-				return hostPathOther, nil
+				return hostPathOther
 			}
-			return hostPathCurrent, nil
+			return hostPathCurrent
 		},
 	}
 
 functionLoop:
 	for _, f := range hostPathDeterminerFuncs {
 		for i, p := range paths {
-			result, err := f(i, p)
-			if err != nil {
-				return nil, err
-			}
+			result := f(i, p)
 			hostPathIndex := i
 			switch result {
 			case hostPathNeither:
