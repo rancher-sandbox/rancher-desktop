@@ -34,6 +34,7 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 test.describe('Command server', () => {
+  test.skip(os.platform() === 'win32', 'TODO: Implement on Windows');
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   let page: Page;
