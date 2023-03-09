@@ -43,7 +43,7 @@ import paths from '@pkg/utils/paths';
 import { setupProtocolHandler, protocolRegistered } from '@pkg/utils/protocols';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getVersion } from '@pkg/utils/version';
 import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
@@ -484,7 +484,7 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
   preferencesSetDirtyFlag(dirtyFlag);
 });
 
-function writeSettings(arg: RecursivePartial<settings.Settings>) {
+function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
   // arrayCustomizer is necessary to properly merge array of strings
   _.mergeWith(cfg, arg, arrayCustomizer);
   settings.save(cfg);
