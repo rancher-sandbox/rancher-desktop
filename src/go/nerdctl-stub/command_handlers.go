@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // This file contains handlers for specific commands.
@@ -25,7 +27,9 @@ func imageBuildHandler(c *commandDefinition, args []string, argHandlers argHandl
 	}
 	newPath, cleanups, err := argHandlers.filePathArgHandler(args[0])
 	if err != nil {
-		runCleanups(cleanups)
+		if cleanupErr := runCleanups(cleanups); cleanupErr != nil {
+			err = multierror.Append(err, cleanupErr)
+		}
 		return nil, err
 	}
 	return &parsedArgs{args: append([]string{newPath}, args[1:]...), cleanup: cleanups}, nil
@@ -63,8 +67,11 @@ func containerCopyHandler(c *commandDefinition, args []string, argHandlers argHa
 
 	if len(paths) != 2 {
 		// We should have exactly one source and one destination... just fail
-		runCleanups(cleanups)
-		return nil, fmt.Errorf("accepts 2 args, received %d", len(paths))
+		err := fmt.Errorf("accepts 2 args, received %d", len(paths))
+		if cleanupErr := runCleanups(cleanups); cleanupErr != nil {
+			err = multierror.Append(err, cleanupErr)
+		}
+		return nil, err
 	}
 
 	hostPathDeterminerFuncs := []func(i int, p string) (hostPathResult, error){
@@ -136,7 +143,9 @@ functionLoop:
 			newPath, newCleanups, err := argHandlers.filePathArgHandler(paths[hostPathIndex])
 			if err != nil {
 				cleanups = append(cleanups, newCleanups...)
-				runCleanups(cleanups)
+				if cleanupErr := runCleanups(cleanups); cleanupErr != nil {
+					err = multierror.Append(err, cleanupErr)
+				}
 				return nil, err
 			}
 			resultArgs = append(resultArgs, newPath)
