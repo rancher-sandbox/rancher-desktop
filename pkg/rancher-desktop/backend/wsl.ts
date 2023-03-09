@@ -105,7 +105,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.emit('progress');
     });
 
-    this.privilegedInstall = false;
     this.hostSwitchProcess = new BackgroundProcess('host-switch.exe', {
       spawn: async() => {
         const exe = path.join(paths.resources, 'win32', 'internal', 'host-switch.exe');
@@ -161,7 +160,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   protected cfg: BackendSettings | undefined;
 
   /** Indicates wherther the current installation is a privileged install or not. */
-  protected privilegedInstall: boolean;
+  protected privilegedServiceEnabled: false | undefined;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -812,7 +811,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
     const rdNetworking = !!cfg?.experimental.virtualMachine.networkingTunnel;
 
-    if (this.privilegedInstall) {
+    if (this.privilegedServiceEnabled) {
       guestAgentConfig = {
         LOG_DIR:                       await this.wslify(paths.logs),
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
@@ -1181,7 +1180,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         const rdNetworking = !!config?.experimental.virtualMachine.networkingTunnel;
 
-        this.privilegedInstall = rdNetworking ? false : await this.invokePrivilegedService('start');
+        this.privilegedServiceEnabled = rdNetworking ? false : await this.invokePrivilegedService('start');
 
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
@@ -1372,7 +1371,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         // If it's not a privileged installation preset guestAgent
         // port binding address to localhost only.
-        if (!this.privilegedInstall && !config.kubernetes.ingress.localhostOnly) {
+        if (!this.privilegedServiceEnabled && !config.kubernetes.ingress.localhostOnly) {
           this.writeSetting({ kubernetes: { ingress: { localhostOnly: true } } });
         }
 
