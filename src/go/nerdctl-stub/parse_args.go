@@ -20,6 +20,20 @@ type parsedArgs struct {
 // argHandler is the type of a function that handles some argument.
 type argHandler func(string) (string, []cleanupFunc, error)
 
+// argHandlersType defines the functions passed in command handlers.
+type argHandlersType struct {
+	volumeArgHandler       argHandler
+	filePathArgHandler     argHandler
+	outputPathArgHandler   argHandler
+	mountArgHandler        argHandler
+	builderCacheArgHandler argHandler
+}
+
+// commandHandlerType is the type of commandDefinition.handler, which is used
+// to handle positional arguments (and special subcommands).
+// The passed-in arguments include any flags given after positional arguments.
+type commandHandlerType func(*commandDefinition, []string, argHandlersType) (*parsedArgs, error)
+
 type commandDefinition struct {
 	// commands points to the global command map; if this is null, then the global
 	// variable named "commands" is used instead.
@@ -34,7 +48,7 @@ type commandDefinition struct {
 	// handler for any positional arguments and subcommands.  This should not
 	// include the name of the subcommand itself.  If this is not given, all
 	// subcommands are searched for, and positional arguments are ignored.
-	handler func(*commandDefinition, []string) (*parsedArgs, error)
+	handler commandHandlerType
 }
 
 // parseOption takes an argument (that is known to start with `-` or `--`) plus
@@ -145,7 +159,7 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 		} else {
 			// Handler positional arguments and subcommands.
 			if c.handler != nil {
-				childResult, err := c.handler(&c, args[argIndex:])
+				childResult, err := c.handler(&c, args[argIndex:], argHandlers)
 				if err != nil {
 					return nil, err
 				}
@@ -179,16 +193,6 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 		}
 	}
 	return &result, nil
-}
-
-type optionDefinition struct {
-	// long name for the argument
-	long string
-	// short name for the argument (optional)
-	short string
-	// handler to convert values; if unset, this argument does not take a value.
-	// It returns the converted value, plus any cleanup functions.
-	handler func(string) (string, []func(*parsedArgs) error, error)
 }
 
 // parseArgs parses the process arguments (os.Args) and returns them with any
@@ -227,7 +231,7 @@ func registerArgHandler(command, option string, handler argHandler) {
 
 // registerCommandHandler sets handlers for positional arguments.  This should
 // be called from init().
-func registerCommandHandler(command string, handler func(*commandDefinition, []string) (*parsedArgs, error)) {
+func registerCommandHandler(command string, handler commandHandlerType) {
 	// Do some extra checking to guard against typos.
 	if _, ok := commands[command]; !ok {
 		panic(fmt.Sprintf("unknown command %q", command))
@@ -284,42 +288,43 @@ func aliasCommand(alias, target string) {
 
 func init() {
 	// Set up the argument handlers
-	registerArgHandler("builder build", "--cache-from", builderCacheArgHandler)
-	registerArgHandler("builder build", "--cache-to", builderCacheArgHandler)
-	registerArgHandler("builder build", "--file", filePathArgHandler)
-	registerArgHandler("builder build", "--iidfile", outputPathArgHandler)
-	registerArgHandler("builder debug", "--file", filePathArgHandler)
-	registerArgHandler("builder debug", "-f", filePathArgHandler)
-	registerArgHandler("compose", "--file", filePathArgHandler)
-	registerArgHandler("compose", "-f", filePathArgHandler)
-	registerArgHandler("compose", "--project-directory", filePathArgHandler)
-	registerArgHandler("compose", "--env-file", filePathArgHandler)
-	registerArgHandler("compose run", "--volume", volumeArgHandler)
-	registerArgHandler("compose run", "-v", volumeArgHandler)
-	registerArgHandler("container create", "--cidfile", outputPathArgHandler)
-	registerArgHandler("container create", "--cosign-key", filePathArgHandler)
-	registerArgHandler("container create", "--env-file", filePathArgHandler)
-	registerArgHandler("container create", "--label-file", filePathArgHandler)
-	registerArgHandler("container create", "--mount", mountArgHandler)
-	registerArgHandler("container create", "--pidfile", outputPathArgHandler)
-	registerArgHandler("container create", "--volume", volumeArgHandler)
-	registerArgHandler("container create", "-v", volumeArgHandler)
-	registerArgHandler("container run", "--cidfile", outputPathArgHandler)
-	registerArgHandler("container run", "--cosign-key", filePathArgHandler)
-	registerArgHandler("container run", "--env-file", filePathArgHandler)
-	registerArgHandler("container run", "--label-file", filePathArgHandler)
-	registerArgHandler("container run", "--mount", mountArgHandler)
-	registerArgHandler("container run", "--pidfile", outputPathArgHandler)
-	registerArgHandler("container run", "--volume", volumeArgHandler)
-	registerArgHandler("container run", "-v", volumeArgHandler)
-	registerArgHandler("image build", "--file", filePathArgHandler)
-	registerArgHandler("image build", "-f", filePathArgHandler)
-	registerArgHandler("image convert", "--estargz-record-in", filePathArgHandler)
-	registerArgHandler("image load", "--input", filePathArgHandler)
-	registerArgHandler("image save", "--output", outputPathArgHandler)
+	registerArgHandler("builder build", "--cache-from", argHandlers.builderCacheArgHandler)
+	registerArgHandler("builder build", "--cache-to", argHandlers.builderCacheArgHandler)
+	registerArgHandler("builder build", "--file", argHandlers.filePathArgHandler)
+	registerArgHandler("builder build", "--iidfile", argHandlers.outputPathArgHandler)
+	registerArgHandler("builder debug", "--file", argHandlers.filePathArgHandler)
+	registerArgHandler("builder debug", "-f", argHandlers.filePathArgHandler)
+	registerArgHandler("compose", "--file", argHandlers.filePathArgHandler)
+	registerArgHandler("compose", "-f", argHandlers.filePathArgHandler)
+	registerArgHandler("compose", "--project-directory", argHandlers.filePathArgHandler)
+	registerArgHandler("compose", "--env-file", argHandlers.filePathArgHandler)
+	registerArgHandler("compose run", "--volume", argHandlers.volumeArgHandler)
+	registerArgHandler("compose run", "-v", argHandlers.volumeArgHandler)
+	registerArgHandler("container create", "--cidfile", argHandlers.outputPathArgHandler)
+	registerArgHandler("container create", "--cosign-key", argHandlers.filePathArgHandler)
+	registerArgHandler("container create", "--env-file", argHandlers.filePathArgHandler)
+	registerArgHandler("container create", "--label-file", argHandlers.filePathArgHandler)
+	registerArgHandler("container create", "--mount", argHandlers.mountArgHandler)
+	registerArgHandler("container create", "--pidfile", argHandlers.outputPathArgHandler)
+	registerArgHandler("container create", "--volume", argHandlers.volumeArgHandler)
+	registerArgHandler("container create", "-v", argHandlers.volumeArgHandler)
+	registerArgHandler("container run", "--cidfile", argHandlers.outputPathArgHandler)
+	registerArgHandler("container run", "--cosign-key", argHandlers.filePathArgHandler)
+	registerArgHandler("container run", "--env-file", argHandlers.filePathArgHandler)
+	registerArgHandler("container run", "--label-file", argHandlers.filePathArgHandler)
+	registerArgHandler("container run", "--mount", argHandlers.mountArgHandler)
+	registerArgHandler("container run", "--pidfile", argHandlers.outputPathArgHandler)
+	registerArgHandler("container run", "--volume", argHandlers.volumeArgHandler)
+	registerArgHandler("container run", "-v", argHandlers.volumeArgHandler)
+	registerArgHandler("image build", "--file", argHandlers.filePathArgHandler)
+	registerArgHandler("image build", "-f", argHandlers.filePathArgHandler)
+	registerArgHandler("image convert", "--estargz-record-in", argHandlers.filePathArgHandler)
+	registerArgHandler("image load", "--input", argHandlers.filePathArgHandler)
+	registerArgHandler("image save", "--output", argHandlers.outputPathArgHandler)
 
 	// Set up command handlers
 	registerCommandHandler("image build", imageBuildHandler)
+	registerCommandHandler("container cp", containerCopyHandler)
 
 	// Set up aliases
 	aliasCommand("commit", "container commit")

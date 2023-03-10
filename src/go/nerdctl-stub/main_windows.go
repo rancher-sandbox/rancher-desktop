@@ -123,3 +123,12 @@ func outputPathArgHandler(arg string) (string, []cleanupFunc, error) {
 func builderCacheArgHandler(arg string) (string, []cleanupFunc, error) {
 	return builderCacheProcessor(arg, filePathArgHandler, outputPathArgHandler)
 }
+
+// argHandlers is the table of argument handlers.
+var argHandlers = argHandlersType{
+	volumeArgHandler:       volumeArgHandler,
+	filePathArgHandler:     filePathArgHandler,
+	outputPathArgHandler:   outputPathArgHandler,
+	mountArgHandler:        mountArgHandler,
+	builderCacheArgHandler: builderCacheArgHandler,
+}

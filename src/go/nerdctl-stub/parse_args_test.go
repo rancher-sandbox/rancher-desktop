@@ -186,7 +186,7 @@ func TestParse(t *testing.T) {
 		t.Parallel()
 		run := false
 		c := commandDefinition{
-			handler: func(c *commandDefinition, args []string) (*parsedArgs, error) {
+			handler: func(c *commandDefinition, args []string, argHandlers argHandlersType) (*parsedArgs, error) {
 				run = true
 				assert.Equal(t, []string{"positional", "arguments"}, args)
 				return &parsedArgs{}, nil
@@ -214,7 +214,7 @@ func TestParse(t *testing.T) {
 		}
 		localCommands["subcommand"] = commandDefinition{
 			commands: &localCommands,
-			handler: func(c *commandDefinition, args []string) (*parsedArgs, error) {
+			handler: func(c *commandDefinition, args []string, argHandlers argHandlersType) (*parsedArgs, error) {
 				run = true
 				assert.Equal(t, []string{"a", "b"}, args)
 				return &parsedArgs{}, nil
