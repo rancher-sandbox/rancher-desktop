@@ -132,7 +132,7 @@ async function getExtensionManager(client?: ContainerEngineClient, cfg?: Recursi
   }
 
   if (!cfg) {
-    throw new Error(`getExtensionaManager called without configuration`);
+    throw new Error(`getExtensionManager called without configuration`);
   }
 
   await manager?.shutdown();

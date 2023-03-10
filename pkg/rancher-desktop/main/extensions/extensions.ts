@@ -85,82 +85,26 @@ export class ExtensionImpl implements Extension {
   async install(): Promise<boolean> {
     const metadata = await this.metadata;
 
+    function isRejectedResult<T>(result: PromiseSettledResult<T>): result is PromiseRejectedResult {
+      return result.status === 'rejected';
+    }
+
     await fs.promises.mkdir(paths.extensionRoot, { recursive: true });
     const workDir = await fs.promises.mkdtemp(path.join(paths.extensionRoot, `tmp.${ path.basename(this.dir) }`));
+    const results = await Promise.allSettled([
+      this.installMetadata(workDir, metadata),
+      this.installIcon(workDir, metadata),
+      this.installUI(workDir, metadata),
+      this.installHostExecutables(workDir, metadata),
+    ]);
+    const failure = results.find(isRejectedResult);
 
-    try {
-      await Promise.all([
-        // Copy the metadata file
-        fs.promises.writeFile(path.join(workDir, 'metadata.json'), JSON.stringify(metadata, undefined, 2)),
-
-        // Copy the icon
-        (async() => {
-          try {
-            const origIconName = path.basename(metadata.icon);
-
-            try {
-              await this.client.copyFile(this.id, metadata.icon, workDir);
-            } catch (ex: any) {
-              throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex);
-            }
-            if (origIconName !== await this.iconName) {
-              await fs.promises.rename(path.join(workDir, origIconName), path.join(workDir, await this.iconName));
-            }
-          } catch (ex) {
-            console.error(`Could not copy icon for extension ${ this.id }: ${ ex }`);
-            throw ex;
-          }
-        })(),
-
-        // Copy UI
-        (async() => {
-          const uiDir = path.join(workDir, 'ui');
-
-          if (!metadata.ui) {
-            return;
-          }
-
-          await fs.promises.mkdir(uiDir, { recursive: true });
-          await Promise.all(Object.entries(metadata.ui).map(async([name, data]) => {
-            try {
-              await fs.promises.mkdir(path.join(uiDir, name), { recursive: true });
-              await this.client.copyFile(this.id, data.root, path.join(uiDir, name));
-            } catch (ex: any) {
-              throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy UI ${ name }`, ex);
-            }
-          }));
-        })(),
-
-        // Copy host executables
-        (async() => {
-          let plat: 'windows' | 'linux' | 'darwin' = 'windows';
-
-          if (process.platform === 'linux' || process.platform === 'darwin') {
-            plat = process.platform;
-          } else if (process.platform !== 'win32') {
-            throw new Error(`Platform ${ process.platform } is not supported`);
-          }
-          const binDir = path.join(workDir, 'bin');
-
-          await fs.promises.mkdir(binDir, { recursive: true });
-          const binaries = metadata.host?.binaries ?? [];
-          const paths = binaries.flatMap(p => p[plat]).map(b => b?.path).filter(defined);
-
-          await Promise.all(paths.map(async(p) => {
-            try {
-              await this.client.copyFile(this.id, p, binDir);
-            } catch (ex: any) {
-              throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy host binary ${ p }`, ex);
-            }
-          }));
-        })(),
-      ]);
-    } catch (ex) {
-      console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
+    if (failure) {
+      console.error(`Failed to install extension ${ this.id }, cleaning up:`, failure.reason);
       await fs.promises.rm(workDir, { recursive: true }).catch((e) => {
         console.error(`Failed to cleanup extension directory ${ workDir }`, e);
       });
-      throw ex;
+      throw failure.reason;
     }
 
     await fs.promises.rename(workDir, this.dir);
@@ -170,6 +114,74 @@ export class ExtensionImpl implements Extension {
     console.debug(`Install ${ this.id }: install complete.`);
 
     return true;
+  }
+
+  protected installMetadata(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    return fs.promises.writeFile(
+      path.join(workDir, 'metadata.json'),
+      JSON.stringify(metadata, undefined, 2));
+  }
+
+  protected async installIcon(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    try {
+      const origIconName = path.basename(metadata.icon);
+
+      await this.client.copyFile(this.id, metadata.icon, workDir);
+      if (origIconName !== await this.iconName) {
+        await fs.promises.rename(path.join(workDir, origIconName), path.join(workDir, await this.iconName));
+      }
+    } catch (ex) {
+      console.error(`Could not copy icon for extension ${ this.id }: ${ ex }`);
+      if ((ex as NodeJS.ErrnoException)?.code === 'ENOENT') {
+        throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex as Error);
+      }
+      throw ex;
+    }
+  }
+
+  protected async installUI(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    if (!metadata.ui) {
+      return;
+    }
+
+    const uiDir = path.join(workDir, 'ui');
+
+    await fs.promises.mkdir(uiDir, { recursive: true });
+    await Promise.all(Object.entries(metadata.ui).map(async([name, data]) => {
+      try {
+        await fs.promises.mkdir(path.join(uiDir, name), { recursive: true });
+        await this.client.copyFile(this.id, data.root, path.join(uiDir, name));
+      } catch (ex: any) {
+        throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy UI ${ name }`, ex);
+      }
+    }));
+  }
+
+  protected async installHostExecutables(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    const plat: 'windows' | 'linux' | 'darwin' = (() => {
+      switch (process.platform) {
+      case 'win32':
+        return 'windows';
+      case 'linux':
+      case 'darwin':
+        return process.platform;
+      default:
+        throw new Error(`Platform ${ process.platform } is not supported`);
+      }
+    })();
+    const binDir = path.join(workDir, 'bin');
+
+    await fs.promises.mkdir(binDir, { recursive: true });
+    const binaries = metadata.host?.binaries ?? [];
+    const paths = binaries.flatMap(p => p[plat]).map(b => b?.path).filter(defined);
+
+    await Promise.all(paths.map(async(p) => {
+      try {
+        await this.client.copyFile(this.id, p, binDir);
+      } catch (ex: any) {
+        throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy host binary ${ p }`, ex);
+      }
+    }));
   }
 
   async uninstall(): Promise<boolean> {

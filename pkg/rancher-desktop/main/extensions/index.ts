@@ -21,7 +21,7 @@ export async function getExtensionManager(client?: ContainerEngineClient, cfg?: 
 
   if (client) {
     if (!cfg) {
-      throw new Error(`getExtensionaManager called without configuration`);
+      throw new Error(`getExtensionManager called without configuration`);
     }
 
     return getEMImpl(client, cfg);

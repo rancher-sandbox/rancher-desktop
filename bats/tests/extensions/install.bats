@@ -44,6 +44,7 @@ encoded_id() { # variant
     run rdctl api /v1/extension
     assert_success
     assert_output '{}'
+    assert_dir_not_exist "$PATH_EXTENSIONS"
 }
 
 @test 'build various extension testing images' {

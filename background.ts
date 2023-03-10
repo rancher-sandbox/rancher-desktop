@@ -1050,7 +1050,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return Promise.resolve(Object.fromEntries(entries));
   }
 
-  async installExtension(id: string, state: boolean): Promise<{status: number, data?: any}> {
+  async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
     const getEM = (await import('@pkg/main/extensions/manager')).default;
     const em = await getEM();
     const extension = em?.getExtension(id);
@@ -1060,7 +1060,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
       return { status: 503 };
     }
-    if (state) {
+    if (state === 'install') {
       console.debug(`Installing extension ${ id }...`);
       try {
         if (await extension.install()) {

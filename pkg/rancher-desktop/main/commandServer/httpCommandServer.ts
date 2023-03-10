@@ -574,7 +574,7 @@ export class HttpCommandServer {
       response.status(400).type('txt').send(`Invalid extension id ${ JSON.stringify(id) }: not a string.`);
     } else {
       response.writeProcessing();
-      const { status, data } = await this.commandWorker.installExtension(id, true);
+      const { status, data } = await this.commandWorker.installExtension(id, 'install');
 
       if (data) {
         if (typeof data === 'string') {
@@ -597,7 +597,7 @@ export class HttpCommandServer {
       response.status(400).type('txt').send(`Invalid extension id ${ JSON.stringify(id) }: not a string.`);
     } else {
       response.writeProcessing();
-      const { status, data } = await this.commandWorker.installExtension(id, false);
+      const { status, data } = await this.commandWorker.installExtension(id, 'uninstall');
 
       if (data) {
         if (typeof data === 'string') {
@@ -640,10 +640,10 @@ export interface CommandWorkerInterface {
   listExtensions(): Promise<Record<string, true>>;
   /**
    * Install or uninstall the given extension, returning an appropriate HTTP status code.
-   * @param state Whether to install (true) or uninstall (false) the extension.
+   * @param state Whether to install or uninstall the extension.
    * @returns The HTTP status code, possibly with arbitrary response body data.
    */
-  installExtension(id: string, state: boolean): Promise<{status: number, data?: any}>;
+  installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}>;
   // #endregion
 }
 
