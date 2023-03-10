@@ -87,23 +87,39 @@ func TestContainerCopyHandler(t *testing.T) {
 		},
 	}
 
-	handlers := argHandlersType{
-		filePathArgHandler: func(s string) (string, []cleanupFunc, error) {
-			return fmt.Sprintf("<%s>", s), nil, nil
-		},
-	}
-
 	for _, testCase := range testCases {
 		func(testCase testCaseType) {
 			t.Run(strings.Join(testCase.input, "/"), func(t *testing.T) {
 				t.Parallel()
+				ranHandler := false
+				ranCleanups := false
+				handlers := argHandlersType{
+					filePathArgHandler: func(s string) (string, []cleanupFunc, error) {
+						ranHandler = true
+						return fmt.Sprintf("<%s>", s), []cleanupFunc{func() error {
+							ranCleanups = true
+							return nil
+						}}, nil
+					},
+				}
+
 				result, err := containerCopyHandler(nil, testCase.input, handlers)
 				if testCase.err != "" {
 					assert.EqualError(t, err, testCase.err)
+					if ranHandler {
+						assert.True(t, ranCleanups)
+					}
 				} else {
 					assert.NoError(t, err, "Unexpected error running copy handler")
 					assert.Equal(t, testCase.expected, result.args)
-					assert.Empty(t, result.cleanup)
+					if ranHandler {
+						assert.NotEmpty(t, result.cleanup)
+						assert.False(t, ranCleanups)
+						assert.NoError(t, runCleanups(result.cleanup))
+						assert.True(t, ranCleanups)
+					} else {
+						assert.Empty(t, result.cleanup)
+					}
 				}
 			})
 		}(testCase)
