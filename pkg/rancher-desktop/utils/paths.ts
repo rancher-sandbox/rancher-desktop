@@ -8,7 +8,7 @@ import path from 'path';
 
 import electron from 'electron';
 
-interface Paths {
+export interface Paths {
   /** appHome: the location of the main appdata directory. */
   appHome: string;
   /** altAppHome is a secondary directory for application data. */
@@ -53,6 +53,10 @@ export class UnixPaths implements Paths {
   deploymentProfileUser = '';
   extensionRoot = '';
 
+  constructor(pathsData: object) {
+    Object.assign(this, pathsData);
+  }
+
   get wslDistro(): string {
     throw new Error('wslDistro not available for Unix');
   }
@@ -72,6 +76,10 @@ export class WindowsPaths implements Paths {
   extensionRoot = '';
   wslDistro = '';
   wslDistroData = '';
+
+  constructor(pathsData: object) {
+    Object.assign(this, pathsData);
+  }
 
   get lima(): string {
     throw new Error('lima not available for Windows');
@@ -136,11 +144,11 @@ function getPaths(): Paths {
 
   switch (process.platform) {
   case 'darwin':
-    return pathsData as UnixPaths;
+    return new UnixPaths(pathsData);
   case 'linux':
-    return pathsData as UnixPaths;
+    return new UnixPaths(pathsData);
   case 'win32':
-    return pathsData as WindowsPaths;
+    return new WindowsPaths(pathsData);
   default:
     throw new Error(`Platform "${ process.platform }" is not supported.`);
   }

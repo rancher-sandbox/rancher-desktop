@@ -1,13 +1,24 @@
 import os from 'os';
 import path from 'path';
 
-import paths, { Paths, DarwinPaths, Win32Paths, LinuxPaths } from '../paths';
+import paths, { Paths } from '../paths';
 
-const CURRENT_DIR = path.resolve('.');
-const RESOURCES_PATH = path.join(CURRENT_DIR, 'resources');
+const RESOURCES_PATH = path.join(process.cwd(), 'resources');
 
-type platform = 'darwin' | 'linux' | 'win32';
-type expectedData = Record<platform, string | Error>;
+type Platform = 'darwin' | 'linux' | 'win32';
+type expectedData = Record<Platform, string | Error>;
+
+jest.mock('electron', () => {
+  return {
+    __esModule: true,
+    default:    {
+      app: {
+        isPackaged: false,
+        getAppPath: () => process.cwd(),
+      },
+    },
+  };
+});
 
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
@@ -84,8 +95,10 @@ describe('paths', () => {
   };
 
   const table = Object.entries(cases).flatMap(
-    ([prop, data]) => Object.entries(data).map<[string, platform, string|Error]>(
-      ([platform, expected]) => [prop, platform as platform, expected]));
+    ([prop, data]) => Object.entries(data).map<[string, Platform, string|Error]>(
+      ([platform, expected]) => [prop, platform as Platform, expected],
+    ),
+  ).filter(([_, platform]) => platform === process.platform);
 
   // Make a fake environment, because these would not be available on mac.
   const env = Object.assign(process.env, {
@@ -93,17 +106,8 @@ describe('paths', () => {
     LOCALAPPDATA: path.join(os.homedir(), 'AppData', 'Local'),
   });
 
-  const pathsConstructor: Record<platform, new() => Paths> = {
-    darwin: DarwinPaths,
-    linux:  LinuxPaths,
-    win32:  Win32Paths,
-  };
-
-  test.each(table)('.%s (%s)', (prop, platform, expected) => {
-    expect(pathsConstructor).toHaveProperty(platform);
-
+  test.each(table)('.%s (%s)', (prop, _, expected) => {
     const propName = prop as keyof Paths;
-    const paths = new pathsConstructor[platform]();
 
     if (expected instanceof Error) {
       expect(() => paths[propName]).toThrow();
@@ -123,13 +127,6 @@ describe('paths', () => {
 
       expect(actual).toEqual(cleaned);
     }
-  });
-
-  it('should should be for the correct platform', () => {
-    const platform = os.platform();
-
-    expect(pathsConstructor).toHaveProperty(platform);
-    expect(paths).toBeInstanceOf(pathsConstructor[os.platform() as platform]);
   });
 
   it('lima should be in one of the main subtrees', () => {
