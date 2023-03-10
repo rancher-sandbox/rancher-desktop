@@ -175,13 +175,8 @@ function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): Recurs
         const multiSzValue = nativeReg.queryValueRaw(regKey, k);
 
         if (multiSzValue) {
-          // parseMultiString d oesn't work exactly as advertised
-          // https://github.com/simonbuchan/native-reg#parsemultistring
-          let arrayValue = nativeReg.parseMultiString(multiSzValue as nativeReg.Value);
+          const arrayValue = nativeReg.parseMultiString(multiSzValue as nativeReg.Value);
 
-          if (arrayValue?.length === 1 && arrayValue[0].includes('\\0')) {
-            arrayValue = arrayValue[0].split('\\0').filter(s => s);
-          }
           regValue = arrayValue.length ? arrayValue : null;
         } else {
           regValue = null;
