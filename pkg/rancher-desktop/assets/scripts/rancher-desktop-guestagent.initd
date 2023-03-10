@@ -17,6 +17,7 @@ command_args="
   ${GUESTAGENT_PRIVILEGED_SERVICE:+-privilegedService=${GUESTAGENT_PRIVILEGED_SERVICE}}
   ${GUESTAGENT_DOCKER:+-docker=${GUESTAGENT_DOCKER}}
   ${GUESTAGENT_CONTAINERD:+-containerd=${GUESTAGENT_CONTAINERD}}
+  ${GUESTAGENT_K8S_SVC_ADDR:+-k8sServiceListenerAddr=${GUESTAGENT_K8S_SVC_ADDR}}
   ${GUESTAGENT_DEBUG:+-debug}
   "
 command_args="${command_args//$'\n'/ }"

@@ -320,6 +320,13 @@ components:
                   type: boolean
                   x-rd-aliases: [flannel-enabled]
                   x-rd-usage: use flannel networking; disable to install your own CNI
+            ingress:
+              type: object
+              properties:
+                localhostOnly:
+                  type: boolean
+                  x-rd-platforms: [win32]
+                  x-rd-usage: bind services to 127.0.0.1 instead of 0.0.0.0
         experimental:
           type: object
           properties:

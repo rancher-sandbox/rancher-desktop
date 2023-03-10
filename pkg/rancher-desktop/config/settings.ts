@@ -98,6 +98,7 @@ export const defaultSettings = {
     port:    6443,
     enabled: true,
     options: { traefik: true, flannel: true },
+    ingress: { localhostOnly: false },
   },
   portForwarding: { includeKubernetesServices: false },
   images:         {
