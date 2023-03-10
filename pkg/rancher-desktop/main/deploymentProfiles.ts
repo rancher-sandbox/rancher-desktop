@@ -141,7 +141,7 @@ function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: st
  * Windows only. Read settings values from registry using schemaObj as a template.
  * @param schemaObj the object used as a template for navigating registry.
  * @param regKey the registry key obtained from nativeReg.openKey().
- * @returns undefined, or the registry data as an object.
+ * @returns null, or the registry data as an object.
  */
 function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): RecursivePartial<settings.Settings>|null {
   let regValue: any = null;
