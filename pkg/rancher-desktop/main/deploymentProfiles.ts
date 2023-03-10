@@ -144,7 +144,6 @@ function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: st
  * @returns null, or the registry data as an object.
  */
 function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): RecursivePartial<settings.Settings>|null {
-  let regValue: any = null;
   let newObject: RecursivePartial<settings.Settings>|null = null;
 
   const schemaKeys = Object.keys(schemaObj);
@@ -154,6 +153,7 @@ function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): Recurs
 
   for (const k of commonKeys) {
     const schemaVal = schemaObj[k];
+    let regValue: any = null;
 
     if (typeof schemaVal === 'object') {
       if (!Array.isArray(schemaVal)) {
@@ -175,11 +175,10 @@ function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): Recurs
         const multiSzValue = nativeReg.queryValueRaw(regKey, k);
 
         if (multiSzValue) {
+          // Registry value can be a single-string or even a DWORD and parseMultiString will handle it.
           const arrayValue = nativeReg.parseMultiString(multiSzValue as nativeReg.Value);
 
           regValue = arrayValue.length ? arrayValue : null;
-        } else {
-          regValue = null;
         }
       }
     } else {
@@ -196,8 +195,6 @@ function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): Recurs
     if (regValue !== null) {
       newObject ??= {};
       (newObject as Record<string, any>)[k] = regValue;
-      // Set it to null for the next round
-      regValue = null;
     }
   }
 
