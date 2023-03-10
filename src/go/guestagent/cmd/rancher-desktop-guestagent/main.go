@@ -100,6 +100,14 @@ func main() {
 
 	tcpTracker := tcplistener.NewListenerTracker()
 
+	wslAddr, err := getWSLAddr(wslInfName)
+	if err != nil {
+		log.Fatalf("failure getting WSL IP addresses: %v", err)
+	}
+
+	forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
+	portTracker := tracker.NewPortTracker(forwarder, wslAddr)
+
 	if *enablePrivilegedService {
 		if !*enableContainerd && !*enableDocker {
 			log.Fatal("-privilegedService mode requires either -docker or -containerd enabled.")
@@ -112,14 +120,6 @@ func main() {
 		if *vtunnelAddr == "" {
 			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
 		}
-
-		wslAddr, err := getWSLAddr(wslInfName)
-		if err != nil {
-			log.Fatalf("failure getting WSL IP addresses: %v", err)
-		}
-
-		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
-		portTracker := tracker.NewPortTracker(forwarder, wslAddr)
 
 		if *enableContainerd {
 			group.Go(func() error {
@@ -151,26 +151,31 @@ func main() {
 				return nil
 			})
 		}
+	}
 
-		if *enableKubernetes {
-			group.Go(func() error {
-				k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
+	if *enableKubernetes {
+		group.Go(func() error {
+			k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
 
-				if k8sServiceListenerIP == nil || !(k8sServiceListenerIP.Equal(net.IPv4zero) ||
-					k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) { //nolint:gomnd // IPv4 addr localhost
-					log.Fatalf("empty or none valid input for Kubernetes service listener IP address %s. "+
-						"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
-				}
+			if k8sServiceListenerIP == nil || !(k8sServiceListenerIP.Equal(net.IPv4zero) ||
+				k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) { //nolint:gomnd // IPv4 addr localhost
+				log.Fatalf("empty or none valid input for Kubernetes service listener IP address %s. "+
+					"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
+			}
 
-				// Watch for kube
-				err := kube.WatchForServices(ctx, tcpTracker, *configPath, portTracker, k8sServiceListenerIP)
-				if err != nil {
-					return fmt.Errorf("error watching services: %w", err)
-				}
+			// Watch for kube
+			err := kube.WatchForServices(ctx,
+				*configPath,
+				k8sServiceListenerIP,
+				*enablePrivilegedService,
+				portTracker,
+				tcpTracker)
+			if err != nil {
+				return fmt.Errorf("error watching services: %w", err)
+			}
 
-				return nil
-			})
-		}
+			return nil
+		})
 	}
 
 	if *enableIptables {

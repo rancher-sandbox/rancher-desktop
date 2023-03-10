@@ -24,7 +24,9 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
-// PortTracker mamanges published ports.
+// PortTracker keeps track of port mappings and forwards
+// them to the privileged service on the host over AF_VSOCK
+// tunnel (vtunnel).
 type PortTracker struct {
 	// For docker the key is container ID
 	portmap          map[string]nat.PortMap
