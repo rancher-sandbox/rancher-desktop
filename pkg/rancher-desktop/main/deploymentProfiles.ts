@@ -8,8 +8,9 @@ import plist from 'plist';
 import * as settings from '@pkg/config/settings';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-const console = Logging.settings;
+const console = Logging.deploymentProfile;
 
 const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
 
@@ -48,19 +49,33 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
       const registryKey = nativeReg.openKey(key, REGISTRY_PATH_PROFILE.join('\\'), nativeReg.Access.READ);
 
+      if (!registryKey) {
+        continue;
+      }
+      const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
+      const lockedKey = nativeReg.openKey(registryKey, 'Locked', nativeReg.Access.READ);
+
       try {
-        if (registryKey !== null) {
-          profiles.defaults = readRegistryUsingSchema(settings.defaultSettings, registryKey, ['Defaults']);
-          profiles.locked = readRegistryUsingSchema(settings.defaultSettings, registryKey, ['Locked']);
+        if (defaultsKey) {
+          profiles.defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
+        }
+        if (lockedKey) {
+          profiles.locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
         }
       } catch (err) {
         console.error( `Error reading deployment profile: ${ err }`);
       } finally {
-        if (typeof registryKey !== 'undefined') {
-          nativeReg.closeKey(registryKey);
+        nativeReg.closeKey(registryKey);
+        if (defaultsKey) {
+          nativeReg.closeKey(defaultsKey);
+        }
+        if (lockedKey) {
+          nativeReg.closeKey(lockedKey);
         }
       }
-      if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
+      // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
+      // Alternatively, if the keys work, we could break, even if both hives are empty.
+      if (Object.keys(profiles.defaults).length || Object.keys(profiles.locked).length) {
         break;
       }
     }
@@ -126,31 +141,68 @@ function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: st
  * Windows only. Read settings values from registry using schemaObj as a template.
  * @param schemaObj the object used as a template for navigating registry.
  * @param regKey the registry key obtained from nativeReg.openKey().
- * @param regPath the path to the object relative to regKey.
  * @returns undefined, or the registry data as an object.
  */
-function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY, regPath: string[]): any {
-  let regValue;
-  let newObject: any;
+function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): RecursivePartial<settings.Settings>|null {
+  let regValue: any = null;
+  let newObject: RecursivePartial<settings.Settings>|null = null;
 
-  for (const [schemaKey, schemaVal] of Object.entries(schemaObj)) {
-    if (typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
-      regValue = readRegistryUsingSchema(schemaVal, regKey, regPath.concat(schemaKey));
+  const schemaKeys = Object.keys(schemaObj);
+  // ignore case
+  const registryKeys = nativeReg.enumKeyNames(regKey).concat(nativeReg.enumValueNames(regKey)).map(k => k.toLowerCase());
+  const commonKeys = schemaKeys.filter(k => registryKeys.includes(k.toLowerCase()));
+
+  for (const k of commonKeys) {
+    const schemaVal = schemaObj[k];
+
+    if (typeof schemaVal === 'object') {
+      if (!Array.isArray(schemaVal)) {
+        const innerKey = nativeReg.openKey(regKey, k, nativeReg.Access.READ);
+
+        if (!innerKey) {
+          continue;
+        }
+        try {
+          regValue = readRegistryUsingSchema(schemaVal, innerKey);
+          if (regValue && (typeof regValue === 'object') && Object.keys(regValue).length === 0) {
+            // Ignore empty objects
+            regValue = null;
+          }
+        } finally {
+          nativeReg.closeKey(innerKey);
+        }
+      } else {
+        const multiSzValue = nativeReg.queryValueRaw(regKey, k);
+
+        if (multiSzValue) {
+          // parseMultiString d oesn't work exactly as advertised
+          // https://github.com/simonbuchan/native-reg#parsemultistring
+          let arrayValue = nativeReg.parseMultiString(multiSzValue as nativeReg.Value);
+
+          if (arrayValue?.length === 1 && arrayValue[0].includes('\\0')) {
+            arrayValue = arrayValue[0].split('\\0').filter(s => s);
+          }
+          regValue = arrayValue.length ? arrayValue : null;
+        } else {
+          regValue = null;
+        }
+      }
     } else {
-      regValue = nativeReg.getValue(regKey, regPath.join('\\'), schemaKey);
-    }
-
-    if (typeof regValue !== 'undefined' && regValue !== null) {
-      newObject ??= {};
+      regValue = nativeReg.queryValue(regKey, k);
       if (typeof schemaVal === 'boolean') {
         if (typeof regValue === 'number') {
           regValue = regValue !== 0;
         } else {
-          console.debug(`Deployment Profile expected boolean value for ${ regPath.concat(schemaKey) }`);
+          console.debug(`Deployment Profile expected boolean value for key ${ k }`);
           regValue = false;
         }
       }
-      newObject[schemaKey] = regValue;
+    }
+    if (regValue !== null) {
+      newObject ??= {};
+      (newObject as Record<string, any>)[k] = regValue;
+      // Set it to null for the next round
+      regValue = null;
     }
   }
 
