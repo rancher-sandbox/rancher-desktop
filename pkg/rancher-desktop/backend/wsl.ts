@@ -160,7 +160,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   protected cfg: BackendSettings | undefined;
 
   /** Indicates wherther the current installation is a privileged install or not. */
-  protected privilegedServiceEnabled: false | undefined;
+  protected privilegedServiceEnabled = false;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
