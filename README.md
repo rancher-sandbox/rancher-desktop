@@ -178,6 +178,7 @@ Cross-compilation is currently not supported. To run a build do:
 
 ```
 npm run build
+npm run package --publish=never
 ```
 
 The build output goes to `dist/`.
