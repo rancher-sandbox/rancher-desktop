@@ -18,14 +18,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
-	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,20 +33,16 @@ import (
 
 // event occurs when a NodePort in a service is added or removed.
 type event struct {
-	namespace string
-	name      string
-	port      int32
-	deleted   bool
+	UID         types.UID
+	namespace   string
+	name        string
+	portMapping map[int32]corev1.Protocol
+	deleted     bool
 }
 
 // watchServices monitors for NodePort and LoadBalancer services; after listing all service ports
 // initially, it reports service ports being added or deleted.
-func watchServices(
-	ctx context.Context,
-	client *kubernetes.Clientset,
-	portTracker *tracker.PortTracker,
-	k8sServiceListenerIP net.IP,
-) (<-chan event, <-chan error, error) {
+func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan event, <-chan error, error) {
 	eventCh := make(chan event)
 	errorCh := make(chan error)
 	informerFactory := informers.NewSharedInformerFactory(client, 1*time.Hour)
@@ -59,13 +50,13 @@ func watchServices(
 	sharedInformer := serviceInformer.Informer()
 	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			handleUpdate(nil, obj, eventCh, portTracker, k8sServiceListenerIP)
+			handleUpdate(nil, obj, eventCh)
 		},
 		DeleteFunc: func(obj interface{}) {
-			handleUpdate(obj, nil, eventCh, portTracker, k8sServiceListenerIP)
+			handleUpdate(obj, nil, eventCh)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			handleUpdate(oldObj, newObj, eventCh, portTracker, k8sServiceListenerIP)
+			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
 
@@ -119,7 +110,7 @@ func watchServices(
 	// worry about the channel blocking.
 	go func() {
 		for _, svc := range services {
-			handleUpdate(nil, svc, eventCh, portTracker, k8sServiceListenerIP)
+			handleUpdate(nil, svc, eventCh)
 		}
 	}()
 
@@ -128,9 +119,7 @@ func watchServices(
 
 // handleUpdate examines the old and new services, calculating the difference
 // and emitting events to the given channel.
-func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event, portTracker *tracker.PortTracker,
-	k8sServiceListenerIP net.IP,
-) {
+func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 	deleted := make(map[int32]corev1.Protocol)
 	added := make(map[int32]corev1.Protocol)
 	oldSvc, _ := oldObj.(*corev1.Service)
@@ -181,97 +170,21 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event, portTracker 
 		}
 	}
 
+	sendEvents(deleted, oldSvc, true, eventCh)
+	sendEvents(added, newSvc, false, eventCh)
+
 	log.Debugf("kubernetes service update: %s/%s has -%d +%d service port",
 		namespace, name, len(deleted), len(added))
-
-	sendEvents := func(mapping map[int32]corev1.Protocol, svc *corev1.Service, deleted bool) {
-		for port := range mapping {
-			eventCh <- event{
-				namespace: svc.Namespace,
-				name:      svc.Name,
-				port:      port,
-				deleted:   deleted,
-			}
-		}
-	}
-
-	if len(deleted) > 0 {
-		if err := removePortMapping(oldSvc.UID, portTracker); err == nil {
-			log.Debugf("Send remove event for %s", string(oldSvc.UID))
-			sendEvents(deleted, oldSvc, true)
-		}
-	}
-
-	if len(added) > 0 {
-		if portMapping, err := createPortMapping(added, k8sServiceListenerIP); err == nil {
-			if existingPortMap := portTracker.Get(string(newSvc.UID)); existingPortMap != nil {
-				err = updatePortMapping(portMapping, existingPortMap, newSvc.UID, portTracker)
-			} else {
-				err = addPortMapping(portMapping, newSvc.UID, portTracker)
-			}
-
-			if err != nil {
-				log.Errorf("Add or update port mapping failed: %v", err)
-			} else {
-				log.Debugf("Send add event for %s", string(newSvc.UID))
-				sendEvents(added, newSvc, false)
-			}
-		} else {
-			log.Errorf("Create port mapping failed: %v", err)
-		}
-	}
 }
 
-func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (nat.PortMap, error) {
-	portMap := make(nat.PortMap)
-
-	for port, proto := range ports {
-		log.Debugf("create port mapping for port %d, protocol %s", port, proto)
-		portMapKey, err := nat.NewPort(string(proto), strconv.Itoa(int(port)))
-		if err != nil {
-			return nil, err
-		}
-
-		portBinding := nat.PortBinding{
-			HostIP:   k8sServiceListenerIP.String(),
-			HostPort: strconv.Itoa(int(port)),
-		}
-
-		if pb, ok := portMap[portMapKey]; ok {
-			portMap[portMapKey] = append(pb, portBinding)
-		} else {
-			portMap[portMapKey] = []nat.PortBinding{portBinding}
+func sendEvents(mapping map[int32]corev1.Protocol, svc *corev1.Service, deleted bool, eventCh chan<- event) {
+	if svc != nil {
+		eventCh <- event{
+			UID:         svc.UID,
+			namespace:   svc.Namespace,
+			name:        svc.Name,
+			portMapping: mapping,
+			deleted:     deleted,
 		}
 	}
-
-	return portMap, nil
-}
-
-func addPortMapping(portMapping nat.PortMap, serviceUID types.UID, portTracker *tracker.PortTracker) error {
-	log.Debugf("adding %d port mappings for service ID %s", len(portMapping), string(serviceUID))
-
-	return portTracker.Add(string(serviceUID), portMapping)
-}
-
-func removePortMapping(serviceUID types.UID, portTracker *tracker.PortTracker) error {
-	log.Debugf("removing port mappings for service ID %s", string(serviceUID))
-
-	return portTracker.Remove(string(serviceUID))
-}
-
-func updatePortMapping(
-	newPortMap nat.PortMap,
-	existingPortMap nat.PortMap,
-	serviceUID types.UID,
-	portTracker *tracker.PortTracker,
-) error {
-	if !reflect.DeepEqual(newPortMap, existingPortMap) {
-		log.Debugf("updating port mappings for service ID %s", string(serviceUID))
-
-		if err := removePortMapping(serviceUID, portTracker); err == nil {
-			return addPortMapping(newPortMap, serviceUID, portTracker)
-		}
-	}
-
-	return nil
 }
