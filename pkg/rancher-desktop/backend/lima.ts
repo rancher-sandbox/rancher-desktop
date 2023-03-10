@@ -269,7 +269,7 @@ const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-l
 // Name of the forward compatible limactl binary installed by the lima dependencies script.
 const fwdCompatLimactlBin = 'limactl.ventura';
 // Version of Darwin the forward compatible limactl binary was built for.
-const fwdCompatLimactlDarwinVer = '22.2.0';
+const fwdCompatLimactlDarwinVer = '22.1.0';
 
 /**
  * LimaBackend implements all the Lima-specific functionality for Rancher
