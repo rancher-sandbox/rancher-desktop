@@ -182,21 +182,22 @@ describe('settings', () => {
   </dict>
 </plist>
   `;
-  const lockedAccessors = ['containerEngine.allowedImages.enabled', 'containerEngine.allowedImages.patterns'];
-  let mock: jest.SpiedFunction<typeof fs['readFileSync']>;
   // TODO: Stop doing this once profiles are implemented on windows
   const describeNotWindows = process.platform === 'win32' ? describe.skip : describe;
-  const actualSyncReader = fs.readFileSync;
-
-  beforeEach(() => {
-    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
-  });
-  afterEach(() => {
-    mock.mockRestore();
-  });
 
   describe('profiles', () => {
     describeNotWindows('locked fields', () => {
+      const lockedAccessors = ['containerEngine.allowedImages.enabled', 'containerEngine.allowedImages.patterns'];
+      let mock: jest.SpiedFunction<typeof fs['readFileSync']>;
+      const actualSyncReader = fs.readFileSync;
+
+      beforeEach(() => {
+        jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
+      });
+      afterEach(() => {
+        mock.mockRestore();
+      });
+
       function verifyAllFieldsAreLocked(lockedFields: settings.LockedSettingsType) {
         for (const acc of lockedAccessors) {
           expect(_.get(lockedFields, acc)).toBeTruthy();
