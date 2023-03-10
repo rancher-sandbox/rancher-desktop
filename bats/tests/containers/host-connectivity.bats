@@ -1,5 +1,5 @@
 # Test case 36
-# On Windows, You need to create a firewall rule to allow allow communication 
+# On Windows, You need to create a firewall rule to allow allow communication
 # between the host and the container. Please check the below link for instructions.
 # https://docs.rancherdesktop.io/faq#q-can-containers-reach-back-to-host-services-via-hostdockerinternal
 
@@ -27,5 +27,5 @@ verify_host_connectivity() {
 }
 
 @test 'ping host.rancher-desktop.internal from a container' {
-    verify_host_connectivity "host.rancher-desktop.internal" 
+    verify_host_connectivity "host.rancher-desktop.internal"
 }
