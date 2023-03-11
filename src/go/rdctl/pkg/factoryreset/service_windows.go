@@ -20,6 +20,10 @@ func stopPrivilegedService() error {
 		logrus.Tracef("successfully stopped %s", svcName)
 		return nil
 	}
+	if errors.Is(err, windows.ERROR_SERVICE_NOT_ACTIVE) {
+		logrus.Tracef("ignoring failure to stop %s: %s", svcName, err)
+		return nil
+	}
 	if errors.Is(err, windows.ERROR_ACCESS_DENIED) {
 		logrus.Tracef("ignoring failure to stop %s: %s", svcName, err)
 		return nil
