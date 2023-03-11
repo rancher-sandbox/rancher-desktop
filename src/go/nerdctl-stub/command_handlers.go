@@ -104,17 +104,16 @@ func containerCopyHandler(c *commandDefinition, args []string, argHandlers argHa
 			return hostPathUnknown
 		},
 		func(i int, p string) hostPathResult {
-			colon := strings.Index(p, ":")
-			if colon != 1 {
+			if strings.Index(p, ":") != 1 {
 				// Shouldn't get here -- one of the two previous functions should have
 				// found something already.
 				panic(fmt.Sprintf("Expected path %q to start with a character followed by a colon!", p))
 			}
-			// Fall back: the first element should be treated as the container path.
-			if i == 0 {
-				return hostPathOther
+			if i != 0 {
+				panic("Should not reach this on second path")
 			}
-			return hostPathCurrent
+			// Fall back: the first element should be treated as the container path.
+			return hostPathOther
 		},
 	}
 
@@ -134,21 +133,17 @@ functionLoop:
 			}
 
 			// If we reach here, we found the host path to munge.
-			if hostPathIndex == 1 {
-				resultArgs = append(resultArgs, paths[0])
-			}
+			// Modify the path in-place.
 			newPath, newCleanups, err := argHandlers.filePathArgHandler(paths[hostPathIndex])
+			cleanups = append(cleanups, newCleanups...)
 			if err != nil {
-				cleanups = append(cleanups, newCleanups...)
 				if cleanupErr := runCleanups(cleanups); cleanupErr != nil {
 					err = multierror.Append(err, cleanupErr)
 				}
 				return nil, err
 			}
-			resultArgs = append(resultArgs, newPath)
-			if hostPathIndex != 1 {
-				resultArgs = append(resultArgs, paths[1])
-			}
+			paths[hostPathIndex] = newPath
+			resultArgs = append(resultArgs, paths...)
 			break functionLoop
 		}
 	}
