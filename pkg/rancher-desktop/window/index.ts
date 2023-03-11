@@ -72,7 +72,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   }
 
   const isInternalURL = (url: string) => {
-    return url.startsWith(`${ webRoot }/`);
+    return url.startsWith(`${ webRoot }/`) || url.startsWith('x-rd-extension://');
   };
 
   window = new BrowserWindow(options);
@@ -93,7 +93,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
     return { action: 'deny' };
   });
   window.webContents.on('did-fail-load', (event, errorCode, errorDescription, url) => {
-    console.log(`Failed to load ${ url }: ${ errorCode } (${ errorDescription })`);
+    console.log(`Failed to load ${ url }: ${ errorCode } (${ errorDescription })`, event);
   });
   console.debug('createWindow() name:', name, ' url:', url);
   window.loadURL(url);

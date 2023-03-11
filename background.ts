@@ -41,7 +41,7 @@ import { isDevEnv } from '@pkg/utils/environment';
 import { arrayCustomizer } from '@pkg/utils/filters';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import { setupProtocolHandler, protocolRegistered } from '@pkg/utils/protocols';
+import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -105,7 +105,7 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 });
 
 Electron.app.on('second-instance', async() => {
-  await protocolRegistered;
+  await protocolsRegistered;
   console.warn('A second instance was started');
   if (firstRunDialogComplete) {
     window.openMain();
@@ -145,11 +145,19 @@ mainEvents.handle('settings-fetch', () => {
   return Promise.resolve(cfg);
 });
 
+Electron.protocol.registerSchemesAsPrivileged([{ scheme: 'app' }, {
+  scheme:     'x-rd-extension',
+  privileges: {
+    standard:        true,
+    supportFetchAPI: true,
+  },
+}]);
+
 Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
-    setupProtocolHandler();
+    setupProtocolHandlers();
 
     // Needs to happen before any file is written, otherwise that file
     // could be owned by root, which will lead to future problems.
@@ -448,7 +456,7 @@ Electron.app.on('activate', async() => {
 
     return;
   }
-  await protocolRegistered;
+  await protocolsRegistered;
   window.openMain();
 });
 
