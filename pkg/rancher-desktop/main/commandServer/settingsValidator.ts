@@ -273,7 +273,7 @@ export default class SettingsValidator {
   protected checkRosetta(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
     if (desiredValue) {
       if (mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
-        errors.push(`Setting ${ fqname } can only be enabled when experimental.virtual-machine.vm-type is "${ VMType.VZ }".`);
+        errors.push(`Setting ${ fqname } can only be enabled when experimental.virtual-machine.type is "${ VMType.VZ }".`);
 
         return false;
       }
@@ -299,7 +299,7 @@ export default class SettingsValidator {
 
   protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
     if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
-      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.vm-type is "${ VMType.VZ }".`);
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.VZ }".`);
 
       return false;
     }
