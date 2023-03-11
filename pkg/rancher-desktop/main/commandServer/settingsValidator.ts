@@ -1,9 +1,17 @@
 import os from 'os';
 
+import Electron from 'electron';
 import _ from 'lodash';
 
 import {
-  CacheMode, defaultSettings, LockedSettingsType, MountType, ProtocolVersion, SecurityModel, Settings,
+  CacheMode,
+  defaultSettings,
+  LockedSettingsType,
+  MountType,
+  ProtocolVersion,
+  SecurityModel,
+  Settings,
+  VMType,
 } from '@pkg/config/settings';
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -91,7 +99,10 @@ export default class SettingsValidator {
       experimental: {
         virtualMachine: {
           mount: {
-            type: this.checkLima(this.checkEnum(...Object.values(MountType))),
+            type: this.checkLima(this.checkMulti(
+              this.checkEnum(...Object.values(MountType)),
+              this.checkMountType),
+            ),
             '9p': {
               securityModel:   this.checkLima(this.check9P(this.checkEnum(...Object.values(SecurityModel)))),
               protocolVersion: this.checkLima(this.check9P(this.checkEnum(...Object.values(ProtocolVersion)))),
@@ -101,6 +112,11 @@ export default class SettingsValidator {
           },
           socketVMNet:      this.checkPlatform('darwin', this.checkBoolean),
           networkingTunnel: this.checkPlatform('win32', this.checkBoolean),
+          useRosetta:       this.checkPlatform('darwin', this.checkRosetta),
+          type:             this.checkPlatform('darwin', this.checkMulti(
+            this.checkEnum(...Object.values(VMType)),
+            this.checkVMType),
+          ),
         },
       },
       WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },
@@ -192,7 +208,8 @@ export default class SettingsValidator {
 
       if (!(k in allowedSettings)) {
         continue;
-      } else if (typeof (allowedSettings[k]) === 'object') {
+      }
+      if (typeof (allowedSettings[k]) === 'object') {
         if (typeof (newSettings[k]) === 'object') {
           changeNeeded = this.checkProposedSettings(mergedSettings, allowedSettings[k], currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
@@ -253,6 +270,43 @@ export default class SettingsValidator {
     };
   }
 
+  protected checkRosetta(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
+    if (desiredValue) {
+      if (mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
+        errors.push(`Setting ${ fqname } can only be enabled when experimental.virtual-machine.type is "${ VMType.VZ }".`);
+
+        return false;
+      }
+      if (!Electron.app.runningUnderARM64Translation && os.arch() !== 'arm64') {
+        errors.push(`Setting ${ fqname } can only be enabled on aarch64 systems.`);
+
+        return false;
+      }
+    }
+
+    return currentValue !== desiredValue;
+  }
+
+  protected checkVMType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    if (desiredValue === VMType.VZ && parseInt(os.release()) < 22) {
+      errors.push(`Setting ${ fqname } to "${ VMType.VZ }" requires macOS 13.0 (Ventura) or later.`);
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
+  protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.VZ }".`);
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
   protected checkPlatform<C, D>(platform: NodeJS.Platform, validator: ValidatorFunc<Settings, C, D>) {
     return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
       if (!_.isEqual(currentValue, desiredValue)) {
@@ -278,6 +332,18 @@ export default class SettingsValidator {
       }
 
       return validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
+    };
+  }
+
+  protected checkMulti<S, C, D>(...validators: ValidatorFunc<S, C, D>[]) {
+    return (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+      let retval = false;
+
+      for (const validator of validators) {
+        retval ||= validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
+      }
+
+      return retval;
     };
   }
 

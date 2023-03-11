@@ -343,7 +343,7 @@ components:
                   properties:
                     type:
                       type: string
-                      enum: [reverse-sshfs, 9p]
+                      enum: [reverse-sshfs, 9p, virtiofs]
                       x-rd-usage: how directories are shared
                     9p:
                       type: object
@@ -365,6 +365,13 @@ components:
                   type: boolean
                   x-rd-platforms: [win32]
                   x-rd-usage: tunnel networking so it originates from the host
+                type:
+                  type: string
+                  enum: [qemu, vz]
+                  x-rd-platforms: [darwin]
+                useRosetta:
+                  type: boolean
+                  x-rd-platforms: [darwin]
         WSL:
           type: object
           x-rd-platforms: [win32]

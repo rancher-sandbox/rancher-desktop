@@ -40,6 +40,7 @@ import {
   CacheMode,
   ProtocolVersion,
   SecurityModel,
+  VMType,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -707,6 +708,8 @@ test.describe('Command server', () => {
           ['experimental.virtual-machine.mount.9p.security-model', SecurityModel.NONE],
           ['experimental.virtual-machine.mount.type', MountType.NINEP],
           ['experimental.virtual-machine.socket-vmnet', true],
+          ['experimental.virtual-machine.use-rosetta', true],
+          ['experimental.virtual-machine.type', VMType.VZ],
           ['virtual-machine.memory-in-gb', 10],
           ['virtual-machine.number-cpus', 10],
         ],
@@ -715,6 +718,8 @@ test.describe('Command server', () => {
         ],
         linux: [
           ['experimental.virtual-machine.socket-vmnet', true],
+          ['experimental.virtual-machine.use-rosetta', true],
+          ['experimental.virtual-machine.type', VMType.VZ],
           ['virtual-machine.host-resolver', true],
         ],
       };
