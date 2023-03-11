@@ -1512,11 +1512,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
         if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
           await this.vtun.stop();
+          await this.resolverHostProcess.stop();
+          await this.invokePrivilegedService('stop');
         }
         this.process?.kill('SIGTERM');
-        await this.resolverHostProcess.stop();
         await this.hostSwitchProcess.stop();
-        await this.invokePrivilegedService('stop');
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
         }
