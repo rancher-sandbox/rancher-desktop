@@ -81,13 +81,13 @@ class ExtensionManagerImpl implements ExtensionManager {
 
   async init(config: RecursiveReadonly<Settings>) {
     // TODO: Handlers for various events from the renderer process.
-    await Promise.all(Object.entries(config.extensions ?? {}).map(([id, install]) => {
+    await Promise.all(Object.entries(config.extensions ?? {}).map(async([id, install]) => {
       const op = install ? 'install' : 'uninstall';
 
       try {
-        this.getExtension(id)[op]();
+        await this.getExtension(id)[op]();
       } catch (ex) {
-        console.error(`Failed to ${ op } extension ${ id }`, ex);
+        console.error(`Failed to ${ op } extension "${ id }"`, ex);
       }
     }));
   }

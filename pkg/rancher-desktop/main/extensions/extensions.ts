@@ -89,25 +89,23 @@ export class ExtensionImpl implements Extension {
       return result.status === 'rejected';
     }
 
-    await fs.promises.mkdir(paths.extensionRoot, { recursive: true });
-    const workDir = await fs.promises.mkdtemp(path.join(paths.extensionRoot, `tmp.${ path.basename(this.dir) }`));
+    await fs.promises.mkdir(this.dir, { recursive: true });
     const results = await Promise.allSettled([
-      this.installMetadata(workDir, metadata),
-      this.installIcon(workDir, metadata),
-      this.installUI(workDir, metadata),
-      this.installHostExecutables(workDir, metadata),
+      this.installMetadata(this.dir, metadata),
+      this.installIcon(this.dir, metadata),
+      this.installUI(this.dir, metadata),
+      this.installHostExecutables(this.dir, metadata),
     ]);
     const failure = results.find(isRejectedResult);
 
     if (failure) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, failure.reason);
-      await fs.promises.rm(workDir, { recursive: true }).catch((e) => {
-        console.error(`Failed to cleanup extension directory ${ workDir }`, e);
+      await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
+        console.error(`Failed to cleanup extension directory ${ this.dir }`, e);
       });
       throw failure.reason;
     }
 
-    await fs.promises.rename(workDir, this.dir);
     mainEvents.emit('settings-write', { extensions: { [this.id]: true } });
 
     // TODO: Do something so the extension is recognized by the UI.
@@ -185,19 +183,23 @@ export class ExtensionImpl implements Extension {
   }
 
   async uninstall(): Promise<boolean> {
-    const metadata = await this.metadata;
-    const vm = metadata.vm;
-
     // TODO: Unregister the extension from the UI.
 
-    if ('image' in vm) {
-      console.error('Todo: stop container');
-    } else if ('composefile' in vm) {
-      console.error(`Skipping uninstall of compose file when uninstalling ${ this.id }`);
+    try {
+      const metadata = await this.metadata;
+      const vm = metadata.vm;
+
+      if ('image' in vm) {
+        console.error('Todo: stop container');
+      } else if ('composefile' in vm) {
+        console.error(`Skipping uninstall of compose file when uninstalling ${ this.id }`);
+      }
+    } catch (ex) {
+      console.error(`Failed to read extension ${ this.id } metadata while uninstalling, not stopping containers: ${ ex }`);
     }
 
     try {
-      await fs.promises.rmdir(this.dir, { recursive: true });
+      await fs.promises.rm(this.dir, { recursive: true });
     } catch (ex: any) {
       if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw ex;
