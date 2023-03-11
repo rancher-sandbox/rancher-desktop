@@ -754,19 +754,17 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
   }
 
-  protected getLimaConfig(): Promise<LimaConfiguration | undefined> {
-    return (async() => {
-      try {
-        const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
-        const configRaw = await fs.promises.readFile(configPath, 'utf-8');
+  protected async getLimaConfig(): Promise<LimaConfiguration | undefined> {
+    try {
+      const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
+      const configRaw = await fs.promises.readFile(configPath, 'utf-8');
 
-        return yaml.parse(configRaw) as LimaConfiguration;
-      } catch (ex) {
-        if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
-          return undefined;
-        }
+      return yaml.parse(configRaw) as LimaConfiguration;
+    } catch (ex) {
+      if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
+        return undefined;
       }
-    })();
+    }
   }
 
   protected static get limactl() {
@@ -956,26 +954,22 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     })();
   }
 
-  protected imageInfo(fileName: string): Promise<QEMUImageInfo> {
-    return (async() => {
-      try {
-        const { stdout } = await this.spawnWithCapture(LimaBackend.qemuImg, 'info', '--output=json', '--force-share', fileName);
+  protected async imageInfo(fileName: string): Promise<QEMUImageInfo> {
+    try {
+      const { stdout } = await this.spawnWithCapture(LimaBackend.qemuImg, 'info', '--output=json', '--force-share', fileName);
 
-        return JSON.parse(stdout) as QEMUImageInfo;
-      } catch {
-        return { format: 'unknown' } as QEMUImageInfo;
-      }
-    })();
+      return JSON.parse(stdout) as QEMUImageInfo;
+    } catch {
+      return { format: 'unknown' } as QEMUImageInfo;
+    }
   }
 
-  protected convertToRaw(fileName: string): Promise<void> {
-    return (async() => {
-      const rawFileName = `${ fileName }.raw`;
+  protected async convertToRaw(fileName: string): Promise<void> {
+    const rawFileName = `${ fileName }.raw`;
 
-      await this.spawnWithCapture(LimaBackend.qemuImg, 'convert', fileName, rawFileName);
-      await fs.promises.unlink(fileName);
-      await fs.promises.rename(rawFileName, fileName);
-    })();
+    await this.spawnWithCapture(LimaBackend.qemuImg, 'convert', fileName, rawFileName);
+    await fs.promises.unlink(fileName);
+    await fs.promises.rename(rawFileName, fileName);
   }
 
   protected get isRegistered(): Promise<boolean> {
