@@ -367,11 +367,11 @@ components:
                   x-rd-usage: tunnel networking so it originates from the host
                 type:
                   type: string
-                  enum: ['qemu', 'vz']
-                  x-rd-platforms: ['darwin']
+                  enum: [qemu, vz]
+                  x-rd-platforms: [darwin]
                 useRosetta:
                   type: boolean
-                  x-rd-platforms: ['darwin']
+                  x-rd-platforms: [darwin]
         WSL:
           type: object
           x-rd-platforms: [win32]
