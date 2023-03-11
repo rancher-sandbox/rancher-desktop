@@ -4,7 +4,14 @@ import Electron from 'electron';
 import _ from 'lodash';
 
 import {
-  CacheMode, defaultSettings, LockedSettingsType, MountType, ProtocolVersion, SecurityModel, Settings, VMType,
+  CacheMode,
+  defaultSettings,
+  LockedSettingsType,
+  MountType,
+  ProtocolVersion,
+  SecurityModel,
+  Settings,
+  VMType,
 } from '@pkg/config/settings';
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -92,7 +99,10 @@ export default class SettingsValidator {
       experimental: {
         virtualMachine: {
           mount: {
-            type: this.checkLima(this.checkEnum(...Object.values(MountType))),
+            type: this.checkLima(this.checkMulti(
+              this.checkEnum(...Object.values(MountType)),
+              this.checkMountType),
+            ),
             '9p': {
               securityModel:   this.checkLima(this.check9P(this.checkEnum(...Object.values(SecurityModel)))),
               protocolVersion: this.checkLima(this.check9P(this.checkEnum(...Object.values(ProtocolVersion)))),
@@ -280,6 +290,16 @@ export default class SettingsValidator {
   protected checkVMType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
     if (desiredValue === VMType.VZ && parseInt(os.release()) < 22) {
       errors.push(`Setting ${ fqname } to "${ VMType.VZ }" requires macOS 13.0 (Ventura) or later.`);
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
+  protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.vm-type is "${ VMType.VZ }".`);
 
       return false;
     }

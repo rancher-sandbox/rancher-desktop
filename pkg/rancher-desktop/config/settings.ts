@@ -43,6 +43,7 @@ export const ContainerEngineNames: Record<ContainerEngine, string> = {
 export enum MountType {
   NINEP = '9p',
   REVERSE_SSHFS = 'reverse-sshfs',
+  VIRTIOFS = 'virtiofs',
 }
 
 export enum ProtocolVersion {
