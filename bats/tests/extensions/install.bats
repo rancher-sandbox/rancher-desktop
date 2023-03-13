@@ -41,7 +41,7 @@ encoded_id() { # variant
 }
 
 @test 'no extensions installed' {
-    run rdctl api /v1/extension
+    run rdctl api /v1/extensions
     assert_success
     assert_output '{}'
     assert_dir_not_exist "$PATH_EXTENSIONS"
@@ -56,11 +56,11 @@ encoded_id() { # variant
 
 @test 'basic extension - install' {
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id basic)"
-    rdctl api --method=POST "/v1/extension/install?id=$(id basic)"
+    rdctl api --method=POST "/v1/extensions/install?id=$(id basic)"
 }
 
 @test 'basic extension - check extension is installed' {
-    run rdctl api /v1/extension
+    run rdctl api /v1/extensions
     assert_success
     output="$(jq ".[\"$(id basic)\"]" <<< "${output}")"
     assert_output true
@@ -72,9 +72,9 @@ encoded_id() { # variant
 }
 
 @test 'basic extension - uninstall' {
-    rdctl api --method=POST "/v1/extension/uninstall?id=$(id basic)"
+    rdctl api --method=POST "/v1/extensions/uninstall?id=$(id basic)"
 
-    run rdctl api /v1/extension
+    run rdctl api /v1/extensions
     assert_success
     assert_output '{}'
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id basic)"
@@ -82,7 +82,7 @@ encoded_id() { # variant
 
 @test 'missing-icon - attempt to install' {
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id missing-icon)"
-    run rdctl api --method=POST "/v1/extension/install?id=$(id missing-icon)"
+    run rdctl api --method=POST "/v1/extensions/install?id=$(id missing-icon)"
     assert_failure
     assert_output --partial "invalid extension metadata"
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id missing-icon)"
@@ -90,7 +90,7 @@ encoded_id() { # variant
 
 @test 'missing-icon-file - attempt to install' {
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id missing-icon-file)"
-    run rdctl api --method=POST "/v1/extension/install?id=$(id missing-icon-file)"
+    run rdctl api --method=POST "/v1/extensions/install?id=$(id missing-icon-file)"
     assert_failure
     assert_output --partial "Could not copy icon file does-not-exist.svg"
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id missing-icon-file)"
@@ -98,7 +98,7 @@ encoded_id() { # variant
 
 @test 'host-binaries - install' {
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)"
-    run rdctl api --method=POST "/v1/extension/install?id=$(id host-binaries)"
+    run rdctl api --method=POST "/v1/extensions/install?id=$(id host-binaries)"
     assert_success
 }
 
@@ -114,9 +114,9 @@ encoded_id() { # variant
 }
 
 @test 'host-binaries - uninstall' {
-    rdctl api --method=POST "/v1/extension/uninstall?id=$(id host-binaries)"
+    rdctl api --method=POST "/v1/extensions/uninstall?id=$(id host-binaries)"
 
-    run rdctl api /v1/extension
+    run rdctl api /v1/extensions
     assert_success
     assert_output '{}'
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)"
@@ -124,7 +124,7 @@ encoded_id() { # variant
 
 @test 'ui - install' {
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id ui)"
-    run rdctl api --method=POST "/v1/extension/install?id=$(id ui)"
+    run rdctl api --method=POST "/v1/extensions/install?id=$(id ui)"
     assert_success
 }
 
@@ -133,9 +133,9 @@ encoded_id() { # variant
 }
 
 @test 'ui - uninstall' {
-    rdctl api --method=POST "/v1/extension/uninstall?id=$(id ui)"
+    rdctl api --method=POST "/v1/extensions/uninstall?id=$(id ui)"
 
-    run rdctl api /v1/extension
+    run rdctl api /v1/extensions
     assert_success
     assert_output '{}'
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id ui)"

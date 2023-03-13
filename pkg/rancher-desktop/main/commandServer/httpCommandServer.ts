@@ -57,14 +57,14 @@ export class HttpCommandServer {
       '/v1/diagnostic_categories': [0, this.diagnosticCategories],
       '/v1/diagnostic_ids':        [0, this.diagnosticIDsForCategory],
       '/v1/diagnostic_checks':     [0, this.diagnosticChecks],
-      '/v1/extension':             [1, this.listExtensions],
+      '/v1/extensions':            [1, this.listExtensions],
       '/v1/settings':              [0, this.listSettings],
       '/v1/transient_settings':    [0, this.listTransientSettings],
     },
     post: {
-      '/v1/diagnostic_checks':   [0, this.diagnosticRunChecks],
-      '/v1/extension/install':   [1, this.installExtension],
-      '/v1/extension/uninstall': [1, this.uninstallExtension],
+      '/v1/diagnostic_checks':    [0, this.diagnosticRunChecks],
+      '/v1/extensions/install':   [1, this.installExtension],
+      '/v1/extensions/uninstall': [1, this.uninstallExtension],
     },
     put: {
       '/v1/factory_reset':      [0, this.factoryReset],
