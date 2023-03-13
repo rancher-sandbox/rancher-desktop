@@ -85,25 +85,18 @@ export class ExtensionImpl implements Extension {
   async install(): Promise<boolean> {
     const metadata = await this.metadata;
 
-    function isRejectedResult<T>(result: PromiseSettledResult<T>): result is PromiseRejectedResult {
-      return result.status === 'rejected';
-    }
-
     await fs.promises.mkdir(this.dir, { recursive: true });
-    const results = await Promise.allSettled([
-      this.installMetadata(this.dir, metadata),
-      this.installIcon(this.dir, metadata),
-      this.installUI(this.dir, metadata),
-      this.installHostExecutables(this.dir, metadata),
-    ]);
-    const failure = results.find(isRejectedResult);
-
-    if (failure) {
-      console.error(`Failed to install extension ${ this.id }, cleaning up:`, failure.reason);
+    try {
+      await this.installMetadata(this.dir, metadata);
+      await this.installIcon(this.dir, metadata);
+      await this.installUI(this.dir, metadata);
+      await this.installHostExecutables(this.dir, metadata);
+    } catch (ex) {
+      console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
       await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
         console.error(`Failed to cleanup extension directory ${ this.dir }`, e);
       });
-      throw failure.reason;
+      throw ex;
     }
 
     mainEvents.emit('settings-write', { extensions: { [this.id]: true } });
