@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
@@ -126,7 +127,7 @@ export class NerdctlClient implements ContainerEngineClient {
       await this.vm.execCommand('/usr/bin/tar', ...args);
 
       // Copy the archive to the host
-      const workDir = await fs.promises.mkdtemp('rd-nerdctl-copy-');
+      const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));
 
       cleanups.push(() => fs.promises.rm(workDir, { recursive: true }));
       const hostArchive = path.join(workDir, 'copy-file.tgz');
