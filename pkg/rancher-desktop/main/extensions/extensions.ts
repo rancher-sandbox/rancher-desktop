@@ -64,6 +64,8 @@ export class ExtensionImpl implements Extension {
         return result;
       } catch (ex: any) {
         console.error(`Failed to read metadata for ${ this.id }: ${ ex }`);
+        // Unset metadata so we can try again later
+        this._metadata = undefined;
         throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Could not read extension metadata', ex);
       }
     })();
