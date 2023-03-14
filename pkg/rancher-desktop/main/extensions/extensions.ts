@@ -119,15 +119,16 @@ export class ExtensionImpl implements Extension {
     try {
       const origIconName = path.basename(metadata.icon);
 
-      await this.client.copyFile(this.id, metadata.icon, workDir);
+      try {
+        await this.client.copyFile(this.id, metadata.icon, workDir);
+      } catch (ex) {
+        throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex as Error);
+      }
       if (origIconName !== await this.iconName) {
         await fs.promises.rename(path.join(workDir, origIconName), path.join(workDir, await this.iconName));
       }
     } catch (ex) {
       console.error(`Could not copy icon for extension ${ this.id }: ${ ex }`);
-      if ((ex as NodeJS.ErrnoException)?.code === 'ENOENT') {
-        throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex as Error);
-      }
       throw ex;
     }
   }
