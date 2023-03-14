@@ -103,7 +103,9 @@ export class NerdctlClient implements ContainerEngineClient {
     const [workdir, cleanups] = await this.mountImage(imageID);
 
     try {
-      return this.vm.readFile(path.join(workdir, filePath), { encoding });
+      // The await here is needed to ensure we read the result before running
+      // any cleanups
+      return await this.vm.readFile(path.posix.join(workdir, filePath), { encoding });
     } finally {
       await this.runCleanups(cleanups);
     }
@@ -120,7 +122,7 @@ export class NerdctlClient implements ContainerEngineClient {
       const archive = (await this.vm.execCommand({ capture: true }, '/bin/mktemp', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
 
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
-      const sourceDir = path.dirname(path.join(imageDir, sourcePath));
+      const sourceDir = path.dirname(path.posix.join(imageDir, sourcePath));
       const sourceName = path.basename(sourcePath);
       const args = ['--create', '--gzip', '--file', archive, '--directory', sourceDir, resolveSymlinks ? '--dereference' : undefined, sourceName].filter(defined);
 
