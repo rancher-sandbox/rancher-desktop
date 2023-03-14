@@ -61,8 +61,8 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   lima = path.join(this.appHome, 'lima');
   oldIntegration = '/usr/local/bin';
   integration = path.join(this.altAppHome, 'bin');
-  readonly deploymentProfileSystem = path.join('/Library', 'Preferences', APP_NAME);
-  readonly deploymentProfileUser = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
+  readonly deploymentProfileSystem = path.join('/Library', 'Preferences');
+  readonly deploymentProfileUser = path.join(os.homedir(), 'Library', 'Preferences');
 
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
