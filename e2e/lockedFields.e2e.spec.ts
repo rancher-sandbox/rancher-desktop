@@ -80,7 +80,7 @@ test.describe('Locked fields', () => {
       { containerEngine: { allowedImages: { enabled: true } } },
       { containerEngine: { allowedImages: { enabled: true } } },
     );
-    electronApp = await startRancherDesktop(__filename, true);
+    electronApp = await startRancherDesktop(__filename);
     context = electronApp.context();
 
     await context.tracing.start({
