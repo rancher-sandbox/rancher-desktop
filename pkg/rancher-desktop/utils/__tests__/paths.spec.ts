@@ -88,6 +88,11 @@ describe('paths', () => {
       linux:  '%HOME%/.config/rancher-desktop',
       darwin: '%HOME%/Library/Preferences',
     },
+    extensionRoot: {
+      win32:  '%LOCALAPPDATA%/rancher-desktop/extensions/',
+      linux:  '%HOME%/.local/share/rancher-desktop/extensions/',
+      darwin: '%HOME%/Library/Application Support/rancher-desktop/extensions/',
+    },
   };
 
   const table = Object.entries(cases).flatMap(

@@ -5,6 +5,7 @@ set -o errexit -o nounset -o pipefail
 
 source "$topdir/bats-support/load.bash"
 source "$topdir/bats-assert/load.bash"
+source "$topdir/bats-file/load.bash"
 
 # "defaults.bash" *must* be sourced before the rest of the files
 source "$helpers/defaults.bash"

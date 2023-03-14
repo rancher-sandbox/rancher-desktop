@@ -3,8 +3,14 @@ if is_macos; then
     PATH_CONFIG="$HOME/Library/Preferences/rancher-desktop"
     PATH_CACHE="$HOME/Library/Caches/rancher-desktop"
     PATH_LOGS="$HOME/Library/Logs/rancher-desktop"
-    PATH_EXECUTABLE="/Applications/Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
-    PATH_RESOURCES="/Applications/Rancher Desktop.app/Contents/Resources/resources"
+    PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
+    if test -d "/Applications/Rancher Desktop.app"; then
+        PATH_EXECUTABLE="/Applications/Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
+        PATH_RESOURCES="/Applications/Rancher Desktop.app/Contents/Resources/resources"
+    else
+        PATH_EXECUTABLE="$(dirname ${BASH_SOURCE[0]})/../../../dist/mac-$(uname -m)/Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
+        PATH_RESOURCES="$(dirname ${BASH_SOURCE[0]})/../../../dist/mac-$(uname -m)/Rancher Desktop.app/Contents/Resources/resources"
+    fi
     LIMA_HOME="$PATH_APP_HOME/lima"
 fi
 
@@ -14,6 +20,7 @@ if is_linux; then
     PATH_CACHE="$HOME/.local/cache/rancher-desktop"
     PATH_DATA="$HOME/.local/share/rancher-desktop"
     PATH_LOGS="$PATH_DATA/logs"
+    PATH_EXTENSIONS="$PATH_DATA/extensions"
     PATH_EXECUTABLE="" # TODO
     PATH_RESOURCES="/opt/rancher-desktop/resources/resources"
     LIMA_HOME="$PATH_DATA/lima"
@@ -36,8 +43,10 @@ if is_windows; then
     PATH_DATA="$LOCALAPPDATA/rancher-desktop"
     PATH_CACHE="$PATH_DATA/cache"
     PATH_LOGS="$PATH_DATA/logs"
+    PATH_EXTENSIONS="$PATH_DATA/extensions"
     PATH_EXECUTABLE="$PROGRAMFILES/Rancher Desktop/Rancher Desktop.exe"
     PATH_RESOURCES="$PROGRAMFILES/Rancher Desktop/resources/resources"
 fi
 
 PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
+PATH_TEST_ROOT="$(dirname "${BASH_SOURCE[0]}")/.."

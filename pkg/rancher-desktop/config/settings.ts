@@ -114,6 +114,7 @@ export const defaultSettings = {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
+  extensions:   { } as Record<string, boolean>,
   /**
    * Experimental settings - there should not be any UI for these.
    */

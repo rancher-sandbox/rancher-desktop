@@ -36,6 +36,8 @@ export interface Paths {
   deploymentProfileSystem: string;
   /** Deployment Profile User startup settings path. */
   deploymentProfileUser: string;
+  /** Directory that will hold extension data. */
+  readonly extensionRoot: string;
 }
 
 /**
@@ -63,6 +65,7 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   integration = path.join(this.altAppHome, 'bin');
   readonly deploymentProfileSystem = path.join('/Library', 'Preferences');
   readonly deploymentProfileUser = path.join(os.homedir(), 'Library', 'Preferences');
+  readonly extensionRoot = path.join(this.appHome, 'extensions');
 
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
@@ -87,6 +90,7 @@ export class Win32Paths extends ProvidesResources implements Paths {
   readonly cache = path.join(this.localAppData, APP_NAME, 'cache');
   readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
   readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
+  readonly extensionRoot = path.join(this.localAppData, APP_NAME, 'extensions');
 
   get lima(): string {
     throw new Error('lima not available for Windows');
@@ -126,6 +130,7 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   readonly oldIntegration = path.join(os.homedir(), '.local', 'bin');
   readonly deploymentProfileSystem = path.join('/etc', APP_NAME);
   readonly deploymentProfileUser = path.join(this.configHome, APP_NAME);
+  readonly extensionRoot = path.join(this.dataHome, APP_NAME, 'extensions');
 
   get wslDistro(): string {
     throw new Error('wslDistro not available for Linux');

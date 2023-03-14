@@ -407,6 +407,10 @@ components:
               # TODO It is not possible to modify this setting via `rdctl set`.
               x-rd-usage: diagnostic ids that have been muted
               additionalProperties: true
+        extensions:
+          type: object
+          x-rd-usage: control which extensions are installed
+          additionalProperties: true
 
     diagnostics:
       type: object

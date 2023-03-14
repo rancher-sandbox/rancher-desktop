@@ -1,0 +1,7 @@
+{
+  "icon": "extension-icon.svg",
+  "info": "This extension contains a reference to an image.",
+  "vm": {
+    "image": "rd/extension/vm-image"
+  }
+}

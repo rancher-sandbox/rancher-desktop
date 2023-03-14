@@ -54,18 +54,23 @@ export class HttpCommandServer {
   protected dispatchTable: Record<HttpMethod, Record<string, [number, DispatchFunctionType]>> = {
     get: {
       '/v1/about':                 [1, this.about],
-      '/v1/settings':              [0, this.listSettings],
       '/v1/diagnostic_categories': [0, this.diagnosticCategories],
       '/v1/diagnostic_ids':        [0, this.diagnosticIDsForCategory],
       '/v1/diagnostic_checks':     [0, this.diagnosticChecks],
+      '/v1/extensions':            [1, this.listExtensions],
+      '/v1/settings':              [0, this.listSettings],
       '/v1/transient_settings':    [0, this.listTransientSettings],
     },
-    post: { '/v1/diagnostic_checks': [0, this.diagnosticRunChecks] },
-    put:  {
+    post: {
+      '/v1/diagnostic_checks':    [0, this.diagnosticRunChecks],
+      '/v1/extensions/install':   [1, this.installExtension],
+      '/v1/extensions/uninstall': [1, this.uninstallExtension],
+    },
+    put: {
       '/v1/factory_reset':      [0, this.factoryReset],
-      '/v1/shutdown':           [0, this.wrapShutdown],
-      '/v1/settings':           [0, this.updateSettings],
       '/v1/propose_settings':   [0, this.proposeSettings],
+      '/v1/settings':           [0, this.updateSettings],
+      '/v1/shutdown':           [0, this.wrapShutdown],
       '/v1/transient_settings': [0, this.updateTransientSettings],
     },
   };
@@ -553,6 +558,58 @@ export class HttpCommandServer {
       response.status(202).type('txt').send(result);
     }
   }
+
+  protected async listExtensions(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const extensions = await this.commandWorker.listExtensions();
+
+    response.status(200).type('json').send(extensions);
+  }
+
+  protected async installExtension(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const id = request.query.id ?? '';
+
+    if (!id) {
+      response.status(400).type('txt').send('Extension ID is required in the id= parameter.');
+    } else if (typeof id !== 'string') {
+      response.status(400).type('txt').send(`Invalid extension id ${ JSON.stringify(id) }: not a string.`);
+    } else {
+      response.writeProcessing();
+      const { status, data } = await this.commandWorker.installExtension(id, 'install');
+
+      if (data) {
+        if (typeof data === 'string') {
+          response.status(status).type('txt').send(data);
+        } else {
+          response.status(status).type('json').send(data);
+        }
+      } else {
+        response.sendStatus(status);
+      }
+    }
+  }
+
+  protected async uninstallExtension(request: express.Request, response: express.Response): Promise<void> {
+    const id = request.query.id ?? '';
+
+    if (!id) {
+      response.status(400).type('txt').send('Extension ID is required in the id= parameter.');
+    } else if (typeof id !== 'string') {
+      response.status(400).type('txt').send(`Invalid extension id ${ JSON.stringify(id) }: not a string.`);
+    } else {
+      response.writeProcessing();
+      const { status, data } = await this.commandWorker.installExtension(id, 'uninstall');
+
+      if (data) {
+        if (typeof data === 'string') {
+          response.status(status).type('txt').send(data);
+        } else {
+          response.status(status).type('json').send(data);
+        }
+      } else {
+        response.sendStatus(status);
+      }
+    }
+  }
 }
 
 interface commandContext {
@@ -577,6 +634,17 @@ export interface CommandWorkerInterface {
   runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultCollection>;
   getTransientSettings: (context: commandContext) => string;
   updateTransientSettings: (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
+
+  // #region extensions
+  /** List the installed extensions */
+  listExtensions(): Promise<Record<string, true>>;
+  /**
+   * Install or uninstall the given extension, returning an appropriate HTTP status code.
+   * @param state Whether to install or uninstall the extension.
+   * @returns The HTTP status code, possibly with arbitrary response body data.
+   */
+  installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}>;
+  // #endregion
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

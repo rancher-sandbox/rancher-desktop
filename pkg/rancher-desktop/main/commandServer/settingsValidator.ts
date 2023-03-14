@@ -136,6 +136,7 @@ export default class SettingsValidator {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,
       },
+      extensions: this.checkBooleanMapping,
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];

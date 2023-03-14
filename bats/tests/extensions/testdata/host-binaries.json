@@ -1,0 +1,24 @@
+{
+  "icon": "extension-icon.svg",
+  "host": {
+    "binaries": [
+      {
+        "darwin": [
+          {
+            "path": "/bin/dummy.sh"
+          }
+        ],
+        "windows": [
+          {
+            "path": "/bin/dummy.cmd"
+          }
+        ],
+        "linux": [
+          {
+            "path": "/bin/dummy.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

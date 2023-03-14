@@ -87,10 +87,18 @@ docker_context_exists() {
     assert_line $RD_DOCKER_CONTEXT
 }
 
+buildkitd_is_running() {
+    run rdctl shell rc-service buildkitd status
+    assert_success
+    assert_output --partial 'status: started'
+}
+
 wait_for_container_engine() {
     try --max 12 --delay 10 container_engine_info
     if using_docker; then
         try --max 30 --delay 5 docker_context_exists
+    else
+        try --max 30 --delay 5 buildkitd_is_running
     fi
 }
 

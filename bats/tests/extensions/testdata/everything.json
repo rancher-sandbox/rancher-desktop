@@ -1,0 +1,34 @@
+{
+  "icon": "extension-icon.svg",
+  "host": {
+    "binaries": [
+      {
+        "darwin": [
+          {
+            "path": "/bin/dummy.sh"
+          }
+        ],
+        "windows": [
+          {
+            "path": "/bin/dummy.cmd"
+          }
+        ],
+        "linux": [
+          {
+            "path": "/bin/dummy.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "ui": {
+    "dashboard-tab": {
+      "title": "Sample Extension With Everything",
+      "root": "/ui",
+      "src": "index.html"
+    }
+  },
+  "vm": {
+    "image": "rd/extension/everything"
+  }
+}
