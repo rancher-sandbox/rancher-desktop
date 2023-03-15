@@ -37,14 +37,16 @@ test.describe.serial('Extensions protocol handler', () => {
 
     if (!isContainerd) {
       tool = executable('docker');
-      args = ['--context', 'rancher-desktop'].concat(args);
+      if (process.platform !== 'win32') {
+        args = ['--context', 'rancher-desktop'].concat(args);
+      }
     }
 
     return await spawnFile(tool, args, { stdio: 'pipe' });
   }
 
   test.beforeAll(async() => {
-    createDefaultSettings();
+    createDefaultSettings({ kubernetes: { enabled: false } });
     app = await startRancherDesktop(__filename, { mock: false });
     page = await app.firstWindow();
   });
@@ -67,6 +69,25 @@ test.describe.serial('Extensions protocol handler', () => {
     test.skip(!isContainerd, 'Not running containerd, no need to wait for buildkit');
 
     await retry(() => spawnFile(rdctl, ['shell', 'buildctl', 'debug', 'info']));
+  });
+
+  test('wait for docker context', async() => {
+    test.skip(isContainerd, 'Not running moby, no need to wait for context');
+    test.skip(process.platform === 'win32', 'Not setting context on Windows');
+
+    await retry(() => ctrctl('context', 'inspect', 'rancher-desktop'));
+  });
+
+  test('wait for docker daemon to be up', async() => {
+    test.skip(isContainerd, 'Not running moby, no need to wait for context');
+
+    // On Windows, the docker proxy can flap for a while. So we try a few times
+    // in a row (with pauses in the middle) to ensure the backend is stable
+    // before continuing.
+    for (let i = 0; i < 10; ++i) {
+      await retry(() => ctrctl('system', 'info'));
+      await new Promise(resolve => setTimeout(resolve, 1_000));
+    }
   });
 
   test('build and install testing extension', async() => {
