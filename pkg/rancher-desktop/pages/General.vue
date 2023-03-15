@@ -28,7 +28,7 @@
     />
     <hr>
     <div class="network-status">
-      <span class="networkStatusInfo"><b>Network status:</b> {{ onlineStatus }}</span>
+      <span class="networkStatusInfo"><b>Network status:</b> {{ networkStatusLabel }}</span>
     </div>
   </div>
 </template>
@@ -39,6 +39,7 @@ import TelemetryOptIn from '@pkg/components/TelemetryOptIn.vue';
 import UpdateStatus from '@pkg/components/UpdateStatus.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { networkStatus } from '@pkg/utils/networks';
 
 export default {
   name:       'General',
@@ -56,8 +57,8 @@ export default {
   },
 
   computed: {
-    onlineStatus() {
-      return this.networkStatus ? 'online' : 'offline';
+    networkStatusLabel() {
+      return this.networkStatus ? networkStatus.CONNECTED : networkStatus.OFFLINE;
     },
   },
 
