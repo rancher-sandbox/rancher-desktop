@@ -16,6 +16,7 @@ import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
 import Logging from '@pkg/utils/logging';
+import { networkStatus } from '@pkg/utils/networks';
 import paths from '@pkg/utils/paths';
 import { openMain, send } from '@pkg/window';
 import { openDashboard } from '@pkg/window/dashboard';
@@ -23,12 +24,6 @@ import { openPreferences } from '@pkg/window/preferences';
 
 const console = Logging.background;
 const ipcMainProxy = getIpcMainProxy(console);
-
-enum networkStatus {
-  CHECKING = 'checking...',
-  CONNECTED = 'connected',
-  OFFLINE = 'offline',
-}
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
