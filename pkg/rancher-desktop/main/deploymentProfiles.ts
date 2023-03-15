@@ -82,7 +82,7 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     break;
   case 'linux':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      profiles = readProfileFiles(rootPath, 'defaults.json', 'locked.json', JSON);
+      profiles = readProfileFiles(rootPath, 'rancher-desktop.defaults.json', 'rancher-desktop.locked.json', JSON);
 
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;

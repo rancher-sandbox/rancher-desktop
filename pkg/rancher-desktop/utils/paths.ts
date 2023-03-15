@@ -129,7 +129,7 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   readonly integration = path.join(this.altAppHome, 'bin');
   readonly oldIntegration = path.join(os.homedir(), '.local', 'bin');
   readonly deploymentProfileSystem = path.join('/etc', APP_NAME);
-  readonly deploymentProfileUser = path.join(this.configHome, APP_NAME);
+  readonly deploymentProfileUser = path.join(this.configHome);
   readonly extensionRoot = path.join(this.dataHome, APP_NAME, 'extensions');
 
   get wslDistro(): string {
