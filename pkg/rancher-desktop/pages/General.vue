@@ -63,6 +63,8 @@ export default {
   },
 
   mounted() {
+    this.onNetworkStatusUpdate(window.navigator.onLine);
+
     this.$store.dispatch(
       'page/setHeader',
       {
@@ -82,19 +84,18 @@ export default {
     });
     ipcRenderer.send('get-app-version');
     ipcRenderer.on('update-network-status', (event, status) => {
-      this.$data.networkStatus = status;
+      this.onNetworkStatusUpdate(status);
     });
-    this.onNetworkUpdate(window.navigator.onLine);
     window.addEventListener('online', () => {
-      this.onNetworkUpdate(true);
+      this.onNetworkStatusUpdate(true);
     });
     window.addEventListener('offline', () => {
-      this.onNetworkUpdate(false);
+      this.onNetworkStatusUpdate(false);
     });
     // This event is triggered when the Preferences page is revealed (among other times).
     // If the network status changed while the window was closed, this will update it.
     window.addEventListener('pageshow', () => {
-      this.onNetworkUpdate(window.navigator.onLine);
+      this.onNetworkStatusUpdate(window.navigator.onLine);
     });
   },
 
@@ -119,8 +120,8 @@ export default {
     updateTelemetry(value) {
       ipcRenderer.invoke('settings-write', { application: { telemetry: { enabled: value } } });
     },
-    onNetworkUpdate(status) {
-      ipcRenderer.send('update-network-status', status);
+    onNetworkStatusUpdate(status) {
+      this.$data.networkStatus = status;
     },
   },
 };
