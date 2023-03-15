@@ -70,6 +70,7 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
     application: {
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.Manual,
+      startInBackground:      false,
     },
   };
   const settingsData: Settings = _.merge({}, defaultSettings, defaultOverrides, overrides);
