@@ -23,7 +23,7 @@ import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServ
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
-import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
+import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
@@ -177,8 +177,20 @@ Electron.app.whenReady().then(async() => {
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
-    } catch (err: any) {
-      showErrorDialog('Error in the Deployment Profile', err.toString(), true);
+    } catch (ex: any) {
+      if (ex instanceof DeploymentProfileError) {
+        // Need to do a heuristic to see if we have `--no-modal-errors` on the command-line.
+        // Normally we don't process the command-line arguments before we know what our locked fields are,
+        // but we need to see if we don't want to deal with dialog boxes.
+        if (commandLineArgs.includes('--no-modal-dialogs')) {
+          noModalDialogs = true;
+        }
+        await handleFailure(ex);
+      } else {
+        console.log(`Got an unexpected deployment profile error ${ ex }`, ex);
+      }
+
+      throw ex;
     }
     cfg = settings.load(deploymentProfiles);
 
@@ -241,7 +253,7 @@ Electron.app.whenReady().then(async() => {
       Electron.app.dock.hide();
     }
 
-    dockerDirManager.ensureCredHelperConfigured();
+    await dockerDirManager.ensureCredHelperConfigured();
 
     // Path management strategy will need to be selected after an upgrade
     if (!os.platform().startsWith('win') && cfg.application.pathManagementStrategy === PathManagementStrategy.NotSet) {
@@ -267,7 +279,7 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
-    listExtensionsMetadata();
+    await listExtensionsMetadata();
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -767,7 +779,11 @@ ipcMainProxy.handle('show-message-box-rd', async(_event, options: Electron.Messa
 });
 
 function showErrorDialog(title: string, message: string, fatal?: boolean) {
-  Electron.dialog.showErrorBox(title, message);
+  if (noModalDialogs) {
+    console.log(`Fatal Error:\n${ title }\n\n${ message }`);
+  } else {
+    Electron.dialog.showErrorBox(title, message);
+  }
   if (fatal) {
     process.exit(0);
   }
@@ -782,6 +798,8 @@ async function handleFailure(payload: any) {
     ({ name: titlePart, message } = payload);
   } else if (payload instanceof LockedFieldError) {
     showErrorDialog(titlePart, payload.message, true);
+  } else if (payload instanceof DeploymentProfileError) {
+    showErrorDialog('Failed to load the deployment profile', payload.message, true);
   } else if (payload instanceof Error) {
     secondaryMessage = payload.toString();
   } else if (typeof payload === 'number') {

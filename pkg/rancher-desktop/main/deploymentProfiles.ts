@@ -15,6 +15,9 @@ const console = Logging.deploymentProfile;
 
 const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
 
+export class DeploymentProfileError extends Error {
+}
+
 /**
  * Lockable default settings used for validating deployment profiles.
  * Data values are ignored, but types are used for validation.
@@ -40,10 +43,12 @@ const lockableDefaultSettings = {
  */
 
 export async function readDeploymentProfiles(): Promise<settings.DeploymentProfileType> {
-  let profiles: settings.DeploymentProfileType = {
+  const profiles: settings.DeploymentProfileType = {
     defaults: {},
     locked:   {},
   };
+  let defaults: undefined|RecursivePartial<settings.Settings>;
+  let locked: undefined|RecursivePartial<settings.Settings>;
 
   switch (os.platform()) {
   case 'win32':
@@ -58,10 +63,10 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
 
       try {
         if (defaultsKey) {
-          profiles.defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
+          defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
         }
         if (lockedKey) {
-          profiles.locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
+          locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
         }
       } catch (err) {
         console.error( `Error reading deployment profile: ${ err }`);
@@ -76,7 +81,7 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
       }
       // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
       // Alternatively, if the keys work, we could break, even if both hives are empty.
-      if (Object.keys(profiles.defaults).length || Object.keys(profiles.locked).length) {
+      if ((defaults && Object.keys(defaults).length) || (locked && Object.keys(locked).length)) {
         break;
       }
     }
@@ -88,10 +93,10 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
     };
 
     for (const configDir in linuxPaths) {
-      const [defaults, locked] = linuxPaths[configDir];
+      const [defaultPath, lockedPath] = linuxPaths[configDir];
 
-      profiles = parseJsonFile(configDir, defaults, locked);
-      if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
+      [defaults, locked] = parseJsonFiles(configDir, defaultPath, lockedPath);
+      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
         break;
       }
     }
@@ -99,21 +104,48 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
     break;
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      profiles = await parseJsonFromPlist(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
+      [defaults, locked] = await parseJsonFromPlists(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
 
-      if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
+      if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
         break;
       }
     }
     break;
   }
 
-  profiles.defaults = validateDeploymentProfile(profiles.defaults, settings.defaultSettings) ?? {};
-  profiles.locked = validateDeploymentProfile(profiles.locked, lockableDefaultSettings) ?? {};
+  profiles.defaults = validateDeploymentProfile(defaults, settings.defaultSettings) ?? {};
+  profiles.locked = validateDeploymentProfile(locked, lockableDefaultSettings) ?? {};
 
   return profiles;
 }
 
+// This function has to process inputPath for unit-testing, which mocks fs.readFileSync
+async function convertAndParsePlist(inputPath: string): Promise<undefined|RecursivePartial<settings.Settings>> {
+  let finalError: any;
+
+  try {
+    const args = ['-convert', 'json', '-r', '-o', '-', '-'];
+    const body = stream.Readable.from(fs.readFileSync(inputPath, { encoding: 'utf-8' }));
+    const plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
+
+    try {
+      return JSON.parse(plutilResult.stdout);
+    } catch (error: any) {
+      // throw error if we fail to parse the 'locked' profile
+      console.log(`Error parsing deployment profile JSON object ${ inputPath }\n${ error }`);
+      finalError = error;
+    }
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      // throw error if plutil fails to parse the 'locked' profile
+      console.log(`Error parsing deployment profile ${ inputPath }\n${ error }`);
+      finalError = error;
+    }
+  }
+  if (finalError) {
+    throw new DeploymentProfileError(`Error parsing deployment profile JSON object ${ inputPath }: ${ finalError.stdout || finalError.stderr || finalError }`);
+  }
+}
 /**
  * Read and parse plutil deployment profile files.
  * @param rootPath the system or user directory containing profiles.
@@ -122,55 +154,12 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
  * @returns the defaults and/or locked objects if they exist, or
  *          throws an exception if there is an error parsing the locked file.
  */
-async function parseJsonFromPlist(rootPath: string, defaultsPath: string, lockedPath: string) {
-  let defaults;
-  let locked;
 
-  const plutilArgs = ['-convert', 'json', '-r', '-o', '-', '-']; // read from stdin and write to stdout
-  let plutilPath = join(rootPath, defaultsPath);
-
-  try {
-    const body = stream.Readable.from(fs.readFileSync(plutilPath, { encoding: 'utf-8' }));
-    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: [body, 'pipe', 'pipe'] });
-
-    try {
-      defaults = JSON.parse(plutilResult.stdout);
-    } catch (error) {
-      console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
-    }
-  } catch (error: any) {
-    if (error.code !== 'ENOENT') {
-      // just log an error if we fail to parse the 'defaults' profile
-      console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
-    }
-  }
-
-  plutilPath = join(rootPath, lockedPath);
-  let finalError: any;
-
-  try {
-    const body = stream.Readable.from(fs.readFileSync(plutilPath, { encoding: 'utf-8' }));
-    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: [body, 'pipe', 'pipe'] });
-
-    try {
-      locked = JSON.parse(plutilResult.stdout);
-    } catch (error: any) {
-      // throw error if we fail to parse the 'locked' profile
-      console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
-      finalError = error;
-    }
-  } catch (error: any) {
-    if (error.code !== 'ENOENT') {
-      // throw error if plutil fails to parse the 'locked' profile
-      console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
-      finalError = error;
-    }
-  }
-  if (finalError) {
-    throw new Error(`Error parsing deployment profile JSON object ${ plutilPath }: ${ finalError }`);
-  }
-
-  return { defaults, locked };
+async function parseJsonFromPlists(rootPath: string, defaultsPath: string, lockedPath: string): Promise<Array<undefined|RecursivePartial<settings.Settings>>> {
+  return [
+    await convertAndParsePlist(join(rootPath, defaultsPath)),
+    await convertAndParsePlist(join(rootPath, lockedPath)),
+  ];
 }
 
 /**
@@ -181,26 +170,16 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
  * @returns the defaults and/or locked objects if they exist, or
  *          throws an exception if there is an error parsing the locked file.
  */
-function parseJsonFile(rootPath: string, defaultsPath: string, lockedPath: string) {
-  let defaults;
-  let locked;
-
-  try {
-    const defaultsData = fs.readFileSync(join(rootPath, defaultsPath), 'utf-8');
-
-    defaults = JSON.parse(defaultsData);
-  } catch {}
-  try {
-    const lockedData = fs.readFileSync(join(rootPath, lockedPath), 'utf-8');
-
-    locked = JSON.parse(lockedData);
-  } catch (ex: any) {
-    if (ex.code !== 'ENOENT') {
-      throw new Error(`Error parsing locked deployment profile: ${ ex }`);
+function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: string): Array<undefined|RecursivePartial<settings.Settings>> {
+  return [defaultsPath, lockedPath].map((configPath) => {
+    try {
+      return JSON.parse(fs.readFileSync(join(rootPath, configPath), 'utf-8'));
+    } catch (ex: any) {
+      if (ex.code !== 'ENOENT') {
+        throw new DeploymentProfileError(`Error parsing locked deployment profile: ${ ex }`);
+      }
     }
-  }
-
-  return { defaults, locked };
+  });
 }
 
 /**

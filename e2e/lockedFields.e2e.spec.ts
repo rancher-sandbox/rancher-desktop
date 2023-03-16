@@ -57,7 +57,9 @@ test.describe('Locked fields', () => {
 
   async function saveUserProfile() {
     // If there's an error in this code, let it bubble up for the caller to deal with it.
-    deploymentProfile = await readDeploymentProfiles();
+    try {
+      deploymentProfile = await readDeploymentProfiles();
+    } catch { }
   }
 
   async function restoreUserProfile() {
