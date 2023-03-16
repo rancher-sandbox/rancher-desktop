@@ -158,11 +158,16 @@ export async function tearDownHelm() {
   await kubectl('delete', 'deploy', 'nginx-sample', '--namespace', 'default');
 }
 
-export function getFullPathForTool(tool: string): string {
+export function getResourceBinDir(): string {
   const srcDir = path.dirname(__dirname);
+
+  return path.join(srcDir, '..', 'resources', os.platform(), 'bin');
+}
+
+export function getFullPathForTool(tool: string): string {
   const filename = os.platform().startsWith('win') ? `${ tool }.exe` : tool;
 
-  return path.join(srcDir, '..', 'resources', os.platform(), 'bin', filename);
+  return path.join(getResourceBinDir(), filename);
 }
 
 /**

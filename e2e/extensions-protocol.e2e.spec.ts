@@ -8,7 +8,9 @@ import path from 'path';
 import { ElectronApplication, Page, test, expect } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, retry, startRancherDesktop, teardown } from './utils/TestUtils';
+import {
+  createDefaultSettings, getResourceBinDir, retry, startRancherDesktop, teardown,
+} from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -42,7 +44,14 @@ test.describe.serial('Extensions protocol handler', () => {
       }
     }
 
-    return await spawnFile(tool, args, { stdio: 'pipe' });
+    return await spawnFile(tool, args,
+      {
+        stdio: 'pipe',
+        env:   {
+          ...process.env,
+          PATH: `${ process.env.PATH }${ path.delimiter }${ getResourceBinDir() }`,
+        },
+      });
   }
 
   test.beforeAll(async() => {
