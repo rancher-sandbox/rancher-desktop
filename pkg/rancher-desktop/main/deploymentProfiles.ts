@@ -43,6 +43,10 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     defaults: {},
     locked:   {},
   };
+  const linuxPaths = {
+    [paths.deploymentProfileSystem]: ['defaults.json', 'locked.json'],
+    [paths.deploymentProfileUser]:   ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'],
+  };
 
   switch (os.platform()) {
   case 'win32':
@@ -81,9 +85,10 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     }
     break;
   case 'linux':
-    for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      profiles = readProfileFiles(rootPath, 'defaults.json', 'locked.json', JSON);
+    for (const configDir in linuxPaths) {
+      const [defaults, locked] = linuxPaths[configDir];
 
+      profiles = readProfileFiles(configDir, defaults, locked, JSON);
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
       }

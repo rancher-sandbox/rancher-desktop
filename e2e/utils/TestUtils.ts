@@ -29,8 +29,8 @@ export async function createUserProfile(userProfile: RecursivePartial<Settings>|
 }
 
 async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
-  const userProfilePath = path.join(paths.deploymentProfileUser, 'profile.json');
-  const userLocksPath = path.join(paths.deploymentProfileUser, 'locked.json');
+  const userProfilePath = path.join(paths.deploymentProfileUser, 'rancher-desktop.defaults.json');
+  const userLocksPath = path.join(paths.deploymentProfileUser, 'rancher-desktop.locked.json');
 
   if (userProfile && Object.keys(userProfile).length > 0) {
     await fs.promises.writeFile(userProfilePath, JSON.stringify(userProfile, undefined, 2));
