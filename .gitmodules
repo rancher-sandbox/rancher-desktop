@@ -9,4 +9,4 @@
 	url = https://github.com/rancher-sandbox/bats-support.git
 [submodule "bats/bats-file"]
 	path = bats/bats-file
-	url = https://github.com/bats-core/bats-file.git
+	url = https://github.com/rancher-sandbox/bats-file.git
