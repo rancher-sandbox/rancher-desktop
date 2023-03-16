@@ -86,9 +86,9 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     break;
   case 'linux':
     for (const configDir in linuxPaths) {
-      const basenames = linuxPaths[configDir];
+      const [defaults, locked] = linuxPaths[configDir];
 
-      profiles = readProfileFiles(configDir, basenames[0], basenames[1], JSON);
+      profiles = readProfileFiles(configDir, defaults, locked, JSON);
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
       }
