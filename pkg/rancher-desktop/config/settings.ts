@@ -238,9 +238,8 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       // This means that we treat an empty hash defaults profile, or an empty registry hive,
       // as if there is no profile in place (for the purposes of setting the first-run entry).
 
-      _.merge(settings, deploymentProfiles.defaults);
+      _.merge(settings, deploymentProfiles.defaults, deploymentProfiles.locked);
       if (Object.keys(deploymentProfiles.defaults).length || Object.keys(deploymentProfiles.locked).length) {
-        // if there's a non-empty deployment profile, don't show the first-run dialog box (_isFirstRun is already false)
         if (!_.has(settings, 'virtualMachine.memoryInGB') && !_.has(deploymentProfiles.locked, 'virtualMachine.memoryInGB')) {
           setDefaultMemory = true;
         }
@@ -270,7 +269,6 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       console.log('updates disabled');
     }
   }
-  _.merge(settings, deploymentProfiles.locked);
   save(settings);
   lockedSettings = determineLockedFields(deploymentProfiles.locked);
 

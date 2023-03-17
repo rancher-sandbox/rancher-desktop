@@ -5,6 +5,7 @@ import path from 'path';
 import util from 'util';
 
 import Electron from 'electron';
+import _ from 'lodash';
 
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
@@ -193,23 +194,30 @@ Electron.app.whenReady().then(async() => {
       throw ex;
     }
     cfg = settings.load(deploymentProfiles);
+    try {
+      // The profile loader did rudimentary type-validation on profiles, but the validator checks for things
+      // like invalid strings for application.pathManagementStrategy.
+      validateEarlySettings(settings.defaultSettings, deploymentProfiles.defaults, {});
+      validateEarlySettings(settings.defaultSettings, deploymentProfiles.locked, {});
 
-    if (commandLineArgs.length) {
-      try {
+      if (commandLineArgs.length) {
         cfg = updateFromCommandLine(cfg, settings.getLockedSettings(), commandLineArgs);
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
-      } catch (err) {
-        if (err instanceof LockedFieldError) {
-          // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
-          // and the `fatal` part means we're expecting the app to shutdown.
-          // Trying to change a locked-field via the command-line is a fatal error.
-          handleFailure(err).catch((err2: any) => {
-            console.log('Internal error trying to show a failure dialog: ', err2);
-            process.exit(2);
-          });
-        }
-        console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
       }
+    } catch (err) {
+      if (err instanceof LockedFieldError || err instanceof DeploymentProfileError) {
+        // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
+        // and the `fatal` part means we're expecting the app to shutdown.
+        // Errors related to either deployment profiles or
+        // attempts to change locked fields on the command-line are both fatal,
+        // and should appear in a dialog box (or be written to console if
+        // --no-modal-dialogs was specified on the command-line).
+        handleFailure(err).catch((err2: any) => {
+          console.log('Internal error trying to show a failure dialog: ', err2);
+          process.exit(2);
+        });
+      }
+      console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
@@ -906,6 +914,19 @@ function newK8sManager() {
   });
 
   return mgr;
+}
+
+function validateEarlySettings(cfg: settings.Settings, newSettings: RecursivePartial<settings.Settings>, lockedFields: settings.LockedSettingsType): void {
+  // RD hasn't loaded the supported k8s versions yet, so have it defer actually checking the specified version.
+  // If it can't find this version, it will silently move to the closest version.
+  // We'd have to add more code to report that.
+  // It isn't worth adding that code yet. It might never be needed.
+  const newSettingsForValidation = _.omit(newSettings, 'kubernetes.version');
+  const [_needToUpdate, errors] = new SettingsValidator().validateSettings(cfg, newSettingsForValidation, lockedFields);
+
+  if (errors.length > 0) {
+    throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
+  }
 }
 
 /**

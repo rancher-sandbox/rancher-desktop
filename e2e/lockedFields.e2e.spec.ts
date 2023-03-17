@@ -63,10 +63,7 @@ test.describe('Locked fields', () => {
   }
 
   async function restoreUserProfile() {
-    // `deploymentProfile` if `saveUserProfile` throws.
-    if (deploymentProfile) {
-      await createUserProfile(deploymentProfile.defaults, deploymentProfile.locked);
-    }
+    await createUserProfile(deploymentProfile?.defaults ?? null, deploymentProfile?.locked ?? null);
   }
 
   test.describe.configure({ mode: 'serial' });

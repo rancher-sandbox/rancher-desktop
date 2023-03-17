@@ -21,7 +21,7 @@ export class DeploymentProfileError extends Error {
  * Lockable default settings used for validating deployment profiles.
  * Data values are ignored, but types are used for validation.
  */
-const lockableDefaultSettings = {
+export const lockableDefaultSettings = {
   containerEngine: {
     allowedImages: {
       enabled:  true,
@@ -55,6 +55,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
   };
   let defaults: undefined|RecursivePartial<settings.Settings>;
   let locked: undefined|RecursivePartial<settings.Settings>;
+  let fullDefaultPath = '';
+  let fullLockedPath = '';
 
   switch (os.platform()) {
   case 'linux': {
@@ -67,17 +69,20 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
       const [defaultPath, lockedPath] = linuxPaths[configDir];
 
       [defaults, locked] = parseJsonFiles(configDir, defaultPath, lockedPath);
+      fullDefaultPath = join(configDir, defaultPath);
+      fullLockedPath = join(configDir, lockedPath);
       if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
         break;
       }
     }
-  }
     break;
+  }
 
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
       [defaults, locked] = await parseJsonFromPlists(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
-
+      fullDefaultPath = join(rootPath, 'io.rancherdesktop.profile.defaults.plist');
+      fullLockedPath = join(rootPath, 'io.rancherdesktop.profile.locked.plist');
       if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
         break;
       }
@@ -85,8 +90,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
     break;
   }
 
-  profiles.defaults = validateDeploymentProfile(defaults, settings.defaultSettings, []) ?? {};
-  profiles.locked = validateDeploymentProfile(locked, lockableDefaultSettings, []) ?? {};
+  profiles.defaults = validateDeploymentProfile(fullDefaultPath, defaults, settings.defaultSettings, []) ?? {};
+  profiles.locked = validateDeploymentProfile(fullLockedPath, locked, lockableDefaultSettings, []) ?? {};
 
   return profiles;
 }
@@ -113,8 +118,10 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
   try {
     plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
   } catch (error: any) {
-    console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`);
-    throw new DeploymentProfileError(`Error loading plist file ${ inputPath }: ${ getErrorString(error) }`);
+    console.log(`Error parsing deployment profile plist file ${ inputPath }`, error);
+    const msg = `Error loading plist file ${ inputPath }: ${ getErrorString(error) }`;
+
+    throw new DeploymentProfileError(msg);
   }
 
   try {
@@ -169,6 +176,7 @@ function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: stri
 class Win32DeploymentReader {
   protected registryPathProfile: string[];
   protected keyName = '';
+  protected errors: string[] = [];
 
   constructor(registryPathProfile: string[]) {
     this.registryPathProfile = registryPathProfile;
@@ -180,6 +188,7 @@ class Win32DeploymentReader {
     let defaults: RecursivePartial<settings.Settings> = {};
     let locked: RecursivePartial<settings.Settings> = {};
 
+    this.errors = [];
     for (const keyName of ['HKLM', 'HKCU'] as const) {
       this.keyName = keyName;
       const key = nativeReg[keyName];
@@ -209,11 +218,23 @@ class Win32DeploymentReader {
     }
 
     // Don't bother with the validator, because the registry-based reader validates as it reads.
+    if (this.errors.length) {
+      throw new DeploymentProfileError(`Error in registry settings:\n${ this.errors.join('\n') }`);
+    }
+
     return { defaults, locked };
   }
 
   protected fullRegistryPath(...pathParts: string[]): string {
     return `${ this.keyName }\\${ this.registryPathProfile.join('\\') }\\${ pathParts.join('\\') }`;
+  }
+
+  protected msgFieldExpectingReceived(field: string, expected: string, received: string) {
+    return `Error for field '${ field }': expecting ${ expected }, got ${ received }`;
+  }
+
+  protected msgFieldExpectingTypeReceived(field: string, expectedType: string, received: string) {
+    return this.msgFieldExpectingReceived(field, `value of type ${ expectedType }`, received);
   }
 
   /**
@@ -258,8 +279,10 @@ class Win32DeploymentReader {
 
       if ((typeof schemaVal) !== 'object' || schemaVal === null) {
         const valueType = schemaVal === null ? 'null' : (typeof schemaVal);
+        const msg = this.msgFieldExpectingTypeReceived(this.fullRegistryPath(...pathParts, registryKey), valueType, 'a registry object');
 
-        console.error(`Expecting registry entry ${ this.fullRegistryPath(...pathParts, registryKey) } to be a ${ valueType }, but it's a registry object`);
+        console.error(msg);
+        this.errors.push(msg);
         continue;
       }
       const innerKey = nativeReg.openKey(regKey, registryKey, nativeReg.Access.READ);
@@ -286,7 +309,10 @@ class Win32DeploymentReader {
       try {
         regValue = this.readRegistryObject(innerKey, pathParts.concat([schemaKey]), true);
       } catch (err: any) {
-        console.error(`Error getting registry object for ${ this.fullRegistryPath(...pathParts, registryKey) }: `, err);
+        const msg = `Error getting registry object for ${ this.fullRegistryPath(...pathParts, registryKey) }`;
+
+        console.error(msg, err);
+        this.errors.push(msg);
       } finally {
         nativeReg.closeKey(innerKey);
       }
@@ -335,8 +361,12 @@ class Win32DeploymentReader {
           case 1:
             newValue = true;
             break;
-          default:
-            console.error(`Unexpected numeric value names in registry at ${ this.fullRegistryPath(...pathParts, k) } of ${ newValue }: expecting either 0 or 1`);
+          default: {
+            const msg = this.msgFieldExpectingTypeReceived(this.fullRegistryPath(...pathParts), 'boolean', `'${ newValue }'`);
+
+            console.error(msg);
+            this.errors.push(msg);
+          }
           }
         }
         newObject[k] = newValue;
@@ -347,7 +377,7 @@ class Win32DeploymentReader {
   }
 
   protected readRegistryValue(schemaVal: any, regKey: nativeReg.HKEY, pathParts: string[], valueName: string, isUserDefinedObject = false): string[] | string | boolean | number | null {
-    const fullPath = `\\${ this.fullRegistryPath(...pathParts, valueName) }`;
+    const fullPath = `${ this.fullRegistryPath(...pathParts, valueName) }`;
     const valueTypeNames = [
       'NONE', // 0
       'SZ',
@@ -363,13 +393,20 @@ class Win32DeploymentReader {
       'QWORD',
     ];
     const rawValue = nativeReg.queryValueRaw(regKey, valueName);
-    const parsedValueForErrorMessage = nativeReg.queryValue(regKey, valueName);
+    let parsedValueForErrorMessage = nativeReg.queryValue(regKey, valueName);
+
+    try {
+      parsedValueForErrorMessage = JSON.stringify(parsedValueForErrorMessage);
+    } catch { }
 
     if (rawValue === null) {
       // This shouldn't happen
       return null;
     } else if (!isUserDefinedObject && schemaVal && typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
-      console.error(`Expecting registry entry ${ fullPath } to be a registry object, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+      const msg = this.msgFieldExpectingTypeReceived(fullPath, 'object', `a ${ valueTypeNames[rawValue.type] }, value: '${ parsedValueForErrorMessage }'`);
+
+      console.error(msg);
+      this.errors.push(msg);
 
       return null;
     }
@@ -383,33 +420,48 @@ class Win32DeploymentReader {
       } else if (expectingArray) {
         return [nativeReg.parseString(rawValue)];
       } else {
-        console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+        const msg = this.msgFieldExpectingTypeReceived(fullPath, typeof schemaVal, `'${ parsedValueForErrorMessage }'`);
+
+        console.error(msg);
+        this.errors.push(msg);
       }
       break;
     case nativeReg.ValueType.DWORD:
     case nativeReg.ValueType.DWORD_LITTLE_ENDIAN:
     case nativeReg.ValueType.DWORD_BIG_ENDIAN:
       if (expectingArray) {
-        console.error(`Expecting registry entry ${ fullPath } to be an array, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
-      } else if (typeof schemaVal === 'string') {
-        console.error(`Expecting registry entry ${ fullPath } to be a string, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
-      } else {
+        const msg = this.msgFieldExpectingTypeReceived(fullPath, 'array', `'${ parsedValueForErrorMessage }'`);
+
+        console.error(msg);
+        this.errors.push(msg);
+      } else if (isUserDefinedObject || (typeof schemaVal) === 'boolean' || (typeof schemaVal) === 'number') {
+        // Otherwise the schema type is number or boolean. If it's boolean, reduce it to true/false
         parsedValue = nativeReg.parseValue(rawValue) as number;
 
         return (typeof schemaVal === 'boolean') ? !!parsedValue : parsedValue;
+      } else {
+        const msg = this.msgFieldExpectingTypeReceived(fullPath, typeof schemaVal, `'${ parsedValueForErrorMessage }'`);
+
+        console.error(msg);
+        this.errors.push(msg);
       }
       break;
     case nativeReg.ValueType.MULTI_SZ:
       if (expectingArray) {
         return nativeReg.parseMultiString(rawValue);
-      } else if (typeof schemaVal === 'string') {
-        console.error(`Expecting registry entry ${ fullPath } to be a single string, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
       } else {
-        console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
+        const msg = this.msgFieldExpectingTypeReceived(fullPath, typeof schemaVal, `an array '${ parsedValueForErrorMessage }'`);
+
+        console.error(msg);
+        this.errors.push(msg);
       }
       break;
-    default:
-      console.error(`Unexpected registry entry ${ fullPath }: don't know how to process a registry entry of type ${ valueTypeNames[rawValue.type] }`);
+    default: {
+      const msg = `Error for field '${ fullPath }': don't know how to process a registry entry of type ${ valueTypeNames[rawValue.type] }`;
+
+      console.error(msg);
+      this.errors.push(msg);
+    }
     }
 
     return null;
@@ -418,36 +470,67 @@ class Win32DeploymentReader {
 
 /**
  * Do simple type validation of a deployment profile
+ * @param inputPath Used for error messages only
  * @param profile The profile to be validated
  * @param schema The structure (usually defaultSettings) used as a template
  * @param parentPathParts The parent path for the current schema key.
  * @returns The original profile, less any invalid fields
  */
-function validateDeploymentProfile(profile: any, schema: any, parentPathParts: string[]) {
+export function validateDeploymentProfile(inputPath: string, profile: any, schema: any, parentPathParts: string[]): RecursivePartial<settings.Settings> {
+  const errors: string[] = [];
+
+  validateDeploymentProfileWithErrors(profile, errors, schema, parentPathParts);
+  if (errors.length) {
+    throw new DeploymentProfileError(`Error in deployment file ${ inputPath }:\n${ errors.join('\n') }`);
+  }
+
+  return profile;
+}
+
+/**
+ * Do simple type validation of a deployment profile
+ * @param profile The profile to be validated, modified in place
+ * @param errors An array of error messages, built up in place
+ * @param schema The structure (usually defaultSettings) used as a template
+ * @param parentPathParts The parent path for the current schema key.
+ * @returns The original profile, less any invalid fields
+ */
+function validateDeploymentProfileWithErrors(profile: any, errors: string[], schema: any, parentPathParts: string[]) {
   if (typeof profile !== 'object') {
     return profile;
   }
+  const fullPath = (key: string) => {
+    return [...parentPathParts, key].join('.');
+  };
+
   for (const key in profile) {
     if (!(key in schema)) {
-      console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': not in schema.`);
+      console.log(`Deployment Profile ignoring '${ fullPath(key) }': not in schema.`);
       delete profile[key];
       continue;
     }
-    if (typeof profile[key] !== 'object') {
-      if (typeof profile[key] !== typeof schema[key]) {
-        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': expecting value of type ${ typeof schema[key] }, got ${ typeof profile[key] }.`);
-        delete profile[key];
+    const schemaVal = schema[key];
+    const profileVal = profile[key];
+
+    if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
+      if (Array.isArray(profileVal) !== Array.isArray(schemaVal)) {
+        if (Array.isArray(schemaVal)) {
+          errors.push(`Error for field '${ fullPath(key) }': expecting value of type array, got '${ JSON.stringify(profileVal) }'`);
+        } else {
+          errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got an array ${ JSON.stringify(profileVal) }`);
+        }
       }
-    } else if (Array.isArray(profile[key])) {
-      if (!Array.isArray(schema[key])) {
-        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
-        delete profile[key];
+    } else if (typeof profileVal !== 'object') {
+      if (typeof profileVal !== typeof schemaVal) {
+        errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
       }
     } else if (haveUserDefinedObject(parentPathParts.concat(key))) {
       // Keep this part of the profile
+    } else if (typeof profileVal !== typeof schemaVal) {
+      errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
     } else {
       // Finally recurse and compare the schema sub-object with the specified sub-object
-      validateDeploymentProfile(profile[key], schema[key], parentPathParts.concat(key));
+      validateDeploymentProfileWithErrors(profileVal, errors, schemaVal, [...parentPathParts, key]);
     }
   }
 

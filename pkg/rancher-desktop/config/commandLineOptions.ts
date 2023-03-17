@@ -24,6 +24,8 @@ export class LockedFieldError extends Error {}
  *
  *  * All errors are fatal as this function is like an API for launching the application.
  * @param cfg - current loaded settings - this is updated and also returned
+ * @param lockedFields - current locked fields
+ * @param commandLineArgs - new command-line args to be merged into `cfg` (error if the field is locked)
  * @return updated cfg
  */
 export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSettingsType, commandLineArgs: string[]): Settings {
