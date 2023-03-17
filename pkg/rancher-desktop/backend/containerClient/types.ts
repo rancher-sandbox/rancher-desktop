@@ -39,9 +39,10 @@ export interface ContainerEngineClient {
    * @param imageID The ID of the image to read.
    * @param filePath The file to read, relative to the root of the container.
    * @param [options.encoding='utf-8'] The encoding to read.
+   * @param [options.namespace] Namespace the image is in, if supported.
    */
   readFile(imageID: string, filePath: string): Promise<string>;
-  readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding }): Promise<string>;
+  readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding, namespace?: string }): Promise<string>;
 
   /**
    * Copy the given file to disk.
@@ -51,10 +52,11 @@ export interface ContainerEngineClient {
    * This is always the parent directory; the base name of the output will be
    * the base name of the sourcePath.
    * @param [options.resolveSymlinks] Follow symlinks in the source; default true.
+   * @param [options.namespace] Namespace the image is in, if supported.
    * @note Symbolic links might not be copied correctly (for example, the host might be Windows).
    */
   copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks: false }): Promise<void>;
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks?: false, namespace?: string }): Promise<void>;
 
   /**
    * Start a container.

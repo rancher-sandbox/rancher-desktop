@@ -56,22 +56,27 @@ export class NerdctlClient implements ContainerEngineClient {
    * @returns The path that the image has been mounted on, plus an array of
    * cleanup functions that must be called in reverse order when done.
    */
-  protected async mountImage(imageID: string): Promise<[string, (() => Promise<void>)[]]> {
+  protected async mountImage(imageID: string, namespace?: string): Promise<[string, (() => Promise<void>)[]]> {
     const cleanups: (() => Promise<void>)[] = [];
 
     try {
-      const container = (await this.vm.execCommand({ capture: true }, '/usr/local/bin/nerdctl', 'create', '--entrypoint=/', imageID)).trim();
+      const namespaceArgs = namespace === undefined ? [] : ['--namespace', namespace];
+      const container = (await this.vm.execCommand({ capture: true },
+        '/usr/local/bin/nerdctl', ...namespaceArgs, 'create', '--entrypoint=/', imageID)).trim();
 
       if (!container) {
         throw new Error(`Failed to create container for ${ imageID }`);
       }
-      cleanups.push(() => this.vm.execCommand('/usr/local/bin/nerdctl', 'rm', '--force', '--volumes', container));
+      cleanups.push(() => this.vm.execCommand(
+        '/usr/local/bin/nerdctl', ...namespaceArgs, 'rm', '--force', '--volumes', container));
 
       const workdir = (await this.vm.execCommand({ capture: true }, '/bin/mktemp', '-d', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
 
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workdir));
 
-      const command = await this.vm.execCommand({ capture: true, root: true }, '/usr/bin/ctr', '--address=/run/k3s/containerd/containerd.sock', 'snapshot', 'mounts', workdir, container);
+      const command = await this.vm.execCommand({ capture: true, root: true },
+        '/usr/bin/ctr', ...namespaceArgs,
+        '--address=/run/k3s/containerd/containerd.sock', 'snapshot', 'mounts', workdir, container);
 
       await this.vm.execCommand({ root: true }, ...command.trim().split(' '));
       cleanups.push(async() => {
@@ -92,15 +97,15 @@ export class NerdctlClient implements ContainerEngineClient {
   }
 
   readFile(imageID: string, filePath: string): Promise<string>;
-  readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding | undefined; }): Promise<string>;
-  async readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding }): Promise<string> {
+  readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding, namespace?: string }): Promise<string>;
+  async readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding, namespace?: string }): Promise<string> {
     const encoding = options?.encoding ?? 'utf-8';
 
     // Due to https://github.com/containerd/nerdctl/issues/1058 we can't just
     // do `nerdctl create` + `nerdctl cp`.  Instead, we need to make mounts
     // manually.
 
-    const [workdir, cleanups] = await this.mountImage(imageID);
+    const [workdir, cleanups] = await this.mountImage(imageID, options?.namespace);
 
     try {
       // The await here is needed to ensure we read the result before running
@@ -112,10 +117,10 @@ export class NerdctlClient implements ContainerEngineClient {
   }
 
   copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks: false; }): Promise<void>;
-  async copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { resolveSymlinks?: boolean }): Promise<void> {
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks: false, namespace?: string }): Promise<void>;
+  async copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { resolveSymlinks?: boolean, namespace?: string }): Promise<void> {
     const resolveSymlinks = options?.resolveSymlinks !== false;
-    const [imageDir, cleanups] = await this.mountImage(imageID);
+    const [imageDir, cleanups] = await this.mountImage(imageID, options?.namespace);
 
     try {
       // Archive the file(s) into the VM

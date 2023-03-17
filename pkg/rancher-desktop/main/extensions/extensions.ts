@@ -47,6 +47,7 @@ export class ExtensionImpl implements Extension {
   readonly dir: string;
   protected readonly client: ContainerEngineClient;
   protected _metadata: Promise<ExtensionMetadata> | undefined;
+  protected readonly extensionNamespace = 'rancher-desktop-extensions';
 
   /** Extension metadata */
   get metadata(): Promise<ExtensionMetadata> {
@@ -54,7 +55,7 @@ export class ExtensionImpl implements Extension {
       const fallback = { vm: {} };
 
       try {
-        const raw = await this.client.readFile(this.id, 'metadata.json');
+        const raw = await this.readFile('metadata.json');
         const result = _.merge({}, fallback, JSON.parse(raw));
 
         if (!result.icon) {
@@ -120,7 +121,7 @@ export class ExtensionImpl implements Extension {
       const origIconName = path.basename(metadata.icon);
 
       try {
-        await this.client.copyFile(this.id, metadata.icon, workDir);
+        await this.client.copyFile(this.id, metadata.icon, workDir, { namespace: this.extensionNamespace });
       } catch (ex) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex as Error);
       }
@@ -144,7 +145,11 @@ export class ExtensionImpl implements Extension {
     await Promise.all(Object.entries(metadata.ui).map(async([name, data]) => {
       try {
         await fs.promises.mkdir(path.join(uiDir, name), { recursive: true });
-        await this.client.copyFile(this.id, data.root, path.join(uiDir, name));
+        await this.client.copyFile(
+          this.id,
+          data.root,
+          path.join(uiDir, name),
+          { namespace: this.extensionNamespace });
       } catch (ex: any) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy UI ${ name }`, ex);
       }
@@ -171,7 +176,7 @@ export class ExtensionImpl implements Extension {
 
     await Promise.all(paths.map(async(p) => {
       try {
-        await this.client.copyFile(this.id, p, binDir);
+        await this.client.copyFile(this.id, p, binDir, { namespace: this.extensionNamespace });
       } catch (ex: any) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy host binary ${ p }`, ex);
       }
@@ -208,10 +213,14 @@ export class ExtensionImpl implements Extension {
   }
 
   async extractFile(sourcePath: string, destinationPath: string): Promise<void> {
-    await this.client.copyFile(this.id, sourcePath, destinationPath);
+    await this.client.copyFile(
+      this.id,
+      sourcePath,
+      destinationPath,
+      { namespace: this.extensionNamespace });
   }
 
   async readFile(sourcePath: string): Promise<string> {
-    return await this.client.readFile(this.id, sourcePath);
+    return await this.client.readFile(this.id, sourcePath, { namespace: this.extensionNamespace });
   }
 }
