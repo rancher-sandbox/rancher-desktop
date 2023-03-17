@@ -77,4 +77,26 @@ describe(childProcess.spawnFile, () => {
       await fs.promises.rm(workdir, { recursive: true, maxRetries: 3 });
     }
   });
+
+  test('prints stderr', async() => {
+    const script = `
+      console.log('Output on std!!out');
+      console.error('Output on std!!err');
+      process.exitCode = 42;
+    `;
+
+    try {
+      await childProcess.spawnFile(process.execPath, ['-e', script], { stdio: 'pipe' });
+    } catch (ex: any) {
+      expect(ex).toBeInstanceOf(Error);
+      // Check that the Error toString() is used
+      expect(ex.toString()).toContain(`Error: ${ process.execPath }`);
+      // Check that we have the exit code logged
+      expect(ex.toString()).toContain('exited with code 42');
+      // Check that we have stdout in the output
+      expect(ex.toString()).toContain('std!!out');
+      // CHeck that we have stderr in the output
+      expect(ex.toString()).toContain('std!!err');
+    }
+  });
 });
