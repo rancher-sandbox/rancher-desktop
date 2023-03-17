@@ -6,6 +6,7 @@ asar: true
 extraResources:
 - resources/
 - '!resources/darwin/lima-*.tgz'
+- '!resources/darwin/limactl-*.tgz'
 - '!resources/linux/lima-*.tgz'
 - '!resources/host/'
 files:
