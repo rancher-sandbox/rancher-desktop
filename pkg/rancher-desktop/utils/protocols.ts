@@ -8,7 +8,7 @@ import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
-const console = Logging.background;
+const console = Logging['protocol-handler'];
 
 /**
  * Create a URL that consists of a base combined with the provided path

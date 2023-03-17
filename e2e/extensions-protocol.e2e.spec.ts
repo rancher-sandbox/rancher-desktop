@@ -15,7 +15,7 @@ import {
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
 
-/** The top level source directory, assuming we're always from the tree */
+/** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
 const rdctl = executable('rdctl');
 
@@ -77,6 +77,8 @@ test.describe.serial('Extensions protocol handler', () => {
   test('wait for buildkit', async() => {
     test.skip(!isContainerd, 'Not running containerd, no need to wait for buildkit');
 
+    // `buildctl debug info` talks to the backend (to fetch info about it), so
+    // if it succeeds it means the backend is up and can respond to requests.
     await retry(() => spawnFile(rdctl, ['shell', 'buildctl', 'debug', 'info']));
   });
 
