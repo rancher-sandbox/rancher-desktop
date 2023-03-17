@@ -3,6 +3,182 @@ info:
   title: Rancher Desktop API
   version: 0.0.1
 paths:
+  /:
+    get:
+      operationId: listEndpoints
+      summary: List all endpoints.
+      responses:
+        '200':
+          description: A list of endpoints
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+
+  /v0:
+    get:
+      operationId: listV0Endpoints
+      summary: List all version zero endpoints.
+      responses:
+        '200':
+          description: A list of version 0 endpoints, of which there are none.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+
+  /v1:
+    get:
+      operationId: listV1Endpoints
+      summary: List all version one endpoints.
+      responses:
+        '200':
+          description: A list of endpoints
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+
+  /v1/about:
+    get:
+      operationId: getAbout
+      summary: Returns a description of the endpoints
+      responses:
+        '200':
+          description: A note about endpoints not being forwards-compatible.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v1/diagnostic_categories:
+    get:
+      operationId: diagnosticCategories
+      summary: Return a list of the category names for the Diagnostics component. Takes no parameters.
+      responses:
+        '200':
+          description: A list of the category names.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /v1/diagnostic_checks:
+    get:
+      operationId: diagnosticChecks
+      summary: Return all the checks, optionally filtered by specified category and/or checkID.
+      parameters:
+      - in: query
+        name: category
+      - in: query
+        name: checkID
+      responses:
+        '200':
+          description: A list of check objects. An invalid or unrecognized query parameter returns (200, empty array)
+          content:
+            application/json:
+              schema:
+                "$ref" : "#/components/schemas/diagnostics"
+    post:
+      operationId: diagnosticRunChecks
+      summary: Run all diagnostic checks, and return any results.
+      responses:
+        '200':
+          description: A list of check results.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/diagnostics"
+
+  /v1/diagnostic_ids:
+    get:
+      operationId: diagnosticIDsForCategory
+      summary: >-
+        Return a list of the check IDs for the Diagnostics category,
+        or 404 if there is no such `category`.
+        Specifying an exiting category with no checks
+        will return status code 200 and an empty array.
+      parameters:
+      - in: query
+        name: category
+      responses:
+        '200':
+          description: A list of the check IDs for the specified category.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '404':
+          description: The category is not recognized.
+
+
+  /v1/extensions:
+    get:
+      operationId: listExtensions
+      summary: List currently-installed RDX extensions.
+      responses:
+        '200':
+          description: A list of installed RDX extensions.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+
+  /v1/extensions/install:
+    post:
+      operationId: installExtension
+      summary: Install an RDX extension
+      parameters:
+      - in: query
+        name: id
+      responses:
+        '201':
+          description: The extension was installed.
+        '204':
+          description: The extension was already installed.
+        '400':
+          description: There was an issue with the parameters.
+        '422':
+          description: The extension could not be installed.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '503':
+          description: An internal error occurred.
+
+  /v1/extensions/uninstall:
+    post:
+      operationId: uninstallExtension
+      summary: Uninstall an RDX extension
+      parameters:
+      - in: query
+        name: id
+      responses:
+        '201':
+          description: The extension was uninstalled.
+        '204':
+          description: The extension was already uninstalled.
+        '400':
+          description: There was an issue with the parameters.
+        '422':
+          description: The extension could not be installed.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '503':
+          description: An internal error occurred.
+
   /v1/factory_reset:
     put:
       operationId: factoryReset
@@ -109,71 +285,6 @@ paths:
             text/plain:
               schema:
                 type: string
-
-  /v1/diagnostic_categories:
-    get:
-      operationId: diagnosticCategories
-      summary: Return a list of the category names for the Diagnostics component. Takes no parameters.
-      responses:
-        '200':
-          description: A list of the category names.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-
-  /v1/diagnostic_ids:
-    get:
-      operationId: diagnosticIDsForCategory
-      summary: >-
-        Return a list of the check IDs for the Diagnostics category,
-        or 404 if there is no such `category`.
-        Specifying an exiting category with no checks
-        will return status code 200 and an empty array.
-      parameters:
-      - in: query
-        name: category
-      responses:
-        '200':
-          description: A list of the check IDs for the specified category.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-        '404':
-          description: The category is not recognized.
-
-
-  /v1/diagnostic_checks:
-    get:
-      operationId: diagnosticChecks
-      summary: Return all the checks, optionally filtered by specified category and/or checkID.
-      parameters:
-      - in: query
-        name: category
-      - in: query
-        name: checkID
-      responses:
-        '200':
-          description: A list of check objects. An invalid or unrecognized query parameter returns (200, empty array)
-          content:
-            application/json:
-              schema:
-                "$ref" : "#/components/schemas/diagnostics"
-    post:
-      operationId: diagnosticRunChecks
-      summary: Run all diagnostic checks, and return any results.
-      responses:
-        '200':
-          description: A list of check results.
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/diagnostics"
 
   /v1/transient_settings:
     get:
