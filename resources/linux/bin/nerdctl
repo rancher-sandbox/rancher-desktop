@@ -14,6 +14,6 @@ else
     echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl";
     exit 1
   else
-    "${scriptdir}/rdctl" shell sudo nerdctl "$@"
+    "${scriptdir}/rdctl" shell sudo --preserve-env=SSH_AUTH_SOCK nerdctl "$@"
   fi
 fi
