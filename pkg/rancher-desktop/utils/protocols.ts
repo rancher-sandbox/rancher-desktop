@@ -92,7 +92,7 @@ function setupAppProtocolHandler() {
  * Set up protocol handler for x-rd-extension://
  *
  * This handler is used for extensions; the format is:
- * x-rd-extensions://<extension id>/...
+ * x-rd-extension://<extension id>/...
  * Where the extension id is the extension image id, hex encoded (to avoid
  * issues with slashes).  Base64 was not available in Vue.
  */
