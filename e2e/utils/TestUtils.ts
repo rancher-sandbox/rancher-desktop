@@ -70,6 +70,7 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
     application: {
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.Manual,
+      startInBackground:      false,
     },
   };
   const settingsData: Settings = _.merge({}, defaultSettings, defaultOverrides, overrides);
@@ -157,11 +158,16 @@ export async function tearDownHelm() {
   await kubectl('delete', 'deploy', 'nginx-sample', '--namespace', 'default');
 }
 
-export function getFullPathForTool(tool: string): string {
+export function getResourceBinDir(): string {
   const srcDir = path.dirname(__dirname);
+
+  return path.join(srcDir, '..', 'resources', os.platform(), 'bin');
+}
+
+export function getFullPathForTool(tool: string): string {
   const filename = os.platform().startsWith('win') ? `${ tool }.exe` : tool;
 
-  return path.join(srcDir, '..', 'resources', os.platform(), 'bin', filename);
+  return path.join(getResourceBinDir(), filename);
 }
 
 /**
@@ -230,9 +236,10 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
  * Run Rancher Desktop; return promise that resolves to commonly-used
  * playwright objects when it has started.
  * @param testPath The path to the test file.
- * @param tracing Whether to start tracing.
+ * @param options.tracing Whether to start tracing (defaults to true).
+ * @param options.mock Whether to use the mock backend (defaults to true).
  */
-export async function startRancherDesktop(testPath: string, tracing: boolean): Promise<ElectronApplication> {
+export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean }): Promise<ElectronApplication> {
   const electronApp = await _electron.launch({
     args: [
       path.join(__dirname, '../../'),
@@ -244,12 +251,12 @@ export async function startRancherDesktop(testPath: string, tracing: boolean): P
     ],
     env: {
       ...process.env,
-      RD_LOGS_DIR:     reportAsset(testPath, 'log'),
-      RD_MOCK_BACKEND: '1',
+      RD_LOGS_DIR: reportAsset(testPath, 'log'),
+      ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },
   });
 
-  if (tracing) {
+  if (options?.tracing ?? true) {
     await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
   }
 

@@ -1547,7 +1547,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         proc.on('error', reject);
         proc.on('exit', (code, signal) => {
           if (code || signal) {
-            return reject(`Failed to read ${ filePath }: /bin/cat exited with ${ code || signal }`);
+            return reject(new Error(`Failed to read ${ filePath }: /bin/cat exited with ${ code || signal }`));
           }
           resolve();
         });

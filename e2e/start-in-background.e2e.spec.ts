@@ -15,7 +15,7 @@ test.describe.serial('startInBackground setting', () => {
 
   test('window should appear when startInBackground is false', async() => {
     createDefaultSettings({ application: { startInBackground: false } });
-    const electronApp = await startRancherDesktop(__filename, true);
+    const electronApp = await startRancherDesktop(__filename);
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(true);
     const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-startInBackgroundFalse.zip`);
@@ -26,7 +26,7 @@ test.describe.serial('startInBackground setting', () => {
 
   test('window should not appear when startInBackground is true', async() => {
     createDefaultSettings({ application: { startInBackground: true } });
-    const electronApp = await startRancherDesktop(__filename, true);
+    const electronApp = await startRancherDesktop(__filename);
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(false);
     const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-startInBackgroundTrue.zip`);
