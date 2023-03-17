@@ -13,8 +13,6 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.deploymentProfile;
 
-const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
-
 export class DeploymentProfileError extends Error {
 }
 
@@ -31,6 +29,8 @@ const lockableDefaultSettings = {
   },
 };
 
+const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
+
 /**
  * Read and validate deployment profiles, giving system level profiles
  * priority over user level profiles.  If the system directory contains a
@@ -42,7 +42,12 @@ const lockableDefaultSettings = {
  *       located in the main process.
  */
 
-export async function readDeploymentProfiles(): Promise<settings.DeploymentProfileType> {
+export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH_PROFILE): Promise<settings.DeploymentProfileType> {
+  if (process.platform === 'win32') {
+    const win32DeploymentReader = new Win32DeploymentReader(registryProfilePath);
+
+    return Promise.resolve(win32DeploymentReader.readProfile());
+  }
   const profiles: settings.DeploymentProfileType = {
     defaults: {},
     locked:   {},
@@ -51,41 +56,6 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
   let locked: undefined|RecursivePartial<settings.Settings>;
 
   switch (os.platform()) {
-  case 'win32':
-    for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
-      const registryKey = nativeReg.openKey(key, REGISTRY_PATH_PROFILE.join('\\'), nativeReg.Access.READ);
-
-      if (!registryKey) {
-        continue;
-      }
-      const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
-      const lockedKey = nativeReg.openKey(registryKey, 'Locked', nativeReg.Access.READ);
-
-      try {
-        if (defaultsKey) {
-          defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
-        }
-        if (lockedKey) {
-          locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
-        }
-      } catch (err) {
-        console.error( `Error reading deployment profile: ${ err }`);
-      } finally {
-        nativeReg.closeKey(registryKey);
-        if (defaultsKey) {
-          nativeReg.closeKey(defaultsKey);
-        }
-        if (lockedKey) {
-          nativeReg.closeKey(lockedKey);
-        }
-      }
-      // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
-      // Alternatively, if the keys work, we could break, even if both hives are empty.
-      if ((defaults && Object.keys(defaults).length) || (locked && Object.keys(locked).length)) {
-        break;
-      }
-    }
-    break;
   case 'linux': {
     const linuxPaths = {
       [paths.deploymentProfileSystem]: ['defaults.json', 'locked.json'],
@@ -102,6 +72,7 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
     }
   }
     break;
+
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
       [defaults, locked] = await parseJsonFromPlists(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
@@ -192,67 +163,260 @@ function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: stri
 }
 
 /**
- * Windows only. Read settings values from registry using schemaObj as a template.
- * @param schemaObj the object used as a template for navigating registry.
- * @param regKey the registry key obtained from nativeReg.openKey().
- * @returns null, or the registry data as an object.
+ * Win32DeploymentReader - encapsulate details about the registry in this class.
  */
-function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): RecursivePartial<settings.Settings>|null {
-  let newObject: RecursivePartial<settings.Settings>|null = null;
+class Win32DeploymentReader {
+  protected registryPathProfile: string[];
+  protected keyName = '';
 
-  const schemaKeys = Object.keys(schemaObj);
-  // ignore case
-  const registryKeys = nativeReg.enumKeyNames(regKey).concat(nativeReg.enumValueNames(regKey)).map(k => k.toLowerCase());
-  const commonKeys = schemaKeys.filter(k => registryKeys.includes(k.toLowerCase()));
-
-  for (const k of commonKeys) {
-    const schemaVal = schemaObj[k];
-    let regValue: any = null;
-
-    if (typeof schemaVal === 'object') {
-      if (!Array.isArray(schemaVal)) {
-        const innerKey = nativeReg.openKey(regKey, k, nativeReg.Access.READ);
-
-        if (!innerKey) {
-          continue;
-        }
-        try {
-          regValue = readRegistryUsingSchema(schemaVal, innerKey);
-          if (regValue && (typeof regValue === 'object') && Object.keys(regValue).length === 0) {
-            // Ignore empty objects
-            regValue = null;
-          }
-        } finally {
-          nativeReg.closeKey(innerKey);
-        }
-      } else {
-        const multiSzValue = nativeReg.queryValueRaw(regKey, k);
-
-        if (multiSzValue) {
-          // Registry value can be a single-string or even a DWORD and parseMultiString will handle it.
-          const arrayValue = nativeReg.parseMultiString(multiSzValue as nativeReg.Value);
-
-          regValue = arrayValue.length ? arrayValue : null;
-        }
-      }
-    } else {
-      regValue = nativeReg.queryValue(regKey, k);
-      if (typeof schemaVal === 'boolean') {
-        if (typeof regValue === 'number') {
-          regValue = regValue !== 0;
-        } else {
-          console.debug(`Deployment Profile expected boolean value for key ${ k }`);
-          regValue = false;
-        }
-      }
-    }
-    if (regValue !== null) {
-      newObject ??= {};
-      (newObject as Record<string, any>)[k] = regValue;
-    }
+  constructor(registryPathProfile: string[]) {
+    this.registryPathProfile = registryPathProfile;
   }
 
-  return newObject;
+  readProfile(): settings.DeploymentProfileType {
+    const DEFAULTS_HIVE_NAME = 'Defaults';
+    const LOCKED_HIVE_NAME = 'Locked';
+    let defaults: RecursivePartial<settings.Settings> = {};
+    let locked: RecursivePartial<settings.Settings> = {};
+
+    for (const keyName of ['HKLM', 'HKCU'] as const) {
+      this.keyName = keyName;
+      const key = nativeReg[keyName];
+      const registryKey = nativeReg.openKey(key, this.registryPathProfile.join('\\'), nativeReg.Access.READ);
+
+      if (!registryKey) {
+        continue;
+      }
+      const defaultsKey = nativeReg.openKey(registryKey, DEFAULTS_HIVE_NAME, nativeReg.Access.READ);
+      const lockedKey = nativeReg.openKey(registryKey, LOCKED_HIVE_NAME, nativeReg.Access.READ);
+
+      try {
+        defaults = defaultsKey ? this.readRegistryUsingSchema(settings.defaultSettings, defaultsKey, [DEFAULTS_HIVE_NAME]) : {};
+        locked = lockedKey ? this.readRegistryUsingSchema(settings.defaultSettings, lockedKey, [LOCKED_HIVE_NAME]) : {};
+      } catch (err) {
+        console.error('Error reading deployment profile: ', err);
+      } finally {
+        nativeReg.closeKey(registryKey);
+        if (defaultsKey) {
+          nativeReg.closeKey(defaultsKey);
+        }
+        if (lockedKey) {
+          nativeReg.closeKey(lockedKey);
+        }
+      }
+      // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
+      // Alternatively, if the keys work, we could break, even if both hives are empty.
+      if (Object.keys(defaults).length || Object.keys(locked).length) {
+        break;
+      }
+    }
+
+    // Don't bother with the validator, because the registry-based reader validates as it reads.
+    return { defaults, locked };
+  }
+
+  protected fullRegistryPath(...pathParts: string[]): string {
+    return `${ this.keyName }\\${ this.registryPathProfile.join('\\') }\\${ pathParts.join('\\') }`;
+  }
+
+  /**
+   * Windows only. Read settings values from registry using schemaObj as a template.
+   * @param schemaObj the object used as a template for navigating registry.
+   * @param regKey the registry key obtained from nativeReg.openKey().
+   * @param pathParts the relative path to the current registry key, starting at 'Defaults' or 'Locked'
+   * @returns null, or the registry data as an object.
+   */
+  protected readRegistryUsingSchema(schemaObj: Record<string, any>, regKey: nativeReg.HKEY, pathParts: string[]): Record<string, any> {
+    const newObject: Record<string, any> = {};
+    const schemaKeys = Object.keys(schemaObj);
+    const commonKeys: Array<{schemaKey: string, registryKey: string}> = [];
+    const unknownKeys: string[] = [];
+    const userDefinedObjectKeys: Array<{schemaKey: string, registryKey: string}> = [];
+    let regValue: any;
+
+    // Drop the initial 'defaults' or 'locked' field
+    const pathPartsWithoutHiveType = pathParts.slice(1);
+
+    for (const originalKey of nativeReg.enumKeyNames(regKey)) {
+      const schemaKey = fixProfileKeyCase(originalKey, schemaKeys);
+      // "fixed case" means mapping existing keys in the registry (which typically supports case-insensitive lookups)
+      // to the actual case in the schema.
+
+      if (schemaKey === null) {
+        unknownKeys.push(originalKey);
+      } else if (haveUserDefinedObject(pathPartsWithoutHiveType.concat(schemaKey), isEquivalentIgnoreCase)) {
+        userDefinedObjectKeys.push({ schemaKey, registryKey: originalKey });
+      } else {
+        commonKeys.push({ schemaKey, registryKey: originalKey });
+      }
+    }
+    if (unknownKeys.length) {
+      unknownKeys.sort(caseInsensitiveComparator.compare);
+      console.error(`Unrecognized keys in registry at ${ this.fullRegistryPath(...pathParts) }: [${ unknownKeys.join(', ') }]`);
+    }
+
+    // First process the nested keys, then process any values
+    for (const { schemaKey, registryKey } of commonKeys) {
+      const schemaVal = schemaObj[schemaKey];
+
+      if ((typeof schemaVal) !== 'object' || schemaVal === null) {
+        const valueType = schemaVal === null ? 'null' : (typeof schemaVal);
+
+        console.error(`Expecting registry entry ${ this.fullRegistryPath(...pathParts, registryKey) } to be a ${ valueType }, but it's a registry object`);
+        continue;
+      }
+      const innerKey = nativeReg.openKey(regKey, registryKey, nativeReg.Access.READ);
+
+      if (!innerKey) {
+        continue;
+      }
+      try {
+        regValue = this.readRegistryUsingSchema(schemaVal, innerKey, pathParts.concat([schemaKey]));
+      } finally {
+        nativeReg.closeKey(innerKey);
+      }
+      if (Object.keys(regValue).length) {
+        newObject[schemaKey] = regValue;
+      }
+    }
+    for (const { schemaKey, registryKey } of userDefinedObjectKeys) {
+      const innerKey = nativeReg.openKey(regKey, registryKey, nativeReg.Access.READ);
+
+      if (innerKey === null) {
+        console.error(`No value for registry object ${ this.fullRegistryPath(...pathParts, registryKey) }`);
+        continue;
+      }
+      try {
+        regValue = this.readRegistryObject(innerKey, pathParts.concat([schemaKey]), true);
+      } catch (err: any) {
+        console.error(`Error getting registry object for ${ this.fullRegistryPath(...pathParts, registryKey) }: `, err);
+      } finally {
+        nativeReg.closeKey(innerKey);
+      }
+      if (regValue) {
+        newObject[schemaKey] = regValue;
+      }
+    }
+    const unknownValueNames: string[] = [];
+
+    for (const originalName of nativeReg.enumValueNames(regKey)) {
+      const schemaKey = fixProfileKeyCase(originalName, schemaKeys);
+
+      if (schemaKey === null) {
+        unknownValueNames.push(originalName);
+      } else {
+        regValue = this.readRegistryValue(schemaObj[schemaKey], regKey, pathParts, originalName);
+        if (regValue !== null) {
+          newObject[schemaKey] = regValue;
+        }
+      }
+    }
+    if (unknownValueNames.length > 0) {
+      unknownValueNames.sort(caseInsensitiveComparator.compare);
+      console.error(`Unrecognized value names in registry at ${ this.fullRegistryPath(...pathParts) }: [${ unknownValueNames.join(', ') }]`);
+    }
+
+    return newObject;
+  }
+
+  protected readRegistryObject(regKey: nativeReg.HKEY, pathParts: string[], isUserDefinedObject = false) {
+    const newObject: Record<string, string[] | string | boolean | number> = {};
+
+    for (const k of nativeReg.enumValueNames(regKey)) {
+      let newValue = this.readRegistryValue(undefined, regKey, pathParts, k, isUserDefinedObject);
+
+      if (newValue !== null) {
+        if (isUserDefinedObject && (typeof newValue) === 'number') {
+          // Currently all user-defined objects are either
+          // Record<string, string> or Record<string, boolean>
+          // The registry can't store boolean values, only numbers, so we assume true and false
+          // are stored as 1 and 0, respectively. Any other numeric values are considered errors.
+          switch (newValue) {
+          case 0:
+            newValue = false;
+            break;
+          case 1:
+            newValue = true;
+            break;
+          default:
+            console.error(`Unexpected numeric value names in registry at ${ this.fullRegistryPath(...pathParts, k) } of ${ newValue }: expecting either 0 or 1`);
+          }
+        }
+        newObject[k] = newValue;
+      }
+    }
+
+    return newObject;
+  }
+
+  protected readRegistryValue(schemaVal: any, regKey: nativeReg.HKEY, pathParts: string[], valueName: string, isUserDefinedObject = false): string[] | string | boolean | number | null {
+    const fullPath = `\\${ this.fullRegistryPath(...pathParts, valueName) }`;
+    const valueTypeNames = [
+      'NONE', // 0
+      'SZ',
+      'EXPAND_SZ',
+      'BINARY',
+      'DWORD',
+      'DWORD_BIG_ENDIAN',
+      'LINK',
+      'MULTI_SZ',
+      'RESOURCE_LIST',
+      'FULL_RESOURCE_DESCRIPTOR',
+      'RESOURCE_REQUIREMENTS_LIST',
+      'QWORD',
+    ];
+    const rawValue = nativeReg.queryValueRaw(regKey, valueName);
+    const parsedValueForErrorMessage = nativeReg.queryValue(regKey, valueName);
+
+    if (rawValue === null) {
+      // This shouldn't happen
+      return null;
+    } else if (!isUserDefinedObject && schemaVal && typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
+      console.error(`Expecting registry entry ${ fullPath } to be a registry object, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+
+      return null;
+    }
+    const expectingArray = Array.isArray(schemaVal);
+    let parsedValue: any = null;
+
+    switch (rawValue.type) {
+    case nativeReg.ValueType.SZ:
+      if (isUserDefinedObject || (typeof schemaVal) === 'string') {
+        return nativeReg.parseValue(rawValue) as string;
+      } else if (expectingArray) {
+        return [nativeReg.parseValue(rawValue) as string];
+      } else {
+        console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+      }
+      break;
+    case nativeReg.ValueType.DWORD:
+    case nativeReg.ValueType.DWORD_LITTLE_ENDIAN:
+    case nativeReg.ValueType.DWORD_BIG_ENDIAN:
+      if (expectingArray) {
+        console.error(`Expecting registry entry ${ fullPath } to be an array, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+      } else if (typeof schemaVal === 'string') {
+        console.error(`Expecting registry entry ${ fullPath } to be a string, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+      } else {
+        parsedValue = nativeReg.parseValue(rawValue) as number;
+
+        return (typeof schemaVal === 'boolean') ? !!parsedValue : parsedValue;
+      }
+      break;
+    case nativeReg.ValueType.MULTI_SZ:
+      if (expectingArray) {
+        return nativeReg.parseValue(rawValue) as string [];
+      } else if (typeof schemaVal === 'string') {
+        console.error(`Expecting registry entry ${ fullPath } to be a single string, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
+      } else {
+        console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
+      }
+      break;
+    default:
+      console.error(`Unexpected registry entry ${ fullPath }: don't know how to process a registry entry of type ${ valueTypeNames[rawValue.type] }`);
+    }
+
+    return null;
+  }
 }
 
 /**
@@ -282,7 +446,7 @@ function validateDeploymentProfile(profile: any, schema: any, parentPathParts: s
         console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
         delete profile[key];
       }
-    } else if (isUserDefinedObject(parentPathParts, key)) {
+    } else if (haveUserDefinedObject(parentPathParts.concat(key), isEquivalentRespectCase)) {
       // Keep this part of the profile
     } else {
       // Finally recurse and compare the schema sub-object with the specified sub-object
@@ -293,24 +457,42 @@ function validateDeploymentProfile(profile: any, schema: any, parentPathParts: s
   return profile;
 }
 
+function isEquivalentRespectCase(a: string, b: string): boolean {
+  return a === b;
+}
+
+const caseInsensitiveComparator = new Intl.Collator('en', { sensitivity: 'base' });
+
+function isEquivalentIgnoreCase(a: string, b: string): boolean {
+  return caseInsensitiveComparator.compare(a, b) === 0;
+}
+
+function fixProfileKeyCase(key: string, schemaKeys: string[]): string|null {
+  return schemaKeys.find(val => isEquivalentIgnoreCase(key, val)) ?? null;
+}
+
+const userDefinedKeys = [
+  'extensions',
+  'WSL.integrations',
+  'diagnostics.mutedChecks',
+].map(s => s.split('.'));
+
 /**
  * A "user-defined object" from the schema's point of view is an object that contains user-defined keys.
  * For example, `WSL.integrations` points to a user-defined object, while
  * `WSL` alone points to an object that contains only one key, `integrations`.
- * @param pathParts
- * @param key
+ *
+ * @param pathParts - On Windows, the parts of the registry path below KEY\Software\Rancher Desktop\Profile\{defaults|locked|}
+ *                    The first field is always either 'defaults' or 'locked' and can be ignored
+ *                    On other platforms its the path-parts up to but not including the root (which is unnamed anyway).
+ * @param equivFunc - comparison function used to ignore or respect case.
  * @returns boolean
  */
-function isUserDefinedObject(pathParts: string[], key: string): boolean {
-  if (pathParts.length > 3) {
-    return false;
-  }
-  switch (pathParts.length) {
-  case 0:
-    return key === 'extensions';
-  case 1:
-    return ((key === 'integrations' && pathParts[0] === 'WSL') ||
-      (key === 'mutedChecks' && pathParts[0] === 'diagnostics'));
+function haveUserDefinedObject(pathParts: string[], equivFunc: (a: string, b: string) => boolean): boolean {
+  for (const userDefinedKey of userDefinedKeys.filter(userDefinedKey => userDefinedKey.length === pathParts.length)) {
+    if (pathParts.every((p, i) => equivFunc(p, userDefinedKey[i]))) {
+      return true;
+    }
   }
 
   return false;
