@@ -14,6 +14,11 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.deploymentProfile;
 
+const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
+
+export const testingDefaultsHiveName = 'DefaultsTest';
+export const testingLockedHiveName = 'LockedTest';
+
 export class DeploymentProfileError extends Error {
 }
 
@@ -482,4 +487,18 @@ const userDefinedKeys = [
  */
 function haveUserDefinedObject(pathParts: string[]): boolean {
   return userDefinedKeys.some(userDefinedKey => _.isEqual(userDefinedKey, pathParts));
+}
+
+function isUserDefinedObjectIgnoreCase(pathParts: string[], key: string): boolean {
+  key = key.toLowerCase();
+  if (pathParts.length === 0) {
+    return key === 'extensions';
+  } else if (pathParts.length === 1) {
+    const parentFieldName = pathParts[0].toLowerCase();
+
+    return ((key === 'integrations' && parentFieldName === 'wsl') ||
+      (key === 'mutedchecks' && parentFieldName === 'diagnostics'));
+  }
+
+  return false;
 }

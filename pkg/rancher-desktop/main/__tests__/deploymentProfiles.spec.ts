@@ -240,7 +240,8 @@ describeWindows('windows deployment profiles', () => {
             showMuted:   true,
             mutedChecks: { montreal: true, 'riviere du loup': false, magog: false },
           },
-          extensions: { bellingham: 'WA', portland: 'OR', shasta: 'CA', elko: 'NV' },
+          // @ts-ignore
+          extensions: { bellingham: true, seattle: true, olympia: false, winthrop: true },
         };
         const lockedUserProfile = {
           containerEngine: {
@@ -310,6 +311,18 @@ describeWindows('windows deployment profiles', () => {
             [expect.stringMatching(/Expecting registry entry .*?kubernetes.version to be a string, but it's a registry object/)],
             [expect.stringMatching(/Expecting registry entry .*?WSL.integrations to be a registry object, but it's a SZ, value: should be a sub-object/)],
           ]);
+          containerEngine: {},
+          diagnostics:     {
+            showMuted: true,
+          },
+        };
+        // TODO: Track console.log to see error messages about the invalid registry entries
+
+        it('loads a bad profile and finds very little', async() => {
+          await installInRegistry(incorrectDefaultsUserRegFile);
+          const profile = await readDeploymentProfiles(true);
+
+          expect(profile.defaults).toMatchObject(limitedUserProfile);
         });
       });
     });
