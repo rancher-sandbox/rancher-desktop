@@ -55,12 +55,12 @@ verify_busybox() {
 
 verify_images() {
     if using_docker; then
-        run ctrctl images
+        run docker images
         assert_output --partial "nginx" "busybox"
     else
-        run ctrctl images --format json
+        run nerdctl images --format json
         assert_output --partial '"Repository":"nginx'
-        run ctrctl images --namespace k8s.io
+        run nerdctl --namespace k8s.io images
         assert_output --partial "busybox"
     fi
 }
@@ -69,7 +69,7 @@ verify_images() {
 }
 
 @test 'upgrade kubernetes' {
-    rdctl set --kubernetes-version "$RD_KUBERNETES_VERSION"
+    rdctl set --kubernetes.version "$RD_KUBERNETES_VERSION"
     wait_for_apiserver "$RD_KUBERNETES_VERSION"
     wait_for_container_engine
 }
@@ -96,12 +96,9 @@ verify_nginx_after_change_k8s() {
     verify_images
 }
 
-restart_nginx() {
-    run ctrctl start nginx-no-restart
-    assert_success
-}
 @test 'restart nginx-no-restart before downgrade' {
-    try restart_nginx
+    run ctrctl start nginx-no-restart
+    try verify_nginx
 }
 
 @test 'downgrade kubernetes' {
@@ -116,7 +113,7 @@ restart_nginx() {
 }
 
 @test 'verify busybox is gone after downgrade' {
-    run kubectl get pods -A --selector="app=busybox"
+    run kubectl get pods --selector="app=busybox"
     assert_output --partial "No resources found"
 }
 
