@@ -12,7 +12,7 @@ import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
 import { openPreferences } from '@pkg/window/preferences';
 
-const console = Logging[`window-${ process.pid }`];
+const console = Logging[`window_${ process.type || 'main' }`];
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
