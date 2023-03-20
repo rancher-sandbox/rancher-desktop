@@ -13,6 +13,19 @@
         </NuxtLink>
       </li>
     </ul>
+    <hr>
+    <nav-item>
+      <template #before>
+        <span class="icon icon-circle-plus"></span>
+      </template>
+      Extensions
+    </nav-item>
+    <nav-item
+      v-for="extension in extensions"
+      :key="extension.id"
+    >
+      {{ extension.name }}
+    </nav-item>
   </nav>
 </template>
 
@@ -23,9 +36,14 @@ import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
 import { RouteRecordPublic } from 'vue-router';
 
+import NavItem from './NavItem.vue';
+
 export default {
-  components: { BadgeState },
-  props:      {
+  components: {
+    BadgeState,
+    NavItem,
+  },
+  props: {
     items: {
       type:      Array,
       required:  true,
@@ -47,6 +65,10 @@ export default {
           return result;
         });
       },
+    },
+    extensions: {
+      type:     Array,
+      required: true,
     },
   },
   data() {
