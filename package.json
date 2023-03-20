@@ -2,7 +2,7 @@
   "name": "rancher-desktop",
   "productName": "Rancher Desktop",
   "license": "Apache-2.0",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "author": {
     "name": "SUSE",
     "email": "containers@suse.com"
