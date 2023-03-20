@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import Electron from 'electron';
+import Electron, { ipcRenderer } from 'electron';
 import _ from 'lodash';
 
 import BackendHelper from '@pkg/backend/backendHelper';
@@ -26,7 +26,7 @@ import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCrede
 import { DashboardServer } from '@pkg/main/dashboardServer';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
-import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
+import { ExtensionErrorCode, ExtensionManager, isExtensionError } from '@pkg/main/extensions';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
@@ -1058,12 +1058,18 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return Promise.resolve(Object.fromEntries(entries));
   }
 
+  async listExtensionsMetadata(extensionManager: ExtensionManager) {
+    const extensions = await extensionManager.getExtensions();
+
+    window.send('extensions-list', extensions);
+  }
+
   async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
     const getEM = (await import('@pkg/main/extensions/manager')).default;
     const em = await getEM();
     const extension = em?.getExtension(id);
 
-    if (!extension) {
+    if (!extension || typeof (em) === 'undefined') {
       console.debug(`Failed to install extension ${ id }: could not get extension.`);
 
       return { status: 503 };
@@ -1086,6 +1092,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           }
         }
         throw ex;
+      } finally {
+        this.listExtensionsMetadata(em);
       }
     } else {
       console.debug(`Uninstalling extension ${ id }...`);
@@ -1103,6 +1111,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           }
         }
         throw ex;
+      } finally {
+        this.listExtensionsMetadata(em);
       }
     }
   }

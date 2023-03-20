@@ -103,6 +103,24 @@ class ExtensionManagerImpl implements ExtensionManager {
     return ext;
   }
 
+  async getExtensions() {
+    const regex = /\/(.+?)\-/;
+    const extensions = Object.values(this.extensions);
+    const transformedExtensions = extensions.map(async(current) => {
+      const { id, dir } = current;
+      const metadata = await current.metadata;
+
+      return {
+        name: id.match(regex)?.[1],
+        id,
+        dir,
+        metadata,
+      };
+    });
+
+    return await Promise.all(transformedExtensions);
+  }
+
   shutdown() {
     // Remove our event listeners (to avoid issues when we switch backends).
     for (const untypedChannel in this.eventListeners) {

@@ -6,6 +6,7 @@ import Electron from 'electron';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
+import type { ExtensionMetadata } from '@pkg/main/extensions/types'
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -146,5 +147,9 @@ export interface IpcRendererEvents {
 
   // #region tab navigation
   'route': (route: { name?: string, path?: string, direction?: Direction }) => void;
+  // #endregion
+
+  // #region extensions
+  'extensions-list': (extensions: { name: string | undefined; id: string; dir: string; metadata: ExtensionMetadata; }[]) => void;
   // #endregion
 }
