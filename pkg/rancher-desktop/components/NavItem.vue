@@ -5,8 +5,13 @@ export default Vue.extend({});
 
 <template>
   <div class="nav-item">
-    <slot name="before">
-    </slot>
+    <div
+      v-if="$slots.before"
+      class="before"
+    >
+      <slot name="before">
+      </slot>
+    </div>
     <slot name="default">
       Extensions
     </slot>
@@ -24,5 +29,18 @@ export default Vue.extend({});
     display: flex;
     gap: 0.25rem;
     align-items: center;
+  }
+
+  .before {
+    min-width: 1.25rem;
+    max-width: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 100%;
+      height: auto;
+    }
   }
 </style>

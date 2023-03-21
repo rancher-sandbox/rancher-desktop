@@ -24,6 +24,9 @@
       v-for="extension in extensions"
       :key="extension.id"
     >
+      <template #before>
+        <img :src="`x-rd-extension://${ hexEncode(extension.id) }/icon.svg`">
+      </template>
       {{ extension.metadata.ui['dashboard-tab'].title }}
     </nav-item>
   </nav>
@@ -86,6 +89,19 @@ export default {
         return paths;
       }, {}),
     };
+  },
+  methods: {
+    hexEncode(str: string) {
+      let hex = '';
+
+      for (let i = 0; i < str.length; i++) {
+        const charCode = str.charCodeAt(i).toString(16);
+
+        hex += charCode.length < 2 ? `0${ charCode }` : charCode;
+      }
+
+      return hex;
+    },
   },
 };
 </script>

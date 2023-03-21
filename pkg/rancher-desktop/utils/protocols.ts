@@ -103,7 +103,7 @@ function setupExtensionProtocolHandler() {
     // directory traversal etc. issues.
     const extensionID = Buffer.from(url.hostname, 'hex').toString('base64url');
     const resourcePath = path.normalize(url.pathname);
-    const filepath = path.join(paths.extensionRoot, extensionID, 'ui', resourcePath);
+    const filepath = path.join(paths.extensionRoot, extensionID, resourcePath);
     const result = { path: filepath, mimeType: getMimeTypeForPath(filepath) };
 
     callback(result);
