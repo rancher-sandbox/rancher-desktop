@@ -26,7 +26,7 @@
         :key="extension.id"
       >
         <template #before>
-          <img :src="`x-rd-extension://${ hexEncode(extension.id) }/icon.svg`">
+          <img :src="imageUri(extension.id)">
         </template>
         {{ extension.metadata.ui['dashboard-tab'].title }}
       </nav-item>
@@ -42,6 +42,8 @@ import { BadgeState } from '@rancher/components';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavItem from './NavItem.vue';
+
+import { hexEncode } from '@pkg/utils/string-encode';
 
 export default {
   components: {
@@ -100,16 +102,8 @@ export default {
     },
   },
   methods: {
-    hexEncode(str: string): string {
-      let hex = '';
-
-      for (let i = 0; i < str.length; i++) {
-        const charCode = str.charCodeAt(i).toString(16);
-
-        hex += charCode.length < 2 ? `0${ charCode }` : charCode;
-      }
-
-      return hex;
+    imageUri(id: string): string {
+      return `x-rd-extension://${ hexEncode(id) }/icon.svg`;
     },
   },
 };
