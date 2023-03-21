@@ -24,7 +24,7 @@
       v-for="extension in extensions"
       :key="extension.id"
     >
-      {{ extension.name }}
+      {{ extension.metadata.ui['dashboard-tab'].title }}
     </nav-item>
   </nav>
 </template>

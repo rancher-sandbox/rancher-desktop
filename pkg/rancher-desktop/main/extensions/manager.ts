@@ -104,14 +104,12 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   async getExtensions() {
-    const regex = /\/(.+?)\-/;
     const extensions = Object.values(this.extensions);
     const transformedExtensions = extensions.map(async(current) => {
       const { id, dir } = current;
       const metadata = await current.metadata;
 
       return {
-        name: id.match(regex)?.[1],
         id,
         dir,
         metadata,
