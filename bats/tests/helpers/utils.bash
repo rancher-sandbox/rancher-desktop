@@ -7,6 +7,7 @@ is_true() {
         true
     fi
 }
+
 is_false() {
     ! is_true "$1"
 }
@@ -17,6 +18,12 @@ bool() {
     else
         echo "false"
     fi
+}
+
+assert_nothing() {
+    # This is a no-op, used to show that run() has been used to continue the
+    # test even when the command failed, but the failure itself is ignored.
+    true
 }
 
 try() {

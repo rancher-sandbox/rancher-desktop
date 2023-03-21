@@ -6,6 +6,7 @@ setup() {
 
 teardown_file() {
     run rdctl shutdown
+    assert_nothing
 }
 
 assert_file_contents_equal() { # $have $want

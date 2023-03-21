@@ -103,8 +103,12 @@ teardown_file() {
     load '../helpers/load'
 
     run ctrctl rm -f nginx
+    assert_nothing
 
     run helm uninstall wordpress --wait
+    assert_nothing
+
     # The database PVC doesn't get deleted by `helm uninstall`.
     run kubectl delete pvc data-wordpress-mariadb-0
+    assert_nothing
 }
