@@ -638,6 +638,7 @@ export interface CommandWorkerInterface {
   // #region extensions
   /** List the installed extensions */
   listExtensions(): Promise<Record<string, true>>;
+  listExtensionsMetadata(): Promise<void>;
   /**
    * Install or uninstall the given extension, returning an appropriate HTTP status code.
    * @param state Whether to install or uninstall the extension.

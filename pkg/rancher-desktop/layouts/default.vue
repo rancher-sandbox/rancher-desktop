@@ -84,7 +84,6 @@ export default {
     });
     ipcRenderer.on('extensions-list', (_event, extensions) => {
       this.extensions = extensions;
-      console.log('EXTENSIONS LIST', { extensions });
     });
   },
 

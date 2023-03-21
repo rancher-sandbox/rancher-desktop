@@ -150,6 +150,6 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region extensions
-  'extensions-list': (extensions: { id: string; dir: string | undefined; metadata: ExtensionMetadata; }[]) => void;
+  'extensions-list': (extensions: { id: string; dir: string | undefined; metadata: ExtensionMetadata; }[] | undefined) => void;
   // #endregion
 }

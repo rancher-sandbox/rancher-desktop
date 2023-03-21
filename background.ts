@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import Electron, { ipcRenderer } from 'electron';
+import Electron from 'electron';
 import _ from 'lodash';
 
 import BackendHelper from '@pkg/backend/backendHelper';
@@ -26,7 +26,7 @@ import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCrede
 import { DashboardServer } from '@pkg/main/dashboardServer';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
-import { ExtensionErrorCode, ExtensionManager, isExtensionError } from '@pkg/main/extensions';
+import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
@@ -168,7 +168,9 @@ Electron.app.whenReady().then(async() => {
     await checkPrerequisites();
 
     DashboardServer.getInstance().init();
-    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
+    const commandWorker = new BackgroundCommandWorker();
+
+    httpCommandServer = new HttpCommandServer(commandWorker);
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
     await setupNetworking();
@@ -264,6 +266,7 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
+    commandWorker.listExtensionsMetadata();
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -1052,23 +1055,29 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     })());
   }
 
+  async getExtensionManager() {
+    const getEM = (await import('@pkg/main/extensions/manager')).default;
+
+    return await getEM();
+  }
+
   listExtensions(): Promise<Record<string, true>> {
     const entries = Object.entries(cfg.extensions).filter(([k, v]) => v) as [string, true][];
 
     return Promise.resolve(Object.fromEntries(entries));
   }
 
-  async listExtensionsMetadata(extensionManager: ExtensionManager) {
-    const extensions = await extensionManager.getExtensions();
+  async listExtensionsMetadata() {
+    const extensionManager = await this.getExtensionManager();
+    const extensions = await extensionManager?.getExtensions();
     const installedExtensions = Object.keys(await this.listExtensions());
-    const filteredExtensions = extensions.filter(x => installedExtensions.includes(x.id));
+    const filteredExtensions = extensions?.filter(x => installedExtensions.includes(x.id));
 
     window.send('extensions-list', filteredExtensions);
   }
 
   async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
-    const getEM = (await import('@pkg/main/extensions/manager')).default;
-    const em = await getEM();
+    const em = await this.getExtensionManager();
     const extension = em?.getExtension(id);
 
     if (!extension || typeof (em) === 'undefined') {
@@ -1095,7 +1104,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         throw ex;
       } finally {
-        this.listExtensionsMetadata(em);
+        this.listExtensionsMetadata();
       }
     } else {
       console.debug(`Uninstalling extension ${ id }...`);
@@ -1114,7 +1123,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         throw ex;
       } finally {
-        this.listExtensionsMetadata(em);
+        this.listExtensionsMetadata();
       }
     }
   }
