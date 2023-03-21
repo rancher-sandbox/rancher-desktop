@@ -1,13 +1,16 @@
-/**
- * ContainerRunOptions are the options the can be passed to
- * ContainerEngineClient.run().  All fields are optional.
- */
-export type ContainerRunOptions = {
+type ContainerBasicOptions = {
   /**
    * Namespace the container should be created in.
    * @note Silently ignored when using moby.
    */
   namespace?: string;
+};
+
+/**
+ * ContainerRunOptions are the options the can be passed to
+ * ContainerEngineClient.run().  All fields are optional.
+ */
+export type ContainerRunOptions = ContainerBasicOptions & {
   /** The name of the container. */
   name?: string;
   /** Container restart policy, defaults to "no". */
@@ -18,16 +21,18 @@ export type ContainerRunOptions = {
  * ContainerStopOptions are the options that can be passed to
  * ContainerEngineClient.stop().  All fields are optional.
  */
-export type ContainerStopOptions = {
-  /**
-   * Namespace the container should be created in.
-   * @note Silently ignored when using moby.
-   */
-  namespace?: string;
+export type ContainerStopOptions = ContainerBasicOptions & {
   /** Force stop the container (killing it uncleanly). */
   force?: true;
   /** Delete the container after stopping. */
   delete?: true;
+};
+
+export type ContainerComposeUpOptions = ContainerBasicOptions & {
+  /** The name of the project */
+  name?: string;
+  /** Environment variables to set on build */
+  env?: Record<string, string>;
 };
 
 /**
@@ -48,9 +53,13 @@ export interface ContainerEngineClient {
    * Copy the given file to disk.
    * @param imageID The ID of the image to copy files from.
    * @param sourcePath The source path (inside the image) to copy from.
+   * This may be the path to a file or a directory.  If this is a directory, it
+   * must end with a slash.
    * @param destinationDir The destination path (on the host) to copy to.
-   * This is always the parent directory; the base name of the output will be
-   * the base name of the sourcePath.
+   * If sourcePath is a directory, then its contents will be place here without
+   * an extra directory.  Otherwise, this is the parent directory, and the
+   * named file will be created within this directory with the same base name as
+   * in the VM.
    * @param [options.resolveSymlinks] Follow symlinks in the source; default true.
    * @param [options.namespace] Namespace the image is in, if supported.
    * @note Symbolic links might not be copied correctly (for example, the host might be Windows).
@@ -67,9 +76,17 @@ export interface ContainerEngineClient {
   run(imageID: string, options?: ContainerRunOptions): Promise<string>;
 
   /**
+   * Start containers via `docker compose` / `nerdctl compose`.
+   * @param composeDir The path containing the compose file.
+   */
+  composeUp(composeDir: string, options?: ContainerComposeUpOptions): Promise<void>;
+
+  /**
    * Stop the given container, if it exists and is running.
    */
   stop(container: string, options?: ContainerStopOptions): Promise<void>;
+
+  composeDown(composeDir: string, options?: ContainerComposeUpOptions): Promise<void>;
 
   /** Escape hatch (for now): the executable to run */
   readonly executable: string;

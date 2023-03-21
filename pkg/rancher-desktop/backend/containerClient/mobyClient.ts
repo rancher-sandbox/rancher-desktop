@@ -2,11 +2,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
+import _ from 'lodash';
+
+import { ContainerComposeUpOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
 import { ErrorCommand, spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import { defined } from '@pkg/utils/typeUtils';
 
@@ -27,17 +30,41 @@ export class MobyClient implements ContainerEngineClient {
    * @param args
    * @returns
    */
-  protected async runTool(...args: string[]): Promise<{ stdout: string, stderr: string }> {
-    const { stdout, stderr } = await spawnFile(
-      this.executable,
-      args,
-      { stdio: ['ignore', 'pipe', 'pipe'], env: { DOCKER_HOST: this.endpoint } });
+  protected docker(...args: string[]): Promise<{ stdout: string, stderr: string }>;
+  protected docker(options: {env?: Record<string, string>}, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
+  protected docker(argOrOptions: any, ...args: string[]): Promise<{ stdout: string, stderr: string }> {
+    if (typeof argOrOptions === 'string') {
+      return this.runTool('docker', argOrOptions, ...args);
+    }
+
+    return this.runTool(argOrOptions, 'docker', ...args);
+  }
+
+  protected async runTool(tool: string, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
+  protected async runTool(options: {env?: Record<string, string>}, tool: string, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
+  protected async runTool(argOrOptions: any, tool: string, ...args: string[]): Promise<{ stdout: string, stderr: string }> {
+    const finalArgs = args.concat();
+    const binDir = path.join(paths.resources, process.platform, 'bin');
+    const options: { env: Record<string, string> } = {
+      env: {
+        DOCKER_HOST: this.endpoint,
+        PATH:        `${ process.env.PATH }${ path.delimiter }${ binDir }`,
+      },
+    };
+
+    if (typeof argOrOptions === 'string') {
+      finalArgs.unshift(tool);
+      tool = argOrOptions;
+    } else {
+      options.env = _.merge({}, argOrOptions?.env ?? {}, options.env);
+    }
+    const { stdout, stderr } = await spawnFile(path.join(binDir, tool), finalArgs, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
 
     return { stdout, stderr };
   }
 
   protected async makeContainer(imageID: string): Promise<string> {
-    const { stdout, stderr } = await this.runTool('create', '--entrypoint=/', imageID);
+    const { stdout, stderr } = await this.docker('create', '--entrypoint=/', imageID);
     const container = stdout.split(/\r?\n/).filter(x => x).pop()?.trim();
 
     console.debug(stderr.trim());
@@ -74,6 +101,11 @@ export class MobyClient implements ContainerEngineClient {
   async copyFile(imageID: string, sourcePath: string, destinationPath: string, options?: { resolveSymlinks?: boolean, silent?: boolean }): Promise<void> {
     const resolveSymlinks = options?.resolveSymlinks !== false;
 
+    if (sourcePath.endsWith('/')) {
+      // If we're copying a directory, add "." so we don't create an extra
+      // directory.
+      sourcePath += '.';
+    }
     if (!options?.silent) {
       console.debug(`Copying ${ imageID }:${ sourcePath } to ${ destinationPath }`);
     }
@@ -99,7 +131,7 @@ export class MobyClient implements ContainerEngineClient {
     args.push(imageID);
 
     try {
-      const { stdout, stderr } = (await this.runTool(...args));
+      const { stdout, stderr } = (await this.docker(...args));
 
       console.debug(stderr.trim());
 
@@ -117,9 +149,22 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
+  async composeUp(composeDir: string, options?: ContainerComposeUpOptions) {
+    const args = ['--project-directory', composeDir];
+
+    if (options?.name) {
+      args.push('--project-name', options.name);
+    }
+    args.push('up', '--quiet-pull', '--wait');
+
+    const result = await this.runTool({ env: options?.env ?? {} }, 'docker-compose', ...args);
+
+    console.debug('ran docker compose up', result);
+  }
+
   async stop(container: string, options?: ContainerStopOptions): Promise<void> {
     if (options?.delete && options.force) {
-      const { stderr } = await this.runTool('container', 'rm', '--force', container);
+      const { stderr } = await this.docker('container', 'rm', '--force', container);
 
       if (!/Error: No such container: \S+/.test(stderr)) {
         console.debug(stderr.trim());
@@ -128,9 +173,19 @@ export class MobyClient implements ContainerEngineClient {
       return;
     }
 
-    await this.runTool('container', 'stop', container);
+    await this.docker('container', 'stop', container);
     if (options?.delete) {
-      await this.runTool('container', 'rm', container);
+      await this.docker('container', 'rm', container);
     }
+  }
+
+  async composeDown(composeDir: string, options?: ContainerComposeUpOptions) {
+    const args = [
+      options?.name ? ['--project-name', options.name] : [],
+      ['--project-directory', composeDir, 'down'],
+    ].flat();
+    const result = await this.runTool('docker-compose', ...args);
+
+    console.debug('ran docker compose down', result);
   }
 }

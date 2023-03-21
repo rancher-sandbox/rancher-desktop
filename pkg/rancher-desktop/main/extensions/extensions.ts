@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import _ from 'lodash';
@@ -94,6 +95,7 @@ export class ExtensionImpl implements Extension {
       await this.installIcon(this.dir, metadata);
       await this.installUI(this.dir, metadata);
       await this.installHostExecutables(this.dir, metadata);
+      await this.installContainers(this.dir, metadata);
     } catch (ex) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
       await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
@@ -183,18 +185,77 @@ export class ExtensionImpl implements Extension {
     }));
   }
 
+  get containerName() {
+    const normalizedId = this.id.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '_');
+
+    return `rd-extension-${ normalizedId }`;
+  }
+
+  /**
+   * Extra the Docker Compose files into a newly-created temporary directory.
+   * This is required because nerdctl doesn't seem to keep the definition around,
+   * @note The caller is expected to remove the output directory.
+   * @param composePath the value of metadata.vm.composefile
+   */
+  protected async extractComposeDefinition(composePath: string): Promise<string> {
+    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
+    const composeDir = path.posix.dirname(path.posix.normalize(composePath));
+
+    await this.client.copyFile(
+      this.id,
+      composeDir === '.' ? '/' : `${ composeDir }/`,
+      workDir,
+      { namespace: this.extensionNamespace });
+
+    return workDir;
+  }
+
+  protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    function isImage(input: any): input is { image: string } {
+      return typeof input?.image === 'string';
+    }
+
+    function isComposefile(input: any): input is { composefile: string } {
+      return typeof input?.composefile === 'string';
+    }
+
+    if (isImage(metadata.vm)) {
+      // eslint-disable-next-line no-template-curly-in-string -- literal ${DESKTOP_PLUGIN_IMAGE}
+      const imageID = metadata.vm.image === '${DESKTOP_PLUGIN_IMAGE}' ? this.id : metadata.vm.image;
+      const stdout = await this.client.run(imageID, {
+        namespace: this.extensionNamespace,
+        name:      this.containerName,
+        restart:   'always',
+      });
+
+      console.debug(`Running ${ this.id } container image ${ imageID }: ${ stdout.trim() }`);
+    } else if (isComposefile(metadata.vm)) {
+      const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
+
+      try {
+        console.debug(`Running ${ this.id } compose up (workDir=${ workDir })`);
+        await this.client.composeUp(
+          workDir,
+          {
+            name:      this.containerName,
+            namespace: this.extensionNamespace,
+            env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+          },
+        );
+      } finally {
+        // await fs.promises.rm(workDir, { recursive: true });
+        console.log(`not removing temporary directory ${ workDir }`);
+      }
+    }
+  }
+
   async uninstall(): Promise<boolean> {
     // TODO: Unregister the extension from the UI.
 
     try {
       const metadata = await this.metadata;
-      const vm = metadata.vm;
 
-      if ('image' in vm) {
-        console.error('Todo: stop container');
-      } else if ('composefile' in vm) {
-        console.error(`Skipping uninstall of compose file when uninstalling ${ this.id }`);
-      }
+      await this.uninstallContainers(metadata);
     } catch (ex) {
       console.error(`Failed to read extension ${ this.id } metadata while uninstalling, not stopping containers: ${ ex }`);
     }
@@ -210,6 +271,36 @@ export class ExtensionImpl implements Extension {
     mainEvents.emit('settings-write', { extensions: { [this.id]: false } });
 
     return true;
+  }
+
+  protected async uninstallContainers(metadata: ExtensionMetadata) {
+    function isImage(input: any): input is { image: string } {
+      return typeof input?.image === 'string';
+    }
+
+    function isComposefile(input: any): input is { composefile: string } {
+      return typeof input?.composefile === 'string';
+    }
+
+    if (isImage(metadata.vm)) {
+      await this.client.stop(this.containerName, {
+        namespace: this.extensionNamespace,
+        force:     true,
+        delete:    true,
+      });
+    } else if (isComposefile(metadata.vm)) {
+      const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
+
+      try {
+        await this.client.composeDown(workDir, {
+          name:      this.containerName,
+          namespace: this.extensionNamespace,
+          env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        });
+      } finally {
+        await fs.promises.rm(workDir, { recursive: true });
+      }
+    }
   }
 
   async extractFile(sourcePath: string, destinationPath: string): Promise<void> {
