@@ -27,7 +27,7 @@ export default Vue.extend({});
     padding: 7.5px 10px;
     letter-spacing: 1.4px;
     display: flex;
-    gap: 0.25rem;
+    gap: 0.5rem;
     align-items: center;
   }
 

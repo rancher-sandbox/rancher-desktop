@@ -13,22 +13,24 @@
         </NuxtLink>
       </li>
     </ul>
-    <hr>
-    <nav-item>
-      <template #before>
-        <span class="icon icon-circle-plus"></span>
-      </template>
-      Extensions
-    </nav-item>
-    <nav-item
-      v-for="extension in extensions"
-      :key="extension.id"
-    >
-      <template #before>
-        <img :src="`x-rd-extension://${ hexEncode(extension.id) }/icon.svg`">
-      </template>
-      {{ extension.metadata.ui['dashboard-tab'].title }}
-    </nav-item>
+    <template v-if="featureExtensions">
+      <hr>
+      <nav-item>
+        <template #before>
+          <span class="icon icon-circle-plus"></span>
+        </template>
+        Extensions
+      </nav-item>
+      <nav-item
+        v-for="extension in extensions"
+        :key="extension.id"
+      >
+        <template #before>
+          <img :src="`x-rd-extension://${ hexEncode(extension.id) }/icon.svg`">
+        </template>
+        {{ extension.metadata.ui['dashboard-tab'].title }}
+      </nav-item>
+    </template>
   </nav>
 </template>
 
@@ -90,8 +92,15 @@ export default {
       }, {}),
     };
   },
+  computed: {
+    featureExtensions(): boolean {
+      const nuxt: NuxtApp = (this as any).$nuxt;
+
+      return !!nuxt.$config.featureExtensions;
+    },
+  },
   methods: {
-    hexEncode(str: string) {
+    hexEncode(str: string): string {
       let hex = '';
 
       for (let i = 0; i < str.length; i++) {
