@@ -2,6 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import Electron from 'electron';
 import _ from 'lodash';
 
 import {
@@ -9,12 +10,14 @@ import {
 } from './types';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.extensions;
+const ipcMain = getIpcMainProxy(console);
 
 class ExtensionErrorImpl extends Error implements ExtensionError {
   [ExtensionErrorMarker] = 0;
@@ -312,3 +315,9 @@ export class ExtensionImpl implements Extension {
     return await this.client.readFile(this.id, sourcePath, { namespace: this.extensionNamespace });
   }
 }
+
+ipcMain.handle('extension/host-info', () => ({
+  platform: process.platform,
+  arch:     Electron.app.runningUnderARM64Translation ? 'arm64' : process.arch,
+  hostname: os.hostname(),
+}));

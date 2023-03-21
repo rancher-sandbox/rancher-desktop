@@ -105,6 +105,10 @@ export interface IpcMainInvokeEvents {
   'images-mounted': (mounted: boolean) => {imageName: string, tag: string, imageID: string, size: string}[];
   'images-check-state': () => boolean;
   // #endregion
+
+  // #region extensions
+  'extension/host-info': () => {platform: string, arch: string, hostname: string};
+  // #endregion
 }
 
 /**
