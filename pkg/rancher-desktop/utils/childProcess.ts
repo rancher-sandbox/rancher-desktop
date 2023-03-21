@@ -29,8 +29,51 @@ interface SpawnOptionsEncoding {
   encoding?: { stdout?: BufferEncoding, stderr?: BufferEncoding } | BufferEncoding
 }
 
-interface SpawnError extends Error {
-  command?: string[];
+class SpawnError extends Error {
+  constructor(command: string[], options: {code: number|null, signal: NodeJS.Signals | null, stdout?: string, stderr?: string}) {
+    const executable = command[0];
+    let message = `${ executable } exited with code ${ options.code }`;
+
+    if (options.code === null) {
+      message = `${ executable } exited with signal ${ options.signal }`;
+    }
+    super(message);
+
+    this[ErrorCommand] = command.join(' ');
+    this.command = command;
+    if (options.stdout !== undefined) {
+      this.stdout = options.stdout;
+    }
+    if (options.stderr !== undefined) {
+      this.stderr = options.stderr;
+    }
+    if (options.code !== null) {
+      this.code = options.code;
+    }
+    if (options.signal !== null) {
+      this.signal = options.signal;
+    }
+  }
+
+  toString() {
+    const lines = [Error.prototype.toString.call(this)];
+
+    if (process.env.NODE_ENV !== 'production') {
+      if (this.stdout !== undefined) {
+        lines.push('stdout:');
+        lines.push(...this.stdout.split('\n').map(line => `  ${ line }`));
+      }
+      if (this.stderr !== undefined) {
+        lines.push('stderr:');
+        lines.push(...this.stderr.split('\n').map(line => `  ${ line }`));
+      }
+    }
+
+    return lines.map(line => `${ line }\n`).join('');
+  }
+
+  [ErrorCommand]: string;
+  command: string[];
   stdout?: string;
   stderr?: string;
   code?: number;
@@ -237,32 +280,9 @@ export async function spawnFile(
       if ((code === 0 && signal === null) || (code === null && signal === 'SIGTERM')) {
         return resolve();
       }
-      let message = `${ command } exited with code ${ code }`;
-
-      if (code === null) {
-        message = `${ command } exited with signal ${ signal }`;
-      }
-      const error: SpawnError = new Error(message);
-
-      Object.defineProperties(error, {
-        [ErrorCommand]: {
-          enumerable: false,
-          value:      `${ command } ${ finalArgs.join(' ') }`,
-        },
-      });
-      if (typeof result.stdout !== 'undefined') {
-        error.stdout = result.stdout;
-      }
-      if (typeof result.stderr !== 'undefined') {
-        error.stderr = result.stderr;
-      }
-      if (code !== null) {
-        error.code = code;
-      } else if (signal !== null) {
-        error.signal = signal;
-      }
-      error.command = [command].concat(finalArgs);
-      reject(error);
+      reject(new SpawnError([command].concat(finalArgs), {
+        code, signal, ...result,
+      }));
     });
     child.on('error', reject);
   });
