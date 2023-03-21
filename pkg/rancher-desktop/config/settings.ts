@@ -230,9 +230,11 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       // because on Windows it's impossible to have an empty set of registry keys
       // but still have a deployment profile.
       // Linux and macOS can have empty files, but we'll ignore those.
-      if (Object.keys(deploymentProfiles.defaults).length) {
-        _.merge(settings, deploymentProfiles.defaults);
-        if (!_.has(deploymentProfiles.defaults, 'virtualMachine.memoryInGB')) {
+      if (Object.keys(deploymentProfiles.defaults).length || Object.keys(deploymentProfiles.locked).length) {
+        if (Object.keys(deploymentProfiles.defaults).length) {
+          _.merge(settings, deploymentProfiles.defaults);
+        }
+        if (!_.has(settings, 'virtualMachine.memoryInGB') && !_.has(deploymentProfiles.locked, 'virtualMachine.memoryInGB')) {
           setDefaultMemory = true;
         }
       } else {
