@@ -14,6 +14,8 @@ interface DiagnosticsState {
   inError: boolean;
 }
 
+type Credentials = Omit<ServerState, 'pid'>;
+
 const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }/v1/${ pathRemainder }`;
 
 /**
@@ -51,7 +53,7 @@ export const mutations: MutationsType<DiagnosticsState> = {
 type DiagActionContext = ActionContext<DiagnosticsState>;
 
 export const actions = {
-  async fetchDiagnostics({ commit, rootState }: DiagActionContext, args: ServerState) {
+  async fetchDiagnostics({ commit, rootState }: DiagActionContext, args: Credentials) {
     const {
       port,
       user,
@@ -80,7 +82,7 @@ export const actions = {
     commit('SET_DIAGNOSTICS', checks);
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
-  async runDiagnostics({ commit, rootState }:DiagActionContext, credentials: ServerState) {
+  async runDiagnostics({ commit, rootState }:DiagActionContext, credentials: Credentials) {
     const { port, user, password } = credentials;
     const response = await fetch(
       uri(port, 'diagnostic_checks'),
@@ -121,7 +123,7 @@ export const actions = {
     await dispatch(
       'preferences/commitPreferences',
       {
-        ...rootState.credentials.credentials as ServerState,
+        ...rootState.credentials.credentials as Credentials,
         payload: {
           version:     CURRENT_SETTINGS_VERSION,
           diagnostics: { mutedChecks: { [rowToUpdate.id]: isMuted } },

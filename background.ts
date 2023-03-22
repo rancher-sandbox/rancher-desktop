@@ -44,7 +44,7 @@ import paths from '@pkg/utils/paths';
 import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getVersion } from '@pkg/utils/version';
 import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
@@ -497,7 +497,7 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
   preferencesSetDirtyFlag(dirtyFlag);
 });
 
-function writeSettings(arg: RecursivePartial<settings.Settings>) {
+function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
   // arrayCustomizer is necessary to properly merge array of strings
   _.mergeWith(cfg, arg, arrayCustomizer);
   settings.save(cfg);
@@ -541,22 +541,9 @@ ipcMainProxy.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg, { interactive: true });
 });
 
-ipcMainProxy.on('api-get-credentials', () => {
-  mainEvents.emit('api-get-credentials');
-});
-
-Electron.ipcMain.handle('api-get-credentials', () => {
-  return new Promise<void>((resolve) => {
-    mainEvents.once('api-credentials', resolve);
-    mainEvents.emit('api-get-credentials');
-  });
-});
+ipcMainProxy.handle('api-get-credentials', () => mainEvents.invoke('api-get-credentials'));
 
 ipcMainProxy.handle('get-locked-fields', () => settings.getLockedSettings());
-
-mainEvents.on('api-credentials', (credentials) => {
-  window.send('api-credentials', credentials);
-});
 
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);

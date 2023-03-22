@@ -83,18 +83,13 @@ interface MainEventNames {
   'integration-update'(state: Record<string, boolean | string>): void;
 
   /**
-   * Emitted as a request to get the credentials for API access.
-   */
-  'api-get-credentials'(): void;
-
-  /**
-   * Emitted as a reply to 'api-get-credentials'; the credentials can be used
-   * via HTTP basic auth on localhost.
+   * Fetch the API credentials that can be used for HTTP basic auth on localhost
+   * to talk to the backend.
    *
    * @note These credentials are meant for the UI; using them may require user
    * interaction.
    */
-  'api-credentials'(credentials: { user: string, password: string, port: number }): void;
+  'api-get-credentials'(): { user: string, password: string, port: number };
 
   /**
    * Force trigger diagnostics with the given id.
@@ -155,14 +150,19 @@ interface MainEvents extends EventEmitter {
     event: IsHandler<eventName> extends false ? eventName : never,
     ...args: Parameters<MainEventNames[eventName]>
   ): boolean;
-  /** @deprecated */ // Via eslint deprecation/deprecation: prevent usage of unrecognized events.
-  emit(eventName: string | symbol, ...args: any[]): boolean;
+
   on<eventName extends keyof MainEventNames>(
     event: IsHandler<eventName> extends false ? eventName : never,
     listener: (...args: Parameters<MainEventNames[eventName]>) => void
   ): this;
-  /** @deprecated */ // Via eslint deprecation/deprecation: prevent usage of unrecognized events.
-  on(event: string | symbol, listener: (...args: any[]) => void): this;
+  once<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    listener: (...args: Parameters<MainEventNames[eventName]>) => void
+  ): this;
+  off<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    listener: (...args: Parameters<MainEventNames[eventName]>) => void
+  ): this;
 
   /**
    * Invoke a handler that returns a promise of a result.
@@ -184,6 +184,42 @@ class MainEventsImpl extends EventEmitter implements MainEvents {
   handlers: {
     [eventName in keyof MainEventNames]?: HandlerType<eventName> | undefined;
   } = {};
+
+  emit<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    ...args: Parameters<MainEventNames[eventName]>
+  ): boolean;
+
+  emit(eventName: string, ...args: any[]): boolean {
+    return super.emit(eventName, ...args);
+  }
+
+  on<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    listener: (...args: Parameters<MainEventNames[eventName]>) => void
+  ): this;
+
+  on(eventName: string, listener: (...args: any[]) => void) {
+    return super.on(eventName, listener);
+  }
+
+  once<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    listener: (...args: Parameters<MainEventNames[eventName]>) => void
+  ): this;
+
+  once(eventName: string, listener: (...args: any[]) => void) {
+    return super.once(eventName, listener);
+  }
+
+  off<eventName extends keyof MainEventNames>(
+    event: IsHandler<eventName> extends false ? eventName : never,
+    listener: (...args: Parameters<MainEventNames[eventName]>) => void
+  ): this;
+
+  off(eventName: string, listener: (...args: any[]) => void) {
+    return super.off(eventName, listener);
+  }
 
   async invoke<eventName extends keyof MainEventNames>(
     event: IsHandler<eventName> extends true ? eventName : never,
