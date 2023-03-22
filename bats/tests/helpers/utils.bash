@@ -1,6 +1,6 @@
 is_true() {
     # case-insensitive check; false values: '', '0', 'no', and 'false'
-    local value="$(echo "$1" | tr '[A-Z]' '[a-z]')"
+    local value="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
     if [[ "$value" =~ ^(0|no|false)?$ ]]; then
         false
     else
@@ -13,7 +13,7 @@ is_false() {
 }
 
 bool() {
-    if is_true $1; then
+    if is_true "$1"; then
         echo "true"
     else
         echo "false"
@@ -51,10 +51,10 @@ try() {
         shift
     done
     local count=0
-    while [ $count -lt $max ]; do
+    while [ "$count" -lt "$max" ]; do
         run "$@"
-        [ $status -eq 0 ] && return
-        sleep $delay
+        [ "$status" -eq 0 ] && return
+        sleep "$delay"
         count=$(( count + 1 ))
     done
 }

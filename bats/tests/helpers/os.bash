@@ -41,5 +41,5 @@ is_windows() {
     fi
 }
 is_unix() {
-    ! is_windows
+    ! is_windows "$@"
 }

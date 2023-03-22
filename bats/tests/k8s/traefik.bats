@@ -1,3 +1,8 @@
+# shellcheck disable=SC2030,SC2031
+# See https://github.com/koalaman/shellcheck/issues/2431
+# https://www.shellcheck.net/wiki/SC2030 -- Modification of output is local (to subshell caused by @bats test)
+# https://www.shellcheck.net/wiki/SC2031 -- output was modified in a subshell. That change might be lost
+
 # Test case 25 & 26
 
 setup() {
@@ -73,6 +78,6 @@ assert_traefik_pods_are_up() {
      assert_success
      run curl "http://$(get_host):80"
      [ "$status" -ne 0 ]
-     run curl -k https://$(get_host):443
+     run curl -k "https://$(get_host):443"
      [ "$status" -ne 0 ]
 }

@@ -119,7 +119,7 @@ EOF
 }
 
 @test 'pull registry image' {
-    ctrctl pull --quiet $REGISTRY_IMAGE
+    ctrctl pull --quiet "$REGISTRY_IMAGE"
 }
 
 @test 'create plain registry' {
@@ -164,6 +164,8 @@ EOF
 
 @test 'create registry with basic auth' {
     # note: docker htpasswd **must** use bcrypt algorithm, i.e. `htpasswd -nbB user password`
+    # We intentionally use single-quotes; the '$' characters are literals
+    # shellcheck disable=SC2016
     HTPASSWD='user:$2y$05$pd/kWjYSW9x48yaPQgrl.eLn02DdMPyoYPUy/yac601k6w.okKgmG'
     rdshell mkdir -p "$AUTH_DIR"
     echo "$HTPASSWD" | rdshell tee "$AUTH_DIR/htpasswd" > /dev/null
