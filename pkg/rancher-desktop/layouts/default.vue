@@ -82,10 +82,10 @@ export default {
     ipcRenderer.on('route', (event, args) => {
       this.goToRoute(args);
     });
-    ipcRenderer.on('extensions-list', (_event, extensions) => {
+    ipcRenderer.on('extensions/list', (_event, extensions) => {
       this.extensions = extensions || [];
     });
-    ipcRenderer.send('extensions-list');
+    ipcRenderer.send('extensions/list');
   },
 
   beforeDestroy() {

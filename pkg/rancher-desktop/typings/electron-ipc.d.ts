@@ -80,7 +80,7 @@ export interface IpcMainEvents {
 
   'help/preferences/open-url': () => void;
 
-  'extensions-list': () => void;
+  'extensions/list': () => void;
 }
 
 /**
@@ -152,6 +152,6 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region extensions
-  'extensions-list': (extensions: { id: string; metadata: ExtensionMetadata; }[] | undefined) => void;
+  'extensions/list': (extensions: { id: string; metadata: ExtensionMetadata; }[] | undefined) => void;
   // #endregion
 }

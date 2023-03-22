@@ -520,7 +520,7 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 
 mainEvents.on('settings-write', writeSettings);
 
-ipcMainProxy.on('extensions-list', () => {
+ipcMainProxy.on('extensions/list', () => {
   new BackgroundCommandWorker().listExtensionsMetadata();
 });
 
@@ -1077,7 +1077,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     const installedExtensions = Object.keys(await this.listExtensions());
     const filteredExtensions = extensions?.filter(x => installedExtensions.includes(x.id));
 
-    window.send('extensions-list', filteredExtensions);
+    window.send('extensions/list', filteredExtensions);
   }
 
   async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
