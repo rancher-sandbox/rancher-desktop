@@ -226,14 +226,17 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
   } catch (err: any) {
     settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
-      // An empty deployment profile is considered the same as an absent one,
-      // because on Windows it's impossible to have an empty set of registry keys
-      // but still have a deployment profile.
-      // Linux and macOS can have empty files, but we'll ignore those.
+      // If there is no settings file, use the contents of the selected defaults deployment profile.
+      // Whether or not there's a settings file, give highest priority to any settings in the locked profile
+      // (which is merged outside this if-block().
+      //
+      // The deployment profile always returns an empty object if there is no profile.
+      // This means that we treat an empty hash defaults profile, or an empty registry hive,
+      // as if there is no profile in place (for the purposes of setting the first-run entry).
+
+      _.merge(settings, deploymentProfiles.defaults);
       if (Object.keys(deploymentProfiles.defaults).length || Object.keys(deploymentProfiles.locked).length) {
-        if (Object.keys(deploymentProfiles.defaults).length) {
-          _.merge(settings, deploymentProfiles.defaults);
-        }
+        // if there's a non-empty deployment profile, don't show the first-run dialog box (_isFirstRun is already false)
         if (!_.has(settings, 'virtualMachine.memoryInGB') && !_.has(deploymentProfiles.locked, 'virtualMachine.memoryInGB')) {
           setDefaultMemory = true;
         }
