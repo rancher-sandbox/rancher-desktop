@@ -101,7 +101,18 @@ verify_nginx_after_change_k8s() {
 }
 
 @test 'restart nginx-no-restart before downgrade' {
-    run ctrctl start nginx-no-restart
+    if using_docker; then
+        run docker start nginx-no-restart
+        assert_success
+    else
+        # BUG BUG BUG
+        # After restarting the VM nerdctl fails to restart stopped containers.
+        # It will eventually succeed after retrying multiple times (typically twice).
+        # See https://github.com/containerd/nerdctl/issues/665#issuecomment-1372862742
+        # BUG BUG BUG
+        try nerdctl start nginx-no-restart
+        assert_success
+    fi
     try verify_nginx
     assert_success
 }
