@@ -7,6 +7,7 @@ setup() {
     # If sudo permissions are not present, these tests should be skipped.
     if is_linux; then
         run sudo sysctl -w net.ipv4.ip_unprivileged_port_start=443
+        assert_nothing
     fi
 }
 
@@ -63,5 +64,7 @@ teardown_file() {
     load '../helpers/load'
 
     run helm uninstall rancher --namespace cattle-system --wait
+    assert_nothing
     run helm uninstall cert-manager --namespace cert-manager --wait
+    assert_nothing
 }

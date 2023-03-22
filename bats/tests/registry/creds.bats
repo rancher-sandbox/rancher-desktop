@@ -45,6 +45,7 @@ setup() {
 
 create_registry() {
     run ctrctl rm -f registry
+    assert_nothing
     ctrctl run \
           --detach \
           --name registry \
@@ -62,6 +63,7 @@ create_registry() {
 wait_for_registry() {
     # registry port is forwarded to host
     try --max 10 --delay 5 curl -k --silent --show-error "https://localhost:$REGISTRY_PORT/v2/_catalog"
+    assert_success
 }
 
 using_insecure_registry() {
@@ -190,6 +192,7 @@ EOF
 
 @test 'verify that pushing fails when not logged in' {
     run bash -c "echo $REGISTRY | \"$CRED_HELPER\" erase"
+    assert_nothing
     run ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
     assert_failure
     assert_output --regexp "(401 Unauthorized|no basic auth credentials)"
