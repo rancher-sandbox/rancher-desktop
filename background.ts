@@ -1084,7 +1084,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     const em = await this.getExtensionManager();
     const extension = em?.getExtension(id);
 
-    if (!extension || typeof (em) === 'undefined') {
+    if (!extension) {
       console.debug(`Failed to install extension ${ id }: could not get extension.`);
 
       return { status: 503 };
