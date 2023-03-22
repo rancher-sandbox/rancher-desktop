@@ -107,12 +107,11 @@ class ExtensionManagerImpl implements ExtensionManager {
     const extensions = Object.values(this.extensions);
 
     const transformedExtensions = extensions.map(async(current) => {
-      const { id, dir } = current;
+      const { id } = current;
       const metadata = await current.metadata;
 
       return {
         id,
-        dir,
         metadata,
       };
     });
