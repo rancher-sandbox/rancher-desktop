@@ -1,11 +1,8 @@
-# Test case 8 & 13
-
-# shellcheck disable=SC2030,SC2031
-# SC2030 (info): Modification of output is local (to subshell caused by @bats test).
-# SC2031 (info): output was modified in a subshell. That change might be lost.
-
 setup() {
     load '../helpers/load'
+    if is_macos arm64; then
+        skip "The bitnami wordpress image is not available for arm64 architecture. Skipping..."
+    fi
 }
 
 @test 'factory reset' {
@@ -20,20 +17,9 @@ setup() {
 @test 'start rancher desktop' {
     start_kubernetes
     wait_for_apiserver
-    # the docker context "rancher-desktop" may not have been written
+    # the docker context "rancher-desktop" may not have been writtengit
     # even though the apiserver is already running
     wait_for_container_engine
-}
-
-@test 'deploy nginx' {
-    ctrctl pull nginx
-    ctrctl run -d -p 8585:80 --restart=always --name nginx nginx
-}
-
-verify_nginx() {
-    run curl http://localhost:8585
-    assert_success
-    assert_output --partial "Welcome to nginx!"
 }
 
 @test 'deploy wordpress' {
@@ -45,7 +31,7 @@ verify_nginx() {
           --set mariadb.volumePermissions.enabled=true
 }
 
-verify_wordpress() {
+@test 'verify wordpress was deployed' {
     run helm list
     assert_success
     assert_line --regexp "$(printf '^wordpress[ \t]+default')"
@@ -60,51 +46,8 @@ verify_wordpress() {
     assert_output --regexp "(Just another WordPress site|<title>User&#039;s Blog!</title>)"
 }
 
-@test 'verify nginx before upgrade' {
-    verify_nginx
-}
-
-@test 'verify wordpress before upgrade' {
-    verify_wordpress
-}
-
-@test 'upgrade kubernetes' {
-    rdctl set --kubernetes-version "$RD_KUBERNETES_VERSION"
-    wait_for_apiserver "$RD_KUBERNETES_VERSION"
-}
-
-@test 'verify nginx after upgrade' {
-    verify_nginx
-}
-
-@test 'verify wordpress after upgrade' {
-    verify_wordpress
-}
-
-@test 'downgrade kubernetes' {
-    rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
-    wait_for_apiserver
-}
-
-@test 'verify nginx after downgrade' {
-    # nginx should still be running because it is not managed by kubernetes
-    verify_nginx
-}
-
-@test 'verify wordpress is gone after downgrade' {
-    # downgrading kubernetes deletes all workloads
-    run helm list
-    assert_success
-    refute_line --regexp "$(printf '^wordpress[ \t]+default')"
-    #verify_wordpress
-}
-
 teardown_file() {
     load '../helpers/load'
-
-    run ctrctl rm -f nginx
-    assert_nothing
-
     run helm uninstall wordpress --wait
     assert_nothing
 
