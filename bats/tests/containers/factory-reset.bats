@@ -47,14 +47,18 @@ rdctl_factory_reset() {
     rdctl factory-reset "$@"
 
     if [[ "$1" == "--remove-kubernetes-cache=true" ]]; then
-        refute [ -e "$PATH_CACHE" ]
+        assert_not_exist "$PATH_CACHE"
     else
-        assert [ -e "$PATH_CACHE" ]
+        assert_exists "$PATH_CACHE"
     fi
 }
 
 refute_failure() {
     assert_success
+}
+
+refute_not_exists() {
+    assert_exists "$@"
 }
 
 check_installation() {
@@ -84,7 +88,7 @@ check_installation() {
     fi
     for dir in "${delete_dir[@]}"; do
         echo "$assert that $dir does not exist"
-        $assert [ ! -e "$dir" ]
+        ${assert}_not_exists "$dir"
     done
 
     # Check if docker-X symlinks were deleted
