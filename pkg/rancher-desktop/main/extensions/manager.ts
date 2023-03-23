@@ -106,7 +106,7 @@ class ExtensionManagerImpl implements ExtensionManager {
     return ext;
   }
 
-  async getExtensions() {
+  async getInstalledExtensions() {
     const extensions = Object.values(this.extensions);
     const installedExtensions = await fs.promises.readdir(paths.extensionRoot);
 

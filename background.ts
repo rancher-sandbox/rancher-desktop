@@ -841,7 +841,7 @@ async function getExtensionManager() {
 
 async function listExtensionsMetadata() {
   const extensionManager = await getExtensionManager();
-  const extensions = await extensionManager?.getExtensions();
+  const extensions = await extensionManager?.getInstalledExtensions();
 
   window.send('extensions/list', extensions);
 }
