@@ -168,9 +168,8 @@ Electron.app.whenReady().then(async() => {
     await checkPrerequisites();
 
     DashboardServer.getInstance().init();
-    const commandWorker = new BackgroundCommandWorker();
 
-    httpCommandServer = new HttpCommandServer(commandWorker);
+    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
     await setupNetworking();
@@ -266,7 +265,7 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
-    commandWorker.listExtensionsMetadata();
+    listExtensionsMetadata();
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -521,7 +520,7 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 mainEvents.on('settings-write', writeSettings);
 
 ipcMainProxy.on('extensions/list', () => {
-  new BackgroundCommandWorker().listExtensionsMetadata();
+  listExtensionsMetadata();
 });
 
 ipcMainProxy.handle('transient-settings-fetch', () => {
@@ -837,6 +836,19 @@ function doFullRestart(context: CommandWorkerInterface.CommandContext) {
   });
 }
 
+async function getExtensionManager() {
+  const getEM = (await import('@pkg/main/extensions/manager')).default;
+
+  return await getEM();
+}
+
+async function listExtensionsMetadata() {
+  const extensionManager = await getExtensionManager();
+  const extensions = await extensionManager?.getExtensions();
+
+  window.send('extensions/list', extensions);
+}
+
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
@@ -1059,27 +1071,14 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     })());
   }
 
-  async getExtensionManager() {
-    const getEM = (await import('@pkg/main/extensions/manager')).default;
-
-    return await getEM();
-  }
-
   listExtensions(): Promise<Record<string, true>> {
     const entries = Object.entries(cfg.extensions).filter(([k, v]) => v) as [string, true][];
 
     return Promise.resolve(Object.fromEntries(entries));
   }
 
-  async listExtensionsMetadata() {
-    const extensionManager = await this.getExtensionManager();
-    const extensions = await extensionManager?.getExtensions();
-
-    window.send('extensions/list', extensions);
-  }
-
   async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
-    const em = await this.getExtensionManager();
+    const em = await getExtensionManager();
     const extension = em?.getExtension(id);
 
     if (!extension) {
@@ -1106,7 +1105,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         throw ex;
       } finally {
-        this.listExtensionsMetadata();
+        listExtensionsMetadata();
       }
     } else {
       console.debug(`Uninstalling extension ${ id }...`);
@@ -1125,7 +1124,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         throw ex;
       } finally {
-        this.listExtensionsMetadata();
+        listExtensionsMetadata();
       }
     }
   }
