@@ -80,6 +80,8 @@ test.describe.serial('Extensions protocol handler', () => {
     // `buildctl debug info` talks to the backend (to fetch info about it), so
     // if it succeeds it means the backend is up and can respond to requests.
     await retry(() => spawnFile(rdctl, ['shell', 'buildctl', 'debug', 'info']));
+    // On Windows nerdctl needs a bit of time for the containerd socket to be ready
+    await new Promise(resolve => setTimeout(resolve, 1_000));
   });
 
   test('wait for docker context', async() => {
