@@ -519,10 +519,7 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 
 mainEvents.on('settings-write', writeSettings);
 
-ipcMainProxy.on('extensions/list', () => {
-  listExtensionsMetadata();
-});
-
+ipcMainProxy.on('extensions/list', listExtensionsMetadata);
 ipcMainProxy.handle('transient-settings-fetch', () => {
   return Promise.resolve(TransientSettings.value);
 });
