@@ -25,6 +25,7 @@ import path from 'path';
 import { expect, test, _electron } from '@playwright/test';
 import _ from 'lodash';
 import fetch, { RequestInit } from 'node-fetch';
+import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
 import {
@@ -116,7 +117,7 @@ test.describe('Command server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
-    createDefaultSettings();
+    createDefaultSettings({ kubernetes: { enabled: true } });
     electronApp = await _electron.launch({
       args: [
         appPath,
@@ -1205,30 +1206,23 @@ test.describe('Command server', () => {
       });
 
       test.describe('getting endpoints', () => {
+        async function getEndpoints() {
+          const apiSpecPath = path.join(path.dirname(__filename), '../pkg/rancher-desktop/assets/specs/command-api.yaml');
+          const apiSpec = await fs.promises.readFile(apiSpecPath, 'utf-8');
+          const specPaths = yaml.parse(apiSpec).paths;
+
+          return Object.entries<Record<string, unknown>>(specPaths)
+            .flatMap(([path, data]) => Object.keys(data).map(method => [path, method]))
+            .sort();
+        }
+
         test('no paths should return all supported endpoints', async() => {
           const { stdout, stderr } = await rdctl(['api', '/']);
+          const endpoints = (await getEndpoints())
+            .map(([path, method]) => `${ method.toUpperCase() } ${ path }`);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toEqual([
-            'GET /',
-            'GET /v0',
-            'GET /v1',
-            'GET /v1/about',
-            'GET /v1/diagnostic_categories',
-            'GET /v1/diagnostic_checks',
-            'POST /v1/diagnostic_checks',
-            'GET /v1/diagnostic_ids',
-            'GET /v1/extensions',
-            'POST /v1/extensions/install',
-            'POST /v1/extensions/uninstall',
-            'PUT /v1/factory_reset',
-            'PUT /v1/propose_settings',
-            'GET /v1/settings',
-            'PUT /v1/settings',
-            'PUT /v1/shutdown',
-            'GET /v1/transient_settings',
-            'PUT /v1/transient_settings',
-          ]);
+          expect(JSON.parse(stdout)).toEqual(endpoints);
         });
 
         test('version-only path for v0 should return only itself', async() => {
@@ -1242,26 +1236,12 @@ test.describe('Command server', () => {
 
         test('version-only path for v1 should return all endpoints in that version only', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v1']);
+          const endpoints = (await getEndpoints())
+            .filter(([path]) => path.startsWith('/v1'))
+            .map(([path, method]) => `${ method.toUpperCase() } ${ path }`);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toEqual([
-            'GET /v1',
-            'GET /v1/about',
-            'GET /v1/diagnostic_categories',
-            'GET /v1/diagnostic_checks',
-            'POST /v1/diagnostic_checks',
-            'GET /v1/diagnostic_ids',
-            'GET /v1/extensions',
-            'POST /v1/extensions/install',
-            'POST /v1/extensions/uninstall',
-            'PUT /v1/factory_reset',
-            'PUT /v1/propose_settings',
-            'GET /v1/settings',
-            'PUT /v1/settings',
-            'PUT /v1/shutdown',
-            'GET /v1/transient_settings',
-            'PUT /v1/transient_settings',
-          ]);
+          expect(JSON.parse(stdout)).toEqual(endpoints);
         });
         test('/v2 should fail', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v2']);
