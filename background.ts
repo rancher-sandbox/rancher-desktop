@@ -1074,10 +1074,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   async listExtensionsMetadata() {
     const extensionManager = await this.getExtensionManager();
     const extensions = await extensionManager?.getExtensions();
-    const installedExtensions = Object.keys(await this.listExtensions());
-    const filteredExtensions = extensions?.filter(x => installedExtensions.includes(x.id));
 
-    window.send('extensions/list', filteredExtensions);
+    window.send('extensions/list', extensions);
   }
 
   async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
