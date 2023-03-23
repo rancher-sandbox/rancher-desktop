@@ -164,6 +164,8 @@ test.describe.serial('KubernetesBackend', () => {
         expectedDefinition['application.adminAccess'] = false;
         expectedDefinition['virtualMachine.numberCPUs'] = false;
         expectedDefinition['virtualMachine.memoryInGB'] = false;
+      } else if (process.platform === 'win32') {
+        expectedDefinition['experimental.virtualMachine.networkingTunnel'] = false;
       }
 
       const expected: Record<string, {current: any, desired: any, severity: 'reset' | 'restart'}> = {};
