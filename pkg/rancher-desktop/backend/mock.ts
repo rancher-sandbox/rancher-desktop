@@ -146,6 +146,10 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
     return Promise.resolve();
   }
 
+  copyFileIn(hostPath: string, vmPath: string): Promise<void> {
+    return Promise.reject('MockBackend#copyFileIn() not implemented');
+  }
+
   copyFileOut(vmPath: string, hostPath: string): Promise<void> {
     return Promise.reject('MockBackend#copyFileOut() not implemented');
   }

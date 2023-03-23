@@ -33,6 +33,20 @@ class ExtensionErrorImpl extends Error implements ExtensionError {
   }
 }
 
+/**
+ * isVMTypeImage asserts that a ExtensionMetadata.vm is an image.
+ */
+function isVMTypeImage(input: ExtensionMetadata['vm']): input is { image: string } {
+  return typeof (input as any)?.image === 'string';
+}
+
+/**
+ * isVMTypeComposefile asserts that a ExtensionMetadata.vm is a composefile.
+ */
+function isVMTypeComposefile(input: ExtensionMetadata['vm']): input is { composefile: string } {
+  return typeof (input as any)?.composefile === 'string';
+}
+
 export class ExtensionImpl implements Extension {
   constructor(id: string, client: ContainerEngineClient) {
     const encodedId = Buffer.from(id, 'utf-8').toString('base64url');
@@ -95,7 +109,7 @@ export class ExtensionImpl implements Extension {
       await this.installIcon(this.dir, metadata);
       await this.installUI(this.dir, metadata);
       await this.installHostExecutables(this.dir, metadata);
-      await this.installContainers(this.dir, metadata);
+      await this.installContainers(metadata);
     } catch (ex) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
       await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
@@ -192,7 +206,7 @@ export class ExtensionImpl implements Extension {
   }
 
   /**
-   * Extra the Docker Compose files into a newly-created temporary directory.
+   * Extract the Docker Compose files into a newly-created temporary directory.
    * This is required because nerdctl doesn't seem to keep the definition around,
    * @note The caller is expected to remove the output directory.
    * @param composePath the value of metadata.vm.composefile
@@ -210,16 +224,8 @@ export class ExtensionImpl implements Extension {
     return workDir;
   }
 
-  protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
-    function isImage(input: any): input is { image: string } {
-      return typeof input?.image === 'string';
-    }
-
-    function isComposefile(input: any): input is { composefile: string } {
-      return typeof input?.composefile === 'string';
-    }
-
-    if (isImage(metadata.vm)) {
+  protected async installContainers(metadata: ExtensionMetadata): Promise<void> {
+    if (isVMTypeImage(metadata.vm)) {
       // eslint-disable-next-line no-template-curly-in-string -- literal ${DESKTOP_PLUGIN_IMAGE}
       const imageID = metadata.vm.image === '${DESKTOP_PLUGIN_IMAGE}' ? this.id : metadata.vm.image;
       const stdout = await this.client.run(imageID, {
@@ -229,7 +235,7 @@ export class ExtensionImpl implements Extension {
       });
 
       console.debug(`Running ${ this.id } container image ${ imageID }: ${ stdout.trim() }`);
-    } else if (isComposefile(metadata.vm)) {
+    } else if (isVMTypeComposefile(metadata.vm)) {
       const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
 
       try {
@@ -243,8 +249,7 @@ export class ExtensionImpl implements Extension {
           },
         );
       } finally {
-        // await fs.promises.rm(workDir, { recursive: true });
-        console.log(`not removing temporary directory ${ workDir }`);
+        await fs.promises.rm(workDir, { recursive: true });
       }
     }
   }
@@ -274,21 +279,13 @@ export class ExtensionImpl implements Extension {
   }
 
   protected async uninstallContainers(metadata: ExtensionMetadata) {
-    function isImage(input: any): input is { image: string } {
-      return typeof input?.image === 'string';
-    }
-
-    function isComposefile(input: any): input is { composefile: string } {
-      return typeof input?.composefile === 'string';
-    }
-
-    if (isImage(metadata.vm)) {
+    if (isVMTypeImage(metadata.vm)) {
       await this.client.stop(this.containerName, {
         namespace: this.extensionNamespace,
         force:     true,
         delete:    true,
       });
-    } else if (isComposefile(metadata.vm)) {
+    } else if (isVMTypeComposefile(metadata.vm)) {
       const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
 
       try {

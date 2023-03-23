@@ -4,7 +4,7 @@ import path from 'path';
 
 import _ from 'lodash';
 
-import { ContainerComposeUpOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
+import { ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
 import { ErrorCommand, spawnFile } from '@pkg/utils/childProcess';
@@ -58,14 +58,13 @@ export class MobyClient implements ContainerEngineClient {
     } else {
       options.env = _.merge({}, argOrOptions?.env ?? {}, options.env);
     }
-    const { stdout, stderr } = await spawnFile(path.join(binDir, tool), finalArgs, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
 
-    return { stdout, stderr };
+    return await spawnFile(executable(tool), finalArgs, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
   }
 
   protected async makeContainer(imageID: string): Promise<string> {
     const { stdout, stderr } = await this.docker('create', '--entrypoint=/', imageID);
-    const container = stdout.split(/\r?\n/).filter(x => x).pop()?.trim();
+    const container = stdout.trim();
 
     console.debug(stderr.trim());
     if (!container) {
@@ -149,7 +148,7 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeUpOptions) {
+  async composeUp(composeDir: string, options?: ContainerComposeOptions) {
     const args = ['--project-directory', composeDir];
 
     if (options?.name) {
@@ -179,7 +178,7 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
-  async composeDown(composeDir: string, options?: ContainerComposeUpOptions) {
+  async composeDown(composeDir: string, options?: ContainerComposeOptions) {
     const args = [
       options?.name ? ['--project-name', options.name] : [],
       ['--project-directory', composeDir, 'down'],

@@ -28,7 +28,12 @@ export type ContainerStopOptions = ContainerBasicOptions & {
   delete?: true;
 };
 
-export type ContainerComposeUpOptions = ContainerBasicOptions & {
+/**
+ * ContainerComposeOptions are options that can be passed to
+ * ContainerEngineClient.composeUp() and .composeDown().  All fields are
+ * optional.
+ */
+export type ContainerComposeOptions = ContainerBasicOptions & {
   /** The name of the project */
   name?: string;
   /** Environment variables to set on build */
@@ -79,14 +84,14 @@ export interface ContainerEngineClient {
    * Start containers via `docker compose` / `nerdctl compose`.
    * @param composeDir The path containing the compose file.
    */
-  composeUp(composeDir: string, options?: ContainerComposeUpOptions): Promise<void>;
+  composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
 
   /**
    * Stop the given container, if it exists and is running.
    */
   stop(container: string, options?: ContainerStopOptions): Promise<void>;
 
-  composeDown(composeDir: string, options?: ContainerComposeUpOptions): Promise<void>;
+  composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
 
   /** Escape hatch (for now): the executable to run */
   readonly executable: string;

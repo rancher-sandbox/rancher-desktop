@@ -1590,6 +1590,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
   }
 
+  copyFileIn(hostPath: string, vmPath: string): Promise<void> {
+    return this.lima('copy', hostPath, `${ MACHINE_NAME }:${ vmPath }`);
+  }
+
   copyFileOut(vmPath: string, hostPath: string): Promise<void> {
     return this.lima('copy', `${ MACHINE_NAME }:${ vmPath }`, hostPath);
   }

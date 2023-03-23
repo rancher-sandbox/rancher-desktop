@@ -1,10 +1,13 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
+import util from 'util';
 
 import _ from 'lodash';
+import tar from 'tar-stream';
 
-import { ContainerComposeUpOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
+import { ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -29,16 +32,16 @@ export class NerdctlClient implements ContainerEngineClient {
   /**
    * Run nerdctl with the given arguments, returning the standard output.
    */
-  protected async runTool(...args: string[]): Promise<string>;
-  protected async runTool(options: { env?: Record<string, string>}, ...args: string[]): Promise<string>;
-  protected async runTool(optionOrArg: any, ...args: string[]): Promise<string> {
+  protected async nerdctl(...args: string[]): Promise<string>;
+  protected async nerdctl(options: { env?: Record<string, string>}, ...args: string[]): Promise<string>;
+  protected async nerdctl(optionOrArg: any, ...args: string[]): Promise<string> {
     const finalArgs = args.concat();
     const options: { env?: Record<string, string> } = {};
 
     if (typeof optionOrArg === 'string') {
       finalArgs.unshift(optionOrArg);
     } else {
-      _.merge(options, _.pick(options, 'env'));
+      _.merge(options, { env: { ...process.env, ...optionOrArg.env } });
     }
 
     const { stdout } = await spawnFile(
@@ -68,6 +71,9 @@ export class NerdctlClient implements ContainerEngineClient {
    * @param imageID The ID of the image to mount.
    * @returns The path that the image has been mounted on, plus an array of
    * cleanup functions that must be called in reverse order when done.
+   * @note Due to https://github.com/containerd/nerdctl/issues/1058 we can't
+   * just do `nerdctl create` + `nerdctl cp`.  Instead, we need to make mounts
+   * manually.
    */
   protected async mountImage(imageID: string, namespace?: string): Promise<[string, (() => Promise<void>)[]]> {
     const cleanups: (() => Promise<void>)[] = [];
@@ -113,11 +119,6 @@ export class NerdctlClient implements ContainerEngineClient {
   readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding, namespace?: string }): Promise<string>;
   async readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding, namespace?: string }): Promise<string> {
     const encoding = options?.encoding ?? 'utf-8';
-
-    // Due to https://github.com/containerd/nerdctl/issues/1058 we can't just
-    // do `nerdctl create` + `nerdctl cp`.  Instead, we need to make mounts
-    // manually.
-
     const [workdir, cleanups] = await this.mountImage(imageID, options?.namespace);
 
     try {
@@ -184,20 +185,78 @@ export class NerdctlClient implements ContainerEngineClient {
     }
     args.push(imageID);
 
-    return (await this.runTool(...args)).trim();
+    return (await this.nerdctl(...args)).trim();
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeUpOptions) {
-    // We need to copy into a directory in /tmp/ for lima
+  async composeUp(composeDir: string, options?: ContainerComposeOptions) {
     const cleanups: (() => Promise<void>)[] = [];
 
     try {
-      const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-compose-up-'));
+      const workDir = (await this.vm.execCommand({ capture: true },
+        '/bin/mktemp', '--directory', '--tmpdir', 'rd-nerdctl-compose-up-XXXXXX')).trim();
 
-      cleanups.push(() => fs.promises.rm(workDir, { recursive: true }));
-      await fs.promises.cp(composeDir, workDir, { recursive: true, dereference: true });
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workDir));
 
-      const args = ['compose', '--project-directory', workDir];
+      const hostDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-compose-up-'));
+
+      cleanups.push(() => fs.promises.rm(hostDir, { recursive: true }));
+
+      const hostPath = path.join(hostDir, 'compose.tar');
+      const tarStream = fs.createWriteStream(hostPath);
+      const archive = tar.pack();
+      const archiveFinished = util.promisify(stream.finished)(archive);
+      const newEntry = util.promisify(archive.entry.bind(archive));
+      const baseHeader: Partial<tar.Headers> = {
+        mode:  0o755,
+        uid:   0,
+        uname: 'root',
+        gname: 'wheel',
+        type:  'directory',
+      };
+      const walk = async(dir: string) => {
+        const fullPath = path.normalize(path.join(composeDir, dir));
+
+        for (const basename of await fs.promises.readdir(fullPath)) {
+          const name = path.normalize(path.join(dir, basename));
+          const info = await fs.promises.lstat(path.join(fullPath, basename));
+
+          if (info.isDirectory()) {
+            await newEntry({ ...baseHeader, name });
+            await walk(path.join(dir, basename));
+          } else if (info.isFile()) {
+            const readStream = fs.createReadStream(path.join(fullPath, basename));
+            const entry = archive.entry({
+              ...baseHeader,
+              ..._.pick(info, 'mode', 'mtime', 'size'),
+              type: 'file',
+              name,
+            });
+            const entryFinished = util.promisify(stream.finished)(entry);
+
+            readStream.pipe(entry);
+            await entryFinished;
+          } else if (info.isSymbolicLink()) {
+            await newEntry({
+              ...baseHeader,
+              ..._.pick(info, 'mode', 'mtime'),
+              name,
+              type:     'symlink',
+              linkname: await fs.promises.readlink(path.join(fullPath, basename)),
+            });
+          }
+        }
+      };
+
+      archive.pipe(tarStream);
+      await walk('.');
+      archive.finalize();
+      await archiveFinished;
+
+      await this.vm.copyFileIn(hostPath, path.posix.join(workDir, 'compose.tar'));
+      await this.vm.execCommand('/bin/mkdir', path.posix.join(workDir, 'extract'));
+      await this.vm.execCommand('/usr/bin/tar', 'xf', path.posix.join(workDir, 'compose.tar'), '-C', path.posix.join(workDir, 'extract'));
+
+      const args = ['compose', '--project-directory', path.posix.join(workDir, 'extract')];
 
       if (options?.name) {
         args.push('--project-name', options.name);
@@ -206,20 +265,18 @@ export class NerdctlClient implements ContainerEngineClient {
         args.unshift('--namespace', options.namespace);
       }
       if (options?.env) {
-        const envDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-compose-up-env-'));
-        const envFile = path.join(envDir, 'compose.env');
+        const envFile = path.join(hostDir, 'compose.env');
         const envData = Object.entries(options.env)
           .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
           .join('');
 
-        cleanups.push(() => fs.promises.rm(envDir, { recursive: true }));
         await fs.promises.writeFile(envFile, envData);
         args.push('--env-file', envFile);
       }
       // nerdctl doesn't support --wait, so make do with --detach.
       args.push('up', '--quiet-pull', '--detach');
 
-      const result = await this.runTool({ env: options?.env ?? {} }, ...args);
+      const result = await this.nerdctl({ env: options?.env ?? {} }, ...args);
 
       console.log('ran nerdctl compose up', result);
     } finally {
@@ -237,18 +294,18 @@ export class NerdctlClient implements ContainerEngineClient {
     }
 
     if (options?.delete && options.force) {
-      await this.runTool(...addNS('container', 'rm', '--force', container));
+      await this.nerdctl(...addNS('container', 'rm', '--force', container));
 
       return;
     }
 
-    await this.runTool(...addNS('container', 'stop', container));
+    await this.nerdctl(...addNS('container', 'stop', container));
     if (options?.delete) {
-      await this.runTool(...addNS('container', 'rm', container));
+      await this.nerdctl(...addNS('container', 'rm', container));
     }
   }
 
-  async composeDown(composeDir: string, options?: ContainerComposeUpOptions): Promise<void> {
+  async composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
     const cleanups: (() => Promise<void>)[] = [];
     const args = [
       options?.namespace ? ['--namespace', options.namespace] : [],
@@ -269,7 +326,7 @@ export class NerdctlClient implements ContainerEngineClient {
         await fs.promises.writeFile(envFile, envData);
         args.push('--env-file', envFile);
       }
-      const result = await this.runTool(...args);
+      const result = await this.nerdctl(...args);
 
       console.debug('ran nerdctl compose down:', result);
     } finally {
