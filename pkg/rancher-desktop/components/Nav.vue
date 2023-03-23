@@ -24,13 +24,12 @@
       <nav-item
         v-for="extension in extensions"
         :key="extension.id"
+        @click="openExtension(extension.id)"
       >
         <template #before>
           <img :src="imageUri(extension.id)">
         </template>
-        <a @click="openExtension(extension.id)">
-          {{ extension.metadata.ui['dashboard-tab'].title }}
-        </a>
+        {{ extension.metadata.ui['dashboard-tab'].title }}
       </nav-item>
     </template>
   </nav>

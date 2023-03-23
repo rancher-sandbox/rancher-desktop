@@ -4,7 +4,10 @@ export default Vue.extend({});
 </script>
 
 <template>
-  <div class="nav-item">
+  <div
+    class="nav-item"
+    v-on="$listeners"
+  >
     <div
       v-if="$slots.before"
       class="before"
@@ -29,6 +32,10 @@ export default Vue.extend({});
     display: flex;
     gap: 0.5rem;
     align-items: center;
+
+    &:hover {
+      cursor: pointer;
+    }
   }
 
   .before {
