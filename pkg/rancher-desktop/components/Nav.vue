@@ -13,6 +13,24 @@
         </NuxtLink>
       </li>
     </ul>
+    <template v-if="featureExtensions">
+      <hr>
+      <nav-item>
+        <template #before>
+          <span class="icon icon-circle-plus"></span>
+        </template>
+        Extensions
+      </nav-item>
+      <nav-item
+        v-for="extension in extensions"
+        :key="extension.id"
+      >
+        <template #before>
+          <img :src="imageUri(extension.id)">
+        </template>
+        {{ extension.metadata.ui['dashboard-tab'].title }}
+      </nav-item>
+    </template>
   </nav>
 </template>
 
@@ -23,9 +41,16 @@ import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
 import { RouteRecordPublic } from 'vue-router';
 
+import NavItem from './NavItem.vue';
+
+import { hexEncode } from '@pkg/utils/string-encode';
+
 export default {
-  components: { BadgeState },
-  props:      {
+  components: {
+    BadgeState,
+    NavItem,
+  },
+  props: {
     items: {
       type:      Array,
       required:  true,
@@ -48,6 +73,10 @@ export default {
         });
       },
     },
+    extensions: {
+      type:     Array,
+      required: true,
+    },
   },
   data() {
     const nuxt: NuxtApp = (this as any).$nuxt;
@@ -64,6 +93,18 @@ export default {
         return paths;
       }, {}),
     };
+  },
+  computed: {
+    featureExtensions(): boolean {
+      const nuxt: NuxtApp = (this as any).$nuxt;
+
+      return !!nuxt.$config.featureExtensions;
+    },
+  },
+  methods: {
+    imageUri(id: string): string {
+      return `x-rd-extension://${ hexEncode(id) }/icon.svg`;
+    },
   },
 };
 </script>

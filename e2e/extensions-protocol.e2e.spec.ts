@@ -110,7 +110,7 @@ test.describe.serial('Extensions protocol handler', () => {
 
   test('use extension protocol handler', async() => {
     const result = await page.evaluate(async() => {
-      const data = await fetch('x-rd-extension://72642f657874656e73696f6e2f7569/dashboard-tab/ui/index.html');
+      const data = await fetch('x-rd-extension://72642f657874656e73696f6e2f7569/ui/dashboard-tab/ui/index.html');
 
       return await data.text();
     });

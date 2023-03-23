@@ -69,6 +69,11 @@ export interface ExtensionManager {
   getExtension(id: string): Extension;
 
   /**
+   * Get a collection of all installed extensions.
+   */
+  getInstalledExtensions(): Promise<{ id: string; metadata: ExtensionMetadata; }[]>;
+
+  /**
    * Shut down the extension manager, doing any clean up necessary.
    */
   shutdown(): Promise<void>;

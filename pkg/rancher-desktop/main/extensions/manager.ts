@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 import { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 
 import { ExtensionImpl } from './extensions';
@@ -7,6 +9,7 @@ import type { Settings } from '@pkg/config/settings';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import type { IpcMainEvents, IpcMainInvokeEvents } from '@pkg/typings/electron-ipc';
 import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 import type { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 import type { Extension, ExtensionManager } from './types';
@@ -101,6 +104,29 @@ class ExtensionManagerImpl implements ExtensionManager {
     }
 
     return ext;
+  }
+
+  async getInstalledExtensions() {
+    const extensions = Object.values(this.extensions);
+    const installedExtensions = await fs.promises.readdir(paths.extensionRoot);
+
+    const transformedExtensions = extensions
+      .filter((extension) => {
+        const encodedExtension = Buffer.from(extension.id).toString('base64url');
+
+        return installedExtensions.includes(encodedExtension);
+      })
+      .map(async(current) => {
+        const { id } = current;
+        const metadata = await current.metadata;
+
+        return {
+          id,
+          metadata,
+        };
+      });
+
+    return await Promise.all(transformedExtensions);
   }
 
   shutdown() {

@@ -1,7 +1,11 @@
 <template>
   <div class="wrapper">
     <rd-header class="header" @open-preferences="openPreferences" />
-    <rd-nav class="nav" :items="routes" />
+    <rd-nav
+      class="nav"
+      :items="routes"
+      :extensions="extensions"
+    />
     <the-title />
     <main class="body">
       <Nuxt />
@@ -32,6 +36,10 @@ export default {
     rdNav:    Nav,
     rdHeader: Header,
     TheTitle,
+  },
+
+  data() {
+    return { extensions: [] };
   },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
@@ -74,6 +82,10 @@ export default {
     ipcRenderer.on('route', (event, args) => {
       this.goToRoute(args);
     });
+    ipcRenderer.on('extensions/list', (_event, extensions) => {
+      this.extensions = extensions || [];
+    });
+    ipcRenderer.send('extensions/list');
   },
 
   beforeDestroy() {

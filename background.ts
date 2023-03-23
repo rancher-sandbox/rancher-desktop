@@ -168,6 +168,7 @@ Electron.app.whenReady().then(async() => {
     await checkPrerequisites();
 
     DashboardServer.getInstance().init();
+
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
@@ -264,6 +265,7 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
+    listExtensionsMetadata();
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -517,6 +519,7 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 
 mainEvents.on('settings-write', writeSettings);
 
+ipcMainProxy.on('extensions/list', listExtensionsMetadata);
 ipcMainProxy.handle('transient-settings-fetch', () => {
   return Promise.resolve(TransientSettings.value);
 });
@@ -817,6 +820,19 @@ function doFullRestart(context: CommandWorkerInterface.CommandContext) {
   });
 }
 
+async function getExtensionManager() {
+  const getEM = (await import('@pkg/main/extensions/manager')).default;
+
+  return await getEM();
+}
+
+async function listExtensionsMetadata() {
+  const extensionManager = await getExtensionManager();
+  const extensions = await extensionManager?.getInstalledExtensions();
+
+  window.send('extensions/list', extensions);
+}
+
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
@@ -1046,8 +1062,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
-    const getEM = (await import('@pkg/main/extensions/manager')).default;
-    const em = await getEM();
+    const em = await getExtensionManager();
     const extension = em?.getExtension(id);
 
     if (!extension) {
@@ -1073,6 +1088,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           }
         }
         throw ex;
+      } finally {
+        listExtensionsMetadata();
       }
     } else {
       console.debug(`Uninstalling extension ${ id }...`);
@@ -1090,6 +1107,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           }
         }
         throw ex;
+      } finally {
+        listExtensionsMetadata();
       }
     }
   }
