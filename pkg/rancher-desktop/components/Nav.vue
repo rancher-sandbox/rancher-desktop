@@ -24,6 +24,7 @@
       <nav-item
         v-for="extension in extensions"
         :key="extension.id"
+        @click="openExtension(extension.id)"
       >
         <template #before>
           <img :src="imageUri(extension.id)">
@@ -39,6 +40,7 @@ import os from 'os';
 
 import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
+import { ipcRenderer } from 'electron';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavItem from './NavItem.vue';
@@ -104,6 +106,10 @@ export default {
   methods: {
     imageUri(id: string): string {
       return `x-rd-extension://${ hexEncode(id) }/icon.svg`;
+    },
+    openExtension(id: string): void {
+      console.log('OPEN EXTENSION', { id: hexEncode(id) });
+      ipcRenderer.send('extensions/open', hexEncode(id));
     },
   },
 };

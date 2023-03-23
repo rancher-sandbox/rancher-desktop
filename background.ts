@@ -520,6 +520,11 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 mainEvents.on('settings-write', writeSettings);
 
 ipcMainProxy.on('extensions/list', listExtensionsMetadata);
+
+ipcMainProxy.on('extensions/open', (_event, id) => {
+  window.openExtension(id);
+});
+
 ipcMainProxy.handle('transient-settings-fetch', () => {
   return Promise.resolve(TransientSettings.value);
 });

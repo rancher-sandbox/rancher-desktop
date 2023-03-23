@@ -1,7 +1,7 @@
 import os from 'os';
 import path from 'path';
 
-import Electron, { BrowserWindow, app, shell } from 'electron';
+import Electron, { BrowserWindow, app, shell, BrowserView } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
 import { load as loadSettings } from '@pkg/config/settings';
@@ -180,6 +180,46 @@ export function openMain() {
   });
 
   app.dock?.show();
+}
+
+let view: Electron.BrowserView;
+
+export function openExtension(id: string) {
+  // const preloadPath = path.join(paths.resources, 'preload.js');
+  console.debug(`openExtension(${ id })`);
+
+  const window = getWindow('main') ?? undefined;
+
+  if (!window) {
+    return;
+  }
+
+  const windowSize = window?.getContentSize();
+
+  if (!view) {
+    view = new BrowserView();
+    window?.setBrowserView(view);
+
+    const x = 230;
+    const y = 55;
+
+    view.setBounds({
+      x,
+      y,
+      width:  windowSize[0] - x,
+      height: windowSize[1] - y,
+    });
+
+    view.setAutoResize({ width: true, height: true });
+  }
+
+  const url = `x-rd-extension://${ id }/ui/dashboard-tab/ui/index.html`;
+
+  view.webContents
+    .loadURL(url)
+    .catch((err) => {
+      console.error(`Can't load the dashboard URL ${ url }: `, err);
+    });
 }
 
 /**
