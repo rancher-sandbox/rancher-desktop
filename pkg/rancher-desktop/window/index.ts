@@ -182,6 +182,8 @@ export function openMain() {
   app.dock?.show();
 }
 
+let view: Electron.BrowserView;
+
 export function openExtension(id: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
@@ -192,22 +194,24 @@ export function openExtension(id: string) {
     return;
   }
 
-  const view = new BrowserView();
   const windowSize = window?.getContentSize();
 
-  window?.setBrowserView(view);
+  if (!view) {
+    view = new BrowserView();
+    window?.setBrowserView(view);
 
-  const x = 230;
-  const y = 55;
+    const x = 230;
+    const y = 55;
 
-  view.setBounds({
-    x,
-    y,
-    width:  windowSize[0] - x,
-    height: windowSize[1] - y,
-  });
+    view.setBounds({
+      x,
+      y,
+      width:  windowSize[0] - x,
+      height: windowSize[1] - y,
+    });
 
-  view.setAutoResize({ width: true, height: true });
+    view.setAutoResize({ width: true, height: true });
+  }
 
   const url = `x-rd-extension://${ id }/ui/dashboard-tab/ui/index.html`;
 
@@ -216,21 +220,6 @@ export function openExtension(id: string) {
     .catch((err) => {
       console.error(`Can't load the dashboard URL ${ url }: `, err);
     });
-
-  // createWindow(
-  //   `extension:${ id }`,
-  //   `x-rd-extension://${ id }/ui/dashboard-tab/ui/index.html`,
-  //   {
-  //     width:          800,
-  //     height:         600,
-  //     parent:         getWindow('main') ?? undefined,
-  //     webPreferences: {
-  //       devTools:         true,
-  //       nodeIntegration:  false,
-  //       contextIsolation: true,
-  //       // preload:          preloadPath,
-  //     },
-  //   });
 }
 
 /**
