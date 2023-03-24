@@ -1,11 +1,14 @@
 /*
- * This tests the extension protocol handler.
+ * This tests interactions with the extension front end.
  * An E2E test is required to have access to the web page context.
  */
 
+import os from 'os';
 import path from 'path';
 
-import { ElectronApplication, Page, test, expect } from '@playwright/test';
+import {
+  ElectronApplication, Page, test, expect, JSHandle,
+} from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import {
@@ -14,6 +17,8 @@ import {
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
+
+import type { BrowserView, BrowserWindow } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
@@ -29,7 +34,7 @@ function executable(name: string) {
   return path.join(srcDir, 'resources', process.platform, 'bin', exeName);
 }
 
-test.describe.serial('Extensions protocol handler', () => {
+test.describe.serial('Extensions', () => {
   let app: ElectronApplication;
   let page: Page;
   let isContainerd = false;
@@ -116,5 +121,56 @@ test.describe.serial('Extensions protocol handler', () => {
     });
 
     expect(result).toContain('ddClient');
+  });
+
+  test.describe('extension API', () => {
+    let view: JSHandle<BrowserView>;
+
+    test('extension UI can be loaded', async() => {
+      const window = await app.browserWindow(page);
+
+      await page.click('.nav .nav-item[data-id="extension:rd/extension/ui"]');
+
+      // Try until we can get a BrowserView for the extension (because it can
+      // take some time to load).
+      view = await retry(async() => {
+        // Evaluate script remotely to look for the appropriate BrowserView
+        const result = await window.evaluateHandle((window: BrowserWindow) => {
+          for (const view of window.getBrowserViews()) {
+            if (view.webContents.mainFrame.url.startsWith('x-rd-extension://')) {
+              return view;
+            }
+          }
+        }) as JSHandle<BrowserView|undefined>;
+
+        // Check that the result evaluated to the view, and not undefined.
+        if (await (result).evaluate(v => typeof v) === 'undefined') {
+          throw new Error('Could not find extension view');
+        }
+
+        return result as JSHandle<BrowserView>;
+      });
+    });
+
+    /** evaluate a short snippet in the extension context. */
+    function evalInView(script: string): Promise<any> {
+      return view.evaluate((v, { script }) => {
+        return v.webContents.executeJavaScript(script);
+      }, { script });
+    }
+
+    test('exposes API endpoint', async() => {
+      const result = {
+        platform: await evalInView('ddClient.host.platform'),
+        arch:     await evalInView('ddClient.host.arch'),
+        hostname: await evalInView('ddClient.host.hostname'),
+      };
+
+      expect(result).toEqual({
+        platform: os.platform(),
+        arch:     os.arch(),
+        hostname: os.hostname(),
+      });
+    });
   });
 });
