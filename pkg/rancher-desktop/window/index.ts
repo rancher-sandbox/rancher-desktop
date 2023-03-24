@@ -194,11 +194,11 @@ export function openExtension(id: string, path: string) {
     return;
   }
 
-  const windowSize = window?.getContentSize();
+  const windowSize = window.getContentSize();
 
   if (!view) {
     view = new BrowserView();
-    window?.setBrowserView(view);
+    window.setBrowserView(view);
 
     const x = 230;
     const y = 55;
