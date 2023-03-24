@@ -81,6 +81,7 @@ export interface IpcMainEvents {
   'extensions/list': () => void;
   'extensions/open': (id: string, path: string) => void;
   'extensions/close': () => void;
+  'extensions/open-external': (url: string) => void;
   'ok:extensions/getContentArea': (payload: { x: number, y: number }) => void;
   // #endregion
 }

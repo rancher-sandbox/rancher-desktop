@@ -91,6 +91,10 @@ class ExtensionManagerImpl implements ExtensionManager {
       hostname: os.hostname(),
     }));
 
+    this.setMainListener('extensions/open-external', (...[, url]) => {
+      Electron.shell.openExternal(url);
+    });
+
     // Install / uninstall extensions as needed.
     await Promise.all(Object.entries(config.extensions ?? {}).map(async([id, install]) => {
       const op = install ? 'install' : 'uninstall';

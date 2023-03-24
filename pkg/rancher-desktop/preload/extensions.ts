@@ -19,7 +19,7 @@ class Client implements v1.DockerDesktopClient {
   desktopUI = {} as v1.DesktopUI;
   host: v1.Host = {
     openExternal: (url: string) => {
-      throw new Error('not implemented');
+      ipcRenderer.send('extensions/open-external', url);
     },
     platform: '<unknown>',
     arch:     '<unknown>',
