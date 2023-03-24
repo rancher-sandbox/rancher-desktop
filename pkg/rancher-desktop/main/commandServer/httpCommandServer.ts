@@ -595,7 +595,8 @@ export class HttpCommandServer {
       response.status(400).type('txt').send(`Invalid extension id ${ JSON.stringify(id) }: not a string.`);
     } else {
       response.writeProcessing();
-      const { status, data } = await this.commandWorker.installExtension(id, 'uninstall');
+      const { status, data: rawData } = await this.commandWorker.installExtension(id, 'uninstall');
+      const data = rawData || `Deleted ${ id }`;
 
       if (data) {
         if (typeof data === 'string') {
