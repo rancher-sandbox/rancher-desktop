@@ -12,11 +12,12 @@ For user-oriented documentation, please see [docs.rancherdesktop.io][docs].
 
 ## Overview
 
-Rancher Desktop is an Electron application with the primary business logic
-written in TypeScript and JavaScript.  It leverages several other pieces of
-technology to provide the platform elements which include k3s, kubectl, nerdctl
-WSL, QEMU, and more. The application wraps numerous pieces of technology to
-provide one cohesive application.
+Rancher Desktop is an Electron application that is mainly written in TypeScript.
+It bundles a variety of other technologies in order to provide one cohesive application.
+It includes a command line tool, `rdctl`, which is written in Go.
+Most developer activities, such as running a development build, building/packaging
+Rancher Desktop, running unit tests, and running end-to-end tests, are done through
+`npm run` scripts. Some exceptions exist, such as running BATS tests.
 
 
 ## Setup
