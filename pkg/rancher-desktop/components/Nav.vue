@@ -40,11 +40,11 @@ import os from 'os';
 
 import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
-import { ipcRenderer } from 'electron';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavItem from './NavItem.vue';
 
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { hexEncode } from '@pkg/utils/string-encode';
 
 export default {
