@@ -1,63 +1,84 @@
 <script lang="ts">
-import os from 'os';
 
 import Vue from 'vue';
+import { mapGetters, mapState } from 'vuex';
 
-import SystemPreferences from '@pkg/components/SystemPreferences.vue';
-import { defaultSettings, Settings } from '@pkg/config/settings';
-import { RecursiveTypes } from '@pkg/utils/typeUtils';
+import PreferencesVirtualMachineHardware from '@pkg/components/Preferences/VirtualMachineHardware.vue';
+import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
+import Tab from '@pkg/components/Tabbed/Tab.vue';
+import { Settings } from '@pkg/config/settings';
+import type { TransientSettings } from '@pkg/config/transientSettings';
+import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-virtual-machine',
-  components: { SystemPreferences },
-  props:      {
+  components: {
+    RdTabbed,
+    Tab,
+    PreferencesVirtualMachineHardware,
+  },
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
     },
   },
-  data() {
-    return { settings: defaultSettings };
-  },
   computed: {
-    hasSystemPreferences(): boolean {
-      return !os.platform().startsWith('win');
-    },
-    availMemoryInGB(): number {
-      return Math.ceil(os.totalmem() / 2 ** 30);
-    },
-    availNumCPUs(): number {
-      return os.cpus().length;
+    ...mapGetters('preferences', ['isPlatformWindows']),
+    ...mapGetters('transientSettings', ['getActiveTab']),
+    ...mapState('credentials', ['credentials']),
+    activeTab(): string {
+      return this.getActiveTab || 'hardware';
     },
   },
   methods: {
-    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
-      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    async tabSelected({ tab }: { tab: Vue.Component }) {
+      if (this.activeTab !== tab.name) {
+        await this.commitPreferences(tab.name || '');
+      }
+    },
+    async commitPreferences(tabName: string) {
+      await this.$store.dispatch(
+        'transientSettings/commitPreferences',
+        {
+          ...this.credentials as ServerState,
+          payload: { preferences: { navItem: { currentTabs: { 'Virtual Machine': tabName } } } } as RecursivePartial<TransientSettings>,
+        },
+      );
     },
   },
 });
 </script>
 
 <template>
-  <div class="preferences-content">
-    <system-preferences
-      v-if="hasSystemPreferences"
-      :memory-in-g-b="preferences.virtualMachine.memoryInGB"
-      :number-c-p-us="preferences.virtualMachine.numberCPUs"
-      :avail-memory-in-g-b="availMemoryInGB"
-      :avail-num-c-p-us="availNumCPUs"
-      :reserved-memory-in-g-b="6"
-      :reserved-num-c-p-us="1"
-      @update:memory="onChange('virtualMachine.memoryInGB', $event)"
-      @update:cpu="onChange('virtualMachine.numberCPUs', $event)"
-    />
-  </div>
+  <rd-tabbed
+    v-bind="$attrs"
+    class="action-tabs"
+    :no-content="true"
+    :default-tab="activeTab"
+    @changed="tabSelected"
+  >
+    <template #tabs>
+      <tab
+        label="Hardware"
+        name="hardware"
+        :weight="1"
+      />
+    </template>
+    <div class="virtual-machine-content">
+      <component
+        :is="`preferences-virtual-machine-${ activeTab }`"
+        :preferences="preferences"
+      />
+    </div>
+  </rd-tabbed>
 </template>
 
 <style lang="scss" scoped>
-  .preferences-content {
+  .virtual-machine-content {
     padding: var(--preferences-content-padding);
   }
 </style>
