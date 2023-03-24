@@ -265,12 +265,12 @@ export class NerdctlClient implements ContainerEngineClient {
         args.unshift('--namespace', options.namespace);
       }
       if (options?.env) {
-        const envFile = path.join(hostDir, 'compose.env');
+        const envFile = path.posix.join(workDir, 'compose.env');
         const envData = Object.entries(options.env)
           .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
           .join('');
 
-        await fs.promises.writeFile(envFile, envData);
+        await this.vm.writeFile(envFile, envData);
         args.push('--env-file', envFile);
       }
       // nerdctl doesn't support --wait, so make do with --detach.
@@ -316,14 +316,17 @@ export class NerdctlClient implements ContainerEngineClient {
 
     try {
       if (options?.env) {
-        const envDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-compose-up-env-'));
-        const envFile = path.join(envDir, 'compose.env');
+        const envDir = (await this.vm.execCommand({ capture: true },
+          '/bin/mktemp', '--directory', '--tmpdir', 'rd-nerdctl-compose-down-XXXXXX')).trim();
+
+        cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', envDir));
+
+        const envFile = path.posix.join(envDir, 'compose.env');
         const envData = Object.entries(options.env)
           .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
           .join('');
 
-        cleanups.push(() => fs.promises.rm(envDir, { recursive: true }));
-        await fs.promises.writeFile(envFile, envData);
+        await this.vm.writeFile(envFile, envData);
         args.push('--env-file', envFile);
       }
       const result = await this.nerdctl(...args);
