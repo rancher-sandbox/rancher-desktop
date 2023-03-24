@@ -238,6 +238,14 @@ export interface VMExecutor {
   writeFile(filePath: string, fileContents: string, permissions: fs.Mode): Promise<void>;
 
   /**
+   * Copy the given file from the host into the VM.
+   * @param hostPath The source path, on the host.
+   * @param vmPath The destination path, inside the VM.
+   * @note The behaviour of copying a directory is undefined.
+   */
+  copyFileIn(hostPath: string, vmPath: string): Promise<void>;
+
+  /**
    * Copy the given file from the VM into the host.
    * @param vmPath The source path, inside the VM.
    * @param hostPath The destination path, on the host.

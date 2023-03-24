@@ -32,6 +32,12 @@ encoded_id() { # variant
     id "$1" | tr -d '\r\n' | base64 | tr '+/' '-_' | tr -d '='
 }
 
+namespace_arg() {
+    if using_containerd; then
+        echo '--namespace=rancher-desktop-extensions'
+    fi
+}
+
 @test 'factory reset' {
     factory_reset
 }
@@ -44,14 +50,22 @@ encoded_id() { # variant
 @test 'no extensions installed' {
     run rdctl api /v1/extensions
     assert_success
-    assert_output '{}'
+    assert_output $'\x7b'$'\x7d' # empty JSON dict, {}
     assert_dir_not_exist "$PATH_EXTENSIONS"
 }
 
 @test 'build various extension testing images' {
     local extension
-    for extension in basic host-binaries missing-icon missing-icon-file ui; do
-        ctrctl build --tag rd/extension/$extension --build-arg variant=$extension "$TESTDATA_DIR"
+    local variants=(
+        basic host-binaries missing-icon missing-icon-file ui
+    )
+    for extension in "${variants[@]}"; do
+        ctrctl $(namespace_arg) build --tag rd/extension/$extension --build-arg variant=$extension "$TESTDATA_DIR"
+    done
+    for extension in "${variants[@]}"; do
+        run ctrctl $(namespace_arg) image list --format '{{ .Repository }}'
+        assert_success
+        assert_line "rd/extension/${variants[@]}"
     done
 }
 

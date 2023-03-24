@@ -679,6 +679,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     await this.writeFileWSL(filePath, fileContents, { permissions });
   }
 
+  async copyFileIn(hostPath: string, vmPath: string): Promise<void> {
+    const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
+
+    await fs.promises.copyFile(windowsPath, hostPath);
+  }
+
   async copyFileOut(vmPath: string, hostPath: string): Promise<void> {
     const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
 

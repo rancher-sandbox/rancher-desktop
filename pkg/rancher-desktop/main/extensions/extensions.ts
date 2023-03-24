@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import _ from 'lodash';
@@ -32,6 +33,20 @@ class ExtensionErrorImpl extends Error implements ExtensionError {
   }
 }
 
+/**
+ * isVMTypeImage asserts that a ExtensionMetadata.vm is an image.
+ */
+function isVMTypeImage(input: ExtensionMetadata['vm']): input is { image: string } {
+  return typeof (input as any)?.image === 'string';
+}
+
+/**
+ * isVMTypeComposefile asserts that a ExtensionMetadata.vm is a composefile.
+ */
+function isVMTypeComposefile(input: ExtensionMetadata['vm']): input is { composefile: string } {
+  return typeof (input as any)?.composefile === 'string';
+}
+
 export class ExtensionImpl implements Extension {
   constructor(id: string, client: ContainerEngineClient) {
     const encodedId = Buffer.from(id, 'utf-8').toString('base64url');
@@ -47,6 +62,7 @@ export class ExtensionImpl implements Extension {
   readonly dir: string;
   protected readonly client: ContainerEngineClient;
   protected _metadata: Promise<ExtensionMetadata> | undefined;
+  protected readonly extensionNamespace = 'rancher-desktop-extensions';
 
   /** Extension metadata */
   get metadata(): Promise<ExtensionMetadata> {
@@ -54,7 +70,7 @@ export class ExtensionImpl implements Extension {
       const fallback = { vm: {} };
 
       try {
-        const raw = await this.client.readFile(this.id, 'metadata.json');
+        const raw = await this.readFile('metadata.json');
         const result = _.merge({}, fallback, JSON.parse(raw));
 
         if (!result.icon) {
@@ -93,6 +109,7 @@ export class ExtensionImpl implements Extension {
       await this.installIcon(this.dir, metadata);
       await this.installUI(this.dir, metadata);
       await this.installHostExecutables(this.dir, metadata);
+      await this.installContainers(metadata);
     } catch (ex) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
       await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
@@ -120,7 +137,7 @@ export class ExtensionImpl implements Extension {
       const origIconName = path.basename(metadata.icon);
 
       try {
-        await this.client.copyFile(this.id, metadata.icon, workDir);
+        await this.client.copyFile(this.id, metadata.icon, workDir, { namespace: this.extensionNamespace });
       } catch (ex) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex as Error);
       }
@@ -144,7 +161,11 @@ export class ExtensionImpl implements Extension {
     await Promise.all(Object.entries(metadata.ui).map(async([name, data]) => {
       try {
         await fs.promises.mkdir(path.join(uiDir, name), { recursive: true });
-        await this.client.copyFile(this.id, data.root, path.join(uiDir, name));
+        await this.client.copyFile(
+          this.id,
+          data.root,
+          path.join(uiDir, name),
+          { namespace: this.extensionNamespace });
       } catch (ex: any) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy UI ${ name }`, ex);
       }
@@ -171,11 +192,66 @@ export class ExtensionImpl implements Extension {
 
     await Promise.all(paths.map(async(p) => {
       try {
-        await this.client.copyFile(this.id, p, binDir);
+        await this.client.copyFile(this.id, p, binDir, { namespace: this.extensionNamespace });
       } catch (ex: any) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy host binary ${ p }`, ex);
       }
     }));
+  }
+
+  get containerName() {
+    const normalizedId = this.id.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '_');
+
+    return `rd-extension-${ normalizedId }`;
+  }
+
+  /**
+   * Extract the Docker Compose files into a newly-created temporary directory.
+   * This is required because nerdctl doesn't seem to keep the definition around,
+   * @note The caller is expected to remove the output directory.
+   * @param composePath the value of metadata.vm.composefile
+   */
+  protected async extractComposeDefinition(composePath: string): Promise<string> {
+    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
+    const composeDir = path.posix.dirname(path.posix.normalize(composePath));
+
+    await this.client.copyFile(
+      this.id,
+      composeDir === '.' ? '/' : `${ composeDir }/`,
+      workDir,
+      { namespace: this.extensionNamespace });
+
+    return workDir;
+  }
+
+  protected async installContainers(metadata: ExtensionMetadata): Promise<void> {
+    if (isVMTypeImage(metadata.vm)) {
+      // eslint-disable-next-line no-template-curly-in-string -- literal ${DESKTOP_PLUGIN_IMAGE}
+      const imageID = metadata.vm.image === '${DESKTOP_PLUGIN_IMAGE}' ? this.id : metadata.vm.image;
+      const stdout = await this.client.run(imageID, {
+        namespace: this.extensionNamespace,
+        name:      this.containerName,
+        restart:   'always',
+      });
+
+      console.debug(`Running ${ this.id } container image ${ imageID }: ${ stdout.trim() }`);
+    } else if (isVMTypeComposefile(metadata.vm)) {
+      const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
+
+      try {
+        console.debug(`Running ${ this.id } compose up (workDir=${ workDir })`);
+        await this.client.composeUp(
+          workDir,
+          {
+            name:      this.containerName,
+            namespace: this.extensionNamespace,
+            env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+          },
+        );
+      } finally {
+        await fs.promises.rm(workDir, { recursive: true });
+      }
+    }
   }
 
   async uninstall(): Promise<boolean> {
@@ -183,13 +259,8 @@ export class ExtensionImpl implements Extension {
 
     try {
       const metadata = await this.metadata;
-      const vm = metadata.vm;
 
-      if ('image' in vm) {
-        console.error('Todo: stop container');
-      } else if ('composefile' in vm) {
-        console.error(`Skipping uninstall of compose file when uninstalling ${ this.id }`);
-      }
+      await this.uninstallContainers(metadata);
     } catch (ex) {
       console.error(`Failed to read extension ${ this.id } metadata while uninstalling, not stopping containers: ${ ex }`);
     }
@@ -207,11 +278,37 @@ export class ExtensionImpl implements Extension {
     return true;
   }
 
+  protected async uninstallContainers(metadata: ExtensionMetadata) {
+    if (isVMTypeImage(metadata.vm)) {
+      await this.client.stop(this.containerName, {
+        namespace: this.extensionNamespace,
+        force:     true,
+        delete:    true,
+      });
+    } else if (isVMTypeComposefile(metadata.vm)) {
+      const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
+
+      try {
+        await this.client.composeDown(workDir, {
+          name:      this.containerName,
+          namespace: this.extensionNamespace,
+          env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        });
+      } finally {
+        await fs.promises.rm(workDir, { recursive: true });
+      }
+    }
+  }
+
   async extractFile(sourcePath: string, destinationPath: string): Promise<void> {
-    await this.client.copyFile(this.id, sourcePath, destinationPath);
+    await this.client.copyFile(
+      this.id,
+      sourcePath,
+      destinationPath,
+      { namespace: this.extensionNamespace });
   }
 
   async readFile(sourcePath: string): Promise<string> {
-    return await this.client.readFile(this.id, sourcePath);
+    return await this.client.readFile(this.id, sourcePath, { namespace: this.extensionNamespace });
   }
 }
