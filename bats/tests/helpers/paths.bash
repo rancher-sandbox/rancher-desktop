@@ -22,7 +22,11 @@ if is_linux; then
     PATH_LOGS="$PATH_DATA/logs"
     PATH_EXTENSIONS="$PATH_DATA/extensions"
     PATH_EXECUTABLE="" # TODO
-    PATH_RESOURCES="/opt/rancher-desktop/resources/resources"
+    if test -d "/opt/rancher-desktop"; then
+        PATH_RESOURCES="/opt/rancher-desktop/resources/resources"
+    else
+        PATH_RESOURCES="$(dirname ${BASH_SOURCE[0]})/../../../dist/linux-unpacked/resources/resources"
+    fi
     LIMA_HOME="$PATH_DATA/lima"
 fi
 
