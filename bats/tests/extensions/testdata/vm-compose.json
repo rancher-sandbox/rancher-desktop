@@ -2,6 +2,6 @@
   "icon": "extension-icon.svg",
   "info": "This image uses vm.composefile",
   "vm": {
-    "composefile": "docker-compose.yaml"
+    "composefile": "/compose/compose.yaml"
   }
 }

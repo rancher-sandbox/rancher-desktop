@@ -1,3 +1,7 @@
+setup_file() {
+    load '../helpers/load'
+}
+
 setup() {
     load '../helpers/load'
 

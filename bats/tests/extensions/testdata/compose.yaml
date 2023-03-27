@@ -1,0 +1,4 @@
+name: sample-compose
+services:
+  web:
+    image: "${DESKTOP_PLUGIN_IMAGE}"

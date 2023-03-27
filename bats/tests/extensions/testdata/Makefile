@@ -2,5 +2,7 @@ all: \
   image-basic image-missing-icon image-ui \
   image-vm-image image-vm-compose image-host-binaries
 
+TOOL ?= docker
+
 image-%:
-	docker build -t rd/extension/$(@:image-%=%) --build-arg variant=$(@:image-%=%) .
+	${TOOL} build -t rd/extension/$(@:image-%=%) --build-arg variant=$(@:image-%=%) .
