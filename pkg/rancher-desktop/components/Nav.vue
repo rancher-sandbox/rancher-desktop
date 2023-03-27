@@ -113,7 +113,7 @@ export default {
       const { ui: { 'dashboard-tab': { root, src } } } = metadata;
 
       return {
-        name:   'extensions-root-src-id',
+        name:   'rdx-root-src-id',
         params: {
           root,
           src,
