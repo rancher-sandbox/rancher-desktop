@@ -129,13 +129,13 @@ test.describe.serial('Extensions', () => {
   test('build and install testing extension', async() => {
     const dataDir = path.join(srcDir, 'bats', 'tests', 'extensions', 'testdata');
 
-    await ctrctl('build', '--tag', 'rd/extension/ui', '--build-arg', 'variant=ui', dataDir);
-    await spawnFile(rdctl, ['api', '-XPOST', '/v1/extensions/install?id=rd/extension/ui']);
+    await ctrctl('build', '--tag', 'rd/extension/everything', '--build-arg', 'variant=everything', dataDir);
+    await spawnFile(rdctl, ['api', '-XPOST', '/v1/extensions/install?id=rd/extension/everything']);
   });
 
   test('use extension protocol handler', async() => {
     const result = await page.evaluate(async() => {
-      const data = await fetch('x-rd-extension://72642f657874656e73696f6e2f7569/ui/dashboard-tab/ui/index.html');
+      const data = await fetch('x-rd-extension://72642f657874656e73696f6e2f65766572797468696e67/ui/dashboard-tab/ui/index.html');
 
       return await data.text();
     });
@@ -149,7 +149,7 @@ test.describe.serial('Extensions', () => {
     test('extension UI can be loaded', async() => {
       const window: JSHandle<BrowserWindow> = await app.browserWindow(page);
 
-      await page.click('.nav .nav-item[data-id="extension:rd/extension/ui"]');
+      await page.click('.nav .nav-item[data-id="extension:rd/extension/everything"]');
 
       // Try until we can get a BrowserView for the extension (because it can
       // take some time to load).
@@ -199,6 +199,29 @@ test.describe.serial('Extensions', () => {
         platform: os.platform(),
         arch:     os.arch(),
         hostname: os.hostname(),
+      });
+    });
+
+    test.describe('running host commands', () => {
+      const wrapperName = process.platform === 'win32' ? 'dummy.cmd' : 'dummy.sh';
+
+      test('capturing output', async() => {
+        const script = `
+          ddClient.extension.host.cli.exec("${ wrapperName }", [
+            "${ process.execPath }", "-e", "console.log(1 + 1)"
+          ]).then(({cmd, killed, signal, code, stdout, stderr}) => ({
+            /* Rebuild the object so it can be serialized properly */
+            cmd, killed, signal, code, stdout, stderr
+          }));
+        `.replace(/\s+/g, ' ');
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.objectContaining({
+          cmd:    expect.stringContaining(wrapperName),
+          code:   0,
+          stdout: expect.stringContaining('2'),
+          stderr: expect.stringContaining(''),
+        }));
       });
     });
   });
