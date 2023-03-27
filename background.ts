@@ -525,6 +525,10 @@ ipcMainProxy.on('extensions/open', (_event, id, path) => {
   window.openExtension(id, path);
 });
 
+ipcMainProxy.on('extensions/close', () => {
+  window.closeExtension();
+});
+
 ipcMainProxy.handle('transient-settings-fetch', () => {
   return Promise.resolve(TransientSettings.value);
 });

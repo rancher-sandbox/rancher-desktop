@@ -182,7 +182,7 @@ export function openMain() {
   app.dock?.show();
 }
 
-let view: Electron.BrowserView;
+let view: Electron.BrowserView | undefined;
 
 export function openExtension(id: string, path: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
@@ -220,6 +220,15 @@ export function openExtension(id: string, path: string) {
     .catch((err) => {
       console.error(`Can't load the dashboard URL ${ url }: `, err);
     });
+}
+
+export function closeExtension() {
+  if (!view) {
+    return;
+  }
+
+  getWindow('main')?.removeBrowserView(view);
+  view = undefined;
 }
 
 /**
