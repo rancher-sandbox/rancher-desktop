@@ -108,7 +108,16 @@ class ExtensionManagerImpl implements ExtensionManager {
 
   async getInstalledExtensions() {
     const extensions = Object.values(this.extensions);
-    const installedExtensions = await fs.promises.readdir(paths.extensionRoot);
+    let installedExtensions: string[] = [];
+
+    try {
+      installedExtensions = await fs.promises.readdir(paths.extensionRoot);
+    } catch (ex: any) {
+      if ((ex as NodeJS.ErrnoException)?.code === 'ENOENT') {
+        return [];
+      }
+      throw ex;
+    }
 
     const transformedExtensions = extensions
       .filter((extension) => {
