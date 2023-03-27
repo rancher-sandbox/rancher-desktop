@@ -42,7 +42,9 @@ test.describe.serial('Extensions', () => {
   async function ctrctl(...args: string[]) {
     let tool = executable('nerdctl');
 
-    if (!isContainerd) {
+    if (isContainerd) {
+      args = ['--namespace', 'rancher-desktop-extensions'].concat(args);
+    } else {
       tool = executable('docker');
       if (process.platform !== 'win32') {
         args = ['--context', 'rancher-desktop'].concat(args);
