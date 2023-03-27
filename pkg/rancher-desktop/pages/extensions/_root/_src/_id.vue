@@ -4,16 +4,16 @@ import Vue from 'vue';
 
 export default Vue.extend({
   beforeRouteEnter(to, _from, next) {
-    const { params: { id } } = to;
+    const { params: { root, src, id } } = to;
 
     next((vm: any) => {
-      vm.openExtension(id);
+      vm.openExtension(id, root, src);
     });
   },
   beforeRouteUpdate(to, _from, next) {
-    const { params: { id } } = to;
+    const { params: { root, src, id } } = to;
 
-    this.openExtension(id);
+    this.openExtension(id, root, src);
 
     next();
   },
@@ -22,8 +22,8 @@ export default Vue.extend({
     next();
   },
   methods: {
-    openExtension(id: string): void {
-      ipcRenderer.send('extensions/open', id);
+    openExtension(id: string, root: string, src: string): void {
+      ipcRenderer.send('extensions/open', id, `${ root }/${ src }`);
     },
     closeExtensionView(): void {
       ipcRenderer.send('extensions/close');

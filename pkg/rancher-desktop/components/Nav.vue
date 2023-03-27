@@ -24,7 +24,7 @@
       <template v-for="extension in extensions">
         <nuxt-link
           :key="extension.id"
-          :to="extensionRoute(extension.id)"
+          :to="extensionRoute(extension)"
         >
           <nav-item>
             <template #before>
@@ -109,10 +109,16 @@ export default {
     imageUri(id: string): string {
       return `x-rd-extension://${ hexEncode(id) }/icon.svg`;
     },
-    extensionRoute(id: string) {
+    extensionRoute({ id, metadata }: { id: string, metadata: any }) {
+      const { ui: { 'dashboard-tab': { root, src } } } = metadata;
+
       return {
-        name:   'extensions-id',
-        params: { id: hexEncode(id) },
+        name:   'extensions-root-src-id',
+        params: {
+          root,
+          src,
+          id: hexEncode(id),
+        },
       };
     },
   },
