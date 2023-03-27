@@ -1,6 +1,7 @@
 import fs from 'fs';
+import os from 'os';
 
-import { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import Electron, { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 
 import { ExtensionImpl } from './extensions';
 
@@ -83,7 +84,14 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   async init(config: RecursiveReadonly<Settings>) {
-    // TODO: Handlers for various events from the renderer process.
+    // Handle events from the renderer process.
+    this.setMainHandler('extension/host-info', () => ({
+      platform: process.platform,
+      arch:     Electron.app.runningUnderARM64Translation ? 'arm64' : process.arch,
+      hostname: os.hostname(),
+    }));
+
+    // Install / uninstall extensions as needed.
     await Promise.all(Object.entries(config.extensions ?? {}).map(async([id, install]) => {
       const op = install ? 'install' : 'uninstall';
 
