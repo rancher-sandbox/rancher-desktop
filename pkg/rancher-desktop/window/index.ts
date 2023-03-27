@@ -184,7 +184,7 @@ export function openMain() {
 
 let view: Electron.BrowserView;
 
-export function openExtension(id: string) {
+export function openExtension(id: string, path: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
 
@@ -194,11 +194,11 @@ export function openExtension(id: string) {
     return;
   }
 
-  const windowSize = window?.getContentSize();
+  const windowSize = window.getContentSize();
 
   if (!view) {
     view = new BrowserView();
-    window?.setBrowserView(view);
+    window.setBrowserView(view);
 
     const x = 230;
     const y = 55;
@@ -213,7 +213,7 @@ export function openExtension(id: string) {
     view.setAutoResize({ width: true, height: true });
   }
 
-  const url = `x-rd-extension://${ id }/ui/dashboard-tab/ui/index.html`;
+  const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ path }`;
 
   view.webContents
     .loadURL(url)

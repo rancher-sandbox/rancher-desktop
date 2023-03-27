@@ -521,8 +521,8 @@ mainEvents.on('settings-write', writeSettings);
 
 ipcMainProxy.on('extensions/list', listExtensionsMetadata);
 
-ipcMainProxy.on('extensions/open', (_event, id) => {
-  window.openExtension(id);
+ipcMainProxy.on('extensions/open', (_event, id, path) => {
+  window.openExtension(id, path);
 });
 
 ipcMainProxy.handle('transient-settings-fetch', () => {

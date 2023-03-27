@@ -79,7 +79,7 @@ export interface IpcMainEvents {
 
   // #region Extensions
   'extensions/list': () => void;
-  'extensions/open': (id: string) => void;
+  'extensions/open': (id: string, path: string) => void;
   // #endregion
 }
 
@@ -149,6 +149,6 @@ export interface IpcRendererEvents {
 
   // #region extensions
   'extensions/list': (extensions: { id: string; metadata: ExtensionMetadata; }[] | undefined) => void;
-  'extensions/open': (id: string) => void;
+  'extensions/open': (id: string, path: string) => void;
   // #endregion
 }
