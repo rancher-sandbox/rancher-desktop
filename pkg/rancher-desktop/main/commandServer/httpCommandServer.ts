@@ -4,6 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import express from 'express';
+import _ from 'lodash';
 
 import type { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
@@ -51,29 +52,33 @@ export class HttpCommandServer {
 
   protected commandWorker: CommandWorkerInterface;
 
-  protected dispatchTable: Record<HttpMethod, Record<string, [number, DispatchFunctionType]>> = {
-    get: {
-      '/v1/about':                 [1, this.about],
-      '/v1/diagnostic_categories': [0, this.diagnosticCategories],
-      '/v1/diagnostic_ids':        [0, this.diagnosticIDsForCategory],
-      '/v1/diagnostic_checks':     [0, this.diagnosticChecks],
-      '/v1/extensions':            [1, this.listExtensions],
-      '/v1/settings':              [0, this.listSettings],
-      '/v1/transient_settings':    [0, this.listTransientSettings],
-    },
-    post: {
-      '/v1/diagnostic_checks':    [0, this.diagnosticRunChecks],
-      '/v1/extensions/install':   [1, this.installExtension],
-      '/v1/extensions/uninstall': [1, this.uninstallExtension],
-    },
-    put: {
-      '/v1/factory_reset':      [0, this.factoryReset],
-      '/v1/propose_settings':   [0, this.proposeSettings],
-      '/v1/settings':           [0, this.updateSettings],
-      '/v1/shutdown':           [0, this.wrapShutdown],
-      '/v1/transient_settings': [0, this.updateTransientSettings],
-    },
-  };
+  protected dispatchTable: Record<HttpMethod, Record<string, readonly [number, DispatchFunctionType]>> = _.merge(
+    {
+      get: {
+        '/v1/about':                 [1, this.about],
+        '/v1/diagnostic_categories': [0, this.diagnosticCategories],
+        '/v1/diagnostic_ids':        [0, this.diagnosticIDsForCategory],
+        '/v1/diagnostic_checks':     [0, this.diagnosticChecks],
+        '/v1/settings':              [0, this.listSettings],
+        '/v1/transient_settings':    [0, this.listTransientSettings],
+      },
+      post: { '/v1/diagnostic_checks': [0, this.diagnosticRunChecks] },
+      put:  {
+        '/v1/factory_reset':      [0, this.factoryReset],
+        '/v1/propose_settings':   [0, this.proposeSettings],
+        '/v1/settings':           [0, this.updateSettings],
+        '/v1/shutdown':           [0, this.wrapShutdown],
+        '/v1/transient_settings': [0, this.updateTransientSettings],
+      },
+    } as const,
+    !process.env.RD_ENV_EXTENSIONS ? {} : {
+      get:  { '/v1/extensions': [1, this.listExtensions] },
+      post: {
+        '/v1/extensions/install':   [1, this.installExtension],
+        '/v1/extensions/uninstall': [1, this.uninstallExtension],
+      },
+    } as const,
+  );
 
   constructor(commandWorker: CommandWorkerInterface) {
     this.commandWorker = commandWorker;
