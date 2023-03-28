@@ -169,6 +169,13 @@ export default class SettingsValidator {
             this.checkEnum(...Object.values(VMType)),
             this.checkVMType),
           ),
+          proxy: {
+            enabled:  this.checkBoolean,
+            address:  this.checkString,
+            password: this.checkString,
+            port:     this.checkNumber(1, 65535),
+            username: this.checkString,
+          },
         },
       },
       WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },
