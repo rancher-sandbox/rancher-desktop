@@ -21,16 +21,19 @@
         </template>
         Extensions
       </nav-item>
-      <nav-item
-        v-for="extension in extensions"
-        :key="extension.id"
-        @click="openExtension(extension)"
-      >
-        <template #before>
-          <img :src="imageUri(extension.id)">
-        </template>
-        {{ extension.metadata.ui['dashboard-tab'].title }}
-      </nav-item>
+      <template v-for="extension in extensions">
+        <nuxt-link
+          :key="extension.id"
+          :to="extensionRoute(extension)"
+        >
+          <nav-item>
+            <template #before>
+              <img :src="imageUri(extension.id)">
+            </template>
+            {{ extension.metadata.ui['dashboard-tab'].title }}
+          </nav-item>
+        </nuxt-link>
+      </template>
     </template>
   </nav>
 </template>
@@ -44,7 +47,6 @@ import { RouteRecordPublic } from 'vue-router';
 
 import NavItem from './NavItem.vue';
 
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { hexEncode } from '@pkg/utils/string-encode';
 
 export default {
@@ -107,11 +109,17 @@ export default {
     imageUri(id: string): string {
       return `x-rd-extension://${ hexEncode(id) }/icon.svg`;
     },
-    openExtension({ id, metadata }: { id: string, metadata: any}): void {
-      console.log('OPEN EXTENSION', { id: hexEncode(id) });
+    extensionRoute({ id, metadata }: { id: string, metadata: any }) {
       const { ui: { 'dashboard-tab': { root, src } } } = metadata;
 
-      ipcRenderer.send('extensions/open', hexEncode(id), `${ root }/${ src }`);
+      return {
+        name:   'rdx-root-src-id',
+        params: {
+          root,
+          src,
+          id: hexEncode(id),
+        },
+      };
     },
   },
 };
@@ -151,6 +159,15 @@ ul {
     }
 }
 
+a {
+  &:hover {
+    text-decoration: none;
+  }
+
+  &.nuxt-link-active::v-deep div {
+    background-color: var(--nav-active);
+  }
+}
 .nav-badge {
   line-height: initial;
   letter-spacing: initial;

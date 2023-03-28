@@ -70,6 +70,13 @@ export default {
     mode:          'hash',
     prefetchLinks: false,
     middleware:    ['i18n', 'indexRedirect'],
+    extendRoutes(routes, resolve) {
+      routes.push({
+        name:      'rdx-root-src-id',
+        path:      '/extensions/:root(.*)/:src/:id',
+        component: resolve(__dirname, 'pages/extensions/_root/_src/_id.vue'),
+      });
+    },
   },
   ssr:            false,
   styleResources: {
