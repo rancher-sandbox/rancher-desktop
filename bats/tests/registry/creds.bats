@@ -115,7 +115,7 @@ EOF
     rdsudo apk add mkcert --force-broken-world --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing
     rdshell mkdir -p "$CAROOT"
     rdshell "CAROOT=$CAROOT" TRUST_STORES=none mkcert -install
-    rdshell sh -c "mkdir -p $CERTS_DIR; cd $CERTS_DIR; CAROOT=$CAROOT mkcert $REGISTRY_HOST"
+    rdshell sh -c "mkdir -p \"$CERTS_DIR\"; cd \"$CERTS_DIR\"; CAROOT=\"$CAROOT\" mkcert \"$REGISTRY_HOST\""
 }
 
 @test 'pull registry image' {
@@ -193,7 +193,7 @@ EOF
 }
 
 @test 'verify that pushing fails when not logged in' {
-    run bash -c "echo $REGISTRY | \"$CRED_HELPER\" erase"
+    run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" erase"
     assert_nothing
     run ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
     assert_failure
@@ -209,11 +209,11 @@ EOF
 }
 
 @test 'verify credentials in host cred store' {
-    run bash -c "echo $REGISTRY | \"$CRED_HELPER\" get"
+    run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" get"
     assert_success
     assert_output --partial '"Secret":"password"'
 
     ctrctl logout "$REGISTRY"
-    run bash -c "echo $REGISTRY | \"$CRED_HELPER\" get"
+    run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" get"
     refute_output --partial '"Secret":"password"'
 }
