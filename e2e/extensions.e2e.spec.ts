@@ -223,6 +223,43 @@ test.describe.serial('Extensions', () => {
           stderr: expect.stringContaining(''),
         }));
       });
+
+      test('streaming output', async() => {
+        const script = `
+          (new Promise((resolve) => {
+            let output = [], errors = [], exitCodes = [];
+            ddClient.extension.host.cli.exec("${ wrapperName }", [
+              "${ process.execPath }", "-e",
+              "console.log(2 + 2); console.error(3 + 3);"],
+              {
+                stream: {
+                  onOutput: (data) => {
+                    output.push(data);
+                  },
+                  onError: (err) => {
+                    errors.push(err);
+                    resolve(output, errors, exitCodes);
+                  },
+                  onClose: (exitCode) => {
+                    exitCodes.push(exitCode);
+                    resolve({output, errors, exitCodes});
+                  },
+                }
+            });
+          })).catch(ex => ex);
+        `;
+
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.objectContaining({
+          output: expect.arrayContaining([
+            { stdout: expect.stringContaining('4') },
+            { stderr: expect.stringContaining('6') },
+          ]),
+          errors:    [],
+          exitCodes: [0],
+        }));
+      });
     });
   });
 });
