@@ -22,8 +22,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var forceInstall bool
-
 // installCmd represents the 'rdctl extensions install' command
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -31,13 +29,8 @@ var installCmd = &cobra.Command{
 	Long: `rdctl extension install [--force] <image-id>
 --force: avoid any interactivity.
 The <image-id> is an image reference, e.g. splatform/epinio-docker-desktop:latest (the tag is optional).`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("no image specified")
-		}
-		if len(args) >= 2 {
-			return fmt.Errorf("too many arguments specified")
-		}
 		cmd.SilenceUsage = true
 		return installExtension(args)
 	},
@@ -45,12 +38,10 @@ The <image-id> is an image reference, e.g. splatform/epinio-docker-desktop:lates
 
 func init() {
 	extensionCmd.AddCommand(installCmd)
-	installCmd.Flags().BoolVarP(&forceInstall, "force", "", true, "Avoid interactivity")
 }
 
 func installExtension(args []string) error {
 	imageID := args[0]
-	//TODO: How do we use `forceInstall` ?
 	endpoint := fmt.Sprintf("/%s/extensions/install?id=%s", apiVersion, imageID)
 	// https://stackoverflow.com/questions/20847357/golang-http-client-always-escaped-the-url
 	// Looks like http.NewRequest(method, url) escapes the URL
@@ -62,10 +53,10 @@ func installExtension(args []string) error {
 		}
 		return displayAPICallResult([]byte{}, errorPacket, err)
 	}
-	if string(result) == "Created" {
-		fmt.Printf("%s image %s\n", string(result), imageID)
-	} else if len(result) > 0 {
-		fmt.Printf("%s\n", imageID)
+	msg := "no output from server"
+	if result != nil {
+		msg = string(result)
 	}
+	fmt.Printf("Installing image %s: %s\n", imageID, msg)
 	return nil
 }

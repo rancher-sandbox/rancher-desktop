@@ -29,13 +29,8 @@ var uninstallCmd = &cobra.Command{
 	Short: "Uninstall an RDX extension",
 	Long: `rdctl extension uninstall <image-id>
 The <image-id> is an image reference, e.g. splatform/epinio-docker-desktop:latest (the tag is optional).`,
+  Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("no image specified")
-		}
-		if len(args) >= 2 {
-			return fmt.Errorf("too many arguments specified")
-		}
 		cmd.SilenceUsage = true
 		return uninstallExtension(args)
 	},
@@ -52,8 +47,10 @@ func uninstallExtension(args []string) error {
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult([]byte{}, errorPacket, err)
 	}
+	msg := "no output from server"
 	if result != nil {
-		fmt.Printf("%s\n", string(result))
+		msg = string(result)
 	}
+	fmt.Printf("Uninstalling image %s: %s\n", imageID, msg)
 	return nil
 }

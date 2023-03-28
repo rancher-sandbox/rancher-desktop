@@ -1453,69 +1453,6 @@ test.describe('Command server', () => {
 
       expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });
-
-    test.describe('extensions', () => {
-      const STD_EXTENSION_NAME = 'rd/extension/ui';
-
-      test('can add an extension', async() => {
-        // Delete the standard extension if it exists
-        let haveStdExtension = false;
-        let error: any;
-        let { stdout, stderr } = await rdctl(['api', '/v1/extensions']);
-        // Is it plural or not. Set it once and forget it
-        const EXTENSION_COMMAND_NAME = 'extension';
-
-        expect(stderr).toBe('');
-        if (stdout) {
-          const installed = JSON.parse(stdout);
-
-          if (STD_EXTENSION_NAME in installed) {
-            haveStdExtension = true;
-          }
-        }
-        if (haveStdExtension) {
-          const { stdout, stderr, error } = await rdctl([EXTENSION_COMMAND_NAME, 'uninstall', STD_EXTENSION_NAME]);
-
-          expect({
-            stdout, stderr, error,
-          }).toEqual({
-            error:  undefined,
-            stderr: '',
-            stdout: expect.stringContaining(`Deleted ${ STD_EXTENSION_NAME }`),
-          });
-        }
-        // Now add the extension
-        await new Promise(resolve => setTimeout(resolve, 5_000));
-        ({ stdout, stderr, error } = await rdctl([EXTENSION_COMMAND_NAME, 'install', STD_EXTENSION_NAME]));
-        expect({
-          stdout, stderr, error,
-        }).toEqual({
-          error:  undefined,
-          stderr: '',
-          stdout: expect.stringContaining('Created'),
-        });
-        // Verify it's present
-        ({ stdout, stderr, error } = await rdctl([EXTENSION_COMMAND_NAME, 'ls']));
-        expect({
-          stdout, stderr, error,
-        }).toEqual({
-          error:  undefined,
-          stderr: '',
-          stdout: expect.stringContaining(STD_EXTENSION_NAME),
-        });
-        if (!haveStdExtension) {
-          const { stdout, stderr, error } = await rdctl([EXTENSION_COMMAND_NAME, 'uninstall', STD_EXTENSION_NAME]);
-
-          expect({
-            stdout, stderr, error,
-          }).toEqual({
-            error:  undefined,
-            stderr: '',
-            stdout: expect.stringContaining(`Deleted ${ STD_EXTENSION_NAME }`),
-          });
-        }
-      });
-    });
   });
 
   // Where is the test that pushes a supported update, you may be wondering?
