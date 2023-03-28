@@ -66,10 +66,10 @@ namespace_arg() {
     for extension in "${variants[@]}"; do
         ctrctl $(namespace_arg) build --tag rd/extension/$extension --build-arg variant=$extension "$TESTDATA_DIR"
     done
+    run ctrctl $(namespace_arg) image list --format '{{ .Repository }}'
+    assert_success
     for extension in "${variants[@]}"; do
-        run ctrctl $(namespace_arg) image list --format '{{ .Repository }}'
-        assert_success
-        assert_line "rd/extension/${variants[@]}"
+        assert_line "rd/extension/$extension"
     done
 }
 
