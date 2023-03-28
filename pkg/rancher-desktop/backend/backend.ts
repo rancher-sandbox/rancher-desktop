@@ -148,6 +148,11 @@ export interface VMBackend extends EventEmitter<BackendEvents> {
   reset(config: BackendSettings): Promise<void>;
 
   /**
+   * Apply the settings update that does not require a backend restart.
+   */
+  handleSettingsUpdate(config: BackendSettings): Promise<void>;
+
+  /**
    * Check if applying the given settings would require the backend to restart.
    */
   requiresRestartReasons(config: RecursivePartial<BackendSettings>): Promise<RestartReasons>;

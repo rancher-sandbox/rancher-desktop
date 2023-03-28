@@ -1578,6 +1578,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     });
   }
 
+  async handleSettingsUpdate(newConfig: BackendSettings): Promise<void> {}
+
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
   // a Promise.

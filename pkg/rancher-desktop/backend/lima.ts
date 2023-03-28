@@ -2101,6 +2101,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     });
   }
 
+  async handleSettingsUpdate(_: BackendSettings): Promise<void> {}
+
   async requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     const GiB = 1024 * 1024 * 1024;
     const limaConfig = await this.getLimaConfig();
