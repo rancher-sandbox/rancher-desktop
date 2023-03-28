@@ -25,7 +25,7 @@ if is_linux; then
     if test -d "/opt/rancher-desktop"; then
         PATH_RESOURCES="/opt/rancher-desktop/resources/resources"
     else
-        PATH_RESOURCES="$(dirname ${BASH_SOURCE[0]})/../../../dist/linux-unpacked/resources/resources"
+        PATH_RESOURCES="$(dirname "${BASH_SOURCE[0]}")/../../../dist/linux-unpacked/resources/resources"
     fi
     LIMA_HOME="$PATH_DATA/lima"
 fi

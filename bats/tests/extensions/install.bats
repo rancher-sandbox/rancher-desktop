@@ -64,9 +64,9 @@ namespace_arg() {
         basic host-binaries missing-icon missing-icon-file ui
     )
     for extension in "${variants[@]}"; do
-        ctrctl $(namespace_arg) build --tag rd/extension/$extension --build-arg variant=$extension "$TESTDATA_DIR"
+        ctrctl "$(namespace_arg)" build --tag "rd/extension/$extension" --build-arg "variant=$extension" "$TESTDATA_DIR"
     done
-    run ctrctl $(namespace_arg) image list --format '{{ .Repository }}'
+    run ctrctl "$(namespace_arg)" image list --format '{{ .Repository }}'
     assert_success
     for extension in "${variants[@]}"; do
         assert_line "rd/extension/$extension"
