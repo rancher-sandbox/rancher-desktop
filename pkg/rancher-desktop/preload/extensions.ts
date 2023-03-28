@@ -171,6 +171,63 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
   return exec;
 }
 
+function getProcess(id: string): execProcess | undefined {
+  const process = outstandingProcesses[id]?.deref();
+
+  if (process) {
+    return process;
+  }
+
+  // The process handle has gone away on our side, just try to kill it.
+  ipcRenderer.send('extensions/spawn/kill', id);
+  delete outstandingProcesses[id];
+  console.debug(`Process ${ id } not found, discarding.`);
+}
+
+ipcRenderer.on('extensions/spawn/output', (event, id, data) => {
+  const process = getProcess(id);
+  const streamOpts = process?.[stream];
+
+  if (!process || !streamOpts?.onOutput) {
+    // Process died, or there's no output handler.
+    return;
+  }
+
+  if (!streamOpts.splitOutputLines) {
+    streamOpts.onOutput(data);
+
+    return;
+  }
+
+  for (const key of ['stdout', 'stderr'] as const) {
+    const input = (data as Record<string, string>)[key];
+    const keySym = { stdout, stderr }[key] as typeof stdout | typeof stderr;
+
+    if (input) {
+      process[keySym] += input;
+      while (true) {
+        const [_match, line, rest] = /^(.*?)\r?\n(.*)$/s.exec(process[keySym]) ?? [];
+
+        if (typeof line === 'undefined') {
+          return;
+        }
+        process[stream].onOutput?.({ [key]: line } as {stdout:string} | {stderr:string});
+        process[keySym] = rest;
+      }
+    }
+  }
+});
+
+ipcRenderer.on('extensions/spawn/error', (_, id, error) => {
+  console.debug(`RDX: Extension ${ id } errored:`, error);
+  getProcess(id)?.[stream].onError?.(error);
+});
+
+ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
+  console.debug(`RDX: Extension ${ id } closed:`, returnValue);
+  getProcess(id)?.[stream]?.onClose?.(typeof returnValue === 'number' ? returnValue : -1);
+});
+
 class Client implements v1.DockerDesktopClient {
   constructor(info: {platform: string, arch: string, hostname: string}) {
     Object.assign(this.host, info);
