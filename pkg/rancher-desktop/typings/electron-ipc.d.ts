@@ -85,6 +85,8 @@ export interface IpcMainEvents {
   'extensions/spawn/kill': (execId: string) => void;
   /** Execute the given command, streaming results back via events. */
   'extensions/spawn/streaming': (options: import('@pkg/main/extensions/types').SpawnOptions) => void;
+  /** Show a notification */
+  'extensions/ui/toast': (level: 'success' | 'warning' | 'error', message: string) => void;
   'ok:extensions/getContentArea': (payload: { x: number, y: number }) => void;
   // #endregion
 }
@@ -115,6 +117,7 @@ export interface IpcMainInvokeEvents {
   'extensions/host-info': () => {platform: string, arch: string, hostname: string};
   /** Execute the given command and return the results. */
   'extensions/spawn/blocking': (options: import('@pkg/main/extensions/types').SpawnOptions) => import('@pkg/main/extensions/types').SpawnResult;
+  'extensions/ui/show-open': (options: import('electron').OpenDialogOptions) => import('electron').OpenDialogReturnValue;
   // #endregion
 }
 

@@ -138,6 +138,37 @@ class ExtensionManagerImpl implements ExtensionManager {
       throw new Error(`Unexpected scope ${ options.scope }`);
     });
 
+    this.setMainHandler('extensions/ui/show-open', (event, options) => {
+      const window = Electron.BrowserWindow.fromWebContents(event.sender);
+
+      if (window) {
+        return Electron.dialog.showOpenDialog(window, options);
+      }
+
+      return Electron.dialog.showOpenDialog(options);
+    });
+
+    this.setMainListener('extensions/ui/toast', (event, level, message) => {
+      const title = {
+        success: 'Success',
+        warning: 'Warning',
+        error:   'Error',
+      }[level];
+      const urgency = ({
+        success: 'low',
+        warning: 'normal',
+        error:   'critical',
+      } as const)[level];
+
+      const notification = new Electron.Notification({
+        title,
+        body: message,
+        urgency,
+      });
+
+      notification.show();
+    });
+
     // Install / uninstall extensions as needed.
     await Promise.all(Object.entries(config.extensions ?? {}).map(async([id, install]) => {
       const op = install ? 'install' : 'uninstall';

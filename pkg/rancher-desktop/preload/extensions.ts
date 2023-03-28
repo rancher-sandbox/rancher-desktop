@@ -6,6 +6,7 @@
 import Electron from 'electron';
 
 import type { SpawnOptions } from '@pkg/main/extensions/types';
+import clone from '@pkg/utils/clone';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 /* eslint-disable import/namespace -- that rule doesn't work with TypeScript type-only imports. */
@@ -239,7 +240,28 @@ class Client implements v1.DockerDesktopClient {
     image: extensionId,
   };
 
-  desktopUI = {} as v1.DesktopUI;
+  desktopUI = {
+    dialog: {
+      showOpenDialog(options: any): Promise<v1.OpenDialogResult> {
+        // Use the clone() here to ensure we only pass plain data structures to
+        // the main process.
+        return ipcRenderer.invoke('extensions/ui/show-open', clone(options));
+      },
+    },
+    navigate: {} as v1.NavigationIntents,
+    toast:    {
+      success(msg: string) {
+        ipcRenderer.send('extensions/ui/toast', 'success', `${ msg }`);
+      },
+      warning(msg: string) {
+        ipcRenderer.send('extensions/ui/toast', 'warning', `${ msg }`);
+      },
+      error(msg: string) {
+        ipcRenderer.send('extensions/ui/toast', 'error', `${ msg }`);
+      },
+    },
+  };
+
   host: v1.Host = {
     openExternal: (url: string) => {
       ipcRenderer.send('extensions/open-external', url);
