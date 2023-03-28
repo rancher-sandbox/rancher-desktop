@@ -98,6 +98,10 @@ class E2ETestRunner extends events.EventEmitter {
   async run() {
     try {
       process.env.NODE_ENV = 'test';
+
+      // Set feature flags
+      process.env.RD_ENV_EXTENSIONS = '1';
+
       await buildUtils.wait(
         () => this.startRendererProcess(),
         () => buildUtils.buildMain(),
