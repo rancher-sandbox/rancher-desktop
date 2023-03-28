@@ -45,7 +45,7 @@ func uninstallExtension(args []string) error {
 	endpoint := fmt.Sprintf("/%s/extensions/uninstall?id=%s", apiVersion, imageID)
 	result, errorPacket, err := processRequestForAPI(doRequest("POST", endpoint))
 	if errorPacket != nil || err != nil {
-		return displayAPICallResult([]byte{}, errorPacket, err)
+		return displayAPICallResult(result, errorPacket, err)
 	}
 	msg := "no output from server"
 	if result != nil {

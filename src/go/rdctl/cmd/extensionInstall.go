@@ -48,10 +48,7 @@ func installExtension(args []string) error {
 
 	result, errorPacket, err := processRequestForAPI(doRequest("POST", endpoint))
 	if errorPacket != nil || err != nil {
-		if result != nil {
-			return fmt.Errorf("installation failed: %s\n", string(result))
-		}
-		return displayAPICallResult([]byte{}, errorPacket, err)
+		return displayAPICallResult(result, errorPacket, err)
 	}
 	msg := "no output from server"
 	if result != nil {
