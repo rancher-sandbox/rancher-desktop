@@ -83,5 +83,5 @@ rdsudo() {
     rdshell sudo "$@"
 }
 rc_service() {
-    rdsudo $RC_SERVICE "$@"
+    rdsudo "$RC_SERVICE" "$@"
 }

@@ -45,7 +45,7 @@ get_host() {
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --namespace cattle-system  \
-        --set hostname=$(get_host) \
+        --set hostname="$(get_host)" \
         --wait \
         --timeout=10m \
         --create-namespace

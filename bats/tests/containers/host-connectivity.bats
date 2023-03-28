@@ -17,7 +17,7 @@ setup() {
 }
 
 verify_host_connectivity() {
-    run ctrctl run --rm alpine ping -c 5 $1
+    run ctrctl run --rm alpine ping -c 5 "$1"
     assert_success
     assert_output --partial "5 packets transmitted, 5 packets received, 0% packet loss"
 }

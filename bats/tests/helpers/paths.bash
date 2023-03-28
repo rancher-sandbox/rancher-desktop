@@ -8,8 +8,8 @@ if is_macos; then
         PATH_EXECUTABLE="/Applications/Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
         PATH_RESOURCES="/Applications/Rancher Desktop.app/Contents/Resources/resources"
     else
-        PATH_EXECUTABLE="$(dirname ${BASH_SOURCE[0]})/../../../dist/mac-$(uname -m)/Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
-        PATH_RESOURCES="$(dirname ${BASH_SOURCE[0]})/../../../dist/mac-$(uname -m)/Rancher Desktop.app/Contents/Resources/resources"
+        PATH_EXECUTABLE="$(dirname "${BASH_SOURCE[0]}")/../../../dist/mac-$(uname -m)/Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
+        PATH_RESOURCES="$(dirname "${BASH_SOURCE[0]}")/../../../dist/mac-$(uname -m)/Rancher Desktop.app/Contents/Resources/resources"
     fi
     LIMA_HOME="$PATH_APP_HOME/lima"
 fi

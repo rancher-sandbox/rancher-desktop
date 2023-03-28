@@ -23,7 +23,7 @@ check_uname() {
     # https://github.com/rancher-sandbox/rancher-desktop/issues/3239
     # BUG BUG BUG
     run ctrctl run -i --platform "$platform" busybox uname -m
-    if is_true ${assert_success:-true}; then
+    if is_true "${assert_success:-true}"; then
         assert_success
         assert_output "$cpu"
     fi

@@ -120,7 +120,7 @@ check_installation() {
         echo "$assert that $profile does not add ~/.rd/bin to the PATH"
         # cshrc: setenv PATH "/Users/jan/.rd/bin"\:"$PATH"
         # posix: export PATH="/Users/jan/.rd/bin:$PATH"
-        run grep "PATH.\"$HOME/.rd/bin" $profile
+        run grep "PATH.\"$HOME/.rd/bin" "$profile"
         ${assert}_failure
     done
 
@@ -128,7 +128,7 @@ check_installation() {
     if using_docker; then
         if is_unix; then
             echo "$assert that the docker context rancher-desktop does not exist"
-            run grep -r rancher-desktop $HOME/.docker/contexts/meta
+            run grep -r rancher-desktop "$HOME/.docker/contexts/meta"
             ${assert}_failure
         fi
     fi

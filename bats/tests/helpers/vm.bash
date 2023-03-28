@@ -2,7 +2,7 @@ wait_for_shell() {
     if is_unix; then
         try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
         # wait until sshfs mounts are done
-        try --max 12 --delay 5 rdctl shell test -d $HOME/.rd
+        try --max 12 --delay 5 rdctl shell test -d "$HOME/.rd"
     fi
     rdctl shell sync
 }
@@ -18,7 +18,7 @@ factory_reset() {
         sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
     fi
 
-    image_allow_list="$(bool $RD_USE_IMAGE_ALLOW_LIST)"
+    image_allow_list="$(bool "$RD_USE_IMAGE_ALLOW_LIST")"
     path_management="rcfiles"
     wsl_integrations="{}"
     if is_windows; then
@@ -84,7 +84,7 @@ container_engine_info() {
 docker_context_exists() {
     run docker_exe context ls -q
     assert_success
-    assert_line $RD_DOCKER_CONTEXT
+    assert_line "$RD_DOCKER_CONTEXT"
 }
 
 buildkitd_is_running() {

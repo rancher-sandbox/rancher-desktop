@@ -115,11 +115,11 @@ EOF
     rdsudo apk add mkcert --force-broken-world --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing
     rdshell mkdir -p "$CAROOT"
     rdshell "CAROOT=$CAROOT" TRUST_STORES=none mkcert -install
-    rdshell sh -c "mkdir -p $CERTS_DIR; cd $CERTS_DIR; CAROOT=$CAROOT mkcert $REGISTRY_HOST"
+    rdshell sh -c "mkdir -p \"$CERTS_DIR\"; cd \"$CERTS_DIR\"; CAROOT=\"$CAROOT\" mkcert \"$REGISTRY_HOST\""
 }
 
 @test 'pull registry image' {
-    ctrctl pull --quiet $REGISTRY_IMAGE
+    ctrctl pull --quiet "$REGISTRY_IMAGE"
 }
 
 @test 'create plain registry' {
@@ -164,6 +164,8 @@ EOF
 
 @test 'create registry with basic auth' {
     # note: docker htpasswd **must** use bcrypt algorithm, i.e. `htpasswd -nbB user password`
+    # We intentionally use single-quotes; the '$' characters are literals
+    # shellcheck disable=SC2016
     HTPASSWD='user:$2y$05$pd/kWjYSW9x48yaPQgrl.eLn02DdMPyoYPUy/yac601k6w.okKgmG'
     rdshell mkdir -p "$AUTH_DIR"
     echo "$HTPASSWD" | rdshell tee "$AUTH_DIR/htpasswd" > /dev/null
@@ -191,7 +193,7 @@ EOF
 }
 
 @test 'verify that pushing fails when not logged in' {
-    run bash -c "echo $REGISTRY | \"$CRED_HELPER\" erase"
+    run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" erase"
     assert_nothing
     run ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
     assert_failure
@@ -207,11 +209,11 @@ EOF
 }
 
 @test 'verify credentials in host cred store' {
-    run bash -c "echo $REGISTRY | \"$CRED_HELPER\" get"
+    run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" get"
     assert_success
     assert_output --partial '"Secret":"password"'
 
     ctrctl logout "$REGISTRY"
-    run bash -c "echo $REGISTRY | \"$CRED_HELPER\" get"
+    run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" get"
     refute_output --partial '"Secret":"password"'
 }
