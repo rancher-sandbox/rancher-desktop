@@ -8,7 +8,7 @@ wait_for_shell() {
 }
 
 factory_reset() {
-    rdctl factory-reset
+    rdctl factory-reset --verbose
 
     if is_windows; then
         run sudo ip link delete docker0

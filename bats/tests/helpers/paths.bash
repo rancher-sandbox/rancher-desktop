@@ -47,6 +47,8 @@ if is_windows; then
     PATH_DATA="$LOCALAPPDATA/rancher-desktop"
     PATH_CACHE="$PATH_DATA/cache"
     PATH_LOGS="$PATH_DATA/logs"
+    PATH_DISTRO="$PATH_DATA/distro"
+    PATH_DISTRO_DATA="$PATH_DATA/distro-data"
     PATH_EXTENSIONS="$PATH_DATA/extensions"
     if test -d "$PROGRAMFILES/Rancher Desktop"; then
         PATH_EXECUTABLE="$PROGRAMFILES/Rancher Desktop/Rancher Desktop.exe"

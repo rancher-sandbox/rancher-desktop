@@ -3,7 +3,7 @@ setup() {
 }
 
 @test 'factory-reset when Rancher Desktop is not running' {
-    rdctl factory-reset --verbose
+    factory_reset
     start_application
     rdctl shutdown
     rdctl_factory_reset --remove-kubernetes-cache=false --verbose
@@ -46,7 +46,7 @@ start_application() {
 rdctl_factory_reset() {
     rdctl factory-reset "$@"
 
-    if [[ $1 == "--remove-kubernetes-cache=true" ]]; then
+    if [[ "${1:-}" == "--remove-kubernetes-cache=true" ]]; then
         assert_not_exist "$PATH_CACHE"
     else
         assert_exists "$PATH_CACHE"
@@ -86,10 +86,22 @@ check_installation() {
         # this one only exists after an update has been downloaded
         # ~/Library/Application Support/Caches/rancher-desktop-updater
     fi
+
+    if is_windows; then
+        delete_dir+=("$PATH_LOGS" "$PATH_DISTRO" "$PATH_DISTRO_DATA")
+    fi
+
     for dir in "${delete_dir[@]}"; do
         echo "$assert that $dir does not exist"
         ${assert}_not_exists "$dir"
     done
+
+    #Check if rancher-desktop WSL distros are deleted on Windows
+    if is_windows; then
+        run wsl --list
+        ${refute}_output "rancher-desktop"
+        ${refute}_output "rancher-desktop-data"
+    fi
 
     # Check if docker-X symlinks were deleted
     for dfile in docker-buildx docker-compose; do
@@ -115,19 +127,21 @@ check_installation() {
                 fi
             fi
         done
-    fi
 
-    for profile in "${env_profiles[@]}"; do
+        for profile in "${env_profiles[@]}"; do
         echo "$assert that $profile does not add ~/.rd/bin to the PATH"
         # cshrc: setenv PATH "/Users/jan/.rd/bin"\:"$PATH"
         # posix: export PATH="/Users/jan/.rd/bin:$PATH"
         run grep "PATH.\"$HOME/.rd/bin" "$profile"
         ${assert}_failure
-    done
+        done
+    fi
+
+
 
     # Check if the rancher-desktop docker context has been removed
-    if using_docker; then
-        if is_unix; then
+    if is_unix; then
+        if using_docker; then
             echo "$assert that the docker context rancher-desktop does not exist"
             run grep -r rancher-desktop "$HOME/.docker/contexts/meta"
             ${assert}_failure
