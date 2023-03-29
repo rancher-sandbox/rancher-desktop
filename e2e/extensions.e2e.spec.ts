@@ -3,26 +3,32 @@
  * An E2E test is required to have access to the web page context.
  */
 
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
 import {
-  ElectronApplication, Page, test, expect, JSHandle,
+  ElectronApplication, Page, test, expect, JSHandle, TestInfo,
 } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getResourceBinDir, retry, startRancherDesktop, teardown,
+  createDefaultSettings, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
+import { Log } from '@pkg/utils/logging';
 
 import type { BrowserView, BrowserWindow } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
 const rdctl = executable('rdctl');
+
+fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
+
+const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
 
 /**
  * Get the given executable. Similar to @pkg/utils/resources, but does not use
@@ -68,6 +74,18 @@ test.describe.serial('Extensions', () => {
   });
 
   test.afterAll(() => teardown(app, __filename));
+
+  // Set things up so console messages from the UI gets logged too.
+  let currentTestInfo: TestInfo;
+
+  test.beforeEach(({ browserName }, testInfo) => {
+    currentTestInfo = testInfo;
+  });
+  test.beforeAll(() => {
+    page.on('console', (message) => {
+      console.error(`${ currentTestInfo.titlePath.join(' >> ') } >> ${ message.text() }`);
+    });
+  });
 
   test('should load backend', async() => {
     await (new NavPage(page)).progressBecomesReady();
@@ -129,7 +147,7 @@ test.describe.serial('Extensions', () => {
     let view: JSHandle<BrowserView>;
 
     test('extension UI can be loaded', async() => {
-      const window = await app.browserWindow(page);
+      const window: JSHandle<BrowserWindow> = await app.browserWindow(page);
 
       await page.click('.nav .nav-item[data-id="extension:rd/extension/ui"]');
 
@@ -152,6 +170,15 @@ test.describe.serial('Extensions', () => {
 
         return result as JSHandle<BrowserView>;
       });
+
+      view.evaluate((v, { window }) => {
+        v.webContents.addListener('console-message', (event, level, message, line, source) => {
+          const levelName = (['verbose', 'info', 'warning', 'error'])[level];
+          const outputMessage = `[${ levelName }] ${ message } @${ source }:${ line }`;
+
+          window.webContents.executeJavaScript(`console.log(${ JSON.stringify(outputMessage) })`);
+        });
+      }, { window });
     });
 
     /** evaluate a short snippet in the extension context. */
