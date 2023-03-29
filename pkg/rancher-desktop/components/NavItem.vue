@@ -1,11 +1,12 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({});
+export default Vue.extend({ props: { id: { type: String, default: '' } } });
 </script>
 
 <template>
   <div
     class="nav-item"
+    :data-id="id"
     v-on="$listeners"
   >
     <div

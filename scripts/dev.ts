@@ -110,7 +110,8 @@ class DevRunner extends events.EventEmitter {
   /**
    * Start the renderer process.
    */
-  startRendererProcess(): Promise<void> {
+  async startRendererProcess(): Promise<void> {
+    await buildUtils.buildPreload();
     this.#rendererProcess = this.spawn(
       'Renderer process',
       'node',

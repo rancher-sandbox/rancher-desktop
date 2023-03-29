@@ -7,6 +7,7 @@
 /resources/win32/
 /resources/host/
 /resources/rancher-dashboard/*
+/resources/preload.js*
 /coverage/
 /dist/**
 /.idea/

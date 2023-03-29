@@ -44,9 +44,8 @@ export class Log {
     });
     // If we're running unit tests, output to the console rather than file.
     // However, _don't_ do so for end-to-end tests in Playwright.
-    // We detect Playwright via the TEST_PARALLEL_INDEX environment variable.
-    // See https://playwright.dev/docs/test-parallel#worker-index-and-parallel-index
-    if (process.env.NODE_ENV === 'test' && !process.env.TEST_PARALLEL_INDEX) {
+    // We detect Playwright via an environment variable we set in scripts/e2e.ts
+    if (process.env.NODE_ENV === 'test' && !process.env.RD_E2E_TEST) {
       this.console = globalThis.console;
     } else {
       this.console = new Console(this.stream);

@@ -1,23 +1,34 @@
 /*
- * This tests the extension protocol handler.
+ * This tests interactions with the extension front end.
  * An E2E test is required to have access to the web page context.
  */
 
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import { ElectronApplication, Page, test, expect } from '@playwright/test';
+import {
+  ElectronApplication, Page, test, expect, JSHandle, TestInfo,
+} from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getResourceBinDir, retry, startRancherDesktop, teardown,
+  createDefaultSettings, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
+import { Log } from '@pkg/utils/logging';
+
+import type { BrowserView, BrowserWindow } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
 const rdctl = executable('rdctl');
+
+fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
+
+const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
 
 /**
  * Get the given executable. Similar to @pkg/utils/resources, but does not use
@@ -29,7 +40,7 @@ function executable(name: string) {
   return path.join(srcDir, 'resources', process.platform, 'bin', exeName);
 }
 
-test.describe.serial('Extensions protocol handler', () => {
+test.describe.serial('Extensions', () => {
   let app: ElectronApplication;
   let page: Page;
   let isContainerd = false;
@@ -37,7 +48,9 @@ test.describe.serial('Extensions protocol handler', () => {
   async function ctrctl(...args: string[]) {
     let tool = executable('nerdctl');
 
-    if (!isContainerd) {
+    if (isContainerd) {
+      args = ['--namespace', 'rancher-desktop-extensions'].concat(args);
+    } else {
       tool = executable('docker');
       if (process.platform !== 'win32') {
         args = ['--context', 'rancher-desktop'].concat(args);
@@ -61,6 +74,18 @@ test.describe.serial('Extensions protocol handler', () => {
   });
 
   test.afterAll(() => teardown(app, __filename));
+
+  // Set things up so console messages from the UI gets logged too.
+  let currentTestInfo: TestInfo;
+
+  test.beforeEach(({ browserName }, testInfo) => {
+    currentTestInfo = testInfo;
+  });
+  test.beforeAll(() => {
+    page.on('console', (message) => {
+      console.error(`${ currentTestInfo.titlePath.join(' >> ') } >> ${ message.text() }`);
+    });
+  });
 
   test('should load backend', async() => {
     await (new NavPage(page)).progressBecomesReady();
@@ -116,5 +141,65 @@ test.describe.serial('Extensions protocol handler', () => {
     });
 
     expect(result).toContain('ddClient');
+  });
+
+  test.describe('extension API', () => {
+    let view: JSHandle<BrowserView>;
+
+    test('extension UI can be loaded', async() => {
+      const window: JSHandle<BrowserWindow> = await app.browserWindow(page);
+
+      await page.click('.nav .nav-item[data-id="extension:rd/extension/ui"]');
+
+      // Try until we can get a BrowserView for the extension (because it can
+      // take some time to load).
+      view = await retry(async() => {
+        // Evaluate script remotely to look for the appropriate BrowserView
+        const result = await window.evaluateHandle((window: BrowserWindow) => {
+          for (const view of window.getBrowserViews()) {
+            if (view.webContents.mainFrame.url.startsWith('x-rd-extension://')) {
+              return view;
+            }
+          }
+        }) as JSHandle<BrowserView|undefined>;
+
+        // Check that the result evaluated to the view, and not undefined.
+        if (await (result).evaluate(v => typeof v) === 'undefined') {
+          throw new Error('Could not find extension view');
+        }
+
+        return result as JSHandle<BrowserView>;
+      });
+
+      view.evaluate((v, { window }) => {
+        v.webContents.addListener('console-message', (event, level, message, line, source) => {
+          const levelName = (['verbose', 'info', 'warning', 'error'])[level];
+          const outputMessage = `[${ levelName }] ${ message } @${ source }:${ line }`;
+
+          window.webContents.executeJavaScript(`console.log(${ JSON.stringify(outputMessage) })`);
+        });
+      }, { window });
+    });
+
+    /** evaluate a short snippet in the extension context. */
+    function evalInView(script: string): Promise<any> {
+      return view.evaluate((v, { script }) => {
+        return v.webContents.executeJavaScript(script);
+      }, { script });
+    }
+
+    test('exposes API endpoint', async() => {
+      const result = {
+        platform: await evalInView('ddClient.host.platform'),
+        arch:     await evalInView('ddClient.host.arch'),
+        hostname: await evalInView('ddClient.host.hostname'),
+      };
+
+      expect(result).toEqual({
+        platform: os.platform(),
+        arch:     os.arch(),
+        hostname: os.hostname(),
+      });
+    });
   });
 });

@@ -61,6 +61,7 @@ class Builder {
   async build() {
     console.log('Building...');
     await this.buildRenderer();
+    await buildUtils.buildPreload();
     await buildUtils.buildMain();
   }
 

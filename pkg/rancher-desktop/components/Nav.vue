@@ -26,7 +26,7 @@
           :key="extension.id"
           :to="extensionRoute(extension)"
         >
-          <nav-item>
+          <nav-item :id="`extension:${extension.id}`">
             <template #before>
               <img :src="imageUri(extension.id)">
             </template>
