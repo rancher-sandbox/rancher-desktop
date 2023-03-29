@@ -1,7 +1,9 @@
 import os from 'os';
 import path from 'path';
 
-import Electron, { BrowserWindow, app, shell, BrowserView } from 'electron';
+import Electron, {
+  BrowserWindow, app, shell, BrowserView, ipcMain,
+} from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
 import { load as loadSettings } from '@pkg/config/settings';
@@ -184,6 +186,44 @@ export function openMain() {
 
 let view: Electron.BrowserView | undefined;
 
+const updateView = (window: any, payload: any) => {
+  view = new BrowserView({
+    webPreferences: {
+      nodeIntegration:  false,
+      contextIsolation: true,
+      preload:          path.join(paths.resources, 'preload.js'),
+    },
+  });
+  window.setBrowserView(view);
+
+  const windowSize = window.getSize();
+  const titleBarHeight = windowSize[1] - window.getContentSize()[1];
+
+  const x = payload.x;
+  const y = payload.y;
+
+  view.setBounds({
+    x,
+    y,
+    width:  windowSize[0] - x,
+    height: windowSize[1] - titleBarHeight - y,
+  });
+
+  view.setAutoResize({ width: true, height: true });
+
+  if (!Electron.app.isPackaged) {
+    Shortcuts.register(
+      window, {
+        ...CommandOrControl,
+        shift: true,
+        key:   'i',
+      },
+      () => view?.webContents.openDevTools(),
+      'open developer tools for the extension',
+    );
+  }
+};
+
 export function openExtension(id: string, relPath: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
@@ -194,51 +234,21 @@ export function openExtension(id: string, relPath: string) {
     return;
   }
 
-  if (!view) {
-    view = new BrowserView({
-      webPreferences: {
-        nodeIntegration:  false,
-        contextIsolation: true,
-        preload:          path.join(paths.resources, 'preload.js'),
-      },
-    });
-    window.setBrowserView(view);
+  window.webContents.send('extensions/getContentArea');
 
-    const windowSize = window.getSize();
-    const titleBarHeight = windowSize[1] - window.getContentSize()[1];
-
-    const x = 230;
-    const y = 55 + titleBarHeight;
-
-    view.setBounds({
-      x,
-      y,
-      width:  windowSize[0] - x,
-      height: windowSize[1] - y,
-    });
-
-    view.setAutoResize({ width: true, height: true });
-
-    if (!Electron.app.isPackaged) {
-      Shortcuts.register(
-        window, {
-          ...CommandOrControl,
-          shift: true,
-          key:   'i',
-        },
-        () => view?.webContents.openDevTools(),
-        'open developer tools for the extension',
-      );
+  ipcMain.on('ok:extensions/getContentArea', (_event, args) => {
+    if (!view) {
+      updateView(window, args);
     }
-  }
 
-  const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
+    const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
 
-  view.webContents
-    .loadURL(url)
-    .catch((err) => {
-      console.error(`Can't load the dashboard URL ${ url }: `, err);
-    });
+    view?.webContents
+      .loadURL(url)
+      .catch((err) => {
+        console.error(`Can't load the dashboard URL ${ url }: `, err);
+      });
+  });
 }
 
 export function closeExtension() {
