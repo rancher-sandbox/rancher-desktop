@@ -1268,7 +1268,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
 
       await fs.promises.writeFile(tmpFile, sudoers, { mode: 0o644 });
-      commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
+      commands.push(`mkdir -p "${ path.dirname(LIMA_SUDOERS_LOCATION) }" && cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
       paths.push(LIMA_SUDOERS_LOCATION);
       console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } needs to be updated.`);
     }
