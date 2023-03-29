@@ -58,7 +58,10 @@ test.describe.serial('Extensions', () => {
   }
 
   test.beforeAll(async() => {
-    createDefaultSettings({ kubernetes: { enabled: false } });
+    createDefaultSettings({
+      containerEngine: { name: ContainerEngine.MOBY },
+      kubernetes:      { enabled: false },
+    });
     app = await startRancherDesktop(__filename, { mock: false });
     page = await app.firstWindow();
   });
@@ -249,6 +252,46 @@ test.describe.serial('Extensions', () => {
           errors:    [],
           exitCodes: [0],
         }));
+      });
+    });
+
+    test.describe('running container engine commands', () => {
+      test('can run arbitrary commands', async() => {
+        const script = `
+          ddClient.docker.cli.exec("info", ["--format", "{{ json . }}"])
+          .then(v => v.parseJsonObject())
+          .then(j => JSON.stringify(j));
+        `;
+        const result = JSON.parse(await evalInView(script));
+
+        expect(result).toEqual(expect.objectContaining({
+          ID:          expect.any(String),
+          Driver:      expect.any(String),
+          Plugins:     expect.objectContaining({}),
+          MemoryLimit: expect.any(Boolean),
+          SwapLimit:   expect.any(Boolean),
+          MemTotal:    expect.any(Number),
+          OSType:      'linux',
+        }));
+      });
+      test('can list images', async() => {
+        const script = 'ddClient.docker.listImages({digests: true})';
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            Repository: 'rd/extension/everything',
+            Digest:     expect.any(String),
+          }),
+        ]));
+      });
+      test('can list containers', async() => {
+        const script = 'ddClient.docker.listContainers({size: true})';
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.arrayContaining([
+          expect.objectContaining({ Image: 'rd/extension/everything' }),
+        ]));
       });
     });
   });
