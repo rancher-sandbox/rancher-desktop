@@ -1423,6 +1423,7 @@ test.describe('Command server', () => {
         }
       });
     });
+
     test('should verify nerdctl can talk to containerd', async() => {
       const { stdout } = await rdctl(['list-settings']);
       const settings: Settings = JSON.parse(stdout);
@@ -1448,7 +1449,7 @@ test.describe('Command server', () => {
       await expect(navPage.progressBar).not.toBeHidden();
       await navPage.progressBecomesReady();
       await expect(navPage.progressBar).toBeHidden();
-      const output = await retry(() => tool('docker', 'info'));
+      const output = await retry(() => tool('docker', 'info'), { delay: 500, tries: 60 });
 
       expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });

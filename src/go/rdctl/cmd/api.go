@@ -105,6 +105,10 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 		}
 		result, errorPacket, err = processRequestForAPI(doRequest(apiSettings.Method, endpoint))
 	}
+	return displayAPICallResult(result, errorPacket, err)
+}
+
+func displayAPICallResult(result []byte, errorPacket *APIError, err error) error {
 	if err != nil {
 		return err
 	}
@@ -131,5 +135,5 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Fprintln(os.Stdout, string(errorPacketBytes))
 	os.Exit(1)
-	panic("Should never be reached")
+	return nil
 }
