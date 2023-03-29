@@ -9,7 +9,15 @@ const log = Logging.shortcuts;
 
 const Shortcut = {
   key: (shortcut: Shortcut | Electron.Input) => {
-    return `${ shortcut.meta ? 'Cmd+' : '' }${ shortcut.control ? 'Ctrl+' : '' }${ shortcut.shift ? 'Shift+' : '' }${ shortcut.alt ? 'Alt+' : '' }${ shortcut.key }`;
+    const keyName = shortcut.key.toString();
+
+    return [
+      shortcut.meta ? 'Cmd+' : '',
+      shortcut.control ? 'Ctrl+' : '',
+      shortcut.shift ? 'Shift+' : '',
+      shortcut.alt ? 'Alt+' : '',
+      keyName.length === 1 ? keyName.toUpperCase() : keyName,
+    ].join('');
   },
 };
 
