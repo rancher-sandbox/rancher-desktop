@@ -2,10 +2,7 @@
 
 setup() {
     load '../helpers/load'
-    case $ARCH in
-    x86_64) ARCH_FOR_KUBERLR=amd64 ;;
-    *) ARCH_FOR_KUBERLR=$ARCH ;;
-    esac
+    ARCH_FOR_KUBERLR=amd64
 }
 
 @test 'factory reset' {
@@ -74,22 +71,24 @@ verify_images() {
     verify_images
 }
 
+# Remove all the kubectl clients from the .kuberlr directory.
+# Then run `kubectl`, and it should pull in the `kubectl` for
+# the current k8s version in that directory.
+
+verify_kuberlr_for_version() {
+    k8sVersion=$1
+    rm -f "${HOME}"/.kuberlr/"${OS}"-"${ARCH_FOR_KUBERLR}"/kubectl*
+    run kubectl version
+    assert_output --regexp "Client Version.*GitVersion:.v$k8sVersion"
+    run ls -l "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+    assert_output --partial "kubectl$k8sVersion"
+}
+
 @test 'upgrade kubernetes' {
     rdctl set --kubernetes.version "$RD_KUBERNETES_VERSION"
     wait_for_apiserver "$RD_KUBERNETES_VERSION"
     wait_for_container_engine
-}
-
-clear_kuberlr_directory() {
-    rm -f "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}/kubectl*"
-}
-
-@test 'pull in new kuberlr-managed kubectl' {
-    clear_kuberlr_directory
-    run kubectl version
-    assert_output --regexp "Client Version.*GitVersion:.v$RD_KUBERNETES_VERSION"
-    run ls -l "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
-    assert_output --partial "kubectl$RD_KUBERNETES_VERSION"
+    verify_kuberlr_for_version "$RD_KUBERNETES_VERSION"
 }
 
 verify_nginx_after_change_k8s() {
@@ -137,14 +136,7 @@ verify_nginx_after_change_k8s() {
     rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
     wait_for_apiserver
     wait_for_container_engine
-}
-
-@test 'pull in previous kuberlr-managed kubectl' {
-    clear_kuberlr_directory
-    run kubectl version
-    assert_output --regexp "Client Version.*GitVersion:.v$RD_KUBERNETES_PREV_VERSION"
-    run ls -l "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
-    assert_output --partial "kubectl$RD_KUBERNETES_PREV_VERSION"
+    verify_kuberlr_for_version "$RD_KUBERNETES_PREV_VERSION"
 }
 
 @test 'verify nginx after downgrade' {
