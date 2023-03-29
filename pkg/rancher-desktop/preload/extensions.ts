@@ -19,6 +19,29 @@ const stdout = Symbol('stdout');
 const stderr = Symbol('stderr');
 const id = Symbol('id');
 
+/**
+ * DockerListContainersOptions describes the arguments for
+ * ddClient.docker.listContainers()
+ */
+interface DockerListContainersOptions {
+  all?: boolean;
+  limit?: number;
+  size?: boolean;
+  filters?: string;
+  namespace?: string;
+}
+
+/**
+ * DockerListImagesOptions describes the arguments for
+ * ddClient.docker.listImages()
+ */
+interface DockerListImagesOptions {
+  all?: boolean;
+  filters?: string;
+  digests?: boolean;
+  namespace?: string;
+}
+
 /** execProcess holds the state associated with a v1.ExecProcess. */
 interface execProcess {
   /** The identifier for this process. */
@@ -271,7 +294,52 @@ class Client implements v1.DockerDesktopClient {
     hostname: '<unknown>',
   };
 
-  docker = {} as v1.Docker;
+  docker = {
+    cli:            { exec: getExec('docker-cli') },
+    listContainers: async(options: DockerListContainersOptions = {}) => {
+      const args = ['ls', '--format={{json .}}', '--no-trunc'];
+
+      args.push(`--all=${ options.all ?? false }`);
+      if ((options.limit ?? -1) > -1) {
+        args.push(`--last=${ options.limit }`);
+      }
+      args.push(`--size=${ options.size ?? false }`);
+      if (options.filters !== undefined) {
+        args.push(`--filter=${ options.filters }`);
+      }
+      if (options.namespace) {
+        args.unshift(`--namespace=${ options.namespace }`);
+      }
+
+      const result = await this.docker.cli.exec('container', args);
+
+      if (result.code || result.signal) {
+        throw new Error(`failed to list containers: ${ result.stderr }`);
+      }
+
+      return result.parseJsonLines();
+    },
+    listImages: async(options: DockerListImagesOptions = {}) => {
+      const args = ['ls', '--format={{json .}}', '--no-trunc'];
+
+      args.push(`--all=${ options.all ?? false }`);
+      if (options.filters !== undefined) {
+        args.push(`--filter=${ options.filters }`);
+      }
+      args.push(`--digests=${ options.digests ?? false }`);
+      if (options.namespace) {
+        args.unshift(`--namespace=${ options.namespace }`);
+      }
+
+      const result = await this.docker.cli.exec('image', args);
+
+      if (result.code || result.signal) {
+        throw new Error(`failed to list images: ${ result.stderr }`);
+      }
+
+      return result.parseJsonLines();
+    },
+  };
 }
 
 export default async function initExtensions(): Promise<void> {
