@@ -27,7 +27,7 @@ factory_reset() {
     fi
 
     mkdir -p "$PATH_CONFIG"
-    cat <<EOF > "$PATH_CONFIG_FILE"
+    cat <<EOF >"$PATH_CONFIG_FILE"
 {
   "version": 5,
   "application": {
@@ -63,10 +63,10 @@ start_container_engine() {
     # Detach `rdctl start` because on Windows the process may not exit until
     # Rancher Desktop itself quits.
     rdctl start \
-          --application.updater.enabled=false \
-          --container-engine="$RD_CONTAINER_ENGINE" \
-          --kubernetes-enabled=false \
-          "$@" &
+        --application.updater.enabled=false \
+        --container-engine="$RD_CONTAINER_ENGINE" \
+        --kubernetes-enabled=false \
+        "$@" &
 }
 
 start_kubernetes() {

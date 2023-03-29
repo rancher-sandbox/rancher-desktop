@@ -22,9 +22,9 @@ assert_file_contents_equal() { # $have $want
     local want_hash="$(md5sum "$want" | cut -d ' ' -f 1)"
     if [ "$have_hash" != "$want_hash" ]; then
         printf "expected : %s (%s)\nactual   : %s (%s)" \
-            "$want" "$want_hash" "$have" "$have_hash" \
-        | batslib_decorate "files are different" \
-        | fail
+            "$want" "$want_hash" "$have" "$have_hash" |
+            batslib_decorate "files are different" |
+            fail
     fi
 }
 
@@ -64,9 +64,9 @@ namespace_arg() {
         basic host-binaries missing-icon missing-icon-file ui
     )
     for extension in "${variants[@]}"; do
-        ctrctl $(namespace_arg) build --tag rd/extension/$extension --build-arg variant=$extension "$TESTDATA_DIR"
+        ctrctl "$(namespace_arg)" build --tag "rd/extension/$extension" --build-arg "variant=$extension" "$TESTDATA_DIR"
     done
-    run ctrctl $(namespace_arg) image list --format '{{ .Repository }}'
+    run ctrctl "$(namespace_arg)" image list --format '{{ .Repository }}'
     assert_success
     for extension in "${variants[@]}"; do
         assert_line "rd/extension/$extension"
@@ -81,8 +81,7 @@ namespace_arg() {
 @test 'basic extension - check extension is installed' {
     run rdctl extension ls
     assert_success
-    output="$(id basic)"
-    assert_output "rd/extension/basic"
+    assert_line "rd/extension/basic"
 }
 
 @test 'basic extension - check extension contents' {

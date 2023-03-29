@@ -6,6 +6,7 @@ setup() {
 
 teardown_file() {
     run rdctl shutdown
+    assert_nothing
 }
 
 id() { # variant
@@ -40,9 +41,9 @@ namespace_arg() {
 
 @test 'build extension testing images' {
     local extension
-    for extension in vm-image vm-compose ; do
+    for extension in vm-image vm-compose; do
         ctrctl build \
-            $(namespace_arg) \
+            "$(namespace_arg)" \
             --tag rd/extension/$extension \
             --build-arg variant=$extension "$TESTDATA_DIR"
     done
@@ -53,12 +54,12 @@ namespace_arg() {
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-image)\"]" <<< "${output}")"
+    output="$(jq ".[\"$(id vm-image)\"]" <<<"${output}")"
     assert_output true
 }
 
 @test 'image - check for running container' {
-    run ctrctl $(namespace_arg) container ls
+    run ctrctl "$(namespace_arg)" container ls
     assert_success
     assert_line --regexp "$(id vm-image).*[[:space:]]Up[[:space:]]"
 }
@@ -66,7 +67,7 @@ namespace_arg() {
 @test 'image - uninstall' {
     rdctl api --method=POST "/v1/extensions/uninstall?id=$(id vm-image)"
 
-    run ctrctl $(namespace_arg) container ls --all
+    run ctrctl "$(namespace_arg)" container ls --all
     assert_success
     refute_line --partial "$(id vm-image)"
 }
@@ -76,12 +77,12 @@ namespace_arg() {
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-compose)\"]" <<< "${output}")"
+    output="$(jq ".[\"$(id vm-compose)\"]" <<<"${output}")"
     assert_output true
 }
 
 @test 'compose - check for running container' {
-    run ctrctl $(namespace_arg) container ls
+    run ctrctl "$(namespace_arg)" container ls
     assert_success
     assert_line --regexp "$(id vm-compose).*[[:space:]]Up[[:space:]]"
 }
@@ -89,7 +90,7 @@ namespace_arg() {
 @test 'compose - uninstall' {
     rdctl api --method=POST "/v1/extensions/uninstall?id=$(id vm-compose)"
 
-    run ctrctl $(namespace_arg) container ls --all
+    run ctrctl "$(namespace_arg)" container ls --all
     assert_success
     refute_line --partial "$(id vm-compose)"
 }

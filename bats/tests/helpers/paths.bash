@@ -25,7 +25,7 @@ if is_linux; then
     if test -d "/opt/rancher-desktop"; then
         PATH_RESOURCES="/opt/rancher-desktop/resources/resources"
     else
-        PATH_RESOURCES="$(dirname ${BASH_SOURCE[0]})/../../../dist/linux-unpacked/resources/resources"
+        PATH_RESOURCES="$(dirname "${BASH_SOURCE[0]}")/../../../dist/linux-unpacked/resources/resources"
     fi
     LIMA_HOME="$PATH_DATA/lima"
 fi
@@ -34,7 +34,7 @@ win32env() {
     # The cmd.exe _sometimes_ returns an empty string when invoked in a subshell
     # wslpath "$(cmd.exe /c "echo %$1%" 2>/dev/null)" | tr -d "\r"
     # Let's see if powershell.exe avoids this issue
-    wslpath "$(powershell.exe -Command "Write-Output \${Env:$1}")"  | tr -d "\r"
+    wslpath "$(powershell.exe -Command "Write-Output \${Env:$1}")" | tr -d "\r"
 }
 
 if is_windows; then

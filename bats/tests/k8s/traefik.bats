@@ -29,13 +29,13 @@ get_host() {
 assert_traefik_pods_are_down() {
     run kubectl get --all-namespaces pods
 
-    if  [[ "$output" != *"connection refused"* ]] && \
-        [[ "$output" != *"No resources found"* ]] && \
-        [[ "$output" != *"ContainerCreating"* ]] && \
-        [[ "$output" != *"Pending"* ]] && \
-        [[ "$output" != *"Completed"* ]] && \
-        [[ "$output" != *"Terminating"* ]] && \
-        [[ "$output" != *"traefik"* ]]; then
+    if [[ $output != *"connection refused"* ]] &&
+        [[ $output != *"No resources found"* ]] &&
+        [[ $output != *"ContainerCreating"* ]] &&
+        [[ $output != *"Pending"* ]] &&
+        [[ $output != *"Completed"* ]] &&
+        [[ $output != *"Terminating"* ]] &&
+        [[ $output != *"traefik"* ]]; then
         return 0
     else
         return 1
@@ -45,12 +45,12 @@ assert_traefik_pods_are_down() {
 assert_traefik_pods_are_up() {
     run kubectl get --all-namespaces pods
 
-    if [[ "$output" != *"connection refused"* ]] && \
-        [[ "$output" != *"No resources found"* ]] && \
-        [[ "$output" != *"ContainerCreating"* ]] && \
-        [[ "$output" != *"Pending"* ]] && \
-        [[ "$output" != *"Terminating"* ]] && \
-        [[ "$output" =~ "traefik" ]]; then
+    if [[ $output != *"connection refused"* ]] &&
+        [[ $output != *"No resources found"* ]] &&
+        [[ $output != *"ContainerCreating"* ]] &&
+        [[ $output != *"Pending"* ]] &&
+        [[ $output != *"Terminating"* ]] &&
+        [[ $output =~ "traefik" ]]; then
         return 0
     else
         return 1
@@ -70,14 +70,14 @@ assert_traefik_pods_are_up() {
 }
 
 @test 'enable traefik' {
-     # Enable traefik
-     rdctl set --kubernetes.options.traefik=TRUE
-     wait_for_apiserver
-     # Check if the traefik pods come up
-     try --max 30 --delay 10 assert_traefik_pods_are_up
-     assert_success
-     run curl "http://$(get_host):80"
-     [ "$status" -ne 0 ]
-     run curl -k "https://$(get_host):443"
-     [ "$status" -ne 0 ]
+    # Enable traefik
+    rdctl set --kubernetes.options.traefik=TRUE
+    wait_for_apiserver
+    # Check if the traefik pods come up
+    try --max 30 --delay 10 assert_traefik_pods_are_up
+    assert_success
+    run curl "http://$(get_host):80"
+    [ "$status" -ne 0 ]
+    run curl -k "https://$(get_host):443"
+    [ "$status" -ne 0 ]
 }

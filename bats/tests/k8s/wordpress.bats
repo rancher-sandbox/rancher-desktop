@@ -24,11 +24,11 @@ setup() {
 
 @test 'deploy wordpress' {
     helm install wordpress bitnami/wordpress \
-          --wait \
-          --timeout 20m \
-          --set service.type=NodePort \
-          --set volumePermissions.enabled=true \
-          --set mariadb.volumePermissions.enabled=true
+        --wait \
+        --timeout 20m \
+        --set service.type=NodePort \
+        --set volumePermissions.enabled=true \
+        --set mariadb.volumePermissions.enabled=true
 }
 
 @test 'verify wordpress was deployed' {
