@@ -194,8 +194,6 @@ export function openExtension(id: string, relPath: string) {
     return;
   }
 
-  const windowSize = window.getContentSize();
-
   if (!view) {
     view = new BrowserView({
       webPreferences: {
@@ -206,8 +204,11 @@ export function openExtension(id: string, relPath: string) {
     });
     window.setBrowserView(view);
 
+    const windowSize = window.getSize();
+    const titleBarHeight = windowSize[1] - window.getContentSize()[1];
+
     const x = 230;
-    const y = 55;
+    const y = 55 + titleBarHeight;
 
     view.setBounds({
       x,
