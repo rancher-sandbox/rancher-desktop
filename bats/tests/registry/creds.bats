@@ -84,8 +84,10 @@ skip_for_insecure_registry() {
     start_container_engine
 
     if using_image_allow_list; then
-        rdctl api -X PUT -b settings <<EOF
+        wait_for_shell
+        rdctl api -X PUT --input - settings <<EOF
 {
+  "version": 6,
   "containerEngine": {
     "allowedImages": {
       "enabled": true,
