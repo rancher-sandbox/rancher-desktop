@@ -46,7 +46,7 @@ start_application() {
 rdctl_factory_reset() {
     rdctl factory-reset "$@"
 
-    if [[ "$1" == "--remove-kubernetes-cache=true" ]]; then
+    if [[ $1 == "--remove-kubernetes-cache=true" ]]; then
         assert_not_exist "$PATH_CACHE"
     else
         assert_exists "$PATH_CACHE"
@@ -65,7 +65,7 @@ check_installation() {
     local assert=assert
     local refute=refute
 
-    if [ "${1:-}" == "before" ]; then
+    if [ "${1-}" == "before" ]; then
         assert=refute
         refute=assert
     fi
@@ -100,16 +100,17 @@ check_installation() {
     # Check if ./rd/bin was removed from the path
     if is_unix; then
         # TODO add check for config.fish
-        env_profiles=("$HOME/.bashrc"
-                      "$HOME/.zshrc"
-                      "$HOME/.cshrc"
-                      "$HOME/.tcshrc"
-                     )
+        env_profiles=(
+            "$HOME/.bashrc"
+            "$HOME/.zshrc"
+            "$HOME/.cshrc"
+            "$HOME/.tcshrc"
+        )
         for candidate in .bash_profile .bash_login .profile; do
             if [ -e "$HOME/$candidate" ]; then
                 env_profiles+=("$HOME/$candidate")
                 # Only the first candidate that exists will be modified
-                if [ "${1:-}" = "before" ]; then
+                if [ "${1-}" = "before" ]; then
                     break
                 fi
             fi

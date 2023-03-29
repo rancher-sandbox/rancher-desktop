@@ -47,16 +47,16 @@ create_registry() {
     run ctrctl rm -f registry
     assert_nothing
     ctrctl run \
-          --detach \
-          --name registry \
-          --restart always \
-          -p "$REGISTRY_PORT:$REGISTRY_PORT" \
-          -e "REGISTRY_HTTP_ADDR=0.0.0.0:$REGISTRY_PORT" \
-          -v "$CERTS_DIR_VOLUME:/certs" \
-          -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/$REGISTRY_HOST.pem" \
-          -e "REGISTRY_HTTP_TLS_KEY=/certs/$REGISTRY_HOST-key.pem" \
-          "$@" \
-          "$REGISTRY_IMAGE"
+        --detach \
+        --name registry \
+        --restart always \
+        -p "$REGISTRY_PORT:$REGISTRY_PORT" \
+        -e "REGISTRY_HTTP_ADDR=0.0.0.0:$REGISTRY_PORT" \
+        -v "$CERTS_DIR_VOLUME:/certs" \
+        -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/$REGISTRY_HOST.pem" \
+        -e "REGISTRY_HTTP_TLS_KEY=/certs/$REGISTRY_HOST-key.pem" \
+        "$@" \
+        "$REGISTRY_IMAGE"
     wait_for_registry
 }
 
@@ -84,7 +84,7 @@ skip_for_insecure_registry() {
     start_container_engine
 
     if using_image_allow_list; then
-        rdctl api -X PUT -b <<EOF settings
+        rdctl api -X PUT -b settings <<EOF
 {
   "containerEngine": {
     "allowedImages": {
@@ -168,7 +168,7 @@ EOF
     # shellcheck disable=SC2016
     HTPASSWD='user:$2y$05$pd/kWjYSW9x48yaPQgrl.eLn02DdMPyoYPUy/yac601k6w.okKgmG'
     rdshell mkdir -p "$AUTH_DIR"
-    echo "$HTPASSWD" | rdshell tee "$AUTH_DIR/htpasswd" > /dev/null
+    echo "$HTPASSWD" | rdshell tee "$AUTH_DIR/htpasswd" >/dev/null
     create_registry \
         -v "$AUTH_DIR_VOLUME:/auth" \
         -e REGISTRY_AUTH=htpasswd \

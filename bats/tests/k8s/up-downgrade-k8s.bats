@@ -77,13 +77,13 @@ verify_images() {
 }
 
 verify_nginx_after_change_k8s() {
-        run curl http://localhost:8686
-        assert_failure
-        assert_output --partial "Failed to connect to localhost port 8686"
+    run curl http://localhost:8686
+    assert_failure
+    assert_output --partial "Failed to connect to localhost port 8686"
 
-        run curl http://localhost:8585
-        assert_success
-        assert_output --partial "Welcome to nginx!"
+    run curl http://localhost:8585
+    assert_success
+    assert_output --partial "Welcome to nginx!"
 }
 
 @test 'verify nginx after upgrade' {

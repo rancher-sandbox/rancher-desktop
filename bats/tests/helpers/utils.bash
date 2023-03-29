@@ -1,7 +1,7 @@
 is_true() {
     # case-insensitive check; false values: '', '0', 'no', and 'false'
     local value="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
-    if [[ "$value" =~ ^(0|no|false)?$ ]]; then
+    if [[ $value =~ ^(0|no|false)?$ ]]; then
         false
     else
         true
@@ -31,22 +31,22 @@ try() {
     local delay=5
     while [[ $# -gt 0 ]] && [[ $1 == -* ]]; do
         case "$1" in
-            --max)
-                max=$2
-                shift
-                ;;
-            --delay)
-                delay=$2
-                shift
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                printf "Usage error: unknown flag '%s'" "$1" >&2
-                return 1
-                ;;
+        --max)
+            max=$2
+            shift
+            ;;
+        --delay)
+            delay=$2
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            printf "Usage error: unknown flag '%s'" "$1" >&2
+            return 1
+            ;;
         esac
         shift
     done
@@ -55,6 +55,6 @@ try() {
         run "$@"
         [ "$status" -eq 0 ] && return
         sleep "$delay"
-        count=$(( count + 1 ))
+        count=$((count + 1))
     done
 }

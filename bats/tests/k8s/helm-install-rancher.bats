@@ -3,7 +3,7 @@
 setup() {
     load '../helpers/load'
 
-    # TODO - Consider implementing a function to check for sudo permissions before running tests that require them. 
+    # TODO - Consider implementing a function to check for sudo permissions before running tests that require them.
     # If sudo permissions are not present, these tests should be skipped.
     if is_linux; then
         run sudo sysctl -w net.ipv4.ip_unprivileged_port_start=443
@@ -21,7 +21,7 @@ setup() {
 }
 
 @test 'add helm repo' {
-    helm repo add jetstack https://charts.jetstack.io        
+    helm repo add jetstack https://charts.jetstack.io
     helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
     helm repo update
 }
@@ -44,7 +44,7 @@ get_host() {
         --create-namespace
     helm upgrade \
         --install rancher rancher-latest/rancher \
-        --namespace cattle-system  \
+        --namespace cattle-system \
         --set hostname="$(get_host)" \
         --wait \
         --timeout=10m \

@@ -41,7 +41,7 @@ namespace_arg() {
 
 @test 'build extension testing images' {
     local extension
-    for extension in vm-image vm-compose ; do
+    for extension in vm-image vm-compose; do
         ctrctl build \
             "$(namespace_arg)" \
             --tag rd/extension/$extension \
@@ -54,7 +54,7 @@ namespace_arg() {
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-image)\"]" <<< "${output}")"
+    output="$(jq ".[\"$(id vm-image)\"]" <<<"${output}")"
     assert_output true
 }
 
@@ -77,7 +77,7 @@ namespace_arg() {
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-compose)\"]" <<< "${output}")"
+    output="$(jq ".[\"$(id vm-compose)\"]" <<<"${output}")"
     assert_output true
 }
 
