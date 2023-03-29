@@ -1,7 +1,11 @@
-# Test case 8 & 13
+# Test cases 8, 13, 19
 
 setup() {
     load '../helpers/load'
+    case $ARCH in
+    x86_64) ARCH_FOR_KUBERLR=amd64 ;;
+    *) ARCH_FOR_KUBERLR=$ARCH ;;
+    esac
 }
 
 @test 'factory reset' {
@@ -76,6 +80,18 @@ verify_images() {
     wait_for_container_engine
 }
 
+clear_kuberlr_directory() {
+    rm -f "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}/kubectl*"
+}
+
+@test 'pull in new kuberlr-managed kubectl' {
+    clear_kuberlr_directory
+    run kubectl version
+    assert_output --regexp "Client Version.*GitVersion:.v$RD_KUBERNETES_VERSION"
+    run ls -l "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+    assert_output --partial "kubectl$RD_KUBERNETES_VERSION"
+}
+
 verify_nginx_after_change_k8s() {
     run curl http://localhost:8686
     assert_failure
@@ -121,6 +137,14 @@ verify_nginx_after_change_k8s() {
     rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
     wait_for_apiserver
     wait_for_container_engine
+}
+
+@test 'pull in previous kuberlr-managed kubectl' {
+    clear_kuberlr_directory
+    run kubectl version
+    assert_output --regexp "Client Version.*GitVersion:.v$RD_KUBERNETES_PREV_VERSION"
+    run ls -l "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+    assert_output --partial "kubectl$RD_KUBERNETES_PREV_VERSION"
 }
 
 @test 'verify nginx after downgrade' {
