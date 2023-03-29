@@ -98,6 +98,7 @@ class E2ETestRunner extends events.EventEmitter {
   async run() {
     try {
       process.env.NODE_ENV = 'test';
+      process.env.RD_E2E_TEST = '1';
 
       // Set feature flags
       process.env.RD_ENV_EXTENSIONS = '1';
@@ -105,6 +106,7 @@ class E2ETestRunner extends events.EventEmitter {
       await buildUtils.wait(
         () => this.startRendererProcess(),
         () => buildUtils.buildMain(),
+        () => buildUtils.buildPreload(),
       );
       await isCiOrDevelopmentTimeout();
       await this.startTestProcess();
