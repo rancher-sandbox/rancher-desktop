@@ -185,7 +185,12 @@ export function openMain() {
 }
 
 let view: Electron.BrowserView | undefined;
+let extId = '';
+let extPath = '';
 
+/**
+ * Attaches a browser view to the main window
+ */
 const createView = () => {
   view = new BrowserView({
     webPreferences: {
@@ -197,6 +202,11 @@ const createView = () => {
   getWindow('main')?.setBrowserView(view);
 };
 
+/**
+ * Updates the browser view size and position
+ * @param window The main window
+ * @param payload Payload representing coordinates for view position
+ */
 const updateView = (window: any, payload: any) => {
   if (!view) {
     return;
@@ -218,6 +228,9 @@ const updateView = (window: any, payload: any) => {
   view.setAutoResize({ width: true, height: true });
 };
 
+/**
+ * Navigates to the current desired extension
+ */
 function extensionNavigate() {
   if (!extId || !extPath) {
     return;
@@ -235,6 +248,12 @@ function extensionNavigate() {
     });
 }
 
+/**
+ * Adjusts the zoom level of the main window and attached browser view based on
+ * the given input.
+ * @param event The Electron Event that triggered this listener
+ * @param input The Electron Input associated with the event
+ */
 const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => {
   const window = getWindow('main');
 
@@ -262,9 +281,11 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
   }
 };
 
-let extId = '';
-let extPath = '';
-
+/**
+ * Opens an extension in a browser view and attaches it to the main window
+ * @param id The extension ID
+ * @param relPath The relative path to the extension root
+ */
 export function openExtension(id: string, relPath: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
@@ -309,6 +330,9 @@ export function openExtension(id: string, relPath: string) {
   }
 }
 
+/**
+ * Removes the extension's browser view from the main window
+ */
 export function closeExtension() {
   if (!view) {
     return;
