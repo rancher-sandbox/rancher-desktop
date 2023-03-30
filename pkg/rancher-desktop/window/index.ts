@@ -223,7 +223,7 @@ export function openExtension(id: string, relPath: string) {
         window, {
           ...CommandOrControl,
           shift: true,
-          key:   'O',
+          key:   'O', // U+004F Latin Capital Letter O
         },
         () => view?.webContents.openDevTools({ mode: 'detach' }),
         'open developer tools for the extension',
