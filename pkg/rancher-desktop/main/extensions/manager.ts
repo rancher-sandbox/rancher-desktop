@@ -239,8 +239,7 @@ class ExtensionManagerImpl implements ExtensionManager {
   protected convertHostOptions(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): SpawnOptions {
     const extensionId = this.getExtensionIdFromEvent(event);
     const extension = this.getExtension(extensionId) as ExtensionImpl;
-    const exeExtension = process.platform === 'win32' ? '.exe' : '';
-    const exePath = path.join(extension.dir, 'bin', options.command[0]) + exeExtension;
+    const exePath = path.join(extension.dir, 'bin', options.command[0]);
 
     return {
       ...options,
