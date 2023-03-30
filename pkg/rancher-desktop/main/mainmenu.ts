@@ -119,9 +119,27 @@ function getMacApplicationMenu(): Array<MenuItem> {
     Electron.app.isPackaged ? new MenuItem({
       label:   'View',
       submenu: [
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
+        {
+          label:       'Actual Size',
+          accelerator: 'CmdOrCtrl+0',
+          click(_item, focusedWindow) {
+            setZoomLevel(focusedWindow, 0, '0');
+          },
+        },
+        {
+          label:       'Zoom In',
+          accelerator: 'CmdOrCtrl+Plus',
+          click(_item, focusedWindow) {
+            setZoomLevel(focusedWindow, 0.5, 'Plus');
+          },
+        },
+        {
+          label:       'Zoom Out',
+          accelerator: 'CmdOrCtrl+-',
+          click(_item, focusedWindow) {
+            setZoomLevel(focusedWindow, -0.5, '-');
+          },
+        },
         { type: 'separator' },
         { role: 'togglefullscreen' },
       ],
@@ -161,9 +179,27 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
           { role: 'toggleDevTools', label: 'Toggle &Developer Tools' },
           { type: 'separator' },
         ] as MenuItemConstructorOptions[]),
-        { role: 'resetZoom', label: '&Actual Size' },
-        { role: 'zoomIn', label: 'Zoom &In' },
-        { role: 'zoomOut', label: 'Zoom &Out' },
+        {
+          label:       '&Actual Size',
+          accelerator: 'CmdOrCtrl+0',
+          click(_item, focusedWindow) {
+            setZoomLevel(focusedWindow, 0, '0');
+          },
+        },
+        {
+          label:       'Zoom &In',
+          accelerator: 'CmdOrCtrl+Plus',
+          click(_item, focusedWindow) {
+            setZoomLevel(focusedWindow, 0.5, 'Plus');
+          },
+        },
+        {
+          accelerator: 'CmdOrCtrl+-',
+          label:       'Zoom &Out',
+          click(_item, focusedWindow) {
+            setZoomLevel(focusedWindow, -0.5, '-');
+          },
+        },
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'Toggle Full &Screen' },
       ],
@@ -187,4 +223,38 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
     },
     { type: 'separator' },
   ];
+}
+
+/**
+ * Adjusts the zoom level for the focused window by the desired increment. Also
+ * adjusts the zoom level for an attached browser view if one exists.
+ * @param focusedWindow The window that has focus
+ * @param zoomLevelAdjustment The desired increment to adjust the zoom level by
+ * @param keyEventKeyCode The key code associated with the zoom level adjustment
+ */
+function setZoomLevel(focusedWindow: Electron.BrowserWindow | undefined, zoomLevelAdjustment: number, keyEventKeyCode: string) {
+  if (!focusedWindow) {
+    return;
+  }
+
+  const { webContents } = focusedWindow;
+  const currentZoomLevel = webContents.getZoomLevel();
+  const view = focusedWindow.getBrowserView();
+
+  if (!view) {
+    const desiredZoomLevel = zoomLevelAdjustment === 0 ? zoomLevelAdjustment : currentZoomLevel + zoomLevelAdjustment;
+
+    webContents.setZoomLevel(desiredZoomLevel);
+    focusedWindow.getBrowserView()?.webContents.setZoomLevel(desiredZoomLevel);
+
+    return;
+  }
+
+  const event: Electron.KeyboardInputEvent = {
+    type:      'keyDown',
+    keyCode:   keyEventKeyCode,
+    modifiers: ['ctrl', 'control'],
+  };
+
+  webContents.sendInputEvent(event);
 }
