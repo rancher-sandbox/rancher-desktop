@@ -76,18 +76,21 @@ verify_images() {
 # the current k8s version in that directory.
 
 verify_kuberlr_for_version() {
-    k8sVersion=$1
-    rm -f "${HOME}"/.kuberlr/"${OS}"-"${ARCH_FOR_KUBERLR}"/kubectl*
+    local K8S_VERSION=$1
+    local KUBERLR_DIR="${HOME}/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+    rm -f "${KUBERLR_DIR}/kubectl"*
     run kubectl version
-    assert_output --regexp "Client Version.*GitVersion:.v$k8sVersion"
-    run ls -l "$HOME/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
-    assert_output --partial "kubectl$k8sVersion"
+    assert_output --regexp "Client Version.*GitVersion:.v${K8S_VERSION}"
+    assert_exists "${KUBERLR_DIR}/kubectl${K8S_VERSION}"
 }
 
 @test 'upgrade kubernetes' {
     rdctl set --kubernetes.version "$RD_KUBERNETES_VERSION"
     wait_for_apiserver "$RD_KUBERNETES_VERSION"
     wait_for_container_engine
+}
+
+@test 'kuberlr pulls in kubectl for new k8s version' {
     verify_kuberlr_for_version "$RD_KUBERNETES_VERSION"
 }
 
@@ -136,6 +139,9 @@ verify_nginx_after_change_k8s() {
     rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
     wait_for_apiserver
     wait_for_container_engine
+}
+
+@test 'kuberlr pulls in kubectl for previous k8s version' {
     verify_kuberlr_for_version "$RD_KUBERNETES_PREV_VERSION"
 }
 
