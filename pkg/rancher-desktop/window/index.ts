@@ -199,8 +199,8 @@ const updateView = (window: any, payload: any) => {
   const windowSize = window.getSize();
   const titleBarHeight = windowSize[1] - window.getContentSize()[1];
 
-  const x = payload.x;
-  const y = payload.y;
+  const x = Math.round(payload.x * window.webContents.getZoomFactor());
+  const y = Math.round(payload.y * window.webContents.getZoomFactor());
 
   view.setBounds({
     x,
@@ -234,11 +234,13 @@ export function openExtension(id: string, relPath: string) {
     return;
   }
 
-  window.webContents.send('extensions/getContentArea');
-
-  ipcMain.on('ok:extensions/getContentArea', (_event, args) => {
+  ipcMain.once('ok:extensions/getContentArea', (_event, args) => {
     if (!view) {
-      updateView(window, args);
+      try {
+        updateView(window, args);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
@@ -249,6 +251,8 @@ export function openExtension(id: string, relPath: string) {
         console.error(`Can't load the dashboard URL ${ url }: `, err);
       });
   });
+
+  window.webContents.send('extensions/getContentArea');
 }
 
 export function closeExtension() {
