@@ -31,7 +31,7 @@ interface execProcess {
 /**
  * The identifier for the extension (the name of the image).
  */
-const extensionId = decodeURIComponent((location.href.match(/:\/\/([^/]+)/)?.[1] ?? '').replace(/(..)/g, '%$1'));
+const extensionId = decodeURIComponent(location.hostname.replace(/(..)/g, '%$1'));
 
 /**
  * The processes that are waiting to complete, keyed by the process ID.
@@ -50,7 +50,7 @@ const outstandingProcesses: Record<string, WeakRef<execProcess>> = {};
 function getTypeErrorMessage(name: string, expectedType: string, object: any) {
   let message = `[ERROR_INVALID_ARG_TYPE]: The "${ name }" argument must be of type ${ expectedType }.`;
 
-  if (typeof object === 'object' && 'constructor' in object && 'name' in object.constructor.name) {
+  if (typeof object === 'object' && 'constructor' in object && 'name' in object.constructor) {
     message += ` Received an instance of ${ object.constructor.name }`;
   } else {
     message += ` Received ${ typeof object }`;
@@ -110,8 +110,8 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
       command: [`${ cmd }`].concat(Array.from(args).map(arg => `${ arg }`)),
       execId,
       scope,
-      ...(typeof options?.cwd === 'string' ? { cwd: `${ options.cwd }` } : {}),
-      ...(options?.env ? { env: Object.fromEntries(Object.entries(options.env).map(([k, v]) => [`${ k }`, `${ v }`])) } : {}),
+      ...options?.cwd ? { cwd: options.cwd } : {},
+      ...options?.env ? { env: options.env } : {},
     };
 
     if (options && isSpawnOptions(options)) {
