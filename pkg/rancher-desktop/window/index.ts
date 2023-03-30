@@ -234,6 +234,22 @@ function extensionNavigate(id: string, relPath: string) {
     });
 }
 
+const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => {
+  const window = getWindow('main');
+
+  if (!window) {
+    return;
+  }
+
+  if (input.type === 'keyDown' && input.control && (input.key === '-' || input.key === '+')) {
+    event.preventDefault();
+    const currentZoomLevel = window.webContents.getZoomLevel();
+    const newZoomLevel = input.key === '-' ? currentZoomLevel - 0.5 : currentZoomLevel + 0.5;
+
+    window.webContents.setZoomLevel(newZoomLevel);
+  }
+};
+
 export function openExtension(id: string, relPath: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
@@ -248,6 +264,7 @@ export function openExtension(id: string, relPath: string) {
     if (!view) {
       try {
         updateView(window, args);
+        window.webContents.on('before-input-event', extensionZoomListener);
       } catch (e) {
         console.error(e);
       }
@@ -265,6 +282,7 @@ export function closeExtension() {
   }
 
   getWindow('main')?.removeBrowserView(view);
+  getWindow('main')?.webContents.removeListener('before-input-event', extensionZoomListener);
   view = undefined;
 }
 
