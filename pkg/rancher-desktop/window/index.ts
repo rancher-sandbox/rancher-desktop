@@ -186,7 +186,7 @@ export function openMain() {
 
 let view: Electron.BrowserView | undefined;
 
-const updateView = (window: any, payload: any) => {
+const createView = () => {
   view = new BrowserView({
     webPreferences: {
       nodeIntegration:  false,
@@ -194,7 +194,13 @@ const updateView = (window: any, payload: any) => {
       preload:          path.join(paths.resources, 'preload.js'),
     },
   });
-  window.setBrowserView(view);
+  getWindow('main')?.setBrowserView(view);
+};
+
+const updateView = (window: any, payload: any) => {
+  if (!view) {
+    return;
+  }
 
   const windowSize = window.getSize();
   const titleBarHeight = windowSize[1] - window.getContentSize()[1];
@@ -210,18 +216,6 @@ const updateView = (window: any, payload: any) => {
   });
 
   view.setAutoResize({ width: true, height: true });
-
-  if (!Electron.app.isPackaged) {
-    Shortcuts.register(
-      window, {
-        ...CommandOrControl,
-        shift: true,
-        key:   'i',
-      },
-      () => view?.webContents.openDevTools(),
-      'open developer tools for the extension',
-    );
-  }
 };
 
 function extensionNavigate(id: string, relPath: string) {
@@ -247,6 +241,7 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
     const newZoomLevel = input.key === '-' ? currentZoomLevel - 0.5 : currentZoomLevel + 0.5;
 
     window.webContents.setZoomLevel(newZoomLevel);
+    window.webContents.send('extensions/getContentArea');
   }
 };
 
@@ -260,20 +255,35 @@ export function openExtension(id: string, relPath: string) {
     return;
   }
 
-  ipcMain.once('ok:extensions/getContentArea', (_event, args) => {
-    if (!view) {
-      try {
-        updateView(window, args);
-        window.webContents.on('before-input-event', extensionZoomListener);
-      } catch (e) {
-        console.error(e);
+  if (!ipcMain.eventNames().includes('ok:extensions/getContentArea')) {
+    ipcMain.on('ok:extensions/getContentArea', (_event, args) => {
+      if (!view) {
+        try {
+          createView();
+          window.webContents.on('before-input-event', extensionZoomListener);
+        } catch (e) {
+          console.error(e);
+        }
       }
-    }
 
-    extensionNavigate(id, relPath);
-  });
+      updateView(window, args);
+      extensionNavigate(id, relPath);
+    });
+  }
 
   window.webContents.send('extensions/getContentArea');
+
+  if (!Electron.app.isPackaged) {
+    Shortcuts.register(
+      window, {
+        ...CommandOrControl,
+        shift: true,
+        key:   'i',
+      },
+      () => view?.webContents.openDevTools(),
+      'open developer tools for the extension',
+    );
+  }
 }
 
 export function closeExtension() {
