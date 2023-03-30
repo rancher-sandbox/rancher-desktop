@@ -203,7 +203,7 @@ test.describe.serial('Extensions', () => {
             /* Rebuild the object so it can be serialized properly */
             cmd, killed, signal, code, stdout, stderr
           }));
-        `.replace(/\s+/g, ' ');
+        `;
         const result = await evalInView(script);
 
         expect(result).toEqual(expect.objectContaining({
