@@ -46,7 +46,7 @@ start_application() {
 rdctl_factory_reset() {
     rdctl factory-reset "$@"
 
-    if [[ "${1:-}" == "--remove-kubernetes-cache=true" ]]; then
+    if [[ ${1-} == "--remove-kubernetes-cache=true" ]]; then
         assert_not_exist "$PATH_CACHE"
     else
         assert_exists "$PATH_CACHE"
@@ -105,10 +105,10 @@ check_installation() {
 
     # Check if docker-X symlinks were deleted
     if is_unix; then
-    for dfile in docker-buildx docker-compose; do
-        run readlink "$HOME/.docker/cli-plugins/$dfile"
-        ${refute}_output "$HOME/.rd/bin/$dfile"
-    done
+        for dfile in docker-buildx docker-compose; do
+            run readlink "$HOME/.docker/cli-plugins/$dfile"
+            ${refute}_output "$HOME/.rd/bin/$dfile"
+        done
     fi
 
     # Check if ./rd/bin was removed from the path
@@ -131,15 +131,13 @@ check_installation() {
         done
 
         for profile in "${env_profiles[@]}"; do
-        echo "$assert that $profile does not add ~/.rd/bin to the PATH"
-        # cshrc: setenv PATH "/Users/jan/.rd/bin"\:"$PATH"
-        # posix: export PATH="/Users/jan/.rd/bin:$PATH"
-        run grep "PATH.\"$HOME/.rd/bin" "$profile"
-        ${assert}_failure
+            echo "$assert that $profile does not add ~/.rd/bin to the PATH"
+            # cshrc: setenv PATH "/Users/jan/.rd/bin"\:"$PATH"
+            # posix: export PATH="/Users/jan/.rd/bin:$PATH"
+            run grep "PATH.\"$HOME/.rd/bin" "$profile"
+            ${assert}_failure
         done
     fi
-
-
 
     # Check if the rancher-desktop docker context has been removed
     if is_unix; then
