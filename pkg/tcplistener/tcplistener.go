@@ -63,7 +63,7 @@ func (l *ListenerTracker) Add(ctx context.Context, ip net.IP, port int) error {
 
 // Remove an IP / port combination from the listener tracker.  If this
 // combination was not being tracked, this is a no-op.
-func (l *ListenerTracker) Remove(ctx context.Context, ip net.IP, port int) error {
+func (l *ListenerTracker) Remove(_ context.Context, ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
 
 	l.mutex.Lock()
