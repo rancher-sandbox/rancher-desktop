@@ -282,6 +282,32 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
 };
 
 /**
+ * Creates and positions the extension's browser view after coordinates are
+ * received from the renderer
+ * @param _event The Electron Ipc Main Event that triggered this listener
+ * @param args Arguments associated with the event
+ */
+function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, args: any) {
+  const window = getWindow('main');
+
+  if (!window) {
+    return;
+  }
+
+  if (!view) {
+    try {
+      createView();
+      window.webContents.on('before-input-event', extensionZoomListener);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  updateView(window, args);
+  extensionNavigate();
+}
+
+/**
  * Opens an extension in a browser view and attaches it to the main window
  * @param id The extension ID
  * @param relPath The relative path to the extension root
@@ -300,19 +326,7 @@ export function openExtension(id: string, relPath: string) {
   extPath = relPath;
 
   if (!ipcMain.eventNames().includes('ok:extensions/getContentArea')) {
-    ipcMain.on('ok:extensions/getContentArea', (_event, args) => {
-      if (!view) {
-        try {
-          createView();
-          window.webContents.on('before-input-event', extensionZoomListener);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      updateView(window, args);
-      extensionNavigate();
-    });
+    ipcMain.on('ok:extensions/getContentArea', extensionGetContentAreaListener);
   }
 
   window.webContents.send('extensions/getContentArea');
@@ -338,8 +352,11 @@ export function closeExtension() {
     return;
   }
 
-  getWindow('main')?.removeBrowserView(view);
-  getWindow('main')?.webContents.removeListener('before-input-event', extensionZoomListener);
+  const window = getWindow('main');
+
+  window?.removeBrowserView(view);
+  window?.webContents.removeListener('before-input-event', extensionZoomListener);
+  ipcMain.removeListener('ok:extensions/getContentArea', extensionGetContentAreaListener);
   view = undefined;
 }
 
