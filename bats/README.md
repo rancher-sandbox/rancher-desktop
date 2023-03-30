@@ -115,9 +115,14 @@ After finishing to develop a BATS test suite, you can locally verify the syntax 
           go install mvdan.cc/sh/v3/cmd/shfmt@v3.6.0
           ```
 
-3.2. Get the syntax and formatting feedback for BATS linting by running:
+  2. Get the syntax and formatting feedback for BATS linting by running:
 
-  ```
-  make -C bats lint
-  ```
-3. Please, make sure to fix the highlighted linting errors prior to submitting a PR. Not required, but highly recommendable
+      ```
+      make -C bats lint
+      ```
+3. Please, make sure to fix the highlighted linting errors prior to submitting a PR. Not required, but highly recommendable. To do so, run the following command:
+
+    Example
+    ```
+    shfmt -w tests/containers/factory-reset.bats
+    ```
