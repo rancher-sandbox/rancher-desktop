@@ -13,7 +13,7 @@ import {
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
+  createDefaultSettings, getFullPathForTool, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -24,21 +24,11 @@ import type { BrowserView, BrowserWindow } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
-const rdctl = executable('rdctl');
+const rdctl = getFullPathForTool('rdctl');
 
 fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
 
 const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
-
-/**
- * Get the given executable. Similar to @pkg/utils/resources, but does not use
- * Electron.app (which doesn't work during the test).
- */
-function executable(name: string) {
-  const exeName = name + (process.platform === 'win32' ? '.exe' : '');
-
-  return path.join(srcDir, 'resources', process.platform, 'bin', exeName);
-}
 
 test.describe.serial('Extensions', () => {
   let app: ElectronApplication;
@@ -46,12 +36,12 @@ test.describe.serial('Extensions', () => {
   let isContainerd = false;
 
   async function ctrctl(...args: string[]) {
-    let tool = executable('nerdctl');
+    let tool = getFullPathForTool('nerdctl');
 
     if (isContainerd) {
       args = ['--namespace', 'rancher-desktop-extensions'].concat(args);
     } else {
-      tool = executable('docker');
+      tool = getFullPathForTool('docker');
       if (process.platform !== 'win32') {
         args = ['--context', 'rancher-desktop'].concat(args);
       }
