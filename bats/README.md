@@ -1,0 +1,123 @@
+## Overview
+
+BATS is a testing framework for Bash shell scripts that provides supporting libraries and helpers for customizable server-side test automation.
+
+## Setup
+
+Run the following commands from the root directory of the Git repository to install BATS and its helper libraries into the BATS test directory.
+
+```
+git submodule update --init
+```
+
+## Running BATS
+
+1. To run the BATS test, specify the path to BATS executable from bats-core and run the following commands:
+
+    To run a specific test set from a bats file:
+
+      Example:
+
+      ```
+      cd bats
+      ./bats-core/bin/bats tests/registry/creds.bats
+      ```
+
+    To run all BATS tests:
+
+      ```
+      cd bats
+      ./bats-core/bin/bats make all
+      ```
+
+    To run the BATS test, specifying some of Rancher Desktop's configuration, run the following commands:
+
+      Example:
+
+      ```
+      cd bats
+      RD_CONTAINER_RUNTIME=moby RD_USE_IMAGE_ALLOW_LIST=false ./bats-core/bin/bats tests/registry/creds.bats
+      ```
+
+## Writing BATS Tests
+
+1. Add BATS test by creating files with `.bats` extension under ./bats/tests/FOLDER_NAME
+2. A Bats test file is a Bash script with special syntax for defining test cases. Under the hood, each test case is just a function with a description.
+
+    Example:
+    ```
+    @test "addition using bc" {
+      result="$(echo 2+2 | bc)"
+      [ "$result" -eq 4 ]
+      }
+    ```
+  BATS syntax and libraries for defining test hooks, writing assertions and treating output can be accessed via BATS documentation: [bats-core](https://bats-core.readthedocs.io/en/stable/), [bats-assert](https://github.com/bats-core/bats-assert), [bats-support](https://github.com/ztombol/bats-support)
+
+## BATS linting
+
+After finishing to develop a BATS test suite, you can locally verify the syntax and formatting feedback for BATS linting prior to submitting a PR, following the instructions:
+
+  1. Make sure to have installed shellcheck and shfmt
+
+    On MacOS:
+
+        - Assuming you have Homebrew:
+
+          ```
+          brew install shfmt shellcheck
+          ```
+        - If you have Go installed, you can also install `shfmt` by running:
+
+          ```
+          go install mvdan.cc/sh/v3/cmd/shfmt@v3.6.0
+          ```
+
+    On Linux:
+
+        - The simplest way to install ShellCheck locally is through your package managers such as `apt/apt-get/yum`. Run commands as per your distro.
+
+          ```
+          sudo apt install shellcheck
+          ```
+
+        - `Shfmt` is available as snap application. If your distribution has snap installed, you can install shfmt using command:
+
+          ```
+          sudo snap install shfmt
+          ```
+          The other way to install Shfmt is by using the following one-liner command:
+
+          ```
+          curl -sS https://webinstall.dev/shfmt | bash
+          ```
+          If you have Go installed, you can also install `shfmt` by running:
+
+          ```
+          go install mvdan.cc/sh/v3/cmd/shfmt@v3.6.0
+          ```
+    On Windows:
+
+        - The simplest way to install ShellCheck locally is:
+
+          Via chocolatey:
+
+            ```
+            choco install shellcheck
+            ```
+          Via scoop:
+
+            ```
+            `scoop install shellcheck`
+            ```
+        - If you have Go installed, you can install `shfmt` by running:
+
+          ```
+          go install mvdan.cc/sh/v3/cmd/shfmt@v3.6.0
+          ```
+
+3.2. Get the syntax and formatting feedback for BATS linting by running:
+
+  ```
+  make -C bats lint
+  ```
+3. Please, make sure to fix the highlighted linting errors prior to submitting a PR. Not required, but highly recommendable
