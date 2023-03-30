@@ -218,13 +218,17 @@ const updateView = (window: any, payload: any) => {
   view.setAutoResize({ width: true, height: true });
 };
 
-function extensionNavigate(id: string, relPath: string) {
-  const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
+function extensionNavigate() {
+  if (!extId || !extPath) {
+    return;
+  }
+
+  const url = `x-rd-extension://${ extId }/ui/dashboard-tab/${ extPath }`;
 
   view?.webContents
     .loadURL(url)
     .catch((err) => {
-      console.error(`Can't load the dashboard URL ${ url }: `, err);
+      console.error(`Can't load the extension URL ${ url }: `, err);
     });
 }
 
@@ -241,9 +245,13 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
     const newZoomLevel = input.key === '-' ? currentZoomLevel - 0.5 : currentZoomLevel + 0.5;
 
     window.webContents.setZoomLevel(newZoomLevel);
+    view?.webContents.setZoomLevel(newZoomLevel);
     window.webContents.send('extensions/getContentArea');
   }
 };
+
+let extId = '';
+let extPath = '';
 
 export function openExtension(id: string, relPath: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
@@ -254,6 +262,9 @@ export function openExtension(id: string, relPath: string) {
   if (!window) {
     return;
   }
+
+  extId = id;
+  extPath = relPath;
 
   if (!ipcMain.eventNames().includes('ok:extensions/getContentArea')) {
     ipcMain.on('ok:extensions/getContentArea', (_event, args) => {
@@ -267,7 +278,7 @@ export function openExtension(id: string, relPath: string) {
       }
 
       updateView(window, args);
-      extensionNavigate(id, relPath);
+      extensionNavigate();
     });
   }
 
