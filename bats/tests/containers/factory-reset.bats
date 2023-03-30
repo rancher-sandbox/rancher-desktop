@@ -104,10 +104,12 @@ check_installation() {
     fi
 
     # Check if docker-X symlinks were deleted
+    if is_unix; then
     for dfile in docker-buildx docker-compose; do
         run readlink "$HOME/.docker/cli-plugins/$dfile"
         ${refute}_output "$HOME/.rd/bin/$dfile"
     done
+    fi
 
     # Check if ./rd/bin was removed from the path
     if is_unix; then
