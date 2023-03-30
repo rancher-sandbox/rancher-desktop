@@ -150,28 +150,26 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 
 		if newSvc.Spec.Type == corev1.ServiceTypeNodePort {
 			for _, port := range newSvc.Spec.Ports {
-				if _, ok := deleted[port.NodePort]; ok {
-					// This port is in both added & deleted; skip it.
-					delete(deleted, port.NodePort)
-				} else {
-					added[port.NodePort] = port.Protocol
-				}
+				delete(deleted, port.NodePort)
+				added[port.NodePort] = port.Protocol
 			}
 		}
 
 		if newSvc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 			for _, port := range newSvc.Spec.Ports {
-				if _, ok := deleted[port.Port]; ok {
-					delete(deleted, port.Port)
-				} else {
-					added[port.Port] = port.Protocol
-				}
+				delete(deleted, port.Port)
+				added[port.Port] = port.Protocol
 			}
 		}
 	}
 
-	sendEvents(deleted, oldSvc, true, eventCh)
-	sendEvents(added, newSvc, false, eventCh)
+	if len(deleted) > 0 {
+		sendEvents(deleted, oldSvc, true, eventCh)
+	}
+
+	if len(added) > 0 {
+		sendEvents(added, newSvc, false, eventCh)
+	}
 
 	log.Debugf("kubernetes service update: %s/%s has -%d +%d service port",
 		namespace, name, len(deleted), len(added))
