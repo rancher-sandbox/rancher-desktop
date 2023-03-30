@@ -227,6 +227,9 @@ function extensionNavigate() {
 
   view?.webContents
     .loadURL(url)
+    .then(() => {
+      view?.webContents.setZoomLevel(getWindow('main')?.webContents.getZoomLevel() ?? 0);
+    })
     .catch((err) => {
       console.error(`Can't load the extension URL ${ url }: `, err);
     });
