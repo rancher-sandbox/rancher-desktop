@@ -150,7 +150,7 @@ func WatchForServices(
 								"name":      event.name,
 							})
 						} else {
-							log.Debugf("kuberentes service: port mapping deleted %s/%s:%v",
+							log.Debugf("kubernetes service: port mapping deleted %s/%s:%v",
 								event.namespace, event.name, event.portMapping)
 						}
 
@@ -168,7 +168,7 @@ func WatchForServices(
 						}
 					}
 
-					log.Debugf("kuberentes service: deleted listener %s/%s:%v",
+					log.Debugf("kubernetes service: deleted listener %s/%s:%v",
 						event.namespace, event.name, event.portMapping)
 				} else {
 					if enablePrivilegedService {
