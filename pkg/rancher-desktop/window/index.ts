@@ -224,6 +224,16 @@ const updateView = (window: any, payload: any) => {
   }
 };
 
+function extensionNavigate(id: string, relPath: string) {
+  const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
+
+  view?.webContents
+    .loadURL(url)
+    .catch((err) => {
+      console.error(`Can't load the dashboard URL ${ url }: `, err);
+    });
+}
+
 export function openExtension(id: string, relPath: string) {
   // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
@@ -243,13 +253,7 @@ export function openExtension(id: string, relPath: string) {
       }
     }
 
-    const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
-
-    view?.webContents
-      .loadURL(url)
-      .catch((err) => {
-        console.error(`Can't load the dashboard URL ${ url }: `, err);
-      });
+    extensionNavigate(id, relPath);
   });
 
   window.webContents.send('extensions/getContentArea');
