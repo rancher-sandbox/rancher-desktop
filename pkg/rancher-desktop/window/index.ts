@@ -239,10 +239,19 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
     return;
   }
 
-  if (input.type === 'keyDown' && input.control && (input.key === '-' || input.key === '+')) {
+  if (input.type === 'keyDown' && input.control && (input.key === '-' || input.key === '+' || input.key === '0')) {
     event.preventDefault();
     const currentZoomLevel = window.webContents.getZoomLevel();
-    const newZoomLevel = input.key === '-' ? currentZoomLevel - 0.5 : currentZoomLevel + 0.5;
+    const newZoomLevel = (() => {
+      switch (input.key) {
+      case '-':
+        return currentZoomLevel - 0.5;
+      case '+':
+        return currentZoomLevel + 0.5;
+      case '0':
+        return 0;
+      }
+    })();
 
     window.webContents.setZoomLevel(newZoomLevel);
     view?.webContents.setZoomLevel(newZoomLevel);
