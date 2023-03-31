@@ -212,12 +212,18 @@ const updateView = (window: any, payload: any) => {
     return;
   }
 
+  const isMacOS = os.platform().startsWith('darwin');
+
   const windowSize = window.getSize();
   const contentSize = window.getContentSize();
-  const titleBarHeight = os.platform().startsWith('darwin') ? windowSize[1] - window.getContentSize()[1] : 0;
+  const titleBarHeight = isMacOS ? windowSize[1] - window.getContentSize()[1] : 0;
 
-  const x = Math.round(payload.x * window.webContents.getZoomFactor());
-  const y = Math.round((payload.y + titleBarHeight) * window.webContents.getZoomFactor());
+  const defaultZoomLevel = 0;
+  const currentZoomLevel = window.webContents.getZoomLevel();
+  const yZoomFactor = isMacOS ? 1 + (currentZoomLevel - defaultZoomLevel) / 10 : window.webContents.getZoomFactor();
+
+  const x = Math.round(payload.x * window.webContents.getZoomLevel());
+  const y = Math.round((payload.y + titleBarHeight) * yZoomFactor);
 
   view.setBounds({
     x,
