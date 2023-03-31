@@ -213,7 +213,8 @@ const updateView = (window: any, payload: any) => {
   }
 
   const windowSize = window.getSize();
-  const titleBarHeight = windowSize[1] - window.getContentSize()[1];
+  const contentSize = window.getContentSize();
+  const titleBarHeight = os.platform().startsWith('darwin') ? windowSize[1] - window.getContentSize()[1] : 0;
 
   const x = Math.round(payload.x * window.webContents.getZoomFactor());
   const y = Math.round((payload.y + titleBarHeight) * window.webContents.getZoomFactor());
@@ -221,8 +222,8 @@ const updateView = (window: any, payload: any) => {
   view.setBounds({
     x,
     y,
-    width:  windowSize[0] - x,
-    height: windowSize[1] - y,
+    width:  contentSize[0] - x,
+    height: (contentSize[1] + titleBarHeight) - y,
   });
 
   view.setAutoResize({ width: true, height: true });
