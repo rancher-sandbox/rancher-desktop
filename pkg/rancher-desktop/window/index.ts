@@ -223,9 +223,9 @@ export function openExtension(id: string, relPath: string) {
         window, {
           ...CommandOrControl,
           shift: true,
-          key:   'i',
+          key:   'O', // U+004F Latin Capital Letter O
         },
-        () => view?.webContents.openDevTools(),
+        () => view?.webContents.openDevTools({ mode: 'detach' }),
         'open developer tools for the extension',
       );
     }
