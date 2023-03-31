@@ -18,5 +18,3 @@ indent_style = tab
 
 [*.{sh,bash,bats}]
 indent_size = 4
-# shfmt option
-keep_padding = true

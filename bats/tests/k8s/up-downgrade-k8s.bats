@@ -1,7 +1,8 @@
-# Test case 8 & 13
+# Test cases 8, 13, 19
 
 setup() {
     load '../helpers/load'
+    ARCH_FOR_KUBERLR=amd64
 }
 
 @test 'factory reset' {
@@ -70,20 +71,37 @@ verify_images() {
     verify_images
 }
 
+# Remove all the kubectl clients from the .kuberlr directory.
+# Then run `kubectl`, and it should pull in the `kubectl` for
+# the current k8s version in that directory.
+
+verify_kuberlr_for_version() {
+    local K8S_VERSION=$1
+    local KUBERLR_DIR="${HOME}/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+    rm -f "${KUBERLR_DIR}/kubectl"*
+    run kubectl version
+    assert_output --regexp "Client Version.*GitVersion:.v${K8S_VERSION}"
+    assert_exists "${KUBERLR_DIR}/kubectl${K8S_VERSION}"
+}
+
 @test 'upgrade kubernetes' {
     rdctl set --kubernetes.version "$RD_KUBERNETES_VERSION"
     wait_for_apiserver "$RD_KUBERNETES_VERSION"
     wait_for_container_engine
 }
 
-verify_nginx_after_change_k8s() {
-        run curl http://localhost:8686
-        assert_failure
-        assert_output --partial "Failed to connect to localhost port 8686"
+@test 'kuberlr pulls in kubectl for new k8s version' {
+    verify_kuberlr_for_version "$RD_KUBERNETES_VERSION"
+}
 
-        run curl http://localhost:8585
-        assert_success
-        assert_output --partial "Welcome to nginx!"
+verify_nginx_after_change_k8s() {
+    run curl http://localhost:8686
+    assert_failure
+    assert_output --partial "Failed to connect to localhost port 8686"
+
+    run curl http://localhost:8585
+    assert_success
+    assert_output --partial "Welcome to nginx!"
 }
 
 @test 'verify nginx after upgrade' {
@@ -121,6 +139,10 @@ verify_nginx_after_change_k8s() {
     rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
     wait_for_apiserver
     wait_for_container_engine
+}
+
+@test 'kuberlr pulls in kubectl for previous k8s version' {
+    verify_kuberlr_for_version "$RD_KUBERNETES_PREV_VERSION"
 }
 
 @test 'verify nginx after downgrade' {
