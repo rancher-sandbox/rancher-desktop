@@ -25,7 +25,7 @@ setup() {
 
 @test "pull rancher" {
     docker run --privileged -d --restart=no -p 8080:80 -p 8443:443 rancher/rancher
-    run docker images --format '{{json .Repository}}
+    run docker ps --format '{{json .Image}}'
     assert_output --partial "rancher/rancher"
 }
 
@@ -33,7 +33,7 @@ setup() {
     rdctl set --container-engine.name=containerd
     wait_for_container_engine
     nerdctl run --privileged -d --restart=no -p 8080:80 -p 8443:443 rancher/rancher
-    run nerdctl images --format '{{json .Repository}}
+    run nerdctl ps --format '{{json .Image}}'
     assert_output --partial "rancher/rancher"
 }
 
@@ -43,12 +43,12 @@ setup() {
 }
 
 @test 'verify the rancher container is gone' {
-    run docker images --format '{{json .Repository}}
+    run docker ps --format '{{json .Image}}'
     refute_output --partial "rancher/rancher"
 }
 
 @test 'switch back to containerd and verify that container is gone' {
     rdctl set --container-engine.name containerd
-    run nerdctl images --format '{{json .Repository}}'
+    run nerdctl ps --format '{{json .Image}}'
     refute_output --partial "rancher/rancher"
 }
