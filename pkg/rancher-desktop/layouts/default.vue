@@ -6,7 +6,7 @@
       :items="routes"
       :extensions="extensions"
     />
-    <the-title />
+    <the-title ref="rdx-title" />
     <main class="body">
       <Nuxt />
     </main>
@@ -86,10 +86,22 @@ export default {
       this.extensions = extensions || [];
     });
     ipcRenderer.send('extensions/list');
+
+    ipcRenderer.on('extensions/getContentArea', () => {
+      const rect = this.$refs['rdx-title'].$el.getBoundingClientRect();
+
+      const payload = {
+        x: rect.left,
+        y: rect.top,
+      };
+
+      ipcRenderer.send('ok:extensions/getContentArea', payload);
+    });
   },
 
   beforeDestroy() {
     ipcRenderer.off('k8s-check-state');
+    ipcRenderer.off('extensions/getContentArea');
   },
 
   methods: {
