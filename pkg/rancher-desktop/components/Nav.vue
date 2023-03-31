@@ -15,12 +15,14 @@
     </ul>
     <template v-if="featureExtensions">
       <hr>
-      <nav-item>
-        <template #before>
-          <span class="icon icon-circle-plus"></span>
-        </template>
-        Extensions
-      </nav-item>
+      <NuxtLink to="/marketplace">
+        <nav-item>
+          <template #before>
+            <span class="icon icon-circle-plus"></span>
+          </template>
+          Extensions
+        </nav-item>
+      </NuxtLink>
       <template v-for="extension in extensions">
         <nuxt-link
           :key="extension.id"
@@ -133,6 +135,10 @@ nav {
     padding: 0;
     margin: 0;
     padding-top: 20px;
+
+    a {
+      text-decoration: none;
+    }
 }
 
 ul {

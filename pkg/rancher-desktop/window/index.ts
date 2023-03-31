@@ -1,7 +1,7 @@
 import os from 'os';
 import path from 'path';
 
-import Electron, { BrowserWindow, app, shell, BrowserView } from 'electron';
+import Electron, { app, BrowserView, BrowserWindow, shell } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
 import { load as loadSettings } from '@pkg/config/settings';

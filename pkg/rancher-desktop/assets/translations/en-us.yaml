@@ -166,7 +166,24 @@ suffix:
 app:
   name: Rancher Desktop
   update: "There's one last step to finish updating Rancher Desktop"
-
+marketplace:
+  title: Marketplace
+  noResults: No extension found for the search criteria
+  banners:
+    install: Extension {name} has been installed.
+    uninstall: Extension {name} has been uninstalled.
+  sidebar:
+    installButton:
+      label: Install
+      loading: Installing...
+    uninstallButton:
+      label: Uninstall
+      loading: Uninstalling...
+    latestVersion: Latest version
+    latestUpdate: Latest update
+    platforms: Platforms
+    links: Links
+    categories: Categories
 images:
   title: Images
   state:
