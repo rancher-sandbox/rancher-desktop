@@ -216,13 +216,13 @@ const updateView = (window: any, payload: any) => {
   const titleBarHeight = windowSize[1] - window.getContentSize()[1];
 
   const x = Math.round(payload.x * window.webContents.getZoomFactor());
-  const y = Math.round(payload.y * window.webContents.getZoomFactor());
+  const y = Math.round((payload.y + titleBarHeight) * window.webContents.getZoomFactor());
 
   view.setBounds({
     x,
     y,
     width:  windowSize[0] - x,
-    height: windowSize[1] - titleBarHeight - y,
+    height: windowSize[1] - y,
   });
 
   view.setAutoResize({ width: true, height: true });
@@ -248,6 +248,16 @@ function extensionNavigate() {
     });
 }
 
+const zoomInKey = os.platform().startsWith('darwin') ? '=' : '+';
+
+function isZoomKeyCombo(input: Electron.Input) {
+  const modifier = input.control || input.meta;
+
+  return input.type === 'keyDown' &&
+    modifier &&
+    (input.key === '-' || input.key === zoomInKey || input.key === '0');
+}
+
 /**
  * Adjusts the zoom level of the main window and attached browser view based on
  * the given input.
@@ -261,19 +271,25 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
     return;
   }
 
-  if (input.type === 'keyDown' && input.control && (input.key === '-' || input.key === '+' || input.key === '0')) {
+  if (isZoomKeyCombo(input)) {
     event.preventDefault();
     const currentZoomLevel = window.webContents.getZoomLevel();
     const newZoomLevel = (() => {
       switch (input.key) {
       case '-':
         return currentZoomLevel - 0.5;
-      case '+':
+      case zoomInKey:
         return currentZoomLevel + 0.5;
       case '0':
         return 0;
       }
     })();
+
+    if (typeof newZoomLevel === 'undefined') {
+      console.debug('Extension Zoom Listener: Unable to determine zoom level');
+
+      return;
+    }
 
     window.webContents.setZoomLevel(newZoomLevel);
     view?.webContents.setZoomLevel(newZoomLevel);
