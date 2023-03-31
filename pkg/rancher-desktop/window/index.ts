@@ -222,7 +222,7 @@ const updateView = (window: any, payload: any) => {
   const currentZoomLevel = window.webContents.getZoomLevel();
   const yZoomFactor = isMacOS ? 1 + (currentZoomLevel - defaultZoomLevel) / 10 : window.webContents.getZoomFactor();
 
-  const x = Math.round(payload.x * window.webContents.getZoomLevel());
+  const x = Math.round(payload.x * window.webContents.getZoomFactor());
   const y = Math.round((payload.y + titleBarHeight) * yZoomFactor);
 
   view.setBounds({
