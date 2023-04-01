@@ -4,7 +4,19 @@ BATS is a testing framework for Bash shell scripts that provides supporting libr
 
 ## Setup
 
-Run the following commands from the root directory of the Git repository to install BATS and its helper libraries into the BATS test directory.
+It's important to have a Rancher Desktop CI build installed with privileged rights before running the BATS tests.
+
+On Windows:
+  Prior to running `git submodule update --init`, it's important to setup the Git configuration by running the following commands:
+
+  ```
+  git config --global core.eol lf
+  git config --global core.autocrlf false
+  ```
+  Then, checkout the Git repository or clone it.
+
+All platforms:
+From the root directory of the Git repository, run the following commands to install BATS and its helper libraries into the BATS test directory:
 
   ```
   git submodule update --init
@@ -118,7 +130,7 @@ After finishing to develop a BATS test suite, you can locally verify the syntax 
           go install mvdan.cc/sh/v3/cmd/shfmt@v3.6.0
           ```
 
-  2. Get the syntax and formatting feedback for BATS linting by running:
+  2. Get the syntax and formatting feedback for BATS linting by running from the root directory of the Git repository:
 
       ```
       make -C bats lint
@@ -127,5 +139,5 @@ After finishing to develop a BATS test suite, you can locally verify the syntax 
 
     Example
     ```
-    shfmt -w tests/containers/factory-reset.bats
+    shfmt -w ./bats/tests/containers/factory-reset.bats
     ```
