@@ -3,7 +3,7 @@ setup() {
 }
 
 @test 'factory-reset when Rancher Desktop is not running' {
-    factory_reset
+    rdctl factory-reset --verbose
     start_application
     rdctl shutdown
     rdctl_factory_reset --remove-kubernetes-cache=false --verbose
@@ -96,23 +96,23 @@ check_installation() {
         ${assert}_not_exists "$dir"
     done
 
-    #Check if rancher-desktop WSL distros are deleted on Windows
+    # Check if rancher-desktop WSL distros are deleted on Windows
     if is_windows; then
-        run wsl --list
-        ${refute}_output "rancher-desktop"
-        ${refute}_output "rancher-desktop-data"
+        run powershell.exe -c "wsl.exe --list"
+        ${refute}_line "rancher-desktop-data"
+        ${refute}_line "rancher-desktop"
     fi
 
-    # Check if docker-X symlinks were deleted
     if is_unix; then
+
+        # Check if docker-X symlinks were deleted
         for dfile in docker-buildx docker-compose; do
             run readlink "$HOME/.docker/cli-plugins/$dfile"
             ${refute}_output "$HOME/.rd/bin/$dfile"
         done
-    fi
 
-    # Check if ./rd/bin was removed from the path
-    if is_unix; then
+        # Check if ./rd/bin was removed from the path
+
         # TODO add check for config.fish
         env_profiles=(
             "$HOME/.bashrc"
@@ -137,19 +137,15 @@ check_installation() {
             run grep "PATH.\"$HOME/.rd/bin" "$profile"
             ${assert}_failure
         done
-    fi
 
-    # Check if the rancher-desktop docker context has been removed
-    if is_unix; then
+        # Check if the rancher-desktop docker context has been removed
         if using_docker; then
             echo "$assert that the docker context rancher-desktop does not exist"
             run grep -r rancher-desktop "$HOME/.docker/contexts/meta"
             ${assert}_failure
         fi
-    fi
 
-    # Check if VM was killed
-    if is_unix; then
+        # Check if VM was killed
         run limactl ls
         ${assert}_output --partial "No instance found"
     fi
