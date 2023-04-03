@@ -230,7 +230,7 @@ ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
 });
 
 class Client implements v1.DockerDesktopClient {
-  constructor(info: {platform: string, arch: string, hostname: string}) {
+  constructor(info: {arch: string, hostname: string}) {
     Object.assign(this.host, info);
   }
 
@@ -266,18 +266,18 @@ class Client implements v1.DockerDesktopClient {
     openExternal: (url: string) => {
       ipcRenderer.send('extensions/open-external', url);
     },
-    platform: '<unknown>',
-    arch:     '<unknown>',
+    platform: process.platform,
+    arch:     process.arch,
     hostname: '<unknown>',
   };
 
   docker = {} as v1.Docker;
 }
 
-export default async function initExtensions(): Promise<void> {
+export default function initExtensions(): void {
   if (document.location.protocol === 'x-rd-extension:') {
-    const info = await ipcRenderer.invoke('extensions/host-info');
-    const ddClient = new Client(info);
+    const hostInfo: { arch: string, hostname: string } = JSON.parse(process.argv.slice(-1).pop() ?? '{}');
+    const ddClient = new Client(hostInfo);
 
     Electron.contextBridge.exposeInMainWorld('ddClient', ddClient);
   } else {

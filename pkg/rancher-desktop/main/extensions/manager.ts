@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import Electron, { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import _ from 'lodash';
 
 import { ExtensionImpl } from './extensions';
@@ -94,12 +94,6 @@ class ExtensionManagerImpl implements ExtensionManager {
 
   async init(config: RecursiveReadonly<Settings>) {
     // Handle events from the renderer process.
-    this.setMainHandler('extensions/host-info', () => ({
-      platform: process.platform,
-      arch:     Electron.app.runningUnderARM64Translation ? 'arm64' : process.arch,
-      hostname: os.hostname(),
-    }));
-
     this.setMainListener('extensions/open-external', (...[, url]) => {
       Electron.shell.openExternal(url);
     });

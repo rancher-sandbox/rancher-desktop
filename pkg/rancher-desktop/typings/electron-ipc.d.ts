@@ -114,7 +114,6 @@ export interface IpcMainInvokeEvents {
   // #endregion
 
   // #region extensions
-  'extensions/host-info': () => {platform: string, arch: string, hostname: string};
   /** Execute the given command and return the results. */
   'extensions/spawn/blocking': (options: import('@pkg/main/extensions/types').SpawnOptions) => import('@pkg/main/extensions/types').SpawnResult;
   'extensions/ui/show-open': (options: import('electron').OpenDialogOptions) => import('electron').OpenDialogReturnValue;
