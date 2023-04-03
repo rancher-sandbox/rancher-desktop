@@ -152,7 +152,7 @@ export class NerdctlClient implements ContainerEngineClient {
       }
       const args = ['--create', '--gzip', '--file', archive, '--directory', sourceDir, resolveSymlinks ? '--dereference' : undefined, sourceName].filter(defined);
 
-      await this.vm.execCommand('/usr/bin/tar', ...args);
+      await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);
 
       // Copy the archive to the host
       const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));

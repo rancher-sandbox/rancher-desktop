@@ -251,7 +251,10 @@ class ExtensionManagerImpl implements ExtensionManager {
    * Convert incoming spawn options from the docker-exec context.
    */
   protected convertDockerCliOptions(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): SpawnOptions {
-    throw new Error('not implemented');
+    return {
+      ...options,
+      command: [this.client.executable, ...options.command],
+    };
   }
 
   /**
