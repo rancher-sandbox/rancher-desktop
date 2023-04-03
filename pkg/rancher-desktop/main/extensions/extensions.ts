@@ -206,51 +206,58 @@ export class ExtensionImpl implements Extension {
   }
 
   /**
-   * Extract the Docker Compose files into a newly-created temporary directory.
-   * This is required because nerdctl doesn't seem to keep the definition around,
-   * @note The caller is expected to remove the output directory.
-   * @param composePath the value of metadata.vm.composefile
+   * Extract the docker compose files into the given work directory, generating
+   * stub ones if we're only given an image name.
+   * @param metadata The extension metadata.
+   * @param workDir Directory to extract into.
+   * @returns Whether we found containers to run.
    */
-  protected async extractComposeDefinition(composePath: string): Promise<string> {
-    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
-    const composeDir = path.posix.dirname(path.posix.normalize(composePath));
+  protected async extractComposeDefinition(metadata: ExtensionMetadata, workDir: string): Promise<boolean> {
+    if (isVMTypeImage(metadata.vm)) {
+      const contents = {
+        name:     this.id,
+        // Disable lint because it's a literal ${DESKTOP_PLUGIN_IMAGE} string.
+        // eslint-disable-next-line no-template-curly-in-string
+        services: { web: { image: '${DESKTOP_PLUGIN_IMAGE}' } },
+      };
 
-    await this.client.copyFile(
-      this.id,
-      composeDir === '.' ? '/' : `${ composeDir }/`,
-      workDir,
-      { namespace: this.extensionNamespace });
+      await fs.promises.writeFile(path.join(workDir, 'compose.yaml'), JSON.stringify(contents));
+    } else if (isVMTypeComposefile(metadata.vm)) {
+      const composeDir = path.posix.dirname(path.posix.normalize(metadata.vm.composefile));
 
-    return workDir;
+      await this.client.copyFile(
+        this.id,
+        composeDir === '.' ? '/' : `${ composeDir }/`,
+        workDir,
+        { namespace: this.extensionNamespace });
+    } else {
+      console.debug(`Extension ${ this.id } does not have containers to run.`);
+
+      return false;
+    }
+
+    return true;
   }
 
   protected async installContainers(metadata: ExtensionMetadata): Promise<void> {
-    if (isVMTypeImage(metadata.vm)) {
-      // eslint-disable-next-line no-template-curly-in-string -- literal ${DESKTOP_PLUGIN_IMAGE}
-      const imageID = metadata.vm.image === '${DESKTOP_PLUGIN_IMAGE}' ? this.id : metadata.vm.image;
-      const stdout = await this.client.run(imageID, {
-        namespace: this.extensionNamespace,
-        name:      this.containerName,
-        restart:   'always',
-      });
+    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
 
-      console.debug(`Running ${ this.id } container image ${ imageID }: ${ stdout.trim() }`);
-    } else if (isVMTypeComposefile(metadata.vm)) {
-      const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
-
-      try {
-        console.debug(`Running ${ this.id } compose up (workDir=${ workDir })`);
-        await this.client.composeUp(
-          workDir,
-          {
-            name:      this.containerName,
-            namespace: this.extensionNamespace,
-            env:       { DESKTOP_PLUGIN_IMAGE: this.id },
-          },
-        );
-      } finally {
-        await fs.promises.rm(workDir, { recursive: true });
+    try {
+      if (!await this.extractComposeDefinition(metadata, workDir)) {
+        return;
       }
+
+      console.debug(`Running ${ this.id } compose up (workDir=${ workDir })`);
+      await this.client.composeUp(
+        workDir,
+        {
+          name:      this.containerName,
+          namespace: this.extensionNamespace,
+          env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        },
+      );
+    } finally {
+      await fs.promises.rm(workDir, { recursive: true });
     }
   }
 
@@ -279,24 +286,24 @@ export class ExtensionImpl implements Extension {
   }
 
   protected async uninstallContainers(metadata: ExtensionMetadata) {
-    if (isVMTypeImage(metadata.vm)) {
-      await this.client.stop(this.containerName, {
-        namespace: this.extensionNamespace,
-        force:     true,
-        delete:    true,
-      });
-    } else if (isVMTypeComposefile(metadata.vm)) {
-      const workDir = await this.extractComposeDefinition(metadata.vm.composefile);
+    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
 
-      try {
-        await this.client.composeDown(workDir, {
+    try {
+      if (!await this.extractComposeDefinition(metadata, workDir)) {
+        return;
+      }
+
+      console.debug(`Running ${ this.id } compose down (workDir=${ workDir })`);
+      await this.client.composeDown(
+        workDir,
+        {
           name:      this.containerName,
           namespace: this.extensionNamespace,
           env:       { DESKTOP_PLUGIN_IMAGE: this.id },
-        });
-      } finally {
-        await fs.promises.rm(workDir, { recursive: true });
-      }
+        },
+      );
+    } finally {
+      await fs.promises.rm(workDir, { recursive: true });
     }
   }
 
