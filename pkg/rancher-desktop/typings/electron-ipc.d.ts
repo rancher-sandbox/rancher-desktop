@@ -81,6 +81,12 @@ export interface IpcMainEvents {
   'extensions/list': () => void;
   'extensions/open': (id: string, path: string) => void;
   'extensions/close': () => void;
+  'extensions/open-external': (url: string) => void;
+  'extensions/spawn/kill': (execId: string) => void;
+  /** Execute the given command, streaming results back via events. */
+  'extensions/spawn/streaming': (options: import('@pkg/main/extensions/types').SpawnOptions) => void;
+  /** Show a notification */
+  'extensions/ui/toast': (level: 'success' | 'warning' | 'error', message: string) => void;
   'ok:extensions/getContentArea': (payload: { x: number, y: number }) => void;
   // #endregion
 }
@@ -108,7 +114,10 @@ export interface IpcMainInvokeEvents {
   // #endregion
 
   // #region extensions
-  'extension/host-info': () => {platform: string, arch: string, hostname: string};
+  'extensions/host-info': () => {platform: string, arch: string, hostname: string};
+  /** Execute the given command and return the results. */
+  'extensions/spawn/blocking': (options: import('@pkg/main/extensions/types').SpawnOptions) => import('@pkg/main/extensions/types').SpawnResult;
+  'extensions/ui/show-open': (options: import('electron').OpenDialogOptions) => import('electron').OpenDialogReturnValue;
   // #endregion
 }
 
@@ -157,5 +166,8 @@ export interface IpcRendererEvents {
   'extensions/list': (extensions: { id: string; metadata: ExtensionMetadata; }[] | undefined) => void;
   'extensions/open': (id: string, path: string) => void;
   'extensions/close': () => void;
+  'extensions/spawn/close': (id: string, code: number) => void;
+  'extensions/spawn/error': (id: string, error: Error | NodeJS.Signals) => void;
+  'extensions/spawn/output': (id: string, data: { stdout: string } | { stderr: string }) => void;
   // #endregion
 }

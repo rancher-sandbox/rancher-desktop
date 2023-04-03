@@ -86,13 +86,9 @@ export type SpawnOptions = {
    */
   command: string[];
   /**
-   * Identifier for the extension that initiated the spawn.
-   */
-  extension: string;
-  /**
    * Identifier for the spawn event, scoped to the webContents frame.
    */
-  id: string;
+  execId: string;
   /**
    * The scope where the execution will take place; this is determined by which
    * API is being called.
@@ -113,9 +109,9 @@ export type SpawnOptions = {
  */
 export type SpawnResult = {
   /** The command executed. */
-  command: string;
-  /** Whether the process was forcefully killed. */
-  killed: boolean;
+  cmd: string;
+  /** Whether the process was forcefully killed via the API. */
+  killed?: boolean;
   /** The command exit code / signal. */
   result: NodeJS.Signals | number;
   stdout: string;

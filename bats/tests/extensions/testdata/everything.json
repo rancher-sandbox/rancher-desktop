@@ -29,6 +29,6 @@
     }
   },
   "vm": {
-    "image": "rd/extension/everything"
+    "composefile": "/compose/compose.yaml"
   }
 }
