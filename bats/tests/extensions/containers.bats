@@ -1,3 +1,7 @@
+setup_file() {
+    load '../helpers/load'
+}
+
 setup() {
     load '../helpers/load'
 
@@ -28,7 +32,7 @@ namespace_arg() {
 }
 
 @test 'start container engine' {
-    start_container_engine
+    RD_ENV_EXTENSIONS=1 start_container_engine
     wait_for_container_engine
 }
 
