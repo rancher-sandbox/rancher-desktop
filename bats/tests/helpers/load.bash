@@ -38,3 +38,6 @@ export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 teardown_file() {
     run rdctl shutdown
 }
+
+# Bug workarounds go here. The goal is to make this an empty file
+source "$helpers/workarounds.bash"
