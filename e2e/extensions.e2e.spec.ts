@@ -294,5 +294,16 @@ test.describe.serial('Extensions', () => {
         ]));
       });
     });
+
+    test.describe('ddClient.vm.service', () => {
+      test.skip('can fetch from the backend', () => {
+      });
+      test('can fetch from external sources', async() => {
+        const url = 'http://127.0.0.1:6120/LICENSES'; // dashboard
+        const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
+
+        await expect(result).resolves.toContain('Copyright');
+      });
+    });
   });
 });

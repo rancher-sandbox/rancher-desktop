@@ -12,6 +12,7 @@ import type { Settings } from '@pkg/config/settings';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import type { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import * as childProcess from '@pkg/utils/childProcess';
+import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import type { RecursiveReadonly } from '@pkg/utils/typeUtils';
@@ -167,6 +168,26 @@ class ExtensionManagerImpl implements ExtensionManager {
       });
 
       notification.show();
+    });
+
+    this.setMainHandler('extensions/vm/http-fetch', async(event, config) => {
+      const extensionId = this.getExtensionIdFromEvent(event);
+      const url = new URL(config.url);
+
+      if (!url.hostname) {
+        console.error(`Fetching from extension backend service not implemented yet (${ extensionId } fetching ${ url })`);
+
+        return Promise.reject(new Error('Could not fetch from backend'));
+      }
+
+      const options: RequestInit = {
+        method:  config.method,
+        headers: config.headers ?? {},
+        body:    config.data,
+      };
+      const response = await fetch(url.toString(), options);
+
+      return await response.text();
     });
 
     // Install / uninstall extensions as needed.
