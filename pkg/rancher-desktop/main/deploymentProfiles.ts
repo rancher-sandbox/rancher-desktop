@@ -3,9 +3,9 @@ import os from 'os';
 import { join } from 'path';
 
 import * as nativeReg from 'native-reg';
-import plist from 'plist';
 
 import * as settings from '@pkg/config/settings';
+import { execSync } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -89,7 +89,7 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     for (const configDir in linuxPaths) {
       const [defaults, locked] = linuxPaths[configDir];
 
-      profiles = readProfileFiles(configDir, defaults, locked, JSON);
+      profiles = parseJsonFile(configDir, defaults, locked);
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
       }
@@ -98,7 +98,7 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     break;
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      profiles = readProfileFiles(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist', plist);
+      profiles = parseJsonFromPlist(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
 
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
@@ -114,27 +114,64 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
 }
 
 /**
+ * Read and parse plutil deployment profile files.
+ * @param rootPath the system or user directory containing profiles.
+ * @param defaultsPath the file path to the 'defaults' file.
+ * @param lockedPath the file path to the 'locked' file.
+ * @returns the defaults and/or locked objects if they exist, or
+ *          throws an exception if there is an error parsing the locked file.
+ */
+function parseJsonFromPlist(rootPath: string, defaultsPath: string, lockedPath: string) {
+  let defaults;
+  let locked;
+
+  const plutilCmnd = 'plutil -convert json -r -o - -- ';
+  const pathDefaults = join(rootPath, defaultsPath);
+
+  if (settings.fileExists(pathDefaults)) {
+    try {
+      const buffer = execSync(join(plutilCmnd, pathDefaults ));
+
+      defaults = JSON.parse(buffer.toString());
+    } catch (error) {}
+  }
+
+  const pathLocked = join(rootPath, lockedPath);
+
+  if (settings.fileExists(pathLocked)) {
+    try {
+      const buffer = execSync(join(plutilCmnd, pathLocked ));
+
+      locked = JSON.parse(buffer.toString());
+    } catch (error) {
+      throw new Error(`Error parsing locked deployment profile: ${ error }`);
+    }
+  }
+
+  return { defaults, locked };
+}
+
+/**
  * Read and parse deployment profile files.
  * @param rootPath the system or user directory containing profiles.
  * @param defaultsPath the file path to the 'defaults' file.
  * @param lockedPath the file path to the 'locked' file.
- * @param parser the parser (JSON or plist) for parsing the files read.
  * @returns the defaults and/or locked objects if they exist, or
  *          throws an exception if there is an error parsing the locked file.
  */
-function readProfileFiles(rootPath: string, defaultsPath: string, lockedPath: string, parser: any) {
+function parseJsonFile(rootPath: string, defaultsPath: string, lockedPath: string) {
   let defaults;
   let locked;
 
   try {
     const defaultsData = fs.readFileSync(join(rootPath, defaultsPath), 'utf-8');
 
-    defaults = parser.parse(defaultsData);
+    defaults = JSON.parse(defaultsData);
   } catch {}
   try {
     const lockedData = fs.readFileSync(join(rootPath, lockedPath), 'utf-8');
 
-    locked = parser.parse(lockedData);
+    locked = JSON.parse(lockedData);
   } catch (ex: any) {
     if (ex.code !== 'ENOENT') {
       throw new Error(`Error parsing locked deployment profile: ${ ex }`);

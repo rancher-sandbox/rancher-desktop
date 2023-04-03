@@ -6,7 +6,7 @@ import stream from 'stream';
 import { Log } from '@pkg/utils/logging';
 
 export {
-  ChildProcess, CommonOptions, SpawnOptions, exec, spawn,
+  ChildProcess, CommonOptions, SpawnOptions, exec, execSync, spawn,
 } from 'child_process';
 
 /**
