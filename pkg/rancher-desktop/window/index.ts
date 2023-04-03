@@ -2,7 +2,7 @@ import os from 'os';
 import path from 'path';
 
 import Electron, {
-  BrowserWindow, app, shell, BrowserView, ipcMain,
+  BrowserWindow, app, shell, BrowserView, ipcMain, nativeTheme,
 } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
@@ -200,6 +200,10 @@ const createView = () => {
     },
   });
   getWindow('main')?.setBrowserView(view);
+
+  const backgroundColor = nativeTheme.shouldUseDarkColors ? '#202c33' : '#f4f4f6';
+
+  view.setBackgroundColor(backgroundColor);
 };
 
 /**
