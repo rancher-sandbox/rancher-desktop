@@ -30,6 +30,7 @@ import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers'
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
+import SERVICE_SCRIPT_MOPROXY from '@pkg/assets/scripts/moproxy.initd';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
@@ -796,6 +797,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
   }
 
+  /**
+   * Return the Linux path to the moproxy executable.
+   */
+  protected getMoproxyPath(): Promise<string> {
+    return this.wslify(path.join(paths.resources, 'linux', 'internal', 'moproxy'));
+  }
+
   protected async writeProxySettings(proxy: BackendSettings['experimental']['virtualMachine']['proxy']): Promise<void> {
     if (proxy.address && proxy.port) {
       // Write to /etc/moproxy/proxy.ini
@@ -1339,6 +1347,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
               this.progressTracker.action('Proxy Config Setup', 50, async() => {
+                await this.execCommand('mkdir', '-p', '/etc/moproxy');
+                await this.writeConf('moproxy', {
+                  MOPROXY_BINARY: await this.getMoproxyPath(),
+                  LOG_DIR:        logPath,
+                });
+                await this.writeFile('/etc/init.d/moproxy', SERVICE_SCRIPT_MOPROXY, 0o755);
                 await this.writeProxySettings(config.experimental.virtualMachine.proxy);
               }),
               this.progressTracker.action('Configuring image proxy', 50, async() => {

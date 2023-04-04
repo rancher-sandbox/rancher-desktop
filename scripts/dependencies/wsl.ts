@@ -124,6 +124,38 @@ export class HostResolverHost implements Dependency, GithubDependency {
   }
 }
 
+export class Moproxy implements Dependency, GithubDependency {
+  name = 'Moproxy';
+  githubOwner = 'rancher-sandbox';
+  githubRepo = 'moproxy';
+
+  async download(context: DownloadContext): Promise<void> {
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
+    const tarName = `moproxy_${ context.versions.moproxy }_linux_x86_64_musl.bin.tar.gz`;
+    const moproxyURL = `${ baseURL }/v${ context.versions.moproxy }/${ tarName }`;
+    const moproxyPath = path.join(context.internalDir, tarName);
+
+    await download(
+      moproxyURL,
+      moproxyPath,
+      { access: fs.constants.W_OK });
+
+    extract(context.internalDir, moproxyPath, 'moproxy');
+  }
+
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}
+
 export class WSLDistro implements Dependency, GithubDependency {
   name = 'WSLDistro';
   githubOwner = 'rancher-sandbox';

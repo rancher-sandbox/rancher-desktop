@@ -1,0 +1,79 @@
+#!/sbin/openrc-run
+
+name=moproxy
+
+description="A transparent TCP to SOCKSv5/HTTP proxy."
+
+extra_started_commands="enable disable reload"
+description_enable="Start redirecting the network traffic to the HTTP proxy."
+description_disable="Stop redirecting the network traffic to the HTTP proxy."
+description_reload="Reload the proxy list."
+
+# TCP Listen address
+: ${host:=${MOPROXY_HOST:-"::"}}
+# TCP Listen port
+: ${port:=${MOPROXY_PORT:-"2080"}}
+# List of backend proxy servers
+: ${proxy_list:=${MOPROXY_PROXYLIST:-"/etc/moproxy/proxy.ini"}}
+# Additional arguments to pass to moproxy
+: ${moproxy_args:=${MOPROXY_ARGS:-""}}
+# Comma-seperated list of port traffic to redirect to moproxy
+: ${ports_redirected:=${MOPROXY_REDIRECTED_PORT:-"80,443"}}
+
+command="'${MOPROXY_BINARY:-/usr/sbin/moproxy}'"
+command_args="--host ${host} --port ${port} --list ${proxy_list} ${moproxy_args}"
+command_background="yes"
+pidfile="/run/${name}.pid"
+
+MOPROXY_LOGFILE="${MOPROXY_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+output_log="'${MOPROXY_LOGFILE}'"
+error_log="'${MOPROXY_LOGFILE}'"
+
+iptables_cmd() {
+	iptables --table nat --$1 $2 --protocol tcp --match multiport --dports "${ports_redirected}" --jump REDIRECT --to-port "${port}"
+}
+
+add_rule_to_chain() {
+	if ! iptables_cmd check $1 &> /dev/null
+	then
+		iptables_cmd append $1
+	else
+		einfo "Rule already in table"
+	fi
+}
+
+remove_rule_from_chain() {
+	while iptables_cmd check $1 &> /dev/null
+	do
+		iptables_cmd delete $1
+	done
+}
+
+depend() {
+    after iptables ip6tables
+}
+
+enable() {
+	einfo "Starting the iptables rules to start redirection of ports ${ports_redirected} to ${name}"
+	add_rule_to_chain OUTPUT
+	add_rule_to_chain PREROUTING
+}
+
+disable() {
+	einfo "Removing all the iptables rules to stop redirection to ${name}"
+	remove_rule_from_chain OUTPUT
+	remove_rule_from_chain PREROUTING
+}
+
+start_post() {
+	enable
+}
+
+stop_pre() {
+	disable
+}
+
+reload() {
+	ebegin "Reloading ${name}"
+	start-stop-daemon --signal HUP --pidfile "$pidfile"
+}
