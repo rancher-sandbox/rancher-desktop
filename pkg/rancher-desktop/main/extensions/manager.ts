@@ -1,6 +1,8 @@
+import { ChildProcessByStdio, spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { Readable } from 'stream';
 
 import { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import _ from 'lodash';
@@ -11,7 +13,6 @@ import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { Settings } from '@pkg/config/settings';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import type { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg/typings/electron-ipc';
-import * as childProcess from '@pkg/utils/childProcess';
 import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -29,6 +30,8 @@ type IpcMainEventListener<K extends keyof IpcMainEvents> =
 type IpcMainEventHandler<K extends keyof IpcMainInvokeEvents> =
   (event: IpcMainInvokeEvent, ...args: Parameters<IpcMainInvokeEvents[K]>) =>
     Promise<ReturnType<IpcMainInvokeEvents[K]>> | ReturnType<IpcMainInvokeEvents[K]>;
+
+type ReadableChildProcess = ChildProcessByStdio<null, Readable, Readable>;
 
 class ExtensionManagerImpl implements ExtensionManager {
   protected extensions: Record<string, ExtensionImpl> = {};
@@ -91,7 +94,7 @@ class ExtensionManagerImpl implements ExtensionManager {
    * Processes from extensions created in spawnStreaming() that may still be
    * running.
    */
-  protected processes: Record<string, WeakRef<childProcess.ChildProcess>> = {};
+  protected processes: Record<string, WeakRef<ReadableChildProcess>> = {};
 
   async init(config: RecursiveReadonly<Settings>) {
     // Handle events from the renderer process.
@@ -110,11 +113,11 @@ class ExtensionManagerImpl implements ExtensionManager {
     this.setMainListener('extensions/spawn/streaming', async(event, options) => {
       switch (options.scope) {
       case 'host':
-        return this.spawnStreaming(event, this.convertHostOptions(event, options));
+        return this.execStreaming(event, options, this.spawnHost(event, options));
       case 'docker-cli':
-        return this.spawnStreaming(event, this.convertDockerCliOptions(event, options));
+        return this.execStreaming(event, options, this.spawnDockerCli(event, options));
       case 'container':
-        return this.spawnStreaming(event, await this.convertContainerOptions(event, options));
+        return this.execStreaming(event, options, await this.spawnContainer(event, options));
       }
       console.error(`Unexpected scope ${ options.scope }`);
       throw new Error(`Unexpected scope ${ options.scope }`);
@@ -123,11 +126,11 @@ class ExtensionManagerImpl implements ExtensionManager {
     this.setMainHandler('extensions/spawn/blocking', async(event, options) => {
       switch (options.scope) {
       case 'host':
-        return this.spawnBlocking(this.convertHostOptions(event, options));
+        return this.execBlocking(this.spawnHost(event, options));
       case 'docker-cli':
-        return this.spawnBlocking(this.convertDockerCliOptions(event, options));
+        return this.execBlocking(this.spawnDockerCli(event, options));
       case 'container':
-        return this.spawnBlocking(await this.convertContainerOptions(event, options));
+        return this.execBlocking(await this.spawnContainer(event, options));
       }
       console.error(`Unexpected scope ${ options.scope }`);
       throw new Error(`Unexpected scope ${ options.scope }`);
@@ -248,56 +251,75 @@ class ExtensionManagerImpl implements ExtensionManager {
     return Buffer.from(origin.hostname, 'hex').toString();
   }
 
-  /**
-   * Convert incoming spawn options from the host-exec context.
-   */
-  protected convertHostOptions(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): SpawnOptions {
+  /** Spawn a process in the host context. */
+  protected spawnHost(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): ReadableChildProcess {
     const extensionId = this.getExtensionIdFromEvent(event);
     const extension = this.getExtension(extensionId) as ExtensionImpl;
-    const exePath = path.join(extension.dir, 'bin', options.command[0]);
 
-    return {
-      ...options,
-      command: [exePath, ...options.command.slice(1)],
-    };
+    if (!extension) {
+      throw new Error(`Could not find calling extension ${ extensionId }`);
+    }
+
+    return spawn(
+      path.join(extension.dir, 'bin', options.command[0]),
+      options.command.slice(1),
+      {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        ..._.pick(options, ['cwd', 'env']),
+      });
   }
 
-  /**
-   * Convert incoming spawn options from the docker-exec context.
-   */
-  protected convertDockerCliOptions(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): SpawnOptions {
-    return {
-      ...options,
-      command: [this.client.executable, ...options.command],
-    };
+  /** Spawn a process in the docker-cli context. */
+  protected spawnDockerCli(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): ReadableChildProcess {
+    const extensionId = this.getExtensionIdFromEvent(event);
+    const extension = this.getExtension(extensionId) as ExtensionImpl;
+
+    if (!extension) {
+      throw new Error(`Could not find calling extension ${ extensionId }`);
+    }
+
+    return spawn(this.client.executable, options.command, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      ..._.pick(options, ['cwd', 'env']),
+    });
   }
 
-  /**
-   * Convert incoming spawn options from the container-exec context.
-   */
-  protected convertContainerOptions(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<SpawnOptions> {
+  /** Spawn a process in the container context. */
+  protected spawnContainer(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     return Promise.reject(new Error('not implemented'));
   }
 
   /**
-   * Spawn a process on behalf of an extension, returning a promise that will be
-   * resolved when the process completes.
+   * Execute a process on behalf of an extension, returning a promise that will
+   * be resolved when the process completes.
    */
-  protected spawnBlocking(options: SpawnOptions): Promise<SpawnResult> {
-    const args = options.command.concat();
-    const exePath = args.shift();
+  protected execBlocking(process: ReadableChildProcess): Promise<SpawnResult> {
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+    let errored = false;
 
-    if (!exePath) {
-      throw new Error(`no executable given`);
-    }
+    process.stdout.on('data', (data: string | Buffer) => {
+      stdout.push(Buffer.from(data));
+    });
+    process.stderr.on('data', (data: string | Buffer) => {
+      stderr.push(Buffer.from(data));
+    });
 
-    return new Promise((resolve) => {
-      childProcess.execFile(exePath, args, { ..._.pick(options, ['cwd', 'env']) }, (error, stdout, stderr) => {
+    return new Promise((resolve, reject) => {
+      process.on('error', (error) => {
+        errored = true;
+        reject(error);
+      });
+
+      process.on('exit', (code, signal) => {
+        if (errored) {
+          return;
+        }
         resolve({
-          cmd:    options.command.join(' '),
-          result: error?.signal ?? error?.code ?? 0,
-          stdout,
-          stderr,
+          cmd:    `${ process.spawnfile } ${ process.spawnargs.join(' ') }`,
+          result: signal ?? code ?? 0,
+          stdout: Buffer.concat(stdout).toString('utf-8'),
+          stderr: Buffer.concat(stderr).toString('utf-8'),
         });
       });
     });
@@ -311,35 +333,25 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   /**
-   * Spawn a process on behalf of an extension, with the output fed back to the
-   * extension via callbacks.
+   * Execute a process on behalf of an extension, with the output fed back to
+   * the extension via callbacks.
    */
-  protected spawnStreaming(event: IpcMainEvent, options: SpawnOptions) {
+  protected execStreaming(event: IpcMainEvent, options: SpawnOptions, process: ReadableChildProcess) {
     const extensionId = this.getExtensionIdFromEvent(event);
-    const args = options.command.concat();
-    const exePath = args.shift();
 
-    if (!exePath) {
-      throw new Error(`no executable given`);
-    }
-
-    const proc = childProcess.spawn(exePath, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      ..._.pick(options, ['cwd', 'env']),
-    });
     let errored = false;
 
-    proc.stdout.on('data', (stdout: string | Buffer) => {
+    process.stdout.on('data', (stdout: string | Buffer) => {
       this.sendToFrame(event, 'extensions/spawn/output', options.execId, { stdout: stdout.toString('utf-8') });
     });
-    proc.stderr.on('data', (stderr: string | Buffer) => {
+    process.stderr.on('data', (stderr: string | Buffer) => {
       this.sendToFrame(event, 'extensions/spawn/output', options.execId, { stderr: stderr.toString('utf-8') });
     });
-    proc.on('error', (error) => {
+    process.on('error', (error) => {
       errored = true;
       this.sendToFrame(event, 'extensions/spawn/error', options.execId, error);
     });
-    proc.on('exit', (code, signal) => {
+    process.on('exit', (code, signal) => {
       if (errored) {
         return;
       }
@@ -356,7 +368,7 @@ class ExtensionManagerImpl implements ExtensionManager {
 
     const fullId = `${ extensionId }:${ options.execId }`;
 
-    this.processes[fullId] = new WeakRef(proc);
+    this.processes[fullId] = new WeakRef(process);
   }
 
   async shutdown() {
