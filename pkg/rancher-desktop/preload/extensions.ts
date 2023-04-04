@@ -261,37 +261,39 @@ class Client implements v1.DockerDesktopClient {
    * makeRequest is a helper for ddClient.extension.vm.service.<HTTP method>
    * that wraps ddClient.extension.vm.service.request().
    */
-  protected makeRequest(method: string, url: string, data?: any) {
-    return this.extension.vm?.service?.request({
+  protected makeRequest(method: string, url: string, data?: any): Promise<unknown> {
+    return this.request({
       method, url, data, headers: {},
-    }) ?? Promise.reject(`Failed to ${ method } ${ url }: properties missing`);
+    });
+  }
+
+  protected async request(config: v1.RequestConfig): Promise<unknown> {
+    try {
+      const result = await ipcRenderer.invoke('extensions/vm/http-fetch', config);
+
+      // Parse as JSON if possible (API is unclear).
+      try {
+        return JSON.parse(result);
+      } catch {
+        return result;
+      }
+    } catch (ex) {
+      console.debug(`${ config.method } ${ config.url } error:`, ex);
+      throw ex;
+    }
   }
 
   extension: v1.Extension = {
     vm: {
       cli:     { exec: getExec('container') },
       service: {
-        request: async(config: v1.RequestConfig): Promise<unknown> => {
-          try {
-            const result = await ipcRenderer.invoke('extensions/vm/http-fetch', config);
-
-            // Parse as JSON if possible (API is unclear).
-            try {
-              return JSON.parse(result);
-            } catch {
-              return result;
-            }
-          } catch (ex) {
-            console.debug(`${ config.method } ${ config.url } error:`, ex);
-            throw ex;
-          }
-        },
-        get:    (url: string) => this.makeRequest('GET', url),
-        post:   (url: string, data: any) => this.makeRequest('POST', url, data),
-        put:    (url: string, data: any) => this.makeRequest('PUT', url, data),
-        patch:  (url: string, data: any) => this.makeRequest('PATCH', url, data),
-        delete: (url: string) => this.makeRequest('DELETE', url),
-        head:   (url: string) => this.makeRequest('HEAD', url),
+        request: (config: v1.RequestConfig) => this.request(config),
+        get:     (url: string) => this.makeRequest('GET', url),
+        post:    (url: string, data: any) => this.makeRequest('POST', url, data),
+        put:     (url: string, data: any) => this.makeRequest('PUT', url, data),
+        patch:   (url: string, data: any) => this.makeRequest('PATCH', url, data),
+        delete:  (url: string) => this.makeRequest('DELETE', url),
+        head:    (url: string) => this.makeRequest('HEAD', url),
       },
     },
     host:  { cli: { exec: getExec('host') } },
