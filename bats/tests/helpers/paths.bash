@@ -48,8 +48,13 @@ if is_windows; then
     PATH_CACHE="$PATH_DATA/cache"
     PATH_LOGS="$PATH_DATA/logs"
     PATH_EXTENSIONS="$PATH_DATA/extensions"
-    PATH_EXECUTABLE="$PROGRAMFILES/Rancher Desktop/Rancher Desktop.exe"
-    PATH_RESOURCES="$PROGRAMFILES/Rancher Desktop/resources/resources"
+    if test -d "$PROGRAMFILES/Rancher Desktop"; then
+        PATH_EXECUTABLE="$PROGRAMFILES/Rancher Desktop/Rancher Desktop.exe"
+        PATH_RESOURCES="$PROGRAMFILES/Rancher Desktop/resources/resources"
+    else
+        PATH_EXECUTABLE="$LOCALAPPDATA/Programs/Rancher Desktop/Rancher Desktop.exe"
+        PATH_RESOURCES="$LOCALAPPDATA/Programs/Rancher Desktop/resources/resources"
+    fi
 fi
 
 PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
