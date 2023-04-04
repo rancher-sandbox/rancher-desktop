@@ -1,19 +1,22 @@
 ## Overview
 
-BATS is a testing framework for Bash shell scripts that provides supporting libraries and helpers for customizable server-side test automation.
+BATS is a testing framework for Bash shell scripts that provides supporting libraries and helpers for customizable test automation.
 
 ## Setup
 
-It's important to have a Rancher Desktop CI build installed with privileged rights before running the BATS tests.
+It's important to have a Rancher Desktop CI or release build installed and running with no errors before executing the BATS tests.
 
 On Windows:
-  Prior to running `git submodule update --init`, it's important to setup the Git configuration by running the following commands:
+
+Clone the Git repository of Rancher Desktop, whether directly inside a WSl distro or on the host Win32.
+If the repository will be cloned on Win32, prior to cloning it, it's important to setup the Git configuration by running the following commands:
 
   ```
   git config --global core.eol lf
   git config --global core.autocrlf false
   ```
-  Then, checkout the Git repository or clone it.
+Note that changing `crlf` settings is not needed when you clone it inside a WSL distro.
+Regardless of the repository location, the BATS tests can be executed ONLY from inside a WSL distribution. So, if the repository is cloned on Win32, the repository can be located within a WSL distro from /mnt/c, as it represents the `C:` drive on Windows.
 
 All platforms:
 From the root directory of the Git repository, run the following commands to install BATS and its helper libraries into the BATS test directory:
@@ -57,16 +60,7 @@ From the root directory of the Git repository, run the following commands to ins
 ## Writing BATS Tests
 
 1. Add BATS test by creating files with `.bats` extension under ./bats/tests/FOLDER_NAME
-2. A Bats test file is a Bash script with special syntax for defining test cases. Under the hood, each test case is just a function with a description.
-
-    Example:
-    ```
-    @test "addition using bc" {
-        run sh -c "echo 2+2 | bc"
-        assert_output "4"
-    }
-    ```
-  BATS syntax and libraries for defining test hooks, writing assertions and treating output can be accessed via BATS [documentation](https://bats-core.readthedocs.io/en/stable/): [bats-core](https://github.com/rancher-sandbox/bats-core), [bats-assert](https://github.com/rancher-sandbox/bats-assert), [bats-file](https://github.com/rancher-sandbox/bats-file), [bats-support](https://github.com/rancher-sandbox/bats-support)
+2. A Bats test file is a Bash script with special syntax for defining test cases. BATS syntax and libraries for defining test hooks, writing assertions and treating output can be accessed via BATS [documentation](https://bats-core.readthedocs.io/en/stable/): [bats-core](https://github.com/rancher-sandbox/bats-core), [bats-assert](https://github.com/rancher-sandbox/bats-assert), [bats-file](https://github.com/rancher-sandbox/bats-file), [bats-support](https://github.com/rancher-sandbox/bats-support)
 
 ## BATS linting
 
