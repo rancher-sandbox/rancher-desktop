@@ -974,7 +974,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
-      userConfig.currentContext ??= contextName;
+      userConfig.currentContext ||= contextName;
       // Use custom exportConfig() that supports the `proxy-url` cluster field.
       const userYAML = this.ensureContentsAreYAML(exportConfig(userConfig));
       const writeStream = fs.createWriteStream(workPath, { mode: 0o600 });
