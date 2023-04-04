@@ -267,7 +267,7 @@ class Client implements v1.DockerDesktopClient {
       ipcRenderer.send('extensions/open-external', url);
     },
     platform: process.platform,
-    arch:     process.arch,
+    arch:     '<unknown>',
     hostname: '<unknown>',
   };
 
