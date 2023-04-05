@@ -192,11 +192,18 @@ let extPath = '';
  * Attaches a browser view to the main window
  */
 const createView = () => {
+  const hostInfo = {
+    arch:     Electron.app.runningUnderARM64Translation ? 'arm64' : process.arch,
+    hostname: os.hostname(),
+  };
+
   view = new BrowserView({
     webPreferences: {
-      nodeIntegration:  false,
-      contextIsolation: true,
-      preload:          path.join(paths.resources, 'preload.js'),
+      nodeIntegration:     false,
+      contextIsolation:    true,
+      preload:             path.join(paths.resources, 'preload.js'),
+      sandbox:             true,
+      additionalArguments: [JSON.stringify(hostInfo)],
     },
   });
   getWindow('main')?.setBrowserView(view);
@@ -336,7 +343,6 @@ function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, args: an
  * @param relPath The relative path to the extension root
  */
 export function openExtension(id: string, relPath: string) {
-  // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
 
   const window = getWindow('main') ?? undefined;

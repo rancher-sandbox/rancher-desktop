@@ -1,10 +1,12 @@
 import initExtensions from './extensions';
 
-async function init() {
-  await initExtensions();
+function init() {
+  initExtensions();
 }
 
-init().catch((ex) => {
+try {
+  init();
+} catch (ex) {
   console.error(ex);
   throw ex;
-});
+}
