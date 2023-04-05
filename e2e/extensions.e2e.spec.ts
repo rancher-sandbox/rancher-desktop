@@ -195,7 +195,7 @@ test.describe.serial('Extensions', () => {
       });
     });
 
-    test.describe('running host commands', () => {
+    test.describe('ddClient.extension.host.cli.exec', () => {
       const wrapperName = process.platform === 'win32' ? 'dummy.cmd' : 'dummy.sh';
 
       test('capturing output', async() => {
@@ -255,8 +255,8 @@ test.describe.serial('Extensions', () => {
       });
     });
 
-    test.describe('running container engine commands', () => {
-      test('can run arbitrary commands', async() => {
+    test.describe('ddClient.docker', () => {
+      test('ddClient.docker.cli.exec', async() => {
         const script = `
           ddClient.docker.cli.exec("info", ["--format", "{{ json . }}"])
           .then(v => v.parseJsonObject())
@@ -274,7 +274,7 @@ test.describe.serial('Extensions', () => {
           OSType:      'linux',
         }));
       });
-      test('can list images', async() => {
+      test('ddClient.docker.listImages', async() => {
         const script = 'ddClient.docker.listImages({digests: true})';
         const result = await evalInView(script);
 
@@ -285,13 +285,28 @@ test.describe.serial('Extensions', () => {
           }),
         ]));
       });
-      test('can list containers', async() => {
+      test('ddClient.docker.listContainers', async() => {
         const script = 'ddClient.docker.listContainers({size: true})';
         const result = await evalInView(script);
 
         expect(result).toEqual(expect.arrayContaining([
           expect.objectContaining({ Image: 'rd/extension/everything' }),
         ]));
+      });
+    });
+
+    test.describe('ddClient.extension.vm.cli.exec', () => {
+      test('capturing output', async() => {
+        const script = `
+          ddClient.extension.vm.cli.exec("/bin/echo", ["xyzzy"])
+          .then(v => JSON.stringify(v))
+        `;
+        const result = JSON.parse(await evalInView(script));
+
+        expect(result).toEqual(expect.objectContaining({
+          stdout: 'xyzzy\n',
+          code:   0,
+        }));
       });
     });
 

@@ -1,11 +1,13 @@
+import { ChildProcessByStdio } from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
+import { Readable } from 'stream';
 
 import _ from 'lodash';
+import yaml from 'yaml';
 
 import {
-  Extension, ExtensionError, ExtensionErrorCode, ExtensionErrorMarker, ExtensionMetadata,
+  Extension, ExtensionError, ExtensionErrorCode, ExtensionErrorMarker, ExtensionMetadata, SpawnOptions,
 } from './types';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
@@ -109,7 +111,7 @@ export class ExtensionImpl implements Extension {
       await this.installIcon(this.dir, metadata);
       await this.installUI(this.dir, metadata);
       await this.installHostExecutables(this.dir, metadata);
-      await this.installContainers(metadata);
+      await this.installContainers(this.dir, metadata);
     } catch (ex) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
       await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
@@ -205,14 +207,10 @@ export class ExtensionImpl implements Extension {
     return `rd-extension-${ normalizedId }`;
   }
 
-  /**
-   * Extract the docker compose files into the given work directory, generating
-   * stub ones if we're only given an image name.
-   * @param metadata The extension metadata.
-   * @param workDir Directory to extract into.
-   * @returns Whether we found containers to run.
-   */
-  protected async extractComposeDefinition(metadata: ExtensionMetadata, workDir: string): Promise<boolean> {
+  protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    const composeDir = path.join(workDir, 'compose');
+
+    // Extract compose file and place it in composeDir
     if (isVMTypeImage(metadata.vm)) {
       const contents = {
         name:     this.id,
@@ -221,55 +219,42 @@ export class ExtensionImpl implements Extension {
         services: { web: { image: '${DESKTOP_PLUGIN_IMAGE}' } },
       };
 
-      await fs.promises.writeFile(path.join(workDir, 'compose.yaml'), JSON.stringify(contents));
+      await fs.promises.mkdir(composeDir, { recursive: true });
+      await fs.promises.writeFile(path.join(composeDir, 'compose.yaml'), JSON.stringify(contents));
     } else if (isVMTypeComposefile(metadata.vm)) {
-      const composeDir = path.posix.dirname(path.posix.normalize(metadata.vm.composefile));
+      const imageComposeDir = path.posix.dirname(path.posix.normalize(metadata.vm.composefile));
 
+      await fs.promises.mkdir(composeDir, { recursive: true });
       await this.client.copyFile(
         this.id,
-        composeDir === '.' ? '/' : `${ composeDir }/`,
-        workDir,
+        imageComposeDir === '.' ? '/' : `${ imageComposeDir }/`,
+        composeDir,
         { namespace: this.extensionNamespace });
     } else {
       console.debug(`Extension ${ this.id } does not have containers to run.`);
 
-      return false;
+      return;
     }
 
-    return true;
-  }
-
-  protected async installContainers(metadata: ExtensionMetadata): Promise<void> {
-    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
-
-    try {
-      if (!await this.extractComposeDefinition(metadata, workDir)) {
-        return;
-      }
-
-      console.debug(`Running ${ this.id } compose up (workDir=${ workDir })`);
-      await this.client.composeUp(
-        workDir,
-        {
-          name:      this.containerName,
-          namespace: this.extensionNamespace,
-          env:       { DESKTOP_PLUGIN_IMAGE: this.id },
-        },
-      );
-    } finally {
-      await fs.promises.rm(workDir, { recursive: true });
-    }
+    // Run `ctrctl compose up`
+    console.debug(`Running ${ this.id } compose up`);
+    await this.client.composeUp(
+      composeDir,
+      {
+        name:      this.containerName,
+        namespace: this.extensionNamespace,
+        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+      },
+    );
   }
 
   async uninstall(): Promise<boolean> {
     // TODO: Unregister the extension from the UI.
 
     try {
-      const metadata = await this.metadata;
-
-      await this.uninstallContainers(metadata);
+      await this.uninstallContainers();
     } catch (ex) {
-      console.error(`Failed to read extension ${ this.id } metadata while uninstalling, not stopping containers: ${ ex }`);
+      console.error(`Ignoring error stopping ${ this.id } containers on uninstall: ${ ex }`);
     }
 
     try {
@@ -285,26 +270,71 @@ export class ExtensionImpl implements Extension {
     return true;
   }
 
-  protected async uninstallContainers(metadata: ExtensionMetadata) {
-    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ext-install-'));
+  protected async uninstallContainers() {
+    console.debug(`Running ${ this.id } compose down`);
+    await this.client.composeDown(
+      path.join(this.dir, 'compose'),
+      {
+        name:      this.containerName,
+        namespace: this.extensionNamespace,
+        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+      },
+    );
+  }
 
-    try {
-      if (!await this.extractComposeDefinition(metadata, workDir)) {
-        return;
+  _composeFile: Promise<any> | undefined;
+  get composeFile(): Promise<any> {
+    this._composeFile ??= (async() => {
+      const filenames = [
+        'compose.yaml',
+        'compose.yml',
+        'docker-compose.yaml',
+        'docker-compose.yml',
+      ];
+      let contents: string | undefined;
+
+      for (const name of filenames) {
+        const filePath = path.join(this.dir, 'compose', name);
+
+        try {
+          contents = await fs.promises.readFile(filePath, 'utf-8');
+          if (contents) {
+            return yaml.parse(contents);
+          }
+        } catch (ex: any) {
+          if ((ex as NodeJS.ErrnoException)?.code === 'ENOENT') {
+            continue;
+          }
+          throw ex;
+        }
       }
+    })();
 
-      console.debug(`Running ${ this.id } compose down (workDir=${ workDir })`);
-      await this.client.composeDown(
-        workDir,
-        {
-          name:      this.containerName,
-          namespace: this.extensionNamespace,
-          env:       { DESKTOP_PLUGIN_IMAGE: this.id },
-        },
-      );
-    } finally {
-      await fs.promises.rm(workDir, { recursive: true });
+    return this._composeFile as Promise<any>;
+  }
+
+  async composeExec(options: SpawnOptions): Promise<ChildProcessByStdio<null, Readable, Readable>> {
+    const metadata = await this.metadata;
+
+    if (!isVMTypeImage(metadata.vm) && !isVMTypeComposefile(metadata.vm)) {
+      throw new Error(`Could not run exec, extension ${ this.id } does not have containers`);
     }
+
+    const composeData = await this.composeFile;
+    const service = Object.keys(composeData?.services ?? {}).shift();
+
+    if (!service) {
+      throw new Error('No services found, cannot run exec');
+    }
+
+    return this.client.composeExec(path.join(this.dir, 'compose'), {
+      name:      this.containerName,
+      namespace: this.extensionNamespace,
+      env:       { ...options.env, DESKTOP_PLUGIN_NAME: this.id },
+      service,
+      command:   options.command,
+      ...options.cwd ? { workdir: options.cwd } : {},
+    });
   }
 
   async extractFile(sourcePath: string, destinationPath: string): Promise<void> {

@@ -4,10 +4,12 @@ import path from 'path';
 
 import _ from 'lodash';
 
-import { ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions } from './types';
+import {
+  ContainerComposeExecOptions, ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
+} from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
-import { ErrorCommand, spawnFile } from '@pkg/utils/childProcess';
+import { ErrorCommand, spawn, spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
@@ -148,19 +150,6 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeOptions) {
-    const args = ['--project-directory', composeDir];
-
-    if (options?.name) {
-      args.push('--project-name', options.name);
-    }
-    args.push('up', '--quiet-pull', '--wait');
-
-    const result = await this.runTool({ env: options?.env ?? {} }, 'docker-compose', ...args);
-
-    console.debug('ran docker compose up', result);
-  }
-
   async stop(container: string, options?: ContainerStopOptions): Promise<void> {
     if (options?.delete && options.force) {
       const { stderr } = await this.docker('container', 'rm', '--force', container);
@@ -178,6 +167,19 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
+  async composeUp(composeDir: string, options?: ContainerComposeOptions) {
+    const args = ['--project-directory', composeDir];
+
+    if (options?.name) {
+      args.push('--project-name', options.name);
+    }
+    args.push('up', '--quiet-pull', '--wait');
+
+    const result = await this.runTool({ env: options?.env ?? {} }, 'docker-compose', ...args);
+
+    console.debug('ran docker compose up', result);
+  }
+
   async composeDown(composeDir: string, options?: ContainerComposeOptions) {
     const args = [
       options?.name ? ['--project-name', options.name] : [],
@@ -186,5 +188,23 @@ export class MobyClient implements ContainerEngineClient {
     const result = await this.runTool('docker-compose', ...args);
 
     console.debug('ran docker compose down', result);
+  }
+
+  composeExec(composeDir: string, options: ContainerComposeExecOptions) {
+    const args = [
+      options.name ? ['--project-name', options.name] : [],
+      ['--project-directory', composeDir, 'exec'],
+      options.user ? ['--user', options.user] : [],
+      options.workdir ? ['--workdir', options.workdir] : [],
+      [options.service, ...options.command],
+    ].flat();
+
+    return Promise.resolve(spawn(executable('docker-compose'), args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env:   {
+        ...process.env,
+        DOCKER_HOST: this.endpoint,
+      },
+    }));
   }
 }
