@@ -109,11 +109,25 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       spawn: async() => {
         const exe = path.join(paths.resources, 'win32', 'internal', 'host-switch.exe');
         const stream = await Logging['host-switch'].fdStream;
-        const k8sPort = 6443;
-        const gatewayIP = '192.168.127.2';
-        const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ gatewayIP }:${ k8sPort }`;
+        const args: string[] = [];
 
-        return childProcess.spawn(exe, ['--port-forward', k8sPortForwarding], {
+        if (this.cfg?.kubernetes.enabled) {
+          const k8sPort = 6443;
+          const gatewayIP = '192.168.127.2';
+          const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ gatewayIP }:${ k8sPort }`;
+
+          args.push('--port-forward', k8sPortForwarding);
+
+          if (this.cfg?.kubernetes.options.traefik) {
+            const ingressIP = this.cfg?.kubernetes.ingress.localhostOnly ? '127.0.0.1' : '0.0.0.0';
+
+            for (const port of [80, 443]) {
+              args.push('--port-forward', `${ ingressIP }:${ port }=${ gatewayIP }:${ port }`);
+            }
+          }
+        }
+
+        return childProcess.spawn(exe, args, {
           stdio:       ['ignore', stream, stream],
           windowsHide: true,
         });
