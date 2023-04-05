@@ -55,9 +55,8 @@ EOF
     rdctl start \
         --application.updater.enabled=false \
         --container-engine.name="$RD_CONTAINER_ENGINE" \
-        --kubernetes.enabled=true \
-        #--virtual-machine.memory-in-gb 6 \
-        "$@" &
+        --kubernetes.enabled=true
+    "$@" &
 }
 
 start_kubernetes() {

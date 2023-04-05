@@ -2,11 +2,28 @@ setup() {
     load '../helpers/load'
 }
 
-@test 'factory-reset when Rancher Desktop is not running' {
-    rdctl factory-reset --verbose
-    start_application
+@test 'factory-reset - pre-condition to factory-reset when Rancher Desktop is not running' {
+    factory_reset
+}
+
+@test 'restart application' {
+    run start_application
+    assert_success
+}
+
+@test 'verify application before factory-reset' {
+    check_installation before
+}
+
+@test 'shutdown Rancher Desktop' {
     rdctl shutdown
+}
+
+@test 'factory-reset after shutdown Rancher Desktop' {
     rdctl_factory_reset --remove-kubernetes-cache=false --verbose
+}
+
+@test 'verify factory-reset worked after shutdown Rancher Desktop' {
     check_installation
 }
 
@@ -40,7 +57,6 @@ start_application() {
         rdctl set --application.path-management-strategy rcfiles
     fi
 
-    check_installation before
 }
 
 rdctl_factory_reset() {
