@@ -2,8 +2,8 @@
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
+import ExtensionsError from '@pkg/components/ExtensionsError.vue';
 import { hexDecode } from '@pkg/utils/string-encode';
-import ExtensionsError from '~/components/ExtensionsError.vue';
 
 interface ExtensionsData {
   error: Error | undefined;
