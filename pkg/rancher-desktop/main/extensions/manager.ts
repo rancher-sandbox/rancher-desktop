@@ -322,7 +322,7 @@ class ExtensionManagerImpl implements ExtensionManager {
           return;
         }
         resolve({
-          cmd:    `${ process.spawnfile } ${ process.spawnargs.join(' ') }`,
+          cmd:    process.spawnargs.join(' '),
           result: signal ?? code ?? 0,
           stdout: Buffer.concat(stdout).toString('utf-8'),
           stderr: Buffer.concat(stderr).toString('utf-8'),
