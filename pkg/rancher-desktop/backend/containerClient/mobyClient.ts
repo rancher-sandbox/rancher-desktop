@@ -5,14 +5,14 @@ import path from 'path';
 import _ from 'lodash';
 
 import {
-  ContainerComposeExecOptions, ContainerComposeExecResult,
-  ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions,
-  ContainerStopOptions,
+  ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
+  ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
+  ContainerRunClientOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
 import { ErrorCommand, spawn, spawnFile } from '@pkg/utils/childProcess';
-import Logging from '@pkg/utils/logging';
+import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import { defined } from '@pkg/utils/typeUtils';
@@ -192,7 +192,7 @@ export class MobyClient implements ContainerEngineClient {
     console.debug('ran docker compose down', result);
   }
 
-  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ContainerComposeExecResult> {
+  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess> {
     const args = [
       options.name ? ['--project-name', options.name] : [],
       ['--project-directory', composeDir, 'exec'],
@@ -208,5 +208,26 @@ export class MobyClient implements ContainerEngineClient {
         DOCKER_HOST: this.endpoint,
       },
     }));
+  }
+
+  runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
+  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
+  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: ContainerRunClientOptions) {
+    const opts = options ?? {};
+
+    // Due to TypeScript reasons, we have to make each branch separately.
+    switch (stdio) {
+    case 'ignore':
+    case undefined:
+      return spawnFile(this.executable, args, { ...opts, stdio: 'ignore' });
+    case 'stream':
+      return spawn(this.executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+    case 'pipe':
+      return spawnFile(this.executable, args, { ...opts, stdio: 'pipe' });
+    }
+
+    return spawnFile(this.executable, args, { ...opts, stdio });
   }
 }

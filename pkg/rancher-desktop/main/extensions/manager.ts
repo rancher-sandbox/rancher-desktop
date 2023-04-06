@@ -277,10 +277,10 @@ class ExtensionManagerImpl implements ExtensionManager {
       throw new Error(`Could not find calling extension ${ extensionId }`);
     }
 
-    return spawn(this.client.executable, options.command, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      ..._.pick(options, ['cwd', 'env']),
-    });
+    return this.client.runClient(
+      options.command,
+      'stream',
+      _.pick(options, ['cwd', 'env', 'namespace']));
   }
 
   /** Spawn a process in the container context. */

@@ -1,4 +1,6 @@
-import type { ChildProcessByStdio } from 'child_process';
+import type { Log } from '@pkg/utils/logging';
+
+import type { ChildProcessByStdio, SpawnOptions } from 'child_process';
 import type { Readable } from 'stream';
 
 type ContainerBasicOptions = {
@@ -54,8 +56,14 @@ export type ContainerComposeExecOptions = ContainerComposeOptions & {
   workdir?: string;
 };
 
-/** ContainerComposeExecResult describes the process returned from composeExec */
-export type ContainerComposeExecResult = ChildProcessByStdio<null, Readable, Readable>;
+/** ReadableProcess describes a process that is capturing output */
+export type ReadableProcess = ChildProcessByStdio<null, Readable, Readable>;
+
+/**
+ * ContainerRunClientOptions describes arguments to
+ * ContainerEngineClient.runClient()
+ */
+export type ContainerRunClientOptions = SpawnOptions & { namespace?: string };
 
 /**
  * ContainerEngineClient is used to run commands on the container engine.
@@ -119,11 +127,14 @@ export interface ContainerEngineClient {
    * raw process that has stdout and stderr set to pipe (but nothing for stdin).
    * @param composeDir The host path containing the compose file.
    */
-  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ContainerComposeExecResult>;
+  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess>;
 
   /**
-   * The client executable to run.  This is used for commands where the two
-   * clients are implemented compatibly.
+   * Run the client directly, using the given arguments.  The 'stdio' argument
+   * determines the return value.
    */
-  readonly executable: string;
+  runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{stdout: string, stderr: string}>;
+  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
 }
