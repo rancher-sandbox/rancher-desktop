@@ -175,7 +175,7 @@ export class MobyClient implements ContainerEngineClient {
     if (options?.name) {
       args.push('--project-name', options.name);
     }
-    args.push('up', '--quiet-pull', '--wait');
+    args.push('up', '--quiet-pull', '--wait', '--remove-orphans');
 
     const result = await this.runTool({ env: options?.env ?? {} }, 'docker-compose', ...args);
 
