@@ -64,6 +64,7 @@ export default {
     // First-party
     '~/plugins/i18n',
     '~/plugins/directives',
+    '~/plugins/clean-html-directive',
     { src: '~/plugins/extend-router' },
   ],
   router: {
