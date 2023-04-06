@@ -796,6 +796,22 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
   }
 
+  protected async writeProxySettings(proxy: BackendSettings['experimental']['virtualMachine']['proxy']): Promise<void> {
+    if (proxy.address && proxy.port) {
+      // Write to /etc/moproxy/proxy.ini
+      const protocol = proxy.address.startsWith('socks5://') ? 'socks5' : 'http';
+      const address = proxy.address.replace(/(https|http|socks5):\/\//g, '');
+      const contents = `[rancher-desktop-proxy]\naddress=${ address }:${ proxy.port }\nprotocol=${ protocol }\n`;
+      const attributePrefix = protocol === 'socks5' ? 'socks' : 'http';
+      const username = proxy.username ? `${ attributePrefix } username=${ proxy.username }\n` : '';
+      const password = proxy.password ? `${ attributePrefix } password=${ proxy.password }\n` : '';
+
+      await this.writeFile(`/etc/moproxy/proxy.ini`, `${ contents }${ username }${ password }`);
+    } else {
+      await this.writeFile(`/etc/moproxy/proxy.ini`, '; no proxy defined');
+    }
+  }
+
   /**
    * handleUpgrade removes all the left over files that
    * were renamed in between releases.
@@ -1322,6 +1338,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
+              this.progressTracker.action('Proxy Config Setup', 50, async() => {
+                await this.writeProxySettings(config.experimental.virtualMachine.proxy);
+              }),
               this.progressTracker.action('Configuring image proxy', 50, async() => {
                 const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
                 const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
@@ -1386,6 +1405,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
+
+        if (config.experimental.virtualMachine.proxy.enabled && config.experimental.virtualMachine.proxy.address && config.experimental.virtualMachine.proxy.port) {
+          await this.progressTracker.action('Starting proxy', 100, this.startService('moproxy'));
+        }
         if (config.containerEngine.allowedImages.enabled) {
           await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
         }
@@ -1597,7 +1620,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     });
   }
 
-  async handleSettingsUpdate(newConfig: BackendSettings): Promise<void> {}
+  async handleSettingsUpdate(newConfig: BackendSettings): Promise<void> {
+    const proxy = newConfig.experimental.virtualMachine.proxy;
+
+    await this.writeProxySettings(proxy);
+    if (proxy.enabled && proxy.address && proxy.port) {
+      await this.execService('moproxy', 'reload', '--ifstarted');
+      await this.startService('moproxy');
+    } else {
+      await this.stopService('moproxy');
+    }
+  }
 
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
