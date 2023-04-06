@@ -1,3 +1,6 @@
+import type { ChildProcessByStdio } from 'child_process';
+import type { Readable } from 'stream';
+
 type ContainerBasicOptions = {
   /**
    * Namespace the container should be created in.
@@ -40,6 +43,20 @@ export type ContainerComposeOptions = ContainerBasicOptions & {
   env?: Record<string, string>;
 };
 
+export type ContainerComposeExecOptions = ContainerComposeOptions & {
+  /** The service to exec in. */
+  service: string;
+  /** The command (and arguments) to execute. */
+  command: string[];
+  /** Run the command as the given (in-container) user. */
+  user?: string,
+  /** Run the command in the given (in-container) directory */
+  workdir?: string;
+};
+
+/** ContainerComposeExecResult describes the process returned from composeExec */
+export type ContainerComposeExecResult = ChildProcessByStdio<null, Readable, Readable>;
+
 /**
  * ContainerEngineClient is used to run commands on the container engine.
  */
@@ -81,17 +98,28 @@ export interface ContainerEngineClient {
   run(imageID: string, options?: ContainerRunOptions): Promise<string>;
 
   /**
+   * Stop the given container, if it exists and is running.
+   */
+  stop(container: string, options?: ContainerStopOptions): Promise<void>;
+
+  /**
    * Start containers via `docker compose` / `nerdctl compose`.
    * @param composeDir The path containing the compose file.
    */
   composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
 
   /**
-   * Stop the given container, if it exists and is running.
+   * Stop containers via `docker compose` / `nerdctl compose`.
+   * @param composeDir The path containing the compose file.
    */
-  stop(container: string, options?: ContainerStopOptions): Promise<void>;
-
   composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
+
+  /**
+   * Spawn a process using `docker compose exec` / `nerdctl ...`, returning a
+   * raw process that has stdout and stderr set to pipe (but nothing for stdin).
+   * @param composeDir The host path containing the compose file.
+   */
+  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ContainerComposeExecResult>;
 
   /**
    * The client executable to run.  This is used for commands where the two

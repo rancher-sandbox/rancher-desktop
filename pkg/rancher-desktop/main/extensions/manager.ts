@@ -1,6 +1,5 @@
 import { ChildProcessByStdio, spawn } from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -286,7 +285,14 @@ class ExtensionManagerImpl implements ExtensionManager {
 
   /** Spawn a process in the container context. */
   protected spawnContainer(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
-    return Promise.reject(new Error('not implemented'));
+    const extensionId = this.getExtensionIdFromEvent(event);
+    const extension = this.getExtension(extensionId) as ExtensionImpl;
+
+    if (!extension) {
+      return Promise.reject(new Error(`Could not find calling extension ${ extensionId }`));
+    }
+
+    return extension.composeExec(options);
   }
 
   /**
