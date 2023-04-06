@@ -138,8 +138,10 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
       const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
 
       try {
-        defaults = await JSON.parse(plutilResult.stdout);
-      } catch {}
+        defaults = JSON.parse(plutilResult.stdout);
+      } catch (error) {
+        console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
+      }
     } catch (error) {
       console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
     }
@@ -153,7 +155,7 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
       const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
 
       try {
-        locked = await JSON.parse(plutilResult.stdout);
+        locked = JSON.parse(plutilResult.stdout);
       } catch (error) {
         console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
         throw new Error(`${ error }`);
