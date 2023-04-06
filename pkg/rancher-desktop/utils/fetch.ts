@@ -6,6 +6,8 @@ import util from 'util';
 
 import _fetch, { RequestInit } from 'node-fetch';
 
+export { RequestInit } from 'node-fetch';
+
 /**
  * CertificateVerificationError is a custom Error class that describes a TLS
  * certificate that failed verification.

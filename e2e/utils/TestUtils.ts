@@ -177,8 +177,13 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
   const exe = getFullPathForTool(tool);
 
   try {
-    const { stdout } = await childProcess.spawnFile(
-      exe, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const { stdout } = await childProcess.spawnFile(exe, args, {
+      env: {
+        ...process.env,
+        PATH: `${ process.env.PATH }${ path.delimiter }${ getResourceBinDir() }`,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
 
     return stdout;
   } catch (ex:any) {

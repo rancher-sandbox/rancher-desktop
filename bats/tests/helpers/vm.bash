@@ -17,27 +17,29 @@ factory_reset() {
         sudo iptables -F
         sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
     fi
+}
 
-    image_allow_list="$(bool "$RD_USE_IMAGE_ALLOW_LIST")"
-    path_management="rcfiles"
-    wsl_integrations="{}"
+start_container_engine() {
+    # TODO why is --path option required for Windows
     if is_windows; then
-        path_management="notset"
-        wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
+        set - --path "$(wslpath -w "$PATH_EXECUTABLE")" "$@"
+    fi
+    if is_unix; then
+        set - --application.admin-access=false "$@"
+        set - --application.path-management-strategy rcfiles "$@"
     fi
 
+    # TODO containerEngine.allowedImages.patterns and WSL.integrations
+    # TODO cannot be set from the commandline yet
+    image_allow_list="$(bool "$RD_USE_IMAGE_ALLOW_LIST")"
+    wsl_integrations="{}"
+    if is_windows; then
+        wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
+    fi
     mkdir -p "$PATH_CONFIG"
     cat <<EOF >"$PATH_CONFIG_FILE"
 {
-  "version": 5,
-  "application": {
-    "adminAccess":            false,
-    "pathManagementStrategy": "$path_management",
-    "updater":                { "enabled": false }
-  },
-  "virtualMachine": {
-    "memoryInGB": 6
-  },
+  "version": 6,
   "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
     "allowedImages": {
@@ -47,25 +49,14 @@ factory_reset() {
   }
 }
 EOF
-}
 
-start_container_engine() {
-    # TODO why is --path option required for Windows
-    if is_windows; then
-        set - --path "$(wslpath -w "$PATH_EXECUTABLE")" "$@"
-    fi
-    if is_macos; then
-        set - --application.admin-access=false "$@"
-    fi
-    if is_unix; then
-        set - --application.path-management-strategy rcfiles "$@"
-    fi
     # Detach `rdctl start` because on Windows the process may not exit until
     # Rancher Desktop itself quits.
     rdctl start \
         --application.updater.enabled=false \
         --container-engine="$RD_CONTAINER_ENGINE" \
         --kubernetes-enabled=false \
+        --virtual-machine.memory-in-gb 6 \
         "$@" &
 }
 

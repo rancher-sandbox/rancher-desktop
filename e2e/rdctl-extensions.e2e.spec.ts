@@ -64,7 +64,10 @@ test.describe('Command server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
-    createDefaultSettings({ kubernetes: { enabled: true } });
+    createDefaultSettings({
+      containerEngine: { allowedImages: { enabled: false } },
+      kubernetes:      { enabled: true },
+    });
     electronApp = await _electron.launch({
       args: [
         appPath,

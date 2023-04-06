@@ -1,1 +1,3 @@
-rem This script does not do anything
+rem This script just runs all the arguments
+
+%*

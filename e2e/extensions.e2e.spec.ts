@@ -13,7 +13,7 @@ import {
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
+  createDefaultSettings, getFullPathForTool, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -24,21 +24,11 @@ import type { BrowserView, BrowserWindow } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
-const rdctl = executable('rdctl');
+const rdctl = getFullPathForTool('rdctl');
 
 fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
 
 const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
-
-/**
- * Get the given executable. Similar to @pkg/utils/resources, but does not use
- * Electron.app (which doesn't work during the test).
- */
-function executable(name: string) {
-  const exeName = name + (process.platform === 'win32' ? '.exe' : '');
-
-  return path.join(srcDir, 'resources', process.platform, 'bin', exeName);
-}
 
 test.describe.serial('Extensions', () => {
   let app: ElectronApplication;
@@ -46,12 +36,12 @@ test.describe.serial('Extensions', () => {
   let isContainerd = false;
 
   async function ctrctl(...args: string[]) {
-    let tool = executable('nerdctl');
+    let tool = getFullPathForTool('nerdctl');
 
     if (isContainerd) {
       args = ['--namespace', 'rancher-desktop-extensions'].concat(args);
     } else {
-      tool = executable('docker');
+      tool = getFullPathForTool('docker');
       if (process.platform !== 'win32') {
         args = ['--context', 'rancher-desktop'].concat(args);
       }
@@ -68,7 +58,10 @@ test.describe.serial('Extensions', () => {
   }
 
   test.beforeAll(async() => {
-    createDefaultSettings({ kubernetes: { enabled: false } });
+    createDefaultSettings({
+      containerEngine: { name: ContainerEngine.MOBY },
+      kubernetes:      { enabled: false },
+    });
     app = await startRancherDesktop(__filename, { mock: false });
     page = await app.firstWindow();
   });
@@ -129,13 +122,13 @@ test.describe.serial('Extensions', () => {
   test('build and install testing extension', async() => {
     const dataDir = path.join(srcDir, 'bats', 'tests', 'extensions', 'testdata');
 
-    await ctrctl('build', '--tag', 'rd/extension/ui', '--build-arg', 'variant=ui', dataDir);
-    await spawnFile(rdctl, ['api', '-XPOST', '/v1/extensions/install?id=rd/extension/ui']);
+    await ctrctl('build', '--tag', 'rd/extension/everything', '--build-arg', 'variant=everything', dataDir);
+    await spawnFile(rdctl, ['api', '-XPOST', '/v1/extensions/install?id=rd/extension/everything']);
   });
 
   test('use extension protocol handler', async() => {
     const result = await page.evaluate(async() => {
-      const data = await fetch('x-rd-extension://72642f657874656e73696f6e2f7569/ui/dashboard-tab/ui/index.html');
+      const data = await fetch('x-rd-extension://72642f657874656e73696f6e2f65766572797468696e67/ui/dashboard-tab/ui/index.html');
 
       return await data.text();
     });
@@ -149,7 +142,7 @@ test.describe.serial('Extensions', () => {
     test('extension UI can be loaded', async() => {
       const window: JSHandle<BrowserWindow> = await app.browserWindow(page);
 
-      await page.click('.nav .nav-item[data-id="extension:rd/extension/ui"]');
+      await page.click('.nav .nav-item[data-id="extension:rd/extension/everything"]');
 
       // Try until we can get a BrowserView for the extension (because it can
       // take some time to load).
@@ -199,6 +192,117 @@ test.describe.serial('Extensions', () => {
         platform: os.platform(),
         arch:     os.arch(),
         hostname: os.hostname(),
+      });
+    });
+
+    test.describe('running host commands', () => {
+      const wrapperName = process.platform === 'win32' ? 'dummy.cmd' : 'dummy.sh';
+
+      test('capturing output', async() => {
+        const script = `
+          ddClient.extension.host.cli.exec("${ wrapperName }", [
+            "${ process.execPath }", "-e", "console.log(1 + 1)"
+          ]).then(({cmd, killed, signal, code, stdout, stderr}) => ({
+            /* Rebuild the object so it can be serialized properly */
+            cmd, killed, signal, code, stdout, stderr
+          }));
+        `;
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.objectContaining({
+          cmd:    expect.stringContaining(wrapperName),
+          code:   0,
+          stdout: expect.stringContaining('2'),
+          stderr: expect.stringContaining(''),
+        }));
+      });
+
+      test('streaming output', async() => {
+        const script = `
+          (new Promise((resolve) => {
+            let output = [], errors = [], exitCodes = [];
+            ddClient.extension.host.cli.exec("${ wrapperName }", [
+              "${ process.execPath }", "-e",
+              "console.log(2 + 2); console.error(3 + 3);"],
+              {
+                stream: {
+                  onOutput: (data) => {
+                    output.push(data);
+                  },
+                  onError: (err) => {
+                    errors.push(err);
+                    resolve(output, errors, exitCodes);
+                  },
+                  onClose: (exitCode) => {
+                    exitCodes.push(exitCode);
+                    resolve({output, errors, exitCodes});
+                  },
+                }
+            });
+          })).catch(ex => ex);
+        `;
+
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.objectContaining({
+          output: expect.arrayContaining([
+            { stdout: expect.stringContaining('4') },
+            { stderr: expect.stringContaining('6') },
+          ]),
+          errors:    [],
+          exitCodes: [0],
+        }));
+      });
+    });
+
+    test.describe('running container engine commands', () => {
+      test('can run arbitrary commands', async() => {
+        const script = `
+          ddClient.docker.cli.exec("info", ["--format", "{{ json . }}"])
+          .then(v => v.parseJsonObject())
+          .then(j => JSON.stringify(j));
+        `;
+        const result = JSON.parse(await evalInView(script));
+
+        expect(result).toEqual(expect.objectContaining({
+          ID:          expect.any(String),
+          Driver:      expect.any(String),
+          Plugins:     expect.objectContaining({}),
+          MemoryLimit: expect.any(Boolean),
+          SwapLimit:   expect.any(Boolean),
+          MemTotal:    expect.any(Number),
+          OSType:      'linux',
+        }));
+      });
+      test('can list images', async() => {
+        const script = 'ddClient.docker.listImages({digests: true})';
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            Repository: 'rd/extension/everything',
+            Digest:     expect.any(String),
+          }),
+        ]));
+      });
+      test('can list containers', async() => {
+        const script = 'ddClient.docker.listContainers({size: true})';
+        const result = await evalInView(script);
+
+        expect(result).toEqual(expect.arrayContaining([
+          expect.objectContaining({ Image: 'rd/extension/everything' }),
+        ]));
+      });
+    });
+
+    test.describe('ddClient.vm.service', () => {
+      test.skip('can fetch from the backend', () => {
+      });
+      test('can fetch from external sources', async() => {
+        const url = 'http://127.0.0.1:6120/LICENSES'; // dashboard
+        const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
+
+        await expect(result).resolves.toContain('Copyright');
       });
     });
   });

@@ -2,7 +2,7 @@ import os from 'os';
 import path from 'path';
 
 import Electron, {
-  BrowserWindow, app, shell, BrowserView, ipcMain,
+  BrowserWindow, app, shell, BrowserView, ipcMain, nativeTheme,
 } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
@@ -192,14 +192,25 @@ let extPath = '';
  * Attaches a browser view to the main window
  */
 const createView = () => {
+  const hostInfo = {
+    arch:     Electron.app.runningUnderARM64Translation ? 'arm64' : process.arch,
+    hostname: os.hostname(),
+  };
+
   view = new BrowserView({
     webPreferences: {
-      nodeIntegration:  false,
-      contextIsolation: true,
-      preload:          path.join(paths.resources, 'preload.js'),
+      nodeIntegration:     false,
+      contextIsolation:    true,
+      preload:             path.join(paths.resources, 'preload.js'),
+      sandbox:             true,
+      additionalArguments: [JSON.stringify(hostInfo)],
     },
   });
   getWindow('main')?.setBrowserView(view);
+
+  const backgroundColor = nativeTheme.shouldUseDarkColors ? '#202c33' : '#f4f4f6';
+
+  view.setBackgroundColor(backgroundColor);
 };
 
 /**
@@ -336,7 +347,6 @@ function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, args: an
  * @param relPath The relative path to the extension root
  */
 export function openExtension(id: string, relPath: string) {
-  // const preloadPath = path.join(paths.resources, 'preload.js');
   console.debug(`openExtension(${ id })`);
 
   const window = getWindow('main') ?? undefined;
@@ -359,9 +369,9 @@ export function openExtension(id: string, relPath: string) {
       window, {
         ...CommandOrControl,
         shift: true,
-        key:   'i',
+        key:   'O', // U+004F Latin Capital Letter O
       },
-      () => view?.webContents.openDevTools(),
+      () => view?.webContents.openDevTools({ mode: 'detach' }),
       'open developer tools for the extension',
     );
   }

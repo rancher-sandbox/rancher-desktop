@@ -93,6 +93,9 @@ export interface ContainerEngineClient {
 
   composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
 
-  /** Escape hatch (for now): the executable to run */
+  /**
+   * The client executable to run.  This is used for commands where the two
+   * clients are implemented compatibly.
+   */
   readonly executable: string;
 }
