@@ -33,7 +33,7 @@ export default Vue.extend({
     return { error: undefined };
   },
   computed: {
-    extensionId(): string {
+    extensionId(): string | undefined {
       return hexDecode(this.$route.params.id);
     },
   },
