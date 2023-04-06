@@ -4,6 +4,7 @@ import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesWslIntegrations from '@pkg/components/Preferences/WslIntegrations.vue';
+import PreferencesWslNetwork from '@pkg/components/Preferences/WslNetwork.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
@@ -16,7 +17,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-wsl',
   components: {
-    RdTabbed, Tab, PreferencesWslIntegrations,
+    RdTabbed, Tab, PreferencesWslIntegrations, PreferencesWslNetwork,
   },
   props: {
     preferences: {
@@ -63,6 +64,11 @@ export default Vue.extend({
         label="Integrations"
         name="integrations"
         :weight="1"
+      />
+      <tab
+        label="Network"
+        name="network"
+        :weight="2"
       />
     </template>
     <div class="wsl-content">

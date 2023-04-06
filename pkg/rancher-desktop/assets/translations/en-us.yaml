@@ -298,6 +298,11 @@ application:
       legendText: Notification Icon
       label: Hide Notification Icon
 
+virtualMachine:
+  networkingTunnel:
+    legend: Networking tunnel
+    label: Enable networking tunnel
+
 containerEngine:
   label: Container Engine
   options:
@@ -2564,6 +2569,7 @@ prefs:
     'true': Include Prerelease Versions
     'false': Show Releases Only
     label: Helm Charts
+  experimental: Experimental
 
 principal:
   loading: Loading&hellip;
@@ -4689,7 +4695,7 @@ extensions:
       icon: icon-extension
       heading: No extensions installed
       body: It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
-      button: 
+      button:
         text: Browse Extensions
 
 ##############################
