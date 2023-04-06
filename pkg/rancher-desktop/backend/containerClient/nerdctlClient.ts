@@ -406,7 +406,7 @@ export class NerdctlClient implements ContainerEngineClient {
       }
 
       args.push(...[
-        ['exec'],
+        ['exec', '--tty=false'],
         options.user ? ['--user', options.user] : [],
         options.workdir ? ['--workdir', options.workdir] : [],
         [options.service, ...options.command],
