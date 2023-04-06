@@ -5,7 +5,9 @@ import path from 'path';
 import _ from 'lodash';
 
 import {
-  ContainerComposeExecOptions, ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
+  ContainerComposeExecOptions, ContainerComposeExecResult,
+  ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions,
+  ContainerStopOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
@@ -167,7 +169,7 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeOptions) {
+  async composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
     const args = ['--project-directory', composeDir];
 
     if (options?.name) {
@@ -180,7 +182,7 @@ export class MobyClient implements ContainerEngineClient {
     console.debug('ran docker compose up', result);
   }
 
-  async composeDown(composeDir: string, options?: ContainerComposeOptions) {
+  async composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
     const args = [
       options?.name ? ['--project-name', options.name] : [],
       ['--project-directory', composeDir, 'down'],
@@ -190,7 +192,7 @@ export class MobyClient implements ContainerEngineClient {
     console.debug('ran docker compose down', result);
   }
 
-  composeExec(composeDir: string, options: ContainerComposeExecOptions) {
+  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ContainerComposeExecResult> {
     const args = [
       options.name ? ['--project-name', options.name] : [],
       ['--project-directory', composeDir, 'exec'],

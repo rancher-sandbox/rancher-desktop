@@ -8,8 +8,9 @@ import _ from 'lodash';
 import tar from 'tar-stream';
 
 import {
-  ContainerComposeExecOptions, ContainerComposeOptions, ContainerEngineClient,
-  ContainerRunOptions, ContainerStopOptions,
+  ContainerComposeExecOptions, ContainerComposeExecResult,
+  ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions,
+  ContainerStopOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
@@ -301,7 +302,7 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeOptions) {
+  async composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
     const cleanups: (() => Promise<void>)[] = [];
 
     try {
@@ -342,14 +343,19 @@ export class NerdctlClient implements ContainerEngineClient {
 
   async composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
     const cleanups: (() => Promise<void>)[] = [];
-    const args = [
-      options?.namespace ? ['--namespace', options.namespace] : [],
-      ['compose'],
-      options?.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'down'],
-    ].flat();
 
     try {
+      const workDir = await this.copyDirectoryIn(composeDir);
+
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workDir));
+
+      const args = [
+        options?.namespace ? ['--namespace', options.namespace] : [],
+        ['compose'],
+        options?.name ? ['--project-name', options.name] : [],
+        ['--project-directory', composeDir, 'down'],
+      ].flat();
+
       if (options?.env) {
         const envDir = (await this.vm.execCommand({ capture: true },
           '/bin/mktemp', '--directory', '--tmpdir', 'rd-nerdctl-compose-down-XXXXXX')).trim();
@@ -372,7 +378,7 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
-  async composeExec(composeDir: string, options: ContainerComposeExecOptions) {
+  async composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ContainerComposeExecResult> {
     const cleanups: (() => Promise<void>)[] = [];
 
     try {

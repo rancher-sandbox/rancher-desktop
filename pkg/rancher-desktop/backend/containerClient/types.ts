@@ -55,7 +55,7 @@ export type ContainerComposeExecOptions = ContainerComposeOptions & {
 };
 
 /** ContainerComposeExecResult describes the process returned from composeExec */
-type ContainerComposeExecResult = ChildProcessByStdio<null, Readable, Readable>;
+export type ContainerComposeExecResult = ChildProcessByStdio<null, Readable, Readable>;
 
 /**
  * ContainerEngineClient is used to run commands on the container engine.
