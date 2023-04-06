@@ -5,7 +5,7 @@ import { join } from 'path';
 import * as nativeReg from 'native-reg';
 
 import * as settings from '@pkg/config/settings';
-import { execSync } from '@pkg/utils/childProcess';
+import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -38,7 +38,7 @@ const lockableDefaultSettings = {
  *       located in the main process.
  */
 
-export function readDeploymentProfiles(): settings.DeploymentProfileType {
+export async function readDeploymentProfiles(): Promise<settings.DeploymentProfileType> {
   let profiles: settings.DeploymentProfileType = {
     defaults: {},
     locked:   {},
@@ -98,7 +98,11 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
     break;
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      profiles = parseJsonFromPlist(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
+      try {
+        profiles = await parseJsonFromPlist(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
+      } catch (error) {
+        throw new Error(`${ error }`);
+      }
 
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
@@ -121,30 +125,42 @@ export function readDeploymentProfiles(): settings.DeploymentProfileType {
  * @returns the defaults and/or locked objects if they exist, or
  *          throws an exception if there is an error parsing the locked file.
  */
-function parseJsonFromPlist(rootPath: string, defaultsPath: string, lockedPath: string) {
+async function parseJsonFromPlist(rootPath: string, defaultsPath: string, lockedPath: string) {
   let defaults;
   let locked;
 
-  const plutilCmnd = 'plutil -convert json -r -o - -- ';
-  const pathDefaults = join(rootPath, defaultsPath);
+  const plutilArgArray = ['-convert', 'json', '-r', '-o', '-', '--'];
+  let plutilPath = join(rootPath, defaultsPath);
+  let plutilArgs = plutilArgArray.concat(plutilPath);
 
-  if (settings.fileExists(pathDefaults)) {
+  if (settings.fileExists(plutilPath)) {
     try {
-      const buffer = execSync(join(plutilCmnd, pathDefaults ));
+      const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
 
-      defaults = JSON.parse(buffer.toString());
-    } catch (error) {}
+      try {
+        defaults = await JSON.parse(plutilResult.stdout);
+      } catch {}
+    } catch (error) {
+      console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
+    }
   }
 
-  const pathLocked = join(rootPath, lockedPath);
+  plutilPath = join(rootPath, lockedPath);
+  plutilArgs = plutilArgArray.concat(plutilPath);
 
-  if (settings.fileExists(pathLocked)) {
+  if (settings.fileExists(plutilPath)) {
     try {
-      const buffer = execSync(join(plutilCmnd, pathLocked ));
+      const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
 
-      locked = JSON.parse(buffer.toString());
+      try {
+        locked = await JSON.parse(plutilResult.stdout);
+      } catch (error) {
+        console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
+        throw new Error(`${ error }`);
+      }
     } catch (error) {
-      throw new Error(`Error parsing locked deployment profile: ${ error }`);
+      console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
+      throw new Error(`${ error }`);
     }
   }
 

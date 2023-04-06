@@ -176,7 +176,7 @@ Electron.app.whenReady().then(async() => {
     let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
     try {
-      deploymentProfiles = readDeploymentProfiles();
+      deploymentProfiles = await readDeploymentProfiles();
     } catch { }
     cfg = settings.load(deploymentProfiles);
 

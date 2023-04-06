@@ -251,10 +251,10 @@ describe('settings', () => {
             .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.None));
         });
         test('all fields are unlocked', () => {
-          const deploymentProfile = readDeploymentProfiles();
-
-          settings.load(deploymentProfile);
-          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+          readDeploymentProfiles().then((profiles) => {
+            settings.load(profiles);
+            verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+          });
         });
       });
       describe('when there is a profile', () => {
@@ -280,14 +280,14 @@ describe('settings', () => {
             ({ system, user, shouldLock }) => {
               mock = jest.spyOn(fs, 'readFileSync')
                 .mockImplementation(createMocker(system, user));
-              const deploymentProfile = readDeploymentProfiles();
-
-              settings.load(deploymentProfile);
-              if (shouldLock) {
-                verifyAllFieldsAreLocked(settings.getLockedSettings());
-              } else {
-                verifyAllFieldsAreUnlocked(settings.getLockedSettings());
-              }
+              readDeploymentProfiles().then((profiles) => {
+                settings.load(profiles);
+                if (shouldLock) {
+                  verifyAllFieldsAreLocked(settings.getLockedSettings());
+                } else {
+                  verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+                }
+              });
             });
         });
       });
