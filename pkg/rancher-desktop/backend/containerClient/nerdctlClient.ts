@@ -154,7 +154,11 @@ export class NerdctlClient implements ContainerEngineClient {
         sourceName = path.posix.basename(sourcePath);
         sourceDir = path.posix.join(imageDir, path.posix.dirname(sourcePath));
       }
-      const args = ['--create', '--gzip', '--file', archive, '--directory', sourceDir, resolveSymlinks ? '--dereference' : undefined, sourceName].filter(defined);
+      const args = [
+        '--create', '--gzip', '--file', archive, '--directory', sourceDir,
+        resolveSymlinks ? '--dereference' : undefined,
+        '--one-file-system', '--sparse', sourceName,
+      ].filter(defined);
 
       await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);
 
