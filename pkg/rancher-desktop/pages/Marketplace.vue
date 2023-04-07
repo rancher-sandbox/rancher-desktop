@@ -13,7 +13,9 @@
         :weight="1"
         @active="tabActivate('marketplace-catalog')"
       />
-      <component :is="activeTab" />
+      <div class="marketplace-container">
+        <component :is="activeTab" />
+      </div>
     </rd-tabbed>
   </div>
 </template>
@@ -75,5 +77,9 @@ export default {
     height: 100%;
     // font-size: 1.5rem;
   }
+}
+
+.marketplace-container {
+  padding: 1rem 0.25rem;
 }
 </style>
