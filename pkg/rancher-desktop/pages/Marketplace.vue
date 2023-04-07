@@ -1,22 +1,49 @@
 <template>
   <div class="extensions-page">
-    <marketplace-catalog />
+    <rd-tabbed>
+      <tab
+        label="Installed"
+        name="installed"
+        :weight="0"
+        @active="tabActivate('extensions-installed')"
+      />
+      <tab
+        label="Catalog"
+        name="catalog"
+        :weight="1"
+        @active="tabActivate('marketplace-catalog')"
+      />
+      <component :is="activeTab" />
+    </rd-tabbed>
   </div>
 </template>
 
 <script>
 
 import MarketplaceCatalog from '@pkg/components/MarketplaceCatalog.vue';
+import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
+import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { defaultSettings } from '@pkg/config/settings';
+import { withCredentials } from '@pkg/hocs/withCredentials';
+import ExtensionsInstalled from '@pkg/pages/extensions/installed.vue';
+
+const ExtensionsInstalledWithCredentials = withCredentials(ExtensionsInstalled);
+const MarketplaceCatalogWithCredentials = withCredentials(MarketplaceCatalog);
 
 export default {
   title:      'Marketplace',
-  components: { MarketplaceCatalog },
+  components: {
+    RdTabbed,
+    Tab,
+    MarketplaceCatalog:  MarketplaceCatalogWithCredentials,
+    ExtensionsInstalled: ExtensionsInstalledWithCredentials,
+  },
   data() {
     return {
       settings:           defaultSettings,
       imageNamespaces:    [],
       supportsNamespaces: true,
+      activeTab:          'marketplace-catalog',
     };
   },
   mounted() {
@@ -24,6 +51,11 @@ export default {
       title:       'Marketplace',
       description: '',
     });
+  },
+  methods: {
+    tabActivate(tab) {
+      this.activeTab = tab;
+    },
   },
 };
 </script>
