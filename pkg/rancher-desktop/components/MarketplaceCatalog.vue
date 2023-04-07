@@ -5,6 +5,8 @@ import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
 
+type FilteredExtensions = typeof demoMarketplace.summaries;
+
 export default Vue.extend({
   name:       'marketplace-catalog',
   components: { MarketplaceCard },
@@ -15,7 +17,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    filteredExtensions() {
+    filteredExtensions(): FilteredExtensions {
       let tempExtensions = this.extensions;
 
       if (this.searchValue) {
