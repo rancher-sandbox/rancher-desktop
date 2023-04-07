@@ -1,20 +1,25 @@
 <template>
   <div class="extensions-page">
-    <rd-tabbed>
+    <rd-tabbed
+      :active-tab="activeTab"
+    >
       <tab
         label="Installed"
-        name="installed"
+        name="extensions-installed"
         :weight="0"
         @active="tabActivate('extensions-installed')"
       />
       <tab
         label="Catalog"
-        name="catalog"
+        name="marketplace-catalog"
         :weight="1"
         @active="tabActivate('marketplace-catalog')"
       />
       <div class="marketplace-container">
-        <component :is="activeTab" />
+        <component
+          :is="activeTab"
+          @click:browse="tabActivate('marketplace-catalog')"
+        />
       </div>
     </rd-tabbed>
   </div>

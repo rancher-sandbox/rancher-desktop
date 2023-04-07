@@ -4674,6 +4674,17 @@ diagnostics:
       heading: No problems detected
       body: Rancher Desktop appears to be functioning correctly.
 
+
+##############################
+### Extensions Page
+##############################
+extensions:
+  installed:
+    emptyState:
+      icon: icon-extension
+      heading: No extensions installed
+      body: It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
+
 ##############################
 ### Preferences Page
 ##############################

@@ -30,7 +30,10 @@ export const withCredentials = (component: WithCredentialsComponent) => {
     render(h): VNode {
       return h(
         component,
-        { props: { credentials: this.credentials } },
+        {
+          props: { credentials: this.credentials },
+          on:    this.$listeners,
+        },
       );
     },
   });

@@ -62,12 +62,17 @@ export default {
       type:    Boolean,
       default: false,
     },
+
+    activeTab: {
+      type:    String,
+      default: '',
+    },
   },
 
   data() {
     return {
       tabs:          [],
-      activeTabName: null,
+      activeTabName: this.activeTab,
     };
   },
 
@@ -102,6 +107,13 @@ export default {
       } else if (useHash && activeTab?.name === windowHash) {
         this.select(activeTab.name);
       }
+    },
+    activeTab(current, previous) {
+      if (current === previous || current === this.activeTabName) {
+        return;
+      }
+
+      this.select(current);
     },
   },
 

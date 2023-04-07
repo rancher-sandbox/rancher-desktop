@@ -1,6 +1,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
 
+import EmptyState from '@pkg/components/EmptyState.vue';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ExtensionMetadata } from '@pkg/main/extensions/types';
@@ -8,7 +9,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name:       'extensions-installed',
-  components: { SortableTable },
+  components: { SortableTable, EmptyState },
   props:      {
     credentials: {
       type:     Object as PropType<Omit<ServerState, 'pid'>>,
@@ -31,6 +32,17 @@ export default Vue.extend({
       ],
     };
   },
+  computed: {
+    emptyStateIcon(): string {
+      return this.t('extensions.installed.emptyState.icon');
+    },
+    emptyStateHeading(): string {
+      return this.t('extensions.installed.emptyState.heading');
+    },
+    emptyStateBody(): string {
+      return this.t('extensions.installed.emptyState.body', { }, true);
+    },
+  },
   beforeMount() {
     ipcRenderer.on('extensions/list', (_event, extensions) => {
       this.extensions = extensions || [];
@@ -38,6 +50,9 @@ export default Vue.extend({
     ipcRenderer.send('extensions/list');
   },
   methods: {
+    browseExtensions() {
+      this.$emit('click:browse');
+    },
     uninstall(id: string) {
       fetch(
         `http://localhost:${ this.credentials?.port }/v1/extensions/uninstall?id=${ id }`,
@@ -66,6 +81,24 @@ export default Vue.extend({
       :table-actions="false"
       :row-actions="false"
     >
+      <template #no-rows>
+        <td :colspan="headers.length + 1">
+          <empty-state
+            :icon="emptyStateIcon"
+            :heading="emptyStateHeading"
+            :body="emptyStateBody"
+          >
+            <template #primary-action>
+              <button
+                class="btn role-primary"
+                @click="browseExtensions"
+              >
+                Browse Extensions
+              </button>
+            </template>
+          </empty-state>
+        </td>
+      </template>
       <template #col:uninstall="{row}">
         <td>
           <button
