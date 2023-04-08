@@ -254,13 +254,18 @@ class ExtensionManagerImpl implements ExtensionManager {
   protected spawnHost(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): ReadableChildProcess {
     const extensionId = this.getExtensionIdFromEvent(event);
     const extension = this.getExtension(extensionId) as ExtensionImpl;
+    let command = options.command[0];
 
     if (!extension) {
       throw new Error(`Could not find calling extension ${ extensionId }`);
     }
 
+    if (!path.isAbsolute(command)) {
+      command = path.join(extension.dir, 'bin', command);
+    }
+
     return spawn(
-      path.join(extension.dir, 'bin', options.command[0]),
+      command,
       options.command.slice(1),
       {
         stdio: ['ignore', 'pipe', 'pipe'],
