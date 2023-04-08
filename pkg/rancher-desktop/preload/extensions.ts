@@ -353,8 +353,16 @@ class Client implements v1.DockerDesktopClient {
       if (result.code || result.signal) {
         throw new Error(`failed to list containers: ${ result.stderr }`);
       }
+      return result.parseJsonLines().map(item => {
+        const id = item.ID;
+        const { ID, ...temp } = item;
 
-      return result.parseJsonLines();
+        return {
+          ...temp,
+          Id: id,
+          Names: item.Names.split(',')
+        }
+      });
     },
     listImages: async(options: DockerListImagesOptions = {}) => {
       const args = ['ls', '--format={{json .}}', '--no-trunc'];
