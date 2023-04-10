@@ -44,6 +44,14 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
+    directory: "/src/go/extension-proxy"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
     directory: "/src/go/mock-wsl"
     schedule:
       interval: "weekly"
