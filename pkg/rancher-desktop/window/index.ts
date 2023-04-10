@@ -386,6 +386,12 @@ export function closeExtension() {
     return;
   }
 
+  /**
+   * TODO: ISSUE #4394 Replace undocumented `webContents.destroy()` with
+   * `webcontents.close()`
+   */
+  (view.webContents as any).destroy();
+
   const window = getWindow('main');
 
   window?.removeBrowserView(view);
