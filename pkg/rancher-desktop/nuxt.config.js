@@ -93,6 +93,6 @@ export default {
   telemetry:           false,
   publicRuntimeConfig: {
     featureDiagnosticsFixes: process.env.RD_ENV_DIAGNOSTICS_FIXES === '1',
-    featureExtensions:       process.env.RD_ENV_EXTENSIONS === '1',
+    featureExtensions:       true,
   },
 };
