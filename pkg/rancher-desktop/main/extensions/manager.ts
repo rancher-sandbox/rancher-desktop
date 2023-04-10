@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
-import { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import Electron, { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import _ from 'lodash';
 
 import { ExtensionImpl } from './extensions';
