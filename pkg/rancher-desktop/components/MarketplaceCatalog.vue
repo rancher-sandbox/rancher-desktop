@@ -13,7 +13,7 @@ export default Vue.extend({
   data() {
     return {
       searchValue: '',
-      extensions:  demoMarketplace.summaries.slice(0, 2),
+      extensions:  demoMarketplace.summaries,
     };
   },
   computed: {
