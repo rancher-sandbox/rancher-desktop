@@ -167,7 +167,7 @@ app:
   name: Rancher Desktop
   update: "There's one last step to finish updating Rancher Desktop"
 marketplace:
-  title: Marketplace
+  title: Extensions
   noResults: No extension found for the search criteria
   tabs:
     catalog: Catalog

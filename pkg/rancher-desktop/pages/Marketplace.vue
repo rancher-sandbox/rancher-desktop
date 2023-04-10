@@ -54,7 +54,7 @@ export default {
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
-      title:       'Marketplace',
+      title:       this.t('marketplace.title'),
       description: '',
     });
   },
