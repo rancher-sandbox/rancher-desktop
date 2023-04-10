@@ -30,6 +30,7 @@ export default Vue.extend({
           width: 76,
         },
       ],
+      loading: true,
     };
   },
   computed: {
@@ -46,6 +47,7 @@ export default Vue.extend({
   beforeMount() {
     ipcRenderer.on('extensions/list', (_event, extensions) => {
       this.extensions = extensions || [];
+      this.loading = false;
     });
     ipcRenderer.send('extensions/list');
   },
@@ -75,6 +77,7 @@ export default Vue.extend({
   <div>
     <sortable-table
       key-field="description"
+      :loading="loading"
       :headers="headers"
       :rows="extensions"
       :search="false"
