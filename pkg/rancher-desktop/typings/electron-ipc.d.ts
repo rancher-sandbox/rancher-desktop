@@ -166,6 +166,7 @@ export interface IpcRendererEvents {
   // #region extensions
   'extensions/list': (extensions: { id: string; metadata: ExtensionMetadata; }[] | undefined) => void;
   'extensions/open': (id: string, path: string) => void;
+  'err:extensions/open': () => void;
   'extensions/close': () => void;
   'extensions/spawn/close': (id: string, code: number) => void;
   'extensions/spawn/error': (id: string, error: Error | NodeJS.Signals) => void;

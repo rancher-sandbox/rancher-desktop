@@ -333,6 +333,7 @@ function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, args: an
       createView();
       window.webContents.on('before-input-event', extensionZoomListener);
     } catch (e) {
+      window.webContents.send('err:extensions/open', e);
       console.error(e);
     }
   }
