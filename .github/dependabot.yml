@@ -33,6 +33,10 @@ updates:
       - # This needs to be done in lockstep with node-fetch.
         dependency-name: "@types/node-fetch"
         versions: [ ">2" ]
+      - # We don't utilize @rancher/shell in a meaningful way. It is safe to
+        # ignore until we arrive a solution that uses it.
+        dependency-name: "@rancher/shell"
+        versions: [ ">0.1" ]
 
   # Maintain dependencies for Golang
   - package-ecosystem: "gomod"
