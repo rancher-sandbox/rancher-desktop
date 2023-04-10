@@ -15,7 +15,7 @@
     </ul>
     <template v-if="featureExtensions">
       <hr>
-      <NuxtLink to="/marketplace">
+      <NuxtLink to="/Marketplace">
         <nav-item>
           <template #before>
             <span class="icon icon-circle-plus"></span>

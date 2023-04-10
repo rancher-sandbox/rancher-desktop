@@ -1,56 +1,67 @@
 <template>
   <div class="extensions-page">
-    <nuxt-child />
-    <input v-model="searchValue" type="text" placeholder="Search" />
-    <div v-if="filteredExtensions.length === 0" class="extensions-content-missing">
-      {{ t('marketplace.noResults') }}
-    </div>
-    <div class="extensions-content">
-      <div v-for="item in filteredExtensions" :key="item.slug" :v-if="filteredExtensions">
-        <MarketplaceCard :extension="item" />
+    <rd-tabbed
+      :active-tab="activeTab"
+    >
+      <tab
+        :label="t('marketplace.tabs.installed')"
+        name="extensions-installed"
+        :weight="0"
+        @active="tabActivate('extensions-installed')"
+      />
+      <tab
+        :label="t('marketplace.tabs.catalog')"
+        name="marketplace-catalog"
+        :weight="1"
+        @active="tabActivate('marketplace-catalog')"
+      />
+      <div class="marketplace-container">
+        <component
+          :is="activeTab"
+          @click:browse="tabActivate('marketplace-catalog')"
+        />
       </div>
-    </div>
+    </rd-tabbed>
   </div>
 </template>
 
 <script>
-import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
 
-import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
+import MarketplaceCatalog from '@pkg/components/MarketplaceCatalog.vue';
+import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
+import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { defaultSettings } from '@pkg/config/settings';
+import { withCredentials } from '@pkg/hocs/withCredentials';
+import ExtensionsInstalled from '@pkg/pages/extensions/installed.vue';
+
+const ExtensionsInstalledWithCredentials = withCredentials(ExtensionsInstalled);
 
 export default {
-  components: { MarketplaceCard },
   title:      'Marketplace',
+  components: {
+    RdTabbed,
+    Tab,
+    MarketplaceCatalog,
+    ExtensionsInstalled: ExtensionsInstalledWithCredentials,
+  },
   data() {
     return {
       settings:           defaultSettings,
-      extensions:         demoMarketplace.summaries.slice(0, 2),
       imageNamespaces:    [],
       supportsNamespaces: true,
-      searchValue:        '',
+      activeTab:          'marketplace-catalog',
     };
-  },
-  computed: {
-    filteredExtensions() {
-      let tempExtensions = this.extensions;
-
-      if (this.searchValue) {
-        tempExtensions = tempExtensions.filter((item) => {
-          return item.name
-            .toLowerCase()
-            .includes(this.searchValue.toLowerCase());
-        });
-      }
-
-      return tempExtensions;
-    },
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
-      title:       'Marketplace',
+      title:       this.t('marketplace.title'),
       description: '',
     });
+  },
+  methods: {
+    tabActivate(tab) {
+      this.activeTab = tab;
+    },
   },
 };
 </script>
@@ -70,5 +81,9 @@ export default {
     height: 100%;
     // font-size: 1.5rem;
   }
+}
+
+.marketplace-container {
+  padding: 1rem 0.25rem;
 }
 </style>

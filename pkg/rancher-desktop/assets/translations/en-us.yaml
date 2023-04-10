@@ -167,8 +167,11 @@ app:
   name: Rancher Desktop
   update: "There's one last step to finish updating Rancher Desktop"
 marketplace:
-  title: Marketplace
+  title: Extensions
   noResults: No extension found for the search criteria
+  tabs:
+    catalog: Catalog
+    installed: Installed
   banners:
     install: Extension {name} has been installed.
     uninstall: Extension {name} has been uninstalled.
@@ -4673,6 +4676,21 @@ diagnostics:
       icon: icon-checkmark
       heading: No problems detected
       body: Rancher Desktop appears to be functioning correctly.
+
+
+##############################
+### Extensions Page
+##############################
+extensions:
+  installed:
+    list:
+      uninstall: Uninstall
+    emptyState:
+      icon: icon-extension
+      heading: No extensions installed
+      body: It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
+      button: 
+        text: Browse Extensions
 
 ##############################
 ### Preferences Page
