@@ -3,12 +3,16 @@
  */
 
 import childProcess from 'child_process';
+import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
 import util from 'util';
+import zlib from 'zlib';
 
 import _ from 'lodash';
+import tar from 'tar-stream';
 import webpack from 'webpack';
 
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -239,6 +243,19 @@ export default {
     }
   },
 
+  mapArchToGoArch(arch: string) {
+    const result = ({
+      x64:   'amd64',
+      arm64: 'arm64',
+    } as const)[arch];
+
+    if (!result) {
+      throw new Error(`Architecture ${ arch } is not supported.`);
+    }
+
+    return result;
+  },
+
   /**
    * Build the WSL helper application for Windows.
    */
@@ -295,6 +312,112 @@ export default {
     });
   },
 
+  async buildExtensionProxyImage(): Promise<void> {
+    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-build-rdx-pf-'));
+
+    try {
+      const executablePath = path.join(workDir, 'extension-proxy');
+      const layerPath = path.join(workDir, 'layer.tar');
+      const imagePath = path.join(this.rootDir, 'resources', 'rdx-proxy.tgz');
+
+      console.log('Building RDX proxying image...');
+
+      // Build the golang executable
+      await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', executablePath, '.', {
+        cwd: path.join(this.rootDir, 'src', 'go', 'extension-proxy'),
+        env: { ...process.env, GOOS: 'linux' },
+      });
+
+      // Build the layer tarball
+      // tar streams don't implement piping to multiple writers, and stream.Duplex
+      // can't deal with it either; so we need to fully writ out the file, then
+      // calculate the hash as a separate step.
+      const layer = tar.pack();
+      const layerOutput = layer.pipe(fs.createWriteStream(layerPath));
+      const executableStats = await fs.promises.stat(executablePath);
+
+      await stream.promises.finished(
+        fs.createReadStream(executablePath)
+          .pipe(layer.entry({
+            name:  path.basename(executablePath),
+            mode:  0o755,
+            type:  'file',
+            mtime: new Date(0),
+            size:  executableStats.size,
+          })));
+      layer.finalize();
+      await stream.promises.finished(layerOutput);
+
+      // calculate the hash
+      const layerReader = fs.createReadStream(layerPath);
+      const layerHasher = layerReader.pipe(crypto.createHash('sha256'));
+
+      await stream.promises.finished(layerReader);
+
+      // Build the image tarball
+      const layerHash = layerHasher.digest().toString('hex');
+      const image = tar.pack();
+      const imageWritten =
+        stream.promises.finished(
+          image
+            .pipe(zlib.createGzip())
+            .pipe(fs.createWriteStream(imagePath)));
+      const addEntry = (name: string, input: Buffer | stream.Readable, size?: number) => {
+        if (Buffer.isBuffer(input)) {
+          size = input.length;
+          input = stream.Readable.from(input);
+        }
+
+        return stream.promises.finished((input as stream.Readable).pipe(image.entry({
+          name,
+          size,
+          type:  'file',
+          mtime: new Date(0),
+        })));
+      };
+
+      image.entry({ name: layerHash, type: 'directory' });
+      await addEntry(`${ layerHash }/VERSION`, Buffer.from('1.0'));
+      await addEntry(`${ layerHash }/layer.tar`, fs.createReadStream(layerPath), layerOutput.bytesWritten);
+      await addEntry(`${ layerHash }/json`, Buffer.from(JSON.stringify({
+        id:      layerHash,
+        created: '0000-01-01T00:00:00.0Z',
+        config:  {
+          ExposedPorts: { '80/tcp': {} },
+          WorkingDir:   '/',
+          Entrypoint:   [`/${ path.basename(executablePath) }`],
+        },
+      })));
+      await addEntry(`${ layerHash }.json`, Buffer.from(JSON.stringify({
+        architecture: this.mapArchToGoArch(process.arch),
+        config:       {
+          ExposedPorts: { '80/tcp': {} },
+          Entrypoint:   [`/${ path.basename(executablePath) }`],
+          WorkingDir:   '/',
+        },
+        created: '0000-01-01T00:00:00.0Z',
+        history: [],
+        os:      'linux',
+        rootfs:  {
+          type:     'layers',
+          diff_ids: [`sha256:${ layerHash }`],
+        },
+      })));
+      await addEntry('manifest.json', Buffer.from(JSON.stringify([
+        {
+          Config:   `${ layerHash }.json`,
+          RepoTags: ['ghcr.io/rancher-sandbox/rancher-desktop/rdx-proxy:latest'],
+          Layers:   [`${ layerHash }/layer.tar`],
+        },
+      ])));
+      image.finalize();
+      await imageWritten;
+      console.log('Built RDX port proxy image');
+    } finally {
+      await fs.promises.rm(workDir, { recursive: true });
+    }
+  },
+
   /**
    * Build a golang-based utility for the specified platform.
    * @param name basename of the executable to build
@@ -339,6 +462,7 @@ export default {
     }
     tasks.push(() => this.buildUtility('rdctl', os.platform(), 'bin'));
     tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
+    tasks.push(() => this.buildExtensionProxyImage());
 
     return this.wait(...tasks);
   },
