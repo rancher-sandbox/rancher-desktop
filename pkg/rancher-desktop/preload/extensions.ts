@@ -171,7 +171,7 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
     return (async() => {
       const response = await ipcRenderer.invoke('extensions/spawn/blocking', safeOptions);
 
-      console.debug(`spawn/blocking got result:`, response);
+      console.debug(`spawn/blocking got result:`, process.env.RD_E2E_TEST ? JSON.stringify(response) : response);
 
       return {
         cmd:    response.cmd,
@@ -334,27 +334,73 @@ class Client implements v1.DockerDesktopClient {
   docker = {
     cli:            { exec: getExec('docker-cli') },
     listContainers: async(options: DockerListContainersOptions = {}) => {
-      const args = ['ls', '--format={{json .}}', '--no-trunc'];
+      // Unfortunately, there's no command line option to just make an API call,
+      // and `container ls` by itself doesn't provide all the info.
+      const lsArgs = ['ls', '--format={{json .}}', '--no-trunc'];
 
-      args.push(`--all=${ options.all ?? false }`);
+      lsArgs.push(`--all=${ options.all ?? false }`);
       if ((options.limit ?? -1) > -1) {
-        args.push(`--last=${ options.limit }`);
+        lsArgs.push(`--last=${ options.limit }`);
       }
-      args.push(`--size=${ options.size ?? false }`);
       if (options.filters !== undefined) {
-        args.push(`--filter=${ options.filters }`);
+        lsArgs.push(`--filter=${ options.filters }`);
       }
       if (options.namespace) {
-        args.unshift(`--namespace=${ options.namespace }`);
+        lsArgs.unshift(`--namespace=${ options.namespace }`);
       }
 
-      const result = await this.docker.cli.exec('container', args);
+      const lsResult = await this.docker.cli.exec('container', lsArgs);
 
-      if (result.code || result.signal) {
-        throw new Error(`failed to list containers: ${ result.stderr }`);
+      if (lsResult.code || lsResult.signal) {
+        throw new Error(`failed to list containers: ${ lsResult.stderr }`);
       }
 
-      return result.parseJsonLines();
+      const lsContainers = lsResult.parseJsonLines();
+
+      // We need to run `container inspect` to add more info.
+      const inspectArgs = ['--format={{json .}}'];
+
+      inspectArgs.push(`--size=${ options.size ?? false }`);
+      inspectArgs.push(...lsContainers.map(c => c.ID));
+      if (options.namespace) {
+        inspectArgs.unshift(`--namespace=${ options.namespace }`);
+      }
+
+      const inspectResults = await this.docker.cli.exec('inspect', inspectArgs);
+
+      if (inspectResults.code || inspectResults.signal) {
+        throw new Error(`failed to inspect containers: ${ inspectResults.stderr }`);
+      }
+
+      const inspectContainers = inspectResults.parseJsonLines().flat();
+
+      return lsContainers.map((c) => {
+        const details = inspectContainers.find(i => i.Id.startsWith(c.ID));
+        const pick = (object: any, ...prop: (string | [string, string])[]) => {
+          const result: Record<string, any> = {};
+
+          for (const p of prop) {
+            const [key, newKey] = Array.isArray(p) ? p : [p, p];
+
+            if (key in object ?? {}) {
+              result[newKey] = object[key];
+            }
+          }
+
+          return result;
+        };
+
+        return {
+          ...pick(c, 'Image', 'Command', 'Status'),
+          ...pick(details, 'Id', ['Image', 'ImageID'], 'SizeRw', 'SizeRootFs',
+            'HostConfig', 'NetworkSettings', 'Mounts'),
+          ...pick(details.NetworkSettings, 'Ports'),
+          ...pick(details.Config, 'Labels'),
+          ...pick(details.State, ['Status', 'State']),
+          Names:   c.Names.split(/\s+/g),
+          Created: Date.parse(c.CreatedAt).valueOf(),
+        };
+      });
     },
     listImages: async(options: DockerListImagesOptions = {}) => {
       const args = ['ls', '--format={{json .}}', '--no-trunc'];
