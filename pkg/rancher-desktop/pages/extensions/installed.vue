@@ -102,6 +102,21 @@ export default Vue.extend({
           </empty-state>
         </td>
       </template>
+      <template #col:id="{row}">
+        <td>
+          <nuxt-link
+            :to="{
+              name: 'marketplace-details',
+              params: {
+                slug: row.id,
+                image: row.metadata.icon
+              }
+            }"
+          >
+            {{ row.metadata.ui['dashboard-tab'].title }}
+          </nuxt-link>
+        </td>
+      </template>
       <template #col:uninstall="{row}">
         <td>
           <button
