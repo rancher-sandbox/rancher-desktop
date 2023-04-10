@@ -186,6 +186,11 @@ class ExtensionManagerImpl implements ExtensionManager {
       return await response.text();
     });
 
+    // Import image for port forwarding
+    await this.client.runClient(
+      ['image', 'load', '--input', path.join(paths.resources, 'rdx-proxy.tgz')],
+      console, { namespace: ExtensionImpl.extensionNamespace });
+
     // Install / uninstall extensions as needed.
     await Promise.all(Object.entries(config.extensions ?? {}).map(async([id, install]) => {
       const op = install ? 'install' : 'uninstall';

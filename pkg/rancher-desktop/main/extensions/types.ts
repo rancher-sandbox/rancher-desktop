@@ -8,9 +8,33 @@ import type { Settings } from '@pkg/config/settings';
 import type { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 export type ExtensionMetadata = {
+  /** Icon for the extension, as a path in the image. */
   icon: string;
-  ui?: Record<string, { title: string, root: string, src: string }>;
-  vm: { image: string } | { composefile: string } | {};
+  /** UI endpoints. Currently only "dashboard-tab" is supported. */
+  ui?: {
+    'dashboard-tab'?: {
+      /** The title of the UI, as shown in the side bar. */
+      title: string;
+      /** Root of the directory inside the image holding the UI files. */
+      root: string;
+      /** The initial HTML page to load, relative to root. */
+      src: string;
+      /** Information on the backend to expose. */
+      backend?: {
+        /** The name of the socket, as found in vm.exposes.socket */
+        socket: string;
+      }
+    }
+  }
+  /** Containers to run. */
+  vm?: ({ image: string } | { composefile: string }) & {
+    /** Things to expose to the UI */
+    exposes?: {
+      /** Path to a Unix socket to expose; this is in `/run/guest-services/`. */
+      socket: string;
+    }
+  };
+  /** Files to copy to the host. */
   host?: { binaries: Record<'darwin' | 'windows' | 'linux', { path: string }[]>[] };
 };
 
