@@ -341,6 +341,21 @@ export class ExtensionImpl implements Extension {
     return this._composeFile as Promise<any>;
   }
 
+  async getBackendPort() {
+    const portInfo = await this.client.composePort(
+      path.join(this.dir, 'compose'), {
+        name:      this.containerName,
+        namespace: this.extensionNamespace,
+        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        service:   'r-d-x-port-forwarding',
+        port:      80,
+        protocol:  'tcp',
+      });
+
+    // The port info looks like "0.0.0.0:1234", return only the port number.
+    return /:(\d+)$/.exec(portInfo)?.[1];
+  }
+
   async composeExec(options: SpawnOptions): Promise<ChildProcessByStdio<null, Readable, Readable>> {
     const metadata = await this.metadata;
 

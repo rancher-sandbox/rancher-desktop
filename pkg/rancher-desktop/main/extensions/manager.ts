@@ -168,7 +168,21 @@ class ExtensionManagerImpl implements ExtensionManager {
 
     this.setMainHandler('extensions/vm/http-fetch', async(event, config) => {
       const extensionId = this.getExtensionIdFromEvent(event);
-      const url = new URL(config.url);
+      const extension = this.getExtension(extensionId) as ExtensionImpl;
+      let url: URL;
+
+      if (/^[^:/]*:/.test(config.url)) {
+        // the URL is absolute, use as-is.
+        url = new URL(config.url);
+      } else {
+        // given a relative URL, we need to figure out how to connect to the backend.
+        const port = await extension.getBackendPort();
+
+        if (!port) {
+          return Promise.reject(new Error('Could not find backend port'));
+        }
+        url = new URL(config.url, `http://127.0.0.1:${ port }`);
+      }
 
       if (!url.hostname) {
         console.error(`Fetching from extension backend service not implemented yet (${ extensionId } fetching ${ url })`);
