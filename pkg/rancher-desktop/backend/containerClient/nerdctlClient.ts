@@ -8,14 +8,14 @@ import _ from 'lodash';
 import tar from 'tar-stream';
 
 import {
-  ContainerComposeExecOptions, ContainerComposeExecResult,
-  ContainerComposeOptions, ContainerEngineClient, ContainerRunOptions,
-  ContainerStopOptions,
+  ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
+  ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
+  ContainerRunClientOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
 import { spawn, spawnFile } from '@pkg/utils/childProcess';
-import Logging from '@pkg/utils/logging';
+import Logging, { Log } from '@pkg/utils/logging';
 import { executable } from '@pkg/utils/resources';
 import { defined } from '@pkg/utils/typeUtils';
 
@@ -154,7 +154,11 @@ export class NerdctlClient implements ContainerEngineClient {
         sourceName = path.posix.basename(sourcePath);
         sourceDir = path.posix.join(imageDir, path.posix.dirname(sourcePath));
       }
-      const args = ['--create', '--gzip', '--file', archive, '--directory', sourceDir, resolveSymlinks ? '--dereference' : undefined, sourceName].filter(defined);
+      const args = [
+        '--create', '--gzip', '--file', archive, '--directory', sourceDir,
+        resolveSymlinks ? '--dereference' : undefined,
+        '--one-file-system', '--sparse', sourceName,
+      ].filter(defined);
 
       await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);
 
@@ -378,7 +382,7 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
-  async composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ContainerComposeExecResult> {
+  async composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess> {
     const cleanups: (() => Promise<void>)[] = [];
 
     try {
@@ -406,7 +410,7 @@ export class NerdctlClient implements ContainerEngineClient {
       }
 
       args.push(...[
-        ['exec'],
+        ['exec', '--tty=false'],
         options.user ? ['--user', options.user] : [],
         options.workdir ? ['--workdir', options.workdir] : [],
         [options.service, ...options.command],
@@ -425,5 +429,29 @@ export class NerdctlClient implements ContainerEngineClient {
     } finally {
       await this.runCleanups(cleanups);
     }
+  }
+
+  runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
+  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
+  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: ContainerRunClientOptions) {
+    const opts = options ?? {};
+
+    if (opts.namespace) {
+      args = ['--namespace', opts.namespace].concat(args);
+    }
+    // Due to TypeScript reasons, we have to make each branch separately.
+    switch (stdio) {
+    case 'ignore':
+    case undefined:
+      return spawnFile(this.executable, args, { ...opts, stdio: 'ignore' });
+    case 'stream':
+      return spawn(this.executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+    case 'pipe':
+      return spawnFile(this.executable, args, { ...opts, stdio: 'pipe' });
+    }
+
+    return spawnFile(this.executable, args, { ...opts, stdio });
   }
 }

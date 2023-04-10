@@ -277,10 +277,10 @@ class ExtensionManagerImpl implements ExtensionManager {
       throw new Error(`Could not find calling extension ${ extensionId }`);
     }
 
-    return spawn(this.client.executable, options.command, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      ..._.pick(options, ['cwd', 'env']),
-    });
+    return this.client.runClient(
+      options.command,
+      'stream',
+      _.pick(options, ['cwd', 'env', 'namespace']));
   }
 
   /** Spawn a process in the container context. */
@@ -322,7 +322,7 @@ class ExtensionManagerImpl implements ExtensionManager {
           return;
         }
         resolve({
-          cmd:    `${ process.spawnfile } ${ process.spawnargs.join(' ') }`,
+          cmd:    process.spawnargs.join(' '),
           result: signal ?? code ?? 0,
           stdout: Buffer.concat(stdout).toString('utf-8'),
           stderr: Buffer.concat(stderr).toString('utf-8'),

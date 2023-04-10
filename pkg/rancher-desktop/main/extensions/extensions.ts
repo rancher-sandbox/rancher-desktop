@@ -330,7 +330,7 @@ export class ExtensionImpl implements Extension {
     return this.client.composeExec(path.join(this.dir, 'compose'), {
       name:      this.containerName,
       namespace: this.extensionNamespace,
-      env:       { ...options.env, DESKTOP_PLUGIN_NAME: this.id },
+      env:       { ...options.env, DESKTOP_PLUGIN_IMAGE: this.id },
       service,
       command:   options.command,
       ...options.cwd ? { workdir: options.cwd } : {},
