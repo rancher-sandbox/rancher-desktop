@@ -290,7 +290,23 @@ test.describe.serial('Extensions', () => {
         const result = await evalInView(script);
 
         expect(result).toEqual(expect.arrayContaining([
-          expect.objectContaining({ Image: 'rd/extension/everything' }),
+          expect.objectContaining({
+            Id:              expect.any(String),
+            Names:           expect.arrayContaining([expect.any(String)]),
+            Image:           'rd/extension/everything',
+            ImageID:         expect.any(String),
+            Command:         expect.any(String),
+            Created:         expect.any(Number),
+            Ports:           expect.anything(),
+            SizeRw:          expect.any(Number),
+            SizeRootFs:      expect.any(Number),
+            Labels:          expect.any(Object),
+            State:           expect.any(String),
+            Status:          expect.any(String),
+            HostConfig:      expect.any(Object),
+            NetworkSettings: expect.any(Object),
+            Mounts:          expect.any(Array),
+          }),
         ]));
       });
     });
