@@ -27,6 +27,14 @@ export const withCredentials = (component: WithCredentialsComponent) => {
     async fetch() {
       this.credentials = await this.$store.dispatch('credentials/fetchCredentials');
     },
+    /**
+     * Aliasing createElement to h is a common convention you’ll see in the Vue
+     * ecosystem and is actually required for JSX. We aren't using JSX here, but
+     * following this convention allows us to easily make the switch in the
+     * future if we so desire.
+     *
+     * https://v2.vuejs.org/v2/guide/render-function.html#JSX
+     */
     render(h): VNode {
       return h(
         component,
