@@ -169,6 +169,9 @@ app:
 marketplace:
   title: Marketplace
   noResults: No extension found for the search criteria
+  tabs:
+    catalog: Catalog
+    installed: Installed
   banners:
     install: Extension {name} has been installed.
     uninstall: Extension {name} has been uninstalled.
@@ -4680,10 +4683,14 @@ diagnostics:
 ##############################
 extensions:
   installed:
+    list:
+      uninstall: Uninstall
     emptyState:
       icon: icon-extension
       heading: No extensions installed
       body: It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
+      button: 
+        text: Browse Extensions
 
 ##############################
 ### Preferences Page

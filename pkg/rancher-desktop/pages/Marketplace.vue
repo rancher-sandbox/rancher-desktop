@@ -4,13 +4,13 @@
       :active-tab="activeTab"
     >
       <tab
-        label="Installed"
+        :label="t('marketplace.tabs.installed')"
         name="extensions-installed"
         :weight="0"
         @active="tabActivate('extensions-installed')"
       />
       <tab
-        label="Catalog"
+        :label="t('marketplace.tabs.catalog')"
         name="marketplace-catalog"
         :weight="1"
         @active="tabActivate('marketplace-catalog')"
@@ -35,14 +35,13 @@ import { withCredentials } from '@pkg/hocs/withCredentials';
 import ExtensionsInstalled from '@pkg/pages/extensions/installed.vue';
 
 const ExtensionsInstalledWithCredentials = withCredentials(ExtensionsInstalled);
-const MarketplaceCatalogWithCredentials = withCredentials(MarketplaceCatalog);
 
 export default {
   title:      'Marketplace',
   components: {
     RdTabbed,
     Tab,
-    MarketplaceCatalog:  MarketplaceCatalogWithCredentials,
+    MarketplaceCatalog,
     ExtensionsInstalled: ExtensionsInstalledWithCredentials,
   },
   data() {

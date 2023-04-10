@@ -96,7 +96,7 @@ export default Vue.extend({
                 class="btn role-primary"
                 @click="browseExtensions"
               >
-                Browse Extensions
+                {{ t('extensions.installed.emptyState.button.text') }}
               </button>
             </template>
           </empty-state>
@@ -123,7 +123,7 @@ export default Vue.extend({
             class="btn btn-sm role-primary"
             @click="uninstall(row.id)"
           >
-            Uninstall
+            {{ t('extensions.installed.list.uninstall') }}
           </button>
         </td>
       </template>
