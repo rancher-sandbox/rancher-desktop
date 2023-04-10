@@ -17,7 +17,7 @@ fi
 if is_linux; then
     PATH_APP_HOME="$HOME/.config/rancher-desktop"
     PATH_CONFIG="$HOME/.config/rancher-desktop"
-    PATH_CACHE="$HOME/.local/cache/rancher-desktop"
+    PATH_CACHE="$HOME/.cache/rancher-desktop"
     PATH_DATA="$HOME/.local/share/rancher-desktop"
     PATH_LOGS="$PATH_DATA/logs"
     PATH_EXTENSIONS="$PATH_DATA/extensions"
