@@ -7,7 +7,7 @@ import _ from 'lodash';
 import {
   ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
   ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
-  ContainerRunClientOptions,
+  ContainerRunClientOptions, ContainerComposePortOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
@@ -208,6 +208,18 @@ export class MobyClient implements ContainerEngineClient {
         DOCKER_HOST: this.endpoint,
       },
     }));
+  }
+
+  async composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string> {
+    const args = [
+      options.name ? ['--project-name', options.name] : [],
+      ['--project-directory', composeDir, 'port'],
+      options.protocol ? ['--protocol', options.protocol] : [],
+      [options.service, options.port.toString()],
+    ].flat();
+    const { stdout } = await this.runTool('docker-compose', ...args);
+
+    return stdout.trim();
   }
 
   runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
