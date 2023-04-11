@@ -71,7 +71,7 @@ export class HttpCommandServer {
         '/v1/transient_settings': [0, this.updateTransientSettings],
       },
     } as const,
-    !process.env.RD_ENV_EXTENSIONS ? {} : {
+    {
       get:  { '/v1/extensions': [1, this.listExtensions] },
       post: {
         '/v1/extensions/install':   [1, this.installExtension],

@@ -166,6 +166,9 @@ export default {
 
       return JSON.parse(screenshots)[0].url || '';
     },
+    versionedExtension() {
+      return `${ this.extension }:${ this.extensionDetails.version }`;
+    },
   },
 
   watch: {},
@@ -219,7 +222,7 @@ export default {
       this.resetBanners();
 
       fetch(
-        `http://localhost:${ this.credentials?.port }/v1/extensions/${ action }?id=${ this.extension }`,
+        `http://localhost:${ this.credentials?.port }/v1/extensions/${ action }?id=${ this.versionedExtension }`,
         {
           method:  'POST',
           headers: new Headers({
