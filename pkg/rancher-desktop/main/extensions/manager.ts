@@ -335,7 +335,7 @@ class ExtensionManagerImpl implements ExtensionManager {
    * Helper for event.senderFrame.send() to add checking of channel names.
    */
   protected sendToFrame<K extends keyof IpcRendererEvents>(event: IpcMainEvent, channel: K, ...args: Parameters<IpcRendererEvents[K]>) {
-    event.senderFrame.send(channel, ...args as any);
+    event.senderFrame?.send?.(channel, ...args as any);
   }
 
   /**
