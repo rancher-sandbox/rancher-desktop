@@ -15,14 +15,6 @@
     </ul>
     <template v-if="featureExtensions">
       <hr>
-      <NuxtLink to="/Marketplace">
-        <nav-item>
-          <template #before>
-            <span class="icon icon-circle-plus"></span>
-          </template>
-          Extensions
-        </nav-item>
-      </NuxtLink>
       <template v-for="extension in extensions">
         <nuxt-link
           :key="extension.id"
