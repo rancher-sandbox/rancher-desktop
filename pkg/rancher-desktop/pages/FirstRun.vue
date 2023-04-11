@@ -52,7 +52,7 @@
         class="role-primary"
         @click="close"
       >
-        Accept
+        Ok
       </button>
     </div>
   </div>
@@ -114,6 +114,10 @@ export default Vue.extend({
       return os.platform() === 'linux' || os.platform() === 'darwin';
     },
   },
+  beforeMount() {
+    // Save default settings on closing window.
+    window.addEventListener('beforeunload', this.close);
+  },
   mounted() {
     ipcRenderer.on('settings-read', (event, settings) => {
       this.$data.settings = settings;
@@ -135,6 +139,9 @@ export default Vue.extend({
     if (this.pathManagementRelevant) {
       this.setPathManagementStrategy(PathManagementStrategy.RcFiles);
     }
+  },
+  beforeDestroy() {
+    window.removeEventListener('beforeunload', this.close);
   },
   methods: {
     onChange() {
