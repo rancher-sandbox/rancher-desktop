@@ -1,10 +1,10 @@
 export default {
-  'splatform/epinio-docker-desktop': {
+  'ghcr.io/rancher-sandbox/epinio-desktop-extension': {
     CreatedTime:   '2022-05-06T00:44:00Z',
     UpdatedAt:     '2023-02-24T10:40:43.666252815Z',
     Categories:    ['kubernetes'],
     LatestVersion: {
-      Tag:                '0.0.23',
+      Tag:                '0.0.12',
       ManifestListDigest:
         'sha256:d74bf36e9ad51fdca0ddfacaf6d0af3c8bd5a984e583e6a081e2907958e11954',
       Platforms: [
@@ -31,7 +31,7 @@ export default {
           '<h1>The Application Development Engine for Kubernetes</h1><h3>Tame your developer workflow to go from Code to URL in one step.</h3>Epinio installs into any Kubernetes cluster to bring your application from source code to deployment and allow for Developers and Operators to work better together!',
         'com.docker.extension.publisher-url': 'https://epinio.io',
         'com.docker.extension.screenshots':
-          '[{"url":"https://desktop.docker.com/extensions/splatform_epinio-docker-desktop/epinio_io/images/epinio-docker-desktop-screenshot.png","alt":"Epinio after Installation"}]',
+          '[{"url":"https://github.com/rancher-sandbox/epinio-desktop-extension/raw/rancher-desktop/epinio.png","alt":"Epinio after Installation"}]',
         'org.opencontainers.image.description':
           'Push from source to Kubernetes in one step',
         'org.opencontainers.image.title':  'Epinio',

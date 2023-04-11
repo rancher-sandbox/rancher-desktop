@@ -3,7 +3,7 @@ export const demoMarketplace = {
     {
       id:                 '',
       name:               'Epinio',
-      slug:               'splatform/epinio-docker-desktop',
+      slug:               'ghcr.io/rancher-sandbox/epinio-desktop-extension',
       type:               'extension',
       publisher:          { name: 'Rancher by SUSE' },
       created_at:         '2022-05-06T00:44:00Z',
