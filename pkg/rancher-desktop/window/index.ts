@@ -30,6 +30,7 @@ export const mainRoutes = [
   { route: '/Images' },
   { route: '/Troubleshooting' },
   { route: '/Diagnostics' },
+  { route: '/Extensions' },
 ];
 
 /**
