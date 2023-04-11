@@ -2,7 +2,7 @@ import os from 'os';
 import path from 'path';
 
 import Electron, {
-  BrowserWindow, app, shell, BrowserView, ipcMain, nativeTheme,
+  BrowserWindow, app, shell, BrowserView, ipcMain, nativeTheme, screen,
 } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
@@ -111,12 +111,18 @@ const mainUrl = process.env.RD_ENV_PLUGINS_DEV ? 'https://localhost:8888' : `${ 
  */
 export function openMain() {
   console.debug('openMain() webRoot:', webRoot);
+
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  const defaultWidth = Math.min(Math.trunc(width * 0.8), 1280);
+  const defaultHeight = Math.min(Math.trunc(height * 0.8), 720);
+
   const window = createWindow(
     'main',
     mainUrl,
     {
-      width:          940,
-      height:         600,
+      width:          defaultWidth,
+      height:         defaultHeight,
       resizable:      !process.env.RD_MOCK_FOR_SCREENSHOTS, // remove window's shadows while taking screenshots
       icon:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
       webPreferences: {
