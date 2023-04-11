@@ -167,7 +167,12 @@ export default {
       return JSON.parse(screenshots)[0].url || '';
     },
     versionedExtension() {
-      return `${ this.extension }:${ this.extensionDetails.version }`;
+      return `${ this.extensionWithoutVersion }:${ this.extensionDetails?.version }`;
+    },
+    extensionWithoutVersion() {
+      const index = this.extension.lastIndexOf(':');
+
+      return this.extension.substring(0, index) || this.extension;
     },
   },
 
@@ -178,7 +183,7 @@ export default {
       this.$router.push('/marketplace');
     }
 
-    this.metadata = demoMetadata[this.extension];
+    this.metadata = demoMetadata[this.extensionWithoutVersion];
 
     if (!this.metadata) {
       return;
@@ -187,13 +192,13 @@ export default {
     this.$store.dispatch('page/setHeader', {
       title:
         this.metadata?.LatestVersion.Labels['org.opencontainers.image.title'] ||
-        this.extension,
+        this.extensionWithoutVersion,
     });
 
     this.extensionDetails = {
       name:
         this.metadata?.LatestVersion.Labels['org.opencontainers.image.title'] ||
-        this.extension,
+        this.extensionWithoutVersion,
       icon:
         this.metadata?.LatestVersion.Labels[
           'com.docker.desktop.extension.icon'
