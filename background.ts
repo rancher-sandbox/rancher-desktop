@@ -134,7 +134,9 @@ mainEvents.on('settings-update', async(newSettings) => {
   if (newSettings.application.hideNotificationIcon) {
     Tray.getInstance(cfg).hide();
   } else {
-    Tray.getInstance(cfg).show();
+    if (firstRunDialogComplete) {
+      Tray.getInstance(cfg).show();
+    }
     mainEvents.emit('k8s-check-state', k8smanager);
   }
 
