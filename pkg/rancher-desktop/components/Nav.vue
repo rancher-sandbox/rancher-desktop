@@ -14,12 +14,7 @@
       </li>
     </ul>
     <NuxtLink to="/Marketplace">
-      <nav-item>
-        <template #before>
-          <span class="icon icon-circle-plus"></span>
-        </template>
-        Extensions
-      </nav-item>
+      <nav-item>Extensions</nav-item>
     </NuxtLink>
     <template v-if="featureExtensions">
       <hr>
