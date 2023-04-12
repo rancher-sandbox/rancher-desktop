@@ -53,6 +53,9 @@ test.describe.serial('Main App Test', () => {
 
   test('Main Page', async({ colorScheme }) => {
     const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
+    const navExtension = page.locator('[data-test="extension-nav-epinio"]');
+
+    await expect(navExtension).toBeVisible();
 
     await screenshot.take('General');
     await screenshot.take('PortForwarding', navPage);
@@ -86,6 +89,9 @@ test.describe.serial('Main App Test', () => {
     await extensionsPage.tabCatalog.click();
 
     await extensionsPage.cardEpinio.click();
+
+    // wait for details to render
+    await page.waitForTimeout(1000);
 
     await screenshot.take('Extensions-Details');
   });
