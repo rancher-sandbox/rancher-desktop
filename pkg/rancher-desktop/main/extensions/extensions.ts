@@ -64,7 +64,11 @@ export class ExtensionImpl implements Extension {
   readonly dir: string;
   protected readonly client: ContainerEngineClient;
   protected _metadata: Promise<ExtensionMetadata> | undefined;
-  protected readonly extensionNamespace = 'rancher-desktop-extensions';
+  /** The (nerdctl) namespace to use; shared with ExtensionManagerImpl */
+  static readonly extensionNamespace = 'rancher-desktop-extensions';
+  protected get extensionNamespace() {
+    return ExtensionImpl.extensionNamespace;
+  }
 
   /** Extension metadata */
   get metadata(): Promise<ExtensionMetadata> {
@@ -209,10 +213,11 @@ export class ExtensionImpl implements Extension {
 
   protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
     const composeDir = path.join(workDir, 'compose');
+    let contents: any;
 
     // Extract compose file and place it in composeDir
     if (isVMTypeImage(metadata.vm)) {
-      const contents = {
+      contents = {
         name:     this.id,
         // Disable lint because it's a literal ${DESKTOP_PLUGIN_IMAGE} string.
         // eslint-disable-next-line no-template-curly-in-string
@@ -230,10 +235,50 @@ export class ExtensionImpl implements Extension {
         imageComposeDir === '.' ? '/' : `${ imageComposeDir }/`,
         composeDir,
         { namespace: this.extensionNamespace });
+
+      const composeNames = ['compose.yaml', 'compose.yml', 'docker-compose.yaml', 'docker-compose.yml'];
+
+      for (const composeName of composeNames) {
+        try {
+          contents = yaml.parse(await fs.promises.readFile(path.join(composeDir, composeName), 'utf-8'));
+          break;
+        } catch (ex) {
+          /* Try the next file, or fall back to nothing */
+        }
+      }
     } else {
       console.debug(`Extension ${ this.id } does not have containers to run.`);
 
       return;
+    }
+
+    if (metadata.vm.exposes?.socket) {
+      _.merge(contents, {
+        services: {
+          'r-d-x-port-forwarding': {
+            image:       'ghcr.io/rancher-sandbox/rancher-desktop/rdx-proxy:latest',
+            environment: { SOCKET: `/run/guest-services/${ metadata.vm.exposes.socket }` },
+            ports:       ['80'],
+          },
+        },
+        volumes: { 'r-d-x-guest-services': { labels: { 'io.rancherdesktop.type': 'guest-services' } } },
+      });
+
+      // Fix up the compose file to always have a volume at /run/guest-services/
+      // so that it can be used for sockets to be exposed.
+      for (const service of Object.values<any>(contents.services)) {
+        service.volumes ??= [];
+        service.volumes.push({
+          type:   'volume',
+          source: 'r-d-x-guest-services',
+          target: '/run/guest-services',
+          volume: { nocopy: true },
+        });
+      }
+
+      // Write out the modified compose file, either clobbering the original or
+      // using the preferred name and shadowing the original.
+      await fs.promises.writeFile(path.join(composeDir, 'compose.yaml'), yaml.stringify(contents));
     }
 
     // Run `ctrctl compose up`
@@ -285,32 +330,30 @@ export class ExtensionImpl implements Extension {
   _composeFile: Promise<any> | undefined;
   get composeFile(): Promise<any> {
     this._composeFile ??= (async() => {
-      const filenames = [
-        'compose.yaml',
-        'compose.yml',
-        'docker-compose.yaml',
-        'docker-compose.yml',
-      ];
-      let contents: string | undefined;
+      // Because we wrote out `compose.yaml` in installContainers(), we
+      // can assume that name.
 
-      for (const name of filenames) {
-        const filePath = path.join(this.dir, 'compose', name);
+      const filePath = path.join(this.dir, 'compose', 'compose.yaml');
 
-        try {
-          contents = await fs.promises.readFile(filePath, 'utf-8');
-          if (contents) {
-            return yaml.parse(contents);
-          }
-        } catch (ex: any) {
-          if ((ex as NodeJS.ErrnoException)?.code === 'ENOENT') {
-            continue;
-          }
-          throw ex;
-        }
-      }
+      return yaml.parse(await fs.promises.readFile(filePath, 'utf-8'));
     })();
 
     return this._composeFile as Promise<any>;
+  }
+
+  async getBackendPort() {
+    const portInfo = await this.client.composePort(
+      path.join(this.dir, 'compose'), {
+        name:      this.containerName,
+        namespace: this.extensionNamespace,
+        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        service:   'r-d-x-port-forwarding',
+        port:      80,
+        protocol:  'tcp',
+      });
+
+    // The port info looks like "0.0.0.0:1234", return only the port number.
+    return /:(\d+)$/.exec(portInfo)?.[1];
   }
 
   async composeExec(options: SpawnOptions): Promise<ChildProcessByStdio<null, Readable, Readable>> {

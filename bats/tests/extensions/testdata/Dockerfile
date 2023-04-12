@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM python:3-alpine
 ARG variant=basic
 
 ADD ${variant}.json /metadata.json
@@ -7,4 +7,4 @@ ADD ui /ui/
 ADD bin /bin/
 ADD compose.yaml /compose/
 
-ENTRYPOINT ["/bin/sh", "-c", "sleep inf"]
+ENTRYPOINT ["/usr/local/bin/python3", "/bin/server.py"]

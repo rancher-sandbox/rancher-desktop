@@ -59,6 +59,15 @@ export type ContainerComposeExecOptions = ContainerComposeOptions & {
 /** ReadableProcess describes a process that is capturing output */
 export type ReadableProcess = ChildProcessByStdio<null, Readable, Readable>;
 
+export type ContainerComposePortOptions = ContainerComposeOptions & {
+  /** The service to find the port for */
+  service: string;
+  /** The private port to map */
+  port: number;
+  /** The protocol to use */
+  protocol: 'tcp' | 'udp';
+};
+
 /**
  * ContainerRunClientOptions describes arguments to
  * ContainerEngineClient.runClient()
@@ -128,6 +137,13 @@ export interface ContainerEngineClient {
    * @param composeDir The host path containing the compose file.
    */
   composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess>;
+
+  /**
+   * Get port information for a compose service.
+   * @param composeDir The host path containing the compose file.
+   * @returns The port information, looking like `0.0.0.0:12345`.
+   */
+  composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string>;
 
   /**
    * Run the client directly, using the given arguments.  The 'stdio' argument

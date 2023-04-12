@@ -25,10 +25,16 @@
     "dashboard-tab": {
       "title": "Sample Extension With Everything",
       "root": "/ui",
-      "src": "index.html"
+      "src": "index.html",
+      "backend": {
+        "socket": "hello.sock"
+      }
     }
   },
   "vm": {
-    "composefile": "/compose/compose.yaml"
+    "composefile": "/compose/compose.yaml",
+    "exposes": {
+      "socket": "hello.sock"
+    }
   }
 }

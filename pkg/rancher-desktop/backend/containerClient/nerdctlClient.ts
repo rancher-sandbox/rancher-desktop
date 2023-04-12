@@ -10,7 +10,7 @@ import tar from 'tar-stream';
 import {
   ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
   ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
-  ContainerRunClientOptions,
+  ContainerRunClientOptions, ContainerComposePortOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
@@ -426,6 +426,45 @@ export class NerdctlClient implements ContainerEngineClient {
       cleanups.splice(0, cleanups.length);
 
       return result;
+    } finally {
+      await this.runCleanups(cleanups);
+    }
+  }
+
+  async composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string> {
+    const cleanups: (() => Promise<void>)[] = [];
+
+    try {
+      const workComposeDir = await this.copyDirectoryIn(composeDir);
+
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workComposeDir));
+      const args = [
+        options.namespace ? ['--namespace', options.namespace] : [],
+        ['compose'],
+        options.name ? ['--project-name', options.name] : [],
+        ['--project-directory', workComposeDir],
+      ].flat();
+
+      if (options.env) {
+        const envFile = (await this.vm.execCommand({ capture: true },
+          '/bin/mktemp', '--tmpdir', 'rd-nerdctl-compose-exec-XXXXXX')).trim();
+
+        cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', envFile));
+        const envData = Object.entries(options.env)
+          .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
+          .join('');
+
+        await this.vm.writeFile(envFile, envData);
+        args.push('--env-file', envFile);
+      }
+
+      args.push(...[
+        ['port'],
+        options.protocol ? ['--protocol', options.protocol] : [],
+        [options.service, options.port.toString(10)],
+      ].flat());
+
+      return (await this.nerdctl(...args)).trim();
     } finally {
       await this.runCleanups(cleanups);
     }
