@@ -37,13 +37,13 @@ const (
 // for container events.
 type EventMonitor struct {
 	dockerClient *client.Client
-	portTracker  *tracker.PortTracker
+	portTracker  tracker.Tracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
 // Docker's event API. Caller is responsible to make sure that
 // Docker engine is up and running.
-func NewEventMonitor(portTracker *tracker.PortTracker) (*EventMonitor, error) {
+func NewEventMonitor(portTracker tracker.Tracker) (*EventMonitor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
