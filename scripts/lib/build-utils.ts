@@ -330,7 +330,7 @@ export default {
 
       // Build the layer tarball
       // tar streams don't implement piping to multiple writers, and stream.Duplex
-      // can't deal with it either; so we need to fully writ out the file, then
+      // can't deal with it either; so we need to fully write out the file, then
       // calculate the hash as a separate step.
       const layer = tar.pack();
       const layerOutput = layer.pipe(fs.createWriteStream(layerPath));
