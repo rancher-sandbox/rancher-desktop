@@ -20,13 +20,17 @@ factory_reset() {
 }
 
 start_container_engine() {
-    # TODO why is --path option required for Windows
-    if is_windows; then
-        set - --path "$(wslpath -w "$PATH_EXECUTABLE")" "$@"
-    fi
+    local args=(
+        --application.updater.enabled=false
+        --container-engine="$RD_CONTAINER_ENGINE"
+        --kubernetes-enabled=false
+    )
     if is_unix; then
-        set - --application.admin-access=false "$@"
-        set - --application.path-management-strategy rcfiles "$@"
+        args+=(
+            --application.admin-access=false
+            --application.path-management-strategy rcfiles
+            --virtual-machine.memory-in-gb 6
+        )
     fi
 
     # TODO containerEngine.allowedImages.patterns and WSL.integrations
@@ -52,12 +56,7 @@ EOF
 
     # Detach `rdctl start` because on Windows the process may not exit until
     # Rancher Desktop itself quits.
-    rdctl start \
-        --application.updater.enabled=false \
-        --container-engine="$RD_CONTAINER_ENGINE" \
-        --kubernetes-enabled=false \
-        --virtual-machine.memory-in-gb 6 \
-        "$@" &
+    rdctl start "${args[@]}" "$@" &
 }
 
 start_kubernetes() {
