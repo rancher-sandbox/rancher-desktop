@@ -61,7 +61,8 @@ func NewPortTracker(forwarder *forwarder.VtunnelForwarder, wslAddrs []types.Conn
 	}
 }
 
-// Add adds a container ID and port mapping to the tracker.
+// Add adds a container ID and port mapping to the tracker and calls the
+// vtunnle forwarder to send the port mappings to privileged service.
 func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 	if len(portMap) == 0 {
 		return nil
@@ -86,7 +87,8 @@ func (p *PortTracker) Get(containerID string) nat.PortMap {
 	return p.portStorage.get(containerID)
 }
 
-// Remove deletes a container ID and port mapping from the tracker.
+// Remove deletes a container ID and port mapping from the tracker and calls the
+// vtunnle forwarder to send the port mappings to privileged service.
 func (p *PortTracker) Remove(containerID string) error {
 	portMap := p.portStorage.get(containerID)
 	if len(portMap) != 0 {
