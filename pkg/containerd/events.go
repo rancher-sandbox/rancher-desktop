@@ -28,7 +28,6 @@ import (
 	containerdNamespace "github.com/containerd/containerd/namespaces"
 	"github.com/docker/go-connections/nat"
 	"github.com/gogo/protobuf/proto"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
@@ -39,7 +38,6 @@ const portsKey = "nerdctl/ports"
 type EventMonitor struct {
 	containerdClient *containerd.Client
 	portTracker      tracker.Tracker
-	tcpTracker       *tcplistener.ListenerTracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
@@ -48,7 +46,6 @@ type EventMonitor struct {
 func NewEventMonitor(
 	containerdSock string,
 	portTracker tracker.Tracker,
-	tcpTracker *tcplistener.ListenerTracker,
 ) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
 	if err != nil {
@@ -58,7 +55,6 @@ func NewEventMonitor(
 	return &EventMonitor{
 		containerdClient: client,
 		portTracker:      portTracker,
-		tcpTracker:       tcpTracker,
 	}, nil
 }
 
@@ -105,7 +101,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 
-				updateListener(ctx, ports, e.tcpTracker.Add)
+				updateListener(ctx, ports, e.portTracker.AddListener)
 
 			case "/containers/update":
 				cuEvent := &events.ContainerUpdate{}
@@ -131,7 +127,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						updateListener(ctx, ports, e.tcpTracker.Remove)
+						updateListener(ctx, ports, e.portTracker.RemoveListener)
 						err = e.portTracker.Add(cuEvent.ID, ports)
 						if err != nil {
 							log.Errorf("failed to add port mapping from container update event: %v", err)
@@ -139,7 +135,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							continue
 						}
 
-						updateListener(ctx, ports, e.tcpTracker.Add)
+						updateListener(ctx, ports, e.portTracker.AddListener)
 					}
 
 					continue
@@ -164,7 +160,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					}
 				}
 
-				updateListener(ctx, portMapToDelete, e.tcpTracker.Remove)
+				updateListener(ctx, portMapToDelete, e.portTracker.RemoveListener)
 			}
 
 		case err := <-errCh:
