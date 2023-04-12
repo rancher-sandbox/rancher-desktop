@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import { join } from 'path';
+import stream from 'stream';
 
 import * as nativeReg from 'native-reg';
 
@@ -129,13 +130,12 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
   let defaults;
   let locked;
 
-  const plutilArgArray = ['-convert', 'json', '-r', '-o', '-', '--'];
+  const plutilArgs = ['-convert', 'json', '-r', '-o', '-', '-']; // read from stdin and write to stdout
   let plutilPath = join(rootPath, defaultsPath);
-  let plutilArgs = plutilArgArray.concat(plutilPath);
 
   try {
-    await fs.promises.stat(plutilPath);
-    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
+    const body = stream.Readable.from(fs.readFileSync(plutilPath, { encoding: 'utf-8' }));
+    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: [body, 'pipe', 'pipe'] });
 
     try {
       defaults = JSON.parse(plutilResult.stdout);
@@ -150,11 +150,10 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
   }
 
   plutilPath = join(rootPath, lockedPath);
-  plutilArgs = plutilArgArray.concat(plutilPath);
 
   try {
-    await fs.promises.stat(plutilPath);
-    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
+    const body = stream.Readable.from(fs.readFileSync(plutilPath, { encoding: 'utf-8' }));
+    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: [body, 'pipe', 'pipe'] });
 
     try {
       locked = JSON.parse(plutilResult.stdout);
