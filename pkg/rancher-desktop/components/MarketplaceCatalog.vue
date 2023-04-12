@@ -41,8 +41,15 @@ export default Vue.extend({
       {{ t('marketplace.noResults') }}
     </div>
     <div class="extensions-content">
-      <div v-for="item in filteredExtensions" :key="item.slug" :v-if="filteredExtensions">
-        <MarketplaceCard :extension="item" />
+      <div
+        v-for="item in filteredExtensions"
+        :key="item.slug"
+        :v-if="filteredExtensions"
+      >
+        <MarketplaceCard
+          :extension="item"
+          :data-test="`extension-card-${item.name.toLowerCase()}`"
+        />
       </div>
     </div>
   </div>

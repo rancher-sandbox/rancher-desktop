@@ -73,6 +73,11 @@ test.describe.serial('Main App Test', () => {
     await page.waitForTimeout(1000);
 
     await screenshot.take('Diagnostics');
+
+    const extensionsPage = await navPage.navigateTo('Extensions');
+
+    await expect(extensionsPage.cardEpinio).toBeVisible();
+    await screenshot.take('Extensions', navPage);
   });
 
   test('Preferences Page', async({ colorScheme }) => {

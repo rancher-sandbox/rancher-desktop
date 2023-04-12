@@ -15,6 +15,7 @@
       </div>
       <div class="extension-content-sidebar">
         <button
+          data-test="button-install"
           :class="['btn', 'btn-xs', 'role-primary']"
           :disabled="loading"
           @click="appInstallation(installationAction)"
