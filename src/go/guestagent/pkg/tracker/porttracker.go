@@ -16,21 +16,23 @@ limitations under the License.
 package tracker
 
 import (
-	"sync"
-
-	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
+type Tracker interface {
+	Add(containerID string, portMapping nat.PortMap) error
+	Remove(containerID string) error
+	RemoveAll()
+	Get(containerID string) nat.PortMap
+}
+
 // PortTracker keeps track of port mappings and forwards
 // them to the privileged service on the host over AF_VSOCK
 // tunnel (vtunnel).
 type PortTracker struct {
-	// For docker the key is container ID
-	portmap          map[string]nat.PortMap
-	mutex            sync.Mutex
+	portStorage      *portStorage
 	vtunnelForwarder *forwarder.VtunnelForwarder
 	wslAddrs         []types.ConnectAddrs
 }
@@ -38,7 +40,7 @@ type PortTracker struct {
 // NewPortTracker creates a new Port Tracker.
 func NewPortTracker(forwarder *forwarder.VtunnelForwarder, wslAddrs []types.ConnectAddrs) *PortTracker {
 	return &PortTracker{
-		portmap:          make(map[string]nat.PortMap),
+		portStorage:      newPortStorage(),
 		vtunnelForwarder: forwarder,
 		wslAddrs:         wslAddrs,
 	}
@@ -50,63 +52,29 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 		return nil
 	}
 
-	p.mutex.Lock()
-	p.portmap[containerID] = portMap
-	log.Debugf("PortTracker Add status: %+v", p.portmap)
-	p.mutex.Unlock()
-
-	return p.vtunnelForwarder.Send(types.PortMapping{
+	err := p.vtunnelForwarder.Send(types.PortMapping{
 		Remove:       false,
 		Ports:        portMap,
 		ConnectAddrs: p.wslAddrs,
 	})
-}
-
-// RemoveAll removes all the port bindings from the tracker.
-func (p *PortTracker) RemoveAll() {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
-	for containerID, portMap := range p.portmap {
-		if len(portMap) != 0 {
-			log.Debugf("removing the following container [%s] port binding: %+v", containerID, portMap)
-
-			if err := p.remove(containerID); err != nil {
-				log.Errorf("RemoveAll containers failed to removed container [%s] : %v", containerID, err)
-			}
-		}
+	if err != nil {
+		return err
 	}
-}
 
-// Remove deletes a container ID and port mapping from the tracker.
-func (p *PortTracker) Remove(containerID string) error {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
-	return p.remove(containerID)
-}
-
-// Get gets a port mapping by container ID from the tracker.
-func (p *PortTracker) Get(containerID string) nat.PortMap {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	log.Debugf("PortTracker Get status: %+v", p.portmap)
-	portMap, ok := p.portmap[containerID]
-	if ok {
-		return portMap
-	}
+	p.portStorage.add(containerID, portMap)
 
 	return nil
 }
 
-// Remove a container's corresponding port mapping, without acquiring the lock.
-func (p *PortTracker) remove(containerID string) error {
-	if portMap, ok := p.portmap[containerID]; ok {
-		defer func() {
-			delete(p.portmap, containerID)
-			log.Debugf("PortTracker Remove status: %+v", p.portmap)
-		}()
+// Get gets a port mapping by container ID from the tracker.
+func (p *PortTracker) Get(containerID string) nat.PortMap {
+	return p.portStorage.get(containerID)
+}
 
+// Remove deletes a container ID and port mapping from the tracker.
+func (p *PortTracker) Remove(containerID string) error {
+	portMap := p.portStorage.get(containerID)
+	if len(portMap) != 0 {
 		err := p.vtunnelForwarder.Send(types.PortMapping{
 			Remove:       true,
 			Ports:        portMap,
@@ -115,7 +83,14 @@ func (p *PortTracker) remove(containerID string) error {
 		if err != nil {
 			return err
 		}
+
+		p.portStorage.remove(containerID)
 	}
 
 	return nil
+}
+
+// RemoveAll removes all the port bindings from the tracker.
+func (p *PortTracker) RemoveAll() {
+	p.portStorage.removeAll()
 }

@@ -38,7 +38,7 @@ const portsKey = "nerdctl/ports"
 // for container events.
 type EventMonitor struct {
 	containerdClient *containerd.Client
-	portTracker      *tracker.PortTracker
+	portTracker      tracker.Tracker
 	tcpTracker       *tcplistener.ListenerTracker
 }
 
@@ -47,7 +47,7 @@ type EventMonitor struct {
 // Docker engine is up and running.
 func NewEventMonitor(
 	containerdSock string,
-	portTracker *tracker.PortTracker,
+	portTracker tracker.Tracker,
 	tcpTracker *tcplistener.ListenerTracker,
 ) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
