@@ -5,7 +5,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
-import { createDefaultSettings, reportAsset, teardown } from '../e2e/utils/TestUtils';
+import { createDefaultSettings, reportAsset, teardown, tool } from '../e2e/utils/TestUtils';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
@@ -47,15 +47,19 @@ test.describe.serial('Main App Test', () => {
     await page.emulateMedia({ colorScheme });
 
     await navPage.progressBecomesReady();
+
+    await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.12');
+    await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension:0.2.2');
+
+    const navExtension = page.locator('[data-test="extension-nav-epinio"]');
+
+    await expect(navExtension).toBeVisible();
   });
 
   test.afterAll(() => teardown(electronApp, __filename));
 
   test('Main Page', async({ colorScheme }) => {
     const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
-    const navExtension = page.locator('[data-test="extension-nav-epinio"]');
-
-    await expect(navExtension).toBeVisible();
 
     await screenshot.take('General');
     await screenshot.take('PortForwarding', navPage);
