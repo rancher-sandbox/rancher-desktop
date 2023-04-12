@@ -35,7 +35,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"golang.org/x/sync/errgroup"
@@ -98,8 +97,6 @@ func main() {
 		cancel()
 	}()
 
-	tcpTracker := tcplistener.NewListenerTracker()
-
 	wslAddr, err := getWSLAddr(wslInfName)
 	if err != nil {
 		log.Fatalf("failure getting WSL IP addresses: %v", err)
@@ -123,7 +120,7 @@ func main() {
 
 		if *enableContainerd {
 			group.Go(func() error {
-				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker, tcpTracker)
+				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
 				if err != nil {
 					return fmt.Errorf("error initializing containerd event monitor: %w", err)
 				}
@@ -168,8 +165,7 @@ func main() {
 				*configPath,
 				k8sServiceListenerIP,
 				*enablePrivilegedService,
-				portTracker,
-				tcpTracker)
+				portTracker)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
 			}
@@ -181,7 +177,7 @@ func main() {
 	if *enableIptables {
 		group.Go(func() error {
 			// Forward ports
-			err := iptables.ForwardPorts(ctx, tcpTracker, iptablesUpdateInterval)
+			err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)
 			}
