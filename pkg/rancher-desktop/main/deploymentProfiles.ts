@@ -133,16 +133,18 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
   let plutilPath = join(rootPath, defaultsPath);
   let plutilArgs = plutilArgArray.concat(plutilPath);
 
-  if (settings.fileExists(plutilPath)) {
-    try {
-      const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
+  try {
+    await fs.promises.stat(plutilPath);
+    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
 
-      try {
-        defaults = JSON.parse(plutilResult.stdout);
-      } catch (error) {
-        console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
-      }
+    try {
+      defaults = JSON.parse(plutilResult.stdout);
     } catch (error) {
+      console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
+    }
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      // just log an error if we fail to parse the 'defaults' profile
       console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
     }
   }
@@ -150,17 +152,20 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
   plutilPath = join(rootPath, lockedPath);
   plutilArgs = plutilArgArray.concat(plutilPath);
 
-  if (settings.fileExists(plutilPath)) {
-    try {
-      const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
+  try {
+    await fs.promises.stat(plutilPath);
+    const plutilResult = await spawnFile('plutil', plutilArgs, { stdio: 'pipe' });
 
-      try {
-        locked = JSON.parse(plutilResult.stdout);
-      } catch (error) {
-        console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
-        throw new Error(`${ error }`);
-      }
+    try {
+      locked = JSON.parse(plutilResult.stdout);
     } catch (error) {
+      // throw error if we fail to parse the 'locked' profile
+      console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
+      throw new Error(`${ error }`);
+    }
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      // throw error if plutil fails to parse the 'locked' profile
       console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
       throw new Error(`${ error }`);
     }

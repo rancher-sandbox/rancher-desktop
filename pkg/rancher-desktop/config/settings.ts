@@ -308,7 +308,7 @@ export function runInDebugMode(debug: boolean): boolean {
   return debug || !!process.env.RD_DEBUG_ENABLED;
 }
 
-export function fileExists(path: string) {
+function fileExists(path: string) {
   try {
     fs.statSync(path);
 
