@@ -16,6 +16,15 @@ if [ -z "${pid}" ]; then
     exit 1
 fi
 
+# If the pid is _not_ /sbin/init, find the child that is.
+command="$(ps -o pid,args | awk "\$1 == $pid { print \$2 }")"
+if [ "$command" != "/sbin/init" ]; then
+  newpid="$(ps -o pid,ppid,args | awk "\$2 == $pid && \$3 == \"/sbin/init\" { print \$1 }")"
+  if [ -n "${newpid}" ]; then
+    pid="${newpid}"
+  fi
+fi
+
 if [ $# -eq 0 ]; then
   set -- /bin/sh
 fi
