@@ -433,9 +433,16 @@ class Client implements v1.DockerDesktopClient {
         throw new Error(`failed to inspect images: ${ inspectResults.stderr }`);
       }
 
-      const inspectImages: any[] = inspectResults.parseJsonObject();
+      // When doing JSON format, docker CLI returns an array, but nerdctl
+      // returns JSON lines.  ParseJsonLines + flat() deals with the difference.
+      const inspectImages = inspectResults.parseJsonLines().flat();
       const mergedImages = lsImages.map((image) => {
-        const inspected = inspectImages.find(i => i.Id === image.ID);
+        let inspected = inspectImages.find(i => i.Id === image.ID);
+
+        // nerdctl uses the config digest for inspectImages[*].Id (or at least
+        // a different value than image.ID); we need to try to match it up to
+        // the desired inspect result via digests instead.
+        inspected ||= inspectImages.find(i => (i.RepoDigests as any[]).some(d => d.endsWith(image.Digest)));
 
         return { ...image, ...inspected ?? {} };
       });
@@ -445,12 +452,12 @@ class Client implements v1.DockerDesktopClient {
 
         return {
           Id:          i.Id,
-          ParentId:    i.Parent,
+          ParentId:    i.Parent ?? '',
           RepoTags:    i.RepoTags,
           Created:     Date.parse(i.Created).valueOf(),
           Size:        i.Size,
           SharedSize:  -1,
-          VirtualSize: i.VirtualSize,
+          VirtualSize: i.VirtualSize ?? i.Size,
           Labels:      i.Config?.Labels ?? {},
           Containers:  isNaN(containers) ? -1 : containers,
         };
