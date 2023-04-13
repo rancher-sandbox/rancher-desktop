@@ -178,8 +178,10 @@ Electron.app.whenReady().then(async() => {
     let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
     try {
-      deploymentProfiles = readDeploymentProfiles();
-    } catch { }
+      deploymentProfiles = await readDeploymentProfiles();
+    } catch (err: any) {
+      showErrorDialog('Error in the Deployment Profile', err.toString(), true);
+    }
     cfg = settings.load(deploymentProfiles);
 
     if (commandLineArgs.length) {
