@@ -4,7 +4,7 @@ export default {
     UpdatedAt:     '2023-02-24T10:40:43.666252815Z',
     Categories:    ['kubernetes'],
     LatestVersion: {
-      Tag:                '0.0.12',
+      Tag:                '0.0.23.5',
       ManifestListDigest:
         'sha256:d74bf36e9ad51fdca0ddfacaf6d0af3c8bd5a984e583e6a081e2907958e11954',
       Platforms: [
