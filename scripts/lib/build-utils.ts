@@ -325,7 +325,9 @@ export default {
       // Build the golang executable
       await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', executablePath, '.', {
         cwd: path.join(this.rootDir, 'src', 'go', 'extension-proxy'),
-        env: { ...process.env, CGO_ENABLED: '0', GOOS: 'linux' },
+        env: {
+          ...process.env, CGO_ENABLED: '0', GOOS: 'linux',
+        },
       });
 
       // Build the layer tarball
