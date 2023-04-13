@@ -89,6 +89,8 @@ export interface IpcMainEvents {
   'extensions/ui/toast': (level: 'success' | 'warning' | 'error', message: string) => void;
   'ok:extensions/getContentArea': (payload: { x: number, y: number }) => void;
   // #endregion
+
+  'arch/checkArm': () => void;
 }
 
 /**
@@ -172,4 +174,5 @@ export interface IpcRendererEvents {
   'extensions/spawn/error': (id: string, error: Error | NodeJS.Signals) => void;
   'extensions/spawn/output': (id: string, data: { stdout: string } | { stderr: string }) => void;
   // #endregion
+  'ok:arch/checkArm': (isArm: boolean) => void;
 }
