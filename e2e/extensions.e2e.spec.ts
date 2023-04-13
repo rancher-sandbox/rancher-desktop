@@ -280,8 +280,15 @@ test.describe.serial('Extensions', () => {
 
         expect(result).toEqual(expect.arrayContaining([
           expect.objectContaining({
-            Repository: 'rd/extension/everything',
-            Digest:     expect.any(String),
+            Id:          expect.any(String),
+            ParentId:    expect.any(String),
+            RepoTags:    expect.arrayContaining(['rd/extension/everything:latest']),
+            Created:     expect.any(Number),
+            Size:        expect.any(Number),
+            SharedSize:  expect.any(Number),
+            VirtualSize: expect.any(Number),
+            Labels:      expect.any(Object),
+            Containers:  expect.any(Number),
           }),
         ]));
       });

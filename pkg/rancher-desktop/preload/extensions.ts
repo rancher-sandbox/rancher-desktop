@@ -403,24 +403,58 @@ class Client implements v1.DockerDesktopClient {
       });
     },
     listImages: async(options: DockerListImagesOptions = {}) => {
-      const args = ['ls', '--format={{json .}}', '--no-trunc'];
+      const lsArgs = ['ls', '--format={{json .}}', '--no-trunc'];
 
-      args.push(`--all=${ options.all ?? false }`);
+      lsArgs.push(`--all=${ options.all ?? false }`);
       if (options.filters !== undefined) {
-        args.push(`--filter=${ options.filters }`);
+        lsArgs.push(`--filter=${ options.filters }`);
       }
-      args.push(`--digests=${ options.digests ?? false }`);
+      lsArgs.push(`--digests=${ options.digests ?? false }`);
       if (options.namespace) {
-        args.unshift(`--namespace=${ options.namespace }`);
+        lsArgs.unshift(`--namespace=${ options.namespace }`);
       }
 
-      const result = await this.docker.cli.exec('image', args);
+      const lsResult = await this.docker.cli.exec('image', lsArgs);
 
-      if (result.code || result.signal) {
-        throw new Error(`failed to list images: ${ result.stderr }`);
+      if (lsResult.code || lsResult.signal) {
+        throw new Error(`failed to list images: ${ lsResult.stderr }`);
       }
 
-      return result.parseJsonLines();
+      const lsImages = lsResult.parseJsonLines();
+
+      const inspectArgs = [
+        options.namespace ? [`--namespace=${ options.namespace }`] : [],
+        ['--format', 'json'],
+        lsImages.map(i => i.ID),
+      ].flat();
+      const inspectResults = await this.docker.cli.exec('inspect', inspectArgs);
+
+      if (inspectResults.code || inspectResults.signal) {
+        throw new Error(`failed to inspect images: ${ inspectResults.stderr }`);
+      }
+
+      const inspectImages: any[] = inspectResults.parseJsonObject();
+      const mergedImages = lsImages.map((image) => {
+        const inspected = inspectImages.find(i => i.Id === image.ID);
+
+        return { ...image, ...inspected ?? {} };
+      });
+
+      return mergedImages.map((i) => {
+        const containers = parseInt(i.Containers, 10);
+
+        return {
+          Id:          i.Id,
+          ParentId:    i.Parent,
+          RepoTags:    i.RepoTags,
+          Created:     Date.parse(i.Created).valueOf(),
+          Size:        i.Size,
+          SharedSize:  -1,
+          VirtualSize: i.VirtualSize,
+          Labels:      i.Config?.Labels ?? {},
+          Containers:  isNaN(containers) ? -1 : containers,
+        };
+      });
     },
   };
 }
