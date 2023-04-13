@@ -99,11 +99,7 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
     break;
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
-      try {
-        profiles = await parseJsonFromPlist(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
-      } catch (error) {
-        throw new Error(`${ error }`);
-      }
+      profiles = await parseJsonFromPlist(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
 
       if (typeof profiles.defaults !== 'undefined' || typeof profiles.locked !== 'undefined') {
         break;
@@ -150,6 +146,7 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
   }
 
   plutilPath = join(rootPath, lockedPath);
+  let finalError: any;
 
   try {
     const body = stream.Readable.from(fs.readFileSync(plutilPath, { encoding: 'utf-8' }));
@@ -157,17 +154,20 @@ async function parseJsonFromPlist(rootPath: string, defaultsPath: string, locked
 
     try {
       locked = JSON.parse(plutilResult.stdout);
-    } catch (error) {
+    } catch (error: any) {
       // throw error if we fail to parse the 'locked' profile
       console.log(`Error parsing deployment profile JSON object ${ plutilPath }\n${ error }`);
-      throw new Error(`${ error }`);
+      finalError = error;
     }
   } catch (error: any) {
     if (error.code !== 'ENOENT') {
       // throw error if plutil fails to parse the 'locked' profile
       console.log(`Error parsing deployment profile ${ plutilPath }\n${ error }`);
-      throw new Error(`${ error }`);
+      finalError = error;
     }
+  }
+  if (finalError) {
+    throw new Error(`Error parsing deployment profile JSON object ${ plutilPath }: ${ finalError }`);
   }
 
   return { defaults, locked };

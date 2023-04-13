@@ -177,7 +177,9 @@ Electron.app.whenReady().then(async() => {
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
-    } catch { }
+    } catch (err: any) {
+      showErrorDialog('Error in the Deployment Profile', err.toString(), true);
+    }
     cfg = settings.load(deploymentProfiles);
 
     if (commandLineArgs.length) {
