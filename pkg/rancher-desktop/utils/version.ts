@@ -37,7 +37,17 @@ export async function getVersion() {
 }
 
 export function parseDocsVersion(version: string) {
-  const releasePattern = /^v?(\d+\.\d+)\.\d+$/;
+  // Match '1.9.0-tech-preview' (returns '1.9-tech-preview'), but not '1.9.0-123-g1234567' (returns 'next')
+  const releasePattern = /^v?(\d+\.\d+)\.\d+(-[a-z].*)?$/;
+  const matches = releasePattern.exec(version);
 
-  return releasePattern.exec(version)?.[1] ?? 'next';
+  if (matches) {
+    if (matches[2]) {
+      return matches[1].concat(matches[2]);
+    }
+
+    return matches[1];
+  }
+
+  return 'next';
 }
