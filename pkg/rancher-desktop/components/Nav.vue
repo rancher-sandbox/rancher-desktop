@@ -22,7 +22,13 @@
         >
           <nav-item :id="`extension:${extension.id}`">
             <template #before>
-              <img :src="imageUri(extension.id)">
+              <img
+                class="extension-icon"
+                :class="{
+                  'no-theme': !isOnWhitelist(extension.metadata.ui['dashboard-tab'].title),
+                }"
+                :src="imageUri(extension.id)"
+              >
             </template>
             {{ extension.metadata.ui['dashboard-tab'].title }}
           </nav-item>
@@ -115,6 +121,9 @@ export default {
         },
       };
     },
+    isOnWhitelist(name: string): boolean {
+      return ['Epinio', 'Tachometer'].includes(name);
+    },
   },
 };
 </script>
@@ -170,6 +179,21 @@ a {
   line-height: initial;
   letter-spacing: initial;
   font-size: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .extension-icon {
+    &:not(.no-theme) {
+      filter: brightness(0) invert(100%) grayscale(1) brightness(2);
+    }
+  }
+}
+@media (prefers-color-scheme: light) {
+  .extension-icon {
+    &:not(.no-theme) {
+      filter: brightness(0) grayscale(1) brightness(4);
+    }
+  }
 }
 
 </style>
