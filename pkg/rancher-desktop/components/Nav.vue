@@ -25,7 +25,7 @@
               <img
                 class="extension-icon"
                 :class="{
-                  'no-theme': !isKnownMonochrome(extension.metadata.ui['dashboard-tab'].title),
+                  'no-theme': !isKnownMonochrome(extension.id),
                 }"
                 :src="imageUri(extension.id)"
               >
@@ -121,8 +121,11 @@ export default {
         },
       };
     },
-    isKnownMonochrome(name: string): boolean {
-      return ['Epinio', 'Tachometer'].includes(name);
+    isKnownMonochrome(id: string): boolean {
+      return !!id && [
+        'ghcr.io/rancher-sandbox/epinio-desktop-extension',
+        'julianb90/tachometer',
+      ].includes(id.split(':')[0]);
     },
   },
 };
