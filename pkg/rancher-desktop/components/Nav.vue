@@ -184,11 +184,18 @@ a {
   font-size: 0.75rem;
 }
 
+/**
+  * Change the icon colors by setting a class 'known-monochrome' containing dark theme properties.
+  */
 @media (prefers-color-scheme: dark) {
   .known-monochrome {
     filter: brightness(0) invert(100%) grayscale(1) brightness(2);
   }
 }
+
+/**
+  * Change the icon colors by setting a class 'known-monochrome' containing light theme properties.
+  */
 @media (prefers-color-scheme: light) {
   .known-monochrome {
     filter: brightness(0) grayscale(1) brightness(4);
