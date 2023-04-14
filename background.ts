@@ -487,10 +487,6 @@ ipcMainProxy.on('dashboard-open', () => {
   openDashboard();
 });
 
-ipcMainProxy.on('arch/checkArm', () => {
-  window.send('ok:arch/checkArm', Electron.app.runningUnderARM64Translation || process.arch.startsWith('arm'));
-});
-
 ipcMainProxy.on('dashboard-close', () => {
   closeDashboard();
 });

@@ -18,7 +18,6 @@
       <div class="marketplace-container">
         <component
           :is="activeTab"
-          :is-arm="isArm"
           @click:browse="tabActivate('marketplace-catalog')"
         />
       </div>
@@ -34,7 +33,6 @@ import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import { withCredentials } from '@pkg/hocs/withCredentials';
 import ExtensionsInstalled from '@pkg/pages/extensions/installed.vue';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 const ExtensionsInstalledWithCredentials = withCredentials(ExtensionsInstalled);
 
@@ -52,15 +50,7 @@ export default {
       imageNamespaces:    [],
       supportsNamespaces: true,
       activeTab:          'marketplace-catalog',
-      isArm:              false,
     };
-  },
-  beforeMount() {
-    ipcRenderer.on('ok:arch/checkArm', (_event, isArm) => {
-      this.isArm = isArm;
-    });
-
-    ipcRenderer.send('arch/checkArm');
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
