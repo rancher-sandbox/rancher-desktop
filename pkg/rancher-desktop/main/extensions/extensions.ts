@@ -268,12 +268,14 @@ export class ExtensionImpl implements Extension {
       // so that it can be used for sockets to be exposed.
       for (const service of Object.values<any>(contents.services)) {
         service.volumes ??= [];
-        service.volumes.push({
-          type:   'volume',
-          source: 'r-d-x-guest-services',
-          target: '/run/guest-services',
-          volume: { nocopy: true },
-        });
+        if (!service.volumes.find((v: { target: string; }) => v?.target === '/run/guest-services')) {
+          service.volumes.push({
+            type:   'volume',
+            source: 'r-d-x-guest-services',
+            target: '/run/guest-services',
+            volume: { nocopy: true },
+          });
+        }
       }
 
       // Write out the modified compose file, either clobbering the original or
