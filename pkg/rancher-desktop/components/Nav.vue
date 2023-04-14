@@ -25,7 +25,7 @@
               <img
                 class="extension-icon"
                 :class="{
-                  'no-theme': !isKnownMonochrome(extension.id),
+                  'known-monochrome': isKnownMonochrome(extension.id),
                 }"
                 :src="imageUri(extension.id)"
               >
@@ -185,17 +185,13 @@ a {
 }
 
 @media (prefers-color-scheme: dark) {
-  .extension-icon {
-    &:not(.no-theme) {
-      filter: brightness(0) invert(100%) grayscale(1) brightness(2);
-    }
+  .known-monochrome {
+    filter: brightness(0) invert(100%) grayscale(1) brightness(2);
   }
 }
 @media (prefers-color-scheme: light) {
-  .extension-icon {
-    &:not(.no-theme) {
-      filter: brightness(0) grayscale(1) brightness(4);
-    }
+  .known-monochrome {
+    filter: brightness(0) grayscale(1) brightness(4);
   }
 }
 
