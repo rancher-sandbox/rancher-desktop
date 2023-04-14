@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2023 SUSE LLC
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"strings"
 
@@ -44,13 +43,15 @@ var errAPI = errors.New("error from API")
 type APITracker struct {
 	httpClient  http.Client
 	portStorage *portStorage
+	*ListenerTracker
 }
 
 // NewAPITracker creates a new instace of a API Tracker.
 func NewAPITracker() *APITracker {
 	return &APITracker{
-		httpClient:  *http.DefaultClient,
-		portStorage: newPortStorage(),
+		httpClient:      *http.DefaultClient,
+		portStorage:     newPortStorage(),
+		ListenerTracker: NewListenerTracker(),
 	}
 }
 
@@ -104,16 +105,6 @@ func (a *APITracker) Remove(containerID string) error {
 // RemoveAll removes all the port bindings from the tracker.
 func (a *APITracker) RemoveAll() {
 	a.portStorage.removeAll()
-}
-
-// Not Implemented.
-func (a *APITracker) AddListener(ctx context.Context, ip net.IP, port int) error {
-	return nil
-}
-
-// Not Implemented.
-func (a *APITracker) RemoveListener(ctx context.Context, ip net.IP, port int) error {
-	return nil
 }
 
 func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
