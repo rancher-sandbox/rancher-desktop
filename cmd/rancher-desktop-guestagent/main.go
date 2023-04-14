@@ -102,52 +102,56 @@ func main() {
 		log.Fatalf("failure getting WSL IP addresses: %v", err)
 	}
 
-	forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
-	portTracker := tracker.NewPortTracker(forwarder, wslAddr)
+	if !*enableContainerd && !*enableDocker {
+		log.Fatal("requires either -docker or -containerd enabled.")
+	}
+
+	if *enableContainerd && *enableDocker {
+		log.Fatal("requires either -docker or -containerd, not both.")
+	}
+
+	var portTracker tracker.Tracker
 
 	if *enablePrivilegedService {
-		if !*enableContainerd && !*enableDocker {
-			log.Fatal("-privilegedService mode requires either -docker or -containerd enabled.")
-		}
-
-		if *enableContainerd && *enableDocker {
-			log.Fatal("-privilegedService mode requires either -docker or -containerd, not both.")
-		}
-
 		if *vtunnelAddr == "" {
 			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
 		}
 
-		if *enableContainerd {
-			group.Go(func() error {
-				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
-				if err != nil {
-					return fmt.Errorf("error initializing containerd event monitor: %w", err)
-				}
-				if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
-					return err
-				}
-				eventMonitor.MonitorPorts(ctx)
+		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
+		portTracker = tracker.NewPortTracker(forwarder, wslAddr)
+	} else {
+		portTracker = tracker.NewAPITracker()
+	}
 
-				return eventMonitor.Close()
-			})
-		}
+	if *enableContainerd {
+		group.Go(func() error {
+			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+			if err != nil {
+				return fmt.Errorf("error initializing containerd event monitor: %w", err)
+			}
+			if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
+				return err
+			}
+			eventMonitor.MonitorPorts(ctx)
 
-		if *enableDocker {
-			group.Go(func() error {
-				eventMonitor, err := docker.NewEventMonitor(portTracker)
-				if err != nil {
-					return fmt.Errorf("error initializing docker event monitor: %w", err)
-				}
-				if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
-					return err
-				}
-				eventMonitor.MonitorPorts(ctx)
-				eventMonitor.Flush()
+			return eventMonitor.Close()
+		})
+	}
 
-				return nil
-			})
-		}
+	if *enableDocker {
+		group.Go(func() error {
+			eventMonitor, err := docker.NewEventMonitor(portTracker)
+			if err != nil {
+				return fmt.Errorf("error initializing docker event monitor: %w", err)
+			}
+			if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
+				return err
+			}
+			eventMonitor.MonitorPorts(ctx)
+			eventMonitor.Flush()
+
+			return nil
+		})
 	}
 
 	if *enableKubernetes {
