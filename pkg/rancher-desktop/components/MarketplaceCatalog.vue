@@ -10,6 +10,12 @@ type FilteredExtensions = typeof demoMarketplace.summaries;
 export default Vue.extend({
   name:       'marketplace-catalog',
   components: { MarketplaceCard },
+  props:      {
+    isArm: {
+      type:    Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       searchValue: '',
@@ -18,7 +24,7 @@ export default Vue.extend({
   },
   computed: {
     filteredExtensions(): FilteredExtensions {
-      let tempExtensions = this.extensions;
+      let tempExtensions = this.extensionsByArch;
 
       if (this.searchValue) {
         tempExtensions = tempExtensions.filter((item) => {
@@ -29,6 +35,15 @@ export default Vue.extend({
       }
 
       return tempExtensions;
+    },
+    extensionsByArch(): FilteredExtensions {
+      if (!this.isArm) {
+        return this.extensions;
+      }
+
+      return this.extensions.filter((extension) => {
+        return extension.name !== 'Epinio';
+      });
     },
   },
 });
