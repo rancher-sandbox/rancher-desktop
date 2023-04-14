@@ -256,6 +256,10 @@ export default {
     return result;
   },
 
+  get arch(): string {
+    return process.env.M1 ? 'arm64' : process.arch;
+  },
+
   /**
    * Build the WSL helper application for Windows.
    */
@@ -326,7 +330,10 @@ export default {
       await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', executablePath, '.', {
         cwd: path.join(this.rootDir, 'src', 'go', 'extension-proxy'),
         env: {
-          ...process.env, CGO_ENABLED: '0', GOOS: 'linux',
+          ...process.env,
+          CGO_ENABLED: '0',
+          GOOS:        'linux',
+          GOARCH:      this.mapArchToGoArch(this.arch),
         },
       });
 
@@ -391,7 +398,7 @@ export default {
         },
       })));
       await addEntry(`${ layerHash }.json`, Buffer.from(JSON.stringify({
-        architecture: this.mapArchToGoArch(process.arch),
+        architecture: this.mapArchToGoArch(this.arch),
         config:       {
           ExposedPorts: { '80/tcp': {} },
           Entrypoint:   [`/${ path.basename(executablePath) }`],
