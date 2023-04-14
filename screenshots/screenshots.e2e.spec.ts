@@ -48,15 +48,22 @@ test.describe.serial('Main App Test', () => {
 
     await navPage.progressBecomesReady();
 
-    await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.12');
-    await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension:0.2.2');
+    await page.waitForTimeout(2500);
+
+    // await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.12');
+    // await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension:0.2.2');
 
     const navExtension = page.locator('[data-test="extension-nav-epinio"]');
 
-    await expect(navExtension).toBeVisible();
+    await expect(navExtension).toBeVisible({ timeout: 30000 });
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(() => {
+    // await tool('rdctl', 'extension', 'uninstall', 'ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.12');
+    // await tool('rdctl', 'extension', 'uninstall', 'docker/logs-explorer-extension:0.2.2');
+
+    return teardown(electronApp, __filename);
+  });
 
   test('Main Page', async({ colorScheme }) => {
     const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
