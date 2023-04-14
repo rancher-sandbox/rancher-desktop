@@ -39,7 +39,7 @@ test.describe.serial('Extensions', () => {
     let tool = getFullPathForTool('nerdctl');
 
     if (isContainerd) {
-      args = ['--namespace', 'rancher-desktop-extensions'].concat(args);
+      args = ['--namespace', 'rdx'].concat(args);
     } else {
       tool = getFullPathForTool('docker');
       if (process.platform !== 'win32') {

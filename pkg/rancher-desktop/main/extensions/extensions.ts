@@ -65,7 +65,7 @@ export class ExtensionImpl implements Extension {
   protected readonly client: ContainerEngineClient;
   protected _metadata: Promise<ExtensionMetadata> | undefined;
   /** The (nerdctl) namespace to use; shared with ExtensionManagerImpl */
-  static readonly extensionNamespace = 'rancher-desktop-extensions';
+  static readonly extensionNamespace = 'rdx';
   protected get extensionNamespace() {
     return ExtensionImpl.extensionNamespace;
   }

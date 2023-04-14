@@ -23,7 +23,7 @@ encoded_id() { # variant
 
 namespace_arg() {
     if using_containerd; then
-        echo '--namespace=rancher-desktop-extensions'
+        echo '--namespace=rdx'
     fi
 }
 
