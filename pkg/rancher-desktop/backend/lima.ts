@@ -7,6 +7,7 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import * as process from 'process';
 import stream from 'stream';
 import util from 'util';
 
@@ -615,7 +616,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       locations.push(paths.logs);
     }
     if (os.platform() === 'darwin') {
-      locations.push('/Volumes', '/var/folders');
+      locations.push('/Applications', '/Volumes', '/var/folders');
+    }
+    if (os.platform() === 'linux') {
+      if (fs.existsSync('/opt/rancher-desktop')) {
+        locations.push('/opt/rancher-desktop');
+      }
+      if (process.env.APPDIR) {
+        locations.push(process.env.APPDIR);
+      }
     }
 
     for (const location of locations) {
