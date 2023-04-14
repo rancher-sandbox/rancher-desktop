@@ -22,7 +22,14 @@
         >
           <nav-item :id="`extension:${extension.id}`">
             <template #before>
-              <img :src="imageUri(extension.id)">
+              <img
+                class="extension-icon"
+                :class="{
+                  'icon-light': isOnWhitelist(extension.metadata.ui['dashboard-tab'].title) && isDarkMode,
+                  'icon-dark': isOnWhitelist(extension.metadata.ui['dashboard-tab'].title) && !isDarkMode
+                }"
+                :src="imageUri(extension.id)"
+              >
             </template>
             {{ extension.metadata.ui['dashboard-tab'].title }}
           </nav-item>
@@ -98,6 +105,9 @@ export default {
 
       return !!nuxt.$config.featureExtensions;
     },
+    isDarkMode(): boolean {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    },
   },
   methods: {
     imageUri(id: string): string {
@@ -114,6 +124,9 @@ export default {
           id: hexEncode(id),
         },
       };
+    },
+    isOnWhitelist(name: string): boolean {
+      return ['Epinio', 'Tachometer'].includes(name);
     },
   },
 };
@@ -170,6 +183,14 @@ a {
   line-height: initial;
   letter-spacing: initial;
   font-size: 0.75rem;
+}
+
+.icon-dark {
+  filter: brightness(0) grayscale(1) brightness(4);
+}
+
+.icon-light {
+  filter: brightness(0) invert(100%) grayscale(1) brightness(1.2);
 }
 
 </style>
