@@ -25,7 +25,7 @@
               <img
                 class="extension-icon"
                 :class="{
-                  'no-theme': !isOnWhitelist(extension.metadata.ui['dashboard-tab'].title),
+                  'no-theme': !isKnownMonochrome(extension.metadata.ui['dashboard-tab'].title),
                 }"
                 :src="imageUri(extension.id)"
               >
@@ -121,7 +121,7 @@ export default {
         },
       };
     },
-    isOnWhitelist(name: string): boolean {
+    isKnownMonochrome(name: string): boolean {
       return ['Epinio', 'Tachometer'].includes(name);
     },
   },
