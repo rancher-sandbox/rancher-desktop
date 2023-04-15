@@ -28,27 +28,29 @@ import (
 )
 
 const (
-	hostSwitchIP   = "192.168.127.2"
-	gatewayBaseURL = "http://192.168.127.1:80"
+	GatewayBaseURL = "http://192.168.127.1:80"
+	HostSwitchIP   = "192.168.127.2"
 	exposeAPI      = "/services/forwarder/expose"
 	unexposeAPI    = "/services/forwarder/unexpose"
 )
 
-var errAPI = errors.New("error from API")
+var ErrAPI = errors.New("error from API")
 
 // APITracker keeps track of the port mappings and calls the
 // corresponding API endpoints that is responsible for exposing
 // and unexposing the ports on the host. This should only be used when
 // the Rancher Desktop networking is enabled and the privileged service is disabled.
 type APITracker struct {
+	baseURL     string
 	httpClient  http.Client
 	portStorage *portStorage
 	*ListenerTracker
 }
 
 // NewAPITracker creates a new instace of a API Tracker.
-func NewAPITracker() *APITracker {
+func NewAPITracker(baseURL string) *APITracker {
 	return &APITracker{
+		baseURL:         baseURL,
 		httpClient:      *http.DefaultClient,
 		portStorage:     newPortStorage(),
 		ListenerTracker: NewListenerTracker(),
@@ -58,19 +60,35 @@ func NewAPITracker() *APITracker {
 // Add adds a container ID and port mapping to the tracker and calls the
 // /services/forwarder/expose endpoint to forward the port mappings.
 func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
-	a.portStorage.add(containerID, portMap)
+	var errs []error
 
-	for _, portBindings := range portMap {
+	successfullyForwarded := make(nat.PortMap)
+
+	for portProto, portBindings := range portMap {
+		var tmpPortBinding []nat.PortBinding
+
 		for _, portBinding := range portBindings {
 			err := a.expose(
 				&types.ExposeRequest{
 					Local:  ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
-					Remote: ipPortBuilder(hostSwitchIP, portBinding.HostPort),
+					Remote: ipPortBuilder(HostSwitchIP, portBinding.HostPort),
 				})
 			if err != nil {
-				return fmt.Errorf("failed exposing %+v calling API: %w", portBinding, err)
+				errs = append(errs, fmt.Errorf("failed exposing %+v calling API: %w", portBinding, err))
+
+				continue
 			}
+
+			tmpPortBinding = append(tmpPortBinding, portBinding)
 		}
+
+		successfullyForwarded[portProto] = tmpPortBinding
+	}
+
+	a.portStorage.add(containerID, successfullyForwarded)
+
+	if len(errs) != 0 {
+		return fmt.Errorf("%w: %+v", ErrAPI, errs)
 	}
 
 	return nil
@@ -87,6 +105,8 @@ func (a *APITracker) Remove(containerID string) error {
 	portMappings := a.portStorage.get(containerID)
 	defer a.portStorage.remove(containerID)
 
+	var errs []error
+
 	for _, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
 			err := a.unExpose(
@@ -94,17 +114,49 @@ func (a *APITracker) Remove(containerID string) error {
 					Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 				})
 			if err != nil {
-				return fmt.Errorf("failed exposing %+v calling API: %w", portBinding, err)
+				errs = append(errs, fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
+
+				continue
 			}
 		}
+	}
+
+	if len(errs) != 0 {
+		return fmt.Errorf("%w: %+v", ErrAPI, errs)
 	}
 
 	return nil
 }
 
 // RemoveAll removes all the port bindings from the tracker.
-func (a *APITracker) RemoveAll() {
+func (a *APITracker) RemoveAll() error {
+	var errs []error
+
+	allPortMappings := a.portStorage.getAll()
+
+	for _, portMapping := range allPortMappings {
+		for _, portBindings := range portMapping {
+			for _, portBinding := range portBindings {
+				err := a.unExpose(
+					&types.UnexposeRequest{
+						Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
+					})
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
+
+					continue
+				}
+			}
+		}
+	}
+
 	a.portStorage.removeAll()
+
+	if len(errs) != 0 {
+		return fmt.Errorf("%w: %+v", ErrAPI, errs)
+	}
+
+	return nil
 }
 
 func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
@@ -116,7 +168,7 @@ func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
 	req, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
-		urlBuilder(exposeAPI),
+		a.urlBuilder(exposeAPI),
 		bytes.NewReader(bin))
 	if err != nil {
 		return err
@@ -139,7 +191,7 @@ func (a *APITracker) unExpose(unexposeReq *types.UnexposeRequest) error {
 	req, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
-		urlBuilder(exposeAPI),
+		a.urlBuilder(unexposeAPI),
 		bytes.NewReader(bin))
 	if err != nil {
 		return err
@@ -153,6 +205,14 @@ func (a *APITracker) unExpose(unexposeReq *types.UnexposeRequest) error {
 	return verifyResposeBody(res)
 }
 
+func (a *APITracker) urlBuilder(api string) string {
+	return a.baseURL + api
+}
+
+func ipPortBuilder(ip, port string) string {
+	return ip + ":" + port
+}
+
 func verifyResposeBody(res *http.Response) error {
 	defer res.Body.Close()
 
@@ -164,16 +224,8 @@ func verifyResposeBody(res *http.Response) error {
 
 		errMsg := strings.TrimSpace(string(apiResponse))
 
-		return fmt.Errorf("%w: %s", errAPI, errMsg)
+		return fmt.Errorf("%w: %s", ErrAPI, errMsg)
 	}
 
 	return nil
-}
-
-func urlBuilder(api string) string {
-	return gatewayBaseURL + api
-}
-
-func ipPortBuilder(ip, port string) string {
-	return ip + ":" + port
 }

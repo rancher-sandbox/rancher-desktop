@@ -43,9 +43,10 @@ func (p *portStorage) add(containerID string, portMap nat.PortMap) {
 func (p *portStorage) get(containerID string) nat.PortMap {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
 	log.Debugf("portStorage get status: %+v", p.portmap)
-	portMap, ok := p.portmap[containerID]
-	if ok {
+
+	if portMap, ok := p.portmap[containerID]; ok {
 		return portMap
 	}
 
@@ -63,6 +64,13 @@ func (p *portStorage) removeAll() {
 			p.remove(containerID)
 		}
 	}
+}
+
+func (p *portStorage) getAll() map[string]nat.PortMap {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	return p.portmap
 }
 
 func (p *portStorage) remove(containerID string) {
