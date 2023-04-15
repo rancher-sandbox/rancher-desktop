@@ -120,7 +120,7 @@ func main() {
 		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
 		portTracker = tracker.NewPortTracker(forwarder, wslAddr)
 	} else {
-		portTracker = tracker.NewAPITracker()
+		portTracker = tracker.NewAPITracker(tracker.GatewayBaseURL)
 	}
 
 	if *enableContainerd {

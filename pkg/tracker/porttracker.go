@@ -25,7 +25,7 @@ type Tracker interface {
 	Get(containerID string) nat.PortMap
 	Add(containerID string, portMapping nat.PortMap) error
 	Remove(containerID string) error
-	RemoveAll()
+	RemoveAll() error
 	NetTracker
 }
 
@@ -96,6 +96,8 @@ func (p *PortTracker) Remove(containerID string) error {
 }
 
 // RemoveAll removes all the port bindings from the tracker.
-func (p *PortTracker) RemoveAll() {
+func (p *PortTracker) RemoveAll() error {
 	p.portStorage.removeAll()
+
+	return nil
 }

@@ -8,6 +8,7 @@ require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/lima-vm/lima v0.8.4-0.20220220162153-7b9afeb62201
+	github.com/stretchr/testify v1.8.2
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.6.0
 	k8s.io/api v0.25.0-alpha.3
@@ -33,6 +34,7 @@ require (
 	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect

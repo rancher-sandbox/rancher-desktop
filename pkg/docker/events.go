@@ -115,7 +115,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 // Flush clears all the container port mappings
 // out of the port tracker upon shutdown.
 func (e *EventMonitor) Flush() {
-	e.portTracker.RemoveAll()
+	_ = e.portTracker.RemoveAll()
 }
 
 // Info returns information about the docker server
