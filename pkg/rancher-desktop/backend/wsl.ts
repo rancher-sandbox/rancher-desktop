@@ -1375,17 +1375,16 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         if (kubernetesVersion) {
           await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
         }
-        if (config.containerEngine.name === ContainerEngine.CONTAINERD) {
-          await this.progressTracker.action('Starting buildkit', 0,
-            this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
-        }
 
         switch (config.containerEngine.name) {
         case ContainerEngine.CONTAINERD:
+          await this.progressTracker.action('Starting buildkit', 0,
+            this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
           this.#containerEngineClient = new NerdctlClient(this);
           break;
         case ContainerEngine.MOBY:
           this.#containerEngineClient = new MobyClient(this, 'npipe:////./pipe/docker_engine');
+          await this.progressTracker.action('Waiting for socket to stabilize', 0, this.waitForDockerSocket());
           break;
         }
 
@@ -1498,6 +1497,29 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         await this.execCommand('/usr/local/bin/wsl-service', 'local', 'start');
       })(),
     ]);
+  }
+
+  /**
+   * The docker proxy process flaps a bit at the start while things are starting
+   * up.  We need to wait for it to stabilize before declaring it ready.
+   */
+  async waitForDockerSocket(): Promise<void> {
+    let successCount = 0;
+
+    // Wait for ten consecutive successes, clearing out successCount whenever we
+    // hit an error.  In the ideal case this is a ten-second delay in startup
+    // time.  We use `docker system info` because that needs to talk to the
+    // socket to fetch data about the engine (and it returns an error if it
+    // fails to do so).
+    while (successCount < 10) {
+      try {
+        await this.containerEngineClient.runClient(['system', 'info'], 'ignore');
+        successCount++;
+      } catch (ex) {
+        successCount = 0;
+      }
+      await util.promisify(setTimeout)(1_000);
+    }
   }
 
   async stop(): Promise<void> {
