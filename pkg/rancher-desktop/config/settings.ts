@@ -251,17 +251,19 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       // 25% of available ram up to a maximum of 6gb
       settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
     }
-    if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
-      settings.application.updater.enabled = false;
-    } else {
-      const appVersion = getProductionVersion();
+  }
+  if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
+    settings.application.updater.enabled = false;
+  } else {
+    const appVersion = getProductionVersion();
 
-      // Auto-update doesn't work for CI or local builds, so don't enable it by default.
-      // CI builds use a version string like `git describe`, e.g. "v1.1.0-4140-g717225dc".
-      // Versions like "1.9.0-tech-preview" are pre-releases and not CI builds, so should not disable auto-update.
-      if (appVersion.match(/^v?\d+\.\d+\.\d+-\d+-g[0-9a-f]+$/) || appVersion.includes('?')) {
-        settings.application.updater.enabled = false;
-      }
+    console.log(`appVersion is ${ appVersion }`);
+    // Auto-update doesn't work for CI or local builds, so don't enable it by default.
+    // CI builds use a version string like `git describe`, e.g. "v1.1.0-4140-g717225dc".
+    // Versions like "1.9.0-tech-preview" are pre-releases and not CI builds, so should not disable auto-update.
+    if (appVersion.match(/^v?\d+\.\d+\.\d+-\d+-g[0-9a-f]+$/) || appVersion.includes('?')) {
+      settings.application.updater.enabled = false;
+      console.log('updates disabled');
     }
   }
   _.merge(settings, deploymentProfiles.locked);
