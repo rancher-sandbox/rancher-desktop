@@ -38,7 +38,6 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
-import { arrayCustomizer } from '@pkg/utils/filters';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
@@ -504,8 +503,29 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
 });
 
 function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
-  // arrayCustomizer is necessary to properly merge array of strings
-  _.mergeWith(cfg, arg, arrayCustomizer);
+  const customizer = (objValue: any, srcValue: any) => {
+    if (Array.isArray(objValue)) {
+      // If the destination is a array of primitives, just return the source
+      // (i.e. completely overwrite).
+      if (objValue.every(i => typeof i !== 'object')) {
+        return srcValue;
+      }
+    }
+    if (typeof srcValue === 'object' && srcValue) {
+      // For objects, setting a value to `undefined` will remove it.
+      for (const [key, value] of Object.entries(srcValue)) {
+        if (typeof value === 'undefined') {
+          delete srcValue[key];
+          if (typeof objValue === 'object' && objValue) {
+            delete objValue[key];
+          }
+        }
+      }
+      // Don't return anything, let _.mergeWith() do the actual merging.
+    }
+  };
+
+  _.mergeWith(cfg, arg, customizer);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
 }
