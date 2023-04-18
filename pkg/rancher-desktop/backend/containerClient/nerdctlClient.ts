@@ -13,7 +13,7 @@ import {
   ContainerRunClientOptions, ContainerComposePortOptions,
 } from './types';
 
-import { VMExecutor } from '@pkg/backend/backend';
+import { execOptions, VMExecutor } from '@pkg/backend/backend';
 import { spawn, spawnFile } from '@pkg/utils/childProcess';
 import Logging, { Log } from '@pkg/utils/logging';
 import { executable } from '@pkg/utils/resources';
@@ -71,6 +71,24 @@ export class NerdctlClient implements ContainerEngineClient {
   }
 
   /**
+   * Like running this.vm.execCommand, but retries the command if no output
+   * is produced. Is a workaround for a strange behavior of this.vm.execCommand:
+   * sometimes nothing is returned from stdout, as though it did not run at
+   * all. See https://github.com/rancher-sandbox/rancher-desktop/issues/4473
+   * for more info.
+   */
+  protected async execCommandWithRetries(options: execOptions & { capture: true }, ...command: string[]): Promise<string> {
+    const maxRetries = 10;
+    let result = '';
+
+    for (let i = 0; i < maxRetries && !result; i++) {
+      result = await this.vm.execCommand({ ...options, capture: true }, ...command);
+    }
+
+    return result;
+  }
+
+  /**
    * Mount the given image inside the VM.
    * @param imageID The ID of the image to mount.
    * @returns The path that the image has been mounted on, plus an array of
@@ -84,20 +102,17 @@ export class NerdctlClient implements ContainerEngineClient {
 
     try {
       const namespaceArgs = namespace === undefined ? [] : ['--namespace', namespace];
-      const container = (await this.vm.execCommand({ capture: true },
+      const container = (await this.execCommandWithRetries({ capture: true },
         '/usr/local/bin/nerdctl', ...namespaceArgs, 'create', '--entrypoint=/', imageID)).trim();
 
-      if (!container) {
-        throw new Error(`Failed to create container for ${ imageID }`);
-      }
       cleanups.push(() => this.vm.execCommand(
         '/usr/local/bin/nerdctl', ...namespaceArgs, 'rm', '--force', '--volumes', container));
 
-      const workdir = (await this.vm.execCommand({ capture: true }, '/bin/mktemp', '-d', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
+      const workdir = (await this.execCommandWithRetries({ capture: true }, '/bin/mktemp', '-d', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
 
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workdir));
 
-      const command = await this.vm.execCommand({ capture: true, root: true },
+      const command = await this.execCommandWithRetries({ capture: true, root: true },
         '/usr/bin/ctr', ...namespaceArgs,
         '--address=/run/k3s/containerd/containerd.sock', 'snapshot', 'mounts', workdir, container);
 
@@ -142,7 +157,7 @@ export class NerdctlClient implements ContainerEngineClient {
 
     try {
       // Archive the file(s) into the VM
-      const archive = (await this.vm.execCommand({ capture: true }, '/bin/mktemp', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
+      const archive = (await this.execCommandWithRetries({ capture: true }, '/bin/mktemp', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
 
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
       let sourceName: string, sourceDir: string;
