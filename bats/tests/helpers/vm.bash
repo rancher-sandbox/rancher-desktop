@@ -78,7 +78,7 @@ docker_context_exists() {
 }
 
 buildkitd_is_running() {
-    run rdctl shell rc-service buildkitd status
+    run rdctl shell rc-service --nocolor buildkitd status
     assert_success
     assert_output --partial 'status: started'
 }

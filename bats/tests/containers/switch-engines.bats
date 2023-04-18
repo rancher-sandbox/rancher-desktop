@@ -21,7 +21,9 @@ setup() {
 }
 
 @test "switch to containerd" {
-    rdctl set --container-engine.name=containerd
+    RD_CONTAINER_ENGINE=containerd
+    run rdctl set --container-engine.name=containerd
+    assert_success
     wait_for_container_engine
     nerdctl run -d -p 8086:80 --restart=no nginx
     run nerdctl ps --format '{{json .Image}}'
@@ -29,7 +31,9 @@ setup() {
 }
 
 @test 'switch back to moby' {
-    rdctl set --container-engine.name moby
+    RD_CONTAINER_ENGINE=moby
+    run rdctl set --container-engine.name moby
+    assert_success
     wait_for_container_engine
 }
 
@@ -39,7 +43,14 @@ setup() {
 }
 
 @test 'switch back to containerd and verify that the nginx container is gone' {
-    rdctl set --container-engine.name containerd
+    RD_CONTAINER_ENGINE=containerd
+    run rdctl set --container-engine.name containerd
+    assert_success
+    wait_for_container_engine
     run nerdctl ps --format '{{json .Image}}'
     refute_output --partial "nginx"
+}
+
+@test 'linux-bats is waiting for an rd shutdown before it stops' {
+    rdctl shutdown
 }
