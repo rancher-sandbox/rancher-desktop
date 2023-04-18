@@ -131,7 +131,7 @@ paths:
               schema:
                 type: object
                 additionalProperties:
-                  type: boolean
+                  type: string
 
   /v1/extensions/install:
     post:
@@ -521,7 +521,8 @@ components:
         extensions:
           type: object
           x-rd-usage: control which extensions are installed
-          additionalProperties: true
+          additionalProperties:
+            type: string
 
     diagnostics:
       type: object

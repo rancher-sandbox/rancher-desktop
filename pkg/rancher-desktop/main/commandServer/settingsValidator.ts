@@ -136,7 +136,7 @@ export default class SettingsValidator {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,
       },
-      extensions: this.checkBooleanMapping,
+      extensions: this.checkExtensions,
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -490,6 +490,79 @@ export default class SettingsValidator {
     }
 
     return false;
+  }
+
+  protected checkExtensions(
+    mergedSettings: Settings,
+    currentValue: Record<string, string>,
+    desiredValue: any,
+    errors: string[],
+    fqname: string,
+  ): boolean {
+    if (typeof desiredValue !== 'object' || !desiredValue) {
+      errors.push(`${ fqname }: "${ desiredValue }" is not a valid mapping`);
+
+      return false;
+    }
+
+    // makeRE is a tagged template for making regular expressions with /x (i.e.
+    // ignoring any whitespace within the regular expression itself).
+    function makeRE(strings: {raw: readonly string[]}, ...subsitutions: any[]) {
+      const subsitutionSources = subsitutions.map(s => s instanceof RegExp ? s.source : s);
+      const raw = String.raw(strings, ...subsitutionSources);
+      const lines = raw.split(/\r?\n/);
+      // Drop comments at end of line
+      const uncommentedLines = lines.map(line => line.replace(/\s#.*$/, ''));
+
+      return new RegExp(uncommentedLines.join('').replace(/\s+/g, ''));
+    }
+
+    // The key should be a name, and the value a tag.
+    const domainComponent = makeRE`
+      # a domain component is alpha-numeric-or-dash, but the start and end
+      # characters may not be a dash.
+      [a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?
+      `;
+    const domain = makeRE`
+      # a domain is one or more domain components joined by dot, and optionally
+      # with a colon followed by a port number.
+      ${ domainComponent }(?:\.${ domainComponent })*
+      (?::[0-9]+)?
+      `;
+    const nameComponent = makeRE`
+      # a name component is lower-alpha-numeric things, separated by any one of
+      # a set of separators.
+      [a-z0-9]+(?:(?:\.|_|__|-*)[a-z0-9]+)*
+      `;
+    const nameRE = makeRE`
+      ^
+      (?:${ domain }/)?
+      ${ nameComponent }
+      (?:/${ nameComponent })*
+      $
+      `;
+    const tagRE = makeRE`
+      ^
+      [\w][\w.-]{0,127}
+      $
+      `;
+    let hasErrors = false;
+
+    for (const [name, tag] of Object.entries(desiredValue)) {
+      if (!nameRE.test(name)) {
+        errors.push(`${ name } is an invalid name`);
+        hasErrors = true;
+      }
+      if (typeof tag !== 'string') {
+        errors.push(`${ name } has non-string tag ${ tag }`);
+        hasErrors = true;
+      } else if (!tagRE.test(tag)) {
+        errors.push(`${ name } has invalid tag ${ tag }`);
+        hasErrors = true;
+      }
+    }
+
+    return hasErrors;
   }
 
   protected checkPreferencesNavItemCurrent(

@@ -164,7 +164,7 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region extensions
-  'extensions/list': (extensions: { id: string; metadata: ExtensionMetadata; }[] | undefined) => void;
+  'extensions/list': (extensions: { id: string, version: string, metadata: ExtensionMetadata; }[]) => void;
   'extensions/open': (id: string, path: string) => void;
   'err:extensions/open': () => void;
   'extensions/close': () => void;

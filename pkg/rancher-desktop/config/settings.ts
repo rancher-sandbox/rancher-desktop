@@ -22,7 +22,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-export const CURRENT_SETTINGS_VERSION = 6 as const;
+export const CURRENT_SETTINGS_VERSION = 7 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -114,7 +114,8 @@ export const defaultSettings = {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
-  extensions:   { } as Record<string, boolean>,
+  /** Installed extensions, mapping to the installed version (tag). */
+  extensions:   { } as Record<string, string>,
   /**
    * Experimental settings - there should not be any UI for these.
    */
@@ -441,6 +442,18 @@ const updateTable: Record<number, (settings: any) => void> = {
         delete settings[field];
       }
     }
+  },
+  6: (settings) => {
+    // Rancher Desktop 1.9+
+    // extensions went from Record<string, boolean> to Record<string, string>
+    // The key used to be the extension image (including tag); it's now keyed
+    // by the image (without tag) with the value being the tag.
+    const withTags = Object.entries(settings.extensions ?? {}).filter(([, v]) => v).map(([k]) => k);
+    const extensions = withTags.map((image) => {
+      return image.split(':', 2).concat('latest').slice(0, 2) as [string, string];
+    });
+
+    settings.extensions = Object.fromEntries(extensions);
   },
 };
 

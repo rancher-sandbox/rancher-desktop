@@ -128,7 +128,7 @@ export default {
       }
 
       response.json().then((res) => {
-        this.isInstalled = Object.keys(res).includes(this.versionedExtension);
+        this.isInstalled = Object.keys(res).includes(this.extensionWithoutVersion);
       });
     });
   },
