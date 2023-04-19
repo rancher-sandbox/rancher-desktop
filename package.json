@@ -83,7 +83,7 @@
     "rancher-icons": "rancher/icons#v2.0.9",
     "ref-napi": "3.0.3",
     "ref-struct-di": "1.1.1",
-    "semver": "7.3.8",
+    "semver": "7.4.0",
     "socks-proxy-agent": "7.0.0",
     "sudo-prompt": "9.2.1",
     "tar-stream": "3.0.0",
