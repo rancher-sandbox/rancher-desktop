@@ -13,7 +13,7 @@ require github.com/stretchr/testify v1.7.0 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.5.2
-	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-connections v0.4.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 )

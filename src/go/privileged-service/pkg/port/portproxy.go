@@ -51,20 +51,20 @@ func (p *proxy) exec(portMapping types.PortMapping) error {
 		connectAddrs: portMapping.ConnectAddrs,
 	}
 	if portMapping.Remove {
-		return p.deleteProxy(portProxy)
+		return p.delete(portProxy)
 	}
-	return p.addProxy(portProxy)
+	return p.add(portProxy)
 }
 
 func (p *proxy) removeAll() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	for _, proxy := range p.portMappings {
-		_ = p.deleteProxy(proxy)
+		_ = p.delete(proxy)
 	}
 }
 
-func (p *proxy) addProxy(portProxy portProxy) error {
+func (p *proxy) add(portProxy portProxy) error {
 	for _, v := range portProxy.ports {
 		for _, addr := range v {
 			wslIP, err := getConnectAddr(addr.HostIP, portProxy.connectAddrs)
@@ -87,7 +87,7 @@ func (p *proxy) addProxy(portProxy portProxy) error {
 	return nil
 }
 
-func (p *proxy) deleteProxy(portProxy portProxy) error {
+func (p *proxy) delete(portProxy portProxy) error {
 	for _, v := range portProxy.ports {
 		for _, addr := range v {
 			args, err := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
