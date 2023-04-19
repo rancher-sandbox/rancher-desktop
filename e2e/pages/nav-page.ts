@@ -1,5 +1,6 @@
 
 import { DiagnosticsPage } from './diagnostics-page';
+import { ExtensionsPage } from './extensions-page';
 import { ImagesPage } from './images-page';
 import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
@@ -15,6 +16,7 @@ const pageConstructors = {
   Images:          (page: Page) => new ImagesPage(page),
   Troubleshooting: (page: Page) => new TroubleshootingPage(page),
   Diagnostics:     (page: Page) => new DiagnosticsPage(page),
+  Extensions:      (page: Page) => new ExtensionsPage(page),
 };
 
 export class NavPage {

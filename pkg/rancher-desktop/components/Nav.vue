@@ -18,6 +18,7 @@
       <template v-for="extension in extensions">
         <nuxt-link
           :key="extension.id"
+          :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
           :to="extensionRoute(extension)"
         >
           <nav-item :id="`extension:${extension.id}`">

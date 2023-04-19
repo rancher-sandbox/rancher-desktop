@@ -47,9 +47,17 @@ test.describe.serial('Main App Test', () => {
     await page.emulateMedia({ colorScheme });
 
     await navPage.progressBecomesReady();
+
+    await page.waitForTimeout(2500);
+
+    const navExtension = page.locator('[data-test="extension-nav-epinio"]');
+
+    await expect(navExtension).toBeVisible({ timeout: 30000 });
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(() => {
+    return teardown(electronApp, __filename);
+  });
 
   test('Main Page', async({ colorScheme }) => {
     const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
@@ -73,6 +81,24 @@ test.describe.serial('Main App Test', () => {
     await page.waitForTimeout(1000);
 
     await screenshot.take('Diagnostics');
+
+    const extensionsPage = await navPage.navigateTo('Extensions');
+
+    await expect(extensionsPage.cardEpinio).toBeVisible();
+    await screenshot.take('Extensions');
+
+    await extensionsPage.tabInstalled.click();
+
+    await screenshot.take('Extensions-Installed');
+
+    await extensionsPage.tabCatalog.click();
+
+    await extensionsPage.cardEpinio.click();
+
+    // wait for details to render
+    await page.waitForTimeout(1000);
+
+    await screenshot.take('Extensions-Details');
   });
 
   test('Preferences Page', async({ colorScheme }) => {

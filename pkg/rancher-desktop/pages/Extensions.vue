@@ -4,12 +4,14 @@
       :active-tab="activeTab"
     >
       <tab
+        data-test="extensions-tab-installed"
         :label="t('marketplace.tabs.installed')"
         name="extensions-installed"
         :weight="0"
         @active="tabActivate('extensions-installed')"
       />
       <tab
+        data-test="extensions-tab-catalog"
         :label="t('marketplace.tabs.catalog')"
         name="marketplace-catalog"
         :weight="1"
