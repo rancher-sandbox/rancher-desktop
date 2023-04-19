@@ -17,53 +17,57 @@ limitations under the License.
 package port
 
 import (
+	"crypto/md5"
 	"fmt"
 	"net"
 	"sync"
 
+	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/command"
 )
 
 const netsh = "netsh"
 
+type portProxy struct {
+	ports        nat.PortMap
+	connectAddrs []types.ConnectAddrs
+}
+
 type proxy struct {
-	portMappings []types.PortMapping
+	portMappings map[string]portProxy
 	mutex        sync.Mutex
 }
 
 func newProxy() *proxy {
 	return &proxy{
-		portMappings: make([]types.PortMapping, 0),
+		portMappings: make(map[string]portProxy),
 	}
 }
 
 func (p *proxy) exec(portMapping types.PortMapping) error {
+	portProxy := portProxy{
+		ports:        portMapping.Ports,
+		connectAddrs: portMapping.ConnectAddrs,
+	}
 	if portMapping.Remove {
-		return deleteProxy(portMapping)
+		return p.deleteProxy(portProxy)
 	}
-	if err := addProxy(portMapping); err != nil {
-		return err
-	}
-	p.mutex.Lock()
-	p.portMappings = append(p.portMappings, portMapping)
-	p.mutex.Unlock()
-
-	return nil
+	return p.addProxy(portProxy)
 }
 
 func (p *proxy) removeAll() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	for _, pm := range p.portMappings {
-		_ = deleteProxy(pm)
+	for _, proxy := range p.portMappings {
+		_ = p.deleteProxy(proxy)
 	}
 }
 
-func addProxy(portMapping types.PortMapping) error {
-	for _, v := range portMapping.Ports {
+func (p *proxy) addProxy(portProxy portProxy) error {
+	for _, v := range portProxy.ports {
 		for _, addr := range v {
-			wslIP, err := getConnectAddr(addr.HostIP, portMapping.ConnectAddrs)
+			wslIP, err := getConnectAddr(addr.HostIP, portProxy.connectAddrs)
 			if err != nil {
 				return err
 			}
@@ -77,11 +81,14 @@ func addProxy(portMapping types.PortMapping) error {
 			}
 		}
 	}
+	p.mutex.Lock()
+	p.portMappings[getHash(portProxy)] = portProxy
+	p.mutex.Unlock()
 	return nil
 }
 
-func deleteProxy(portMapping types.PortMapping) error {
-	for _, v := range portMapping.Ports {
+func (p *proxy) deleteProxy(portProxy portProxy) error {
+	for _, v := range portProxy.ports {
 		for _, addr := range v {
 			args, err := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
 			if err != nil {
@@ -93,6 +100,7 @@ func deleteProxy(portMapping types.PortMapping) error {
 			}
 		}
 	}
+	delete(p.portMappings, getHash(portProxy))
 	return nil
 }
 
@@ -175,4 +183,10 @@ func portProxyAddArgs(listenPort, listenAddr, connectAddr string) ([]string, err
 		fmt.Sprintf("connectport=%s", listenPort),
 		fmt.Sprintf("connectaddress=%s", connectAddr),
 	}, nil
+}
+
+func getHash(portProxy portProxy) string {
+	h := md5.New()
+	s := fmt.Sprintf("%v", portProxy)
+	return fmt.Sprintf("%x", h.Sum([]byte(s)))
 }
