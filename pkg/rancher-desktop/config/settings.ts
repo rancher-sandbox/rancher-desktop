@@ -11,7 +11,7 @@ import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
@@ -273,6 +273,39 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
 
   return settings;
 }
+
+/**
+ * Merge settings in-place with changes, returning the merged settings.
+ * @param cfg Baseline settings.  This will be modified.
+ * @param changes The set of changes to pull in.
+ * @returns The merged settings (also modified in-place).
+ */
+export function merge<T = Settings>(cfg: T, changes: RecursivePartial<RecursiveReadonly<T>>): T {
+  const customizer = (objValue: any, srcValue: any) => {
+    if (Array.isArray(objValue)) {
+      // If the destination is a array of primitives, just return the source
+      // (i.e. completely overwrite).
+      if (objValue.every(i => typeof i !== 'object')) {
+        return srcValue;
+      }
+    }
+    if (typeof srcValue === 'object' && srcValue) {
+      // For objects, setting a value to `undefined` will remove it.
+      for (const [key, value] of Object.entries(srcValue)) {
+        if (typeof value === 'undefined') {
+          delete srcValue[key];
+          if (typeof objValue === 'object' && objValue) {
+            delete objValue[key];
+          }
+        }
+      }
+      // Don't return anything, let _.mergeWith() do the actual merging.
+    }
+  };
+
+  return _.mergeWith(cfg, changes, customizer);
+}
+
 export function getLockedSettings(): LockedSettingsType {
   return lockedSettings;
 }

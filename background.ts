@@ -5,7 +5,6 @@ import path from 'path';
 import util from 'util';
 
 import Electron from 'electron';
-import _ from 'lodash';
 
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
@@ -503,30 +502,7 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
 });
 
 function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
-  const customizer = (objValue: any, srcValue: any) => {
-    if (Array.isArray(objValue)) {
-      // If the destination is a array of primitives, just return the source
-      // (i.e. completely overwrite).
-      if (objValue.every(i => typeof i !== 'object')) {
-        return srcValue;
-      }
-    }
-    if (typeof srcValue === 'object' && srcValue) {
-      // For objects, setting a value to `undefined` will remove it.
-      for (const [key, value] of Object.entries(srcValue)) {
-        if (typeof value === 'undefined') {
-          delete srcValue[key];
-          if (typeof objValue === 'object' && objValue) {
-            delete objValue[key];
-          }
-        }
-      }
-      // Don't return anything, let _.mergeWith() do the actual merging.
-    }
-  };
-
-  _.mergeWith(cfg, arg, customizer);
-  settings.save(cfg);
+  settings.save(settings.merge(cfg, arg));
   mainEvents.emit('settings-update', cfg);
 }
 
