@@ -19,6 +19,7 @@ package port
 import (
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/command"
@@ -26,12 +27,37 @@ import (
 
 const netsh = "netsh"
 
-func execProxy(portMapping types.PortMapping) error {
+type proxy struct {
+	portMappings []types.PortMapping
+	mutex        sync.Mutex
+}
+
+func newProxy() *proxy {
+	return &proxy{
+		portMappings: make([]types.PortMapping, 0),
+	}
+}
+
+func (p *proxy) exec(portMapping types.PortMapping) error {
 	if portMapping.Remove {
 		return deleteProxy(portMapping)
 	}
-	return addProxy(portMapping)
+	if err := addProxy(portMapping); err != nil {
+		return err
+	}
+	p.mutex.Lock()
+	p.portMappings = append(p.portMappings, portMapping)
+	p.mutex.Unlock()
 
+	return nil
+}
+
+func (p *proxy) removeAll() {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	for _, pm := range p.portMappings {
+		_ = deleteProxy(pm)
+	}
 }
 
 func addProxy(portMapping types.PortMapping) error {

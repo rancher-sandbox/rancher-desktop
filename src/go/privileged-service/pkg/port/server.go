@@ -36,6 +36,7 @@ const (
 // Server is a port server listening for port events from
 // RD Guest Agent over vtunnel.
 type Server struct {
+	proxy       *proxy
 	eventLogger debug.Log
 	quit        chan interface{}
 	listener    net.Listener
@@ -45,6 +46,7 @@ type Server struct {
 // NewServer creates and returns a new instance of a Port Server.
 func NewServer(elog debug.Log) *Server {
 	return &Server{
+		proxy:       newProxy(),
 		eventLogger: elog,
 		stopped:     true,
 	}
@@ -95,13 +97,14 @@ func (s *Server) handleEvent(conn net.Conn) {
 		return
 	}
 	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
-	if err = execProxy(pm); err != nil {
+	if err = s.proxy.exec(pm); err != nil {
 		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy failed: %v", err))
 	}
 }
 
 // Stop shuts down the server gracefully
 func (s *Server) Stop() {
+	s.proxy.removeAll()
 	close(s.quit)
 	s.listener.Close()
 	s.stopped = true
