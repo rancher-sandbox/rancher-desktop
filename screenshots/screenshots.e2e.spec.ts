@@ -5,7 +5,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
-import { createDefaultSettings, reportAsset, teardown, tool } from '../e2e/utils/TestUtils';
+import { createDefaultSettings, reportAsset, teardown } from '../e2e/utils/TestUtils';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
@@ -50,18 +50,12 @@ test.describe.serial('Main App Test', () => {
 
     await page.waitForTimeout(2500);
 
-    // await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.12');
-    // await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension:0.2.2');
-
     const navExtension = page.locator('[data-test="extension-nav-epinio"]');
 
     await expect(navExtension).toBeVisible({ timeout: 30000 });
   });
 
   test.afterAll(() => {
-    // await tool('rdctl', 'extension', 'uninstall', 'ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.12');
-    // await tool('rdctl', 'extension', 'uninstall', 'docker/logs-explorer-extension:0.2.2');
-
     return teardown(electronApp, __filename);
   });
 
