@@ -34,16 +34,16 @@ type Tracker interface {
 // tunnel (vtunnel).
 type PortTracker struct {
 	portStorage      *portStorage
-	vtunnelForwarder *forwarder.VtunnelForwarder
+	vtunnelForwarder forwarder.Forwarder
 	wslAddrs         []types.ConnectAddrs
 	*ListenerTracker
 }
 
 // NewPortTracker creates a new Port Tracker.
-func NewPortTracker(forwarder *forwarder.VtunnelForwarder, wslAddrs []types.ConnectAddrs) *PortTracker {
+func NewPortTracker(vtunnelForwarder forwarder.Forwarder, wslAddrs []types.ConnectAddrs) *PortTracker {
 	return &PortTracker{
 		portStorage:      newPortStorage(),
-		vtunnelForwarder: forwarder,
+		vtunnelForwarder: vtunnelForwarder,
 		wslAddrs:         wslAddrs,
 		ListenerTracker:  NewListenerTracker(),
 	}
