@@ -51,9 +51,12 @@ if is_windows; then
     if test -d "$PROGRAMFILES/Rancher Desktop"; then
         PATH_EXECUTABLE="$PROGRAMFILES/Rancher Desktop/Rancher Desktop.exe"
         PATH_RESOURCES="$PROGRAMFILES/Rancher Desktop/resources/resources"
-    else
+    elif test -d "$LOCALAPPDATA/Programs/Rancher Desktop"; then
         PATH_EXECUTABLE="$LOCALAPPDATA/Programs/Rancher Desktop/Rancher Desktop.exe"
         PATH_RESOURCES="$LOCALAPPDATA/Programs/Rancher Desktop/resources/resources"
+    else
+        PATH_EXECUTABLE="$(dirname "${BASH_SOURCE[0]}")/../../../dist/win-unpacked/Rancher Desktop.exe"
+        PATH_RESOURCES="$(dirname "${BASH_SOURCE[0]}")/../../../dist/win-unpacked/resources/resources"
     fi
 fi
 
