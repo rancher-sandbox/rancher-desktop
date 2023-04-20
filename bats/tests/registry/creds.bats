@@ -9,7 +9,6 @@ teardown_file() {
     assert_nothing
 }
 
-
 setup() {
     load '../helpers/load'
     REGISTRY_IMAGE="registry:2.8.1"
