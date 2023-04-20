@@ -33,6 +33,6 @@ type PortMapping struct {
 type ConnectAddrs struct {
 	// Network indicates the available networks for the address (for example, "tcp", "udp")
 	Network string `json:"network"`
-	// Address is either IPV4 or IPV6 in CIDR format (for example, "192.0.2.1:25", "[2001:db8::1]:80")
+	// Address is either IPV4 or IPV6 (for example, "192.0.2.1:25", "[2001:db8::1]:80")
 	Addr string `json:"addr"`
 }
