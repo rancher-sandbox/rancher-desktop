@@ -25,6 +25,8 @@ linters:
     - exhaustruct # Many structs have optional fields
     - nosnakecase # Catches imported constants like SO_LINGER
     - wrapcheck # No need to always wrap errors
+    - tparallel
+    - paralleltest
 linters-settings:
   govet:
     disable:
