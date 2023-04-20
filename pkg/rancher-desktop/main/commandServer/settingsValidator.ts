@@ -499,6 +499,11 @@ export default class SettingsValidator {
     errors: string[],
     fqname: string,
   ): boolean {
+    if (_.isEqual(desiredValue, currentValue)) {
+      // Accept no-op changes
+      return false;
+    }
+
     if (typeof desiredValue !== 'object' || !desiredValue) {
       errors.push(`${ fqname }: "${ desiredValue }" is not a valid mapping`);
 
@@ -546,23 +551,19 @@ export default class SettingsValidator {
       [\w][\w.-]{0,127}
       $
       `;
-    let hasErrors = false;
 
     for (const [name, tag] of Object.entries(desiredValue)) {
       if (!nameRE.test(name)) {
-        errors.push(`${ name } is an invalid name`);
-        hasErrors = true;
+        errors.push(`${ fqname }: "${ name }" is an invalid name`);
       }
       if (typeof tag !== 'string') {
-        errors.push(`${ name } has non-string tag ${ tag }`);
-        hasErrors = true;
+        errors.push(`${ fqname }: "${ name }" has non-string tag "${ tag }"`);
       } else if (!tagRE.test(tag)) {
-        errors.push(`${ name } has invalid tag ${ tag }`);
-        hasErrors = true;
+        errors.push(`${ fqname }: "${ name }" has invalid tag "${ tag }"`);
       }
     }
 
-    return hasErrors;
+    return !_.isEqual(desiredValue, currentValue);
   }
 
   protected checkPreferencesNavItemCurrent(
