@@ -222,23 +222,26 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 		// Specifically, don't delete .../cache/k3s & k3s-versions.json
 		files, err := ioutil.ReadDir(localRDAppData)
 		if err != nil {
-			return nil, fmt.Errorf("could not get files in folder %s: %w", localRDAppData, err)
-		}
-		for _, file := range files {
-			baseName := file.Name()
-			if strings.ToLower(baseName) != "cache" {
-				dirs = append(dirs, path.Join(localRDAppData, baseName))
-			} else {
-				cacheDir := path.Join(localRDAppData, baseName)
-				cacheFiles, err := ioutil.ReadDir(cacheDir)
-				if err != nil {
-					logrus.Infof("could not get files in folder %s: %s", cacheDir, err)
+			if !errors.Is(err, os.ErrNotExist) {
+				return nil, fmt.Errorf("could not get files in folder %s: %w", localRDAppData, err)
+			}
+		} else {
+			for _, file := range files {
+				baseName := file.Name()
+				if strings.ToLower(baseName) != "cache" {
+					dirs = append(dirs, path.Join(localRDAppData, baseName))
 				} else {
-					for _, cacheDirFile := range cacheFiles {
-						cacheDirFileName := cacheDirFile.Name()
-						lcFileName := strings.ToLower(cacheDirFileName)
-						if lcFileName != "k3s" && lcFileName != "k3s-versions.json" {
-							dirs = append(dirs, path.Join(cacheDir, cacheDirFileName))
+					cacheDir := path.Join(localRDAppData, baseName)
+					cacheFiles, err := ioutil.ReadDir(cacheDir)
+					if err != nil {
+						logrus.Infof("could not get files in folder %s: %s", cacheDir, err)
+					} else {
+						for _, cacheDirFile := range cacheFiles {
+							cacheDirFileName := cacheDirFile.Name()
+							lcFileName := strings.ToLower(cacheDirFileName)
+							if lcFileName != "k3s" && lcFileName != "k3s-versions.json" {
+								dirs = append(dirs, path.Join(cacheDir, cacheDirFileName))
+							}
 						}
 					}
 				}
