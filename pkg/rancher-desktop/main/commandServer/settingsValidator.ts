@@ -510,11 +510,14 @@ export default class SettingsValidator {
       return false;
     }
 
-    // makeRE is a tagged template for making regular expressions with /x (i.e.
-    // ignoring any whitespace within the regular expression itself).
-    function makeRE(strings: {raw: readonly string[]}, ...subsitutions: any[]) {
-      const subsitutionSources = subsitutions.map(s => s instanceof RegExp ? s.source : s);
-      const raw = String.raw(strings, ...subsitutionSources);
+    /**
+     * makeRE is a tagged template for making regular expressions with /x (i.e.
+     * ignoring any whitespace within the regular expression itself).
+     * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
+     */
+    function makeRE(strings: TemplateStringsArray, ...substitutions: any[]) {
+      const substitutionSources = substitutions.map(s => s instanceof RegExp ? s.source : s);
+      const raw = String.raw(strings, ...substitutionSources);
       const lines = raw.split(/\r?\n/);
       // Drop comments at end of line
       const uncommentedLines = lines.map(line => line.replace(/\s#.*$/, ''));
