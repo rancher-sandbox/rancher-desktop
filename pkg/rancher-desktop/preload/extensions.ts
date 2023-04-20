@@ -357,14 +357,17 @@ class Client implements v1.DockerDesktopClient {
 
       const lsContainers = lsResult.parseJsonLines();
 
-      // We need to run `container inspect` to add more info.
-      const inspectArgs = ['--format={{json .}}'];
-
-      inspectArgs.push(`--size=${ options.size ?? false }`);
-      inspectArgs.push(...lsContainers.map(c => c.ID));
-      if (options.namespace) {
-        inspectArgs.unshift(`--namespace=${ options.namespace }`);
+      if (lsContainers.length === 0) {
+        return [];
       }
+
+      // We need to run `container inspect` to add more info.
+      const inspectArgs = [
+        '--format={{json .}}',
+        options.size ? ['--size=true'] : [],
+        lsContainers.map(c => c.ID),
+        options.namespace ? [`--namespace=${ options.namespace }`] : [],
+      ].flat();
 
       const inspectResults = await this.docker.cli.exec('inspect', inspectArgs);
 
@@ -392,13 +395,15 @@ class Client implements v1.DockerDesktopClient {
 
         return {
           ...pick(c, 'Image', 'Command', 'Status'),
-          ...pick(details, 'Id', ['Image', 'ImageID'], 'SizeRw', 'SizeRootFs',
-            'HostConfig', 'NetworkSettings', 'Mounts'),
-          ...pick(details.NetworkSettings, 'Ports'),
+          ...pick(details, 'Id', ['Image', 'ImageID'], 'NetworkSettings', 'Mounts'),
+          HostConfig: details.HostConfig ?? {},
+          SizeRootFs: details.SizeRootFs ?? -1,
+          SizeRw:     details.SizeRw ?? -1,
+          Ports:      details.NetworkSettings.Ports ?? {},
           ...pick(details.Config, 'Labels'),
           ...pick(details.State, ['Status', 'State']),
-          Names:   c.Names.split(/\s+/g),
-          Created: Date.parse(c.CreatedAt).valueOf(),
+          Names:      c.Names.split(/\s+/g),
+          Created:    Date.parse(c.CreatedAt).valueOf(),
         };
       });
     },
@@ -421,6 +426,10 @@ class Client implements v1.DockerDesktopClient {
       }
 
       const lsImages = lsResult.parseJsonLines();
+
+      if (lsImages.length === 0) {
+        return [];
+      }
 
       const inspectArgs = [
         options.namespace ? [`--namespace=${ options.namespace }`] : [],
