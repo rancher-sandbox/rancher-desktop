@@ -339,17 +339,15 @@ export class ExtensionImpl implements Extension {
     );
   }
 
-  get isInstalled(): Promise<boolean> {
-    return (async() => {
-      try {
-        const filePath = path.join(this.dir, this.VERSION_FILE);
-        const installed = await fs.promises.readFile(filePath, 'utf-8');
+  async isInstalled(): Promise<boolean> {
+    try {
+      const filePath = path.join(this.dir, this.VERSION_FILE);
+      const installed = await fs.promises.readFile(filePath, 'utf-8');
 
-        return installed === this.version;
-      } catch (ex) {
-        return false;
-      }
-    })();
+      return installed === this.version;
+    } catch (ex) {
+      return false;
+    }
   }
 
   _composeFile: Promise<any> | undefined;

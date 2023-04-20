@@ -251,7 +251,7 @@ class ExtensionManagerImpl implements ExtensionManager {
 
     // No tag specified; grab the installed version, if available
     for (const ext of Object.values(extGroup)) {
-      if (await ext.isInstalled) {
+      if (await ext.isInstalled()) {
         return ext;
       }
     }
@@ -268,7 +268,7 @@ class ExtensionManagerImpl implements ExtensionManager {
     const exts = await Promise.all(Object.entries(this.extensions).map(async([id, group]) => {
       const versions = Object.entries(group);
       const states = await Promise.all(versions.map(async([version, ext]) => {
-        return [version, await ext.isInstalled, ext] as const;
+        return [version, await ext.isInstalled(), ext] as const;
       }));
 
       return [id, ...states.find(([, installed]) => installed) ?? ['', false]] as const;

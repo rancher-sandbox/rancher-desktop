@@ -80,7 +80,7 @@ export interface Extension {
   /**
    * Check whether this extension is installed (at this version).
    */
-  readonly isInstalled: Promise<boolean>;
+  isInstalled(): Promise<boolean>;
 
   /**
    * Extract the given file from the image.
