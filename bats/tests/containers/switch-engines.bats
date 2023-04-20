@@ -5,52 +5,52 @@ setup() {
     RD_CONTAINER_ENGINE=moby
 }
 
+teardown_file() {
+    load '../helpers/load'
+    run rdctl shutdown
+    assert_nothing
+}
+
+switch_container_engine() {
+    local name=$1
+    RD_CONTAINER_ENGINE="${name}"
+    run rdctl set --container-engine.name="${name}"
+    assert_success
+    wait_for_container_engine
+}
+
+pull_nginx() {
+    ctrctl run -d -p 8085:80 --restart=no nginx
+    run ctrctl ps --format '{{json .Image}}'
+    assert_output --partial nginx
+}
+
 @test 'factory reset' {
     factory_reset
 }
 
-@test 'start container engine' {
+@test 'start moby and pull nginx' {
     start_container_engine
     wait_for_container_engine
-}
-
-@test "pull nginx" {
-    docker run -d -p 8085:80 --restart=no nginx
-    run docker ps --format '{{json .Image}}'
-    assert_output --partial nginx
+    pull_nginx
 }
 
 @test "switch to containerd" {
-    RD_CONTAINER_ENGINE=containerd
-    run rdctl set --container-engine.name=containerd
-    assert_success
-    wait_for_container_engine
-    nerdctl run -d -p 8086:80 --restart=no nginx
-    run nerdctl ps --format '{{json .Image}}'
-    assert_output --partial nginx
+    switch_container_engine containerd
+    pull_nginx
+}
+
+switch_back_verify_nginx_gone() {
+    local name=$1
+    switch_container_engine "${name}"
+    run ctrctl ps --format '{{json .Image}}'
+    refute_output --partial "nginx"
 }
 
 @test 'switch back to moby' {
-    RD_CONTAINER_ENGINE=moby
-    run rdctl set --container-engine.name moby
-    assert_success
-    wait_for_container_engine
-}
-
-@test 'verify the nginx container is gone' {
-    run docker ps --format '{{json .Image}}'
-    refute_output --partial "nginx"
+    switch_back_verify_nginx_gone moby
 }
 
 @test 'switch back to containerd and verify that the nginx container is gone' {
-    RD_CONTAINER_ENGINE=containerd
-    run rdctl set --container-engine.name containerd
-    assert_success
-    wait_for_container_engine
-    run nerdctl ps --format '{{json .Image}}'
-    refute_output --partial "nginx"
-}
-
-@test 'linux-bats is waiting for an rd shutdown before it stops' {
-    rdctl shutdown
+    switch_back_verify_nginx_gone containerd
 }
