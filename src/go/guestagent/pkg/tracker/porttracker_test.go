@@ -66,6 +66,12 @@ func TestPortTrackerAdd(t *testing.T) {
 				ConnectAddrs: wslConnectAddr,
 			},
 		})
+
+	actualPortMapping1 := portTracker.Get(containerID)
+	assert.Equal(t, actualPortMapping1, portMapping)
+
+	actualPortMapping2 := portTracker.Get(containerID2)
+	assert.Equal(t, actualPortMapping2, portMapping2)
 }
 
 func TestPortTrackerAddWithError(t *testing.T) {
@@ -85,7 +91,7 @@ func TestPortTrackerAddWithError(t *testing.T) {
 		},
 	}
 	err := portTracker.Add(containerID, portMapping)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, errSend)
 
 	assert.Len(t, forwarder.receivedPortMappings, 1)
 
@@ -136,6 +142,14 @@ func TestPortTrackerRemove(t *testing.T) {
 	err = portTracker.Remove(containerID)
 	assert.NoError(t, err)
 
+	removeRequestIndex := 2
+	assert.Equal(t, forwarder.receivedPortMappings[removeRequestIndex],
+		types.PortMapping{
+			Remove:       true,
+			Ports:        portMapping,
+			ConnectAddrs: wslConnectAddr,
+		})
+
 	actualPortMapping1 := portTracker.Get(containerID)
 	assert.Nil(t, actualPortMapping1)
 
@@ -148,13 +162,6 @@ func TestPortTrackerRemove(t *testing.T) {
 			},
 		},
 	})
-
-	assert.Equal(t, forwarder.receivedPortMappings[2],
-		types.PortMapping{
-			Remove:       true,
-			Ports:        portMapping,
-			ConnectAddrs: wslConnectAddr,
-		})
 }
 
 func TestPortTrackerRemoveError(t *testing.T) {
@@ -191,6 +198,14 @@ func TestPortTrackerRemoveError(t *testing.T) {
 	forwarder.sendErr = errSend
 	err = portTracker.Remove(containerID)
 	assert.Error(t, err)
+
+	removeRequestIndex := 2
+	assert.Equal(t, forwarder.receivedPortMappings[removeRequestIndex],
+		types.PortMapping{
+			Remove:       true,
+			Ports:        portMapping,
+			ConnectAddrs: wslConnectAddr,
+		})
 
 	actualPortMapping1 := portTracker.Get(containerID)
 	assert.Equal(t, actualPortMapping1, nat.PortMap{

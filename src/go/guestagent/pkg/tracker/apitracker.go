@@ -99,8 +99,8 @@ func (a *APITracker) Get(containerID string) nat.PortMap {
 	return a.portStorage.get(containerID)
 }
 
-// Remove a single entry from the port storage and unexposes
-// the corresponding port forwarding.
+// Remove a single entry from the port storage and calls the
+// /services/forwarder/unexpose endpoint to remove the forwarded the port mappings.
 func (a *APITracker) Remove(containerID string) error {
 	portMappings := a.portStorage.get(containerID)
 	defer a.portStorage.remove(containerID)
@@ -114,7 +114,8 @@ func (a *APITracker) Remove(containerID string) error {
 					Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 				})
 			if err != nil {
-				errs = append(errs, fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
+				errs = append(errs,
+					fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
 
 				continue
 			}
@@ -128,7 +129,8 @@ func (a *APITracker) Remove(containerID string) error {
 	return nil
 }
 
-// RemoveAll removes all the port bindings from the tracker.
+// RemoveAll calls the /services/forwarder/unexpose
+// and removes all the port bindings from the tracker.
 func (a *APITracker) RemoveAll() error {
 	var errs []error
 
@@ -142,7 +144,8 @@ func (a *APITracker) RemoveAll() error {
 						Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 					})
 				if err != nil {
-					errs = append(errs, fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
+					errs = append(errs,
+						fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
 
 					continue
 				}

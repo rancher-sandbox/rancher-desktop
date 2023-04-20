@@ -143,7 +143,7 @@ func TestAddWithError(t *testing.T) {
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	})
-	assert.ElementsMatch(t, actualPortMapping["80/tcp"],
+	assert.Equal(t, actualPortMapping["80/tcp"],
 		[]nat.PortBinding{
 			{
 				HostIP:   hostIP,
@@ -187,7 +187,7 @@ func TestGet(t *testing.T) {
 
 	actualPortMappings := apiTracker.Get(containerID)
 	assert.Len(t, actualPortMappings, len(portMapping))
-	assert.ElementsMatch(t, actualPortMappings["443/tcp"], portMapping["443/tcp"])
+	assert.Equal(t, actualPortMappings["443/tcp"], portMapping["443/tcp"])
 }
 
 func TestRemove(t *testing.T) {
