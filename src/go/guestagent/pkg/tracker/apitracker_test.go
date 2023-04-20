@@ -70,41 +70,7 @@ func TestBasicAdd(t *testing.T) {
 	assert.Equal(t, portMapping, actualPortMapping)
 }
 
-func TestGet(t *testing.T) {
-	t.Parallel()
-
-	portMapping := nat.PortMap{
-		"443/tcp": []nat.PortBinding{
-			{
-				HostIP:   hostIP,
-				HostPort: hostPort2,
-			},
-			{
-				HostIP:   hostIP3,
-				HostPort: hostPort2,
-			},
-		},
-	}
-
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	testSrv := httptest.NewServer(mux)
-	defer testSrv.Close()
-
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
-	err := apiTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
-
-	actualPortMappings := apiTracker.Get(containerID)
-	assert.Len(t, actualPortMappings, len(portMapping))
-	assert.ElementsMatch(t, actualPortMappings["443/tcp"], portMapping["443/tcp"])
-}
-
-func TestPartialAdd(t *testing.T) {
+func TestAddWithError(t *testing.T) {
 	t.Parallel()
 
 	var expectedExposeReq []*types.ExposeRequest
@@ -177,15 +143,51 @@ func TestPartialAdd(t *testing.T) {
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	})
-	assert.Contains(t, actualPortMapping["80/tcp"],
-		nat.PortBinding{
-			HostIP:   hostIP,
-			HostPort: hostPort,
-		},
-		nat.PortBinding{
-			HostIP:   hostIP3,
-			HostPort: hostPort,
+	assert.ElementsMatch(t, actualPortMapping["80/tcp"],
+		[]nat.PortBinding{
+			{
+				HostIP:   hostIP,
+				HostPort: hostPort,
+			},
+			{
+				HostIP:   hostIP3,
+				HostPort: hostPort,
+			},
 		})
+}
+
+func TestGet(t *testing.T) {
+	t.Parallel()
+
+	portMapping := nat.PortMap{
+		"443/tcp": []nat.PortBinding{
+			{
+				HostIP:   hostIP,
+				HostPort: hostPort2,
+			},
+			{
+				HostIP:   hostIP3,
+				HostPort: hostPort2,
+			},
+		},
+	}
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	err := apiTracker.Add(containerID, portMapping)
+	assert.NoError(t, err)
+
+	actualPortMappings := apiTracker.Get(containerID)
+	assert.Len(t, actualPortMappings, len(portMapping))
+	assert.ElementsMatch(t, actualPortMappings["443/tcp"], portMapping["443/tcp"])
 }
 
 func TestRemove(t *testing.T) {
