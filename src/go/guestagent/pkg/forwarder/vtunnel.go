@@ -22,6 +22,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
+type Forwarder interface {
+	Send(portMapping types.PortMapping) error
+}
+
 // VtunnelForwarder forwards the PortMappings to Vtunnel Peer process.
 type VtunnelForwarder struct {
 	peerAddr string
