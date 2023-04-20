@@ -186,7 +186,6 @@ func portProxyAddArgs(listenPort, listenAddr, connectAddr string) ([]string, err
 }
 
 func getHash(portProxy portProxy) string {
-	h := md5.New()
-	s := fmt.Sprintf("%v", portProxy)
-	return fmt.Sprintf("%x", h.Sum([]byte(s)))
+	data := fmt.Sprintf("%v", portProxy)
+	return fmt.Sprintf("%x", md5.Sum([]byte(data)))
 }
