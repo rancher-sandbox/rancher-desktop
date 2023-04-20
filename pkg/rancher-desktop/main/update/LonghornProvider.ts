@@ -206,6 +206,12 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
   }
 }
 
+/**
+ * Return the OS version of whatever platform we are running on.
+ * Note that this is *not* the kernel version; it is the OS version,
+ * i.e. the version of the entire package, including kernel,
+ * userspace programs, base configuration, etc.
+ */
 async function getPlatformVersion(): Promise<string> {
   switch (process.platform) {
   case 'win32':
@@ -220,10 +226,13 @@ async function getPlatformVersion(): Promise<string> {
     return macOsVersion.toString();
   }
   case 'linux':
-    // OS version is hard to get on Linux. Luckily, automatic updates
-    // are not supported on Linux as of the time of writing. "unknown"
-    // should suffice.
-    return 'unknown';
+    // OS version is hard to get on Linux and could be in many different
+    // formats. We hard-code it to 0.0.0 so that Upgrade Responder can
+    // parse it into an InstanceInfo. Nevertheless, automatic updates
+    // are not supported on Linux as of the time of writing, so this is
+    // just in case we want to introduce rules for Linux that don't have
+    // to do with platform version in the future.
+    return '0.0.0';
   }
   throw new Error(`Platform "${ process.platform }" is not supported`);
 }
