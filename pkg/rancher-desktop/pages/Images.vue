@@ -62,7 +62,7 @@ export default {
 
         this.$store.dispatch(
           'page/setAction',
-          { action: 'images-button-add' },
+          { action: 'ImagesButtonAdd' },
         );
       },
       immediate: true,
