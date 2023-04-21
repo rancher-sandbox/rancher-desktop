@@ -1,7 +1,3 @@
-setup_file() {
-    rm -f "$HOME/.docker/config.json"
-}
-
 teardown_file() {
     load '../helpers/load'
     # On Linux if we don't shutdown Rancher Desktop the bats test doesn't shutdown.
@@ -90,6 +86,7 @@ skip_for_insecure_registry() {
 
 @test 'factory reset' {
     factory_reset
+    rm -f "$DOCKER_CONFIG_FILE"
 }
 
 @test 'start container engine' {
