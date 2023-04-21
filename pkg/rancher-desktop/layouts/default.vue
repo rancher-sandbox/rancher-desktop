@@ -83,7 +83,9 @@ export default {
       this.goToRoute(args);
     });
     ipcRenderer.on('extensions/list', (_event, extensions) => {
-      this.extensions = extensions || [];
+      this.extensions = (extensions || []).filter((e) => {
+        return !!e.metadata.ui?.['dashboard-tab'];
+      });
     });
     ipcRenderer.send('extensions/list');
 
