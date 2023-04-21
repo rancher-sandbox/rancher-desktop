@@ -305,7 +305,7 @@ class Client implements v1.DockerDesktopClient {
       showOpenDialog(options: any): Promise<v1.OpenDialogResult> {
         // Use the clone() here to ensure we only pass plain data structures to
         // the main process.
-        return ipcRenderer.invoke('extensions/ui/show-open', clone(options));
+        return ipcRenderer.invoke('extensions/ui/show-open', clone(options ?? {}));
       },
     },
     navigate: {} as v1.NavigationIntents,
