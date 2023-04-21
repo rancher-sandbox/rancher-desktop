@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2023 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ package port
 
 import (
 	"crypto/md5"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
+	"sort"
 	"sync"
 
 	"github.com/docker/go-connections/nat"
@@ -29,9 +32,11 @@ import (
 
 const netsh = "netsh"
 
+var ErrPortProxy = errors.New("error from PortProxy")
+
 type portProxy struct {
-	ports        nat.PortMap
-	connectAddrs []types.ConnectAddrs
+	PortMap      nat.PortMap
+	ConnectAddrs []types.ConnectAddrs
 }
 
 type proxy struct {
@@ -46,28 +51,35 @@ func newProxy() *proxy {
 }
 
 func (p *proxy) exec(portMapping types.PortMapping) error {
-	portProxy := portProxy{
-		ports:        portMapping.Ports,
-		connectAddrs: portMapping.ConnectAddrs,
+	port := portProxy{
+		PortMap:      portMapping.Ports,
+		ConnectAddrs: portMapping.ConnectAddrs,
 	}
 	if portMapping.Remove {
-		return p.delete(portProxy)
+		return p.delete(port)
 	}
-	return p.add(portProxy)
+	return p.add(port)
 }
 
-func (p *proxy) removeAll() {
+func (p *proxy) removeAll() error {
+	errs := make([]error, 0)
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	for _, proxy := range p.portMappings {
-		_ = p.delete(proxy)
+		if err := p.delete(proxy); err != nil {
+			errs = append(errs, fmt.Errorf("deleting portproxy: %+v faile: %w", proxy, err))
+		}
 	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%w: %+v", ErrPortProxy, errs)
 }
 
-func (p *proxy) add(portProxy portProxy) error {
-	for _, v := range portProxy.ports {
+func (p *proxy) add(port portProxy) error {
+	for _, v := range port.PortMap {
 		for _, addr := range v {
-			wslIP, err := getConnectAddr(addr.HostIP, portProxy.connectAddrs)
+			wslIP, err := getConnectAddr(addr.HostIP, port.ConnectAddrs)
 			if err != nil {
 				return err
 			}
@@ -82,13 +94,17 @@ func (p *proxy) add(portProxy portProxy) error {
 		}
 	}
 	p.mutex.Lock()
-	p.portMappings[getHash(portProxy)] = portProxy
-	p.mutex.Unlock()
+	defer p.mutex.Unlock()
+	hash, err := getHash(port)
+	if err != nil {
+		return err
+	}
+	p.portMappings[hash] = port
 	return nil
 }
 
-func (p *proxy) delete(portProxy portProxy) error {
-	for _, v := range portProxy.ports {
+func (p *proxy) delete(port portProxy) error {
+	for _, v := range port.PortMap {
 		for _, addr := range v {
 			args, err := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
 			if err != nil {
@@ -100,7 +116,13 @@ func (p *proxy) delete(portProxy portProxy) error {
 			}
 		}
 	}
-	delete(p.portMappings, getHash(portProxy))
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	hash, err := getHash(port)
+	if err != nil {
+		return err
+	}
+	delete(p.portMappings, hash)
 	return nil
 }
 
@@ -185,7 +207,18 @@ func portProxyAddArgs(listenPort, listenAddr, connectAddr string) ([]string, err
 	}, nil
 }
 
-func getHash(portProxy portProxy) string {
-	data := fmt.Sprintf("%v", portProxy)
-	return fmt.Sprintf("%x", md5.Sum([]byte(data)))
+func getHash(ports portProxy) (string, error) {
+	sort.Slice(ports.ConnectAddrs, func(i, j int) bool {
+		return ports.ConnectAddrs[i].Addr < ports.ConnectAddrs[j].Addr
+	})
+	for _, portBinding := range ports.PortMap {
+		sort.Slice(portBinding, func(i, j int) bool {
+			return portBinding[i].HostIP < portBinding[j].HostIP
+		})
+	}
+	b, err := json.Marshal(ports)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", md5.Sum(b)), nil
 }

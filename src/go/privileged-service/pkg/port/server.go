@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2023 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,7 +104,9 @@ func (s *Server) handleEvent(conn net.Conn) {
 
 // Stop shuts down the server gracefully
 func (s *Server) Stop() {
-	s.proxy.removeAll()
+	if err := s.proxy.removeAll(); err != nil {
+		s.eventLogger.Warning(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), err.Error())
+	}
 	close(s.quit)
 	s.listener.Close()
 	s.stopped = true
