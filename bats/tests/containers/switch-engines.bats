@@ -14,15 +14,16 @@ teardown_file() {
 switch_container_engine() {
     local name=$1
     RD_CONTAINER_ENGINE="${name}"
-    run rdctl set --container-engine.name="${name}"
-    assert_success
+    rdctl set --container-engine.name="${name}"
     wait_for_container_engine
 }
 
-pull_nginx() {
+pull_containers() {
     ctrctl run -d -p 8085:80 --restart=no nginx
+    ctrctl run -d --restart=always busybox /bin/sh -c "sleep inf"
     run ctrctl ps --format '{{json .Image}}'
     assert_output --partial nginx
+    assert_output --partial busybox
 }
 
 @test 'factory reset' {
@@ -32,25 +33,31 @@ pull_nginx() {
 @test 'start moby and pull nginx' {
     start_container_engine
     wait_for_container_engine
-    pull_nginx
+    pull_containers
 }
 
 @test "switch to containerd" {
     switch_container_engine containerd
-    pull_nginx
+    pull_containers
 }
 
-switch_back_verify_nginx_gone() {
-    local name=$1
-    switch_container_engine "${name}"
+verify_post_switch_containers() {
     run ctrctl ps --format '{{json .Image}}'
+    assert_output --partial "busybox"
     refute_output --partial "nginx"
 }
 
-@test 'switch back to moby' {
-    switch_back_verify_nginx_gone moby
+switch_back_verify_post_switch_containers() {
+    local name=$1
+    switch_container_engine "${name}"
+    try --max 12 --delay 5 verify_post_switch_containers
+    assert_success
 }
 
-@test 'switch back to containerd and verify that the nginx container is gone' {
-    switch_back_verify_nginx_gone containerd
+@test 'switch back to moby and verify containers' {
+    switch_back_verify_post_switch_containers moby
+}
+
+@test 'switch back to containerd and verify containers' {
+    switch_back_verify_post_switch_containers containerd
 }
