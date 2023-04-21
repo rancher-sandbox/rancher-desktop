@@ -4,6 +4,7 @@ import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesVirtualMachineHardware from '@pkg/components/Preferences/VirtualMachineHardware.vue';
+import PreferencesVirtualMachineVolumes from '@pkg/components/Preferences/VirtualMachineVolumes.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
@@ -19,6 +20,7 @@ export default Vue.extend({
     RdTabbed,
     Tab,
     PreferencesVirtualMachineHardware,
+    PreferencesVirtualMachineVolumes,
   },
   props: {
     preferences: {
@@ -63,15 +65,21 @@ export default Vue.extend({
   >
     <template #tabs>
       <tab
+        label="Volumes"
+        name="volumes"
+        :weight="1"
+      />
+      <tab
         label="Hardware"
         name="hardware"
-        :weight="1"
+        :weight="2"
       />
     </template>
     <div class="virtual-machine-content">
       <component
         :is="`preferences-virtual-machine-${ activeTab }`"
         :preferences="preferences"
+        v-on="$listeners"
       />
     </div>
   </rd-tabbed>

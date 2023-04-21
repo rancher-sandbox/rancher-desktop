@@ -19,6 +19,7 @@ export const defaultTransientSettings = {
       current:     'Application' as NavItemName,
       currentTabs: {
         Application:        'general',
+        'Virtual Machine':  'hardware',
         'Container Engine': 'general',
       } as Record<NavItemName, string | undefined>,
     },

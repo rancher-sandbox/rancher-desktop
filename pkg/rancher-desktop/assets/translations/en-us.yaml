@@ -302,6 +302,46 @@ virtualMachine:
   networkingTunnel:
     legend: Networking tunnel
     label: Enable networking tunnel
+  mount:
+    type:
+      legend: Mount type
+      options:
+        reverse-sshfs:
+          label: reverse-sshfs
+          description: Exposes the filesystem by running an SFTP server.
+        9p:
+          label: 9p
+          description: Exposes the filesystem by using QEMU's virtio-9p-pci devices.
+          options:
+            cacheMode:
+              legend: Cache mode
+              tooltip: Caching policy to be used
+              options:
+                none: none
+                loose: loose
+                fscache: fscache
+                mmap: mmap
+            mSizeInKb:
+              legend: Memory size in KiB
+              tooltip: Maximum package size in KiB
+            protocolVersion:
+              legend: Protocol version
+              tooltip: 9P protocol version
+              options:
+                9p2000: 9p2000
+                9p2000u: '9p2000.u'
+                9p2000L: '9p2000.L'
+            securityModel:
+              legend: Security Model
+              tooltip: Security model used for the export path
+              options:
+                passthrough: passthrough
+                'mapped-xattr': mapped-xattr
+                'mapped-file': mapped-file
+                none: none
+        virtiofs:
+          label: virtiofs
+          description: Exposes the filesystem by using an Apple Virtualization framework shared directory device.
 
 containerEngine:
   label: Container Engine
