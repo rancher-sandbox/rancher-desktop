@@ -1,7 +1,15 @@
+teardown_file() {
+    load '../helpers/load'
+    # On Linux if we don't shutdown Rancher Desktop the bats test doesn't shutdown.
+    run rdctl shutdown
+    assert_nothing
+}
+
 setup() {
     load '../helpers/load'
     REGISTRY_IMAGE="registry:2.8.1"
     REGISTRY_PORT="5050"
+    DOCKER_CONFIG_FILE="$HOME/.docker/config.json"
 
     TEMP=/tmp
     if is_windows; then
@@ -78,6 +86,7 @@ skip_for_insecure_registry() {
 
 @test 'factory reset' {
     factory_reset
+    rm -f "$DOCKER_CONFIG_FILE"
 }
 
 @test 'start container engine' {
@@ -101,6 +110,17 @@ EOF
 
 @test 'wait for container engine' {
     wait_for_container_engine
+}
+
+@test 'verify credential is set correctly' {
+    verify_default_credStore
+}
+
+verify_default_credStore() {
+    local CREDHELPER_NAME="$(basename "$CRED_HELPER" .exe | sed s/^docker-credential-//)"
+    run jq -r .credsStore "$DOCKER_CONFIG_FILE"
+    assert_success
+    assert_output "$CREDHELPER_NAME"
 }
 
 @test 'verify allowed-images config' {
@@ -218,4 +238,12 @@ EOF
     ctrctl logout "$REGISTRY"
     run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" get"
     refute_output --partial '"Secret":"password"'
+}
+
+@test 'verify the docker-desktop credential helper is replaced with the rancher-desktop default' {
+    factory_reset
+    echo '{ "credsStore": "desktop" }' >|"$DOCKER_CONFIG_FILE"
+    start_container_engine
+    wait_for_container_engine
+    verify_default_credStore
 }
