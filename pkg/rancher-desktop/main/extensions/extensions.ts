@@ -226,7 +226,7 @@ export class ExtensionImpl implements Extension {
     // Extract compose file and place it in composeDir
     if (isVMTypeImage(metadata.vm)) {
       contents = {
-        name:     this.id,
+        name:     this.id.replace(/[^a-z0-9_-]/g, '_'),
         // Disable lint because it's a literal ${DESKTOP_PLUGIN_IMAGE} string.
         // eslint-disable-next-line no-template-curly-in-string
         services: { web: { image: '${DESKTOP_PLUGIN_IMAGE}' } },
