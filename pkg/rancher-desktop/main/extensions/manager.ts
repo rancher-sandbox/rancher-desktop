@@ -236,7 +236,7 @@ class ExtensionManagerImpl implements ExtensionManager {
     let [, repo, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
     const extGroup = this.extensions[image] ?? {};
 
-    // The build process uses an older TypeScript that can't infer id correctly.
+    // The build process uses an older TypeScript that can't infer repo correctly.
     repo ??= image;
     tag ??= undefined;
 
