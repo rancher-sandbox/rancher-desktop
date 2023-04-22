@@ -62,7 +62,8 @@ EOF
 start_kubernetes() {
     start_container_engine \
         --kubernetes-enabled \
-        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
+        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION" \
+        "$@"
 }
 
 container_engine_info() {
