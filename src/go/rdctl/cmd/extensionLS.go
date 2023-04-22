@@ -29,9 +29,10 @@ import (
 
 // lsCmd represents the ls command
 var lsCmd = &cobra.Command{
-	Use:   "ls",
-	Short: "List currently installed images",
-	Long:  `List currently installed images.`,
+	Use:     "ls",
+	Aliases: []string{"list"},
+	Short:   "List currently installed images",
+	Long:    `List currently installed images.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			return fmt.Errorf("rdctl extension ls takes no additional arguments, got %s", args)
@@ -51,7 +52,7 @@ func listExtensions() error {
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult([]byte{}, errorPacket, err)
 	}
-	extensionList := map[string]bool{}
+	extensionList := map[string]string{}
 	err = json.Unmarshal(result, &extensionList)
 	if err != nil {
 		return fmt.Errorf("failed to json-unmarshal results of `extensions ls`: %w", err)
@@ -61,8 +62,8 @@ func listExtensions() error {
 		return nil
 	}
 	extensionIDs := make([]string, 0, len(extensionList))
-	for id := range extensionList {
-		extensionIDs = append(extensionIDs, id)
+	for id, tag := range extensionList {
+		extensionIDs = append(extensionIDs, fmt.Sprintf("%s:%s", id, tag))
 	}
 	sort.Slice(extensionIDs, func(i, j int) bool { return strings.ToLower(extensionIDs[i]) < strings.ToLower(extensionIDs[j]) })
 

@@ -45,9 +45,19 @@ export type ExtensionMetadata = {
  */
 export interface Extension {
   /**
-   * The image ID for this extension.
+   * The image ID for this extension, excluding the tag.
    */
   readonly id: string;
+
+  /**
+   * The image tag for this extension.
+   */
+  readonly version: string;
+
+  /**
+   * The full image tag for this image (a combination of idonly and version).
+   */
+  readonly image: string;
 
   /**
    * Metadata for this extension.
@@ -68,6 +78,11 @@ export interface Extension {
   uninstall(): Promise<boolean>;
 
   /**
+   * Check whether this extension is installed (at this version).
+   */
+  isInstalled(): Promise<boolean>;
+
+  /**
    * Extract the given file from the image.
    * @param sourcePath The name of the file (or directory) to extract, relative
    * to the root of the image; for example, `metadata.json`.
@@ -86,16 +101,18 @@ export interface ExtensionManager {
 
   /**
    * Get the given extension.
-   * @param id The image ID of the extension.
+   * @param id The image ID of the extension, possibly including the tag.
+   *        If the tag is not supplied, the currently-installed version is
+   *        used; if no version is installed, "latest" is assumed.
    * @note This may cause the given image to be downloaded.
    * @note The extension will not be automatically installed.
    */
-  getExtension(id: string): Extension;
+  getExtension(image: string): Promise<Extension>;
 
   /**
    * Get a collection of all installed extensions.
    */
-  getInstalledExtensions(): Promise<{ id: string; metadata: ExtensionMetadata; }[]>;
+  getInstalledExtensions(): Promise<{ id: string; version: string, metadata: ExtensionMetadata; }[]>;
 
   /**
    * Shut down the extension manager, doing any clean up necessary.

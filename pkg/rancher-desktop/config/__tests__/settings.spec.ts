@@ -24,6 +24,53 @@ enum ProfileTypes {
 }
 
 describe('settings', () => {
+  describe('merge', () => {
+    test('merges plain objects', () => {
+      const input = {
+        a: 1,
+        b: {
+          c: 2, d: 3, e: { f: 4 },
+        },
+      };
+      const changes = { a: 10, b: { c: 20, e: { } } };
+      const result = settings.merge(input, changes);
+
+      expect(result).toEqual({
+        a: 10,
+        b: {
+          c: 20, d: 3, e: { f: 4 },
+        },
+      },
+      );
+    });
+    test('replaces arrays of primitives', () => {
+      const input = {
+        a: [1, 2, 3, 4, 5], b: 3, c: 5,
+      };
+      const changes = { a: [1, 3, 5, 7], b: 4 };
+      const result = settings.merge(input, changes);
+
+      expect(result).toEqual({
+        a: [1, 3, 5, 7], b: 4, c: 5,
+      });
+    });
+    test('removes values set to undefined', () => {
+      const input = { a: 1, b: { c: 3, d: 4 } };
+      const changes = { b: { c: undefined } };
+      const result = settings.merge(input, changes);
+
+      expect(result).toEqual({ a: 1, b: { d: 4 } });
+    });
+    test('returns merged settings', () => {
+      const input = { a: 1 };
+      const changes = { a: 2 };
+      const result = settings.merge(input, changes);
+
+      expect(result).toBe(input);
+      expect(input).toEqual({ a: 2 });
+    });
+  });
+
   const jsonProfile = JSON.stringify({
     ignoreThis:      { soups: ['gazpacho', 'turtle'] },
     containerEngine: {

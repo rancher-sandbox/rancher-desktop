@@ -640,8 +640,8 @@ export interface CommandWorkerInterface {
   updateTransientSettings: (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
 
   // #region extensions
-  /** List the installed extensions */
-  listExtensions(): Promise<Record<string, true>>;
+  /** List the installed extensions with their versions */
+  listExtensions(): Promise<Record<string, string>>;
   /**
    * Install or uninstall the given extension, returning an appropriate HTTP status code.
    * @param state Whether to install or uninstall the extension.

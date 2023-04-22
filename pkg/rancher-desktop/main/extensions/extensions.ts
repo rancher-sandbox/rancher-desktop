@@ -50,24 +50,32 @@ function isVMTypeComposefile(input: ExtensionMetadata['vm']): input is { compose
 }
 
 export class ExtensionImpl implements Extension {
-  constructor(id: string, client: ContainerEngineClient) {
+  constructor(id: string, tag: string, client: ContainerEngineClient) {
     const encodedId = Buffer.from(id, 'utf-8').toString('base64url');
 
     this.id = id;
+    this.version = tag;
     this.client = client;
     this.dir = path.join(paths.extensionRoot, encodedId);
   }
 
-  /** The extension ID (the image ID) */
+  /** The extension ID (the image ID), excluding the tag */
   id: string;
+  /** The extension image tag */
+  version: string;
   /** The directory this extension will be installed into */
   readonly dir: string;
   protected readonly client: ContainerEngineClient;
   protected _metadata: Promise<ExtensionMetadata> | undefined;
   /** The (nerdctl) namespace to use; shared with ExtensionManagerImpl */
   static readonly extensionNamespace = 'rancher-desktop-extensions';
+  protected readonly VERSION_FILE = 'version.txt';
   protected get extensionNamespace() {
     return ExtensionImpl.extensionNamespace;
+  }
+
+  get image() {
+    return `${ this.id }:${ this.version }`;
   }
 
   /** Extension metadata */
@@ -116,6 +124,7 @@ export class ExtensionImpl implements Extension {
       await this.installUI(this.dir, metadata);
       await this.installHostExecutables(this.dir, metadata);
       await this.installContainers(this.dir, metadata);
+      await this.markInstalled(this.dir);
     } catch (ex) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
       await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
@@ -124,9 +133,8 @@ export class ExtensionImpl implements Extension {
       throw ex;
     }
 
-    mainEvents.emit('settings-write', { extensions: { [this.id]: true } });
+    mainEvents.emit('settings-write', { extensions: { [this.id]: this.version } });
 
-    // TODO: Do something so the extension is recognized by the UI.
     console.debug(`Install ${ this.id }: install complete.`);
 
     return true;
@@ -143,7 +151,7 @@ export class ExtensionImpl implements Extension {
       const origIconName = path.basename(metadata.icon);
 
       try {
-        await this.client.copyFile(this.id, metadata.icon, workDir, { namespace: this.extensionNamespace });
+        await this.client.copyFile(this.image, metadata.icon, workDir, { namespace: this.extensionNamespace });
       } catch (ex) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy icon file ${ metadata.icon }`, ex as Error);
       }
@@ -168,7 +176,7 @@ export class ExtensionImpl implements Extension {
       try {
         await fs.promises.mkdir(path.join(uiDir, name), { recursive: true });
         await this.client.copyFile(
-          this.id,
+          this.image,
           data.root,
           path.join(uiDir, name),
           { namespace: this.extensionNamespace });
@@ -198,7 +206,7 @@ export class ExtensionImpl implements Extension {
 
     await Promise.all(paths.map(async(p) => {
       try {
-        await this.client.copyFile(this.id, p, binDir, { namespace: this.extensionNamespace });
+        await this.client.copyFile(this.image, p, binDir, { namespace: this.extensionNamespace });
       } catch (ex: any) {
         throw new ExtensionErrorImpl(ExtensionErrorCode.FILE_NOT_FOUND, `Could not copy host binary ${ p }`, ex);
       }
@@ -231,7 +239,7 @@ export class ExtensionImpl implements Extension {
 
       await fs.promises.mkdir(composeDir, { recursive: true });
       await this.client.copyFile(
-        this.id,
+        this.image,
         imageComposeDir === '.' ? '/' : `${ imageComposeDir }/`,
         composeDir,
         { namespace: this.extensionNamespace });
@@ -290,14 +298,16 @@ export class ExtensionImpl implements Extension {
       {
         name:      this.containerName,
         namespace: this.extensionNamespace,
-        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        env:       { DESKTOP_PLUGIN_IMAGE: this.image },
       },
     );
   }
 
-  async uninstall(): Promise<boolean> {
-    // TODO: Unregister the extension from the UI.
+  protected async markInstalled(workDir: string) {
+    await fs.promises.writeFile(path.join(workDir, this.VERSION_FILE), this.version, 'utf-8');
+  }
 
+  async uninstall(): Promise<boolean> {
     try {
       await this.uninstallContainers();
     } catch (ex) {
@@ -312,7 +322,7 @@ export class ExtensionImpl implements Extension {
       }
     }
 
-    mainEvents.emit('settings-write', { extensions: { [this.id]: false } });
+    mainEvents.emit('settings-write', { extensions: { [this.id]: undefined } });
 
     return true;
   }
@@ -324,9 +334,20 @@ export class ExtensionImpl implements Extension {
       {
         name:      this.containerName,
         namespace: this.extensionNamespace,
-        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        env:       { DESKTOP_PLUGIN_IMAGE: this.image },
       },
     );
+  }
+
+  async isInstalled(): Promise<boolean> {
+    try {
+      const filePath = path.join(this.dir, this.VERSION_FILE);
+      const installed = await fs.promises.readFile(filePath, 'utf-8');
+
+      return installed === this.version;
+    } catch (ex) {
+      return false;
+    }
   }
 
   _composeFile: Promise<any> | undefined;
@@ -348,7 +369,7 @@ export class ExtensionImpl implements Extension {
       path.join(this.dir, 'compose'), {
         name:      this.containerName,
         namespace: this.extensionNamespace,
-        env:       { DESKTOP_PLUGIN_IMAGE: this.id },
+        env:       { DESKTOP_PLUGIN_IMAGE: this.image },
         service:   'r-d-x-port-forwarding',
         port:      80,
         protocol:  'tcp',
@@ -375,7 +396,7 @@ export class ExtensionImpl implements Extension {
     return this.client.composeExec(path.join(this.dir, 'compose'), {
       name:      this.containerName,
       namespace: this.extensionNamespace,
-      env:       { ...options.env, DESKTOP_PLUGIN_IMAGE: this.id },
+      env:       { ...options.env, DESKTOP_PLUGIN_IMAGE: this.image },
       service,
       command:   options.command,
       ...options.cwd ? { workdir: options.cwd } : {},
@@ -384,13 +405,13 @@ export class ExtensionImpl implements Extension {
 
   async extractFile(sourcePath: string, destinationPath: string): Promise<void> {
     await this.client.copyFile(
-      this.id,
+      this.image,
       sourcePath,
       destinationPath,
       { namespace: this.extensionNamespace });
   }
 
   async readFile(sourcePath: string): Promise<string> {
-    return await this.client.readFile(this.id, sourcePath, { namespace: this.extensionNamespace });
+    return await this.client.readFile(this.image, sourcePath, { namespace: this.extensionNamespace });
   }
 }

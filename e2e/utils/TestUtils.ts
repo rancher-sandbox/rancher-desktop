@@ -49,7 +49,8 @@ async function createDarwinUserProfile(userProfile: RecursivePartial<Settings>|n
   const userLocksPath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.locked.plist');
 
   if (userProfile && Object.keys(userProfile).length > 0) {
-    await fs.promises.writeFile(userProfilePath, plist.build(userProfile));
+    // plist.build() seems to have issues with RecursivePartial<Record<string, string>>, hence cast.
+    await fs.promises.writeFile(userProfilePath, plist.build(userProfile as any));
   } else {
     await fs.promises.rm(userProfilePath, { force: true });
   }

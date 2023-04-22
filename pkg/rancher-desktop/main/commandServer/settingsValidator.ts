@@ -56,6 +56,58 @@ type SettingsValidationMap = SettingsValidationMapEntry<Settings, Settings>;
 
 type TransientSettingsValidationMap = SettingsValidationMapEntry<TransientSettings, TransientSettings>;
 
+/**
+ * ImageNameRegExp is a regular expression that matches a docker image name
+ * (including optional registry and one or more name components).
+ */
+const ImageNameRegExp = (function() {
+  /**
+   * makeRE is a tagged template for making regular expressions with /x (i.e.
+   * ignoring any whitespace within the regular expression itself).
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
+   */
+  function makeRE(strings: TemplateStringsArray, ...substitutions: any[]) {
+    const substitutionSources = substitutions.map(s => s instanceof RegExp ? s.source : s);
+    const raw = String.raw(strings, ...substitutionSources);
+    const lines = raw.split(/\r?\n/);
+    // Drop comments at end of line
+    const uncommentedLines = lines.map(line => line.replace(/\s#.*$/, ''));
+
+    return new RegExp(uncommentedLines.join('').replace(/\s+/g, ''));
+  }
+  const domainComponent = makeRE`
+    # a domain component is alpha-numeric-or-dash, but the start and end
+    # characters may not be a dash.
+    [a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?
+    `;
+  const domain = makeRE`
+    # a domain is one or more domain components joined by dot, and optionally
+    # with a colon followed by a port number.
+    ${ domainComponent }(?:\.${ domainComponent })*
+    (?::[0-9]+)?
+    `;
+  const nameComponent = makeRE`
+    # a name component is lower-alpha-numeric things, separated by any one of
+    # a set of separators.
+    [a-z0-9]+(?:(?:\.|_|__|-*)[a-z0-9]+)*
+    `;
+  const nameRE = makeRE`
+    ^
+    (?:${ domain }/)?
+    ${ nameComponent }
+    (?:/${ nameComponent })*
+    $
+    `;
+
+  return nameRE;
+})();
+
+/**
+ * ImageTagRegExp is a regular expression that matches a docker image tag (that
+ * is, only the bit after the colon).
+ */
+const ImageTagRegExp = /^[\w][\w.-]{0,127}$/;
+
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: SettingsValidationMap | null = null;
@@ -136,7 +188,7 @@ export default class SettingsValidator {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,
       },
-      extensions: this.checkBooleanMapping,
+      extensions: this.checkExtensions,
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -490,6 +542,38 @@ export default class SettingsValidator {
     }
 
     return false;
+  }
+
+  protected checkExtensions(
+    mergedSettings: Settings,
+    currentValue: Record<string, string>,
+    desiredValue: any,
+    errors: string[],
+    fqname: string,
+  ): boolean {
+    if (_.isEqual(desiredValue, currentValue)) {
+      // Accept no-op changes
+      return false;
+    }
+
+    if (typeof desiredValue !== 'object' || !desiredValue) {
+      errors.push(`${ fqname }: "${ desiredValue }" is not a valid mapping`);
+
+      return false;
+    }
+
+    for (const [name, tag] of Object.entries(desiredValue)) {
+      if (!ImageNameRegExp.test(name)) {
+        errors.push(`${ fqname }: "${ name }" is an invalid name`);
+      }
+      if (typeof tag !== 'string') {
+        errors.push(`${ fqname }: "${ name }" has non-string tag "${ tag }"`);
+      } else if (!ImageTagRegExp.test(tag)) {
+        errors.push(`${ fqname }: "${ name }" has invalid tag "${ tag }"`);
+      }
+    }
+
+    return !_.isEqual(desiredValue, currentValue);
   }
 
   protected checkPreferencesNavItemCurrent(

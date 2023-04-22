@@ -11,7 +11,7 @@ import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
@@ -22,7 +22,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-export const CURRENT_SETTINGS_VERSION = 6 as const;
+export const CURRENT_SETTINGS_VERSION = 7 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -114,7 +114,8 @@ export const defaultSettings = {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
-  extensions:   { } as Record<string, boolean>,
+  /** Installed extensions, mapping to the installed version (tag). */
+  extensions:   { } as Record<string, string>,
   /**
    * Experimental settings - there should not be any UI for these.
    */
@@ -272,6 +273,39 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
 
   return settings;
 }
+
+/**
+ * Merge settings in-place with changes, returning the merged settings.
+ * @param cfg Baseline settings.  This will be modified.
+ * @param changes The set of changes to pull in.
+ * @returns The merged settings (also modified in-place).
+ */
+export function merge<T = Settings>(cfg: T, changes: RecursivePartial<RecursiveReadonly<T>>): T {
+  const customizer = (objValue: any, srcValue: any) => {
+    if (Array.isArray(objValue)) {
+      // If the destination is a array of primitives, just return the source
+      // (i.e. completely overwrite).
+      if (objValue.every(i => typeof i !== 'object')) {
+        return srcValue;
+      }
+    }
+    if (typeof srcValue === 'object' && srcValue) {
+      // For objects, setting a value to `undefined` will remove it.
+      for (const [key, value] of Object.entries(srcValue)) {
+        if (typeof value === 'undefined') {
+          delete srcValue[key];
+          if (typeof objValue === 'object' && objValue) {
+            delete objValue[key];
+          }
+        }
+      }
+      // Don't return anything, let _.mergeWith() do the actual merging.
+    }
+  };
+
+  return _.mergeWith(cfg, changes, customizer);
+}
+
 export function getLockedSettings(): LockedSettingsType {
   return lockedSettings;
 }
@@ -441,6 +475,18 @@ const updateTable: Record<number, (settings: any) => void> = {
         delete settings[field];
       }
     }
+  },
+  6: (settings) => {
+    // Rancher Desktop 1.9+
+    // extensions went from Record<string, boolean> to Record<string, string>
+    // The key used to be the extension image (including tag); it's now keyed
+    // by the image (without tag) with the value being the tag.
+    const withTags = Object.entries(settings.extensions ?? {}).filter(([, v]) => v).map(([k]) => k);
+    const extensions = withTags.map((image) => {
+      return image.split(':', 2).concat('latest').slice(0, 2) as [string, string];
+    });
+
+    settings.extensions = Object.fromEntries(extensions);
   },
 };
 

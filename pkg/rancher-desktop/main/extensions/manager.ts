@@ -1,5 +1,4 @@
 import { ChildProcessByStdio, spawn } from 'child_process';
-import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -17,7 +16,9 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import type { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
-import type { Extension, ExtensionManager, SpawnOptions, SpawnResult } from './types';
+import type {
+  Extension, ExtensionManager, ExtensionMetadata, SpawnOptions, SpawnResult,
+} from './types';
 
 const console = Logging.extensions;
 const ipcMain = getIpcMainProxy(console);
@@ -33,7 +34,12 @@ type IpcMainEventHandler<K extends keyof IpcMainInvokeEvents> =
 type ReadableChildProcess = ChildProcessByStdio<null, Readable, Readable>;
 
 class ExtensionManagerImpl implements ExtensionManager {
-  protected extensions: Record<string, ExtensionImpl> = {};
+  /**
+   * Known extensions.  Keyed by the image (excluding tag), then the tag.
+   * @note Items here are not necessarily installed, but all installed
+   * extensions are listed.
+   */
+  protected extensions: Record<string, Record<string, ExtensionImpl>> = {};
 
   constructor(client: ContainerEngineClient) {
     this.client = client;
@@ -112,9 +118,9 @@ class ExtensionManagerImpl implements ExtensionManager {
     this.setMainListener('extensions/spawn/streaming', async(event, options) => {
       switch (options.scope) {
       case 'host':
-        return this.execStreaming(event, options, this.spawnHost(event, options));
+        return this.execStreaming(event, options, await this.spawnHost(event, options));
       case 'docker-cli':
-        return this.execStreaming(event, options, this.spawnDockerCli(event, options));
+        return this.execStreaming(event, options, await this.spawnDockerCli(event, options));
       case 'container':
         return this.execStreaming(event, options, await this.spawnContainer(event, options));
       }
@@ -125,9 +131,9 @@ class ExtensionManagerImpl implements ExtensionManager {
     this.setMainHandler('extensions/spawn/blocking', async(event, options) => {
       switch (options.scope) {
       case 'host':
-        return this.execBlocking(this.spawnHost(event, options));
+        return this.execBlocking(await this.spawnHost(event, options));
       case 'docker-cli':
-        return this.execBlocking(this.spawnDockerCli(event, options));
+        return this.execBlocking(await this.spawnDockerCli(event, options));
       case 'container':
         return this.execBlocking(await this.spawnContainer(event, options));
       }
@@ -168,7 +174,7 @@ class ExtensionManagerImpl implements ExtensionManager {
 
     this.setMainHandler('extensions/vm/http-fetch', async(event, config) => {
       const extensionId = this.getExtensionIdFromEvent(event);
-      const extension = this.getExtension(extensionId) as ExtensionImpl;
+      const extension = await this.getExtension(extensionId) as ExtensionImpl;
       let url: URL;
 
       if (/^[^:/]*:/.test(config.url)) {
@@ -206,58 +212,79 @@ class ExtensionManagerImpl implements ExtensionManager {
       console, { namespace: ExtensionImpl.extensionNamespace });
 
     // Install / uninstall extensions as needed.
-    await Promise.all(Object.entries(config.extensions ?? {}).map(async([id, install]) => {
-      const op = install ? 'install' : 'uninstall';
+    const tasks: Promise<any>[] = [];
 
-      try {
-        await this.getExtension(id)[op]();
-      } catch (ex) {
-        console.error(`Failed to ${ op } extension "${ id }"`, ex);
+    for (const [repo, tag] of Object.entries(config.extensions)) {
+      if (!tag) {
+        // If the tag is unset / falsy, we wanted to uninstall the extension.
+        // There is no need to re-initialize it.
+        continue;
       }
-    }));
+
+      tasks.push((async(id: string) => {
+        try {
+          return (await this.getExtension(id)).install();
+        } catch (ex) {
+          console.error(`Failed to install extension ${ id }`, ex);
+        }
+      })(`${ repo }:${ tag }`));
+      await Promise.all(tasks);
+    }
   }
 
-  getExtension(id: string): Extension {
-    let ext = this.extensions[id];
+  async getExtension(image: string): Promise<Extension> {
+    let [, repo, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
+    const extGroup = this.extensions[image] ?? {};
 
-    if (!ext) {
-      ext = new ExtensionImpl(id, this.client);
-      this.extensions[id] = ext;
+    // The build process uses an older TypeScript that can't infer repo correctly.
+    repo ??= image;
+    tag ??= undefined;
+
+    this.extensions[repo] = extGroup;
+
+    if (tag) {
+      // Requested a specific tag; create it if we don't have it.
+      extGroup[tag] ||= new ExtensionImpl(repo, tag, this.client);
+
+      return extGroup[tag];
     }
 
-    return ext;
+    // No tag specified; grab the installed version, if available
+    for (const ext of Object.values(extGroup)) {
+      if (await ext.isInstalled()) {
+        return ext;
+      }
+    }
+
+    // If we get here, no tag is specified and nothing is installed.
+    // Return the latest version.
+    // TODO: Figure out something better than "latest" (#4362)
+    extGroup.latest ||= new ExtensionImpl(repo, 'latest', this.client);
+
+    return extGroup.latest;
   }
 
   async getInstalledExtensions() {
-    const extensions = Object.values(this.extensions);
-    let installedExtensions: string[] = [];
+    const exts = await Promise.all(Object.entries(this.extensions).map(async([id, group]) => {
+      const versions = Object.entries(group);
+      const states = await Promise.all(versions.map(async([version, ext]) => {
+        return [version, await ext.isInstalled(), ext] as const;
+      }));
 
-    try {
-      installedExtensions = await fs.promises.readdir(paths.extensionRoot);
-    } catch (ex: any) {
-      if ((ex as NodeJS.ErrnoException)?.code === 'ENOENT') {
-        return [];
+      return [id, ...states.find(([, installed]) => installed) ?? ['', false]] as const;
+    }));
+
+    const result: { id: string, version: string, metadata: ExtensionMetadata }[] = [];
+
+    for (const [id, version, installed, ext] of exts) {
+      if (installed) {
+        result.push({
+          id, version, metadata: await ext!.metadata,
+        });
       }
-      throw ex;
     }
 
-    const transformedExtensions = extensions
-      .filter((extension) => {
-        const encodedExtension = Buffer.from(extension.id).toString('base64url');
-
-        return installedExtensions.includes(encodedExtension);
-      })
-      .map(async(current) => {
-        const { id } = current;
-        const metadata = await current.metadata;
-
-        return {
-          id,
-          metadata,
-        };
-      });
-
-    return await Promise.all(transformedExtensions);
+    return result;
   }
 
   /**
@@ -270,9 +297,9 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   /** Spawn a process in the host context. */
-  protected spawnHost(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): ReadableChildProcess {
+  protected async spawnHost(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
-    const extension = this.getExtension(extensionId) as ExtensionImpl;
+    const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
     if (!extension) {
       throw new Error(`Could not find calling extension ${ extensionId }`);
@@ -288,9 +315,9 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   /** Spawn a process in the docker-cli context. */
-  protected spawnDockerCli(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): ReadableChildProcess {
+  protected async spawnDockerCli(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
-    const extension = this.getExtension(extensionId) as ExtensionImpl;
+    const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
     if (!extension) {
       throw new Error(`Could not find calling extension ${ extensionId }`);
@@ -303,9 +330,9 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   /** Spawn a process in the container context. */
-  protected spawnContainer(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
+  protected async spawnContainer(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
-    const extension = this.getExtension(extensionId) as ExtensionImpl;
+    const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
     if (!extension) {
       return Promise.reject(new Error(`Could not find calling extension ${ extensionId }`));

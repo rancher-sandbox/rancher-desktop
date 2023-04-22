@@ -422,6 +422,33 @@ describe(SettingsValidator, () => {
     });
   });
 
+  describe('extensions', () => {
+    test('should accept already-invalid input', () => {
+      const changes = { extensions: { '!invalid name!': '@invalid tag@' } };
+      const input = _.merge({}, cfg, changes);
+      const [changed, errors] = subject.validateSettings(input, changes);
+
+      expect({ changed, errors }).toEqual({ changed: false, errors: [] });
+    });
+
+    const longString = new Array(255).join('x');
+
+    test.each<[string, any, string[]]>([
+      ['should reject non-dict values', 123, ['extensions: "123" is not a valid mapping']],
+      ['should reject non-string values', { a: 1 }, ['extensions: "a" has non-string tag "1"']],
+      ['should reject invalid names', { '!!@': 'latest' }, ['extensions: "!!@" is an invalid name']],
+      ['should accept names with a bare component', { image: 'tag' }, []],
+      ['should accept names with a domain', { 'registry.test/name': 'tag' }, []],
+      ['should accept names with multiple components', { 'registry.test/dir/name': 'tag' }, []],
+      ['should reject invalid tags', { image: 'hello world' }, ['extensions: "image" has invalid tag "hello world"']],
+      ['should reject overly-long tags', { image: longString }, [`extensions: "image" has invalid tag "${ longString }"`]],
+    ])('%s', (...[, input, expectedErrors]) => {
+      const [, errors] = subject.validateSettings(cfg, { extensions: input });
+
+      expect(errors).toEqual(expectedErrors);
+    });
+  });
+
   describe('locked fields', () => {
     describe('containerEngine.allowedImages', () => {
       const allowedImageListConfig: settings.Settings = _.merge({}, cfg, {

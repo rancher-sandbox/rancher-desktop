@@ -295,26 +295,27 @@ test.describe.serial('Extensions', () => {
       test('ddClient.docker.listContainers', async() => {
         const script = 'ddClient.docker.listContainers({size: true})';
         const result = await evalInView(script);
+        const container = result.find((r: { Image: string; }) => r.Image.startsWith('rd/extension/everything'));
 
-        expect(result).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            Id:              expect.any(String),
-            Names:           expect.arrayContaining([expect.any(String)]),
-            Image:           'rd/extension/everything',
-            ImageID:         expect.any(String),
-            Command:         expect.any(String),
-            Created:         expect.any(Number),
-            Ports:           expect.anything(),
-            SizeRw:          expect.any(Number),
-            SizeRootFs:      expect.any(Number),
-            Labels:          expect.any(Object),
-            State:           expect.any(String),
-            Status:          expect.any(String),
-            HostConfig:      expect.any(Object),
-            NetworkSettings: expect.any(Object),
-            Mounts:          expect.any(Array),
-          }),
-        ]));
+        // The playwright copy of expect() produces terrible error messages when
+        // things don't match, making it difficult to find what was wrong.
+        // Match properties individually to make things easier to spot.
+        expect(container).toBeTruthy();
+        expect(container).toHaveProperty('Id', expect.any(String));
+        expect(container).toHaveProperty('Names', expect.arrayContaining([expect.any(String)]));
+        expect(container).toHaveProperty('Image', expect.stringContaining('rd/extension/everything'));
+        expect(container).toHaveProperty('ImageID', expect.any(String));
+        expect(container).toHaveProperty('Command', expect.any(String));
+        expect(container).toHaveProperty('Created', expect.any(Number));
+        expect(container).toHaveProperty('Ports', expect.anything());
+        expect(container).toHaveProperty('SizeRw', expect.any(Number));
+        expect(container).toHaveProperty('SizeRootFs', expect.any(Number));
+        expect(container).toHaveProperty('Labels', expect.any(Object));
+        expect(container).toHaveProperty('State', expect.any(String));
+        expect(container).toHaveProperty('Status', expect.any(String));
+        expect(container).toHaveProperty('HostConfig', expect.any(Object));
+        expect(container).toHaveProperty('NetworkSettings', expect.any(Object));
+        expect(container).toHaveProperty('Mounts', expect.any(Array));
       });
     });
 

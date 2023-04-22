@@ -5,7 +5,6 @@ import path from 'path';
 import util from 'util';
 
 import Electron from 'electron';
-import _ from 'lodash';
 
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
@@ -38,7 +37,6 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
-import { arrayCustomizer } from '@pkg/utils/filters';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
@@ -504,9 +502,7 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
 });
 
 function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
-  // arrayCustomizer is necessary to properly merge array of strings
-  _.mergeWith(cfg, arg, arrayCustomizer);
-  settings.save(cfg);
+  settings.save(settings.merge(cfg, arg));
   mainEvents.emit('settings-update', cfg);
 }
 
@@ -841,7 +837,7 @@ async function getExtensionManager() {
 
 async function listExtensionsMetadata() {
   const extensionManager = await getExtensionManager();
-  const extensions = await extensionManager?.getInstalledExtensions();
+  const extensions = await extensionManager?.getInstalledExtensions() ?? [];
 
   window.send('extensions/list', extensions);
 }
@@ -1068,23 +1064,23 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     })());
   }
 
-  listExtensions(): Promise<Record<string, true>> {
-    const entries = Object.entries(cfg.extensions).filter(([k, v]) => v) as [string, true][];
+  listExtensions(): Promise<Record<string, string>> {
+    const entries = Object.entries(cfg.extensions).filter(([k, v]) => v);
 
     return Promise.resolve(Object.fromEntries(entries));
   }
 
-  async installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
+  async installExtension(image: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
     const em = await getExtensionManager();
-    const extension = em?.getExtension(id);
+    const extension = await em?.getExtension(image);
 
     if (!extension) {
-      console.debug(`Failed to install extension ${ id }: could not get extension.`);
+      console.debug(`Failed to install extension ${ image }: could not get extension.`);
 
       return { status: 503 };
     }
     if (state === 'install') {
-      console.debug(`Installing extension ${ id }...`);
+      console.debug(`Installing extension ${ image }...`);
       try {
         if (await extension.install()) {
           return { status: 201 };
@@ -1095,9 +1091,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         if (isExtensionError(ex)) {
           switch (ex.code) {
           case ExtensionErrorCode.INVALID_METADATA:
-            return { status: 422, data: `The image ${ id } has invalid extension metadata` };
+            return { status: 422, data: `The image ${ image } has invalid extension metadata` };
           case ExtensionErrorCode.FILE_NOT_FOUND:
-            return { status: 422, data: `The image ${ id } failed to install: ${ ex.message }` };
+            return { status: 422, data: `The image ${ image } failed to install: ${ ex.message }` };
           }
         }
         throw ex;
@@ -1105,7 +1101,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         listExtensionsMetadata();
       }
     } else {
-      console.debug(`Uninstalling extension ${ id }...`);
+      console.debug(`Uninstalling extension ${ image }...`);
       try {
         if (await extension.uninstall()) {
           return { status: 201 };
@@ -1116,7 +1112,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         if (isExtensionError(ex)) {
           switch (ex.code) {
           case ExtensionErrorCode.INVALID_METADATA:
-            return { status: 422, data: `The image ${ id } has invalid extension metadata` };
+            return { status: 422, data: `The image ${ image } has invalid extension metadata` };
           }
         }
         throw ex;
