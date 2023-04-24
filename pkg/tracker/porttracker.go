@@ -46,6 +46,10 @@ func NewPortTracker(forwarder *forwarder.VtunnelForwarder, wslAddrs []types.Conn
 
 // Add adds a container ID and port mapping to the tracker.
 func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
+	if len(portMap) == 0 {
+		return nil
+	}
+
 	p.mutex.Lock()
 	p.portmap[containerID] = portMap
 	log.Debugf("PortTracker Add status: %+v", p.portmap)
@@ -97,18 +101,20 @@ func (p *PortTracker) Get(containerID string) nat.PortMap {
 
 // Remove a container's corresponding port mapping, without acquiring the lock.
 func (p *PortTracker) remove(containerID string) error {
-	defer func() {
-		delete(p.portmap, containerID)
-		log.Debugf("PortTracker Remove status: %+v", p.portmap)
-	}()
+	if portMap, ok := p.portmap[containerID]; ok {
+		defer func() {
+			delete(p.portmap, containerID)
+			log.Debugf("PortTracker Remove status: %+v", p.portmap)
+		}()
 
-	err := p.vtunnelForwarder.Send(types.PortMapping{
-		Remove:       true,
-		Ports:        p.portmap[containerID],
-		ConnectAddrs: p.wslAddrs,
-	})
-	if err != nil {
-		return err
+		err := p.vtunnelForwarder.Send(types.PortMapping{
+			Remove:       true,
+			Ports:        portMap,
+			ConnectAddrs: p.wslAddrs,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
