@@ -1,0 +1,11 @@
+{
+  "info": "This is used to do manual testing of various host APIs",
+  "icon": "extension-icon.svg",
+  "ui": {
+    "dashboard-tab": {
+      "title": "RDX Host-APIs Test",
+      "root": "/ui",
+      "src": "host-apis.html"
+    }
+  }
+}

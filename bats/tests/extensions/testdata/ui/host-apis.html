@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="application/javascript">
+
+    function openExternal() {
+      ddClient.host.openExternal("https://rancherdesktop.io");
+    }
+
+    function openDialog() {
+      const properties=Array.from(document.getElementById('dialogOptions').selectedOptions).map(v => v.value);
+      const options=properties.length>0? {properties}:undefined;
+      ddClient.desktopUI.dialog.showOpenDialog(options).then(result => {
+        console.log('openDialog result:',result);
+        document.getElementById('dialogCancelled').checked=result.canceled;
+        document.getElementById('dialogFilePaths').innerHTML=
+          result.filePaths.map(p => `<option>${p}</option>`).join('');
+        document.getElementById('dialogBookmarks').innerHTML=
+          (result.bookmarks??[]).map(p => `<option>${p}</option>`).join('');
+      });
+    }
+
+    /**
+     * Open a toast notification
+     * @param type ['success' | 'warning' | 'error'] The type of toast to invoke.
+     */
+    function toast(type) {
+      ddClient.desktopUI.toast[type](`This is a ${type} toast`);
+    }
+
+    let platform='unknown';
+    if(/^mac/i.test(navigator.platform)) {
+      platform='darwin';
+    } else if(/^win/i.test(navigator.platform)) {
+      platform='win32';
+    } else if(/^linunx/i.test(navigator.platform)) {
+      platform='linux';
+    }
+    document.documentElement.setAttribute('platform',platform);
+  </script>
+
+  <style>
+    #dialog {
+      display: flex;
+    }
+
+    #dialog>* {
+      flex: 1;
+    }
+
+    :root:not([platform="darwin"]) #dialogOptions>option[darwin],
+    :root:not([platform="win32"]) #dialogOptions>option[win32],
+    :root:not([platform="linux"]) #dialogOptions>option[linux] {
+      display: none;
+    }
+
+    #dialog table {
+      border: 1px solid;
+    }
+
+    #dialog table td,
+    #dialog table td>select {
+      width: 100%;
+    }
+
+  </style>
+</head>
+
+<body>
+  <h1>Rancher Desktop Extensions Host API Testing</h1>
+
+  <h2>Open external</h2>
+  <p>Clicking the button should open the Rancher Desktop home page in a browser.</p>
+  <button onclick="openExternal()">Open in web page</button>
+  <hr>
+
+  <h2>Select file</h2>
+  <section id="dialog">
+    <div>
+      <p>Clicking on the button should show a file open dialog.</p>
+      <select id="dialogOptions" multiple>
+        <option value="openFile">Open File</option>
+        <option value="openDirectory">Open Directory</option>
+        <option value="multiSelections">Multiple Selection</option>
+        <option value="showHiddenFiles">Show Hidden Files</option>
+        <option value="createDirectory" darwin>Create Directory</option>
+        <option value="promptToCreate" win32>Prompt to Create</option>
+        <option value="noResolveAliases" darwin>No Resolve Symlinks</option>
+        <option value="treatPackageAsDirectory" darwin>Treat Package as Directory</option>
+        <option value="dontAddToRecent" win32>Don't Add to Recent</option>
+      </select>
+      <button onclick="openDialog()">Choose File</button>
+    </div>
+    <div>
+      <table>
+        <th>
+        <td colspan="2">Dialog Output</td>
+        </th>
+        <tr>
+          <th>cancelled</th>
+          <td><input type="checkbox" id="dialogCancelled"></td>
+        </tr>
+        <tr>
+          <th>file paths</th>
+          <td><select multiple id="dialogFilePaths"></select></td>
+        </tr>
+      </table>
+    </div>
+  </section>
+  <hr>
+
+  <h2>Toast</h2>
+  <p>
+    Clicking on each of the buttons should pop up a notification where the
+    notification title matches the type clicked on.
+  </p>
+  <button onclick="toast('success')">Success</button>
+  <button onclick="toast('warning')">Warning</button>
+  <button onclick="toast('error')">Error</button>
+</body>
+
+</html>
