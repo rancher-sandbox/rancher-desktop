@@ -138,7 +138,7 @@ export default class SettingsValidator {
       containerEngine: {
         allowedImages: {
           enabled:  this.checkBoolean,
-          patterns: this.checkStringArray,
+          patterns: this.checkUniqueStringArray,
         },
         // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message
         name: this.checkEnum('containerd', 'moby', 'docker'),
@@ -513,14 +513,39 @@ export default class SettingsValidator {
     return errors.length === 0 && changed;
   }
 
-  protected checkStringArray<S>(mergedSettings: S, currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
+  protected checkUniqueStringArray<S>(mergedSettings: S, currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
     if (!Array.isArray(desiredValue) || desiredValue.some(s => typeof (s) !== 'string')) {
       errors.push(this.invalidSettingMessage(fqname, desiredValue));
 
       return false;
     }
+    const duplicateValues = this.findDuplicates(desiredValue);
+
+    if (duplicateValues.length > 0) {
+      duplicateValues.sort((a: string, b:string) => {
+        return a.localeCompare(b);
+      });
+      errors.push(`field '${ fqname }' has duplicate entries: "${ duplicateValues.join('", "') }"`);
+
+      return false;
+    }
 
     return currentValue.length !== desiredValue.length || currentValue.some((v, i) => v !== desiredValue[i]);
+  }
+
+  protected findDuplicates(list: string[]): string[] {
+    if (list.length <= 1) {
+      return [];
+    }
+    const first = list[0];
+
+    list = list.slice(1);
+    if (list.includes(first)) {
+      // Filter out `first` so we don't count it again as a duplicate.
+      return [first].concat(this.findDuplicates(list.filter(elt => elt !== first)));
+    } else {
+      return this.findDuplicates(list);
+    }
   }
 
   protected checkPathManagementStrategy(mergedSettings: Settings, currentValue: PathManagementStrategy,
