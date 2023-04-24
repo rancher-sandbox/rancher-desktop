@@ -59,7 +59,7 @@ namespace_arg() {
     run rdctl api /v1/extensions
     assert_success
     output="$(jq ".[\"$(id vm-image)\"]" <<<"${output}")"
-    assert_output true
+    assert_output '"latest"'
 }
 
 @test 'image - check for running container' {
@@ -82,7 +82,7 @@ namespace_arg() {
     run rdctl api /v1/extensions
     assert_success
     output="$(jq ".[\"$(id vm-compose)\"]" <<<"${output}")"
-    assert_output true
+    assert_output '"latest"'
 }
 
 @test 'compose - check for running container' {
