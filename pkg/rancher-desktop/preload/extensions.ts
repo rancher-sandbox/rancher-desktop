@@ -357,14 +357,17 @@ class Client implements v1.DockerDesktopClient {
 
       const lsContainers = lsResult.parseJsonLines();
 
-      // We need to run `container inspect` to add more info.
-      const inspectArgs = ['--format={{json .}}'];
-
-      inspectArgs.push(`--size=${ options.size ?? false }`);
-      inspectArgs.push(...lsContainers.map(c => c.ID));
-      if (options.namespace) {
-        inspectArgs.unshift(`--namespace=${ options.namespace }`);
+      if (lsContainers.length === 0) {
+        return [];
       }
+
+      // We need to run `container inspect` to add more info.
+      const inspectArgs = [
+        '--format={{json .}}',
+        options.size ? ['--size=true'] : [],
+        lsContainers.map(c => c.ID),
+        options.namespace ? [`--namespace=${ options.namespace }`] : [],
+      ].flat();
 
       const inspectResults = await this.docker.cli.exec('inspect', inspectArgs);
 
@@ -392,13 +395,15 @@ class Client implements v1.DockerDesktopClient {
 
         return {
           ...pick(c, 'Image', 'Command', 'Status'),
-          ...pick(details, 'Id', ['Image', 'ImageID'], 'SizeRw', 'SizeRootFs',
-            'HostConfig', 'NetworkSettings', 'Mounts'),
-          ...pick(details.NetworkSettings, 'Ports'),
+          ...pick(details, 'Id', ['Image', 'ImageID'], 'NetworkSettings', 'Mounts'),
+          HostConfig: details.HostConfig ?? {},
+          SizeRootFs: details.SizeRootFs ?? -1,
+          SizeRw:     details.SizeRw ?? -1,
+          Ports:      details.NetworkSettings.Ports ?? {},
           ...pick(details.Config, 'Labels'),
           ...pick(details.State, ['Status', 'State']),
-          Names:   c.Names.split(/\s+/g),
-          Created: Date.parse(c.CreatedAt).valueOf(),
+          Names:      c.Names.split(/\s+/g),
+          Created:    Date.parse(c.CreatedAt).valueOf(),
         };
       });
     },
@@ -422,6 +427,10 @@ class Client implements v1.DockerDesktopClient {
 
       const lsImages = lsResult.parseJsonLines();
 
+      if (lsImages.length === 0) {
+        return [];
+      }
+
       const inspectArgs = [
         options.namespace ? [`--namespace=${ options.namespace }`] : [],
         ['--format', 'json'],
@@ -433,9 +442,16 @@ class Client implements v1.DockerDesktopClient {
         throw new Error(`failed to inspect images: ${ inspectResults.stderr }`);
       }
 
-      const inspectImages: any[] = inspectResults.parseJsonObject();
+      // When doing JSON format, docker CLI returns an array, but nerdctl
+      // returns JSON lines.  ParseJsonLines + flat() deals with the difference.
+      const inspectImages = inspectResults.parseJsonLines().flat();
       const mergedImages = lsImages.map((image) => {
-        const inspected = inspectImages.find(i => i.Id === image.ID);
+        let inspected = inspectImages.find(i => i.Id === image.ID);
+
+        // nerdctl uses the config digest for inspectImages[*].Id (or at least
+        // a different value than image.ID); we need to try to match it up to
+        // the desired inspect result via digests instead.
+        inspected ||= inspectImages.find(i => (i.RepoDigests as any[]).some(d => d.endsWith(image.Digest)));
 
         return { ...image, ...inspected ?? {} };
       });
@@ -445,12 +461,12 @@ class Client implements v1.DockerDesktopClient {
 
         return {
           Id:          i.Id,
-          ParentId:    i.Parent,
+          ParentId:    i.Parent ?? '',
           RepoTags:    i.RepoTags,
           Created:     Date.parse(i.Created).valueOf(),
           Size:        i.Size,
           SharedSize:  -1,
-          VirtualSize: i.VirtualSize,
+          VirtualSize: i.VirtualSize ?? i.Size,
           Labels:      i.Config?.Labels ?? {},
           Containers:  isNaN(containers) ? -1 : containers,
         };

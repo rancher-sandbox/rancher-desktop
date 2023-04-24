@@ -324,7 +324,8 @@ class ExtensionManagerImpl implements ExtensionManager {
     }
 
     return this.client.runClient(
-      options.command,
+      // For docker compatibility, strip quotes for any arguments.
+      options.command.map(arg => (/^(["'])(.*)\1$/.exec(arg) ?? ['', '', arg])[2]),
       'stream',
       _.pick(options, ['cwd', 'env', 'namespace']));
   }

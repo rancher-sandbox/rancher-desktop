@@ -29,6 +29,7 @@ const rdctl = getFullPathForTool('rdctl');
 fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
 
 const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
+const NAMESPACE = 'rancher-desktop-extensions';
 
 test.describe.serial('Extensions', () => {
   let app: ElectronApplication;
@@ -39,7 +40,7 @@ test.describe.serial('Extensions', () => {
     let tool = getFullPathForTool('nerdctl');
 
     if (isContainerd) {
-      args = ['--namespace', 'rancher-desktop-extensions'].concat(args);
+      args = ['--namespace', NAMESPACE].concat(args);
     } else {
       tool = getFullPathForTool('docker');
       if (process.platform !== 'win32') {
@@ -275,7 +276,11 @@ test.describe.serial('Extensions', () => {
         }));
       });
       test('ddClient.docker.listImages', async() => {
-        const script = 'ddClient.docker.listImages({digests: true})';
+        const options = {
+          digests:   true,
+          namesapce: isContainerd ? NAMESPACE : undefined,
+        };
+        const script = `ddClient.docker.listImages(${ JSON.stringify(options) })`;
         const result = await evalInView(script);
 
         expect(result).toEqual(expect.arrayContaining([
@@ -293,7 +298,11 @@ test.describe.serial('Extensions', () => {
         ]));
       });
       test('ddClient.docker.listContainers', async() => {
-        const script = 'ddClient.docker.listContainers({size: true})';
+        const options = {
+          size:      !isContainerd, // nerdctl doesn't implement --size
+          namespace: isContainerd ? NAMESPACE : undefined,
+        };
+        const script = `ddClient.docker.listContainers(${ JSON.stringify(options) })`;
         const result = await evalInView(script);
         const container = result.find((r: { Image: string; }) => r.Image.startsWith('rd/extension/everything'));
 
