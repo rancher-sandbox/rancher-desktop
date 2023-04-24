@@ -73,5 +73,5 @@ update_allowed_patterns() {
   }
 }
 EOF
-    rdctl api settings -X PUT --input -
+        rdctl api settings -X PUT --input -
 }
