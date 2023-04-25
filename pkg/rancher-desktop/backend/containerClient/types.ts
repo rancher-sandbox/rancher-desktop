@@ -39,6 +39,8 @@ export type ContainerStopOptions = ContainerBasicOptions & {
  * optional.
  */
 export type ContainerComposeOptions = ContainerBasicOptions & {
+  /** The directory holding the compose files. */
+  composeDir: string;
   /** The name of the project */
   name?: string;
   /** Environment variables to set on build */
@@ -121,29 +123,25 @@ export interface ContainerEngineClient {
 
   /**
    * Start containers via `docker compose` / `nerdctl compose`.
-   * @param composeDir The path containing the compose file.
    */
-  composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
+  composeUp(options: ContainerComposeOptions): Promise<void>;
 
   /**
    * Stop containers via `docker compose` / `nerdctl compose`.
-   * @param composeDir The path containing the compose file.
    */
-  composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void>;
+  composeDown(options?: ContainerComposeOptions): Promise<void>;
 
   /**
    * Spawn a process using `docker compose exec` / `nerdctl ...`, returning a
    * raw process that has stdout and stderr set to pipe (but nothing for stdin).
-   * @param composeDir The host path containing the compose file.
    */
-  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess>;
+  composeExec(options: ContainerComposeExecOptions): Promise<ReadableProcess>;
 
   /**
    * Get port information for a compose service.
-   * @param composeDir The host path containing the compose file.
    * @returns The port information, looking like `0.0.0.0:12345`.
    */
-  composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string>;
+  composePort(options: ContainerComposePortOptions): Promise<string>;
 
   /**
    * Run the client directly, using the given arguments.  The 'stdio' argument

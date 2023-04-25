@@ -169,33 +169,33 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
-    const args = ['--project-directory', composeDir];
+  async composeUp(options: ContainerComposeOptions): Promise<void> {
+    const args = ['--project-directory', options.composeDir];
 
-    if (options?.name) {
+    if (options.name) {
       args.push('--project-name', options.name);
     }
     args.push('up', '--quiet-pull', '--wait', '--remove-orphans');
 
-    const result = await this.runTool({ env: options?.env ?? {} }, 'docker-compose', ...args);
+    const result = await this.runTool({ env: options.env ?? {} }, 'docker-compose', ...args);
 
     console.debug('ran docker compose up', result);
   }
 
-  async composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
+  async composeDown(options: ContainerComposeOptions): Promise<void> {
     const args = [
-      options?.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'down'],
+      options.name ? ['--project-name', options.name] : [],
+      ['--project-directory', options.composeDir, 'down'],
     ].flat();
-    const result = await this.runTool('docker-compose', ...args);
+    const result = await this.runTool({ env: options.env ?? {} }, 'docker-compose', ...args);
 
     console.debug('ran docker compose down', result);
   }
 
-  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess> {
+  composeExec(options: ContainerComposeExecOptions): Promise<ReadableProcess> {
     const args = [
       options.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'exec'],
+      ['--project-directory', options.composeDir, 'exec'],
       options.user ? ['--user', options.user] : [],
       options.workdir ? ['--workdir', options.workdir] : [],
       [options.service, ...options.command],
@@ -210,10 +210,10 @@ export class MobyClient implements ContainerEngineClient {
     }));
   }
 
-  async composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string> {
+  async composePort(options: ContainerComposePortOptions): Promise<string> {
     const args = [
       options.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'port'],
+      ['--project-directory', options.composeDir, 'port'],
       options.protocol ? ['--protocol', options.protocol] : [],
       [options.service, options.port.toString()],
     ].flat();

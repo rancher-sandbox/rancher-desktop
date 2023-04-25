@@ -294,8 +294,8 @@ export class ExtensionImpl implements Extension {
     // Run `ctrctl compose up`
     console.debug(`Running ${ this.id } compose up`);
     await this.client.composeUp(
-      composeDir,
       {
+        composeDir,
         name:      this.containerName,
         namespace: this.extensionNamespace,
         env:       { DESKTOP_PLUGIN_IMAGE: this.image },
@@ -329,14 +329,12 @@ export class ExtensionImpl implements Extension {
 
   protected async uninstallContainers() {
     console.debug(`Running ${ this.id } compose down`);
-    await this.client.composeDown(
-      path.join(this.dir, 'compose'),
-      {
-        name:      this.containerName,
-        namespace: this.extensionNamespace,
-        env:       { DESKTOP_PLUGIN_IMAGE: this.image },
-      },
-    );
+    await this.client.composeDown({
+      composeDir: path.join(this.dir, 'compose'),
+      name:       this.containerName,
+      namespace:  this.extensionNamespace,
+      env:        { DESKTOP_PLUGIN_IMAGE: this.image },
+    });
   }
 
   async isInstalled(): Promise<boolean> {
@@ -365,15 +363,15 @@ export class ExtensionImpl implements Extension {
   }
 
   async getBackendPort() {
-    const portInfo = await this.client.composePort(
-      path.join(this.dir, 'compose'), {
-        name:      this.containerName,
-        namespace: this.extensionNamespace,
-        env:       { DESKTOP_PLUGIN_IMAGE: this.image },
-        service:   'r-d-x-port-forwarding',
-        port:      80,
-        protocol:  'tcp',
-      });
+    const portInfo = await this.client.composePort({
+      composeDir: path.join(this.dir, 'compose'),
+      name:       this.containerName,
+      namespace:  this.extensionNamespace,
+      env:        { DESKTOP_PLUGIN_IMAGE: this.image },
+      service:    'r-d-x-port-forwarding',
+      port:       80,
+      protocol:   'tcp',
+    });
 
     // The port info looks like "0.0.0.0:1234", return only the port number.
     return /:(\d+)$/.exec(portInfo)?.[1];
@@ -393,12 +391,13 @@ export class ExtensionImpl implements Extension {
       throw new Error('No services found, cannot run exec');
     }
 
-    return this.client.composeExec(path.join(this.dir, 'compose'), {
-      name:      this.containerName,
-      namespace: this.extensionNamespace,
-      env:       { ...options.env, DESKTOP_PLUGIN_IMAGE: this.image },
+    return this.client.composeExec({
+      composeDir: path.join(this.dir, 'compose'),
+      name:       this.containerName,
+      namespace:  this.extensionNamespace,
+      env:        { ...options.env, DESKTOP_PLUGIN_IMAGE: this.image },
       service,
-      command:   options.command,
+      command:    options.command,
       ...options.cwd ? { workdir: options.cwd } : {},
     });
   }
