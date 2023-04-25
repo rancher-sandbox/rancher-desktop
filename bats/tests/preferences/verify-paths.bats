@@ -29,7 +29,7 @@ teardown_file() {
 @test 'bash managed' {
     if command -v bash >/dev/null && [ -f "$HOME/.bashrc" ]; then
         run bash -l -c "which rdctl" 3>&-
-        assert_output --partial '.rd/bin/rdctl'
+        assert_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'bash not found or ~/.bashrc does not exist'
     fi
@@ -39,7 +39,7 @@ teardown_file() {
     if command -v ksh >/dev/null && [ -f "$HOME/.kshrc" ]; then
         run ksh -c "which rdctl"
         assert_success
-        assert_output --partial '.rd/bin/rdctl'
+        assert_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'ksh not found or ~/.kshrc does not exist'
     fi
@@ -49,7 +49,7 @@ teardown_file() {
     if command -v zsh >/dev/null && [ -f "$HOME/.zshrc" ]; then
         run zsh -i -c "which rdctl"
         assert_success
-        assert_output --partial '.rd/bin/rdctl'
+        assert_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'zsh not found or ~/.zshrc does not exist'
     fi
@@ -59,7 +59,7 @@ teardown_file() {
     if command -v fish >/dev/null; then
         run fish -c "which rdctl"
         assert_success
-        assert_output --partial '.rd/bin/rdctl'
+        assert_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'fish not found'
     fi
@@ -82,7 +82,7 @@ no_bashrc_path_manager() {
     if command -v bash >/dev/null && [ -f "$HOME/.bashrc" ]; then
         run bash -l -c "which rdctl" 3>&-
         # Can't assert success or failure because rdctl might be in a directory other than ~/.rd/bin
-        refute_output --partial '.rd/bin/rdctl'
+        refute_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'bash not found or ~/.bashrc does not exist'
     fi
@@ -92,7 +92,7 @@ no_bashrc_path_manager() {
     if command -v ksh >/dev/null && [ -f "$HOME/.kshrc" ]; then
         run ksh -c "which rdctl"
         # Can't assert success or failure because rdctl might be in a directory other than ~/.rd/bin
-        refute_output --partial '.rd/bin/rdctl'
+        refute_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'ksh not found or ~/.kshrc does not exist'
     fi
@@ -101,7 +101,7 @@ no_bashrc_path_manager() {
 @test 'zsh unmanaged' {
     if command -v zsh >/dev/null && [ -f "$HOME/.zshrc" ]; then
         run zsh -i -c "which rdctl"
-        refute_output --partial '.rd/bin/rdctl'
+        refute_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'zsh not found or ~/.zshrc does not exist'
     fi
@@ -110,7 +110,7 @@ no_bashrc_path_manager() {
 @test 'fish unmanaged' {
     if command -v fish >/dev/null; then
         run fish -c "which rdctl"
-        refute_output --partial '.rd/bin/rdctl'
+        refute_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'fish not found'
     fi
