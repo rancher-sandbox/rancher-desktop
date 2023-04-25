@@ -694,15 +694,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   async copyFileIn(hostPath: string, vmPath: string): Promise<void> {
-    const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
-
-    await fs.promises.copyFile(windowsPath, hostPath);
+    // Sometimes WSL has issues copying _from_ the VM.  So we instead do the
+    // copying from inside the VM.
+    await this.execCommand('/bin/cp', '-f', '-T', await this.wslify(hostPath), vmPath);
   }
 
   async copyFileOut(vmPath: string, hostPath: string): Promise<void> {
-    const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
-
-    await fs.promises.copyFile(windowsPath, hostPath);
+    // Sometimes WSL has issues copying _from_ the VM.  So we instead do the
+    // copying from inside the VM.
+    await this.execCommand('/bin/cp', '-f', '-T', vmPath, await this.wslify(hostPath));
   }
 
   /**
