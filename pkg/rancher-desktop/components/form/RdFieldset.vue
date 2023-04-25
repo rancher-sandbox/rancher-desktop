@@ -31,13 +31,14 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
-  fieldset {
-    all: unset;
-  }
-
   .rd-fieldset {
+    margin: 0;
+    padding: 0;
+    border: none;
+
     legend {
       font-size: 1rem;
+      color: inherit;
       line-height: 1.5rem;
       padding-bottom: 0.5rem;
     }
