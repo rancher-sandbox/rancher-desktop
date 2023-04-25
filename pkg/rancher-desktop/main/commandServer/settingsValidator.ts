@@ -522,9 +522,7 @@ export default class SettingsValidator {
     const duplicateValues = this.findDuplicates(desiredValue);
 
     if (duplicateValues.length > 0) {
-      duplicateValues.sort((a: string, b:string) => {
-        return a.localeCompare(b);
-      });
+      duplicateValues.sort(Intl.Collator().compare);
       errors.push(`field '${ fqname }' has duplicate entries: "${ duplicateValues.join('", "') }"`);
 
       return false;
@@ -534,18 +532,18 @@ export default class SettingsValidator {
   }
 
   protected findDuplicates(list: string[]): string[] {
-    if (list.length <= 1) {
-      return [];
-    }
-    const first = list[0];
+    const firstInstance = new Set<string>();
+    const duplicates = new Set<string>();
 
-    list = list.slice(1);
-    if (list.includes(first)) {
-      // Filter out `first` so we don't count it again as a duplicate.
-      return [first].concat(this.findDuplicates(list.filter(elt => elt !== first)));
-    } else {
-      return this.findDuplicates(list);
+    for (const member of list) {
+      if (!firstInstance.has(member)) {
+        firstInstance.add(member);
+      } else {
+        duplicates.add(member);
+      }
     }
+
+    return Array.from(duplicates);
   }
 
   protected checkPathManagementStrategy(mergedSettings: Settings, currentValue: PathManagementStrategy,
