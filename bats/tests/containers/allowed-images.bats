@@ -13,6 +13,7 @@ teardown_file() {
     factory_reset
     start_kubernetes
     wait_for_apiserver
+    wait_for_container_engine
 }
 
 @test 'update the list of patterns first time' {
