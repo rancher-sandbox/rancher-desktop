@@ -150,9 +150,8 @@ export class NerdctlClient implements ContainerEngineClient {
   }
 
   copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks: false, namespace?: string }): Promise<void>;
-  async copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { resolveSymlinks?: boolean, namespace?: string }): Promise<void> {
-    const resolveSymlinks = options?.resolveSymlinks !== false;
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { namespace?: string }): Promise<void>;
+  async copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { namespace?: string }): Promise<void> {
     const [imageDir, cleanups] = await this.mountImage(imageID, options?.namespace);
 
     try {
@@ -161,7 +160,7 @@ export class NerdctlClient implements ContainerEngineClient {
       const archive = path.posix.join(workDir, 'archive.tgz');
       const fileList = path.posix.join(workDir, 'files.txt');
 
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', workDir));
       let sourceName: string, sourceDir: string;
 
       if (sourcePath.endsWith('/')) {
@@ -186,8 +185,7 @@ export class NerdctlClient implements ContainerEngineClient {
 
       const args = [
         '--create', '--gzip', '--file', archive, '--directory', sourceDir,
-        resolveSymlinks ? '--dereference' : undefined,
-        '--one-file-system', '--sparse', '--files-from', fileList,
+        '--dereference', '--one-file-system', '--sparse', '--files-from', fileList,
       ].filter(defined);
 
       await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);

@@ -15,7 +15,6 @@ import { ErrorCommand, spawn, spawnFile } from '@pkg/utils/childProcess';
 import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
-import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.moby;
 
@@ -66,6 +65,19 @@ export class MobyClient implements ContainerEngineClient {
     return await spawnFile(executable(tool), finalArgs, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
   }
 
+  /**
+   * Run a list of cleanup functions in reverse.
+   */
+  protected async runCleanups(cleanups: (() => Promise<unknown>)[]) {
+    for (const cleanup of cleanups.reverse()) {
+      try {
+        await cleanup();
+      } catch (e) {
+        console.error('Failed to run cleanup:', e);
+      }
+    }
+  }
+
   protected async makeContainer(imageID: string): Promise<string> {
     const { stdout, stderr } = await this.docker('create', '--entrypoint=/', imageID);
     const container = stdout.trim();
@@ -100,9 +112,9 @@ export class MobyClient implements ContainerEngineClient {
   }
 
   copyFile(imageID: string, sourcePath: string, destinationPath: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationPath: string, options: { resolveSymlinks?: false; silent?: true }): Promise<void>;
-  async copyFile(imageID: string, sourcePath: string, destinationPath: string, options?: { resolveSymlinks?: boolean, silent?: boolean }): Promise<void> {
-    const resolveSymlinks = options?.resolveSymlinks !== false;
+  copyFile(imageID: string, sourcePath: string, destinationPath: string, options: { silent?: true }): Promise<void>;
+  async copyFile(imageID: string, sourcePath: string, destinationPath: string, options?: { silent?: boolean }): Promise<void> {
+    const cleanups: (() => Promise<unknown>)[] = [];
 
     if (sourcePath.endsWith('/')) {
       // If we're copying a directory, add "." so we don't create an extra
@@ -115,12 +127,33 @@ export class MobyClient implements ContainerEngineClient {
 
     const container = await this.makeContainer(imageID);
 
-    try {
-      const args = ['cp', resolveSymlinks ? '--follow-link' : undefined, `${ container }:${ sourcePath }`, destinationPath].filter(defined);
+    cleanups.push(() => spawnFile(this.executable, ['rm', container], { stdio: console }));
 
-      await spawnFile(this.executable, args, { stdio: console });
+    try {
+      if (this.vm.backend === 'wsl') {
+        // On Windows, non-Administrators by default do not have the privileges
+        // to create symlinks.  However, `docker cp --follow-link` doesn't
+        // dereference symlinks it encounters when recursively copying a file.
+        // We work around this by copying it into a tarball in the VM and then
+        // extracting it from there.
+        const wslDestPath = (await this.vm.execCommand({ capture: true }, '/bin/wslpath', '-u', destinationPath)).trim();
+        const archive = (await this.vm.execCommand({ capture: true }, '/bin/mktemp', '-t', 'rd-moby-cp-XXXXXX')).trim();
+
+        cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
+        await this.vm.execCommand(
+          '/bin/sh', '-c',
+          `/usr/bin/docker cp '${ container }:${ sourcePath }' - > '${ archive }'`);
+        await this.vm.execCommand(
+          '/usr/bin/tar', '--extract', '--file', archive, '--dereference',
+          '--directory', wslDestPath);
+      } else {
+        await spawnFile(
+          this.executable,
+          ['cp', '--follow-link', `${ container }:${ sourcePath }`, destinationPath],
+          { stdio: console });
+      }
     } finally {
-      await spawnFile(this.executable, ['rm', container], { stdio: console });
+      await this.runCleanups(cleanups);
     }
   }
 

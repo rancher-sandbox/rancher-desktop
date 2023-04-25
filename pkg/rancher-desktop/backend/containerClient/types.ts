@@ -101,12 +101,12 @@ export interface ContainerEngineClient {
    * an extra directory.  Otherwise, this is the parent directory, and the
    * named file will be created within this directory with the same base name as
    * in the VM.
-   * @param [options.resolveSymlinks] Follow symlinks in the source; default true.
    * @param [options.namespace] Namespace the image is in, if supported.
-   * @note Symbolic links might not be copied correctly (for example, the host might be Windows).
+   * @note Symbolic links are always resolved, as some hosts might not support
+   * them.
    */
   copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks?: false, namespace?: string }): Promise<void>;
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { namespace?: string }): Promise<void>;
 
   /**
    * Start a container.
