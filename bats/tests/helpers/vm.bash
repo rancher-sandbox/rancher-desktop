@@ -43,7 +43,7 @@ start_container_engine() {
     mkdir -p "$PATH_CONFIG"
     cat <<EOF >"$PATH_CONFIG_FILE"
 {
-  "version": 6,
+  "version": 7,
   "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
     "allowedImages": {
@@ -62,7 +62,8 @@ EOF
 start_kubernetes() {
     start_container_engine \
         --kubernetes-enabled \
-        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
+        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION" \
+        "$@"
 }
 
 container_engine_info() {
