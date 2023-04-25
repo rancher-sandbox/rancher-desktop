@@ -1,3 +1,5 @@
+# https://www.shellcheck.net/wiki/SC2120 -- disabled due to complaining about not referencing arguments that are optional on functions is_platformName
+# shellcheck disable=SC2120
 UNAME=$(uname)
 ARCH=$(uname -m)
 
