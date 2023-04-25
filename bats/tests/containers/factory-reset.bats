@@ -1,5 +1,7 @@
 setup() {
     load '../helpers/load'
+    assert=assert
+    refute=refute
 }
 
 @test 'factory reset' {
@@ -11,47 +13,27 @@ setup() {
 }
 
 @test 'Verify that the expected directories were created' {
-    check_directories before
+    before check_directories
 }
 
 @test 'Verify that docker symlinks were created' {
-    if is_unix; then
-        check_docker_symlinks before
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    before check_docker_symlinks
 }
 
 @test 'Verify that path management was set' {
-    if is_unix; then
-        check_path before
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    before check_path
 }
 
 @test 'Verify that rancher desktop context was created' {
-    if is_unix; then
-        check_rd_context before
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    before check_rd_context
 }
 
 @test 'Verify that lima VM was created' {
-    if is_unix; then
-        check_lima before
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    before check_lima
 }
 
 @test 'Verify that WSL distributions were created' {
-    if is_windows; then
-        check_WSL before
-    else
-        skip "This test is not applicable on MacOS/Linux. Skipping..."
-    fi
+    before check_WSL
 }
 
 @test 'Shutdown Rancher Desktop' {
@@ -66,43 +48,23 @@ setup() {
 }
 
 @test 'Verify that docker symlinks were deleted' {
-    if is_unix; then
-        check_docker_symlinks
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_docker_symlinks
 }
 
 @test 'Verify that path management was unset' {
-    if is_unix; then
-        check_path
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_path
 }
 
 @test 'Verify that rancher desktop context was deleted' {
-    if is_unix; then
-        check_rd_context
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_rd_context
 }
 
 @test 'Verify that lima VM was deleted' {
-    if is_unix; then
-        check_lima
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_lima
 }
 
 @test 'Verify that WSL distributions were deleted' {
-    if is_windows; then
-        check_WSL
-    else
-        skip "This test is not applicable on MacOS/Linux. Skipping..."
-    fi
+    check_WSL
 }
 
 @test 'Start Rancher Desktop 2' {
@@ -118,43 +80,23 @@ setup() {
 }
 
 @test 'Verify that docker symlinks were deleted 2' {
-    if is_unix; then
-        check_docker_symlinks
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_docker_symlinks
 }
 
 @test 'Verify that path management was unset 2' {
-    if is_unix; then
-        check_path
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_path
 }
 
 @test 'Verify that rancher desktop context was deleted 2' {
-    if is_unix; then
-        check_rd_context
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_rd_context
 }
 
 @test 'Verify that lima VM was deleted 2' {
-    if is_unix; then
-        check_lima
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_lima
 }
 
 @test 'Verify that WSL distributions were deleted 2' {
-    if is_windows; then
-        check_WSL
-    else
-        skip "This test is not applicable on MacOS/Linux. Skipping..."
-    fi
+    check_WSL
 }
 
 @test 'Start Rancher Desktop 3' {
@@ -170,43 +112,23 @@ setup() {
 }
 
 @test 'Verify that docker symlinks were deleted 3' {
-    if is_unix; then
-        check_docker_symlinks
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_docker_symlinks
 }
 
 @test 'Verify that path management was unset 3' {
-    if is_unix; then
-        check_path
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_path
 }
 
 @test 'Verify that rancher desktop context was deleted 3' {
-    if is_unix; then
-        check_rd_context
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_rd_context
 }
 
 @test 'Verify that lima VM was deleted 3' {
-    if is_unix; then
-        check_lima
-    else
-        skip "This test is not applicable on Windows. Skipping..."
-    fi
+    check_lima
 }
 
 @test 'Verify that WSL distributions were deleted 3' {
-    if is_windows; then
-        check_WSL
-    else
-        skip "This test is not applicable on MacOS/Linux. Skipping..."
-    fi
+    check_WSL
 }
 
 rdctl_factory_reset() {
@@ -230,14 +152,13 @@ refute_not_exists() {
     assert_exists "$@"
 }
 
-check_directories() {
-    local assert=assert
-    local refute=refute
+before() {
+    assert=refute
+    refute=assert
+    "$@"
+}
 
-    if [ "${1-}" == "before" ]; then
-        assert=refute
-        refute=assert
-    fi
+check_directories() {
     # Check if all expected directories are created after starting application/ are deleted after a factory reset
     delete_dir=("$PATH_APP_HOME" "$PATH_CONFIG")
     if is_unix; then
@@ -261,33 +182,21 @@ check_directories() {
 
     for dir in "${delete_dir[@]}"; do
         echo "$assert that $dir does not exist"
-        "${assert}"_not_exists "$dir"
+        "${assert}_not_exists" "$dir"
     done
 }
 
 check_docker_symlinks() {
-    local assert=assert
-    local refute=refute
-
-    if [ "${1-}" == "before" ]; then
-        assert=refute
-        refute=assert
-    fi
+    skip_on_windows
     # Check if docker-X symlinks were deleted
     for dfile in docker-buildx docker-compose; do
         run readlink "$HOME/.docker/cli-plugins/$dfile"
-        "${refute}"_output "$HOME/.rd/bin/$dfile"
+        "${refute}_output" "$HOME/.rd/bin/$dfile"
     done
 }
 
 check_path() {
-    local assert=assert
-    local refute=refute
-
-    if [ "${1-}" == "before" ]; then
-        assert=refute
-        refute=assert
-    fi
+    skip_on_windows
     # Check if ./rd/bin was removed from the path
     # TODO add check for config.fish
     env_profiles=(
@@ -311,49 +220,31 @@ check_path() {
         # cshrc: setenv PATH "/Users/jan/.rd/bin"\:"$PATH"
         # posix: export PATH="/Users/jan/.rd/bin:$PATH"
         run grep "PATH.\"$HOME/.rd/bin" "$profile"
-        "${assert}"_failure
+        "${assert}_failure"
     done
 }
 
 check_rd_context() {
-    local assert=assert
-    local refute=refute
-
-    if [ "${1-}" == "before" ]; then
-        assert=refute
-        refute=assert
-    fi
+    skip_on_windows
     # Check if the rancher-desktop docker context has been removed
     if using_docker; then
         echo "$assert that the docker context rancher-desktop does not exist"
         run grep -r rancher-desktop "$HOME/.docker/contexts/meta"
-        "${assert}"_failure
+        "${assert}_failure"
     fi
 }
 
 check_lima() {
-    local assert=assert
-    local refute=refute
-
-    if [ "${1-}" == "before" ]; then
-        assert=refute
-        refute=assert
-    fi
+    skip_on_windows
     # Check if VM was killed
     run limactl ls
-    "${assert}"_output --partial "No instance found"
+    "${assert}_output" --partial "No instance found"
 }
 
 check_WSL() {
-    local assert=assert
-    local refute=refute
-
-    if [ "${1-}" == "before" ]; then
-        assert=refute
-        refute=assert
-    fi
+    skip_on_unix
     # Check if rancher-desktop WSL distros are deleted on Windows
     run powershell.exe -c "wsl.exe --list"
-    "${refute}"_line --partial "rancher-desktop-data"
-    "${refute}"_line --partial "rancher-desktop"
+    "${refute}_output" --partial "rancher-desktop-data"
+    "${refute}_output" --partial "rancher-desktop"
 }

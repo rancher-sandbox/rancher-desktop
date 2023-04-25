@@ -44,3 +44,13 @@ is_windows() {
 is_unix() {
     ! is_windows "$@"
 }
+skip_on_windows() {
+    if is_windows; then
+        skip "This test is not applicable on Windows."
+    fi
+}
+skip_on_unix() {
+    if is_unix; then
+        skip "This test is not applicable on MacOS/Linux."
+    fi
+}
