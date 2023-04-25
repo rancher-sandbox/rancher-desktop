@@ -1,3 +1,5 @@
+# https://www.shellcheck.net/wiki/SC2120 -- disabled due to complaining about not referencing arguments that are optional on functions is_platformName
+# shellcheck disable=SC2120
 UNAME=$(uname)
 ARCH=$(uname -m)
 
@@ -43,4 +45,14 @@ is_windows() {
 }
 is_unix() {
     ! is_windows "$@"
+}
+skip_on_windows() {
+    if is_windows; then
+        skip "This test is not applicable on Windows."
+    fi
+}
+skip_on_unix() {
+    if is_unix; then
+        skip "This test is not applicable on MacOS/Linux."
+    fi
 }

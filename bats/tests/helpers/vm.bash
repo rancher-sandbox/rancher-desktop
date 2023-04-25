@@ -1,8 +1,10 @@
 wait_for_shell() {
     if is_unix; then
         try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
+        assert_success
         # wait until sshfs mounts are done
         try --max 12 --delay 5 rdctl shell test -d "$HOME/.rd"
+        assert_success
     fi
     rdctl shell sync
 }
@@ -66,6 +68,25 @@ start_kubernetes() {
         "$@"
 }
 
+start_application() {
+    start_kubernetes
+    wait_for_apiserver
+
+    # the docker context "rancher-desktop" may not have been written
+    # even though the apiserver is already running
+    if using_docker; then
+        wait_for_container_engine
+    fi
+
+    # BUG BUG BUG
+    # Looks like the rcfiles don't get updated via `rdctl start`
+    # BUG BUG BUG
+    if is_unix; then
+        rdctl set --application.path-management-strategy manual
+        rdctl set --application.path-management-strategy rcfiles
+    fi
+}
+
 container_engine_info() {
     run ctrctl info
     assert_success
@@ -86,10 +107,13 @@ buildkitd_is_running() {
 
 wait_for_container_engine() {
     try --max 12 --delay 10 container_engine_info
+    assert_success
     if using_docker; then
         try --max 30 --delay 5 docker_context_exists
+        assert_success
     else
         try --max 30 --delay 5 buildkitd_is_running
+        assert_success
     fi
 }
 
