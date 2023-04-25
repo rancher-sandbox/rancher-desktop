@@ -27,8 +27,12 @@ teardown_file() {
 
 # Running `bash -l -c` causes bats to hang
 @test 'bash managed' {
-    run bash -l -c "which rdctl" 3>&-
-    assert_output --partial '.rd/bin/rdctl'
+    if command -v bash >/dev/null && [ -f "$HOME/.bashrc" ]; then
+        run bash -l -c "which rdctl" 3>&-
+        assert_output --partial '.rd/bin/rdctl'
+    else
+        skip 'bash not found or ~/.bashrc does not exist'
+    fi
 }
 
 @test 'ksh managed' {
@@ -75,8 +79,13 @@ no_bashrc_path_manager() {
 }
 
 @test 'bash unmanaged' {
-    run bash -l -c "which rdctl" 3>&-
-    assert_failure
+    if command -v bash >/dev/null && [ -f "$HOME/.bashrc" ]; then
+        run bash -l -c "which rdctl" 3>&-
+        # Can't assert success or failure because rdctl might be in a directory other than ~/.rd/bin
+        refute_output --partial '.rd/bin/rdctl'
+    else
+        skip 'bash not found or ~/.bashrc does not exist'
+    fi
 }
 
 @test 'ksh unmanaged' {
