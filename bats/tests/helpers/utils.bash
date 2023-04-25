@@ -62,9 +62,9 @@ try() {
 update_allowed_patterns() {
     local enabled=$1
     local patterns=$2
-    cat <<EOF |
+    rdctl api settings -X PUT --input - <<EOF
 {
-  "version": 6,
+  "version": 7,
   "containerEngine": {
     "allowedImages": {
       "enabled": $enabled,
@@ -73,5 +73,4 @@ update_allowed_patterns() {
   }
 }
 EOF
-        rdctl api settings -X PUT --input -
 }

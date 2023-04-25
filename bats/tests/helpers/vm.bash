@@ -43,7 +43,7 @@ start_container_engine() {
     mkdir -p "$PATH_CONFIG"
     cat <<EOF >"$PATH_CONFIG_FILE"
 {
-  "version": 6,
+  "version": 7,
   "WSL": { "integrations": $wsl_integrations },
   "containerEngine": {
     "allowedImages": {
