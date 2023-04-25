@@ -157,7 +157,9 @@ export class NerdctlClient implements ContainerEngineClient {
 
     try {
       // Archive the file(s) into the VM
-      const archive = (await this.execCommandWithRetries({ capture: true }, '/bin/mktemp', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
+      const workDir = (await this.execCommandWithRetries({ capture: true }, '/bin/mktemp', '-d', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
+      const archive = path.posix.join(workDir, 'archive.tgz');
+      const fileList = path.posix.join(workDir, 'files.txt');
 
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
       let sourceName: string, sourceDir: string;
@@ -169,19 +171,32 @@ export class NerdctlClient implements ContainerEngineClient {
         sourceName = path.posix.basename(sourcePath);
         sourceDir = path.posix.join(imageDir, path.posix.dirname(sourcePath));
       }
+      // Compute the list of all files to archive, but exclude symlinks that
+      // point outside the source directory (and directories, because tar is
+      // recursive).
+      await this.vm.execCommand({ root: true, cwd: sourceDir },
+        '/usr/bin/find', sourceName,
+        '-type', 'd', '-or', '(',
+        '(',
+        '-exec', '/bin/sh', '-c', `readlink -f {} | grep -q '${ imageDir }'`, ';',
+        ')',
+        '-a',
+        '-exec', '/bin/sh', '-c', `echo '{}' >> ${ fileList }`, ';',
+        ')');
+
       const args = [
         '--create', '--gzip', '--file', archive, '--directory', sourceDir,
         resolveSymlinks ? '--dereference' : undefined,
-        '--one-file-system', '--sparse', sourceName,
+        '--one-file-system', '--sparse', '--files-from', fileList,
       ].filter(defined);
 
       await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);
 
       // Copy the archive to the host
-      const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));
+      const hostWorkDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));
 
-      cleanups.push(() => fs.promises.rm(workDir, { recursive: true }));
-      const hostArchive = path.join(workDir, 'copy-file.tgz');
+      cleanups.push(() => fs.promises.rm(hostWorkDir, { recursive: true }));
+      const hostArchive = path.join(hostWorkDir, 'copy-file.tgz');
 
       await this.vm.copyFileOut(archive, hostArchive);
 
@@ -190,6 +205,7 @@ export class NerdctlClient implements ContainerEngineClient {
       const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot ?? `C:\\Windows`, 'system32', 'tar.exe') : '/usr/bin/tar';
       const extractArgs = ['xzf', hostArchive, '-C', destinationDir];
 
+      await fs.promises.mkdir(path.normalize(path.join(destinationDir, sourceName)), { recursive: true });
       await spawnFile(tar, extractArgs, { stdio: console });
     } finally {
       await this.runCleanups(cleanups);
