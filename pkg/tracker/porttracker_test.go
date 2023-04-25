@@ -74,6 +74,24 @@ func TestPortTrackerAdd(t *testing.T) {
 	assert.Equal(t, actualPortMapping2, portMapping2)
 }
 
+func TestPortTrackerAddEmptyPortMap(t *testing.T) {
+	t.Parallel()
+
+	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
+	forwarder := testVtunnelForwarder{}
+	forwarder.sendErr = errSend
+	portTracker := tracker.NewPortTracker(&forwarder, wslConnectAddr)
+
+	portMapping := nat.PortMap{}
+	err := portTracker.Add(containerID, portMapping)
+	assert.NoError(t, err)
+
+	assert.Len(t, forwarder.receivedPortMappings, 0)
+
+	actualPortMapping := portTracker.Get(containerID)
+	assert.Len(t, actualPortMapping, 0)
+}
+
 func TestPortTrackerAddWithError(t *testing.T) {
 	t.Parallel()
 
@@ -162,6 +180,21 @@ func TestPortTrackerRemove(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestPortTrackerRemoveZeroLengthPortMap(t *testing.T) {
+	t.Parallel()
+
+	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
+	forwarder := testVtunnelForwarder{}
+	portTracker := tracker.NewPortTracker(&forwarder, wslConnectAddr)
+
+	portMapping := nat.PortMap{}
+	err := portTracker.Add(containerID, portMapping)
+	assert.NoError(t, err)
+
+	err = portTracker.Remove(containerID)
+	assert.NoError(t, err)
 }
 
 func TestPortTrackerRemoveError(t *testing.T) {

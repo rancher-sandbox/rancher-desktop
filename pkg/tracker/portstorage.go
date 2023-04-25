@@ -58,11 +58,8 @@ func (p *portStorage) removeAll() {
 	defer p.mutex.Unlock()
 
 	for containerID, portMap := range p.portmap {
-		if len(portMap) != 0 {
-			log.Debugf("removing the following container [%s] port binding: %+v", containerID, portMap)
-
-			p.remove(containerID)
-		}
+		log.Debugf("removing the following container [%s] port binding: %+v", containerID, portMap)
+		delete(p.portmap, containerID)
 	}
 }
 
@@ -74,6 +71,8 @@ func (p *portStorage) getAll() map[string]nat.PortMap {
 }
 
 func (p *portStorage) remove(containerID string) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	delete(p.portmap, containerID)
 	log.Debugf("portStorage remove status: %+v", p.portmap)
 }
