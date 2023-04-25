@@ -244,16 +244,7 @@ export class ExtensionImpl implements Extension {
         composeDir,
         { namespace: this.extensionNamespace });
 
-      const composeNames = ['compose.yaml', 'compose.yml', 'docker-compose.yaml', 'docker-compose.yml'];
-
-      for (const composeName of composeNames) {
-        try {
-          contents = yaml.parse(await fs.promises.readFile(path.join(composeDir, composeName), 'utf-8'));
-          break;
-        } catch (ex) {
-          /* Try the next file, or fall back to nothing */
-        }
-      }
+      contents = yaml.parse(await fs.promises.readFile(path.join(composeDir, path.posix.basename(metadata.vm.composefile)), 'utf-8'));
     } else {
       console.debug(`Extension ${ this.id } does not have containers to run.`);
 
