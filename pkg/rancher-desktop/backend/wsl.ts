@@ -927,11 +927,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   async execCommand(options: wslExecOptions & { capture: true }, ...command: string[]): Promise<string>;
   async execCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<void | string> {
     let options: wslExecOptions = {};
+    const cwdOptions: string[] = [];
 
     if (typeof optionsOrArg === 'string') {
       command = [optionsOrArg].concat(command);
     } else {
       options = optionsOrArg;
+    }
+
+    if (options.cwd) {
+      cwdOptions.push('--cd', options.cwd.toString());
+      delete options.cwd;
     }
 
     const expectFailure = options.expectFailure ?? false;
@@ -940,7 +946,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       // Print a slightly different message if execution fails.
       return await this.execWSL({
         encoding: 'utf-8', ...options, expectFailure: true,
-      }, '--distribution', options.distro ?? INSTANCE_NAME, '--exec', ...command);
+      }, '--distribution', options.distro ?? INSTANCE_NAME, ...cwdOptions, '--exec', ...command);
     } catch (ex) {
       if (!expectFailure) {
         console.log(`WSL: executing: ${ command.join(' ') }: ${ ex }`);
