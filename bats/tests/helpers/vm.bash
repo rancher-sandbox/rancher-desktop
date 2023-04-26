@@ -61,6 +61,7 @@ EOF
     rdctl start "${args[@]}" "$@" &
 }
 
+# shellcheck disable=SC2120
 start_kubernetes() {
     start_container_engine \
         --kubernetes-enabled \
