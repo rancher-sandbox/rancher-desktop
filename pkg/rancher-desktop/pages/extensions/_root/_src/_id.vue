@@ -3,14 +3,16 @@ import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
 import ExtensionsError from '@pkg/components/ExtensionsError.vue';
+import ExtensionsUninstalled from '@pkg/components/ExtensionsUninstalled.vue';
 import { hexDecode } from '@pkg/utils/string-encode';
 
 interface ExtensionsData {
   error: Error | undefined;
+  isExtensionGone: boolean;
 }
 
 export default Vue.extend({
-  components: { ExtensionsError },
+  components: { ExtensionsError, ExtensionsUninstalled },
   beforeRouteEnter(to, _from, next) {
     const { params: { root, src, id } } = to;
 
@@ -72,14 +74,24 @@ export default Vue.extend({
         this.closeExtensionView();
       }
     },
+    browseCatalog() {
+      this.$router.push({ name: 'Extensions' });
+    },
   },
 });
 </script>
 
 <template>
-  <extensions-error
-    v-if="error"
-    :error="error"
-    :extension-id="extensionId"
-  />
+  <div>
+    <extensions-uninstalled
+      v-if="isExtensionGone"
+      :extension-id="extensionId"
+      @click:browse="browseCatalog"
+    />
+    <extensions-error
+      v-if="error"
+      :error="error"
+      :extension-id="extensionId"
+    />
+  </div>
 </template>
