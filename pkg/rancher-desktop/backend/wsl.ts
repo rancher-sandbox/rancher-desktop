@@ -831,12 +831,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
     const rdNetworking = !!cfg?.experimental.virtualMachine.networkingTunnel;
 
-    if (this.privilegedServiceEnabled) {
+    if (rdNetworking || this.privilegedServiceEnabled) {
       guestAgentConfig = {
         LOG_DIR:                       await this.wslify(paths.logs),
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
         GUESTAGENT_IPTABLES:           enableKubernetes ? 'false' : 'true', // only enable IPTABLES for older K8s
-        GUESTAGENT_PRIVILEGED_SERVICE: 'true',
+        GUESTAGENT_PRIVILEGED_SERVICE: rdNetworking ? 'false' : 'true',
         GUESTAGENT_CONTAINERD:         cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
         GUESTAGENT_DOCKER:             cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
         GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
@@ -852,6 +852,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         GUESTAGENT_K8S_SVC_ADDR:       '127.0.0.1', // always use localhost for non-privileged installation/user
       };
     }
+
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
@@ -860,13 +861,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       this.writeConf('rancher-desktop-guestagent', guestAgentConfig),
     ]);
     await this.execCommand('/sbin/rc-update', 'add', 'rancher-desktop-guestagent', 'default');
-
-    // Stop the service if RD Networking is enabled. We need to add it
-    // first as rc-service del … fails if the service is not enabled,
-    // but rc-service add … handles an already-enabled service fine.
-    if (rdNetworking) {
-      await this.execCommand('/sbin/rc-update', 'del', 'rancher-desktop-guestagent', 'default');
-    }
   }
 
   /**
