@@ -76,8 +76,10 @@ assert_traefik_pods_are_up() {
     # Check if the traefik pods come up
     try --max 30 --delay 10 assert_traefik_pods_are_up
     assert_success
-    run curl "http://$(get_host):80"
-    [ "$status" -ne 0 ]
-    run curl -k "https://$(get_host):443"
-    [ "$status" -ne 0 ]
+    try --max 30 --delay 10 curl --head "http://$(get_host):80"
+    assert_success
+    assert_output --regexp 'HTTP/[0-9.]* 404'
+    try --max 30 --delay 10 curl --head --insecure "https://$(get_host):443"
+    assert_success
+    assert_output --regexp 'HTTP/[0-9.]* 404'
 }
