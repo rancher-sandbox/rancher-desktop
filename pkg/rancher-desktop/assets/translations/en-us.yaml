@@ -4682,6 +4682,7 @@ diagnostics:
 ### Extensions Page
 ##############################
 extensions:
+  icon: icon-extension
   installed:
     list:
       uninstall: Uninstall
@@ -4691,6 +4692,10 @@ extensions:
       body: It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
       button: 
         text: Browse Extensions
+  view:
+    emptyState:
+      heading: Extension uninstalled
+      body: 'was uninstalled. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
 
 ##############################
 ### Preferences Page
