@@ -27,7 +27,7 @@ teardown_file() {
 
 # Running `bash -l -c` causes bats to hang
 @test 'bash managed' {
-    if command -v bash >/dev/null && [ -f "$HOME/.bashrc" ]; then
+    if command -v bash >/dev/null; then
         run bash -l -c "which rdctl" 3>&-
         assert_output --partial "$HOME/.rd/bin/rdctl"
     else
@@ -36,7 +36,7 @@ teardown_file() {
 }
 
 @test 'zsh managed' {
-    if command -v zsh >/dev/null && [ -f "$HOME/.zshrc" ]; then
+    if command -v zsh >/dev/null; then
         run zsh -i -c "which rdctl"
         assert_success
         assert_output --partial "$HOME/.rd/bin/rdctl"
@@ -69,7 +69,7 @@ no_bashrc_path_manager() {
 }
 
 @test 'bash unmanaged' {
-    if command -v bash >/dev/null && [ -f "$HOME/.bashrc" ]; then
+    if command -v bash >/dev/null; then
         run bash -l -c "which rdctl" 3>&-
         # Can't assert success or failure because rdctl might be in a directory other than ~/.rd/bin
         refute_output --partial "$HOME/.rd/bin/rdctl"
@@ -79,7 +79,7 @@ no_bashrc_path_manager() {
 }
 
 @test 'zsh unmanaged' {
-    if command -v zsh >/dev/null && [ -f "$HOME/.zshrc" ]; then
+    if command -v zsh >/dev/null; then
         run zsh -i -c "which rdctl"
         refute_output --partial "$HOME/.rd/bin/rdctl"
     else
