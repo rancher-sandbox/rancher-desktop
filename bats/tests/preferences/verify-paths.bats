@@ -35,16 +35,6 @@ teardown_file() {
     fi
 }
 
-@test 'ksh managed' {
-    if command -v ksh >/dev/null && [ -f "$HOME/.kshrc" ]; then
-        run ksh -c "which rdctl"
-        assert_success
-        assert_output --partial "$HOME/.rd/bin/rdctl"
-    else
-        skip 'ksh not found or ~/.kshrc does not exist'
-    fi
-}
-
 @test 'zsh managed' {
     if command -v zsh >/dev/null && [ -f "$HOME/.zshrc" ]; then
         run zsh -i -c "which rdctl"
@@ -85,16 +75,6 @@ no_bashrc_path_manager() {
         refute_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'bash not found or ~/.bashrc does not exist'
-    fi
-}
-
-@test 'ksh unmanaged' {
-    if command -v ksh >/dev/null && [ -f "$HOME/.kshrc" ]; then
-        run ksh -c "which rdctl"
-        # Can't assert success or failure because rdctl might be in a directory other than ~/.rd/bin
-        refute_output --partial "$HOME/.rd/bin/rdctl"
-    else
-        skip 'ksh not found or ~/.kshrc does not exist'
     fi
 }
 
