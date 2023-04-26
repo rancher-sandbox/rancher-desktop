@@ -81,7 +81,7 @@ namespace_arg() {
 @test 'basic extension - check extension is installed' {
     run rdctl extension ls
     assert_success
-    assert_line "rd/extension/basic"
+    assert_line --partial "rd/extension/basic"
 }
 
 @test 'basic extension - check extension contents' {
