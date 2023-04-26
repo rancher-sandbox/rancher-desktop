@@ -60,6 +60,16 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npm run package -- --${{ matrix.platform }} --publish=never
+    - name: Build bats.tar.gz
+      if: matrix.platform == 'linux'
+      run: make -C bats bats.tar.gz
+    - name: Upload bats.tar.gz
+      uses: actions/upload-artifact@v3
+      if: matrix.platform == 'linux'
+      with:
+        name: bats.tar.gz
+        path: bats/bats.tar.gz
+        if-no-files-found: error
     - name: Upload mac disk image
       uses: actions/upload-artifact@v3
       if: matrix.platform == 'mac'
