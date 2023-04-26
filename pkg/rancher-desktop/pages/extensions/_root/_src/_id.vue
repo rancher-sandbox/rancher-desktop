@@ -30,7 +30,10 @@ export default Vue.extend({
     next();
   },
   data(): ExtensionsData {
-    return { error: undefined };
+    return {
+      error:           undefined,
+      isExtensionGone: false,
+    };
   },
   computed: {
     extensionId(): string | undefined {
@@ -44,6 +47,7 @@ export default Vue.extend({
     );
 
     ipcRenderer.on('err:extensions/open', this.extensionError);
+    ipcRenderer.on('ok:extensions/uninstall', this.extensionUninstalled);
   },
   beforeDestroy() {
     ipcRenderer.off('err:extensions/open', this.extensionError);
@@ -57,6 +61,16 @@ export default Vue.extend({
     },
     extensionError(_event: any, err: Error): void {
       this.error = err;
+    },
+    extensionUninstalled(_event: any, extensionId: string): void {
+      if (!this.extensionId) {
+        return;
+      }
+
+      if (extensionId.startsWith(this.extensionId)) {
+        this.isExtensionGone = true;
+        this.closeExtensionView();
+      }
     },
   },
 });
