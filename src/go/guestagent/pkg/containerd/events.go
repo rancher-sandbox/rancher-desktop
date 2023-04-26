@@ -190,11 +190,7 @@ func (e *EventMonitor) IsServing(ctx context.Context) error {
 func (e *EventMonitor) Close() error {
 	defer e.containerdClient.Close()
 
-	if err := e.portTracker.RemoveAll(); err != nil {
-		return err
-	}
-
-	return nil
+	return e.portTracker.RemoveAll()
 }
 
 func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {
