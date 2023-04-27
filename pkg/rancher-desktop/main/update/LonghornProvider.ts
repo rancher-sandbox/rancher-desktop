@@ -10,6 +10,7 @@ import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electr
 import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
 import semver from 'semver';
 
+import * as childProcess from '@pkg/utils/childProcess';
 import fetch from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import { getMacOsVersion } from '@pkg/utils/osVersion';
@@ -66,14 +67,6 @@ export interface LonghornUpdateInfo extends UpdateInfo {
   unsupportedUpdateAvailable: boolean;
 }
 
-type UpgradeResponderRequestPayload = {
-  appVersion: string;
-  extraInfo: {
-    platform: string;
-    platformVersion: string;
-  },
-};
-
 /**
  * LonghornUpgraderResponse describes the response from the Longhorn Upgrade
  * Responder service.
@@ -97,6 +90,15 @@ type UpgradeResponderQueryResult = {
   latest: UpgradeResponderVersion;
   requestIntervalInMinutes: number,
   unsupportedUpdateAvailable: boolean,
+};
+
+type UpgradeResponderRequestPayload = {
+  appVersion: semver.SemVer;
+  extraInfo: {
+    platform: string;
+    platformVersion: string;
+    wslVersion?: string,
+  },
 };
 
 export interface GithubReleaseAsset {
@@ -245,6 +247,30 @@ async function getPlatformVersion(): Promise<string> {
   throw new Error(`Platform "${ process.platform }" is not supported`);
 }
 
+export async function getWslVersion(): Promise<string | undefined> {
+  const wslPath = 'C:\Windows\system32\wsl.exe';
+  const args = ['--version'];
+  let stdout: string;
+
+  try {
+    const result = await childProcess.spawnFile(wslPath, args);
+
+    stdout = result.stdout;
+  } catch (ex) {
+    console.warn(`${ wslPath } ${ args.join(' ') }: ${ ex }`);
+
+    return undefined;
+  }
+
+  const matches = stdout.match(/^WSL .*? ([0-9.]+)$/m);
+
+  if (!matches || matches.length !== 2) {
+    throw new Error(`failed to find WSL version from stdout "${ stdout }"`);
+  }
+
+  return matches[1];
+}
+
 /**
  * Fetch info on available versions of Rancher Desktop, as well as other
  * things, from the Upgrade Responder server.
@@ -257,6 +283,11 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
       platformVersion: await getPlatformVersion(),
     },
   };
+
+  if (process.platform === 'win32') {
+    requestPayload.extraInfo.wslVersion = await getWslVersion();
+  }
+
   // If we are using anything on `github.io` as the update server, we're
   // trying to run a simplified test.  In that case, break the protocol and do
   // a HTTP GET instead of the HTTP POST with data we should do for actual
