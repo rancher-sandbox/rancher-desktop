@@ -309,7 +309,7 @@ containerEngine:
       description: Namespaces for container images; use with nerdctl.
 
 allowedImages:
-  label: Allowed Image Patterns (Experimental)
+  label: Allowed Image Patterns
   patterns:
     placeholder: Type the image pattern
   errors:
@@ -2564,6 +2564,7 @@ prefs:
     'true': Include Prerelease Versions
     'false': Show Releases Only
     label: Helm Charts
+  experimental: Experimental
 
 principal:
   loading: Loading&hellip;
@@ -4689,7 +4690,7 @@ extensions:
       icon: icon-extension
       heading: No extensions installed
       body: It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
-      button: 
+      button:
         text: Browse Extensions
 
 ##############################

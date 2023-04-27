@@ -1,12 +1,19 @@
 <script lang="ts">
 import Vue from 'vue';
+
+import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 /**
  * Groups several controls as well as labels
  */
 export default Vue.extend({
-  name:  'rd-fieldset',
-  props: {
+  name:       'rd-fieldset',
+  components: { LabeledBadge },
+  props:      {
     legendText: {
+      type:    String,
+      default: '',
+    },
+    badgeText: {
       type:    String,
       default: '',
     },
@@ -24,6 +31,10 @@ export default Vue.extend({
       <slot name="legend">
         {{ legendText }}
         <i v-if="legendTooltip" v-tooltip="legendTooltip" class="icon icon-info icon-lg" />
+        <labeled-badge
+          v-if="badgeText"
+          :text="badgeText"
+        />
       </slot>
     </legend>
     <slot></slot>

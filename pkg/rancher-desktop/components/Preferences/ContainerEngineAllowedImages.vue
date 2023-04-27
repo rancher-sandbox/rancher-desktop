@@ -78,6 +78,7 @@ export default Vue.extend({
     <rd-fieldset
       data-test="allowedImages"
       :legend-text="t('allowedImages.label')"
+      :badge-text="t('prefs.experimental')"
     >
       <checkbox
         :label="t('allowedImages.enable')"
