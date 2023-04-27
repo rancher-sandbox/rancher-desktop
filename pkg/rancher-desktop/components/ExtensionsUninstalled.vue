@@ -20,7 +20,11 @@ export default Vue.extend({
       return this.t('extensions.view.emptyState.heading');
     },
     emptyStateBody(): string {
-      return this.t('extensions.view.emptyState.body');
+      return this.t(
+        'extensions.view.emptyState.body',
+        { extensionId: `<code>${ this.extensionId }</code>` },
+        true,
+      );
     },
   },
   methods: {
@@ -37,7 +41,7 @@ export default Vue.extend({
     :heading="emptyStateHeading"
   >
     <template #body>
-      <code>{{ extensionId }}</code> {{ emptyStateBody }}
+      <span v-html="emptyStateBody"></span>
     </template>
     <template #primary-action>
       <button

@@ -4695,7 +4695,7 @@ extensions:
   view:
     emptyState:
       heading: Extension uninstalled
-      body: 'was uninstalled. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
+      body: '{extensionId} was uninstalled. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
 
 ##############################
 ### Preferences Page
