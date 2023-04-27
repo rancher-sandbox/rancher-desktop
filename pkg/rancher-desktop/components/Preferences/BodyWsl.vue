@@ -1,51 +1,87 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 
-import WslIntegration from '@pkg/components/WSLIntegration.vue';
-import RdFieldset from '@pkg/components/form/RdFieldset.vue';
+import PreferencesWslIntegrations from '@pkg/components/Preferences/WslIntegrations.vue';
+import PreferencesWslNetwork from '@pkg/components/Preferences/WslNetwork.vue';
+import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
+import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
-import { RecursiveTypes } from '@pkg/utils/typeUtils';
+import type { TransientSettings } from '@pkg/config/transientSettings';
+import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-wsl',
-  components: { WslIntegration, RdFieldset },
-  props:      {
+  components: {
+    RdTabbed, Tab, PreferencesWslIntegrations, PreferencesWslNetwork,
+  },
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
     },
   },
-  computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
-  methods:  {
-    onChange(distro: string, value: boolean) {
-      const property: keyof RecursiveTypes<Settings> = `WSL.integrations["${ distro }"]` as any;
-
-      this.$store.dispatch('preferences/updateWslIntegrations', { distribution: `["${ distro }"]`, value });
-      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+  computed: {
+    ...mapGetters('transientSettings', ['getActiveTab']),
+    ...mapState('credentials', ['credentials']),
+    activeTab(): string {
+      return this.getActiveTab || 'integrations';
+    },
+  },
+  methods: {
+    async tabSelected({ tab }: { tab: Vue.Component }) {
+      if (this.activeTab !== tab.name) {
+        await this.commitPreferences(tab.name || '');
+      }
+    },
+    async commitPreferences(tabName: string) {
+      await this.$store.dispatch(
+        'transientSettings/commitPreferences',
+        {
+          ...this.credentials as ServerState,
+          payload: { preferences: { navItem: { currentTabs: { WSL: tabName } } } } as RecursivePartial<TransientSettings>,
+        },
+      );
     },
   },
 });
 </script>
 
 <template>
-  <div class="preferences-body">
-    <rd-fieldset
-      :legend-text="t('integrations.windows.description', { }, true)"
-    >
-      <wsl-integration
-        :integrations="getWslIntegrations"
-        @integration-set="onChange"
+  <rd-tabbed
+    v-bind="$attrs"
+    class="action-tabs"
+    :no-content="true"
+    :default-tab="activeTab"
+    @changed="tabSelected"
+  >
+    <template #tabs>
+      <tab
+        label="Integrations"
+        name="integrations"
+        :weight="1"
       />
-    </rd-fieldset>
-  </div>
+      <tab
+        label="Network"
+        name="network"
+        :weight="2"
+      />
+    </template>
+    <div class="wsl-content">
+      <component
+        :is="`preferences-wsl-${ activeTab }`"
+        :preferences="preferences"
+      />
+    </div>
+  </rd-tabbed>
 </template>
 
 <style lang="scss" scoped>
-  .preferences-body {
+  .wsl-content {
     padding: var(--preferences-content-padding);
   }
 </style>
