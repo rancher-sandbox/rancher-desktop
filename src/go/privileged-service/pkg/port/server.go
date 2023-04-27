@@ -96,14 +96,15 @@ func (s *Server) handleEvent(conn net.Conn) {
 		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding received payload error: %v", err))
 		return
 	}
-	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
+	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("handleEvent for %+v", pm))
 	if err = s.proxy.exec(pm); err != nil {
-		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy failed: %v", err))
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy [%+v] failed: %v", pm, err))
 	}
 }
 
 // Stop shuts down the server gracefully
 func (s *Server) Stop() {
+	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("remove all %+v", s.proxy.portMappings))
 	if err := s.proxy.removeAll(); err != nil {
 		s.eventLogger.Warning(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), err.Error())
 	}

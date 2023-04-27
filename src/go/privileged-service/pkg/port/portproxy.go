@@ -61,21 +61,6 @@ func (p *proxy) exec(portMapping types.PortMapping) error {
 	return p.add(port)
 }
 
-func (p *proxy) removeAll() error {
-	errs := make([]error, 0)
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	for _, proxy := range p.portMappings {
-		if err := p.delete(proxy); err != nil {
-			errs = append(errs, fmt.Errorf("deleting portproxy: %+v faile: %w", proxy, err))
-		}
-	}
-	if len(errs) == 0 {
-		return nil
-	}
-	return fmt.Errorf("%w: %+v", ErrPortProxy, errs)
-}
-
 func (p *proxy) add(port portProxy) error {
 	for _, v := range port.PortMap {
 		for _, addr := range v {
@@ -93,17 +78,47 @@ func (p *proxy) add(port portProxy) error {
 			}
 		}
 	}
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
 	hash, err := getHash(port)
 	if err != nil {
 		return err
 	}
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	p.portMappings[hash] = port
 	return nil
 }
 
 func (p *proxy) delete(port portProxy) error {
+	if err := execNetshDelete(port); err != nil {
+		return err
+	}
+
+	hash, err := getHash(port)
+	if err != nil {
+		return err
+	}
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	delete(p.portMappings, hash)
+	return nil
+}
+
+func (p *proxy) removeAll() error {
+	errs := make([]error, 0)
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	for _, proxy := range p.portMappings {
+		if err := execNetshDelete(proxy); err != nil {
+			errs = append(errs, fmt.Errorf("deleting portproxy: %+v faile: %w", proxy, err))
+		}
+	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%w: %+v", ErrPortProxy, errs)
+}
+
+func execNetshDelete(port portProxy) error {
 	for _, v := range port.PortMap {
 		for _, addr := range v {
 			args, err := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
@@ -116,13 +131,6 @@ func (p *proxy) delete(port portProxy) error {
 			}
 		}
 	}
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	hash, err := getHash(port)
-	if err != nil {
-		return err
-	}
-	delete(p.portMappings, hash)
 	return nil
 }
 
