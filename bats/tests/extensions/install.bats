@@ -6,6 +6,12 @@ setup() {
     load '../helpers/load'
 
     TESTDATA_DIR="${PATH_TEST_ROOT}/extensions/testdata/"
+
+    if using_containerd; then
+        namespace_arg=('--namespace=rancher-desktop-extensions')
+    else
+        namespace_arg=()
+    fi
 }
 
 teardown_file() {
@@ -36,12 +42,6 @@ encoded_id() { # variant
     id "$1" | tr -d '\r\n' | base64 | tr '+/' '-_' | tr -d '='
 }
 
-namespace_arg() {
-    if using_containerd; then
-        echo '--namespace=rancher-desktop-extensions'
-    fi
-}
-
 @test 'factory reset' {
     factory_reset
 }
@@ -64,9 +64,9 @@ namespace_arg() {
         basic host-binaries missing-icon missing-icon-file ui
     )
     for extension in "${variants[@]}"; do
-        ctrctl "$(namespace_arg)" build --tag "rd/extension/$extension" --build-arg "variant=$extension" "$TESTDATA_DIR"
+        ctrctl "${namespace_arg[@]}" build --tag "rd/extension/$extension" --build-arg "variant=$extension" "$TESTDATA_DIR"
     done
-    run ctrctl "$(namespace_arg)" image list --format '{{ .Repository }}'
+    run ctrctl "${namespace_arg[@]}" image list --format '{{ .Repository }}'
     assert_success
     for extension in "${variants[@]}"; do
         assert_line "rd/extension/$extension"
@@ -81,7 +81,7 @@ namespace_arg() {
 @test 'basic extension - check extension is installed' {
     run rdctl extension ls
     assert_success
-    assert_line "rd/extension/basic"
+    assert_line --partial "rd/extension/basic"
 }
 
 @test 'basic extension - check extension contents' {

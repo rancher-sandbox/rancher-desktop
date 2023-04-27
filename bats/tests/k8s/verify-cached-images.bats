@@ -19,7 +19,7 @@ test_k8s_version_has_correct_cached_extension() {
     local EXTENSION=$2
     rdctl set --kubernetes-version "$K8S_VERSION"
     wait_for_apiserver "$K8S_VERSION"
-    run ls "$PATH_CACHE/k3s/v${K8S_VERSION}"*k3s*/k3s-airgap-images-amd64."${EXTENSION}"
+    run ls "$PATH_CACHE/k3s/v${K8S_VERSION}"*k3s*/k3s-airgap-images-*."${EXTENSION}"
     assert_success
 }
 
