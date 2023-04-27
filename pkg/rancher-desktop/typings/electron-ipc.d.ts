@@ -171,5 +171,6 @@ export interface IpcRendererEvents {
   'extensions/spawn/close': (id: string, code: number) => void;
   'extensions/spawn/error': (id: string, error: Error | NodeJS.Signals) => void;
   'extensions/spawn/output': (id: string, data: { stdout: string } | { stderr: string }) => void;
+  'ok:extensions/uninstall': (id: string) => void;
   // #endregion
 }

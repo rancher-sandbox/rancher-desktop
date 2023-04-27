@@ -1104,6 +1104,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       console.debug(`Uninstalling extension ${ image }...`);
       try {
         if (await extension.uninstall()) {
+          window.send('ok:extensions/uninstall', image);
+
           return { status: 201 };
         } else {
           return { status: 204 };

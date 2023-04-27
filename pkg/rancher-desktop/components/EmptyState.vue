@@ -68,6 +68,7 @@ export default Vue.extend({
   .empty-state-body {
     font-size: 1rem;
     line-height: 1.5rem;
+    text-align: center;
   }
 
   .empty-state-primary-action {

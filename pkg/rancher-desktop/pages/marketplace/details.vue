@@ -96,6 +96,18 @@ import demoMetadata from '@pkg/utils/_demo_metadata.js';
 export default {
   name:       'marketplace-details',
   components: { LoadingIndicator, Banner },
+
+  beforeRouteEnter(to, _from, next) {
+    const { params: { slug } } = to;
+
+    if (!slug) {
+      next({ name: 'Extensions' });
+
+      return;
+    }
+
+    next();
+  },
   data() {
     return {
       extension:        this.$route.params.slug,
