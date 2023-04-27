@@ -82,7 +82,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div>
+  <div class="extensions-container">
     <extensions-uninstalled
       v-if="isExtensionGone"
       :extension-id="extensionId"
@@ -95,3 +95,11 @@ export default Vue.extend({
     />
   </div>
 </template>
+
+<style lang="scss" scoped>
+  .extensions-container {
+    padding: 0 6rem;
+    max-width: 64rem;
+    justify-self: center;
+  }
+</style>
