@@ -104,11 +104,11 @@ func (s *Server) handleEvent(conn net.Conn) {
 
 // Stop shuts down the server gracefully
 func (s *Server) Stop() {
+	close(s.quit)
+	s.listener.Close()
 	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("remove all %+v", s.proxy.portMappings))
 	if err := s.proxy.removeAll(); err != nil {
 		s.eventLogger.Warning(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), err.Error())
 	}
-	close(s.quit)
-	s.listener.Close()
 	s.stopped = true
 }
