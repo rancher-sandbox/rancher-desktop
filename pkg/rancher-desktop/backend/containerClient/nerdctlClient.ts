@@ -134,6 +134,26 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
+  async waitForReady(): Promise<void> {
+    // We need to check two things: containerd, and buildkitd.
+    const commandsToCheck = [
+      ['/usr/local/bin/nerdctl', 'system', 'info'],
+      ['/usr/local/bin/buildctl', 'debug', 'info'],
+    ];
+
+    for (const cmd of commandsToCheck) {
+      while (true) {
+        try {
+          await this.vm.execCommand({ expectFailure: true, root: true }, ...cmd);
+          break;
+        } catch (ex) {
+          // Ignore the error, try again
+          await util.promisify(setTimeout)(1_000);
+        }
+      }
+    }
+  }
+
   readFile(imageID: string, filePath: string): Promise<string>;
   readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding, namespace?: string }): Promise<string>;
   async readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding, namespace?: string }): Promise<string> {

@@ -81,6 +81,11 @@ export type ContainerRunClientOptions = SpawnOptions & { namespace?: string };
  */
 export interface ContainerEngineClient {
   /**
+   * Block until the container engine is ready.
+   */
+  waitForReady(): Promise<void>;
+
+  /**
    * Read the file from the given container image.
    * @param imageID The ID of the image to read.
    * @param filePath The file to read, relative to the root of the container.

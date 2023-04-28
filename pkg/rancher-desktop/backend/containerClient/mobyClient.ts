@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import _ from 'lodash';
 
@@ -88,6 +89,25 @@ export class MobyClient implements ContainerEngineClient {
     }
 
     return container;
+  }
+
+  async waitForReady(): Promise<void> {
+    let successCount = 0;
+
+    // Wait for ten consecutive successes, clearing out successCount whenever we
+    // hit an error.  In the ideal case this is a ten-second delay in startup
+    // time.  We use `docker system info` because that needs to talk to the
+    // socket to fetch data about the engine (and it returns an error if it
+    // fails to do so).
+    while (successCount < 10) {
+      try {
+        await this.runClient(['system', 'info'], 'ignore');
+        successCount++;
+      } catch (ex) {
+        successCount = 0;
+      }
+      await util.promisify(setTimeout)(1_000);
+    }
   }
 
   readFile(imageID: string, filePath: string): Promise<string>;
