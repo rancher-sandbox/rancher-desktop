@@ -141,6 +141,7 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
   try {
     plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
   } catch (error: any) {
+    // throw error if plutil fails to parse the 'locked' profile
     console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`);
     throw new DeploymentProfileError(`Error loading plist file ${ inputPath }: ${ getErrorString(error) }`);
   }
@@ -148,6 +149,7 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
   try {
     return JSON.parse(plutilResult.stdout ?? '');
   } catch (error: any) {
+    // throw error if we fail to parse the 'locked' profile
     console.log(`Error parsing deployment profile JSON object ${ inputPath }\n${ error }`);
     throw new DeploymentProfileError(`Error parsing deployment profile JSON object from ${ inputPath }: ${ getErrorString(error) }`);
   }
