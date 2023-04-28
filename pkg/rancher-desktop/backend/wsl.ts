@@ -1140,15 +1140,34 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   /**
+   * Execute a command on a given OpenRC service.
+   *
+   * @param service The name of the OpenRC service to execute.
+   * @param action The name of the OpenRC service action to execute.
+   * @param argument Argument to pass to `wsl-service` (`--ifnotstart`, `--ifstarted`)
+   */
+  async execService(service: string, action: string, argument = '') {
+    await this.execCommand('/usr/local/bin/wsl-service', argument, service, action);
+  }
+
+  /**
    * Start the given OpenRC service.  This should only happen after
    * provisioning, to ensure that provisioning can modify any configuration.
    *
    * @param service The name of the OpenRC service to execute.
    */
   async startService(service: string) {
-    // Run rc-update as we have dynamic dependencies.
     await this.execCommand('/sbin/rc-update', '--update');
-    await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
+    await this.execService(service, 'start', '--ifnotstarted');
+  }
+
+  /**
+   * Stop the given OpenRC service.
+   *
+   * @param service The name of the OpenRC service to stop.
+   */
+  async stopService(service: string) {
+    await this.execService(service, 'stop', '--ifstarted');
   }
 
   /**
@@ -1379,7 +1398,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         switch (config.containerEngine.name) {
         case ContainerEngine.CONTAINERD:
           await this.progressTracker.action('Starting buildkit', 0,
-            this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
+            this.startService('buildkitd'));
           this.#containerEngineClient = new NerdctlClient(this);
           break;
         case ContainerEngine.MOBY:
@@ -1479,7 +1498,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         // Stop the service if it's already running for some reason.
         // This should never be the case (because we tore down init).
-        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
+        await this.stopService('local');
 
         // Clobber /etc/local.d and replace it with a symlink to our desired
         // path.  This is needed as /etc/init.d/local does not support
@@ -1495,7 +1514,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           '-print', '-exec', 'chmod', 'a+x', '{}', ';');
 
         // Run the script.
-        await this.execCommand('/usr/local/bin/wsl-service', 'local', 'start');
+        await this.startService('local');
       })(),
     ]);
   }
@@ -1517,14 +1536,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
       await this.progressTracker.action('Shutting Down...', 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'openresty', 'stop');
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'rancher-desktop-guestagent', 'stop');
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
+          await this.stopService('k3s');
+          await this.stopService('docker');
+          await this.stopService('containerd');
+          await this.stopService('openresty');
+          await this.stopService('rancher-desktop-guestagent');
+          await this.stopService('buildkitd');
           try {
-            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
+            await this.stopService('local');
           } catch (ex) {
             // Do not allow errors here to prevent us from stopping.
             console.error('Failed to run user provisioning scripts on stopping:', ex);
