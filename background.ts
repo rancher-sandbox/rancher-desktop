@@ -6,6 +6,7 @@ import util from 'util';
 
 import Electron from 'electron';
 import _ from 'lodash';
+import semver from 'semver';
 
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
@@ -264,7 +265,7 @@ Electron.app.whenReady().then(async() => {
 
     await dockerDirManager.ensureCredHelperConfigured();
 
-    // Path management strategy will need to be selected after an upgrade
+    // Path management strategy will need to be selected after an update
     if (!os.platform().startsWith('win') && cfg.application.pathManagementStrategy === PathManagementStrategy.NotSet) {
       if (!noModalDialogs) {
         await window.openPathUpdate();

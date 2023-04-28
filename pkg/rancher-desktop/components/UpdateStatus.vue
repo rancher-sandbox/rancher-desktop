@@ -36,7 +36,7 @@
         <span v-else></span>
       </template>
     </card>
-    <card v-else-if="unsupportedUpgradeAvailable" :show-highlight-border="false">
+    <card v-else-if="unsupportedUpdateAvailable" :show-highlight-border="false">
       <template #title>
         <div class="type-title">
           <h3>Latest Version Not Supported</h3>
@@ -158,8 +158,8 @@ class UpdateStatus extends UpdateStatusProps {
     return this.applying ? 'Applying update...' : 'Restart Now';
   }
 
-  get unsupportedUpgradeAvailable() {
-    return !this.hasUpdate && this.updateState?.info?.unsupportedUpgradeAvailable;
+  get unsupportedUpdateAvailable() {
+    return !this.hasUpdate && this.updateState?.info?.unsupportedUpdateAvailable;
   }
 
   applyUpdate() {

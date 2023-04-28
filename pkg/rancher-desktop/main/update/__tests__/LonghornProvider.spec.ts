@@ -43,7 +43,7 @@ describe('queryUpgradeResponder', () => {
     expect(result.latest.Name).toEqual('v3.2.1');
   });
 
-  it('should set unsupportedUpgradeAvailable to true when a newer-than-latest version is unsupported', async() => {
+  it('should set unsupportedUpdateAvailable to true when a newer-than-latest version is unsupported', async() => {
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -71,11 +71,11 @@ describe('queryUpgradeResponder', () => {
     });
     const result = await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
 
-    expect(result.unsupportedUpgradeAvailable).toBe(true);
+    expect(result.unsupportedUpdateAvailable).toBe(true);
     expect(result.latest.Name).toEqual('v2.1.3');
   });
 
-  it('should set unsupportedUpgradeAvailable to false when no newer-than-latest versions are unsupported', async() => {
+  it('should set unsupportedUpdateAvailable to false when no newer-than-latest versions are unsupported', async() => {
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -103,7 +103,7 @@ describe('queryUpgradeResponder', () => {
     });
     const result = await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
 
-    expect(result.unsupportedUpgradeAvailable).toBe(false);
+    expect(result.unsupportedUpdateAvailable).toBe(false);
     expect(result.latest.Name).toEqual('v3.2.1');
   });
 
@@ -163,7 +163,7 @@ describe('queryUpgradeResponder', () => {
     });
     const result = await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
 
-    expect(result.unsupportedUpgradeAvailable).toBe(false);
+    expect(result.unsupportedUpdateAvailable).toBe(false);
     expect(result.latest.Name).toEqual('v3.2.1');
   });
 });

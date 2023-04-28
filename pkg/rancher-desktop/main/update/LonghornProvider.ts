@@ -19,7 +19,7 @@ const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
 
 /**
- * If the upgrade responder doesn't have a requestIntervalInMinutes field (or if
+ * If Upgrade Responder doesn't have a requestIntervalInMinutes field (or if
  * it's zero), use this value instead.  Note that the server can still set it to
  * be less than this value.
  */
@@ -30,7 +30,7 @@ const defaultUpdateIntervalInMinutes = 60;
  */
 export interface LonghornProviderOptions extends CustomPublishOptions {
   /**
-   * upgradeServer is the URL for the upgrade-responder server
+   * upgradeServer is the URL for the Upgrade Responder server
    * @example "https://responder.example.com:8314/v1/checkupgrade"
    */
   readonly upgradeServer: string;
@@ -63,17 +63,17 @@ export interface LonghornUpdateInfo extends UpdateInfo {
    * Whether there is an unsupported version of Rancher Desktop that is
    * newer than the latest supported version.
    */
-  unsupportedUpgradeAvailable: boolean;
+  unsupportedUpdateAvailable: boolean;
 }
 
 /**
- * LonghornUpgraderResponse describes the response from the Longhorn upgrade
- * responder service.
+ * LonghornUpgraderResponse describes the response from the Longhorn Upgrade
+ * Responder service.
  */
 interface LonghornUpgraderResponse {
   versions: UpgradeResponderVersion[];
   /**
-   * The number of minutes before the next upgrade check should be performed.
+   * The number of minutes before the next update check should be performed.
    */
   requestIntervalInMinutes: number;
 }
@@ -88,7 +88,7 @@ type UpgradeResponderVersion = {
 type UpgradeResponderQueryResult = {
   latest: UpgradeResponderVersion;
   requestIntervalInMinutes: number,
-  unsupportedUpgradeAvailable: boolean,
+  unsupportedUpdateAvailable: boolean,
 };
 
 export interface GithubReleaseAsset {
@@ -131,7 +131,7 @@ interface LonghornCache {
    * Whether there is an unsupported version of Rancher Desktop that is
    * newer than the latest supported version.
    */
-  unsupportedUpgradeAvailable: boolean;
+  unsupportedUpdateAvailable: boolean;
   /** Whether the recorded release is an installable update */
   isInstallable: boolean;
   release: {
@@ -252,21 +252,21 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
   // If we are using anything on `github.io` as the update server, we're
   // trying to run a simplified test.  In that case, break the protocol and do
   // a HTTP GET instead of the HTTP POST with data we should do for actual
-  // longhorn upgrade-responder servers.
+  // Longhorn Upgrade Responder servers.
   const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(url) ? { method: 'GET' } : {
     method: 'POST',
     body:   JSON.stringify(requestPayload),
   };
 
-  console.debug(`Checking for upgrades from ${ url }`);
+  console.debug(`Checking ${ url } for updates`);
   const responseRaw = await fetch(url, requestOptions);
   const response = await responseRaw.json() as LonghornUpgraderResponse;
 
-  console.debug(`Upgrade server response:`, util.inspect(response, true, null));
+  console.debug(`Upgrade Responder response:`, util.inspect(response, true, null));
 
   const allVersions = response.versions;
 
-  // If the upgrade responder does not send the Supported field,
+  // If Upgrade Responder does not send the Supported field,
   // assume that the version is supported.
   for (const version of allVersions) {
     version.Supported ??= true;
@@ -279,21 +279,21 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
     throw newError('Could not find latest version', 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND');
   }
   const latest = supportedVersions[0];
-  const unsupportedUpgradeAvailable = allVersions[0].Name !== latest.Name;
+  const unsupportedUpdateAvailable = allVersions[0].Name !== latest.Name;
 
   return {
     latest,
     requestIntervalInMinutes: response.requestIntervalInMinutes,
-    unsupportedUpgradeAvailable,
+    unsupportedUpdateAvailable,
   };
 }
 
 /**
  * LonghornProvider is a Provider that interacts with Longhorn's
  * [Upgrade Responder](https://github.com/longhorn/upgrade-responder) server to
- * locate upgrade versions.  It assumes that the versions are actually published
- * as GitHub releases.  It also assumes that all versions have assets for all
- * platforms (that is, it doesn't filter by platform on checking).
+ * determine which versions are available. It assumes that the versions are
+ * published as GitHub releases. It also assumes that all versions have assets
+ * for all platforms (that is, it doesn't filter by platform on checking).
  *
  * Note that we do internal caching to avoid issues with being double-counted in
  * the stats.
@@ -343,7 +343,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     }
 
     const queryResult = await queryUpgradeResponder(this.configuration.upgradeServer, this.updater.currentVersion);
-    const { latest, unsupportedUpgradeAvailable } = queryResult;
+    const { latest, unsupportedUpdateAvailable } = queryResult;
     const requestIntervalInMinutes = queryResult.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
     const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
     const nextRequestTime = Date.now() + requestIntervalInMs;
@@ -392,7 +392,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
 
     const cache: LonghornCache = {
       nextUpdateTime: nextRequestTime,
-      unsupportedUpgradeAvailable,
+      unsupportedUpdateAvailable,
       isInstallable:  false, // Always false, we'll update this later.
       release:        {
         tag,
@@ -423,14 +423,14 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
         sha512:                cache.file.checksum,
         isAdminRightsRequired: false,
       }],
-      version:                     cache.release.tag,
-      path:                        '',
-      sha512:                      '',
-      releaseName:                 cache.release.name,
-      releaseNotes:                cache.release.notes,
-      releaseDate:                 cache.release.date,
-      nextUpdateTime:              cache.nextUpdateTime,
-      unsupportedUpgradeAvailable: cache.unsupportedUpgradeAvailable,
+      version:                    cache.release.tag,
+      path:                       '',
+      sha512:                     '',
+      releaseName:                cache.release.name,
+      releaseNotes:               cache.release.notes,
+      releaseDate:                cache.release.date,
+      nextUpdateTime:             cache.nextUpdateTime,
+      unsupportedUpdateAvailable: cache.unsupportedUpdateAvailable,
     };
   }
 
