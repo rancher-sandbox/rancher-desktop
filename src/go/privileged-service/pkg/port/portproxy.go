@@ -82,6 +82,13 @@ func (p *proxy) add(port portProxy) error {
 	if err != nil {
 		return err
 	}
+	// Ideally we would want to have the mutex lock around the entire add
+	// function to create an atomic operation for adding netsh and adding
+	// the portMappings cache. However, we don't want the netsh operation
+	// to be impacted by the lock contention and it is acceptable for cache
+	// to fall out of sync with netsh since the cost is cheap. When the cache
+	// attempts to remove an entry that does not exist or double remove an entry
+	// we would ignore the error and move on.
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.portMappings[hash] = port
@@ -97,6 +104,13 @@ func (p *proxy) delete(port portProxy) error {
 	if err != nil {
 		return err
 	}
+	// Ideally we would want to have the mutex lock around the entire delete
+	// function to create an atomic operation for deleting netsh and removing
+	// the portMappings cache. However, we don't want the netsh operation
+	// to be impacted by the lock contention and it is acceptable for cache
+	// to fall out of sync with netsh since the cost is cheap. When the cache
+	// attempts to remove an entry that does not exist or double remove an entry
+	// we would ignore the error and move on.
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	delete(p.portMappings, hash)
