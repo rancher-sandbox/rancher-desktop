@@ -319,6 +319,7 @@ describeWindows('windows deployment profiles', () => {
         // TODO: Track console.log to see error messages about the invalid registry entries
 
         it('loads a bad profile and finds very little', async() => {
+          await clearRegistry();
           await installInRegistry(incorrectDefaultsUserRegFile);
           const profile = await readDeploymentProfiles(true);
 
