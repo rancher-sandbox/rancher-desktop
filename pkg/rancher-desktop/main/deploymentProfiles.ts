@@ -119,31 +119,37 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
   return profiles;
 }
 
-// This function has to process inputPath for unit-testing, which mocks fs.readFileSync
+// This function can't call `plutil` directly with `inputPath`, because unit-testing mocks `fs.readFileSync`
+// So read the text into a string variable, and have `plutil` read it via stdin.
+// It's no error if a deployment profile doesn't exist.
+// Any other error needs to show up in a dialog box and terminate processing.
 async function convertAndParsePlist(inputPath: string): Promise<undefined|RecursivePartial<settings.Settings>> {
-  let finalError: any;
+  let plutilResult: { stdout?: string, stderr?: string };
+  let body: stream.Readable;
+  const args = ['-convert', 'json', '-r', '-o', '-', '-'];
+  const getErrorString = (error: any) => error.stdout || error.stderr || error.toString();
 
   try {
-    const args = ['-convert', 'json', '-r', '-o', '-', '-'];
-    const body = stream.Readable.from(fs.readFileSync(inputPath, { encoding: 'utf-8' }));
-    const plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
-
-    try {
-      return JSON.parse(plutilResult.stdout);
-    } catch (error: any) {
-      // throw error if we fail to parse the 'locked' profile
-      console.log(`Error parsing deployment profile JSON object ${ inputPath }\n${ error }`);
-      finalError = error;
-    }
+    body = stream.Readable.from(fs.readFileSync(inputPath, { encoding: 'utf-8' }));
   } catch (error: any) {
-    if (error.code !== 'ENOENT') {
-      // throw error if plutil fails to parse the 'locked' profile
-      console.log(`Error parsing deployment profile ${ inputPath }\n${ error }`);
-      finalError = error;
+    if (error.code === 'ENOENT') {
+      return;
     }
+    console.log(`Error reading file ${ inputPath }\n${ error }`);
+    throw new DeploymentProfileError(`Error reading file ${ inputPath }: ${ getErrorString(error) }`);
   }
-  if (finalError) {
-    throw new DeploymentProfileError(`Error parsing deployment profile JSON object ${ inputPath }: ${ finalError.stdout || finalError.stderr || finalError }`);
+  try {
+    plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
+  } catch (error: any) {
+    console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`);
+    throw new DeploymentProfileError(`Error loading plist file ${ inputPath }: ${ getErrorString(error) }`);
+  }
+
+  try {
+    return JSON.parse(plutilResult.stdout ?? '');
+  } catch (error: any) {
+    console.log(`Error parsing deployment profile JSON object ${ inputPath }\n${ error }`);
+    throw new DeploymentProfileError(`Error parsing deployment profile JSON object from ${ inputPath }: ${ getErrorString(error) }`);
   }
 }
 /**
@@ -172,11 +178,13 @@ async function parseJsonFromPlists(rootPath: string, defaultsPath: string, locke
  */
 function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: string): Array<undefined|RecursivePartial<settings.Settings>> {
   return [defaultsPath, lockedPath].map((configPath) => {
+    const fullPath = join(rootPath, configPath);
+
     try {
-      return JSON.parse(fs.readFileSync(join(rootPath, configPath), 'utf-8'));
+      return JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
     } catch (ex: any) {
       if (ex.code !== 'ENOENT') {
-        throw new DeploymentProfileError(`Error parsing locked deployment profile: ${ ex }`);
+        throw new DeploymentProfileError(`Error parsing deployment profile from ${ fullPath }: ${ ex }`);
       }
     }
   });
