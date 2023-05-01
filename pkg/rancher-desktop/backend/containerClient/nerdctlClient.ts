@@ -180,7 +180,7 @@ export class NerdctlClient implements ContainerEngineClient {
       const archive = path.posix.join(workDir, 'archive.tgz');
       const fileList = path.posix.join(workDir, 'files.txt');
 
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', workDir));
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workDir));
       let sourceName: string, sourceDir: string;
 
       if (sourcePath.endsWith('/')) {
