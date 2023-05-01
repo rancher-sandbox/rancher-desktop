@@ -101,6 +101,10 @@ export default {
       type:     Array,
       required: true,
     },
+    protectedImages: {
+      type:    Array,
+      default: () => [],
+    },
     imageNamespaces: {
       type:     Array,
       required: true,
@@ -342,7 +346,7 @@ export default {
       return row.imageName && row.imageName !== '<none>';
     },
     isDeletable(row) {
-      return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
+      return !this.protectedImages.includes(row.imageName);
     },
     isPushable(row) {
       // If it doesn't contain a '/', it's certainly not pushable,
