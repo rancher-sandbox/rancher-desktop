@@ -87,17 +87,18 @@ export class ExtensionImpl implements Extension {
         const raw = await this.readFile('metadata.json');
         const result = _.merge({}, fallback, JSON.parse(raw));
 
-        if (!result.icon) {
-          throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Invalid extension: missing icon');
+        if (result.icon) {
+          return result;
         }
-
-        return result;
       } catch (ex: any) {
         console.error(`Failed to read metadata for ${ this.id }: ${ ex }`);
         // Unset metadata so we can try again later
         this._metadata = undefined;
         throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Could not read extension metadata', ex);
       }
+      // If we reach here, we got the metadata but there was no icon set.
+      // There's no point in retrying in that case.
+      throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Invalid extension: missing icon');
     })();
 
     return this._metadata as Promise<ExtensionMetadata>;
