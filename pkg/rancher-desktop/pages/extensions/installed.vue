@@ -113,7 +113,7 @@ export default Vue.extend({
               }
             }"
           >
-            {{ row.metadata.ui['dashboard-tab'].title }}
+            {{ (row.labels || {})['org.opencontainers.image.title'] || row.id }}
           </nuxt-link>
         </td>
       </template>
