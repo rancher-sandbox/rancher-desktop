@@ -97,11 +97,6 @@ func main() {
 		cancel()
 	}()
 
-	wslAddr, err := getWSLAddr(wslInfName)
-	if err != nil {
-		log.Fatalf("failure getting WSL IP addresses: %v", err)
-	}
-
 	if !*enableContainerd && !*enableDocker {
 		log.Fatal("requires either -docker or -containerd enabled.")
 	}
@@ -115,6 +110,11 @@ func main() {
 	if *enablePrivilegedService {
 		if *vtunnelAddr == "" {
 			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
+		}
+
+		wslAddr, err := getWSLAddr(wslInfName)
+		if err != nil {
+			log.Fatalf("failure getting WSL IP addresses: %v", err)
 		}
 
 		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
