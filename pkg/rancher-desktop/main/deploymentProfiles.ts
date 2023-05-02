@@ -55,8 +55,8 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
 
   switch (os.platform()) {
   case 'win32':
-    for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
-      for (const registryPath of REGISTRY_PATH_PROFILE) {
+    for (const registryPath of REGISTRY_PATH_PROFILE) {
+      for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
         const registryKey = nativeReg.openKey(key, registryPath.join('\\'), nativeReg.Access.READ);
 
         if (!registryKey) {
@@ -83,7 +83,7 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
             nativeReg.closeKey(lockedKey);
           }
         }
-        if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
+        if ((defaults && Object.keys(defaults).length) || (locked && Object.keys(locked).length)) {
           break;
         }
       }
