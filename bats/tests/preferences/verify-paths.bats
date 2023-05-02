@@ -25,10 +25,11 @@ teardown_file() {
     ensure_dotfiles_are_completed_BUG_BUG_BUG_4519
 }
 
-# Running `bash -l -c` causes bats to hang
+# Running `bash -l -c` can cause bats to hang, so close the output file descriptor with '3>&-'
 @test 'bash managed' {
     if command -v bash >/dev/null; then
         run bash -l -c "which rdctl" 3>&-
+        assert_success
         assert_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'bash not found or ~/.bashrc does not exist'
@@ -41,7 +42,7 @@ teardown_file() {
         assert_success
         assert_output --partial "$HOME/.rd/bin/rdctl"
     else
-        skip 'zsh not found or ~/.zshrc does not exist'
+        skip 'zsh not found'
     fi
 }
 
@@ -74,7 +75,7 @@ no_bashrc_path_manager() {
         # Can't assert success or failure because rdctl might be in a directory other than ~/.rd/bin
         refute_output --partial "$HOME/.rd/bin/rdctl"
     else
-        skip 'bash not found or ~/.bashrc does not exist'
+        skip 'bash not found'
     fi
 }
 
@@ -83,7 +84,7 @@ no_bashrc_path_manager() {
         run zsh -i -c "which rdctl"
         refute_output --partial "$HOME/.rd/bin/rdctl"
     else
-        skip 'zsh not found or ~/.zshrc does not exist'
+        skip 'zsh not found'
     fi
 }
 
