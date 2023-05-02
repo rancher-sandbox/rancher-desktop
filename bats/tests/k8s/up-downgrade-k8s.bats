@@ -1,9 +1,7 @@
 # Test cases 8, 13, 19
 
-setup() {
-    load '../helpers/load'
-    ARCH_FOR_KUBERLR=amd64
-}
+load '../helpers/load'
+ARCH_FOR_KUBERLR=amd64
 
 @test 'factory reset' {
     factory_reset

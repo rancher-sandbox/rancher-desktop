@@ -1,15 +1,7 @@
 # Test case 20
 
-setup() {
-    load '../helpers/load'
-    RD_CONTAINER_ENGINE=moby
-}
-
-teardown_file() {
-    load '../helpers/load'
-    run rdctl shutdown
-    assert_nothing
-}
+load '../helpers/load'
+RD_CONTAINER_ENGINE=moby
 
 switch_container_engine() {
     local name=$1

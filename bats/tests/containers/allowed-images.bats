@@ -1,13 +1,5 @@
-setup() {
-    load '../helpers/load'
-    RD_USE_IMAGE_ALLOW_LIST=true
-}
-
-teardown_file() {
-    load '../helpers/load'
-    run rdctl shutdown
-    assert_nothing
-}
+load '../helpers/load'
+RD_USE_IMAGE_ALLOW_LIST=true
 
 @test 'start' {
     factory_reset
