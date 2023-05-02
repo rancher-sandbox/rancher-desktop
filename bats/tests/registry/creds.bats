@@ -1,12 +1,6 @@
-teardown_file() {
-    load '../helpers/load'
-    # On Linux if we don't shutdown Rancher Desktop the bats test doesn't shutdown.
-    run rdctl shutdown
-    assert_nothing
-}
+load '../helpers/load'
 
 setup() {
-    load '../helpers/load'
     REGISTRY_IMAGE="registry:2.8.1"
     REGISTRY_PORT="5050"
     DOCKER_CONFIG_FILE="$HOME/.docker/config.json"

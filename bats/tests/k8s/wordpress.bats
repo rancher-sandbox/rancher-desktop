@@ -1,5 +1,6 @@
+load '../helpers/load'
+
 setup() {
-    load '../helpers/load'
     if is_macos arm64; then
         skip "The bitnami wordpress image is not available for arm64 architecture. Skipping..."
     fi

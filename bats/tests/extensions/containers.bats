@@ -1,22 +1,13 @@
-setup_file() {
-    load '../helpers/load'
-}
+load '../helpers/load'
 
 setup() {
-    load '../helpers/load'
-
-    TESTDATA_DIR="${PATH_TEST_ROOT}/extensions/testdata/"
+    TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
 
     if using_containerd; then
         namespace_arg=('--namespace=rancher-desktop-extensions')
     else
         namespace_arg=()
     fi
-}
-
-teardown_file() {
-    run rdctl shutdown
-    assert_nothing
 }
 
 id() { # variant
