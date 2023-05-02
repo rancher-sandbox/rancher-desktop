@@ -111,11 +111,17 @@ func TestAddWithError(t *testing.T) {
 	}
 	err := apiTracker.Add(containerID, portMapping)
 	assert.Error(t, err)
-	assert.ErrorContains(t, err,
-		fmt.Sprintf("failed exposing %+v calling API: %s", nat.PortBinding{
-			HostIP:   hostIP2,
-			HostPort: hostPort,
-		}, tracker.ErrAPI))
+
+	errPortBinding := nat.PortBinding{
+		HostIP:   hostIP2,
+		HostPort: hostPort,
+	}
+	nestedErr := fmt.Errorf("%w: Bad API error", tracker.ErrAPI)
+	errs := []error{
+		fmt.Errorf("exposing %+v failed: %w", errPortBinding, nestedErr),
+	}
+	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrExposeAPI, errs)
+	assert.EqualError(t, err, expectedErr.Error())
 
 	assert.Len(t, expectedExposeReq, 2)
 	assert.ElementsMatch(t, expectedExposeReq,
@@ -296,11 +302,17 @@ func TestRemoveWithError(t *testing.T) {
 
 	err = apiTracker.Remove(containerID)
 	assert.Error(t, err)
-	assert.ErrorContains(t, err,
-		fmt.Sprintf("failed unexposing %+v calling API: %s", nat.PortBinding{
-			HostIP:   hostIP2,
-			HostPort: hostPort,
-		}, tracker.ErrAPI))
+
+	errPortBinding := nat.PortBinding{
+		HostIP:   hostIP2,
+		HostPort: hostPort,
+	}
+	nestedErr := fmt.Errorf("%w: Test API error", tracker.ErrAPI)
+	errs := []error{
+		fmt.Errorf("unexposing %+v failed: %w", errPortBinding, nestedErr),
+	}
+	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrUnexposeAPI, errs)
+	assert.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
 		{Local: ipPortBuilder(hostIP, hostPort)},
@@ -381,7 +393,7 @@ func TestRemoveAllWithError(t *testing.T) {
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
 		assert.NoError(t, err)
 		if tmpReq.Local == ipPortBuilder(hostIP2, hostPort2) {
-			http.Error(w, "Test API error", http.StatusRequestTimeout)
+			http.Error(w, "RemoveAll API error", http.StatusRequestTimeout)
 
 			return
 		}
@@ -421,11 +433,17 @@ func TestRemoveAllWithError(t *testing.T) {
 
 	err = apiTracker.RemoveAll()
 	assert.Error(t, err)
-	assert.ErrorContains(t, err,
-		fmt.Sprintf("failed unexposing %+v calling API: %s", nat.PortBinding{
-			HostIP:   hostIP2,
-			HostPort: hostPort2,
-		}, tracker.ErrAPI))
+
+	errPortBinding := nat.PortBinding{
+		HostIP:   hostIP2,
+		HostPort: hostPort2,
+	}
+	nestedErr := fmt.Errorf("%w: RemoveAll API error", tracker.ErrAPI)
+	errs := []error{
+		fmt.Errorf("RemoveAll unexposing %+v failed: %w", errPortBinding, nestedErr),
+	}
+	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrUnexposeAPI, errs)
+	assert.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
 		{Local: ipPortBuilder(hostIP, hostPort)},

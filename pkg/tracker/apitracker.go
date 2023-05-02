@@ -20,9 +20,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 
+	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
 )
@@ -34,7 +36,12 @@ const (
 	unexposeAPI    = "/services/forwarder/unexpose"
 )
 
-var ErrAPI = errors.New("error from API")
+var (
+	ErrAPI         = errors.New("error from API")
+	ErrExposeAPI   = fmt.Errorf("error from %s API", exposeAPI)
+	ErrUnexposeAPI = fmt.Errorf("error from %s API", unexposeAPI)
+	ErrInvalidIPv4 = errors.New("not an IPv4 address")
+)
 
 // APITracker keeps track of the port mappings and calls the
 // corresponding API endpoints that is responsible for exposing
@@ -68,13 +75,21 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 		var tmpPortBinding []nat.PortBinding
 
 		for _, portBinding := range portBindings {
-			err := a.expose(
+			// The expose API only supports IPv4
+			ipv4, err := isIPv4(portBinding.HostIP)
+			if !ipv4 || err != nil {
+				continue
+			}
+
+			log.Debugf("calling %s API for the following port binding: %+v", exposeAPI, portBinding)
+
+			err = a.expose(
 				&types.ExposeRequest{
 					Local:  ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 					Remote: ipPortBuilder(HostSwitchIP, portBinding.HostPort),
 				})
 			if err != nil {
-				errs = append(errs, fmt.Errorf("failed exposing %+v calling API: %w", portBinding, err))
+				errs = append(errs, fmt.Errorf("exposing %+v failed: %w", portBinding, err))
 
 				continue
 			}
@@ -88,7 +103,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 	a.portStorage.add(containerID, successfullyForwarded)
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrAPI, errs)
+		return fmt.Errorf("%w: %+v", ErrExposeAPI, errs)
 	}
 
 	return nil
@@ -102,20 +117,28 @@ func (a *APITracker) Get(containerID string) nat.PortMap {
 // Remove a single entry from the port storage and calls the
 // /services/forwarder/unexpose endpoint to remove the forwarded the port mappings.
 func (a *APITracker) Remove(containerID string) error {
-	portMappings := a.portStorage.get(containerID)
+	portMap := a.portStorage.get(containerID)
 	defer a.portStorage.remove(containerID)
 
 	var errs []error
 
-	for _, portBindings := range portMappings {
+	for _, portBindings := range portMap {
 		for _, portBinding := range portBindings {
-			err := a.unExpose(
+			// The unexpose API only supports IPv4
+			ipv4, err := isIPv4(portBinding.HostIP)
+			if !ipv4 || err != nil {
+				continue
+			}
+
+			log.Debugf("calling %s API for the following port binding: %+v", unexposeAPI, portBinding)
+
+			err = a.unExpose(
 				&types.UnexposeRequest{
 					Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 				})
 			if err != nil {
 				errs = append(errs,
-					fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
+					fmt.Errorf("unexposing %+v failed: %w", portBinding, err))
 
 				continue
 			}
@@ -123,7 +146,7 @@ func (a *APITracker) Remove(containerID string) error {
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrAPI, errs)
+		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, errs)
 	}
 
 	return nil
@@ -139,13 +162,21 @@ func (a *APITracker) RemoveAll() error {
 	for _, portMapping := range allPortMappings {
 		for _, portBindings := range portMapping {
 			for _, portBinding := range portBindings {
-				err := a.unExpose(
+				// The unexpose API only supports IPv4
+				ipv4, err := isIPv4(portBinding.HostIP)
+				if !ipv4 || err != nil {
+					continue
+				}
+
+				log.Debugf("calling %s API for the following port binding: %+v", unexposeAPI, portBinding)
+
+				err = a.unExpose(
 					&types.UnexposeRequest{
 						Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 					})
 				if err != nil {
 					errs = append(errs,
-						fmt.Errorf("failed unexposing %+v calling API: %w", portBinding, err))
+						fmt.Errorf("RemoveAll unexposing %+v failed: %w", portBinding, err))
 
 					continue
 				}
@@ -156,7 +187,7 @@ func (a *APITracker) RemoveAll() error {
 	a.portStorage.removeAll()
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrAPI, errs)
+		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, errs)
 	}
 
 	return nil
@@ -168,6 +199,7 @@ func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
 		return err
 	}
 
+	log.Debugf("sending a HTTP POST to %s API with expose request: %v", exposeAPI, exposeReq)
 	req, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
@@ -191,6 +223,7 @@ func (a *APITracker) unExpose(unexposeReq *types.UnexposeRequest) error {
 		return err
 	}
 
+	log.Debugf("sending a HTTP POST to %s API with expose request: %v", unexposeAPI, unexposeReq)
 	req, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
@@ -231,4 +264,17 @@ func verifyResposeBody(res *http.Response) error {
 	}
 
 	return nil
+}
+
+func isIPv4(addr string) (bool, error) {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return false, fmt.Errorf("%w: %s", ErrInvalidIPv4, addr)
+	}
+
+	if ip.To4() != nil {
+		return true, nil
+	}
+
+	return false, nil
 }
