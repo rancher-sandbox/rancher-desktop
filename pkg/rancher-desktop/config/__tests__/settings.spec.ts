@@ -71,20 +71,78 @@ describe('settings', () => {
     });
   });
 
-  const jsonProfile = JSON.stringify({
-    ignoreThis:      { soups: ['gazpacho', 'turtle'] },
+  const fullDefaults = {
+    debug:       true,
+    application: {
+      adminAccess:            false,
+      pathManagementStrategy: 'rcfiles',
+      window:                 { quitOnClose: true },
+    },
     containerEngine: {
       allowedImages: {
         enabled:  true,
-        patterns: ["Shouldn't see this"],
+        patterns: [],
+      },
+      name: 'moby',
+    },
+    kubernetes: {
+      version: '1.23.15',
+      enabled: true,
+    },
+    WSL: {
+      integrations: {
+        kingston: false,
+        napanee:  false,
+        yarker:   true,
+        weed:     true,
       },
     },
-    kubernetes: { version: "Shouldn't see this" },
-  });
+    portForwarding: { includeKubernetesServices: false },
+    diagnostics:    {
+      showMuted:   false,
+      locked:      true,
+      mutedChecks: {
+        montreal:          true,
+        'riviere du loup': false,
+        magog:             false,
+      },
+    },
+    extensions: {
+      bellingham: true,
+      seattle:    true,
+      olympia:    false,
+      winthrop:   true,
+    },
+    ignorableTestSettings: {
+      testTitle:  'test-title',
+      testStruct: {
+        title:     'tests-struct',
+        subStruct: {
+          title:  'sub-title',
+          locked: true,
+          subvar: 'sub-var',
+        },
+      },
+    },
+  };
+
+  const jsonProfile = JSON.stringify(fullDefaults);
   const plistProfile = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>application</key>
+    <dict>
+        <key>adminAccess</key>
+        <false/>
+        <key>pathManagementStrategy</key>
+        <string>rcfiles</string>
+        <key>window</key>
+        <dict>
+            <key>quitOnClose</key>
+            <true/>
+        </dict>
+    </dict>
     <key>containerEngine</key>
     <dict>
       <key>allowedImages</key>
@@ -95,10 +153,12 @@ describe('settings', () => {
         <true/>
         <key>patterns</key>
         <array/>
-        <key>containerEngine</key>
-        <string>moby</string>
       </dict>
+      <key>name</key>
+      <string>moby</string>
     </dict>
+    <key>debug</key>
+    <true/>
     <key>kubernetes</key>
     <dict>
       <key>version</key>
@@ -106,7 +166,12 @@ describe('settings', () => {
       <key>enabled</key>
       <true/>
     </dict>
-    <key>testSettings</key>
+    <key>portForwarding</key>
+    <dict>
+        <key>includeKubernetesServices</key>
+        <false/>
+    </dict>
+    <key>ignorableTestSettings</key>
     <dict>
       <key>testTitle</key>
       <string>test-title</string>
@@ -129,12 +194,44 @@ describe('settings', () => {
     <true/>
     <key>diagnostics</key>
     <dict>
-      <key>showMuted</key>
-      <false/>
-      <key>locked</key>
-      <true/>
-      <key>mutedChecks</key>
-      <dict/>
+        <key>locked</key>
+        <true/>
+        <key>mutedChecks</key>
+        <dict>
+            <key>magog</key>
+            <false/>
+            <key>montreal</key>
+            <true/>
+            <key>riviere du loup</key>
+            <false/>
+        </dict>
+        <key>showMuted</key>
+        <false/>
+    </dict>
+    <key>extensions</key>
+    <dict>
+        <key>bellingham</key>
+        <true/>
+        <key>olympia</key>
+        <false/>
+        <key>seattle</key>
+        <true/>
+        <key>winthrop</key>
+        <true/>
+    </dict>
+    <key>WSL</key>
+    <dict>
+        <key>integrations</key>
+        <dict>
+            <key>kingston</key>
+            <false/>
+            <key>napanee</key>
+            <false/>
+            <key>weed</key>
+            <true/>
+            <key>yarker</key>
+            <true/>
+        </dict>
     </dict>
   </dict>
 </plist>`;
@@ -158,10 +255,15 @@ describe('settings', () => {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>containerEngine</key>
+    <dict>
+      <key>name</key>
+      <string>should be ignored</string>
+    </dict>
     <key>kubernetes</key>
     <dict>
       <key>version</key>
-      <string>Should be ignored</string>
+      <string>Shouldn't see this</string>
     </dict>
   </dict>
 </plist>
@@ -336,6 +438,17 @@ describe('settings', () => {
                 verifyAllFieldsAreUnlocked(settings.getLockedSettings());
               }
             });
+        });
+        describe('check profile reading', () => {
+          it('preserves hash-like settings', async() => {
+            mock = jest.spyOn(fs, 'readFileSync')
+              .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
+            const profiles = await readDeploymentProfiles();
+            const expectedDefaults = _.omit(fullDefaults, ['debug', 'ignorableTestSettings', 'diagnostics.locked']);
+
+            expect(profiles.locked).toEqual({ containerEngine: {} });
+            expect(profiles.defaults).toEqual(expectedDefaults);
+          });
         });
       });
     });
