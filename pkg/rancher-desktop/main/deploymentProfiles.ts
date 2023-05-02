@@ -141,7 +141,6 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
   try {
     plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
   } catch (error: any) {
-    // throw error if plutil fails to parse the 'locked' profile
     console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`);
     throw new DeploymentProfileError(`Error loading plist file ${ inputPath }: ${ getErrorString(error) }`);
   }
@@ -149,7 +148,6 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
   try {
     return JSON.parse(plutilResult.stdout ?? '');
   } catch (error: any) {
-    // throw error if we fail to parse the 'locked' profile
     console.log(`Error parsing deployment profile JSON object ${ inputPath }\n${ error }`);
     throw new DeploymentProfileError(`Error parsing deployment profile JSON object from ${ inputPath }: ${ getErrorString(error) }`);
   }
@@ -265,35 +263,48 @@ function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): Recurs
  * @returns The original profile, less any invalid fields
  */
 function validateDeploymentProfile(profile: any, schema: any, parentPathParts: string[]) {
-  if (typeof profile === 'object') {
-    for (const key in profile) {
-      if (key in schema) {
-        if (typeof profile[key] === 'object') {
-          if (Array.isArray(profile[key])) {
-            if (!Array.isArray(schema[key])) {
-              console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
-              delete profile[key];
-            }
-          } else if (parentPathParts.length <= 2 && isSpecialObject(parentPathParts, key)) {
-            // Keep this part of the profile
-          } else {
-            validateDeploymentProfile(profile[key], schema[key], parentPathParts.concat(key));
-          }
-        } else if (typeof profile[key] !== typeof schema[key]) {
-          console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': expecting value of type ${ typeof schema[key] }, got ${ typeof profile[key] }.`);
-          delete profile[key];
-        }
-      } else {
-        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': not in schema.`);
+  if (typeof profile !== 'object') {
+    return profile;
+  }
+  for (const key in profile) {
+    if (!(key in schema)) {
+      console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': not in schema.`);
+      delete profile[key];
+      continue;
+    }
+    if (typeof profile[key] !== 'object') {
+      if (typeof profile[key] !== typeof schema[key]) {
+        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': expecting value of type ${ typeof schema[key] }, got ${ typeof profile[key] }.`);
         delete profile[key];
       }
+    } else if (Array.isArray(profile[key])) {
+      if (!Array.isArray(schema[key])) {
+        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
+        delete profile[key];
+      }
+    } else if (isUserDefinedObject(parentPathParts, key)) {
+      // Keep this part of the profile
+    } else {
+      // Finally recurse and compare the schema sub-object with the specified sub-object
+      validateDeploymentProfile(profile[key], schema[key], parentPathParts.concat(key));
     }
   }
 
   return profile;
 }
 
-function isSpecialObject(pathParts: string[], key: string): boolean {
+/**
+ * A "user-defined object" from the schema's point of view is an object that contains user-defined keys.
+ * For example, `WSL.integrations` points to a user-defined object, while
+ * `WSL` alone points to an object that contains only one key, `integrations`.
+ * @param pathParts
+ * @param key
+ * @returns boolean
+ */
+function isUserDefinedObject(pathParts: string[], key: string): boolean {
+  if (pathParts.length > 3) {
+    return false;
+  }
   switch (pathParts.length) {
   case 0:
     return key === 'extensions';
