@@ -40,9 +40,3 @@ export default Vue.extend({
     </rd-fieldset>
   </div>
 </template>
-
-<style scoped>
-  .wsl-network {
-    padding: var(--preferences-content-padding);
-  }
-</style>
