@@ -43,9 +43,3 @@ export default Vue.extend({
     </rd-fieldset>
   </div>
 </template>
-
-<style scoped>
-  .wsl-integrations {
-    padding: var(--preferences-content-padding);
-  }
-</style>
