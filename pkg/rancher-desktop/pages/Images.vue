@@ -10,6 +10,7 @@
       :show-all="settings.images.showAll"
       :selected-namespace="settings.images.namespace"
       :supports-namespaces="supportsNamespaces"
+      :protected-images="protectedImages"
       @toggledShowAll="onShowAllImagesChanged"
       @switchNamespace="onChangeNamespace"
     />
@@ -29,10 +30,11 @@ export default {
   components: { Images },
   data() {
     return {
-      settings:           defaultSettings,
-      images:             [],
-      imageNamespaces:    [],
-      supportsNamespaces: true,
+      settings:            defaultSettings,
+      images:              [],
+      imageNamespaces:     [],
+      supportsNamespaces:  true,
+      installedExtensions: [],
     };
   },
 
@@ -43,6 +45,22 @@ export default {
       }
 
       return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
+    },
+    rancherImages() {
+      return this.images
+        .filter(image => image.imageName.startsWith('rancher/'))
+        .map(image => image.imageName);
+    },
+    installedExtensionImages() {
+      return this.installedExtensions.map(image => image.id);
+    },
+    protectedImages() {
+      return [
+        'moby/buildkit',
+        'ghcr.io/rancher-sandbox/rancher-desktop/rdx-proxy',
+        ...this.rancherImages,
+        ...this.installedExtensionImages,
+      ];
     },
     ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),
     ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' }),
@@ -114,11 +132,15 @@ export default {
       this.$data.settings = settings;
     });
     ipcRenderer.send('settings-read');
+
+    ipcRenderer.on('extensions/list', this.installedExtensionsUpdate);
+    ipcRenderer.send('extensions/list');
   },
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
     ipcRenderer.removeAllListeners('images-mounted');
     ipcRenderer.removeAllListeners('images-changed');
+    ipcRenderer.removeListener('extensions/list', this.installedExtensionsUpdate);
   },
 
   methods: {
@@ -146,6 +168,9 @@ export default {
         ipcRenderer.invoke('settings-write',
           { images: { namespace: value } } );
       }
+    },
+    installedExtensionsUpdate(_event, extensions) {
+      this.installedExtensions = extensions || [];
     },
   },
 };
