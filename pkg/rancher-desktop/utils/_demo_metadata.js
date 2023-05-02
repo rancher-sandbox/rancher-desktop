@@ -5,9 +5,8 @@ export default {
     Categories:    ['kubernetes'],
     LatestVersion: {
       Tag:                '0.0.23.5',
-      ManifestListDigest:
-        'sha256:d74bf36e9ad51fdca0ddfacaf6d0af3c8bd5a984e583e6a081e2907958e11954',
-      Platforms: [
+      ManifestListDigest: 'sha256:d74bf36e9ad51fdca0ddfacaf6d0af3c8bd5a984e583e6a081e2907958e11954',
+      Platforms:          [
         {
           OS:      'linux',
           Arch:    'amd64',
@@ -41,9 +40,8 @@ export default {
     PreviousVersions: [
       {
         Tag:                '0.0.22',
-        ManifestListDigest:
-          'sha256:a8d754c3c4693185f2d66ef8d7d47accf05848f1bd71fd7beeb86a2eb35cba7d',
-        Platforms: [
+        ManifestListDigest: 'sha256:a8d754c3c4693185f2d66ef8d7d47accf05848f1bd71fd7beeb86a2eb35cba7d',
+        Platforms:          [
           {
             OS:      'linux',
             Arch:    'amd64',
@@ -76,9 +74,8 @@ export default {
       },
       {
         Tag:                '0.0.21',
-        ManifestListDigest:
-          'sha256:123ebbc1c8ee6f0bc68debda31f7c1d3c182c5b47dc016a4facc38a29869f51c',
-        Platforms: [
+        ManifestListDigest: 'sha256:123ebbc1c8ee6f0bc68debda31f7c1d3c182c5b47dc016a4facc38a29869f51c',
+        Platforms:          [
           {
             OS:      'linux',
             Arch:    'amd64',
@@ -111,9 +108,8 @@ export default {
       },
       {
         Tag:                '0.0.20',
-        ManifestListDigest:
-          'sha256:a9e064d0a8b88cd7964d70300b19cef4386fa255c171c1754378f9118f4b96ef',
-        Platforms: [
+        ManifestListDigest: 'sha256:a9e064d0a8b88cd7964d70300b19cef4386fa255c171c1754378f9118f4b96ef',
+        Platforms:          [
           {
             OS:      'linux',
             Arch:    'amd64',
@@ -146,9 +142,8 @@ export default {
       },
       {
         Tag:                '0.0.19',
-        ManifestListDigest:
-          'sha256:e9bb2557e3aa8b73b8aff80c6dd33df68c6f91d3d1062fe6c1977d22e94fbecc',
-        Platforms: [
+        ManifestListDigest: 'sha256:e9bb2557e3aa8b73b8aff80c6dd33df68c6f91d3d1062fe6c1977d22e94fbecc',
+        Platforms:          [
           {
             OS:      'linux',
             Arch:    'amd64',
