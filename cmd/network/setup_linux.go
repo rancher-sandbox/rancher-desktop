@@ -26,6 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netns"
 
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
 	rdvsock "github.com/rancher-sandbox/rancher-desktop-networking/pkg/vsock"
 )
@@ -36,6 +37,7 @@ var (
 	unshareArg      string
 	logFile         string
 	vmSwitchLogFile string
+	subnet          string
 )
 
 const (
@@ -47,6 +49,8 @@ const (
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
+	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
+		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
 	flag.StringVar(&vmSwitchPath, "vm-switch-path", "", "the path to the vm-switch binary that will run in a new namespace")
 	flag.StringVar(&vmSwitchLogFile, "vm-switch-logfile", "", "path to the logfile for vm-switch process")
 	flag.StringVar(&unshareArg, "unshare-arg", "", "the command argument to pass to the unshare program")
@@ -96,6 +100,8 @@ func main() {
 		fmt.Sprintf("-n/proc/%d/fd/%d", os.Getpid(), ns),
 		"-F",
 		vmSwitchPath,
+		"-subnet",
+		subnet,
 	}
 	if vmSwitchLogFile != "" {
 		args = append(args, "-logfile", vmSwitchLogFile)

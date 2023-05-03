@@ -33,6 +33,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/rancher-sandbox/rancher-desktop-host-resolver/pkg/vmsock"
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/vsock"
 )
 
@@ -50,8 +51,8 @@ const (
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
-	flag.StringVar(&virtualSubnet, "subnet", defaultSubnet,
-		fmt.Sprintf("Subnet range with CIDR suffix for virtual network, e,g: %s", defaultSubnet))
+	flag.StringVar(&virtualSubnet, "subnet", config.DefaultSubnet,
+		fmt.Sprintf("Subnet range with CIDR suffix for virtual network, e,g: %s", config.DefaultSubnet))
 	flag.Var(&staticPortForward, "port-forward",
 		"List of ports that needs to be pre forwarded to the WSL VM in Host:Port=Guest:Port format e.g: 127.0.0.1:2222=192.168.127.2:22")
 	flag.Parse()
@@ -68,26 +69,26 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	subnet, err := validateSubnet(virtualSubnet)
+	subnet, err := config.ValidateSubnet(virtualSubnet)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	portForwarding, err := parsePortForwarding(staticPortForward)
+	portForwarding, err := config.ParsePortForwarding(staticPortForward)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	config := newConfig(*subnet, portForwarding, debug)
+	cfg := newConfig(*subnet, portForwarding, debug)
 
 	ln, err := vsockHandshake(ctx, vsockHandshakePort, vsock.SignaturePhrase)
 	if err != nil {
 		logrus.Fatalf("handshake with peer process failed: %v", err)
 	}
 
-	logrus.Debugf("attempting to start a virtual network with the following config: %+v", config)
+	logrus.Debugf("attempting to start a virtual network with the following config: %+v", cfg)
 	groupErrs.Go(func() error {
-		return run(ctx, groupErrs, &config, ln)
+		return run(ctx, groupErrs, &cfg, ln)
 	})
 
 	// Wait for something to happen
@@ -108,8 +109,8 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, g *errgroup.Group, config *types.Configuration, ln net.Listener) error {
-	vn, err := virtualnetwork.New(config)
+func run(ctx context.Context, g *errgroup.Group, cfg *types.Configuration, ln net.Listener) error {
+	vn, err := virtualnetwork.New(cfg)
 	if err != nil {
 		return err
 	}
@@ -130,7 +131,7 @@ func run(ctx context.Context, g *errgroup.Group, config *types.Configuration, ln
 		}
 	}()
 
-	apiServer := fmt.Sprintf("%s:80", config.GatewayIP)
+	apiServer := fmt.Sprintf("%s:80", cfg.GatewayIP)
 	vnLn, err := vn.Listen("tcp", apiServer)
 	if err != nil {
 		return err
