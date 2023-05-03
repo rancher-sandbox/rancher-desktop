@@ -31,9 +31,6 @@ source "$PATH_BATS_HELPERS/vm.bash"
 source "$PATH_BATS_HELPERS/kubernetes.bash"
 source "$PATH_BATS_HELPERS/commands.bash"
 
-# Bug workarounds go here. The goal is to make this an empty file
-source "$PATH_BATS_HELPERS/workarounds.bash"
-
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
@@ -43,4 +40,4 @@ teardown_file() {
 }
 
 # Bug workarounds go here. The goal is to make this an empty file
-source "$helpers/workarounds.bash"
+source "$PATH_BATS_HELPERS/workarounds.bash"
