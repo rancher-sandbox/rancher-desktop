@@ -33,7 +33,7 @@ teardown_file() {
         assert_success
         assert_output --partial "$HOME/.rd/bin/rdctl"
     else
-        skip 'bash not found or ~/.bashrc does not exist'
+        skip 'bash not found'
     fi
 }
 
