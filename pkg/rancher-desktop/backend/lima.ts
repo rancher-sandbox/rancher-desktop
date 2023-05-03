@@ -12,6 +12,7 @@ import util from 'util';
 
 import Electron from 'electron';
 import merge from 'lodash/merge';
+import omit from 'lodash/omit';
 import zip from 'lodash/zip';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
@@ -871,10 +872,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Run the given command within the VM.
    */
   limaSpawn(options: execOptions, args: string[]): ChildProcess {
+    const workDir = options.cwd ?? '.';
+
     if (options.root) {
       args = ['sudo'].concat(args);
     }
-    args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
+    args = ['shell', `--workdir=${ workDir }`, MACHINE_NAME].concat(args);
 
     if (this.debug) {
       console.log(`> limactl ${ args.join(' ') }`);
@@ -884,7 +887,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return spawnWithSignal(
       LimaBackend.limactl,
       args,
-      { ...options, env: { ...LimaBackend.limaEnv, ...options.env ?? {} } });
+      { ...omit(options, 'cwd'), env: { ...LimaBackend.limaEnv, ...options.env ?? {} } });
   }
 
   async execCommand(...command: string[]): Promise<void>;
@@ -903,10 +906,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
 
     const expectFailure = options.expectFailure ?? false;
+    const workDir = options.cwd ?? '.';
 
     try {
       // Print a slightly different message if execution fails.
-      const { stdout } = await this.limaWithCapture({ expectFailure: true }, 'shell', '--workdir=.', MACHINE_NAME, ...command);
+      const { stdout } = await this.limaWithCapture({ expectFailure: true }, 'shell', `--workdir=${ workDir }`, MACHINE_NAME, ...command);
 
       if (options.capture) {
         return stdout;

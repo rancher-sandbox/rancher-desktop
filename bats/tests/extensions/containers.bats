@@ -3,6 +3,10 @@ load '../helpers/load'
 setup() {
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
 
+    if using_windows_exe; then
+        TESTDATA_DIR="$(wslpath -m "${TESTDATA_DIR}")"
+    fi
+
     if using_containerd; then
         namespace_arg=('--namespace=rancher-desktop-extensions')
     else

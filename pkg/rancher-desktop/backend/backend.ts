@@ -199,6 +199,11 @@ export type execOptions = childProcess.CommonOptions & {
  */
 export interface VMExecutor {
   /**
+   * The backend in use.
+   */
+  readonly backend: VMBackend['backend'];
+
+  /**
    * execCommand runs the given command in the virtual machine.
    * @param execOptions Execution options.  If capture is set, standard output is
    *    returned.
