@@ -1,9 +1,11 @@
 <script lang="ts">
+import os from 'os';
 
 import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesVirtualMachineHardware from '@pkg/components/Preferences/VirtualMachineHardware.vue';
+import PreferencesVirtualMachineNetwork from '@pkg/components/Preferences/VirtualMachineNetwork.vue';
 import PreferencesVirtualMachineVolumes from '@pkg/components/Preferences/VirtualMachineVolumes.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
@@ -21,6 +23,7 @@ export default Vue.extend({
     Tab,
     PreferencesVirtualMachineHardware,
     PreferencesVirtualMachineVolumes,
+    PreferencesVirtualMachineNetwork,
   },
   props: {
     preferences: {
@@ -34,6 +37,9 @@ export default Vue.extend({
     ...mapState('credentials', ['credentials']),
     activeTab(): string {
       return this.getActiveTab || 'hardware';
+    },
+    hasNetworkTab(): boolean {
+      return os.platform() === 'darwin';
     },
   },
   methods: {
@@ -65,14 +71,20 @@ export default Vue.extend({
   >
     <template #tabs>
       <tab
+        v-if="hasNetworkTab"
+        label="Network"
+        name="network"
+        :weight="1"
+      />
+      <tab
         label="Volumes"
         name="volumes"
-        :weight="1"
+        :weight="2"
       />
       <tab
         label="Hardware"
         name="hardware"
-        :weight="2"
+        :weight="3"
       />
     </template>
     <div class="virtual-machine-content">
