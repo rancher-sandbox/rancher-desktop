@@ -107,18 +107,24 @@ export class ExtensionImpl implements Extension {
   /** Extension image labels */
   get labels(): Promise<Record<string, string>> {
     this._labels ??= (async() => {
-      if (await this.isInstalled()) {
-        const labelPath = path.join(this.dir, 'labels.json');
+      try {
+        if (await this.isInstalled()) {
+          const labelPath = path.join(this.dir, 'labels.json');
 
-        return JSON.parse(await fs.promises.readFile(labelPath, 'utf-8'));
+          return JSON.parse(await fs.promises.readFile(labelPath, 'utf-8'));
+        }
+
+        const info = await this.client.runClient(
+          ['image', 'inspect', '--format={{ json .Config.Labels }}', this.image],
+          'pipe',
+          { namespace: ExtensionImpl.extensionNamespace });
+
+        return JSON.parse(info.stdout);
+      } catch (ex: any) {
+        // Unset cached value so we can try again later
+        this._labels = undefined;
+        throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Could not read image labels', ex);
       }
-
-      const info = await this.client.runClient(
-        ['image', 'inspect', '--format={{ json .Config.Labels }}', this.image],
-        'pipe',
-        { namespace: ExtensionImpl.extensionNamespace });
-
-      return JSON.parse(info.stdout);
     })();
 
     return this._labels as Promise<Record<string, string>>;
