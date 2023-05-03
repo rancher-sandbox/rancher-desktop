@@ -55,6 +55,9 @@ export default Vue.extend({
     browseExtensions() {
       this.$emit('click:browse');
     },
+    extensionTitle(ext: {id: string, labels: Record<string, string>}): string {
+      return ext.labels?.['org.opencontainers.image.title'] ?? ext.id;
+    },
     uninstall(id: string) {
       fetch(
         `http://localhost:${ this.credentials?.port }/v1/extensions/uninstall?id=${ id }`,
@@ -113,7 +116,7 @@ export default Vue.extend({
               }
             }"
           >
-            {{ (row.labels || {})['org.opencontainers.image.title'] || row.id }}
+            {{ extensionTitle(row) }}
           </nuxt-link>
         </td>
       </template>
