@@ -13,20 +13,13 @@ interface ExtensionState {
 
 interface ExtensionsState {
   extensions: Record<string, ExtensionState>;
-  inError: boolean;
 }
 
-export const state: () => ExtensionsState = () => ({
-  extensions: {},
-  inError:    false,
-});
+export const state: () => ExtensionsState = () => ({ extensions: {} });
 
 export const mutations: MutationsType<ExtensionsState> = {
   SET_EXTENSIONS(state: ExtensionsState, extensions: Record<string, ExtensionState>) {
     state.extensions = extensions;
-  },
-  SET_IN_ERROR(state: ExtensionsState, status: boolean) {
-    state.inError = status;
   },
 };
 
@@ -38,7 +31,6 @@ export const actions = {
 
     if (!response.ok) {
       console.log(`fetchExtensions: failed: status: ${ response.status }:${ response.statusText }`);
-      commit('SET_IN_ERROR', true);
 
       return;
     }
