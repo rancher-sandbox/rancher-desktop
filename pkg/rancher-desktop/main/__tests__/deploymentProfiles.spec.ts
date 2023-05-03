@@ -240,8 +240,7 @@ describeWindows('windows deployment profiles', () => {
             showMuted:   true,
             mutedChecks: { montreal: true, 'riviere du loup': false, magog: false },
           },
-          // @ts-ignore
-          extensions: { bellingham: true, seattle: true, olympia: false, winthrop: true },
+          extensions: { bellingham: 'WA', portland: 'OR', shasta: 'CA', elko: 'NV' },
         };
         const lockedUserProfile = {
           containerEngine: {
