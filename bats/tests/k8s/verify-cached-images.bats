@@ -1,8 +1,6 @@
 # Test cases 57, 58
 
-setup() {
-    load '../helpers/load'
-}
+load '../helpers/load'
 
 @test 'factory reset' {
     factory_reset

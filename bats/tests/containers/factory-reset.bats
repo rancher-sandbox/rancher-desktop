@@ -1,8 +1,6 @@
-setup() {
-    load '../helpers/load'
-    assert=assert
-    refute=refute
-}
+load '../helpers/load'
+assert=assert
+refute=refute
 
 @test 'factory reset' {
     factory_reset

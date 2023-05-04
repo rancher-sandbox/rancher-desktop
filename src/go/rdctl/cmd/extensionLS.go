@@ -52,7 +52,9 @@ func listExtensions() error {
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult([]byte{}, errorPacket, err)
 	}
-	extensionList := map[string]string{}
+	extensionList := map[string]struct {
+		Version string `json:"version"`
+	}{}
 	err = json.Unmarshal(result, &extensionList)
 	if err != nil {
 		return fmt.Errorf("failed to json-unmarshal results of `extensions ls`: %w", err)
@@ -62,8 +64,8 @@ func listExtensions() error {
 		return nil
 	}
 	extensionIDs := make([]string, 0, len(extensionList))
-	for id, tag := range extensionList {
-		extensionIDs = append(extensionIDs, fmt.Sprintf("%s:%s", id, tag))
+	for id, info := range extensionList {
+		extensionIDs = append(extensionIDs, fmt.Sprintf("%s:%s", id, info.Version))
 	}
 	sort.Slice(extensionIDs, func(i, j int) bool { return strings.ToLower(extensionIDs[i]) < strings.ToLower(extensionIDs[j]) })
 

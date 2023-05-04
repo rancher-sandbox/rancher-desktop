@@ -1,8 +1,8 @@
 # Test case 11 & 12
 
-setup() {
-    load '../helpers/load'
+load '../helpers/load'
 
+setup() {
     # TODO - Consider implementing a function to check for sudo permissions before running tests that require them.
     # If sudo permissions are not present, these tests should be skipped.
     if is_linux; then

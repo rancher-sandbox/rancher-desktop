@@ -1,14 +1,20 @@
 set -o errexit -o nounset -o pipefail
 
-# Get absolute path names for current and top directories
-PATH_BATS_HELPERS=$(
-    cd "$(dirname "${BASH_SOURCE[0]}")"
-    pwd
-)
-PATH_BATS_ROOT=$(
-    cd "$PATH_BATS_HELPERS/../.."
-    pwd
-)
+absolute_path() {
+    (
+        cd "$1"
+        pwd
+    )
+}
+
+PATH_BATS_HELPERS=$(absolute_path "$(dirname "${BASH_SOURCE[0]}")")
+PATH_BATS_ROOT=$(absolute_path "$PATH_BATS_HELPERS/../..")
+
+# Use fatal() to abort loading helpers; don't run any tests
+fatal() {
+    echo "   $1" >&3
+    exit 1
+}
 
 source "$PATH_BATS_ROOT/bats-support/load.bash"
 source "$PATH_BATS_ROOT/bats-assert/load.bash"
@@ -27,3 +33,8 @@ source "$PATH_BATS_HELPERS/commands.bash"
 
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
+
+# On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
+teardown_file() {
+    run rdctl shutdown
+}

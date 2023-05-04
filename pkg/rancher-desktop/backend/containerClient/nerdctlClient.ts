@@ -134,6 +134,26 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
+  async waitForReady(): Promise<void> {
+    // We need to check two things: containerd, and buildkitd.
+    const commandsToCheck = [
+      ['/usr/local/bin/nerdctl', 'system', 'info'],
+      ['/usr/local/bin/buildctl', 'debug', 'info'],
+    ];
+
+    for (const cmd of commandsToCheck) {
+      while (true) {
+        try {
+          await this.vm.execCommand({ expectFailure: true, root: true }, ...cmd);
+          break;
+        } catch (ex) {
+          // Ignore the error, try again
+          await util.promisify(setTimeout)(1_000);
+        }
+      }
+    }
+  }
+
   readFile(imageID: string, filePath: string): Promise<string>;
   readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding, namespace?: string }): Promise<string>;
   async readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding, namespace?: string }): Promise<string> {
@@ -150,16 +170,17 @@ export class NerdctlClient implements ContainerEngineClient {
   }
 
   copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { resolveSymlinks: false, namespace?: string }): Promise<void>;
-  async copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { resolveSymlinks?: boolean, namespace?: string }): Promise<void> {
-    const resolveSymlinks = options?.resolveSymlinks !== false;
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { namespace?: string }): Promise<void>;
+  async copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { namespace?: string }): Promise<void> {
     const [imageDir, cleanups] = await this.mountImage(imageID, options?.namespace);
 
     try {
       // Archive the file(s) into the VM
-      const archive = (await this.execCommandWithRetries({ capture: true }, '/bin/mktemp', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
+      const workDir = (await this.execCommandWithRetries({ capture: true }, '/bin/mktemp', '-d', '-t', 'rd-nerdctl-cp-XXXXXX')).trim();
+      const archive = path.posix.join(workDir, 'archive.tgz');
+      const fileList = path.posix.join(workDir, 'files.txt');
 
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workDir));
       let sourceName: string, sourceDir: string;
 
       if (sourcePath.endsWith('/')) {
@@ -169,19 +190,31 @@ export class NerdctlClient implements ContainerEngineClient {
         sourceName = path.posix.basename(sourcePath);
         sourceDir = path.posix.join(imageDir, path.posix.dirname(sourcePath));
       }
+      // Compute the list of all files to archive, but exclude symlinks that
+      // point outside the source directory (and directories, because tar is
+      // recursive).
+      await this.vm.execCommand({ root: true, cwd: sourceDir },
+        '/usr/bin/find', sourceName,
+        '-type', 'd', '-or', '(',
+        '(',
+        '-exec', '/bin/sh', '-c', `readlink -f {} | grep -q '${ imageDir }'`, ';',
+        ')',
+        '-a',
+        '-exec', '/bin/sh', '-c', `echo '{}' >> ${ fileList }`, ';',
+        ')');
+
       const args = [
         '--create', '--gzip', '--file', archive, '--directory', sourceDir,
-        resolveSymlinks ? '--dereference' : undefined,
-        '--one-file-system', '--sparse', sourceName,
+        '--dereference', '--one-file-system', '--sparse', '--files-from', fileList,
       ].filter(defined);
 
       await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);
 
       // Copy the archive to the host
-      const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));
+      const hostWorkDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));
 
-      cleanups.push(() => fs.promises.rm(workDir, { recursive: true }));
-      const hostArchive = path.join(workDir, 'copy-file.tgz');
+      cleanups.push(() => fs.promises.rm(hostWorkDir, { recursive: true }));
+      const hostArchive = path.join(hostWorkDir, 'copy-file.tgz');
 
       await this.vm.copyFileOut(archive, hostArchive);
 
@@ -190,6 +223,7 @@ export class NerdctlClient implements ContainerEngineClient {
       const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot ?? `C:\\Windows`, 'system32', 'tar.exe') : '/usr/bin/tar';
       const extractArgs = ['xzf', hostArchive, '-C', destinationDir];
 
+      await fs.promises.mkdir(path.normalize(path.join(destinationDir, sourceName)), { recursive: true });
       await spawnFile(tar, extractArgs, { stdio: console });
     } finally {
       await this.runCleanups(cleanups);
@@ -321,74 +355,96 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
+  /**
+   * Sets up the environment for compose.
+   * @returns [projectDir] The compose project directory to use.
+   * @returns [envFile] The environment file to use.
+   * @returns [cleanups] Any cleanups we need to run after
+   */
+  protected async composePrep(options: ContainerComposeOptions): Promise<{
+    projectDir: string,
+    envFile: string,
+    cleanups: (() => Promise<void>)[],
+  }> {
     const cleanups: (() => Promise<void>)[] = [];
+    const envData = Object.entries(options.env ?? {})
+      .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
+      .join('');
 
     try {
-      const workDir = await this.copyDirectoryIn(composeDir);
+      if (this.vm.backend === 'wsl') {
+        // For WSL, we don't need to copy anything; nerdctl-stub will translate
+        // the paths correctly.
 
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workDir));
+        const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-compose-'));
+        const envFile = path.join(workDir, 'env.txt');
 
-      const args = ['compose', '--project-directory', workDir];
+        cleanups.push(() => fs.promises.rm(workDir, { recursive: true }));
+        await fs.promises.writeFile(envFile, envData);
 
-      if (options?.name) {
+        return {
+          projectDir: options.composeDir, envFile, cleanups,
+        };
+      }
+
+      const projectDir = await this.copyDirectoryIn(options.composeDir);
+
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', projectDir));
+
+      const envFile = (await (this.vm.execCommand({ capture: true },
+        '/bin/mktemp', '--tmpdir', 'rd-nerdct-compose-XXXXXX'))).trim();
+
+      cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', envFile));
+
+      await this.vm.writeFile(envFile, envData);
+
+      return {
+        projectDir, envFile, cleanups,
+      };
+    } catch (ex) {
+      await this.runCleanups(cleanups);
+      throw ex;
+    }
+  }
+
+  async composeUp(options: ContainerComposeOptions): Promise<void> {
+    const { projectDir, envFile, cleanups } = await this.composePrep(options);
+
+    try {
+      const args = ['compose', '--project-directory', projectDir];
+
+      if (options.name) {
         args.push('--project-name', options.name);
       }
-      if (options?.namespace) {
+      if (options.namespace) {
         args.unshift('--namespace', options.namespace);
       }
-      if (options?.env) {
-        const envFile = (await (this.vm.execCommand({ capture: true },
-          '/bin/mktemp', '--tmpdir', 'rd-nerdctl-compose-up-XXXXXX'))).trim();
-
-        cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', envFile));
-        const envData = Object.entries(options.env)
-          .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
-          .join('');
-
-        await this.vm.writeFile(envFile, envData);
+      if (options.env) {
         args.push('--env-file', envFile);
       }
       // nerdctl doesn't support --wait, so make do with --detach.
       args.push('up', '--quiet-pull', '--detach');
 
-      const result = await this.nerdctl({ env: options?.env ?? {} }, ...args);
+      const result = await this.nerdctl({ env: options.env ?? {} }, ...args);
 
       console.log('ran nerdctl compose up', result);
     } finally {
-      this.runCleanups(cleanups);
+      await this.runCleanups(cleanups);
     }
   }
 
-  async composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
-    const cleanups: (() => Promise<void>)[] = [];
+  async composeDown(options: ContainerComposeOptions): Promise<void> {
+    const { projectDir, envFile, cleanups } = await this.composePrep(options);
 
     try {
-      const workDir = await this.copyDirectoryIn(composeDir);
-
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workDir));
-
       const args = [
-        options?.namespace ? ['--namespace', options.namespace] : [],
+        options.namespace ? ['--namespace', options.namespace] : [],
         ['compose'],
-        options?.name ? ['--project-name', options.name] : [],
-        ['--project-directory', composeDir, 'down'],
+        options.name ? ['--project-name', options.name] : [],
+        ['--project-directory', projectDir, 'down'],
+        options.env ? ['--env-file', envFile] : [],
       ].flat();
 
-      if (options?.env) {
-        const envDir = (await this.vm.execCommand({ capture: true },
-          '/bin/mktemp', '--directory', '--tmpdir', 'rd-nerdctl-compose-down-XXXXXX')).trim();
-
-        cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', envDir));
-
-        const envFile = path.posix.join(envDir, 'compose.env');
-        const envData = Object.entries(options.env)
-          .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
-          .join('');
-
-        await this.vm.writeFile(envFile, envData);
-        args.push('--env-file', envFile);
-      }
       const result = await this.nerdctl(...args);
 
       console.debug('ran nerdctl compose down:', result);
@@ -397,39 +453,21 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
-  async composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess> {
-    const cleanups: (() => Promise<void>)[] = [];
+  async composeExec(options: ContainerComposeExecOptions): Promise<ReadableProcess> {
+    const { projectDir, envFile, cleanups } = await this.composePrep(options);
 
     try {
-      const workComposeDir = await this.copyDirectoryIn(composeDir);
-
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workComposeDir));
       const args = [
         options.namespace ? ['--namespace', options.namespace] : [],
         ['compose'],
         options.name ? ['--project-name', options.name] : [],
-        ['--project-directory', workComposeDir],
-      ].flat();
-
-      if (options.env) {
-        const envFile = (await this.vm.execCommand({ capture: true },
-          '/bin/mktemp', '--tmpdir', 'rd-nerdctl-compose-exec-XXXXXX')).trim();
-
-        cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', envFile));
-        const envData = Object.entries(options.env)
-          .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
-          .join('');
-
-        await this.vm.writeFile(envFile, envData);
-        args.push('--env-file', envFile);
-      }
-
-      args.push(...[
+        ['--project-directory', projectDir],
+        options.env ? ['--env-file', envFile] : [],
         ['exec', '--tty=false'],
         options.user ? ['--user', options.user] : [],
         options.workdir ? ['--workdir', options.workdir] : [],
         [options.service, ...options.command],
-      ].flat());
+      ].flat();
 
       const result = spawn(executable('nerdctl'), args, { stdio: ['ignore', 'pipe', 'pipe'] });
       const delayedCleanups = cleanups.concat();
@@ -446,38 +484,20 @@ export class NerdctlClient implements ContainerEngineClient {
     }
   }
 
-  async composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string> {
-    const cleanups: (() => Promise<void>)[] = [];
+  async composePort(options: ContainerComposePortOptions): Promise<string> {
+    const { projectDir, envFile, cleanups } = await this.composePrep(options);
 
     try {
-      const workComposeDir = await this.copyDirectoryIn(composeDir);
-
-      cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', workComposeDir));
       const args = [
         options.namespace ? ['--namespace', options.namespace] : [],
         ['compose'],
         options.name ? ['--project-name', options.name] : [],
-        ['--project-directory', workComposeDir],
-      ].flat();
-
-      if (options.env) {
-        const envFile = (await this.vm.execCommand({ capture: true },
-          '/bin/mktemp', '--tmpdir', 'rd-nerdctl-compose-exec-XXXXXX')).trim();
-
-        cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', envFile));
-        const envData = Object.entries(options.env)
-          .map(([k, v]) => `${ k }='${ v.replaceAll("'", "\\'") }'\n`)
-          .join('');
-
-        await this.vm.writeFile(envFile, envData);
-        args.push('--env-file', envFile);
-      }
-
-      args.push(...[
+        ['--project-directory', projectDir],
+        options.env ? ['--env-file', envFile] : [],
         ['port'],
         options.protocol ? ['--protocol', options.protocol] : [],
         [options.service, options.port.toString(10)],
-      ].flat());
+      ].flat();
 
       return (await this.nerdctl(...args)).trim();
     } finally {

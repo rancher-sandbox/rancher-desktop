@@ -130,7 +130,9 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
     // Build options to pass to the main process, while not trusting the input
     // too much.
     const safeOptions: SpawnOptions = {
-      command: [`${ cmd }`].concat(Array.from(args).map(arg => `${ arg }`)),
+      command: [`${ cmd }`].concat(Array.from(args).map((arg) => {
+        return `${ arg }`.replace(/^(["'])(.*)\1$/, '\\2');
+      })),
       execId,
       scope,
       ...options?.cwd ? { cwd: options.cwd } : {},

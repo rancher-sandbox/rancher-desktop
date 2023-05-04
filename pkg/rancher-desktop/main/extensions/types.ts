@@ -65,6 +65,11 @@ export interface Extension {
   readonly metadata: Promise<ExtensionMetadata>;
 
   /**
+   * Image labels associated with this extension.
+   */
+  readonly labels: Promise<Record<string, string>>;
+
+  /**
    * Install this extension.
    * @note If the extension is already installed, this is a no-op.
    * @return Whether the extension was installed.
@@ -112,7 +117,7 @@ export interface ExtensionManager {
   /**
    * Get a collection of all installed extensions.
    */
-  getInstalledExtensions(): Promise<{ id: string; version: string, metadata: ExtensionMetadata; }[]>;
+  getInstalledExtensions(): Promise<Extension[]>;
 
   /**
    * Shut down the extension manager, doing any clean up necessary.

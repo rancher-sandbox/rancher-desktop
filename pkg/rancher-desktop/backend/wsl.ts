@@ -694,15 +694,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   async copyFileIn(hostPath: string, vmPath: string): Promise<void> {
-    const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
-
-    await fs.promises.copyFile(windowsPath, hostPath);
+    // Sometimes WSL has issues copying _from_ the VM.  So we instead do the
+    // copying from inside the VM.
+    await this.execCommand('/bin/cp', '-f', '-T', await this.wslify(hostPath), vmPath);
   }
 
   async copyFileOut(vmPath: string, hostPath: string): Promise<void> {
-    const windowsPath = (await this.execCommand({ capture: true }, '/bin/wslpath', '-w', vmPath)).trim();
-
-    await fs.promises.copyFile(windowsPath, hostPath);
+    // Sometimes WSL has issues copying _from_ the VM.  So we instead do the
+    // copying from inside the VM.
+    await this.execCommand('/bin/cp', '-f', '-T', vmPath, await this.wslify(hostPath));
   }
 
   /**
@@ -927,11 +927,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   async execCommand(options: wslExecOptions & { capture: true }, ...command: string[]): Promise<string>;
   async execCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<void | string> {
     let options: wslExecOptions = {};
+    const cwdOptions: string[] = [];
 
     if (typeof optionsOrArg === 'string') {
       command = [optionsOrArg].concat(command);
     } else {
       options = optionsOrArg;
+    }
+
+    if (options.cwd) {
+      cwdOptions.push('--cd', options.cwd.toString());
+      delete options.cwd;
     }
 
     const expectFailure = options.expectFailure ?? false;
@@ -940,7 +946,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       // Print a slightly different message if execution fails.
       return await this.execWSL({
         encoding: 'utf-8', ...options, expectFailure: true,
-      }, '--distribution', options.distro ?? INSTANCE_NAME, '--exec', ...command);
+      }, '--distribution', options.distro ?? INSTANCE_NAME, ...cwdOptions, '--exec', ...command);
     } catch (ex) {
       if (!expectFailure) {
         console.log(`WSL: executing: ${ command.join(' ') }: ${ ex }`);
@@ -1378,9 +1384,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           break;
         case ContainerEngine.MOBY:
           this.#containerEngineClient = new MobyClient(this, 'npipe:////./pipe/docker_engine');
-          await this.progressTracker.action('Waiting for socket to stabilize', 0, this.waitForDockerSocket());
           break;
         }
+
+        await this.progressTracker.action('Waiting for container engine to be ready', 0, this.containerEngineClient.waitForReady());
 
         // If it's not a privileged installation preset guestAgent
         // port binding address to localhost only.
@@ -1491,29 +1498,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         await this.execCommand('/usr/local/bin/wsl-service', 'local', 'start');
       })(),
     ]);
-  }
-
-  /**
-   * The docker proxy process flaps a bit at the start while things are starting
-   * up.  We need to wait for it to stabilize before declaring it ready.
-   */
-  async waitForDockerSocket(): Promise<void> {
-    let successCount = 0;
-
-    // Wait for ten consecutive successes, clearing out successCount whenever we
-    // hit an error.  In the ideal case this is a ten-second delay in startup
-    // time.  We use `docker system info` because that needs to talk to the
-    // socket to fetch data about the engine (and it returns an error if it
-    // fails to do so).
-    while (successCount < 10) {
-      try {
-        await this.containerEngineClient.runClient(['system', 'info'], 'ignore');
-        successCount++;
-      } catch (ex) {
-        successCount = 0;
-      }
-      await util.promisify(setTimeout)(1_000);
-    }
   }
 
   async stop(): Promise<void> {

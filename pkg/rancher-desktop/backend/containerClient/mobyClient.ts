@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import _ from 'lodash';
 
@@ -15,7 +16,6 @@ import { ErrorCommand, spawn, spawnFile } from '@pkg/utils/childProcess';
 import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
-import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.moby;
 
@@ -66,6 +66,19 @@ export class MobyClient implements ContainerEngineClient {
     return await spawnFile(executable(tool), finalArgs, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
   }
 
+  /**
+   * Run a list of cleanup functions in reverse.
+   */
+  protected async runCleanups(cleanups: (() => Promise<unknown>)[]) {
+    for (const cleanup of cleanups.reverse()) {
+      try {
+        await cleanup();
+      } catch (e) {
+        console.error('Failed to run cleanup:', e);
+      }
+    }
+  }
+
   protected async makeContainer(imageID: string): Promise<string> {
     const { stdout, stderr } = await this.docker('create', '--entrypoint=/', imageID);
     const container = stdout.trim();
@@ -76,6 +89,25 @@ export class MobyClient implements ContainerEngineClient {
     }
 
     return container;
+  }
+
+  async waitForReady(): Promise<void> {
+    let successCount = 0;
+
+    // Wait for ten consecutive successes, clearing out successCount whenever we
+    // hit an error.  In the ideal case this is a ten-second delay in startup
+    // time.  We use `docker system info` because that needs to talk to the
+    // socket to fetch data about the engine (and it returns an error if it
+    // fails to do so).
+    while (successCount < 10) {
+      try {
+        await this.runClient(['system', 'info'], 'ignore');
+        successCount++;
+      } catch (ex) {
+        successCount = 0;
+      }
+      await util.promisify(setTimeout)(1_000);
+    }
   }
 
   readFile(imageID: string, filePath: string): Promise<string>;
@@ -100,9 +132,9 @@ export class MobyClient implements ContainerEngineClient {
   }
 
   copyFile(imageID: string, sourcePath: string, destinationPath: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationPath: string, options: { resolveSymlinks?: false; silent?: true }): Promise<void>;
-  async copyFile(imageID: string, sourcePath: string, destinationPath: string, options?: { resolveSymlinks?: boolean, silent?: boolean }): Promise<void> {
-    const resolveSymlinks = options?.resolveSymlinks !== false;
+  copyFile(imageID: string, sourcePath: string, destinationPath: string, options: { silent?: true }): Promise<void>;
+  async copyFile(imageID: string, sourcePath: string, destinationPath: string, options?: { silent?: boolean }): Promise<void> {
+    const cleanups: (() => Promise<unknown>)[] = [];
 
     if (sourcePath.endsWith('/')) {
       // If we're copying a directory, add "." so we don't create an extra
@@ -115,12 +147,33 @@ export class MobyClient implements ContainerEngineClient {
 
     const container = await this.makeContainer(imageID);
 
-    try {
-      const args = ['cp', resolveSymlinks ? '--follow-link' : undefined, `${ container }:${ sourcePath }`, destinationPath].filter(defined);
+    cleanups.push(() => spawnFile(this.executable, ['rm', container], { stdio: console }));
 
-      await spawnFile(this.executable, args, { stdio: console });
+    try {
+      if (this.vm.backend === 'wsl') {
+        // On Windows, non-Administrators by default do not have the privileges
+        // to create symlinks.  However, `docker cp --follow-link` doesn't
+        // dereference symlinks it encounters when recursively copying a file.
+        // We work around this by copying it into a tarball in the VM and then
+        // extracting it from there.
+        const wslDestPath = (await this.vm.execCommand({ capture: true }, '/bin/wslpath', '-u', destinationPath)).trim();
+        const archive = (await this.vm.execCommand({ capture: true }, '/bin/mktemp', '-t', 'rd-moby-cp-XXXXXX')).trim();
+
+        cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', archive));
+        await this.vm.execCommand(
+          '/bin/sh', '-c',
+          `/usr/bin/docker cp '${ container }:${ sourcePath }' - > '${ archive }'`);
+        await this.vm.execCommand(
+          '/usr/bin/tar', '--extract', '--file', archive, '--dereference',
+          '--directory', wslDestPath);
+      } else {
+        await spawnFile(
+          this.executable,
+          ['cp', '--follow-link', `${ container }:${ sourcePath }`, destinationPath],
+          { stdio: console });
+      }
     } finally {
-      await spawnFile(this.executable, ['rm', container], { stdio: console });
+      await this.runCleanups(cleanups);
     }
   }
 
@@ -169,33 +222,33 @@ export class MobyClient implements ContainerEngineClient {
     }
   }
 
-  async composeUp(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
-    const args = ['--project-directory', composeDir];
+  async composeUp(options: ContainerComposeOptions): Promise<void> {
+    const args = ['--project-directory', options.composeDir];
 
-    if (options?.name) {
+    if (options.name) {
       args.push('--project-name', options.name);
     }
     args.push('up', '--quiet-pull', '--wait', '--remove-orphans');
 
-    const result = await this.runTool({ env: options?.env ?? {} }, 'docker-compose', ...args);
+    const result = await this.runTool({ env: options.env ?? {} }, 'docker-compose', ...args);
 
     console.debug('ran docker compose up', result);
   }
 
-  async composeDown(composeDir: string, options?: ContainerComposeOptions): Promise<void> {
+  async composeDown(options: ContainerComposeOptions): Promise<void> {
     const args = [
-      options?.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'down'],
+      options.name ? ['--project-name', options.name] : [],
+      ['--project-directory', options.composeDir, 'down'],
     ].flat();
-    const result = await this.runTool('docker-compose', ...args);
+    const result = await this.runTool({ env: options.env ?? {} }, 'docker-compose', ...args);
 
     console.debug('ran docker compose down', result);
   }
 
-  composeExec(composeDir: string, options: ContainerComposeExecOptions): Promise<ReadableProcess> {
+  composeExec(options: ContainerComposeExecOptions): Promise<ReadableProcess> {
     const args = [
       options.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'exec'],
+      ['--project-directory', options.composeDir, 'exec'],
       options.user ? ['--user', options.user] : [],
       options.workdir ? ['--workdir', options.workdir] : [],
       [options.service, ...options.command],
@@ -210,10 +263,10 @@ export class MobyClient implements ContainerEngineClient {
     }));
   }
 
-  async composePort(composeDir: string, options: ContainerComposePortOptions): Promise<string> {
+  async composePort(options: ContainerComposePortOptions): Promise<string> {
     const args = [
       options.name ? ['--project-name', options.name] : [],
-      ['--project-directory', composeDir, 'port'],
+      ['--project-directory', options.composeDir, 'port'],
       options.protocol ? ['--protocol', options.protocol] : [],
       [options.service, options.port.toString()],
     ].flat();

@@ -131,7 +131,16 @@ paths:
               schema:
                 type: object
                 additionalProperties:
-                  type: string
+                  type: object
+                  properties:
+                    version:
+                      type: string
+                    metadata:
+                      type: object
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string
 
   /v1/extensions/install:
     post:

@@ -122,8 +122,8 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
     break;
   }
 
-  profiles.defaults = validateDeploymentProfile(defaults, settings.defaultSettings) ?? {};
-  profiles.locked = validateDeploymentProfile(locked, lockableDefaultSettings) ?? {};
+  profiles.defaults = validateDeploymentProfile(defaults, settings.defaultSettings, []) ?? {};
+  profiles.locked = validateDeploymentProfile(locked, lockableDefaultSettings, []) ?? {};
 
   return profiles;
 }
@@ -161,6 +161,7 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
     throw new DeploymentProfileError(`Error parsing deployment profile JSON object from ${ inputPath }: ${ getErrorString(error) }`);
   }
 }
+
 /**
  * Read and parse plutil deployment profile files.
  * @param rootPath the system or user directory containing profiles.
@@ -267,31 +268,59 @@ function readRegistryUsingSchema(schemaObj: any, regKey: nativeReg.HKEY): Recurs
  * Do simple type validation of a deployment profile
  * @param profile The profile to be validated
  * @param schema The structure (usually defaultSettings) used as a template
+ * @param parentPathParts The parent path for the current schema key.
  * @returns The original profile, less any invalid fields
  */
-function validateDeploymentProfile(profile: any, schema: any) {
-  if (typeof profile === 'object') {
-    for (const key in profile) {
-      if (key in schema) {
-        if (typeof profile[key] === typeof schema[key]) {
-          if (typeof profile[key] === 'object') {
-            if (Array.isArray(profile[key] !== Array.isArray(schema[key]))) {
-              console.log(`Deployment Profile ignoring '${ key }'. Array type mismatch.`);
-              delete profile[key];
-            } else if (!Array.isArray(profile[key])) {
-              validateDeploymentProfile(profile[key], schema[key]);
-            }
-          }
-        } else {
-          console.log(`Deployment Profile ignoring '${ key }'. Wrong type.`);
-          delete profile[key];
-        }
-      } else {
-        console.log(`Deployment Profile ignoring '${ key }'. Not in schema.`);
+function validateDeploymentProfile(profile: any, schema: any, parentPathParts: string[]) {
+  if (typeof profile !== 'object') {
+    return profile;
+  }
+  for (const key in profile) {
+    if (!(key in schema)) {
+      console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': not in schema.`);
+      delete profile[key];
+      continue;
+    }
+    if (typeof profile[key] !== 'object') {
+      if (typeof profile[key] !== typeof schema[key]) {
+        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': expecting value of type ${ typeof schema[key] }, got ${ typeof profile[key] }.`);
         delete profile[key];
       }
+    } else if (Array.isArray(profile[key])) {
+      if (!Array.isArray(schema[key])) {
+        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
+        delete profile[key];
+      }
+    } else if (isUserDefinedObject(parentPathParts, key)) {
+      // Keep this part of the profile
+    } else {
+      // Finally recurse and compare the schema sub-object with the specified sub-object
+      validateDeploymentProfile(profile[key], schema[key], parentPathParts.concat(key));
     }
   }
 
   return profile;
+}
+
+/**
+ * A "user-defined object" from the schema's point of view is an object that contains user-defined keys.
+ * For example, `WSL.integrations` points to a user-defined object, while
+ * `WSL` alone points to an object that contains only one key, `integrations`.
+ * @param pathParts
+ * @param key
+ * @returns boolean
+ */
+function isUserDefinedObject(pathParts: string[], key: string): boolean {
+  if (pathParts.length > 3) {
+    return false;
+  }
+  switch (pathParts.length) {
+  case 0:
+    return key === 'extensions';
+  case 1:
+    return ((key === 'integrations' && pathParts[0] === 'WSL') ||
+      (key === 'mutedChecks' && pathParts[0] === 'diagnostics'));
+  }
+
+  return false;
 }

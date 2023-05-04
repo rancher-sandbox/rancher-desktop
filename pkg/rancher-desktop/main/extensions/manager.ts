@@ -14,11 +14,9 @@ import type { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg
 import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import type { RecursiveReadonly } from '@pkg/utils/typeUtils';
+import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
-import type {
-  Extension, ExtensionManager, ExtensionMetadata, SpawnOptions, SpawnResult,
-} from './types';
+import type { Extension, ExtensionManager, SpawnOptions, SpawnResult } from './types';
 
 const console = Logging.extensions;
 const ipcMain = getIpcMainProxy(console);
@@ -265,26 +263,13 @@ class ExtensionManagerImpl implements ExtensionManager {
   }
 
   async getInstalledExtensions() {
-    const exts = await Promise.all(Object.entries(this.extensions).map(async([id, group]) => {
-      const versions = Object.entries(group);
-      const states = await Promise.all(versions.map(async([version, ext]) => {
-        return [version, await ext.isInstalled(), ext] as const;
-      }));
+    // Get a list of all extensions, installed or not.
+    const exts = Object.values(this.extensions).flatMap(group => Object.values(group));
+    // Calculate if each is installed (in parallel).
+    const states = await Promise.all(exts.map(async ext => [ext, await ext.isInstalled()] as const));
 
-      return [id, ...states.find(([, installed]) => installed) ?? ['', false]] as const;
-    }));
-
-    const result: { id: string, version: string, metadata: ExtensionMetadata }[] = [];
-
-    for (const [id, version, installed, ext] of exts) {
-      if (installed) {
-        result.push({
-          id, version, metadata: await ext!.metadata,
-        });
-      }
-    }
-
-    return result;
+    // Return the extensions that are marked as installed.
+    return states.filter(([, state]) => state).map(([ext]) => ext);
   }
 
   /**

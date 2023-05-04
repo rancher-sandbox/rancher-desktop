@@ -1,10 +1,10 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
+import { mapGetters } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
@@ -18,8 +18,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      extensions: [] as { id: string; metadata: ExtensionMetadata; }[],
-      headers:    [
+      headers: [
         {
           name:  'id',
           label: 'Name',
@@ -43,17 +42,21 @@ export default Vue.extend({
     emptyStateBody(): string {
       return this.t('extensions.installed.emptyState.body', { }, true);
     },
+    ...mapGetters('extensions', { extensionsList: 'list' }),
   },
-  beforeMount() {
-    ipcRenderer.on('extensions/list', (_event, extensions) => {
-      this.extensions = extensions || [];
-      this.loading = false;
+  async beforeMount() {
+    ipcRenderer.on('extensions/changed', () => {
+      this.$store.dispatch('extensions/fetch');
     });
-    ipcRenderer.send('extensions/list');
+    await this.$store.dispatch('extensions/fetch');
+    this.loading = false;
   },
   methods: {
     browseExtensions() {
       this.$emit('click:browse');
+    },
+    extensionTitle(ext: {id: string, labels: Record<string, string>}): string {
+      return ext.labels?.['org.opencontainers.image.title'] ?? ext.id;
     },
     uninstall(id: string) {
       fetch(
@@ -79,7 +82,7 @@ export default Vue.extend({
       key-field="description"
       :loading="loading"
       :headers="headers"
-      :rows="extensions"
+      :rows="extensionsList"
       :search="false"
       :table-actions="false"
       :row-actions="false"
@@ -113,7 +116,7 @@ export default Vue.extend({
               }
             }"
           >
-            {{ row.metadata.ui['dashboard-tab'].title }}
+            {{ extensionTitle(row) }}
           </nuxt-link>
         </td>
       </template>
@@ -121,7 +124,7 @@ export default Vue.extend({
         <td>
           <button
             class="btn btn-sm role-primary"
-            @click="uninstall(row.id)"
+            @click="uninstall(`${ row.id }:${ row.version }`)"
           >
             {{ t('extensions.installed.list.uninstall') }}
           </button>

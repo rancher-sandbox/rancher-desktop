@@ -1,22 +1,17 @@
-setup_file() {
-    load '../helpers/load'
-}
+load '../helpers/load'
 
 setup() {
-    load '../helpers/load'
+    TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
 
-    TESTDATA_DIR="${PATH_TEST_ROOT}/extensions/testdata/"
+    if using_windows_exe; then
+        TESTDATA_DIR="$(wslpath -m "${TESTDATA_DIR}")"
+    fi
 
     if using_containerd; then
         namespace_arg=('--namespace=rancher-desktop-extensions')
     else
         namespace_arg=()
     fi
-}
-
-teardown_file() {
-    run rdctl shutdown
-    assert_nothing
 }
 
 id() { # variant
@@ -58,7 +53,7 @@ encoded_id() { # variant
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-image)\"]" <<<"${output}")"
+    output="$(jq ".[\"$(id vm-image)\"].version" <<<"${output}")"
     assert_output '"latest"'
 }
 
@@ -81,7 +76,7 @@ encoded_id() { # variant
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-compose)\"]" <<<"${output}")"
+    output="$(jq ".[\"$(id vm-compose)\"].version" <<<"${output}")"
     assert_output '"latest"'
 }
 

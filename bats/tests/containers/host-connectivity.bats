@@ -3,9 +3,7 @@
 # between the host and the container. Please check the below link for instructions.
 # https://docs.rancherdesktop.io/faq#q-can-containers-reach-back-to-host-services-via-hostdockerinternal
 
-setup() {
-    load '../helpers/load'
-}
+load '../helpers/load'
 
 @test 'factory reset' {
     factory_reset
