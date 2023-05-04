@@ -92,8 +92,8 @@ type UpgradeResponderQueryResult = {
   unsupportedUpdateAvailable: boolean,
 };
 
-type UpgradeResponderRequestPayload = {
-  appVersion: semver.SemVer;
+export type UpgradeResponderRequestPayload = {
+  appVersion: string;
   extraInfo: {
     platform: string;
     platformVersion: string;
