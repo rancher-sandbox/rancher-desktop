@@ -39,10 +39,11 @@ import (
 )
 
 var (
-	debug    bool
-	tapIface string
-	logFile  string
-	subnet   string
+	debug            bool
+	tapIface         string
+	logFile          string
+	subnet           string
+	tapDeviceMacAddr string
 )
 
 const (
@@ -53,6 +54,8 @@ const (
 func main() {
 	flag.BoolVar(&debug, "debug", true, "enable debug flag")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
+	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
+		"48 bits mac address that is associated to the tap interface")
 	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
 		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
 	flag.StringVar(&logFile, "logfile", "/var/log/vm-switch.log", "path to vm-switch process logfile")
@@ -121,8 +124,8 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 		logrus.Debugf("closed tap device: %s", tapIface)
 	}()
 
-	if err := linkUp(tapIface, config.TapDeviceMacAddr); err != nil {
-		logrus.Fatalf("setting mac address [%s] for %s tap device failed: %s", config.TapDeviceMacAddr, tapIface, err)
+	if err := linkUp(tapIface, tapDeviceMacAddr); err != nil {
+		logrus.Fatalf("setting mac address [%s] for %s tap device failed: %s", tapDeviceMacAddr, tapIface, err)
 	}
 	if err := loopbackUp(); err != nil {
 		logrus.Fatalf("enabling loop back device failed: %s", err)
@@ -131,7 +134,7 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 		logrus.Fatalf("setting up forwarding iptables rules for loopback interface failed: %s", err)
 	}
 
-	logrus.Debugf("setup complete for tap interface %s(%s) + loopback", tapIface, config.TapDeviceMacAddr)
+	logrus.Debugf("setup complete for tap interface %s(%s) + loopback", tapIface, tapDeviceMacAddr)
 
 	errCh := make(chan error, 1)
 	go tx(ctx, connFile, tap, errCh, maxMTU)
@@ -155,7 +158,7 @@ func forwardLoopback(subnet string) error {
 	rules := map[string][]string{
 		"PREROUTING":  {"-t", "nat", "-A", "PREROUTING", "-d", tapDeviceIP, "-j", "DNAT", "--to-destination", "127.0.0.1"},
 		"OUTPUT":      {"-t", "nat", "-A", "OUTPUT", "-d", tapDeviceIP, "-j", "DNAT", "--to-destination", "127.0.0.1"},
-		"POSTROUTING": {"-t", "nat", "-A", "POSTROUTING", "-o", defaultTapDevice, "-j", "MASQUERADE"},
+		"POSTROUTING": {"-t", "nat", "-A", "POSTROUTING", "-o", tapIface, "-j", "MASQUERADE"},
 	}
 
 	for key, args := range rules {

@@ -28,7 +28,12 @@ import (
 )
 
 const (
-	DefaultSubnet      = "192.168.127.0/24"
+	// Subnet range that is used by default if
+	// one is not provided through the arguments.
+	DefaultSubnet = "192.168.127.0/24"
+	// Reserved Mac Address for the tap device eth0 that
+	// is used by vm switch during the tap device
+	// creation.
 	TapDeviceMacAddr   = "5a:94:ef:e4:0c:ee"
 	gatewayLastByte    = 1
 	staticDHCPLastByte = 2

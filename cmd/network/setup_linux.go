@@ -32,12 +32,14 @@ import (
 )
 
 var (
-	debug           bool
-	vmSwitchPath    string
-	unshareArg      string
-	logFile         string
-	vmSwitchLogFile string
-	subnet          string
+	debug            bool
+	vmSwitchPath     string
+	unshareArg       string
+	logFile          string
+	vmSwitchLogFile  string
+	tapIface         string
+	subnet           string
+	tapDeviceMacAddr string
 )
 
 const (
@@ -45,12 +47,16 @@ const (
 	unshare            = "/usr/bin/unshare"
 	vsockHandshakePort = 6669
 	vsockDialPort      = 6656
+	defaultTapDevice   = "eth0"
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
+	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
 	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
 		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
+	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
+		"48 bits mac address that is associated to the tap interface")
 	flag.StringVar(&vmSwitchPath, "vm-switch-path", "", "the path to the vm-switch binary that will run in a new namespace")
 	flag.StringVar(&vmSwitchLogFile, "vm-switch-logfile", "", "path to the logfile for vm-switch process")
 	flag.StringVar(&unshareArg, "unshare-arg", "", "the command argument to pass to the unshare program")
@@ -100,8 +106,12 @@ func main() {
 		fmt.Sprintf("-n/proc/%d/fd/%d", os.Getpid(), ns),
 		"-F",
 		vmSwitchPath,
+		"-tap-interface",
+		tapIface,
 		"-subnet",
 		subnet,
+		"-tap-mac-address",
+		tapDeviceMacAddr,
 	}
 	if vmSwitchLogFile != "" {
 		args = append(args, "-logfile", vmSwitchLogFile)
