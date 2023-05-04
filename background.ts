@@ -279,7 +279,7 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
-    await listExtensionsMetadata();
+    window.send('extensions/changed');
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -530,8 +530,6 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 });
 
 mainEvents.on('settings-write', writeSettings);
-
-ipcMainProxy.on('extensions/list', listExtensionsMetadata);
 
 ipcMainProxy.on('extensions/open', (_event, id, path) => {
   window.openExtension(id, path);
@@ -853,13 +851,6 @@ async function getExtensionManager() {
   return await getEM();
 }
 
-async function listExtensionsMetadata() {
-  const extensionManager = await getExtensionManager();
-  const extensions = await extensionManager?.getInstalledExtensions() ?? [];
-
-  window.send('extensions/list', extensions);
-}
-
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
@@ -1082,8 +1073,14 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     })());
   }
 
-  listExtensions(): Promise<Record<string, string>> {
-    const entries = Object.entries(cfg.extensions).filter(([k, v]) => v);
+  async listExtensions() {
+    const extensionManager = await getExtensionManager();
+    const extensions = await extensionManager?.getInstalledExtensions() ?? [];
+    const entries = await Promise.all(extensions.map(async x => [x.id, {
+      version:  x.version,
+      metadata: await x.metadata,
+      labels:   await x.labels,
+    }] as const));
 
     return Promise.resolve(Object.fromEntries(entries));
   }
@@ -1116,7 +1113,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         throw ex;
       } finally {
-        listExtensionsMetadata();
+        window.send('extensions/changed');
       }
     } else {
       console.debug(`Uninstalling extension ${ image }...`);
@@ -1137,7 +1134,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         throw ex;
       } finally {
-        listExtensionsMetadata();
+        window.send('extensions/changed');
       }
     }
   }

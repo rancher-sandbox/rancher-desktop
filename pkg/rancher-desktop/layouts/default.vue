@@ -38,9 +38,6 @@ export default {
     TheTitle,
   },
 
-  data() {
-    return { extensions: [] };
-  },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
     if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
@@ -73,6 +70,7 @@ export default {
     },
     ...mapState('credentials', ['credentials']),
     ...mapGetters('diagnostics', ['diagnostics']),
+    ...mapGetters('extensions', { extensions: 'list' }),
   },
 
   beforeMount() {
@@ -82,12 +80,10 @@ export default {
     ipcRenderer.on('route', (event, args) => {
       this.goToRoute(args);
     });
-    ipcRenderer.on('extensions/list', (_event, extensions) => {
-      this.extensions = (extensions || []).filter((e) => {
-        return !!e.metadata.ui?.['dashboard-tab'];
-      });
+    ipcRenderer.on('extensions/changed', () => {
+      this.$store.dispatch('extensions/fetch');
     });
-    ipcRenderer.send('extensions/list');
+    this.$store.dispatch('extensions/fetch');
 
     ipcRenderer.on('extensions/getContentArea', () => {
       const rect = this.$refs['rdx-title'].$el.getBoundingClientRect();

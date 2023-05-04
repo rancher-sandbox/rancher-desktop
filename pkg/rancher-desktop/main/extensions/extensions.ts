@@ -67,6 +67,7 @@ export class ExtensionImpl implements Extension {
   readonly dir: string;
   protected readonly client: ContainerEngineClient;
   protected _metadata: Promise<ExtensionMetadata> | undefined;
+  protected _labels: Promise<Record<string, string>> | undefined;
   /** The (nerdctl) namespace to use; shared with ExtensionManagerImpl */
   static readonly extensionNamespace = 'rancher-desktop-extensions';
   protected readonly VERSION_FILE = 'version.txt';
@@ -102,6 +103,32 @@ export class ExtensionImpl implements Extension {
     })();
 
     return this._metadata as Promise<ExtensionMetadata>;
+  }
+
+  /** Extension image labels */
+  get labels(): Promise<Record<string, string>> {
+    this._labels ??= (async() => {
+      try {
+        if (await this.isInstalled()) {
+          const labelPath = path.join(this.dir, 'labels.json');
+
+          return JSON.parse(await fs.promises.readFile(labelPath, 'utf-8'));
+        }
+
+        const info = await this.client.runClient(
+          ['image', 'inspect', '--format={{ json .Config.Labels }}', this.image],
+          'pipe',
+          { namespace: ExtensionImpl.extensionNamespace });
+
+        return JSON.parse(info.stdout);
+      } catch (ex: any) {
+        // Unset cached value so we can try again later
+        this._labels = undefined;
+        throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Could not read image labels', ex);
+      }
+    })();
+
+    return this._labels as Promise<Record<string, string>>;
   }
 
   protected _iconName: Promise<string> | undefined;
@@ -141,10 +168,15 @@ export class ExtensionImpl implements Extension {
     return true;
   }
 
-  protected installMetadata(workDir: string, metadata: ExtensionMetadata): Promise<void> {
-    return fs.promises.writeFile(
-      path.join(workDir, 'metadata.json'),
-      JSON.stringify(metadata, undefined, 2));
+  protected async installMetadata(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    await Promise.all([
+      fs.promises.writeFile(
+        path.join(workDir, 'metadata.json'),
+        JSON.stringify(metadata, undefined, 2)),
+      fs.promises.writeFile(
+        path.join(workDir, 'labels.json'),
+        JSON.stringify(await this.labels, undefined, 2)),
+    ]);
   }
 
   protected async installIcon(workDir: string, metadata: ExtensionMetadata): Promise<void> {

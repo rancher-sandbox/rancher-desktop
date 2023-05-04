@@ -15,7 +15,7 @@
     </ul>
     <template v-if="featureExtensions">
       <hr>
-      <template v-for="extension in extensions">
+      <template v-for="extension in extensionsWithUI">
         <nuxt-link
           :key="extension.id"
           :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
@@ -44,11 +44,17 @@ import os from 'os';
 
 import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
+import { PropType } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavItem from './NavItem.vue';
 
+import type { ExtensionMetadata } from '@pkg/main/extensions/types';
 import { hexEncode } from '@pkg/utils/string-encode';
+
+type ExtensionWithUI = ExtensionMetadata & {
+  ui: { 'dashboard-tab': { title: string } };
+};
 
 export default {
   components: {
@@ -79,7 +85,7 @@ export default {
       },
     },
     extensions: {
-      type:     Array,
+      type:     Array as PropType<{ id: string, metadata: ExtensionMetadata }[]>,
       required: true,
     },
   },
@@ -104,6 +110,11 @@ export default {
       const nuxt: NuxtApp = (this as any).$nuxt;
 
       return !!nuxt.$config.featureExtensions;
+    },
+    extensionsWithUI(): { id: string, metadata: ExtensionWithUI }[] {
+      const allExtensions: { id: string, metadata: ExtensionMetadata }[] = (this as any).extensions;
+
+      return allExtensions.filter(ext => ext.metadata?.ui?.['dashboard-tab']) as any;
     },
   },
   methods: {

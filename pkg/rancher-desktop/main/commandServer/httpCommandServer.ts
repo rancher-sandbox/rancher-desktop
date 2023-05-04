@@ -9,6 +9,7 @@ import _ from 'lodash';
 import type { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
+import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import mainEvents from '@pkg/main/mainEvents';
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
 import * as serverHelper from '@pkg/main/serverHelper';
@@ -641,7 +642,7 @@ export interface CommandWorkerInterface {
 
   // #region extensions
   /** List the installed extensions with their versions */
-  listExtensions(): Promise<Record<string, string>>;
+  listExtensions(): Promise<Record<string, {version: string, metadata: ExtensionMetadata, labels: Record<string, string>}>>;
   /**
    * Install or uninstall the given extension, returning an appropriate HTTP status code.
    * @param state Whether to install or uninstall the extension.
