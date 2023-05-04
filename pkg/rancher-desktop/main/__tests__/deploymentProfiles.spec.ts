@@ -25,7 +25,7 @@ const REGISTRY_PATH_PROFILE = REG_PATH_START.concat('TestProfile');
 const NON_PROFILE_PATH = FULL_REG_PATH_START.join('\\');
 const FULL_PROFILE_PATH = FULL_REG_PATH_START.concat('TestProfile').join('\\');
 
-const describeWindows = process.platform === 'win32' ? describe : describe.skip;
+const [describeWindows, describeNotWindows] = process.platform === 'win32' ? [describe, describe.skip] : [describe.skip, describe];
 
 let testDir = '';
 let regFilePath = '';
@@ -200,9 +200,10 @@ const arrayFromSingleStringDefaultsUserRegFile = `Windows Registry Editor Versio
 "patterns"="hokey smoke!"
 `;
 
-describeWindows('windows deployment profiles', () => {
-  /* Mock console.error() to capture error messages. */
-  let consoleMock: jest.SpyInstance<void, [message?: any, ...optionalArgs: any[]]>;
+describe('deployment profiles', () => {
+  describeWindows('windows deployment profiles', () => {
+    /* Mock console.error() to capture error messages. */
+    let consoleMock: jest.SpyInstance<void, [message?: any, ...optionalArgs: any[]]>;
 
   beforeEach(async() => {
     nativeReg.deleteTree(nativeReg.HKCU, path.join(...(REGISTRY_PATH_PROFILE)));
@@ -220,7 +221,7 @@ describeWindows('windows deployment profiles', () => {
     describe('defaults', () => {
       describe('happy paths', () => {
         const defaultUserProfile: RecursivePartial<settings.Settings> = {
-          application: {
+          application:     {
             debug:       true,
             adminAccess: false,
             telemetry:   { enabled: true },
@@ -230,17 +231,33 @@ describeWindows('windows deployment profiles', () => {
               enabled:  false,
               patterns: ['edmonton', 'calgary', 'red deer', 'bassano'],
             },
-            name: settings.ContainerEngine.MOBY,
+            name:          settings.ContainerEngine.MOBY,
           },
-          WSL:        { integrations: { kingston: false, napanee: false, yarker: true, weed: true } },
-          kubernetes: {
+          WSL:             {
+            integrations: {
+              kingston: false,
+              napanee:  false,
+              yarker:   true,
+              weed:     true
+            }
+          },
+          kubernetes:      {
             version: '867-5309',
           },
-          diagnostics: {
+          diagnostics:     {
             showMuted:   true,
-            mutedChecks: { montreal: true, 'riviere du loup': false, magog: false },
+            mutedChecks: {
+              montreal:          true,
+              'riviere du loup': false,
+              magog:             false
+            },
           },
-          extensions: { bellingham: 'WA', portland: 'OR', shasta: 'CA', elko: 'NV' },
+          extensions:      {
+            bellingham: 'WA',
+            portland:   'OR',
+            shasta:     'CA',
+            elko:       'NV'
+          },
         };
         const lockedUserProfile = {
           containerEngine: {
@@ -255,8 +272,10 @@ describeWindows('windows deployment profiles', () => {
           it('loads nothing', async() => {
             const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-            expect(profile.defaults).toEqual({});
-            expect(profile.locked).toEqual({});
+            expect(profile.defaults)
+              .toEqual({});
+            expect(profile.locked)
+              .toEqual({});
           });
         });
 
@@ -267,8 +286,10 @@ describeWindows('windows deployment profiles', () => {
             await installInRegistry(lockedUserRegFile);
             const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-            expect(profile.defaults).toEqual(defaultUserProfile);
-            expect(profile.locked).toEqual(lockedUserProfile);
+            expect(profile.defaults)
+              .toEqual(defaultUserProfile);
+            expect(profile.locked)
+              .toEqual(lockedUserProfile);
           });
         });
 
@@ -277,9 +298,13 @@ describeWindows('windows deployment profiles', () => {
           await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
           const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-          expect(profile.defaults).toEqual({
-            containerEngine: { allowedImages: { patterns: ['hokey smoke!'] }, name: 'moby' },
-          });
+          expect(profile.defaults)
+            .toEqual({
+              containerEngine: {
+                allowedImages: { patterns: ['hokey smoke!'] },
+                name:          'moby'
+              },
+            });
         });
 
         it('converts a single string into an array', async() => {
@@ -287,9 +312,10 @@ describeWindows('windows deployment profiles', () => {
           await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
           const profile = await readDeploymentProfiles(true);
 
-          expect(profile.defaults).toMatchObject({
-            containerEngine: { allowedImages: { patterns: ['hokey smoke!'] } },
-          });
+          expect(profile.defaults)
+            .toMatchObject({
+              containerEngine: { allowedImages: { patterns: ['hokey smoke!'] } },
+            });
         });
       });
       describe('error paths', () => {
@@ -305,55 +331,82 @@ describeWindows('windows deployment profiles', () => {
         it('loads a bad profile, complains about all the errors, and keeps only valid entries', async() => {
           await clearRegistry();
           await installInRegistry(incorrectDefaultsUserRegFile);
-          const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-          expect(profile.defaults).toEqual(limitedUserProfile);
-          // Remember that sub-objects are processed before values
-          expect(consoleMock.mock.calls).toEqual([
-            [expect.stringMatching(/Expecting registry entry .*?application.adminAccess to be a boolean, but it's a registry object/)],
-            [expect.stringMatching(/Expecting registry entry .*?application.Debug to be a boolean, but it's a SZ/)],
-            [expect.stringMatching(/Expecting registry entry .*?application.Updater to be a registry object, but it's a DWORD, value: 0/)],
-            [expect.stringMatching(/Expecting registry entry .*?containerEngine.allowedImages.enabled to be a boolean, but it's a SZ, value: should be a boolean/)],
-            [expect.stringMatching(/Expecting registry entry .*?containerEngine.name to be a string, but it's a DWORD, value: 5/)],
-            [expect.stringMatching(/Expecting registry entry .*?diagnostics.mutedChecks to be a registry object, but it's a DWORD, value: 66/)],
-            [expect.stringMatching(/Expecting registry entry .*?images.namespace to be a single string, but it's an array of strings, value: busybox,nginx/)],
-            [expect.stringMatching(/Expecting registry entry .*?kubernetes.version to be a string, but it's a registry object/)],
-            [expect.stringMatching(/Expecting registry entry .*?WSL.integrations to be a registry object, but it's a SZ, value: should be a sub-object/)],
-          ]);
-          containerEngine: {},
-          diagnostics:     {
-            showMuted: true,
-          },
-        };
-
-        it('loads a bad profile, complains about all the errors, and keeps only valid entries', async() => {
-          await clearRegistry();
-          await installInRegistry(incorrectDefaultsUserRegFile);
-          const profile = await readDeploymentProfiles(true);
-
-          expect(profile.defaults).toMatchObject(limitedUserProfile);
-          // Remember that sub-objects are processed before values
-          expect(consoleMock).toHaveBeenNthCalledWith(1,
-            expect.stringMatching(/Expecting registry entry .*?application.adminAccess to be a boolean, but it's a registry object/),
-          );
-          expect(consoleMock).toHaveBeenNthCalledWith(2,
-            expect.stringMatching(/Expecting registry entry .*?application.Debug to be a boolean, but it's a SZ/));
-          expect(consoleMock).toHaveBeenNthCalledWith(3,
-            expect.stringMatching(/Expecting registry entry .*?application.Updater to be a registry object, but it's a DWORD, value: 0/));
-          expect(consoleMock).toHaveBeenNthCalledWith(4,
-            expect.stringMatching(/Expecting registry entry .*?containerEngine.allowedImages.enabled to be a boolean, but it's a SZ, value: should be a boolean/));
-          expect(consoleMock).toHaveBeenNthCalledWith(5,
-            expect.stringMatching(/Expecting registry entry .*?containerEngine.name to be a string, but it's a DWORD, value: 5/));
-          expect(consoleMock).toHaveBeenNthCalledWith(6,
-            expect.stringMatching(/Expecting registry entry .*?diagnostics.mutedChecks to be a registry object, but it's a DWORD, value: 66/));
-          expect(consoleMock).toHaveBeenNthCalledWith(7,
-            expect.stringMatching(/Expecting registry entry .*?images.namespace to be a single string, but it's an array of strings, value: busybox,nginx/));
-          expect(consoleMock).toHaveBeenNthCalledWith(8,
-            expect.stringMatching(/Expecting registry entry .*?kubernetes.version to be a string, but it's a registry object/));
-          expect(consoleMock).toHaveBeenNthCalledWith(9,
-            expect.stringMatching(/Expecting registry entry .*?WSL.integrations to be a registry object, but it's a SZ, value: should be a sub-object/));
+          await expect(readDeploymentProfiles(REGISTRY_PATH_PROFILE))
+            .rejects
+            .toThrow(`Error in registry settings:
+Error for registry entry 'application.debug': expecting value of type boolean, got '"should be a number"'
+Error for registry entry 'application.updater': expecting value of type object, got '0'
+Error for registry entry 'application.adminAccess': expecting value of type boolean, got '{"sudo":true}'
+Error for registry entry 'containerEngine.name': expecting value of type string, got '5'
+Error for registry entry 'containerEngine.allowedImages.patterns': expecting an array, got '19'
+Error for registry entry 'containerEngine.allowedImages.enabled': expecting value of type boolean, got '"should be a boolean"'
+Error for registry entry 'images.namespace': expecting value of type string, got an array ["busybox","nginx"]
+Error for registry entry 'wsl.integrations': expecting value of type object, got '"should be a sub-object"'
+Error for registry entry 'kubernetes.version': expecting value of type string, got '{}'
+Error for registry entry 'kubernetes.enabled': expecting value of type boolean, got '-7'
+Error for registry entry 'diagnostics.mutedChecks': expecting value of type object, got '66'`);
         });
       });
+    });
+  });
+
+  describeNotWindows('non-windows deployment profiles', () => {
+    const invalidDefaultProfile = {
+      application: {
+        debug:                  'should be a boolean',
+        updater:                0,
+        pathManagementStrategy: 'goose',
+        adminAccess:            {
+          sudo: true,
+        },
+      },
+      containerEngine: {
+        name:          5,
+        allowedImages: {
+          patterns: 19,
+          enabled:  'should be a boolean',
+        },
+      },
+      images: {
+        namespace: ['busybox', 'nginx'],
+      },
+      kubernetes: {
+        port: {
+          zoo: ['possums', 'snakes', 'otters'],
+        },
+        version: { },
+        enabled: -7,
+      },
+      diagnostics: {
+        showMuted:   [true],
+        mutedChecks: 'should be an object',
+      },
+    };
+
+    test('complains about invalid default values', () => {
+      expect(() => {
+        validateDeploymentProfile('fake default profile', invalidDefaultProfile, settings.defaultSettings, []);
+      }).toThrow(`Error in deployment file fake default profile:
+Error for field 'application.debug': expecting value of type boolean, got '"should be a boolean"'
+Error for field 'application.updater': expecting value of type object, got '0'
+Error for field 'application.adminAccess': expecting value of type boolean, got '{"sudo":true}'
+Error for field 'containerEngine.name': expecting value of type string, got '5'
+Error for field 'containerEngine.allowedImages.patterns': expecting an array, got '19'
+Error for field 'containerEngine.allowedImages.enabled': expecting value of type boolean, got '"should be a boolean"'
+Error for field 'images.namespace': expecting value of type string, got an array ["busybox","nginx"]
+Error for field 'kubernetes.port': expecting value of type number, got '{"zoo":["possums","snakes","otters"]}'
+Error for field 'kubernetes.version': expecting value of type string, got '{}'
+Error for field 'kubernetes.enabled': expecting value of type boolean, got '-7'
+Error for field 'diagnostics.showMuted': expecting value of type boolean, got an array [true]
+Error for field 'diagnostics.mutedChecks': expecting value of type object, got '"should be an object"'`);
+    });
+    test('complains about invalid locked settings', () => {
+      expect(() => {
+        validateDeploymentProfile('fake locked profile', invalidDefaultProfile, lockableDefaultSettings, []);
+      }).toThrow(`Error in deployment file fake locked profile:
+Error for field 'containerEngine.allowedImages.patterns': expecting an array, got '19'
+Error for field 'containerEngine.allowedImages.enabled': expecting value of type boolean, got '"should be a boolean"'`);
     });
   });
 });

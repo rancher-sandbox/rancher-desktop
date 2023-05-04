@@ -26,7 +26,7 @@ export class DeploymentProfileError extends Error {
  * Lockable default settings used for validating deployment profiles.
  * Data values are ignored, but types are used for validation.
  */
-const lockableDefaultSettings = {
+export const lockableDefaultSettings = {
   containerEngine: {
     allowedImages: {
       enabled:  true,
@@ -60,6 +60,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
   };
   let defaults: undefined|RecursivePartial<settings.Settings>;
   let locked: undefined|RecursivePartial<settings.Settings>;
+  let fullDefaultPath = '';
+  let fullLockedPath = '';
 
   switch (os.platform()) {
   case 'linux': {
@@ -72,6 +74,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
       const [defaultPath, lockedPath] = linuxPaths[configDir];
 
       [defaults, locked] = parseJsonFiles(configDir, defaultPath, lockedPath);
+      fullDefaultPath = join(configDir, defaultPath);
+      fullLockedPath = join(configDir, lockedPath);
       if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
         break;
       }
@@ -82,7 +86,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
       [defaults, locked] = await parseJsonFromPlists(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
-
+      fullDefaultPath = join(rootPath, 'io.rancherdesktop.profile.defaults.plist');
+      fullLockedPath = join(rootPath, 'io.rancherdesktop.profile.locked.plist');
       if (typeof defaults !== 'undefined' || typeof locked !== 'undefined') {
         break;
       }
@@ -90,8 +95,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
     break;
   }
 
-  profiles.defaults = validateDeploymentProfile(defaults, settings.defaultSettings, []) ?? {};
-  profiles.locked = validateDeploymentProfile(locked, lockableDefaultSettings, []) ?? {};
+  profiles.defaults = validateDeploymentProfile(fullDefaultPath, defaults, settings.defaultSettings, []) ?? {};
+  profiles.locked = validateDeploymentProfile(fullLockedPath, locked, lockableDefaultSettings, []) ?? {};
 
   return profiles;
 }
@@ -118,8 +123,10 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
   try {
     plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
   } catch (error: any) {
-    console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`);
-    throw new DeploymentProfileError(`Error loading plist file ${ inputPath }: ${ getErrorString(error) }`);
+    console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`, error);
+    const msg = `Error loading plist file ${ inputPath }: ${ error.stdout || getErrorString(error) }`;
+
+    throw new DeploymentProfileError(msg);
   }
 
   try {
@@ -423,36 +430,66 @@ class Win32DeploymentReader {
 
 /**
  * Do simple type validation of a deployment profile
+ * @param inputPath Used for error messages only
  * @param profile The profile to be validated
  * @param schema The structure (usually defaultSettings) used as a template
  * @param parentPathParts The parent path for the current schema key.
  * @returns The original profile, less any invalid fields
  */
-function validateDeploymentProfile(profile: any, schema: any, parentPathParts: string[]) {
+export function validateDeploymentProfile(inputPath: string, profile: any, schema: any, parentPathParts: string[]): RecursivePartial<settings.Settings> {
+  const errors: string[] = [];
+
+  validateDeploymentProfileWithErrors(profile, errors, schema, parentPathParts);
+  if (errors.length) {
+    throw new DeploymentProfileError(`Error in deployment file ${ inputPath }:\n${ errors.join('\n') }`);
+  }
+
+  return profile;
+}
+
+/**
+ * Do simple type validation of a deployment profile
+ * @param profile The profile to be validated, modified in place
+ * @param errors An array of error messages, built up in place
+ * @param schema The structure (usually defaultSettings) used as a template
+ * @param parentPathParts The parent path for the current schema key.
+ * @returns The original profile, less any invalid fields
+ */
+function validateDeploymentProfileWithErrors(profile: any, errors: string[], schema: any, parentPathParts: string[]) {
   if (typeof profile !== 'object') {
     return profile;
   }
+  const fullPath = (key: string) => {
+    return parentPathParts.length === 0 ? key : `${ parentPathParts.join('.') }.${ key }`;
+  };
+
   for (const key in profile) {
     if (!(key in schema)) {
-      console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': not in schema.`);
+      console.log(`Deployment Profile ignoring '${ fullPath(key) }': not in schema.`);
       delete profile[key];
       continue;
     }
-    if (typeof profile[key] !== 'object') {
-      if (typeof profile[key] !== typeof schema[key]) {
-        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': expecting value of type ${ typeof schema[key] }, got ${ typeof profile[key] }.`);
-        delete profile[key];
-      }
-    } else if (Array.isArray(profile[key])) {
-      if (!Array.isArray(schema[key])) {
-        console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
-        delete profile[key];
+    const schemaVal = schema[key];
+    const profileVal = profile[key];
+
+    // Special-case arrays first, because they're a type of object, but not type-equivalent to non-array objects
+    if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
+      if (Array.isArray(profileVal) !== Array.isArray(schemaVal)) {
+        if (Array.isArray(schemaVal)) {
+          errors.push(`Error for field '${ fullPath(key) }': expecting an array, got '${ JSON.stringify(profileVal) }'`);
+        } else {
+          errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got an array ${ JSON.stringify(profileVal) }`);
+        }
       }
     } else if (haveUserDefinedObject(parentPathParts.concat(key))) {
       // Keep this part of the profile
+    } else if (typeof profileVal !== typeof schemaVal) {
+      errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
     } else {
       // Finally recurse and compare the schema sub-object with the specified sub-object
-      validateDeploymentProfile(profile[key], schema[key], parentPathParts.concat(key));
+      const newParentParts = parentPathParts.length === 0 ? [key] : parentPathParts.concat(key);
+
+      validateDeploymentProfileWithErrors(profileVal, errors, schemaVal, newParentParts);
     }
   }
 
