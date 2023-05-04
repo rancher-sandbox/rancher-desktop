@@ -21,14 +21,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
-type Tracker interface {
-	Get(containerID string) nat.PortMap
-	Add(containerID string, portMapping nat.PortMap) error
-	Remove(containerID string) error
-	RemoveAll() error
-	NetTracker
-}
-
 // PortTracker keeps track of port mappings and forwards
 // them to the privileged service on the host over AF_VSOCK
 // tunnel (vtunnel).

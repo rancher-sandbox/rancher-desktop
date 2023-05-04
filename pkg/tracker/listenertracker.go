@@ -27,11 +27,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-type NetTracker interface {
-	AddListener(ctx context.Context, ip net.IP, port int) error
-	RemoveListener(ctx context.Context, ip net.IP, port int) error
-}
-
 // ListenerTracker manages listeners.
 type ListenerTracker struct {
 	// outstanding listeners; the key is generated via ipPortToAddr.

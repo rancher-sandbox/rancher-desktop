@@ -41,18 +41,20 @@ func TestListenerTracker(t *testing.T) {
 		{testPort: 9899},
 	}
 
-	for _, tt := range tests { //nolint:varnamelen // tt is a standard naming to use in test
-		t.Run(fmt.Sprintf("Should create listener with port: %d", tt.testPort), func(t *testing.T) {
-			err := listenerTracker.AddListener(ctx, testIPAddr, tt.testPort)
+	for _, tt := range tests {
+		testCase := tt
+		t.Run(fmt.Sprintf("Should create listener with port: %d", testCase.testPort), func(t *testing.T) {
+			t.Parallel()
+			err := listenerTracker.AddListener(ctx, testIPAddr, testCase.testPort)
 			assert.Nil(t, err)
 
-			_, err = net.Dial("tcp", ipPortToAddr(testIPAddr, tt.testPort))
+			_, err = net.Dial("tcp", ipPortToAddr(testIPAddr, testCase.testPort))
 			assert.Nil(t, err)
 
-			err = listenerTracker.RemoveListener(ctx, testIPAddr, tt.testPort)
+			err = listenerTracker.RemoveListener(ctx, testIPAddr, testCase.testPort)
 			assert.Nil(t, err)
 
-			_, err = net.Dial("tcp", ipPortToAddr(testIPAddr, tt.testPort))
+			_, err = net.Dial("tcp", ipPortToAddr(testIPAddr, testCase.testPort))
 			assert.ErrorIs(t, err, syscall.ECONNREFUSED)
 		})
 	}
