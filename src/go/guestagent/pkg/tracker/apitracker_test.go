@@ -27,6 +27,7 @@ import (
 )
 
 const (
+	hostSwitchIP = "192.168.127.2"
 	containerID  = "containerID_1"
 	containerID2 = "containerID_2"
 	hostIP       = "127.0.0.1"
@@ -64,7 +65,7 @@ func TestBasicAdd(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, expectedExposeReq.Local, ipPortBuilder(hostIP, hostPort))
-	assert.Equal(t, expectedExposeReq.Remote, ipPortBuilder(tracker.HostSwitchIP, hostPort))
+	assert.Equal(t, expectedExposeReq.Remote, ipPortBuilder(hostSwitchIP, hostPort))
 
 	actualPortMapping := apiTracker.Get(containerID)
 	assert.Equal(t, portMapping, actualPortMapping)
@@ -128,18 +129,18 @@ func TestAddWithError(t *testing.T) {
 		[]*types.ExposeRequest{
 			{
 				Local:  ipPortBuilder(hostIP, hostPort),
-				Remote: ipPortBuilder(tracker.HostSwitchIP, hostPort),
+				Remote: ipPortBuilder(hostSwitchIP, hostPort),
 			},
 			{
 				Local:  ipPortBuilder(hostIP3, hostPort),
-				Remote: ipPortBuilder(tracker.HostSwitchIP, hostPort),
+				Remote: ipPortBuilder(hostSwitchIP, hostPort),
 			},
 		},
 	)
 	assert.NotContains(t, expectedExposeReq,
 		&types.ExposeRequest{
 			Local:  ipPortBuilder(hostIP2, hostPort),
-			Remote: ipPortBuilder(tracker.HostSwitchIP, hostPort),
+			Remote: ipPortBuilder(hostSwitchIP, hostPort),
 		},
 	)
 

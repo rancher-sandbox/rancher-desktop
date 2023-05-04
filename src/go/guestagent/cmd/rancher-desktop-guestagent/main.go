@@ -109,7 +109,7 @@ func main() {
 
 	if *enablePrivilegedService {
 		if *vtunnelAddr == "" {
-			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
+			log.Fatal("-vtunnelAddr must be provided when -privilegedService is enabled.")
 		}
 
 		wslAddr, err := getWSLAddr(wslInfName)

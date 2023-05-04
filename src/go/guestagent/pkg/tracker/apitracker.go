@@ -30,10 +30,15 @@ import (
 )
 
 const (
+	// The Gateway IP address that is statically reserved
+	// by DHCP and will not change. It is used to initialize
+	// the NewAPITracker.
 	GatewayBaseURL = "http://192.168.127.1:80"
-	HostSwitchIP   = "192.168.127.2"
-	exposeAPI      = "/services/forwarder/expose"
-	unexposeAPI    = "/services/forwarder/unexpose"
+	// Tap device (eth0) IP which is also allocated to the host-switch
+	// it is statically reserved by DHCP.
+	hostSwitchIP = "192.168.127.2"
+	exposeAPI    = "/services/forwarder/expose"
+	unexposeAPI  = "/services/forwarder/unexpose"
 )
 
 var (
@@ -64,7 +69,7 @@ func NewAPITracker(baseURL string) *APITracker {
 	}
 }
 
-// Add adds a container ID and port mapping to the tracker and calls the
+// Add a container ID and port mapping to the tracker and calls the
 // /services/forwarder/expose endpoint to forward the port mappings.
 func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 	var errs []error
@@ -86,7 +91,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 			err = a.expose(
 				&types.ExposeRequest{
 					Local:  ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
-					Remote: ipPortBuilder(HostSwitchIP, portBinding.HostPort),
+					Remote: ipPortBuilder(hostSwitchIP, portBinding.HostPort),
 				})
 			if err != nil {
 				errs = append(errs, fmt.Errorf("exposing %+v failed: %w", portBinding, err))
