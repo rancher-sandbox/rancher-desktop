@@ -1,37 +1,33 @@
+<script lang="ts">
+import { Card } from '@rancher/components';
+import Vue from 'vue';
+
+export default Vue.extend({
+  name:       'troubleshooting-line-item',
+  components: { Card },
+});
+</script>
 <template>
-  <div class="troubleshooting-line-item">
-    <div class="description">
-      <h3>
-        <slot name="title">
-        </slot>
-      </h3>
-      <span>
-        <slot name="description">
-        </slot>
+  <card
+    class="troubleshooting-line-item"
+    :show-highlight-border="false"
+  >
+    <template #title>
+      <slot name="title"></slot>
+    </template>
+    <template #body>
+      <slot name="description"></slot>
+      <span class="options">
+        <slot name="options"></slot>
       </span>
-      <div class="options">
-        <slot name="options">
-        </slot>
-      </div>
-    </div>
-    <slot>
-    </slot>
-  </div>
+    </template>
+    <template #actions>
+      <slot name="actions"></slot>
+    </template>
+  </card>
 </template>
 
 <style lang="scss" scoped>
-  .troubleshooting-line-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .description {
-    margin-right: 1.5rem;
-  }
-
   .options {
     margin-top: 0.5rem;
   }
