@@ -22,7 +22,7 @@ export const preferencesNavItems: NavItems[] = [
   },
   {
     name: process.platform === 'win32' ? 'WSL' : 'Virtual Machine',
-    tabs: process.platform === 'win32' ? ['integrations', 'network'] : [],
+    tabs: process.platform === 'win32' ? ['integrations', 'network'] : ['hardware', 'volumes'],
   },
   {
     name: 'Container Engine',
