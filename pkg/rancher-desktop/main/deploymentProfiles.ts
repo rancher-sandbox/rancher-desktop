@@ -13,7 +13,10 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.deploymentProfile;
 
-const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
+const REGISTRY_PATH_PROFILE = [
+  ['SOFTWARE', 'Policies', 'Rancher Desktop'], // recommended profile location
+  ['SOFTWARE', 'Rancher Desktop', 'Profile'], // backward compatible location
+];
 
 export class DeploymentProfileError extends Error {
 }
@@ -52,37 +55,41 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
 
   switch (os.platform()) {
   case 'win32':
-    for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
-      const registryKey = nativeReg.openKey(key, REGISTRY_PATH_PROFILE.join('\\'), nativeReg.Access.READ);
+    findWin32Profile: {
+      for (const registryPath of REGISTRY_PATH_PROFILE) {
+        for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
+          const registryKey = nativeReg.openKey(key, registryPath.join('\\'), nativeReg.Access.READ);
 
-      if (!registryKey) {
-        continue;
-      }
-      const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
-      const lockedKey = nativeReg.openKey(registryKey, 'Locked', nativeReg.Access.READ);
+          if (!registryKey) {
+            continue;
+          }
+          const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
+          const lockedKey = nativeReg.openKey(registryKey, 'Locked', nativeReg.Access.READ);
 
-      try {
-        if (defaultsKey) {
-          defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
+          try {
+            if (defaultsKey) {
+              defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
+            }
+            if (lockedKey) {
+              locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
+            }
+          } catch (err) {
+            console.error( `Error reading deployment profile: ${ err }`);
+          } finally {
+            nativeReg.closeKey(registryKey);
+            if (defaultsKey) {
+              nativeReg.closeKey(defaultsKey);
+            }
+            if (lockedKey) {
+              nativeReg.closeKey(lockedKey);
+            }
+          }
+          // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
+          // Alternatively, if the keys work, we could break, even if both hives are empty.
+          if ((defaults && Object.keys(defaults).length) || (locked && Object.keys(locked).length)) {
+            break findWin32Profile;
+          }
         }
-        if (lockedKey) {
-          locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
-        }
-      } catch (err) {
-        console.error( `Error reading deployment profile: ${ err }`);
-      } finally {
-        nativeReg.closeKey(registryKey);
-        if (defaultsKey) {
-          nativeReg.closeKey(defaultsKey);
-        }
-        if (lockedKey) {
-          nativeReg.closeKey(lockedKey);
-        }
-      }
-      // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
-      // Alternatively, if the keys work, we could break, even if both hives are empty.
-      if ((defaults && Object.keys(defaults).length) || (locked && Object.keys(locked).length)) {
-        break;
       }
     }
     break;
