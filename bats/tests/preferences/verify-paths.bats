@@ -54,8 +54,7 @@ setup() {
 # This bashrc test assumes that this test will succeed, but it frees us
 # from sleeping after changing application.path-management-strategy
 no_bashrc_path_manager() {
-    run grep --silent 'MANAGED BY RANCHER DESKTOP START' "$HOME/.bashrc"
-    assert_failure
+    ! grep --silent 'MANAGED BY RANCHER DESKTOP START' "$HOME/.bashrc"
 }
 
 @test 'move to manual path-management' {
