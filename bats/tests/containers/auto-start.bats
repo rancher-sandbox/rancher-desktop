@@ -60,7 +60,7 @@ load '../helpers/load'
 
     if is_windows; then
         run powershell.exe -c "reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v RancherDesktop"
-        assert_success
+        assert_failure
         assert_output --partial "The system was unable to find the specified registry"
     fi
 }
