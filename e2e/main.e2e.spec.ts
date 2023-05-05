@@ -78,7 +78,7 @@ test.describe.serial('Main App Test', () => {
     const troubleshootingPage = await navPage.navigateTo('Troubleshooting');
 
     await expect(navPage.mainTitle).toHaveText('Troubleshooting');
-    await expect(troubleshootingPage.dashboard).toBeVisible();
+    await expect(troubleshootingPage.troubleshooting).toBeVisible();
     await expect(troubleshootingPage.logsButton).toBeVisible();
     await expect(troubleshootingPage.factoryResetButton).toBeVisible();
   });
