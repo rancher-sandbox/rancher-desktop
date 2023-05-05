@@ -4,6 +4,7 @@ import os from 'os';
 import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
+import PreferencesVirtualMachineEmulation from '@pkg/components/Preferences/VirtualMachineEmulation.vue';
 import PreferencesVirtualMachineHardware from '@pkg/components/Preferences/VirtualMachineHardware.vue';
 import PreferencesVirtualMachineNetwork from '@pkg/components/Preferences/VirtualMachineNetwork.vue';
 import PreferencesVirtualMachineVolumes from '@pkg/components/Preferences/VirtualMachineVolumes.vue';
@@ -24,6 +25,7 @@ export default Vue.extend({
     PreferencesVirtualMachineHardware,
     PreferencesVirtualMachineVolumes,
     PreferencesVirtualMachineNetwork,
+    PreferencesVirtualMachineEmulation,
   },
   props: {
     preferences: {
@@ -38,7 +40,7 @@ export default Vue.extend({
     activeTab(): string {
       return this.getActiveTab || 'hardware';
     },
-    hasNetworkTab(): boolean {
+    isPlatformDarwin(): boolean {
       return os.platform() === 'darwin';
     },
   },
@@ -71,20 +73,26 @@ export default Vue.extend({
   >
     <template #tabs>
       <tab
-        v-if="hasNetworkTab"
+        v-if="isPlatformDarwin"
+        label="Emulation"
+        name="emulation"
+        :weight="1"
+      />
+      <tab
+        v-if="isPlatformDarwin"
         label="Network"
         name="network"
-        :weight="1"
+        :weight="2"
       />
       <tab
         label="Volumes"
         name="volumes"
-        :weight="2"
+        :weight="3"
       />
       <tab
         label="Hardware"
         name="hardware"
-        :weight="3"
+        :weight="4"
       />
     </template>
     <div class="virtual-machine-content">
