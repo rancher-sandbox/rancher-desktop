@@ -26,6 +26,17 @@ assert_nothing() {
     true
 }
 
+jq_output() {
+    jq -r "$@" <<<"${output}"
+}
+
+get_setting() {
+    local json_key=$1
+    run rdctl api /settings
+    assert_success
+    jq_output "${json_key}"
+}
+
 try() {
     local max=24
     local delay=5

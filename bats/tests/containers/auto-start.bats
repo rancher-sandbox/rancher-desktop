@@ -8,27 +8,20 @@ load '../helpers/load'
     start_application
 }
 
-get_json_key() {
-    local json_key=$1
-    run rdctl list-settings
-    assert_success
-    jq -r "${json_key}" <<<"${output}"
-}
-
 @test 'Verify that initial Behavior is all set to false' {
-    run get_json_key '.application.autoStart'
+    run get_setting '.application.autoStart'
     assert_output false
-    run get_json_key '.application.startInBackground'
+    run get_setting '.application.startInBackground'
     assert_output false
-    run get_json_key '.application.window.quitOnClose'
+    run get_setting '.application.window.quitOnClose'
     assert_output false
-    run get_json_key '.application.hideNotificationIcon'
+    run get_setting '.application.hideNotificationIcon'
     assert_output false
 }
 
 @test 'Enable auto start' {
     rdctl set --application.auto-start=true
-    run get_json_key '.application.autoStart'
+    run get_setting '.application.autoStart'
     assert_output true
 }
 
@@ -51,7 +44,7 @@ get_json_key() {
 
 @test 'Disable auto start' {
     rdctl set --application.auto-start=false
-    run get_json_key '.application.autoStart'
+    run get_setting '.application.autoStart'
     assert_output false
 }
 
@@ -74,36 +67,36 @@ get_json_key() {
 
 @test 'Enable quit-on-close' {
     rdctl set --application.window.quit-on-close=true
-    run get_json_key '.application.window.quitOnClose'
+    run get_setting '.application.window.quitOnClose'
     assert_output true
 }
 
 @test 'Disable quit-on-close' {
     rdctl set --application.window.quit-on-close=false
-    run get_json_key '.application.window.quitOnClose'
+    run get_setting '.application.window.quitOnClose'
     assert_output false
 }
 
 @test 'Enable start-in-background' {
     rdctl set --application.start-in-background=true
-    run get_json_key '.application.startInBackground'
+    run get_setting '.application.startInBackground'
     assert_output true
 }
 
 @test 'Disable start-in-background' {
     rdctl set --application.start-in-background=false
-    run get_json_key '.application.startInBackground'
+    run get_setting '.application.startInBackground'
     assert_output false
 }
 
 @test 'Enable hide-notification-icon' {
     rdctl set --application.hide-notification-icon=true
-    run get_json_key '.application.hideNotificationIcon'
+    run get_setting '.application.hideNotificationIcon'
     assert_output true
 }
 
 @test 'Disable hide-notification-icon' {
     rdctl set --application.hide-notification-icon=false
-    run get_json_key '.application.hideNotificationIcon'
+    run get_setting '.application.hideNotificationIcon'
     assert_output false
 }
