@@ -10,12 +10,6 @@ setup() {
     fi
 }
 
-teardown_file() {
-    load '../helpers/load'
-    run rdctl shutdown
-    assert_nothing
-}
-
 @test 'factory reset' {
     factory_reset
 }
