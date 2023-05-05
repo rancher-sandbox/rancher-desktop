@@ -5,6 +5,7 @@ import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.diagnostics;
+let allowSuccessfulConnectionDiagnosticLog = true;
 
 // Returns the timeout, in milliseconds, for the network connectivity check.
 function getTimeout(): number {
@@ -28,20 +29,26 @@ async function checkNetworkConnectivity(): Promise<boolean> {
   const timeout = getTimeout();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   let connected: boolean;
+  const runningConnectivityTestMessage = `Running connectivity test with timeout of ${ timeout } ms`;
 
-  console.log(`Running connectivity test with timeout of ${ timeout } ms`);
   try {
     await fetch('https://example.com/', { signal: controller.signal });
-    console.log('Connection test completed successfully');
+    if (allowSuccessfulConnectionDiagnosticLog) {
+      console.log(runningConnectivityTestMessage);
+      console.log('Connection test completed successfully');
+      allowSuccessfulConnectionDiagnosticLog = false;
+    }
     connected = true;
   } catch (error: any) {
     let errorMessage = error;
 
+    console.log(runningConnectivityTestMessage);
     if (error.name === 'AbortError') {
       errorMessage = `timed out after ${ timeout } ms`;
     }
     console.log(`Got error while checking connectivity: ${ errorMessage }`);
     connected = false;
+    allowSuccessfulConnectionDiagnosticLog = true;
   } finally {
     clearTimeout(timeoutId);
   }
