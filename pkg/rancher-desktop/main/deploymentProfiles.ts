@@ -492,12 +492,10 @@ function haveUserDefinedObject(pathParts: string[]): boolean {
 function isUserDefinedObjectIgnoreCase(pathParts: string[], key: string): boolean {
   key = key.toLowerCase();
   if (pathParts.length === 0) {
-    return key === 'extensions';
+    return equivFunc(key, 'extensions');
   } else if (pathParts.length === 1) {
-    const parentFieldName = pathParts[0].toLowerCase();
-
-    return ((key === 'integrations' && parentFieldName === 'wsl') ||
-      (key === 'mutedchecks' && parentFieldName === 'diagnostics'));
+    return ((equivFunc(pathParts[0], 'WSL') && equivFunc(key, 'integrations')) ||
+      (equivFunc(pathParts[0], 'diagnostics') && equivFunc(key, 'mutedChecks')));
   }
 
   return false;
