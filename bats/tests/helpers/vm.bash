@@ -10,18 +10,18 @@ wait_for_shell() {
 }
 
 factory_reset() {
-    rdctl factory-reset
-
-    if is_unix; then
-        if pgrep -f rancher-desktop; then
-            pkill -f rancher-desktop
-            # Re-run because RD was not stopped before deleting the data
-            rdctl factory-reset
+    if using_npm_run_dev; then
+        if is_unix; then
+            run rdctl shutdown
+            run pkill -f "$(readlink -f "$PATH_REPO_ROOT/node_modules")"
+            run pkill -f "$(readlink -f "$PATH_RESOURCES")"
+            run pkill -f "$(readlink -f "$LIMA_HOME")"
+        else
+            # TODO: kill `npm run dev` instance on Windows
+            true
         fi
-    else
-        # TODO: kill `npm run dev` instance on Windows
-        true
     fi
+    rdctl factory-reset
 
     if is_windows; then
         run sudo ip link delete docker0
@@ -89,7 +89,7 @@ start_container_engine() {
 EOF
 
     if using_npm_run_dev; then
-        # translated args back into the internal API format
+        # translate args back into the internal API format
         local api_args=()
         for arg in "${args[@]}"; do
             api_args+=("$(apify_arg "$arg")")
@@ -106,8 +106,8 @@ EOF
 # shellcheck disable=SC2120
 start_kubernetes() {
     start_container_engine \
-        --kubernetes-enabled \
-        --kubernetes-version "$RD_KUBERNETES_PREV_VERSION" \
+        --kubernetes.enabled \
+        --kubernetes.version "$RD_KUBERNETES_PREV_VERSION" \
         "$@"
 }
 
