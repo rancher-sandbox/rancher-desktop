@@ -7,6 +7,14 @@
 
 load '../helpers/load'
 
+setup() {
+    if is_linux; then
+        if [ "$(sysctl -n net.ipv4.ip_unprivileged_port_start)" -gt 80 ]; then
+            skip "net.ipv4.ip_unprivileged_port_start must be 80 or less"
+        fi
+    fi
+}
+
 @test 'factory reset' {
     factory_reset
 }
