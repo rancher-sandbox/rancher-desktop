@@ -66,6 +66,9 @@ start_container_engine() {
             --virtual-machine.memory-in-gb 6
         )
     fi
+    if using_networking_tunnel; then
+        args+=(--experimental.virtual-machine.networking-tunnel)
+    fi
 
     # TODO containerEngine.allowedImages.patterns and WSL.integrations
     # TODO cannot be set from the commandline yet

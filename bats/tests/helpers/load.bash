@@ -20,14 +20,19 @@ source "$PATH_BATS_ROOT/bats-support/load.bash"
 source "$PATH_BATS_ROOT/bats-assert/load.bash"
 source "$PATH_BATS_ROOT/bats-file/load.bash"
 
-# "defaults.bash" *must* be sourced before the rest of the files
-source "$PATH_BATS_HELPERS/defaults.bash"
-source "$PATH_BATS_HELPERS/utils.bash"
 source "$PATH_BATS_HELPERS/os.bash"
+source "$PATH_BATS_HELPERS/utils.bash"
+
+# os.bash and utils.bash must be loaded before defaults.bash
+source "$PATH_BATS_HELPERS/defaults.bash"
+
+# defaults.bash must be loaded before paths.bash
 source "$PATH_BATS_HELPERS/paths.bash"
 
-# "vm.bash" must be loaded first to define `using_containerd` etc
+# paths.bash must be loaded before vm.bash
 source "$PATH_BATS_HELPERS/vm.bash"
+
+# vm.bash must be loaded before kubernetes.bash and commands.bash
 source "$PATH_BATS_HELPERS/kubernetes.bash"
 source "$PATH_BATS_HELPERS/commands.bash"
 
