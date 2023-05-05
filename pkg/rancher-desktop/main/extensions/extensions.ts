@@ -19,7 +19,7 @@ import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.extensions;
 
-class ExtensionErrorImpl extends Error implements ExtensionError {
+export class ExtensionErrorImpl extends Error implements ExtensionError {
   [ExtensionErrorMarker] = 0;
   code: ExtensionErrorCode;
 

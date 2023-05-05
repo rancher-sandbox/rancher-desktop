@@ -111,11 +111,15 @@ export interface ExtensionManager {
    * Get the given extension.
    * @param image The image reference of the extension, possibly including the
    *        tag.  If the tag is not supplied, the currently-installed version is
-   *        used; if no version is installed, "latest" is assumed.
+   *        used (see options.preferInstalled); if no version is installed,
+   *        "latest" is assumed.
+   * @param [options.preferInstalled=true] If the given image reference does not
+   *        include tags and the extension is already installed, return the
+   *        currently installed version.
    * @note This may cause the given image to be downloaded.
    * @note The extension will not be automatically installed.
    */
-  getExtension(image: string): Promise<Extension>;
+  getExtension(image: string, options?: { preferInstalled?: boolean }): Promise<Extension>;
 
   /**
    * Get a collection of all installed extensions.

@@ -1097,7 +1097,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
   async installExtension(image: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
     const em = await getExtensionManager();
-    const extension = await em?.getExtension(image);
+    const extension = await em?.getExtension(image, { preferInstalled: state === 'uninstall' });
 
     if (!extension) {
       console.debug(`Failed to install extension ${ image }: could not get extension.`);

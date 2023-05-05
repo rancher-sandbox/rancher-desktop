@@ -4,8 +4,12 @@ import { Readable } from 'stream';
 
 import Electron, { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import _ from 'lodash';
+import semver from 'semver';
 
-import { ExtensionImpl } from './extensions';
+import { ExtensionErrorImpl, ExtensionImpl } from './extensions';
+import {
+  Extension, ExtensionErrorCode, ExtensionManager, SpawnOptions, SpawnResult,
+} from './types';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { Settings } from '@pkg/config/settings';
@@ -15,8 +19,6 @@ import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursiveReadonly } from '@pkg/utils/typeUtils';
-
-import type { Extension, ExtensionManager, SpawnOptions, SpawnResult } from './types';
 
 const console = Logging.extensions;
 const ipcMain = getIpcMainProxy(console);
@@ -232,36 +234,67 @@ class ExtensionManagerImpl implements ExtensionManager {
     await Promise.all(tasks);
   }
 
-  async getExtension(image: string): Promise<Extension> {
-    // eslint-disable-next-line prefer-const
-    let [, repo, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
-    const extGroup = this.extensions[image] ?? {};
+  async getExtension(image: string, options: { preferInstalled?: boolean } = {}): Promise<Extension> {
+    let [, imageName, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
 
-    // The build process uses an older TypeScript that can't infer repo correctly.
-    repo ??= image;
+    // The build process uses an older TypeScript that can't infer imageName correctly.
+    imageName ??= image;
 
-    this.extensions[repo] = extGroup;
+    this.extensions[imageName] ??= {};
+    const extGroup = this.extensions[imageName];
+    const preferInstalled = options?.preferInstalled ?? true;
 
     if (tag) {
       // Requested a specific tag; create it if we don't have it.
-      extGroup[tag] ||= new ExtensionImpl(repo, tag, this.client);
+      extGroup[tag] ||= new ExtensionImpl(imageName, tag, this.client);
 
       return extGroup[tag];
     }
 
     // No tag specified; grab the installed version, if available
-    for (const ext of Object.values(extGroup)) {
-      if (await ext.isInstalled()) {
-        return ext;
+    if (preferInstalled) {
+      for (const ext of Object.values(extGroup)) {
+        if (await ext.isInstalled()) {
+          return ext;
+        }
       }
     }
 
     // If we get here, no tag is specified and nothing is installed.
-    // Return the latest version.
-    // TODO: Figure out something better than "latest" (#4362)
-    extGroup.latest ||= new ExtensionImpl(repo, 'latest', this.client);
+    tag = await this.findBestVersion(imageName);
+    extGroup[tag] ||= new ExtensionImpl(imageName, tag, this.client);
 
-    return extGroup.latest;
+    return extGroup[tag];
+  }
+
+  /**
+   * Given an image name (without tag), calculate the best tag to use as an
+   * extension image.
+   */
+  protected async findBestVersion(imageName: string): Promise<string> {
+    const tags = await this.client.getTags(
+      imageName, { namespace: ExtensionImpl.extensionNamespace });
+
+    console.debug(`Got tags: ${ JSON.stringify(Array.from(tags)) }`);
+
+    // Select the highest semver tag, if available.
+    const vers = Array.from(tags).map(tag => [semver.coerce(tag), tag] as const)
+      .filter(([v]) => v) as [semver.SemVer, string][];
+    const newest = vers.sort(([l], [r]) => semver.compare(l, r)).pop()?.[1];
+
+    if (newest) {
+      return newest;
+    }
+
+    // Use the "latest" tag, if available.
+    if (tags.has('latest')) {
+      return 'latest';
+    }
+
+    // No relevant tags are available.
+    throw new ExtensionErrorImpl(
+      ExtensionErrorCode.FILE_NOT_FOUND,
+      `Could not detect relevant version for image "${ imageName }"`);
   }
 
   async getInstalledExtensions() {
