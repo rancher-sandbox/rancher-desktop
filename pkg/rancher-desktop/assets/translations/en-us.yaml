@@ -342,6 +342,9 @@ virtualMachine:
         virtiofs:
           label: virtiofs
           description: Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+  socketVmNet:
+    legend: Enable socket-vmnet
+    label: Use socket-vmnet instead of vde-vmnet
 
 containerEngine:
   label: Container Engine
