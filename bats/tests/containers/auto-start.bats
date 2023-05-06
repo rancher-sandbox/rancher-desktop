@@ -10,18 +10,23 @@ load '../helpers/load'
 
 @test 'Verify that initial Behavior is all set to false' {
     run get_setting '.application.autoStart'
+    assert_success
     assert_output false
     run get_setting '.application.startInBackground'
+    assert_success
     assert_output false
     run get_setting '.application.window.quitOnClose'
+    assert_success
     assert_output false
     run get_setting '.application.hideNotificationIcon'
+    assert_success
     assert_output false
 }
 
 @test 'Enable auto start' {
     rdctl set --application.auto-start=true
     run get_setting '.application.autoStart'
+    assert_success
     assert_output true
 }
 
@@ -45,6 +50,7 @@ load '../helpers/load'
 @test 'Disable auto start' {
     rdctl set --application.auto-start=false
     run get_setting '.application.autoStart'
+    assert_success
     assert_output false
 }
 
@@ -68,35 +74,41 @@ load '../helpers/load'
 @test 'Enable quit-on-close' {
     rdctl set --application.window.quit-on-close=true
     run get_setting '.application.window.quitOnClose'
+    assert_success
     assert_output true
 }
 
 @test 'Disable quit-on-close' {
     rdctl set --application.window.quit-on-close=false
     run get_setting '.application.window.quitOnClose'
+    assert_success
     assert_output false
 }
 
 @test 'Enable start-in-background' {
     rdctl set --application.start-in-background=true
     run get_setting '.application.startInBackground'
+    assert_success
     assert_output true
 }
 
 @test 'Disable start-in-background' {
     rdctl set --application.start-in-background=false
     run get_setting '.application.startInBackground'
+    assert_success
     assert_output false
 }
 
 @test 'Enable hide-notification-icon' {
     rdctl set --application.hide-notification-icon=true
     run get_setting '.application.hideNotificationIcon'
+    assert_success
     assert_output true
 }
 
 @test 'Disable hide-notification-icon' {
     rdctl set --application.hide-notification-icon=false
     run get_setting '.application.hideNotificationIcon'
+    assert_success
     assert_output false
 }
