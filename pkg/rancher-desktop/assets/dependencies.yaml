@@ -13,7 +13,7 @@ steve: 0.1.0-beta9
 guestAgent: 0.3.11
 rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.6.4
-ECRCredentialHelper: 0.6.0
+ECRCredentialHelper: 0.7.0
 hostResolver: 0.1.5
 mobyOpenAPISpec: "1.43"
 wix: wix3112rtm
