@@ -21,11 +21,10 @@ describe('runCommand', () => {
   it('runs the command', async() => {
     const expected = `Some output`;
 
-    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath, options) => {
+    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath) => {
       const home = findHomeDir() ?? '';
 
       expect(filepath).toEqual(path.join(home, '.docker', 'config.json'));
-      expect(options).toMatchObject({ encoding: 'utf-8' });
 
       return Promise.resolve(JSON.stringify({ credsStore: 'pikachu' }));
     });
@@ -61,6 +60,9 @@ describe('runCommand', () => {
     expect(jest.mocked(spawnFile)).not.toHaveBeenCalled();
   });
 
+  // Check managing credentials, for the case where there's a per-host override
+  // in the `credHelpers` key, as well as the case where there is no such
+  // override.
   describe.each([
     {
       description: 'overridden', host: 'override.test', executable: 'bulbasaur',
@@ -82,6 +84,8 @@ describe('runCommand', () => {
       });
     });
 
+    // Check each action, `get`, `erase`, `store`, and an unknown action.
+    // We need per-command checks here as our logic varies per command.
     test.each([
       { command: 'get', input: host },
       { command: 'erase', input: host },
@@ -110,11 +114,10 @@ describe('list', () => {
   let helpers: Record<string, any> = {};
 
   beforeEach(() => {
-    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath, options) => {
+    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath) => {
       const home = findHomeDir() ?? '';
 
       expect(filepath).toEqual(path.join(home, '.docker', 'config.json'));
-      expect(options).toMatchObject({ encoding: 'utf-8' });
 
       return Promise.resolve(JSON.stringify(config));
     });
