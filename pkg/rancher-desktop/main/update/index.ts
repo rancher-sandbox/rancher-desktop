@@ -66,7 +66,7 @@ Electron.ipcMain.on('update-state', () => {
 });
 
 Electron.ipcMain.on('update-apply', () => {
-  if (!autoUpdater) {
+  if (!autoUpdater || process.env.RD_FORCE_UPDATES_ENABLED) {
     return;
   }
   autoUpdater.quitAndInstall();
@@ -123,6 +123,10 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   } catch (e) {
     console.error(e);
     throw e;
+  }
+
+  if (process.env.RD_FORCE_UPDATES_ENABLED) {
+    updater.forceDevUpdateConfig = true;
   }
 
   updater.logger = console;
@@ -246,7 +250,7 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
  * @returns Whether the update is being installed.
  */
 async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
-  if (doInstall && await hasQueuedUpdate()) {
+  if (doInstall && await hasQueuedUpdate() && !process.env.RD_FORCE_UPDATES_ENABLED) {
     console.log('Update is cached; forcing re-check to install.');
 
     return await new Promise((resolve) => {

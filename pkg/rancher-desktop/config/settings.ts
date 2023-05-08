@@ -261,7 +261,12 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
     }
   }
-  if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
+
+  // determine whether updates should be enabled
+  if (process.env.RD_FORCE_UPDATES_ENABLED) {
+    console.debug('updates enabled via RD_FORCE_UPDATES_ENABLED');
+    settings.application.updater.enabled = true;
+  } else if (os.platform() === 'linux' && !process.env.APPIMAGE) {
     settings.application.updater.enabled = false;
   } else {
     const appVersion = getProductionVersion();

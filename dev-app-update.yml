@@ -1,0 +1,6 @@
+owner: rancher-sandbox
+repo: rancher-desktop
+updaterCacheDirName: rancher-desktop
+provider: custom
+upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
+vPrefixedTagName: true
