@@ -55,38 +55,52 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
 
   switch (os.platform()) {
   case 'win32':
+    // eslint-disable-next-line no-labels
     findWin32Profile: {
-      for (const registryPath of REGISTRY_PATH_PROFILE) {
-        for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
+      for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
+        for (const registryPath of REGISTRY_PATH_PROFILE) {
           const registryKey = nativeReg.openKey(key, registryPath.join('\\'), nativeReg.Access.READ);
 
           if (!registryKey) {
             continue;
           }
-          const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
-          const lockedKey = nativeReg.openKey(registryKey, 'Locked', nativeReg.Access.READ);
 
-          try {
-            if (defaultsKey) {
-              defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
-            }
-            if (lockedKey) {
-              locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
-            }
-          } catch (err) {
-            console.error( `Error reading deployment profile: ${ err }`);
-          } finally {
-            nativeReg.closeKey(registryKey);
-            if (defaultsKey) {
-              nativeReg.closeKey(defaultsKey);
-            }
-            if (lockedKey) {
-              nativeReg.closeKey(lockedKey);
+          if (!defaults || Object.keys(defaults).length === 0) {
+            const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
+
+            try {
+              if (defaultsKey) {
+                defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
+              }
+            } catch (err) {
+              console.error( `Error reading default deployment profile: ${ err }`);
+            } finally {
+              if (defaultsKey) {
+                nativeReg.closeKey(defaultsKey);
+              }
             }
           }
-          // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
-          // Alternatively, if the keys work, we could break, even if both hives are empty.
-          if ((defaults && Object.keys(defaults).length) || (locked && Object.keys(locked).length)) {
+
+          if (!locked || Object.keys(locked).length === 0) {
+            const lockedKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
+
+            try {
+              if (lockedKey) {
+                locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
+              }
+            } catch (err) {
+              console.error( `Error reading locked deployment profile: ${ err }`);
+            } finally {
+              if (lockedKey) {
+                nativeReg.closeKey(lockedKey);
+              }
+            }
+          }
+
+          nativeReg.closeKey(registryKey);
+
+          if ((defaults && Object.keys(defaults).length) && (locked && Object.keys(locked).length)) {
+            // eslint-disable-next-line no-labels
             break findWin32Profile;
           }
         }
