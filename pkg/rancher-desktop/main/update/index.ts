@@ -101,6 +101,11 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
 
     options.updateProvider = LonghornProvider;
 
+    if (process.env.RD_UPGRADE_RESPONDER_URL) {
+      console.log(`using custom upgrade responder URL ${ process.env.RD_UPGRADE_RESPONDER_URL }`);
+      options.upgradeServer = process.env.RD_UPGRADE_RESPONDER_URL;
+    }
+
     switch (os.platform()) {
     case 'win32': {
       updater = new MsiUpdater(options);
