@@ -97,12 +97,16 @@ func main() {
 		cancel()
 	}()
 
-	if !*enableContainerd && !*enableDocker {
-		log.Fatal("requires either -docker or -containerd enabled.")
+	if !*enableContainerd &&
+		!*enableDocker &&
+		!*enableIptables {
+		log.Fatal("requires either -docker, -containerd or -iptables enabled.")
 	}
 
-	if *enableContainerd && *enableDocker {
-		log.Fatal("requires either -docker or -containerd, not both.")
+	if *enableContainerd &&
+		*enableDocker &&
+		*enableIptables {
+		log.Fatal("requires either -docker, -containerd or -iptables, not all.")
 	}
 
 	var portTracker tracker.Tracker
