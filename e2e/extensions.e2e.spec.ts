@@ -25,6 +25,7 @@ import type { BrowserView, BrowserWindow } from 'electron';
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
 const rdctl = getFullPathForTool('rdctl');
+const execPath = process.execPath.replace(/\\/g, '/');
 
 fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
 
@@ -165,7 +166,7 @@ test.describe.serial('Extensions', () => {
         return result as JSHandle<BrowserView>;
       });
 
-      view.evaluate((v, { window }) => {
+      await view.evaluate((v, { window }) => {
         v.webContents.addListener('console-message', (event, level, message, line, source) => {
           const levelName = (['verbose', 'info', 'warning', 'error'])[level];
           const outputMessage = `[${ levelName }] ${ message } @${ source }:${ line }`;
@@ -202,7 +203,7 @@ test.describe.serial('Extensions', () => {
       test('capturing output', async() => {
         const script = `
           ddClient.extension.host.cli.exec("${ wrapperName }", [
-            "${ process.execPath }", "-e", "console.log(1 + 1)"
+            "${ execPath }", "-e", "console.log(1 + 1)"
           ]).then(({cmd, killed, signal, code, stdout, stderr}) => ({
             /* Rebuild the object so it can be serialized properly */
             cmd, killed, signal, code, stdout, stderr
@@ -223,7 +224,7 @@ test.describe.serial('Extensions', () => {
           (new Promise((resolve) => {
             let output = [], errors = [], exitCodes = [];
             ddClient.extension.host.cli.exec("${ wrapperName }", [
-              "${ process.execPath }", "-e",
+              "${ execPath }", "-e",
               "console.log(2 + 2); console.error(3 + 3);"],
               {
                 stream: {
