@@ -66,35 +66,11 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
           }
 
           if (!defaults || Object.keys(defaults).length === 0) {
-            const defaultsKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
-
-            try {
-              if (defaultsKey) {
-                defaults = readRegistryUsingSchema(settings.defaultSettings, defaultsKey) ?? {};
-              }
-            } catch (err) {
-              console.error( `Error reading default deployment profile: ${ err }`);
-            } finally {
-              if (defaultsKey) {
-                nativeReg.closeKey(defaultsKey);
-              }
-            }
+            defaults = readRegistryByType(registryKey, 'Defaults');
           }
 
           if (!locked || Object.keys(locked).length === 0) {
-            const lockedKey = nativeReg.openKey(registryKey, 'Defaults', nativeReg.Access.READ);
-
-            try {
-              if (lockedKey) {
-                locked = readRegistryUsingSchema(settings.defaultSettings, lockedKey) ?? {};
-              }
-            } catch (err) {
-              console.error( `Error reading locked deployment profile: ${ err }`);
-            } finally {
-              if (lockedKey) {
-                nativeReg.closeKey(lockedKey);
-              }
-            }
+            locked = readRegistryByType(registryKey, 'Locked');
           }
 
           nativeReg.closeKey(registryKey);
@@ -138,6 +114,26 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
   profiles.locked = validateDeploymentProfile(locked, lockableDefaultSettings, []) ?? {};
 
   return profiles;
+}
+
+function readRegistryByType(regKey: nativeReg.HKEY, type: string ) {
+  let profile: undefined|RecursivePartial<settings.Settings>;
+
+  const key = nativeReg.openKey(regKey, type, nativeReg.Access.READ);
+
+  try {
+    if (key) {
+      profile = readRegistryUsingSchema(settings.defaultSettings, key) ?? {};
+    }
+  } catch (err) {
+    console.error(`Error reading ${ type } deployment profile: ${ err }`);
+  } finally {
+    if (key) {
+      nativeReg.closeKey(key);
+    }
+  }
+
+  return profile;
 }
 
 // This function can't call `plutil` directly with `inputPath`, because unit-testing mocks `fs.readFileSync`
