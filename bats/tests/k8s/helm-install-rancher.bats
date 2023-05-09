@@ -3,12 +3,7 @@
 load '../helpers/load'
 
 setup() {
-    # TODO - Consider implementing a function to check for sudo permissions before running tests that require them.
-    # If sudo permissions are not present, these tests should be skipped.
-    if is_linux; then
-        run sudo sysctl -w net.ipv4.ip_unprivileged_port_start=443
-        assert_nothing
-    fi
+    needs_port 443
 }
 
 @test 'factory reset' {
