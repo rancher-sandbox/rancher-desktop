@@ -9,18 +9,6 @@ const RESOURCES_PATH = path.join(CURRENT_DIR, 'resources');
 type platform = 'darwin' | 'linux' | 'win32';
 type expectedData = Record<platform, string | Error>;
 
-jest.mock('electron', () => {
-  return {
-    __esModule: true,
-    default:    {
-      app: {
-        isPackaged: false,
-        getAppPath: () => CURRENT_DIR,
-      },
-    },
-  };
-});
-
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
     appHome: {

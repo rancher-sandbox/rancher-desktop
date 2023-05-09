@@ -1,15 +1,12 @@
 import fs from 'fs';
 import http from 'http';
-import os from 'os';
 import path from 'path';
-import stream from 'stream';
 import { URL } from 'url';
 
-import { findHomeDir } from '@kubernetes/client-node';
+import runCredentialHelper from './credentialUtils';
 
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
 import * as serverHelper from '@pkg/main/serverHelper';
-import * as childProcess from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
@@ -26,11 +23,6 @@ const console = Logging.server;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
-
-type credHelperInfo = {
-  credsStore: string;
-  credHelpers: Record<string, string>
-};
 
 type checkerFnType = (stdout: string) => boolean;
 
@@ -128,13 +120,8 @@ export class HttpCredentialHelperServer {
 
         return;
       }
-      const helperInfo = await this.getCredentialHelperName(commandName, data);
 
-      if (commandName === 'list') {
-        await this.doListCommand(helperInfo, request, response);
-      } else {
-        await this.doNonListCommand(`docker-credential-${ helperInfo.credsStore }`, commandName, data, request, response);
-      }
+      await this.doCommand(commandName, data, request, response);
     } catch (err) {
       console.debug(`FAILURE: Processing request ${ request.method } ${ path }`);
       console.log(`Error handling ${ request.url }`, err);
@@ -145,19 +132,19 @@ export class HttpCredentialHelperServer {
     }
   }
 
-  protected async doNonListCommand(
-    helperName: string,
+  protected async doCommand(
     commandName: string,
     data: string,
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     try {
-      const stdout = await this.runCommand(helperName, commandName, data, request);
+      const stdout = await this.runCommand(commandName, data, request);
 
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.write(ensureEndsWithNewline(stdout));
     } catch (err: any) {
       const stderr = (err.stderr || err.stdout) ?? err.toString();
+      const helperName = err.helper ?? '<unknown>';
 
       console.debug(`FAILURE: Processing request ${ commandName } with credential helper ${ helperName }`);
       response.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -165,7 +152,7 @@ export class HttpCredentialHelperServer {
     }
   }
 
-  protected async runCommand(helperName: string,
+  protected async runCommand(
     commandName: string,
     data: string,
     request: http.IncomingMessage): Promise<string> {
@@ -189,124 +176,16 @@ export class HttpCredentialHelperServer {
       throw new Error(requestCheckError);
     }
 
-    const platform = os.platform();
-    let pathVar = process.env.PATH ?? '';
+    const output = await runCredentialHelper(commandName, data);
 
-    // The PATH needs to contain our resources directory (on macOS that would
-    // not be in the application's PATH).
-    // NOTE: This needs to match DockerDirManager.spawnFileWithExtraPath
-    pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
-
-    const body = stream.Readable.from(data);
-    const { stdout } = await childProcess.spawnFile(helperName, [commandName], {
-      env:   { ...process.env, PATH: pathVar },
-      stdio: [body, 'pipe', console],
-    });
-
-    if (!checkerFn(stdout)) {
+    if (!checkerFn(output)) {
       throw new Error(`Invalid output for ${ commandName } command.`);
     }
 
-    return stdout;
-  }
-
-  /**
-   * For the LIST command, there are multiple possible sources of information
-   * that need to be merged into a simple
-   *    { ServerURL: Username } hash.
-   * The first source is the credsStore.
-   * Then if any helper credsStores are identified in the `credHelpers` section,
-   * get the full { ServerURL: Username } from each of them,
-   * and keep only those ServerURLs that point to that credsStore.
-   *
-   * Modeled after https://github.com/docker/cli/blob/d0bd373986b6678bfe1a0eb6989ce13907247a85/cli/config/configfile/file.go#L285
-   *
-   * @param {String} credsStore: global credential-helper-name defined in ~/.docker/config.json
-   * @param {Record<string, string>} credHelpers: hash of URLs to credential-helper-name
-   * @param {http.IncomingMessage} request:
-   * @param {http.ServerResponse} response:
-   */
-  protected async doListCommand(
-    { credsStore, credHelpers }: credHelperInfo,
-    request: http.IncomingMessage,
-    response: http.ServerResponse): Promise<void> {
-    try {
-      const serverAndUsernameInfo: Record<string, string> =
-        JSON.parse(await this.runCommand(`docker-credential-${ credsStore }`,
-          'list', '', request));
-      const helperNames = new Set(Object.values(credHelpers ?? {}));
-
-      for (const helperName of helperNames) {
-        try {
-          const helperServerAndUserNames: Record<string, string> =
-            JSON.parse(await this.runCommand(`docker-credential-${ helperName }`,
-              'list', '', request));
-
-          for (const serverURL in helperServerAndUserNames) {
-            if (credHelpers[serverURL] === helperName) {
-              serverAndUsernameInfo[serverURL] = helperServerAndUserNames[serverURL];
-            }
-          }
-        } catch (err) {
-          console.debug(`Failed to get credential list for helper ${ helperName }`);
-        }
-      }
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(JSON.stringify(serverAndUsernameInfo));
-
-      return;
-    } catch (err: any) {
-      const stderr = err.stderr || err.stdout || err.toString();
-
-      console.debug(`credentialServer: list: writing back status 400, error: ${ stderr }`);
-      response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.write(stderr);
-    }
-  }
-
-  /**
-   * Returns the name of the credential-helper to use (which is a suffix of the helper `docker-credential-`).
-   *
-   * Note that callers are responsible for catching exceptions, which usually happens if the
-   * `$HOME/docker/config.json` doesn't exist, its JSON is corrupt, or it doesn't have a `credsStore` field.
-   */
-  protected async getCredentialHelperName(command: string, payload: string): Promise<credHelperInfo> {
-    const home = findHomeDir();
-    const dockerConfig = path.join(home ?? '', '.docker', 'config.json');
-    const contents = JSON.parse((await fs.promises.readFile(dockerConfig, { encoding: 'utf-8' })).toString());
-    const credHelpers = contents.credHelpers;
-    const credsStore = contents.credsStore;
-
-    if (credHelpers) {
-      let credsStoreOverride = '';
-
-      switch (command) {
-      case 'erase':
-      case 'get':
-        credsStoreOverride = credHelpers[payload.trim()];
-        break;
-      case 'store': {
-        const obj = JSON.parse(payload);
-
-        credsStoreOverride = obj.ServerURL ? credHelpers[obj.ServerURL] : '';
-      }
-      }
-      if (credsStoreOverride) {
-        return { credsStore: credsStoreOverride, credHelpers: { } };
-      }
-    }
-
-    return { credsStore, credHelpers };
+    return output;
   }
 
   closeServer() {
     this.server.close();
-  }
-
-  protected async runWithInput(data: string, command: string, args: string[]): Promise<string> {
-    const body = stream.Readable.from(data);
-    const { stdout } = await childProcess.spawnFile(command, args, { stdio: [body, 'pipe', console] });
-
-    return stdout;
   }
 }

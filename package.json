@@ -186,6 +186,9 @@
       "^@pkg/(.*)$": "<rootDir>/pkg/rancher-desktop/$1"
     },
     "preset": "ts-jest/presets/js-with-babel",
+    "setupFiles": [
+      "<rootDir>/pkg/rancher-desktop/utils/testUtils/setupElectron.ts"
+    ],
     "testEnvironment": "jsdom"
   },
   "browserslist": [
