@@ -23,18 +23,23 @@ source "$PATH_BATS_ROOT/bats-file/load.bash"
 source "$PATH_BATS_HELPERS/os.bash"
 source "$PATH_BATS_HELPERS/utils.bash"
 
-# os.bash and utils.bash must be loaded before defaults.bash
+# defaults.bash uses is_windows() from os.bash and
+# validate_enum() and is_true() from utils.bash.
 source "$PATH_BATS_HELPERS/defaults.bash"
 
-# defaults.bash must be loaded before paths.bash
+# paths.bash uses RD_LOCATION from defaults.bash
 source "$PATH_BATS_HELPERS/paths.bash"
 
-# paths.bash must be loaded before vm.bash
+# commands.bash uses is_containerd() from defaults.bash,
+# is_windows() etc from os.bash,
+# and PATH_* variables from paths.bash
+source "$PATH_BATS_HELPERS/commands.bash"
+
+# vm.bash uses various PATH_* variables from paths.bash
 source "$PATH_BATS_HELPERS/vm.bash"
 
-# vm.bash must be loaded before kubernetes.bash and commands.bash
+# kubernetes.bash has no load-time dependencies
 source "$PATH_BATS_HELPERS/kubernetes.bash"
-source "$PATH_BATS_HELPERS/commands.bash"
 
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"

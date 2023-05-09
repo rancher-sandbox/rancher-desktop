@@ -162,11 +162,3 @@ wait_for_container_engine() {
         assert_success
     fi
 }
-
-using_containerd() {
-    test "$RD_CONTAINER_ENGINE" = "containerd"
-}
-
-using_docker() {
-    ! using_containerd
-}
