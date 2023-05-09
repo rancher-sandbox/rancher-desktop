@@ -15,7 +15,7 @@ import {
 } from '@pkg/config/settings';
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
-import { validateImageName, validateImageTag } from '@pkg/utils/dockerUtils';
+import { parseImageReference, validateImageName, validateImageTag } from '@pkg/utils/dockerUtils';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferences';
 
@@ -73,8 +73,14 @@ export default class SettingsValidator {
     this.allowedSettings ||= {
       version:     this.checkUnchanged,
       application: {
-        adminAccess:            this.checkLima(this.checkBoolean),
-        debug:                  this.checkBoolean,
+        adminAccess: this.checkLima(this.checkBoolean),
+        debug:       this.checkBoolean,
+        extensions:  {
+          allowed: {
+            enabled: this.checkBoolean,
+            list:    this.checkExtensionAllowList,
+          },
+        },
         pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
         telemetry:              { enabled: this.checkBoolean },
         /** Whether we should check for updates and apply them. */
@@ -546,6 +552,33 @@ export default class SettingsValidator {
     }
 
     return !_.isEqual(desiredValue, currentValue);
+  }
+
+  protected checkExtensionAllowList(
+    mergedSettings: Settings,
+    currentValue: string[],
+    desiredValue: any,
+    errors: string[],
+    fqname: string,
+  ): boolean {
+    if (_.isEqual(desiredValue, currentValue)) {
+      // Accept no-op changes
+      return false;
+    }
+
+    const changed = this.checkUniqueStringArray(mergedSettings, currentValue, desiredValue, errors, fqname);
+
+    if (errors.length) {
+      return changed;
+    }
+
+    for (const pattern of desiredValue as string[]) {
+      if (!parseImageReference(pattern)) {
+        errors.push(`${ fqname }: "${ pattern }" does not describe an image reference`);
+      }
+    }
+
+    return errors.length === 0 && changed;
   }
 
   protected checkPreferencesNavItemCurrent(

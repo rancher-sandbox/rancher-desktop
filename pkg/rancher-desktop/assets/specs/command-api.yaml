@@ -345,6 +345,20 @@ components:
             debug:
               type: boolean
               x-rd-usage: generate more verbose logging
+            extensions:
+              type: object
+              properties:
+                allowed:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      x-rd-hidden: true
+                    list:
+                      type: array
+                      items:
+                        type: string
+                        x-rd-hidden: true
             pathManagementStrategy:
               type: string
               enum: [manual, rcfiles]
