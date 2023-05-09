@@ -8,6 +8,7 @@ import (
 )
 
 func TestJsonToRegFormat(t *testing.T) {
+
 	t.Run("complains about bad arguments", func(t *testing.T) {
 		type errorTestCases struct {
 			hiveType      string
