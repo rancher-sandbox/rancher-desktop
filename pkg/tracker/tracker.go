@@ -25,12 +25,10 @@ import (
 // NetTracker is the interface that wraps the methods
 // that are used to manage Add/Remove tcp listeners.
 type NetTracker interface {
-	// AddListener creates a TCP listener for a given IP and Port
-	// it returns an error if it fails.
+	// AddListener creates a TCP listener for a given IP and Port.
 	AddListener(ctx context.Context, ip net.IP, port int) error
 
-	// RemoveListener removes a TCP listener for a given IP and Port
-	// it returns an error if it fails.
+	// RemoveListener removes a TCP listener for a given IP and Port.
 	RemoveListener(ctx context.Context, ip net.IP, port int) error
 }
 
@@ -41,16 +39,15 @@ type Tracker interface {
 	// Get returns a portMap using the containerID as a lookup Key.
 	Get(containerID string) nat.PortMap
 
-	// Add adds a portMap to the storage using the containerID as a Key
-	// and returns an error if the it fails.
+	// Add adds a portMap to the storage using the containerID as a Key.
+	// It replaces all existing portMappings, without attempting to unbind listeners,
+	// so the caller is responsible for calling Remove first if necessary.
 	Add(containerID string, portMapping nat.PortMap) error
 
-	// Remove removes a portMap using the containerID as a key, if fails
-	// it returns and error.
+	// Remove removes a portMap using the containerID as a key.
 	Remove(containerID string) error
 
-	// RemoveAll removes all the available portMappings in the storage,
-	// if fails it reutrns an error.
+	// RemoveAll removes all the available portMappings in the storage.
 	RemoveAll() error
 
 	NetTracker

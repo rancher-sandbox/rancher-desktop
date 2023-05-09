@@ -67,7 +67,13 @@ func (p *portStorage) getAll() map[string]nat.PortMap {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	return p.portmap
+	portMappings := make(map[string]nat.PortMap, len(p.portmap))
+
+	for k, v := range p.portmap {
+		portMappings[k] = v
+	}
+
+	return portMappings
 }
 
 func (p *portStorage) remove(containerID string) {

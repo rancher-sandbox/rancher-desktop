@@ -21,19 +21,19 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
-// PortTracker keeps track of port mappings and forwards
+// VTunnelTracker keeps track of port mappings and forwards
 // them to the privileged service on the host over AF_VSOCK
 // tunnel (vtunnel).
-type PortTracker struct {
+type VTunnelTracker struct {
 	portStorage      *portStorage
 	vtunnelForwarder forwarder.Forwarder
 	wslAddrs         []types.ConnectAddrs
 	*ListenerTracker
 }
 
-// NewPortTracker creates a new Port Tracker.
-func NewPortTracker(vtunnelForwarder forwarder.Forwarder, wslAddrs []types.ConnectAddrs) *PortTracker {
-	return &PortTracker{
+// NewVTunnelTracker creates a new Port Tracker.
+func NewVTunnelTracker(vtunnelForwarder forwarder.Forwarder, wslAddrs []types.ConnectAddrs) *VTunnelTracker {
+	return &VTunnelTracker{
 		portStorage:      newPortStorage(),
 		vtunnelForwarder: vtunnelForwarder,
 		wslAddrs:         wslAddrs,
@@ -43,7 +43,7 @@ func NewPortTracker(vtunnelForwarder forwarder.Forwarder, wslAddrs []types.Conne
 
 // Add adds a container ID and port mapping to the tracker and calls the
 // vtunnle forwarder to send the port mappings to privileged service.
-func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
+func (p *VTunnelTracker) Add(containerID string, portMap nat.PortMap) error {
 	if len(portMap) == 0 {
 		return nil
 	}
@@ -63,13 +63,13 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 }
 
 // Get gets a port mapping by container ID from the tracker.
-func (p *PortTracker) Get(containerID string) nat.PortMap {
+func (p *VTunnelTracker) Get(containerID string) nat.PortMap {
 	return p.portStorage.get(containerID)
 }
 
 // Remove deletes a container ID and port mapping from the tracker and calls the
 // vtunnle forwarder to send the port mappings to privileged service.
-func (p *PortTracker) Remove(containerID string) error {
+func (p *VTunnelTracker) Remove(containerID string) error {
 	portMap := p.portStorage.get(containerID)
 	if len(portMap) != 0 {
 		err := p.vtunnelForwarder.Send(types.PortMapping{
@@ -88,7 +88,7 @@ func (p *PortTracker) Remove(containerID string) error {
 }
 
 // RemoveAll removes all the port bindings from the tracker.
-func (p *PortTracker) RemoveAll() error {
+func (p *VTunnelTracker) RemoveAll() error {
 	p.portStorage.removeAll()
 
 	return nil
