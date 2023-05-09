@@ -304,7 +304,7 @@ virtualMachine:
     label: Enable networking tunnel
   mount:
     type:
-      legend: Mount type
+      legend: Mount Type
       options:
         reverse-sshfs:
           label: reverse-sshfs
@@ -345,6 +345,18 @@ virtualMachine:
   socketVmNet:
     legend: Enable socket-vmnet
     label: Use socket-vmnet instead of vde-vmnet
+  type:
+    legend: Virtual Machine Type
+    options:
+      qemu:
+        label: QEMU
+        description: Use the QEMU emulator.
+      vz:
+        label: VZ
+        description: Use the Apple Virtualization framework.
+  useRosetta:
+    legend: VZ option
+    label: Enable Rosetta support
 
 containerEngine:
   label: Container Engine
@@ -2613,6 +2625,7 @@ prefs:
     'false': Show Releases Only
     label: Helm Charts
   experimental: Experimental
+  onlyFromVentura: The setting requires macOS 13.0 (Ventura) or later.
 
 principal:
   loading: Loading&hellip;

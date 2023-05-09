@@ -123,7 +123,6 @@ export default Vue.extend({
                   {{ option.label }}
                   <labeled-badge
                     v-if="option.experimental"
-                    color="bg-darker"
                     :text="t('prefs.experimental')"
                   />
                 </template>
