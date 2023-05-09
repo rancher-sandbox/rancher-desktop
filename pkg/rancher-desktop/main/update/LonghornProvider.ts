@@ -66,6 +66,14 @@ export interface LonghornUpdateInfo extends UpdateInfo {
   unsupportedUpdateAvailable: boolean;
 }
 
+type UpgradeResponderRequestPayload = {
+  appVersion: string;
+  extraInfo: {
+    platform: string;
+    platformVersion: string;
+  },
+};
+
 /**
  * LonghornUpgraderResponse describes the response from the Longhorn Upgrade
  * Responder service.
@@ -242,8 +250,8 @@ async function getPlatformVersion(): Promise<string> {
  * things, from the Upgrade Responder server.
  */
 export async function queryUpgradeResponder(url: string, currentVersion: semver.SemVer): Promise<UpgradeResponderQueryResult> {
-  const requestPayload = {
-    appVersion: currentVersion,
+  const requestPayload: UpgradeResponderRequestPayload = {
+    appVersion: currentVersion.toString(),
     extraInfo:  {
       platform:        `${ process.platform }-${ os.arch() }`,
       platformVersion: await getPlatformVersion(),
