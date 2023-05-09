@@ -26,6 +26,11 @@ import type { BrowserView, BrowserWindow } from 'electron';
 const srcDir = path.dirname(path.dirname(__filename));
 const rdctl = getFullPathForTool('rdctl');
 
+// On Windows there's an eval routine that treats backslashes as escape-sequence leaders,
+// so it's better to replace them with forward slashes. The file can still be found,
+// and we don't have to deal with unintended escape-sequence processing.
+const execPath = process.execPath.replace(/\\/g, '/');
+
 fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
 
 const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
@@ -165,7 +170,7 @@ test.describe.serial('Extensions', () => {
         return result as JSHandle<BrowserView>;
       });
 
-      view.evaluate((v, { window }) => {
+      await view.evaluate((v, { window }) => {
         v.webContents.addListener('console-message', (event, level, message, line, source) => {
           const levelName = (['verbose', 'info', 'warning', 'error'])[level];
           const outputMessage = `[${ levelName }] ${ message } @${ source }:${ line }`;
@@ -202,7 +207,7 @@ test.describe.serial('Extensions', () => {
       test('capturing output', async() => {
         const script = `
           ddClient.extension.host.cli.exec("${ wrapperName }", [
-            "${ process.execPath }", "-e", "console.log(1 + 1)"
+            "${ execPath }", "-e", "console.log(1 + 1)"
           ]).then(({cmd, killed, signal, code, stdout, stderr}) => ({
             /* Rebuild the object so it can be serialized properly */
             cmd, killed, signal, code, stdout, stderr
@@ -223,7 +228,7 @@ test.describe.serial('Extensions', () => {
           (new Promise((resolve) => {
             let output = [], errors = [], exitCodes = [];
             ddClient.extension.host.cli.exec("${ wrapperName }", [
-              "${ process.execPath }", "-e",
+              "${ execPath }", "-e",
               "console.log(2 + 2); console.error(3 + 3);"],
               {
                 stream: {
