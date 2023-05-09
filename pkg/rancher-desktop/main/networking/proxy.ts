@@ -8,12 +8,22 @@ import { URL } from 'url';
 import { Agent, ClientRequest, RequestOptions, AgentCallbackReturn } from 'agent-base';
 import Electron from 'electron';
 import HttpProxyAgent from 'http-proxy-agent';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpsProxyAgent, HttpsProxyAgentOptions } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
+
+interface HttpConnectOpts extends net.TcpNetConnectOpts {
+    secureEndpoint: false;
+}
+interface HttpsConnectOpts extends tls.ConnectionOptions {
+    port: number;
+    secureEndpoint: true;
+}
+
+type CustomAgentConnectOpts = HttpConnectOpts | HttpsConnectOpts;
 
 export default class ElectronProxyAgent extends Agent {
   protected session: Electron.Session;
@@ -75,22 +85,25 @@ export default class ElectronProxyAgent extends Agent {
   }
 }
 
-class CustomHttpsProxyAgent extends HttpsProxyAgent {
-  constructor(proxyURL: string, opts: HttpsAgentOptions) {
+class CustomHttpsProxyAgent<Uri extends string> extends HttpsProxyAgent<Uri> {
+  constructor(proxy: Uri | URL, opts?: HttpsProxyAgentOptions<Uri>) {
     // Use object destructing here to ensure we only get wanted properties.
-    const { hostname, port, protocol } = new URL(proxyURL);
+    const { hostname, port, protocol } = new URL(proxy.toString());
     const mergedOpts = Object.assign({}, opts, {
       hostname, port, protocol,
     });
 
-    super(mergedOpts);
-    this.options = opts;
+    super(proxy, mergedOpts);
+    if (opts) {
+      this.options = opts;
+    }
   }
 
-  callback(req: ClientRequest, opts: RequestOptions): Promise<net.Socket> {
+  async connect(req: http.ClientRequest, opts: CustomAgentConnectOpts): Promise<net.Socket> {
     const mergedOptions = Object.assign({}, this.options, opts);
+    const socket = await super.connect(req, mergedOptions);
 
-    return super.callback(req, mergedOptions);
+    return socket;
   }
 }
 
