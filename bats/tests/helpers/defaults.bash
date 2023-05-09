@@ -3,6 +3,14 @@
 
 validate_enum RD_CONTAINER_ENGINE containerd moby
 
+using_containerd() {
+    test "$RD_CONTAINER_ENGINE" = "containerd"
+}
+
+using_docker() {
+    ! using_containerd
+}
+
 ########################################################################
 : "${RD_KUBERNETES_VERSION:=1.23.6}"
 

@@ -53,8 +53,8 @@ encoded_id() { # variant
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-image)\"].version" <<<"${output}")"
-    assert_output '"latest"'
+    run jq_output ".[\"$(id vm-image)\"].version"
+    assert_output latest
 }
 
 @test 'image - check for running container' {
@@ -76,8 +76,8 @@ encoded_id() { # variant
 
     run rdctl api /v1/extensions
     assert_success
-    output="$(jq ".[\"$(id vm-compose)\"].version" <<<"${output}")"
-    assert_output '"latest"'
+    run jq_output ".[\"$(id vm-compose)\"].version"
+    assert_output latest
 }
 
 @test 'compose - check for running container' {
