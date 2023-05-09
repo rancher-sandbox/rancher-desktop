@@ -81,9 +81,9 @@ interface commandFlagType {
 
 type yamlObject = any;
 
-type goTypeName = 'string' | 'bool' | 'int';
-type goCmdFlagTypeName = 'String' | 'Bool' | 'Int';
-type typeValue = goTypeName | settingsTreeType;
+type goTypeName = 'string' | 'bool' | 'int' | 'array';
+type goCmdFlagTypeName = 'String' | 'Bool' | 'Int' | 'Array';
+type typeValue = goTypeName | settingsTreeType | 'hash';
 type settingsTypeObject = { type: typeValue };
 type settingsTreeType = Record<string, settingsTypeObject>;
 
@@ -202,10 +202,16 @@ class Generator {
     } else {
       const onlyLineParts = [indent, capitalize(propertyName), ' '];
 
-      if (includeJSONTag) {
-        onlyLineParts.push('*');
+      if (typeWrapper.type === 'array') {
+        onlyLineParts.push('[]string');
+      } else if (typeWrapper.type === 'hash') {
+        onlyLineParts.push('map[string]interface{}');
+      } else {
+        if (includeJSONTag) {
+          onlyLineParts.push('*');
+        }
+        onlyLineParts.push(typeWrapper.type);
       }
-      onlyLineParts.push(typeWrapper.type);
       if (includeJSONTag) {
         onlyLineParts.push(`\`json:"${ propertyName },omitempty"\``);
       }
@@ -226,6 +232,8 @@ class Generator {
       return `, strconv.Itoa(specifiedSettings.${ capitalizedName })`;
     case 'String':
       return `, specifiedSettings.${ capitalizedName }`;
+    case 'Array':
+      return '';
     }
   }
 
@@ -287,14 +295,23 @@ class Generator {
     case 'integer':
       return this.walkPropertyInteger(propertyName, preference, notAvailable, settingsTree);
     case 'array':
-      return this.walkPropertyArray(propertyName);
+      // not yet available
+      return this.walkPropertyArray(propertyName, preference, settingsTree);
     default:
       throw new Error(`walkProperty: unexpected preference.type: '${ preference.type }'`);
     }
   }
 
-  protected walkPropertyArray(propertyName: string): void {
-    console.log(`Not generating a CLI entry for property ${ propertyName }: arrays not supported.`);
+  protected walkPropertyArray(
+    propertyName: string,
+    preference: yamlObject,
+    settingsTree: settingsTreeType,
+  ): void {
+    this.updateLeaf(propertyName, capitalizeParts(propertyName),
+      'array', 'Array', 'nil',
+      preference,
+      true,
+      settingsTree);
   }
 
   protected walkPropertyBoolean(
@@ -329,7 +346,8 @@ class Generator {
     notAvailable: boolean,
     settingsTree: settingsTreeType): void {
     if (preference.additionalProperties) {
-      console.log(`Skipping ${ propertyName }: not settable from the command-line.`);
+      settingsTree[lastName(propertyName)] = { type: 'hash' };
+      // console.log(`Skipping ${ propertyName }: not settable from the command-line.`);
 
       return;
     }
