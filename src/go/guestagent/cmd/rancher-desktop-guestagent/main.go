@@ -57,6 +57,20 @@ var (
 		"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
 )
 
+//nolint:lll
+// Flags can only be enable in the following combination:
+// +======================+=======================+===========================+=========================+=============================+
+// |                      | Default Network Admin | Default Network Non-Admin | Namespace Network Admin | Namespace Network Non-Admin |
+// +======================+=======================+===========================+=========================+=============================+
+// | privilegedService    | enable                | disable                   | disable                 | disable                     |
+// +----------------------+-----------------------+---------------------------+-------------------------+-----------------------------+
+// | docker Or containerd | enable                | disable                   | enable                  | enable                      |
+// +----------------------+-----------------------+---------------------------+-------------------------+-----------------------------+
+// | iptables             | disable               | enable                    | disable                 | disable                     |
+// +----------------------+-----------------------+---------------------------+-------------------------+-----------------------------+
+// | Kubernetes           | enable                | enable                    | enable                  | enable                      |
+// +----------------------+-----------------------+---------------------------+-------------------------+-----------------------------+
+
 const (
 	wslInfName             = "eth0"
 	iptablesUpdateInterval = 3 * time.Second
@@ -97,6 +111,10 @@ func main() {
 		cancel()
 	}()
 
+	// Only one of the containerd, docker or iptables should be enabled
+	// at any give run. The containerd or docker is enabled depending
+	// on the chosen backend engine when privileged service is enabled
+	// and port mappings are sent over the VTunnel. However, when
 	if !*enableContainerd &&
 		!*enableDocker &&
 		!*enableIptables {
@@ -121,8 +139,8 @@ func main() {
 			log.Fatalf("failure getting WSL IP addresses: %v", err)
 		}
 
-		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
-		portTracker = tracker.NewPortTracker(forwarder, wslAddr)
+		forwarder := forwarder.NewVTunnelForwarder(*vtunnelAddr)
+		portTracker = tracker.NewVTunnelTracker(forwarder, wslAddr)
 	} else {
 		portTracker = tracker.NewAPITracker(tracker.GatewayBaseURL)
 	}

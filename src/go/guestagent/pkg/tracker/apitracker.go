@@ -137,7 +137,7 @@ func (a *APITracker) Remove(containerID string) error {
 
 			log.Debugf("calling %s API for the following port binding: %+v", unexposeAPI, portBinding)
 
-			err = a.unExpose(
+			err = a.unexpose(
 				&types.UnexposeRequest{
 					Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 				})
@@ -162,9 +162,7 @@ func (a *APITracker) Remove(containerID string) error {
 func (a *APITracker) RemoveAll() error {
 	var errs []error
 
-	allPortMappings := a.portStorage.getAll()
-
-	for _, portMapping := range allPortMappings {
+	for _, portMapping := range a.portStorage.getAll() {
 		for _, portBindings := range portMapping {
 			for _, portBinding := range portBindings {
 				// The unexpose API only supports IPv4
@@ -175,7 +173,7 @@ func (a *APITracker) RemoveAll() error {
 
 				log.Debugf("calling %s API for the following port binding: %+v", unexposeAPI, portBinding)
 
-				err = a.unExpose(
+				err = a.unexpose(
 					&types.UnexposeRequest{
 						Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
 					})
@@ -222,7 +220,7 @@ func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
 	return verifyResposeBody(res)
 }
 
-func (a *APITracker) unExpose(unexposeReq *types.UnexposeRequest) error {
+func (a *APITracker) unexpose(unexposeReq *types.UnexposeRequest) error {
 	bin, err := json.Marshal(unexposeReq)
 	if err != nil {
 		return err
