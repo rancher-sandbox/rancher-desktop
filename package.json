@@ -70,7 +70,7 @@
     "fs-extra": "11.1.0",
     "http-proxy-agent": "5.0.0",
     "http-proxy-middleware": "2.0.6",
-    "https-proxy-agent": "5.0.1",
+    "https-proxy-agent": "6.1.0",
     "intl-messageformat": "10.2.5",
     "jquery": "3.6.3",
     "jsonpath": "1.1.1",
