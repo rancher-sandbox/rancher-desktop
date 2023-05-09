@@ -25,6 +25,10 @@ import type { BrowserView, BrowserWindow } from 'electron';
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
 const rdctl = getFullPathForTool('rdctl');
+
+// On Windows there's an eval routine that treats backslashes as escape-sequence leaders,
+// so it's better to replace them with forward slashes. The file can still be found,
+// and we don't have to deal with unintended escape-sequence processing.
 const execPath = process.execPath.replace(/\\/g, '/');
 
 fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
