@@ -20,6 +20,19 @@ bool() {
     fi
 }
 
+# Ensure that the variable contains a valid value, e.g.
+# `validate_enum VAR value1 value2`
+validate_enum() {
+    local var=$1
+    shift
+    for value in "$@"; do
+        if [ "${!var}" = "$value" ]; then
+            return
+        fi
+    done
+    fatal "$var=${!var} is not a valid setting; select from [$*]"
+}
+
 assert_nothing() {
     # This is a no-op, used to show that run() has been used to continue the
     # test even when the command failed, but the failure itself is ignored.
