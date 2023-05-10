@@ -70,10 +70,20 @@ func (p *portStorage) getAll() map[string]nat.PortMap {
 	portMappings := make(map[string]nat.PortMap, len(p.portmap))
 
 	for k, v := range p.portmap {
-		portMappings[k] = v
+		portMappings[k] = copyPortMap(v)
 	}
 
 	return portMappings
+}
+
+func copyPortMap(m nat.PortMap) nat.PortMap {
+	portMap := make(nat.PortMap, len(m))
+
+	for k, v := range m {
+		portMap[k] = v
+	}
+
+	return portMap
 }
 
 func (p *portStorage) remove(containerID string) {

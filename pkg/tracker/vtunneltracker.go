@@ -16,10 +16,15 @@ limitations under the License.
 package tracker
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
+
+var ErrRemoveAll = errors.New("failed to remove all portMappings")
 
 // VTunnelTracker keeps track of port mappings and forwards
 // them to the privileged service on the host over AF_VSOCK
@@ -41,8 +46,8 @@ func NewVTunnelTracker(vtunnelForwarder forwarder.Forwarder, wslAddrs []types.Co
 	}
 }
 
-// Add adds a container ID and port mapping to the tracker and calls the
-// vtunnle forwarder to send the port mappings to privileged service.
+// Add a container ID and port mapping to the tracker and calls the
+// vtunnel forwarder to send the port mappings to privileged service.
 func (p *VTunnelTracker) Add(containerID string, portMap nat.PortMap) error {
 	if len(portMap) == 0 {
 		return nil
@@ -68,7 +73,7 @@ func (p *VTunnelTracker) Get(containerID string) nat.PortMap {
 }
 
 // Remove deletes a container ID and port mapping from the tracker and calls the
-// vtunnle forwarder to send the port mappings to privileged service.
+// vtunnel forwarder to send the port mappings to privileged service.
 func (p *VTunnelTracker) Remove(containerID string) error {
 	portMap := p.portStorage.get(containerID)
 	if len(portMap) != 0 {
@@ -89,7 +94,26 @@ func (p *VTunnelTracker) Remove(containerID string) error {
 
 // RemoveAll removes all the port bindings from the tracker.
 func (p *VTunnelTracker) RemoveAll() error {
-	p.portStorage.removeAll()
+	defer p.portStorage.removeAll()
+
+	allPortMappings := p.portStorage.getAll()
+
+	var errs []error
+
+	for _, portMap := range allPortMappings {
+		err := p.vtunnelForwarder.Send(types.PortMapping{
+			Remove:       true,
+			Ports:        portMap,
+			ConnectAddrs: p.wslAddrs,
+		})
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) != 0 {
+		return fmt.Errorf("%w: %+v", ErrRemoveAll, errs)
+	}
 
 	return nil
 }
