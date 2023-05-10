@@ -22,7 +22,7 @@ class RegistryAuth {
 
   /**
    * Ask the credential helpers for authentication for the given host.
-   * @param host The host to find auth for; possibly a URL instead.
+   * @param hosts The hosts to find auth for; possibly a URL instead.
    * @returns The value of the `Authorization` header to use.
    */
   protected async findAuth(...hosts: string[]): Promise<string | undefined> {
@@ -155,7 +155,7 @@ class RegistryAuth {
     try {
       issuedDate = Date.parse(parsed.issued_at);
     } catch (ex) {
-      const error = new Error(`Failed to parse authroization response issued_at ${ parsed.issued_at }`);
+      const error = new Error(`Failed to parse authorization response issued_at ${ parsed.issued_at }`);
 
       (error as any).cause = ex;
       throw error;
@@ -226,7 +226,7 @@ class RegistryAuth {
 
             switch (quoteType) {
             case 'backslash': {
-              // We can get away with just treating the next character as a
+              // We can get away with just treating the next character as
               // a literal (no `\n` for newline, etc.).
               value += header.substring(0, quotePos);
               header = header.substring(quotePos + 1);

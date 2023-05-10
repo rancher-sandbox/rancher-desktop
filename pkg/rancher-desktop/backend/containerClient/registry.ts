@@ -50,9 +50,12 @@ class DockerRegistry {
       for (const link of resp.headers[getAsList]('Link') ?? []) {
         const fields = link.split(/;\s*/);
 
-        if (!fields.includes('rel="next"')) {
+        if (!fields.some(field => /^rel=("?)next\1$/i.test(field))) {
           continue;
         }
+        // The `Link` header defined in RFC 8288 always has angle brackets
+        // around the (possibly relative) URL:
+        // https://www.rfc-editor.org/rfc/rfc8288#section-3
         endpoint = new URL(fields[0].replace(/^<(.+)>$/, '$1'), endpoint);
         hasMore = true;
       }

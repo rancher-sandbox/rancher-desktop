@@ -51,31 +51,26 @@ function makeRE(strings: TemplateStringsArray, ...substitutions: any[]) {
  * (including optional registry and one or more name components).
  */
 const ImageNameRegExp = (function() {
-  const domainComponent = makeRE`
-    # a domain component is alpha-numeric-or-dash, but the start and end
-    # characters may not be a dash.
-    [a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?
-    `;
+  // a domain component is alpha-numeric-or-dash, but the start and end
+  // characters may not be a dash.
+  const domainComponent = /[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?/;
+  // a domain is two or more domain components joined by dot, and optionally
+  // with a colon followed by a port number.
   const domain = makeRE`
-    # a domain is two or more domain components joined by dot, and optionally
-    # with a colon followed by a port number.
     ${ domainComponent }(?:\.${ domainComponent })+
     (?::[0-9]+)?
     `;
-  const nameComponent = makeRE`
-    # a name component is lower-alpha-numeric things, separated by any one of
-    # a set of separators.
-    [a-z0-9]+(?:(?:\.|_|__|-*)[a-z0-9]+)*
-    `;
-  const nameRE = makeRE`
+  // a name component is lower-alpha-numeric things, separated by any one of
+  // a set of separators.
+  const nameComponent = /[a-z0-9]+(?:(?:\.|_|__|-*)[a-z0-9]+)*/;
+
+  return makeRE`
     (?:(?<domain>${ domain })/)?
     (?<name>
       ${ nameComponent }
       (?:/${ nameComponent })*
     )
     `;
-
-  return nameRE;
 })();
 
 /**
