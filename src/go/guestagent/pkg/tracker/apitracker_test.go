@@ -71,6 +71,82 @@ func TestBasicAdd(t *testing.T) {
 	assert.Equal(t, portMapping, actualPortMapping)
 }
 
+func TestAddOverride(t *testing.T) {
+	t.Parallel()
+
+	var expectedExposeReq []*types.ExposeRequest
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var tmpReq *types.ExposeRequest
+		err := json.NewDecoder(r.Body).Decode(&tmpReq)
+		assert.NoError(t, err)
+		expectedExposeReq = append(expectedExposeReq, tmpReq)
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	portMapping := nat.PortMap{
+		"80/tcp": []nat.PortBinding{
+			{
+				HostIP:   hostIP,
+				HostPort: hostPort,
+			},
+		},
+		"443/tcp": []nat.PortBinding{
+			{
+				HostIP:   hostIP2,
+				HostPort: hostPort2,
+			},
+		},
+	}
+	err := apiTracker.Add(containerID, portMapping)
+	assert.NoError(t, err)
+
+	firstEntryIndex := 0
+	assert.Equal(t, expectedExposeReq[firstEntryIndex].Local, ipPortBuilder(hostIP, hostPort))
+	assert.Equal(t, expectedExposeReq[firstEntryIndex].Remote, ipPortBuilder(hostSwitchIP, hostPort))
+
+	secondEntryIndex := 1
+	assert.Equal(t, expectedExposeReq[secondEntryIndex].Local, ipPortBuilder(hostIP2, hostPort2))
+	assert.Equal(t, expectedExposeReq[secondEntryIndex].Remote, ipPortBuilder(hostSwitchIP, hostPort2))
+
+	actualPortMapping := apiTracker.Get(containerID)
+	assert.Equal(t, portMapping, actualPortMapping)
+
+	// reset the exposeReq slice
+	expectedExposeReq = nil
+
+	portMapping2 := nat.PortMap{
+		"80/tcp": []nat.PortBinding{
+			{
+				HostIP:   hostIP,
+				HostPort: hostPort,
+			},
+		},
+		"8080/tcp": []nat.PortBinding{
+			{
+				HostIP:   hostIP2,
+				HostPort: "8080",
+			},
+		},
+	}
+	err = apiTracker.Add(containerID, portMapping2)
+	assert.NoError(t, err)
+
+	assert.Equal(t, expectedExposeReq[firstEntryIndex].Local, ipPortBuilder(hostIP, hostPort))
+	assert.Equal(t, expectedExposeReq[firstEntryIndex].Remote, ipPortBuilder(hostSwitchIP, hostPort))
+
+	assert.Equal(t, expectedExposeReq[secondEntryIndex].Local, ipPortBuilder(hostIP2, "8080"))
+	assert.Equal(t, expectedExposeReq[secondEntryIndex].Remote, ipPortBuilder(hostSwitchIP, "8080"))
+
+	actualPortMapping = apiTracker.Get(containerID)
+	assert.Equal(t, portMapping2, actualPortMapping)
+}
+
 func TestAddWithError(t *testing.T) {
 	t.Parallel()
 
