@@ -46,11 +46,7 @@ function makeRE(strings: TemplateStringsArray, ...substitutions: any[]) {
   return new RegExp(uncommentedLines.join('').replace(/\s+/g, ''));
 }
 
-/**
- * ImageNameRegExp is a regular expression that matches a docker image name
- * (including optional registry and one or more name components).
- */
-const ImageNameRegExp = (function() {
+const { ImageNameRegExp, ImageNamePrefixRegExp } = (function() {
   // a domain component is alpha-numeric-or-dash, but the start and end
   // characters may not be a dash.
   const domainComponent = /[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?/;
@@ -64,13 +60,34 @@ const ImageNameRegExp = (function() {
   // a set of separators.
   const nameComponent = /[a-z0-9]+(?:(?:\.|_|__|-*)[a-z0-9]+)*/;
 
-  return makeRE`
+  /**
+   * ImageNameRegExp is a regular expression that matches a docker image name
+   * (including optional registry and one or more name components).
+   */
+  const ImageNameRegExp = makeRE`
     (?:(?<domain>${ domain })/)?
     (?<name>
       ${ nameComponent }
       (?:/${ nameComponent })*
     )
     `;
+
+  /**
+   * ImageRefPrefixRegExp is a regular expression similar to ImageNameRegExp but
+   * supports looking for prefixes (i.e. a name that ends in a slash).
+   * Note that we may end up with just the domain (no name).
+   */
+  const ImageNamePrefixRegExp = makeRE`
+    (?:
+      (?:(?<domain>${ domain })/)?
+      (?<name>
+        (?:${ nameComponent }/)*
+        (?:${ nameComponent })?
+      )
+    )
+  `;
+
+  return { ImageNameRegExp, ImageNamePrefixRegExp };
 })();
 
 /**
@@ -86,14 +103,28 @@ const ImageRefRegExp = makeRE`
   $
   `;
 
+const ImageRefPrefixRegExp = makeRE`
+  ^
+  ${ ImageNamePrefixRegExp }
+  (?::(?<tag>${ ImageTagRegExp }))?
+  $
+  `;
+
 /**
  * Given an image reference, parse it into (possibly) registry, name, and
  * (possibly) tag components.
+ * @param prefix If set, accept prefixes (names that end with a slash).
  */
-export function parseImageReference(reference: string): imageInfo | null {
-  const result = ImageRefRegExp.exec(reference);
+export function parseImageReference(reference: string, prefix = false): imageInfo | null {
+  const result = (prefix ? ImageRefPrefixRegExp : ImageRefRegExp).exec(reference);
 
   if (!result?.groups) {
+    return null;
+  }
+
+  if (!result.groups['domain'] && !result.groups['name']) {
+    // When checking for a prefix, parsing an empty string can succeed; in that
+    // case, reject it rather than accepting anything from Docker Hub.
     return null;
   }
 

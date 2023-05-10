@@ -1097,7 +1097,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     if (state === 'install') {
       console.debug(`Installing extension ${ image }...`);
       try {
-        if (await extension.install()) {
+        const { enabled, list } = cfg.application.extensions.allowed;
+
+        if (await extension.install(enabled ? list : undefined)) {
           return { status: 201 };
         } else {
           return { status: 204 };
@@ -1109,6 +1111,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
             return { status: 422, data: `The image ${ image } has invalid extension metadata` };
           case ExtensionErrorCode.FILE_NOT_FOUND:
             return { status: 422, data: `The image ${ image } failed to install: ${ ex.message }` };
+          case ExtensionErrorCode.INSTALL_DENIED:
+            return { status: 403, data: `The image ${ image } is not an allowed extension` };
           }
         }
         throw ex;

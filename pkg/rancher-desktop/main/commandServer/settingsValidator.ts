@@ -573,7 +573,7 @@ export default class SettingsValidator {
     }
 
     for (const pattern of desiredValue as string[]) {
-      if (!parseImageReference(pattern)) {
+      if (!parseImageReference(pattern, true)) {
         errors.push(`${ fqname }: "${ pattern }" does not describe an image reference`);
       }
     }

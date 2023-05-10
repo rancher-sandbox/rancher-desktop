@@ -211,6 +211,8 @@ class ExtensionManagerImpl implements ExtensionManager {
 
     // Install / uninstall extensions as needed.
     const tasks: Promise<any>[] = [];
+    const { enabled: allowEnabled, list: allowListRaw } = config.application.extensions.allowed;
+    const allowList = allowEnabled ? allowListRaw : undefined;
 
     for (const [repo, tag] of Object.entries(config.extensions)) {
       if (!tag) {
@@ -221,7 +223,7 @@ class ExtensionManagerImpl implements ExtensionManager {
 
       tasks.push((async(id: string) => {
         try {
-          return (await this.getExtension(id)).install();
+          return (await this.getExtension(id)).install(allowList);
         } catch (ex) {
           console.error(`Failed to install extension ${ id }`, ex);
         }

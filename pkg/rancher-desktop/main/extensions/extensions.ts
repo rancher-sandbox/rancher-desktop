@@ -12,6 +12,7 @@ import {
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import mainEvents from '@pkg/main/mainEvents';
+import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { defined } from '@pkg/utils/typeUtils';
@@ -142,8 +143,58 @@ export class ExtensionImpl implements Extension {
     return this._iconName as Promise<string>;
   }
 
-  async install(): Promise<boolean> {
+  /**
+   * Check if the given image is allowed to be installed according to the
+   * extension allow list.
+   * @throws If the image is not allowed to be installed.
+   */
+  protected static checkInstallAllowed(allowedImages: readonly string[] | undefined, image: string) {
+    const desired = parseImageReference(image);
+    const code = ExtensionErrorCode.INSTALL_DENIED;
+    const prefix = `Disallowing install of ${ image }:`;
+
+    if (!desired) {
+      throw new ExtensionErrorImpl(code, `${ prefix } Invalid image reference`);
+    }
+    if (!allowedImages) {
+      return;
+    }
+    for (const pattern of allowedImages) {
+      const allowed = parseImageReference(pattern, true);
+
+      if (allowed?.tag && allowed.tag !== desired.tag) {
+        // This pattern doesn't match the tag, look for something else.
+        continue;
+      }
+
+      if (allowed?.registry.href !== desired.registry.href) {
+        // This pattern has a different registry
+        continue;
+      }
+
+      if (!allowed.name) {
+        // If there's no name given, the whole registry is allowed.
+        return '';
+      }
+
+      if (allowed.name.endsWith('/')) {
+        if (desired.name.startsWith(allowed.name)) {
+          // The allowed pattern ends with a slash, anything in the org is fine.
+          return '';
+        }
+      } else if (allowed.name === desired.name) {
+        return '';
+      }
+    }
+
+    throw new ExtensionErrorImpl(code, `${ prefix } Image is not allowed`);
+  }
+
+  async install(allowedImages: readonly string[] | undefined): Promise<boolean> {
     const metadata = await this.metadata;
+
+    ExtensionImpl.checkInstallAllowed(allowedImages, this.image);
+    console.debug(`Image ${ this.image } is allowed to install: ${ allowedImages }`);
 
     await fs.promises.mkdir(this.dir, { recursive: true });
     try {

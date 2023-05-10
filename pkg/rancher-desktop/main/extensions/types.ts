@@ -71,10 +71,13 @@ export interface Extension {
 
   /**
    * Install this extension.
+   * @param allowedImages The list of extension images that are allowed to be
+   *        used; if all images are allowed, pass in undefined.
    * @note If the extension is already installed, this is a no-op.
+   * @throws If the settings specify an allow list and this is not in it.
    * @return Whether the extension was installed.
    */
-  install(): Promise<boolean>;
+  install(allowedImages: readonly string[] | undefined): Promise<boolean>;
   /**
    * Uninstall this extension.
    * @note If the extension was not installed, this is a no-op.
@@ -169,6 +172,7 @@ export const ExtensionErrorMarker = Symbol('extension-error');
 export enum ExtensionErrorCode {
   INVALID_METADATA,
   FILE_NOT_FOUND,
+  INSTALL_DENIED,
 }
 
 export interface ExtensionError extends Error {

@@ -74,7 +74,7 @@ export const defaultSettings = {
     extensions:  {
       allowed: {
         enabled: false,
-        list:    [],
+        list:    [] as Array<string>,
       },
     },
     pathManagementStrategy: PathManagementStrategy.NotSet,
