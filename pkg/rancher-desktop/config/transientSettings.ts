@@ -21,6 +21,7 @@ export const defaultTransientSettings = {
         Application:        'general',
         'Virtual Machine':  'hardware',
         'Container Engine': 'general',
+        ...(process.platform === 'win32' && { WSL: 'integration' }),
       } as Record<NavItemName, string | undefined>,
     },
   },

@@ -342,6 +342,15 @@ virtualMachine:
         virtiofs:
           label: virtiofs
           description: Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+  proxy:
+    legend: WSL Proxy
+    label: Enable the proxy used by rancher-desktop
+    addressTitle: Proxy address
+    address: Address
+    port: Port
+    authTitle: Authentication information
+    username: Username
+    password: Password
   socketVmNet:
     legend: Enable socket-vmnet
     label: Use socket-vmnet instead of vde-vmnet
