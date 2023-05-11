@@ -30,11 +30,10 @@ export default {
   components: { Images },
   data() {
     return {
-      settings:            defaultSettings,
-      images:              [],
-      imageNamespaces:     [],
-      supportsNamespaces:  true,
-      installedExtensions: [],
+      settings:           defaultSettings,
+      images:             [],
+      imageNamespaces:    [],
+      supportsNamespaces: true,
     };
   },
 
@@ -52,7 +51,7 @@ export default {
         .map(image => image.imageName);
     },
     installedExtensionImages() {
-      return this.installedExtensions.map(image => image.id);
+      return this.extensions.map(image => image.id);
     },
     protectedImages() {
       return [
@@ -64,6 +63,7 @@ export default {
     },
     ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),
     ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' }),
+    ...mapGetters('extensions', { extensions: 'list' }),
   },
 
   watch: {
@@ -133,14 +133,14 @@ export default {
     });
     ipcRenderer.send('settings-read');
 
-    ipcRenderer.on('extensions/list', this.installedExtensionsUpdate);
-    ipcRenderer.send('extensions/list');
+    ipcRenderer.on('extensions/changed', this.fetchExtensions);
+    this.$store.dispatch('extensions/fetch');
   },
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
     ipcRenderer.removeAllListeners('images-mounted');
     ipcRenderer.removeAllListeners('images-changed');
-    ipcRenderer.removeListener('extensions/list', this.installedExtensionsUpdate);
+    ipcRenderer.removeListener('extensions/changed', this.fetchExtensions);
   },
 
   methods: {
@@ -169,8 +169,8 @@ export default {
           { images: { namespace: value } } );
       }
     },
-    installedExtensionsUpdate(_event, extensions) {
-      this.installedExtensions = extensions || [];
+    fetchExtensions() {
+      this.$store.dispatch('extensions/fetch');
     },
   },
 };
