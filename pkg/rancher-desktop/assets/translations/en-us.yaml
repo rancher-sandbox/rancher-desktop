@@ -300,7 +300,7 @@ application:
 
 virtualMachine:
   networkingTunnel:
-    legend: Networking tunnel
+    legend: Networking Tunnel
     label: Enable networking tunnel
   mount:
     type:
@@ -314,7 +314,7 @@ virtualMachine:
           description: Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           options:
             cacheMode:
-              legend: Cache mode
+              legend: Cache Mode
               tooltip: Caching policy to be used
               options:
                 none: none
@@ -322,10 +322,10 @@ virtualMachine:
                 fscache: fscache
                 mmap: mmap
             mSizeInKb:
-              legend: Memory size in KiB
+              legend: Memory Size In KiB
               tooltip: Maximum package size in KiB
             protocolVersion:
-              legend: Protocol version
+              legend: Protocol Version
               tooltip: 9P protocol version
               options:
                 9p2000: 9p2000
@@ -355,7 +355,7 @@ virtualMachine:
         label: VZ
         description: Use the Apple Virtualization framework.
   useRosetta:
-    legend: VZ option
+    legend: VZ Option
     label: Enable Rosetta support
 
 containerEngine:
