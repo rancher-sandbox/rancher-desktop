@@ -131,7 +131,7 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
     // too much.
     const safeOptions: SpawnOptions = {
       command: [`${ cmd }`].concat(Array.from(args).map((arg) => {
-        return `${ arg }`.replace(/^(["'])(.*)\1$/, '\\2');
+        return `${ arg }`.replace(/^(["'])(.*)\1$/, '$2');
       })),
       execId,
       scope,
