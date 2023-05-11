@@ -193,7 +193,6 @@ func main() {
 
 	if *enableIptables {
 		group.Go(func() error {
-			// Forward ports
 			err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)

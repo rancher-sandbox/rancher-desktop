@@ -188,17 +188,21 @@ func (e *EventMonitor) IsServing(ctx context.Context) error {
 
 // Close closes the client connection to the API server.
 func (e *EventMonitor) Close() error {
-	err := e.containerdClient.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close containerd client: %w", err)
+	var finalErr error
+
+	if err := e.containerdClient.Close(); err != nil {
+		finalErr = fmt.Errorf("failed to close containerd client: %w", err)
 	}
 
-	err = e.portTracker.RemoveAll()
-	if err != nil {
-		return fmt.Errorf("failed to remove all ports from port tracker: %w", err)
+	if err := e.portTracker.RemoveAll(); err != nil {
+		if finalErr != nil {
+			finalErr = fmt.Errorf("%w; failed to remove all ports from port tracker: %w", finalErr, err)
+		} else {
+			finalErr = fmt.Errorf("failed to remove all ports from port tracker: %w", err)
+		}
 	}
 
-	return nil
+	return finalErr
 }
 
 func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {
