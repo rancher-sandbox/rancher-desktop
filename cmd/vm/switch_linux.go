@@ -156,9 +156,8 @@ func forwardLoopback(subnet string) error {
 	}
 	tapDeviceIP := config.TapDeviceIP(ip.To4())
 	rules := map[string][]string{
-		"PREROUTING":  {"-t", "nat", "-A", "PREROUTING", "-d", tapDeviceIP, "-j", "DNAT", "--to-destination", "127.0.0.1"},
-		"OUTPUT":      {"-t", "nat", "-A", "OUTPUT", "-d", tapDeviceIP, "-j", "DNAT", "--to-destination", "127.0.0.1"},
-		"POSTROUTING": {"-t", "nat", "-A", "POSTROUTING", "-o", tapIface, "-j", "MASQUERADE"},
+		"PREROUTING":  {"--table", "nat", "--append", "PREROUTING", "--destination", tapDeviceIP, "--jump", "DNAT", "--to-destination", "127.0.0.1"},
+		"POSTROUTING": {"--table", "nat", "--append", "POSTROUTING", "--out-interface", tapIface, "--jump", "MASQUERADE"},
 	}
 
 	for key, args := range rules {
