@@ -137,6 +137,7 @@ export default {
       return !!id && [
         'ghcr.io/rancher-sandbox/epinio-desktop-extension',
         'julianb90/tachometer',
+        'prakhar1989/dive-in',
       ].includes(id.split(':')[0]);
     },
   },
