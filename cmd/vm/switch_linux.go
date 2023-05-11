@@ -34,24 +34,32 @@ import (
 	"github.com/vishvananda/netlink"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
 )
 
 var (
-	debug    bool
-	tapIface string
-	logFile  string
+	debug            bool
+	tapIface         string
+	logFile          string
+	subnet           string
+	tapDeviceMacAddr string
 )
 
 const (
-	defaultTapDevice = "eth0"
-	defaultMacAddr   = "5a:94:ef:e4:0c:ee"
-	maxMTU           = 4000
+	defaultTapDevice        = "eth0"
+	maxMTU                  = 4000
+	appendToChain    string = "append"
+	deleteFromChain  string = "delete"
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", true, "enable debug flag")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
+	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
+		"MAC address that is associated to the tap interface")
+	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
+		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
 	flag.StringVar(&logFile, "logfile", "/var/log/vm-switch.log", "path to vm-switch process logfile")
 	flag.Parse()
 
@@ -114,18 +122,24 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 
 	defer func() {
 		connFile.Close()
+		if err := loopbackRules(deleteFromChain, subnet); err != nil {
+			logrus.Errorf("clearing iptable rules failed: %s", err)
+		}
 		tap.Close()
 		logrus.Debugf("closed tap device: %s", tapIface)
 	}()
 
-	if err := linkUp(tapIface, defaultMacAddr); err != nil {
-		logrus.Fatalf("setting mac address [%s] for %s tap device failed: %s", defaultMacAddr, tapIface, err)
+	if err := linkUp(tapIface, tapDeviceMacAddr); err != nil {
+		logrus.Fatalf("setting mac address [%s] for %s tap device failed: %s", tapDeviceMacAddr, tapIface, err)
 	}
 	if err := loopbackUp(); err != nil {
 		logrus.Fatalf("enabling loop back device failed: %s", err)
 	}
+	if err := loopbackRules(appendToChain, subnet); err != nil {
+		logrus.Fatalf("setting up forwarding iptables rules for loopback interface failed: %s", err)
+	}
 
-	logrus.Debugf("setup complete for tap interface %s(%s) + loopback", tapIface, defaultMacAddr)
+	logrus.Debugf("setup complete for tap interface %s(%s) + loopback", tapIface, tapDeviceMacAddr)
 
 	errCh := make(chan error, 1)
 	go tx(ctx, connFile, tap, errCh, maxMTU)
@@ -138,6 +152,34 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 	}()
 
 	return <-errCh
+}
+
+func loopbackRules(chainOP, subnet string) error {
+	chainOP = fmt.Sprintf("--%s", chainOP)
+	ip, _, err := net.ParseCIDR(subnet)
+	if err != nil {
+		return err
+	}
+	tapDeviceIP := config.TapDeviceIP(ip.To4())
+	rules := map[string][]string{
+		"PREROUTING":  {"--table", "nat", chainOP, "PREROUTING", "--destination", tapDeviceIP, "--jump", "DNAT", "--to-destination", "127.0.0.1"},
+		"POSTROUTING": {"--table", "nat", chainOP, "POSTROUTING", "--out-interface", tapIface, "--jump", "MASQUERADE"},
+	}
+
+	for key, args := range rules {
+		logrus.Debugf("running %s iptable rules: iptables %s", key, args)
+		if err := execIPTable(args); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func execIPTable(args []string) error {
+	cmd := exec.Command("iptables", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func loopbackUp() error {
