@@ -212,6 +212,7 @@ rancher-desktop --remote-debugging-port="8315"
 On Windows, start Rancher Desktop with the following command:
 
 ``` powershell
+cd 'C:\Program Files\Rancher Desktop\'
 & '.\Rancher Desktop.exe' --remote-debugging-port="8315"
 ```
 
