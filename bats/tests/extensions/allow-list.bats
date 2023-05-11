@@ -17,7 +17,7 @@ setup() {
 }
 
 write_allow_list() { # list
-    local list=${1:-}
+    local list=${1-}
     local allowed=true
 
     if [ -z "$list" ]; then
@@ -27,8 +27,8 @@ write_allow_list() { # list
     # Note that the list preference is not writable using `rdctl set`, and we
     # need to do a direct API call instead.
 
-    rdctl api /v1/settings --input - <<< '{
-        "version": 7,
+    rdctl api /v1/settings --input - <<<'{
+        "version": '"$(get_setting .version)"',
         "application": {
             "extensions": {
                 "allowed": {
