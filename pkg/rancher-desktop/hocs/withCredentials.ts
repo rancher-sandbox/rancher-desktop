@@ -27,6 +27,11 @@ export const withCredentials = (component: WithCredentialsComponent) => {
     async fetch() {
       this.credentials = await this.$store.dispatch('credentials/fetchCredentials');
     },
+    computed: {
+      hasCredentials(): boolean {
+        return !!this.credentials.user || !!this.credentials.password || !!this.credentials.port;
+      },
+    },
     /**
      * Aliasing createElement to h is a common convention you’ll see in the Vue
      * ecosystem and is actually required for JSX. We aren't using JSX here, but
@@ -36,6 +41,10 @@ export const withCredentials = (component: WithCredentialsComponent) => {
      * https://v2.vuejs.org/v2/guide/render-function.html#JSX
      */
     render(h): VNode {
+      if (!this.hasCredentials) {
+        return h();
+      }
+
       return h(
         component,
         {
