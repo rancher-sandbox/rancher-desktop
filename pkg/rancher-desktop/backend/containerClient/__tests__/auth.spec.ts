@@ -1,4 +1,5 @@
 import RegistryAuth from '@pkg/backend/containerClient/auth';
+import * as childProcess from '@pkg/utils/childProcess';
 
 describe('RegistryAuth', () => {
   describe('parseAuthHeader', () => {
@@ -54,6 +55,15 @@ describe('RegistryAuth', () => {
       const actual = RegistryAuth['parseAuthHeader'](input);
 
       expect(actual).toEqual(expected.map(v => ({ parameters: {}, ...v })));
+    });
+  });
+
+  describe('findAuth', () => {
+    it('should not fail when failing to list known credentials', async() => {
+      const exception = new Error('failed to spawn file');
+
+      jest.spyOn(childProcess, 'spawnFile').mockRejectedValue(exception);
+      await expect(RegistryAuth['findAuth']('example.test')).resolves.toBeUndefined();
     });
   });
 });

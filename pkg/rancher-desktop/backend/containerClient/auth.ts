@@ -60,14 +60,29 @@ class RegistryAuth {
       }
     }
 
-    const knownAuths = JSON.parse(await runCredentialCommand('list'));
+    let knownAuths: Record<string, { Username: string, Secret: string }> = {};
+
+    try {
+      knownAuths = JSON.parse(await runCredentialCommand('list'));
+    } catch (ex) {
+      // if we fail to list credentials, that's not an error (there's probably
+      // no docker config or something).
+      console.debug(`Failed to list known credentials: ${ ex }`);
+
+      return;
+    }
 
     for (const candidate of candidates) {
       if (candidate in knownAuths) {
-        const auth = JSON.parse(await runCredentialCommand('get', candidate));
-        const login = Buffer.from(`${ auth.Username }:${ auth.Secret }`, 'utf-8');
+        try {
+          const auth = JSON.parse(await runCredentialCommand('get', candidate));
+          const login = Buffer.from(`${ auth.Username }:${ auth.Secret }`, 'utf-8');
 
-        return `Basic ${ login.toString('base64') }`;
+          return `Basic ${ login.toString('base64') }`;
+        } catch {
+          // Failure to get credentials from one helper isn't fatal.
+          continue;
+        }
       }
     }
   }
