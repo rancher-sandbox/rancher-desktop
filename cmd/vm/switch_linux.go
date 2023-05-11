@@ -49,13 +49,15 @@ var (
 const (
 	defaultTapDevice = "eth0"
 	maxMTU           = 4000
+	append string = "append"
+	delete string = "delete"
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", true, "enable debug flag")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
 	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
-		"48 bits mac address that is associated to the tap interface")
+		"MAC address that is associated to the tap interface")
 	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
 		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
 	flag.StringVar(&logFile, "logfile", "/var/log/vm-switch.log", "path to vm-switch process logfile")
@@ -120,6 +122,9 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 
 	defer func() {
 		connFile.Close()
+		if err := forwardLoopback(delete, subnet); err != nil{
+			logrus.Errorf("clearing iptable rules failed: %s", err)
+		}
 		tap.Close()
 		logrus.Debugf("closed tap device: %s", tapIface)
 	}()
@@ -130,7 +135,7 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 	if err := loopbackUp(); err != nil {
 		logrus.Fatalf("enabling loop back device failed: %s", err)
 	}
-	if err := forwardLoopback(subnet); err != nil {
+	if err := forwardLoopback(append, subnet); err != nil {
 		logrus.Fatalf("setting up forwarding iptables rules for loopback interface failed: %s", err)
 	}
 
@@ -149,15 +154,16 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 	return <-errCh
 }
 
-func forwardLoopback(subnet string) error {
+func forwardLoopback(chainOP, subnet string) error {
+	chainOP = fmt.Sprintf("--%s", chainOP)
 	ip, _, err := net.ParseCIDR(subnet)
 	if err != nil {
 		return err
 	}
 	tapDeviceIP := config.TapDeviceIP(ip.To4())
 	rules := map[string][]string{
-		"PREROUTING":  {"--table", "nat", "--append", "PREROUTING", "--destination", tapDeviceIP, "--jump", "DNAT", "--to-destination", "127.0.0.1"},
-		"POSTROUTING": {"--table", "nat", "--append", "POSTROUTING", "--out-interface", tapIface, "--jump", "MASQUERADE"},
+		"PREROUTING":  {"--table", "nat", chainOP, "PREROUTING", "--destination", tapDeviceIP, "--jump", "DNAT", "--to-destination", "127.0.0.1"},
+		"POSTROUTING": {"--table", "nat", chainOP, "POSTROUTING", "--out-interface", tapIface, "--jump", "MASQUERADE"},
 	}
 
 	for key, args := range rules {
