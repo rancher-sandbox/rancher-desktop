@@ -47,10 +47,10 @@ var (
 )
 
 const (
-	defaultTapDevice = "eth0"
-	maxMTU           = 4000
-	append string = "append"
-	delete string = "delete"
+	defaultTapDevice        = "eth0"
+	maxMTU                  = 4000
+	appendToChain    string = "append"
+	deleteFromChain  string = "delete"
 )
 
 func main() {
@@ -122,7 +122,7 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 
 	defer func() {
 		connFile.Close()
-		if err := forwardLoopback(delete, subnet); err != nil{
+		if err := loopbackRules(deleteFromChain, subnet); err != nil {
 			logrus.Errorf("clearing iptable rules failed: %s", err)
 		}
 		tap.Close()
@@ -135,7 +135,7 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 	if err := loopbackUp(); err != nil {
 		logrus.Fatalf("enabling loop back device failed: %s", err)
 	}
-	if err := forwardLoopback(append, subnet); err != nil {
+	if err := loopbackRules(appendToChain, subnet); err != nil {
 		logrus.Fatalf("setting up forwarding iptables rules for loopback interface failed: %s", err)
 	}
 
@@ -154,7 +154,7 @@ func run(ctx context.Context, cancel context.CancelFunc, connFile io.ReadWriteCl
 	return <-errCh
 }
 
-func forwardLoopback(chainOP, subnet string) error {
+func loopbackRules(chainOP, subnet string) error {
 	chainOP = fmt.Sprintf("--%s", chainOP)
 	ip, _, err := net.ParseCIDR(subnet)
 	if err != nil {

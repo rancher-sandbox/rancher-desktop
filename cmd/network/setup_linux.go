@@ -56,7 +56,7 @@ func main() {
 	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
 		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
 	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
-		"48 bits mac address that is associated to the tap interface")
+		"MAC address that is associated to the tap interface")
 	flag.StringVar(&vmSwitchPath, "vm-switch-path", "", "the path to the vm-switch binary that will run in a new namespace")
 	flag.StringVar(&vmSwitchLogFile, "vm-switch-logfile", "", "path to the logfile for vm-switch process")
 	flag.StringVar(&unshareArg, "unshare-arg", "", "the command argument to pass to the unshare program")
