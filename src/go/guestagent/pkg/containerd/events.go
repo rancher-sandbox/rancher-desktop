@@ -195,11 +195,9 @@ func (e *EventMonitor) Close() error {
 	}
 
 	if err := e.portTracker.RemoveAll(); err != nil {
-		if finalErr != nil {
-			finalErr = fmt.Errorf("%w; failed to remove all ports from port tracker: %w", finalErr, err)
-		} else {
-			finalErr = fmt.Errorf("failed to remove all ports from port tracker: %w", err)
-		}
+		finalErr = fmt.Errorf("failed to remove all ports from port tracker: %w", err)
+
+		return finalErr
 	}
 
 	return finalErr

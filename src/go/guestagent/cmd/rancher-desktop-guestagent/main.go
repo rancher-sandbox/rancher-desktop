@@ -70,9 +70,8 @@ var (
 // | iptables             | disable or | enable    | disable | disable   |
 // |                      | **enable   |           |         |           |
 // +----------------------+------------+-----------+---------+-----------+
-// ** The iptables can be enable for the default network admin when the older
-// version of k8s is used that does not support service watch API. When the
-// iptables enabled in this case, the docker or containerd must be disabled.
+// ** iptables can be enable for the default network with admin when older
+// versions of k8s are used that do not support the service watcher API.
 
 const (
 	wslInfName             = "eth0"
