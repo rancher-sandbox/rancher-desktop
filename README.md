@@ -195,6 +195,40 @@ npm run package --publish=never
 
 The build output goes to `dist/`.
 
+### Debugging builds with the Chrome remote debugger
+
+The Chrome remote debugger allows you to debug Electron apps using Chrome Developer Tools. You can use it to access log messages that might output to the developer console of the renderer process. This is especially helpful for getting additional debug information in production builds of Rancher Desktop.
+
+#### Starting Rancher Desktop with Remote Debugging Enabled
+
+To enable remote debugging, start Rancher Desktop with the `--remote-debugging-port` argument.
+
+On macOS and Linux, start Rancher Desktop with the following command:
+
+``` bash
+rancher-desktop --remote-debugging-port="8315"
+```
+
+On Windows, start Rancher Desktop with the following command:
+
+``` powershell
+cd 'C:\Program Files\Rancher Desktop\'
+& '.\Rancher Desktop.exe' --remote-debugging-port="8315"
+```
+
+After Rancher Desktop starts, open Chrome and navigate to `http://localhost:8315/`. Select the available target to start remote debugging Rancher Desktop.
+
+![image](https://github.com/rak-phillip/rancher-desktop/assets/835961/4f5fcb33-d381-4900-a836-685eab3af441)
+
+![image](https://github.com/rak-phillip/rancher-desktop/assets/835961/91b4ee63-7093-4377-b8b3-f2f4a57a16a7)
+
+#### Remote Debugging an Extension
+
+To remote debug an extension, follow the same process as remote debugging a build. However, you will need to load an extension before navigating to `http://localhost:8315/`. Both Rancher Desktop and the loaded extension should be listed as available targets.
+
+![image](https://github.com/rak-phillip/rancher-desktop/assets/835961/71bb7eec-38e5-4744-a547-ebb36048918a)
+
+![image](https://github.com/rak-phillip/rancher-desktop/assets/835961/f4aad3e1-dabc-473e-9404-05609216cd03)
 
 ## Development Builds
 
