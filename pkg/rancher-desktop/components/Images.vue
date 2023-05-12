@@ -192,34 +192,32 @@ export default {
     rows() {
       return this.filteredImages
         .map((image) => {
-          if (!image.availableActions) {
           // The `availableActions` property is used by the ActionMenu to fill
           // out the menu entries.  Note that we need to modify the items
           // in-place, as SortableTable depends on object identity to manage its
           // selection state.
-            image.availableActions = [
-              {
-                label:   this.t('images.manager.table.action.push'),
-                action:  'doPush',
-                enabled: this.isPushable(image),
-                icon:    'icon icon-upload',
-              },
-              {
-                label:      this.t('images.manager.table.action.delete'),
-                action:     'deleteImage',
-                enabled:    this.isDeletable(image),
-                icon:       'icon icon-delete',
-                bulkable:   true,
-                bulkAction: 'deleteImages',
-              },
-              {
-                label:   this.t('images.manager.table.action.scan'),
-                action:  'scanImage',
-                enabled: true,
-                icon:    'icon icon-info',
-              },
-            ].filter(x => x.enabled);
-          }
+          image.availableActions = [
+            {
+              label:   this.t('images.manager.table.action.push'),
+              action:  'doPush',
+              enabled: this.isPushable(image),
+              icon:    'icon icon-upload',
+            },
+            {
+              label:      this.t('images.manager.table.action.delete'),
+              action:     'deleteImage',
+              enabled:    this.isDeletable(image),
+              icon:       'icon icon-delete',
+              bulkable:   true,
+              bulkAction: 'deleteImages',
+            },
+            {
+              label:   this.t('images.manager.table.action.scan'),
+              action:  'scanImage',
+              enabled: true,
+              icon:    'icon icon-info',
+            },
+          ].filter(x => x.enabled);
           // ActionMenu callbacks - SortableTable assumes that these methods live
           // on the rows directly.
           if (!image.doPush) {
