@@ -299,25 +299,17 @@ describeWindows('windows deployment profiles', () => {
 
           expect(profile.defaults).toEqual(limitedUserProfile);
           // Remember that sub-objects are processed before values
-          expect(consoleMock).toHaveBeenNthCalledWith(1,
-            expect.stringMatching(/Expecting registry entry .*?application.adminAccess to be a boolean, but it's a registry object/),
-          );
-          expect(consoleMock).toHaveBeenNthCalledWith(2,
-            expect.stringMatching(/Expecting registry entry .*?application.Debug to be a boolean, but it's a SZ/));
-          expect(consoleMock).toHaveBeenNthCalledWith(3,
-            expect.stringMatching(/Expecting registry entry .*?application.Updater to be a registry object, but it's a DWORD, value: 0/));
-          expect(consoleMock).toHaveBeenNthCalledWith(4,
-            expect.stringMatching(/Expecting registry entry .*?containerEngine.allowedImages.enabled to be a boolean, but it's a SZ, value: should be a boolean/));
-          expect(consoleMock).toHaveBeenNthCalledWith(5,
-            expect.stringMatching(/Expecting registry entry .*?containerEngine.name to be a string, but it's a DWORD, value: 5/));
-          expect(consoleMock).toHaveBeenNthCalledWith(6,
-            expect.stringMatching(/Expecting registry entry .*?diagnostics.mutedChecks to be a registry object, but it's a DWORD, value: 66/));
-          expect(consoleMock).toHaveBeenNthCalledWith(7,
-            expect.stringMatching(/Expecting registry entry .*?images.namespace to be a single string, but it's an array of strings, value: busybox,nginx/));
-          expect(consoleMock).toHaveBeenNthCalledWith(8,
-            expect.stringMatching(/Expecting registry entry .*?kubernetes.version to be a string, but it's a registry object/));
-          expect(consoleMock).toHaveBeenNthCalledWith(9,
-            expect.stringMatching(/Expecting registry entry .*?WSL.integrations to be a registry object, but it's a SZ, value: should be a sub-object/));
+          expect(consoleMock.mock.calls).toEqual([
+            [expect.stringMatching(/Expecting registry entry .*?application.adminAccess to be a boolean, but it's a registry object/)],
+            [expect.stringMatching(/Expecting registry entry .*?application.Debug to be a boolean, but it's a SZ/)],
+            [expect.stringMatching(/Expecting registry entry .*?application.Updater to be a registry object, but it's a DWORD, value: 0/)],
+            [expect.stringMatching(/Expecting registry entry .*?containerEngine.allowedImages.enabled to be a boolean, but it's a SZ, value: should be a boolean/)],
+            [expect.stringMatching(/Expecting registry entry .*?containerEngine.name to be a string, but it's a DWORD, value: 5/)],
+            [expect.stringMatching(/Expecting registry entry .*?diagnostics.mutedChecks to be a registry object, but it's a DWORD, value: 66/)],
+            [expect.stringMatching(/Expecting registry entry .*?images.namespace to be a single string, but it's an array of strings, value: busybox,nginx/)],
+            [expect.stringMatching(/Expecting registry entry .*?kubernetes.version to be a string, but it's a registry object/)],
+            [expect.stringMatching(/Expecting registry entry .*?WSL.integrations to be a registry object, but it's a SZ, value: should be a sub-object/)],
+          ]);
         });
       });
     });
