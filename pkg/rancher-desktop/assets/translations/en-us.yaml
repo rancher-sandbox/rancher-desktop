@@ -180,13 +180,9 @@ marketplace:
       label: Install
       loading: Installing...
     uninstallButton:
-      label: Uninstall
-      loading: Uninstalling...
-    latestVersion: Latest version
-    latestUpdate: Latest update
-    platforms: Platforms
-    links: Links
-    categories: Categories
+      label: Remove
+      loading: Removing...
+  moreInfo: More information
 images:
   title: Images
   state:

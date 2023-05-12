@@ -87,6 +87,14 @@ button,
   color: var(--primary);
 }
 
+.role-danger {
+  background: var(--error);
+
+  &:hover {
+    background-color: var(--error-hover-bg);
+  }
+}
+
 .role-link {
   background: transparent;
   color: var(--link) !important;
