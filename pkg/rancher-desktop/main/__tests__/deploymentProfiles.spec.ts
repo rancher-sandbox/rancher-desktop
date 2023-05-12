@@ -39,13 +39,12 @@ async function clearRegistry() {
 }
 
 async function installInRegistry(regFileContents: string) {
-  const BOM = ''; // \uFEFF';
-
-  await fs.promises.writeFile(regFilePath, BOM + regFileContents, { encoding: 'latin1' });
+  await fs.promises.writeFile(regFilePath, regFileContents, { encoding: 'ascii' });
   try {
     await spawnFile('reg', ['IMPORT', regFilePath]);
   } catch (ex: any) {
-    expect(ex).toMatchObject({});
+    // Use expect to display the error message
+    expect(ex).toBeNull();
     throw ex;
   }
 }
@@ -256,8 +255,8 @@ describeWindows('windows deployment profiles', () => {
           it('loads nothing', async() => {
             const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-            expect(profile.defaults).toMatchObject({});
-            expect(profile.locked).toMatchObject({});
+            expect(profile.defaults).toEqual({});
+            expect(profile.locked).toEqual({});
           });
         });
 
@@ -268,8 +267,8 @@ describeWindows('windows deployment profiles', () => {
             await installInRegistry(lockedUserRegFile);
             const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-            expect(profile.defaults).toMatchObject(defaultUserProfile);
-            expect(profile.locked).toMatchObject(lockedUserProfile);
+            expect(profile.defaults).toEqual(defaultUserProfile);
+            expect(profile.locked).toEqual(lockedUserProfile);
           });
         });
 
@@ -278,8 +277,8 @@ describeWindows('windows deployment profiles', () => {
           await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
           const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-          expect(profile.defaults).toMatchObject({
-            containerEngine: { allowedImages: { patterns: ['hokey smoke!'] } },
+          expect(profile.defaults).toEqual({
+            containerEngine: { allowedImages: { patterns: ['hokey smoke!'] }, name: 'moby' },
           });
         });
       });
@@ -298,7 +297,7 @@ describeWindows('windows deployment profiles', () => {
           await installInRegistry(incorrectDefaultsUserRegFile);
           const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-          expect(profile.defaults).toMatchObject(limitedUserProfile);
+          expect(profile.defaults).toEqual(limitedUserProfile);
           // Remember that sub-objects are processed before values
           expect(consoleMock).toHaveBeenNthCalledWith(1,
             expect.stringMatching(/Expecting registry entry .*?application.adminAccess to be a boolean, but it's a registry object/),

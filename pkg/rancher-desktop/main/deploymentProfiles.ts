@@ -3,6 +3,7 @@ import os from 'os';
 import { join } from 'path';
 import stream from 'stream';
 
+import _ from 'lodash';
 import * as nativeReg from 'native-reg';
 
 import * as settings from '@pkg/config/settings';
@@ -197,12 +198,8 @@ class Win32DeploymentReader {
         console.error('Error reading deployment profile: ', err);
       } finally {
         nativeReg.closeKey(registryKey);
-        if (defaultsKey) {
-          nativeReg.closeKey(defaultsKey);
-        }
-        if (lockedKey) {
-          nativeReg.closeKey(lockedKey);
-        }
+        nativeReg.closeKey(defaultsKey);
+        nativeReg.closeKey(lockedKey);
       }
       // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
       // Alternatively, if the keys work, we could break, even if both hives are empty.
@@ -237,17 +234,17 @@ class Win32DeploymentReader {
     // Drop the initial 'defaults' or 'locked' field
     const pathPartsWithoutHiveType = pathParts.slice(1);
 
-    for (const originalKey of nativeReg.enumKeyNames(regKey)) {
-      const schemaKey = fixProfileKeyCase(originalKey, schemaKeys);
+    for (const registryKey of nativeReg.enumKeyNames(regKey)) {
+      const schemaKey = fixProfileKeyCase(registryKey, schemaKeys);
       // "fixed case" means mapping existing keys in the registry (which typically supports case-insensitive lookups)
       // to the actual case in the schema.
 
       if (schemaKey === null) {
-        unknownKeys.push(originalKey);
-      } else if (haveUserDefinedObject(pathPartsWithoutHiveType.concat(schemaKey), isEquivalentIgnoreCase)) {
-        userDefinedObjectKeys.push({ schemaKey, registryKey: originalKey });
+        unknownKeys.push(registryKey);
+      } else if (haveUserDefinedObject(pathPartsWithoutHiveType.concat(schemaKey))) {
+        userDefinedObjectKeys.push({ schemaKey, registryKey });
       } else {
-        commonKeys.push({ schemaKey, registryKey: originalKey });
+        commonKeys.push({ schemaKey, registryKey });
       }
     }
     if (unknownKeys.length) {
@@ -382,9 +379,9 @@ class Win32DeploymentReader {
     switch (rawValue.type) {
     case nativeReg.ValueType.SZ:
       if (isUserDefinedObject || (typeof schemaVal) === 'string') {
-        return nativeReg.parseValue(rawValue) as string;
+        return nativeReg.parseString(rawValue);
       } else if (expectingArray) {
-        return [nativeReg.parseValue(rawValue) as string];
+        return [nativeReg.parseString(rawValue)];
       } else {
         console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
       }
@@ -404,7 +401,7 @@ class Win32DeploymentReader {
       break;
     case nativeReg.ValueType.MULTI_SZ:
       if (expectingArray) {
-        return nativeReg.parseValue(rawValue) as string [];
+        return nativeReg.parseMultiString(rawValue);
       } else if (typeof schemaVal === 'string') {
         console.error(`Expecting registry entry ${ fullPath } to be a single string, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
       } else {
@@ -446,7 +443,7 @@ function validateDeploymentProfile(profile: any, schema: any, parentPathParts: s
         console.log(`Deployment Profile ignoring '${ parentPathParts.join('.') }.${ key }': got an array, expecting type ${ typeof schema[key] }.`);
         delete profile[key];
       }
-    } else if (haveUserDefinedObject(parentPathParts.concat(key), isEquivalentRespectCase)) {
+    } else if (haveUserDefinedObject(parentPathParts.concat(key))) {
       // Keep this part of the profile
     } else {
       // Finally recurse and compare the schema sub-object with the specified sub-object
@@ -455,10 +452,6 @@ function validateDeploymentProfile(profile: any, schema: any, parentPathParts: s
   }
 
   return profile;
-}
-
-function isEquivalentRespectCase(a: string, b: string): boolean {
-  return a === b;
 }
 
 const caseInsensitiveComparator = new Intl.Collator('en', { sensitivity: 'base' });
@@ -485,15 +478,8 @@ const userDefinedKeys = [
  * @param pathParts - On Windows, the parts of the registry path below KEY\Software\Rancher Desktop\Profile\{defaults|locked|}
  *                    The first field is always either 'defaults' or 'locked' and can be ignored
  *                    On other platforms its the path-parts up to but not including the root (which is unnamed anyway).
- * @param equivFunc - comparison function used to ignore or respect case.
  * @returns boolean
  */
-function haveUserDefinedObject(pathParts: string[], equivFunc: (a: string, b: string) => boolean): boolean {
-  for (const userDefinedKey of userDefinedKeys.filter(userDefinedKey => userDefinedKey.length === pathParts.length)) {
-    if (pathParts.every((p, i) => equivFunc(p, userDefinedKey[i]))) {
-      return true;
-    }
-  }
-
-  return false;
+function haveUserDefinedObject(pathParts: string[]): boolean {
+  return userDefinedKeys.some(userDefinedKey => _.isEqual(userDefinedKey, pathParts));
 }
