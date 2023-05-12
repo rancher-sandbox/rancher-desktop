@@ -58,13 +58,21 @@ var (
 )
 
 // Flags can only be enabled in the following combination:
-// +===========+=======================================+====================+
-// |           |            Default Network            | Namespaced Network |
-// +===========+=======================================+====================+
-// | Admin     | privilegedService + docker/containerd | docker/containerd  |
-// +-----------+---------------------------------------+--------------------+
-// | Non-Admin | iptables                              | docker/containerd  |
-// +-----------+---------------------------------------+--------------------+
+// +======================+==============================================+
+// |                      |     Default Network    | Namespaced Network  |
+// +----------------------+------------------------+---------------------+
+// |                      | Admin      | Non-Admin | Admin   | Non-Admin |
+// +======================+============+===========+=========+===========+
+// | privilegedService    | enable     | disable   | disable | disable   |
+// +----------------------+------------+-----------+---------+-----------+
+// | docker Or containerd | enable     | disable   | enable  | enable    |
+// +----------------------+------------+-----------+---------+-----------+
+// | iptables             | disable or | enable    | disable | disable   |
+// |                      | **enable   |           |         |           |
+// +----------------------+------------+-----------+---------+-----------+
+// ** The iptables can be enable for the default network admin when the older
+// version of k8s is used that does not support service watch API. When the
+// iptables enabled in this case, the docker or containerd must be disabled.
 
 const (
 	wslInfName             = "eth0"
