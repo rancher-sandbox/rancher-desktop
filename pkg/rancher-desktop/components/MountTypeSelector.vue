@@ -27,14 +27,14 @@ export default Vue.extend({
     },
   },
   computed: {
-    options() {
+    options(): { label: string, value: MountType, description: string, experimental: boolean, disabled: boolean }[] {
       const defaultOption = MountType.REVERSE_SSHFS;
 
       return Object.values(MountType)
         .filter((x) => {
           // Filter because virtiofs is only available on MacOS from Ventura release
           if (x === MountType.VIRTIOFS) {
-            return (os.platform() === 'darwin') && (parseInt(os.release()) >= 22);
+            return this.hasVirtIoFs;
           }
 
           return true;
@@ -48,6 +48,7 @@ export default Vue.extend({
             value:        x,
             description:  this.t(`virtualMachine.mount.type.options.${ x }.description`, {}, true),
             experimental: x !== defaultOption, // Mark experimental options
+            disabled:     x === MountType.VIRTIOFS && this.virtIoFsDisabled,
           };
         });
     },
@@ -56,6 +57,12 @@ export default Vue.extend({
     },
     ninePSelected(): boolean {
       return this.preferences.experimental.virtualMachine.mount.type === MountType.NINEP;
+    },
+    hasVirtIoFs(): boolean {
+      return os.platform() === 'darwin';
+    },
+    virtIoFsDisabled(): boolean {
+      return parseInt(os.release()) < 22;
     },
   },
   methods: {
@@ -90,6 +97,15 @@ export default Vue.extend({
     updateValue<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$emit('update', property, value);
     },
+    disabledVirtIoFsTooltip(disabled: boolean): { content: string } | {} {
+      let tooltip = {};
+
+      if (disabled) {
+        tooltip = { content: this.t('prefs.onlyFromVentura') };
+      }
+
+      return tooltip;
+    },
   },
 });
 </script>
@@ -117,14 +133,19 @@ export default Vue.extend({
                 :label="option.label"
                 :val="option.value"
                 :description="option.description"
+                :disabled="option.disabled"
                 @input="updateValue('experimental.virtualMachine.mount.type', $event)"
               >
                 <template #label>
-                  {{ option.label }}
-                  <labeled-badge
-                    v-if="option.experimental"
-                    :text="t('prefs.experimental')"
-                  />
+                  <div
+                    v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
+                  >
+                    {{ option.label }}
+                    <labeled-badge
+                      v-if="option.experimental"
+                      :text="t('prefs.experimental')"
+                    />
+                  </div>
                 </template>
               </radio-button>
             </template>
