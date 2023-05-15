@@ -1490,7 +1490,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         // Ensure all scripts are executable; Windows mounts are unlikely to
         // have it set by default.
         await this.execCommand('/usr/bin/find',
-          '/etc/local.d',
+          '/etc/local.d/',
           '(', '-name', '*.start', '-o', '-name', '*.stop', ')',
           '-print', '-exec', 'chmod', 'a+x', '{}', ';');
 
