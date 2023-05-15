@@ -322,8 +322,8 @@ virtualMachine:
                 fscache: fscache
                 mmap: mmap
             mSizeInKb:
-              legend: Memory Size In KiB
-              tooltip: Maximum package size in KiB
+              legend: Memory Size In KB
+              tooltip: Maximum package size in KB
             protocolVersion:
               legend: Protocol Version
               tooltip: 9P protocol version
