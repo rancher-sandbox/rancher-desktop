@@ -80,9 +80,10 @@
 </template>
 
 <script>
-
 import SortableTable from '@pkg/components/SortableTable';
 import { Card, Checkbox } from '@rancher/components';
+import _ from 'lodash';
+import { mapState, mapMutations } from 'vuex';
 
 import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
 import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
@@ -161,6 +162,7 @@ export default {
     };
   },
   computed: {
+    ...mapState('action-menu', { menuImages: state => state.resources?.map(i => i.imageName) ?? [] }),
     keyedImages() {
       return this.images
         .map((image, index) => {
@@ -190,7 +192,9 @@ export default {
         .map(this.getTaggedImage);
     },
     rows() {
-      return this.filteredImages
+      const filteredImages = _.cloneDeep(this.filteredImages);
+
+      return filteredImages
         .map((image) => {
           // The `availableActions` property is used by the ActionMenu to fill
           // out the menu entries.  Note that we need to modify the items
@@ -244,11 +248,22 @@ export default {
     },
   },
 
+  watch: {
+    rows: {
+      handler(newRows) {
+        if (this.menuImages.some(name => newRows.map(r => r.imageName).includes(name))) {
+          this.hideMenu();
+        }
+      },
+    },
+  },
+
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
   },
 
   methods: {
+    ...mapMutations('action-menu', { hideMenu: 'hide' }),
     updateSelection(val) {
       this.selected = val;
     },
