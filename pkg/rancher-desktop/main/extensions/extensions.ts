@@ -25,9 +25,9 @@ class ExtensionErrorImpl extends Error implements ExtensionError {
 
   constructor(code: ExtensionErrorCode, message: string, cause?: Error) {
     // XXX We're currently using a version of TypeScript that doesn't have the
-    // ES2022.Error lib, so it does't understand the "cause" option to the Error
-    // constructor.  Work around this by explicitly calling setting the cause.
-    // It appears to still be printed in that case.
+    // ES2022.Error lib, so it doesn't understand the "cause" option to the
+    // Error constructor.  Work around this by explicitly calling setting the
+    // cause.  It appears to still be printed in that case.
     super(message);
     if (cause) {
       (this as any).cause = cause;

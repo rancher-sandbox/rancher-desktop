@@ -40,6 +40,12 @@ write_allow_list() { # list
     }'
 }
 
+check_extension_installed() { # refute, name
+    run rdctl extension ls
+    assert_success
+    ${1:-assert}_output --partial ${2:-rd/extension/basic}
+}
+
 @test 'factory reset' {
     factory_reset
 }
@@ -63,26 +69,39 @@ write_allow_list() { # list
 @test 'when no extension allow list is set up, all extensions can install' {
     write_allow_list ''
     rdctl extension install rd/extension/basic
+    check_extension_installed
     rdctl extension uninstall rd/extension/basic
+}
+
+@test 'empty allow list disables extension installs' {
+    write_allow_list '[]'
+    run rdctl extension install rd/extension/basic
+    assert_failure
+    check_extension_installed refute
 }
 
 @test 'when an extension is explicitly allowed, it can be installed' {
-    write_allow_list '["rd/extension/basic:latest"]'
+    write_allow_list '["irrelevant/image","rd/extension/basic:latest"]'
     rdctl extension install rd/extension/basic:latest
+    check_extension_installed
     rdctl extension uninstall rd/extension/basic
+    check_extension_installed refute
 }
 
-@test 'when an extension is not in the allowe list, it cannot be installed' {
-    write_allow_list '["rd/extension/other"]'
+@test 'when an extension is not in the allowed list, it cannot be installed' {
+    write_allow_list '["rd/extension/other","registry.test/image"]'
     run rdctl extension install rd/extension/basic
     assert_failure
+    check_extension_installed refute
 }
 
 @test 'when no tags given, any tag is allowed' {
     write_allow_list '["rd/extension/basic"]'
     ctrctl "${namespace_arg[@]}" tag rd/extension/basic rd/extension/basic:0.0.3
     rdctl extension install rd/extension/basic:0.0.3
+    check_extension_installed
     rdctl extension uninstall rd/extension/basic
+    check_extension_installed refute
 }
 
 @test 'when tags are given, only the specified tag is allowed' {
@@ -91,17 +110,22 @@ write_allow_list() { # list
     ctrctl "${namespace_arg[@]}" tag rd/extension/basic rd/extension/basic:0.0.3
     run rdctl extension install rd/extension/basic:0.0.3
     assert_failure
+    check_extension_installed refute
 }
 
 @test 'extensions can be allowed by organization' {
     write_allow_list '["rd/extension/"]'
     rdctl extension install rd/extension/basic
+    check_extension_installed
     rdctl extension uninstall rd/extension/basic
+    check_extension_installed refute
 }
 
 @test 'extensions can be allowed by repository host' {
     write_allow_list '["registry.test/"]'
     ctrctl "${namespace_arg[@]}" tag rd/extension/basic registry.test/basic:0.0.3
     rdctl extension install registry.test/basic:0.0.3
+    check_extension_installed '' registry.test/basic
     rdctl extension uninstall registry.test/basic
+    check_extension_installed refute registry.test/basic
 }
