@@ -124,7 +124,7 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
     plutilResult = await spawnFile('plutil', args, { stdio: [body, 'pipe', 'pipe'] });
   } catch (error: any) {
     console.log(`Error parsing deployment profile plist file ${ inputPath }\n${ error }`, error);
-    const msg = `Error loading plist file ${ inputPath }: ${ error.stdout || getErrorString(error) }`;
+    const msg = `Error loading plist file ${ inputPath }: ${ getErrorString(error) }`;
 
     throw new DeploymentProfileError(msg);
   }
@@ -472,8 +472,11 @@ function validateDeploymentProfileWithErrors(profile: any, errors: string[], sch
     const schemaVal = schema[key];
     const profileVal = profile[key];
 
-    // Special-case arrays first, because they're a type of object, but not type-equivalent to non-array objects
-    if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
+    if (typeof profileVal !== 'object') {
+      if (typeof profileVal !== typeof schemaVal) {
+        errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
+      }
+    } else if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
       if (Array.isArray(profileVal) !== Array.isArray(schemaVal)) {
         if (Array.isArray(schemaVal)) {
           errors.push(`Error for field '${ fullPath(key) }': expecting an array, got '${ JSON.stringify(profileVal) }'`);
@@ -524,16 +527,4 @@ const userDefinedKeys = [
  */
 function haveUserDefinedObject(pathParts: string[]): boolean {
   return userDefinedKeys.some(userDefinedKey => _.isEqual(userDefinedKey, pathParts));
-}
-
-function isUserDefinedObjectIgnoreCase(pathParts: string[], key: string): boolean {
-  key = key.toLowerCase();
-  if (pathParts.length === 0) {
-    return equivFunc(key, 'extensions');
-  } else if (pathParts.length === 1) {
-    return ((equivFunc(pathParts[0], 'WSL') && equivFunc(key, 'integrations')) ||
-      (equivFunc(pathParts[0], 'diagnostics') && equivFunc(key, 'mutedChecks')));
-  }
-
-  return false;
 }

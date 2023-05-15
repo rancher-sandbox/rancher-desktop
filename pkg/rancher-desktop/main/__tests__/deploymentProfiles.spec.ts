@@ -45,7 +45,6 @@ async function installInRegistry(regFileContents: string) {
   } catch (ex: any) {
     // Use expect to display the error message
     expect(ex).toBeNull();
-    throw ex;
   }
 }
 
@@ -268,73 +267,53 @@ describe('deployment profiles', () => {
           },
         };
 
-        describe('no system profiles, no user profiles', () => {
-          it('loads nothing', async() => {
-            const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
+          describe('no system profiles, no user profiles', () => {
+            it('loads nothing', async() => {
+              const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-            expect(profile.defaults)
-              .toEqual({});
-            expect(profile.locked)
-              .toEqual({});
+              expect(profile.defaults).toEqual({});
+              expect(profile.locked).toEqual({});
+            });
           });
-        });
 
-        describe('no system profiles, both user profiles', () => {
-          it('loads both profiles', async() => {
+          describe('no system profiles, both user profiles', () => {
+            it('loads both profiles', async() => {
+              await clearRegistry();
+              await installInRegistry(defaultsUserRegFile);
+              await installInRegistry(lockedUserRegFile);
+              const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
+
+              expect(profile.defaults).toEqual(defaultUserProfile);
+              expect(profile.locked).toEqual(lockedUserProfile);
+            });
+          });
+
+          it('converts a single string into an array', async() => {
             await clearRegistry();
-            await installInRegistry(defaultsUserRegFile);
-            await installInRegistry(lockedUserRegFile);
+            await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
             const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
 
-            expect(profile.defaults)
-              .toEqual(defaultUserProfile);
-            expect(profile.locked)
-              .toEqual(lockedUserProfile);
+            expect(profile.defaults).toEqual({
+              containerEngine: { allowedImages: { patterns: ['hokey smoke!'] }, name: 'moby' },
+            });
           });
         });
+        describe('error paths', () => {
+          const limitedUserProfile = {
+            application: {
+              telemetry: { enabled: true },
+            },
+            diagnostics: {
+              showMuted: true,
+            },
+          };
 
-        it('converts a single string into an array', async() => {
-          await clearRegistry();
-          await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
-          const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
-
-          expect(profile.defaults)
-            .toEqual({
-              containerEngine: {
-                allowedImages: { patterns: ['hokey smoke!'] },
-                name:          'moby'
-              },
-            });
-        });
-
-        it('converts a single string into an array', async() => {
-          await clearRegistry();
-          await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
-          const profile = await readDeploymentProfiles(true);
-
-          expect(profile.defaults)
-            .toMatchObject({
-              containerEngine: { allowedImages: { patterns: ['hokey smoke!'] } },
-            });
-        });
-      });
-      describe('error paths', () => {
-        const limitedUserProfile = {
-          application: {
-            telemetry: { enabled: true },
-          },
-          diagnostics: {
-            showMuted: true,
-          },
-        };
-
-        it('loads a bad profile, complains about all the errors, and keeps only valid entries', async() => {
-          await clearRegistry();
-          await installInRegistry(incorrectDefaultsUserRegFile);
-
-          await expect(readDeploymentProfiles(REGISTRY_PATH_PROFILE))
-            .rejects
-            .toThrow(`Error in registry settings:
+          it('loads a bad profile, complains about all the errors, and keeps only valid entries', async() => {
+            await clearRegistry();
+            await installInRegistry(incorrectDefaultsUserRegFile);
+            await expect(readDeploymentProfiles(true))
+              .rejects
+              .toThrow(`Error in registry settings:
 Error for registry entry 'application.debug': expecting value of type boolean, got '"should be a number"'
 Error for registry entry 'application.updater': expecting value of type object, got '0'
 Error for registry entry 'application.adminAccess': expecting value of type boolean, got '{"sudo":true}'
