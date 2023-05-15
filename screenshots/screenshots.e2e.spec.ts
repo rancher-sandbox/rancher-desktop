@@ -11,6 +11,7 @@ import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 const isWin = os.platform() === 'win32';
+const isMac = os.platform() === 'darwin';
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
@@ -125,13 +126,37 @@ test.describe.serial('Main App Test', () => {
     await expect(e2ePreferences.application.autoStart).toBeVisible();
     await screenshot.take('application', 'tabBehavior');
 
-    if (!isWin) {
+    if (isWin) {
+      await e2ePreferences.wsl.nav.click();
+      await screenshot.take('wsl', 'tabIntegrations');
+
+      await e2ePreferences.wsl.tabNetwork.click();
+      await expect(e2ePreferences.wsl.networkingTunnel).toBeVisible();
+      await screenshot.take('wsl', 'tabNetwork');
+    } else {
+      // Linux & Mac
       await e2ePreferences.application.nav.click();
       await e2ePreferences.application.tabEnvironment.click();
       await expect(e2ePreferences.application.pathManagement).toBeVisible();
       await screenshot.take('application', 'tabEnvironment');
 
-      await screenshot.take('virtualMachine');
+      await e2ePreferences.virtualMachine.nav.click();
+      await expect(e2ePreferences.virtualMachine.memory).toBeVisible();
+      await screenshot.take('virtualMachine', 'tabHardware');
+
+      await e2ePreferences.virtualMachine.tabVolumes.click();
+      await expect(e2ePreferences.virtualMachine.mountType).toBeVisible();
+      await screenshot.take('virtualMachine', 'tabVolumes');
+
+      if (isMac) {
+        await e2ePreferences.virtualMachine.tabNetwork.click();
+        await expect(e2ePreferences.virtualMachine.socketVmNet).toBeVisible();
+        await screenshot.take('virtualMachine', 'tabNetwork');
+
+        await e2ePreferences.virtualMachine.tabEmulation.click();
+        await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
+        await screenshot.take('virtualMachine', 'tabEmulation');
+      }
     }
 
     await screenshot.take('containerEngine', 'tabGeneral');
