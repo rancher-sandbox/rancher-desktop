@@ -543,6 +543,9 @@ components:
                     username:
                       type: string
                       x-rd-usage: if needed the username to connect to the proxy
+                    noproxy:
+                      type: string
+                      x-rd-usage: comma-separated list of addresses not redicrected to the proxy
         WSL:
           type: object
           x-rd-platforms: [win32]

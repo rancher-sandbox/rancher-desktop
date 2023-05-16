@@ -851,6 +851,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } else {
       await this.writeFile(`/etc/moproxy/proxy.ini`, '; no proxy defined');
     }
+
+    await this.modifyConf('moproxy', { MOPROXY_NOPROXY: proxy.noproxy });
   }
 
   /**
@@ -1196,6 +1198,31 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const contents = Object.entries(settings).map(([key, value]) => `${ key }="${ value }"\n`).join('');
 
     await this.writeFile(`/etc/conf.d/${ service }`, contents);
+  }
+
+  protected async readConf(service: string): Promise<Record<string, string>> {
+    const confRegex = /(?:^|^)\s*?([\w]+)(?:\s*=\s*?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*(?:[\w.-])*|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/;
+    const conf = await this.readFile(`/etc/conf.d/${ service }`);
+
+    const confFields = conf.split(/\r?\n/).map(line => confRegex.exec(line)).filter(defined) as Array<RegExpExecArray>;
+
+    const result = confFields.reduce((res, curr) => {
+      const key = curr[1];
+      const value = curr[2].replace(/^(['"])([\s\S]*)\1$/mg, '$2');
+
+      return { ...res, ...{ [key]: value } };
+    }, {} as Record<string, string>);
+
+    console.log(result);
+
+    return result;
+  }
+
+  protected async modifyConf(service: string, settings: Record<string, string>) {
+    const current = await this.readConf(service);
+    const contents = { ...current, ...settings };
+
+    await this.writeConf(service, contents);
   }
 
   /**

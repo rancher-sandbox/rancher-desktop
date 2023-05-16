@@ -127,7 +127,7 @@ export const defaultSettings = {
       /** windows only: if set, use gvisor based network rather than host-resolver/dnsmasq. */
       networkingTunnel: false,
       proxy:            {
-        enabled: false, address: '', password: '', port: 3128, username: '',
+        enabled: false, address: '', password: '', port: 3128, username: '', noproxy: '0.0.0.0/8,10.0.0.0/8,127.0.0.0/8,169.254.0.0/16,172.16.0.0/12,192.168.0.0/16,224.0.0.0/4,240.0.0.0/4',
       },
     },
   },
