@@ -704,7 +704,7 @@ test.describe('Command server', () => {
           ['application.admin-access', true],
           ['application.path-management-strategy', 'rcfiles'],
           ['experimental.virtual-machine.mount.9p.cache-mode', CacheMode.MMAP],
-          ['experimental.virtual-machine.mount.9p.msize-in-kb', 128],
+          ['experimental.virtual-machine.mount.9p.msize-in-kib', 128],
           ['experimental.virtual-machine.mount.9p.protocol-version', ProtocolVersion.NINEP2000_L],
           ['experimental.virtual-machine.mount.9p.security-model', SecurityModel.NONE],
           ['experimental.virtual-machine.mount.type', MountType.NINEP],

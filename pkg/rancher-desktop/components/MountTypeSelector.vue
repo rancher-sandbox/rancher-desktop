@@ -175,15 +175,15 @@ export default Vue.extend({
           </select>
         </rd-fieldset>
         <rd-fieldset
-          data-test="msizeInKb"
-          :legend-text="t('virtualMachine.mount.type.options.9p.options.mSizeInKb.legend')"
-          :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.mSizeInKb.tooltip')"
+          data-test="msizeInKib"
+          :legend-text="t('virtualMachine.mount.type.options.9p.options.mSizeInKib.legend')"
+          :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.mSizeInKib.tooltip')"
         >
           <input
             type="number"
-            :value="preferences.experimental.virtualMachine.mount['9p'].msizeInKB"
+            :value="preferences.experimental.virtualMachine.mount['9p'].msizeInKib"
             min="4"
-            @input="updateValue('experimental.virtualMachine.mount.9p.msizeInKB', $event.target.value)"
+            @input="updateValue('experimental.virtualMachine.mount.9p.msizeInKib', $event.target.value)"
           />
         </rd-fieldset>
         <rd-fieldset

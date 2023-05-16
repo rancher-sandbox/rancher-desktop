@@ -473,7 +473,7 @@ components:
                         protocolVersion:
                           type: string
                           enum: [9p2000, 9p2000.u, 9p2000.L]
-                        msizeInKB:
+                        msizeInKib:
                           type: integer
                           minimum: 4
                           x-rd-usage: maximum packet size

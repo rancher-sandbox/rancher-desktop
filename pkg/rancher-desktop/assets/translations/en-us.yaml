@@ -321,7 +321,7 @@ virtualMachine:
                 loose: loose
                 fscache: fscache
                 mmap: mmap
-            mSizeInKb:
+            mSizeInKib:
               legend: Memory Size In KiB
               tooltip: Maximum package size in KiB
             protocolVersion:

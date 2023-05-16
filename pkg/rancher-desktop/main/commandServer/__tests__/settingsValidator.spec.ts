@@ -69,7 +69,7 @@ describe(SettingsValidator, () => {
       ['containerEngine', 'allowedImages', 'locked'],
       ['containerEngine', 'name'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'cacheMode'],
-      ['experimental', 'virtualMachine', 'mount', '9p', 'msizeInKB'],
+      ['experimental', 'virtualMachine', 'mount', '9p', 'msizeInKib'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'securityModel'],
       ['experimental', 'virtualMachine', 'mount', 'type'],

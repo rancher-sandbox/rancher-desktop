@@ -45,7 +45,6 @@ if (/^--/) {
     s/memoryInGb/memoryInGB/;
     s/numberCpus/numberCPUs/;
     s/socketVmnet/socketVMNet/;
-    s/msizeInKb/msizeInKB/;
     s/--wsl/--WSL/;
 }
 print;
