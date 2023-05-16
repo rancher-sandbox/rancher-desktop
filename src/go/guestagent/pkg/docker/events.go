@@ -37,13 +37,13 @@ const (
 // for container events.
 type EventMonitor struct {
 	dockerClient *client.Client
-	portTracker  *tracker.PortTracker
+	portTracker  tracker.Tracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
 // Docker's event API. Caller is responsible to make sure that
 // Docker engine is up and running.
-func NewEventMonitor(portTracker *tracker.PortTracker) (*EventMonitor, error) {
+func NewEventMonitor(portTracker tracker.Tracker) (*EventMonitor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					validatePortMapping(container.NetworkSettings.NetworkSettingsBase.Ports)
 					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
 					if err != nil {
-						log.Errorf("adding port mapping to tracker failed: %w", err)
+						log.Errorf("adding port mapping to tracker failed: %v", err)
 					}
 				}
 			case stopEvent, dieEvent:
@@ -115,7 +115,10 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 // Flush clears all the container port mappings
 // out of the port tracker upon shutdown.
 func (e *EventMonitor) Flush() {
-	e.portTracker.RemoveAll()
+	err := e.portTracker.RemoveAll()
+	if err != nil {
+		log.Errorf("Flush received an error to remove all portMappings: %v", err)
+	}
 }
 
 // Info returns information about the docker server

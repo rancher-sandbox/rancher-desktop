@@ -28,7 +28,6 @@ import (
 	containerdNamespace "github.com/containerd/containerd/namespaces"
 	"github.com/docker/go-connections/nat"
 	"github.com/gogo/protobuf/proto"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
@@ -38,8 +37,7 @@ const portsKey = "nerdctl/ports"
 // for container events.
 type EventMonitor struct {
 	containerdClient *containerd.Client
-	portTracker      *tracker.PortTracker
-	tcpTracker       *tcplistener.ListenerTracker
+	portTracker      tracker.Tracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
@@ -47,8 +45,7 @@ type EventMonitor struct {
 // Docker engine is up and running.
 func NewEventMonitor(
 	containerdSock string,
-	portTracker *tracker.PortTracker,
-	tcpTracker *tcplistener.ListenerTracker,
+	portTracker tracker.Tracker,
 ) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
 	if err != nil {
@@ -58,7 +55,6 @@ func NewEventMonitor(
 	return &EventMonitor{
 		containerdClient: client,
 		portTracker:      portTracker,
-		tcpTracker:       tcpTracker,
 	}, nil
 }
 
@@ -105,7 +101,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 
-				updateListener(ctx, ports, e.tcpTracker.Add)
+				updateListener(ctx, ports, e.portTracker.AddListener)
 
 			case "/containers/update":
 				cuEvent := &events.ContainerUpdate{}
@@ -131,7 +127,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						updateListener(ctx, ports, e.tcpTracker.Remove)
+						updateListener(ctx, ports, e.portTracker.RemoveListener)
 						err = e.portTracker.Add(cuEvent.ID, ports)
 						if err != nil {
 							log.Errorf("failed to add port mapping from container update event: %v", err)
@@ -139,7 +135,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							continue
 						}
 
-						updateListener(ctx, ports, e.tcpTracker.Add)
+						updateListener(ctx, ports, e.portTracker.AddListener)
 					}
 
 					continue
@@ -164,7 +160,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					}
 				}
 
-				updateListener(ctx, portMapToDelete, e.tcpTracker.Remove)
+				updateListener(ctx, portMapToDelete, e.portTracker.RemoveListener)
 			}
 
 		case err := <-errCh:
@@ -192,9 +188,19 @@ func (e *EventMonitor) IsServing(ctx context.Context) error {
 
 // Close closes the client connection to the API server.
 func (e *EventMonitor) Close() error {
-	e.portTracker.RemoveAll()
+	var finalErr error
 
-	return e.containerdClient.Close()
+	if err := e.containerdClient.Close(); err != nil {
+		finalErr = fmt.Errorf("failed to close containerd client: %w", err)
+	}
+
+	if err := e.portTracker.RemoveAll(); err != nil {
+		finalErr = fmt.Errorf("failed to remove all ports from port tracker: %w", err)
+
+		return finalErr
+	}
+
+	return finalErr
 }
 
 func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {

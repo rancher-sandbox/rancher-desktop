@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2023 SUSE LLC
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -11,8 +11,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package tcplistener implements a TCP listener
-package tcplistener
+// Package tracker implements a tracking mechanism to keep track
+// of the ports during various container event types e.g start, stop
+package tracker
 
 import (
 	"context"
@@ -40,13 +41,9 @@ func NewListenerTracker() *ListenerTracker {
 	}
 }
 
-func ipPortToAddr(ip net.IP, port int) string {
-	return net.JoinHostPort(ip.String(), strconv.Itoa(port))
-}
-
-// Add an IP / port combination into the listener tracker.  If this combination
-// is already being tracked, this is a no-op.
-func (l *ListenerTracker) Add(ctx context.Context, ip net.IP, port int) error {
+// AddListener adds an IP / port combination into the listener tracker.
+// If this combination is already being tracked, this is a no-op.
+func (l *ListenerTracker) AddListener(ctx context.Context, ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
 
 	listener, err := listen(ctx, addr)
@@ -61,9 +58,9 @@ func (l *ListenerTracker) Add(ctx context.Context, ip net.IP, port int) error {
 	return nil
 }
 
-// Remove an IP / port combination from the listener tracker.  If this
+// RemoveListener removes an IP / port combination from the listener tracker.  If this
 // combination was not being tracked, this is a no-op.
-func (l *ListenerTracker) Remove(_ context.Context, ip net.IP, port int) error {
+func (l *ListenerTracker) RemoveListener(_ context.Context, ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
 
 	l.mutex.Lock()
@@ -78,6 +75,10 @@ func (l *ListenerTracker) Remove(_ context.Context, ip net.IP, port int) error {
 	}
 
 	return nil
+}
+
+func ipPortToAddr(ip net.IP, port int) string {
+	return net.JoinHostPort(ip.String(), strconv.Itoa(port))
 }
 
 // Listen on the given address and port.  The returned listener never handles

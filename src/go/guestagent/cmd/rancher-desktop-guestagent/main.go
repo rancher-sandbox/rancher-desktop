@@ -35,7 +35,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"golang.org/x/sync/errgroup"
@@ -57,6 +56,22 @@ var (
 	k8sServiceListenerAddr  = flag.String("k8sServiceListenerAddr", net.IPv4zero.String(),
 		"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
 )
+
+// Flags can only be enabled in the following combination:
+// +======================+==============================================+
+// |                      |     Default Network    | Namespaced Network  |
+// +----------------------+------------------------+---------------------+
+// |                      | Admin      | Non-Admin | Admin   | Non-Admin |
+// +======================+============+===========+=========+===========+
+// | privilegedService    | enable     | disable   | disable | disable   |
+// +----------------------+------------+-----------+---------+-----------+
+// | docker Or containerd | enable     | disable   | enable  | enable    |
+// +----------------------+------------+-----------+---------+-----------+
+// | iptables             | disable or | enable    | disable | disable   |
+// |                      | **enable   |           |         |           |
+// +----------------------+------------+-----------+---------+-----------+
+// ** iptables can be enable for the default network with admin when older
+// versions of k8s are used that do not support the service watcher API.
 
 const (
 	wslInfName             = "eth0"
@@ -98,59 +113,65 @@ func main() {
 		cancel()
 	}()
 
-	tcpTracker := tcplistener.NewListenerTracker()
-
-	wslAddr, err := getWSLAddr(wslInfName)
-	if err != nil {
-		log.Fatalf("failure getting WSL IP addresses: %v", err)
+	if !*enableContainerd &&
+		!*enableDocker &&
+		!*enableIptables {
+		log.Fatal("requires either -docker, -containerd or -iptables enabled.")
 	}
 
-	forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
-	portTracker := tracker.NewPortTracker(forwarder, wslAddr)
+	if *enableContainerd &&
+		*enableDocker &&
+		*enableIptables {
+		log.Fatal("requires either -docker, -containerd or -iptables, not all.")
+	}
+
+	var portTracker tracker.Tracker
 
 	if *enablePrivilegedService {
-		if !*enableContainerd && !*enableDocker {
-			log.Fatal("-privilegedService mode requires either -docker or -containerd enabled.")
-		}
-
-		if *enableContainerd && *enableDocker {
-			log.Fatal("-privilegedService mode requires either -docker or -containerd, not both.")
-		}
-
 		if *vtunnelAddr == "" {
-			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
+			log.Fatal("-vtunnelAddr must be provided when -privilegedService is enabled.")
 		}
 
-		if *enableContainerd {
-			group.Go(func() error {
-				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker, tcpTracker)
-				if err != nil {
-					return fmt.Errorf("error initializing containerd event monitor: %w", err)
-				}
-				if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
-					return err
-				}
-				eventMonitor.MonitorPorts(ctx)
-
-				return eventMonitor.Close()
-			})
+		wslAddr, err := getWSLAddr(wslInfName)
+		if err != nil {
+			log.Fatalf("failure getting WSL IP addresses: %v", err)
 		}
 
-		if *enableDocker {
-			group.Go(func() error {
-				eventMonitor, err := docker.NewEventMonitor(portTracker)
-				if err != nil {
-					return fmt.Errorf("error initializing docker event monitor: %w", err)
-				}
-				if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
-					return err
-				}
-				eventMonitor.MonitorPorts(ctx)
-				eventMonitor.Flush()
+		forwarder := forwarder.NewVTunnelForwarder(*vtunnelAddr)
+		portTracker = tracker.NewVTunnelTracker(forwarder, wslAddr)
+	} else {
+		portTracker = tracker.NewAPITracker(tracker.GatewayBaseURL)
+	}
 
-				return nil
-			})
-		}
+	if *enableContainerd {
+		group.Go(func() error {
+			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+			if err != nil {
+				return fmt.Errorf("error initializing containerd event monitor: %w", err)
+			}
+			if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
+				return err
+			}
+			eventMonitor.MonitorPorts(ctx)
+
+			return eventMonitor.Close()
+		})
+	}
+
+	if *enableDocker {
+		group.Go(func() error {
+			eventMonitor, err := docker.NewEventMonitor(portTracker)
+			if err != nil {
+				return fmt.Errorf("error initializing docker event monitor: %w", err)
+			}
+			if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
+				return err
+			}
+			eventMonitor.MonitorPorts(ctx)
+			eventMonitor.Flush()
+
+			return nil
+		})
 	}
 
 	if *enableKubernetes {
@@ -168,8 +189,7 @@ func main() {
 				*configPath,
 				k8sServiceListenerIP,
 				*enablePrivilegedService,
-				portTracker,
-				tcpTracker)
+				portTracker)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
 			}
@@ -180,8 +200,7 @@ func main() {
 
 	if *enableIptables {
 		group.Go(func() error {
-			// Forward ports
-			err := iptables.ForwardPorts(ctx, tcpTracker, iptablesUpdateInterval)
+			err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)
 			}
