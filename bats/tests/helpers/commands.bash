@@ -38,6 +38,8 @@ else
     RD_DOCKER_CONTEXT=rancher-desktop
 fi
 
+CONTAINERD_NAMESPACE=default
+
 no_cr() {
     tr -d '\r'
 }
@@ -68,7 +70,7 @@ limactl() {
     "$PATH_RESOURCES/$PLATFORM/lima/bin/limactl" "$@"
 }
 nerdctl() {
-    "$PATH_RESOURCES/$PLATFORM/bin/nerdctl$EXE" "$@" | no_cr
+    "$PATH_RESOURCES/$PLATFORM/bin/nerdctl$EXE" --namespace "$CONTAINERD_NAMESPACE" "$@" | no_cr
 }
 rdctl() {
     if is_windows; then

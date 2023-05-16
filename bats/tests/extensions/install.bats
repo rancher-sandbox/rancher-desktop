@@ -1,18 +1,14 @@
 load '../helpers/load'
 
 setup() {
+    CONTAINERD_NAMESPACE=rancher-desktop-extensions
+
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
 
     if using_windows_exe; then
         TESTDATA_DIR_CLI="$(wslpath -m "${TESTDATA_DIR}")"
     else
         TESTDATA_DIR_CLI="${TESTDATA_DIR}"
-    fi
-
-    if using_containerd; then
-        namespace_arg=('--namespace=rancher-desktop-extensions')
-    else
-        namespace_arg=()
     fi
 }
 
@@ -61,12 +57,12 @@ encoded_id() { # variant
         basic host-binaries missing-icon missing-icon-file ui
     )
     for extension in "${variants[@]}"; do
-        ctrctl "${namespace_arg[@]}" build \
+        ctrctl build \
             --tag "rd/extension/$extension" \
             --build-arg "variant=$extension" \
             "$TESTDATA_DIR_CLI"
     done
-    run ctrctl "${namespace_arg[@]}" image list --format '{{ .Repository }}'
+    run ctrctl image list --format '{{ .Repository }}'
     assert_success
     for extension in "${variants[@]}"; do
         assert_line "rd/extension/$extension"
