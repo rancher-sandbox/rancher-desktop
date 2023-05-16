@@ -43,7 +43,7 @@ write_allow_list() { # list
 check_extension_installed() { # refute, name
     run rdctl extension ls
     assert_success
-    ${1:-assert}_output --partial ${2:-rd/extension/basic}
+    "${1:-assert}_output" --partial "${2:-rd/extension/basic}"
 }
 
 @test 'factory reset' {
