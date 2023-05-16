@@ -6,6 +6,7 @@ export class WslNav {
   readonly networkingTunnel: Locator;
   readonly tabIntegrations: Locator;
   readonly tabNetwork: Locator;
+  readonly wslIntegrations: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -13,5 +14,6 @@ export class WslNav {
     this.networkingTunnel = page.locator('[data-test="networkingTunnel"]');
     this.tabIntegrations = page.locator('.tab >> text=Integrations');
     this.tabNetwork = page.locator('.tab >> text=Network');
+    this.wslIntegrations = page.locator('[data-test="wslIntegrations"]');
   }
 }

@@ -34,6 +34,7 @@ export default Vue.extend({
 <template>
   <div class="wsl-integrations">
     <rd-fieldset
+      data-test="wslIntegrations"
       :legend-text="t('integrations.windows.description', { }, true)"
     >
       <wsl-integration
