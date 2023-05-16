@@ -5,7 +5,10 @@ import os from 'os';
 import path from 'path';
 
 import * as settings from '@pkg/config/settings';
-import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
+import {
+  readDeploymentProfiles,
+  lockableDefaultSettings, validateDeploymentProfile,
+} from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -204,68 +207,68 @@ describe('deployment profiles', () => {
     /* Mock console.error() to capture error messages. */
     let consoleMock: jest.SpyInstance<void, [message?: any, ...optionalArgs: any[]]>;
 
-  beforeEach(async() => {
-    nativeReg.deleteTree(nativeReg.HKCU, path.join(...(REGISTRY_PATH_PROFILE)));
-    testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'regtest-'));
-    regFilePath = path.join(testDir, 'import.reg');
-    consoleMock = jest.spyOn(console, 'error');
-  });
-  afterEach(async() => {
-    await fs.promises.rm(testDir, { force: true, recursive: true });
-    consoleMock.mockReset();
-  });
-  // TODO:  Add an `afterAll(clearRegistry)` when we're finished developing.
+    beforeEach(async() => {
+      nativeReg.deleteTree(nativeReg.HKCU, path.join(...(REGISTRY_PATH_PROFILE)));
+      testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'regtest-'));
+      regFilePath = path.join(testDir, 'import.reg');
+      consoleMock = jest.spyOn(console, 'error');
+    });
+    afterEach(async() => {
+      await fs.promises.rm(testDir, { force: true, recursive: true });
+      consoleMock.mockReset();
+    });
+    // TODO:  Add an `afterAll(clearRegistry)` when we're finished developing.
 
-  describe('profile', () => {
-    describe('defaults', () => {
-      describe('happy paths', () => {
-        const defaultUserProfile: RecursivePartial<settings.Settings> = {
-          application:     {
-            debug:       true,
-            adminAccess: false,
-            telemetry:   { enabled: true },
-          },
-          containerEngine: {
-            allowedImages: {
-              enabled:  false,
-              patterns: ['edmonton', 'calgary', 'red deer', 'bassano'],
+    describe('profile', () => {
+      describe('defaults', () => {
+        describe('happy paths', () => {
+          const defaultUserProfile: RecursivePartial<settings.Settings> = {
+            application: {
+              debug:       true,
+              adminAccess: false,
+              telemetry:   { enabled: true },
             },
-            name:          settings.ContainerEngine.MOBY,
-          },
-          WSL:             {
-            integrations: {
-              kingston: false,
-              napanee:  false,
-              yarker:   true,
-              weed:     true
-            }
-          },
-          kubernetes:      {
-            version: '867-5309',
-          },
-          diagnostics:     {
-            showMuted:   true,
-            mutedChecks: {
-              montreal:          true,
-              'riviere du loup': false,
-              magog:             false
+            containerEngine: {
+              allowedImages: {
+                enabled:  false,
+                patterns: ['edmonton', 'calgary', 'red deer', 'bassano'],
+              },
+              name: settings.ContainerEngine.MOBY,
             },
-          },
-          extensions:      {
-            bellingham: 'WA',
-            portland:   'OR',
-            shasta:     'CA',
-            elko:       'NV'
-          },
-        };
-        const lockedUserProfile = {
-          containerEngine: {
-            allowedImages: {
-              enabled:  false,
-              patterns: ['busybox', 'nginx'],
+            WSL: {
+              integrations: {
+                kingston: false,
+                napanee:  false,
+                yarker:   true,
+                weed:     true,
+              },
             },
-          },
-        };
+            kubernetes: {
+              version: '867-5309',
+            },
+            diagnostics: {
+              showMuted:   true,
+              mutedChecks: {
+                montreal:          true,
+                'riviere du loup': false,
+                magog:             false,
+              },
+            },
+            extensions: {
+              bellingham: 'WA',
+              portland:   'OR',
+              shasta:     'CA',
+              elko:       'NV',
+            },
+          };
+          const lockedUserProfile = {
+            containerEngine: {
+              allowedImages: {
+                enabled:  false,
+                patterns: ['busybox', 'nginx'],
+              },
+            },
+          };
 
           describe('no system profiles, no user profiles', () => {
             it('loads nothing', async() => {
@@ -299,19 +302,10 @@ describe('deployment profiles', () => {
           });
         });
         describe('error paths', () => {
-          const limitedUserProfile = {
-            application: {
-              telemetry: { enabled: true },
-            },
-            diagnostics: {
-              showMuted: true,
-            },
-          };
-
           it('loads a bad profile, complains about all the errors, and keeps only valid entries', async() => {
             await clearRegistry();
             await installInRegistry(incorrectDefaultsUserRegFile);
-            await expect(readDeploymentProfiles(true))
+            await expect(readDeploymentProfiles())
               .rejects
               .toThrow(`Error in registry settings:
 Error for registry entry 'application.debug': expecting value of type boolean, got '"should be a number"'
@@ -325,6 +319,7 @@ Error for registry entry 'wsl.integrations': expecting value of type object, got
 Error for registry entry 'kubernetes.version': expecting value of type string, got '{}'
 Error for registry entry 'kubernetes.enabled': expecting value of type boolean, got '-7'
 Error for registry entry 'diagnostics.mutedChecks': expecting value of type object, got '66'`);
+          });
         });
       });
     });

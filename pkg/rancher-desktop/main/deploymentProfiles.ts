@@ -14,11 +14,6 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.deploymentProfile;
 
-const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
-
-export const testingDefaultsHiveName = 'DefaultsTest';
-export const testingLockedHiveName = 'LockedTest';
-
 export class DeploymentProfileError extends Error {
 }
 
@@ -472,17 +467,17 @@ function validateDeploymentProfileWithErrors(profile: any, errors: string[], sch
     const schemaVal = schema[key];
     const profileVal = profile[key];
 
-    if (typeof profileVal !== 'object') {
-      if (typeof profileVal !== typeof schemaVal) {
-        errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
-      }
-    } else if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
+    if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
       if (Array.isArray(profileVal) !== Array.isArray(schemaVal)) {
         if (Array.isArray(schemaVal)) {
           errors.push(`Error for field '${ fullPath(key) }': expecting an array, got '${ JSON.stringify(profileVal) }'`);
         } else {
           errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got an array ${ JSON.stringify(profileVal) }`);
         }
+      }
+    } else if (typeof profileVal !== 'object') {
+      if (typeof profileVal !== typeof schemaVal) {
+        errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
       }
     } else if (haveUserDefinedObject(parentPathParts.concat(key))) {
       // Keep this part of the profile
