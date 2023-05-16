@@ -1,4 +1,3 @@
-openapi: 3.0.0
 info:
   title: Rancher Desktop API
   version: 0.0.1
@@ -492,6 +491,26 @@ components:
                 useRosetta:
                   type: boolean
                   x-rd-platforms: [darwin]
+                proxy:
+                  type: object
+                  x-rd-platforms: [win32]
+                  x-rd-usage: configure proxy address
+                  properties:
+                    enabled:
+                      type: boolean
+                      x-rd-usage: redirect the traffic to the configured proxy address
+                    address:
+                      type: string
+                      x-rd-usage: proxy address
+                    password:
+                      type: string
+                      x-rd-usage: if needed the password to connect to the proxy
+                    port:
+                      type: integer
+                      x-rd-usage: proxy port
+                    username:
+                      type: string
+                      x-rd-usage: if needed the username to connect to the proxy
         WSL:
           type: object
           x-rd-platforms: [win32]

@@ -18,3 +18,4 @@ hostResolver: 0.1.5
 mobyOpenAPISpec: "1.43"
 wix: wix3112rtm
 hostSwitch: 0.1.0
+moproxy: 0.5.0

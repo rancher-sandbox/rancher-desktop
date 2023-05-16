@@ -5,6 +5,7 @@ import { mapGetters, mapState } from 'vuex';
 
 import PreferencesWslIntegrations from '@pkg/components/Preferences/WslIntegrations.vue';
 import PreferencesWslNetwork from '@pkg/components/Preferences/WslNetwork.vue';
+import PreferencesWslProxy from '@pkg/components/Preferences/WslProxy.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
@@ -17,7 +18,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-wsl',
   components: {
-    RdTabbed, Tab, PreferencesWslIntegrations, PreferencesWslNetwork,
+    RdTabbed, Tab, PreferencesWslIntegrations, PreferencesWslNetwork, PreferencesWslProxy,
   },
   props: {
     preferences: {
@@ -29,7 +30,7 @@ export default Vue.extend({
     ...mapGetters('transientSettings', ['getActiveTab']),
     ...mapState('credentials', ['credentials']),
     activeTab(): string {
-      return this.getActiveTab || 'integrations';
+      return this.getActiveTab || 'integration';
     },
   },
   methods: {
@@ -61,14 +62,19 @@ export default Vue.extend({
   >
     <template #tabs>
       <tab
-        label="Integrations"
-        name="integrations"
-        :weight="1"
-      />
-      <tab
         label="Network"
         name="network"
+        :weight="3"
+      />
+      <tab
+        label="Integrations"
+        name="integrations"
         :weight="2"
+      />
+      <tab
+        label="Proxy"
+        name="proxy"
+        :weight="1"
       />
     </template>
     <div class="wsl-content">

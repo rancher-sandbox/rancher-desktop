@@ -97,6 +97,8 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
 
   noModalDialogs = true;
 
+  async handleSettingsUpdate(_: BackendSettings): Promise<void> {}
+
   requiresRestartReasons(config: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     if (!this.cfg) {
       return Promise.resolve({});

@@ -9,7 +9,7 @@ import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, HostResolverHost, HostSwitch } from 'scripts/dependencies/wsl';
+import { WSLDistro, HostResolverHost, HostSwitch, Moproxy } from 'scripts/dependencies/wsl';
 import {
   DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit,
 } from 'scripts/lib/dependencies';
@@ -43,6 +43,7 @@ const dependencies: Dependency[] = [
   new Wix(),
   new MobyOpenAPISpec(),
   new HostSwitch(),
+  new Moproxy(),
 ];
 
 function git(...args: string[]): number | null {
