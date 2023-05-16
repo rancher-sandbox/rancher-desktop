@@ -305,7 +305,7 @@ describe('deployment profiles', () => {
           it('loads a bad profile, complains about all the errors, and keeps only valid entries', async() => {
             await clearRegistry();
             await installInRegistry(incorrectDefaultsUserRegFile);
-            await expect(readDeploymentProfiles())
+            await expect(readDeploymentProfiles(REGISTRY_PATH_PROFILE))
               .rejects
               .toThrow(`Error in registry settings:
 Error for registry entry 'application.debug': expecting value of type boolean, got '"should be a number"'
