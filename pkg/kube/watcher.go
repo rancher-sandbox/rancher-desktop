@@ -27,7 +27,6 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -54,8 +53,7 @@ func WatchForServices(
 	configPath string,
 	k8sServiceListenerIP net.IP,
 	enablePrivilegedService bool,
-	portTracker *tracker.PortTracker,
-	listenerTracker *tcplistener.ListenerTracker,
+	portTracker tracker.Tracker,
 ) error {
 	// These variables are shared across the different states
 	var (
@@ -158,7 +156,7 @@ func WatchForServices(
 					}
 
 					for port := range event.portMapping {
-						if err := listenerTracker.Remove(ctx, k8sServiceListenerIP, int(port)); err != nil {
+						if err := portTracker.RemoveListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
 							log.Errorw("failed to close listener", log.Fields{
 								"error":     err,
 								"ports":     event.portMapping,
@@ -198,7 +196,7 @@ func WatchForServices(
 						continue
 					}
 					for port := range event.portMapping {
-						if err := listenerTracker.Add(ctx, k8sServiceListenerIP, int(port)); err != nil {
+						if err := portTracker.AddListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
 							log.Errorw("failed to create listener", log.Fields{
 								"error":     err,
 								"ports":     event.portMapping,

@@ -10,7 +10,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/lima-vm/lima/pkg/guestagent/iptables"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
 // ForwardPorts forwards ports found in iptables dnat. In some environments,
@@ -19,7 +19,7 @@ import (
 // as part of the normal forwarding system. This function detects those ports
 // and binds them so that they are picked up.
 // The argument is a time, in seconds, to wait between updating.
-func ForwardPorts(ctx context.Context, tracker *tcplistener.ListenerTracker, updateInterval time.Duration) error {
+func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval time.Duration) error {
 	var ports []iptables.Entry
 
 	for {
@@ -50,7 +50,7 @@ func ForwardPorts(ctx context.Context, tracker *tcplistener.ListenerTracker, upd
 		// Remove old forwards
 		for _, p := range removed {
 			name := entryToString(p)
-			if err := tracker.Remove(ctx, p.IP, p.Port); err != nil {
+			if err := tracker.RemoveListener(ctx, p.IP, p.Port); err != nil {
 				log.Warnf("failed to close listener %q: %w", name, err)
 			}
 		}
@@ -58,7 +58,7 @@ func ForwardPorts(ctx context.Context, tracker *tcplistener.ListenerTracker, upd
 		// Add new forwards
 		for _, p := range added {
 			name := entryToString(p)
-			if err := tracker.Add(ctx, p.IP, p.Port); err != nil {
+			if err := tracker.AddListener(ctx, p.IP, p.Port); err != nil {
 				log.Errorf("failed to listen %q: %w", name, err)
 			} else {
 				log.Infof("opened listener for %q", name)
