@@ -44,11 +44,6 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  */
 
 export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH_PROFILE): Promise<settings.DeploymentProfileType> {
-  if (process.platform === 'win32') {
-    const win32DeploymentReader = new Win32DeploymentReader(registryProfilePath);
-
-    return Promise.resolve(win32DeploymentReader.readProfile());
-  }
   const profiles: settings.DeploymentProfileType = {
     defaults: {},
     locked:   {},
@@ -59,6 +54,13 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
   let fullLockedPath = '';
 
   switch (os.platform()) {
+  case 'win32': {
+    const win32DeploymentReader = new Win32DeploymentReader(registryProfilePath);
+
+    ({ defaults, locked } = win32DeploymentReader.readProfile());
+    break;
+  }
+
   case 'linux': {
     const linuxPaths = {
       [paths.deploymentProfileSystem]: ['defaults.json', 'locked.json'],
@@ -75,8 +77,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
         break;
       }
     }
-  }
     break;
+  }
 
   case 'darwin':
     for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
