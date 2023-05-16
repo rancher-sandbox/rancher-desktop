@@ -29,6 +29,7 @@ is_linux() {
         test "$OS" = linux -a "$ARCH" = "$1"
     fi
 }
+
 is_macos() {
     if [ -z "${1-}" ]; then
         test "$OS" = darwin
@@ -36,6 +37,7 @@ is_macos() {
         test "$OS" = darwin -a "$ARCH" = "$1"
     fi
 }
+
 is_windows() {
     if [ -z "${1-}" ]; then
         test "$OS" = windows
@@ -43,16 +45,32 @@ is_windows() {
         test "$OS" = windows -a "$ARCH" = "$1"
     fi
 }
+
 is_unix() {
     ! is_windows "$@"
 }
+
 skip_on_windows() {
     if is_windows; then
         skip "This test is not applicable on Windows."
     fi
 }
+
 skip_on_unix() {
     if is_unix; then
         skip "This test is not applicable on MacOS/Linux."
+    fi
+}
+
+needs_port() {
+    local port=$1
+    if is_linux; then
+        if [ "$(sysctl -n net.ipv4.ip_unprivileged_port_start)" -gt "$port" ]; then
+            # Run sudo non-interactive, so don't prompt for password
+            run sudo -n sysctl -w "net.ipv4.ip_unprivileged_port_start=$port"
+            if [ "$status" -ne 0 ]; then
+                skip "net.ipv4.ip_unprivileged_port_start must be $port or less"
+            fi
+        fi
     fi
 }
