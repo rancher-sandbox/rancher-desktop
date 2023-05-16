@@ -44,6 +44,11 @@ const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
  */
 
 export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH_PROFILE): Promise<settings.DeploymentProfileType> {
+  if (process.platform === 'win32') {
+    const win32DeploymentReader = new Win32DeploymentReader(registryProfilePath);
+
+    return Promise.resolve(win32DeploymentReader.readProfile());
+  }
   const profiles: settings.DeploymentProfileType = {
     defaults: {},
     locked:   {},
@@ -54,13 +59,6 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
   let fullLockedPath = '';
 
   switch (os.platform()) {
-  case 'win32': {
-    const win32DeploymentReader = new Win32DeploymentReader(registryProfilePath);
-
-    ({ defaults, locked } = win32DeploymentReader.readProfile());
-    break;
-  }
-
   case 'linux': {
     const linuxPaths = {
       [paths.deploymentProfileSystem]: ['defaults.json', 'locked.json'],
@@ -178,6 +176,7 @@ function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: stri
 class Win32DeploymentReader {
   protected registryPathProfile: string[];
   protected keyName = '';
+  protected errors: string[] = [];
 
   constructor(registryPathProfile: string[]) {
     this.registryPathProfile = registryPathProfile;
@@ -218,6 +217,10 @@ class Win32DeploymentReader {
     }
 
     // Don't bother with the validator, because the registry-based reader validates as it reads.
+    if (this.errors.length) {
+      throw new DeploymentProfileError(`Error in registry ${ this.registryPathProfile }:\n${ this.errors.join('\n') }`);
+    }
+
     return { defaults, locked };
   }
 
@@ -267,8 +270,10 @@ class Win32DeploymentReader {
 
       if ((typeof schemaVal) !== 'object' || schemaVal === null) {
         const valueType = schemaVal === null ? 'null' : (typeof schemaVal);
+        const msg = `Error for field '${ this.fullRegistryPath(...pathParts, registryKey) }': expecting value of type  ${ valueType }, got a registry object`;
 
-        console.error(`Expecting registry entry ${ this.fullRegistryPath(...pathParts, registryKey) } to be a ${ valueType }, but it's a registry object`);
+        console.error(msg);
+        this.errors.push(msg);
         continue;
       }
       const innerKey = nativeReg.openKey(regKey, registryKey, nativeReg.Access.READ);
@@ -295,7 +300,10 @@ class Win32DeploymentReader {
       try {
         regValue = this.readRegistryObject(innerKey, pathParts.concat([schemaKey]), true);
       } catch (err: any) {
-        console.error(`Error getting registry object for ${ this.fullRegistryPath(...pathParts, registryKey) }: `, err);
+        const msg = `Error getting registry object for ${ this.fullRegistryPath(...pathParts, registryKey) }`;
+
+        console.error(msg, err);
+        this.errors.push(msg);
       } finally {
         nativeReg.closeKey(innerKey);
       }
@@ -344,8 +352,12 @@ class Win32DeploymentReader {
           case 1:
             newValue = true;
             break;
-          default:
-            console.error(`Unexpected numeric value names in registry at ${ this.fullRegistryPath(...pathParts, k) } of ${ newValue }: expecting either 0 or 1`);
+          default: {
+            const msg = `Error for field '${ this.fullRegistryPath(...pathParts) }': expecting value of type  boolean, got '${ newValue }`;
+
+            console.error(msg);
+            this.errors.push(msg);
+          }
           }
         }
         newObject[k] = newValue;
@@ -378,7 +390,10 @@ class Win32DeploymentReader {
       // This shouldn't happen
       return null;
     } else if (!isUserDefinedObject && schemaVal && typeof schemaVal === 'object' && !Array.isArray(schemaVal)) {
-      console.error(`Expecting registry entry ${ fullPath } to be a registry object, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+      const msg = `Error for field '${ fullPath }': expecting value of type  object, got a ${ valueTypeNames[rawValue.type] }, value: '${ parsedValueForErrorMessage }'`;
+
+      console.error(msg);
+      this.errors.push(msg);
 
       return null;
     }
@@ -392,16 +407,25 @@ class Win32DeploymentReader {
       } else if (expectingArray) {
         return [nativeReg.parseString(rawValue)];
       } else {
-        console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+        const msg = `Error for field '${ fullPath }': expecting value of type  ${ typeof schemaVal }, got '${ parsedValueForErrorMessage }'`;
+
+        console.error(msg);
+        this.errors.push(msg);
       }
       break;
     case nativeReg.ValueType.DWORD:
     case nativeReg.ValueType.DWORD_LITTLE_ENDIAN:
     case nativeReg.ValueType.DWORD_BIG_ENDIAN:
       if (expectingArray) {
-        console.error(`Expecting registry entry ${ fullPath } to be an array, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+        const msg = `Error for field '${ fullPath }': expecting an array, got '${ parsedValueForErrorMessage }'`;
+
+        console.error(msg);
+        this.errors.push(msg);
       } else if (typeof schemaVal === 'string') {
-        console.error(`Expecting registry entry ${ fullPath } to be a string, but it's a ${ valueTypeNames[rawValue.type] }, value: ${ parsedValueForErrorMessage }`);
+        const msg = `Error for field '${ fullPath }': expecting value of type string, got '${ parsedValueForErrorMessage }'`;
+
+        console.error(msg);
+        this.errors.push(msg);
       } else {
         parsedValue = nativeReg.parseValue(rawValue) as number;
 
@@ -412,13 +436,23 @@ class Win32DeploymentReader {
       if (expectingArray) {
         return nativeReg.parseMultiString(rawValue);
       } else if (typeof schemaVal === 'string') {
-        console.error(`Expecting registry entry ${ fullPath } to be a single string, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
+        const msg = `Error for field '${ fullPath }': expecting value of type string, got an array '${ parsedValueForErrorMessage }'`;
+
+        console.error(msg);
+        this.errors.push(msg);
       } else {
-        console.error(`Expecting registry entry ${ fullPath } to be a ${ typeof schemaVal }, but it's an array of strings, value: ${ parsedValueForErrorMessage }`);
+        const msg = `Error for field '${ fullPath }': expecting value of type ${ typeof schemaVal }, got an array '${ parsedValueForErrorMessage }'`;
+
+        console.error(msg);
+        this.errors.push(msg);
       }
       break;
-    default:
-      console.error(`Unexpected registry entry ${ fullPath }: don't know how to process a registry entry of type ${ valueTypeNames[rawValue.type] }`);
+    default: {
+      const msg = `Error for field '${ fullPath }': don't know how to process a registry entry of type ${ valueTypeNames[rawValue.type] }`;
+
+      console.error(msg);
+      this.errors.push(msg);
+    }
     }
 
     return null;
