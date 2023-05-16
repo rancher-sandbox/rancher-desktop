@@ -1,16 +1,11 @@
 load '../helpers/load'
 
 setup() {
-    TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
+    CONTAINERD_NAMESPACE=rancher-desktop-extensions
 
+    TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
     if using_windows_exe; then
         TESTDATA_DIR="$(wslpath -m "${TESTDATA_DIR}")"
-    fi
-
-    if using_containerd; then
-        namespace_arg=('--namespace=rancher-desktop-extensions')
-    else
-        namespace_arg=()
     fi
 }
 
@@ -42,7 +37,6 @@ encoded_id() { # variant
     local extension
     for extension in vm-image vm-compose; do
         ctrctl build \
-            "${namespace_arg[@]}" \
             --tag rd/extension/$extension \
             --build-arg variant=$extension "$TESTDATA_DIR"
     done
@@ -58,7 +52,7 @@ encoded_id() { # variant
 }
 
 @test 'image - check for running container' {
-    run ctrctl "${namespace_arg[@]}" container ls
+    run ctrctl container ls
     assert_success
     assert_line --regexp "$(id vm-image).*[[:space:]]Up[[:space:]]"
 }
@@ -66,7 +60,7 @@ encoded_id() { # variant
 @test 'image - uninstall' {
     rdctl api --method=POST "/v1/extensions/uninstall?id=$(id vm-image)"
 
-    run ctrctl "${namespace_arg[@]}" container ls --all
+    run ctrctl container ls --all
     assert_success
     refute_line --partial "$(id vm-image)"
 }
@@ -81,7 +75,7 @@ encoded_id() { # variant
 }
 
 @test 'compose - check for running container' {
-    run ctrctl "${namespace_arg[@]}" container ls
+    run ctrctl container ls
     assert_success
     assert_line --regexp "$(id vm-compose).*[[:space:]]Up[[:space:]]"
 }
@@ -89,7 +83,7 @@ encoded_id() { # variant
 @test 'compose - uninstall' {
     rdctl api --method=POST "/v1/extensions/uninstall?id=$(id vm-compose)"
 
-    run ctrctl "${namespace_arg[@]}" container ls --all
+    run ctrctl container ls --all
     assert_success
     refute_line --partial "$(id vm-compose)"
 }
