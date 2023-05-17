@@ -107,7 +107,7 @@ export default class SettingsValidator {
             '9p': {
               securityModel:   this.checkLima(this.check9P(this.checkEnum(...Object.values(SecurityModel)))),
               protocolVersion: this.checkLima(this.check9P(this.checkEnum(...Object.values(ProtocolVersion)))),
-              msizeInKB:       this.checkLima(this.check9P(this.checkNumber(4, Number.POSITIVE_INFINITY))),
+              msizeInKib:      this.checkLima(this.check9P(this.checkNumber(4, Number.POSITIVE_INFINITY))),
               cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
           },

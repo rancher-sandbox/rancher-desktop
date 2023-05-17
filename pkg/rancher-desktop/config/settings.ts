@@ -132,7 +132,7 @@ export const defaultSettings = {
         '9p': {
           securityModel:   SecurityModel.NONE,
           protocolVersion: ProtocolVersion.NINEP2000_L,
-          msizeInKB:       128,
+          msizeInKib:      128,
           cacheMode:       CacheMode.MMAP,
         },
       },

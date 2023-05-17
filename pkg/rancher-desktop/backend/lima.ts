@@ -634,7 +634,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         mount['9p'] = {
           securityModel:   nineP.securityModel,
           protocolVersion: nineP.protocolVersion,
-          msize:           `${ nineP.msizeInKB }KiB`,
+          msize:           `${ nineP.msizeInKib }KiB`,
           cache:           nineP.cacheMode,
         };
       }
@@ -2113,7 +2113,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     }
     Object.assign(reasons, this.kubeBackend.k3sHelper.requiresRestartReasons(this.cfg, cfg, {
       'experimental.virtualMachine.mount.9p.cacheMode':       undefined,
-      'experimental.virtualMachine.mount.9p.msizeInKB':       undefined,
+      'experimental.virtualMachine.mount.9p.msizeInKib':      undefined,
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
       'experimental.virtualMachine.mount.type':               undefined,
