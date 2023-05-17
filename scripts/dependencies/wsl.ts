@@ -125,7 +125,7 @@ export class HostResolverHost implements Dependency, GithubDependency {
 }
 
 export class Moproxy implements Dependency, GithubDependency {
-  name = 'Moproxy';
+  name = 'moproxy';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'moproxy';
 
