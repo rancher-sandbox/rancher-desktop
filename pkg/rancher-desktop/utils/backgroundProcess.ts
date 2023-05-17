@@ -1,4 +1,5 @@
 import timers from 'timers';
+import util from 'util';
 
 import * as childProcess from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
@@ -48,7 +49,7 @@ export default class BackgroundProcess {
   /**
    * Timer used to restart the process;
    */
-  protected timer: NodeJS.Timeout | null = null;
+  protected timer: NodeJS.Timeout | undefined;
 
   /**
    * @param name A descriptive name of the process for logging.
@@ -83,6 +84,13 @@ export default class BackgroundProcess {
   }
 
   /**
+   * Check if the monitored process is still running.
+   */
+  protected isRunning() {
+    return this.process && this.process.exitCode === null && this.process.signalCode === null;
+  }
+
+  /**
    * Attempt to start the process once.
    */
   protected async restart() {
@@ -92,34 +100,44 @@ export default class BackgroundProcess {
 
       return;
     }
+    timers.clearTimeout(this.timer);
+    this.timer = undefined;
+
     if (this.process) {
+      if (this.isRunning()) {
+        console.debug(`Restarting ${ this.name } (pid ${ this.process.pid }): ignoring restart, already alive`);
+
+        return;
+      }
+      console.debug(`Stopping exising ${ this.name } process (pid ${ this.process.pid })`);
       await this.destroy(this.process);
+
+      // Wait for the process to fully exit
+      while (this.isRunning()) {
+        await util.promisify(timers.setTimeout)(100);
+      }
     }
-    if (this.timer) {
-      // Ideally, we should use this.timer.refresh(); however, it does not
-      // appear to actually trigger.
-      timers.clearTimeout(this.timer);
-      this.timer = null;
-    }
+
     console.log(`Launching background process ${ this.name }.`);
     const process = await this.spawn();
 
     this.process = process;
+    console.debug(`Launched background process ${ this.name } (pid ${ process.pid })`);
     process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        console.log(`Background process ${ this.name } exited gracefully.`);
+        console.log(`Background process ${ this.name } (pid ${ process.pid }) exited gracefully.`);
       } else {
-        console.log(`Background process ${ this.name } exited with status ${ status } signal ${ signal }`);
+        console.log(`Background process ${ this.name } (pid ${ process.pid }) exited with status ${ status } signal ${ signal }`);
       }
       if (!Object.is(process, this.process)) {
-        console.log(`Not current ${ this.name } process; nothing to be done.`);
+        console.log(`Not current ${ this.name } process (pid ${ process.pid }, want ${ this.process?.pid }); nothing to be done.`);
 
         return;
       }
       this.shouldRun().then((result) => {
         if (result) {
           this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
-          console.debug(`Background process ${ this.name } will restart.`);
+          console.debug(`Background process ${ this.name } will restart (process ${ process.pid } exited)`);
         }
       }).catch(console.error);
     });
@@ -129,11 +147,10 @@ export default class BackgroundProcess {
    * Stop the process and do not restart it.
    */
   async stop() {
-    console.log(`Stopping background process ${ this.name }.`);
+    console.log(`Stopping background process ${ this.name } (pid ${ this.process?.pid ?? '<none>' }).`);
     this.started = false;
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
+    timers.clearTimeout(this.timer);
+    this.timer = undefined;
     if (this.process) {
       await this.destroy(this.process);
     }
