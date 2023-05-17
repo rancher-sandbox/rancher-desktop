@@ -4773,6 +4773,8 @@ preferences:
       reset: Kubernetes will reset after applying changes.
       restart: Kubernetes will restart after applying changes.
       error: "There's a problem with the preferences selection."
+  locked:
+    tooltip: Locked due to organization's policy
 
 ##############################
 ### Integrations Page
