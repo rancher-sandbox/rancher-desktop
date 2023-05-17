@@ -109,8 +109,8 @@ export interface ExtensionManager {
 
   /**
    * Get the given extension.
-   * @param id The image ID of the extension, possibly including the tag.
-   *        If the tag is not supplied, the currently-installed version is
+   * @param image The image reference of the extension, possibly including the
+   *        tag.  If the tag is not supplied, the currently-installed version is
    *        used; if no version is installed, "latest" is assumed.
    * @note This may cause the given image to be downloaded.
    * @note The extension will not be automatically installed.

@@ -228,17 +228,17 @@ class ExtensionManagerImpl implements ExtensionManager {
           console.error(`Failed to install extension ${ id }`, ex);
         }
       })(`${ repo }:${ tag }`));
-      await Promise.all(tasks);
     }
+    await Promise.all(tasks);
   }
 
   async getExtension(image: string): Promise<Extension> {
+    // eslint-disable-next-line prefer-const
     let [, repo, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
     const extGroup = this.extensions[image] ?? {};
 
     // The build process uses an older TypeScript that can't infer repo correctly.
     repo ??= image;
-    tag ??= undefined;
 
     this.extensions[repo] = extGroup;
 
