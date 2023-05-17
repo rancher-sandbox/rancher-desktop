@@ -11,7 +11,7 @@ type BackgroundProcessConstructorOptions = {
   spawn: () => Promise<childProcess.ChildProcess>;
   /** Optional function to stop the underlying child process. */
   destroy?: (child: childProcess.ChildProcess) => Promise<void>;
-  /** Additional checks to see if the process should be strarted. */
+  /** Additional checks to see if the process should be started. */
   shouldRun?: () => Promise<boolean>;
 };
 
