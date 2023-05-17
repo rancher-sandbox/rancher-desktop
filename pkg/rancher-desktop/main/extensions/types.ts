@@ -55,7 +55,7 @@ export interface Extension {
   readonly version: string;
 
   /**
-   * The full image tag for this image (a combination of idonly and version).
+   * The full image tag for this image (a combination of id and version).
    */
   readonly image: string;
 

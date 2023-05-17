@@ -101,6 +101,14 @@ encoded_id() { # variant
     assert_line --partial "$(id basic):v0.0.2"
 }
 
+@test 'basic extension - uninstalling not installed version' {
+    rdctl extension uninstall "$(id basic):0.0.1"
+    run rdctl extension ls
+    assert_success
+    # Trying to uninstall a version that isn't installed should be a no-op
+    assert_line --partial "$(id basic):v0.0.2"
+}
+
 @test 'basic extension - uninstall' {
     ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):0.0.3"
     # Uninstall should remove whatever version is installed, not the newest.
