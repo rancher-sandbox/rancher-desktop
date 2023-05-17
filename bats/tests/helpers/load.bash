@@ -44,9 +44,12 @@ source "$PATH_BATS_HELPERS/kubernetes.bash"
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
-# On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
-teardown_file() {
+global_teardown() {
+    # On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
     run rdctl shutdown
+}
+teardown_file() {
+    global_teardown
 }
 
 # Bug workarounds go here. The goal is to make this an empty file

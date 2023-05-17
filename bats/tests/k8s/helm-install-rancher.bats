@@ -62,4 +62,5 @@ teardown_file() {
     assert_nothing
     run helm uninstall cert-manager --namespace cert-manager --wait
     assert_nothing
+    global_teardown
 }
