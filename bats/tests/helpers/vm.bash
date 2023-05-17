@@ -54,6 +54,7 @@ EOF
 
 start_container_engine() {
     local args=(
+        --application.debug
         --application.updater.enabled=false
         --container-engine.name="$RD_CONTAINER_ENGINE"
         --kubernetes.enabled=false
