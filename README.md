@@ -119,7 +119,7 @@ npm install
 ```
 
 > ### ⚠️ Working on a mac with an M1 chip?
-> 
+>
 > You will need to set the `M1` environment variable before installing dependencies and running any npm scripts:
 >
 > ```
@@ -203,10 +203,16 @@ The Chrome remote debugger allows you to debug Electron apps using Chrome Develo
 
 To enable remote debugging, start Rancher Desktop with the `--remote-debugging-port` argument.
 
-On macOS and Linux, start Rancher Desktop with the following command:
+On Linux, start Rancher Desktop with the following command:
 
 ``` bash
 rancher-desktop --remote-debugging-port="8315"
+```
+
+On MacOS, start Rancher Desktop with the following command:
+
+```
+/Applications/Rancher\ Desktop.app/Contents/MacOS/Rancher\ Desktop --remote-debugging-port="8315"
 ```
 
 On Windows, start Rancher Desktop with the following command:
