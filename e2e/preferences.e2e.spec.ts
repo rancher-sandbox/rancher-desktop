@@ -50,8 +50,12 @@ test.describe.serial('Main App Test', () => {
 
   test.afterAll(() => teardown(electronApp, __filename));
 
-  test('should open preferences modal', () => {
+  test('should open preferences modal', async() => {
     expect(preferencesWindow).toBeDefined();
+
+    // Wait for the window to actually load (i.e. transition from
+    // app://index.html/#/preferences to app://index.html/#/Preferences#general)
+    await preferencesWindow.waitForURL(/Preferences/);
   });
 
   test('should show application page and render general tab', async() => {
@@ -149,6 +153,9 @@ test.describe.serial('Main App Test', () => {
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
 
     expect(preferencesWindow).toBeDefined();
+    // Wait for the window to actually load (i.e. transition from
+    // app://index.html/#/preferences to app://index.html/#/Preferences#general)
+    await preferencesWindow.waitForURL(/Preferences/);
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
@@ -174,6 +181,9 @@ test.describe.serial('Main App Test', () => {
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
 
     expect(preferencesWindow).toBeDefined();
+    // Wait for the window to actually load (i.e. transition from
+    // app://index.html/#/preferences to app://index.html/#/Preferences#general)
+    await preferencesWindow.waitForURL(/Preferences/);
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');

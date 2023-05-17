@@ -1428,10 +1428,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.containerEngine.name === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
-        if (kubernetesVersion) {
-          await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
-        }
-
         switch (config.containerEngine.name) {
         case ContainerEngine.CONTAINERD:
           await this.progressTracker.action('Starting buildkit', 0,
@@ -1444,6 +1440,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
 
         await this.progressTracker.action('Waiting for container engine to be ready', 0, this.containerEngineClient.waitForReady());
+
+        if (kubernetesVersion) {
+          await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
+        }
 
         // If it's not a privileged installation preset guestAgent
         // port binding address to localhost only.

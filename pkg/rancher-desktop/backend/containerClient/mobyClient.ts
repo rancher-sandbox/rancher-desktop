@@ -19,6 +19,11 @@ import { executable } from '@pkg/utils/resources';
 
 const console = Logging.moby;
 
+type runClientOptions = ContainerRunClientOptions & {
+  /** The executable to run, defaulting to this.executable (i.e. "docker") */
+  executable?: string;
+};
+
 export class MobyClient implements ContainerEngineClient {
   constructor(vm: VMExecutor, endpoint: string) {
     this.vm = vm;
@@ -28,43 +33,6 @@ export class MobyClient implements ContainerEngineClient {
   readonly vm: VMExecutor;
   readonly executable = executable('docker');
   readonly endpoint: string;
-
-  /**
-   * Run docker (CLI) with the given arguments, returning stdout.
-   * @param args
-   * @returns
-   */
-  protected docker(...args: string[]): Promise<{ stdout: string, stderr: string }>;
-  protected docker(options: {env?: Record<string, string>}, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
-  protected docker(argOrOptions: any, ...args: string[]): Promise<{ stdout: string, stderr: string }> {
-    if (typeof argOrOptions === 'string') {
-      return this.runTool('docker', argOrOptions, ...args);
-    }
-
-    return this.runTool(argOrOptions, 'docker', ...args);
-  }
-
-  protected async runTool(tool: string, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
-  protected async runTool(options: {env?: Record<string, string>}, tool: string, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
-  protected async runTool(argOrOptions: any, tool: string, ...args: string[]): Promise<{ stdout: string, stderr: string }> {
-    const finalArgs = args.concat();
-    const binDir = path.join(paths.resources, process.platform, 'bin');
-    const options: { env: Record<string, string> } = {
-      env: {
-        DOCKER_HOST: this.endpoint,
-        PATH:        `${ process.env.PATH }${ path.delimiter }${ binDir }`,
-      },
-    };
-
-    if (typeof argOrOptions === 'string') {
-      finalArgs.unshift(tool);
-      tool = argOrOptions;
-    } else {
-      options.env = _.merge({}, argOrOptions?.env ?? {}, options.env);
-    }
-
-    return await spawnFile(executable(tool), finalArgs, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
-  }
 
   /**
    * Run a list of cleanup functions in reverse.
@@ -80,7 +48,7 @@ export class MobyClient implements ContainerEngineClient {
   }
 
   protected async makeContainer(imageID: string): Promise<string> {
-    const { stdout, stderr } = await this.docker('create', '--entrypoint=/', imageID);
+    const { stdout, stderr } = await this.runClient(['create', '--entrypoint=/', imageID], 'pipe');
     const container = stdout.trim();
 
     console.debug(stderr.trim());
@@ -187,7 +155,7 @@ export class MobyClient implements ContainerEngineClient {
     args.push(imageID);
 
     try {
-      const { stdout, stderr } = (await this.docker(...args));
+      const { stdout, stderr } = await this.runClient(args, 'pipe');
 
       console.debug(stderr.trim());
 
@@ -207,7 +175,7 @@ export class MobyClient implements ContainerEngineClient {
 
   async stop(container: string, options?: ContainerStopOptions): Promise<void> {
     if (options?.delete && options.force) {
-      const { stderr } = await this.docker('container', 'rm', '--force', container);
+      const { stderr } = await this.runClient(['container', 'rm', '--force', container], 'pipe');
 
       if (!/Error: No such container: \S+/.test(stderr)) {
         console.debug(stderr.trim());
@@ -216,9 +184,9 @@ export class MobyClient implements ContainerEngineClient {
       return;
     }
 
-    await this.docker('container', 'stop', container);
+    await this.runClient(['container', 'stop', container]);
     if (options?.delete) {
-      await this.docker('container', 'rm', container);
+      await this.runClient(['container', 'rm', container]);
     }
   }
 
@@ -230,9 +198,8 @@ export class MobyClient implements ContainerEngineClient {
     }
     args.push('up', '--quiet-pull', '--wait', '--remove-orphans');
 
-    const result = await this.runTool({ env: options.env ?? {} }, 'docker-compose', ...args);
-
-    console.debug('ran docker compose up', result);
+    await this.runClient(args, console, { ...options, executable: 'docker-compose' });
+    console.debug('ran docker compose up');
   }
 
   async composeDown(options: ContainerComposeOptions): Promise<void> {
@@ -240,9 +207,9 @@ export class MobyClient implements ContainerEngineClient {
       options.name ? ['--project-name', options.name] : [],
       ['--project-directory', options.composeDir, 'down'],
     ].flat();
-    const result = await this.runTool({ env: options.env ?? {} }, 'docker-compose', ...args);
 
-    console.debug('ran docker compose down', result);
+    await this.runClient(args, console, { ...options, executable: 'docker-compose' });
+    console.debug('ran docker compose down');
   }
 
   composeExec(options: ContainerComposeExecOptions): Promise<ReadableProcess> {
@@ -270,29 +237,36 @@ export class MobyClient implements ContainerEngineClient {
       options.protocol ? ['--protocol', options.protocol] : [],
       [options.service, options.port.toString()],
     ].flat();
-    const { stdout } = await this.runTool('docker-compose', ...args);
+    const { stdout } = await this.runClient(args, 'pipe', { ...options, executable: 'docker-compose' });
 
     return stdout.trim();
   }
 
-  runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
-  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
-  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
-  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
-  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: ContainerRunClientOptions) {
-    const opts = options ?? {};
+  runClient(args: string[], stdio?: 'ignore', options?: runClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: Log, options?: runClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: 'pipe', options?: runClientOptions): Promise<{ stdout: string; stderr: string; }>;
+  runClient(args: string[], stdio: 'stream', options?: runClientOptions): ReadableProcess;
+  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: runClientOptions) {
+    const binDir = path.join(paths.resources, process.platform, 'bin');
+    const executable = path.resolve(binDir, options?.executable ?? this.executable);
+    const opts = _.merge({}, options ?? {}, {
+      env: {
+        DOCKER_HOST: this.endpoint,
+        PATH:        `${ process.env.PATH }${ path.delimiter }${ binDir }`,
+      },
+    });
 
     // Due to TypeScript reasons, we have to make each branch separately.
     switch (stdio) {
     case 'ignore':
     case undefined:
-      return spawnFile(this.executable, args, { ...opts, stdio: 'ignore' });
+      return spawnFile(executable, args, { ...opts, stdio: 'ignore' });
     case 'stream':
-      return spawn(this.executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+      return spawn(executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
     case 'pipe':
-      return spawnFile(this.executable, args, { ...opts, stdio: 'pipe' });
+      return spawnFile(executable, args, { ...opts, stdio: 'pipe' });
     }
 
-    return spawnFile(this.executable, args, { ...opts, stdio });
+    return spawnFile(executable, args, { ...opts, stdio });
   }
 }

@@ -39,13 +39,13 @@ test.describe.serial('startInBackground setting', () => {
 function checkWindowOpened(electronApp: ElectronApplication): Promise<boolean> {
   const promise = new Promise<boolean>((resolve) => {
     electronApp.on('window', () => resolve(true));
-    setTimeout(() => resolve(false), 3_000);
+    setTimeout(() => resolve(false), 10_000);
   });
 
   // Check for any windows that may have been created since defining the
   // 'window' handler on electronApp
   for (const window of electronApp.windows()) {
-    if (window.url() === 'app://index.html/') {
+    if (window.url().startsWith('app://')) {
       return Promise.resolve(true);
     }
   }

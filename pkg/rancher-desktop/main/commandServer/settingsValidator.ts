@@ -585,6 +585,12 @@ export default class SettingsValidator {
         return false;
       }
 
+      if (_.isEqual(currentValue[k as NavItemName], desiredValue[k])) {
+        // If the setting is unchanged, allow any value.  This is needed if some
+        // settings are not applicable for a platform.
+        continue;
+      }
+
       const navItem = preferencesNavItems.find(item => item.name === k);
 
       if (!navItem?.tabs?.includes(desiredValue[k])) {
