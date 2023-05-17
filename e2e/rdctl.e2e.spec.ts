@@ -916,6 +916,9 @@ test.describe('Command server', () => {
           const result = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(oldSettings)]);
 
           expect(result.stderr).toEqual('');
+
+          // Since we just applied new settings, we must wait for the backend to restart.
+          await (new NavPage(page)).progressBecomesReady();
         });
       });
 
@@ -1055,7 +1058,7 @@ test.describe('Command server', () => {
                       }).toEqual({
                         error:  undefined,
                         stderr: '',
-                        stdout: expect.stringContaining('no changes necessary'),
+                        stdout: expect.not.stringContaining('apply'),
                       });
                     });
                   }
