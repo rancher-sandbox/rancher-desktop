@@ -1,4 +1,4 @@
-name: Lint
+name: Lint & Test
 
 on:
   push: {}
@@ -20,11 +20,11 @@ jobs:
         go-version-file: go.mod
         cache: true
 
+    - name: Run golangci-lint
     # Run `go build` to cache things for the linter, so it doesn't time out.
-    - run: go build -v ./...
+      run: go build -v ./...
       env:
         CGO_ENABLED: '0'
-
     - uses: golangci/golangci-lint-action@v3.1.0
       with:
         args: --verbose --timeout 3m
@@ -32,3 +32,6 @@ jobs:
         # so repopulating the cache just shows a pile of errors.
         skip-pkg-cache: true
         skip-build-cache: true
+
+    - name: Unit tests
+      run: make test

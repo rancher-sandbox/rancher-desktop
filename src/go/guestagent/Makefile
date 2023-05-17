@@ -4,7 +4,7 @@ build:
 
 .PHONY: test
 test:
-	go test -v ./pkg/...
+	go test -v ./...
 
 .PHONY: clean
 clean:
