@@ -107,17 +107,7 @@ export default Vue.extend({
       </template>
       <template #col:id="{row}">
         <td>
-          <nuxt-link
-            :to="{
-              name: 'marketplace-details',
-              params: {
-                slug: row.id,
-                image: row.metadata.icon
-              }
-            }"
-          >
-            {{ extensionTitle(row) }}
-          </nuxt-link>
+          {{ extensionTitle(row) }}
         </td>
       </template>
       <template #col:uninstall="{row}">
