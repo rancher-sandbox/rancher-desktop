@@ -69,8 +69,14 @@ export enum CacheMode {
 export const defaultSettings = {
   version:     CURRENT_SETTINGS_VERSION,
   application: {
-    adminAccess:            true,
-    debug:                  false,
+    adminAccess: true,
+    debug:       false,
+    extensions:  {
+      allowed: {
+        enabled: false,
+        list:    [] as Array<string>,
+      },
+    },
     pathManagementStrategy: PathManagementStrategy.NotSet,
     telemetry:              { enabled: true },
     /** Whether we should check for updates and apply them. */

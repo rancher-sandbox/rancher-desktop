@@ -275,6 +275,7 @@ class Generator {
     settingsTree: settingsTreeType): void {
     const platforms = preference['x-rd-platforms'] ?? [];
 
+    notAvailable ||= preference['x-rd-hidden'];
     notAvailable ||= platforms.length > 0 && !platforms.includes(process.platform);
     switch (preference.type) {
     case 'object':

@@ -211,6 +211,8 @@ class ExtensionManagerImpl implements ExtensionManager {
 
     // Install / uninstall extensions as needed.
     const tasks: Promise<any>[] = [];
+    const { enabled: allowEnabled, list: allowListRaw } = config.application.extensions.allowed;
+    const allowList = allowEnabled ? allowListRaw : undefined;
 
     for (const [repo, tag] of Object.entries(config.extensions)) {
       if (!tag) {
@@ -221,22 +223,22 @@ class ExtensionManagerImpl implements ExtensionManager {
 
       tasks.push((async(id: string) => {
         try {
-          return (await this.getExtension(id)).install();
+          return (await this.getExtension(id)).install(allowList);
         } catch (ex) {
           console.error(`Failed to install extension ${ id }`, ex);
         }
       })(`${ repo }:${ tag }`));
-      await Promise.all(tasks);
     }
+    await Promise.all(tasks);
   }
 
   async getExtension(image: string): Promise<Extension> {
+    // eslint-disable-next-line prefer-const
     let [, repo, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
     const extGroup = this.extensions[image] ?? {};
 
     // The build process uses an older TypeScript that can't infer repo correctly.
     repo ??= image;
-    tag ??= undefined;
 
     this.extensions[repo] = extGroup;
 
