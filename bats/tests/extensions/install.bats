@@ -159,7 +159,35 @@ encoded_id() { # variant
     fi
 }
 
+@test 'host-binaries - upgrade' {
+    # We test upgrades with host-binaries as there was a bug about reinstalling
+    # an extension with host binaries.
+    ctrctl image tag "$(id host-binaries)" "$(id host-binaries):0.0.1"
+    ctrctl image tag "$(id host-binaries)" "$(id host-binaries):v0.0.2"
+
+    run rdctl extension ls
+    assert_success
+    assert_line --partial "$(id host-binaries):latest"
+
+    rdctl extension install "$(id host-binaries)"
+    run rdctl extension ls
+    assert_success
+    # The highest semver tag should be installed, replacing the existing one.
+    assert_line --partial "$(id host-binaries):v0.0.2"
+}
+
+@test 'host-binaries - uninstalling not installed version' {
+    rdctl extension uninstall "$(id host-binaries):0.0.1"
+    run rdctl extension ls
+    assert_success
+    # Trying to uninstall a version that isn't installed should be a no-op
+    assert_line --partial "$(id host-binaries):v0.0.2"
+}
+
 @test 'host-binaries - uninstall' {
+    ctrctl image tag "$(id host-binaries)" "$(id host-binaries):0.0.3"
+    # Uninstall should remove whatever version is installed, not the newest.
+
     rdctl extension uninstall "$(id host-binaries)"
 
     run rdctl extension ls
