@@ -271,7 +271,7 @@ export class ExtensionImpl implements Extension {
   }
 
   protected async installHostExecutables(workDir: string, metadata: ExtensionMetadata): Promise<void> {
-    const plat: 'windows' | 'linux' | 'darwin' = (() => {
+    const plat = (() => {
       switch (process.platform) {
       case 'win32':
         return 'windows';
