@@ -4,6 +4,7 @@ import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 
 import { VersionEntry } from '@pkg/backend/k8s';
+import RdSelect from '@pkg/components/RdSelect.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
@@ -13,8 +14,10 @@ import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
-  components: { Checkbox, RdFieldset },
-  props:      {
+  components: {
+    Checkbox, RdFieldset, RdSelect,
+  },
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
@@ -27,7 +30,6 @@ export default Vue.extend({
       kubernetesPort:     6443,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
-      kubernetesVersion:  this.preferences.kubernetes.version,
     };
   },
   computed: {
@@ -46,6 +48,9 @@ export default Vue.extend({
     },
     isKubernetesDisabled(): boolean {
       return !this.preferences.kubernetes.enabled;
+    },
+    kubernetesVersion(): string {
+      return this.preferences.kubernetes.version;
     },
     kubernetesVersionLabel(): string {
       return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
@@ -100,9 +105,9 @@ export default Vue.extend({
       class="width-xs"
       :legend-text="kubernetesVersionLabel"
     >
-      <select
-        v-model="kubernetesVersion"
+      <rd-select
         class="select-k8s-version"
+        :value="kubernetesVersion"
         :disabled="isKubernetesDisabled"
         @change="onChange('kubernetes.version', $event.target.value)"
       >
@@ -130,7 +135,7 @@ export default Vue.extend({
             v{{ item.version.version }}
           </option>
         </optgroup>
-      </select>
+      </rd-select>
     </rd-fieldset>
     <rd-fieldset
       data-test="kubernetesPort"
