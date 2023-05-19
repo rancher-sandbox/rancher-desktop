@@ -1,18 +1,13 @@
 load '../helpers/load'
 
 setup() {
+    CONTAINERD_NAMESPACE=rancher-desktop-extensions
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
 
     if using_windows_exe; then
         TESTDATA_DIR_CLI="$(wslpath -m "${TESTDATA_DIR}")"
     else
         TESTDATA_DIR_CLI="${TESTDATA_DIR}"
-    fi
-
-    if using_containerd; then
-        namespace_arg=('--namespace=rancher-desktop-extensions')
-    else
-        namespace_arg=()
     fi
 }
 
@@ -56,12 +51,12 @@ check_extension_installed() { # refute, name
 }
 
 @test 'build extension testing image' {
-    ctrctl "${namespace_arg[@]}" build \
+    ctrctl build \
         --tag "rd/extension/basic" \
         --build-arg "variant=basic" \
         "$TESTDATA_DIR_CLI"
 
-    run ctrctl "${namespace_arg[@]}" image list --format '{{ .Repository }}'
+    run ctrctl image list --format '{{ .Repository }}'
     assert_success
     assert_line "rd/extension/basic"
 }
@@ -97,7 +92,7 @@ check_extension_installed() { # refute, name
 
 @test 'when no tags given, any tag is allowed' {
     write_allow_list '["rd/extension/basic"]'
-    ctrctl "${namespace_arg[@]}" tag rd/extension/basic rd/extension/basic:0.0.3
+    ctrctl tag rd/extension/basic rd/extension/basic:0.0.3
     rdctl extension install rd/extension/basic:0.0.3
     check_extension_installed
     rdctl extension uninstall rd/extension/basic
@@ -107,7 +102,7 @@ check_extension_installed() { # refute, name
 @test 'when tags are given, only the specified tag is allowed' {
     sleep 20
     write_allow_list '["rd/extension/basic:0.0.2"]'
-    ctrctl "${namespace_arg[@]}" tag rd/extension/basic rd/extension/basic:0.0.3
+    ctrctl tag rd/extension/basic rd/extension/basic:0.0.3
     run rdctl extension install rd/extension/basic:0.0.3
     assert_failure
     check_extension_installed refute
@@ -123,7 +118,7 @@ check_extension_installed() { # refute, name
 
 @test 'extensions can be allowed by repository host' {
     write_allow_list '["registry.test/"]'
-    ctrctl "${namespace_arg[@]}" tag rd/extension/basic registry.test/basic:0.0.3
+    ctrctl tag rd/extension/basic registry.test/basic:0.0.3
     rdctl extension install registry.test/basic:0.0.3
     check_extension_installed '' registry.test/basic
     rdctl extension uninstall registry.test/basic
