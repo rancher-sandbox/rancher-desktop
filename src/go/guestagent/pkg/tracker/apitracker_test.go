@@ -106,13 +106,17 @@ func TestAddOverride(t *testing.T) {
 	err := apiTracker.Add(containerID, portMapping)
 	assert.NoError(t, err)
 
-	firstEntryIndex := 0
-	assert.Equal(t, expectedExposeReq[firstEntryIndex].Local, ipPortBuilder(hostIP, hostPort))
-	assert.Equal(t, expectedExposeReq[firstEntryIndex].Remote, ipPortBuilder(hostSwitchIP, hostPort))
-
-	secondEntryIndex := 1
-	assert.Equal(t, expectedExposeReq[secondEntryIndex].Local, ipPortBuilder(hostIP2, hostPort2))
-	assert.Equal(t, expectedExposeReq[secondEntryIndex].Remote, ipPortBuilder(hostSwitchIP, hostPort2))
+	assert.ElementsMatch(t, expectedExposeReq,
+		[]*types.ExposeRequest{
+			{
+				Local:  ipPortBuilder(hostIP, hostPort),
+				Remote: ipPortBuilder(hostSwitchIP, hostPort),
+			},
+			{
+				Local:  ipPortBuilder(hostIP2, hostPort2),
+				Remote: ipPortBuilder(hostSwitchIP, hostPort2),
+			},
+		})
 
 	actualPortMapping := apiTracker.Get(containerID)
 	assert.Equal(t, portMapping, actualPortMapping)
@@ -137,11 +141,17 @@ func TestAddOverride(t *testing.T) {
 	err = apiTracker.Add(containerID, portMapping2)
 	assert.NoError(t, err)
 
-	assert.Equal(t, expectedExposeReq[firstEntryIndex].Local, ipPortBuilder(hostIP, hostPort))
-	assert.Equal(t, expectedExposeReq[firstEntryIndex].Remote, ipPortBuilder(hostSwitchIP, hostPort))
-
-	assert.Equal(t, expectedExposeReq[secondEntryIndex].Local, ipPortBuilder(hostIP2, "8080"))
-	assert.Equal(t, expectedExposeReq[secondEntryIndex].Remote, ipPortBuilder(hostSwitchIP, "8080"))
+	assert.ElementsMatch(t, expectedExposeReq,
+		[]*types.ExposeRequest{
+			{
+				Local:  ipPortBuilder(hostIP, hostPort),
+				Remote: ipPortBuilder(hostSwitchIP, hostPort),
+			},
+			{
+				Local:  ipPortBuilder(hostIP2, "8080"),
+				Remote: ipPortBuilder(hostSwitchIP, "8080"),
+			},
+		})
 
 	actualPortMapping = apiTracker.Get(containerID)
 	assert.Equal(t, portMapping2, actualPortMapping)
