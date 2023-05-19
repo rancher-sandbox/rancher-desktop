@@ -83,7 +83,7 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
   if (!fs.existsSync(settingsFullPath)) {
     fs.mkdirSync(paths.config, { recursive: true });
     fs.writeFileSync(path.join(paths.config, fileSettingsName), settingsJson);
-    console.log('Default settings file successfully created on: ', `${ paths.config }/${ fileSettingsName }`, settingsData);
+    console.log(`Default settings file successfully created at ${ paths.config }/${ fileSettingsName }`);
   } else {
     try {
       const contents = fs.readFileSync(settingsFullPath, { encoding: 'utf-8' });
