@@ -351,15 +351,21 @@ test.describe.serial('Extensions', () => {
     test.describe('ddClient.extension.vm.service', () => {
       test('can fetch from the backend', async() => {
         const url = '/etc/os-release';
-        const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
 
-        await expect(result).resolves.toContain('VERSION_ID');
+        await retry(async() => {
+          const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
+
+          await expect(result).resolves.toContain('VERSION_ID');
+        });
       });
       test('can fetch from external sources', async() => {
         const url = 'http://127.0.0.1:6120/LICENSES'; // dashboard
-        const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
 
-        await expect(result).resolves.toContain('Copyright');
+        await retry(async() => {
+          const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
+
+          await expect(result).resolves.toContain('Copyright');
+        });
       });
     });
   });
