@@ -18,15 +18,25 @@ export default Vue.extend({
       default: null,
     },
   },
+  computed: {
+    selectedValue: {
+      get(): string {
+        return this.value;
+      },
+      set(newValue: string): void {
+        this.$emit('input', newValue);
+      },
+    },
+  },
 });
 </script>
 
 <template>
   <div class="rd-select-container">
     <select
-      :value="value"
-      :disabled="$attrs.disabled || isLocked"
+      v-model="selectedValue"
       v-bind="$attrs"
+      :disabled="$attrs.disabled || isLocked"
       v-on="$listeners"
     >
       <slot name="default">
