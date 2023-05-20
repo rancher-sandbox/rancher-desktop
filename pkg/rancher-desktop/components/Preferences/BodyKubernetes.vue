@@ -4,6 +4,7 @@ import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 
 import { VersionEntry } from '@pkg/backend/k8s';
+import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
@@ -15,7 +16,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
   components: {
-    Checkbox, RdFieldset, RdSelect,
+    Checkbox, RdFieldset, RdSelect, RdInput,
   },
   props: {
     preferences: {
@@ -142,7 +143,7 @@ export default Vue.extend({
       class="width-xs"
       legend-text="Kubernetes Port"
     >
-      <input
+      <rd-input
         type="number"
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.port"
