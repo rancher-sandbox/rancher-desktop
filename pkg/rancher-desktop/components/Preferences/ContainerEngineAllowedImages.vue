@@ -28,7 +28,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   },
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
-    patterns() {
+    patterns(): string[] {
       return this.preferences.containerEngine.allowedImages.patterns;
     },
     isAllowedImagesEnabled(): boolean {
@@ -40,10 +40,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     isPatternsFieldLocked(): boolean {
       return this.isPreferenceLocked('containerEngine.allowedImages.patterns') || !this.isAllowedImagesEnabled;
     },
-    allowedImagesLockedTooltip() {
+    allowedImagesLockedTooltip(): string {
       return this.t('allowedImages.locked.tooltip');
     },
-    patternsErrorMessages() {
+    patternsErrorMessages(): { duplicate: string } {
       return { duplicate: this.t('allowedImages.errors.duplicate') };
     },
   },
