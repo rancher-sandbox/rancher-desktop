@@ -61,6 +61,7 @@ export class HttpCommandServer {
         '/v1/diagnostic_ids':        [0, this.diagnosticIDsForCategory],
         '/v1/diagnostic_checks':     [0, this.diagnosticChecks],
         '/v1/settings':              [0, this.listSettings],
+        '/v1/settings/locked':       [0, this.listLockedSettings],
         '/v1/transient_settings':    [0, this.listTransientSettings],
       },
       post: { '/v1/diagnostic_checks': [0, this.diagnosticRunChecks] },
@@ -325,6 +326,20 @@ export class HttpCommandServer {
     } else {
       console.debug('listSettings: failed 200');
       response.status(404).type('txt').send('No settings found');
+    }
+
+    return Promise.resolve();
+  }
+
+  protected listLockedSettings(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const settings = this.commandWorker.getLockedSettings(context);
+
+    if (settings) {
+      console.debug('listLockedSettings: succeeded 200');
+      response.status(200).type('txt').send(settings);
+    } else {
+      console.debug('listLockedSettings: failed 200');
+      response.status(404).type('txt').send('No locked settings found');
     }
 
     return Promise.resolve();
@@ -630,6 +645,7 @@ interface commandContext {
 export interface CommandWorkerInterface {
   factoryReset: (keepSystemImages: boolean) => void;
   getSettings: (context: commandContext) => string;
+  getLockedSettings: (context: commandContext) => string;
   updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   proposeSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   requestShutdown: (context: commandContext) => void;
