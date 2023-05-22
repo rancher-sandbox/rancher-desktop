@@ -337,4 +337,7 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   getPreferencesNormalized(state: PreferencesState) {
     return normalizePreferences(state.preferences);
   },
+  isPreferenceLocked: (state: PreferencesState) => (value: string) => {
+    return _.get(state.lockedPreferences, value);
+  },
 };
