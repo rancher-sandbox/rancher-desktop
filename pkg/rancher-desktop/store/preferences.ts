@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { CURRENT_SETTINGS_VERSION, defaultSettings, Settings } from '@pkg/config/settings';
+import { CURRENT_SETTINGS_VERSION, defaultSettings, Settings, LockedSettingsType } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
@@ -18,6 +18,7 @@ interface Severities {
 interface PreferencesState {
   initialPreferences: Settings;
   preferences: Settings;
+  lockedPreferences: LockedSettingsType;
   wslIntegrations: { [distribution: string]: string | boolean};
   isPlatformWindows: boolean;
   hasError: boolean;
@@ -32,9 +33,13 @@ interface CommitArgs extends Credentials {
   payload?: RecursivePartial<Settings>;
 }
 
-const uri = (port: number) => `http://localhost:${ port }/v1/settings`;
+const uri = (port: number, path: string) => `http://localhost:${ port }/v1/${ path }`;
 
-const proposedSettings = (port: number) => `http://localhost:${ port }/v1/propose_settings`;
+const proposedSettings = (port: number) => uri(port, 'propose_settings');
+
+const settingsUri = (port: number) => uri(port, 'settings');
+
+const lockedUri = (port: number) => uri(port, 'settings/locked');
 
 /**
  * Creates an object composed of active WSL Integrations.
@@ -70,6 +75,7 @@ export const state: () => PreferencesState = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
     preferences:        _.cloneDeep(defaultSettings),
+    lockedPreferences:  { },
     wslIntegrations:    { },
     isPlatformWindows:  false,
     hasError:           false,
@@ -88,6 +94,9 @@ export const mutations: MutationsType<PreferencesState> = {
   },
   SET_INITIAL_PREFERENCES(state, preferences) {
     state.initialPreferences = preferences;
+  },
+  SET_LOCKED_PREFERENCES(state, preferences) {
+    state.lockedPreferences = preferences;
   },
   SET_WSL_INTEGRATIONS(state, integrations) {
     state.wslIntegrations = integrations;
@@ -124,7 +133,7 @@ export const actions = {
     const { port, user, password } = args;
 
     const response = await fetch(
-      uri(port),
+      settingsUri(port),
       {
         headers: new Headers({
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
@@ -142,13 +151,35 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
+  async fetchLocked({ dispatch, commit }: PrefActionContext, args: Credentials) {
+    const { port, user, password } = args;
+
+    const response = await fetch(
+      lockedUri(port),
+      {
+        headers: new Headers({
+          Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+      });
+
+    if (!response.ok) {
+      commit('SET_HAS_ERROR', true);
+
+      return;
+    }
+
+    const settings: Settings = await response.json();
+
+    commit('SET_LOCKED_PREFERENCES', settings);
+  },
   async commitPreferences({ dispatch, getters }: PrefActionContext, args: CommitArgs) {
     const {
       port, user, password, payload,
     } = args;
 
     await fetch(
-      uri(port),
+      settingsUri(port),
       {
         method:  'PUT',
         headers: new Headers({

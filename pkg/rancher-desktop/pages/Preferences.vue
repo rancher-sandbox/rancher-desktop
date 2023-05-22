@@ -1,7 +1,7 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
+import Vue, { VueConstructor } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
@@ -15,7 +15,12 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferences';
 
-export default Vue.extend({
+interface VuexBindings {
+  credentials: Omit<ServerState, 'pid'>;
+  getCurrentNavItem: 'WSL' | 'Application' | 'Virtual Machine' | 'Container Engine' | 'Kubernetes';
+}
+
+export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-modal',
   components: {
     PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesFooter, EmptyState,
@@ -27,6 +32,7 @@ export default Vue.extend({
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
     await this.$store.dispatch('preferences/fetchPreferences', this.credentials as ServerState);
+    await this.$store.dispatch('preferences/fetchLocked', this.credentials as ServerState);
     await this.$store.dispatch('transientSettings/fetchTransientSettings', this.credentials as ServerState);
     this.preferencesLoaded = true;
 
