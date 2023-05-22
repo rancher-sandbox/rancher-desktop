@@ -1,15 +1,19 @@
 <script lang="ts">
 import { Checkbox, StringList } from '@rancher/components';
-import Vue from 'vue';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters } from 'vuex';
 
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
-import { LockedSettingsType, Settings } from '@pkg/config/settings';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+interface VuexBindings {
+  isPreferenceLocked(path: string): boolean;
+}
+
+export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-container-engine-allowed-images',
   components: {
     Checkbox,
@@ -22,10 +26,8 @@ export default Vue.extend({
       required: true,
     },
   },
-  data() {
-    return { lockedFields: {} as LockedSettingsType };
-  },
   computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
     patterns() {
       return this.preferences.containerEngine.allowedImages.patterns;
     },
@@ -33,10 +35,10 @@ export default Vue.extend({
       return this.preferences.containerEngine.allowedImages.enabled;
     },
     isEnabledFieldLocked(): boolean {
-      return this.lockedFields.containerEngine?.allowedImages?.enabled ?? false;
+      return this.isPreferenceLocked('containerEngine.allowedImages.enabled');
     },
     isPatternsFieldLocked(): boolean {
-      return this.lockedFields.containerEngine?.allowedImages?.patterns || !this.isAllowedImagesEnabled;
+      return this.isPreferenceLocked('containerEngine.allowedImages.patterns') || !this.isAllowedImagesEnabled;
     },
     allowedImagesLockedTooltip() {
       return this.t('allowedImages.locked.tooltip');
@@ -44,11 +46,6 @@ export default Vue.extend({
     patternsErrorMessages() {
       return { duplicate: this.t('allowedImages.errors.duplicate') };
     },
-  },
-  mounted() {
-    ipcRenderer.invoke('get-locked-fields').then((lockedFields: LockedSettingsType) => {
-      this.lockedFields = lockedFields;
-    });
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
