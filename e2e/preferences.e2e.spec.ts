@@ -122,7 +122,7 @@ test.describe.serial('Main App Test', () => {
     await expect(application.pathManagement).toBeVisible();
   });
 
-  test('should navigate to virtual machine', async() => {
+  test('should navigate to virtual machine and render hardware tab', async() => {
     test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
     const { virtualMachine, application } = new PreferencesPage(preferencesWindow);
 
@@ -130,8 +130,88 @@ test.describe.serial('Main App Test', () => {
 
     await expect(application.nav).toHaveClass('preferences-nav-item');
     await expect(virtualMachine.nav).toHaveClass('preferences-nav-item active');
+
+    await expect(virtualMachine.tabHardware).toHaveText('Hardware');
+    await expect(virtualMachine.tabVolumes).toBeVisible();
+    await expect(virtualMachine.tabVolumes).toHaveText('Volumes');
+
+    if (os.platform() === 'darwin') {
+      await expect(virtualMachine.tabNetwork).toBeVisible();
+      await expect(virtualMachine.tabNetwork).toHaveText('Network');
+      await expect(virtualMachine.tabEmulation).toBeVisible();
+      await expect(virtualMachine.tabEmulation).toHaveText('Emulation');
+    } else {
+      await expect(virtualMachine.tabNetwork).not.toBeVisible();
+      await expect(virtualMachine.tabEmulation).not.toBeVisible();
+    }
+
     await expect(virtualMachine.memory).toBeVisible();
     await expect(virtualMachine.cpus).toBeVisible();
+  });
+
+  test('should render volumes tab', async() => {
+    test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
+    const { virtualMachine } = new PreferencesPage(preferencesWindow);
+
+    await virtualMachine.tabVolumes.click();
+
+    await expect(virtualMachine.mountType).toBeVisible();
+    await expect(virtualMachine.reverseSshFs).toBeVisible();
+    await expect(virtualMachine.ninep).toBeVisible();
+
+    if (os.platform() === 'darwin') {
+      await expect(virtualMachine.virtiofs).toBeVisible();
+
+      if (parseInt(os.release()) < 22) {
+        await expect(virtualMachine.virtiofs).toBeDisabled();
+      } else {
+        await expect(virtualMachine.virtiofs).not.toBeDisabled();
+      }
+    } else {
+      await expect(virtualMachine.virtiofs).not.toBeVisible();
+    }
+
+    await expect(virtualMachine.reverseSshFs).toBeChecked();
+
+    await virtualMachine.ninep.click();
+    await expect(virtualMachine.cacheMode).toBeVisible();
+    await expect(virtualMachine.msizeInKib).toBeVisible();
+    await expect(virtualMachine.protocolVersion).toBeVisible();
+    await expect(virtualMachine.securityModel).toBeVisible();
+  });
+
+  test('should render network tab on macOS', async() => {
+    test.skip(os.platform() !== 'darwin', 'Network tab only available on macOS');
+
+    const { virtualMachine } = new PreferencesPage(preferencesWindow);
+
+    await virtualMachine.tabNetwork.click();
+    await expect(virtualMachine.socketVmNet).toBeVisible();
+  });
+
+  test('should render emulation tab on macOS', async() => {
+    test.skip(os.platform() !== 'darwin', 'Emulation tab only available on macOS');
+
+    const { virtualMachine } = new PreferencesPage(preferencesWindow);
+
+    await virtualMachine.tabEmulation.click();
+    await expect(virtualMachine.vmType).toBeVisible();
+    await expect(virtualMachine.qemu).toBeVisible();
+    await expect(virtualMachine.vz).toBeVisible();
+
+    if (parseInt(os.release()) < 22) {
+      await expect(virtualMachine.vz).toBeDisabled();
+    } else {
+      await expect(virtualMachine.vz).not.toBeDisabled();
+      await virtualMachine.vz.click();
+      await expect(virtualMachine.useRosetta).toBeVisible();
+
+      if (os.arch() === 'arm64') {
+        await expect(virtualMachine.useRosetta).not.toBeDisabled();
+      } else {
+        await expect(virtualMachine.useRosetta).toBeDisabled();
+      }
+    }
   });
 
   test('should navigate to container engine', async() => {
@@ -204,17 +284,31 @@ test.describe.serial('Main App Test', () => {
     await expect(kubernetes.traefikToggle).toBeVisible();
   });
 
-  test('should navigate to WSL Integrations and check elements', async() => {
-    test.skip(os.platform() !== 'win32', 'WSL Integrations not available on macOS & Linux');
+  test('should navigate to WSL and render network tab', async() => {
+    test.skip(os.platform() !== 'win32', 'WSL nav item not available on macOS & Linux');
     const { wsl } = new PreferencesPage(preferencesWindow);
 
     await wsl.nav.click();
 
     await expect(wsl.nav).toHaveClass('preferences-nav-item active');
+
+    await expect(wsl.tabNetwork).toHaveText('Network');
+    await expect(wsl.tabIntegrations).toBeVisible();
+    await expect(wsl.tabIntegrations).toHaveText('Integrations');
+
+    await expect(wsl.networkingTunnel).toBeVisible();
   });
 
-  test('should not render WSL Integrations on macOS and Linux', async() => {
-    test.skip(os.platform() === 'win32', 'WSL Integrations is only available on Windows');
+  test('should integrations tab', async() => {
+    test.skip(os.platform() !== 'win32', 'WSL nav item not available on macOS & Linux');
+    const { wsl } = new PreferencesPage(preferencesWindow);
+
+    await wsl.tabIntegrations.click();
+    await expect(wsl.wslIntegrations).toBeVisible();
+  });
+
+  test('should not render WSL nav item on macOS and Linux', async() => {
+    test.skip(os.platform() === 'win32', 'WSL nav item is only available on Windows');
     const { wsl } = new PreferencesPage(preferencesWindow);
 
     await expect(wsl.nav).not.toBeVisible();

@@ -95,6 +95,7 @@ export default Vue.extend({
                 :val="option.value"
                 :description="option.description"
                 :disabled="option.disabled"
+                :data-test="option.label"
                 @input="onChange('experimental.virtualMachine.type', $event)"
               >
                 <template #label>
