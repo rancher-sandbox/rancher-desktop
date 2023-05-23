@@ -5,10 +5,7 @@ import os from 'os';
 import path from 'path';
 
 import * as settings from '@pkg/config/settings';
-import {
-  readDeploymentProfiles,
-  lockableDefaultSettings, validateDeploymentProfile,
-} from '@pkg/main/deploymentProfiles';
+import { readDeploymentProfiles, validateDeploymentProfile } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
@@ -395,7 +392,7 @@ describe('deployment profiles', () => {
       let error: Error | undefined;
 
       try {
-        validateDeploymentProfile('fake locked profile', invalidDefaultProfile, lockableDefaultSettings, []);
+        validateDeploymentProfile('fake locked profile', invalidDefaultProfile, settings.defaultSettings, []);
       } catch (ex: any) {
         error = ex;
       }

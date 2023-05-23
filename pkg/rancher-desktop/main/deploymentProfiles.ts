@@ -17,19 +17,6 @@ const console = Logging.deploymentProfile;
 export class DeploymentProfileError extends Error {
 }
 
-/**
- * Lockable default settings used for validating deployment profiles.
- * Data values are ignored, but types are used for validation.
- */
-export const lockableDefaultSettings = {
-  containerEngine: {
-    allowedImages: {
-      enabled:  true,
-      patterns: [] as Array<string>,
-    },
-  },
-};
-
 const REGISTRY_PATH_PROFILE = ['SOFTWARE', 'Rancher Desktop', 'Profile'];
 
 /**
@@ -91,7 +78,7 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PATH
   }
 
   profiles.defaults = validateDeploymentProfile(fullDefaultPath, defaults, settings.defaultSettings, []) ?? {};
-  profiles.locked = validateDeploymentProfile(fullLockedPath, locked, lockableDefaultSettings, []) ?? {};
+  profiles.locked = validateDeploymentProfile(fullLockedPath, locked, settings.defaultSettings, []) ?? {};
 
   return profiles;
 }

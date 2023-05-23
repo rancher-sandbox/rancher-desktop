@@ -134,8 +134,8 @@ describe('settings', () => {
   const plistProfile = plist.build(fullDefaults);
   const unlockedProfile = {
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
-    containerEngine: { name: 'should be ignored' },
-    kubernetes:      { version: "Shouldn't see this" },
+    containerEngine: { name: 'moby' },
+    kubernetes:      { version: '1.25.9' },
   };
   const lockedProfile = {
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
@@ -145,7 +145,7 @@ describe('settings', () => {
         patterns: ['nginx', 'alpine'],
       },
     },
-    kubernetes: { version: "Shouldn't see this" },
+    kubernetes: { version: '1.25.9' },
   };
   const unlockedJSONProfile = JSON.stringify(unlockedProfile);
   const lockedJSONProfile = JSON.stringify(lockedProfile);
@@ -336,8 +336,16 @@ describe('settings', () => {
               .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
             const profiles = await readDeploymentProfiles();
             const expectedDefaults = _.omit(fullDefaults, ['debug', 'ignorableTestSettings', 'diagnostics.locked']);
+            const expected = {
+              containerEngine: {
+                name: 'moby',
+              },
+              kubernetes: {
+                version: '1.25.9',
+              },
+            };
 
-            expect(profiles.locked).toEqual({ containerEngine: {} });
+            expect(profiles.locked).toEqual(expected);
             expect(profiles.defaults).toEqual(expectedDefaults);
           });
         });
