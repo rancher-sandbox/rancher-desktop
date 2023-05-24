@@ -34,10 +34,13 @@ export default Vue.extend({
     :legend-text="t('pathManagement.label')"
     :legend-tooltip="t('pathManagement.tooltip', { }, true)"
   >
-    <path-management-selector
-      :show-label="false"
-      :value="preferences.application.pathManagementStrategy"
-      @input="onChange('application.pathManagementStrategy', $event)"
-    />
+    <template #default="{ isLocked }">
+      <path-management-selector
+        :show-label="false"
+        :value="preferences.application.pathManagementStrategy"
+        :is-locked="isLocked"
+        @input="onChange('application.pathManagementStrategy', $event)"
+      />
+    </template>
   </rd-fieldset>
 </template>
