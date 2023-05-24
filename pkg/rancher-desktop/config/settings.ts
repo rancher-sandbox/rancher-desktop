@@ -69,7 +69,7 @@ export enum CacheMode {
 export const defaultSettings = {
   version:     CURRENT_SETTINGS_VERSION,
   application: {
-    adminAccess: true,
+    adminAccess: false,
     debug:       false,
     extensions:  {
       allowed: {
@@ -91,7 +91,7 @@ export const defaultSettings = {
       enabled:  false,
       patterns: [] as Array<string>,
     },
-    name: ContainerEngine.CONTAINERD,
+    name: ContainerEngine.MOBY,
   },
   virtualMachine: {
     memoryInGB:   2,
