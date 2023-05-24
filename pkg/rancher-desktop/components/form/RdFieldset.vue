@@ -21,6 +21,17 @@ export default Vue.extend({
       type:    String,
       default: '',
     },
+    isLocked: {
+      type:    Boolean,
+      default: false,
+    },
+  },
+  computed: {
+    lockedTooltip() {
+      const legendTooltip = this.legendTooltip ? ` <br><br> ${ this.legendTooltip }` : '';
+
+      return `${ this.t('preferences.locked.tooltip') }${ legendTooltip }`;
+    },
   },
 });
 </script>
@@ -30,14 +41,31 @@ export default Vue.extend({
     <legend>
       <slot name="legend">
         {{ legendText }}
-        <i v-if="legendTooltip" v-tooltip="legendTooltip" class="icon icon-info icon-lg" />
+        <i
+          v-if="isLocked"
+          v-tooltip="{
+            content: lockedTooltip,
+            placement: 'right'
+          }"
+          class="icon icon-lock icon-lg"
+        />
+        <i
+          v-else-if="legendTooltip"
+          v-tooltip="legendTooltip"
+          class="icon icon-info icon-lg"
+        />
         <labeled-badge
           v-if="badgeText"
           :text="badgeText"
         />
       </slot>
     </legend>
-    <slot></slot>
+    <slot
+      name="default"
+      :is-locked="isLocked"
+    >
+      <!-- Slot content -->
+    </slot>
   </fieldset>
 </template>
 
