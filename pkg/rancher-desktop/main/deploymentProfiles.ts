@@ -13,7 +13,7 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.deploymentProfile;
 
-const REGISTRY_PATH_PROFILE = [
+const PROFILE_REGISTRY_PATHS = [
   ['SOFTWARE', 'Policies', 'Rancher Desktop'], // recommended profile location
   ['SOFTWARE', 'Rancher Desktop', 'Profile'], // backward compatible location
 ];
@@ -58,7 +58,7 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
     // eslint-disable-next-line no-labels
     findWin32Profile: {
       for (const key of [nativeReg.HKLM, nativeReg.HKCU]) {
-        for (const registryPath of REGISTRY_PATH_PROFILE) {
+        for (const registryPath of PROFILE_REGISTRY_PATHS) {
           const registryKey = nativeReg.openKey(key, registryPath.join('\\'), nativeReg.Access.READ);
 
           if (!registryKey) {
@@ -116,17 +116,17 @@ export async function readDeploymentProfiles(): Promise<settings.DeploymentProfi
   return profiles;
 }
 
-function readRegistryByType(regKey: nativeReg.HKEY, type: string ) {
+function readRegistryByType(regKey: nativeReg.HKEY, profileType: string ) {
   let profile: undefined|RecursivePartial<settings.Settings>;
 
-  const key = nativeReg.openKey(regKey, type, nativeReg.Access.READ);
+  const key = nativeReg.openKey(regKey, profileType, nativeReg.Access.READ);
 
   try {
     if (key) {
       profile = readRegistryUsingSchema(settings.defaultSettings, key) ?? {};
     }
   } catch (err) {
-    console.error(`Error reading ${ type } deployment profile: ${ err }`);
+    console.error(`Error reading ${ profileType } deployment profile: ${ err }`);
   } finally {
     if (key) {
       nativeReg.closeKey(key);
