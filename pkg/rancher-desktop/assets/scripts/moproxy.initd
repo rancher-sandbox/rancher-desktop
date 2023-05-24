@@ -17,11 +17,13 @@ description_reload="Reload the proxy list."
 : ${proxy_list:=${MOPROXY_PROXYLIST:-"/etc/moproxy/proxy.ini"}}
 # Additional arguments to pass to moproxy
 : ${moproxy_args:=${MOPROXY_ARGS:-""}}
+# Override this argument to disable the use of TLS SNI
+: ${moproxy_remotedns:=${MOPROXY_REMOTE_DNS:-"--remote-dns"}}
 # Comma-seperated list of port traffic to redirect to moproxy
 : ${ports_redirected:=${MOPROXY_REDIRECTED_PORT:-"80,443"}}
 
 command="'${MOPROXY_BINARY:-/usr/sbin/moproxy}'"
-command_args="--host ${host} --port ${port} --list ${proxy_list} ${moproxy_args}"
+command_args="--host ${host} --port ${port} ${moproxy_remotedns} --list ${proxy_list} ${moproxy_args}"
 command_background="yes"
 pidfile="/run/${name}.pid"
 
