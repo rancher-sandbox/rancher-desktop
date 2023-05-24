@@ -247,6 +247,23 @@ async function getPlatformVersion(): Promise<string> {
   throw new Error(`Platform "${ process.platform }" is not supported`);
 }
 
+// Getting WSL version is a complex process. There are two ways that
+// WSL is installed on a system:
+//
+// 1. "In-box" or "feature" versions come with the OS, and have version
+//    numbers that correlate with the OS version.
+// 2. "Application" versions are installed via the Windows app store,
+//    and have version numbers that are independent of the OS.
+//
+// It is possible to have a in-box and an application version of WSL
+// installed simultaneously. If this is the case, the application version
+// always takes precedence.
+//
+// It is difficult and not useful to get the version of any installed
+// in-box version of WSL. So, this function tries to get the version
+// of an installed application version of WSL, and if it cannot find
+// it for any reason (i.e. WSL is not installed, only an in-box version
+// is installed), it returns undefined.
 export async function getWslVersion(): Promise<string | undefined> {
   const wslPath = 'C:\Windows\system32\wsl.exe';
   const args = ['--version'];
