@@ -36,6 +36,26 @@
         <span v-else></span>
       </template>
     </card>
+    <card v-else-if="unsupportedUpdateAvailable" :show-highlight-border="false">
+      <template #title>
+        <div class="type-title">
+          <h3>Latest Version Not Supported</h3>
+        </div>
+      </template>
+      <template #body>
+        <p>
+          A newer version of Rancher Desktop is available, but not supported on your system.
+        </p>
+        <br>
+        <p>
+          For more information please see
+          <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
+        </p>
+      </template>
+      <template #actions>
+        <div></div>
+      </template>
+    </card>
   </div>
 </template>
 
@@ -136,6 +156,10 @@ class UpdateStatus extends UpdateStatusProps {
 
   get applyMessage() {
     return this.applying ? 'Applying update...' : 'Restart Now';
+  }
+
+  get unsupportedUpdateAvailable() {
+    return !this.hasUpdate && this.updateState?.info?.unsupportedUpdateAvailable;
   }
 
   applyUpdate() {

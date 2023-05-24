@@ -98,7 +98,13 @@ describe('UpdateStatus.vue', () => {
           available:  true,
           downloaded: false,
           info:       {
-            version: 'v1.2.3', files: [], path: '', sha512: '', releaseDate: '',
+            version:                    'v1.2.3',
+            files:                      [],
+            path:                       '',
+            sha512:                     '',
+            releaseDate:                '',
+            nextUpdateTime:             12345,
+            unsupportedUpdateAvailable: false,
           },
           progress: {
             percent:        12.34,
