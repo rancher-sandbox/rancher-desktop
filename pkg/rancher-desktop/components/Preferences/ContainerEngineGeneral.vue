@@ -38,10 +38,13 @@ export default Vue.extend({
       data-test="containerEngine"
       :legend-text="t('containerEngine.label')"
     >
-      <engine-selector
-        :container-engine="preferences.containerEngine.name"
-        @change="onChange('containerEngine.name', $event)"
-      />
+      <template #default="{ isLocked }">
+        <engine-selector
+          :container-engine="preferences.containerEngine.name"
+          :is-locked="isLocked"
+          @change="onChange('containerEngine.name', $event)"
+        />
+      </template>
     </rd-fieldset>
   </div>
 </template>
