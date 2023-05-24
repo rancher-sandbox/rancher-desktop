@@ -7,6 +7,14 @@ import fetch from '@pkg/utils/fetch';
 
 const itWindows = process.platform === 'win32' ? it : it.skip;
 const itUnix = process.platform !== 'win32' ? it : it.skip;
+const standardWslStdout = `WSL version: 1.2.5.0
+Kernel version: 5.15.90.1
+WSLg version: 1.0.51
+MSRDC version: 1.2.3770
+Direct3D version: 1.608.2-61064218
+DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
+Windows version: 10.0.19044.2846
+`;
 
 jest.mock('@pkg/utils/fetch', () => {
   return {
@@ -29,16 +37,7 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should return the latest version', async() => {
-    (spawnFile as jest.Mock).mockResolvedValue({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValue({ stdout: standardWslStdout });
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -70,16 +69,7 @@ Windows version: 10.0.19044.2846
   });
 
   it('should set unsupportedUpdateAvailable to true when a newer-than-latest version is unsupported', async() => {
-    (spawnFile as jest.Mock).mockResolvedValue({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValue({ stdout: standardWslStdout });
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -112,16 +102,7 @@ Windows version: 10.0.19044.2846
   });
 
   it('should set unsupportedUpdateAvailable to false when no newer-than-latest versions are unsupported', async() => {
-    (spawnFile as jest.Mock).mockResolvedValue({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValue({ stdout: standardWslStdout });
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -154,16 +135,7 @@ Windows version: 10.0.19044.2846
   });
 
   it('should throw an error if no versions are supported', async() => {
-    (spawnFile as jest.Mock).mockResolvedValue({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValue({ stdout: standardWslStdout });
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -195,16 +167,7 @@ Windows version: 10.0.19044.2846
   });
 
   it('should treat all versions as supported when server does not include Supported key', async() => {
-    (spawnFile as jest.Mock).mockResolvedValue({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValue({ stdout: standardWslStdout });
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -258,16 +221,7 @@ Windows version: 10.0.19044.2846
   });
 
   itWindows('should include wslVersion in request to Upgrade Responder when wsl --version is successful', async() => {
-    (spawnFile as jest.Mock).mockResolvedValue({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValue({ stdout: standardWslStdout });
     (fetch as jest.Mock).mockReturnValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
@@ -339,16 +293,7 @@ describe('getWslVersion', () => {
   });
 
   it('should return the latest WSL version when the English version of Windows is installed', async() => {
-    (spawnFile as jest.Mock).mockResolvedValueOnce({
-      stdout: `WSL version: 1.2.5.0
-Kernel version: 5.15.90.1
-WSLg version: 1.0.51
-MSRDC version: 1.2.3770
-Direct3D version: 1.608.2-61064218
-DXCore version: 10.0.25131.1002-220531-1700.rs-onecore-base2-hyp
-Windows version: 10.0.19044.2846
-`,
-    });
+    (spawnFile as jest.Mock).mockResolvedValueOnce({ stdout: standardWslStdout });
     await expect(getWslVersion()).resolves.toEqual('1.2.5.0');
   });
 

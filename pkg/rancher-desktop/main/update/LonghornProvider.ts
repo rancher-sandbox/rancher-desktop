@@ -265,7 +265,8 @@ async function getPlatformVersion(): Promise<string> {
 // it for any reason (i.e. WSL is not installed, only an in-box version
 // is installed), it returns undefined.
 export async function getWslVersion(): Promise<string | undefined> {
-  const wslPath = 'C:\Windows\system32\wsl.exe';
+  const systemRoot = process.env.SystemRoot ?? 'C:\\Windows';
+  const wslPath = path.join(systemRoot, 'system32', 'wsl.exe');
   const args = ['--version'];
   let stdout: string;
 
