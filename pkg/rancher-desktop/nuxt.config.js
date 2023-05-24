@@ -1,5 +1,7 @@
 'use strict';
 
+import path from 'path';
+
 import _ from 'lodash';
 
 import babelConfig from '../../babel.config';
@@ -22,6 +24,7 @@ export default {
       webpackConfig.target = 'electron-renderer';
       // Set a resolver alias for `./@pkg` so that we can load things from @ in CSS
       webpackConfig.resolve.alias['./@pkg'] = __dirname;
+      webpackConfig.resolve.alias['vue$'] = isDevelopment ? path.resolve(process.cwd(), 'node_modules', 'vue') : 'vue';
 
       // Add necessary loaders
       webpackConfig.module.rules.push({
