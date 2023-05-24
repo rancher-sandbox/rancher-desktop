@@ -134,6 +134,7 @@ export default Vue.extend({
                 :val="option.value"
                 :description="option.description"
                 :disabled="option.disabled"
+                :data-test="option.label"
                 @input="updateValue('experimental.virtualMachine.mount.type', $event)"
               >
                 <template #label>
@@ -157,7 +158,7 @@ export default Vue.extend({
         class="col span-6 mount-type-sub-options"
       >
         <rd-fieldset
-          data-test="mountType"
+          data-test="cacheMode"
           :legend-text="t('virtualMachine.mount.type.options.9p.options.cacheMode.legend')"
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.cacheMode.tooltip')"
         >
