@@ -31,60 +31,68 @@ MOPROXY_LOGFILE="${MOPROXY_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${MOPROXY_LOGFILE}'"
 error_log="'${MOPROXY_LOGFILE}'"
 
+iptables_redirect_to_moproxy_chain() {
+	iptables --table nat --$1 $2 --protocol tcp --match multiport --dports "${ports_redirected}" --jump MOPROXY
+}
+
 iptables_redirect() {
-	iptables --table nat --$1 $2 --protocol tcp --match multiport --dports "${ports_redirected}" --jump REDIRECT --to-port "${port}"
+	iptables --table nat --append MOPROXY --protocol tcp --jump REDIRECT --to-port "${port}"
 }
 
 iptables_accept() {
-	iptables --table nat --$1 $2 --protocol tcp --match multiport --dports "${ports_redirected}" --destination $3 --jump ACCEPT
-}
-
-add_rule_to_chain() {
-	if ! iptables_$1 check $2 $3 &> /dev/null
-	then
-		iptables_$1 append $2 $3
-	else
-		einfo "Rule already in table"
-	fi
-}
-
-remove_rule_from_chain() {
-	while iptables_$1 check $2 $3 &> /dev/null
-	do
-		iptables_$1 delete $2 $3
-	done
+	iptables --table nat --append MOPROXY --protocol tcp --destination "$1" --jump ACCEPT
 }
 
 add_noproxy_rules() {
 	for i in ${noproxy_rules//,/ }
 	do
-		add_rule_to_chain accept OUTPUT $i
+		iptables_accept "$i"
 	done
 }
 
-remove_noproxy_rules() {
-	for i in ${noproxy_rules//,/ }
+enable_redirection_to_moproxy_chain() {
+	if ! iptables_redirect_to_moproxy_chain check $1 &> /dev/null
+	then
+		iptables_redirect_to_moproxy_chain append $1
+	else
+		einfo "Rule already in table"
+	fi
+}
+
+disable_redirection_to_moproxy_chain() {
+	while iptables_redirect_to_moproxy_chain check $1  &> /dev/null
 	do
-		remove_rule_from_chain accept OUTPUT $i
+		iptables_redirect_to_moproxy_chain delete $1
 	done
+}
+
+create_moproxy_chain() {
+	iptables --table nat --new MOPROXY
+}
+
+delete_moproxy_chain() {
+	iptables --table nat --flush MOPROXY
+	iptables --table nat --delete-chain MOPROXY
 }
 
 depend() {
-    after iptables ip6tables
+	after iptables ip6tables
 }
 
 enable() {
 	einfo "Starting the iptables rules to start redirection of ports ${ports_redirected} to ${name}"
+	create_moproxy_chain
 	add_noproxy_rules
-	add_rule_to_chain redirect OUTPUT
-	add_rule_to_chain redirect PREROUTING
+	iptables_redirect
+	enable_redirection_to_moproxy_chain OUTPUT
+	enable_redirection_to_moproxy_chain PREROUTING
 }
 
 disable() {
 	einfo "Removing all the iptables rules to stop redirection to ${name}"
-	remove_noproxy_rules
-	remove_rule_from_chain redirect OUTPUT
-	remove_rule_from_chain redirect PREROUTING
+	disable_redirection_to_moproxy_chain PREROUTING
+	disable_redirection_to_moproxy_chain OUTPUT
+	delete_moproxy_chain
 }
 
 start_post() {
@@ -98,4 +106,7 @@ stop_pre() {
 reload() {
 	ebegin "Reloading ${name}"
 	start-stop-daemon --signal HUP --pidfile "$pidfile"
+	iptables --table nat --flush MOPROXY
+	add_noproxy_rules
+	iptables_redirect
 }
