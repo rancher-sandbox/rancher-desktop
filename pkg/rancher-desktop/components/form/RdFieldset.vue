@@ -40,7 +40,11 @@ export default Vue.extend({
   <fieldset class="rd-fieldset">
     <legend>
       <slot name="legend">
-        {{ legendText }}
+        <span>{{ legendText }}</span>
+        <labeled-badge
+          v-if="badgeText"
+          :text="badgeText"
+        />
         <i
           v-if="isLocked"
           v-tooltip="{
@@ -53,10 +57,6 @@ export default Vue.extend({
           v-else-if="legendTooltip"
           v-tooltip="legendTooltip"
           class="icon icon-info icon-lg"
-        />
-        <labeled-badge
-          v-if="badgeText"
-          :text="badgeText"
         />
       </slot>
     </legend>
@@ -80,6 +80,10 @@ export default Vue.extend({
       color: inherit;
       line-height: 1.5rem;
       padding-bottom: 0.5rem;
+
+      > * {
+        margin-right: 0.25rem;
+      }
     }
   }
 </style>
