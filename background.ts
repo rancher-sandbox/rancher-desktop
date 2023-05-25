@@ -968,6 +968,10 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return jsonStringifyWithWhiteSpace(cfg);
   }
 
+  getLockedSettings() {
+    return jsonStringifyWithWhiteSpace(settings.getLockedSettings());
+  }
+
   getDiagnosticCategories(): string[]|undefined {
     return diagnostics.getCategoryNames();
   }

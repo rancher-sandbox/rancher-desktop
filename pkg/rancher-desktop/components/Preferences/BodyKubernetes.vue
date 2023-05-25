@@ -2,6 +2,7 @@
 
 import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import { VersionEntry } from '@pkg/backend/k8s';
 import RdInput from '@pkg/components/RdInput.vue';
@@ -34,6 +35,7 @@ export default Vue.extend({
     };
   },
   computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
     defaultVersion(): VersionEntry {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
 
@@ -110,6 +112,7 @@ export default Vue.extend({
         class="select-k8s-version"
         :value="kubernetesVersion"
         :disabled="isKubernetesDisabled"
+        :is-locked="isPreferenceLocked('kubernetes.version')"
         @change="onChange('kubernetes.version', $event.target.value)"
       >
         <!--
@@ -147,6 +150,7 @@ export default Vue.extend({
         type="number"
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.port"
+        :is-locked="isPreferenceLocked('kubernetes.port')"
         @input="onChange('kubernetes.port', castToNumber($event.target.value))"
       />
     </rd-fieldset>

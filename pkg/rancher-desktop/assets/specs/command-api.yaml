@@ -282,6 +282,18 @@ paths:
               schema:
                 type: string
 
+  /v1/settings/locked:
+    get:
+      operationId: listLockedSettings
+      summary:  List the current locked settings
+      responses:
+        '200':
+          description: The locked preferences in JSON format
+          content:
+            application/json:
+              schema:
+                "$ref" : "#/components/schemas/preferences"
+
   /v1/shutdown:
     put:
       operationId: shutdownApp
