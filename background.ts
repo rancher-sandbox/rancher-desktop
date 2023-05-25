@@ -40,7 +40,7 @@ import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
-import { getMacOsVersion } from '@pkg/utils/osVersion';
+import { fetchMacOsVersion, getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
 import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
 import { executable } from '@pkg/utils/resources';
@@ -161,6 +161,11 @@ Electron.app.whenReady().then(async() => {
     const commandLineArgs = getCommandLineArgs();
 
     setupProtocolHandlers();
+
+    // make sure we have the macOS version cached before calling getMacOsVersion()
+    if (os.platform() === 'darwin') {
+      await fetchMacOsVersion(console);
+    }
 
     // Needs to happen before any file is written, otherwise that file
     // could be owned by root, which will lead to future problems.
@@ -347,13 +352,7 @@ async function checkPrerequisites() {
   }
   case 'darwin': {
     // Required: MacOS-10.15(Darwin-19) or newer
-    const macOsVersion = await getMacOsVersion(console);
-
-    if (macOsVersion === null) {
-      console.warn('failed to get macOS version');
-      break;
-    }
-    if (semver.gt('10.15.0', macOsVersion)) {
+    if (semver.gt('10.15.0', getMacOsVersion())) {
       messageId = 'macOS-release';
     }
     break;
