@@ -36,6 +36,7 @@ export default Vue.extend({
     <select
       v-model="selectedValue"
       v-bind="$attrs"
+      :class="{ 'locked' : isLocked && !$attrs.disabled }"
       :disabled="$attrs.disabled || isLocked"
       v-on="$listeners"
     >
@@ -61,5 +62,13 @@ export default Vue.extend({
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  .locked {
+    color: var(--dropdown-locked-text);
+
+    &:hover {
+      color: var(--dropdown-locked-text);
+    }
   }
 </style>
