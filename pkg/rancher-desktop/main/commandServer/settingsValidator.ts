@@ -2,6 +2,7 @@ import os from 'os';
 
 import Electron from 'electron';
 import _ from 'lodash';
+import semver from 'semver';
 
 import {
   CacheMode,
@@ -16,6 +17,7 @@ import {
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { parseImageReference, validateImageName, validateImageTag } from '@pkg/utils/dockerUtils';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferences';
 
@@ -303,10 +305,16 @@ export default class SettingsValidator {
   }
 
   protected checkVMType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
-    if (desiredValue === VMType.VZ && parseInt(os.release()) < 22) {
-      errors.push(`Setting ${ fqname } to "${ VMType.VZ }" requires macOS 13.0 (Ventura) or later.`);
+    if (desiredValue === VMType.VZ) {
+      if (os.arch() === 'arm64' && semver.gt('13.3.0', getMacOsVersion())) {
+        errors.push(`Setting ${ fqname } to "${ VMType.VZ }" on ARM requires macOS 13.3 (Ventura) or later.`);
 
-      return false;
+        return false;
+      } else if (semver.gt('13.0.0', getMacOsVersion())) {
+        errors.push(`Setting ${ fqname } to "${ VMType.VZ }" on Intel requires macOS 13.0 (Ventura) or later.`);
+
+        return false;
+      }
     }
 
     return currentValue !== desiredValue;

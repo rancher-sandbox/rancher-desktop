@@ -2,6 +2,7 @@
 import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
+import semver from 'semver';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -9,6 +10,7 @@ import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings, VMType } from '@pkg/config/settings';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
@@ -51,7 +53,7 @@ export default Vue.extend({
       return this.preferences.experimental.virtualMachine.type === VMType.VZ;
     },
     vzDisabled(): boolean {
-      return parseInt(os.release()) < 22;
+      return semver.gt('13.0.0', getMacOsVersion()) || (os.arch() === 'arm64' && semver.gt('13.3.0', getMacOsVersion()));
     },
     rosettaDisabled(): boolean {
       return os.arch() !== 'arm64';
@@ -65,7 +67,7 @@ export default Vue.extend({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t('prefs.onlyFromVentura') };
+        tooltip = { content: this.t(`prefs.onlyFromVentura_${ os.arch() }`) };
       }
 
       return tooltip;

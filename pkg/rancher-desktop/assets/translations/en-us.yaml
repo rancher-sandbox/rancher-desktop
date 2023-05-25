@@ -2628,7 +2628,8 @@ prefs:
     'false': Show Releases Only
     label: Helm Charts
   experimental: Experimental
-  onlyFromVentura: The setting requires macOS 13.0 (Ventura) or later.
+  onlyFromVentura_x64: This setting requires macOS 13.0 (Ventura) or later.
+  onlyFromVentura_arm64: This setting requires macOS 13.3 (Ventura) or later.
 
 principal:
   loading: Loading&hellip;
