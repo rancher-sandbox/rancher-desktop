@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
@@ -20,7 +21,8 @@ export default Vue.extend({
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
   },
-  methods: {
+  computed: { ...mapGetters('preferences', ['isPreferenceLocked']) },
+  methods:  {
     onChangeEngine(desiredEngine: ContainerEngine) {
       this.containerEngine = desiredEngine;
       this.$emit('container-engine-change', desiredEngine);
@@ -37,6 +39,7 @@ export default Vue.extend({
     <rd-fieldset
       data-test="containerEngine"
       :legend-text="t('containerEngine.label')"
+      :is-locked="isPreferenceLocked('containerEngine.name')"
     >
       <template #default="{ isLocked }">
         <engine-selector

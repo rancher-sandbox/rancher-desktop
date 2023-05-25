@@ -3,6 +3,7 @@ import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
@@ -27,6 +28,7 @@ export default Vue.extend({
     },
   },
   computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
     options(): { label: string, value: MountType, description: string, experimental: boolean, disabled: boolean }[] {
       const defaultOption = MountType.REVERSE_SSHFS;
 
@@ -117,6 +119,7 @@ export default Vue.extend({
         <rd-fieldset
           data-test="mountType"
           :legend-text="t('virtualMachine.mount.type.legend')"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.type')"
         >
           <template #default="{ isLocked }">
             <radio-group
