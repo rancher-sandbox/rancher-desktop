@@ -129,7 +129,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
 
   .icon-lock {
     vertical-align: 2%;
-    color: var(--warning);
   }
 
 </style>
