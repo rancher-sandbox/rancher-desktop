@@ -153,7 +153,7 @@ export const defaultSettings = {
 
 export type Settings = typeof defaultSettings;
 
-// A settings-like type with a subset of all of the fields of defaultSettings,
+// A settings-like type with a subset of all the fields of defaultSettings,
 // but all leaves are set to `true`.
 export type LockedSettingsType = Record<string, any>;
 let lockedSettings: LockedSettingsType = {};
