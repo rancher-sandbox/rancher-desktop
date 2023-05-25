@@ -9,7 +9,7 @@ import PreferencesBody from '@pkg/components/Preferences/ModalBody.vue';
 import PreferencesFooter from '@pkg/components/Preferences/ModalFooter.vue';
 import PreferencesHeader from '@pkg/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@pkg/components/Preferences/ModalNav.vue';
-import type { TransientSettings } from '@pkg/config/transientSettings';
+import type { NavItemName, TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
@@ -17,7 +17,7 @@ import { preferencesNavItems } from '@pkg/window/preferences';
 
 interface VuexBindings {
   credentials: Omit<ServerState, 'pid'>;
-  getCurrentNavItem: 'WSL' | 'Application' | 'Virtual Machine' | 'Container Engine' | 'Kubernetes';
+  getCurrentNavItem: NavItemName;
 }
 
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({

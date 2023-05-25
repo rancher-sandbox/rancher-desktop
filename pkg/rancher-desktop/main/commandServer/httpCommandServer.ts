@@ -338,7 +338,7 @@ export class HttpCommandServer {
       console.debug('listLockedSettings: succeeded 200');
       response.status(200).type('txt').send(settings);
     } else {
-      console.debug('listLockedSettings: failed 200');
+      console.debug('listLockedSettings: failed 404');
       response.status(404).type('txt').send('No locked settings found');
     }
 
