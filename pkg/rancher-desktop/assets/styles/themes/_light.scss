@@ -350,7 +350,11 @@ BODY, .theme-light {
   --checkbox-border            : #{$medium};
   --checkbox-tick-disabled     : #{darken($disabled, 40%)};
   --checkbox-disabled-bg       : #{$disabled};
+  --checkbox-tick-locked       : #{$darkest};
+  --checkbox-locked-bg         : #{lighten($disabled, 5%)};
   --checkbox-ticked-bg         : #{$link};
+  --checkbox-locked-border     : #{lighten($disabled, 5%)};
+  --checkbox-locked-shadow     : #{lighten($disabled, 5%)};
 
   --dropdown-bg                : #{$lightest};
   --dropdown-border            : #{$medium};
