@@ -1,12 +1,12 @@
 <script lang="ts">
 
-import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import { VersionEntry } from '@pkg/backend/k8s';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
@@ -17,7 +17,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
   components: {
-    Checkbox, RdFieldset, RdSelect, RdInput,
+    RdCheckbox, RdFieldset, RdSelect, RdInput,
   },
   props: {
     preferences: {
@@ -97,9 +97,10 @@ export default Vue.extend({
       data-test="kubernetesToggle"
       legend-text="Kubernetes"
     >
-      <checkbox
+      <rd-checkbox
         label="Enable Kubernetes"
         :value="preferences.kubernetes.enabled"
+        :is-locked="isPreferenceLocked('kubernetes.enabled')"
         @input="onChange('kubernetes.enabled', $event)"
       />
     </rd-fieldset>
@@ -158,10 +159,11 @@ export default Vue.extend({
       data-test="traefikToggle"
       legend-text="Traefik"
     >
-      <checkbox
+      <rd-checkbox
         label="Enable Traefik"
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.options.traefik"
+        :is-locked="isPreferenceLocked('kubernetes.options.traefik')"
         @input="onChange('kubernetes.options.traefik', $event)"
       />
     </rd-fieldset>

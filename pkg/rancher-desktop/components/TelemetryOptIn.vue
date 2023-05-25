@@ -1,11 +1,15 @@
 <script>
-import { Checkbox } from '@rancher/components';
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 
 export default {
-  components: { Checkbox },
+  components: { RdCheckbox },
   props:      {
     // misc
     telemetry: {
+      type:    Boolean,
+      default: false,
+    },
+    isTelemetryLocked: {
       type:    Boolean,
       default: false,
     },
@@ -21,8 +25,9 @@ export default {
 <template>
   <div class="system-preferences">
     <div class="checkbox">
-      <Checkbox
+      <rd-checkbox
         :value="telemetry"
+        :is-locked="isTelemetryLocked"
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
         @input="toggleTelemetry"
       />

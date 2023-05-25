@@ -18,12 +18,14 @@
       :enabled="settings.application.updater.enabled"
       :update-state="updateState"
       :version="version"
+      :is-auto-update-locked="autoUpdateLocked"
       @enabled="onUpdateEnabled"
       @apply="onUpdateApply"
     />
     <hr>
     <telemetry-opt-in
       :telemetry="settings.application.telemetry.enabled"
+      :is-telemetry-locked="telemetryLocked"
       @updateTelemetry="updateTelemetry"
     />
     <hr>
@@ -34,6 +36,7 @@
 </template>
 
 <script>
+import _ from 'lodash';
 
 import TelemetryOptIn from '@pkg/components/TelemetryOptIn.vue';
 import UpdateStatus from '@pkg/components/UpdateStatus.vue';
@@ -47,12 +50,14 @@ export default {
   components: { TelemetryOptIn, UpdateStatus },
   data() {
     return {
-      settings:      defaultSettings,
+      settings:         defaultSettings,
+      telemetryLocked:  null,
+      autoUpdateLocked: null,
       /** @type import('@pkg/main/update').UpdateState | null */
-      updateState:   null,
+      updateState:      null,
       /** @type string */
-      version:       '(checking...)',
-      networkStatus: true,
+      version:          '(checking...)',
+      networkStatus:    true,
     };
   },
 
@@ -85,6 +90,10 @@ export default {
     ipcRenderer.send('get-app-version');
     ipcRenderer.on('update-network-status', (event, status) => {
       this.onNetworkStatusUpdate(status);
+    });
+    ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
+      this.$data.telemetryLocked = _.get(lockedFields, 'application.telemetry.enabled');
+      this.$data.autoUpdateLocked = _.get(lockedFields, 'application.updater.enabled');
     });
     window.addEventListener('online', () => {
       this.onNetworkStatusUpdate(true);

@@ -2,11 +2,12 @@
   <div>
     <div class="version">
       <span class="versionInfo"><b>Version:</b> {{ version }}</span>
-      <Checkbox
+      <rd-checkbox
         v-if="updatePossible"
         v-model="updatesEnabled"
         class="updatesEnabled"
         label="Check for updates automatically"
+        :is-locked="autoUpdateLocked"
       />
     </div>
     <card v-if="hasUpdate" ref="updateInfo" :show-highlight-border="false">
@@ -60,12 +61,13 @@
 </template>
 
 <script lang="ts">
-import { Card, Checkbox } from '@rancher/components';
+import { Card } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
 import Component from 'vue-class-component';
 
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
@@ -88,10 +90,14 @@ const UpdateStatusProps = Vue.extend({
       type:    String,
       default: '(checking...)',
     },
+    isAutoUpdateLocked: {
+      type:    Boolean,
+      default: false,
+    },
   },
 });
 
-@Component({ components: { Card, Checkbox } })
+@Component({ components: { Card, RdCheckbox } })
 class UpdateStatus extends UpdateStatusProps {
   applying = false;
 
@@ -165,6 +171,10 @@ class UpdateStatus extends UpdateStatusProps {
   applyUpdate() {
     this.applying = true;
     this.$emit('apply');
+  }
+
+  get autoUpdateLocked() {
+    return this.isAutoUpdateLocked;
   }
 }
 
