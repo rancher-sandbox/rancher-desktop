@@ -14,6 +14,10 @@ export default {
       type:    Boolean,
       default: false,
     },
+    isLocked: {
+      type:    Boolean,
+      default: false,
+    },
   },
   computed: {
     options() {
@@ -44,6 +48,7 @@ export default {
       :value="containerEngine"
       :options="options"
       :row="row"
+      :disabled="isLocked"
       @input="updateEngine"
     >
       <template #label>

@@ -3,6 +3,7 @@ import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
@@ -27,6 +28,7 @@ export default Vue.extend({
     },
   },
   computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
     options(): { label: string, value: MountType, description: string, experimental: boolean, disabled: boolean }[] {
       const defaultOption = MountType.REVERSE_SSHFS;
 
@@ -117,40 +119,44 @@ export default Vue.extend({
         <rd-fieldset
           data-test="mountType"
           :legend-text="t('virtualMachine.mount.type.legend')"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.type')"
         >
-          <radio-group
-            :name="groupName"
-            :options="options"
-          >
-            <template
-              v-for="(option, index) in options"
-              #[index]
+          <template #default="{ isLocked }">
+            <radio-group
+              :name="groupName"
+              :options="options"
+              :disabled="isLocked"
             >
-              <radio-button
-                :key="groupName+'-'+index"
-                :name="groupName"
-                :value="preferences.experimental.virtualMachine.mount.type"
-                :label="option.label"
-                :val="option.value"
-                :description="option.description"
-                :disabled="option.disabled"
-                :data-test="option.label"
-                @input="updateValue('experimental.virtualMachine.mount.type', $event)"
+              <template
+                v-for="(option, index) in options"
+                #[index]="{ isDisabled }"
               >
-                <template #label>
-                  <div
-                    v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
-                  >
-                    {{ option.label }}
-                    <labeled-badge
-                      v-if="option.experimental"
-                      :text="t('prefs.experimental')"
-                    />
-                  </div>
-                </template>
-              </radio-button>
-            </template>
-          </radio-group>
+                <radio-button
+                  :key="groupName+'-'+index"
+                  :name="groupName"
+                  :value="preferences.experimental.virtualMachine.mount.type"
+                  :label="option.label"
+                  :val="option.value"
+                  :description="option.description"
+                  :disabled="option.disabled || isDisabled"
+                  :data-test="option.label"
+                  @input="updateValue('experimental.virtualMachine.mount.type', $event)"
+                >
+                  <template #label>
+                    <div
+                      v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
+                    >
+                      {{ option.label }}
+                      <labeled-badge
+                        v-if="option.experimental"
+                        :text="t('prefs.experimental')"
+                      />
+                    </div>
+                  </template>
+                </radio-button>
+              </template>
+            </radio-group>
+          </template>
         </rd-fieldset>
       </div>
       <div

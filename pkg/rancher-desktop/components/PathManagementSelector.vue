@@ -28,6 +28,10 @@ export default Vue.extend({
       type:    Boolean,
       default: true,
     },
+    isLocked: {
+      type:    Boolean,
+      default: false,
+    },
   },
   computed: {
     options(): pathManagementOptions[] {
@@ -70,6 +74,7 @@ export default Vue.extend({
     :value="value"
     :options="options"
     :row="row"
+    :disabled="isLocked"
     class="path-management"
     @input="updateVal"
   >
