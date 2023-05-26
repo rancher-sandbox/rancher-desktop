@@ -352,6 +352,8 @@ virtualMachine:
     authTitle: Authentication information
     username: Username
     password: Password
+    noproxyTitle: No proxy hostname list
+    noproxy: Comma-seperated list of hostname to not redirect to the proxy
   socketVmNet:
     legend: Enable socket-vmnet
     label: Use socket-vmnet instead of vde-vmnet

@@ -94,6 +94,18 @@ export default Vue.extend({
         @input="onChange('experimental.virtualMachine.proxy.password', $event.target.value)"
       />
     </rd-fieldset>
+    <rd-fieldset
+      class="wsl-proxy-fieldset"
+      :legend-text="t('virtualMachine.proxy.noproxyTitle', { }, true)"
+    >
+      <input
+        :placeholder="t('virtualMachine.proxy.noproxy', { }, true)"
+        :disabled="isFieldDisabled"
+        :value="preferences.experimental.virtualMachine.proxy.noproxy"
+        class="wsl-proxy-field"
+        @input="onChange('experimental.virtualMachine.proxy.noproxy', $event.target.value)"
+      />
+    </rd-fieldset>
   </div>
 </template>
 
