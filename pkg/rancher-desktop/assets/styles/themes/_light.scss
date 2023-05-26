@@ -362,6 +362,7 @@ BODY, .theme-light {
   --dropdown-hover-bg          : var(--primary);
   --dropdown-disabled-text     : var(--muted);
   --dropdown-disabled-bg       : #{$disabled};
+  --dropdown-locked-text       : #{$darkest};
 
   // UNUSED?
   --card-header                : var(--primary-banner-bg);
