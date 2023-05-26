@@ -10,7 +10,7 @@ import RdSelect from '@pkg/components/RdSelect.vue';
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import {
-  CacheMode, MountType, ProtocolVersion, SecurityModel, Settings,
+  CacheMode, MountType, ProtocolVersion, SecurityModel, Settings, VMType,
 } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
@@ -68,7 +68,7 @@ export default Vue.extend({
       return os.platform() === 'darwin';
     },
     virtIoFsDisabled(): boolean {
-      return parseInt(os.release()) < 22;
+      return this.preferences.experimental.virtualMachine.type !== VMType.VZ;
     },
   },
   methods: {
@@ -107,7 +107,7 @@ export default Vue.extend({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t('prefs.onlyFromVentura') };
+        tooltip = { content: this.t('prefs.onlyWithVZ') };
       }
 
       return tooltip;
