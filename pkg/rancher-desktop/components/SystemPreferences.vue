@@ -21,6 +21,10 @@ export default {
       type:    Number,
       default: 1,
     },
+    isLockedMemory: {
+      type:    Boolean,
+      default: false,
+    },
 
     // CPU limits
     numberCPUs: {
@@ -38,6 +42,10 @@ export default {
     reservedNumCPUs: {
       type:    Number,
       default: 0,
+    },
+    isLockedCpu: {
+      type:    Boolean,
+      default: false,
     },
   },
   computed: {
@@ -177,6 +185,7 @@ export default {
       :marks="memoryMarks"
       :disabled="disableMemory"
       :process="processMemory"
+      :is-locked="isLockedMemory"
       @change="updatedVal($event, 'memory')"
     />
 
@@ -191,6 +200,7 @@ export default {
       :marks="CPUMarks"
       :disabled="disableCPUs"
       :process="processCPUs"
+      :is-locked="isLockedCpu"
       @change="updatedVal($event, 'cpu')"
     />
   </div>
