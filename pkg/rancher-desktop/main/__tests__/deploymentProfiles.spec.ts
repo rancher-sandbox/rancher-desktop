@@ -22,9 +22,9 @@ describe('deployment profiles', () => {
 
     // Note that we can't modify the HKLM hive without admin privileges,
     // so this whole test will just work with the user's HKCU hive.
-    const REG_PATH_START = ['SOFTWARE', 'Rancher Desktop'];
+    const REG_PATH_START = ['SOFTWARE', 'Policies', 'Rancher Desktop'];
     const FULL_REG_PATH_START = ['HKEY_CURRENT_USER'].concat(REG_PATH_START);
-    const REGISTRY_PATH_PROFILE = REG_PATH_START.concat('TestProfile');
+    const REGISTRY_PROFILE_PATHS = [REG_PATH_START.concat('TestProfile')];
 
     const NON_PROFILE_PATH = FULL_REG_PATH_START.join('\\');
     const FULL_PROFILE_PATH = FULL_REG_PATH_START.concat('TestProfile').join('\\');
@@ -170,7 +170,7 @@ describe('deployment profiles', () => {
 
     async function clearRegistry() {
       try {
-        await spawnFile('reg', ['DELETE', `HKCU\\${ REGISTRY_PATH_PROFILE.join('\\') }`, '/f']);
+        await spawnFile('reg', ['DELETE', `HKCU\\${ REGISTRY_PROFILE_PATHS[0].join('\\') }`, '/f']);
       } catch {
         // Ignore any errors
       }
@@ -201,7 +201,7 @@ describe('deployment profiles', () => {
     }
 
     beforeEach(async() => {
-      nativeReg.deleteTree(nativeReg.HKCU, path.join(...(REGISTRY_PATH_PROFILE)));
+      nativeReg.deleteTree(nativeReg.HKCU, path.join(...(REGISTRY_PROFILE_PATHS[0])));
       testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'regtest-'));
       regFilePath = path.join(testDir, 'import.reg');
     });
@@ -263,7 +263,7 @@ describe('deployment profiles', () => {
 
           describe('no system profiles, no user profiles', () => {
             it('loads nothing', async() => {
-              const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
+              const profile = await readDeploymentProfiles(REGISTRY_PROFILE_PATHS);
 
               expect(profile.defaults).toEqual({});
               expect(profile.locked).toEqual({});
@@ -275,7 +275,7 @@ describe('deployment profiles', () => {
               await clearRegistry();
               await installInRegistry(defaultsUserRegFile);
               await installInRegistry(lockedUserRegFile);
-              const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
+              const profile = await readDeploymentProfiles(REGISTRY_PROFILE_PATHS);
 
               expect(profile.defaults).toEqual(defaultUserProfile);
               expect(profile.locked).toEqual(lockedUserProfile);
@@ -285,7 +285,7 @@ describe('deployment profiles', () => {
           it('converts a single string into an array', async() => {
             await clearRegistry();
             await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
-            const profile = await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
+            const profile = await readDeploymentProfiles(REGISTRY_PROFILE_PATHS);
 
             expect(profile.defaults).toEqual({
               containerEngine: { allowedImages: { patterns: ['hokey smoke!'] }, name: 'moby' },
@@ -311,7 +311,7 @@ describe('deployment profiles', () => {
             let error: Error | undefined;
 
             try {
-              await readDeploymentProfiles(REGISTRY_PATH_PROFILE);
+              await readDeploymentProfiles(REGISTRY_PROFILE_PATHS);
             } catch (ex: any) {
               error = ex;
             }
