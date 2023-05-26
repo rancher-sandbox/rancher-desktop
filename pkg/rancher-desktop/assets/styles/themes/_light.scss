@@ -380,6 +380,7 @@ BODY, .theme-light {
   --input-disabled-border      : #{darken($medium, 10%)};
   --input-disabled-placeholder : #{darken($medium, 15%)};
   --input-addon-bg             : #{$darker};
+  --input-locked-text          : #{$darkest};
 
   --progress-bg                : #{$medium};
   --progress-divider           : #{$medium};

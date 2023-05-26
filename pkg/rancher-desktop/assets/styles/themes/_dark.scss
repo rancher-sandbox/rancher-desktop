@@ -110,6 +110,7 @@
   --input-disabled-border      : #{darken($medium, 30%)};
   --input-disabled-placeholder : #{darken($disabled, 10%)};
   --input-addon-bg             : #{$darker};
+  --input-locked-text          : #{$lightest};
 
   --progress-bg                : #{$medium};
   --progress-divider           : #{$lightest};
