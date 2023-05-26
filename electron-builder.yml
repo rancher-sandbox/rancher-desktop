@@ -25,7 +25,7 @@ mac:
   target: [ dmg, zip ]
 afterSign: "scripts/notarize.js"
 win:
-  target: [ nsis, zip ]
+  target: [ zip ]
   signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
   requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
   extraFiles:
@@ -40,10 +40,6 @@ linux:
   - from: packaging/linux/rancher-desktop.desktop
     to: resources/linux/rancher-desktop.desktop
   target: [ zip ]
-nsis:
-  license: LICENSE
-  include: build/installer.nsh
-  oneClick: false # Needed for restart prompt
 publish:
   provider: custom
   upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
