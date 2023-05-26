@@ -25,6 +25,7 @@ export default Vue.extend({
   <div class="rd-input-container">
     <input
       :value="value"
+      :class="{ 'locked' : isLocked && !$attrs.disabled }"
       :disabled="$attrs.disabled || isLocked"
       v-bind="$attrs"
       v-on="$listeners"
@@ -47,5 +48,13 @@ export default Vue.extend({
     display: flex;
     align-items: center;
     gap: 0.5rem;
+
+    .locked {
+      color: var(--input-locked-text);
+
+      &:hover {
+        color: var(--input-locked-text);
+      }
+    }
   }
 </style>
