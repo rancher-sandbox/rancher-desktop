@@ -1,0 +1,20 @@
+name: Run BATS on latest CI build
+on:
+  workflow_dispatch: {}
+
+jobs:
+  install-latest-build:
+    runs-on: macos-12
+    steps:
+    - name: Checkout Rancher Desktop
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: true
+    - name: Install latest CI build
+      run: ./scripts/install-latest-ci.sh
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - name: Run BATS
+      run: |
+        cd /tmp
+        ./bats-core/bin/bats tests/helpers/info.bash tests/containers/platform.bats
