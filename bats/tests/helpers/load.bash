@@ -44,6 +44,14 @@ source "$PATH_BATS_HELPERS/kubernetes.bash"
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
+global_setup() {
+    # Ideally this should be printed only when using the tap formatter,
+    # but I don't see a way to check for this.
+    echo "# --- ${BATS_TEST_FILENAME#"$PATH_BATS_ROOT/tests/"}" >&3
+}
+setup_file() {
+    global_setup
+}
 global_teardown() {
     # On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
     run rdctl shutdown
