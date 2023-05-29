@@ -10,6 +10,10 @@ wait_for_shell() {
 }
 
 factory_reset() {
+    if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
+        capture_logs
+    fi
+
     if using_npm_run_dev; then
         if is_unix; then
             run rdctl shutdown
