@@ -84,13 +84,6 @@ jobs:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
-    - name: Upload Windows exe installer
-      uses: actions/upload-artifact@v3
-      if: matrix.platform == 'win'
-      with:
-        name: Rancher Desktop Setup.exe
-        path: dist/Rancher Desktop*.exe
-        if-no-files-found: error
     - name: Upload Windows installer
       uses: actions/upload-artifact@v3
       if: matrix.platform == 'win'
@@ -196,11 +189,4 @@ jobs:
         if ($cert -ne $usedCert) {
           Write-Output "Expected Certificate" $cert "Actual Certificate" $usedCert
           Throw "Installer signed with wrong certicate"
-        }
-        # Check that the exe file was signed by the expected cert
-        $usedCert = (Get-AuthenticodeSignature -FilePath 'dist\Rancher Desktop Setup*.exe').SignerCertificate
-        Write-Output $usedCert
-        if ($cert -ne $usedCert) {
-          Write-Output "Expected Certificate" $cert "Actual Certificate" $usedCert
-          Throw "NSIS Installer signed with wrong certicate"
         }

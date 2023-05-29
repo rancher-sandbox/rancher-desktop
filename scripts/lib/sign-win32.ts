@@ -19,7 +19,7 @@ import * as childProcess from '@pkg/utils/childProcess';
  */
 const REQUIRED_WINDOWS_CONFIG = {
   signingHashAlgorithms: ['sha256'],
-  target:                'nsis',
+  target:                'zip',
 };
 
 /**
@@ -94,11 +94,7 @@ export async function sign(workDir: string) {
     }
   }
 
-  // For at least one release, we need to sign both NSIS (exe) and WiX (msi)
-  // installers, so that older versions can find the new exe installer to
-  // upgrade to.
   await buildWiX(workDir, unpackedDir, config);
-  await buildNSIS(workDir, unpackedDir, config);
 }
 
 async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {
@@ -122,35 +118,4 @@ async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBu
   ];
 
   await childProcess.spawnFile(toolPath, toolArgs, { stdio: 'inherit' });
-}
-
-async function buildNSIS(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {
-  const internalDir = 'resources/resources/win32/internal';
-
-  // Copy the signed privileged-service.exe for the installer build.
-  const privilegedServiceFile = 'privileged-service.exe';
-  const privilegedServiceFrom = path.join(unpackedDir, internalDir, privilegedServiceFile);
-  const privilegedServiceTo = path.join(process.cwd(), 'resources/win32/internal', privilegedServiceFile);
-
-  await fs.promises.copyFile(privilegedServiceFrom, privilegedServiceTo);
-
-  // Generate an electron-builder.yml forcing the use of the cert.
-  const newConfigPath = path.join(workDir, 'electron-builder.yml');
-
-  await fs.promises.writeFile(newConfigPath, yaml.stringify(config), 'utf-8');
-
-  // Rebuild the installer (automatically signing the installer & uninstaller).
-  await childProcess.spawnFile(
-    process.argv0,
-    [
-      process.argv[0],
-      'node_modules/electron-builder/out/cli/cli.js',
-      'build',
-      '--prepackaged', unpackedDir,
-      '--config', newConfigPath,
-    ],
-    {
-      stdio: 'inherit',
-      env:   { ...process.env, __COMPAT_LAYER: 'RunAsInvoker' },
-    });
 }
