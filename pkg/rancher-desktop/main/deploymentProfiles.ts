@@ -181,42 +181,38 @@ class Win32DeploymentReader {
     let locked: RecursivePartial<settings.Settings> = {};
 
     this.errors = [];
-    // eslint-disable-next-line no-labels
-    readProfileFromRegistry: {
-      for (this.registryPathCurrent of this.registryPathProfile) {
-        for (const keyName of ['HKLM', 'HKCU'] as const) {
-          this.keyName = keyName;
-          const key = nativeReg[keyName];
-          const registryKey = nativeReg.openKey(key, this.registryPathCurrent.join('\\'), nativeReg.Access.READ);
+    for (this.registryPathCurrent of this.registryPathProfile) {
+      for (const keyName of ['HKLM', 'HKCU'] as const) {
+        this.keyName = keyName;
+        const key = nativeReg[keyName];
+        const registryKey = nativeReg.openKey(key, this.registryPathCurrent.join('\\'), nativeReg.Access.READ);
 
-          if (!registryKey) {
-            continue;
-          }
-          const defaultsKey = nativeReg.openKey(registryKey, DEFAULTS_HIVE_NAME, nativeReg.Access.READ);
-          const lockedKey = nativeReg.openKey(registryKey, LOCKED_HIVE_NAME, nativeReg.Access.READ);
+        if (!registryKey) {
+          continue;
+        }
+        const defaultsKey = nativeReg.openKey(registryKey, DEFAULTS_HIVE_NAME, nativeReg.Access.READ);
+        const lockedKey = nativeReg.openKey(registryKey, LOCKED_HIVE_NAME, nativeReg.Access.READ);
 
-          try {
-            defaults = defaultsKey ? this.readRegistryUsingSchema(settings.defaultSettings, defaultsKey, [DEFAULTS_HIVE_NAME]) : {};
-            locked = lockedKey ? this.readRegistryUsingSchema(settings.defaultSettings, lockedKey, [LOCKED_HIVE_NAME]) : {};
-          } catch (err) {
-            console.error('Error reading deployment profile: ', err);
-          } finally {
-            nativeReg.closeKey(registryKey);
-            nativeReg.closeKey(defaultsKey);
-            nativeReg.closeKey(lockedKey);
-          }
+        try {
+          defaults = defaultsKey ? this.readRegistryUsingSchema(settings.defaultSettings, defaultsKey, [DEFAULTS_HIVE_NAME]) : {};
+          locked = lockedKey ? this.readRegistryUsingSchema(settings.defaultSettings, lockedKey, [LOCKED_HIVE_NAME]) : {};
+        } catch (err) {
+          console.error('Error reading deployment profile: ', err);
+        } finally {
+          nativeReg.closeKey(registryKey);
+          nativeReg.closeKey(defaultsKey);
+          nativeReg.closeKey(lockedKey);
+        }
 
-          // Don't bother with the validator, because the registry-based reader validates as it reads.
-          if (this.errors.length) {
-            throw new DeploymentProfileError(`Error in registry settings:\n${ this.errors.join('\n') }`);
-          }
+        // Don't bother with the validator, because the registry-based reader validates as it reads.
+        if (this.errors.length) {
+          throw new DeploymentProfileError(`Error in registry settings:\n${ this.errors.join('\n') }`);
+        }
 
-          // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
-          // Alternatively, if the keys work, we could break, even if both hives are empty.
-          if (Object.keys(defaults).length || Object.keys(locked).length) {
-            // eslint-disable-next-line no-labels
-            break readProfileFromRegistry;
-          }
+        // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
+        // Alternatively, if the keys work, we could break, even if both hives are empty.
+        if (Object.keys(defaults).length || Object.keys(locked).length) {
+          return { defaults, locked };
         }
       }
     }
