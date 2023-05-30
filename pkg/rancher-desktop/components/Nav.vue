@@ -14,6 +14,7 @@
       </li>
     </ul>
     <template v-if="featureExtensions">
+      <hr v-if="extensionsWithUI.length">
       <div>
         <template v-for="extension in extensionsWithUI">
           <nuxt-link
