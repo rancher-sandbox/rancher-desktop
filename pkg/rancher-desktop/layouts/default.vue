@@ -85,6 +85,10 @@ export default {
     });
     this.$store.dispatch('extensions/fetch');
 
+    ipcRenderer.on('preferences/changed', () => {
+      this.$store.dispatch('preferences/fetchPreferences', this.credentials);
+    });
+
     ipcRenderer.on('extensions/getContentArea', () => {
       const rect = this.$refs['rdx-title'].$el.getBoundingClientRect();
 

@@ -1046,6 +1046,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       writeSettings(newSettings);
       // cfg is a global, and at this point newConfig has been merged into it :(
       window.send('settings-update', cfg);
+      window.send('preferences/changed');
     } else {
       // Obviously if there are no settings to update, there's no need to restart.
       return ['no changes necessary', ''];

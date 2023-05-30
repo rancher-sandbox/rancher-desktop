@@ -172,4 +172,8 @@ export interface IpcRendererEvents {
   'extensions/spawn/output': (id: string, data: { stdout: string } | { stderr: string }) => void;
   'ok:extensions/uninstall': (id: string) => void;
   // #endregion
+
+  // #region preferences
+  'preferences/changed': () => void;
+  // #endregion
 }
