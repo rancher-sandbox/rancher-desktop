@@ -21,6 +21,20 @@ using_docker() {
 : "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
 
 ########################################################################
+: "${RD_CAPTURE_LOGS:=false}"
+
+capturing_logs() {
+    is_true "$RD_CAPTURE_LOGS"
+}
+
+########################################################################
+: "${RD_TAKE_SCREENSHOTS:=false}"
+
+taking_screenshots() {
+    is_true "$RD_TAKE_SCREENSHOTS"
+}
+
+########################################################################
 : "${RD_USE_IMAGE_ALLOW_LIST:=false}"
 
 using_image_allow_list() {

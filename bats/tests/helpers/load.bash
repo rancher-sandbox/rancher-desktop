@@ -9,6 +9,12 @@ absolute_path() {
 
 PATH_BATS_HELPERS=$(absolute_path "$(dirname "${BASH_SOURCE[0]}")")
 PATH_BATS_ROOT=$(absolute_path "$PATH_BATS_HELPERS/../..")
+PATH_BATS_LOGS=$PATH_BATS_ROOT/logs
+
+# RD_TEST_FILENAME is relative to tests/ and strips the .bats extension,
+# e.g. "registry/creds" for ".../bats/tests/registry/creds.bats"
+RD_TEST_FILENAME=${BATS_TEST_FILENAME#"$PATH_BATS_ROOT/tests/"}
+RD_TEST_FILENAME=${RD_TEST_FILENAME%.bats}
 
 # Use fatal() to abort loading helpers; don't run any tests
 fatal() {
@@ -47,17 +53,23 @@ export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 global_setup() {
     # Ideally this should be printed only when using the tap formatter,
     # but I don't see a way to check for this.
-    echo "# --- ${BATS_TEST_FILENAME#"$PATH_BATS_ROOT/tests/"}" >&3
+    echo "# ===== $RD_TEST_FILENAME =====" >&3
 }
 setup_file() {
     global_setup
 }
 global_teardown() {
+    capture_logs
     # On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
     run rdctl shutdown
 }
 teardown_file() {
     global_teardown
+}
+teardown() {
+    if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
+        screenshot
+    fi
 }
 
 # Bug workarounds go here. The goal is to make this an empty file

@@ -1,4 +1,4 @@
-# PATH_BATS_ROOT and PATH_BATS_HELPERS are already set by load.bash
+# PATH_BATS_ROOT, PATH_BATS_LOGS, and PATH_BATS_HELPERS are already set by load.bash
 
 PATH_REPO_ROOT=$(absolute_path "$PATH_BATS_ROOT/..")
 
