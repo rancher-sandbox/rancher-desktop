@@ -74,6 +74,8 @@ func main() {
 		logrus.Fatal(err)
 	}
 
+	logrus.Debugf("attempting to start with the following subnet: %+v", subnet)
+
 	portForwarding, err := config.ParsePortForwarding(staticPortForward)
 	if err != nil {
 		logrus.Fatal(err)
