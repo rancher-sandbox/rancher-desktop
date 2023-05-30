@@ -162,7 +162,6 @@ export class MobyClient implements ContainerEngineClient {
       const { stdout } = await this.runClient(
         ['image', 'list', '--format={{ .Repository }}:{{ .Tag }}'], 'pipe', options);
 
-      console.log(`existing images:`, stdout);
       for (const imageRef of stdout.split(/\s+/).filter(v => v)) {
         const info = parseImageReference(imageRef);
 
