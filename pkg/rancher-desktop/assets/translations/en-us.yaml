@@ -380,8 +380,6 @@ allowedImages:
   errors:
     duplicate: Error, item is duplicate.
   enable: Enable
-  locked:
-    tooltip: Patterns cannot be changed due to Organization's policy
   alert:
     The image name needs to match one of the patterns defined in the Allowed Images preference tab.
 

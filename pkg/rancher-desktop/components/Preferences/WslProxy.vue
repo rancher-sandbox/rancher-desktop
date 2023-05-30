@@ -1,7 +1,8 @@
 <script lang="ts">
-import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
@@ -10,7 +11,7 @@ import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-wsl-proxy',
-  components: { Checkbox, RdFieldset },
+  components: { RdCheckbox, RdFieldset },
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
@@ -18,6 +19,7 @@ export default Vue.extend({
     },
   },
   computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
     isFieldDisabled() {
       return !(this.preferences.experimental.virtualMachine.proxy.enabled);
     },
@@ -37,9 +39,10 @@ export default Vue.extend({
         :legend-text="t('virtualMachine.proxy.legend')"
         :badge-text="t('prefs.experimental')"
       >
-        <checkbox
+        <rd-checkbox
           :label="t('virtualMachine.proxy.label', { }, true)"
           :value="preferences.experimental.virtualMachine.proxy.enabled"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.enabled')"
           @input="onChange('experimental.virtualMachine.proxy.enabled', $event)"
         />
       </rd-fieldset>

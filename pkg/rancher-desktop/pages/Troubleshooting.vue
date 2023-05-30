@@ -22,10 +22,11 @@
           </button>
         </template>
         <template #options>
-          <Checkbox
+          <rd-checkbox
             :value="isDebugging"
             :disabled="alwaysDebugging"
             :tooltip="debugModeTooltip"
+            :is-locked="debugLocked"
             label="Enable debug mode"
             @input="updateDebug"
           />
@@ -84,19 +85,21 @@
 
 <script>
 
-import { Checkbox } from '@rancher/components';
+import _ from 'lodash';
 
 import TroubleshootingLineItem from '@pkg/components/TroubleshootingLineItem.vue';
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { defaultSettings, runInDebugMode } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',
-  components: { TroubleshootingLineItem, Checkbox },
+  components: { TroubleshootingLineItem, RdCheckbox },
   data:       () => ({
     state:           ipcRenderer.sendSync('k8s-state'),
     settings:        defaultSettings,
+    debugLocked:     false,
     isDebugging:     runInDebugMode(defaultSettings.application.debug),
     alwaysDebugging: runInDebugMode(false),
   }),
@@ -121,6 +124,9 @@ export default {
       this.$data.settings = newSettings;
     });
     ipcRenderer.send('settings-read');
+    ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
+      this.$data.debugLocked = _.get(lockedFields, 'application.debug');
+    });
   },
   methods: {
     async factoryReset() {

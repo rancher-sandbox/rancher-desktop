@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
@@ -11,7 +11,7 @@ import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-application-general',
-  components: { Checkbox, RdFieldset },
+  components: { RdCheckbox, RdFieldset },
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
@@ -32,7 +32,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapGetters('preferences', ['isPlatformWindows']),
+    ...mapGetters('preferences', ['isPlatformWindows', 'isPreferenceLocked']),
     isSudoAllowed(): boolean {
       return this.preferences?.application?.adminAccess ?? false;
     },
@@ -56,9 +56,10 @@ export default Vue.extend({
       legend-text="Administrative Access"
       :legend-tooltip="sudoAllowedTooltip"
     >
-      <checkbox
+      <rd-checkbox
         label="Allow to acquire administrative credentials (sudo access)"
         :value="isSudoAllowed"
+        :is-locked="isPreferenceLocked('application.adminAccess')"
         @input="onChange('application.adminAccess', $event)"
       />
     </rd-fieldset>
@@ -66,10 +67,11 @@ export default Vue.extend({
       data-test="automaticUpdates"
       legend-text="Automatic Updates"
     >
-      <checkbox
+      <rd-checkbox
         data-test="automaticUpdatesCheckbox"
         label="Check for updates automatically"
         :value="canAutoUpdate"
+        :is-locked="isPreferenceLocked('application.updater.enabled')"
         @input="onChange('application.updater.enabled', $event)"
       />
     </rd-fieldset>
@@ -77,9 +79,10 @@ export default Vue.extend({
       data-test="statistics"
       legend-text="Statistics"
     >
-      <checkbox
+      <rd-checkbox
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
         :value="preferences.application.telemetry.enabled"
+        :is-locked="isPreferenceLocked('application.telemetry.enabled')"
         @input="onChange('application.telemetry.enabled', $event)"
       />
     </rd-fieldset>

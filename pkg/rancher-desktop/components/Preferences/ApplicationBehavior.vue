@@ -1,7 +1,8 @@
 <script lang="ts">
-import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
@@ -10,14 +11,15 @@ import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
-  components: { Checkbox, RdFieldset },
+  components: { RdCheckbox, RdFieldset },
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
     },
   },
-  methods: {
+  computed: { ...mapGetters('preferences', ['isPreferenceLocked']) },
+  methods:  {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
@@ -31,9 +33,10 @@ export default Vue.extend({
       data-test="autoStart"
       :legend-text="t('application.behavior.autoStart.legendText')"
     >
-      <checkbox
+      <rd-checkbox
         :label="t('application.behavior.autoStart.label')"
         :value="preferences.application.autoStart"
+        :is-locked="isPreferenceLocked('application.autoStart')"
         @input="onChange('application.autoStart', $event)"
       />
     </rd-fieldset>
@@ -43,14 +46,16 @@ export default Vue.extend({
       :legend-tooltip="t('application.behavior.background.legendTooltip')"
       class="checkbox-group"
     >
-      <checkbox
+      <rd-checkbox
         :label="t('application.behavior.startInBackground.label')"
         :value="preferences.application.startInBackground"
+        :is-locked="isPreferenceLocked('application.startInBackground')"
         @input="onChange('application.startInBackground', $event)"
       />
-      <checkbox
+      <rd-checkbox
         :label="t('application.behavior.windowQuitOnClose.label')"
         :value="preferences.application.window.quitOnClose"
+        :is-locked="isPreferenceLocked('application.window.quitOnClose')"
         @input="onChange('application.window.quitOnClose', $event)"
       />
     </rd-fieldset>
@@ -58,9 +63,10 @@ export default Vue.extend({
       data-test="notificationIcon"
       :legend-text="t('application.behavior.notificationIcon.legendText')"
     >
-      <checkbox
+      <rd-checkbox
         :label="t('application.behavior.notificationIcon.label')"
         :value="preferences.application.hideNotificationIcon"
+        :is-locked="isPreferenceLocked('application.hideNotificationIcon')"
         @input="onChange('application.hideNotificationIcon', $event)"
       />
     </rd-fieldset>

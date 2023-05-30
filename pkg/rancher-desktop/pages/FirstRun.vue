@@ -3,9 +3,10 @@
     <h2 data-test="k8s-settings-header">
       Welcome to Rancher Desktop
     </h2>
-    <Checkbox
+    <rd-checkbox
       label="Enable Kubernetes"
       :value="settings.kubernetes.enabled"
+      :is-locked="kubernetesLocked"
       @input="handleDisableKubernetesCheckbox"
     />
     <label>
@@ -61,13 +62,14 @@
 <script lang="ts">
 import os from 'os';
 
-import { Checkbox } from '@rancher/components';
+import _ from 'lodash';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import type { ContainerEngine } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -75,13 +77,14 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   components: {
-    Checkbox, EngineSelector, PathManagementSelector,
+    RdCheckbox, EngineSelector, PathManagementSelector,
   },
   layout: 'dialog',
   data() {
     return {
-      settings: defaultSettings,
-      versions: [] as VersionEntry[],
+      settings:         defaultSettings,
+      kubernetesLocked: false,
+      versions:         [] as VersionEntry[],
 
       // If cachedVersionsOnly is true, it means we're offline and showing only the versions in the cache,
       // not all the versions listed in <cache>/rancher-desktop/k3s-versions.json
@@ -139,6 +142,9 @@ export default Vue.extend({
     if (this.pathManagementRelevant) {
       this.setPathManagementStrategy(PathManagementStrategy.RcFiles);
     }
+    ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
+      this.$data.kubernetesLocked = _.get(lockedFields, 'kubernetes.enabled');
+    });
   },
   beforeDestroy() {
     window.removeEventListener('beforeunload', this.close);
