@@ -83,7 +83,11 @@
   --checkbox-border            : #{$medium};
   --checkbox-tick-disabled     : #{lighten($disabled, 50%)};
   --checkbox-disabled-bg       : #{$disabled};
+  --checkbox-tick-locked       : #{$darkest};
+  --checkbox-locked-bg         : #{lighten($disabled, 50%)};
   --checkbox-ticked-bg         : var(--primary);
+  --checkbox-locked-border     : #{lighten($disabled, 50%)};
+  --checkbox-locked-shadow     : #{lighten($disabled, 50%)};
 
   --dropdown-bg                : #{mix($medium, $dark, 10%)};
   --dropdown-border            : #{$light};
