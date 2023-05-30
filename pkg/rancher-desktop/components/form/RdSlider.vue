@@ -2,13 +2,16 @@
 import Vue from 'vue';
 import VueSlider from 'vue-slider-component';
 
+import RdInput from '@pkg/components/RdInput.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import 'vue-slider-component/theme/default.css';
 
 export default Vue.extend({
   name:       'rd-slider',
-  components: { VueSlider, RdFieldset },
-  props:      {
+  components: {
+    VueSlider, RdFieldset, RdInput,
+  },
+  props: {
     label: {
       type:    String,
       default: '',
@@ -41,6 +44,10 @@ export default Vue.extend({
       type:     Function,
       required: true,
     },
+    isLocked: {
+      type:    Boolean,
+      default: false,
+    },
   },
   methods: {
     updatedVal(value: string) {
@@ -53,14 +60,20 @@ export default Vue.extend({
 <template>
   <rd-fieldset
     :legend-text="label"
+    :is-locked="isLocked"
   >
     <div class="rd-slider">
-      <input
+      <rd-input
         type="number"
         class="slider-input"
         :value="value"
+        :is-locked="isLocked"
         @input="updatedVal($event.target.value)"
-      />
+      >
+        <template #after>
+          <div class="empty-content" />
+        </template>
+      </rd-input>
       <vue-slider
         ref="memory"
         class="rd-slider-rail"
@@ -70,7 +83,7 @@ export default Vue.extend({
         :interval="interval"
         :marks="marks"
         :tooltip="'none'"
-        :disabled="disabled"
+        :disabled="disabled || isLocked"
         :process="process"
         @change="updatedVal($event)"
       />
@@ -125,7 +138,9 @@ export default Vue.extend({
 
 .slider-input, .slider-input:focus, .slider-input:hover {
   max-width: 6rem;
-  border: solid var(--border-width) var(--input-border);
-  padding:10px;
+}
+
+.empty-content {
+  display: none;
 }
 </style>

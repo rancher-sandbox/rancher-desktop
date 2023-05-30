@@ -2,6 +2,7 @@
 import os from 'os';
 
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import SystemPreferences from '@pkg/components/SystemPreferences.vue';
 import { defaultSettings, Settings } from '@pkg/config/settings';
@@ -22,6 +23,7 @@ export default Vue.extend({
     return { settings: defaultSettings };
   },
   computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
     hasSystemPreferences(): boolean {
       return !os.platform().startsWith('win');
     },
@@ -50,6 +52,8 @@ export default Vue.extend({
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
+      :is-locked-memory="isPreferenceLocked('virtualMachine.memoryInGB')"
+      :is-locked-cpu="isPreferenceLocked('virtualMachine.numberCPUs')"
       @update:memory="onChange('virtualMachine.memoryInGB', $event)"
       @update:cpu="onChange('virtualMachine.numberCPUs', $event)"
     />
