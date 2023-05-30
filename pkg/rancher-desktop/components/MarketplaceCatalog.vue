@@ -1,13 +1,19 @@
 <script lang="ts">
-import Vue from 'vue';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters } from 'vuex';
 
 import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
+import { Settings } from '@pkg/config/settings';
 
 type FilteredExtensions = typeof demoMarketplace.summaries;
 
-export default Vue.extend({
+interface VuexBindings {
+  getPreferences: Settings;
+}
+
+export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'marketplace-catalog',
   components: { MarketplaceCard },
   data() {
@@ -51,6 +57,13 @@ export default Vue.extend({
     });
   },
   computed: {
+    ...mapGetters('preferences', ['getPreferences']),
+    containerEngine(): string {
+      return this.getPreferences.containerEngine.name;
+    },
+    isMobyActive(): boolean {
+      return this.containerEngine === 'moby';
+    },
     filteredExtensions(): FilteredExtensions {
       let tempExtensions = this.extensions;
 
@@ -62,7 +75,7 @@ export default Vue.extend({
         });
       }
 
-      return tempExtensions;
+      return tempExtensions.filter(item => this.isMobyActive || item.containerd_compatible);
     },
   },
   methods: {
