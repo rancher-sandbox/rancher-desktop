@@ -43,7 +43,6 @@ const (
 // Subnet represents all the network properties
 // that are required by the host switch process.
 type Subnet struct {
-	IP              string
 	GatewayIP       string
 	StaticDHCPLease map[string]string
 	StaticDNSHost   string
@@ -53,20 +52,19 @@ type Subnet struct {
 // ValidateSubnet validates a given IP CIDR format and
 // creates all the network addresses that are consumable
 // by the host switch process.
-func ValidateSubnet(s string) (*Subnet, error) {
-	ip, _, err := net.ParseCIDR(s)
+func ValidateSubnet(subnet string) (*Subnet, error) {
+	ip, _, err := net.ParseCIDR(subnet)
 	if err != nil {
 		return nil, fmt.Errorf("validating subnet: %w", err)
 	}
 	ipv4 := ip.To4()
 	return &Subnet{
-		IP:        ip.String(),
 		GatewayIP: gatewayIP(ipv4),
 		StaticDHCPLease: map[string]string{
-			TapDeviceIP(ip): TapDeviceMacAddr,
+			TapDeviceIP(ipv4): TapDeviceMacAddr,
 		},
 		StaticDNSHost: staticDNSHost(ipv4),
-		SubnetCIDR:    s,
+		SubnetCIDR:    subnet,
 	}, nil
 }
 
