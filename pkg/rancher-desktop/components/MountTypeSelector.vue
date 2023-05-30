@@ -1,13 +1,14 @@
 <script lang="ts">
 import os from 'os';
 
-import { RadioButton, RadioGroup } from '@rancher/components';
+import { RadioGroup } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import RdSelect from '@pkg/components/RdSelect.vue';
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
+import RdRadioButton from '@pkg/components/form/RdRadioButton.vue';
 import {
   CacheMode, MountType, ProtocolVersion, SecurityModel, Settings,
 } from '@pkg/config/settings';
@@ -20,7 +21,7 @@ export default Vue.extend({
     LabeledBadge,
     RadioGroup,
     RdFieldset,
-    RadioButton,
+    RdRadioButton,
     RdSelect,
   },
   props: {
@@ -127,20 +128,20 @@ export default Vue.extend({
             <radio-group
               :name="groupName"
               :options="options"
-              :disabled="isLocked"
             >
               <template
                 v-for="(option, index) in options"
-                #[index]="{ isDisabled }"
+                #[index]
               >
-                <radio-button
+                <rd-radio-button
                   :key="groupName+'-'+index"
                   :name="groupName"
                   :value="preferences.experimental.virtualMachine.mount.type"
                   :label="option.label"
                   :val="option.value"
                   :description="option.description"
-                  :disabled="option.disabled || isDisabled"
+                  :disabled="option.disabled"
+                  :is-locked="isLocked"
                   :data-test="option.label"
                   @input="updateValue('experimental.virtualMachine.mount.type', $event)"
                 >
@@ -155,7 +156,7 @@ export default Vue.extend({
                       />
                     </div>
                   </template>
-                </radio-button>
+                </rd-radio-button>
               </template>
             </radio-group>
           </template>

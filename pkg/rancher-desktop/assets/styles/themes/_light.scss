@@ -387,6 +387,8 @@ BODY, .theme-light {
   --input-addon-bg             : #{$darker};
   --input-locked-text          : #{$darkest};
 
+  --radio-locked-bg-unchecked  : var(--body-bg);
+
   --progress-bg                : #{$medium};
   --progress-divider           : #{$medium};
 
