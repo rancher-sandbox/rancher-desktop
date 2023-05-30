@@ -32,7 +32,7 @@ export class NerdctlClient implements ContainerEngineClient {
   }
 
   /** The VM backing Rancher Desktop */
-  vm: VMExecutor;
+  readonly vm: VMExecutor;
   readonly executable = executable('nerdctl');
 
   /**
@@ -62,7 +62,7 @@ export class NerdctlClient implements ContainerEngineClient {
   /**
    * Run a list of cleanup functions in reverse.
    */
-  protected async runCleanups(cleanups: (() => Promise<void>)[]) {
+  protected async runCleanups(cleanups: (() => Promise<unknown>)[]) {
     for (const cleanup of cleanups.reverse()) {
       try {
         await cleanup();
@@ -239,6 +239,7 @@ export class NerdctlClient implements ContainerEngineClient {
       results = new Set(await dockerRegistry.getTags(imageName));
     } catch (ex) {
       // We may fail here if the image doesn't exist / has an invalid host.
+      console.debugE(`Could not get tags from registry for ${ imageName }, ignoring:`, ex);
     }
 
     try {
@@ -255,6 +256,7 @@ export class NerdctlClient implements ContainerEngineClient {
       }
     } catch (ex) {
       // Failure to list images is acceptable.
+      console.debugE(`Could not get tags of existing images for ${ imageName }, ignoring:`, ex);
     }
 
     return results;
