@@ -128,11 +128,15 @@ test.describe.serial('Main App Test', () => {
 
     if (isWin) {
       await e2ePreferences.wsl.nav.click();
+      await screenshot.take('wsl', 'tabNetwork');
+
+      await e2ePreferences.wsl.tabIntegrations.click();
+      await expect(e2ePreferences.wsl.wslIntegrations).toBeVisible();
       await screenshot.take('wsl', 'tabIntegrations');
 
-      await e2ePreferences.wsl.tabNetwork.click();
-      await expect(e2ePreferences.wsl.networkingTunnel).toBeVisible();
-      await screenshot.take('wsl', 'tabNetwork');
+      await e2ePreferences.wsl.tabProxy.click();
+      await expect(e2ePreferences.wsl.addressTitle).toBeVisible();
+      await screenshot.take('wsl', 'tabProxy');
     } else {
       // Linux & Mac
       await e2ePreferences.application.nav.click();

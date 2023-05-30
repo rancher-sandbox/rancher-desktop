@@ -45,6 +45,7 @@ export default Vue.extend({
       </rd-fieldset>
       <hr>
       <rd-fieldset
+        data-test="addressTitle"
         class="wsl-proxy-fieldset"
         :legend-text="t('virtualMachine.proxy.addressTitle', { }, true)"
       >
