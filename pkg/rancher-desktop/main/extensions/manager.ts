@@ -223,7 +223,7 @@ class ExtensionManagerImpl implements ExtensionManager {
 
       tasks.push((async(id: string) => {
         try {
-          return (await this.getExtension(id)).install(allowList);
+          return await (await this.getExtension(id)).install(allowList);
         } catch (ex) {
           console.error(`Failed to install extension ${ id }`, ex);
         }
