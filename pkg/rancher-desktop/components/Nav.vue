@@ -160,7 +160,6 @@ nav {
     }
 
     div {
-      background-color: var(--nav-bg-rdx);
       overflow: auto;
       flex-grow: 1
     }

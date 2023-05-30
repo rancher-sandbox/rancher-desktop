@@ -316,7 +316,6 @@ BODY, .theme-light {
   --nav-active                 : #{$light};
   --nav-hover                  : #{$medium};
   --nav-expander-hover         : #{darken($medium, 10%)};
-  --nav-bg-rdx                 : #{darken($light, 1%)};
   --nav-border                 : #{$medium};
   --nav-border-size            : 1px;
   --footer-bg                  : transparent;
