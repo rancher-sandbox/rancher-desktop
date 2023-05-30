@@ -165,13 +165,13 @@ function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: stri
  */
 class Win32DeploymentReader {
   protected registryPathProfile: string[][];
-  protected registryPathProfileIndex: number;
+  protected registryPathCurrent: string[];
   protected keyName = '';
   protected errors: string[] = [];
 
   constructor(registryPathProfile: string[][]) {
     this.registryPathProfile = registryPathProfile;
-    this.registryPathProfileIndex = 0;
+    this.registryPathCurrent = [];
   }
 
   readProfile(): settings.DeploymentProfileType {
@@ -183,11 +183,11 @@ class Win32DeploymentReader {
     this.errors = [];
     // eslint-disable-next-line no-labels
     readProfileFromRegistry: {
-      for (this.registryPathProfileIndex = 0; this.registryPathProfileIndex < this.registryPathProfile.length; this.registryPathProfileIndex++ ) {
+      for (this.registryPathCurrent of this.registryPathProfile) {
         for (const keyName of ['HKLM', 'HKCU'] as const) {
           this.keyName = keyName;
           const key = nativeReg[keyName];
-          const registryKey = nativeReg.openKey(key, this.registryPathProfile[this.registryPathProfileIndex].join('\\'), nativeReg.Access.READ);
+          const registryKey = nativeReg.openKey(key, this.registryPathCurrent.join('\\'), nativeReg.Access.READ);
 
           if (!registryKey) {
             continue;
@@ -205,6 +205,12 @@ class Win32DeploymentReader {
             nativeReg.closeKey(defaultsKey);
             nativeReg.closeKey(lockedKey);
           }
+
+          // Don't bother with the validator, because the registry-based reader validates as it reads.
+          if (this.errors.length) {
+            throw new DeploymentProfileError(`Error in registry settings:\n${ this.errors.join('\n') }`);
+          }
+
           // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
           // Alternatively, if the keys work, we could break, even if both hives are empty.
           if (Object.keys(defaults).length || Object.keys(locked).length) {
@@ -215,16 +221,11 @@ class Win32DeploymentReader {
       }
     }
 
-    // Don't bother with the validator, because the registry-based reader validates as it reads.
-    if (this.errors.length) {
-      throw new DeploymentProfileError(`Error in registry settings:\n${ this.errors.join('\n') }`);
-    }
-
     return { defaults, locked };
   }
 
   protected fullRegistryPath(...pathParts: string[]): string {
-    return `${ this.keyName }\\${ this.registryPathProfile[this.registryPathProfileIndex].join('\\') }\\${ pathParts.join('\\') }`;
+    return `${ this.keyName }\\${ this.registryPathCurrent.join('\\') }\\${ pathParts.join('\\') }`;
   }
 
   protected msgFieldExpectingReceived(field: string, expected: string, received: string) {
