@@ -45,7 +45,7 @@ export class Log {
     // If we're running unit tests, output to the console rather than file.
     // However, _don't_ do so for end-to-end tests in Playwright.
     // We detect Playwright via an environment variable we set in scripts/e2e.ts
-    if (process.env.NODE_ENV === 'test' && !process.env.RD_E2E_TEST) {
+    if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
       this.console = globalThis.console;
     } else {
       this.console = new Console(this.stream);
@@ -105,10 +105,6 @@ export class Log {
     this.logWithDate('warn', message, optionalParameters);
   }
 
-  protected logWithDate(method: consoleKey, message: any, optionalParameters: any[]) {
-    this.console[method](`%s: ${ message }`, new Date(), ...optionalParameters);
-  }
-
   /**
    * Log with the given arguments, but only if debug logging is enabled.
    */
@@ -116,6 +112,23 @@ export class Log {
     if (LOG_LEVEL === 'debug') {
       this.log(data, ...args);
     }
+  }
+
+  /**
+   * Log a description and an exception.  If running in development or in test,
+   * include the exception logs.  This is useful for exceptions that are
+   * somewhat expected, but can occasionally be relevant.
+   */
+  debugE(message: string, exception: any) {
+    if (process.env.RD_TEST || process.env.NODE_ENV !== 'production') {
+      this.debug(message, exception);
+    } else {
+      this.debug(`${ message } ${ exception }`);
+    }
+  }
+
+  protected logWithDate(method: consoleKey, message: any, optionalParameters: any[]) {
+    this.console[method](`%s: ${ message }`, new Date(), ...optionalParameters);
   }
 
   async sync() {

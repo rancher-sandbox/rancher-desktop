@@ -106,7 +106,7 @@ EOF
     else
         # Detach `rdctl start` because on Windows the process may not exit until
         # Rancher Desktop itself quits.
-        rdctl start "${args[@]}" "$@" &
+        RD_TEST=bats rdctl start "${args[@]}" "$@" &
     fi
 }
 

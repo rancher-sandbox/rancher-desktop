@@ -8,11 +8,13 @@ import _ from 'lodash';
 import {
   ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
   ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
-  ContainerRunClientOptions, ContainerComposePortOptions,
+  ContainerRunClientOptions, ContainerComposePortOptions, ContainerBasicOptions,
 } from './types';
 
 import { VMExecutor } from '@pkg/backend/backend';
+import dockerRegistry from '@pkg/backend/containerClient/registry';
 import { ErrorCommand, spawn, spawnFile } from '@pkg/utils/childProcess';
+import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
@@ -143,6 +145,37 @@ export class MobyClient implements ContainerEngineClient {
     } finally {
       await this.runCleanups(cleanups);
     }
+  }
+
+  async getTags(imageName: string, options?: ContainerBasicOptions) {
+    let results = new Set<string>();
+
+    try {
+      results = new Set(await dockerRegistry.getTags(imageName));
+    } catch (ex) {
+      // We may fail here if the image doesn't exist / has an invalid host.
+      console.debugE(`Could not get tags from registry for ${ imageName }, ignoring:`, ex);
+    }
+
+    try {
+      const desired = parseImageReference(imageName);
+      const { stdout } = await this.runClient(
+        ['image', 'list', '--format={{ .Repository }}:{{ .Tag }}'], 'pipe', options);
+
+      console.log(`existing images:`, stdout);
+      for (const imageRef of stdout.split(/\s+/).filter(v => v)) {
+        const info = parseImageReference(imageRef);
+
+        if (info?.tag && info.equalName(desired)) {
+          results.add(info.tag);
+        }
+      }
+    } catch (ex) {
+      // Failure to list images is acceptable.
+      console.debugE(`Could not get tags of existing images for ${ imageName }, ignoring:`, ex);
+    }
+
+    return results;
   }
 
   async run(imageID: string, options?: ContainerRunOptions): Promise<string> {

@@ -19,7 +19,7 @@ import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.extensions;
 
-class ExtensionErrorImpl extends Error implements ExtensionError {
+export class ExtensionErrorImpl extends Error implements ExtensionError {
   [ExtensionErrorMarker] = 0;
   code: ExtensionErrorCode;
 
@@ -383,6 +383,17 @@ export class ExtensionImpl implements Extension {
   }
 
   async uninstall(): Promise<boolean> {
+    const installedVersion = await this.getInstalledVersion();
+
+    if (installedVersion !== undefined && installedVersion !== this.version) {
+      // A _different_ version is installed; nothing to do here.
+      // Note that we continue if no version is installed, in case there was a
+      // partial install (so we can clean up leftover files).
+      console.debug(`Extension ${ this.id }:${ installedVersion } is installed, skipping uninstall of ${ this.image }.`);
+
+      return false;
+    }
+
     try {
       await this.uninstallContainers();
     } catch (ex) {
@@ -412,15 +423,19 @@ export class ExtensionImpl implements Extension {
     });
   }
 
-  async isInstalled(): Promise<boolean> {
+  protected async getInstalledVersion(): Promise<string | undefined> {
     try {
       const filePath = path.join(this.dir, this.VERSION_FILE);
       const installed = await fs.promises.readFile(filePath, 'utf-8');
 
-      return installed === this.version;
+      return installed.trim();
     } catch (ex) {
-      return false;
+      return undefined;
     }
+  }
+
+  async isInstalled(): Promise<boolean> {
+    return this.version === await this.getInstalledVersion();
   }
 
   _composeFile: Promise<any> | undefined;

@@ -3,7 +3,7 @@ import type { Log } from '@pkg/utils/logging';
 import type { ChildProcessByStdio, SpawnOptions } from 'child_process';
 import type { Readable } from 'stream';
 
-type ContainerBasicOptions = {
+export type ContainerBasicOptions = {
   /**
    * Namespace the container should be created in.
    * @note Silently ignored when using moby.
@@ -112,6 +112,13 @@ export interface ContainerEngineClient {
    */
   copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
   copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { namespace?: string }): Promise<void>;
+
+  /**
+   * Get all tags available for the given image name.
+   * @param imageName the image name, possibly including the registry, but
+   *        excluding the tag.
+   */
+  getTags(imageName: string, options?: ContainerBasicOptions): Promise<Set<string>>;
 
   /**
    * Start a container.

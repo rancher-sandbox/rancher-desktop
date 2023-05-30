@@ -98,7 +98,7 @@ class E2ETestRunner extends events.EventEmitter {
   async run() {
     try {
       process.env.NODE_ENV = 'test';
-      process.env.RD_E2E_TEST = '1';
+      process.env.RD_TEST = 'e2e';
 
       // Set feature flags
       process.env.RD_ENV_EXTENSIONS = '1';

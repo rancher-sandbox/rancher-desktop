@@ -85,7 +85,33 @@ encoded_id() { # variant
     assert_file_contents_equal "$PATH_EXTENSIONS/$(encoded_id basic)/icon.svg" "$TESTDATA_DIR/extension-icon.svg"
 }
 
+@test 'basic extension - upgrades' {
+    local tag
+    ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):0.0.1"
+    ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):v0.0.2"
+
+    run rdctl extension ls
+    assert_success
+    assert_line --partial "$(id basic):latest"
+
+    rdctl extension install "$(id basic)"
+    run rdctl extension ls
+    assert_success
+    # The highest semver tag should be installed, replacing the existing one.
+    assert_line --partial "$(id basic):v0.0.2"
+}
+
+@test 'basic extension - uninstalling not installed version' {
+    rdctl extension uninstall "$(id basic):0.0.1"
+    run rdctl extension ls
+    assert_success
+    # Trying to uninstall a version that isn't installed should be a no-op
+    assert_line --partial "$(id basic):v0.0.2"
+}
+
 @test 'basic extension - uninstall' {
+    ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):0.0.3"
+    # Uninstall should remove whatever version is installed, not the newest.
     rdctl extension uninstall "$(id basic)"
 
     run rdctl extension ls
@@ -114,6 +140,12 @@ encoded_id() { # variant
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)"
     run rdctl extension install "$(id host-binaries)"
     assert_success
+}
+
+@test 'host-binaries - check extension is installed' {
+    run rdctl extension ls
+    assert_success
+    assert_output --partial "rd/extension/host-binaries:latest"
 }
 
 @test 'host-binaries - check files' {
