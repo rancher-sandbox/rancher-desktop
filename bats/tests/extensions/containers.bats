@@ -87,3 +87,14 @@ encoded_id() { # variant
     assert_success
     refute_line --partial "$(id vm-compose)"
 }
+
+@test 'compose - with a long name' {
+    local name="$(id vm-compose)-with-an-unsually-long-name-yes-it-is-very-long"
+
+    ctrctl tag "$(id vm-compose)" "$name"
+    rdctl extension install "$name"
+    run ctrctl container ls --all
+    assert_success
+    assert_line --partial "$(id vm-compose)"
+    rdctl extension uninstall "$name"
+}
