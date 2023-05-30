@@ -1273,6 +1273,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         const installerActions = [
           this.progressTracker.action('Starting WSL environment', 100, async() => {
+            const rdNetworkingDNS = '192.168.127.1';
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
@@ -1284,7 +1285,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               }),
               this.progressTracker.action('DNS configuration', 50, async() => {
                 if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
-                  console.debug(`setting DNS server to 192.168.127.1 for rancher desktop networking`);
+                  console.debug(`setting DNS server to ${ rdNetworkingDNS }  for rancher desktop networking`);
                   try {
                     this.hostSwitchProcess.start();
                   } catch (error) {
@@ -1357,7 +1358,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               }),
               this.progressTracker.action('Configuring image proxy', 50, async() => {
                 const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
-                const resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
+                let resolver;
+
+                if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
+                  resolver = `resolver ${ rdNetworkingDNS } ipv6=off;\n`;
+                } else {
+                  resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
+                }
 
                 await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
                 await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
