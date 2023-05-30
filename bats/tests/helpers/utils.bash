@@ -80,6 +80,7 @@ try() {
         sleep "$delay"
         count=$((count + 1))
     done
+    return "$status"
 }
 
 update_allowed_patterns() {
@@ -119,9 +120,22 @@ unique_filename() {
 
 capture_logs() {
     if capturing_logs; then
-        local logdir=$(unique_filename "$PATH_BATS_LOGS/$RD_TEST_FILENAME")
+        local logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
         mkdir -p "$logdir"
         cp -LR "$PATH_LOGS/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"$logdir/test_description"
+    fi
+}
+
+screenshot() {
+    if taking_screenshots; then
+        if is_macos; then
+            local file=$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)
+            mkdir -p "$PATH_BATS_LOGS"
+            # The terminal app must have "Screen Recording" permission;
+            # otherwise only the desktop background is captured.
+            # -x option means "do not play sound"
+            screencapture -x "$file"
+        fi
     fi
 }

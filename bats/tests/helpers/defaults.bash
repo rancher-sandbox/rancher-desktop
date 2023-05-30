@@ -28,6 +28,13 @@ capturing_logs() {
 }
 
 ########################################################################
+: "${RD_TAKE_SCREENSHOTS:=false}"
+
+taking_screenshots() {
+    is_true "$RD_TAKE_SCREENSHOTS"
+}
+
+########################################################################
 : "${RD_USE_IMAGE_ALLOW_LIST:=false}"
 
 using_image_allow_list() {

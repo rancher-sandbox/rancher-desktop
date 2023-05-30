@@ -15,7 +15,7 @@ load load.bash
 # tests; you'll want to run it before all the other tests.
 
 info() { # @test
-    if capturing_logs; then
+    if capturing_logs || taking_screenshots; then
         rm -rf "$PATH_BATS_LOGS"
     fi
     echo "Using '$RD_LOCATION' install; resources '$PATH_RESOURCES'" >&3

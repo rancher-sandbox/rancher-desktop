@@ -66,6 +66,11 @@ global_teardown() {
 teardown_file() {
     global_teardown
 }
+teardown() {
+    if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
+        screenshot
+    fi
+}
 
 # Bug workarounds go here. The goal is to make this an empty file
 source "$PATH_BATS_HELPERS/workarounds.bash"
