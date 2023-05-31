@@ -37,7 +37,7 @@ export default Vue.extend({
           content: tooltip || t('preferences.locked.tooltip'),
           placement: 'right'
         }"
-        class="icon icon-lock icon-lg"
+        class="icon icon-lock"
       />
     </slot>
   </div>

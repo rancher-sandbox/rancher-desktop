@@ -51,7 +51,7 @@ export default Vue.extend({
             content: lockedTooltip,
             placement: 'right'
           }"
-          class="icon icon-lock icon-lg"
+          class="icon icon-lock"
         />
         <i
           v-else-if="legendTooltip"
