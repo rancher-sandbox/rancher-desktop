@@ -12,9 +12,12 @@ import {
 } from './types';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
-import type { Settings } from '@pkg/config/settings';
+import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
+import mainEvents from '@pkg/main/mainEvents';
 import type { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg/typings/electron-ipc';
+import { demoMarketplace } from '@pkg/utils/_demo_marketplace_items';
+import { parseImageReference } from '@pkg/utils/dockerUtils';
 import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -41,11 +44,18 @@ class ExtensionManagerImpl implements ExtensionManager {
    */
   protected extensions: Record<string, Record<string, ExtensionImpl>> = {};
 
-  constructor(client: ContainerEngineClient) {
+  constructor(client: ContainerEngineClient, containerd: boolean) {
     this.client = client;
+    this.containerd = containerd;
   }
 
-  client: ContainerEngineClient;
+  readonly client: ContainerEngineClient;
+
+  /**
+   * Flag indicating whether we're using containerd.
+   * @note avoid if possible.
+   */
+  readonly containerd: boolean;
 
   /**
    * Mapping of event listeners we used with ipcMain.on(), which will be used to
@@ -223,16 +233,65 @@ class ExtensionManagerImpl implements ExtensionManager {
         continue;
       }
 
-      tasks.push((async(id: string) => {
+      if (!this.isSupported(repo)) {
+        // If this extension is explicitly not supported, don't re-install it.
+        console.log(`Uninstalling unsupported extension ${ repo }:${ tag }`);
+        mainEvents.emit('settings-write', { extensions: { [repo]: undefined } });
+        continue;
+      }
+
+      tasks.push((async(repo: string, tag: string) => {
+        const id = `${ repo }:${ tag }`;
+
         try {
           return await (await this.getExtension(id)).install(allowList);
         } catch (ex) {
           console.error(`Failed to install extension ${ id }`, ex);
+          mainEvents.emit('settings-write', { extensions: { [repo]: undefined } });
         }
-      })(`${ repo }:${ tag }`));
+      })(repo, tag));
     }
     await Promise.all(tasks);
   }
+
+  /**
+   * Check if the given extension is supported.
+   * @note This is a temporary hack while we have a hard-coded list of
+   * extensions.
+   */
+  protected isSupported(repo: string): boolean {
+    if (!this.containerd) {
+      return true;
+    }
+
+    const desired = parseImageReference(repo);
+
+    if (!desired) {
+      return false;
+    }
+
+    if (!this.#supportedExtensions) {
+      const supported: Record<string, boolean> = {};
+
+      for (const item of demoMarketplace.summaries) {
+        const slug = parseImageReference(item.slug);
+
+        if (!slug) {
+          continue;
+        }
+
+        supported[new URL(slug.name, slug.registry).toString()] = item.containerd_compatible;
+      }
+
+      this.#supportedExtensions = supported;
+    }
+
+    const ref = new URL(desired.name, desired.registry).toString();
+
+    return this.#supportedExtensions[ref] ?? true;
+  }
+
+  #supportedExtensions: Record<string, boolean> | undefined;
 
   async getExtension(image: string, options: { preferInstalled?: boolean } = {}): Promise<Extension> {
     let [, imageName, tag] = /^(.*):(.*?)$/.exec(image) ?? ['', image, undefined];
@@ -481,7 +540,7 @@ async function getExtensionManager(client?: ContainerEngineClient, cfg?: Recursi
   await manager?.shutdown();
 
   console.debug(`Creating new extension manager...`);
-  manager = new ExtensionManagerImpl(client);
+  manager = new ExtensionManagerImpl(client, cfg.containerEngine.name === ContainerEngine.CONTAINERD);
 
   await manager.init(cfg);
 

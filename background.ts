@@ -289,7 +289,6 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
-    window.send('extensions/changed');
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -392,6 +391,8 @@ async function startBackend(cfg: settings.Settings) {
     await startK8sManager();
   } catch (err) {
     handleFailure(err);
+  } finally {
+    window.send('extensions/changed');
   }
 }
 
@@ -414,6 +415,7 @@ async function startK8sManager() {
   const getEM = (await import('@pkg/main/extensions/manager')).default;
 
   await getEM(k8smanager.containerEngineClient, cfg);
+  window.send('extensions/changed');
 }
 
 /**
