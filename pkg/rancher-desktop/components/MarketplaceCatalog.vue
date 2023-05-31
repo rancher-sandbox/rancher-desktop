@@ -5,7 +5,7 @@ import { mapGetters } from 'vuex';
 import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
-import { Settings } from '@pkg/config/settings';
+import { Settings, ContainerEngine } from '@pkg/config/settings';
 
 type FilteredExtensions = typeof demoMarketplace.summaries;
 
@@ -62,7 +62,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return this.getPreferences.containerEngine.name;
     },
     isMobyActive(): boolean {
-      return this.containerEngine === 'moby';
+      return this.containerEngine === ContainerEngine.MOBY;
     },
     filteredExtensions(): FilteredExtensions {
       let tempExtensions = this.extensions;
