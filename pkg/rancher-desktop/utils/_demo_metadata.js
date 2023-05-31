@@ -899,4 +899,147 @@ export default {
       },
     ],
   },
+  'anchore/docker-desktop-extension': {
+    CreatedTime: '2022-05-06T00:58:00Z',
+    Categories:  [
+      'security',
+    ],
+    LatestVersion: {
+      Tag:                '0.5.1',
+      ManifestListDigest: 'sha256:61a27ece803fadefbaf505b0c398fa7578e15dee8f4ad0d1d1fedd786b6e3681',
+      Platforms:          [
+        {
+          OS:      'linux',
+          Arch:    'amd64',
+          Size:    134661163,
+          Created: '2022-10-19T17:18:31.123438905Z',
+        },
+        {
+          OS:      'linux',
+          Arch:    'arm64',
+          Size:    133335577,
+          Created: '2022-10-19T17:40:19.947055488Z',
+        },
+      ],
+      Labels: {
+        'com.docker.desktop.extension.api.version': '\u003E= 0.2.3',
+        'com.docker.desktop.extension.icon':        'https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164125752-b83d973c-f161-4d54-889f-352dee0ec795.svg',
+        'com.docker.extension.additional-urls':     '[{"title":"Support","url":"https://github.com/anchore/docker-desktop-extension-support"}]',
+        'com.docker.extension.screenshots':         '[{"url":"https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164122365-efb150a9-3c97-42d2-bb46-7ba434fc21d2.png","alt":"image listing"},{"url":"https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164122366-a7b89526-29c0-498c-b23b-d96667368637.png","alt":"package listing"},{"url":"https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164122368-601d1ee2-a77d-4c0f-a98a-1aa68ea79d2a.png","alt":"vulnerability listing"}]',
+        'org.opencontainers.image.description':     'Content and security analysis for container images',
+        'org.opencontainers.image.title':           'anchore',
+        'org.opencontainers.image.vendor':          'Anchore Inc.',
+      },
+    },
+    PreviousVersions: [
+      {
+        Tag:                '0.5.0',
+        ManifestListDigest: 'sha256:f79c0dd73ad79a32bd4ea4f88e951f437d1b71507d7caf8dc962283ece189ebf',
+        Platforms:          [
+          {
+            OS:      'linux',
+            Arch:    'amd64',
+            Size:    136105923,
+            Created: '2022-04-22T14:06:23.122412048Z',
+          },
+          {
+            OS:      'linux',
+            Arch:    'arm64',
+            Size:    134776474,
+            Created: '2022-04-22T14:31:52.656419509Z',
+          },
+        ],
+        Labels: {
+          'com.docker.desktop.extension.api.version': '\u003E= 0.2.3',
+          'com.docker.desktop.extension.icon':        'https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164125752-b83d973c-f161-4d54-889f-352dee0ec795.svg',
+          'com.docker.extension.additional-urls':     '[{"title":"Support","url":"https://github.com/anchore/docker-desktop-extension-support"}]',
+          'com.docker.extension.screenshots':         '[{"alt": "image listing", "url": "https://user-images.githubusercontent.com/590471/164122365-efb150a9-3c97-42d2-bb46-7ba434fc21d2.png"},{"alt": "package listing", "url": "https://user-images.githubusercontent.com/590471/164122366-a7b89526-29c0-498c-b23b-d96667368637.png"},{"alt": "vulnerability listing", "url": "https://user-images.githubusercontent.com/590471/164122368-601d1ee2-a77d-4c0f-a98a-1aa68ea79d2a.png"}]',
+          'org.opencontainers.image.description':     'Content and security analysis for container images',
+          'org.opencontainers.image.title':           'anchore',
+          'org.opencontainers.image.vendor':          'Anchore Inc.',
+        },
+      },
+      {
+        Tag:                '0.4.1',
+        ManifestListDigest: 'sha256:a8264d94c525c11792d1c4e682c5e388d267f0a65e36206090aca1e5d14de695',
+        Platforms:          [
+          {
+            OS:      'linux',
+            Arch:    'amd64',
+            Size:    136069607,
+            Created: '2022-04-21T21:29:23.687465455Z',
+          },
+          {
+            OS:      'linux',
+            Arch:    'arm64',
+            Size:    134740183,
+            Created: '2022-04-21T21:54:19.787134163Z',
+          },
+        ],
+        Labels: {
+          'com.docker.desktop.extension.api.version': '\u003E= 0.2.3',
+          'com.docker.desktop.extension.icon':        'https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164125752-b83d973c-f161-4d54-889f-352dee0ec795.svg',
+          'com.docker.extension.additional-urls':     '[{"title":"Support","url":"https://github.com/anchore/docker-desktop-extension-support"}]',
+          'com.docker.extension.screenshots':         '[{"alt": "image listing", "url": "https://user-images.githubusercontent.com/590471/164122365-efb150a9-3c97-42d2-bb46-7ba434fc21d2.png"},{"alt": "package listing", "url": "https://user-images.githubusercontent.com/590471/164122366-a7b89526-29c0-498c-b23b-d96667368637.png"},{"alt": "vulnerability listing", "url": "https://user-images.githubusercontent.com/590471/164122368-601d1ee2-a77d-4c0f-a98a-1aa68ea79d2a.png"}]',
+          'org.opencontainers.image.description':     'Content and security analysis for container images',
+          'org.opencontainers.image.title':           'anchore',
+          'org.opencontainers.image.vendor':          'Anchore Inc.',
+        },
+      },
+      {
+        Tag:                '0.4.0',
+        ManifestListDigest: 'sha256:437383935558f481b93dea4500290ba8b82304e4ff07e452a949e49c010370ed',
+        Platforms:          [
+          {
+            OS:      'linux',
+            Arch:    'amd64',
+            Size:    136069622,
+            Created: '2022-04-21T20:46:51.076499901Z',
+          },
+          {
+            OS:      'linux',
+            Arch:    'arm64',
+            Size:    134740197,
+            Created: '2022-04-21T21:07:29.059703312Z',
+          },
+        ],
+        Labels: {
+          'com.docker.desktop.extension.api.version': '\u003E= 0.2.3',
+          'com.docker.desktop.extension.icon':        'https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164125752-b83d973c-f161-4d54-889f-352dee0ec795.svg',
+          'com.docker.extension.additional-urls':     '[{"title":"Support","url":"https://github.com/anchore/docker-desktop-extension-support"}]',
+          'com.docker.extension.screenshots':         '[{"alt": "image listing", "url": "https://user-images.githubusercontent.com/590471/164122365-efb150a9-3c97-42d2-bb46-7ba434fc21d2.png"},{"alt": "package listing", "url": "https://user-images.githubusercontent.com/590471/164122366-a7b89526-29c0-498c-b23b-d96667368637.png"},{"alt": "vulnerability listing", "url": "https://user-images.githubusercontent.com/590471/164122368-601d1ee2-a77d-4c0f-a98a-1aa68ea79d2a.png"}]',
+          'org.opencontainers.image.description':     'Content and security analysis for container images',
+          'org.opencontainers.image.title':           'anchore',
+          'org.opencontainers.image.vendor':          'Anchore Inc.',
+        },
+      },
+      {
+        Tag:                '0.3.0',
+        ManifestListDigest: 'sha256:eec35be08d1e439959ba56f777c1e93da1cf4894284562eb4732296b8826574c',
+        Platforms:          [
+          {
+            OS:      'linux',
+            Arch:    'amd64',
+            Size:    19497698,
+            Created: '2022-04-21T13:48:26.773402998Z',
+          },
+          {
+            OS:      'linux',
+            Arch:    'arm64',
+            Size:    18168122,
+            Created: '2022-04-21T14:10:43.230737111Z',
+          },
+        ],
+        Labels: {
+          'com.docker.desktop.extension.api.version': '\u003E= 0.2.3',
+          'com.docker.desktop.extension.icon':        'https://desktop.docker.com/extensions/anchore_docker-desktop-extension/user-images_githubusercontent_com/590471/164125752-b83d973c-f161-4d54-889f-352dee0ec795.svg',
+          'com.docker.extension.additional-urls':     '[{"title":"Support","url":"https://github.com/anchore/docker-desktop-extension-support"}]',
+          'com.docker.extension.screenshots':         '[{"alt": "image listing", "url": "https://user-images.githubusercontent.com/590471/164122365-efb150a9-3c97-42d2-bb46-7ba434fc21d2.png"},{"alt": "package listing", "url": "https://user-images.githubusercontent.com/590471/164122366-a7b89526-29c0-498c-b23b-d96667368637.png"},{"alt": "vulnerability listing", "url": "https://user-images.githubusercontent.com/590471/164122368-601d1ee2-a77d-4c0f-a98a-1aa68ea79d2a.png"}]',
+          'org.opencontainers.image.description':     'Content and security analysis for container images',
+          'org.opencontainers.image.title':           'anchore',
+          'org.opencontainers.image.vendor':          'Anchore Inc.',
+        },
+      },
+    ],
+  },
 };
