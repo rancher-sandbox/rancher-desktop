@@ -265,17 +265,18 @@ async function getPlatformVersion(): Promise<string> {
 // it for any reason (i.e. WSL is not installed, only an in-box version
 // is installed), it returns undefined.
 export async function getWslVersion(): Promise<string | undefined> {
-  const systemRoot = process.env.SystemRoot ?? 'C:\\Windows';
-  const wslPath = path.join(systemRoot, 'system32', 'wsl.exe');
   const args = ['--version'];
   let stdout: string;
 
   try {
-    const result = await childProcess.spawnFile(wslPath, args);
+    const result = await childProcess.spawnFile('wsl.exe', args, {
+      encoding: 'utf16le',
+      stdio:    ['ignore', 'pipe', console],
+    });
 
     stdout = result.stdout;
   } catch (ex) {
-    console.warn(`${ wslPath } ${ args.join(' ') }: ${ ex }`);
+    console.warn(`wsl.exe ${ args.join(' ') }: ${ ex }`);
 
     return undefined;
   }
