@@ -14,27 +14,29 @@
       </li>
     </ul>
     <template v-if="featureExtensions">
-      <hr>
-      <template v-for="extension in extensionsWithUI">
-        <nuxt-link
-          :key="extension.id"
-          :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
-          :to="extensionRoute(extension)"
-        >
-          <nav-item :id="`extension:${extension.id}`">
-            <template #before>
-              <img
-                class="extension-icon"
-                :class="{
-                  'known-monochrome': isKnownMonochrome(extension.id),
-                }"
-                :src="imageUri(extension.id)"
-              >
-            </template>
-            {{ extension.metadata.ui['dashboard-tab'].title }}
-          </nav-item>
-        </nuxt-link>
-      </template>
+      <hr v-if="extensionsWithUI.length">
+      <div>
+        <template v-for="extension in extensionsWithUI">
+          <nuxt-link
+            :key="extension.id"
+            :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
+            :to="extensionRoute(extension)"
+          >
+            <nav-item :id="`extension:${extension.id}`">
+              <template #before>
+                <img
+                  class="extension-icon"
+                  :class="{
+                    'known-monochrome': isKnownMonochrome(extension.id),
+                  }"
+                  :src="imageUri(extension.id)"
+                >
+              </template>
+              {{ extension.metadata.ui['dashboard-tab'].title }}
+            </nav-item>
+          </nuxt-link>
+        </template>
+      </div>
     </template>
   </nav>
 </template>
@@ -146,15 +148,21 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-
 nav {
     background-color: var(--nav-bg);
     padding: 0;
     margin: 0;
     padding-top: 20px;
+    display: flex;
+    flex-direction: column;
 
     a {
       text-decoration: none;
+    }
+
+    div {
+      overflow: auto;
+      flex-grow: 1
     }
 }
 
