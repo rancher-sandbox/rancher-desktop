@@ -18,6 +18,9 @@ export default Vue.extend({
       required: true,
     },
   },
+  data() {
+    return { imageError: false };
+  },
   computed: {
     imageUri(): string {
       return `x-rd-extension://${ hexEncode(this.extensionId) }/icon.svg`;
@@ -26,17 +29,28 @@ export default Vue.extend({
       return !!this.extensionId && knownMonochromeIcons.includes(this.extensionId.split(':')[0]);
     },
   },
+  methods: {
+    handleImageError(): void {
+      this.imageError = true;
+    },
+  },
 });
 </script>
 
 <template>
   <img
+    v-if="!imageError"
     class="extension-icon"
     :class="{
       'known-monochrome': isKnownMonochrome,
     }"
     :src="imageUri"
+    @error="handleImageError"
   >
+  <i
+    v-else
+    class="icon icon-extension icon-lg"
+  />
 </template>
 
 <style lang="scss" scoped>
