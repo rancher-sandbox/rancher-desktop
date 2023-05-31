@@ -127,7 +127,7 @@ capture_logs() {
     fi
 }
 
-screenshot() {
+take_screenshot() {
     if taking_screenshots; then
         if is_macos; then
             local file=$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)
