@@ -5,6 +5,7 @@ import { RadioButton, RadioGroup } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
@@ -22,6 +23,7 @@ export default Vue.extend({
     RdFieldset,
     RadioButton,
     RdSelect,
+    RdInput,
   },
   props: {
     preferences: {
@@ -190,9 +192,10 @@ export default Vue.extend({
           :legend-text="t('virtualMachine.mount.type.options.9p.options.mSizeInKib.legend')"
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.mSizeInKib.tooltip')"
         >
-          <input
+          <rd-input
             type="number"
             :value="preferences.experimental.virtualMachine.mount['9p'].msizeInKib"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.msizeInKib')"
             min="4"
             @input="updateValue('experimental.virtualMachine.mount.9p.msizeInKib', $event.target.value)"
           />

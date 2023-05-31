@@ -2,6 +2,7 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import RdInput from '@pkg/components/RdInput.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
@@ -11,8 +12,10 @@ import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-wsl-proxy',
-  components: { RdCheckbox, RdFieldset },
-  props:      {
+  components: {
+    RdCheckbox, RdFieldset, RdInput,
+  },
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
@@ -52,18 +55,20 @@ export default Vue.extend({
         class="wsl-proxy-fieldset"
         :legend-text="t('virtualMachine.proxy.addressTitle', { }, true)"
       >
-        <input
+        <rd-input
           :placeholder="t('virtualMachine.proxy.address', { }, true)"
           :disabled="isFieldDisabled"
           :value="preferences.experimental.virtualMachine.proxy.address"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.address')"
           class="wsl-proxy-field"
           @input="onChange('experimental.virtualMachine.proxy.address', $event.target.value)"
         />
-        <input
+        <rd-input
           type="number"
           :placeholder="t('virtualMachine.proxy.port', { }, true)"
           :disabled="isFieldDisabled"
           :value="preferences.experimental.virtualMachine.proxy.port"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.port')"
           class="wsl-proxy-field"
           @input="onChange('experimental.virtualMachine.proxy.port', $event.target.value)"
         />
@@ -72,18 +77,20 @@ export default Vue.extend({
         class="wsl-proxy-fieldset"
         :legend-text="t('virtualMachine.proxy.authTitle', { }, true)"
       >
-        <input
+        <rd-input
           :placeholder="t('virtualMachine.proxy.username', { }, true)"
           :disabled="isFieldDisabled"
           :value="preferences.experimental.virtualMachine.proxy.username"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.username')"
           class="wsl-proxy-field"
           @input="onChange('experimental.virtualMachine.proxy.username', $event.target.value)"
         />
-        <input
+        <rd-input
           type="password"
           :placeholder="t('virtualMachine.proxy.password', { }, true)"
           :disabled="isFieldDisabled"
           :value="preferences.experimental.virtualMachine.proxy.password"
+          :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.password')"
           class="wsl-proxy-field"
           @input="onChange('experimental.virtualMachine.proxy.password', $event.target.value)"
         />
