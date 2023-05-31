@@ -5,6 +5,7 @@ import { RadioButton, RadioGroup } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import RdSelect from '@pkg/components/RdSelect.vue';
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import {
@@ -20,6 +21,7 @@ export default Vue.extend({
     RadioGroup,
     RdFieldset,
     RadioButton,
+    RdSelect,
   },
   props: {
     preferences: {
@@ -168,8 +170,10 @@ export default Vue.extend({
           :legend-text="t('virtualMachine.mount.type.options.9p.options.cacheMode.legend')"
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.cacheMode.tooltip')"
         >
-          <select
-            @input="updateValue('experimental.virtualMachine.mount.9p.cacheMode', $event.target.value)"
+          <rd-select
+            :value="preferences.experimental.virtualMachine.mount['9p'].cacheMode"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.cacheMode')"
+            @change="updateValue('experimental.virtualMachine.mount.9p.cacheMode', $event.target.value)"
           >
             <option
               v-for="item in ninePOptions('cacheMode')"
@@ -179,7 +183,7 @@ export default Vue.extend({
             >
               {{ item.label }}
             </option>
-          </select>
+          </rd-select>
         </rd-fieldset>
         <rd-fieldset
           data-test="msizeInKib"
@@ -198,8 +202,10 @@ export default Vue.extend({
           :legend-text="t('virtualMachine.mount.type.options.9p.options.protocolVersion.legend')"
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.protocolVersion.tooltip')"
         >
-          <select
-            @input="updateValue('experimental.virtualMachine.mount.9p.protocolVersion', $event.target.value)"
+          <rd-select
+            :value="preferences.experimental.virtualMachine.mount['9p'].protocolVersion"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.protocolVersion')"
+            @change="updateValue('experimental.virtualMachine.mount.9p.protocolVersion', $event.target.value)"
           >
             <option
               v-for="item in ninePOptions('protocolVersion')"
@@ -209,15 +215,17 @@ export default Vue.extend({
             >
               {{ item.label }}
             </option>
-          </select>
+          </rd-select>
         </rd-fieldset>
         <rd-fieldset
           data-test="securityModel"
           :legend-text="t('virtualMachine.mount.type.options.9p.options.securityModel.legend')"
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.securityModel.tooltip')"
         >
-          <select
-            @input="updateValue('experimental.virtualMachine.mount.9p.securityModel', $event.target.value)"
+          <rd-select
+            :value="preferences.experimental.virtualMachine.mount['9p'].securityModel"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.securityModel')"
+            @change="updateValue('experimental.virtualMachine.mount.9p.securityModel', $event.target.value)"
           >
             <option
               v-for="item in ninePOptions('securityModel')"
@@ -227,7 +235,7 @@ export default Vue.extend({
             >
               {{ item.label }}
             </option>
-          </select>
+          </rd-select>
         </rd-fieldset>
       </div>
     </div>
