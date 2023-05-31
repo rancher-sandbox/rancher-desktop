@@ -4,7 +4,8 @@
   -
   - This file is a Mustache template that is rendered via installer-win32.ts.
   -->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+  xmlns:fire="http://schemas.microsoft.com/wix/FirewallExtension">
   <Product
     Id="*"
     Name="Rancher Desktop"
@@ -150,6 +151,45 @@
         Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
     </Component>
 
+
+    <!-- Add Admin install registry element -->
+    <Component Id="AdminInstallRegistry" Directory="APPLICATIONFOLDER" Guid="752E8274-9706-4B97-8533-1E7C5080320A">
+      <Condition>
+      <![CDATA[MSIINSTALLPERUSER <> 1]]>
+      </Condition>
+      <RegistryValue
+        Root="HKLM"
+        Key='SOFTWARE\SUSE\RancherDesktop'
+        Name="AdminInstall"
+        Value="yes"
+        Type="string"
+        KeyPath="yes"
+      />
+    </Component>
+
+    <!-- Add FirewallException element -->
+    <Component Id="AdminInstallFirewall" Directory="APPLICATIONFOLDER" Guid="B03D3C75-F835-47A9-8224-1D1238B4F74F" KeyPath="yes">
+      <Condition>
+      <![CDATA[MSIINSTALLPERUSER <> 1]]>
+      </Condition>
+      <fire:FirewallException
+        Id="HostSwitchFirewallPrivateException"
+        Name="Rancher Desktop Networking Private Exception"
+        Description="Rancher Desktop host-switch.exe profile exception for private networks"
+        Program="[APPLICATIONFOLDER]resources\resources\win32\internal\host-switch.exe"
+        Profile="private"
+        Scope="any"
+        Protocol="tcp" />
+      <fire:FirewallException
+        Id="HostSwitchFirewallDomainException"
+        Name="Rancher Desktop Networking Domain Exception"
+        Description="Rancher Desktop host-switch.exe profile exception for domain networks"
+        Program="[APPLICATIONFOLDER]resources\resources\win32\internal\host-switch.exe"
+        Profile="domain"
+        Scope="any"
+        Protocol="tcp" />
+    </Component>
+
     <!-- If required, run the app after install (for updates) -->
     <Property Id="RDRUNAFTERINSTALL" Secure="yes" />
     <CustomAction
@@ -170,6 +210,8 @@
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentRef Id="PathUser" />
       <ComponentRef Id="PathSystem" />
+      <ComponentRef Id="AdminInstallRegistry" />
+      <ComponentRef Id="AdminInstallFirewall" />
     </Feature>
   </Product>
   {{ &fileList }}

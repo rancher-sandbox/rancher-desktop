@@ -82,6 +82,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
       '-out', path.join(workDir, `${ path.basename(input, '.wxs') }.wixobj`),
       '-pedantic',
       '-wx',
+      '-ext', 'WixFirewallExtension',
       input,
     ],
     { stdio: 'inherit' })));
@@ -103,6 +104,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     `-dWixUIDialogBmp=${ path.join(appDir, 'build', 'wix', 'dlgbmp.png') }`,
     '-ext', 'WixUIExtension',
     '-ext', 'WixUtilExtension',
+    '-ext', 'WixFirewallExtension',
     '-nologo',
     '-out', outFile,
     '-pedantic',
