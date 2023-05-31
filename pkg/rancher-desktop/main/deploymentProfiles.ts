@@ -164,13 +164,13 @@ function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: stri
  * Win32DeploymentReader - encapsulate details about the registry in this class.
  */
 class Win32DeploymentReader {
-  protected registryPathProfile: string[][];
+  protected registryPathProfiles: string[][];
   protected registryPathCurrent: string[];
   protected keyName = '';
   protected errors: string[] = [];
 
-  constructor(registryPathProfile: string[][]) {
-    this.registryPathProfile = registryPathProfile;
+  constructor(registryPathProfiles: string[][]) {
+    this.registryPathProfiles = registryPathProfiles;
     this.registryPathCurrent = [];
   }
 
@@ -181,7 +181,7 @@ class Win32DeploymentReader {
     let locked: RecursivePartial<settings.Settings> = {};
 
     this.errors = [];
-    for (this.registryPathCurrent of this.registryPathProfile) {
+    for (this.registryPathCurrent of this.registryPathProfiles) {
       for (const keyName of ['HKLM', 'HKCU'] as const) {
         this.keyName = keyName;
         const key = nativeReg[keyName];

@@ -22,7 +22,7 @@ describe('deployment profiles', () => {
 
     // Note that we can't modify the HKLM hive without admin privileges,
     // so this whole test will just work with the user's HKCU hive.
-    const REG_PATH_START = ['SOFTWARE', 'Policies', 'Rancher Desktop'];
+    const REG_PATH_START = ['SOFTWARE', 'Rancher Desktop'];
     const FULL_REG_PATH_START = ['HKEY_CURRENT_USER'].concat(REG_PATH_START);
     const REGISTRY_PROFILE_PATHS = [REG_PATH_START.concat('TestProfile')];
 
