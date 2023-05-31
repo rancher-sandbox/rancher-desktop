@@ -77,7 +77,7 @@ export const demoMarketplace = {
     {
       id:                    '',
       name:                  'Dive In',
-      containerd_compatible: true,
+      containerd_compatible: false,
       slug:                  'prakhar1989/dive-in',
       type:                  'extension',
       publisher:             { name: 'Prakhar Srivastav' },
@@ -149,7 +149,7 @@ export const demoMarketplace = {
     {
       id:                    '',
       name:                  'anchore',
-      containerd_compatible: true,
+      containerd_compatible: false,
       slug:                  'anchore/docker-desktop-extension',
       type:                  'extension',
       publisher:             { name: 'Anchore Inc.' },
@@ -197,7 +197,7 @@ export const demoMarketplace = {
     {
       id:                    '',
       name:                  'Disk Usage',
-      containerd_compatible: true,
+      containerd_compatible: false,
       slug:                  'docker/disk-usage-extension',
       type:                  'extension',
       publisher:             { name: 'Docker Inc.' },
