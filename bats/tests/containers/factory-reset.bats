@@ -130,6 +130,7 @@ refute=refute
 }
 
 rdctl_factory_reset() {
+    capture_logs
     rdctl factory-reset "$@"
 
     if [[ $1 == "--remove-kubernetes-cache=true" ]]; then
