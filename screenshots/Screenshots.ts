@@ -24,7 +24,7 @@ export class Screenshots {
   private appBundleTitle = 'Electron';
 
   protected windowTitle = '';
-  private screenshotIndex = 0;
+  private static screenshotIndex = 0;
   readonly page: Page;
   readonly directory: string;
 
@@ -39,7 +39,7 @@ export class Screenshots {
   }
 
   protected buildPath(title: string): string {
-    return path.resolve(this.directory, `${ this.screenshotIndex++ }_${ title }.png`);
+    return path.resolve(this.directory, `${ Screenshots.screenshotIndex++ }_${ title }.png`);
   }
 
   protected async createScreenshotsDirectory() {
@@ -131,7 +131,7 @@ export class PreferencesScreenshots extends Screenshots {
   async take(tabName: string, subTabName?: string) {
     const tab = (this.preferencePage as any)[tabName];
 
-    tab.nav.click();
+    await tab.nav.click();
     await expect(tab.nav).toHaveClass('preferences-nav-item active');
     const path = subTabName ? `${ tabName }_${ subTabName }` : tabName;
 

@@ -5,7 +5,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
-import { createDefaultSettings, reportAsset, teardown } from '../e2e/utils/TestUtils';
+import { createDefaultSettings, createUserProfile, reportAsset, teardown } from '../e2e/utils/TestUtils';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
@@ -25,6 +25,14 @@ test.describe.serial('Main App Test', () => {
       containerEngine: { allowedImages: { enabled: true, patterns: ['rancher/example'] } },
       diagnostics:     { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
+
+    // Not supporting locked fields on Windows yet
+    if (!isWin) {
+      await createUserProfile(
+        { containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
+        {},
+      );
+    }
 
     electronApp = await _electron.launch({
       args: [
@@ -107,7 +115,6 @@ test.describe.serial('Main App Test', () => {
 
     await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
 
-    // gets full content of preferences window
     const preferencesPage = electronApp.windows()[1];
 
     await preferencesPage.emulateMedia({ colorScheme });
@@ -172,9 +179,54 @@ test.describe.serial('Main App Test', () => {
 
     await screenshot.take('kubernetes');
 
-    if (isWin) {
-      await screenshot.take('wsl');
-    }
+    await preferencesPage.close({ runBeforeUnload: true });
+  });
+
+  test('Preferences Page, locked fields', async({ colorScheme }) => {
+    test.skip(isWin, 'Not supporting locked fields on Windows yet');
+
+    await navPage.preferencesButton.click();
+
+    const prefPage = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+
+    // Mock locked Fields API response
+    await prefPage.route(/^.*\/settings\/locked/, async(route) => {
+      await route.fulfill({
+        body: JSON.stringify({
+          containerEngine: {
+            allowedImages: {
+              enabled:  true,
+              patterns: true,
+            },
+          },
+          kubernetes: { version: true },
+        }),
+        status:  200,
+        headers: {},
+      });
+    });
+
+    const preferencesPage = electronApp.windows()[1];
+
+    await preferencesPage.emulateMedia({ colorScheme });
+
+    const e2ePreferences = new PreferencesPage(preferencesPage);
+    const screenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+
+    await e2ePreferences.containerEngine.nav.click();
+    await e2ePreferences.containerEngine.tabAllowedImages.click();
+    await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
+
+    await e2ePreferences.containerEngine.enabledLockedField.hover();
+    await preferencesPage.waitForTimeout(250);
+    await screenshot.take('containerEngine', 'tabAllowedImages_lockedFields');
+
+    await e2ePreferences.kubernetes.nav.click();
+    await expect(e2ePreferences.kubernetes.kubernetesVersionLockedFields).toBeVisible();
+
+    await e2ePreferences.kubernetes.kubernetesVersionLockedFields.hover();
+    await preferencesPage.waitForTimeout(250);
+    await screenshot.take('kubernetes', 'lockedFields');
 
     await preferencesPage.close({ runBeforeUnload: true });
   });
