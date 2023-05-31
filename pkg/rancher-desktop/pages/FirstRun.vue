@@ -11,7 +11,12 @@
     />
     <label>
       Please select a Kubernetes version{{ offlineCheck() }}:
-      <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
+      <rd-select
+        v-model="settings.kubernetes.version"
+        :is-locked="kubernetesVersionLocked"
+        class="select-k8s-version"
+        @change="onChange"
+      >
         <!--
             - On macOS Chrome / Electron can't style the <option> elements.
             - We do the best we can by instead using <optgroup> for a recommended section.
@@ -36,7 +41,7 @@
             v{{ item.version.version }}
           </option>
         </optgroup>
-      </select>
+      </rd-select>
     </label>
     <engine-selector
       :container-engine="settings.containerEngine.name"
@@ -69,6 +74,7 @@ import { mapGetters } from 'vuex';
 import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
+import RdSelect from '@pkg/components/RdSelect.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import type { ContainerEngine } from '@pkg/config/settings';
@@ -77,14 +83,15 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   components: {
-    RdCheckbox, EngineSelector, PathManagementSelector,
+    RdCheckbox, EngineSelector, PathManagementSelector, RdSelect,
   },
   layout: 'dialog',
   data() {
     return {
-      settings:         defaultSettings,
-      kubernetesLocked: false,
-      versions:         [] as VersionEntry[],
+      settings:                defaultSettings,
+      kubernetesLocked:        false,
+      kubernetesVersionLocked: false,
+      versions:                [] as VersionEntry[],
 
       // If cachedVersionsOnly is true, it means we're offline and showing only the versions in the cache,
       // not all the versions listed in <cache>/rancher-desktop/k3s-versions.json
@@ -144,6 +151,7 @@ export default Vue.extend({
     }
     ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
       this.$data.kubernetesLocked = _.get(lockedFields, 'kubernetes.enabled');
+      this.$data.kubernetesVersionLocked = _.get(lockedFields, 'kubernetes.version');
     });
   },
   beforeDestroy() {
