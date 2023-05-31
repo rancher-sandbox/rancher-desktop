@@ -35,7 +35,7 @@ download_artifact() {
     fi
 
     # Download the package. It requires authentication, so use gh instead of curl.
-    API=repos/$OWNER/$REPO/actions/artifacts/$ARTIFACT_ID/zip
+    API="repos/$OWNER/$REPO/actions/artifacts/$ARTIFACT_ID/zip"
     gh api "$API" > "$TMPDIR/$FILENAME"
 }
 
@@ -43,7 +43,7 @@ download_artifact "Rancher Desktop-mac.x86_64.zip"
 
 # Artifacts are zipped, so extract inner ZIP file from outer wrapper.
 # The outer ZIP has a predictable name like "Rancher Desktop-mac.x86_64.zip"
-# but the inner one has version string: "Rancher Desktop-1.7.0-1061-g91ab3831-mac.zip"
+# but the inner one has a version string: "Rancher Desktop-1.7.0-1061-g91ab3831-mac.zip"
 # Extract filename from:
 # ---------------------------------------------------------------------------
 # $ unzip -l Rancher\ Desktop-mac.x86_64.zip
