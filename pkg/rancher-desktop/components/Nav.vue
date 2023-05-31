@@ -140,6 +140,7 @@ export default {
         'ghcr.io/rancher-sandbox/epinio-desktop-extension',
         'julianb90/tachometer',
         'prakhar1989/dive-in',
+        'joycelin79/newman-extension',
       ].includes(id.split(':')[0]);
     },
   },
