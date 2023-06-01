@@ -66,8 +66,8 @@ kubectl_exe() {
     "$PATH_RESOURCES/$PLATFORM/bin/kubectl$EXE" "$@" | no_cr
 }
 limactl() {
-    # LIMA_HOME is set by paths.bash
-    "$PATH_RESOURCES/$PLATFORM/lima/bin/limactl" "$@"
+    # LIMA_HOME is set by paths.bash but not exported
+    LIMA_HOME="$LIMA_HOME" "$PATH_RESOURCES/$PLATFORM/lima/bin/limactl" "$@"
 }
 nerdctl() {
     "$PATH_RESOURCES/$PLATFORM/bin/nerdctl$EXE" --namespace "$CONTAINERD_NAMESPACE" "$@" | no_cr

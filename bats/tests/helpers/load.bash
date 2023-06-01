@@ -68,7 +68,7 @@ teardown_file() {
 }
 teardown() {
     if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
-        screenshot
+        take_screenshot
     fi
 }
 

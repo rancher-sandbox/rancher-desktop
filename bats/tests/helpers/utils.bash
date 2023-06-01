@@ -119,7 +119,7 @@ unique_filename() {
 }
 
 capture_logs() {
-    if capturing_logs; then
+    if capturing_logs && [ -d "$PATH_LOGS" ]; then
         local logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
         mkdir -p "$logdir"
         cp -LR "$PATH_LOGS/" "$logdir"
@@ -127,7 +127,7 @@ capture_logs() {
     fi
 }
 
-screenshot() {
+take_screenshot() {
     if taking_screenshots; then
         if is_macos; then
             local file=$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)
