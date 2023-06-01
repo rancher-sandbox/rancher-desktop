@@ -251,19 +251,20 @@ async function getPlatformVersion(): Promise<string> {
 // WSL is installed on a system:
 //
 // 1. "In-box" or "feature" versions come with the OS, and have version
-//    numbers that correlate with the OS version.
+//    numbers that correlate with the OS version. In-box versions do not
+//    have a --version flag.
 // 2. "Application" versions are installed via the Windows app store,
-//    and have version numbers that are independent of the OS.
+//    and have version numbers that are independent of the OS. They have
+//    a --version flag.
 //
-// It is possible to have a in-box and an application version of WSL
+// It is possible to have an in-box and an application version of WSL
 // installed simultaneously. If this is the case, the application version
 // always takes precedence.
 //
-// It is difficult and not useful to get the version of any installed
-// in-box version of WSL. So, this function tries to get the version
-// of an installed application version of WSL, and if it cannot find
-// it for any reason (i.e. WSL is not installed, only an in-box version
-// is installed), it returns undefined.
+// Because the version of an in-box installation of WSL is both difficult
+// to get and not useful, we only try to get the version of any application
+// installation of WSL. If this fails for whatever reason, this function
+// returns undefined.
 export async function getWslVersion(): Promise<string | undefined> {
   const args = ['--version'];
   let stdout: string;
