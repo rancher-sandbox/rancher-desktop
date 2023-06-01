@@ -24,13 +24,7 @@
           >
             <nav-item :id="`extension:${extension.id}`">
               <template #before>
-                <img
-                  class="extension-icon"
-                  :class="{
-                    'known-monochrome': isKnownMonochrome(extension.id),
-                  }"
-                  :src="imageUri(extension.id)"
-                >
+                <nav-icon-extension :extension-id="extension.id" />
               </template>
               {{ extension.metadata.ui['dashboard-tab'].title }}
             </nav-item>
@@ -49,6 +43,7 @@ import { BadgeState } from '@rancher/components';
 import { PropType } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
 
+import NavIconExtension from './NavIconExtension.vue';
 import NavItem from './NavItem.vue';
 
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
@@ -62,6 +57,7 @@ export default {
   components: {
     BadgeState,
     NavItem,
+    NavIconExtension,
   },
   props: {
     items: {
@@ -120,9 +116,6 @@ export default {
     },
   },
   methods: {
-    imageUri(id: string): string {
-      return `x-rd-extension://${ hexEncode(id) }/icon.svg`;
-    },
     extensionRoute({ id, metadata }: { id: string, metadata: any }) {
       const { ui: { 'dashboard-tab': { root, src } } } = metadata;
 
@@ -134,14 +127,6 @@ export default {
           id: hexEncode(id),
         },
       };
-    },
-    isKnownMonochrome(id: string): boolean {
-      return !!id && [
-        'ghcr.io/rancher-sandbox/epinio-desktop-extension',
-        'julianb90/tachometer',
-        'prakhar1989/dive-in',
-        'joycelin79/newman-extension',
-      ].includes(id.split(':')[0]);
     },
   },
 };
@@ -204,24 +189,6 @@ a {
   line-height: initial;
   letter-spacing: initial;
   font-size: 0.75rem;
-}
-
-/**
-  * Change the icon colors by setting a class 'known-monochrome' containing dark theme properties.
-  */
-@media (prefers-color-scheme: dark) {
-  .known-monochrome {
-    filter: brightness(0) invert(100%) grayscale(1) brightness(2);
-  }
-}
-
-/**
-  * Change the icon colors by setting a class 'known-monochrome' containing light theme properties.
-  */
-@media (prefers-color-scheme: light) {
-  .known-monochrome {
-    filter: brightness(0) grayscale(1) brightness(4);
-  }
 }
 
 </style>
