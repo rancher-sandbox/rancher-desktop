@@ -39,7 +39,11 @@ download_artifact() {
     gh api "$API" > "$TMPDIR/$FILENAME"
 }
 
-download_artifact "Rancher Desktop-mac.x86_64.zip"
+ARCH=x86_64
+if [ "$(uname -m)" = "arm64" ]; then
+    ARCH=aarch64
+fi
+download_artifact "Rancher Desktop-mac.$ARCH.zip"
 
 # Artifacts are zipped, so extract inner ZIP file from outer wrapper.
 # The outer ZIP has a predictable name like "Rancher Desktop-mac.x86_64.zip"
