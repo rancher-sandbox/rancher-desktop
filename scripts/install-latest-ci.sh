@@ -9,6 +9,13 @@ set -o xtrace
 : ${WORKFLOW:=Package}
 : ${RESULTS:=30}
 
+: ${RD_LOCATION:=user}
+
+if ! [[ $RD_LOCATION =~ ^(system|user)$ ]]; then
+    echo "RD_LOCATION must be either 'system' or 'user'"
+    exit 1
+fi
+
 # Get a list of all successful workflow runs for this repo.
 # I couldn't find a way to filter by workflow name, so get the last $RESULTS
 # runs and hope that at least one of them was for $WORKFLOW.
@@ -67,9 +74,14 @@ fi
 unzip -o "$TMPDIR/$FILENAME" "$ZIP" -d "$TMPDIR"
 
 # Extract from inner archive into ~/Applications
+DEST="/Applications"
+if [ "$RD_LOCATION" = "user" ]; then
+    DEST="$HOME/$DEST"
+fi
+
 APP="Rancher Desktop.app"
-rm -rf "$HOME/Applications/$APP"
-unzip -o "$TMPDIR/$ZIP" "$APP/*" -d "$HOME/Applications" >/dev/null
+rm -rf "$DEST/$APP"
+unzip -o "$TMPDIR/$ZIP" "$APP/*" -d "$DEST" >/dev/null
 
 download_artifact "bats.tar.gz"
 
