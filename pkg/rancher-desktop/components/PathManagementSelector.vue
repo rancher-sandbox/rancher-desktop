@@ -75,6 +75,7 @@ export default Vue.extend({
     :options="options"
     :row="row"
     :disabled="isLocked"
+    :class="{ 'locked-radio' : isLocked }"
     class="path-management"
     @input="updateVal"
   >

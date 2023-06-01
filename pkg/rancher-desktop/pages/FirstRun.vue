@@ -43,15 +43,29 @@
         </optgroup>
       </rd-select>
     </label>
-    <engine-selector
-      :container-engine="settings.containerEngine.name"
-      @change="onChangeEngine"
-    />
-    <path-management-selector
+    <rd-fieldset
+      :legend-text="t('containerEngine.label')"
+      :is-locked="engineSelectorLocked"
+    >
+      <engine-selector
+        :container-engine="settings.containerEngine.name"
+        :is-locked="engineSelectorLocked"
+        @change="onChangeEngine"
+      />
+    </rd-fieldset>
+    <rd-fieldset
       v-if="pathManagementRelevant"
-      :value="pathManagementStrategy"
-      @input="setPathManagementStrategy"
-    />
+      :legend-text="t('pathManagement.label')"
+      :legend-tooltip="t('pathManagement.tooltip', { }, true)"
+      :is-locked="pathManagementSelectorLocked"
+    >
+      <path-management-selector
+        :value="pathManagementStrategy"
+        :is-locked="pathManagementSelectorLocked"
+        :show-label="false"
+        @input="setPathManagementStrategy"
+      />
+    </rd-fieldset>
     <div class="button-area">
       <button
         data-test="accept-btn"
@@ -80,18 +94,25 @@ import { defaultSettings } from '@pkg/config/settings';
 import type { ContainerEngine } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import RdFieldset from '~/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   components: {
-    RdCheckbox, EngineSelector, PathManagementSelector, RdSelect,
+    RdFieldset,
+    RdCheckbox,
+    EngineSelector,
+    PathManagementSelector,
+    RdSelect,
   },
   layout: 'dialog',
   data() {
     return {
-      settings:                defaultSettings,
-      kubernetesLocked:        false,
-      kubernetesVersionLocked: false,
-      versions:                [] as VersionEntry[],
+      settings:                     defaultSettings,
+      kubernetesLocked:             false,
+      kubernetesVersionLocked:      false,
+      engineSelectorLocked:         false,
+      pathManagementSelectorLocked: false,
+      versions:                     [] as VersionEntry[],
 
       // If cachedVersionsOnly is true, it means we're offline and showing only the versions in the cache,
       // not all the versions listed in <cache>/rancher-desktop/k3s-versions.json
@@ -152,6 +173,8 @@ export default Vue.extend({
     ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
       this.$data.kubernetesLocked = _.get(lockedFields, 'kubernetes.enabled');
       this.$data.kubernetesVersionLocked = _.get(lockedFields, 'kubernetes.version');
+      this.$data.engineSelectorLocked = _.get(lockedFields, 'containerEngine.name');
+      this.$data.pathManagementSelectorLocked = _.get(lockedFields, 'application.pathManagementStrategy');
     });
   },
   beforeDestroy() {
