@@ -127,7 +127,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   async install(config: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
     await this.progressTracker.action('Installing k3s', 50, async() => {
       await this.installK3s(desiredVersion);
-      await this.writeServiceScript(config, allowSudo);
+      await this.writeServiceScript(config, desiredVersion, allowSudo);
     });
 
     this.activeVersion = desiredVersion;
@@ -339,13 +339,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   /**
    * Write the openrc script for k3s.
    */
-  protected async writeServiceScript(cfg: BackendSettings, allowSudo: boolean) {
+  protected async writeServiceScript(cfg: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
       ENGINE:          cfg.containerEngine.name ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
-      USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, cfg.kubernetes.version).toString(),
+      USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, cfg.kubernetes.version || desiredVersion.version).toString(),
     };
 
     if (allowSudo && os.platform() === 'darwin') {
