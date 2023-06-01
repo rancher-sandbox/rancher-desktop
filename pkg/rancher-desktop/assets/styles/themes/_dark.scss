@@ -117,6 +117,9 @@
   --input-addon-bg             : #{$darker};
   --input-locked-text          : #{$lightest};
 
+  --radio-locked-bg            : var(--body-bg);
+  --radio-locked-shadow        : var(--body-bg);
+
   --progress-bg                : #{$medium};
   --progress-divider           : #{$lightest};
 

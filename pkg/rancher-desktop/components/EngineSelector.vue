@@ -45,6 +45,7 @@ export default {
     <radio-group
       name="containerEngine"
       class="container-engine"
+      :class="{ 'locked-radio' : isLocked }"
       :value="containerEngine"
       :options="options"
       :row="row"

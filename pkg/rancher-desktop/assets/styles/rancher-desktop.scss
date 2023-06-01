@@ -12,6 +12,18 @@ label > button:first-child:not(.btn-sm) {
     margin-right: 1em;
 }
 
+.locked-radio .radio-container span.radio-custom {
+  &[aria-checked="true"] {
+    opacity: 1;
+  }
+
+  &:not([aria-checked="true"]) {
+    opacity: 1;
+    background-color: var(--radio-locked-bg);
+    box-shadow: var(--radio-locked-shadow);
+  }
+}
+
 @media screen and (prefers-color-scheme: dark) {
     option {
         background-color: var(--input-bg);

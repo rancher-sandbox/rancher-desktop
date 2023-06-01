@@ -88,6 +88,7 @@ export default Vue.extend({
               :options="options"
               :name="groupName"
               :disabled="isLocked"
+              :class="{ 'locked-radio' : isLocked }"
             >
               <template
                 v-for="(option, index) in options"
