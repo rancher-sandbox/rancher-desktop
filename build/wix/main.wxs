@@ -161,7 +161,7 @@
         Root="HKLM"
         Key='SOFTWARE\SUSE\RancherDesktop'
         Name="AdminInstall"
-        Value="yes"
+        Value="true"
         Type="string"
         KeyPath="yes"
       />
