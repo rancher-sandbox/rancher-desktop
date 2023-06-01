@@ -73,6 +73,12 @@ start_container_engine() {
     if using_networking_tunnel; then
         args+=(--experimental.virtual-machine.networking-tunnel)
     fi
+    if using_vz_emulation; then
+        args+=(--experimental.virtual-machine.type vz)
+        if is_macos arm64; then
+            args+=(--experimental.virtual-machine.use-rosetta)
+        fi
+    fi
 
     # TODO containerEngine.allowedImages.patterns and WSL.integrations
     # TODO cannot be set from the commandline yet

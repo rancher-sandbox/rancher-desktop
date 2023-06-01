@@ -42,6 +42,17 @@ using_image_allow_list() {
 }
 
 ########################################################################
+: "${RD_USE_VZ_EMULATION:=false}"
+
+using_vz_emulation() {
+    is_true "$RD_USE_VZ_EMULATION"
+}
+
+if using_vz_emulation && ! is_macos; then
+    fatal "RD_USE_VZ_EMULATION only works on macOS"
+fi
+
+########################################################################
 : "${RD_USE_WINDOWS_EXE:=false}"
 
 using_windows_exe() {
