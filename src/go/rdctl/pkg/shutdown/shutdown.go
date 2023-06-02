@@ -18,6 +18,7 @@ package shutdown
 
 import (
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"os"
 	"os/exec"
 	"regexp"
@@ -43,12 +44,12 @@ func FinishShutdown(waitForShutdown bool) error {
 	var err error
 	switch runtime.GOOS {
 	case "darwin":
-		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
+		err = s.waitForAppToDieOrKillIt(checkProcessQemu, stopLima, 15, 2, "qemu")
 		if err == nil {
 			err = s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
 		}
 	case "linux":
-		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
+		err = s.waitForAppToDieOrKillIt(checkProcessQemu, stopLima, 15, 2, "qemu")
 		if err == nil {
 			err = s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
 		}
@@ -132,12 +133,20 @@ func pkill(args ...string) error {
 	return nil
 }
 
-func pkillQemu() error {
-	err := pkill("-9", "-f", RancherDesktopQemuCommand)
-	if err != nil {
-		return fmt.Errorf("failed to kill qemu: %w", err)
+func stopLima() error {
+	if err := directories.SetupLimaHome(); err != nil {
+		return err
 	}
-	return nil
+	commandPath, err := directories.GetLimactlPath()
+	if err != nil {
+		return err
+	}
+	args := []string{"stop", "-f", "0"}
+	shellCommand := exec.Command(commandPath, args...)
+	shellCommand.Stdin = os.Stdin
+	shellCommand.Stdout = os.Stdout
+	shellCommand.Stderr = os.Stderr
+	return shellCommand.Run()
 }
 
 func pkillDarwin() error {
