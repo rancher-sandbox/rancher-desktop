@@ -145,7 +145,7 @@ func main() {
 
 	if *enableContainerd {
 		group.Go(func() error {
-			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker, *enablePrivilegedService)
 			if err != nil {
 				return fmt.Errorf("error initializing containerd event monitor: %w", err)
 			}
