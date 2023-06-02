@@ -51,10 +51,11 @@ var (
 	containerdSock   = flag.String("containerdSock",
 		containerdSocketFile,
 		"file path for Containerd socket address")
-	vtunnelAddr             = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
+	vtunnelAddr             = flag.String("vtunnelAddr", vtunnelPeerAddr, "peer address for Vtunnel in IP:PORT format")
 	enablePrivilegedService = flag.Bool("privilegedService", false, "enable Privileged Service mode")
 	k8sServiceListenerAddr  = flag.String("k8sServiceListenerAddr", net.IPv4zero.String(),
 		"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
+	adminInstall = flag.Bool("adminInstall", false, "indicates if Rancher Desktop is installed as admin or not")
 )
 
 // Flags can only be enabled in the following combination:
@@ -95,7 +96,7 @@ func main() {
 
 	log.Current = logger
 
-	log.Info("Starting Rancher Desktop Agent")
+	log.Info("Starting Rancher Desktop Agent in [AdminInstall=%t] mode", *adminInstall)
 
 	if os.Geteuid() != 0 {
 		log.Fatal("agent must run as root")
@@ -140,7 +141,7 @@ func main() {
 		forwarder := forwarder.NewVTunnelForwarder(*vtunnelAddr)
 		portTracker = tracker.NewVTunnelTracker(forwarder, wslAddr)
 	} else {
-		portTracker = tracker.NewAPITracker(tracker.GatewayBaseURL)
+		portTracker = tracker.NewAPITracker(tracker.GatewayBaseURL, *adminInstall)
 	}
 
 	if *enableContainerd {
