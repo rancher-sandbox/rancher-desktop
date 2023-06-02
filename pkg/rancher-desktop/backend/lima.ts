@@ -1959,40 +1959,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.execCommand({ root: true }, 'update-ca-certificates');
   }
 
-  protected async getHostIPAddr(): Promise<string> {
-    try {
-      const maxAttempt = 13;
-      let stdout = '';
-
-      for (let attempt = 0; attempt < maxAttempt; ++attempt) {
-        stdout = await this.execCommand({ capture: true }, 'ip', 'route', 'list', 'eth0');
-        const line = stdout.split(/\n/).find(line => /\bvia .* dev eth0\b/.test(line));
-        const match = /\bvia (.*) dev eth0\b/.exec(line ?? '');
-
-        if (match) {
-          return match[1];
-        }
-
-        if (attempt < maxAttempt - 1) {
-          // Do exponential backoff, with the last delay at around 3.5 minutes.
-          // Skip after the last attempt, though.
-          await util.promisify(setTimeout)(Math.pow(2, attempt) * 100);
-        }
-      }
-
-      console.error(`Failed to get host IP address; last output:\n${ stdout }`);
-      throw new Error(`Failed to get host IP address`);
-    } catch (err: any) {
-      console.log(`ip route failed: ${ err }`, err);
-      throw err;
-    }
-  }
-
   protected async installCredentialHelper() {
     const credsPath = getServerCredentialsPath();
 
     try {
-      const hostIPAddr = await this.getHostIPAddr();
+      const hostIPAddr = '192.168.5.2';
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'");
