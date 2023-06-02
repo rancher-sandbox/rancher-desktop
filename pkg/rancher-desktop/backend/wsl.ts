@@ -191,7 +191,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
           return resolve(isAdmin);
         } else {
-          console.debug('Failed to open registry key: HKEY_LOCAL_MACHINE\SOFTWARE\SUSE\RancherDesktop');
+          console.debug('Failed to open registry key: HKEY_LOCAL_MACHINE\SOFTWARE');
         }
       } catch (error) {
         console.error(`Error accessing registry: ${ error }`);
@@ -1484,9 +1484,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
         }
 
-        // If it's not a privileged installation preset guestAgent
-        // port binding address to localhost only.
-        if (!this.getIsAdminInstall() && !config.kubernetes.ingress.localhostOnly) {
+        // Set the kubernetes ingress address to localhost only for
+        // a non-admin installation, if it's not already set.
+        if (!config.kubernetes.ingress.localhostOnly && !await this.getIsAdminInstall()) {
           this.writeSetting({ kubernetes: { ingress: { localhostOnly: true } } });
         }
 
