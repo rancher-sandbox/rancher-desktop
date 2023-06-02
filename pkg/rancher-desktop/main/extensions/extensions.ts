@@ -17,6 +17,34 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { defined } from '@pkg/utils/typeUtils';
 
+/**
+ * ComposeFile describes the contents of a compose file.
+ * @note The typing here is incomplete.
+ */
+type ComposeFile = {
+  name?: string;
+  services: Record<string, {
+    image?: string;
+    environment?: string[];
+    command?: string;
+    volumes?: (string | {
+      type: string;
+      source?: string;
+      target: string;
+      read_only?: boolean;
+      bind?: {
+        propagation?: string;
+        create_host_path?: boolean;
+        selinux?: 'z' | 'Z';
+      };
+      volume?: { nocopy?: boolean };
+      tmpfs?: { size?: number | string; mode?: number };
+      consistency?: string;
+    })[];
+  }>;
+  volumes?: Record<string, any>;
+};
+
 const console = Logging.extensions;
 
 export class ExtensionErrorImpl extends Error implements ExtensionError {
@@ -326,7 +354,7 @@ export class ExtensionImpl implements Extension {
   /**
    * Return the contents of the compose file.
    */
-  protected async getComposeFileContents(): Promise<any> {
+  protected async getComposeFileContents(): Promise<ComposeFile> {
     if (await this.isInstalled()) {
       const composePath = path.join(this.dir, 'compose', 'compose.yaml');
 
@@ -350,11 +378,12 @@ export class ExtensionImpl implements Extension {
 
       return yaml.parse(await this.client.readFile(this.image, composePath, opts));
     }
+    throw new Error(`Invalid vm type`);
   }
 
   protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
     const composeDir = path.join(workDir, 'compose');
-    let contents: any;
+    let contents: ComposeFile;
 
     // Extract compose file and place it in composeDir
     if (isVMTypeImage(metadata.vm)) {
@@ -393,9 +422,9 @@ export class ExtensionImpl implements Extension {
 
       // Fix up the compose file to always have a volume at /run/guest-services/
       // so that it can be used for sockets to be exposed.
-      for (const service of Object.values<any>(contents.services)) {
+      for (const service of Object.values(contents.services)) {
         service.volumes ??= [];
-        if (!service.volumes.find((v: { target: string; }) => v?.target === '/run/guest-services')) {
+        if (!service.volumes.find(v => typeof v !== 'string' && v?.target === '/run/guest-services')) {
           service.volumes.push({
             type:   'volume',
             source: 'r-d-x-guest-services',
