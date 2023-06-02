@@ -32,17 +32,23 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="preferences-nav">
+  <div
+    class="preferences-nav"
+    aria-label="Preferences navigation"
+    role="menu"
+  >
     <nav-item
       v-for="navItem in navItems"
       :key="navItem"
       :data-test="navToKebab(navItem)"
       :name="navItem"
       :active="currentNavItem === navItem"
+      :aria-describedby="'menu-item-description-' + navItem"
       tabindex="0"
+      role="menuitem"
       @click="navClicked"
     >
-      {{ navItem }}
+      <span :id="'menu-item-description-' + navItem">{{ navItem }}</span>
     </nav-item>
   </div>
 </template>
