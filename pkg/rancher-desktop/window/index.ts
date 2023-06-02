@@ -599,20 +599,6 @@ export async function openSudoPrompt(explanations: Record<string, string[]>): Pr
   return result;
 }
 
-export async function openPathUpdate(): Promise<void> {
-  const window = openDialog(
-    'PathUpdate',
-    {
-      title:  'Rancher Desktop - Update',
-      frame:  true,
-      parent: getWindow('main') ?? undefined,
-    });
-
-  await (new Promise<void>((resolve) => {
-    window.on('closed', resolve);
-  }));
-}
-
 export async function openLegacyIntegrations(): Promise<void> {
   const window = openDialog(
     'LegacyIntegrationNotification',
