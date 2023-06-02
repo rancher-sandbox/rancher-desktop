@@ -53,6 +53,7 @@ var (
 // and unexposing the ports on the host. This should only be used when
 // the Rancher Desktop networking is enabled and the privileged service is disabled.
 type APITracker struct {
+	isAdmin     bool
 	baseURL     string
 	httpClient  http.Client
 	portStorage *portStorage
@@ -60,8 +61,9 @@ type APITracker struct {
 }
 
 // NewAPITracker creates a new instace of a API Tracker.
-func NewAPITracker(baseURL string) *APITracker {
+func NewAPITracker(baseURL string, isAdmin bool) *APITracker {
 	return &APITracker{
+		isAdmin:         isAdmin,
 		baseURL:         baseURL,
 		httpClient:      *http.DefaultClient,
 		portStorage:     newPortStorage(),
@@ -90,7 +92,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 
 			err = a.expose(
 				&types.ExposeRequest{
-					Local:  ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
+					Local:  ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 					Remote: ipPortBuilder(hostSwitchIP, portBinding.HostPort),
 				})
 			if err != nil {
@@ -139,7 +141,7 @@ func (a *APITracker) Remove(containerID string) error {
 
 			err = a.unexpose(
 				&types.UnexposeRequest{
-					Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
+					Local: ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 				})
 			if err != nil {
 				errs = append(errs,
@@ -175,7 +177,7 @@ func (a *APITracker) RemoveAll() error {
 
 				err = a.unexpose(
 					&types.UnexposeRequest{
-						Local: ipPortBuilder(portBinding.HostIP, portBinding.HostPort),
+						Local: ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 					})
 				if err != nil {
 					errs = append(errs,
@@ -242,6 +244,17 @@ func (a *APITracker) unexpose(unexposeReq *types.UnexposeRequest) error {
 	}
 
 	return verifyResposeBody(res)
+}
+
+func (a *APITracker) determineHostIP(hostIP string) string {
+	// If Rancher Desktop is installed as non-admin, we use the
+	// localhost IP address since binding to a port on 127.0.0.1
+	// does not require administrative privileges on Windows.
+	if !a.isAdmin {
+		return "127.0.0.1"
+	}
+
+	return hostIP
 }
 
 func (a *APITracker) urlBuilder(api string) string {
