@@ -37,6 +37,12 @@ export default Vue.extend({ props: { id: { type: String, default: '' } } });
     &:hover {
       cursor: pointer;
     }
+
+    &:focus {
+      border: none;
+      outline: none;
+      background-color: var(--primary-banner-bg);
+    }
   }
 
   .before {

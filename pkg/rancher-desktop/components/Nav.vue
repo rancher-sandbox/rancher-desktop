@@ -1,9 +1,20 @@
 <template>
-  <nav>
-    <ul>
-      <li v-for="item in items" :key="item.route" :item="item.route">
-        <NuxtLink :to="item.route">
-          {{ routes[item.route].name }}
+  <nav aria-label="Primary navigation">
+    <ul role="menu">
+      <li
+        v-for="item in items"
+        :key="item.route"
+        :item="item.route"
+        :aria-describedby="'menu-item-description-' + item.route"
+        tabindex="0"
+        role="menuitem"
+        @keydown.enter="activateLink(item.route)"
+      >
+        <NuxtLink
+          :to="item.route"
+          tabindex="-1"
+        >
+          <span :id="'menu-item-description-' + item.route">{{ routes[item.route].name }}</span>
           <badge-state
             v-if="item.error"
             color="bg-error"
@@ -21,12 +32,19 @@
             :key="extension.id"
             :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
             :to="extensionRoute(extension)"
+            tabindex="-1"
           >
-            <nav-item :id="`extension:${extension.id}`">
+            <nav-item
+              :id="`extension:${extension.id}`"
+              :aria-describedby="'menu-item-description-' + extension.metadata.ui['dashboard-tab'].title"
+              role="menuitem"
+              tabindex="0"
+              @keydown.enter="activateLink(extensionRoute(extension))"
+            >
               <template #before>
                 <nav-icon-extension :extension-id="extension.id" />
               </template>
-              {{ extension.metadata.ui['dashboard-tab'].title }}
+              <span :id="'menu-item-description-' + extension.metadata.ui['dashboard-tab'].title">{{ extension.metadata.ui['dashboard-tab'].title }}</span>
             </nav-item>
           </nuxt-link>
         </template>
@@ -41,7 +59,7 @@ import os from 'os';
 import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
 import { PropType } from 'vue';
-import { RouteRecordPublic } from 'vue-router';
+import { RawLocation, RouteRecordPublic } from 'vue-router';
 
 import NavIconExtension from './NavIconExtension.vue';
 import NavItem from './NavItem.vue';
@@ -128,6 +146,11 @@ export default {
         },
       };
     },
+    activateLink(route: RawLocation) {
+      const nuxt: NuxtApp = (this as any).$nuxt;
+
+      nuxt.$router.push(route);
+    },
   },
 };
 </script>
@@ -172,6 +195,12 @@ ul {
 
         a.nuxt-link-active {
             background-color: var(--nav-active);
+        }
+
+        &:focus {
+          border: none;
+          outline: none;
+          background-color: var(--primary-banner-bg);
         }
     }
 }
