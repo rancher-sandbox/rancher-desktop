@@ -883,7 +883,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
     let guestAgentConfig: Record<string, any>;
-    const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
+    const enableKubernetes = !!kubeVersion;
+    const iptables = enableKubernetes && !K3sHelper.requiresPortForwardingFix(kubeVersion);
     const rdNetworking = !!cfg?.experimental.virtualMachine.networkingTunnel;
 
     if (rdNetworking || this.privilegedServiceEnabled) {
@@ -891,7 +892,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         LOG_DIR:                       await this.wslify(paths.logs),
         GUESTAGENT_ADMIN_INSTALL:      await this.getIsAdminInstall(),
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
-        GUESTAGENT_IPTABLES:           enableKubernetes ? 'false' : 'true', // only enable IPTABLES for older K8s
+        GUESTAGENT_IPTABLES:           iptables.toString(), // only enable IPTABLES for older K8s
         GUESTAGENT_PRIVILEGED_SERVICE: rdNetworking ? 'false' : 'true',
         GUESTAGENT_CONTAINERD:         cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
         GUESTAGENT_DOCKER:             cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
