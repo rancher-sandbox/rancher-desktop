@@ -25,6 +25,7 @@ linters:
     - exhaustruct # Many structs have optional fields
     - nosnakecase # Catches imported constants like SO_LINGER
     - wrapcheck # No need to always wrap errors
+    - depguard # Requires configuration and by default only allows stdlib imports
 linters-settings:
   govet:
     disable:
