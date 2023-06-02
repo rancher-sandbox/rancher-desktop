@@ -80,6 +80,7 @@ try() {
         sleep "$delay"
         count=$((count + 1))
     done
+    echo "$output"
     return "$status"
 }
 

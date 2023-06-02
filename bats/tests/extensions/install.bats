@@ -87,8 +87,8 @@ encoded_id() { # variant
 
 @test 'basic extension - upgrades' {
     local tag
-    ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):0.0.1"
-    ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):v0.0.2"
+    ctrctl image tag "$(id basic)" "$(id basic):0.0.1"
+    ctrctl image tag "$(id basic)" "$(id basic):v0.0.2"
 
     run rdctl extension ls
     assert_success
@@ -110,7 +110,7 @@ encoded_id() { # variant
 }
 
 @test 'basic extension - uninstall' {
-    ctrctl "${namespace_arg[@]}" image tag "$(id basic)" "$(id basic):0.0.3"
+    ctrctl image tag "$(id basic)" "$(id basic):0.0.3"
     # Uninstall should remove whatever version is installed, not the newest.
     rdctl extension uninstall "$(id basic)"
 

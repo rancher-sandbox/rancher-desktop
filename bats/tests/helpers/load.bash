@@ -61,7 +61,9 @@ setup_file() {
 global_teardown() {
     capture_logs
     # On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
-    run rdctl shutdown
+    if is_linux; then
+        run rdctl shutdown
+    fi
 }
 teardown_file() {
     global_teardown
