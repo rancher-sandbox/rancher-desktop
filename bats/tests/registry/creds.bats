@@ -1,6 +1,8 @@
 load '../helpers/load'
 
 setup() {
+    shared_setup
+
     REGISTRY_IMAGE="registry:2.8.1"
     REGISTRY_PORT="5050"
     DOCKER_CONFIG_FILE="$HOME/.docker/config.json"

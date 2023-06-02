@@ -8,6 +8,7 @@
 load '../helpers/load'
 
 setup() {
+    shared_setup
     needs_port 80
 }
 

@@ -165,5 +165,5 @@ teardown_file() {
     assert_nothing
     run kubectl delete --selector="app=busybox"
     assert_nothing
-    global_teardown
+    shared_teardown_file
 }

@@ -5,6 +5,7 @@ load '../helpers/load'
 export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v /.rd/bin | tr '\n' ':')
 
 setup() {
+    shared_setup
     if is_windows; then
         skip "test not applicable on Windows"
     fi

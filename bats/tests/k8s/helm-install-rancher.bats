@@ -3,6 +3,7 @@
 load '../helpers/load'
 
 setup() {
+    shared_setup
     needs_port 443
 }
 
@@ -62,5 +63,5 @@ teardown_file() {
     assert_nothing
     run helm uninstall cert-manager --namespace cert-manager --wait
     assert_nothing
-    global_teardown
+    shared_teardown_file
 }

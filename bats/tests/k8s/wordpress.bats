@@ -1,6 +1,7 @@
 load '../helpers/load'
 
 setup() {
+    shared_setup
     if is_macos arm64; then
         skip "The bitnami wordpress image is not available for arm64 architecture. Skipping..."
     fi
@@ -55,5 +56,5 @@ teardown_file() {
     # The database PVC doesn't get deleted by `helm uninstall`.
     run kubectl delete pvc data-wordpress-mariadb-0
     assert_nothing
-    global_teardown
+    shared_teardown_file
 }
