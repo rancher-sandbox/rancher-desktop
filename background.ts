@@ -271,7 +271,7 @@ Electron.app.whenReady().then(async() => {
         await window.openFirstRunDialog();
       } else {
         cfg.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
-        mainEvents.emit('settings-write', { application: { pathManagementStrategy: cfg.application.pathManagementStrategy }});
+        mainEvents.emit('settings-write', { application: { pathManagementStrategy: cfg.application.pathManagementStrategy } });
       }
     }
 
