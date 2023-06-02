@@ -17,6 +17,34 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { defined } from '@pkg/utils/typeUtils';
 
+/**
+ * ComposeFile describes the contents of a compose file.
+ * @note The typing here is incomplete.
+ */
+type ComposeFile = {
+  name?: string;
+  services: Record<string, {
+    image?: string;
+    environment?: string[];
+    command?: string;
+    volumes?: (string | {
+      type: string;
+      source?: string;
+      target: string;
+      read_only?: boolean;
+      bind?: {
+        propagation?: string;
+        create_host_path?: boolean;
+        selinux?: 'z' | 'Z';
+      };
+      volume?: { nocopy?: boolean };
+      tmpfs?: { size?: number | string; mode?: number };
+      consistency?: string;
+    })[];
+  }>;
+  volumes?: Record<string, any>;
+};
+
 const console = Logging.extensions;
 
 export class ExtensionErrorImpl extends Error implements ExtensionError {
@@ -297,27 +325,70 @@ export class ExtensionImpl implements Extension {
     }));
   }
 
-  get containerName() {
-    const normalizedId = this.id.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '_');
+  protected async getComposeName() {
+    if (this._composeName) {
+      return this._composeName;
+    }
 
-    return `rd-extension-${ normalizedId }`;
+    const normalizedId = this.id.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '_');
+    const contents = await this.getComposeFileContents();
+    let composeName = `rd-extension-${ normalizedId }`;
+
+    const maxServiceLength = Math.max(...Object.keys(contents.services).map(n => n.length));
+
+    // On nerdctl, container names are something like:
+    // <this.composeName>_<compose .services.*>_<counter>
+    // If this string is longer than 76 characters, installation will fail.
+    if (composeName.length + maxServiceLength + 4 > 76) {
+      composeName = normalizedId.slice(0, 76 - maxServiceLength - 4);
+    }
+
+    this._composeName = composeName;
+
+    return composeName;
   }
 
-  protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
-    const composeDir = path.join(workDir, 'compose');
-    let contents: any;
+  /** memoized result of getComposeName() */
+  protected _composeName = '';
 
-    // Extract compose file and place it in composeDir
+  /**
+   * Return the contents of the compose file.
+   */
+  protected async getComposeFileContents(): Promise<ComposeFile> {
+    if (await this.isInstalled()) {
+      const composePath = path.join(this.dir, 'compose', 'compose.yaml');
+
+      return yaml.parse(await fs.promises.readFile(composePath, 'utf-8'));
+    }
+
+    const metadata = await this.metadata;
+
     if (isVMTypeImage(metadata.vm)) {
-      contents = {
+      // Only an image was specified, make up a compose file.
+      return {
         name:     this.id.replace(/[^a-z0-9_-]/g, '_'),
         // Disable lint because it's a literal ${DESKTOP_PLUGIN_IMAGE} string.
         // eslint-disable-next-line no-template-curly-in-string
         services: { web: { image: '${DESKTOP_PLUGIN_IMAGE}' } },
       };
+    }
+    if (isVMTypeComposefile(metadata.vm)) {
+      const composePath = path.posix.normalize(metadata.vm.composefile);
+      const opts = { namespace: this.extensionNamespace };
 
+      return yaml.parse(await this.client.readFile(this.image, composePath, opts));
+    }
+    throw new Error(`Invalid vm type`);
+  }
+
+  protected async installContainers(workDir: string, metadata: ExtensionMetadata): Promise<void> {
+    const composeDir = path.join(workDir, 'compose');
+    let contents: ComposeFile;
+
+    // Extract compose file and place it in composeDir
+    if (isVMTypeImage(metadata.vm)) {
+      contents = await this.getComposeFileContents();
       await fs.promises.mkdir(composeDir, { recursive: true });
-      await fs.promises.writeFile(path.join(composeDir, 'compose.yaml'), JSON.stringify(contents));
     } else if (isVMTypeComposefile(metadata.vm)) {
       const imageComposeDir = path.posix.dirname(path.posix.normalize(metadata.vm.composefile));
 
@@ -328,7 +399,9 @@ export class ExtensionImpl implements Extension {
         composeDir,
         { namespace: this.extensionNamespace });
 
-      contents = yaml.parse(await fs.promises.readFile(path.join(composeDir, path.posix.basename(metadata.vm.composefile)), 'utf-8'));
+      contents = await this.getComposeFileContents();
+      // Always clobber the compose project name to avoid issues with length.
+      contents.name = await this.getComposeName();
     } else {
       console.debug(`Extension ${ this.id } does not have containers to run.`);
 
@@ -349,9 +422,9 @@ export class ExtensionImpl implements Extension {
 
       // Fix up the compose file to always have a volume at /run/guest-services/
       // so that it can be used for sockets to be exposed.
-      for (const service of Object.values<any>(contents.services)) {
+      for (const service of Object.values(contents.services)) {
         service.volumes ??= [];
-        if (!service.volumes.find((v: { target: string; }) => v?.target === '/run/guest-services')) {
+        if (!service.volumes.find(v => typeof v !== 'string' && v?.target === '/run/guest-services')) {
           service.volumes.push({
             type:   'volume',
             source: 'r-d-x-guest-services',
@@ -360,18 +433,18 @@ export class ExtensionImpl implements Extension {
           });
         }
       }
-
-      // Write out the modified compose file, either clobbering the original or
-      // using the preferred name and shadowing the original.
-      await fs.promises.writeFile(path.join(composeDir, 'compose.yaml'), yaml.stringify(contents));
     }
 
+    // Write out the modified compose file, either clobbering the original or
+    // using the preferred name and shadowing the original.
+    await fs.promises.writeFile(path.join(composeDir, 'compose.yaml'), JSON.stringify(contents));
+
     // Run `ctrctl compose up`
-    console.debug(`Running ${ this.id } compose up`);
+    console.debug(`Running ${ this.id } compose up for ${ contents.name }`);
     await this.client.composeUp(
       {
         composeDir,
-        name:      this.containerName,
+        name:      await this.getComposeName(),
         namespace: this.extensionNamespace,
         env:       { DESKTOP_PLUGIN_IMAGE: this.image },
       },
@@ -417,7 +490,7 @@ export class ExtensionImpl implements Extension {
     console.debug(`Running ${ this.id } compose down`);
     await this.client.composeDown({
       composeDir: path.join(this.dir, 'compose'),
-      name:       this.containerName,
+      name:       await this.getComposeName(),
       namespace:  this.extensionNamespace,
       env:        { DESKTOP_PLUGIN_IMAGE: this.image },
     });
@@ -455,7 +528,7 @@ export class ExtensionImpl implements Extension {
   async getBackendPort() {
     const portInfo = await this.client.composePort({
       composeDir: path.join(this.dir, 'compose'),
-      name:       this.containerName,
+      name:       await this.getComposeName(),
       namespace:  this.extensionNamespace,
       env:        { DESKTOP_PLUGIN_IMAGE: this.image },
       service:    'r-d-x-port-forwarding',
@@ -483,7 +556,7 @@ export class ExtensionImpl implements Extension {
 
     return this.client.composeExec({
       composeDir: path.join(this.dir, 'compose'),
-      name:       this.containerName,
+      name:       await this.getComposeName(),
       namespace:  this.extensionNamespace,
       env:        { ...options.env, DESKTOP_PLUGIN_IMAGE: this.image },
       service,
