@@ -52,7 +52,6 @@ linters:
   enable:
     - bodyclose
     - deadcode
-    - depguard
     - dogsled
     - dupl
     - errcheck
@@ -100,6 +99,7 @@ linters:
   # - testpackage
   # - revive
   # - wsl
+  # - depguard # Requires configuration and by default only allows stdlib imports
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
