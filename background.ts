@@ -268,9 +268,10 @@ Electron.app.whenReady().then(async() => {
     // Path management strategy will need to be selected after an update
     if (!os.platform().startsWith('win') && cfg.application.pathManagementStrategy === PathManagementStrategy.NotSet) {
       if (!noModalDialogs) {
-        await window.openPathUpdate();
+        await window.openFirstRunDialog();
       } else {
         cfg.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
+        mainEvents.emit('settings-write', { application: { pathManagementStrategy: cfg.application.pathManagementStrategy }});
       }
     }
 
