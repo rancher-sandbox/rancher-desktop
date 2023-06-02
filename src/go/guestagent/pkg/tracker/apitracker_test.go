@@ -52,7 +52,7 @@ func TestBasicAdd(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -88,7 +88,7 @@ func TestAddOverride(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -179,7 +179,7 @@ func TestAddWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -274,7 +274,7 @@ func TestGet(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 	err := apiTracker.Add(containerID, portMapping)
 	assert.NoError(t, err)
 
@@ -302,7 +302,7 @@ func TestRemove(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -366,7 +366,7 @@ func TestRemoveWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -426,7 +426,7 @@ func TestRemoveAll(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -490,7 +490,7 @@ func TestRemoveAllWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL)
+	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -542,6 +542,69 @@ func TestRemoveAllWithError(t *testing.T) {
 
 	expectedPortMapping2 := apiTracker.Get(containerID2)
 	assert.Nil(t, expectedPortMapping2)
+}
+
+func TestNonAdminInstall(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+
+	var expectedExposeReq []*types.ExposeRequest
+
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var tmpReq *types.ExposeRequest
+		err := json.NewDecoder(r.Body).Decode(&tmpReq)
+		assert.NoError(t, err)
+		expectedExposeReq = append(expectedExposeReq, tmpReq)
+	})
+
+	var expectedUnexposeReq []*types.UnexposeRequest
+
+	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
+		var tmpReq *types.UnexposeRequest
+		err := json.NewDecoder(r.Body).Decode(&tmpReq)
+		assert.NoError(t, err)
+		expectedUnexposeReq = append(expectedUnexposeReq, tmpReq)
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(testSrv.URL, false)
+
+	portMapping := nat.PortMap{
+		"1025/tcp": []nat.PortBinding{
+			{
+				HostIP:   "192.168.0.124",
+				HostPort: "1025",
+			},
+		},
+	}
+
+	err := apiTracker.Add(containerID, portMapping)
+	assert.NoError(t, err)
+
+	assert.ElementsMatch(t, expectedExposeReq,
+		[]*types.ExposeRequest{
+			{
+				Local:  ipPortBuilder("127.0.0.1", "1025"),
+				Remote: ipPortBuilder(hostSwitchIP, "1025"),
+			},
+		},
+	)
+
+	err = apiTracker.Remove(containerID)
+	assert.NoError(t, err)
+
+	assert.ElementsMatch(t, expectedUnexposeReq,
+		[]*types.UnexposeRequest{
+			{
+				Local: ipPortBuilder("127.0.0.1", "1025"),
+			},
+		})
+
+	portMapping = apiTracker.Get(containerID)
+	assert.Nil(t, portMapping)
 }
 
 func ipPortBuilder(ip, port string) string {
