@@ -27,7 +27,12 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="preferences-nav-item" :class="{ active }" @click="navClicked">
+  <div
+    class="preferences-nav-item"
+    :class="{ active }"
+    @click="navClicked"
+    @keydown.enter="navClicked"
+  >
     <slot>Menu Item</slot>
   </div>
 </template>
@@ -39,9 +44,19 @@ export default Vue.extend({
     padding: 0.5rem 0.75rem;
     cursor: pointer;
     user-select: none;
-  }
 
-  .active {
-    background-color: var(--nav-active);
+    &.active {
+      background-color: var(--nav-active);
+
+      &:focus {
+        background-color: var(--nav-active);
+      }
+    }
+
+    &:focus {
+      border: none;
+      outline: none;
+      background-color: var(--primary-banner-bg);
+    }
   }
 </style>

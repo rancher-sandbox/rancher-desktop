@@ -19,6 +19,7 @@ export default Vue.extend({
 
   methods: {
     navClicked(tabName: string) {
+      console.log('NOT FAIL');
       if (tabName !== this.$props.currentNavItem) {
         this.$emit('nav-changed', tabName);
       }
@@ -38,6 +39,7 @@ export default Vue.extend({
       :data-test="navToKebab(navItem)"
       :name="navItem"
       :active="currentNavItem === navItem"
+      tabindex="0"
       @click="navClicked"
     >
       {{ navItem }}
