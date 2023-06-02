@@ -24,6 +24,7 @@ import (
 
 // extensionCmd represents the extension command
 var extensionCmd = &cobra.Command{
+	Short: "Manage extensions",
 	Long: `rdctl extension - manage installed extensions
 `,
 	Use: "extension [install | uninstall | ls] [options...]",
