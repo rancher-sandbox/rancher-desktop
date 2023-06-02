@@ -12,6 +12,7 @@ supervisor=supervise-daemon
 name="Rancher Desktop Guest Agent"
 command=/usr/local/bin/rancher-desktop-guestagent
 command_args="
+  ${GUESTAGENT_ADMIN_INSTALL:+-adminInstall=${GUESTAGENT_ADMIN_INSTALL}}
   ${GUESTAGENT_KUBERNETES:+-kubernetes=${GUESTAGENT_KUBERNETES}}
   ${GUESTAGENT_IPTABLES:+-iptables=${GUESTAGENT_IPTABLES}}
   ${GUESTAGENT_PRIVILEGED_SERVICE:+-privilegedService=${GUESTAGENT_PRIVILEGED_SERVICE}}

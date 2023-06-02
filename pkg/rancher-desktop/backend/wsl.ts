@@ -8,6 +8,7 @@ import stream from 'stream';
 import util from 'util';
 
 import _ from 'lodash';
+import * as reg from 'native-reg';
 import semver from 'semver';
 import tar from 'tar-stream';
 
@@ -174,7 +175,37 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /** The current config state. */
   protected cfg: BackendSettings | undefined;
 
-  /** Indicates wherther the current installation is a privileged install or not. */
+  /** Indicates wherther the current installtion is an Admin Install. */
+  #isAdminInstall: Promise<boolean> | undefined;
+
+  protected getIsAdminInstall(): Promise<boolean> {
+    this.#isAdminInstall ??= new Promise((resolve) => {
+      let key;
+
+      try {
+        key = reg.openKey(reg.HKLM, 'SOFTWARE', reg.Access.READ);
+
+        if (key) {
+          const parsedValue = reg.getValue(key, 'SUSE\\RancherDesktop', 'AdminInstall');
+          const isAdmin = parsedValue !== null;
+
+          return resolve(isAdmin);
+        } else {
+          console.debug('Failed to open registry key: HKEY_LOCAL_MACHINE\SOFTWARE');
+        }
+      } catch (error) {
+        console.error(`Error accessing registry: ${ error }`);
+      } finally {
+        reg.closeKey(key);
+      }
+
+      return resolve(false);
+    });
+
+    return this.#isAdminInstall;
+  }
+
+  /** Indicates wherther privileged service is enabled in the current installation. */
   protected privilegedServiceEnabled = false;
 
   /**
@@ -858,6 +889,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     if (rdNetworking || this.privilegedServiceEnabled) {
       guestAgentConfig = {
         LOG_DIR:                       await this.wslify(paths.logs),
+        GUESTAGENT_ADMIN_INSTALL:      await this.getIsAdminInstall(),
         GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
         GUESTAGENT_IPTABLES:           enableKubernetes ? 'false' : 'true', // only enable IPTABLES for older K8s
         GUESTAGENT_PRIVILEGED_SERVICE: rdNetworking ? 'false' : 'true',
@@ -1452,9 +1484,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
         }
 
-        // If it's not a privileged installation preset guestAgent
-        // port binding address to localhost only.
-        if (!this.privilegedServiceEnabled && !config.kubernetes.ingress.localhostOnly) {
+        // Set the kubernetes ingress address to localhost only for
+        // a non-admin installation, if it's not already set.
+        if (!config.kubernetes.ingress.localhostOnly && !await this.getIsAdminInstall()) {
           this.writeSetting({ kubernetes: { ingress: { localhostOnly: true } } });
         }
 
