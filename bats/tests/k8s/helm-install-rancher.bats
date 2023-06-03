@@ -2,8 +2,7 @@
 
 load '../helpers/load'
 
-setup() {
-    shared_setup
+local_setup() {
     needs_port 443
 }
 
@@ -56,12 +55,9 @@ get_host() {
     assert_output --partial "bootstrapPassword"
 }
 
-teardown_file() {
-    load '../helpers/load'
-
+local_teardown_file() {
     run helm uninstall rancher --namespace cattle-system --wait
     assert_nothing
     run helm uninstall cert-manager --namespace cert-manager --wait
     assert_nothing
-    shared_teardown_file
 }

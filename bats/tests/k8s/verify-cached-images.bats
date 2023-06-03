@@ -36,10 +36,3 @@ test_k8s_version_has_correct_cached_extension() {
 @test 'verify k8s 1.26.3 uses .tar.zst in the cache' {
     test_k8s_version_has_correct_cached_extension "1.26.3" "tar.zst"
 }
-
-# Linux bats doesn't shutdown if Rancher Desktop is still running
-teardown_file() {
-    load '../helpers/load'
-    run rdctl shutdown
-    assert_success
-}

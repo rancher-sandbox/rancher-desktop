@@ -1,7 +1,6 @@
 load '../helpers/load'
 
-setup() {
-    shared_setup
+local_setup() {
     if is_macos arm64; then
         skip "The bitnami wordpress image is not available for arm64 architecture. Skipping..."
     fi
@@ -48,13 +47,11 @@ setup() {
     assert_output --regexp "(Just another WordPress site|<title>User&#039;s Blog!</title>)"
 }
 
-teardown_file() {
-    load '../helpers/load'
+local_teardown_file() {
     run helm uninstall wordpress --wait
     assert_nothing
 
     # The database PVC doesn't get deleted by `helm uninstall`.
     run kubectl delete pvc data-wordpress-mariadb-0
     assert_nothing
-    shared_teardown_file
 }

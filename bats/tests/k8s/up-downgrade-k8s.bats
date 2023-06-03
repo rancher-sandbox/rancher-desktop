@@ -158,12 +158,9 @@ verify_nginx_after_change_k8s() {
     verify_images
 }
 
-teardown_file() {
-    load '../helpers/load'
-
+local_teardown_file() {
     run ctrctl rm -f nginx-restart nginx-no-restart
     assert_nothing
     run kubectl delete --selector="app=busybox"
     assert_nothing
-    shared_teardown_file
 }
