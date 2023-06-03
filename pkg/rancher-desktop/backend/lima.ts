@@ -62,6 +62,16 @@ export enum Action {
 }
 
 /**
+ * Symbolc names for various SLIRP IP addresses.
+ */
+enum SLIRP {
+  HOST_GATEWAY = '192.168.5.2',
+  DNS = '192.168.5.3',
+  GUEST_IP_ADDRESS = '192.168.5.15',
+  GUEST_IP_ADDRESS_VZ = '192.168.5.1',
+}
+
+/**
  * Enumeration for determining whether to use vde_vmnet or socket_vmnet.
  */
 enum VMNet {
@@ -456,11 +466,20 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   /**
-   * Get the IPv4 address of the VM, assuming it's already up.
-   * In Lima the slirp IP is hard-coded to 192.168.5.15.
+   * Get the IPv4 address of the VM. This address should be routable from within the VM itself.
+   * In Lima the SLIRP guest IP address is hard-coded.
    */
   get ipAddress(): Promise<string | undefined> {
-    return Promise.resolve('192.168.5.15');
+    let addr = SLIRP.GUEST_IP_ADDRESS;
+
+    // Lima is using a different guest address when using the VZ framework
+    // TODO This may be a bug in Lima and the code here needs to be changed if Lima is updated.
+    // ref: https://github.com/lima-vm/lima/discussions/1600#discussioncomment-6068628
+    if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
+      addr = SLIRP.GUEST_IP_ADDRESS_VZ;
+    }
+
+    return Promise.resolve(addr);
   }
 
   getBackendInvalidReason(): Promise<BackendError | null> {
@@ -690,7 +709,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     delete (config as Record<string, unknown>).paths;
 
     if (os.platform() === 'darwin') {
-      if (allowRoot) {
+      if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
+        console.log('vde/socket_vmnet are not supported in VZ emulation');
+        delete config.networks;
+      } else if (allowRoot) {
         const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
           return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
         });
@@ -1630,24 +1652,26 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * used for flannel configuration.
    */
   async getListeningInterface() {
-    const bridgedIP = await this.getInterfaceAddr('rd0');
+    if (this.cfg?.experimental.virtualMachine.type === VMType.QEMU) {
+      const bridgedIP = await this.getInterfaceAddr('rd0');
 
-    if (bridgedIP) {
-      console.log(`Using ${ bridgedIP } on bridged network rd0`);
+      if (bridgedIP) {
+        console.log(`Using ${ bridgedIP } on bridged network rd0`);
 
-      return { iface: 'rd0', addr: bridgedIP };
+        return { iface: 'rd0', addr:  bridgedIP };
+      }
+      const sharedIP = await this.getInterfaceAddr('rd1');
+
+      if (this.cfg?.application.adminAccess) {
+        await this.noBridgedNetworkDialog(sharedIP);
+      }
+      if (sharedIP) {
+        console.log(`Using ${ sharedIP } on shared network rd1`);
+
+        return { iface: 'rd1', addr: sharedIP };
+      }
+      console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
     }
-    const sharedIP = await this.getInterfaceAddr('rd1');
-
-    if (this.cfg?.application.adminAccess) {
-      await this.noBridgedNetworkDialog(sharedIP);
-    }
-    if (sharedIP) {
-      console.log(`Using ${ sharedIP } on shared network rd1`);
-
-      return { iface: 'rd1', addr: sharedIP };
-    }
-    console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
 
     return { iface: 'eth0', addr: await this.ipAddress };
   }
@@ -1679,7 +1703,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   protected async configureOpenResty(config: BackendSettings) {
     const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
     // TODO: don't use hardcoded IP address
-    const resolver = 'resolver 192.168.5.3 ipv6=off;\n';
+    const resolver = `resolver ${ SLIRP.DNS } ipv6=off;\n`;
 
     await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
@@ -1963,14 +1987,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const credsPath = getServerCredentialsPath();
 
     try {
-      const hostIPAddr = '192.168.5.2';
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'");
       // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
       const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
       const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
-CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
+CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
 `;
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
