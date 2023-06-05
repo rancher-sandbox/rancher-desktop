@@ -345,7 +345,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       ENGINE:          cfg.containerEngine.name ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
-      USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, cfg.kubernetes.version || desiredVersion.version).toString(),
+      USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, desiredVersion.version).toString(),
     };
 
     if (allowSudo && os.platform() === 'darwin') {
