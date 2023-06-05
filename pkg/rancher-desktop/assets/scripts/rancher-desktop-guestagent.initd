@@ -22,8 +22,8 @@ command_args="
   ${GUESTAGENT_DEBUG:+-debug}
   "
 command_args="${command_args//$'\n'/ }"
-output_log="${GUESTAGENT_LOGFILE}"
-error_log="${GUESTAGENT_LOGFILE}"
+output_log="'${GUESTAGENT_LOGFILE}'"
+error_log="'${GUESTAGENT_LOGFILE}'"
 
 respawn_delay=5
 respawn_max=0
