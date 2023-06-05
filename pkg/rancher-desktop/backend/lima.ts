@@ -1658,7 +1658,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       if (bridgedIP) {
         console.log(`Using ${ bridgedIP } on bridged network rd0`);
 
-        return { iface: 'rd0', addr:  bridgedIP };
+        return { iface: 'rd0', addr: bridgedIP };
       }
       const sharedIP = await this.getInterfaceAddr('rd1');
 
