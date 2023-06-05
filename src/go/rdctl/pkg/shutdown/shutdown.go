@@ -74,6 +74,13 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 		if err != nil {
 			return err
 		}
+		if initiatingCommand == Shutdown {
+			// Just check once to see if lima is still running, and if so, run `limactl stop --force 0`
+			err = s.waitForAppToDieOrKillIt(checkLima, stopLimaWithForce, 1, 2, "lima")
+			if err != nil {
+				return err
+			}
+		}
 		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
 		if err != nil {
 			return err
@@ -181,20 +188,23 @@ func checkLima() (bool, error) {
 	return strings.HasPrefix(string(result), "Running"), nil
 }
 
-func stopLima() error {
-	cmd := exec.Command(limaCtlPath, "stop", "--force", "0")
+func runCommandIgnoreOutput(cmd *exec.Cmd) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
+func stopLima() error {
+	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "stop", "0"))
+}
+
+func stopLimaWithForce() error {
+	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "stop", "--force", "0"))
+}
+
 func deleteLima() error {
-	cmd := exec.Command(limaCtlPath, "delete", "--force", "0")
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "delete", "--force", "0"))
 }
 
 func pkillDarwin() error {
