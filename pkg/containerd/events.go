@@ -36,8 +36,9 @@ const portsKey = "nerdctl/ports"
 // EventMonitor monitors the Containerd API
 // for container events.
 type EventMonitor struct {
-	containerdClient *containerd.Client
-	portTracker      tracker.Tracker
+	containerdClient        *containerd.Client
+	portTracker             tracker.Tracker
+	enablePrivilegedService bool
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
@@ -46,6 +47,7 @@ type EventMonitor struct {
 func NewEventMonitor(
 	containerdSock string,
 	portTracker tracker.Tracker,
+	enablePrivilegedService bool,
 ) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
 	if err != nil {
@@ -53,8 +55,9 @@ func NewEventMonitor(
 	}
 
 	return &EventMonitor{
-		containerdClient: client,
-		portTracker:      portTracker,
+		containerdClient:        client,
+		portTracker:             portTracker,
+		enablePrivilegedService: enablePrivilegedService,
 	}, nil
 }
 
@@ -101,7 +104,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 
-				updateListener(ctx, ports, e.portTracker.AddListener)
+				e.updateListener(ctx, ports, e.portTracker.AddListener)
 
 			case "/containers/update":
 				cuEvent := &events.ContainerUpdate{}
@@ -127,7 +130,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						updateListener(ctx, ports, e.portTracker.RemoveListener)
+						e.updateListener(ctx, ports, e.portTracker.RemoveListener)
 						err = e.portTracker.Add(cuEvent.ID, ports)
 						if err != nil {
 							log.Errorf("failed to add port mapping from container update event: %v", err)
@@ -135,7 +138,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							continue
 						}
 
-						updateListener(ctx, ports, e.portTracker.AddListener)
+						e.updateListener(ctx, ports, e.portTracker.AddListener)
 					}
 
 					continue
@@ -160,7 +163,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					}
 				}
 
-				updateListener(ctx, portMapToDelete, e.portTracker.RemoveListener)
+				e.updateListener(ctx, portMapToDelete, e.portTracker.RemoveListener)
 			}
 
 		case err := <-errCh:
@@ -215,6 +218,41 @@ func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, contain
 	return createPortMappingFromString(container.Labels[portsKey])
 }
 
+func (e *EventMonitor) updateListener(
+	ctx context.Context,
+	portMappings nat.PortMap,
+	action func(context.Context, net.IP, int) error,
+) {
+	// Only create listeners for the default network when the PrivilegedService is enabled.
+	// Otherwise, creating listeners can conflict with the proxy listeners that are created
+	// by the namespaced network’s port exposing API.
+	if !e.enablePrivilegedService {
+		return
+	}
+
+	for _, portBindings := range portMappings {
+		for _, portBinding := range portBindings {
+			port, err := strconv.Atoi(portBinding.HostPort)
+			if err != nil {
+				log.Errorf("port conversion for [%+v] error: %v", portBinding, err)
+
+				continue
+			}
+
+			// We always need to use INADDR_ANY here since any other addresses used here
+			// can cause a wrong entry in iptables and will not be routable.
+			if err := action(ctx, net.IPv4zero, port); err != nil {
+				log.Errorf("updating listener for IP: [%s] and Port: [%s] failed: %v",
+					net.IPv4zero,
+					portBinding.HostPort,
+					err)
+
+				continue
+			}
+		}
+	}
+}
+
 func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 	var ports []Port
 
@@ -249,32 +287,8 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 	return portMap, nil
 }
 
-func updateListener(ctx context.Context, portMappings nat.PortMap, action func(context.Context, net.IP, int) error) {
-	for _, portBindings := range portMappings {
-		for _, portBinding := range portBindings {
-			port, err := strconv.Atoi(portBinding.HostPort)
-			if err != nil {
-				log.Errorf("port conversion for [%+v] error: %v", portBinding, err)
-
-				continue
-			}
-
-			// We always need to use INADDR_ANY here since any other addresses used here
-			// can cause a wrong entry in iptables and will not be routable.
-			if err := action(ctx, net.IPv4zero, port); err != nil {
-				log.Errorf("updating listener for IP: [%s] and Port: [%s] failed: %v",
-					net.IPv4zero,
-					portBinding.HostPort,
-					err)
-
-				continue
-			}
-		}
-	}
-}
-
 // Port is representing nerdctl/ports entry in the
-// evnet envelope's labels.
+// event envelope's labels.
 type Port struct {
 	HostPort      int
 	ContainerPort int
