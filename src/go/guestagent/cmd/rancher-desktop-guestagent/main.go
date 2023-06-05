@@ -146,7 +146,7 @@ func main() {
 
 	if *enableContainerd {
 		group.Go(func() error {
-			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker, *enablePrivilegedService)
 			if err != nil {
 				return fmt.Errorf("error initializing containerd event monitor: %w", err)
 			}
@@ -161,6 +161,19 @@ func main() {
 
 	if *enableDocker {
 		group.Go(func() error {
+			// Only run the iptables rules when moby backend
+			// along with the namespaced network is enabled.
+			if !*enablePrivilegedService {
+				if err := iptables.LoopbackRules(iptables.AppendToChain); err != nil {
+					log.Fatalf("failed creating iptables rules: %v", err)
+				}
+
+				defer func() {
+					if err := iptables.LoopbackRules(iptables.DeleteFromChain); err != nil {
+						log.Errorf("failed deleting iptables rules: %v", err)
+					}
+				}()
+			}
 			eventMonitor, err := docker.NewEventMonitor(portTracker)
 			if err != nil {
 				return fmt.Errorf("error initializing docker event monitor: %w", err)
