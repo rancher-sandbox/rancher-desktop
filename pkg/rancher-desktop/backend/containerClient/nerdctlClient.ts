@@ -192,18 +192,14 @@ export class NerdctlClient implements ContainerEngineClient {
         sourceName = path.posix.basename(sourcePath);
         sourceDir = path.posix.join(imageDir, path.posix.dirname(sourcePath));
       }
-      // Compute the list of all files to archive, but exclude symlinks that
-      // point outside the source directory (and directories, because tar is
-      // recursive).
+      // Compute the list of all files to archive, but only including things
+      // that (after resolving symlinks) point into the mount.
+      // This means that absolute links to /proc etc. are skipped.
       await this.vm.execCommand({ root: true, cwd: sourceDir },
-        '/usr/bin/find', sourceName,
-        '-type', 'd', '-or', '(',
-        '(',
+        '/usr/bin/find', '-L', sourceName, '-xdev',
+        '-type', 'f', // After resolving symlinks, the target is a regular file
         '-exec', '/bin/sh', '-c', `readlink -f {} | grep -q '${ imageDir }'`, ';',
-        ')',
-        '-a',
-        '-exec', '/bin/sh', '-c', `echo '{}' >> ${ fileList }`, ';',
-        ')');
+        '-exec', '/bin/sh', '-c', `echo '{}' >> ${ fileList }`, ';');
 
       const args = [
         '--create', '--gzip', '--file', archive, '--directory', sourceDir,
