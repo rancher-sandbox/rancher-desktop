@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import semver from 'semver';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
@@ -14,20 +15,27 @@ interface CommitArgs extends ServerState {
   payload?: RecursivePartial<TransientSettings>;
 }
 
+type ExtendedTransientSettings = TransientSettings & {
+  macOsVersion?: semver.SemVer;
+};
+
 const uri = (port: number) => `http://localhost:${ port }/v1/transient_settings`;
 
-export const state: () => TransientSettings = () => _.cloneDeep(defaultTransientSettings);
+export const state: () => ExtendedTransientSettings = () => _.cloneDeep(defaultTransientSettings);
 
-export const mutations: MutationsType<TransientSettings> = {
+export const mutations: MutationsType<ExtendedTransientSettings> = {
   SET_PREFERENCES(state, preferences) {
     state.preferences = preferences;
   },
   SET_NO_MODAL_DIALOGS(state, noModalDialogs) {
     state.noModalDialogs = noModalDialogs;
   },
+  SET_MAC_OS_VERSION(state, macOsVersion) {
+    state.macOsVersion = macOsVersion;
+  },
 };
 
-type TransientSettingsContext = ActionContext<TransientSettings>;
+type TransientSettingsContext = ActionContext<ExtendedTransientSettings>;
 
 export const actions = {
   setPreferences({ commit }: TransientSettingsContext, preferences: Preferences) {
@@ -68,6 +76,9 @@ export const actions = {
       'transientSettings/fetchTransientSettings',
       args,
       { root: true });
+  },
+  setMacOsVersion({ commit }: TransientSettingsContext, macOsVersion: semver.SemVer) {
+    commit('SET_MAC_OS_VERSION', macOsVersion);
   },
 };
 
