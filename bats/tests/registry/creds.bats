@@ -33,12 +33,22 @@ setup() {
         # BUG BUG BUG
         REGISTRY_HOST="localhost"
     else
+        # Determine IP address of the VM that is routable inside the VM itself.
+        # Essentially localhost, but needs to be a routable IP that also works
+        # from inside a container. Will be turned into a DNS name using sslip.io.
         if is_windows; then
             # In WSL all distros have the same IP address
             ipaddr="$(ip a show eth0 | awk '/inet / {sub("/.*",""); print $2}')"
         else
             # Lima uses a fixed hard-coded IP address
             ipaddr="192.168.5.15"
+            # BUG BUG BUG
+            # The guest IP is different under VZ emulation; this might still change in Lima.
+            # https://github.com/lima-vm/lima/discussions/1600#discussioncomment-6068628
+            # BUG BUG BUG
+            if using_vz_emulation; then
+                ipaddr="192.168.5.1"
+            fi
         fi
         REGISTRY_HOST="registry.$ipaddr.sslip.io"
     fi
