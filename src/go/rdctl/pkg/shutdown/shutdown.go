@@ -18,13 +18,14 @@ package shutdown
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/sirupsen/logrus"
 )
@@ -32,6 +33,8 @@ import (
 type shutdownData struct {
 	waitForShutdown bool
 }
+
+var limaCtlPath string
 
 func newShutdownData(waitForShutdown bool) *shutdownData {
 	return &shutdownData{waitForShutdown: waitForShutdown}
@@ -43,14 +46,25 @@ func FinishShutdown(waitForShutdown bool) error {
 	s := newShutdownData(waitForShutdown)
 	var err error
 	switch runtime.GOOS {
-	case "darwin":
-		err = s.waitForAppToDieOrKillIt(checkProcessQemu, stopLima, 15, 2, "qemu")
-		if err == nil {
-			err = s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
+	case "darwin", "linux":
+		if err = directories.SetupLimaHome(); err != nil {
+			return err
 		}
-	case "linux":
-		err = s.waitForAppToDieOrKillIt(checkProcessQemu, stopLima, 15, 2, "qemu")
-		if err == nil {
+		limaCtlPath, err = directories.GetLimactlPath()
+		if err != nil {
+			return err
+		}
+		err = s.waitForAppToDieOrKillIt(checkLima, stopLima, 15, 2, "lima")
+		if err != nil {
+			return err
+		}
+		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
+		if err != nil {
+			return err
+		}
+		if runtime.GOOS == "darwin" {
+			err = s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
+		} else {
 			err = s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
 		}
 	case "windows":
@@ -133,20 +147,30 @@ func pkill(args ...string) error {
 	return nil
 }
 
-func stopLima() error {
-	if err := directories.SetupLimaHome(); err != nil {
-		return err
-	}
-	commandPath, err := directories.GetLimactlPath()
+func pkillQemu() error {
+	err := pkill("-9", "-f", RancherDesktopQemuCommand)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to kill qemu: %w", err)
 	}
-	args := []string{"stop", "-f", "0"}
-	shellCommand := exec.Command(commandPath, args...)
-	shellCommand.Stdin = os.Stdin
-	shellCommand.Stdout = os.Stdout
-	shellCommand.Stderr = os.Stderr
-	return shellCommand.Run()
+	return nil
+}
+
+func checkLima() (bool, error) {
+	cmd := exec.Command(limaCtlPath, "ls", "--format", "{{.Status}}", "0")
+	cmd.Stderr = os.Stderr
+	result, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	return strings.HasPrefix(string(result), "Running"), nil
+}
+
+func stopLima() error {
+	cmd := exec.Command(limaCtlPath, "stop", "-f", "0")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func pkillDarwin() error {
