@@ -34,11 +34,11 @@ type shutdownData struct {
 	waitForShutdown bool
 }
 
-type InitiatingCommand int8
+type InitiatingCommand string
 
 const (
-	Shutdown     InitiatingCommand = 1
-	FactoryReset InitiatingCommand = 2
+	Shutdown     InitiatingCommand = "shutdown"
+	FactoryReset InitiatingCommand = "factory-reset"
 )
 
 var limaCtlPath string
@@ -47,58 +47,53 @@ func newShutdownData(waitForShutdown bool) *shutdownData {
 	return &shutdownData{waitForShutdown: waitForShutdown}
 }
 
-// FinishShutdown - common function used by both the shutdown and factory-reset commands
-// to ensure rancher desktop is no longer running after sending it a shutdown command
+// FinishShutdown - ensures that none of the Rancher Desktop related processes are around
+// after a graceful shutdown command has been sent as part of either `rdctl shutdown` or
+// `rdctl factory-reset`.
 func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) error {
 	s := newShutdownData(waitForShutdown)
-	var err error
-	switch runtime.GOOS {
-	case "darwin", "linux":
-		if err = directories.SetupLimaHome(); err != nil {
-			return err
-		}
-		limaCtlPath, err = directories.GetLimactlPath()
-		if err != nil {
-			return err
-		}
-		var finishOffLimaCommand func() error
-		switch initiatingCommand {
-		case Shutdown:
-			finishOffLimaCommand = stopLima
-		case FactoryReset:
-			finishOffLimaCommand = deleteLima
-		default:
-			return fmt.Errorf("internal error: unknown shutdown initiating command of %d", initiatingCommand)
-		}
-		err = s.waitForAppToDieOrKillIt(checkLima, finishOffLimaCommand, 15, 2, "lima")
-		if err != nil {
-			return err
-		}
-		if initiatingCommand == Shutdown {
-			// Just check once to see if lima is still running, and if so, run `limactl stop --force 0`
-			err = s.waitForAppToDieOrKillIt(checkLima, stopLimaWithForce, 1, 2, "lima")
-			if err != nil {
-				return err
-			}
-		}
-		err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
-		if err != nil {
-			return err
-		}
-		if runtime.GOOS == "darwin" {
-			err = s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
-		} else {
-			err = s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
-		}
-	case "windows":
-		err = s.waitForAppToDieOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
-	default:
-		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
+	if runtime.GOOS == "windows" {
+		return s.waitForAppToDieOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
 	}
+	var err error
+	if err = directories.SetupLimaHome(); err != nil {
+		return err
+	}
+	limaCtlPath, err = directories.GetLimactlPath()
 	if err != nil {
 		return err
 	}
-	return nil
+	switch initiatingCommand {
+	case Shutdown:
+		err = s.waitForAppToDieOrKillIt(checkLima, stopLima, 15, 2, "lima")
+		if err != nil {
+			return err
+		}
+		// Check once more to see if lima is still running, and if so, run `limactl stop --force 0`
+		err = s.waitForAppToDieOrKillIt(checkLima, stopLimaWithForce, 1, 0, "lima")
+		if err != nil {
+			return err
+		}
+	case FactoryReset:
+		err = s.waitForAppToDieOrKillIt(checkLima, deleteLima, 15, 2, "lima")
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("internal error: unknown shutdown initiating command of '%s'", initiatingCommand)
+	}
+	err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
+	if err != nil {
+		return err
+	}
+	switch runtime.GOOS {
+	case "darwin":
+		return s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
+	case "linux":
+		return s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
+	default:
+		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
+	}
 }
 
 func (s *shutdownData) waitForAppToDieOrKillIt(checkFunc func() (bool, error), killFunc func() error, retryCount int, retryWait int, operation string) error {
