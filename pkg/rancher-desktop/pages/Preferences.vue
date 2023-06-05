@@ -56,6 +56,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     ipcRenderer.on('route', async(event, args) => {
       await this.navigateToTab(args);
     });
+
+    ipcRenderer.invoke('versions/macOs').then((macOsVersion) => {
+      this.$store.dispatch('transientSettings/setMacOsVersion', macOsVersion);
+    });
   },
   beforeDestroy() {
     /**

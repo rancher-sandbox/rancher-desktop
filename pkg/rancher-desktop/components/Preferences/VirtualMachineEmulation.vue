@@ -3,19 +3,22 @@ import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
 import semver from 'semver';
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters, mapState } from 'vuex';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings, VMType } from '@pkg/config/settings';
-import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+interface VuexBindings {
+  macOsVersion: semver.SemVer;
+}
+
+export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-virtual-machine-emulation',
   components: {
     LabeledBadge,
@@ -32,6 +35,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
+    ...mapState('transientSettings', ['macOsVersion']),
     options(): { label: string, value: VMType, description: string, experimental: boolean, disabled: boolean }[] {
       const defaultOption = VMType.QEMU;
 
@@ -53,7 +57,7 @@ export default Vue.extend({
       return this.preferences.experimental.virtualMachine.type === VMType.VZ;
     },
     vzDisabled(): boolean {
-      return semver.gt('13.0.0', getMacOsVersion()) || (os.arch() === 'arm64' && semver.gt('13.3.0', getMacOsVersion()));
+      return semver.lte(this.macOsVersion.version, '13.0.0') || (os.arch() === 'arm64' && semver.lte(this.macOsVersion.version, '13.3.0'));
     },
     rosettaDisabled(): boolean {
       return os.arch() !== 'arm64';
