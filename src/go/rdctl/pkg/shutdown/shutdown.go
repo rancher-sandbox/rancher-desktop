@@ -34,6 +34,13 @@ type shutdownData struct {
 	waitForShutdown bool
 }
 
+type InitiatingCommand int8
+
+const (
+	Shutdown     InitiatingCommand = 1
+	FactoryReset InitiatingCommand = 2
+)
+
 var limaCtlPath string
 
 func newShutdownData(waitForShutdown bool) *shutdownData {
@@ -42,7 +49,7 @@ func newShutdownData(waitForShutdown bool) *shutdownData {
 
 // FinishShutdown - common function used by both the shutdown and factory-reset commands
 // to ensure rancher desktop is no longer running after sending it a shutdown command
-func FinishShutdown(waitForShutdown bool) error {
+func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) error {
 	s := newShutdownData(waitForShutdown)
 	var err error
 	switch runtime.GOOS {
@@ -54,7 +61,16 @@ func FinishShutdown(waitForShutdown bool) error {
 		if err != nil {
 			return err
 		}
-		err = s.waitForAppToDieOrKillIt(checkLima, stopLima, 15, 2, "lima")
+		var finishOffLimaCommand func() error
+		switch initiatingCommand {
+		case Shutdown:
+			finishOffLimaCommand = stopLima
+		case FactoryReset:
+			finishOffLimaCommand = deleteLima
+		default:
+			return fmt.Errorf("internal error: unknown shutdown initiating command of %d", initiatingCommand)
+		}
+		err = s.waitForAppToDieOrKillIt(checkLima, finishOffLimaCommand, 15, 2, "lima")
 		if err != nil {
 			return err
 		}
@@ -166,7 +182,15 @@ func checkLima() (bool, error) {
 }
 
 func stopLima() error {
-	cmd := exec.Command(limaCtlPath, "stop", "-f", "0")
+	cmd := exec.Command(limaCtlPath, "stop", "--force", "0")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func deleteLima() error {
+	cmd := exec.Command(limaCtlPath, "delete", "--force", "0")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
