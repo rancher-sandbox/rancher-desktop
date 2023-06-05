@@ -746,6 +746,10 @@ ipcMainProxy.on('get-app-version', async(event) => {
   event.reply('get-app-version', await getVersion());
 });
 
+ipcMainProxy.handle('versions/macOs', () => {
+  return getMacOsVersion();
+});
+
 ipcMainProxy.on('help/preferences/open-url', async() => {
   Help.preferences.openUrl(await getVersion());
 });

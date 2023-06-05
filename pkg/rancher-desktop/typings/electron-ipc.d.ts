@@ -6,6 +6,7 @@ import Electron from 'electron';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
+import semver from 'semver';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -118,6 +119,10 @@ export interface IpcMainInvokeEvents {
   /** Fetch data from the backend, or arbitrary host ignoring CORS. */
   'extensions/vm/http-fetch': (config: import('@docker/extension-api-client-types').v1.RequestConfig) => any;
   // #endregion
+
+  // #region Versions
+  'versions/macOs': () => semver.SemVer;
+  // #endregion
 }
 
 /**
@@ -175,5 +180,9 @@ export interface IpcRendererEvents {
 
   // #region preferences
   'preferences/changed': () => void;
+  // #endregion
+
+  // #region Versions
+  'versions/macOs': (macOsVersion: semver.SemVer) => void;
   // #endregion
 }
