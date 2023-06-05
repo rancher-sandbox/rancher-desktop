@@ -10,6 +10,7 @@ import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electr
 import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
 import semver from 'semver';
 
+import * as childProcess from '@pkg/utils/childProcess';
 import fetch from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import { getMacOsVersion } from '@pkg/utils/osVersion';
@@ -66,14 +67,6 @@ export interface LonghornUpdateInfo extends UpdateInfo {
   unsupportedUpdateAvailable: boolean;
 }
 
-type UpgradeResponderRequestPayload = {
-  appVersion: string;
-  extraInfo: {
-    platform: string;
-    platformVersion: string;
-  },
-};
-
 /**
  * LonghornUpgraderResponse describes the response from the Longhorn Upgrade
  * Responder service.
@@ -97,6 +90,15 @@ type UpgradeResponderQueryResult = {
   latest: UpgradeResponderVersion;
   requestIntervalInMinutes: number,
   unsupportedUpdateAvailable: boolean,
+};
+
+export type UpgradeResponderRequestPayload = {
+  appVersion: string;
+  extraInfo: {
+    platform: string;
+    platformVersion: string;
+    wslVersion?: string,
+  },
 };
 
 export interface GithubReleaseAsset {
@@ -245,6 +247,50 @@ async function getPlatformVersion(): Promise<string> {
   throw new Error(`Platform "${ process.platform }" is not supported`);
 }
 
+// Getting WSL version is a complex process. There are two ways that
+// WSL is installed on a system:
+//
+// 1. "In-box" or "feature" versions come with the OS, and have version
+//    numbers that correlate with the OS version. In-box versions do not
+//    have a --version flag.
+// 2. "Application" versions are installed via the Windows app store,
+//    and have version numbers that are independent of the OS. They have
+//    a --version flag.
+//
+// It is possible to have an in-box and an application version of WSL
+// installed simultaneously. If this is the case, the application version
+// always takes precedence.
+//
+// Because the version of an in-box installation of WSL is both difficult
+// to get and not useful, we only try to get the version of any application
+// installation of WSL. If this fails for whatever reason, this function
+// returns undefined.
+export async function getWslVersion(): Promise<string | undefined> {
+  const args = ['--version'];
+  let stdout: string;
+
+  try {
+    const result = await childProcess.spawnFile('wsl.exe', args, {
+      encoding: 'utf16le',
+      stdio:    ['ignore', 'pipe', console],
+    });
+
+    stdout = result.stdout;
+  } catch (ex) {
+    console.warn(`wsl.exe ${ args.join(' ') }: ${ ex }`);
+
+    return undefined;
+  }
+
+  const matches = stdout.match(/^WSL .*? ([0-9.]+)$/m);
+
+  if (!matches || matches.length !== 2) {
+    throw new Error(`failed to find WSL version from stdout "${ stdout }"`);
+  }
+
+  return matches[1];
+}
+
 /**
  * Fetch info on available versions of Rancher Desktop, as well as other
  * things, from the Upgrade Responder server.
@@ -257,6 +303,11 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
       platformVersion: await getPlatformVersion(),
     },
   };
+
+  if (process.platform === 'win32') {
+    requestPayload.extraInfo.wslVersion = await getWslVersion();
+  }
+
   // If we are using anything on `github.io` as the update server, we're
   // trying to run a simplified test.  In that case, break the protocol and do
   // a HTTP GET instead of the HTTP POST with data we should do for actual
