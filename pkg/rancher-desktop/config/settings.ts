@@ -229,13 +229,15 @@ export async function clear() {
  * already been loaded, return it without re-loading from disk.
  */
 export function load(deploymentProfiles: DeploymentProfileType): Settings {
-  let setDefaultMemory = false;
-
   try {
     settings ??= loadFromDisk();
   } catch (err: any) {
     settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
+      // If a deployment profile doesn't set `virtualMachine.memoryInGB`, assign a default value (a few lines down)
+      // based on the available memory.
+      settings.virtualMachine.memoryInGB = 0;
+
       // If there is no settings file, use the contents of the selected defaults deployment profile.
       // Whether or not there's a settings file, give highest priority to any settings in the locked profile
       // (which is merged outside this if-block().
@@ -243,23 +245,18 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       // The deployment profile always returns an empty object if there is no profile.
       // This means that we treat an empty hash defaults profile, or an empty registry hive,
       // as if there is no profile in place (for the purposes of setting the first-run entry).
-
       _.merge(settings, deploymentProfiles.defaults, deploymentProfiles.locked);
-      if (Object.keys(deploymentProfiles.defaults).length || Object.keys(deploymentProfiles.locked).length) {
-        if (!_.has(settings, 'virtualMachine.memoryInGB') && !_.has(deploymentProfiles.locked, 'virtualMachine.memoryInGB')) {
-          setDefaultMemory = true;
-        }
-      } else {
+      if (!Object.keys(deploymentProfiles.defaults).length && !Object.keys(deploymentProfiles.locked).length) {
         _isFirstRun = true;
-        setDefaultMemory = true;
       }
     }
-    if (setDefaultMemory && (os.platform() === 'darwin' || os.platform() === 'linux')) {
-      const totalMemoryInGB = os.totalmem() / 2 ** 30;
+  }
+  if ((os.platform() === 'darwin' || os.platform() === 'linux') &&
+    !settings.virtualMachine.memoryInGB) {
+    const totalMemoryInGB = os.totalmem() / 2 ** 30;
 
-      // 25% of available ram up to a maximum of 6gb
-      settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
-    }
+    // 25% of available ram up to a maximum of 6gb
+    settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
   }
 
   // determine whether updates should be enabled
