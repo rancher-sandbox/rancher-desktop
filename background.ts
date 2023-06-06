@@ -750,6 +750,10 @@ ipcMainProxy.handle('versions/macOs', () => {
   return getMacOsVersion();
 });
 
+ipcMainProxy.handle('host/isArm', () => {
+  return Electron.app.runningUnderARM64Translation || process.arch.startsWith('arm');
+});
+
 ipcMainProxy.on('help/preferences/open-url', async() => {
   Help.preferences.openUrl(await getVersion());
 });
