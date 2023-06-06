@@ -60,6 +60,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     ipcRenderer.invoke('versions/macOs').then((macOsVersion) => {
       this.$store.dispatch('transientSettings/setMacOsVersion', macOsVersion);
     });
+
+    ipcRenderer.invoke('host/isArm').then((isArm) => {
+      this.$store.dispatch('transientSettings/setIsArm', isArm);
+    });
   },
   beforeDestroy() {
     /**

@@ -17,6 +17,7 @@ import type { PropType } from 'vue';
 
 interface VuexBindings {
   macOsVersion: semver.SemVer;
+  isArm: boolean;
 }
 
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
@@ -36,7 +37,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   },
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
-    ...mapState('transientSettings', ['macOsVersion']),
+    ...mapState('transientSettings', ['macOsVersion', 'isArm']),
     options(): { label: string, value: VMType, description: string, experimental: boolean, disabled: boolean }[] {
       const defaultOption = VMType.QEMU;
 
@@ -61,7 +62,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return semver.lte(this.macOsVersion.version, '13.0.0') || (os.arch() === 'arm64' && semver.lte(this.macOsVersion.version, '13.3.0'));
     },
     rosettaDisabled(): boolean {
-      return !Electron.app.runningUnderARM64Translation && os.arch() !== 'arm64';
+      return !this.isArm;
     },
   },
   methods: {
