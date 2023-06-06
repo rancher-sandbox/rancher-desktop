@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -63,6 +61,7 @@ func init() {
 func doShellCommand(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	var commandName string
+	var err error
 	if runtime.GOOS == "windows" {
 		commandName = "wsl"
 		distroName := "rancher-desktop"
@@ -75,18 +74,13 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 			"--exec", "/usr/local/bin/wsl-exec"},
 			args...)
 	} else {
-		if err := directories.SetupLimaHome(); err != nil {
+		if err = directories.SetupLimaHome(); err != nil {
 			return err
 		}
-		execPath, err := os.Executable()
+		commandName, err = directories.GetLimactlPath()
 		if err != nil {
 			return err
 		}
-		execPath, err = filepath.EvalSymlinks(execPath)
-		if err != nil {
-			return err
-		}
-		commandName = path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl")
 		if !checkLimaIsRunning(commandName) {
 			// No further output wanted, so just exit with the desired status.
 			os.Exit(1)

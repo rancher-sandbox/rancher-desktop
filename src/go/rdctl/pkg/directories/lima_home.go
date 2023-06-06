@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 )
 
@@ -51,4 +52,16 @@ func SetupLimaHome() error {
 	}
 	os.Setenv("LIMA_HOME", candidatePath)
 	return nil
+}
+
+func GetLimactlPath() (string, error) {
+	execPath, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	execPath, err = filepath.EvalSymlinks(execPath)
+	if err != nil {
+		return "", err
+	}
+	return path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl"), nil
 }

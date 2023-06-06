@@ -49,7 +49,7 @@ var shutdownCmd = &cobra.Command{
 			logrus.SetLevel(logrus.TraceLevel)
 		}
 		cmd.SilenceUsage = true
-		result, err := doShutdown(&commonShutdownSettings)
+		result, err := doShutdown(&commonShutdownSettings, shutdown.Shutdown)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func init() {
 	shutdownCmd.Flags().BoolVar(&commonShutdownSettings.WaitForShutdown, "wait", true, "wait for shutdown to be confirmed")
 }
 
-func doShutdown(shutdownSettings *shutdownSettingsStruct) ([]byte, error) {
+func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
 	output, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -83,6 +83,6 @@ func doShutdown(shutdownSettings *shutdownSettingsStruct) ([]byte, error) {
 		}
 		return nil, err
 	}
-	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown)
+	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
 	return output, err
 }

@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -43,7 +44,7 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 		}
 		cmd.SilenceUsage = true
 		commonShutdownSettings.WaitForShutdown = false
-		_, err := doShutdown(&commonShutdownSettings)
+		_, err := doShutdown(&commonShutdownSettings, shutdown.FactoryReset)
 		if err != nil {
 			return err
 		}
