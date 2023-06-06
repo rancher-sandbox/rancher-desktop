@@ -30,6 +30,15 @@ jest.mock('@pkg/utils/childProcess', () => {
   };
 });
 
+jest.mock('@pkg/utils/osVersion', () => {
+  return {
+    __esModule:      true,
+    getMacOsVersion: jest.fn(() => {
+      return new semver.SemVer('12.0.0');
+    }),
+  };
+});
+
 describe('queryUpgradeResponder', () => {
   afterEach(() => {
     (spawnFile as jest.Mock).mockReset();
