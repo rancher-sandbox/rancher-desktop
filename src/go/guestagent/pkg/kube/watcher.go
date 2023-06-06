@@ -11,9 +11,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package kube watches Kubernetes for NodePort services and forces a listener
-// on 127.0.0.1, so that it can be picked up by the automatic port forwarding
-// mechanisms found in WSLv2 and Lima.
+// Package kube watches Kubernetes for NodePort and LoadBalancer service types.
+// It exposes the services as follows:
+// - [default network - admin install]: It uses vtunnel tracker to forward the
+// port mappings to the host in conjunction with the automatic port forwarding
+// mechanism that is found in WSLv2.
+// - [default network - non-admin install]: It creates TCP listeners on 127.0.0.1,
+// so that it can be picked up by the automatic port forwarding mechanisms found
+// in WSLv2 on the default network with the non-admin install.
+// - [namespaced network - admin install]: It uses API tracker to expose the ports
+// on the host through host-switch.exe
+// - [namespaced network - non-admin install]: It uses API tracker to expose the ports
+// on the host through host-switch.exe; however, the exposed ports are only bound to
+// 127.0.0.1 on the host machine.
 package kube
 
 import (
@@ -52,7 +62,7 @@ func WatchForServices(
 	ctx context.Context,
 	configPath string,
 	k8sServiceListenerIP net.IP,
-	enablePrivilegedService bool,
+	enableListeners bool,
 	portTracker tracker.Tracker,
 ) error {
 	// These variables are shared across the different states
@@ -138,76 +148,76 @@ func WatchForServices(
 				continue
 			case event := <-eventCh:
 				if event.deleted {
-					if enablePrivilegedService {
-						if err := portTracker.Remove(string(event.UID)); err != nil {
-							log.Errorw("failed to delete a port from tracker", log.Fields{
-								"error":     err,
-								"UID":       event.UID,
-								"ports":     event.portMapping,
-								"namespace": event.namespace,
-								"name":      event.name,
-							})
-						} else {
-							log.Debugf("kubernetes service: port mapping deleted %s/%s:%v",
-								event.namespace, event.name, event.portMapping)
+					if enableListeners {
+						for port := range event.portMapping {
+							if err := portTracker.RemoveListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
+								log.Errorw("failed to close listener", log.Fields{
+									"error":     err,
+									"ports":     event.portMapping,
+									"namespace": event.namespace,
+									"name":      event.name,
+								})
+							}
 						}
+
+						log.Debugf("kubernetes service: deleted listener %s/%s:%v",
+							event.namespace, event.name, event.portMapping)
 
 						continue
 					}
 
-					for port := range event.portMapping {
-						if err := portTracker.RemoveListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
-							log.Errorw("failed to close listener", log.Fields{
-								"error":     err,
-								"ports":     event.portMapping,
-								"namespace": event.namespace,
-								"name":      event.name,
-							})
-						}
+					if err := portTracker.Remove(string(event.UID)); err != nil {
+						log.Errorw("failed to delete a port from tracker", log.Fields{
+							"error":     err,
+							"UID":       event.UID,
+							"ports":     event.portMapping,
+							"namespace": event.namespace,
+							"name":      event.name,
+						})
+					} else {
+						log.Debugf("kubernetes service: port mapping deleted %s/%s:%v",
+							event.namespace, event.name, event.portMapping)
 					}
-
-					log.Debugf("kubernetes service: deleted listener %s/%s:%v",
-						event.namespace, event.name, event.portMapping)
 				} else {
-					if enablePrivilegedService {
-						portMapping, err := createPortMapping(event.portMapping, k8sServiceListenerIP)
-						if err != nil {
-							log.Errorw("failed to create port mapping", log.Fields{
-								"error":     err,
-								"ports":     event.portMapping,
-								"namespace": event.namespace,
-								"name":      event.name,
-							})
+					if enableListeners {
+						for port := range event.portMapping {
+							if err := portTracker.AddListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
+								log.Errorw("failed to create listener", log.Fields{
+									"error":     err,
+									"ports":     event.portMapping,
+									"namespace": event.namespace,
+									"name":      event.name,
+								})
+							}
+						}
 
-							continue
-						}
-						if err := portTracker.Add(string(event.UID), portMapping); err != nil {
-							log.Errorw("failed to add port mapping", log.Fields{
-								"error":     err,
-								"ports":     event.portMapping,
-								"namespace": event.namespace,
-								"name":      event.name,
-							})
-						} else {
-							log.Debugf("kubernetes service: port mapping added %s/%s:%v",
-								event.namespace, event.name, event.portMapping)
-						}
+						log.Debugf("kubernetes service: started listener %s/%s:%v",
+							event.namespace, event.name, event.portMapping)
 
 						continue
 					}
-					for port := range event.portMapping {
-						if err := portTracker.AddListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
-							log.Errorw("failed to create listener", log.Fields{
-								"error":     err,
-								"ports":     event.portMapping,
-								"namespace": event.namespace,
-								"name":      event.name,
-							})
-						}
-					}
+					portMapping, err := createPortMapping(event.portMapping, k8sServiceListenerIP)
+					if err != nil {
+						log.Errorw("failed to create port mapping", log.Fields{
+							"error":     err,
+							"ports":     event.portMapping,
+							"namespace": event.namespace,
+							"name":      event.name,
+						})
 
-					log.Debugf("kubernetes service: started listener %s/%s:%v",
-						event.namespace, event.name, event.portMapping)
+						continue
+					}
+					if err := portTracker.Add(string(event.UID), portMapping); err != nil {
+						log.Errorw("failed to add port mapping", log.Fields{
+							"error":     err,
+							"ports":     event.portMapping,
+							"namespace": event.namespace,
+							"name":      event.name,
+						})
+					} else {
+						log.Debugf("kubernetes service: port mapping added %s/%s:%v",
+							event.namespace, event.name, event.portMapping)
+					}
 				}
 			}
 		}
