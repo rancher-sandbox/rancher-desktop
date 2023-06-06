@@ -148,7 +148,7 @@ class RegistryAuth {
 
     const parsed = {
       token:      result.token || result.access_token,
-      issued_at:  result.issued_at,
+      issued_at:  result.issued_at ?? (new Date()).toISOString(),
       expires_in: result.expires_in ?? 300,
     };
 
