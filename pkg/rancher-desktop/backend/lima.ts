@@ -1887,10 +1887,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await Promise.all([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
-          this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {
-            await this.writeFile('/etc/conf.d/qemu-binfmt', 'binfmt_flags="POCF"');
-            await this.execCommand({ root: true }, '/sbin/rc-service', 'qemu-binfmt', 'restart');
-          }),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
