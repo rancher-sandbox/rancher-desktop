@@ -2,6 +2,7 @@
 import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
+import Electron from 'electron';
 import semver from 'semver';
 import Vue, { VueConstructor } from 'vue';
 import { mapGetters, mapState } from 'vuex';
@@ -60,7 +61,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return semver.lte(this.macOsVersion.version, '13.0.0') || (os.arch() === 'arm64' && semver.lte(this.macOsVersion.version, '13.3.0'));
     },
     rosettaDisabled(): boolean {
-      return os.arch() !== 'arm64';
+      return !Electron.app.runningUnderARM64Translation && os.arch() !== 'arm64';
     },
   },
   methods: {
