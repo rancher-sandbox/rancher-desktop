@@ -1,6 +1,6 @@
 limaAndQemu: 1.31.2
 alpineLimaISO:
-  isoVersion: 0.2.30.rd3
+  isoVersion: 0.2.30.rd4
   alpineVersion: 3.18.0
 WSLDistro: "0.41"
 kuberlr: 0.4.2
