@@ -183,7 +183,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('Preferences Page, locked fields', async({ colorScheme }) => {
-    test.skip(isWin, 'Not supporting locked fields on Windows yet');
+    // ToDo, locked fields tooltips are not captured on Windows.
 
     await navPage.preferencesButton.click();
 
