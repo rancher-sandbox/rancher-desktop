@@ -96,7 +96,7 @@ func main() {
 
 	log.Current = logger
 
-	log.Info("Starting Rancher Desktop Agent in [AdminInstall=%t] mode", *adminInstall)
+	log.Infof("Starting Rancher Desktop Agent in [AdminInstall=%t] mode", *adminInstall)
 
 	if os.Geteuid() != 0 {
 		log.Fatal("agent must run as root")
@@ -198,11 +198,18 @@ func main() {
 					"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
 			}
 
+			// listenerOnlyMode represents when iptables is enabled and
+			// privileged services is disabled; this can indicate a non-admin
+			// installation of default network which requires listeners only.
+			// In listenerOnlyMode we creates TCP listeners on 127.0.0.1,
+			// so that it can be picked up by the automatic port forwarding mechanisms
+			// found in WSLv2.
+			listenerOnlyMode := *enableIptables && !*enablePrivilegedService
 			// Watch for kube
 			err := kube.WatchForServices(ctx,
 				*configPath,
 				k8sServiceListenerIP,
-				*enablePrivilegedService,
+				listenerOnlyMode,
 				portTracker)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
