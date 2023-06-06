@@ -68,7 +68,6 @@ enum SLIRP {
   HOST_GATEWAY = '192.168.5.2',
   DNS = '192.168.5.3',
   GUEST_IP_ADDRESS = '192.168.5.15',
-  GUEST_IP_ADDRESS_VZ = '192.168.5.1',
 }
 
 /**
@@ -470,16 +469,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * In Lima the SLIRP guest IP address is hard-coded.
    */
   get ipAddress(): Promise<string | undefined> {
-    let addr = SLIRP.GUEST_IP_ADDRESS;
-
-    // Lima is using a different guest address when using the VZ framework
-    // TODO This may be a bug in Lima and the code here needs to be changed if Lima is updated.
-    // ref: https://github.com/lima-vm/lima/discussions/1600#discussioncomment-6068628
-    if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
-      addr = SLIRP.GUEST_IP_ADDRESS_VZ;
-    }
-
-    return Promise.resolve(addr);
+    return Promise.resolve(SLIRP.GUEST_IP_ADDRESS);
   }
 
   getBackendInvalidReason(): Promise<BackendError | null> {
