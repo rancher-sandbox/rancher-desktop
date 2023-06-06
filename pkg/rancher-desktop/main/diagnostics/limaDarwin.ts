@@ -30,13 +30,13 @@ const CheckLimaDarwin: DiagnosticsChecker = {
 
     return Promise.resolve(isDarwin && isArm);
   },
-  async check() {
+  check() {
     const result = {
       description: '',
       passed:      false,
       fixes:       [] as { description: string }[],
     };
-    const currentVersion = await getMacOsVersion(console);
+    const currentVersion = getMacOsVersion();
 
     result.passed = !!currentVersion && semver.gte(currentVersion, '12.4.0', { loose: true });
     result.description = `This machine is running macOS ${ currentVersion }.`;
@@ -54,7 +54,7 @@ const CheckLimaDarwin: DiagnosticsChecker = {
     }
     console.debug(`${ this.id }: version=${ currentVersion } result=${ JSON.stringify(result) }`);
 
-    return result;
+    return Promise.resolve(result);
   },
 };
 

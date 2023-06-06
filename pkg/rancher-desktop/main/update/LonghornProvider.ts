@@ -222,18 +222,12 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
  * i.e. the version of the entire package, including kernel,
  * userspace programs, base configuration, etc.
  */
-async function getPlatformVersion(): Promise<string> {
+function getPlatformVersion(): string {
   switch (process.platform) {
   case 'win32':
     return os.release();
   case 'darwin': {
-    const macOsVersion = await getMacOsVersion(console);
-
-    if (macOsVersion === null) {
-      throw new Error('failed to get macOS version');
-    }
-
-    return macOsVersion.toString();
+    return getMacOsVersion().toString();
   }
   case 'linux':
     // OS version is hard to get on Linux and could be in many different
@@ -300,7 +294,7 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
     appVersion: currentVersion.toString(),
     extraInfo:  {
       platform:        `${ process.platform }-${ os.arch() }`,
-      platformVersion: await getPlatformVersion(),
+      platformVersion: getPlatformVersion(),
     },
   };
 

@@ -1,11 +1,29 @@
+import * as process from 'process';
+
 import semver from 'semver';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 import { Log } from '@pkg/utils/logging';
 
-export async function getMacOsVersion(console: Log): Promise<semver.SemVer | null> {
-  const { stdout } = await spawnFile('/usr/bin/sw_vers', ['-productVersion'], { stdio: ['ignore', 'pipe', console] });
-  const currentVersion = semver.coerce(stdout);
+let macOsVersion: semver.SemVer;
 
-  return currentVersion;
+export async function fetchMacOsVersion(console: Log) {
+  let versionString = process.env.RD_MOCK_MACOS_VERSION;
+
+  if (!versionString) {
+    const { stdout } = await spawnFile('/usr/bin/sw_vers', ['-productVersion'], { stdio: ['ignore', 'pipe', console] });
+
+    versionString = stdout.trimEnd();
+  }
+  const currentVersion = semver.coerce(versionString);
+
+  if (currentVersion) {
+    macOsVersion = currentVersion;
+  } else {
+    throw new Error(`Cannot convert "${ versionString }" to macOS semver`);
+  }
+}
+
+export function getMacOsVersion(): semver.SemVer {
+  return macOsVersion;
 }
