@@ -1,8 +1,5 @@
 <script lang="ts">
-import os from 'os';
-
 import { RadioButton, RadioGroup } from '@rancher/components';
-import Electron from 'electron';
 import semver from 'semver';
 import Vue, { VueConstructor } from 'vue';
 import { mapGetters, mapState } from 'vuex';
@@ -59,10 +56,13 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return this.preferences.experimental.virtualMachine.type === VMType.VZ;
     },
     vzDisabled(): boolean {
-      return semver.lte(this.macOsVersion.version, '13.0.0') || (os.arch() === 'arm64' && semver.lte(this.macOsVersion.version, '13.3.0'));
+      return semver.lte(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lte(this.macOsVersion.version, '13.3.0'));
     },
     rosettaDisabled(): boolean {
       return !this.isArm;
+    },
+    arch(): string {
+      return this.isArm ? 'arm64' : 'x64';
     },
   },
   methods: {
@@ -73,7 +73,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t(`prefs.onlyFromVentura_${ os.arch() }`) };
+        tooltip = { content: this.t(`prefs.onlyFromVentura_${ this.arch }`) };
       }
 
       return tooltip;
