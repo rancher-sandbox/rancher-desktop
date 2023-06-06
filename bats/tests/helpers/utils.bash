@@ -13,7 +13,7 @@ is_false() {
 }
 
 bool() {
-    if is_true "$1"; then
+    if eval "$1"; then
         echo "true"
     else
         echo "false"

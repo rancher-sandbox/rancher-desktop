@@ -14,6 +14,14 @@ my $problems = 0;
 my $run;
 
 while (<>) {
+    # bats files should not override the global setup and teardown functions.
+    # They should define local_* variants instead, which will be called from
+    # the global versions.
+    if (/^((setup|teardown)\w*)\(/) {
+        print "$ARGV:$.: Don't define $1(); define local_$1() instead\n";
+        $problems++;
+    }
+
     # Matches:
     # - assert_success
     # - $assert_success

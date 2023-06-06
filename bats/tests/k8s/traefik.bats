@@ -7,7 +7,7 @@
 
 load '../helpers/load'
 
-setup() {
+local_setup() {
     needs_port 80
 }
 

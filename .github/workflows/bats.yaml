@@ -63,7 +63,6 @@ jobs:
         ./bats-core/bin/bats \
             --gather-test-outputs-in "$DEFAULT_DIR/logs" \
             --report-formatter tap \
-            tests/helpers/info.bash \
             ${{ inputs.tests }}
       env:
         RD_CONTAINER_ENGINE:     ${{ matrix.engine }}

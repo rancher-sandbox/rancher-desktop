@@ -50,25 +50,46 @@ source "$PATH_BATS_HELPERS/kubernetes.bash"
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
-global_setup() {
+# If called from foo() this function will call local_foo() if it exist.
+call_local_function() {
+    local func="local_$(caller 0 | awk '{print $2}')"
+    if [ "$(type -t "$func")" = "function" ]; then
+        eval "$func"
+    fi
+}
+
+setup_file() {
     # Ideally this should be printed only when using the tap formatter,
     # but I don't see a way to check for this.
     echo "# ===== $RD_TEST_FILENAME =====" >&3
+
+    call_local_function
 }
-setup_file() {
-    global_setup
-}
-global_teardown() {
+
+teardown_file() {
+    call_local_function
+
     capture_logs
+
     # On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
     if is_linux; then
         run rdctl shutdown
     fi
 }
-teardown_file() {
-    global_teardown
+
+setup() {
+    if [ "${BATS_SUITE_TEST_NUMBER}" -eq 1 ] && [ "$RD_TEST_FILENAME" != "helpers/info.bash" ]; then
+        source "$PATH_BATS_HELPERS/info.bash"
+        show_info
+        echo "#"
+    fi
+
+    call_local_function
 }
+
 teardown() {
+    call_local_function
+
     if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
         take_screenshot
     fi

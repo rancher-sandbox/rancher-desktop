@@ -28,33 +28,45 @@ From the root directory of the Git repository, run the following commands to ins
 
 ## Running BATS
 
-1. To run the BATS test, specify the path to BATS executable from bats-core and run the following commands:
+To run the BATS test, specify the path to BATS executable from bats-core and run the following commands:
 
-    To run a specific test set from a bats file:
+To run a specific test set from a bats file:
 
-      ```sh
-      cd bats
-      ./bats-core/bin/bats tests/registry/creds.bats
-      ```
+```sh
+cd bats
+./bats-core/bin/bats tests/registry/creds.bats
+```
 
-    To run all BATS tests:
+To run all BATS tests:
 
-      ```sh
-      cd bats
-      ./bats-core/bin/bats tests/*/
-      ```
+```sh
+cd bats
+./bats-core/bin/bats tests/*/
+```
 
-    To run the BATS test, specifying some of Rancher Desktop's configuration, run the following commands:
+To run the BATS test, specifying some of Rancher Desktop's configuration, run the following commands:
 
-      ```sh
-      cd bats
-      RD_CONTAINER_RUNTIME=moby RD_USE_IMAGE_ALLOW_LIST=false ./bats-core/bin/bats tests/registry/creds.bats
-      ```
-    On Windows:
+```sh
+cd bats
+RD_CONTAINER_RUNTIME=moby RD_USE_IMAGE_ALLOW_LIST=false ./bats-core/bin/bats tests/registry/creds.bats
+```
 
-      BATS must be executed from within a WSL distibution. (You have to cd into `/mnt/c/REPOSITORY_LOCATION` from your unix shell.)
+### On Windows:
 
-      To test the Windows-based tools, set `RD_USE_WINDOWS_EXE` to `true` before running.
+BATS must be executed from within a WSL distibution. (You have to cd into `/mnt/c/REPOSITORY_LOCATION` from your unix shell.)
+
+To test the Windows-based tools, set `RD_USE_WINDOWS_EXE` to `true` before running.
+
+### RD_LOCATION
+
+By default bats will use Rancher Desktop installed in a "system" location. If that doesn't exists, it will try a "user" location, followed by the local "dist" directory inside the local git directory. The final option if is to use "npm". On Linux there is no "user" location.
+
+You can explicitly request a specific install location by setting `RD_LOCATION` to `system`, `user`, `dist`, or `npm`:
+
+```
+cd bats
+RD_LOCATION=dist ./bats-core/bin/bats ...
+```
 
 ## Writing BATS Tests
 

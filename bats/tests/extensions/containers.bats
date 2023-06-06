@@ -1,6 +1,6 @@
 load '../helpers/load'
 
-setup() {
+local_setup() {
     CONTAINERD_NAMESPACE=rancher-desktop-extensions
 
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"

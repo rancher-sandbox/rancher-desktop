@@ -82,7 +82,7 @@ start_container_engine() {
 
     # TODO containerEngine.allowedImages.patterns and WSL.integrations
     # TODO cannot be set from the commandline yet
-    image_allow_list="$(bool "$RD_USE_IMAGE_ALLOW_LIST")"
+    image_allow_list="$(bool using_image_allow_list)"
     wsl_integrations="{}"
     if is_windows; then
         wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
