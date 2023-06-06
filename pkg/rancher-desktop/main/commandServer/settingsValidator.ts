@@ -275,12 +275,12 @@ export default class SettingsValidator {
    */
   protected checkLima<C, D>(validator: ValidatorFunc<Settings, C, D>) {
     return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
-      if (!_.isEqual(currentValue, desiredValue)) {
-        if (!['darwin', 'linux'].includes(os.platform())) {
+      if (!['darwin', 'linux'].includes(os.platform())) {
+        if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(this.notSupported(fqname));
-
-          return false;
         }
+
+        return false;
       }
 
       return validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
@@ -332,12 +332,12 @@ export default class SettingsValidator {
 
   protected checkPlatform<C, D>(platform: NodeJS.Platform, validator: ValidatorFunc<Settings, C, D>) {
     return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
-      if (!_.isEqual(currentValue, desiredValue)) {
-        if (os.platform() !== platform) {
+      if (os.platform() !== platform) {
+        if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(this.notSupported(fqname));
-
-          return false;
         }
+
+        return false;
       }
 
       return validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
@@ -346,12 +346,12 @@ export default class SettingsValidator {
 
   protected check9P<C, D>(validator: ValidatorFunc<Settings, C, D>) {
     return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
-      if (!_.isEqual(currentValue, desiredValue)) {
-        if (mergedSettings.experimental.virtualMachine.mount.type !== MountType.NINEP) {
+      if (mergedSettings.experimental.virtualMachine.mount.type !== MountType.NINEP) {
+        if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(`Setting ${ fqname } can only be changed when experimental.virtualMachine.mount.type is "${ MountType.NINEP }".`);
-
-          return false;
         }
+
+        return false;
       }
 
       return validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
