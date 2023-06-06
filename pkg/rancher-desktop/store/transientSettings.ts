@@ -17,6 +17,7 @@ interface CommitArgs extends ServerState {
 
 type ExtendedTransientSettings = TransientSettings & {
   macOsVersion?: semver.SemVer;
+  isArm?: boolean;
 };
 
 const uri = (port: number) => `http://localhost:${ port }/v1/transient_settings`;
@@ -32,6 +33,9 @@ export const mutations: MutationsType<ExtendedTransientSettings> = {
   },
   SET_MAC_OS_VERSION(state, macOsVersion) {
     state.macOsVersion = macOsVersion;
+  },
+  SET_IS_ARM(state, isArm) {
+    state.isArm = isArm;
   },
 };
 
@@ -79,6 +83,9 @@ export const actions = {
   },
   setMacOsVersion({ commit }: TransientSettingsContext, macOsVersion: semver.SemVer) {
     commit('SET_MAC_OS_VERSION', macOsVersion);
+  },
+  setIsArm({ commit }: TransientSettingsContext, isArm: boolean) {
+    commit('SET_IS_ARM', isArm);
   },
 };
 

@@ -123,6 +123,10 @@ export interface IpcMainInvokeEvents {
   // #region Versions
   'versions/macOs': () => semver.SemVer;
   // #endregion
+
+  // #region Host
+  'host/isArm': () => boolean;
+  // #endregion
 }
 
 /**
@@ -184,5 +188,9 @@ export interface IpcRendererEvents {
 
   // #region Versions
   'versions/macOs': (macOsVersion: semver.SemVer) => void;
+  // #endregion
+
+  // #region Host
+  'host/isArm': (isArm: boolean) => void;
   // #endregion
 }
