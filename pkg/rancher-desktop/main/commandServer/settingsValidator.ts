@@ -288,7 +288,7 @@ export default class SettingsValidator {
   }
 
   protected checkRosetta(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
-    if (desiredValue) {
+    if (desiredValue && !currentValue) {
       if (mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
         errors.push(`Setting ${ fqname } can only be enabled when experimental.virtual-machine.type is "${ VMType.VZ }".`);
 
