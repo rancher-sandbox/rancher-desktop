@@ -14,6 +14,7 @@ jest.mock('electron', () => {
         isPackaged: false,
         getAppPath: () => path.resolve('.'),
       },
+      ipcMain: {},
     },
   };
 });

@@ -36,7 +36,7 @@ type IpcMainEventHandler<K extends keyof IpcMainInvokeEvents> =
 
 type ReadableChildProcess = ChildProcessByStdio<null, Readable, Readable>;
 
-class ExtensionManagerImpl implements ExtensionManager {
+export class ExtensionManagerImpl implements ExtensionManager {
   /**
    * Known extensions.  Keyed by the image (excluding tag), then the tag.
    * @note Items here are not necessarily installed, but all installed
@@ -333,12 +333,27 @@ class ExtensionManagerImpl implements ExtensionManager {
   protected async findBestVersion(imageName: string): Promise<string> {
     const tags = await this.client.getTags(
       imageName, { namespace: ExtensionImpl.extensionNamespace });
+    const tagArray = Array.from(tags);
 
-    console.debug(`Got tags: ${ JSON.stringify(Array.from(tags)) }`);
+    console.debug(`Got tags: ${ JSON.stringify(tagArray) }`);
 
     // Select the highest semver tag, if available.
-    const vers = Array.from(tags).map(tag => [semver.coerce(tag), tag] as const)
-      .filter(([v]) => v) as [semver.SemVer, string][];
+    // We try a couple ways to determine semver in the tag.
+    const vers: [semver.SemVer, string][] = [];
+
+    for (const converter of [
+      // semver.parse, possibly stripping "v" or "v." prefix.
+      (tag: string) => semver.parse(tag.replace(/^v\.?/i, '')),
+      // semver.coerce (grab the first digits in the string)
+      semver.coerce,
+    ]) {
+      vers.push(...tagArray.map(tag => [converter(tag), tag] as const)
+        .filter(([v]) => v) as [semver.SemVer, string][]);
+      if (vers.length > 0) {
+        break;
+      }
+    }
+
     const newest = vers.sort(([l], [r]) => semver.compare(l, r)).pop()?.[1];
 
     if (newest) {
