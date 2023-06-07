@@ -171,6 +171,11 @@ test.describe.serial('Main App Test', () => {
         await e2ePreferences.virtualMachine.tabEmulation.click();
         await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
         await screenshot.take('virtualMachine', 'tabEmulation');
+
+        await e2ePreferences.virtualMachine.vz.click();
+        await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
+        await page.waitForTimeout(afterCheckedTimeout);
+        await screenshot.take('virtualMachine', 'tabEmulation_vz');
       }
     }
 
