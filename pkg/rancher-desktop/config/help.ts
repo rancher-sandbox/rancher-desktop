@@ -26,18 +26,18 @@ class Url {
 
 class PreferencesHelp {
   private readonly url = new Url({
-    'Application-behavior':            'ui/preferences/application#behavior',
-    'Application-environment':         'ui/preferences/application#environment',
-    'Application-general':             'ui/preferences/application#general',
-    'Virtual Machine-hardware':        'ui/preferences/virtual-machine#hardware',
-    'Virtual Machine-volumes':         'ui/preferences/virtual-machine#volumes',
-    'Virtual Machine-network':         'ui/preferences/virtual-machine#network',
-    'Virtual Machine-emulation':       'ui/preferences/virtual-machine#emulation',
-    'Container Engine-general':        'ui/preferences/container-engine#general',
-    'Container Engine-allowed-images': 'ui/preferences/container-engine#allowed-images',
-    'WSL-integrations':                'ui/preferences/wsl#integrations',
-    'WSL-network':                     'ui/preferences/wsl#network',
-    'WSL-proxy':                       'ui/preferences/wsl#proxy',
+    'Application-behavior':            'ui/preferences/application/behavior',
+    'Application-environment':         'ui/preferences/application/environment',
+    'Application-general':             'ui/preferences/application/general',
+    'Virtual Machine-hardware':        'ui/preferences/virtual-machine/hardware',
+    'Virtual Machine-volumes':         'ui/preferences/virtual-machine/volumes',
+    'Virtual Machine-network':         'ui/preferences/virtual-machine/network',
+    'Virtual Machine-emulation':       'ui/preferences/virtual-machine/emulation',
+    'Container Engine-general':        'ui/preferences/container-engine/general',
+    'Container Engine-allowed-images': 'ui/preferences/container-engine/allowed-images',
+    'WSL-integrations':                'ui/preferences/wsl/integrations',
+    'WSL-network':                     'ui/preferences/wsl/network',
+    'WSL-proxy':                       'ui/preferences/wsl/proxy',
     Kubernetes:                        'ui/preferences/kubernetes',
   });
 
