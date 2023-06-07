@@ -7,6 +7,7 @@ export class KubernetesNav {
   readonly kubernetesVersion: Locator;
   readonly kubernetesPort: Locator;
   readonly traefikToggle: Locator;
+  readonly kubernetesVersionLockedFields: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,5 +16,6 @@ export class KubernetesNav {
     this.kubernetesVersion = page.locator('[data-test="kubernetesVersion"]');
     this.kubernetesPort = page.locator('[data-test="kubernetesPort"]');
     this.traefikToggle = page.locator('[data-test="traefikToggle"]');
+    this.kubernetesVersionLockedFields = page.locator('[data-test="kubernetesVersion"] > .select-k8s-version > .icon-lock');
   }
 }
