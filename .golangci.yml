@@ -26,6 +26,7 @@ linters:
     - nosnakecase # Catches imported constants like SO_LINGER
     - wrapcheck # No need to always wrap errors
     - depguard # Requires configuration and by default only allows stdlib imports
+    - dupword # It interferes with duplicate words in comments
 linters-settings:
   govet:
     disable:
