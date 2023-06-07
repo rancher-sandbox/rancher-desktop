@@ -101,13 +101,6 @@ test.describe.serial('Main App Test', () => {
     await screenshot.take('Extensions-Installed');
 
     await extensionsPage.tabCatalog.click();
-
-    await extensionsPage.cardEpinio.click();
-
-    // wait for details to render
-    await page.waitForTimeout(1000);
-
-    await screenshot.take('Extensions-Details');
   });
 
   test('Preferences Page', async({ colorScheme }) => {
