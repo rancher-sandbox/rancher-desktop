@@ -58,10 +58,15 @@ const extensionId = decodeURIComponent(location.hostname.replace(/(..)/g, '%$1')
 
 /**
  * The processes that are waiting to complete, keyed by the process ID.
- * This uses weak references so that if the user no longer cares about them we
- * will not either.
+ * For compatibility reasons, we need a strong reference here.
  */
-const outstandingProcesses: Record<string, WeakRef<execProcess>> = {};
+const outstandingProcesses: Record<string, execProcess> = {};
+
+/**
+ * pageLoadId is a random string that differs on each page load, to ensure that
+ * we don't end up reusing processes from previous loads.
+ */
+const pageLoadId = Array.from(window.crypto.getRandomValues(new Uint8Array(16))).map(v => `00${ v.toString(16) }`.slice(-2)).join('');
 
 /**
  * Construct a TypeError message that is similar to what the browser would
@@ -126,7 +131,7 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
       }
     }
 
-    const execId = `${ scope }-${ nextId++ }`;
+    const execId = `${ pageLoadId }-${ scope }-${ nextId++ }`;
     // Build options to pass to the main process, while not trusting the input
     // too much.
     const safeOptions: SpawnOptions = {
@@ -157,14 +162,15 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
           enumerable: false, value: options.stream, writable: false,
         },
         close: {
-          value: function() {
+          enumerable: true,
+          value:      function() {
             ipcRenderer.send('extensions/spawn/kill', execId);
             delete outstandingProcesses[execId];
           },
         },
       }) as execProcess & v1.ExecProcess;
 
-      outstandingProcesses[execId] = new WeakRef(proc);
+      outstandingProcesses[execId] = proc;
       ipcRenderer.send('extensions/spawn/streaming', safeOptions);
 
       return proc;
@@ -197,8 +203,8 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
   return exec;
 }
 
-function getProcess(id: string): execProcess | undefined {
-  const process = outstandingProcesses[id]?.deref();
+function getProcess(id: string, reason: string): execProcess | undefined {
+  const process = outstandingProcesses[id];
 
   if (process) {
     return process;
@@ -207,11 +213,11 @@ function getProcess(id: string): execProcess | undefined {
   // The process handle has gone away on our side, just try to kill it.
   ipcRenderer.send('extensions/spawn/kill', id);
   delete outstandingProcesses[id];
-  console.debug(`Process ${ id } not found, discarding.`);
+  console.debug(`Process ${ id } not found (${ reason }), discarding.`);
 }
 
 ipcRenderer.on('extensions/spawn/output', (event, id, data) => {
-  const process = getProcess(id);
+  const process = getProcess(id, 'extensions/spawn/output');
   const streamOpts = process?.[stream];
 
   if (!process || !streamOpts?.onOutput) {
@@ -220,7 +226,11 @@ ipcRenderer.on('extensions/spawn/output', (event, id, data) => {
   }
 
   if (!streamOpts.splitOutputLines) {
-    streamOpts.onOutput(data);
+    try {
+      streamOpts.onOutput(data);
+    } catch (ex) {
+      console.error(ex);
+    }
 
     return;
   }
@@ -237,7 +247,11 @@ ipcRenderer.on('extensions/spawn/output', (event, id, data) => {
         if (typeof line === 'undefined') {
           return;
         }
-        process[stream].onOutput?.({ [key]: line } as {stdout:string} | {stderr:string});
+        try {
+          process[stream].onOutput?.({ [key]: line } as {stdout:string} | {stderr:string});
+        } catch (ex) {
+          console.error(ex);
+        }
         process[keySym] = rest;
       }
     }
@@ -246,12 +260,22 @@ ipcRenderer.on('extensions/spawn/output', (event, id, data) => {
 
 ipcRenderer.on('extensions/spawn/error', (_, id, error) => {
   console.debug(`RDX: Extension ${ id } errored:`, error);
-  getProcess(id)?.[stream].onError?.(error);
+  try {
+    getProcess(id, 'extensions/spawn/error')?.[stream].onError?.(error);
+  } catch (ex) {
+    console.error(ex);
+  }
+  delete outstandingProcesses[id];
 });
 
 ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
   console.debug(`RDX: Extension ${ id } closed:`, returnValue);
-  getProcess(id)?.[stream]?.onClose?.(typeof returnValue === 'number' ? returnValue : -1);
+  try {
+    getProcess(id, 'extensions/spawn/close')?.[stream]?.onClose?.(typeof returnValue === 'number' ? returnValue : -1);
+  } catch (ex) {
+    console.error(ex);
+  }
+  delete outstandingProcesses[id];
 });
 
 class Client implements v1.DockerDesktopClient {
@@ -481,6 +505,22 @@ export default function initExtensions(): void {
   if (document.location.protocol === 'x-rd-extension:') {
     const hostInfo: { arch: string, hostname: string } = JSON.parse(process.argv.slice(-1).pop() ?? '{}');
     const ddClient = new Client(hostInfo);
+
+    window.addEventListener('unload', () => {
+      function canClose(proc: execProcess): proc is execProcess & v1.ExecProcess {
+        return 'close' in proc;
+      }
+
+      for (const [id, proc] of Object.entries(outstandingProcesses)) {
+        if (canClose(proc)) {
+          try {
+            proc.close();
+          } catch (ex) {
+            console.debug(`failed to close process ${ id }:`, ex);
+          }
+        }
+      }
+    });
 
     Electron.contextBridge.exposeInMainWorld('ddClient', ddClient);
   } else {
