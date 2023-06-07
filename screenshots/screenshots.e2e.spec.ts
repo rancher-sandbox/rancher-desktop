@@ -18,6 +18,7 @@ test.describe.serial('Main App Test', () => {
   let context: BrowserContext;
   let page: Page;
   let navPage: NavPage;
+  const afterCheckedTimeout = 3000;
 
   test.beforeAll(async({ colorScheme }) => {
     createDefaultSettings({
@@ -152,7 +153,17 @@ test.describe.serial('Main App Test', () => {
       await expect(e2ePreferences.virtualMachine.mountType).toBeVisible();
       await screenshot.take('virtualMachine', 'tabVolumes');
 
+      await e2ePreferences.virtualMachine.ninep.click();
+      await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
+      await page.waitForTimeout(afterCheckedTimeout);
+      await screenshot.take('virtualMachine', 'tabVolumes_9P');
+
       if (isMac) {
+        await e2ePreferences.virtualMachine.virtiofs.click();
+        await expect(e2ePreferences.virtualMachine.virtiofs).toBeChecked();
+        await page.waitForTimeout(afterCheckedTimeout);
+        await screenshot.take('virtualMachine', 'tabVolumes_virtiofs');
+
         await e2ePreferences.virtualMachine.tabNetwork.click();
         await expect(e2ePreferences.virtualMachine.socketVmNet).toBeVisible();
         await screenshot.take('virtualMachine', 'tabNetwork');
