@@ -20,6 +20,11 @@ separately. See https://ss64.com/osx/screencapture.html
 `GetWindowID` is also required, and can be installed running `brew install
 smokris/getwindowid/getwindowid`.
 
+If you're experiencing any issues like `screencapture: no file specified` or
+`could not create image from window` while running the screenshots script, it's most
+likely related to your privacy settings. Try to enable the 'Terminal' option at:
+System Preferences -> Security & Privacy -> Privacy -> Screen Recording.
+
 ### Windows
 
 `ShareX` is required. See https://github.com/ShareX/ShareX
