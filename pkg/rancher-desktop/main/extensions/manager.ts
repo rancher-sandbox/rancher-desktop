@@ -122,7 +122,8 @@ export class ExtensionManagerImpl implements ExtensionManager {
       const fullExecId = `${ extensionId }:${ execId }`;
       const process = this.processes[fullExecId]?.deref();
 
-      process?.kill();
+      process?.kill('SIGTERM');
+      console.debug(`Killed ${ fullExecId }: ${ process }`);
     });
 
     this.setMainListener('extensions/spawn/streaming', async(event, options) => {
@@ -472,48 +473,60 @@ export class ExtensionManagerImpl implements ExtensionManager {
     });
   }
 
-  /***
-   * Helper for event.senderFrame.send() to add checking of channel names.
-   */
-  protected sendToFrame<K extends keyof IpcRendererEvents>(event: IpcMainEvent, channel: K, ...args: Parameters<IpcRendererEvents[K]>) {
-    event.senderFrame?.send?.(channel, ...args as any);
-  }
-
   /**
    * Execute a process on behalf of an extension, with the output fed back to
    * the extension via callbacks.
    */
   protected execStreaming(event: IpcMainEvent, options: SpawnOptions, process: ReadableChildProcess) {
     const extensionId = this.getExtensionIdFromEvent(event);
+    const fullId = `${ extensionId }:${ options.execId }`;
 
     let errored = false;
 
+    /***
+     * Helper for event.senderFrame.send() to add checking of channel names and
+     * process liveness.
+     */
+    const sendToFrame = <K extends keyof IpcRendererEvents>(channel: K, ...args: Parameters<IpcRendererEvents[K]>) => {
+      if (this.processes[fullId]?.deref()) {
+        event.senderFrame?.send?.(channel, ...args as any);
+      } else {
+        // If we get here, the process is only alive due to the closure, but the
+        // weak ref has been removed; this happens if the client has killed the
+        // process already.  In that case, just clean up and do not send anything
+        // to the client frame.
+        console.debug(`Sending ${ channel } to dead process ${ fullId }, force killing.`);
+        process.kill('SIGKILL');
+        // Close outputs to avoid buffered lines being sent after the process has been killed.
+        process.stdout.destroy();
+        process.stderr.destroy();
+      }
+    };
+
     process.stdout.on('data', (stdout: string | Buffer) => {
-      this.sendToFrame(event, 'extensions/spawn/output', options.execId, { stdout: stdout.toString('utf-8') });
+      sendToFrame('extensions/spawn/output', options.execId, { stdout: stdout.toString('utf-8') });
     });
     process.stderr.on('data', (stderr: string | Buffer) => {
-      this.sendToFrame(event, 'extensions/spawn/output', options.execId, { stderr: stderr.toString('utf-8') });
+      sendToFrame('extensions/spawn/output', options.execId, { stderr: stderr.toString('utf-8') });
     });
     process.on('error', (error) => {
       errored = true;
-      this.sendToFrame(event, 'extensions/spawn/error', options.execId, error);
+      sendToFrame('extensions/spawn/error', options.execId, error);
     });
     process.on('exit', (code, signal) => {
       if (errored) {
         return;
       }
       if (code !== null ) {
-        this.sendToFrame(event, 'extensions/spawn/close', options.execId, code);
+        sendToFrame('extensions/spawn/close', options.execId, code);
       } else if (signal !== null) {
         errored = true;
-        this.sendToFrame(event, 'extensions/spawn/error', options.execId, signal);
+        sendToFrame('extensions/spawn/error', options.execId, signal);
       } else {
         errored = true;
-        this.sendToFrame(event, 'extensions/spawn/error', options.execId, new Error('exited with neither code nor signal'));
+        sendToFrame('extensions/spawn/error', options.execId, new Error('exited with neither code nor signal'));
       }
     });
-
-    const fullId = `${ extensionId }:${ options.execId }`;
 
     this.processes[fullId] = new WeakRef(process);
   }
