@@ -68,6 +68,15 @@ start_container_engine() {
             --application.admin-access=false
             --application.path-management-strategy rcfiles
             --virtual-machine.memory-in-gb 6
+            --experimental.virtual-machine.mount.type="$RD_MOUNT_TYPE"
+        )
+    fi
+    if [ "$RD_MOUNT_TYPE" = "9p" ]; then
+        args+=(
+            --experimental.virtual-machine.mount.9p.cache-mode="$RD_9P_CACHE_MODE"
+            --experimental.virtual-machine.mount.9p.msize-in-kib="$RD_9P_MSIZE"
+            --experimental.virtual-machine.mount.9p.protocol-version="$RD_9P_PROTOCOL_VERSION"
+            --experimental.virtual-machine.mount.9p.security-model="$RD_9P_SECURITY_MODEL"
         )
     fi
     if using_networking_tunnel; then

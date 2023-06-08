@@ -75,6 +75,37 @@ if using_networking_tunnel && ! is_windows; then
 fi
 
 ########################################################################
+if ! is_unix && [ -n "${RD_MOUNT_TYPE-}" ]; then
+    fatal "RD_MOUNT_TYPE only works on Linux and macOS"
+fi
+
+: "${RD_MOUNT_TYPE:=reverse-sshfs}"
+
+validate_enum RD_MOUNT_TYPE reverse-sshfs 9p virtiofs
+
+if [ "$RD_MOUNT_TYPE" = "virtiofs" ] && ! using_vz_emulation; then
+    fatal "RD_MOUNT_TYPE=virtiofs only works with VZ emulation"
+fi
+
+########################################################################
+: "${RD_9P_CACHE_MODE:=mmap}"
+
+validate_enum RD_9P_CACHE_MODE none loose fscache mmap
+
+########################################################################
+: "${RD_9P_MSIZE:=128}"
+
+########################################################################
+: "${RD_9P_PROTOCOL_VERSION:=9p2000.L}"
+
+validate_enum RD_9P_PROTOCOL_VERSION 9p2000 9p2000.u 9p2000.L
+
+########################################################################
+: "${RD_9P_SECURITY_MODEL:=none}"
+
+validate_enum RD_9P_SECURITY_MODEL passthrough mapped-xattr mapped-file none
+
+########################################################################
 # RD_LOCATION specifies the location where Rancher Desktop is installed
 #   system: default system-wide install location shared for all users
 #   user:   per-user install location

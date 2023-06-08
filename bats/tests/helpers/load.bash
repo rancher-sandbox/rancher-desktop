@@ -1,5 +1,8 @@
 set -o errexit -o nounset -o pipefail
 
+# RD_LOADED is set when load.bash has been loaded
+RD_LOADED=1
+
 absolute_path() {
     (
         cd "$1"
