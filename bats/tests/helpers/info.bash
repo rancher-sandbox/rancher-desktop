@@ -4,7 +4,7 @@
 
 show_info() { # @test
     # In case the file is loaded as a test: bats tests/helpers/info.bash
-    if [ -z "$RD_LOCATION" ]; then
+    if [ -z "$RD_LOADED" ]; then
         load load.bash
     fi
 
@@ -19,6 +19,13 @@ show_info() { # @test
         printf "$format" "Resources path:" "$PATH_RESOURCES"
         echo "#"
         printf "$format" "Container engine:" "$RD_CONTAINER_ENGINE"
+        printf "$format" "Mount type:" "$RD_MOUNT_TYPE"
+        if [ "$RD_MOUNT_TYPE" = "9p" ]; then
+            printf "$format" "  9p cache mode:" "$RD_9P_CACHE_MODE"
+            printf "$format" "  9p msize:" "$RD_9P_MSIZE"
+            printf "$format" "  9p protocol version:" "$RD_9P_PROTOCOL_VERSION"
+            printf "$format" "  9p security model:" "$RD_9P_SECURITY_MODEL"
+        fi
         printf "$format" "Using image allow list:" "$(bool using_image_allow_list)"
         if is_macos; then
             printf "$format" "Using VZ emulation:" "$(bool using_vz_emulation)"
