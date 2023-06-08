@@ -48,7 +48,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	informerFactory := informers.NewSharedInformerFactory(client, 1*time.Hour)
 	serviceInformer := informerFactory.Core().V1().Services()
 	sharedInformer := serviceInformer.Informer()
-	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, _ = sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			handleUpdate(nil, obj, eventCh)
 		},
