@@ -27,6 +27,18 @@ export default Vue.extend({
         this.$emit('input', newValue);
       },
     },
+    /**
+     * Ensure that the correct value is emitted by overriding the default
+     * listeners to supply a custom input event. Resolves an issue where the
+     * entire vnode emits when using v-model.
+     */
+    computedListeners(): Record<string, Function | Function[]> & { input: (e: any) => any; } {
+      return Object.assign(
+        {},
+        this.$listeners,
+        { input: (e: any) => this.$emit('input', e.target.value) },
+      );
+    },
   },
 });
 </script>
@@ -38,7 +50,7 @@ export default Vue.extend({
       v-bind="$attrs"
       :class="{ 'locked' : isLocked && !$attrs.disabled }"
       :disabled="$attrs.disabled || isLocked"
-      v-on="$listeners"
+      v-on="computedListeners"
     >
       <slot name="default">
         <!-- Slot contents -->
