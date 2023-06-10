@@ -83,7 +83,7 @@ export default class SettingsValidator {
             list:    this.checkExtensionAllowList,
           },
         },
-        pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
+        pathManagementStrategy: this.checkLima(this.checkEnum(...Object.values(PathManagementStrategy))),
         telemetry:              { enabled: this.checkBoolean },
         /** Whether we should check for updates and apply them. */
         updater:                { enabled: this.checkBoolean },
@@ -514,27 +514,6 @@ export default class SettingsValidator {
     }
 
     return Array.from(duplicates);
-  }
-
-  protected checkPathManagementStrategy(mergedSettings: Settings, currentValue: PathManagementStrategy,
-    desiredValue: any, errors: string[], fqname: string): boolean {
-    if (!(Object.values(PathManagementStrategy).includes(desiredValue))) {
-      errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
-
-      return false;
-    }
-
-    if (desiredValue !== currentValue) {
-      if (desiredValue === PathManagementStrategy.NotSet) {
-        errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
-
-        return false;
-      }
-
-      return true;
-    }
-
-    return false;
   }
 
   protected checkExtensions(

@@ -20,7 +20,7 @@ import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
 import { removeLegacySymlinks, PermissionError } from '@pkg/integrations/legacy';
-import { getPathManagerFor, PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
+import { getPathManagerFor, PathManager } from '@pkg/integrations/pathManager';
 import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
@@ -269,16 +269,6 @@ Electron.app.whenReady().then(async() => {
     }
 
     await dockerDirManager.ensureCredHelperConfigured();
-
-    // Path management strategy will need to be selected after an update
-    if (!os.platform().startsWith('win') && cfg.application.pathManagementStrategy === PathManagementStrategy.NotSet) {
-      if (!noModalDialogs) {
-        await window.openFirstRunDialog();
-      } else {
-        cfg.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
-        mainEvents.emit('settings-write', { application: { pathManagementStrategy: cfg.application.pathManagementStrategy } });
-      }
-    }
 
     if (os.platform() === 'linux' || os.platform() === 'darwin') {
       try {
