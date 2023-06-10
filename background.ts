@@ -126,9 +126,11 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   k8smanager.debug = runInDebugMode;
 
-  if (pathManager.strategy !== newSettings.application.pathManagementStrategy) {
-    await pathManager.remove();
-    pathManager = getPathManagerFor(newSettings.application.pathManagementStrategy);
+  if (process.platform !== 'win32') {
+    if (pathManager.strategy !== newSettings.application.pathManagementStrategy) {
+      await pathManager.remove();
+      pathManager = getPathManagerFor(newSettings.application.pathManagementStrategy);
+    }
     await pathManager.enforce();
   }
 
