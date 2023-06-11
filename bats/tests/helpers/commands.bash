@@ -54,7 +54,8 @@ docker() {
     docker_exe --context $RD_DOCKER_CONTEXT "$@"
 }
 docker_exe() {
-    "$PATH_RESOURCES/$PLATFORM/bin/docker$EXE" "$@" | no_cr
+    # Add path to bundled credential helpers to the front of the PATH
+    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" "$PATH_RESOURCES/$PLATFORM/bin/docker$EXE" "$@" | no_cr
 }
 helm() {
     "$PATH_RESOURCES/$PLATFORM/bin/helm$EXE" "$@" | no_cr
