@@ -4,7 +4,7 @@
 
 show_info() { # @test
     # In case the file is loaded as a test: bats tests/helpers/info.bash
-    if [ -z "$RD_LOADED" ]; then
+    if [ -z "$RD_HELPERS_LOADED" ]; then
         load load.bash
     fi
 

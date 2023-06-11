@@ -1,7 +1,7 @@
 set -o errexit -o nounset -o pipefail
 
-# RD_LOADED is set when load.bash has been loaded
-RD_LOADED=1
+# RD_HELPERS_LOADED is set when bats/helpers/load.bash has been loaded
+RD_HELPERS_LOADED=1
 
 absolute_path() {
     (
