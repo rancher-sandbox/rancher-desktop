@@ -22,7 +22,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-export const CURRENT_SETTINGS_VERSION = 7 as const;
+export const CURRENT_SETTINGS_VERSION = 8 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -77,7 +77,7 @@ export const defaultSettings = {
         list:    [] as Array<string>,
       },
     },
-    pathManagementStrategy: PathManagementStrategy.NotSet,
+    pathManagementStrategy: PathManagementStrategy.RcFiles,
     telemetry:              { enabled: true },
     /** Whether we should check for updates and apply them. */
     updater:                { enabled: true },
@@ -496,6 +496,11 @@ const updateTable: Record<number, (settings: any) => void> = {
     });
 
     settings.extensions = Object.fromEntries(extensions);
+  },
+  7: (settings) => {
+    if (settings.application.pathManagementStrategy === 'notset') {
+      settings.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
+    }
   },
 };
 

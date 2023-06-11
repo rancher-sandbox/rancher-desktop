@@ -30,16 +30,6 @@ export class ManualPathManager implements PathManager {
 }
 
 /**
- * NotSetPathManager is used when a choice hasn't been made. This is reserved
- * for scenarios like first run, where a decision needs to be made.
- */
-export class NotSetPathManager implements PathManager {
-  readonly strategy = PathManagementStrategy.NotSet;
-  async enforce(): Promise<void> {}
-  async remove(): Promise<void> {}
-}
-
-/**
  * RcFilePathManager is for when the user wants Rancher Desktop to
  * make changes to their PATH by putting lines that change it in their
  * shell .rc files.
@@ -152,7 +142,6 @@ export class RcFilePathManager implements PathManager {
 export enum PathManagementStrategy {
   Manual = 'manual',
   RcFiles = 'rcfiles',
-  NotSet = 'notset'
 }
 
 /**
@@ -165,8 +154,6 @@ export function getPathManagerFor(strategy: PathManagementStrategy): PathManager
     return new ManualPathManager();
   case PathManagementStrategy.RcFiles:
     return new RcFilePathManager();
-  case PathManagementStrategy.NotSet:
-    return new NotSetPathManager();
   default:
     throw new Error(`Invalid strategy "${ strategy }"`);
   }

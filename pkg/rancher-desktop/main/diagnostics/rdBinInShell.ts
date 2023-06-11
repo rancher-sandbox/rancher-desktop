@@ -13,7 +13,7 @@ import paths from '@pkg/utils/paths';
 
 const console = Logging.diagnostics;
 const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH:';
-let pathStrategy = PathManagementStrategy.NotSet;
+let pathStrategy = PathManagementStrategy.RcFiles;
 
 mainEvents.on('settings-update', (cfg) => {
   pathStrategy = cfg.application.pathManagementStrategy;

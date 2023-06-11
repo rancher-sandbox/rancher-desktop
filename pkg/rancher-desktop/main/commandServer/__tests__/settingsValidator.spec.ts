@@ -383,20 +383,18 @@ describe(SettingsValidator, () => {
       spyPlatform.mockReturnValue('linux');
     });
     describe('should accept valid settings', () => {
-      const validStrategies = Object.keys(PathManagementStrategy).filter(x => x !== 'NotSet');
-
-      test.each(validStrategies)('%s', (strategy) => {
+      test.each(Object.keys(PathManagementStrategy))('%s', (strategy) => {
         const value = PathManagementStrategy[strategy as keyof typeof PathManagementStrategy];
         const [needToUpdate, errors] = subject.validateSettings({
           ...cfg,
           application: {
             ...cfg.application,
-            pathManagementStrategy: PathManagementStrategy.NotSet,
+            pathManagementStrategy: PathManagementStrategy.Manual,
           },
         }, { application: { pathManagementStrategy: value } });
 
         expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: true,
+          needToUpdate: value !== PathManagementStrategy.Manual,
           errors:       [],
         });
       });
@@ -408,17 +406,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       [`application.pathManagementStrategy: "invalid value" is not a valid strategy`],
-      });
-    });
-
-    it('should reject setting as NotSet', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg,
-        { application: { pathManagementStrategy: PathManagementStrategy.NotSet } });
-
-      expect({ needToUpdate, errors }).toEqual({
-        needToUpdate: false,
-        errors:       [`application.pathManagementStrategy: "notset" is not a valid strategy`],
+        errors:       [`Invalid value for application.pathManagementStrategy: <"invalid value">; must be one of ["manual","rcfiles"]`],
       });
     });
   });
