@@ -57,7 +57,7 @@ func (p *PeerConnector) ListendAndHandshake() {
 }
 
 // ListenTCP starts a tcp listener and accepts TCP connections on a given port and addr
-// when a new connection is accepted, ListenTCP handles the connection by estabilishing
+// when a new connection is accepted, ListenTCP handles the connection by establishing
 // virtual socket to the host and sends the packets over the AF_VSOCK
 func (p *PeerConnector) ListenTCP() error {
 	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(p.IPv4ListenAddress), Port: p.TCPListenPort})
