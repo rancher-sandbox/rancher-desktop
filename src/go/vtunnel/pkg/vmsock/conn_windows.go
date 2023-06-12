@@ -173,7 +173,7 @@ func (h *HostConnector) handshake(vmGuid hvsock.GUID, found chan<- hvsock.GUID, 
 				logrus.Errorf("hosthandshake closing connection: %v", err)
 			}
 			if seed == SeedPhrase {
-				logrus.Infof("successfully estabilished a handshake with a peer: %s on port: %v", vmGuid.String(), h.PeerHandshakePort)
+				logrus.Infof("successfully established a handshake with a peer: %s on port: %v", vmGuid.String(), h.PeerHandshakePort)
 				found <- vmGuid
 				return
 			}
