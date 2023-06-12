@@ -77,7 +77,7 @@ export const defaultSettings = {
         list:    [] as Array<string>,
       },
     },
-    pathManagementStrategy: PathManagementStrategy.RcFiles,
+    pathManagementStrategy: process.platform === 'win32' ? PathManagementStrategy.Manual : PathManagementStrategy.RcFiles,
     telemetry:              { enabled: true },
     /** Whether we should check for updates and apply them. */
     updater:                { enabled: true },
@@ -499,7 +499,11 @@ const updateTable: Record<number, (settings: any) => void> = {
   },
   7: (settings) => {
     if (settings.application.pathManagementStrategy === 'notset') {
-      settings.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
+      if (process.platform === 'win32') {
+        settings.application.pathManagementStrategy = PathManagementStrategy.Manual;
+      } else {
+        settings.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
+      }
     }
   },
 };

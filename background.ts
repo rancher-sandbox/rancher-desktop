@@ -126,13 +126,11 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   k8smanager.debug = runInDebugMode;
 
-  if (process.platform !== 'win32') {
-    if (pathManager.strategy !== newSettings.application.pathManagementStrategy) {
-      await pathManager.remove();
-      pathManager = getPathManagerFor(newSettings.application.pathManagementStrategy);
-    }
-    await pathManager.enforce();
+  if (pathManager.strategy !== newSettings.application.pathManagementStrategy) {
+    await pathManager.remove();
+    pathManager = getPathManagerFor(newSettings.application.pathManagementStrategy);
   }
+  await pathManager.enforce();
 
   if (newSettings.application.hideNotificationIcon) {
     Tray.getInstance(cfg).hide();
@@ -229,10 +227,8 @@ Electron.app.whenReady().then(async() => {
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
 
-    if (process.platform !== 'win32') {
-      pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
-      await integrationManager.enforce();
-    }
+    pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
+    await integrationManager.enforce();
 
     mainEvents.emit('settings-update', cfg);
 
