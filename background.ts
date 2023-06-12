@@ -228,8 +228,12 @@ Electron.app.whenReady().then(async() => {
       }
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
-    pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
-    await integrationManager.enforce();
+
+    if (process.platform !== 'win32') {
+      pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
+      await integrationManager.enforce();
+    }
+
     mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already
