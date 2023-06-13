@@ -73,11 +73,11 @@ test.describe('Locked fields', () => {
   });
 
   test.beforeAll(async() => {
-    createDefaultSettings();
-    saveUserProfile();
+    createDefaultSettings({ containerEngine: { allowedImages: { enabled: true, patterns: ['a', 'b', 'c', 'e'] } } });
+    await saveUserProfile();
     await createUserProfile(
       { containerEngine: { allowedImages: { enabled: true } } },
-      { containerEngine: { allowedImages: { enabled: true } } },
+      { containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } } },
     );
     electronApp = await startRancherDesktop(__filename);
     context = electronApp.context();
@@ -105,6 +105,7 @@ test.describe('Locked fields', () => {
     const originalSettings = JSON.parse(stdout);
     const newEnabled = !originalSettings.containerEngine.allowedImages.enabled;
 
+    expect(originalSettings.containerEngine.allowedImages.patterns.sort()).toEqual(['c', 'd', 'f']);
     await expect(rdctl(['set', `--container-engine.allowed-images.enabled=${ newEnabled }`]))
       .resolves.toMatchObject({
         stdout: '',
