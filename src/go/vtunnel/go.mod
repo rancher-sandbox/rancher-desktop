@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
 	github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220526041742-c1ed19db6a88
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/sync v0.2.0
