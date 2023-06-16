@@ -2,8 +2,8 @@
   name: General
 </router>
 <template>
-  <div>
-    <div class="general">
+  <div class="general">
+    <div>
       <ul>
         <li>Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
         <li>
@@ -137,10 +137,18 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="scss">
+.general {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
 
-.general li {
-  margin-bottom: .5em;
+  ul {
+    margin-bottom: 0;
+
+    li {
+      margin-bottom: .5em;
+    }
+  }
 }
-
 </style>
