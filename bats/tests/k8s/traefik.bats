@@ -18,6 +18,7 @@ local_setup() {
 @test 'start k8s' {
     start_kubernetes --kubernetes.options.traefik=true
     wait_for_apiserver
+    wait_for_rdctl_background_process
 }
 
 get_host() {

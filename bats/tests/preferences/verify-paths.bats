@@ -17,6 +17,7 @@ local_setup() {
 @test 'start app' {
     start_container_engine
     wait_for_container_engine
+    wait_for_rdctl_background_process
 }
 
 # Running `bash -l -c` can cause bats to hang, so close the output file descriptor with '3>&-'
@@ -87,5 +88,11 @@ no_bashrc_path_manager() {
         refute_output --partial "$HOME/.rd/bin/rdctl"
     else
         skip 'fish not found'
+    fi
+}
+
+@test 'shutdown on mac' {
+    if is_macos; then
+        rdctl shutdown
     fi
 }

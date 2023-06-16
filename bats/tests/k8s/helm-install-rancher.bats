@@ -13,6 +13,7 @@ local_setup() {
 @test 'start k8s' {
     start_kubernetes
     wait_for_apiserver
+    wait_for_rdctl_background_process
 }
 
 @test 'add helm repo' {

@@ -26,6 +26,7 @@ pull_containers() {
     start_container_engine
     wait_for_container_engine
     pull_containers
+    wait_for_rdctl_background_process
 }
 
 @test "switch to containerd" {

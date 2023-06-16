@@ -8,6 +8,7 @@ refute=refute
 
 @test 'Start up Rancher Desktop' {
     start_application
+    wait_for_rdctl_background_process
 }
 
 @test 'Verify that the expected directories were created' {

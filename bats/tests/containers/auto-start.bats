@@ -6,6 +6,7 @@ load '../helpers/load'
 
 @test 'Start up Rancher Desktop' {
     start_application
+    wait_for_rdctl_background_process
 }
 
 @test 'Verify that initial Behavior is all set to false' {

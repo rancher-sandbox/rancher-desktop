@@ -16,6 +16,7 @@ verify_k8s_is_running() {
     start_kubernetes
     wait_for_apiserver
     verify_k8s_is_running
+    wait_for_rdctl_background_process
 }
 
 @test 'disable kubernetes' {

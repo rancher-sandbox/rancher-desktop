@@ -54,6 +54,7 @@ check_extension_installed() { # refute, name
 @test 'start container engine' {
     RD_ENV_EXTENSIONS=1 start_container_engine
     wait_for_container_engine
+    wait_for_rdctl_background_process
 }
 
 @test 'build extension testing image' {

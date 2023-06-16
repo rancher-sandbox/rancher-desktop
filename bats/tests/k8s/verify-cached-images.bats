@@ -10,6 +10,7 @@ load '../helpers/load'
     # Start first so we can use `rdctl set` in all the calls that change the k8s version
     start_kubernetes
     wait_for_apiserver
+    wait_for_rdctl_background_process
 }
 
 test_k8s_version_has_correct_cached_extension() {

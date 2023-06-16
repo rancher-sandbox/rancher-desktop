@@ -7,6 +7,7 @@ load '../helpers/load'
 @test 'start container engine' {
     start_container_engine
     wait_for_container_engine
+    wait_for_rdctl_background_process
 }
 
 @test 'run rancher' {

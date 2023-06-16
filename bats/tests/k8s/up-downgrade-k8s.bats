@@ -13,6 +13,7 @@ ARCH_FOR_KUBERLR=amd64
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_engine
+    wait_for_rdctl_background_process
 }
 
 @test 'deploy nginx - always restart' {

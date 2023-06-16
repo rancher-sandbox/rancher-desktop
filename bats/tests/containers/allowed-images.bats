@@ -6,6 +6,7 @@ RD_USE_IMAGE_ALLOW_LIST=true
     start_kubernetes
     wait_for_container_engine
     wait_for_apiserver
+    wait_for_rdctl_background_process
 }
 
 @test 'update the list of patterns first time' {

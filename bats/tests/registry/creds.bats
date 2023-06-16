@@ -92,6 +92,7 @@ skip_for_insecure_registry() {
         wait_for_shell
         update_allowed_patterns true "$IMAGE_REGISTRY" "$REGISTRY"
     fi
+    wait_for_rdctl_background_process
 }
 
 @test 'wait for container engine' {

@@ -126,7 +126,15 @@ EOF
         # Detach `rdctl start` because on Windows the process may not exit until
         # Rancher Desktop itself quits.
         RD_TEST=bats rdctl start "${args[@]}" "$@" &
+        RDCTL_PROCESS_ID=$!
     fi
+}
+
+wait_for_rdctl_background_process() {
+    case "${RDCTL_PROCESS_ID:-no}" in
+    0 | no) ;;
+    [0-9][0-9]*) wait "$RDCTL_PROCESS_ID" || true ;;
+    esac
 }
 
 # shellcheck disable=SC2120
