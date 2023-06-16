@@ -31,4 +31,11 @@ export default Vue.extend({
   .options {
     margin-top: 0.5rem;
   }
+
+  // Override card styles from @rancher/components, we can remove this once the component gets refactor.
+  .card-container {
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+  }
 </style>

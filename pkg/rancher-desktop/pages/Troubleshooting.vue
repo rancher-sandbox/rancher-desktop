@@ -5,7 +5,6 @@
         <template #title>
           <span class="text-xl">
             {{ t('troubleshooting.general.logs.title') }}
-            </h3>
           </span>
         </template>
         <template #description>
