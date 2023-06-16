@@ -77,7 +77,7 @@ export const defaultSettings = {
         list:    [] as Array<string>,
       },
     },
-    pathManagementStrategy: PathManagementStrategy.RcFiles,
+    pathManagementStrategy: process.platform === 'win32' ? PathManagementStrategy.Manual : PathManagementStrategy.RcFiles,
     telemetry:              { enabled: true },
     /** Whether we should check for updates and apply them. */
     updater:                { enabled: true },
@@ -245,7 +245,7 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       // The deployment profile always returns an empty object if there is no profile.
       // This means that we treat an empty hash defaults profile, or an empty registry hive,
       // as if there is no profile in place (for the purposes of setting the first-run entry).
-      _.merge(settings, deploymentProfiles.defaults, deploymentProfiles.locked);
+      merge(settings, deploymentProfiles.defaults);
       if (!Object.keys(deploymentProfiles.defaults).length && !Object.keys(deploymentProfiles.locked).length) {
         _isFirstRun = true;
       }
@@ -277,6 +277,8 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       console.log('updates disabled');
     }
   }
+  // Replace existing settings fields with whatever is set in the locked deployment-profile
+  merge(settings, deploymentProfiles.locked);
   save(settings);
   lockedSettings = determineLockedFields(deploymentProfiles.locked);
 
@@ -499,7 +501,11 @@ const updateTable: Record<number, (settings: any) => void> = {
   },
   7: (settings) => {
     if (settings.application.pathManagementStrategy === 'notset') {
-      settings.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
+      if (process.platform === 'win32') {
+        settings.application.pathManagementStrategy = PathManagementStrategy.Manual;
+      } else {
+        settings.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
+      }
     }
   },
 };
