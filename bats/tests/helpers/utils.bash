@@ -89,7 +89,7 @@ update_allowed_patterns() {
     local patterns=$2
     rdctl api settings -X PUT --input - <<EOF
 {
-  "version": 7,
+  "version": 8,
   "containerEngine": {
     "allowedImages": {
       "enabled": $enabled,
