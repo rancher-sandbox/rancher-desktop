@@ -112,15 +112,9 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 
-				// We only need to perform this check when the namespaced network is enabled.
-				// When using the default network without the privileged service
-				// (non-admin install + default network), we will not be using this event API,
-				// iptables scanning will be used instead.
-				if !e.enablePrivilegedService {
-					err := execIptablesRules(ports, startTask.ContainerID, envelope.Namespace, strconv.Itoa(int(startTask.Pid)))
-					if err != nil {
-						log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
-					}
+				err = execIptablesRules(ports, startTask.ContainerID, envelope.Namespace, strconv.Itoa(int(startTask.Pid)))
+				if err != nil {
+					log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 				}
 
 				err = e.portTracker.Add(startTask.ContainerID, ports)
@@ -267,7 +261,8 @@ func (e *EventMonitor) updateListener(
 	}
 }
 
-// execIptablesRules creates an additional DNAT rule if port binding is bound to 127.0.0.1.
+// execIptablesRules creates an additional DNAT rule to allow service exposure on
+// other network addresses if port binding is bound to 127.0.0.1.
 func execIptablesRules(portMappings nat.PortMap, containerID, namespace, pid string) error {
 	var errs []error
 
@@ -289,8 +284,8 @@ func execIptablesRules(portMappings nat.PortMap, containerID, namespace, pid str
 	return nil
 }
 
-// When namespaced network is enabled, if the port binding is bound to 127.0.0.1, we add an additional
-// DNAT rule in the main CNI DNAT chain (CNI-HOSTPORT-DNAT) after the existing rule (using --append).
+// When the port binding is bound to 127.0.0.1, we add an additional DNAT rule in the main
+// CNI DNAT chain (CNI-HOSTPORT-DNAT) after the existing rule (using --append).
 // This is necessary because the initial CNI rule created by containerd only allows the traffic
 // to be routed to localhost. Therefore, we add an additional rule to allow traffic to any
 // destination IP address which allows the service to be discoverable through namespaced network's
@@ -308,7 +303,7 @@ func createLoopbackIPtablesRules(containerID, namespace, pid, port, destinationP
 		return err
 	}
 
-	log.Debugf("read the following network conflist for [containerID: %s] config: %s", containerID, string(output))
+	log.Debugf("read the following network conflist for containerID: %s config: %s", containerID, string(output))
 
 	var networkConfig cniNetworkConfig
 	err = json.Unmarshal(output, &networkConfig)
@@ -323,7 +318,7 @@ func createLoopbackIPtablesRules(containerID, namespace, pid, port, destinationP
 
 	log.Debugf("found the ip address: %s for containerID: %s", eth0IP, containerID)
 
-	// create the corresponding chanin name, e.g CNI-DN-xxxxxx
+	// create the corresponding chain name, e.g CNI-DN-xxxxxx
 	// (where xxxxxx is a function of the ContainerID and network name)
 	// https://www.cni.dev/plugins/current/meta/portmap/#dnat
 	// https://github.com/containernetworking/plugins/blob/2b097c5a62dacfd2f9ea4268faa4fc04bd5343f5/pkg/utils/utils.go#L39
@@ -332,9 +327,9 @@ func createLoopbackIPtablesRules(containerID, namespace, pid, port, destinationP
 
 	log.Debugf("determined iptables chain name: %s for containerID: %s", chainName, containerID)
 
-	// Instead of updating the existing rule we insert the overriding rule obove the previous one
+	// Instead of updating the existing rule we insert the overriding rule below the previous one
 	// e.g rule can be:
-	// iptables -A nat -A CNI-DN-xxxxxx -p tcp -d 0.0.0.0/0 -j DNAT --dport 9119 --to-destination 10.4.0.10:80
+	// iptables -t nat -A CNI-DN-xxxxxx -p tcp -d 0.0.0.0/0 -j DNAT --dport 9119 --to-destination 10.4.0.10:80
 	iptableCmd := exec.Command("iptables",
 		"--table", "nat",
 		"--append", chainName,
@@ -354,7 +349,7 @@ func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, contain
 		return nil, err
 	}
 
-	log.Debugf("got the container [%s] from namespace [%s]", container.ID, namespace)
+	log.Debugf("got a container [%s] from namespace [%s]", container.ID, namespace)
 
 	return createPortMappingFromString(container.Labels[portsKey])
 }
@@ -417,7 +412,7 @@ func extractIPAddress(pid string) (string, error) {
 // ported from:
 // https://github.com/containernetworking/plugins/blob/2b097c5a62dacfd2f9ea4268faa4fc04bd5343f5/pkg/utils/utils.go#L39
 // however module requires Go 1.20
-// MustFormatHashWithPrefix returns a string of given length that begins with the
+// mustFormatHashWithPrefix returns a string of given length that begins with the
 // given prefix. It is filled with entropy based on the given string toHash.
 func mustFormatHashWithPrefix(length int, prefix string, toHash string) string {
 	if len(prefix) >= length || length > maxHashLen {
