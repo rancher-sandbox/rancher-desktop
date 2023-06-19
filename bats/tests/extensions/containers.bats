@@ -80,6 +80,14 @@ encoded_id() { # variant
     assert_line --regexp "$(id vm-compose).*[[:space:]]Up[[:space:]]"
 }
 
+@test 'compose - check for dangling symlinks' {
+    if ! using_containerd; then
+        skip 'This test only applies to containerd'
+    fi
+    assert_exists "$PATH_EXTENSIONS/$(encoded_id vm-compose)/compose/link"
+    assert_not_exists "$PATH_EXTENSIONS/$(encoded_id vm-compose)/compose/dangling-link"
+}
+
 @test 'compose - uninstall' {
     rdctl api --method=POST "/v1/extensions/uninstall?id=$(id vm-compose)"
 
