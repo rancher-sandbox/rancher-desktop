@@ -45,11 +45,13 @@ If it's running, behaves the same as 'rdctl set ...'.
 }
 
 var applicationPath string
+var noModalDialogs bool
 
 func init() {
 	rootCmd.AddCommand(startCmd)
 	options.UpdateCommonStartAndSetCommands(startCmd)
 	startCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "Path to main executable.")
+	startCmd.Flags().BoolVarP(&noModalDialogs, "no-modal-dialogs", "", false, "Avoid displaying dialog boxes.")
 }
 
 /**
@@ -87,6 +89,9 @@ func doStartCommand(cmd *cobra.Command) error {
 		if err != nil {
 			return fmt.Errorf("failed to locate main Rancher Desktop executable: %w\nplease retry with the --path option", err)
 		}
+	}
+	if noModalDialogs {
+		commandLineArgs = append(commandLineArgs, "--no-modal-dialogs")
 	}
 	return launchApp(applicationPath, commandLineArgs)
 }
