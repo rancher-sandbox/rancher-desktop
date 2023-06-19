@@ -9,11 +9,11 @@ import path from 'path';
 import { expect, test, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
+import { createDefaultSettings, startRancherDesktop, teardown } from './utils/TestUtils';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe('WSL Integrations', () => {
   test.skip(true, 'TODO: https://github.com/rancher-sandbox/rancher-desktop/issues/2881');
@@ -26,7 +26,6 @@ test.describe('WSL Integrations', () => {
   let workdir = '';
   /** The environment variables, before our tests. */
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let page: Page;
 
   test.beforeAll(async() => {
@@ -149,27 +148,14 @@ test.describe('WSL Integrations', () => {
   test.beforeAll(async() => {
     createDefaultSettings();
 
-    electronApp = await _electron.launch({
-      args: [
-        path.join(__dirname, '../'),
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
+    electronApp = await startRancherDesktop(__filename, {
       env: {
-        ...(process.env as Record<string, string>),
         PATH:             path.join(workdir, 'system32') + path.delimiter + process.env.PATH,
         RD_TEST_WSL_EXE:  path.join(workdir, 'system32', 'wsl.exe'),
         RD_MOCK_WSL_DATA: path.join(workdir, 'config.json'),
-        RD_MOCK_BACKEND:  '1',
-        RD_LOGS_DIR:      reportAsset(__filename, 'log'),
       },
     });
-    context = electronApp.context();
 
-    await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
   });
   test.afterAll(() => teardown(electronApp, __filename));

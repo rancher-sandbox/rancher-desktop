@@ -32,14 +32,14 @@ import fetch from 'node-fetch';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getFullPathForTool, reportAsset, retry, teardown, tool,
+  createDefaultSettings, getFullPathForTool, retry, startRancherDesktop, teardown, tool,
 } from './utils/TestUtils';
 
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 let credStore = '';
 let dockerConfigPath = '';
@@ -113,11 +113,9 @@ const testUnix = os.platform() === 'win32' ? test.skip : test;
 
 describeWithCreds('Credentials server', () => {
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let serverState: ServerState;
   let authString: string;
   let page: Page;
-  const appPath = path.join(__dirname, '../');
   const curlCommand = os.platform() === 'win32' ? 'curl.exe' : 'curl';
   const initialArgs: string[] = []; // Assigned once we have auth string on first use.
 
@@ -226,27 +224,9 @@ describeWithCreds('Credentials server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
+    await tool('rdctl', 'factory-reset');
     createDefaultSettings({ kubernetes: { enabled: false } });
-    electronApp = await _electron.launch({
-      args: [
-        appPath,
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR: reportAsset(__filename, 'log'),
-      },
-    });
-    context = electronApp.context();
-
-    await context.tracing.start({
-      screenshots: true,
-      snapshots:   true,
-    });
+    electronApp = await startRancherDesktop(__filename, { mock: false });
     page = await electronApp.firstWindow();
   });
 

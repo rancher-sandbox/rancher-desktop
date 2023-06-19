@@ -16,6 +16,11 @@ import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
+let testInfo: undefined | {
+  testPath: string;
+  startTime: number;
+};
+
 export async function createUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
@@ -148,6 +153,15 @@ export async function teardown(app: ElectronApplication, filename: string) {
       console.log(`Manually stopped process ${ pid }`);
     }
   }
+
+  if (testInfo?.testPath === filename) {
+    const delta = (Date.now() - testInfo.startTime) / 1_000;
+    const min = Math.floor(delta / 60);
+    const sec = Math.round(delta % 60);
+    const string = min ? `${ min } min ${ sec } sec` : `${ sec } seconds`;
+
+    console.log(`Test ${ path.basename(filename) } took ${ string }.`);
+  }
 }
 
 /**
@@ -245,7 +259,9 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
  * @param options.tracing Whether to start tracing (defaults to true).
  * @param options.mock Whether to use the mock backend (defaults to true).
  */
-export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean }): Promise<ElectronApplication> {
+export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean, env?: Record<string, string> }): Promise<ElectronApplication> {
+  testInfo = { testPath, startTime: Date.now() };
+
   const electronApp = await _electron.launch({
     args: [
       path.join(__dirname, '../../'),
@@ -257,6 +273,7 @@ export async function startRancherDesktop(testPath: string, options?: { tracing?
     ],
     env: {
       ...process.env,
+      ...options?.env ?? {},
       RD_LOGS_DIR: reportAsset(testPath, 'log'),
       ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },

@@ -1,13 +1,12 @@
 import os from 'os';
-import path from 'path';
 
 import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
-import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
+import { createDefaultSettings, startRancherDesktop, teardown } from './utils/TestUtils';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 let page: Page;
 
@@ -17,34 +16,15 @@ let page: Page;
  * */
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let preferencesWindow: Page;
 
   test.beforeAll(async() => {
     createDefaultSettings();
 
-    electronApp = await _electron.launch({
-      args: [
-        path.join(__dirname, '../'),
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR:     reportAsset(__filename, 'log'),
-        RD_MOCK_BACKEND: '1',
-      },
-    });
-    context = electronApp.context();
+    electronApp = await startRancherDesktop(__filename);
 
-    await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
-
     await new NavPage(page).preferencesButton.click();
-
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
 

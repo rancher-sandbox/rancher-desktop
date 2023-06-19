@@ -7,40 +7,23 @@ import _ from 'lodash';
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, getAlternateSetting, reportAsset, teardown } from './utils/TestUtils';
+import { createDefaultSettings, getAlternateSetting, startRancherDesktop, teardown } from './utils/TestUtils';
 
 import { Settings, ContainerEngine } from '@pkg/config/settings';
 import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe.serial('KubernetesBackend', () => {
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let page: Page;
 
   test.beforeAll(async() => {
     createDefaultSettings();
 
-    electronApp = await _electron.launch({
-      args: [
-        path.join(__dirname, '../'),
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR: reportAsset(__filename, 'log'),
-      },
-    });
-    context = electronApp.context();
-
-    await context.tracing.start({ screenshots: true, snapshots: true });
+    electronApp = await startRancherDesktop(__filename, { mock: false });
     page = await electronApp.firstWindow();
   });
 
