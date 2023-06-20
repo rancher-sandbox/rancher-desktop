@@ -87,9 +87,15 @@ try() {
 update_allowed_patterns() {
     local enabled=$1
     local patterns=$2
+    # TODO TODO TODO
+    # Once https://github.com/rancher-sandbox/rancher-desktop/issues/4939 has been
+    # implemented, the `version` field  should be made a constant. Putting in the
+    # current version here doesn't guarantee that the structure conforms to the latest
+    # schema; we should rely on migrations instead.
+    # TODO TODO TODO
     rdctl api settings -X PUT --input - <<EOF
 {
-  "version": 7,
+  "version": $(get_setting .version),
   "containerEngine": {
     "allowedImages": {
       "enabled": $enabled,
