@@ -56,7 +56,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return this.preferences.experimental.virtualMachine.type === VMType.VZ;
     },
     vzDisabled(): boolean {
-      return semver.lte(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lte(this.macOsVersion.version, '13.3.0'));
+      return semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0'));
     },
     rosettaDisabled(): boolean {
       return !this.isArm;
