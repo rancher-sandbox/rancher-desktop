@@ -225,6 +225,14 @@ export async function clear() {
 }
 
 /**
+ * Used for unit testing only.
+ * Could be used in core code if we ever want to reload changed deployment profiles, but that isn't needed now.
+ */
+export function clearSettings() {
+  settings = undefined;
+}
+
+/**
  * Load the settings file or create it if not present.  If the settings have
  * already been loaded, return it without re-loading from disk.
  */
