@@ -14,10 +14,9 @@ local_setup() {
     factory_reset
 }
 
-@test 'start app and fix dotfiles' {
+@test 'start app' {
     start_container_engine
     wait_for_container_engine
-    ensure_dotfiles_are_completed_BUG_BUG_BUG_4519
 }
 
 # Running `bash -l -c` can cause bats to hang, so close the output file descriptor with '3>&-'

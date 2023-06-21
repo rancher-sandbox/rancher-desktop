@@ -22,6 +22,12 @@ write_allow_list() { # list
     # Note that the list preference is not writable using `rdctl set`, and we
     # need to do a direct API call instead.
 
+    # TODO TODO TODO
+    # Once https://github.com/rancher-sandbox/rancher-desktop/issues/4939 has been
+    # implemented, the `version` field  should be made a constant. Putting in the
+    # current version here doesn't guarantee that the structure conforms to the latest
+    # schema; we should rely on migrations instead.
+    # TODO TODO TODO
     rdctl api /v1/settings --input - <<<'{
         "version": '"$(get_setting .version)"',
         "application": {

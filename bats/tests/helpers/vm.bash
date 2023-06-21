@@ -142,14 +142,6 @@ start_application() {
     if using_docker; then
         wait_for_container_engine
     fi
-
-    # BUG BUG BUG
-    # Looks like the rcfiles don't get updated via `rdctl start`
-    # BUG BUG BUG
-    if is_unix; then
-        rdctl set --application.path-management-strategy manual
-        rdctl set --application.path-management-strategy rcfiles
-    fi
 }
 
 container_engine_info() {
