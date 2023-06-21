@@ -84,13 +84,18 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
   const branchName = getBranchName(name, currentVersion, latestVersion);
 
   console.log(`Creating PR "${ title }".`);
-  await getOctokit().rest.pulls.create({
-    owner: GITHUB_OWNER,
-    repo:  GITHUB_REPO,
-    title,
-    base:  MAIN_BRANCH,
-    head:  branchName,
-  });
+  try {
+    await getOctokit().rest.pulls.create({
+      owner: GITHUB_OWNER,
+      repo:  GITHUB_REPO,
+      title,
+      base:  MAIN_BRANCH,
+      head:  branchName,
+    });
+  } catch (err: any) {
+    console.log(JSON.stringify(err.response?.data));
+    throw err;
+  }
 }
 
 type PRSearchFn = ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>;
