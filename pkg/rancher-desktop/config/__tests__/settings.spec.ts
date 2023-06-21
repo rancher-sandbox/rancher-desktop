@@ -296,7 +296,8 @@ describe('settings', () => {
         test('all fields are unlocked', async() => {
           const profiles = await readDeploymentProfiles();
 
-          settings.load(profiles);
+          settings.createSettings(profiles);
+          settings.updateLockedFields(profiles.locked);
           verifyAllFieldsAreUnlocked(settings.getLockedSettings());
         });
       });
@@ -325,7 +326,8 @@ describe('settings', () => {
                 .mockImplementation(createMocker(system, user));
               const profiles = await readDeploymentProfiles();
 
-              settings.load(profiles);
+              settings.createSettings(profiles);
+              settings.updateLockedFields(profiles.locked);
               if (shouldLock) {
                 verifyAllFieldsAreLocked(settings.getLockedSettings());
               } else {
