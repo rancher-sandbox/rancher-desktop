@@ -3,10 +3,10 @@ import path from 'path';
 
 import { test, expect, _electron } from '@playwright/test';
 
-import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { createDefaultSettings, createUserProfile, reportAsset, teardown } from '../e2e/utils/TestUtils';
+import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
