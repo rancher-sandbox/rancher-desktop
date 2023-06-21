@@ -59,22 +59,22 @@ func TestJsonToRegFormat(t *testing.T) {
 			{
 				hiveType:       "hkcu",
 				profileType:    "defaults",
-				expectedHeader: "HKEY_CURRENT_USER\\SOFTWARE\\Profiles\\Rancher Desktop\\defaults",
+				expectedHeader: "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults",
 			},
 			{
 				hiveType:       "hklm",
 				profileType:    "defaults",
-				expectedHeader: "HKEY_LOCAL_MACHINE\\SOFTWARE\\Profiles\\Rancher Desktop\\defaults",
+				expectedHeader: "HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Rancher Desktop\\defaults",
 			},
 			{
 				hiveType:       "hkcu",
 				profileType:    "locked",
-				expectedHeader: "HKEY_CURRENT_USER\\SOFTWARE\\Profiles\\Rancher Desktop\\locked",
+				expectedHeader: "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\locked",
 			},
 			{
 				hiveType:       "hklm",
 				profileType:    "locked",
-				expectedHeader: "HKEY_LOCAL_MACHINE\\SOFTWARE\\Profiles\\Rancher Desktop\\locked",
+				expectedHeader: "HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Rancher Desktop\\locked",
 			},
 		}
 		jsonBody := `{"version": 19, "application": { "pathManagementStrategy": "manual" } }`
@@ -98,7 +98,7 @@ func TestJsonToRegFormat(t *testing.T) {
         "enabled": false,
         "list": ["wink", "blink", "pokinkleblink"]
      } } }, "containerEngine": { "name": "beatrice" }}`
-		header := "HKEY_CURRENT_USER\\SOFTWARE\\Profiles\\Rancher Desktop\\defaults"
+		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
 		//assert.Equal(t, []string{}, lines)
@@ -126,7 +126,7 @@ func TestJsonToRegFormat(t *testing.T) {
 		}
   }
 }`
-		header := "HKEY_CURRENT_USER\\SOFTWARE\\Profiles\\Rancher Desktop\\defaults"
+		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
 		//assert.Equal(t, []string{}, lines)
@@ -167,37 +167,37 @@ func TestJsonToRegFormat(t *testing.T) {
     "name": "moby"
   }
 }`
-		header := "HKEY_CURRENT_USER\\SOFTWARE\\Profiles\\Rancher Desktop\\defaults"
+		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
 		expectedLines := []string{
 			`Windows Registry Editor Version 5.00`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies]`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop]`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults]`,
 			`"version"=dword:8`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults\application]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]`,
 			`"adminAccess"=dword:0`,
 			`"pathManagementStrategy"="manual"`,
 			`"autoStart"=dword:0`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults\application\extensions]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults\application\extensions\allowed]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]`,
 			`"enabled"=dword:0`,
 			`"list"=hex(7):66,00,6f,00,75,00,6e,00,64,00,00,00,66,00,75,00,6c,00,6c,00,79,00,00,00,62,00,61,00,77,00,64,00,79,00,00,00,74,00,61,00,72,00,6f,00,74,00,00,00,00,00`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults\application\updater]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\updater]`,
 			`"enabled"=dword:0`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults\containerEngine]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine]`,
 			`"name"="moby"`,
 			``,
-			`[HKEY_CURRENT_USER\SOFTWARE\Profiles\Rancher Desktop\defaults\containerEngine\allowedImages]`,
+			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine\allowedImages]`,
 			`"enabled"=dword:0`,
 			`"patterns"=hex(7):66,00,61,00,62,00,6c,00,65,00,00,00,74,00,68,00,65,00,72,00,65,00,00,00,63,00,72,00,61,00,7a,00,79,00,00,00,77,00,68,00,69,00,6e,00,65,00,00,00,00,00`,
 		}

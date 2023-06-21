@@ -148,13 +148,13 @@ func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) (
 		return nil, fmt.Errorf("error in json: %s\n", err)
 	}
 	headerLines := []string{"Windows Registry Editor Version 5.00"}
-	bodyLines, _, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Profiles", "Rancher Desktop", profileType}, reflect.ValueOf(settings), "")
+	bodyLines, _, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop", profileType}, reflect.ValueOf(settings), "")
 	if err != nil {
 		return nil, err
 	}
 	if len(bodyLines) > 0 {
-		headerLines = append(headerLines, "", fmt.Sprintf("[%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Profiles"))
-		headerLines = append(headerLines, "", fmt.Sprintf("[%s\\%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Profiles", "Rancher Desktop"))
+		headerLines = append(headerLines, "", fmt.Sprintf("[%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies"))
+		headerLines = append(headerLines, "", fmt.Sprintf("[%s\\%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop"))
 	}
 	return append(headerLines, bodyLines...), nil
 }

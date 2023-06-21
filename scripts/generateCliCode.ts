@@ -347,7 +347,6 @@ class Generator {
     settingsTree: settingsTreeType): void {
     if (preference.additionalProperties) {
       settingsTree[lastName(propertyName)] = { type: 'hash' };
-      // console.log(`Skipping ${ propertyName }: not settable from the command-line.`);
 
       return;
     }

@@ -34,7 +34,17 @@ var outputSettingsFlags struct {
 var listSettingsCmd = &cobra.Command{
 	Use:   "list-settings",
 	Short: "Lists the current settings.",
-	Long:  `Lists the current settings in JSON format.`,
+	Long: `Lists the current settings in JSON or Windows registry-file format.
+The default output format is JSON.
+
+To convert the current settings into a registry file, run the following command:
+
+rdctl list-commands --output reg,X,Y
+
+where X is either "hkcu" or "hklm", depending on whether you want to update HKEY_LOCAL_MACHINE
+or HKEY_CURRENT_USER respectively,
+and Y is either "defaults" or "locked", depending on which deployment profile you want to populate.
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
