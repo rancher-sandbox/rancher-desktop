@@ -229,8 +229,11 @@ export async function clear() {
  * already been loaded, return it without re-loading from disk.
  */
 export function load(deploymentProfiles: DeploymentProfileType): Settings {
+  if (settings) {
+    return settings;
+  }
   try {
-    settings ??= loadFromDisk();
+    settings = loadFromDisk();
   } catch (err: any) {
     settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
