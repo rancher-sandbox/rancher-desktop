@@ -670,7 +670,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /**
    * Read the given file in a WSL distribution
    * @param [filePath] the path of the file to read.
-   * @param [options] Optional configuratino for reading the file.
+   * @param [options] Optional configuration for reading the file.
    * @param [options.distro=INSTANCE_NAME] The distribution to read from.
    * @param [options.encoding='utf-8'] The encoding to use for the result.
    * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
