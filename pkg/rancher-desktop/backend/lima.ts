@@ -62,7 +62,7 @@ export enum Action {
 }
 
 /**
- * Symbolc names for various SLIRP IP addresses.
+ * Symbolic names for various SLIRP IP addresses.
  */
 enum SLIRP {
   HOST_GATEWAY = '192.168.5.2',
