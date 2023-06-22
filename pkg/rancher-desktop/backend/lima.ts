@@ -1412,7 +1412,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * directory.  We use these temporarily for limactl to generate the sudoers
    * file, but they are not actually executed from here.
    */
-  protected unsafeVMNetExectuables = {
+  protected unsafeVMNetExecutables = {
     vdeSwitch:   path.join(paths.resources, 'darwin/lima/vde/bin/vde_switch'),
     vdeVMNet:    path.join(paths.resources, 'darwin/lima/vde/bin/vde_vmnet'),
     socketVMNet: path.join(paths.resources, 'darwin/lima/socket_vmnet/bin/socket_vmnet'),
@@ -1427,7 +1427,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       const typedKey = key as 'vdeSwitch' | 'vdeVMNet' | 'socketVMNet';
 
       input = input.replaceAll(
-        this.unsafeVMNetExectuables[typedKey],
+        this.unsafeVMNetExecutables[typedKey],
         this.safeVMNetExecutables[typedKey]);
     }
 
@@ -1466,9 +1466,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const set = (key: executableKey) => {
       if (useUnsafeExecutables) {
         if (!config.paths[key] || config.paths[key] === this.safeVMNetExecutables[key]) {
-          config.paths[key] = this.unsafeVMNetExectuables[key];
+          config.paths[key] = this.unsafeVMNetExecutables[key];
         }
-      } else if (!config.paths[key] || config.paths[key] === this.unsafeVMNetExectuables[key]) {
+      } else if (!config.paths[key] || config.paths[key] === this.unsafeVMNetExecutables[key]) {
         config.paths[key] = this.safeVMNetExecutables[key];
       }
     };
