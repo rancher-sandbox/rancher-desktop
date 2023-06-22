@@ -4621,7 +4621,7 @@ featureFlags:
   label: Feature Flags
   warning: |-
     Feature flags allow {vendor} to gate certain features behind flags.
-    Features that are off by defult shoud be considered experimental functionality.
+    Features that are off by default shoud be considered experimental functionality.
     Some features require a restart of the {vendor} server to change.
     This will result in a short outage of the API and UI, but not affect running clusters or workloads.
   restartRequired: "Note: Updating this feature flag requires a restart"
