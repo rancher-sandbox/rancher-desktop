@@ -1305,7 +1305,7 @@ clusterIndexPage:
       buttonText: Configure Gatekeeper
       disabled: OPA Gatekeeper is not configured.
       label: OPA Gatekeeper Constraint Violations
-      noRows: There are no contraints with violations to show.
+      noRows: There are no constraints with violations to show.
     nodes:
       label: Unhealthy Nodes
       noRows: There are no unhealthy nodes to show.
