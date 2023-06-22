@@ -38,6 +38,7 @@ refute=refute
     rdctl shutdown
 }
 @test 'factory-reset when Rancher Desktop is not running' {
+    touch_updater_longhorn
     rdctl_factory_reset --verbose
 }
 
@@ -63,6 +64,10 @@ refute=refute
 
 @test 'Verify that WSL distributions were deleted' {
     check_WSL
+}
+
+@test 'Verify updater-longhorn.json was deleted' {
+    check_updater_longhorn_gone
 }
 
 @test 'Start Rancher Desktop 2' {
@@ -97,6 +102,10 @@ refute=refute
     check_WSL
 }
 
+@test 'Verify updater-longhorn.json was deleted 2' {
+    check_updater_longhorn_gone
+}
+
 @test 'Start Rancher Desktop 3' {
     start_application
 }
@@ -127,6 +136,10 @@ refute=refute
 
 @test 'Verify that WSL distributions were deleted 3' {
     check_WSL
+}
+
+@test 'Verify updater-longhorn.json was deleted when cache was retained' {
+    check_updater_longhorn_gone
 }
 
 rdctl_factory_reset() {
@@ -246,4 +259,12 @@ check_WSL() {
     run powershell.exe -c "wsl.exe --list"
     "${refute}_output" --partial "rancher-desktop-data"
     "${refute}_output" --partial "rancher-desktop"
+}
+
+check_updater_longhorn_gone() {
+    assert_not_exists "$PATH_CACHE/updater-longhorn.json"
+}
+
+touch_updater_longhorn() {
+    touch "$PATH_CACHE/updater-longhorn.json"
 }
