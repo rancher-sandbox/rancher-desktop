@@ -53,7 +53,7 @@ RD_CONTAINER_RUNTIME=moby RD_USE_IMAGE_ALLOW_LIST=false ./bats-core/bin/bats tes
 
 ### On Windows:
 
-BATS must be executed from within a WSL distibution. (You have to cd into `/mnt/c/REPOSITORY_LOCATION` from your unix shell.)
+BATS must be executed from within a WSL distribution. (You have to cd into `/mnt/c/REPOSITORY_LOCATION` from your unix shell.)
 
 To test the Windows-based tools, set `RD_USE_WINDOWS_EXE` to `true` before running.
 
