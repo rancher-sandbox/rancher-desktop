@@ -18,7 +18,7 @@ local_setup() {
 @test 'start rancher desktop' {
     start_kubernetes
     wait_for_apiserver
-    # the docker context "rancher-desktop" may not have been writtengit
+    # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_engine
 }
