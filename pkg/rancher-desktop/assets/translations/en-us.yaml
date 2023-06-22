@@ -4320,7 +4320,7 @@ typeDescription:
   cis.cattle.io.clusterscanprofile: A profile is the configuration for the CIS scan, which is the benchmark versions to use and any specific tests to skip in that benchmark.
   cis.cattle.io.clusterscan: A scan is created to trigger a CIS scan on the cluster based on the defined profile. A report is created after the scan is completed.
   cis.cattle.io.clusterscanreport: A report is the result of a CIS scan of the cluster.
-  management.cattle.io.feature: Feature Flags allow certain {vendor} features to be toggled on and off.  Features that are off by default shoud be considered experimental functionality.
+  management.cattle.io.feature: Feature Flags allow certain {vendor} features to be toggled on and off.  Features that are off by default should be considered experimental functionality.
   resources.cattle.io.backup: A backup is created to perform one-time backups or schedule recurring backups based on a ResourceSet.
   resources.cattle.io.restore: A restore is created to trigger a restore to the cluster based on a backup file.
   resources.cattle.io.resourceset: A resource set defines which CRDs and resources to store in the backup.
@@ -4621,7 +4621,7 @@ featureFlags:
   label: Feature Flags
   warning: |-
     Feature flags allow {vendor} to gate certain features behind flags.
-    Features that are off by default shoud be considered experimental functionality.
+    Features that are off by default should be considered experimental functionality.
     Some features require a restart of the {vendor} server to change.
     This will result in a short outage of the API and UI, but not affect running clusters or workloads.
   restartRequired: "Note: Updating this feature flag requires a restart"
