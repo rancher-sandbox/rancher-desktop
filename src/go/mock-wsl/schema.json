@@ -13,7 +13,7 @@
                 "description": "One command to be matched",
                 "properties": {
                     "args": {
-                        "description": "Arguments to match, execluding the executable name.",
+                        "description": "Arguments to match, excluding the executable name.",
                         "type": "array",
                         "items": {
                             "type": "string"
