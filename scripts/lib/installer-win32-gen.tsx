@@ -92,7 +92,7 @@ type directory = {
   name: string;
   /** Child directories. */
   directories: directory[];
-  /** The regular files within this direcotry */
+  /** The regular files within this directory */
   files: { name: string, id: string }[];
 };
 
