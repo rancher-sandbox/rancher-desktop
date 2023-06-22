@@ -75,7 +75,7 @@ export default class DockerDirManager {
       return JSON.parse(rawConfig);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
-        throw error;
+        throw new Error(`Failed to parse Docker config file '${ this.dockerConfigPath }'. Error: ${ error.message }`);
       }
       console.log('No docker config file found');
 

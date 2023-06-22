@@ -270,7 +270,12 @@ Electron.app.whenReady().then(async() => {
       Electron.app.dock.hide();
     }
 
-    await dockerDirManager.ensureCredHelperConfigured();
+    try {
+      await dockerDirManager.ensureCredHelperConfigured();
+    } catch (ex) {
+      console.error('Error ensuring credential helper configured:', ex);
+      handleFailure(ex);
+    }
 
     if (os.platform() === 'linux' || os.platform() === 'darwin') {
       try {
