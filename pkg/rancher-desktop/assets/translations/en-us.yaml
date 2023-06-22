@@ -3179,7 +3179,7 @@ setup:
   confirmPassword: Confirm New Password
   useRandom: Use a randomly generated password
   useManual: Set a specific password to use
-  defaultPasswordError: It looks like this is your first time visting the Rancher UI, but the local admin account password is already set to something unique. Log in with that account below to continue the setup process.
+  defaultPasswordError: It looks like this is your first time visiting the Rancher UI, but the local admin account password is already set to something unique. Log in with that account below to continue the setup process.
   telemetry:
     label: Allow collection of anonymous statistics to help us improve Rancher
     tip:  'Rancher Labs would like to collect a bit of anonymized information
