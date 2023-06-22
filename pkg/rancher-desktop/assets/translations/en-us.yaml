@@ -1918,7 +1918,7 @@ login:
   welcome: Welcome to {vendor}
   loggedOut: You have been logged out.
   loginAgain: Log in again to continue.
-  error: An error occured logging in. Please try again.
+  error: An error occurred logging in. Please try again.
   useLocal: Use a local user
   loginWithProvider: Log in with {provider}
   username: Username
