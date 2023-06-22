@@ -109,7 +109,7 @@ export default class BackgroundProcess {
 
         return;
       }
-      console.debug(`Stopping exising ${ this.name } process (pid ${ this.process.pid })`);
+      console.debug(`Stopping existing ${ this.name } process (pid ${ this.process.pid })`);
       await this.destroy(this.process);
 
       // Wait for the process to fully exit
