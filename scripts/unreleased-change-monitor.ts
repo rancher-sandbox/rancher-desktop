@@ -74,7 +74,7 @@ export async function hasUnreleasedChanges(dependency: Dependency & GithubDepend
 }
 
 // Creates issues in the main Rancher Desktop repo for external
-// depndencies that have changes that have not been released.
+// dependencies that have changes that have not been released.
 // Also closes issues that were previously created by this script,
 // but that are no longer relevant.
 async function checkForUnreleasedChanges(): Promise<void> {
