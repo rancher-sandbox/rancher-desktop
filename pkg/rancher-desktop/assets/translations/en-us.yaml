@@ -3768,10 +3768,10 @@ validation:
       name:
         required: 'Port Rule [{position}] - Name is required.'
       nodePort:
-        requriedInt: 'Port Rule [{position}] - Node Port must be interger values if included.'
+        requriedInt: 'Port Rule [{position}] - Node Port must be integer values if included.'
       port:
         required: 'Port Rule [{position}] - Port is required.'
-        requriedInt: 'Port Rule [{position}] - Port must be interger values if included.'
+        requriedInt: 'Port Rule [{position}] - Port must be integer values if included.'
       targetPort:
         between: 'Port Rule [{position}] - Target Port must be between 1 and 65535'
         iana: 'Port Rule [{position}] - Target Port must be an IANA Service Name or Integer'
