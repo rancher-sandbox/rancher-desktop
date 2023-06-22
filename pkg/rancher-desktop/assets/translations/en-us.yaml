@@ -135,7 +135,7 @@ product:
   settings: Global Settings
   clusterManagement: Cluster Management
   monitoring: Monitoring
-  mcapps: Mutli-cluster Apps
+  mcapps: Multi-cluster Apps
 
 suffix:
   percent: "%"
