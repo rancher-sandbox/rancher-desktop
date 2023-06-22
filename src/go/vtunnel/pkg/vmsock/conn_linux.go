@@ -30,10 +30,10 @@ type PeerConnector struct {
 	VsockHostPort      uint32
 }
 
-// ListendAndHandshake listens for incoming VSOCK connections from the Host process
+// ListenAndHandshake listens for incoming VSOCK connections from the Host process
 // The handshake is perfomed once during startup/restart to make sure that
 // host process is talking to a right hyper-v VM (most likely WSL)
-func (p *PeerConnector) ListendAndHandshake() {
+func (p *PeerConnector) ListenAndHandshake() {
 	l, err := vsock.Listen(vsock.CIDAny, p.VsockHandshakePort)
 	if err != nil {
 		logrus.Fatalf("PeerHandshake listen for incoming vsock: %v", err)
