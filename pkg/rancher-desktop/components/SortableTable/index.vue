@@ -384,9 +384,9 @@ export default {
     },
 
     hasDelayedColumns() {
-      const delaeydColumns = this.columns.find(c => c.delayLoading);
+      const delayedColumns = this.columns.find(c => c.delayLoading);
 
-      return !!delaeydColumns;
+      return !!delayedColumns;
     },
 
     // Generate row and column data for easier rendering in the template
