@@ -4,7 +4,7 @@ import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostSwitch } from 'scripts/dependencies/wsl';
 import {
-  Dependency, GithubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository,
+  Dependency, GitHubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository,
 } from 'scripts/lib/dependencies';
 
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
@@ -14,7 +14,7 @@ const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-des
 const UCMONITOR = 'ucmonitor';
 const mainRepo = new RancherDesktopRepository(GITHUB_OWNER, GITHUB_REPO);
 
-type UnreleasedChangeMonitoringDependency = Dependency & GithubDependency;
+type UnreleasedChangeMonitoringDependency = Dependency & GitHubDependency;
 
 type DependencyState = { dependency: UnreleasedChangeMonitoringDependency } & HasUnreleasedChangesResult;
 
@@ -43,7 +43,7 @@ async function getExistingIssuesFor(dependencyName: string): Promise<Issue[]> {
  * Tells the caller whether the given dependency has any
  * changes that have not been released.
  */
-export async function hasUnreleasedChanges(dependency: Dependency & GithubDependency): Promise<HasUnreleasedChangesResult> {
+export async function hasUnreleasedChanges(dependency: Dependency & GitHubDependency): Promise<HasUnreleasedChangesResult> {
   const availableVersions = await dependency.getAvailableVersions();
   const sortedVersions = availableVersions.sort((version1, version2) => {
     return dependency.rcompareVersions(version1, version2);

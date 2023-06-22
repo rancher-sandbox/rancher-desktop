@@ -11,7 +11,7 @@
 - [ ] Rename installer filename to replace space with dot.
 
 ### Release Documentation
-- [ ] Release notes. Update on the Github draft Release page.
+- [ ] Release notes. Update on the GitHub draft Release page.
 - [ ] docs update (Help, Readme..)
 - [ ] Slack Announcements
 - [ ] Newsletter summary
@@ -19,7 +19,7 @@
 
 ### Release  
 - [ ] Perform smoke test on release artifacts.
-- [ ] Upload mac, win release artifacts on the Github draft Release page.
+- [ ] Upload mac, win release artifacts on the GitHub draft Release page.
 - [ ] Update the release version for upgrade responder.
 - [ ] Move from draft release to Release.
 - [ ] Check the auto update functionality.

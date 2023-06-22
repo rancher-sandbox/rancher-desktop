@@ -10,7 +10,7 @@ import {
 } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames, getPublishedVersions,
+  DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
 
 function exeName(context: DownloadContext, name: string) {
@@ -183,7 +183,7 @@ export class Helm implements Dependency {
   }
 }
 
-export class DockerCLI implements Dependency, GithubDependency {
+export class DockerCLI implements Dependency, GitHubDependency {
   name = 'dockerCLI';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-docker-cli';
@@ -213,7 +213,7 @@ export class DockerCLI implements Dependency, GithubDependency {
   }
 }
 
-export class DockerBuildx implements Dependency, GithubDependency {
+export class DockerBuildx implements Dependency, GitHubDependency {
   name = 'dockerBuildx';
   githubOwner = 'docker';
   githubRepo = 'buildx';
@@ -248,7 +248,7 @@ export class DockerBuildx implements Dependency, GithubDependency {
   }
 }
 
-export class DockerCompose implements Dependency, GithubDependency {
+export class DockerCompose implements Dependency, GitHubDependency {
   name = 'dockerCompose';
   githubOwner = 'docker';
   githubRepo = 'compose';
@@ -277,7 +277,7 @@ export class DockerCompose implements Dependency, GithubDependency {
   }
 }
 
-export class Trivy implements Dependency, GithubDependency {
+export class Trivy implements Dependency, GitHubDependency {
   name = 'trivy';
   githubOwner = 'aquasecurity';
   githubRepo = 'trivy';
@@ -316,7 +316,7 @@ export class Trivy implements Dependency, GithubDependency {
   }
 }
 
-export class Steve implements Dependency, GithubDependency {
+export class Steve implements Dependency, GitHubDependency {
   name = 'steve';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-steve';
@@ -355,7 +355,7 @@ export class Steve implements Dependency, GithubDependency {
   }
 }
 
-export class GuestAgent implements Dependency, GithubDependency {
+export class GuestAgent implements Dependency, GitHubDependency {
   name = 'guestAgent';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-agent';
@@ -382,7 +382,7 @@ export class GuestAgent implements Dependency, GithubDependency {
   }
 }
 
-export class RancherDashboard implements Dependency, GithubDependency {
+export class RancherDashboard implements Dependency, GitHubDependency {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'dashboard';
@@ -470,7 +470,7 @@ export class RancherDashboard implements Dependency, GithubDependency {
   }
 }
 
-export class DockerProvidedCredHelpers implements Dependency, GithubDependency {
+export class DockerProvidedCredHelpers implements Dependency, GitHubDependency {
   name = 'dockerProvidedCredentialHelpers';
   githubOwner = 'docker';
   githubRepo = 'docker-credential-helpers';
@@ -519,7 +519,7 @@ export class DockerProvidedCredHelpers implements Dependency, GithubDependency {
   }
 }
 
-export class ECRCredHelper implements Dependency, GithubDependency {
+export class ECRCredHelper implements Dependency, GitHubDependency {
   name = 'ECRCredentialHelper';
   githubOwner = 'awslabs';
   githubRepo = 'amazon-ecr-credential-helper';

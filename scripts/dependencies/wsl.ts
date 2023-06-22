@@ -7,7 +7,7 @@ import semver from 'semver';
 import { download } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, GithubDependency, getPublishedReleaseTagNames, getPublishedVersions,
+  DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
 
 function extract(resourcesPath: string, file: string, expectedFile: string): void {
@@ -28,7 +28,7 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
   fs.rmSync(file, { maxRetries: 10 });
 }
 
-export class HostSwitch implements Dependency, GithubDependency {
+export class HostSwitch implements Dependency, GitHubDependency {
   name = 'hostSwitch';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-networking';
@@ -60,7 +60,7 @@ export class HostSwitch implements Dependency, GithubDependency {
   }
 }
 
-export class HostResolverPeer implements Dependency, GithubDependency {
+export class HostResolverPeer implements Dependency, GitHubDependency {
   name = 'hostResolver';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-host-resolver';
@@ -92,7 +92,7 @@ export class HostResolverPeer implements Dependency, GithubDependency {
   }
 }
 
-export class HostResolverHost implements Dependency, GithubDependency {
+export class HostResolverHost implements Dependency, GitHubDependency {
   name = 'hostResolver';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-host-resolver';
@@ -124,7 +124,7 @@ export class HostResolverHost implements Dependency, GithubDependency {
   }
 }
 
-export class Moproxy implements Dependency, GithubDependency {
+export class Moproxy implements Dependency, GitHubDependency {
   name = 'moproxy';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'moproxy';
@@ -156,7 +156,7 @@ export class Moproxy implements Dependency, GithubDependency {
   }
 }
 
-export class WSLDistro implements Dependency, GithubDependency {
+export class WSLDistro implements Dependency, GitHubDependency {
   name = 'WSLDistro';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-wsl-distro';

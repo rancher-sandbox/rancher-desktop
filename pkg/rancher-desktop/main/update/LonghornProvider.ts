@@ -101,7 +101,7 @@ export type UpgradeResponderRequestPayload = {
   },
 };
 
-export interface GithubReleaseAsset {
+export interface GitHubReleaseAsset {
   url: string;
 
   browser_download_url: string;
@@ -112,10 +112,10 @@ export interface GithubReleaseAsset {
 }
 
 /**
- * GithubReleaseInfo describes the API response from GitHub for fetching one
+ * GitHubReleaseInfo describes the API response from GitHub for fetching one
  * release.
  */
-interface GithubReleaseInfo {
+interface GitHubReleaseInfo {
   url: string;
   id: number;
 
@@ -126,7 +126,7 @@ interface GithubReleaseInfo {
   prerelease: boolean;
 
   published_at: string;
-  assets: GithubReleaseAsset[];
+  assets: GitHubReleaseAsset[];
 }
 
 /**
@@ -407,19 +407,19 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     const infoURL = `https://api.github.com/repos/${ owner }/${ repo }/releases/tags/${ tag }`;
     const releaseInfoRaw = await fetch(infoURL,
       { headers: { Accept: 'application/vnd.github.v3+json' } });
-    const releaseInfo = await releaseInfoRaw.json() as GithubReleaseInfo;
-    const assetFilter: (asset: GithubReleaseAsset) => boolean = (() => {
+    const releaseInfo = await releaseInfoRaw.json() as GitHubReleaseInfo;
+    const assetFilter: (asset: GitHubReleaseAsset) => boolean = (() => {
       switch (this.platform) {
       case 'darwin': {
         const isArm64 = Electron.app.runningUnderARM64Translation || os.arch() === 'arm64';
         const suffix = isArm64 ? '-mac.aarch64.zip' : '-mac.x86_64.zip';
 
-        return (asset: GithubReleaseAsset) => asset.name.endsWith(suffix);
+        return (asset: GitHubReleaseAsset) => asset.name.endsWith(suffix);
       }
       case 'linux':
-        return (asset: GithubReleaseAsset) => asset.name.endsWith('AppImage');
+        return (asset: GitHubReleaseAsset) => asset.name.endsWith('AppImage');
       case 'win32': {
-        return (asset: GithubReleaseAsset) => asset.name.endsWith('.msi');
+        return (asset: GitHubReleaseAsset) => asset.name.endsWith('.msi');
       }
       }
     })();

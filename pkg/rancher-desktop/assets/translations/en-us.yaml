@@ -4589,7 +4589,7 @@ advancedSettings:
     'ui-dashboard-index': 'HTML index location for the {appName} UI.'
     'ui-offline-preferred': 'Controls whether UI assets are served locally by the server container or from the remote URL defined in the ui-index and ui-dashboard-index settings. The `Dynamic` option will use local assets in production builds of {appName}.'
     'ui-pl': 'Private-Label company name.'
-    'ui-issues': "Use a url address to send new 'File an Issue' reports instead of sending users to the Github issues page."
+    'ui-issues': "Use a url address to send new 'File an Issue' reports instead of sending users to the GitHub issues page."
     'telemetry-opt': 'Telemetry reporting opt-in.'
     'auth-user-info-max-age-seconds': 'The maximum age of a users auth tokens before an auth provider group membership sync will be performed.'
     'auth-user-info-resync-cron': 'Default cron schedule for resyncing auth provider group memberships.'

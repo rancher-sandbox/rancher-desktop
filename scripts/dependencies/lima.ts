@@ -10,10 +10,10 @@ import semver from 'semver';
 import { download, getResource } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GithubDependency, getPublishedReleaseTagNames, GithubRelease,
+  DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
 } from 'scripts/lib/dependencies';
 
-export class LimaAndQemu implements Dependency, GithubDependency {
+export class LimaAndQemu implements Dependency, GitHubDependency {
   name = 'limaAndQemu';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'lima-and-qemu';
@@ -107,7 +107,7 @@ export class LimaAndQemu implements Dependency, GithubDependency {
   }
 }
 
-export class AlpineLimaISO implements Dependency, GithubDependency {
+export class AlpineLimaISO implements Dependency, GitHubDependency {
   name = 'alpineLimaISO';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'alpine-lima';
@@ -132,7 +132,7 @@ export class AlpineLimaISO implements Dependency, GithubDependency {
     });
   }
 
-  assembleAlpineLimaISOVersionFromGithubRelease(release: GithubRelease): AlpineLimaISOVersion {
+  assembleAlpineLimaISOVersionFromGitHubRelease(release: GitHubRelease): AlpineLimaISOVersion {
     const matchingAsset = release.assets.find((asset: { name: string }) => asset.name.includes('rd'));
 
     if (!matchingAsset) {
@@ -154,7 +154,7 @@ export class AlpineLimaISO implements Dependency, GithubDependency {
   async getAvailableVersions(): Promise<AlpineLimaISOVersion[]> {
     const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const releases = response.data;
-    const versions = await Promise.all(releases.map(this.assembleAlpineLimaISOVersionFromGithubRelease));
+    const versions = await Promise.all(releases.map(this.assembleAlpineLimaISOVersionFromGitHubRelease));
 
     return versions;
   }
