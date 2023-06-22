@@ -254,7 +254,7 @@ authConfig:
         title: '第二步：导航到 "Credentials"标签，创建你的OAuth客户端ID。'
         body: 
           1: '选择 "Create Credentials"下拉菜单，选择 "OAuth clientID"，然后选择 "Web application"。'
-          2: 'Authorized Javascript origins:'
+          2: 'Authorized JavaScript origins:'
           3: 'Authorized redirect URIs:'
           4: '点击 "Create"，然后点击 "Download JSON"按钮。'
           5: '在OAuth凭证框中上传下载的JSON文件。'

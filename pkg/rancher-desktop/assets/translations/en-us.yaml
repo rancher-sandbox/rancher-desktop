@@ -529,7 +529,7 @@ authConfig:
         title: 'Navigate to the "Credentials" tab to create your OAuth client ID'
         body:
           1: 'Select the "Create Credentials" dropdown, and select "OAuth clientID", then select "Web application".'
-          2: 'Authorized Javascript origins:'
+          2: 'Authorized JavaScript origins:'
           3: 'Authorized redirect URIs:'
           4: 'Click "Create", and then click on the "Download JSON" button.'
           5: 'Upload the downloaded JSON file in the OAuth credentials box.'
