@@ -889,7 +889,7 @@ test.describe('Command server', () => {
               updater:   { enabled: !oldSettings.application.updater.enabled },
               debug:     !oldSettings.application.debug,
             },
-            // This field is in to force a restart
+            // This field is to force a restart
             kubernetes: { port: oldSettings.kubernetes.port + 1 },
           };
 
