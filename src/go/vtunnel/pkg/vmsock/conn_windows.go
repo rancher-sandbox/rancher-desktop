@@ -76,7 +76,7 @@ func (h *HostConnector) handleConn(vConn net.Conn) {
 	defer conn.Close()
 	if err := util.Pipe(vConn, conn); err != nil {
 		// this can be caused by an upstream named pipe
-		// when the the write is completed, however, the
+		// when the write is completed, however, the
 		// connection is closed immediately after write
 		if errors.Is(err, syscall.ERROR_BROKEN_PIPE) {
 			return

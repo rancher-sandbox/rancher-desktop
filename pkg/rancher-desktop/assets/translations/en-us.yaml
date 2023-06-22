@@ -1690,7 +1690,7 @@ landing:
   learnMore: Learn More
   gettingStarted:
     title: Getting Started
-    body: Take a look at the the quick getting started guide. For Cluster Manager users, learn more about where you can find you favorite features in the Dashboard UI.
+    body: Take a look at the quick getting started guide. For Cluster Manager users, learn more about where you can find you favorite features in the Dashboard UI.
   community:
     title: Community Support
     docs: Docs
