@@ -1598,7 +1598,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
-    // cause stop to get called again.  Prevent the re-entrancy.
+    // cause stop to get called again.  Prevent the reentrancy.
     // If we're in the middle of starting, also ignore the call to stop (from
     // the process terminating), as we do not want to shut down the VM in that
     // case.
