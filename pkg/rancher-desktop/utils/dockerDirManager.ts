@@ -239,7 +239,7 @@ export default class DockerDirManager {
       return false;
     } else if (helperName === 'pass') {
       if (!await this.credHelperPassInitialized()) {
-        console.debug(`Rejecting ${ helperName }; underlying library not intialized.`);
+        console.debug(`Rejecting ${ helperName }; underlying library not initialized.`);
 
         return false;
       }
