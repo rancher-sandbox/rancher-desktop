@@ -351,7 +351,7 @@ describeWithCreds('Credentials server', () => {
       expect(stdout).toContain('credentials not found in native keychain');
     }
 
-    // Don't bother trying to test erasing a non-existent credential, because the
+    // Don't bother trying to test erasing a nonexistent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
 
