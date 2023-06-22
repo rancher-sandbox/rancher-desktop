@@ -183,7 +183,7 @@ func (h *HostConnector) handshake(vmGuid hvsock.GUID, found chan<- hvsock.GUID, 
 	}
 }
 
-// tryFindGuid waits on a found chanel to receive a GUID until
+// tryFindGuid waits on a found channel to receive a GUID until
 // deadline of 10s is reached
 func tryFindGuid(found chan hvsock.GUID) (hvsock.GUID, error) {
 	bailOut := time.After(time.Second * timeoutSeconds)
