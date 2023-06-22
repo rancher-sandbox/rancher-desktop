@@ -10,7 +10,7 @@ export type GoPlatform = 'linux' | 'darwin' | 'windows';
 
 export type DownloadContext = {
   versions: DependencyVersions;
-  dependencyPlaform: DependencyPlatform;
+  dependencyPlatform: DependencyPlatform;
   platform: Platform;
   goPlatform: GoPlatform;
   // whether we are running on M1

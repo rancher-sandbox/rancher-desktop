@@ -189,7 +189,7 @@ export class DockerCLI implements Dependency, GitHubDependency {
   githubRepo = 'rancher-desktop-docker-cli';
 
   async download(context: DownloadContext): Promise<void> {
-    const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
+    const dockerPlatform = context.dependencyPlatform === 'wsl' ? 'wsl' : context.goPlatform;
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.dockerCLI }`;
     const executableName = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
