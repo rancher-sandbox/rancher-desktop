@@ -19,9 +19,9 @@ VM_SWITCH_LOG="${LOG_DIR}/vm-switch.log"
 if [ $$ -ne "1" ]; then
     # This is not running as PID 1; this means that this is a normal invocation
     # from WSL.
-    exec /usr/local/bin/network-setup --logfile $NETWORK_SETUP_LOG \
+    exec /usr/local/bin/network-setup --logfile "$NETWORK_SETUP_LOG" \
     --vm-switch-path /usr/local/bin/vm-switch --vm-switch-logfile \
-    $VM_SWITCH_LOG --unshare-arg "${0}"
+    "$VM_SWITCH_LOG" --unshare-arg "${0}"
 fi
 
 # Mark directories that we will need to bind mount as shared mounts.
