@@ -1965,7 +1965,7 @@ monitoring:
     tip: 'Adds labels to the ClusterRoles deployed by the Monitoring chart to <a target="_blank" rel="noopener nofollow noreferrer" href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles"> aggregate to the corresponding default k8s admin, edit, and view ClusterRoles.</a>'
   alerting:
     config:
-      label: Alert Manager Cofig
+      label: Alert Manager Config
     enable:
       label: Deploy Alertmanager
     secrets:
