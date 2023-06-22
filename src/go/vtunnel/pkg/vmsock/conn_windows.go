@@ -151,14 +151,14 @@ func (h *HostConnector) handshake(vmGuid hvsock.GUID, found chan<- hvsock.GUID, 
 		ServiceID: svcPort,
 	}
 
-	attempInterval := time.NewTicker(time.Second * 1)
+	attemptInterval := time.NewTicker(time.Second * 1)
 	attempt := 1
 	for {
 		select {
 		case <-done:
 			logrus.Infof("attempt to handshake with [%s], goroutine is terminated", vmGuid.String())
 			return
-		case <-attempInterval.C:
+		case <-attemptInterval.C:
 			conn, err := hvsock.Dial(addr)
 			if err != nil {
 				attempt++
