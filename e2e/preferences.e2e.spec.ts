@@ -104,7 +104,7 @@ test.describe.serial('Main App Test', () => {
 
   test('should render environment tab after close and reopen preferences modal', async() => {
     test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -227,7 +227,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render container engine page after close and reopen preferences modal', async() => {
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -255,7 +255,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render allowed image tab in container engine page after close and reopen preferences modal', async() => {
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
