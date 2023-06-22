@@ -123,7 +123,7 @@ func (p *proxy) removeAll() error {
 	defer p.mutex.Unlock()
 	for _, proxy := range p.portMappings {
 		if err := execNetshDelete(proxy); err != nil {
-			errs = append(errs, fmt.Errorf("deleting portproxy: %+v faile: %w", proxy, err))
+			errs = append(errs, fmt.Errorf("deleting portproxy: %+v failed: %w", proxy, err))
 		}
 	}
 	if len(errs) == 0 {
