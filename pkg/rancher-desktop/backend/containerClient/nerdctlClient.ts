@@ -420,7 +420,7 @@ export class NerdctlClient implements ContainerEngineClient {
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-rf', projectDir));
 
       const envFile = (await (this.vm.execCommand({ capture: true },
-        '/bin/mktemp', '--tmpdir', 'rd-nerdct-compose-XXXXXX'))).trim();
+        '/bin/mktemp', '--tmpdir', 'rd-nerdctl-compose-XXXXXX'))).trim();
 
       cleanups.push(() => this.vm.execCommand('/bin/rm', '-f', envFile));
 
