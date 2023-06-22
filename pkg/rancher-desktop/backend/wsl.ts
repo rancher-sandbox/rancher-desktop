@@ -175,7 +175,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /** The current config state. */
   protected cfg: BackendSettings | undefined;
 
-  /** Indicates wherther the current installtion is an Admin Install. */
+  /** Indicates wherther the current installation is an Admin Install. */
   #isAdminInstall: Promise<boolean> | undefined;
 
   protected getIsAdminInstall(): Promise<boolean> {
