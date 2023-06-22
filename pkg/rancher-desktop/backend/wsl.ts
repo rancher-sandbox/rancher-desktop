@@ -175,7 +175,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /** The current config state. */
   protected cfg: BackendSettings | undefined;
 
-  /** Indicates wherther the current installation is an Admin Install. */
+  /** Indicates whether the current installation is an Admin Install. */
   #isAdminInstall: Promise<boolean> | undefined;
 
   protected getIsAdminInstall(): Promise<boolean> {
@@ -205,7 +205,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return this.#isAdminInstall;
   }
 
-  /** Indicates wherther privileged service is enabled in the current installation. */
+  /** Indicates whether privileged service is enabled in the current installation. */
   protected privilegedServiceEnabled = false;
 
   /**
