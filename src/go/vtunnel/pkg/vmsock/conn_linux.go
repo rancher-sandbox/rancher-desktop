@@ -31,7 +31,7 @@ type PeerConnector struct {
 }
 
 // ListenAndHandshake listens for incoming VSOCK connections from the Host process
-// The handshake is perfomed once during startup/restart to make sure that
+// The handshake is performed once during startup/restart to make sure that
 // host process is talking to a right hyper-v VM (most likely WSL)
 func (p *PeerConnector) ListenAndHandshake() {
 	l, err := vsock.Listen(vsock.CIDAny, p.VsockHandshakePort)
