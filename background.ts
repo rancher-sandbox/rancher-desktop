@@ -272,9 +272,15 @@ Electron.app.whenReady().then(async() => {
 
     try {
       await dockerDirManager.ensureCredHelperConfigured();
-    } catch (ex) {
-      console.error('Error ensuring credential helper configured:', ex);
-      handleFailure(ex);
+    } catch (ex: any) {
+      const errorTitle = 'Error configuring credential helper';
+
+      console.error(`${ errorTitle }:`, ex);
+
+      const title = ex.title ?? errorTitle;
+      const message = ex.message ?? ex.toString();
+
+      showErrorDialog(title, message, true);
     }
 
     if (os.platform() === 'linux' || os.platform() === 'darwin') {
