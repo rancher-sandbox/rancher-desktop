@@ -166,6 +166,10 @@ suffix:
 app:
   name: Rancher Desktop
   update: "There's one last step to finish updating Rancher Desktop"
+firstRun:
+  kubernetesVersion:
+    legend: Kubernetes Version
+    cachedOnly: (cached versions only)
 marketplace:
   title: Extensions
   noResults: No extension found for the search criteria
