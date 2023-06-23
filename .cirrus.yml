@@ -44,8 +44,8 @@ task:
     export DISTRO="$(lsb_release --short --codename)"
     curl --silent --location --fail --output /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
     curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
-    echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
-    echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
+    echo "deb [signed-by=${KEYRING}] http://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
+    echo "deb-src [signed-by=${KEYRING}] http://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
     apt-get update
     apt-get install --yes nodejs
     node --version && npm --version
