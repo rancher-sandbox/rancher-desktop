@@ -236,6 +236,31 @@ To remote debug an extension, follow the same process as remote debugging a buil
 
 ![image](https://github.com/rak-phillip/rancher-desktop/assets/835961/f4aad3e1-dabc-473e-9404-05609216cd03)
 
+### Debugging dev env with GoLand
+
+The following steps have been tested with GoLand on Linux but might work for other
+JetBrains IDEs in a similar way.
+
+1. Install the Node.js plugin (via `File > Settings > Plugins`)
+
+   ![image](https://github.com/s0nea/rancher-desktop/assets/8761082/f9574abb-06d9-4132-a14b-c3d445e87f7d)
+
+2. Go to the "Run/Debug Configurations" dialog (via `Run > Edit Configurations...`)
+3. Add a new Node.js configuration with the following settings:
+   - Name: a name for the debug configuration, e.g. `rancher desktop`
+   - Node interpreter: choose your installed node interpreter, e.g. `/usr/bin/node`
+   - Node parameters: `scripts/ts-wrapper.js scripts/dev.ts`
+   - Working directory: choose the working directory of your project, e.g.
+     `~/src/rancher-desktop`
+
+   ![image](https://github.com/s0nea/rancher-desktop/assets/8761082/41686095-04ba-4d9e-bac1-b5587d146381)
+
+4. Save the configuration
+5. You can now set a breakpoint and click "Debug 'rancher desktop'" to start debugging
+
+   ![image](https://github.com/s0nea/rancher-desktop/assets/8761082/87ea45f4-0a4d-4a52-9f3b-866c45e3fe2a)
+
+
 ## Development Builds
 
 ### Windows and macOS
