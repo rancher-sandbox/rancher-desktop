@@ -10,7 +10,7 @@ dockerBuildx: 0.11.0
 dockerCompose: 2.19.0
 trivy: 0.42.1
 steve: 0.1.0-beta9
-guestAgent: 0.3.15
+guestAgent: 0.3.16
 rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.6.4
 ECRCredentialHelper: 0.7.1
