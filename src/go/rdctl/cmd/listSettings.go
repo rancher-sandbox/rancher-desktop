@@ -30,6 +30,11 @@ var outputSettingsFlags struct {
 	RegistryProfileType string
 }
 
+const jsonFormat = "json"
+const regFormat = "reg"
+const defaultsRegistrySection = "defaults"
+const lockedRegistrySection = "locked"
+
 // listSettingsCmd represents the listSettings command
 var listSettingsCmd = &cobra.Command{
 	Use:   "list-settings",
@@ -64,50 +69,50 @@ and Y is either "defaults" or "locked", depending on which deployment profile yo
 
 func init() {
 	rootCmd.AddCommand(listSettingsCmd)
-	listSettingsCmd.Flags().StringVarP(&outputSettings, "output", "", "", "output format: json|reg[,hive][,type], default json")
+	listSettingsCmd.Flags().StringVarP(&outputSettings, "output", "", "", fmt.Sprintf("output format: %s|%s[,hive][,type], default %s", jsonFormat, regFormat, jsonFormat))
 }
 
 func calcOutputFormatFlags() error {
-	if outputSettings == "" || outputSettings == "json" {
-		outputSettingsFlags.Format = "json"
+	if outputSettings == "" || outputSettings == jsonFormat {
+		outputSettingsFlags.Format = jsonFormat
 		return nil
 	}
 	parts := strings.Split(outputSettings, ",")
-	if parts[0] == "json" {
+	if parts[0] == jsonFormat {
 		if len(parts) > 1 {
 			return fmt.Errorf(`the json output format takes no sub-formats, got "%s"`, outputSettings)
 		}
-		outputSettingsFlags.Format = "json"
+		outputSettingsFlags.Format = jsonFormat
 		return nil
 	}
-	if parts[0] != "reg" {
-		return fmt.Errorf(`expecting an output format of 'json' or 'reg', got "%s"`, outputSettings)
+	if parts[0] != regFormat {
+		return fmt.Errorf(`expecting an output format of '%s' or '%s', got "%s"`, jsonFormat, regFormat, outputSettings)
 	}
-	outputSettingsFlags.Format = "reg"
+	outputSettingsFlags.Format = regFormat
 	for _, part := range parts[1:] {
 		switch part {
-		case "hklm":
+		case reg.HklmRegistryHive:
 			if outputSettingsFlags.RegistryHive != "" {
 				return fmt.Errorf(`already specified registry hive "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryHive, outputSettings)
 			}
 			outputSettingsFlags.RegistryHive = part
 			break
 
-		case "hkcu":
+		case reg.HkcuRegistryHive:
 			if outputSettingsFlags.RegistryHive != "" {
 				return fmt.Errorf(`already specified registry hive "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryHive, outputSettings)
 			}
 			outputSettingsFlags.RegistryHive = part
 			break
 
-		case "defaults":
+		case defaultsRegistrySection:
 			if outputSettingsFlags.RegistryProfileType != "" {
 				return fmt.Errorf(`already specified registry section "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryProfileType, outputSettings)
 			}
 			outputSettingsFlags.RegistryProfileType = part
 			break
 
-		case "locked":
+		case lockedRegistrySection:
 			if outputSettingsFlags.RegistryProfileType != "" {
 				return fmt.Errorf(`already specified registry section "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryProfileType, outputSettings)
 			}
@@ -119,10 +124,10 @@ func calcOutputFormatFlags() error {
 		}
 	}
 	if outputSettingsFlags.RegistryHive == "" {
-		outputSettingsFlags.RegistryHive = "hklm"
+		outputSettingsFlags.RegistryHive = reg.HklmRegistryHive
 	}
 	if outputSettingsFlags.RegistryProfileType == "" {
-		outputSettingsFlags.RegistryProfileType = "defaults"
+		outputSettingsFlags.RegistryProfileType = defaultsRegistrySection
 	}
 	return nil
 }
@@ -135,9 +140,9 @@ func getListSettings() ([]byte, error) {
 	output, err := processRequestForUtility(doRequest("GET", versionCommand("", "settings")))
 	if err != nil {
 		return nil, err
-	} else if outputSettingsFlags.Format == "json" {
+	} else if outputSettingsFlags.Format == jsonFormat {
 		return output, nil
-	} else if outputSettingsFlags.Format == "reg" {
+	} else if outputSettingsFlags.Format == regFormat {
 		lines, err := reg.JsonToReg(outputSettingsFlags.RegistryHive, outputSettingsFlags.RegistryProfileType, string(output))
 		if err != nil {
 			return nil, err
