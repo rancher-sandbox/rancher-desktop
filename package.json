@@ -39,7 +39,6 @@
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
     "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
     "test:e2e:screenshots": "node scripts/ts-wrapper.js scripts/e2e.ts --config=screenshots/playwright-config.ts",
-    "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
     "postuninstall": "electron-builder install-app-deps",
     "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts",
