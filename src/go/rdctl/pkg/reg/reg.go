@@ -42,7 +42,7 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 	case reflect.Struct:
 		numFields := v.NumField()
 		scalarReturnedLines := make([]string, 0, numFields)
-		nestedReturnedLines := []string{}
+		nestedReturnedLines := make([]string, 0)
 		for i := 0; i < numFields; i++ {
 			fieldTag := v.Type().Field(i).Tag.Get("json")
 			fieldName := strings.Replace(fieldTag, ",omitempty", "", 1)
