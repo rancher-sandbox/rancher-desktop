@@ -123,8 +123,8 @@ func run(ctx context.Context, g *errgroup.Group, cfg *types.Configuration, ln ne
 			if err != nil {
 				logrus.Errorf("failed to accept: %v", err)
 			}
-			// AcceptQemu calls the underlying virtual network switch Accept function
-			err = vn.AcceptQemu(ctx, conn)
+			// AcceptStdio calls the underlying virtual network switch Accept function
+			err = vn.AcceptStdio(ctx, conn)
 			if err != nil {
 				logrus.Errorf("failed to accept connection: %v", err)
 			} else {
