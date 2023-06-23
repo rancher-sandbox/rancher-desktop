@@ -53,7 +53,7 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 			if isEmpty {
 				continue
 			}
-			if len(newRetLines[0]) == 0 {
+			if len(newRetLines) > 0 && newRetLines[0][0] == '[' {
 				nestedReturnedLines = append(nestedReturnedLines, newRetLines...)
 			} else {
 				scalarReturnedLines = append(scalarReturnedLines, newRetLines...)
@@ -62,7 +62,7 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 		if len(scalarReturnedLines) == 0 && len(nestedReturnedLines) == 0 {
 			return nil, true, nil
 		}
-		retLines := []string{"", fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
+		retLines := []string{fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
 		retLines = append(retLines, scalarReturnedLines...)
 		retLines = append(retLines, nestedReturnedLines...)
 		return retLines, false, nil
@@ -88,7 +88,7 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 		if numValues == 0 {
 			return nil, true, nil
 		}
-		retLines := []string{"", fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
+		retLines := []string{fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
 		for _, key := range v.MapKeys() {
 			keyAsString := key.String()
 			innerLines, isEmpty, err := convertToRegFormat(append(pathParts, keyAsString), v.MapIndex(key), keyAsString)
@@ -163,8 +163,8 @@ func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) (
 		return nil, err
 	}
 	if len(bodyLines) > 0 {
-		headerLines = append(headerLines, "", fmt.Sprintf("[%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies"))
-		headerLines = append(headerLines, "", fmt.Sprintf("[%s\\%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop"))
+		headerLines = append(headerLines, fmt.Sprintf("[%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies"))
+		headerLines = append(headerLines, fmt.Sprintf("[%s\\%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop"))
 	}
 	return append(headerLines, bodyLines...), nil
 }

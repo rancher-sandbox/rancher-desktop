@@ -84,101 +84,15 @@ RD_USE_IMAGE_ALLOW_LIST=true
     assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\locked\application]'
 }
 
-# The result of the `assert_output` for heredocuments looks suspicious (I see it always passing),
-# but this serves to document the expected full reg output
 @test 'generates registry output' {
     run rdctl list-settings --output reg
     assert_success
-    assert_output <<'EOF'
-Windows Registry Editor Version 5.00
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies]
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop]
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults]
-"version"=dword:8
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]
-"adminAccess"=dword:0
-"debug"=dword:0
-"pathManagementStrategy"="rcfiles"
-"autoStart"=dword:0
-"startInBackground"=dword:0
-"hideNotificationIcon"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]
-"enabled"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\telemetry]
-"enabled"=dword:1
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\updater]
-"enabled"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\window]
-"quitOnClose"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine]
-"name"="moby"
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine\allowedImages]
-"enabled"=dword:1
-"patterns"=hex(7):66,00,69,00,73,00,68,00,00,00,73,00,68,00,65,00,65,00,70,00,00,00,63,00,6f,00,77,00,73,00,00,00,00,00
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\virtualMachine]
-"memoryInGB"=dword:4
-"numberCPUs"=dword:2
-"hostResolver"=dword:1
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\kubernetes]
-"version"="1.25.9"
-"port"=dword:192b
-"enabled"=dword:1
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\kubernetes\options]
-"traefik"=dword:1
-"flannel"=dword:1
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\kubernetes\ingress]
-"localhostOnly"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\experimental]
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\experimental\virtualMachine]
-"socketVMNet"=dword:0
-"networkingTunnel"=dword:0
-"type"="qemu"
-"useRosetta"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\experimental\virtualMachine\mount]
-"type"="reverse-sshfs"
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\experimental\virtualMachine\mount\9p]
-"securityModel"="none"
-"protocolVersion"="9p2000.L"
-"msizeInKib"=dword:80
-"cacheMode"="mmap"
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\experimental\virtualMachine\proxy]
-"enabled"=dword:0
-"address"=""
-"password"=""
-"port"=dword:c38
-"username"=""
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\portForwarding]
-"includeKubernetesServices"=dword:0
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\images]
-"showAll"=dword:1
-"namespace"="k8s.io"
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\diagnostics]
-"showMuted"=dword:0
-EOF
+    # Just match a few of the lines near the start and the end of the output.
+    # The unit tests do more comprehensive output checking.
+    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies]'
+    assert_output --partial '"pathManagementStrategy"="rcfiles"'
+    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\diagnostics]'
+    assert_output --partial '"showMuted"=dword:0'
 }
 
 @test 'needs a shutdown' {

@@ -82,13 +82,11 @@ func TestJsonToRegFormat(t *testing.T) {
 			t.Run(fmt.Sprintf("%s:%s", testCase.hiveType, testCase.profileType), func(t *testing.T) {
 				lines, err := JsonToReg(testCase.hiveType, testCase.profileType, jsonBody)
 				assert.NoError(t, err)
-				assert.Equal(t, 11, len(lines))
-				assert.Equal(t, "", lines[1])
-				assert.Equal(t, fmt.Sprintf("[%s]", testCase.expectedHeader), lines[6])
-				assert.Equal(t, `"version"=dword:13`, lines[7])
-				assert.Equal(t, "", lines[8])
-				assert.Equal(t, fmt.Sprintf("[%s\\application]", testCase.expectedHeader), lines[9])
-				assert.Equal(t, `"pathManagementStrategy"="manual"`, lines[10])
+				assert.Equal(t, 7, len(lines))
+				assert.Equal(t, fmt.Sprintf("[%s]", testCase.expectedHeader), lines[3])
+				assert.Equal(t, `"version"=dword:13`, lines[4])
+				assert.Equal(t, fmt.Sprintf("[%s\\application]", testCase.expectedHeader), lines[5])
+				assert.Equal(t, `"pathManagementStrategy"="manual"`, lines[6])
 			})
 		}
 	})
@@ -101,18 +99,15 @@ func TestJsonToRegFormat(t *testing.T) {
 		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		//assert.Equal(t, []string{}, lines)
-		assert.Equal(t, 18, len(lines))
-		assert.Equal(t, "", lines[1])
-		assert.Equal(t, fmt.Sprintf("[%s]", header), lines[6])
-		assert.Equal(t, fmt.Sprintf("[%s\\application]", header), lines[8])
-		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions]", header), lines[10])
-		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions\\allowed]", header), lines[12])
-		assert.Equal(t, `"enabled"=dword:0`, lines[13])
-		assert.Equal(t, `"list"=hex(7):77,00,69,00,6e,00,6b,00,00,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,70,00,6f,00,6b,00,69,00,6e,00,6b,00,6c,00,65,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,00,00`, lines[14])
-		assert.Equal(t, "", lines[15])
-		assert.Equal(t, fmt.Sprintf("[%s\\containerEngine]", header), lines[16])
-		assert.Equal(t, `"name"="beatrice"`, lines[17])
+		assert.Equal(t, 11, len(lines))
+		assert.Equal(t, fmt.Sprintf("[%s]", header), lines[3])
+		assert.Equal(t, fmt.Sprintf("[%s\\application]", header), lines[4])
+		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions]", header), lines[5])
+		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions\\allowed]", header), lines[6])
+		assert.Equal(t, `"enabled"=dword:0`, lines[7])
+		assert.Equal(t, `"list"=hex(7):77,00,69,00,6e,00,6b,00,00,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,70,00,6f,00,6b,00,69,00,6e,00,6b,00,6c,00,65,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,00,00`, lines[8])
+		assert.Equal(t, fmt.Sprintf("[%s\\containerEngine]", header), lines[9])
+		assert.Equal(t, `"name"="beatrice"`, lines[10])
 	})
 
 	t.Run("Handles maps", func(t *testing.T) {
@@ -129,15 +124,13 @@ func TestJsonToRegFormat(t *testing.T) {
 		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		//assert.Equal(t, []string{}, lines)
-		assert.Equal(t, 15, len(lines))
-		assert.Equal(t, fmt.Sprintf("[%s\\WSL]", header), lines[8])
-		assert.Equal(t, "", lines[9])
-		assert.Equal(t, fmt.Sprintf("[%s\\WSL\\integrations]", header), lines[10])
+		assert.Equal(t, 10, len(lines))
+		assert.Equal(t, fmt.Sprintf("[%s\\WSL]", header), lines[4])
+		assert.Equal(t, fmt.Sprintf("[%s\\WSL\\integrations]", header), lines[5])
 
 		// maps aren't processed in json-order, so allow any order
 		expectedMapValues := []string{`"fish"=dword:1`, `"sheep"=dword:0`, `"owls"="stuff"`, `"cows"=dword:11`}
-		receivedMapValues := lines[11:15]
+		receivedMapValues := lines[6:10]
 		sort.Strings(expectedMapValues)
 		sort.Strings(receivedMapValues)
 		assert.Equal(t, expectedMapValues, receivedMapValues)
@@ -167,52 +160,34 @@ func TestJsonToRegFormat(t *testing.T) {
     "name": "moby"
   }
 }`
-		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
 		expectedLines := []string{
 			`Windows Registry Editor Version 5.00`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies]`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop]`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults]`,
 			`"version"=dword:8`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]`,
 			`"adminAccess"=dword:0`,
 			`"pathManagementStrategy"="manual"`,
 			`"autoStart"=dword:0`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]`,
 			`"enabled"=dword:0`,
 			`"list"=hex(7):66,00,6f,00,75,00,6e,00,64,00,00,00,66,00,75,00,6c,00,6c,00,79,00,00,00,62,00,61,00,77,00,64,00,79,00,00,00,74,00,61,00,72,00,6f,00,74,00,00,00,00,00`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\updater]`,
 			`"enabled"=dword:0`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine]`,
 			`"name"="moby"`,
-			``,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine\allowedImages]`,
 			`"enabled"=dword:0`,
 			`"patterns"=hex(7):66,00,61,00,62,00,6c,00,65,00,00,00,74,00,68,00,65,00,72,00,65,00,00,00,63,00,72,00,61,00,7a,00,79,00,00,00,77,00,68,00,69,00,6e,00,65,00,00,00,00,00`,
 		}
-		assert.Equal(t, 29, len(lines))
+		assert.Equal(t, 20, len(lines))
 		assert.Equal(t, expectedLines, lines)
-		assert.Equal(t, fmt.Sprintf("[%s]", header), lines[6])
-		assert.Equal(t, `"version"=dword:8`, lines[7])
-		assert.Equal(t, "", lines[8])
-		assert.Equal(t, fmt.Sprintf("[%s\\application]", header), lines[9])
-		assert.Equal(t, `"adminAccess"=dword:0`, lines[10])
-		assert.Equal(t, `"pathManagementStrategy"="manual"`, lines[11])
-		assert.Equal(t, `"autoStart"=dword:0`, lines[12])
-		assert.Equal(t, "", lines[13])
 	})
-	t.Run("Handles a full settings file", func(t *testing.T) {
+	t.Run("It handles a full settings file", func(t *testing.T) {
 		jsonBody := `{
   "version": 8,
   "application": {
@@ -313,6 +288,6 @@ func TestJsonToRegFormat(t *testing.T) {
 `
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, 105, len(lines))
+		assert.Equal(t, 78, len(lines))
 	})
 }
