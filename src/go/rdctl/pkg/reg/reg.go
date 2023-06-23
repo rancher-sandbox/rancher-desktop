@@ -1,3 +1,10 @@
+// Package reg is responsible for converting ServerSettingsForJSON structures into
+// importable Windows registry files by running `reg import FILE`.
+//
+// Note that the `reg` command must be run with administrator privileges because it
+// modifies either a section of `HKEY_LOCAL_MACHINE` or `HKEY_CURRENT_USER\SOFTWARE\Policies`,
+// both of which require escalated privileges to be modified.
+
 package reg
 
 import (
@@ -9,22 +16,26 @@ import (
 	"unicode/utf16"
 )
 
+const HkcuRegistryHive = "hkcu"
+const HklmRegistryHive = "hklm"
+
 func escape(s string) string {
 	s1 := strings.ReplaceAll(s, "\\", "\\\\")
 	return strings.ReplaceAll(s1, `"`, `\\"`)
 }
 
-// reflect the structure into lines for a reg file
-// params:
+// convertToRegFormat recursively reflects the supplied value into lines for a reg file
+//
+// Params:
 // pathParts: represents the registry path to the current item
 // v: the reflected value of the current field
 // jsonTag: the name of the field, used in json (and the registry)
 //
-// returns:
+// Returns three values:
 //
 //	an array of lines representing the current value
 //	boolean: true if the current entry is empty
-//	error
+//	an error: the only non-nil error this function can return is when it encounters an unhandled value type
 func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]string, bool, error) {
 	kind := v.Kind()
 	switch kind {
@@ -127,12 +138,11 @@ func stringToMultiStringHexBytes(values []string) string {
 }
 
 // JsonToReg - convert the json settings to a reg file
-/**
- * @param hiveType: "hklm" or "hkcu"
- * @param profileType: "defaults" or "locked"
- * @param settingsBodyAsJSON - options marshaled as JSON
- * @returns: array of strings, intended for writing to a reg file
- */
+// @param hiveType: "hklm" or "hkcu"
+// @param profileType: "defaults" or "locked"
+// @param settings - options marshaled as JSON
+// @returns: array of strings, intended for writing to a reg file
+
 func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) ([]string, error) {
 	var settings options.ServerSettingsForJSON
 
