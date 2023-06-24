@@ -25,7 +25,9 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, createUserProfile, startRancherDesktop, teardown } from './utils/TestUtils';
+import {
+  createDefaultSettings, createUserProfile, startRancherDesktop, teardown, tool,
+} from './utils/TestUtils';
 
 import type { DeploymentProfileType } from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
@@ -67,6 +69,8 @@ test.describe('Locked fields', () => {
   }
 
   test.describe.configure({ mode: 'serial' });
+
+  test.beforeAll(() => tool('rdctl', 'factory-reset'));
 
   test.afterAll(async() => {
     await restoreUserProfile();
