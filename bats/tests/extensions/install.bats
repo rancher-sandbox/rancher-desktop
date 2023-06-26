@@ -69,6 +69,17 @@ encoded_id() { # variant
     done
 }
 
+@test 'extension API - require auth' {
+    local port
+    run cat "${PATH_APP_HOME}/rd-engine.json"
+    assert_success
+    port="$(jq_output .port)"
+    assert [ -n "$port" ]
+    run curl --fail "http://127.0.0.1:${port}/v1/settings"
+    assert_failure
+    assert_output --partial "The requested URL returned error: 401"
+}
+
 @test 'basic extension - install' {
     assert_dir_not_exist "$PATH_EXTENSIONS/$(encoded_id basic)"
     rdctl extension install "$(id basic)"
