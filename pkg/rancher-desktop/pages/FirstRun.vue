@@ -9,8 +9,9 @@
       :is-locked="kubernetesLocked"
       @input="handleDisableKubernetesCheckbox"
     />
-    <label>
-      Please select a Kubernetes version{{ offlineCheck() }}:
+    <rd-fieldset
+      :legend-text="t('firstRun.kubernetesVersion.legend') + offlineCheck()"
+    >
       <rd-select
         v-model="settings.kubernetes.version"
         :is-locked="kubernetesVersionLocked"
@@ -42,7 +43,7 @@
           </option>
         </optgroup>
       </rd-select>
-    </label>
+    </rd-fieldset>
     <rd-fieldset
       :legend-text="t('containerEngine.label')"
       :is-locked="engineSelectorLocked"
@@ -230,7 +231,7 @@ export default Vue.extend({
       this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);
     },
     offlineCheck() {
-      return this.cachedVersionsOnly ? ' (cached versions only)' : '';
+      return this.cachedVersionsOnly ? ` ${ this.t('firstRun.kubernetesVersion.cachedOnly') }` : '';
     },
   },
 });
