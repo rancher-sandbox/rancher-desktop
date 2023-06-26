@@ -115,13 +115,21 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     }
     newSettings = _.merge(newSettings, getObjectRepresentation(fqFieldName as RecursiveKeys<Settings>, finalValue));
   }
+  const settingsValidator = new SettingsValidator();
 
-  // RD hasn't loaded the supported k8s versions yet, so have it defer actually checking the specified version.
-  // If it can't find this version, it will silently move to the closest version.
-  // We'd have to add more code to report that.
-  // It isn't worth adding that code yet. It might never be needed.
-  const newSettingsForValidation = _.omit(newSettings, 'kubernetes.version');
-  const [needToUpdate, errors] = (new SettingsValidator()).validateSettings(cfg, newSettingsForValidation, lockedFields);
+  if (_.has(newSettings, 'kubernetes.version')) {
+    // RD hasn't loaded the supported k8s versions yet, so fake the list.
+    // If the field is locked, we don't need to know what it's locked to,
+    // just that the proposed version is different from the current version.
+    /// The current version doesn't have to be the locked version, but will be after processing ends.
+    const limitedK8sVersionList: Array<string> = [newSettings.kubernetes?.version ?? ''];
+
+    if (cfg.kubernetes.version) {
+      limitedK8sVersionList.push(cfg.kubernetes.version);
+    }
+    settingsValidator.k8sVersions = limitedK8sVersionList;
+  }
+  const [needToUpdate, errors] = settingsValidator.validateSettings(cfg, newSettings, lockedFields);
 
   if (errors.length > 0) {
     const errorString = `Error in command-line options:\n${ errors.join('\n') }`;
@@ -131,7 +139,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     }
     throw new Error(errorString);
   }
-  if (needToUpdate || _.has(newSettings, 'kubernetes.version')) {
+  if (needToUpdate) {
     cfg = _.merge(cfg, newSettings);
     save(cfg);
   } else {
