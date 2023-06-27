@@ -82,6 +82,7 @@ export default class SettingsValidator {
             enabled: this.checkBoolean,
             list:    this.checkExtensionAllowList,
           },
+          installed: this.checkInstalledExtensions,
         },
         pathManagementStrategy: this.checkLima(this.checkEnum(...Object.values(PathManagementStrategy))),
         telemetry:              { enabled: this.checkBoolean },
@@ -152,7 +153,6 @@ export default class SettingsValidator {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,
       },
-      extensions: this.checkExtensions,
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -516,7 +516,7 @@ export default class SettingsValidator {
     return Array.from(duplicates);
   }
 
-  protected checkExtensions(
+  protected checkInstalledExtensions(
     mergedSettings: Settings,
     currentValue: Record<string, string>,
     desiredValue: any,

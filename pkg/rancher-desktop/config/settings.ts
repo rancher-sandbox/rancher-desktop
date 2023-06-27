@@ -22,7 +22,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-export const CURRENT_SETTINGS_VERSION = 8 as const;
+export const CURRENT_SETTINGS_VERSION = 9 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -76,6 +76,8 @@ export const defaultSettings = {
         enabled: false,
         list:    [] as Array<string>,
       },
+      /** Installed extensions, mapping to the installed version (tag). */
+      installed: { } as Record<string, string>,
     },
     pathManagementStrategy: process.platform === 'win32' ? PathManagementStrategy.Manual : PathManagementStrategy.RcFiles,
     telemetry:              { enabled: true },
@@ -120,8 +122,6 @@ export const defaultSettings = {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,
   },
-  /** Installed extensions, mapping to the installed version (tag). */
-  extensions:   { } as Record<string, string>,
   /**
    * Experimental settings - there should not be any UI for these.
    */
@@ -506,6 +506,15 @@ const updateTable: Record<number, (settings: any) => void> = {
       } else {
         settings.application.pathManagementStrategy = PathManagementStrategy.RcFiles;
       }
+    }
+  },
+  8: (settings) => {
+    // Rancher Desktop 1.10: move .extensions to .application.extensions.installed
+    if (settings.extensions) {
+      settings.application ??= {};
+      settings.application.extensions ??= {};
+      settings.application.extensions.installed = settings.extensions;
+      delete settings.extensions;
     }
   },
 };

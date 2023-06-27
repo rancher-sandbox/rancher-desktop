@@ -240,7 +240,7 @@ export class ExtensionImpl implements Extension {
       throw ex;
     }
 
-    mainEvents.emit('settings-write', { extensions: { [this.id]: this.version } });
+    mainEvents.emit('settings-write', { application: { extensions: { installed: { [this.id]: this.version } } } });
 
     console.debug(`Install ${ this.id }: install complete.`);
 
@@ -481,7 +481,7 @@ export class ExtensionImpl implements Extension {
       }
     }
 
-    mainEvents.emit('settings-write', { extensions: { [this.id]: undefined } });
+    mainEvents.emit('settings-write', { application: { extensions: { installed: { [this.id]: undefined } } } });
 
     return true;
   }
