@@ -123,7 +123,7 @@ export function openPreferences() {
   });
 
   window.on('close', (event) => {
-    if (!isDirty) {
+    if (!isDirty || process.env.RD_TEST === 'e2e') {
       return;
     }
 

@@ -55,7 +55,7 @@ test.describe.serial('Main App Test', () => {
 
     // Wait for the window to actually load (i.e. transition from
     // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-    await preferencesWindow.waitForURL(/Preferences/);
+    await preferencesWindow.waitForURL(/Preferences#/i);
   });
 
   test('should show application page and render general tab', async() => {
@@ -104,7 +104,7 @@ test.describe.serial('Main App Test', () => {
 
   test('should render environment tab after close and reopen preferences modal', async() => {
     test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -227,7 +227,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render container engine page after close and reopen preferences modal', async() => {
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -235,7 +235,7 @@ test.describe.serial('Main App Test', () => {
     expect(preferencesWindow).toBeDefined();
     // Wait for the window to actually load (i.e. transition from
     // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-    await preferencesWindow.waitForURL(/Preferences/);
+    await preferencesWindow.waitForURL(/Preferences#/i);
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
@@ -255,7 +255,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render allowed image tab in container engine page after close and reopen preferences modal', async() => {
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
