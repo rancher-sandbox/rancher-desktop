@@ -38,10 +38,40 @@ export function setLogLevel(level: logLevel): void {
 export class Log {
   constructor(topic: string, directory = paths.logs) {
     this.path = path.join(directory, `${ topic }.log`);
-    this.stream = fs.createWriteStream(this.path, { flags: 'w', mode: 0o600 });
+    this.reopen();
+    // The following lines only exist because TypeScript can't reason about
+    // the call to this.reopen() correctly.  They are unused.
+    this.realStream ??= fs.createWriteStream(this.path, { flags: 'ERROR' });
+    this.console ??= globalThis.console;
+    this.fdPromise ??= Promise.reject();
+  }
+
+  /** The path to the log file. */
+  readonly path: string;
+
+  /** A stream to write to the log file. */
+  get stream(): fs.WriteStream {
+    return this.realStream;
+  }
+
+  /** The underlying console stream. */
+  protected console: Console;
+
+  protected realStream: fs.WriteStream;
+
+  protected reopen(mode = 'w') {
+    if (process.env.RD_TEST === 'e2e') {
+      // If we're running E2E tests, we may need to create the log directory.
+      // We don't do this normally because it's synchronous and slow.
+      fs.mkdirSync(path.dirname(this.path), { recursive: true });
+    }
+    this.realStream?.close();
+    this.realStream = fs.createWriteStream(this.path, { flags: mode, mode: 0o600 });
     this.fdPromise = new Promise((resolve) => {
       this.stream.on('open', resolve);
     });
+    delete this._fdStream;
+
     // If we're running unit tests, output to the console rather than file.
     // However, _don't_ do so for end-to-end tests in Playwright.
     // We detect Playwright via an environment variable we set in scripts/e2e.ts
@@ -51,15 +81,6 @@ export class Log {
       this.console = new Console(this.stream);
     }
   }
-
-  /** The path to the log file. */
-  readonly path: string;
-
-  /** A stream to write to the log file. */
-  readonly stream: fs.WriteStream;
-
-  /** The underlying console stream. */
-  protected readonly console: Console;
 
   protected fdPromise: Promise<number>;
 
@@ -181,6 +202,14 @@ export function clearLoggingDirectory(): void {
         fs.unlinkSync(path.join(paths.logs, entry.name));
       }
     }
+  }
+}
+
+export function reopenLogs() {
+  for (const log of logs.values()) {
+    log['reopen']('a');
+    // Trigger making the stream
+    ((_: any) => {})(log.fdStream);
   }
 }
 

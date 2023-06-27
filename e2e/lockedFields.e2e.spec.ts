@@ -32,6 +32,7 @@ import {
 import type { DeploymentProfileType } from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
+import { reopenLogs } from '@pkg/utils/logging';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -70,7 +71,10 @@ test.describe('Locked fields', () => {
 
   test.describe.configure({ mode: 'serial' });
 
-  test.beforeAll(() => tool('rdctl', 'factory-reset'));
+  test.beforeAll(async() => {
+    await tool('rdctl', 'factory-reset', '--verbose');
+    reopenLogs();
+  });
 
   test.afterAll(async() => {
     await restoreUserProfile();

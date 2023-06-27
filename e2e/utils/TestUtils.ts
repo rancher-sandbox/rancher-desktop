@@ -161,6 +161,8 @@ export async function teardown(app: ElectronApplication, filename: string) {
     const string = min ? `${ min } min ${ sec } sec` : `${ sec } seconds`;
 
     console.log(`Test ${ path.basename(filename) } took ${ string }.`);
+  } else {
+    console.log(`Test ${ path.basename(filename) } did not have a start time.`);
   }
 }
 
