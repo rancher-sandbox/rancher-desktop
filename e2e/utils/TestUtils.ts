@@ -139,14 +139,18 @@ export async function packageLogs(testPath: string) {
   await childProcess.spawnFile('tar', ['cfh', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
-export async function teardown(app: ElectronApplication, filename: string) {
-  const context = app.context();
+/**
+ * Tear down the application, without managing logging.  This should only be
+ * used when doing atypical tests that need to restart the application within
+ * the test.  This is normally used instead of `app.close()`.
+ *
+ * @note teardown() should be used where possible.
+ */
+export async function teardownApp(app: ElectronApplication) {
   const proc = app.process();
   const pid = proc.pid;
 
   try {
-    await context.tracing.stop({ path: reportAsset(filename) });
-    await packageLogs(filename);
     // Allow one minute for shutdown
     await Promise.race([
       app.close(),
@@ -183,6 +187,14 @@ export async function teardown(app: ElectronApplication, filename: string) {
       }
     }
   }
+}
+
+export async function teardown(app: ElectronApplication, filename: string) {
+  const context = app.context();
+
+  await context.tracing.stop({ path: reportAsset(filename) });
+  await packageLogs(filename);
+  await teardownApp(app);
 
   if (testInfo?.testPath === filename) {
     const delta = (Date.now() - testInfo.startTime) / 1_000;
