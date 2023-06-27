@@ -46,6 +46,7 @@ import { Banner } from '@rancher/components';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import demoMetadata from '@pkg/utils/_demo_metadata.js';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 export default {
   components: { LoadingIndicator, Banner },
   props:      {
@@ -102,6 +103,10 @@ export default {
     if (!this.metadata) {
       return;
     }
+
+    ipcRenderer.on('extensions/changed', () => {
+      this.installed = this.isInstalled;
+    });
 
     this.installed = this.isInstalled;
     this.extensionDetails = {
