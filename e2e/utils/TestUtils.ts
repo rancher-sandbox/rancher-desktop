@@ -157,6 +157,31 @@ export async function teardown(app: ElectronApplication, filename: string) {
     if (proc.kill('SIGTERM') || proc.kill('SIGKILL')) {
       console.log(`Manually stopped process ${ pid }`);
     }
+    // Try to do platform-specific killing based on process groups
+    if (process.platform === 'darwin' || process.platform === 'linux') {
+      for (const signal of ['TERM', 'TERM', 'TERM', 'KILL']) {
+        let pids = '';
+
+        try {
+          const args = ['-o', 'pid=', process.platform === 'darwin' ? '-g' : '--sid', `${ pid }`];
+
+          pids = (await childProcess.spawnFile('ps', args, { stdio: ['ignore', 'pipe', 'inherit'] })).stdout;
+        } catch (ex) {
+          console.log(`Did not find processes in process group, ignoring.`);
+          break;
+        }
+
+        try {
+          if (pids.trim()) {
+            console.log(`Manually killing group processes ${ pids.replace(/\r?\n/g, ' ').trim() }`);
+            await childProcess.spawnFile('kill', ['-s', signal].concat(...pids.split(/\s+/).filter(p => p)));
+          }
+        } catch (ex) {
+          console.log(`Failed to process group: ${ ex } (retrying)`);
+        }
+        await util.promisify(setTimeout)(1_000);
+      }
+    }
   }
 
   if (testInfo?.testPath === filename) {
