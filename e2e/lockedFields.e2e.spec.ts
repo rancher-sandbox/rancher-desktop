@@ -99,6 +99,11 @@ test.describe('Locked fields', () => {
 
   test.afterAll(() => teardown(electronApp, __filename));
 
+  test.afterAll(async() => {
+    await tool('rdctl', 'factory-reset', '--verbose');
+    reopenLogs();
+  });
+
   test('should start up', async() => {
     const navPage = new NavPage(page);
 

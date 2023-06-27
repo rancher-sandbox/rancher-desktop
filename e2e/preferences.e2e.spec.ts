@@ -4,7 +4,9 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
-import { createDefaultSettings, startRancherDesktop, teardown } from './utils/TestUtils';
+import { createDefaultSettings, startRancherDesktop, teardown, tool } from './utils/TestUtils';
+
+import { reopenLogs } from '@pkg/utils/logging';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 
@@ -29,6 +31,11 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(() => teardown(electronApp, __filename));
+
+  test.afterAll(async() => {
+    await tool('rdctl', 'factory-reset', '--verbose');
+    reopenLogs();
+  });
 
   test('should open preferences modal', async() => {
     expect(preferencesWindow).toBeDefined();

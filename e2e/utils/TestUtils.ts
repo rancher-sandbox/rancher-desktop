@@ -147,7 +147,12 @@ export async function teardown(app: ElectronApplication, filename: string) {
   try {
     await context.tracing.stop({ path: reportAsset(filename) });
     await packageLogs(filename);
-    await app.close();
+    // Allow one minute for shutdown
+    await Promise.race([
+      app.close(),
+      util.promisify(setTimeout)(60 * 1000),
+    ]);
+    await tool('rdctl', 'shutdown');
   } finally {
     if (proc.kill('SIGTERM') || proc.kill('SIGKILL')) {
       console.log(`Manually stopped process ${ pid }`);
