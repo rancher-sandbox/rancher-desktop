@@ -18,7 +18,7 @@ load '../helpers/load'
     run get_setting '.application.window.quitOnClose'
     assert_success
     assert_output false
-    run get_setting '.application.hideNotificationIcon'
+    run get_setting '.application.hideNotivicationIcon'
     assert_success
     assert_output false
 }
@@ -101,14 +101,14 @@ load '../helpers/load'
 
 @test 'Enable hide-notification-icon' {
     rdctl set --application.hide-notification-icon=true
-    run get_setting '.application.hideNotificationIcon'
+    run get_setting '.application.hideNotivicationIcon'
     assert_success
     assert_output true
 }
 
 @test 'Disable hide-notification-icon' {
     rdctl set --application.hide-notification-icon=false
-    run get_setting '.application.hideNotificationIcon'
+    run get_setting '.application.hideNotivicationIcon'
     assert_success
     assert_output false
 }

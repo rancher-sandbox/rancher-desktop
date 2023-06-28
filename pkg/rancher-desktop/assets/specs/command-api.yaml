@@ -399,7 +399,7 @@ components:
             startInBackground:
               type: boolean
               x-rd-usage: start app without window
-            hideNotificationIcon:
+            hideNotivicationIcon:
               type: boolean
               x-rd-usage: don't show notification icon
             window:

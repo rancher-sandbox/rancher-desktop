@@ -134,7 +134,7 @@ describe('commandLineOptions', () => {
           '--application.updater.enabled',
           '--application.autoStart',
           '--application.startInBackground',
-          '--application.hideNotificationIcon',
+          '--application.hideNotivicationIcon',
           '--application.window.quitOnClose',
           '--containerEngine.allowedImages.enabled',
           ['--containerEngine.name', 'containerd'],
