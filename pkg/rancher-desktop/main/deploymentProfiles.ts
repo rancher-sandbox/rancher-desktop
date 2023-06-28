@@ -543,7 +543,7 @@ function fixProfileKeyCase(key: string, schemaKeys: string[]): string|null {
 }
 
 const userDefinedKeys = [
-  'extensions',
+  'application.extensions.installed',
   'WSL.integrations',
   'diagnostics.mutedChecks',
 ].map(s => s.split('.'));

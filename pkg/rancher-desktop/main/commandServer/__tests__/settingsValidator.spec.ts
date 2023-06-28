@@ -615,9 +615,9 @@ describe(SettingsValidator, () => {
     });
   });
 
-  describe('extensions', () => {
+  describe('application.extensions.installed', () => {
     test('should accept already-invalid input', () => {
-      const changes = { extensions: { '!invalid name!': '@invalid tag@' } };
+      const changes = { application: { extensions: { installed: { '!invalid name!': '@invalid tag@' } } } };
       const input = _.merge({}, cfg, changes);
       const [changed, errors] = subject.validateSettings(input, changes);
 
@@ -627,16 +627,16 @@ describe(SettingsValidator, () => {
     const longString = new Array(255).join('x');
 
     test.each<[string, any, string[]]>([
-      ['should reject non-dict values', 123, ['extensions: "123" is not a valid mapping']],
-      ['should reject non-string values', { a: 1 }, ['extensions: "a" has non-string tag "1"']],
-      ['should reject invalid names', { '!!@': 'latest' }, ['extensions: "!!@" is an invalid name']],
+      ['should reject non-dict values', 123, ['application.extensions.installed: "123" is not a valid mapping']],
+      ['should reject non-string values', { a: 1 }, ['application.extensions.installed: "a" has non-string tag "1"']],
+      ['should reject invalid names', { '!!@': 'latest' }, ['application.extensions.installed: "!!@" is an invalid name']],
       ['should accept names with a bare component', { image: 'tag' }, []],
       ['should accept names with a domain', { 'registry.test/name': 'tag' }, []],
       ['should accept names with multiple components', { 'registry.test/dir/name': 'tag' }, []],
-      ['should reject invalid tags', { image: 'hello world' }, ['extensions: "image" has invalid tag "hello world"']],
-      ['should reject overly-long tags', { image: longString }, [`extensions: "image" has invalid tag "${ longString }"`]],
+      ['should reject invalid tags', { image: 'hello world' }, ['application.extensions.installed: "image" has invalid tag "hello world"']],
+      ['should reject overly-long tags', { image: longString }, [`application.extensions.installed: "image" has invalid tag "${ longString }"`]],
     ])('%s', (...[, input, expectedErrors]) => {
-      const [, errors] = subject.validateSettings(cfg, { extensions: input });
+      const [, errors] = subject.validateSettings(cfg, { application: { extensions: { installed: input } } });
 
       expect(errors).toEqual(expectedErrors);
     });

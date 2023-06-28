@@ -218,6 +218,14 @@ describe('deployment profiles', () => {
               debug:       true,
               adminAccess: false,
               telemetry:   { enabled: true },
+              extensions:  {
+                installed: {
+                  bellingham: 'WA',
+                  portland:   'OR',
+                  shasta:     'CA',
+                  elko:       'NV',
+                },
+              },
             },
             containerEngine: {
               allowedImages: {
@@ -244,12 +252,6 @@ describe('deployment profiles', () => {
                 'riviere du loup': false,
                 magog:             false,
               },
-            },
-            extensions: {
-              bellingham: 'WA',
-              portland:   'OR',
-              shasta:     'CA',
-              elko:       'NV',
             },
           };
           const lockedUserProfile = {
