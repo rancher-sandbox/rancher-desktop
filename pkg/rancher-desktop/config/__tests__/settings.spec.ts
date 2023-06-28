@@ -81,14 +81,6 @@ describe('settings', () => {
       adminAccess:            false,
       pathManagementStrategy: 'rcfiles',
       window:                 { quitOnClose: true },
-      extensions:             {
-        installed: {
-          bellingham: 'A',
-          seattle:    'B',
-          olympia:    'C',
-          winthrop:   'D',
-        },
-      },
     },
     containerEngine: {
       allowedImages: {
@@ -118,6 +110,12 @@ describe('settings', () => {
         'riviere du loup': false,
         magog:             false,
       },
+    },
+    extensions: {
+      bellingham: true,
+      seattle:    true,
+      olympia:    false,
+      winthrop:   true,
     },
     ignorableTestSettings: {
       testTitle:  'test-title',

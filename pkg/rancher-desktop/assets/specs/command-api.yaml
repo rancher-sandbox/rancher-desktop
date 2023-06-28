@@ -1,4 +1,3 @@
-
 info:
   title: Rancher Desktop API
   version: 0.0.1
@@ -371,11 +370,6 @@ components:
                       items:
                         type: string
                         x-rd-hidden: true
-                installed:
-                  type: object
-                  x-rd-usage: installed extensions and their tag
-                  additionalProperties:
-                    type: string
             pathManagementStrategy:
               type: string
               enum: [manual, rcfiles]
@@ -578,6 +572,11 @@ components:
               # TODO It is not possible to modify this setting via `rdctl set`.
               x-rd-usage: diagnostic ids that have been muted
               additionalProperties: true
+        extensions:
+          type: object
+          x-rd-usage: control which extensions are installed
+          additionalProperties:
+            type: string
 
     diagnostics:
       type: object

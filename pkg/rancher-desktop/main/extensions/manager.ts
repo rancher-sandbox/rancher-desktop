@@ -227,7 +227,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
     const { enabled: allowEnabled, list: allowListRaw } = config.application.extensions.allowed;
     const allowList = allowEnabled ? allowListRaw : undefined;
 
-    for (const [repo, tag] of Object.entries(config.application.extensions.installed)) {
+    for (const [repo, tag] of Object.entries(config.extensions)) {
       if (!tag) {
         // If the tag is unset / falsy, we wanted to uninstall the extension.
         // There is no need to re-initialize it.
@@ -237,7 +237,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
       if (!this.isSupported(repo)) {
         // If this extension is explicitly not supported, don't re-install it.
         console.log(`Uninstalling unsupported extension ${ repo }:${ tag }`);
-        mainEvents.emit('settings-write', { application: { extensions: { installed: { [repo]: undefined } } } });
+        mainEvents.emit('settings-write', { extensions: { [repo]: undefined } });
         continue;
       }
 
@@ -248,7 +248,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
           return await (await this.getExtension(id)).install(allowList);
         } catch (ex) {
           console.error(`Failed to install extension ${ id }`, ex);
-          mainEvents.emit('settings-write', { application: { extensions: { installed: { [repo]: undefined } } } });
+          mainEvents.emit('settings-write', { extensions: { [repo]: undefined } });
         }
       })(repo, tag));
     }
