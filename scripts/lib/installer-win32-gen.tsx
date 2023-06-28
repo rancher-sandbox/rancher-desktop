@@ -92,7 +92,7 @@ type directory = {
   name: string;
   /** Child directories. */
   directories: directory[];
-  /** The regular files within this direcotry */
+  /** The regular files within this directory */
   files: { name: string, id: string }[];
 };
 
@@ -245,7 +245,7 @@ export default async function generateFileList(rootPath: string): Promise<string
             * GA;   // Rights: GENERIC_ALL
             * ;     // Object GUID: none
             * ;     // Inherit Object GUID: none
-            * SY    // Accound SID: LOCAL_SYSTEM
+            * SY    // Account SID: LOCAL_SYSTEM
             *       // Resource attribute: none
             */}
           <PermissionEx Sddl="O:SYD:(A;;GRGX;;;IU)(A;;GA;;;SY)" />

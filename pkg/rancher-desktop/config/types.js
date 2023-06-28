@@ -1,5 +1,5 @@
 // --------------------------------------
-// 1. Provided by Steve and always potentialy available
+// 1. Provided by Steve and always potentially available
 // --------------------------------------
 
 // Standalone steve

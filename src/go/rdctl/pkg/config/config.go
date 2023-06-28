@@ -127,7 +127,7 @@ func insufficientConnectionInfo() bool {
 }
 
 // determines if we are running in a wsl linux distro
-// by checking for availibily of wslpath and see if it's a symlink
+// by checking for availability of wslpath and see if it's a symlink
 func isWSLDistro() bool {
 	fi, err := os.Lstat("/bin/wslpath")
 	if os.IsNotExist(err) {

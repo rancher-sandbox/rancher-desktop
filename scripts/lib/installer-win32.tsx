@@ -19,7 +19,7 @@ import generateFileList from './installer-win32-gen';
 import { spawnFile } from '@pkg/utils/childProcess';
 
 /**
- * Return the contents of package.json embbedded in the application.
+ * Return the contents of package.json embedded in the application.
  */
 function getPackageJson(appDir: string): Record<string, any> {
   const packageBytes = asar.extractFile(path.join(appDir, 'resources', 'app.asar'), 'package.json');

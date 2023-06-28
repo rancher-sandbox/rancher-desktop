@@ -97,7 +97,7 @@ encoded_id() { # variant
 }
 
 @test 'compose - with a long name' {
-    local name="$(id vm-compose)-with-an-unsually-long-name-yes-it-is-very-long"
+    local name="$(id vm-compose)-with-an-unusually-long-name-yes-it-is-very-long"
 
     ctrctl tag "$(id vm-compose)" "$name"
     rdctl extension install "$name"

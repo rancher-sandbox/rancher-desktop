@@ -76,7 +76,7 @@ func (h *HostConnector) handleConn(vConn net.Conn) {
 	defer conn.Close()
 	if err := util.Pipe(vConn, conn); err != nil {
 		// this can be caused by an upstream named pipe
-		// when the the write is completed, however, the
+		// when the write is completed, however, the
 		// connection is closed immediately after write
 		if errors.Is(err, syscall.ERROR_BROKEN_PIPE) {
 			return
@@ -151,14 +151,14 @@ func (h *HostConnector) handshake(vmGuid hvsock.GUID, found chan<- hvsock.GUID, 
 		ServiceID: svcPort,
 	}
 
-	attempInterval := time.NewTicker(time.Second * 1)
+	attemptInterval := time.NewTicker(time.Second * 1)
 	attempt := 1
 	for {
 		select {
 		case <-done:
 			logrus.Infof("attempt to handshake with [%s], goroutine is terminated", vmGuid.String())
 			return
-		case <-attempInterval.C:
+		case <-attemptInterval.C:
 			conn, err := hvsock.Dial(addr)
 			if err != nil {
 				attempt++
@@ -183,7 +183,7 @@ func (h *HostConnector) handshake(vmGuid hvsock.GUID, found chan<- hvsock.GUID, 
 	}
 }
 
-// tryFindGuid waits on a found chanel to receive a GUID until
+// tryFindGuid waits on a found channel to receive a GUID until
 // deadline of 10s is reached
 func tryFindGuid(found chan hvsock.GUID) (hvsock.GUID, error) {
 	bailOut := time.After(time.Second * timeoutSeconds)

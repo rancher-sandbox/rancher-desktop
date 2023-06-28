@@ -167,7 +167,7 @@ describeUnix(CheckerDockerCLISymlink, () => {
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
   });
 
-  it('should catch non-existent second symlink', async() => {
+  it('should catch nonexistent second symlink', async() => {
     const subject = new CheckerDockerCLISymlink(executable);
 
     jest.spyOn(subject, 'readlink')

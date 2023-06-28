@@ -254,7 +254,7 @@ authConfig:
         title: '第二步：导航到 "Credentials"标签，创建你的OAuth客户端ID。'
         body: 
           1: '选择 "Create Credentials"下拉菜单，选择 "OAuth clientID"，然后选择 "Web application"。'
-          2: 'Authorized Javascript origins:'
+          2: 'Authorized JavaScript origins:'
           3: 'Authorized redirect URIs:'
           4: '点击 "Create"，然后点击 "Download JSON"按钮。'
           5: '在OAuth凭证框中上传下载的JSON文件。'
@@ -4054,7 +4054,7 @@ advancedSettings:
     'system-default-registry': '用于所有系统Docker镜像的私有仓库。'
     'ui-index': 'UI的HTML索引。'
     'ui-pl': 'Private-Label company name.'
-    'ui-issues': '使用一个URL地址来发送新的 "提交问题 "报告，而不是将用户发送到Github问题页面。'
+    'ui-issues': '使用一个URL地址来发送新的 "提交问题 "报告，而不是将用户发送到GitHub问题页面。'
     'telemetry-opt': '遥测报告opt-in。'
     'auth-user-info-max-age-seconds': '在进行认证提供者组成员同步之前，用户认证令牌的最大存活时间。'
     'auth-user-info-resync-cron': '重新同步认证提供者组成员资格的默认cron时间表。'

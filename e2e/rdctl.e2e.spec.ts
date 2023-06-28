@@ -311,7 +311,7 @@ test.describe('Command server', () => {
     expect(body).toContain('no settings specified in the request');
   });
 
-  test('version-only path of a non-existent version should 404', async() => {
+  test('version-only path of a nonexistent version should 404', async() => {
     const resp = await doRequest('/v99bottlesofbeeronthewall');
 
     expect(resp.ok).toBeFalsy();
@@ -648,7 +648,7 @@ test.describe('Command server', () => {
             expect(stderr).not.toContain('Usage:');
           }
         });
-        test.describe('when a non-existent config file is specified', () => {
+        test.describe('when a nonexistent config file is specified', () => {
           test('it fails even when all parameters are specified', async() => {
             const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-fake-docker'));
 
@@ -817,7 +817,7 @@ test.describe('Command server', () => {
       test.describe('settings v5 migration', () => {
         /**
          * Note issue https://github.com/rancher-sandbox/rancher-desktop/issues/3829
-         * calls for removing unrecognized fields in the existings settings.json file
+         * calls for removing unrecognized fields in the existing settings.json file
          * Currently we're ignoring unrecognized fields in the PUT payload -- to complain about
          * them calls for another issue.
          */
@@ -889,7 +889,7 @@ test.describe('Command server', () => {
               updater:   { enabled: !oldSettings.application.updater.enabled },
               debug:     !oldSettings.application.debug,
             },
-            // This field is in to force a restart
+            // This field is to force a restart
             kubernetes: { port: oldSettings.kubernetes.port + 1 },
           };
 
@@ -1275,7 +1275,7 @@ test.describe('Command server', () => {
           expect(stderr).toEqual('');
           expect(JSON.parse(stdout)).toEqual(expect.arrayContaining(['CONNECTED_TO_INTERNET']));
         });
-        test('it 404s for a non-existent category', async() => {
+        test('it 404s for a nonexistent category', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v1/diagnostic_ids?category=cecinestpasuncategory']);
 
           expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found in category cecinestpasuncategory' });
@@ -1351,22 +1351,22 @@ test.describe('Command server', () => {
             ],
           });
         });
-        test('it returns an empty array for a non-existent category', async() => {
+        test('it returns an empty array for a nonexistent category', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v1/diagnostic_checks?category=not*a*category']);
 
           expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
-        test('it returns an empty array for a non-existent category with a valid ID', async() => {
+        test('it returns an empty array for a nonexistent category with a valid ID', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v1/diagnostic_checks?category=not*a*category&id=CONNECTED_TO_INTERNET']);
 
           expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
-        test('it returns an empty array for a non-existent checkID with a valid category', async() => {
+        test('it returns an empty array for a nonexistent checkID with a valid category', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v1/diagnostic_checks?category=Utilities&id=CONNECTED_TO_INTERNET']);
 
           expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
-        test('it returns an empty array for a non-existent checkID when no category is specified', async() => {
+        test('it returns an empty array for a nonexistent checkID when no category is specified', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v1/diagnostic_checks?&id=blip']);
 
           expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });

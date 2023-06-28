@@ -50,7 +50,7 @@ IP and port acting as a peer end of the tunnel.`,
 				VsockHandshakePort: tun.HandshakePort,
 				VsockHostPort:      tun.VsockHostPort,
 			}
-			go peerConnector.ListendAndHandshake()
+			go peerConnector.ListenAndHandshake()
 			errs.Go(peerConnector.ListenTCP)
 		}
 		return errs.Wait()

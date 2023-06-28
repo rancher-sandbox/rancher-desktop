@@ -384,9 +384,9 @@ export default {
     },
 
     hasDelayedColumns() {
-      const delaeydColumns = this.columns.find(c => c.delayLoading);
+      const delayedColumns = this.columns.find(c => c.delayLoading);
 
-      return !!delaeydColumns;
+      return !!delayedColumns;
     },
 
     // Generate row and column data for easier rendering in the template
@@ -693,7 +693,7 @@ export default {
     handleActionButtonClick(i, event) {
       // Each row in the table gets its own ref with
       // a number based on its index. If you are using
-      // an ActionMenu that doen't have a dependency on Vuex,
+      // an ActionMenu that doesn't have a dependency on Vuex,
       // these refs are useful because you can reuse the
       // same ActionMenu component on a page with many different
       // target elements in a list,

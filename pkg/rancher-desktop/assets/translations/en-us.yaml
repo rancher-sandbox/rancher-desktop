@@ -135,11 +135,11 @@ product:
   settings: Global Settings
   clusterManagement: Cluster Management
   monitoring: Monitoring
-  mcapps: Mutli-cluster Apps
+  mcapps: Multi-cluster Apps
 
 suffix:
   percent: "%"
-  milliCpus: mili CPUs
+  milliCpus: milli CPUs
   cpus: CPUs
   ib: iB
   mib: MiB
@@ -533,7 +533,7 @@ authConfig:
         title: 'Navigate to the "Credentials" tab to create your OAuth client ID'
         body:
           1: 'Select the "Create Credentials" dropdown, and select "OAuth clientID", then select "Web application".'
-          2: 'Authorized Javascript origins:'
+          2: 'Authorized JavaScript origins:'
           3: 'Authorized redirect URIs:'
           4: 'Click "Create", and then click on the "Download JSON" button.'
           5: 'Upload the downloaded JSON file in the OAuth credentials box.'
@@ -891,7 +891,7 @@ catalog:
     chart: Chart
     error:
       requiresFound: '<a href="{url}">{name}</a> must be installed before you can install this chart.'
-      requiresMissing: 'This chart requires another chart that provides {name}, but none was was found.'
+      requiresMissing: 'This chart requires another chart that provides {name}, but none was found.'
       insufficientCpu: 'This chart requires {need, number} CPU cores, but the cluster only has {have, number} available.'
       insufficientMemory: 'This chart requires {need} of memory, but the cluster only has {have} available.'
     header:
@@ -1309,7 +1309,7 @@ clusterIndexPage:
       buttonText: Configure Gatekeeper
       disabled: OPA Gatekeeper is not configured.
       label: OPA Gatekeeper Constraint Violations
-      noRows: There are no contraints with violations to show.
+      noRows: There are no constraints with violations to show.
     nodes:
       label: Unhealthy Nodes
       noRows: There are no unhealthy nodes to show.
@@ -1694,7 +1694,7 @@ landing:
   learnMore: Learn More
   gettingStarted:
     title: Getting Started
-    body: Take a look at the the quick getting started guide. For Cluster Manager users, learn more about where you can find you favorite features in the Dashboard UI.
+    body: Take a look at the quick getting started guide. For Cluster Manager users, learn more about where you can find you favorite features in the Dashboard UI.
   community:
     title: Community Support
     docs: Docs
@@ -1922,7 +1922,7 @@ login:
   welcome: Welcome to {vendor}
   loggedOut: You have been logged out.
   loginAgain: Log in again to continue.
-  error: An error occured logging in. Please try again.
+  error: An error occurred logging in. Please try again.
   useLocal: Use a local user
   loginWithProvider: Log in with {provider}
   username: Username
@@ -1969,7 +1969,7 @@ monitoring:
     tip: 'Adds labels to the ClusterRoles deployed by the Monitoring chart to <a target="_blank" rel="noopener nofollow noreferrer" href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles"> aggregate to the corresponding default k8s admin, edit, and view ClusterRoles.</a>'
   alerting:
     config:
-      label: Alert Manager Cofig
+      label: Alert Manager Config
     enable:
       label: Deploy Alertmanager
     secrets:
@@ -3183,7 +3183,7 @@ setup:
   confirmPassword: Confirm New Password
   useRandom: Use a randomly generated password
   useManual: Set a specific password to use
-  defaultPasswordError: It looks like this is your first time visting the Rancher UI, but the local admin account password is already set to something unique. Log in with that account below to continue the setup process.
+  defaultPasswordError: It looks like this is your first time visiting the Rancher UI, but the local admin account password is already set to something unique. Log in with that account below to continue the setup process.
   telemetry:
     label: Allow collection of anonymous statistics to help us improve Rancher
     tip:  'Rancher Labs would like to collect a bit of anonymized information
@@ -3693,7 +3693,7 @@ validation:
   boolean: '"{key}" must be a boolean value.'
   chars: '"{key}" contains {count, plural, =1 {an invalid character} other {# invalid characters}}: {chars}'
   custom:
-    missing: 'No validtor exists for { validatorName }! Does the validtor exist in custom-validtors? Is the name spelled correctly?'
+    missing: 'No validator exists for { validatorName }! Does the validator exist in custom-validators? Is the name spelled correctly?'
   dns:
     doubleHyphen: '"{key}" Cannot contain two or more consecutive hyphens'
     hostname:
@@ -3772,10 +3772,10 @@ validation:
       name:
         required: 'Port Rule [{position}] - Name is required.'
       nodePort:
-        requriedInt: 'Port Rule [{position}] - Node Port must be interger values if included.'
+        requriedInt: 'Port Rule [{position}] - Node Port must be integer values if included.'
       port:
         required: 'Port Rule [{position}] - Port is required.'
-        requriedInt: 'Port Rule [{position}] - Port must be interger values if included.'
+        requriedInt: 'Port Rule [{position}] - Port must be integer values if included.'
       targetPort:
         between: 'Port Rule [{position}] - Target Port must be between 1 and 65535'
         iana: 'Port Rule [{position}] - Target Port must be an IANA Service Name or Integer'
@@ -3941,7 +3941,7 @@ workload:
       supplementalGroups: Additional Group IDs
       sysctls: Sysctls
       sysctlsKey: Name
-    standard: Standard Containter
+    standard: Standard Container
     titles:
       container: Container
       command: Command
@@ -4324,7 +4324,7 @@ typeDescription:
   cis.cattle.io.clusterscanprofile: A profile is the configuration for the CIS scan, which is the benchmark versions to use and any specific tests to skip in that benchmark.
   cis.cattle.io.clusterscan: A scan is created to trigger a CIS scan on the cluster based on the defined profile. A report is created after the scan is completed.
   cis.cattle.io.clusterscanreport: A report is the result of a CIS scan of the cluster.
-  management.cattle.io.feature: Feature Flags allow certain {vendor} features to be toggled on and off.  Features that are off by default shoud be considered experimental functionality.
+  management.cattle.io.feature: Feature Flags allow certain {vendor} features to be toggled on and off.  Features that are off by default should be considered experimental functionality.
   resources.cattle.io.backup: A backup is created to perform one-time backups or schedule recurring backups based on a ResourceSet.
   resources.cattle.io.restore: A restore is created to trigger a restore to the cluster based on a backup file.
   resources.cattle.io.resourceset: A resource set defines which CRDs and resources to store in the backup.
@@ -4338,7 +4338,7 @@ typeDescription:
   catalog.cattle.io.app: An installed application is a Helm 3 chart that was installed either via our charts or through the Helm CLI.
   logging.banzaicloud.io.clusterflow: Logs from the cluster will be collected and logged to the selected Cluster Output.
   logging.banzaicloud.io.clusteroutput: A cluster output defines which logging providers that logs can be sent to and is only effective when deployed in the namespace that the logging operator is in.
-  logging.banzaicloud.io.flow: A flow defines which logs to collect and filter as well as which output to send the logs. The flow is a namespaced resource, which means logs will only be collected from the namepsace that the flow is deployed in.
+  logging.banzaicloud.io.flow: A flow defines which logs to collect and filter as well as which output to send the logs. The flow is a namespaced resource, which means logs will only be collected from the namespace that the flow is deployed in.
   logging.banzaicloud.io.output: An output defines which logging providers that logs can be sent to. The output needs to be in the same namespace as the flow that is using it.
   group.principal: Assigning global roles to a group only works with external auth providers that support groups. Local authorization does not support groups.
 
@@ -4593,7 +4593,7 @@ advancedSettings:
     'ui-dashboard-index': 'HTML index location for the {appName} UI.'
     'ui-offline-preferred': 'Controls whether UI assets are served locally by the server container or from the remote URL defined in the ui-index and ui-dashboard-index settings. The `Dynamic` option will use local assets in production builds of {appName}.'
     'ui-pl': 'Private-Label company name.'
-    'ui-issues': "Use a url address to send new 'File an Issue' reports instead of sending users to the Github issues page."
+    'ui-issues': "Use a url address to send new 'File an Issue' reports instead of sending users to the GitHub issues page."
     'telemetry-opt': 'Telemetry reporting opt-in.'
     'auth-user-info-max-age-seconds': 'The maximum age of a users auth tokens before an auth provider group membership sync will be performed.'
     'auth-user-info-resync-cron': 'Default cron schedule for resyncing auth provider group memberships.'
@@ -4625,7 +4625,7 @@ featureFlags:
   label: Feature Flags
   warning: |-
     Feature flags allow {vendor} to gate certain features behind flags.
-    Features that are off by defult shoud be considered experimental functionality.
+    Features that are off by default should be considered experimental functionality.
     Some features require a restart of the {vendor} server to change.
     This will result in a short outage of the API and UI, but not affect running clusters or workloads.
   restartRequired: "Note: Updating this feature flag requires a restart"

@@ -41,11 +41,11 @@ import (
 )
 
 var (
-	tarbalVersion  = "0.27"
-	wslTarballName = fmt.Sprintf("distro-%s.tar", tarbalVersion)
+	tarballVersion = "0.27"
+	wslTarballName = fmt.Sprintf("distro-%s.tar", tarballVersion)
 	wslTarballURL  = fmt.Sprintf(
 		"https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v%s/%s",
-		tarbalVersion,
+		tarballVersion,
 		wslTarballName)
 	wslDistroName = "vtunnel-e2e-test"
 	// TCP connect test ports

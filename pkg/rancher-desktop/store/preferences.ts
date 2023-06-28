@@ -244,7 +244,7 @@ export const actions = {
    * optional preferences object. Defaults to preferences stored in state if
    * preferences are not provided.
    * @returns A collection of severities to indicate any errors or side-effects
-   * associated with the the preferences.
+   * associated with the preferences.
    */
   async proposePreferences(
     { commit, state, getters }: PrefActionContext,

@@ -175,7 +175,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /** The current config state. */
   protected cfg: BackendSettings | undefined;
 
-  /** Indicates wherther the current installtion is an Admin Install. */
+  /** Indicates whether the current installation is an Admin Install. */
   #isAdminInstall: Promise<boolean> | undefined;
 
   protected getIsAdminInstall(): Promise<boolean> {
@@ -205,7 +205,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return this.#isAdminInstall;
   }
 
-  /** Indicates wherther privileged service is enabled in the current installation. */
+  /** Indicates whether privileged service is enabled in the current installation. */
   protected privilegedServiceEnabled = false;
 
   /**
@@ -670,7 +670,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /**
    * Read the given file in a WSL distribution
    * @param [filePath] the path of the file to read.
-   * @param [options] Optional configuratino for reading the file.
+   * @param [options] Optional configuration for reading the file.
    * @param [options.distro=INSTANCE_NAME] The distribution to read from.
    * @param [options.encoding='utf-8'] The encoding to use for the result.
    * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
@@ -1598,7 +1598,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
-    // cause stop to get called again.  Prevent the re-entrancy.
+    // cause stop to get called again.  Prevent the reentrancy.
     // If we're in the middle of starting, also ignore the call to stop (from
     // the process terminating), as we do not want to shut down the VM in that
     // case.

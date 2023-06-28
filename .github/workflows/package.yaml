@@ -188,5 +188,5 @@ jobs:
         Write-Output $usedCert
         if ($cert -ne $usedCert) {
           Write-Output "Expected Certificate" $cert "Actual Certificate" $usedCert
-          Throw "Installer signed with wrong certicate"
+          Throw "Installer signed with wrong certificate"
         }

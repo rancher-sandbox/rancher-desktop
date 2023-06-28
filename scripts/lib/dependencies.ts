@@ -10,7 +10,7 @@ export type GoPlatform = 'linux' | 'darwin' | 'windows';
 
 export type DownloadContext = {
   versions: DependencyVersions;
-  dependencyPlaform: DependencyPlatform;
+  dependencyPlatform: DependencyPlatform;
   platform: Platform;
   goPlatform: GoPlatform;
   // whether we are running on M1
@@ -76,19 +76,19 @@ export interface Dependency {
 }
 
 /**
- * A Dependency that is hosted in a Github repo.
+ * A Dependency that is hosted in a GitHub repo.
  */
-export interface GithubDependency {
+export interface GitHubDependency {
   githubOwner: string
   githubRepo: string
   // Converts a version (of the format that is stored in dependencies.yaml)
-  // to a tag that is used in a Github release.
+  // to a tag that is used in a GitHub release.
   versionToTagName(version: string | AlpineLimaISOVersion): string
 }
 
 export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
 
-export type GithubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
+export type GitHubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
 
 let _octokit: Octokit | undefined;
 

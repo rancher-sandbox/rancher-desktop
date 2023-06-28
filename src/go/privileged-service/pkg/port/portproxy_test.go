@@ -247,7 +247,7 @@ func TestGetHash(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			description: "simple obejcts",
+			description: "simple objects",
 			actual:      ports1,
 			expect:      ports2,
 			shouldMatch: true,

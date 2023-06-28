@@ -97,14 +97,14 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   const resourcesDir = path.join(process.cwd(), 'resources');
   const downloadContext: DownloadContext = {
-    versions:          depVersions,
-    dependencyPlaform: rawPlatform,
+    versions:           depVersions,
+    dependencyPlatform: rawPlatform,
     platform,
-    goPlatform:        platform === 'win32' ? 'windows' : platform,
-    isM1:              !!process.env.M1,
+    goPlatform:         platform === 'win32' ? 'windows' : platform,
+    isM1:               !!process.env.M1,
     resourcesDir,
-    binDir:            path.join(resourcesDir, platform, 'bin'),
-    internalDir:       path.join(resourcesDir, platform, 'internal'),
+    binDir:             path.join(resourcesDir, platform, 'bin'),
+    internalDir:        path.join(resourcesDir, platform, 'internal'),
   };
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
