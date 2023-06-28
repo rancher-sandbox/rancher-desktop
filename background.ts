@@ -132,7 +132,7 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   await pathManager.enforce();
 
-  if (newSettings.application.hideNotivicationIcon) {
+  if (newSettings.application.hideNotificationIcon) {
     Tray.getInstance(cfg).hide();
   } else {
     if (firstRunDialogComplete) {
@@ -262,7 +262,7 @@ Electron.app.whenReady().then(async() => {
       iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
     });
 
-    if (!cfg.application.hideNotivicationIcon) {
+    if (!cfg.application.hideNotificationIcon) {
       Tray.getInstance(cfg).show();
     }
 
