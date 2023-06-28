@@ -21,14 +21,14 @@ $sudoInstallScript = (Join-Path $scriptPath sudo-install-wsl.ps1)
 
 if ($Step -eq "EnableWSL-01") {
   Write-Output "Doing Step EnableWSL-01"
-  Write-Output "Doing Step EnableWSL-01" | Out-File $logFile
+  Write-Output "Doing Step EnableWSL-01" | Out-gile $logFile
   dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
   Restart-Machine-With-Resume-Command $sudoInstallScript "EnableVMPlatform-02" "installation (step 2)"
 }
 
 if ($Step -eq "EnableVMPlatform-02") {
   Write-Output "Doing Step EnableVMPlatform-02"
-  Write-Output "Doing Step EnableVMPlatform-02" | Out-File -Append $logFile
+  Write-Output "Doing Step EnableVMPlatform-02" | out-file -Append $logFile
   dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
   Restart-Machine-With-Resume-Command $sudoInstallScript "InstallLinuxUpdatePackage-03" "installation (step 3)"
 }
