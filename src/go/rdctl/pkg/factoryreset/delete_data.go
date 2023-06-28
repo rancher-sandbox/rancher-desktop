@@ -89,6 +89,8 @@ func deleteDarwinData(removeKubernetesCache bool) error {
 	}
 	if removeKubernetesCache {
 		pathList = append(pathList, cachePath)
+	} else {
+		pathList = append(pathList, path.Join(cachePath, "updater-longhorn.json"))
 	}
 	return deleteUnixLikeData(homeDir, altAppHomePath, path.Join(homeDir, ".config"), pathList)
 }
@@ -123,6 +125,8 @@ func deleteLinuxData(removeKubernetesCache bool) error {
 	}
 	if removeKubernetesCache {
 		pathList = append(pathList, cachePath)
+	} else {
+		pathList = append(pathList, path.Join(cachePath, "updater-longhorn.json"))
 	}
 	return deleteUnixLikeData(homeDir, altAppHomePath, configHomePath, pathList)
 }
