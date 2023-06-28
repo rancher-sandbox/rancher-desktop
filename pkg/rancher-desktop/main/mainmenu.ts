@@ -44,7 +44,7 @@ function getEditMenu(isMac: boolean): MenuItem {
       { role: 'paste', label: '&Paste' },
       { role: 'delete', label: 'De&lete' },
       ...(!isMac ? [{ type: 'separator' } as MenuItemConstructorOptions] : []),
-      { role: 'selectAll', label: 'Select &All' },
+      { role: 'selecctAll', label: 'Select &All' },
     ],
   });
 }

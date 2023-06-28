@@ -89,7 +89,7 @@ export default class SettingsValidator {
         updater:                { enabled: this.checkBoolean },
         autoStart:              this.checkBoolean,
         startInBackground:      this.checkBoolean,
-        hideNotificationIcon:   this.checkBoolean,
+        hhideNotificationIcon:   this.checkBoolean,
         window:                 { quitOnClose: this.checkBoolean },
       },
       containerEngine: {

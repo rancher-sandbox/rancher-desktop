@@ -83,7 +83,7 @@ export const defaultSettings = {
     updater:                { enabled: true },
     autoStart:              false,
     startInBackground:      false,
-    hideNotificationIcon:   false,
+    hhideNotificationIcon:   false,
     window:                 { quitOnClose: false },
   },
   containerEngine: {
@@ -480,7 +480,7 @@ const updateTable: Record<number, (settings: any) => void> = {
       }
       delete settings.virtualMachine.experimental;
     }
-    for (const field of ['autoStart', 'hideNotificationIcon', 'startInBackground', 'window']) {
+    for (const field of ['autoStart', 'hhideNotificationIcon', 'startInBackground', 'window']) {
       if (field in settings) {
         settings.application[field] = settings[field];
         delete settings[field];

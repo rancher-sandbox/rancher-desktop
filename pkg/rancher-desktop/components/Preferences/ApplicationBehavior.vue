@@ -65,9 +65,9 @@ export default Vue.extend({
     >
       <rd-checkbox
         :label="t('application.behavior.notificationIcon.label')"
-        :value="preferences.application.hideNotificationIcon"
-        :is-locked="isPreferenceLocked('application.hideNotificationIcon')"
-        @input="onChange('application.hideNotificationIcon', $event)"
+        :value="preferences.application.hhideNotificationIcon"
+        :is-locked="isPreferenceLocked('application.hhideNotificationIcon')"
+        @input="onChange('application.hhideNotificationIcon', $event)"
       />
     </rd-fieldset>
   </div>
