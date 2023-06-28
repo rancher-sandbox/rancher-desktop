@@ -116,13 +116,14 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     newSettings = _.merge(newSettings, getObjectRepresentation(fqFieldName as RecursiveKeys<Settings>, finalValue));
   }
   const settingsValidator = new SettingsValidator();
+  const newKubernetesVersion = newSettings.kubernetes?.version;
 
-  if (_.has(newSettings, 'kubernetes.version')) {
+  if (newKubernetesVersion) {
     // RD hasn't loaded the supported k8s versions yet, so fake the list.
     // If the field is locked, we don't need to know what it's locked to,
     // just that the proposed version is different from the current version.
-    /// The current version doesn't have to be the locked version, but will be after processing ends.
-    const limitedK8sVersionList: Array<string> = [newSettings.kubernetes?.version ?? ''];
+    // The current version doesn't have to be the locked version, but will be after processing ends.
+    const limitedK8sVersionList: Array<string> = [newKubernetesVersion];
 
     if (cfg.kubernetes.version) {
       limitedK8sVersionList.push(cfg.kubernetes.version);

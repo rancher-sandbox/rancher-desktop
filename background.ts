@@ -935,7 +935,7 @@ function validateEarlySettings(cfg: settings.Settings, newSettings: RecursivePar
   // We'd have to add more code to report that.
   // It isn't worth adding that code yet. It might never be needed.
   const newSettingsForValidation = _.omit(newSettings, 'kubernetes.version');
-  const errors = (new SettingsValidator().validateSettings(cfg, newSettingsForValidation, lockedFields))[1];
+  const [, errors] = new SettingsValidator().validateSettings(cfg, newSettingsForValidation, lockedFields);
 
   if (errors.length > 0) {
     throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
@@ -966,9 +966,11 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       // We don't want to verify the proposed version makes sense (if it doesn't, we'll assign the default version later).
       // Here we just want to make sure that if we're changing the version to a different value from the current one,
       // the field isn't locked.
+      //
+
       let currentK8sVersions = (await k8smanager.kubeBackend.availableVersions).map(entry => entry.version.version);
 
-      if (currentK8sVersions.length === 0 || (currentK8sVersions.length === 1 && currentK8sVersions[0] === '0.0.0')) {
+      if (currentK8sVersions.length === 0) {
         clearVersionsAfterTesting = true;
         currentK8sVersions = [newSettings.kubernetes.version];
         if (existingSettings.kubernetes.version) {
