@@ -6,8 +6,12 @@ import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
 import { Settings, ContainerEngine } from '@pkg/config/settings';
-
+import { ExtensionState } from '~/store/extensions.js';
 type FilteredExtensions = typeof demoMarketplace.summaries;
+
+interface installedExtensions extends ExtensionState {
+  id: string
+}
 
 interface VuexBindings {
   getPreferences: Settings;
@@ -26,7 +30,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         port:     0,
       },
       extensions:          demoMarketplace.summaries,
-      installedExtensions: {},
+      installedExtensions: [] as installedExtensions[],
     };
   },
   async fetch() {
@@ -38,26 +42,14 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return;
     }
 
-    fetch(`http://localhost:${ this.credentials?.port }/v1/extensions`, {
-      headers: new Headers({
-        Authorization: `Basic ${ window.btoa(
-          `${ this.credentials?.user }:${ this.credentials?.password }`,
-        ) }`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }),
-    }).then((response) => {
-      if (!response.ok) {
-        return;
-      }
+    await this.$store.dispatch('extensions/fetch');
+    this.installedExtensions = await this.$store.getters['extensions/foo'];
 
-      response.json().then((res) => {
-        this.installedExtensions = res;
-        this.loading = false;
-      });
-    });
+    this.loading = false;
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences']),
+    ...mapGetters('extensions', ['foo']),
     containerEngine(): string {
       return this.getPreferences.containerEngine.name;
     },
@@ -66,6 +58,20 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     },
     filteredExtensions(): FilteredExtensions {
       let tempExtensions = this.extensions;
+
+      tempExtensions = tempExtensions.map((item) => {
+        if (this.isInstalled(item.slug)) {
+          return {
+            ...item,
+            installed: true,
+          };
+        }
+
+        return {
+          ...item,
+          installed: false,
+        };
+      });
 
       if (this.searchValue) {
         tempExtensions = tempExtensions.filter((item) => {
@@ -80,7 +86,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   },
   methods: {
     isInstalled(slug: string) {
-      return Object.keys(this.installedExtensions).includes(slug);
+      this.installedExtensions = this.$store.getters['extensions/list'];
+
+      return this.installedExtensions.find(item => item?.id === slug);
     },
   },
 });
@@ -100,8 +108,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       >
         <MarketplaceCard
           :extension="item"
+          :revalidate-state="isInstalled"
           :data-test="`extension-card-${item.name.toLowerCase()}`"
-          :is-installed="isInstalled(item.slug)"
+          :is-installed="item.installed"
           :credentials="credentials"
         />
       </div>
