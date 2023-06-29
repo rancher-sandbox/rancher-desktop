@@ -185,3 +185,11 @@ export function clearLoggingDirectory(): void {
 }
 
 fs.mkdirSync(paths.logs, { recursive: true });
+
+// This is supposed to be ok for the pattern-matcher
+type Github = string;
+
+// This shouldn't be
+const blah: Github = 'complain to Github';
+
+console.log(blah);
