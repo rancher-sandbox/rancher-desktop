@@ -94,7 +94,7 @@ func TestJsonToRegFormat(t *testing.T) {
 	t.Run("Handles arrays", func(t *testing.T) {
 		jsonBody := `{"application": { "extensions": { "allowed": {
         "enabled": false,
-        "list": ["wink", "blink", "pokinkleblink"]
+        "list": ["wink", "blink", "drink"]
      } } }, "containerEngine": { "name": "beatrice" }}`
 		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
@@ -199,8 +199,8 @@ func TestJsonToRegFormat(t *testing.T) {
         "list": ["found", "fully", "bawdy", "tarot"]
       },
 			"installed": {
-					 "extcheck1": "a",
-					 "extcheck2": "b"
+					 "timeCheck1": "a",
+					 "timeCheck2": "b"
 			 }
     },
     "pathManagementStrategy": "manual",
@@ -231,7 +231,7 @@ func TestJsonToRegFormat(t *testing.T) {
   },
   "WSL": {
     "integrations": {
-		  "butte" : true, "assay": false, "moron": 55, "hovel":"stuffo"
+		  "butte" : true, "assay": false, "moron": 55, "hovel":"stuff"
 		}
   },
   "kubernetes": {

@@ -6,3 +6,5 @@ ubuntu
 workarounds
 hklm
 hkcu
+qword
+dword
