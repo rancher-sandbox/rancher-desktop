@@ -30,9 +30,8 @@ test.describe.serial('Main App Test', () => {
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
-
   test.afterAll(async() => {
+    await teardown(electronApp, __filename);
     await tool('rdctl', 'factory-reset', '--verbose');
     reopenLogs();
   });

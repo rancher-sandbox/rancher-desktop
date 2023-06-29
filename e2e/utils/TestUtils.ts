@@ -163,27 +163,30 @@ export async function teardownApp(app: ElectronApplication) {
     }
     // Try to do platform-specific killing based on process groups
     if (process.platform === 'darwin' || process.platform === 'linux') {
-      for (const signal of ['TERM', 'TERM', 'TERM', 'KILL']) {
-        let pids = '';
+      // Send SIGTERM to the process group, wait three seconds, then send
+      // SIGKILL and wait for one more second.
+      for (const [signal, timeout] of [['TERM', 3_000], ['KILL', 1_000]] as const) {
+        let pids: string[] = [];
 
         try {
           const args = ['-o', 'pid=', process.platform === 'darwin' ? '-g' : '--sid', `${ pid }`];
+          const { stdout } = await childProcess.spawnFile('ps', args, { stdio: ['ignore', 'pipe', 'inherit'] });
 
-          pids = (await childProcess.spawnFile('ps', args, { stdio: ['ignore', 'pipe', 'inherit'] })).stdout;
+          pids = stdout.trim().split(/\s+/);
         } catch (ex) {
-          console.log(`Did not find processes in process group, ignoring.`);
+          console.log(`Did not find processes in process group ${ pid }, ignoring.`);
           break;
         }
 
         try {
-          if (pids.trim()) {
-            console.log(`Manually killing group processes ${ pids.replace(/\r?\n/g, ' ').trim() }`);
-            await childProcess.spawnFile('kill', ['-s', signal].concat(...pids.split(/\s+/).filter(p => p)));
+          if (pids.length > 0) {
+            console.log(`Manually killing group processes ${ pids.join(' ') }`);
+            await childProcess.spawnFile('kill', ['-s', signal, ...pids]);
           }
         } catch (ex) {
           console.log(`Failed to process group: ${ ex } (retrying)`);
         }
-        await util.promisify(setTimeout)(1_000);
+        await util.promisify(setTimeout)(timeout);
       }
     }
   }

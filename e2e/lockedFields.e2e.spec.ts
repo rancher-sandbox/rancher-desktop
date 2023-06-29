@@ -97,9 +97,8 @@ test.describe('Locked fields', () => {
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
-
   test.afterAll(async() => {
+    await teardown(electronApp, __filename);
     await tool('rdctl', 'factory-reset', '--verbose');
     reopenLogs();
   });

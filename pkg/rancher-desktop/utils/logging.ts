@@ -59,6 +59,12 @@ export class Log {
 
   protected realStream: fs.WriteStream;
 
+  /**
+   * Reopen the logs; this is necessary after a factory reset because the files
+   * would have been deleted from under us (so reopening ensures any new logs
+   * are readable).
+   * @note This is only used during E2E tests where we do a factory reset.
+   */
   protected reopen(mode = 'w') {
     if (process.env.RD_TEST === 'e2e') {
       // If we're running E2E tests, we may need to create the log directory.
@@ -208,8 +214,9 @@ export function clearLoggingDirectory(): void {
 export function reopenLogs() {
   for (const log of logs.values()) {
     log['reopen']('a');
-    // Trigger making the stream
-    ((_: any) => {})(log.fdStream);
+    // Trigger making the stream (by passing it to `Array.of()` and ignoring the
+    // result).
+    Array.of(log.fdStream);
   }
 }
 

@@ -224,7 +224,7 @@ describeWithCreds('Credentials server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
-    await tool('rdctl', 'factory-reset');
+    await tool('rdctl', 'factory-reset', '--verbose');
     createDefaultSettings({ kubernetes: { enabled: false } });
     electronApp = await startRancherDesktop(__filename, { mock: false });
     page = await electronApp.firstWindow();

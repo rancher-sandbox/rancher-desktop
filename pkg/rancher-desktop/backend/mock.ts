@@ -256,27 +256,23 @@ class MockContainerEngineClient implements ContainerEngineClient {
     return Promise.resolve();
   }
 
-  readFile(imageID: string, filePath: string): Promise<string>;
-  readFile(imageID: string, filePath: string, options: { encoding?: BufferEncoding | undefined; namespace?: string | undefined; }): Promise<string>;
-  readFile(imageID: string, filePath: string, options?: unknown): Promise<string> {
+  readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding; namespace?: string; }): Promise<string> {
     throw new Error('Method not implemented.');
   }
 
-  copyFile(imageID: string, sourcePath: string, destinationDir: string): Promise<void>;
-  copyFile(imageID: string, sourcePath: string, destinationDir: string, options: { namespace?: string | undefined; }): Promise<void>;
-  copyFile(imageID: unknown, sourcePath: unknown, destinationDir: unknown, options?: unknown): Promise<void> {
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { namespace?: string; }): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  getTags(imageName: string, options?: ContainerBasicOptions | undefined): Promise<Set<string>> {
+  getTags(imageName: string, options?: ContainerBasicOptions): Promise<Set<string>> {
     throw new Error('Method not implemented.');
   }
 
-  run(imageID: string, options?: ContainerRunOptions | undefined): Promise<string> {
+  run(imageID: string, options?: ContainerRunOptions): Promise<string> {
     throw new Error('Method not implemented.');
   }
 
-  stop(container: string, options?: ContainerStopOptions | undefined): Promise<void> {
+  stop(container: string, options?: ContainerStopOptions): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
@@ -284,7 +280,7 @@ class MockContainerEngineClient implements ContainerEngineClient {
     throw new Error('Method not implemented.');
   }
 
-  composeDown(options?: ContainerComposeOptions | undefined): Promise<void> {
+  composeDown(options?: ContainerComposeOptions): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
@@ -296,11 +292,11 @@ class MockContainerEngineClient implements ContainerEngineClient {
     throw new Error('Method not implemented.');
   }
 
-  runClient(args: string[], stdio?: 'ignore' | undefined, options?: ContainerRunClientOptions | undefined): Promise<Record<string, never>>;
-  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions | undefined): Promise<Record<string, never>>;
-  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions | undefined): Promise<{ stdout: string; stderr: string; }>;
-  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions | undefined): ReadableProcess;
-  runClient(args: unknown, stdio?: unknown, options?: unknown): import('./containerClient').ReadableProcess | Promise<Record<string, never>> | Promise<{ stdout: string; stderr: string; }> {
+  runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
+  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
+  runClient(args: string[], stdio?: unknown, options?: ContainerRunClientOptions): unknown {
     return Promise.resolve({ stdout: '', stderr: '' });
   }
 }
