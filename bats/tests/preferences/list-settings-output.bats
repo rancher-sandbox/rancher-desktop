@@ -21,9 +21,9 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 @test 'report unrecognized output-options' {
-    run rdctl list-settings '--output=bickley,ruff'
+    run rdctl list-settings '--output=pickle,ruff'
     assert_failure
-    assert_output --partial $'invalid output format of "bickley,ruff"'
+    assert_output --partial $'invalid output format of "pickle,ruff"'
 }
 
 @test 'report unrecognized reg sub-options' {

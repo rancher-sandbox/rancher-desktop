@@ -4,3 +4,5 @@ skopeo
 ssh
 ubuntu
 workarounds
+hklm
+hkcu
