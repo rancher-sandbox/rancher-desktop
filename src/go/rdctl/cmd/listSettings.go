@@ -69,71 +69,40 @@ and Y is either "defaults" or "locked", depending on which deployment profile yo
 
 func init() {
 	rootCmd.AddCommand(listSettingsCmd)
-	listSettingsCmd.Flags().StringVarP(&outputSettings, "output", "", "", fmt.Sprintf("output format: %s|%s[,hive][,type], default %s", jsonFormat, regFormat, jsonFormat))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.Format, "output", "", jsonFormat, fmt.Sprintf("output format: %s|%s, default %s", jsonFormat, regFormat, jsonFormat))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryHive, "reg-hive", "", "", fmt.Sprintf("registry hive: %s|%s, default %s", reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryProfileType, "section", "", "", fmt.Sprintf("registry section: %s|%s, default %s", defaultsRegistrySection, lockedRegistrySection, defaultsRegistrySection))
 }
 
-func calcOutputFormatFlags() error {
-	if outputSettings == "" || outputSettings == jsonFormat {
-		outputSettingsFlags.Format = jsonFormat
+func validateOutputFormatFlags() error {
+	if outputSettingsFlags.Format != jsonFormat && outputSettingsFlags.Format != regFormat {
+		return fmt.Errorf(`invalid output format of "%s"`, outputSettingsFlags.Format)
+	}
+	if outputSettingsFlags.Format == jsonFormat {
+		if outputSettingsFlags.RegistryHive != "" || outputSettingsFlags.RegistryProfileType != "" {
+			return fmt.Errorf("registry hive and profile can't be specified with json")
+		}
 		return nil
 	}
-	parts := strings.Split(outputSettings, ",")
-	if parts[0] == jsonFormat {
-		if len(parts) > 1 {
-			return fmt.Errorf(`the json output format takes no sub-formats, got "%s"`, outputSettings)
-		}
-		outputSettingsFlags.Format = jsonFormat
-		return nil
-	}
-	if parts[0] != regFormat {
-		return fmt.Errorf(`expecting an output format of '%s' or '%s', got "%s"`, jsonFormat, regFormat, outputSettings)
-	}
-	outputSettingsFlags.Format = regFormat
-	for _, part := range parts[1:] {
-		switch part {
-		case reg.HklmRegistryHive:
-			if outputSettingsFlags.RegistryHive != "" {
-				return fmt.Errorf(`already specified registry hive "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryHive, outputSettings)
-			}
-			outputSettingsFlags.RegistryHive = part
-			break
-
-		case reg.HkcuRegistryHive:
-			if outputSettingsFlags.RegistryHive != "" {
-				return fmt.Errorf(`already specified registry hive "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryHive, outputSettings)
-			}
-			outputSettingsFlags.RegistryHive = part
-			break
-
-		case defaultsRegistrySection:
-			if outputSettingsFlags.RegistryProfileType != "" {
-				return fmt.Errorf(`already specified registry section "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryProfileType, outputSettings)
-			}
-			outputSettingsFlags.RegistryProfileType = part
-			break
-
-		case lockedRegistrySection:
-			if outputSettingsFlags.RegistryProfileType != "" {
-				return fmt.Errorf(`already specified registry section "%s" in "%s", can't respecify`, outputSettingsFlags.RegistryProfileType, outputSettings)
-			}
-			outputSettingsFlags.RegistryProfileType = part
-			break
-
-		default:
-			return fmt.Errorf(`expecting a reg output-format parameter, got "%s" in "%s"`, part, outputSettings)
-		}
-	}
-	if outputSettingsFlags.RegistryHive == "" {
+	switch outputSettingsFlags.RegistryHive {
+	case reg.HklmRegistryHive, reg.HkcuRegistryHive:
+	case "":
 		outputSettingsFlags.RegistryHive = reg.HklmRegistryHive
+	default:
+		return fmt.Errorf("invalid registry hive of '%s' specified", outputSettingsFlags.RegistryHive)
 	}
-	if outputSettingsFlags.RegistryProfileType == "" {
+	switch outputSettingsFlags.RegistryProfileType {
+	case defaultsRegistrySection, lockedRegistrySection:
+	case "":
 		outputSettingsFlags.RegistryProfileType = defaultsRegistrySection
+	default:
+		return fmt.Errorf("invalid registry section of '%s' specified", outputSettingsFlags.RegistryProfileType)
 	}
 	return nil
 }
 
 func getListSettings() ([]byte, error) {
-	err := calcOutputFormatFlags()
+	err := validateOutputFormatFlags()
 	if err != nil {
 		return nil, err
 	}

@@ -197,7 +197,11 @@ func TestJsonToRegFormat(t *testing.T) {
       "allowed": {
         "enabled": false,
         "list": ["found", "fully", "bawdy", "tarot"]
-      }
+      },
+			"installed": {
+					 "extcheck1": "a",
+					 "extcheck2": "b"
+			 }
     },
     "pathManagementStrategy": "manual",
     "telemetry": {
@@ -256,10 +260,6 @@ func TestJsonToRegFormat(t *testing.T) {
        "check2": false
     }
   },
-  "extensions": {
-       "extcheck1": true,
-       "extcheck2": false
-   },
   "experimental": {
     "virtualMachine": {
       "type": "qemu",
