@@ -1,7 +1,6 @@
 load '../helpers/load'
 
 local_setup() {
-    REGISTRY_IMAGE="registry:2.8.1"
     REGISTRY_PORT="5050"
     DOCKER_CONFIG_FILE="$HOME/.docker/config.json"
 
@@ -61,7 +60,7 @@ create_registry() {
         -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/$REGISTRY_HOST.pem" \
         -e "REGISTRY_HTTP_TLS_KEY=/certs/$REGISTRY_HOST-key.pem" \
         "$@" \
-        "$REGISTRY_IMAGE"
+        "$IMAGE_REGISTRY"
     wait_for_registry
 }
 
@@ -91,7 +90,7 @@ skip_for_insecure_registry() {
 
     if using_image_allow_list; then
         wait_for_shell
-        update_allowed_patterns true "$(printf '"%s" "docker.io/registry"' "$REGISTRY")"
+        update_allowed_patterns true "$IMAGE_REGISTRY" "$REGISTRY"
     fi
 }
 
@@ -111,7 +110,7 @@ verify_default_credStore() {
 }
 
 @test 'verify allowed-images config' {
-    run ctrctl pull --quiet busybox
+    run ctrctl pull --quiet "$IMAGE_BUSYBOX"
     if using_image_allow_list; then
         assert_failure
         assert_output --regexp "(unauthorized|Forbidden)"
@@ -128,7 +127,7 @@ verify_default_credStore() {
 }
 
 @test 'pull registry image' {
-    ctrctl pull --quiet "$REGISTRY_IMAGE"
+    ctrctl pull --quiet "$IMAGE_REGISTRY"
 }
 
 @test 'create plain registry' {
@@ -136,13 +135,13 @@ verify_default_credStore() {
 }
 
 @test 'tag image with registry' {
-    ctrctl tag "$REGISTRY_IMAGE" "$REGISTRY/$REGISTRY_IMAGE"
+    ctrctl tag "$IMAGE_REGISTRY" "$REGISTRY/registry"
 }
 
 @test 'expect push image to registry to fail because CA cert has not been installed' {
     skip_for_insecure_registry
 
-    run ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
+    run ctrctl push "$REGISTRY/registry"
     assert_failure
     # we don't get cert errors when going through the proxy; they turn into 502's
     assert_output --regexp "(certificate signed by unknown authority|502 Bad Gateway)"
@@ -168,7 +167,7 @@ verify_default_credStore() {
 }
 
 @test 'expect push image to registry to succeed now' {
-    ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
+    ctrctl push "$REGISTRY/registry"
 }
 
 @test 'create registry with basic auth' {
@@ -204,7 +203,7 @@ verify_default_credStore() {
 @test 'verify that pushing fails when not logged in' {
     run bash -c "echo \"$REGISTRY\" | \"$CRED_HELPER\" erase"
     assert_nothing
-    run ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
+    run ctrctl push "$REGISTRY/registry"
     assert_failure
     assert_output --regexp "(401 Unauthorized|no basic auth credentials)"
 }
@@ -214,7 +213,7 @@ verify_default_credStore() {
     assert_success
     assert_output --partial "Login Succeeded"
 
-    ctrctl push "$REGISTRY/$REGISTRY_IMAGE"
+    ctrctl push "$REGISTRY/registry"
 }
 
 @test 'verify credentials in host cred store' {

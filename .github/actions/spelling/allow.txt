@@ -1,5 +1,6 @@
 github
 https
+skopeo
 ssh
 ubuntu
 workarounds

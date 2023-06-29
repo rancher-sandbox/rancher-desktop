@@ -36,6 +36,9 @@ source "$PATH_BATS_HELPERS/utils.bash"
 # validate_enum() and is_true() from utils.bash.
 source "$PATH_BATS_HELPERS/defaults.bash"
 
+# images.bash uses using_ghcr_images() from defaults.bash
+source "$PATH_BATS_HELPERS/images.bash"
+
 # paths.bash uses RD_LOCATION from defaults.bash
 source "$PATH_BATS_HELPERS/paths.bash"
 

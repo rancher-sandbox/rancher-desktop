@@ -93,6 +93,10 @@ start_container_engine() {
     # TODO cannot be set from the commandline yet
     image_allow_list="$(bool using_image_allow_list)"
     wsl_integrations="{}"
+    registry="docker.io"
+    if using_ghcr_images; then
+        registry="ghcr.io"
+    fi
     if is_windows; then
         wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
     fi
@@ -104,7 +108,7 @@ start_container_engine() {
   "containerEngine": {
     "allowedImages": {
       "enabled": $image_allow_list,
-      "patterns": ["docker.io"]
+      "patterns": ["$registry"]
     }
   }
 }

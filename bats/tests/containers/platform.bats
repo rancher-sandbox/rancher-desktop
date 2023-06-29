@@ -14,13 +14,13 @@ check_uname() {
     local cpu="$2"
 
     # Pull container separately because `ctrctl run` doesn't have a --quiet option
-    ctrctl pull --quiet --platform "$platform" busybox
+    ctrctl pull --quiet --platform "$platform" "$IMAGE_BUSYBOX"
 
     # BUG BUG BUG
     # Adding -i option to work around a bug with the Linux docker CLI in WSL
     # https://github.com/rancher-sandbox/rancher-desktop/issues/3239
     # BUG BUG BUG
-    run ctrctl run -i --platform "$platform" busybox uname -m
+    run ctrctl run -i --platform "$platform" "$IMAGE_BUSYBOX" uname -m
     if is_true "${assert_success:-true}"; then
         assert_success
         assert_output "$cpu"
@@ -42,7 +42,7 @@ check_uname() {
 @test 'uninstall s390x emulator' {
     if is_windows; then
         # On WSL the emulator might still be installed from a previous run
-        ctrctl run --privileged --rm tonistiigi/binfmt --uninstall qemu-s390x
+        ctrctl run --privileged --rm "$IMAGE_TONISTIIGI_BINFMT" --uninstall qemu-s390x
     else
         skip "only required on Windows"
     fi
@@ -55,7 +55,7 @@ check_uname() {
 }
 
 @test 'install s390x emulator' {
-    ctrctl run --privileged --rm tonistiigi/binfmt --install s390x
+    ctrctl run --privileged --rm "$IMAGE_TONISTIIGI_BINFMT" --install s390x
 }
 
 @test 'deploy s390x container' {
