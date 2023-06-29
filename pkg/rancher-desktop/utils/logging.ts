@@ -193,3 +193,10 @@ type Github = string;
 const blah: Github = 'complain to Github';
 
 console.log(blah);
+
+// Is this caught?
+// We're doing a type Github test
+// And this?
+// We're doing a Github test
+// How about this:
+// blahtype Github
