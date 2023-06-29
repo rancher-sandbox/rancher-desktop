@@ -43,7 +43,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     }
 
     await this.$store.dispatch('extensions/fetch');
-    this.installedExtensions = await this.$store.getters['extensions/foo'];
 
     this.loading = false;
   },
