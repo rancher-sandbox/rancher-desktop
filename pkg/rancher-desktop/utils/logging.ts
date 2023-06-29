@@ -190,13 +190,13 @@ fs.mkdirSync(paths.logs, { recursive: true });
 type Github = string;
 
 // This shouldn't be
-const blah: Github = 'complain to Github';
+const blah: Github = 'complain to GitHub (fixed)';
 
 console.log(blah);
 
 // Is this caught?
 // We're doing a type Github test
 // And this?
-// We're doing a Github test
-// How about this:
-// blahtype Github
+// We're doing a GitHub (fixed) test
+// This should be flagged:
+// prototype Github
