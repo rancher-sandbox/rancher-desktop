@@ -37,5 +37,6 @@ show_info() { # @test
         echo "#"
         printf "$format" "Capturing logs:" "$(bool capturing_logs)"
         printf "$format" "Taking screenshots:" "$(bool taking_screenshots)"
+        printf "$format" "Using ghcr.io images:" "$(bool using_ghcr_images)"
     ) >&3
 }

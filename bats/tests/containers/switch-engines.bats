@@ -11,11 +11,11 @@ switch_container_engine() {
 }
 
 pull_containers() {
-    ctrctl run -d -p 8085:80 --restart=no nginx
-    ctrctl run -d --restart=always busybox /bin/sh -c "sleep inf"
+    ctrctl run -d -p 8085:80 --restart=no "$IMAGE_NGINX"
+    ctrctl run -d --restart=always "$IMAGE_BUSYBOX" /bin/sh -c "sleep inf"
     run ctrctl ps --format '{{json .Image}}'
-    assert_output --partial nginx
-    assert_output --partial busybox
+    assert_output --partial "$IMAGE_NGINX"
+    assert_output --partial "$IMAGE_BUSYBOX"
 }
 
 @test 'factory reset' {
@@ -35,8 +35,8 @@ pull_containers() {
 
 verify_post_switch_containers() {
     run ctrctl ps --format '{{json .Image}}'
-    assert_output --partial "busybox"
-    refute_output --partial "nginx"
+    assert_output --partial "$IMAGE_BUSYBOX"
+    refute_output --partial "$IMAGE_NGINX"
 }
 
 switch_back_verify_post_switch_containers() {

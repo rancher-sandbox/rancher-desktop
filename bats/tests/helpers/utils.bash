@@ -84,9 +84,32 @@ try() {
     return "$status"
 }
 
+image_without_tag() {
+    local image=$1
+    # If the tag looks like a port number and follows something that looks
+    # like a domain name, then don't strip the tag (e.g. foo.io:5000).
+    if [[ ${image##*:} =~ ^[0-9]+$ && ${image%:*} =~ \.[a-z]+$ ]]; then
+        echo "$image"
+    else
+        echo "${image%:*}"
+    fi
+}
+
 update_allowed_patterns() {
     local enabled=$1
-    local patterns=$2
+    shift
+
+    local patterns=""
+    local image
+    for image in "$@"; do
+        image=$(image_without_tag "$image")
+        if [ -z "$patterns" ]; then
+            patterns="\"${image}\""
+        else
+            patterns="$patterns, \"${image}\""
+        fi
+    done
+
     # TODO TODO TODO
     # Once https://github.com/rancher-sandbox/rancher-desktop/issues/4939 has been
     # implemented, the `version` field  should be made a constant. Putting in the

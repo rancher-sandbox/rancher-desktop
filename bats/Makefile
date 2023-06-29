@@ -18,8 +18,10 @@ lint:
 	@./scripts/bats-lint.pl $(shell find tests -name '*.bats')
 	find tests -name '*.bash' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
 	find tests -name '*.bats' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
+	find scripts -name '*.sh' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
 	find tests -name '*.bash' | xargs shfmt -s -d
 	find tests -name '*.bats' | xargs shfmt -s -d
+	find scripts -name '*.sh' | xargs shfmt -s -d
 
 DEPS = bin/darwin/jq bin/linux/jq
 

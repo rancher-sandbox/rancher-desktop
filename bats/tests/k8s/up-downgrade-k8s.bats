@@ -16,18 +16,18 @@ ARCH_FOR_KUBERLR=amd64
 }
 
 @test 'deploy nginx - always restart' {
-    ctrctl pull nginx
-    run ctrctl run -d -p 8585:80 --restart=always --name nginx-restart nginx
+    ctrctl pull "$IMAGE_NGINX"
+    run ctrctl run -d -p 8585:80 --restart=always --name nginx-restart "$IMAGE_NGINX"
     assert_success
 }
 
 @test 'deploy nginx - no restart' {
-    run ctrctl run -d -p 8686:80 --restart=no --name nginx-no-restart nginx
+    run ctrctl run -d -p 8686:80 --restart=no --name nginx-no-restart "$IMAGE_NGINX"
     assert_success
 }
 
 @test 'deploy busybox' {
-    run kubectl create deploy busybox --image=busybox --replicas=2 -- /bin/sh -c "sleep inf"
+    run kubectl create deploy busybox --image="$IMAGE_BUSYBOX" --replicas=2 -- /bin/sh -c "sleep inf"
     assert_success
 }
 
@@ -57,12 +57,12 @@ verify_busybox() {
 verify_images() {
     if using_docker; then
         run docker images
-        assert_output --partial "nginx" "busybox"
+        assert_output --partial "$IMAGE_NGINX" "$IMAGE_BUSYBOX"
     else
         run nerdctl images --format json
-        assert_output --partial '"Repository":"nginx'
+        assert_output --partial "\"Repository\":\"$IMAGE_NGINX"
         run nerdctl --namespace k8s.io images
-        assert_output --partial "busybox"
+        assert_output --partial "$IMAGE_BUSYBOX"
     fi
 }
 @test 'verify images before upgrade' {
