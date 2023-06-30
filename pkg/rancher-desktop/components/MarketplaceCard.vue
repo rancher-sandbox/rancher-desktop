@@ -46,7 +46,7 @@ import { Banner } from '@rancher/components';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import demoMetadata from '@pkg/utils/_demo_metadata.js';
-// import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+
 export default {
   components: { LoadingIndicator, Banner },
   props:      {
@@ -144,7 +144,8 @@ export default {
         }
       })
         .finally(() => {
-          this.revalidateState();
+          this.$emit('update:extension');
+
           setTimeout(() => {
             this.resetBanners();
           }, 3000);

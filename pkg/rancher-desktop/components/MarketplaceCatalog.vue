@@ -46,7 +46,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences']),
-    ...mapGetters('extensions', ['foo']),
     containerEngine(): string {
       return this.getPreferences.containerEngine.name;
     },
@@ -54,9 +53,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return this.containerEngine === ContainerEngine.MOBY;
     },
     filteredExtensions(): FilteredExtensions {
-      let tempExtensions = this.extensions;
-
-      tempExtensions = tempExtensions.map((item) => {
+      let tempExtensions = this.extensions.map((item) => {
         if (this.isInstalled(item.slug)) {
           return {
             ...item,
@@ -105,10 +102,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       >
         <MarketplaceCard
           :extension="item"
-          :revalidate-state="isInstalled"
           :data-test="`extension-card-${item.name.toLowerCase()}`"
           :is-installed="item.installed"
           :credentials="credentials"
+          @update:extension="isInstalled"
         />
       </div>
     </div>
