@@ -109,7 +109,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       }
 
       return items
-        .map((x) => {
+        .map((x: SecurityModel | ProtocolVersion | CacheMode) => {
           return {
             label:    this.t(`virtualMachine.mount.type.options.9p.options.${ setting }.options.${ x.replace('.', '') }`),
             value:    x,
