@@ -70,6 +70,8 @@ test.describe('Locked fields', () => {
   }
 
   test.describe.configure({ mode: 'serial' });
+  const lockedK8sVersion = '1.26.3';
+  const proposedK8sVersion = '1.26.1';
 
   test.beforeAll(async() => {
     await tool('rdctl', 'factory-reset', '--verbose');
@@ -85,7 +87,7 @@ test.describe('Locked fields', () => {
     await saveUserProfile();
     await createUserProfile(
       { containerEngine: { allowedImages: { enabled: true } } },
-      { containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } } },
+      { containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } }, kubernetes: { version: lockedK8sVersion } },
     );
     electronApp = await startRancherDesktop(__filename);
     context = electronApp.context();
@@ -122,6 +124,16 @@ test.describe('Locked fields', () => {
       .resolves.toMatchObject({
         stdout: '',
         stderr: expect.stringContaining("field 'containerEngine.allowedImages.enabled' is locked"),
+      });
+    await expect(rdctl(['set', `--kubernetes.version=${ proposedK8sVersion }`]))
+      .resolves.toMatchObject({
+        stdout: '',
+        stderr: expect.stringContaining("field 'kubernetes.version' is locked"),
+      });
+    await expect(rdctl(['set', `--kubernetes.version=${ lockedK8sVersion }`]))
+      .resolves.toMatchObject({
+        stdout: expect.stringContaining('Status: no changes necessary.'),
+        stderr: '',
       });
   });
 });

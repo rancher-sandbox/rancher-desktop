@@ -935,7 +935,7 @@ function validateEarlySettings(cfg: settings.Settings, newSettings: RecursivePar
   // We'd have to add more code to report that.
   // It isn't worth adding that code yet. It might never be needed.
   const newSettingsForValidation = _.omit(newSettings, 'kubernetes.version');
-  const [_needToUpdate, errors] = new SettingsValidator().validateSettings(cfg, newSettingsForValidation, lockedFields);
+  const [, errors] = new SettingsValidator().validateSettings(cfg, newSettingsForValidation, lockedFields);
 
   if (errors.length > 0) {
     throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
@@ -952,7 +952,6 @@ function validateEarlySettings(cfg: settings.Settings, newSettings: RecursivePar
  * The `requestShutdown` method is a special case that never returns.
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
-  protected k8sVersions: string[] = [];
   protected settingsValidator = new SettingsValidator();
 
   /**
@@ -960,12 +959,32 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * initialization.
    */
   protected async validateSettings(existingSettings: settings.Settings, newSettings: RecursivePartial<settings.Settings>) {
-    if (this.k8sVersions.length === 0) {
-      this.k8sVersions = (await k8smanager.kubeBackend.availableVersions).map(entry => entry.version.version);
-      this.settingsValidator.k8sVersions = this.k8sVersions;
+    let clearVersionsAfterTesting = false;
+
+    if (newSettings.kubernetes?.version && this.settingsValidator.k8sVersions.length === 0) {
+      // If we're starting up (by running `rdctl start...`) we probably haven't loaded all the k8s versions yet.
+      // We don't want to verify if the proposed version makes sense (if it doesn't, we'll assign the default version later).
+      // Here we just want to make sure that if we're changing the version to a different value from the current one,
+      // the field isn't locked.
+      let currentK8sVersions = (await k8smanager.kubeBackend.availableVersions).map(entry => entry.version.version);
+
+      if (currentK8sVersions.length === 0) {
+        clearVersionsAfterTesting = true;
+        currentK8sVersions = [newSettings.kubernetes.version];
+        if (existingSettings.kubernetes.version) {
+          currentK8sVersions.push(existingSettings.kubernetes.version);
+        }
+      }
+      this.settingsValidator.k8sVersions = currentK8sVersions;
     }
 
-    return this.settingsValidator.validateSettings(existingSettings, newSettings, settings.getLockedSettings());
+    const result = this.settingsValidator.validateSettings(existingSettings, newSettings, settings.getLockedSettings());
+
+    if (clearVersionsAfterTesting) {
+      this.settingsValidator.k8sVersions = [];
+    }
+
+    return result;
   }
 
   getSettings() {
