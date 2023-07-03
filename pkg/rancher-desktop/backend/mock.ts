@@ -178,7 +178,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
 }
 
 class MockKubernetesBackend extends events.EventEmitter implements KubernetesBackend {
-  readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0'), channels: ['latest'] }]);
+  readonly availableVersions = Promise.resolve([]);
   version = '';
   desiredPort = 9443;
 

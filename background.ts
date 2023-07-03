@@ -963,11 +963,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
     if (newSettings.kubernetes?.version && this.settingsValidator.k8sVersions.length === 0) {
       // If we're starting up (by running `rdctl start...`) we probably haven't loaded all the k8s versions yet.
-      // We don't want to verify the proposed version makes sense (if it doesn't, we'll assign the default version later).
+      // We don't want to verify if the proposed version makes sense (if it doesn't, we'll assign the default version later).
       // Here we just want to make sure that if we're changing the version to a different value from the current one,
       // the field isn't locked.
-      //
-
       let currentK8sVersions = (await k8smanager.kubeBackend.availableVersions).map(entry => entry.version.version);
 
       if (currentK8sVersions.length === 0) {
