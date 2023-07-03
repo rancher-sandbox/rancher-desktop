@@ -41,35 +41,35 @@ RD_USE_IMAGE_ALLOW_LIST=true
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
 
-    run rdctl list-settings --output reg --reg-hive=hklm --section=defaults
+    run rdctl list-settings --output reg --reg-hive=HKLM --section=Defaults
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
 
-    run rdctl list-settings --output reg --section=defaults
+    run rdctl list-settings --output reg --section=DEFAULTS
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
 }
 
 @test 'generates registry output for hklm/locked' {
-    run rdctl list-settings --output reg --reg-hive=hklm --section=locked
+    run rdctl list-settings --output reg --reg-hive=hKLm --section=LockeD
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\locked\application]'
-    run rdctl list-settings --output reg --section=locked
+    run rdctl list-settings --output reg --section=LOCKED
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\locked\application]'
 }
 
 @test 'generates registry output for hkcu/defaults' {
-    run rdctl list-settings --output reg --reg-hive=hkcu
+    run rdctl list-settings --output reg --reg-hive=Hkcu
     assert_success
     assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    run rdctl list-settings --output reg --reg-hive=hkcu --section=defaults
+    run rdctl list-settings --output reg --reg-hive=hkcu --section=Defaults
     assert_success
     assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
 }
 
 @test 'generates registry output for hkcu/locked' {
-    run rdctl list-settings --output reg --reg-hive=hkcu --section=locked
+    run rdctl list-settings --output reg --reg-hive=HKCU --section=locked
     assert_success
     assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\locked\application]'
 }

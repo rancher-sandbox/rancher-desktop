@@ -23,7 +23,6 @@ import (
 	"strings"
 )
 
-var outputSettings string
 var outputSettingsFlags struct {
 	Format              string
 	RegistryHive        string
@@ -84,15 +83,17 @@ func validateOutputFormatFlags() error {
 		}
 		return nil
 	}
-	switch outputSettingsFlags.RegistryHive {
+	switch strings.ToLower(outputSettingsFlags.RegistryHive) {
 	case reg.HklmRegistryHive, reg.HkcuRegistryHive:
+		outputSettingsFlags.RegistryHive = strings.ToLower(outputSettingsFlags.RegistryHive)
 	case "":
 		outputSettingsFlags.RegistryHive = reg.HklmRegistryHive
 	default:
 		return fmt.Errorf("invalid registry hive of '%s' specified", outputSettingsFlags.RegistryHive)
 	}
-	switch outputSettingsFlags.RegistryProfileType {
+	switch strings.ToLower(outputSettingsFlags.RegistryProfileType) {
 	case defaultsRegistrySection, lockedRegistrySection:
+		outputSettingsFlags.RegistryProfileType = strings.ToLower(outputSettingsFlags.RegistryProfileType)
 	case "":
 		outputSettingsFlags.RegistryProfileType = defaultsRegistrySection
 	default:
