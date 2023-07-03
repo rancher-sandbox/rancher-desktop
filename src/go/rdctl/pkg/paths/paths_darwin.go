@@ -32,8 +32,8 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 		Lima:                    filepath.Join(appHome, "lima"),
 		OldIntegration:          "/usr/local/bin",
 		Integration:             filepath.Join(altAppHome, "bin"),
-		DeploymentProfileSystem: filepath.Join("/Library", "Preferences", appName),
-		DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences", appName),
+		DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
+		DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
 		ExtensionRoot:           filepath.Join(appHome, "extensions"),
 	}
 	paths.Logs = os.Getenv("RD_LOGS_DIR")

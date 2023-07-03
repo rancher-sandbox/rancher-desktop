@@ -23,8 +23,8 @@ func TestGetPaths(t *testing.T) {
 			Integration:             filepath.Join(homeDir, ".rd", "bin"),
 			OldIntegration:          "/usr/local/bin",
 			Resources:               fakeResourcesPath,
-			DeploymentProfileSystem: filepath.Join("/Library", "Preferences", appName),
-			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences", appName),
+			DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
+			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
 			ExtensionRoot:           filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
@@ -53,8 +53,8 @@ func TestGetPaths(t *testing.T) {
 			Integration:             filepath.Join(homeDir, ".rd", "bin"),
 			OldIntegration:          "/usr/local/bin",
 			Resources:               fakeResourcesPath,
-			DeploymentProfileSystem: filepath.Join("/Library", "Preferences", appName),
-			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences", appName),
+			DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
+			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
 			ExtensionRoot:           filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
