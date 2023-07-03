@@ -105,7 +105,7 @@ func TestJsonToRegFormat(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions]", header), lines[5])
 		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions\\allowed]", header), lines[6])
 		assert.Equal(t, `"enabled"=dword:0`, lines[7])
-		assert.Equal(t, `"list"=hex(7):77,00,69,00,6e,00,6b,00,00,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,70,00,6f,00,6b,00,69,00,6e,00,6b,00,6c,00,65,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,00,00`, lines[8])
+		assert.Equal(t, `"list"=hex(7):77,00,69,00,6e,00,6b,00,00,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,64,00,72,00,69,00,6e,00,6b,00,00,00,00,00`, lines[8])
 		assert.Equal(t, fmt.Sprintf("[%s\\containerEngine]", header), lines[9])
 		assert.Equal(t, `"name"="beatrice"`, lines[10])
 	})
