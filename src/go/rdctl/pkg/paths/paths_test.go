@@ -1,6 +1,6 @@
 package paths
 
-const fakeResourcesPath = "fakepath"
+const fakeResourcesPath = "fakePath"
 
 func mockGetResourcesPath() (string, error) {
 	return fakeResourcesPath, nil
