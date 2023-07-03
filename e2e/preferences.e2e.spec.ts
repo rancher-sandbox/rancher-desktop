@@ -1,13 +1,14 @@
 import os from 'os';
-import path from 'path';
 
 import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
-import { createDefaultSettings, reportAsset, teardown } from './utils/TestUtils';
+import { createDefaultSettings, startRancherDesktop, teardown, tool } from './utils/TestUtils';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import { reopenLogs } from '@pkg/utils/logging';
+
+import type { ElectronApplication, Page } from '@playwright/test';
 
 let page: Page;
 
@@ -17,45 +18,30 @@ let page: Page;
  * */
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let preferencesWindow: Page;
 
   test.beforeAll(async() => {
     createDefaultSettings();
 
-    electronApp = await _electron.launch({
-      args: [
-        path.join(__dirname, '../'),
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR:     reportAsset(__filename, 'log'),
-        RD_MOCK_BACKEND: '1',
-      },
-    });
-    context = electronApp.context();
+    electronApp = await startRancherDesktop(__filename);
 
-    await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
-
     await new NavPage(page).preferencesButton.click();
-
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(async() => {
+    await teardown(electronApp, __filename);
+    await tool('rdctl', 'factory-reset', '--verbose');
+    reopenLogs();
+  });
 
   test('should open preferences modal', async() => {
     expect(preferencesWindow).toBeDefined();
 
     // Wait for the window to actually load (i.e. transition from
     // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-    await preferencesWindow.waitForURL(/Preferences/);
+    await preferencesWindow.waitForURL(/Preferences#/i);
   });
 
   test('should show application page and render general tab', async() => {
@@ -104,7 +90,7 @@ test.describe.serial('Main App Test', () => {
 
   test('should render environment tab after close and reopen preferences modal', async() => {
     test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -227,7 +213,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render container engine page after close and reopen preferences modal', async() => {
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
@@ -235,7 +221,7 @@ test.describe.serial('Main App Test', () => {
     expect(preferencesWindow).toBeDefined();
     // Wait for the window to actually load (i.e. transition from
     // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-    await preferencesWindow.waitForURL(/Preferences/);
+    await preferencesWindow.waitForURL(/Preferences#/i);
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
@@ -255,7 +241,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render allowed image tab in container engine page after close and reopen preferences modal', async() => {
-    preferencesWindow.close();
+    await preferencesWindow.close();
 
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));

@@ -3,7 +3,6 @@
  * An E2E test is required to have access to the web page context.
  */
 
-import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -30,8 +29,6 @@ const rdctl = getFullPathForTool('rdctl');
 // so it's better to replace them with forward slashes. The file can still be found,
 // and we don't have to deal with unintended escape-sequence processing.
 const execPath = process.execPath.replace(/\\/g, '/');
-
-fs.mkdirSync(reportAsset(__filename, 'log'), { recursive: true });
 
 const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
 const NAMESPACE = 'rancher-desktop-extensions';

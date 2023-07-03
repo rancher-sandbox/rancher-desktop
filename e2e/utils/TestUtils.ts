@@ -16,6 +16,11 @@ import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
+let testInfo: undefined | {
+  testPath: string;
+  startTime: number;
+};
+
 export async function createUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
@@ -134,19 +139,75 @@ export async function packageLogs(testPath: string) {
   await childProcess.spawnFile('tar', ['cfh', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
-export async function teardown(app: ElectronApplication, filename: string) {
-  const context = app.context();
+/**
+ * Tear down the application, without managing logging.  This should only be
+ * used when doing atypical tests that need to restart the application within
+ * the test.  This is normally used instead of `app.close()`.
+ *
+ * @note teardown() should be used where possible.
+ */
+export async function teardownApp(app: ElectronApplication) {
   const proc = app.process();
   const pid = proc.pid;
 
   try {
-    await context.tracing.stop({ path: reportAsset(filename) });
-    await packageLogs(filename);
-    await app.close();
+    // Allow one minute for shutdown
+    await Promise.race([
+      app.close(),
+      util.promisify(setTimeout)(60 * 1000),
+    ]);
+    await tool('rdctl', 'shutdown');
   } finally {
     if (proc.kill('SIGTERM') || proc.kill('SIGKILL')) {
       console.log(`Manually stopped process ${ pid }`);
     }
+    // Try to do platform-specific killing based on process groups
+    if (process.platform === 'darwin' || process.platform === 'linux') {
+      // Send SIGTERM to the process group, wait three seconds, then send
+      // SIGKILL and wait for one more second.
+      for (const [signal, timeout] of [['TERM', 3_000], ['KILL', 1_000]] as const) {
+        let pids: string[] = [];
+
+        try {
+          const args = ['-o', 'pid=', process.platform === 'darwin' ? '-g' : '--sid', `${ pid }`];
+          const { stdout } = await childProcess.spawnFile('ps', args, { stdio: ['ignore', 'pipe', 'inherit'] });
+
+          pids = stdout.trim().split(/\s+/);
+        } catch (ex) {
+          console.log(`Did not find processes in process group ${ pid }, ignoring.`);
+          break;
+        }
+
+        try {
+          if (pids.length > 0) {
+            console.log(`Manually killing group processes ${ pids.join(' ') }`);
+            await childProcess.spawnFile('kill', ['-s', signal, ...pids]);
+          }
+        } catch (ex) {
+          console.log(`Failed to process group: ${ ex } (retrying)`);
+        }
+        await util.promisify(setTimeout)(timeout);
+      }
+    }
+  }
+}
+
+export async function teardown(app: ElectronApplication, filename: string) {
+  const context = app.context();
+
+  await context.tracing.stop({ path: reportAsset(filename) });
+  await packageLogs(filename);
+  await teardownApp(app);
+
+  if (testInfo?.testPath === filename) {
+    const delta = (Date.now() - testInfo.startTime) / 1_000;
+    const min = Math.floor(delta / 60);
+    const sec = Math.round(delta % 60);
+    const string = min ? `${ min } min ${ sec } sec` : `${ sec } seconds`;
+
+    console.log(`Test ${ path.basename(filename) } took ${ string }.`);
+  } else {
+    console.log(`Test ${ path.basename(filename) } did not have a start time.`);
   }
 }
 
@@ -245,7 +306,9 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
  * @param options.tracing Whether to start tracing (defaults to true).
  * @param options.mock Whether to use the mock backend (defaults to true).
  */
-export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean }): Promise<ElectronApplication> {
+export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean, env?: Record<string, string> }): Promise<ElectronApplication> {
+  testInfo = { testPath, startTime: Date.now() };
+
   const electronApp = await _electron.launch({
     args: [
       path.join(__dirname, '../../'),
@@ -257,6 +320,7 @@ export async function startRancherDesktop(testPath: string, options?: { tracing?
     ],
     env: {
       ...process.env,
+      ...options?.env ?? {},
       RD_LOGS_DIR: reportAsset(testPath, 'log'),
       ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },

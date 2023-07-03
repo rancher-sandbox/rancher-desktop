@@ -29,7 +29,7 @@ import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getAlternateSetting, kubectl, reportAsset, retry, teardown, tool,
+  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, tool,
 } from './utils/TestUtils';
 
 import {
@@ -49,11 +49,10 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let serverState: ServerState;
   let page: Page;
   const ENOENTMessage = os.platform() === 'win32' ? 'The system cannot find the file specified' : 'no such file or directory';
@@ -118,26 +117,7 @@ test.describe('Command server', () => {
 
   test.beforeAll(async() => {
     createDefaultSettings({ kubernetes: { enabled: true } });
-    electronApp = await _electron.launch({
-      args: [
-        appPath,
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item.
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR: reportAsset(__filename, 'log'),
-      },
-    });
-    context = electronApp.context();
-
-    await context.tracing.start({
-      screenshots: true,
-      snapshots:   true,
-    });
+    electronApp = await startRancherDesktop(__filename, { mock: false });
     page = await electronApp.firstWindow();
   });
 

@@ -25,11 +25,14 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, createUserProfile, startRancherDesktop, teardown } from './utils/TestUtils';
+import {
+  createDefaultSettings, createUserProfile, startRancherDesktop, teardown, tool,
+} from './utils/TestUtils';
 
 import type { DeploymentProfileType } from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
+import { reopenLogs } from '@pkg/utils/logging';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -68,6 +71,11 @@ test.describe('Locked fields', () => {
 
   test.describe.configure({ mode: 'serial' });
 
+  test.beforeAll(async() => {
+    await tool('rdctl', 'factory-reset', '--verbose');
+    reopenLogs();
+  });
+
   test.afterAll(async() => {
     await restoreUserProfile();
   });
@@ -89,7 +97,11 @@ test.describe('Locked fields', () => {
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(async() => {
+    await teardown(electronApp, __filename);
+    await tool('rdctl', 'factory-reset', '--verbose');
+    reopenLogs();
+  });
 
   test('should start up', async() => {
     const navPage = new NavPage(page);

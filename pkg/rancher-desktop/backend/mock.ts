@@ -8,14 +8,16 @@ import semver from 'semver';
 import {
   BackendSettings, execOptions, State, RestartReasons, VMExecutor, BackendEvents,
 } from './backend';
-import { ContainerEngineClient } from './containerClient';
+import {
+  ContainerBasicOptions, ContainerComposeExecOptions, ContainerComposeOptions, ContainerComposePortOptions, ContainerEngineClient, ContainerRunClientOptions, ContainerRunOptions, ContainerStopOptions, ReadableProcess,
+} from './containerClient';
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
 import { Settings } from '@pkg/config/settings';
 import { ChildProcess } from '@pkg/utils/childProcess';
-import Logging from '@pkg/utils/logging';
+import Logging, { Log } from '@pkg/utils/logging';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.mock;
@@ -36,9 +38,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
 
   debug = false;
 
-  get containerEngineClient(): ContainerEngineClient {
-    throw new Error('not implemented');
-  }
+  containerEngineClient = new MockContainerEngineClient();
 
   getBackendInvalidReason(): Promise<KubernetesError | null> {
     return Promise.resolve(null);
@@ -61,7 +61,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
       await util.promisify(setTimeout)(1_000);
     }
     this.progressTracker.numeric('Starting mock backend', 10, 10);
-    await this.kubeBackend.start(config, new semver.SemVer('1.0'));
+    await this.kubeBackend.start(config, new semver.SemVer('1.0.0'));
     this.setState(State.STARTED);
     console.log('Mock backend started');
   }
@@ -249,4 +249,54 @@ class MockKubernetesBackend extends events.EventEmitter implements KubernetesBac
     return super.rawListeners(event) as KubernetesBackendEvents[eventName][];
   }
   // #endregion
+}
+
+class MockContainerEngineClient implements ContainerEngineClient {
+  waitForReady(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  readFile(imageID: string, filePath: string, options?: { encoding?: BufferEncoding; namespace?: string; }): Promise<string> {
+    throw new Error('Method not implemented.');
+  }
+
+  copyFile(imageID: string, sourcePath: string, destinationDir: string, options?: { namespace?: string; }): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  getTags(imageName: string, options?: ContainerBasicOptions): Promise<Set<string>> {
+    throw new Error('Method not implemented.');
+  }
+
+  run(imageID: string, options?: ContainerRunOptions): Promise<string> {
+    throw new Error('Method not implemented.');
+  }
+
+  stop(container: string, options?: ContainerStopOptions): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  composeUp(options: ContainerComposeOptions): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  composeDown(options?: ContainerComposeOptions): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  composeExec(options: ContainerComposeExecOptions): Promise<ReadableProcess> {
+    throw new Error('Method not implemented.');
+  }
+
+  composePort(options: ContainerComposePortOptions): Promise<string> {
+    throw new Error('Method not implemented.');
+  }
+
+  runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
+  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
+  runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
+  runClient(args: string[], stdio?: unknown, options?: ContainerRunClientOptions): unknown {
+    return Promise.resolve({ stdout: '', stderr: '' });
+  }
 }
