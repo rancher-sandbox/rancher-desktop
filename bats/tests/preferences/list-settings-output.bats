@@ -51,7 +51,7 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 @test 'generates registry output for hklm/locked' {
-    run rdctl list-settings --output reg --reg-hive=hKLm --section=LockeD
+    run rdctl list-settings --output reg --reg-hive=Hklm --section=Locked
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\locked\application]'
     run rdctl list-settings --output reg --section=LOCKED
