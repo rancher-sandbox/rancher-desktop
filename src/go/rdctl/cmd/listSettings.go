@@ -58,7 +58,7 @@ and Y is either "defaults" or "locked", depending on which deployment profile yo
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(result))
+		fmt.Println(result)
 		return nil
 	},
 }
@@ -102,24 +102,24 @@ func validateOutputFormatFlags() error {
 	return nil
 }
 
-func getListSettings() ([]byte, error) {
+func getListSettings() (string, error) {
 	err := validateOutputFormatFlags()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	output, err := processRequestForUtility(doRequest("GET", versionCommand("", "settings")))
 	if err != nil {
-		return nil, err
+		return "", err
 	} else if outputSettingsFlags.Format == jsonFormat {
-		return output, nil
+		return string(output), nil
 	} else if outputSettingsFlags.Format == regFormat {
 		lines, err := reg.JsonToReg(outputSettingsFlags.RegistryHive, outputSettingsFlags.RegistryProfileType, string(output))
 		if err != nil {
-			return nil, err
+			return "", err
 		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return strings.Join(lines, "\n"), nil
 	} else {
 		// This shouldn't happen
-		return nil, fmt.Errorf("internal error: unexpected output format of %s", outputSettingsFlags.Format)
+		return "", fmt.Errorf("internal error: unexpected output format of %s", outputSettingsFlags.Format)
 	}
 }
