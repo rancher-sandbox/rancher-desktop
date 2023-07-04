@@ -38,8 +38,8 @@ while (<>) {
         undef $run;
         $problems++;
     }
-    # Matches any line starting with "run " or "try "
-    if (/^\s*(run|try)\s/) {
+    # Matches any line starting with "run "
+    if (/^\s*(run)\s/) {
         $run = $_;
     }
     # Reset $. line counter for next input file

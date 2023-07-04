@@ -49,7 +49,7 @@ get_host() {
 }
 
 @test 'verify rancher' {
-    try --max 9 --delay 10 curl --insecure --silent --show-error "https://$(get_host)/dashboard/auth/login"
+    run try --max 9 --delay 10 curl --insecure --silent --show-error "https://$(get_host)/dashboard/auth/login"
     assert_success
     assert_output --partial "Rancher Dashboard"
     run kubectl get secret --namespace cattle-system bootstrap-secret -o json

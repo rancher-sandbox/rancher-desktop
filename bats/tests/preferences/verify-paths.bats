@@ -60,7 +60,6 @@ no_bashrc_path_manager() {
 @test 'move to manual path-management' {
     rdctl set --application.path-management-strategy=manual
     try --max 5 --delay 2 no_bashrc_path_manager
-    assert_success
 }
 
 @test 'bash unmanaged' {
