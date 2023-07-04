@@ -67,7 +67,6 @@ create_registry() {
 wait_for_registry() {
     # registry port is forwarded to host
     try --max 10 --delay 5 curl -k --silent --show-error "https://localhost:$REGISTRY_PORT/v2/_catalog"
-    assert_success
 }
 
 using_insecure_registry() {

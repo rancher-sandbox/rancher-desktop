@@ -43,7 +43,6 @@ switch_back_verify_post_switch_containers() {
     local name=$1
     switch_container_engine "${name}"
     try --max 12 --delay 5 verify_post_switch_containers
-    assert_success
 }
 
 @test 'switch back to moby and verify containers' {

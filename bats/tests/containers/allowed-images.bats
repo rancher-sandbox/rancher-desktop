@@ -66,7 +66,6 @@ verify_no_nginx() {
 
 @test 'but fails to stand up a pod for forbidden image' {
     try --max 18 --delay 10 verify_no_nginx
-    assert_success
 }
 
 @test 'set patterns with the allowed list disabled' {

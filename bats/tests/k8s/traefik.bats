@@ -62,13 +62,11 @@ assert_traefik_pods_are_up() {
 @test 'disable traefik' {
     # First check whether the traefik pods are up from the first launch
     try --max 30 --delay 10 assert_traefik_pods_are_up
-    assert_success
     # Disable traefik
     rdctl set --kubernetes.options.traefik=FALSE
     wait_for_apiserver
     # Check if the traefik pods go down
     try --max 30 --delay 10 assert_traefik_pods_are_down
-    assert_success
 }
 
 @test 'enable traefik' {
@@ -77,11 +75,10 @@ assert_traefik_pods_are_up() {
     wait_for_apiserver
     # Check if the traefik pods come up
     try --max 30 --delay 10 assert_traefik_pods_are_up
-    assert_success
-    try --max 30 --delay 10 curl --head "http://$(get_host):80"
+    run try --max 30 --delay 10 curl --head "http://$(get_host):80"
     assert_success
     assert_output --regexp 'HTTP/[0-9.]* 404'
-    try --max 30 --delay 10 curl --head --insecure "https://$(get_host):443"
+    run try --max 30 --delay 10 curl --head --insecure "https://$(get_host):443"
     assert_success
     assert_output --regexp 'HTTP/[0-9.]* 404'
 }

@@ -41,7 +41,6 @@ verify_nginx() {
 
 @test 'verify nginx before upgrade' {
     try verify_nginx
-    assert_success
 }
 
 verify_busybox() {
@@ -51,7 +50,6 @@ verify_busybox() {
 
 @test 'verify busybox before upgrade' {
     try verify_busybox
-    assert_success
 }
 
 verify_images() {
@@ -104,12 +102,10 @@ verify_nginx_after_change_k8s() {
 
 @test 'verify nginx after upgrade' {
     try verify_nginx_after_change_k8s
-    assert_success
 }
 
 @test 'verify busybox after upgrade' {
     try verify_busybox
-    assert_success
 }
 
 @test 'verify images after upgrade' {
@@ -127,10 +123,8 @@ verify_nginx_after_change_k8s() {
         # See https://github.com/containerd/nerdctl/issues/665#issuecomment-1372862742
         # BUG BUG BUG
         try nerdctl start nginx-no-restart
-        assert_success
     fi
     try verify_nginx
-    assert_success
 }
 
 @test 'downgrade kubernetes' {
@@ -146,7 +140,6 @@ verify_nginx_after_change_k8s() {
 @test 'verify nginx after downgrade' {
     # nginx should still be running because it is not managed by kubernetes
     try verify_nginx_after_change_k8s
-    assert_success
 }
 
 @test 'verify busybox is gone after downgrade' {
