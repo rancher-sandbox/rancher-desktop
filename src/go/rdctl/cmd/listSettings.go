@@ -43,11 +43,11 @@ The default output format is JSON.
 
 To convert the current settings into a registry file, run the following command:
 
-rdctl list-commands --output reg,X,Y
+rdctl list-commands --output reg --reg-hive=X --profile=Y
 
 where X is either "hkcu" or "hklm", depending on whether you want to update HKEY_LOCAL_MACHINE
-or HKEY_CURRENT_USER respectively,
-and Y is either "defaults" or "locked", depending on which deployment profile you want to populate.
+or HKEY_CURRENT_USER respectively (default: "hklm"),
+and Y is either "defaults" or "locked", depending on which deployment profile you want to populate (default: "defaults").
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {
@@ -68,9 +68,9 @@ and Y is either "defaults" or "locked", depending on which deployment profile yo
 
 func init() {
 	rootCmd.AddCommand(listSettingsCmd)
-	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.Format, "output", "", jsonFormat, fmt.Sprintf("output format: %s|%s, default %s", jsonFormat, regFormat, jsonFormat))
-	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryHive, "reg-hive", "", "", fmt.Sprintf("registry hive: %s|%s, default %s", reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
-	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryProfileType, "section", "", "", fmt.Sprintf("registry section: %s|%s, default %s", defaultsRegistrySection, lockedRegistrySection, defaultsRegistrySection))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.Format, "output", "", jsonFormat, fmt.Sprintf("output format: %s|%s", jsonFormat, regFormat))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryHive, "reg-hive", "", "", fmt.Sprintf(`registry hive: %s|%s (default "%s")`, reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryProfileType, "section", "", "", fmt.Sprintf(`registry section: %s|%s (default "%s")`, defaultsRegistrySection, lockedRegistrySection, defaultsRegistrySection))
 }
 
 func validateOutputFormatFlags() error {
