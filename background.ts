@@ -177,9 +177,6 @@ Electron.app.whenReady().then(async() => {
 
     DashboardServer.getInstance().init();
 
-    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
-    await httpCommandServer.init();
-    await httpCredentialHelperServer.init();
     await setupNetworking();
     let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
@@ -226,6 +223,9 @@ Electron.app.whenReady().then(async() => {
       }
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
+    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
+    await httpCommandServer.init();
+    await httpCredentialHelperServer.init();
 
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
