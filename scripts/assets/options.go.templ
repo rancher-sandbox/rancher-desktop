@@ -35,10 +35,10 @@ import (
 )
 
 /**
- * The two types `serverSettingsForJSON` and `serverSettings` both reflect the settings type in the
+ * The two types `ServerSettingsForJSON` and `serverSettings` both reflect the settings type in the
  * backend (as defined in `config/settings.ts`), but have different uses.
  *
- * As its name implies, the `serverSettingsForJSON` is used to generate a backend for the `rdctl set`
+ * As its name implies, the `ServerSettingsForJSON` is used to generate a backend for the `rdctl set`
  * subcommand. Only fields that are explicitly changed by the user should be inserted into the JSON
  * payload, so we use pointers that are by default nil. This way we don't inadvertently change backend
  * settings to their default values.
@@ -50,7 +50,7 @@ import (
  * See how the two structs are used in the `UpdateFieldsForJSON` function.
  */
 
-type serverSettingsForJSON struct {
+type ServerSettingsForJSON struct {
 	<%- linesForJSON %>
 }
 
@@ -114,6 +114,9 @@ func qualifiedPlatformName() string {
 
 func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
 	<%_ for (const flag of commandFlags) {
+      if (flag.flagType === 'Array') {
+        continue;
+      }
 			const kebabPropertyName = kebabCase(flag.propertyName); _%>
 		cmd.Flags().<%- flag.flagType %>Var(&specifiedSettings.<%- flag.capitalizedName %>, "<%- kebabPropertyName %>", <%- flag.defaultValue %>, "<%- flag.usageNote %>")
 		<%_ if (flag.aliasFor || flag.notAvailable) { _%>
@@ -122,8 +125,8 @@ func UpdateCommonStartAndSetCommands(cmd *cobra.Command) {
 	<%_ } _%>
 }
 
-func UpdateFieldsForJSON(flags *pflag.FlagSet) (*serverSettingsForJSON, error) {
-	var specifiedSettingsForJSON serverSettingsForJSON
+func UpdateFieldsForJSON(flags *pflag.FlagSet) (*ServerSettingsForJSON, error) {
+	var specifiedSettingsForJSON ServerSettingsForJSON
 	changedSomething := false
 	<%_ for (const flag of commandFlags) {
 	const kebabPropertyName = kebabCase(flag.propertyName); _%>

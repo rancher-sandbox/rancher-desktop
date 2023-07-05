@@ -1406,7 +1406,6 @@ test.describe('Command server', () => {
         }
       });
     });
-
     test('should verify nerdctl can talk to containerd', async() => {
       const { stdout } = await rdctl(['list-settings']);
       const settings: Settings = JSON.parse(stdout);
