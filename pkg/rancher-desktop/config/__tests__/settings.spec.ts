@@ -168,6 +168,7 @@ describe('settings', () => {
 
     beforeEach(() => {
       jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
+      settings.clearSettings();
     });
     afterEach(() => {
       mock.mockRestore();
