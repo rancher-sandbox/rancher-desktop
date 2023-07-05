@@ -4,7 +4,7 @@ This is the command-line interface (CLI) for Rancher Desktop.
 
 ## Prerequisites
 
-This tool depends on code generated during `npm run postinstall`.
+This tool depends on code generated during `yarn postinstall`.
 
 ## Usage
 

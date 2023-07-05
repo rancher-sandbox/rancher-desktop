@@ -27,7 +27,7 @@ set_path_resources() {
                 echo "- \"$system\""
                 echo "- \"$user\""
                 echo "- \"$dist\""
-                echo "and 'npm run dev' is unavailable outside repo clone"
+                echo "and 'yarn dev' is unavailable outside repo clone"
             ) >&3
             exit 1
         fi

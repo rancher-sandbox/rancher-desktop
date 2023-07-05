@@ -6,5 +6,5 @@ nerdctl-stub (by parsing the output of `nerdctl -help`).
 ## Usage
 
 ```powershell
-npm run generate:nerdctl-stub
+yarn generate:nerdctl-stub
 ```

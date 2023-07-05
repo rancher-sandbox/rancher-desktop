@@ -58,8 +58,8 @@ jobs:
         npm install -g npm@9
         npm --version
     - run: npm ci
-    - run: npm run build
-    - run: npm run package -- --${{ matrix.platform }} --publish=never
+    - run: yarn build
+    - run: yarn package -- --${{ matrix.platform }} --publish=never
     - name: Build bats.tar.gz
       if: matrix.platform == 'linux'
       run: make -C bats bats.tar.gz
@@ -182,7 +182,7 @@ jobs:
         Write-Output $cert
         $env:CSC_FINGERPRINT = $cert.Thumbprint
         # Run the signing script
-        npm run sign -- (Get-Item "Rancher Desktop*-win.zip")
+        yarn sign -- (Get-Item "Rancher Desktop*-win.zip")
         # Check that the msi file was signed by the expected cert
         $usedCert = (Get-AuthenticodeSignature -FilePath 'dist\Rancher Desktop Setup*.msi').SignerCertificate
         Write-Output $usedCert

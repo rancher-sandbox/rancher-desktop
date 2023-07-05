@@ -64,11 +64,11 @@ task:
     # CirrusCI caching doesn't seem to maintain the UID; we'll need to reset the ownership to ensure
     # we can build files in it.
     - chown -R ranchertest:ranchertest /home/ranchertest/src/node_modules
-    - ${SUDO_NON_ROOT_CMD} npm run postinstall
+    - ${SUDO_NON_ROOT_CMD} yarn postinstall
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - ${SUDO_NON_ROOT_CMD} xvfb-run --auto-servernum -- npm run test:e2e
+    - ${SUDO_NON_ROOT_CMD} xvfb-run --auto-servernum -- yarn test:e2e
 
   on_failure:
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197

@@ -40,8 +40,8 @@ jobs:
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
     - run: npm ci
-    - run: npm run build
-    - run: npm run package -- --${{ matrix.platform }} --publish=never
+    - run: yarn build
+    - run: yarn package -- --${{ matrix.platform }} --publish=never
     - name: Upload Windows exe installer
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v3

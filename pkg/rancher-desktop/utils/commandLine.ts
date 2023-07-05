@@ -6,12 +6,12 @@ import Electron from 'electron';
 // [ PATH-TO-RD-APP, ...RD-OPTIONS]
 // On macOS, the command-line would be `PATH-TO-RD-APP ELECTRON-OPTIONS --args RD-OPTIONS`
 //
-// When running `npm run dev ELECTRON-OPTIONS -- ARGS
+// When running `yarn dev ELECTRON-OPTIONS -- ARGS
 // then process.argv shows up as
 // [ .../node_modules/PATH-TO-ELECTRON-BINARY, SOURCE-ROOT,  RENDERER-PORT,
 //   PATH-TO-NODE-JS, ../scripts/dev.ts, ...ARGS]
 //
-// When running `npm run test:e2e...`, process.argv is:
+// When running `yarn test:e2e...`, process.argv is:
 // [PATH-TO-ELECTRON-BINARY, --inspect=0, --remote-debugging-port=0, SOURCE-ROOT,
 //  --disable-gpu, --whitelisted-ips=, --disable-dev-shm-usage ]
 

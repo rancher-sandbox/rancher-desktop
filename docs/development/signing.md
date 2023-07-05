@@ -16,7 +16,7 @@ In general, the process involves:
 3. Run the signing tool:
 
     ```sh
-    npm run sign -- path/to/archive.zip
+    yarn sign -- path/to/archive.zip
     ```
 
 4. Look in `dist/` for the signed files (`Rancher Desktop Setup.exe`, etc.).
@@ -26,7 +26,7 @@ In general, the process involves:
 On Windows, it is necessary to obtain a code signing certificate that can be
 used with the Windows infrastructure.  It is then necessary to determine the
 fingerprint of the certificate, and set it as the `CSC_FINGERPRINT` environment
-variable before running `npm run sign`.
+variable before running `yarn sign`.
 
 ### Generate a Test Certificate
 

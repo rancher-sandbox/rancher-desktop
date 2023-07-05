@@ -33,6 +33,6 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run ucmonitor
+      - run: yarn ucmonitor
         env:
           GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}

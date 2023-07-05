@@ -149,8 +149,8 @@ validate_enum RD_9P_SECURITY_MODEL passthrough mapped-xattr mapped-file none
 # RD_LOCATION specifies the location where Rancher Desktop is installed
 #   system: default system-wide install location shared for all users
 #   user:   per-user install location
-#   dist:   use the result of `npm run package` in ../dist
-#   npm:    dev mode; start app with `cd ..; npm run dev`
+#   dist:   use the result of `yarn package` in ../dist
+#   npm:    dev mode; start app with `cd ..; yarn dev`
 #   "":     use first location from the list above that contains the app
 
 : "${RD_LOCATION:=}"

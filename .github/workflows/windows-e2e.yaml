@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run e2e Tests
-        run: npm run test:e2e
+        run: yarn test:e2e
         env:
           RD_DEBUG_ENABLED: '1'
       - name: Upload failure reports

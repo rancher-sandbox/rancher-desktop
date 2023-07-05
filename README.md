@@ -17,7 +17,7 @@ It bundles a variety of other technologies in order to provide one cohesive appl
 It includes a command line tool, `rdctl`, which is written in Go.
 Most developer activities, such as running a development build, building/packaging
 Rancher Desktop, running unit tests, and running end-to-end tests, are done through
-`npm run` scripts. Some exceptions exist, such as running BATS tests.
+`yarn` scripts. Some exceptions exist, such as running BATS tests.
 
 
 ## Setup
@@ -164,7 +164,7 @@ Once you have your dependencies installed you can run a development version
 of Rancher Desktop with:
 
 ```
-npm run dev
+yarn dev
 ```
 
 
@@ -179,7 +179,7 @@ npm test
 To run the integration tests:
 
 ```
-npm run test:e2e
+yarn test:e2e
 ```
 
 
@@ -189,8 +189,8 @@ Rancher can be built from source on Windows, macOS or Linux.
 Cross-compilation is currently not supported. To run a build do:
 
 ```
-npm run build
-npm run package --publish=never
+yarn build
+yarn package --publish=never
 ```
 
 The build output goes to `dist/`.
