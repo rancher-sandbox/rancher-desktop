@@ -54,7 +54,7 @@ interface execProcess {
 /**
  * The identifier for the extension (the name of the image).
  */
-const extensionId = decodeURIComponent(location.hostname.replace(/(..)/g, '%$1'));
+const extensionId = location.protocol === 'app:' ? '<app>' : decodeURIComponent(location.hostname.replace(/(..)/g, '%$1'));
 
 /**
  * The processes that are waiting to complete, keyed by the process ID.
@@ -502,28 +502,45 @@ class Client implements v1.DockerDesktopClient {
 }
 
 export default function initExtensions(): void {
-  if (document.location.protocol === 'x-rd-extension:') {
+  switch (document.location.protocol) {
+  case 'x-rd-extension:': {
     const hostInfo: { arch: string, hostname: string } = JSON.parse(process.argv.slice(-1).pop() ?? '{}');
-    const ddClient = new Client(hostInfo);
 
-    window.addEventListener('unload', () => {
-      function canClose(proc: execProcess): proc is execProcess & v1.ExecProcess {
-        return 'close' in proc;
-      }
+    Electron.contextBridge.exposeInMainWorld('ddClient', new Client(hostInfo));
+    break;
+  }
+  case 'app:': {
+    console.log(process);
+    import('os').then(({ arch, hostname }) => {
+      Object.defineProperty(window, 'ddClient', {
+        value:        new Client({ arch: arch(), hostname: hostname() }),
+        configurable: true,
+        enumerable:   true,
+        writable:     true,
+      });
+    });
+    break;
+  }
+  default: {
+    console.debug(`Not adding extension API to ${ document.location.protocol }`);
 
-      for (const [id, proc] of Object.entries(outstandingProcesses)) {
-        if (canClose(proc)) {
-          try {
-            proc.close();
-          } catch (ex) {
-            console.debug(`failed to close process ${ id }:`, ex);
-          }
+    return;
+  }
+  }
+
+  window.addEventListener('unload', () => {
+    function canClose(proc: execProcess): proc is execProcess & v1.ExecProcess {
+      return 'close' in proc;
+    }
+
+    for (const [id, proc] of Object.entries(outstandingProcesses)) {
+      if (canClose(proc)) {
+        try {
+          proc.close();
+        } catch (ex) {
+          console.debug(`failed to close process ${ id }:`, ex);
         }
       }
-    });
-
-    Electron.contextBridge.exposeInMainWorld('ddClient', ddClient);
-  } else {
-    console.debug(`Not adding extension API to ${ document.location.protocol }`);
-  }
+    }
+  });
 }

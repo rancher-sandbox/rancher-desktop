@@ -25,6 +25,7 @@ import BackendProgress from '@pkg/components/BackendProgress.vue';
 import Header from '@pkg/components/Header.vue';
 import Nav from '@pkg/components/Nav.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
+import initExtensions from '@pkg/preload/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { mainRoutes } from '@pkg/window';
 
@@ -74,6 +75,7 @@ export default {
   },
 
   beforeMount() {
+    initExtensions();
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
     });

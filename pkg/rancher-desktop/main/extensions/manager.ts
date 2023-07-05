@@ -36,6 +36,12 @@ type IpcMainEventHandler<K extends keyof IpcMainInvokeEvents> =
 
 type ReadableChildProcess = ChildProcessByStdio<null, Readable, Readable>;
 
+/**
+ * EXTENSION_APP is a fake extension ID the signifies the other end is not a
+ * real extension, but instead is our main application.
+ */
+const EXTENSION_APP = '<app>';
+
 export class ExtensionManagerImpl implements ExtensionManager {
   /**
    * Known extensions.  Keyed by the image (excluding tag), then the tag.
@@ -185,6 +191,11 @@ export class ExtensionManagerImpl implements ExtensionManager {
 
     this.setMainHandler('extensions/vm/http-fetch', async(event, config) => {
       const extensionId = this.getExtensionIdFromEvent(event);
+
+      if (extensionId === EXTENSION_APP) {
+        throw new Error('HTTP fetch from main app not implemented yet');
+      }
+
       const extension = await this.getExtension(extensionId) as ExtensionImpl;
       let url: URL;
 
@@ -388,12 +399,17 @@ export class ExtensionManagerImpl implements ExtensionManager {
   protected getExtensionIdFromEvent(event: IpcMainEvent | IpcMainInvokeEvent): string {
     const origin = new URL(event.senderFrame.origin);
 
-    return Buffer.from(origin.hostname, 'hex').toString();
+    return origin.protocol === 'app:' ? EXTENSION_APP : Buffer.from(origin.hostname, 'hex').toString();
   }
 
   /** Spawn a process in the host context. */
   protected async spawnHost(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
+
+    if (extensionId === EXTENSION_APP) {
+      throw new Error(`spawning a process from the main application is not implemented yet: ${ options.command.join(' ') }`);
+    }
+
     const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
     if (!extension) {
@@ -412,10 +428,13 @@ export class ExtensionManagerImpl implements ExtensionManager {
   /** Spawn a process in the docker-cli context. */
   protected async spawnDockerCli(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
-    const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
-    if (!extension) {
-      throw new Error(`Could not find calling extension ${ extensionId }`);
+    if (extensionId !== EXTENSION_APP) {
+      const extension = await this.getExtension(extensionId) as ExtensionImpl;
+
+      if (!extension) {
+        throw new Error(`Could not find calling extension ${ extensionId }`);
+      }
     }
 
     return this.client.runClient(
@@ -428,6 +447,10 @@ export class ExtensionManagerImpl implements ExtensionManager {
   /** Spawn a process in the container context. */
   protected async spawnContainer(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
+
+    if (extensionId === EXTENSION_APP) {
+      throw new Error(`Spawning a container command is not implemented for the main app: ${ options.command.join(' ') }`);
+    }
     const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
     if (!extension) {
