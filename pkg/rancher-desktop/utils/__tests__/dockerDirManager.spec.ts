@@ -373,7 +373,7 @@ describe('DockerDirManager', () => {
   });
 
   describe('credHelperWorking', () => {
-    let resourcesPathMock: jest.SpyInstance<typeof paths.resources, []>;
+    let replacedPathsResources: jest.ReplaceProperty<string>;
     let spawnMock: jest.SpiedFunction<typeof childProcess.spawnFile>;
     const commonCredHelperExpectations: (...args: Parameters<typeof childProcess.spawnFile>) => void = (command, args, options) => {
       expect(command).toEqual('docker-credential-mockhelper');
@@ -384,11 +384,11 @@ describe('DockerDirManager', () => {
     };
 
     beforeEach(() => {
-      resourcesPathMock = jest.spyOn(paths, 'resources', 'get').mockReturnValue('RESOURCES');
+      replacedPathsResources = jest.replaceProperty(paths, 'resources', 'RESOURCES');
     });
     afterEach(() => {
       spawnMock.mockRestore();
-      resourcesPathMock.mockRestore();
+      replacedPathsResources.restore();
     });
 
     it('should return false when cred helper is not working', async() => {

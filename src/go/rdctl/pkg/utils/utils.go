@@ -5,7 +5,7 @@ import (
 )
 
 // Get the steps-th parent directory of fullPath.
-func getParentDir(fullPath string, steps int) string {
+func GetParentDir(fullPath string, steps int) string {
 	fullPath = filepath.Clean(fullPath)
 	for ; steps > 0; steps-- {
 		fullPath = filepath.Dir(fullPath)

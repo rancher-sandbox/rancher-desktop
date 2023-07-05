@@ -20,7 +20,7 @@ func GetRDPath() (string, error) {
 	}
 	// rdctl should be at <installDir>/resources/resources/linux/bin/rdctl.
 	// rancher-desktop should be 5 directories up from that, at <installDir>/rancher-desktop.
-	normalParentPath := getParentDir(rdctlPath, 5)
+	normalParentPath := GetParentDir(rdctlPath, 5)
 	candidatePaths := []string{
 		filepath.Join(normalParentPath, "rancher-desktop"),
 		"/opt/rancher-desktop/rancher-desktop",

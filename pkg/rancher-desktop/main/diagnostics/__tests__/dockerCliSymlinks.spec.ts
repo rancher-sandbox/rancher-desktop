@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 // The (mock) application directory.
-let appDir = '';
+let appDir = process.cwd();
 
 // Mock Electron.app.getAppPath() to return appDir.
 jest.mock('electron', () => {
@@ -29,6 +29,9 @@ jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
 // eslint-disable-next-line import/first -- Need to mock first.
 import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
+// eslint-disable-next-line import/first -- Need to mock first.
+import paths from '@pkg/utils/paths';
+
 const { mkdtemp, rm } = jest.requireActual('fs/promises');
 const describeUnix = process.platform === 'win32' ? describe.skip : describe;
 const describeWin32 = process.platform === 'win32' ? describe : describe.skip;
@@ -39,13 +42,18 @@ describeUnix(CheckerDockerCLISymlink, () => {
   const rdBinDir = path.join(os.homedir(), '.rd', 'bin');
   const rdBinExecutable = path.join(rdBinDir, executable);
   let appDirExecutable = '';
+  let replacedPathsResources: jest.ReplaceProperty<string>;
 
   beforeAll(async() => {
     appDir = await mkdtemp(path.join(os.tmpdir(), 'rd-diag-'));
-    await fs.promises.mkdir(path.join(appDir, 'resources'));
-    appDirExecutable = path.join(appDir, 'resources', os.platform(), 'bin', executable);
+    const resourcesDir = path.join(appDir, 'resources');
+
+    await fs.promises.mkdir(resourcesDir);
+    appDirExecutable = path.join(resourcesDir, os.platform(), 'bin', executable);
+    replacedPathsResources = jest.replaceProperty(paths, 'resources', resourcesDir);
   });
   afterAll(async() => {
+    replacedPathsResources.restore();
     await rm(appDir, { recursive: true, force: true });
   });
 
