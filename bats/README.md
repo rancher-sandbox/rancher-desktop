@@ -68,6 +68,18 @@ cd bats
 RD_LOCATION=dist ./bats-core/bin/bats ...
 ```
 
+### RD_NO_MODAL_DIALOGS
+
+By default, bats tests are run with the `--no-modal-dialogs` option so fatal errors are written to `background.log`,
+rather than appearing in a blocking modal dialog box. If you *want* those dialog boxes, you can specify
+
+```
+cd bats
+RD_NO_MODAL_DIALOGS=false ./bats-core/bin/bats ...
+```
+
+The default value for this environment variable is `true`.
+
 ## Writing BATS Tests
 
 1. Add BATS test by creating files with `.bats` extension under `./bats/tests/FOLDER_NAME`
