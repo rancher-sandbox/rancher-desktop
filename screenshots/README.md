@@ -42,7 +42,7 @@ Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that t
 First, install dependencies with:
 
 ```
-npm install
+yarn
 ```
 
 Make sure you have run a "Factory Reset" before capturing screenshots, so they show the

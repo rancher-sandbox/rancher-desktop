@@ -23,4 +23,4 @@ jobs:
     - name: Install shfmt
       run: go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
     - run: make -C bats lint
-    - run: npm test
+    - run: yarn test

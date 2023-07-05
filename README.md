@@ -58,7 +58,7 @@ with an existing Windows installation.
    npm config set msbuild_path "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
    ```
 
-You can now clone the repository and run `npm install`.
+You can now clone the repository and run `yarn`.
 
 [development virtual machine]: https://developer.microsoft.com/en-us/windows/downloads/virtual-machines/
 [automated setup script]: ./scripts/windows-setup.ps1
@@ -87,7 +87,7 @@ You can now clone the repository and run `npm install`.
    npm config set msbuild_path "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
    ```
 
-You can now clone the repository and run `npm install`.
+You can now clone the repository and run `yarn`.
 
 [Scoop]: https://scoop.sh/
 [Visual Studio docs]: https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio?view=vs-2022
@@ -115,7 +115,7 @@ You'll also need to run `brew install go` if you haven't installed go.
 
 Then you can install dependencies with:
 ```
-npm install
+yarn
 ```
 
 > ### ⚠️ Working on a mac with an M1 chip?
@@ -124,10 +124,10 @@ npm install
 >
 > ```
 > export M1=1
-> npm install
+> yarn 
 > ```
 >
-> You will want to run `git clean -fdx` to clean out any cached assets and re-downloaded with the correct arch before running `npm install` if you previously installed dependencies without setting `M1` first.
+> You will want to run `git clean -fdx` to clean out any cached assets and re-downloaded with the correct arch before running `yarn` if you previously installed dependencies without setting `M1` first.
 
 ### Linux
 
@@ -146,7 +146,7 @@ Ensure you have the following installed:
 Then you can install dependencies with:
 
 ```
-npm install
+yarn
 ```
 
 You can then run Rancher Desktop as described below. It may fail on the first run -
@@ -173,7 +173,7 @@ yarn dev
 To run the unit tests:
 
 ```
-npm test
+yarn test
 ```
 
 To run the integration tests:
