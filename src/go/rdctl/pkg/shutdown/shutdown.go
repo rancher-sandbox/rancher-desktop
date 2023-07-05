@@ -57,34 +57,36 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 	}
 	var err error
 	if err = directories.SetupLimaHome(); err != nil {
-		return err
-	}
-	limaCtlPath, err = directories.GetLimactlPath()
-	if err != nil {
-		return err
-	}
-	switch initiatingCommand {
-	case Shutdown:
-		err = s.waitForAppToDieOrKillIt(checkLima, stopLima, 15, 2, "lima")
+		logrus.Errorf("Ignoring error trying to get lima directory: %s", err)
+	} else {
+		limaCtlPath, err = directories.GetLimactlPath()
 		if err != nil {
-			return err
+			logrus.Errorf("Ignoring error trying to get path to limactl: %s", err)
+		} else {
+			switch initiatingCommand {
+			case Shutdown:
+				err = s.waitForAppToDieOrKillIt(checkLima, stopLima, 15, 2, "lima")
+				if err != nil {
+					logrus.Errorf("Ignoring error trying to stop lima: %s", err)
+				}
+				// Check once more to see if lima is still running, and if so, run `limactl stop --force 0`
+				err = s.waitForAppToDieOrKillIt(checkLima, stopLimaWithForce, 1, 0, "lima")
+				if err != nil {
+					logrus.Errorf("Ignoring error trying to force-stop lima: %s", err)
+				}
+			case FactoryReset:
+				err = s.waitForAppToDieOrKillIt(checkLima, deleteLima, 15, 2, "lima")
+				if err != nil {
+					logrus.Errorf("Ignoring error trying to delete lima subtree: %s", err)
+				}
+			default:
+				return fmt.Errorf("internal error: unknown shutdown initiating command of '%s'", initiatingCommand)
+			}
 		}
-		// Check once more to see if lima is still running, and if so, run `limactl stop --force 0`
-		err = s.waitForAppToDieOrKillIt(checkLima, stopLimaWithForce, 1, 0, "lima")
-		if err != nil {
-			return err
-		}
-	case FactoryReset:
-		err = s.waitForAppToDieOrKillIt(checkLima, deleteLima, 15, 2, "lima")
-		if err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("internal error: unknown shutdown initiating command of '%s'", initiatingCommand)
 	}
 	err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
 	if err != nil {
-		return err
+		logrus.Errorf("Ignoring error trying to kill qemu: %s", err)
 	}
 	switch runtime.GOOS {
 	case "darwin":
