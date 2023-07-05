@@ -175,9 +175,9 @@
     uuid "^8.3.2"
 
 "@aws-sdk/client-kms@^3.8.1":
-  version "3.363.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-kms/-/client-kms-3.363.0.tgz#328bdafecab572bae82e83b7985e5494ffa2b296"
-  integrity sha512-cGgi3xe8ZX9wRfP3HLd53fXX+8ZXXqEDj/pc4S7NwU3wK955n69pZfgH8xYMWgbqvdw54EWwX+G5ZbKPY6t7Mg==
+  version "3.366.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-kms/-/client-kms-3.366.0.tgz#c143ddb053caa8a445a230dbb3341bf06b443f17"
+  integrity sha512-NBGGpXWTkFr1pv52kSqFLkGwtHdd0Y1ireDH8Z4q1zNCWuwf5Xki5znpjxKau8GM7n8Ynf07KCwB7KMvFHOGqg==
   dependencies:
     "@aws-crypto/sha256-browser" "3.0.0"
     "@aws-crypto/sha256-js" "3.0.0"
@@ -4502,14 +4502,7 @@
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.4.tgz#cd667bcfdd025213aafb7ca5915a932590acdcdc"
   integrity sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==
 
-"@types/ref-napi@*":
-  version "3.0.7"
-  resolved "https://registry.yarnpkg.com/@types/ref-napi/-/ref-napi-3.0.7.tgz#20adc93a7a2f9f992dfb17409fd748e6f4bf403d"
-  integrity sha512-CzPwr36VkezSpaJGdQX/UrczMSDsDgsWQQFEfQkS799Ft7n/s183a53lsql7RwVq+Ik4yLEgI84pRnLC0XXRlA==
-  dependencies:
-    "@types/node" "*"
-
-"@types/ref-napi@3.0.5":
+"@types/ref-napi@*", "@types/ref-napi@3.0.5":
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/@types/ref-napi/-/ref-napi-3.0.5.tgz#8db441d381737af5c353d7dd89c7593b5f2080c8"
   integrity sha512-u+L/RdwTuJes3pDypOVR/MtcqzoULu8Z8yulP6Tw5z7eXV1ba1llizNVFtI/m2iPfDy/dPPt+3ar1QCgonTzsw==
@@ -19679,20 +19672,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==
 
-typescript@4.5.4:
+typescript@4.5.4, typescript@~4.1.5, typescript@~4.2:
   version "4.5.4"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.4.tgz#a17d3a0263bf5c8723b9c52f43c5084edf13c2e8"
   integrity sha512-VgYs2A2QIRuGphtzFV7aQJduJ2gyfTljngLzjpfW9FoYZF6xuw1W0vW9ghCKLfcWrCFxK81CSGRAvS1pn4fIUg==
-
-typescript@~4.1.5:
-  version "4.1.6"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.1.6.tgz#1becd85d77567c3c741172339e93ce2e69932138"
-  integrity sha512-pxnwLxeb/Z5SP80JDRzVjh58KsM6jZHRAOtTpS7sXLS4ogXNKC9ANxHHZqLLeVHZN35jCtI4JdmLLbLiC1kBow==
-
-typescript@~4.2:
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.2.4.tgz#8610b59747de028fda898a8aef0e103f156d0961"
-  integrity sha512-V+evlYHZnQkaz8TRBuxTA92yZBPotr5H+WhQ7bD3hZUndx5tGOa1fuCgeSjxAzM1RiN5IzvadIXTVefuuwZCRg==
 
 ua-parser-js@^0.7.28:
   version "0.7.35"
