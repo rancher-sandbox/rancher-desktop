@@ -212,6 +212,7 @@ Electron.app.whenReady().then(async() => {
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       }
     } catch (err) {
+      noModalDialogs = TransientSettings.value.noModalDialogs;
       if (err instanceof LockedFieldError || err instanceof DeploymentProfileError) {
         // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
         // and the `fatal` part means we're expecting the app to shutdown.

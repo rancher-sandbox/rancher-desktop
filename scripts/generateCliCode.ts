@@ -241,7 +241,7 @@ class Generator {
     const usageParts = [usageNote];
 
     if (rawEnums) {
-      usageParts.push(`(Allowed values: [${ rawEnums.join(', ' ) }])`);
+      usageParts.push(`(allowed values: [${ rawEnums.join(', ' ) }])`);
     }
 
     return usageParts.join(' ').trim();

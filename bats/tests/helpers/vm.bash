@@ -120,11 +120,18 @@ EOF
         for arg in "${args[@]}"; do
             api_args+=("$(apify_arg "$arg")")
         done
+        if suppressing_modal_dialogs; then
+            # Don't apify this option
+            api_args+=(--no-modal-dialogs)
+        fi
 
         npm run dev -- "${api_args[@]}" "$@" &
     else
         # Detach `rdctl start` because on Windows the process may not exit until
         # Rancher Desktop itself quits.
+        if suppressing_modal_dialogs; then
+            args+=(--no-modal-dialogs)
+        fi
         RD_TEST=bats rdctl start "${args[@]}" "$@" &
     fi
 }
