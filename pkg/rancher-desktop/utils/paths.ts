@@ -2,7 +2,6 @@
  * This module describes the various paths we use to store state & data.
  */
 import { spawnSync } from 'child_process';
-import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -103,7 +102,7 @@ export class WindowsPaths implements Paths {
 }
 
 // Gets the path to rdctl. Returns null if rdctl cannot be found.
-function getRdctlPath(): string | null {
+function getRdctlPath(): string {
   let basePath: string;
 
   // If we are running as a script (i.e. npm run postinstall), electron.app is undefined
@@ -113,29 +112,24 @@ function getRdctlPath(): string | null {
     basePath = electron.app.isPackaged ? process.resourcesPath : electron.app.getAppPath();
   }
   const osSpecificName = os.platform().startsWith('win') ? `rdctl.exe` : 'rdctl';
-  const rdctlPath = path.join(basePath, 'resources', os.platform(), 'bin', osSpecificName);
 
-  if (!fs.existsSync(rdctlPath)) {
-    return null;
-  }
-
-  return rdctlPath;
+  return path.join(basePath, 'resources', os.platform(), 'bin', osSpecificName);
 }
 
 function getPaths(): Paths {
-  const rdctlPath = getRdctlPath();
   let pathsData: Partial<Paths>;
 
-  if (rdctlPath) {
-    const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
+  try {
+    const result = spawnSync(getRdctlPath(), ['paths'], { encoding: 'utf8' });
 
     if (result.status !== 0) {
       throw new Error(`rdctl paths failed: ${ JSON.stringify(result) }`);
     }
     pathsData = JSON.parse(result.stdout);
-  } else {
-    // If rdctl hasn't been compiled yet, we can't use it to get paths.
-    // Define defaults that assume that we are running a script.
+  } catch {
+    // In some cases rdctl may not yet be present, or may be an
+    // older version that does not know about paths. In this case,
+    // use default paths.
     pathsData = {
       resources: path.join(process.cwd(), 'resources'),
       logs:      path.join(process.cwd(), 'script_logs'),
