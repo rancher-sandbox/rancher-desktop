@@ -62,10 +62,6 @@ export default {
       type:     Boolean,
       required: true,
     },
-    revalidateState: {
-      type:     Function,
-      required: true,
-    },
   },
   data() {
     return {
