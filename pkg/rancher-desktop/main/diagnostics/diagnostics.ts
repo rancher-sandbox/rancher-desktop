@@ -1,4 +1,3 @@
-
 import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
 import mainEvents from '@pkg/main/mainEvents';

@@ -1,4 +1,3 @@
-
 import Vue from 'vue';
 
 import { SETTING } from '@pkg/config/settings';

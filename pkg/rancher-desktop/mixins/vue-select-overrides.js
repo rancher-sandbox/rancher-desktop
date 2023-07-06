@@ -1,4 +1,3 @@
-
 export default {
   methods: {
     mappedKeys(map, vm) {

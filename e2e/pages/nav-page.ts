@@ -1,4 +1,3 @@
-
 import { DiagnosticsPage } from './diagnostics-page';
 import { ExtensionsPage } from './extensions-page';
 import { ImagesPage } from './images-page';
