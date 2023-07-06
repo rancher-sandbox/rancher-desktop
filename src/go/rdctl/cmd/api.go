@@ -55,9 +55,9 @@ is subject to change without any advance notice.
 
 func init() {
 	rootCmd.AddCommand(apiCmd)
-	apiCmd.Flags().StringVarP(&apiSettings.Method, "method", "X", "", "Method to use")
-	apiCmd.Flags().StringVarP(&apiSettings.InputFile, "input", "", "", "File containing JSON payload to upload (- for standard input)")
-	apiCmd.Flags().StringVarP(&apiSettings.Body, "body", "b", "", "JSON payload to upload")
+	apiCmd.Flags().StringVarP(&apiSettings.Method, "method", "X", "", "method to use")
+	apiCmd.Flags().StringVarP(&apiSettings.InputFile, "input", "", "", "file containing JSON payload to upload (- for standard input)")
+	apiCmd.Flags().StringVarP(&apiSettings.Body, "body", "b", "", "string containing JSON payload to upload")
 }
 
 func doAPICommand(cmd *cobra.Command, args []string) error {

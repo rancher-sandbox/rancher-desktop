@@ -50,8 +50,8 @@ var noModalDialogs bool
 func init() {
 	rootCmd.AddCommand(startCmd)
 	options.UpdateCommonStartAndSetCommands(startCmd)
-	startCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "Path to main executable.")
-	startCmd.Flags().BoolVarP(&noModalDialogs, "no-modal-dialogs", "", false, "Avoid displaying dialog boxes.")
+	startCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "path to main executable")
+	startCmd.Flags().BoolVarP(&noModalDialogs, "no-modal-dialogs", "", false, "avoid displaying dialog boxes")
 }
 
 /**
