@@ -93,3 +93,26 @@ func (manager Manager) createFiles(snapshot Snapshot) error {
 
 	return nil
 }
+
+// Returns snapshots that are present on system.
+func (manager Manager) List() ([]Snapshot, error) {
+	dirEntries, err := os.ReadDir(manager.Paths.Snapshots)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return []Snapshot{}, fmt.Errorf("failed to read snapshots directory: %w", err)
+	}
+	snapshots := make([]Snapshot, 0, len(dirEntries))
+	for _, dirEntry := range dirEntries {
+		snapshot := Snapshot{}
+		metadataPath := filepath.Join(manager.Paths.Snapshots, dirEntry.Name(), "metadata.json")
+		contents, err := os.ReadFile(metadataPath)
+		if err != nil {
+			return []Snapshot{}, fmt.Errorf("failed to read %q: %w", metadataPath, err)
+		}
+		if err := json.Unmarshal(contents, &snapshot); err != nil {
+			return []Snapshot{}, fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
+		}
+		snapshot.Created = snapshot.Created.Local()
+		snapshots = append(snapshots, snapshot)
+	}
+	return snapshots, nil
+}
