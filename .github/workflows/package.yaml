@@ -52,14 +52,10 @@ jobs:
     - name: Flag build for M1
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
-    - name: Upgrade npm
-      # We do this to avoid https://github.com/npm/cli/issues/3079
-      run: |
-        npm install -g npm@9
-        npm --version
-    - run: npm ci
+      # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
+    - run: yarn install --frozen-lockfile --network-timeout 1000000
     - run: yarn build
-    - run: yarn package -- --${{ matrix.platform }} --publish=never
+    - run: yarn package --${{ matrix.platform }} --publish=never
     - name: Build bats.tar.gz
       if: matrix.platform == 'linux'
       run: make -C bats bats.tar.gz
@@ -163,7 +159,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
-    - run: npm ci
+    - run: yarn install --frozen-lockfile
     - uses: actions/download-artifact@v3
       if: runner.os == 'Windows'
       with:

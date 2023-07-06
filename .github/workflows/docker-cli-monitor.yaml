@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: '16.x'
 
-      - run: npm ci
+      - run: yarn install --frozen-lockfile
 
       - run: yarn dcmonitor
         env:
