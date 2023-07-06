@@ -77,8 +77,8 @@ teardown_file() {
 
     capture_logs
 
-    # On Linux if we don't shutdown Rancher Desktop the bats test doesn't terminate
-    if is_linux; then
+    # On Linux & Windows if we don't shutdown Rancher Desktop bats test don't terminate
+    if is_linux || is_windows; then
         run rdctl shutdown
     fi
 }
