@@ -39,6 +39,7 @@ get_host() {
         --create-namespace
     helm upgrade \
         --install rancher rancher-latest/rancher \
+        --version "${RD_RANCHER_IMAGE_TAG#v}" \
         --namespace cattle-system \
         --set hostname="$(get_host)" \
         --wait \
