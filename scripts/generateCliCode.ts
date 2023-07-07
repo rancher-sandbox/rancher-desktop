@@ -27,8 +27,6 @@ import path from 'path';
 import ejs from 'ejs';
 import yaml from 'yaml';
 
-import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
-
 interface commandFlagType {
   /**
    * The capitalized name of the final part of a dotted property name,
@@ -162,7 +160,7 @@ class Generator {
       commandFlags:     this.commandFlags,
       linesForJSON:     linesForJSON.join('\n'),
       linesWithoutJSON: linesWithoutJSON.join('\n'),
-      settingsVersion:  CURRENT_SETTINGS_VERSION,
+      settingsVersion:  9,
       kebabCase,
     };
     const renderedContent = await ejs.renderFile(templateFile, data, options);

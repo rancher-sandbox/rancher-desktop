@@ -148,7 +148,8 @@ function getPaths(): Paths {
   let errorMsg = '';
 
   if (rdctlPath) {
-    const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
+    try {
+      const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
 
     if (result.status === 0 && result.stdout.length > 0) {
       pathsData = JSON.parse(result.stdout);

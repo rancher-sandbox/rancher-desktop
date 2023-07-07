@@ -4,6 +4,7 @@
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
+// TODO: Get the value from pkg/rancher-desktop/assets/dependencies.yaml
 export const CURRENT_SETTINGS_VERSION = 9 as const;
 
 export enum VMType {

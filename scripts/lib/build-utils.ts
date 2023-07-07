@@ -456,7 +456,14 @@ export default {
    * Build the main process code.
    */
   buildMain(): Promise<void> {
-    const tasks = [() => this.buildJavaScript(this.webpackConfig)];
+    return this.wait(() => this.buildJavaScript(this.webpackConfig));
+  },
+
+  /**
+   * Build the things we build with go
+   */
+  buildGoUtilities(): Promise<void> {
+    const tasks = [];
 
     if (os.platform().startsWith('win')) {
       tasks.push(() => this.buildWSLHelper());
