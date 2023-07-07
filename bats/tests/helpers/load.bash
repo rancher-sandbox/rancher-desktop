@@ -47,7 +47,8 @@ source "$PATH_BATS_HELPERS/paths.bash"
 # and PATH_* variables from paths.bash
 source "$PATH_BATS_HELPERS/commands.bash"
 
-# vm.bash uses various PATH_* variables from paths.bash
+# vm.bash uses various PATH_* variables from paths.bash,
+# rdctl from commands.bash, and jq_output from utils.bash
 source "$PATH_BATS_HELPERS/vm.bash"
 
 # kubernetes.bash has no load-time dependencies
@@ -58,7 +59,7 @@ export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
 # If called from foo() this function will call local_foo() if it exist.
 call_local_function() {
-    local func="local_$(caller 0 | awk '{print $2}')"
+    local func="local_$(calling_function)"
     if [ "$(type -t "$func")" = "function" ]; then
         eval "$func"
     fi

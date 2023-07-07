@@ -45,8 +45,24 @@ jq_output() {
 
 get_setting() {
     run rdctl api /settings
-    assert_success
+    assert_success || return
     jq_output "$@"
+}
+
+this_function() {
+    echo "${FUNCNAME[1]}"
+}
+
+calling_function() {
+    echo "${FUNCNAME[2]}"
+}
+
+# Write a comment to the TAP stream
+# Set CALLER to print a calling function higher up in the call stack.
+trace() {
+    if is_true "$RD_TRACE"; then
+        echo "# (${CALLER:-$(calling_function)}): $*" >&3
+    fi
 }
 
 try() {
@@ -73,12 +89,14 @@ try() {
         esac
         shift
     done
-    local count=0
-    while [ "$count" -lt "$max" ]; do
+
+    local count
+    for ((count = 0; count < max; ++count)); do
         run "$@"
-        [ "$status" -eq 0 ] && return
+        if ((status == 0)); then
+            break
+        fi
         sleep "$delay"
-        count=$((count + 1))
     done
     echo "$output"
     return "$status"
