@@ -197,7 +197,15 @@ Electron.app.whenReady().then(async() => {
 
       throw ex;
     }
-    cfg = settings.load(deploymentProfiles);
+    try {
+      cfg = settings.load(deploymentProfiles);
+      settings.updateLockedFields(deploymentProfiles.locked);
+    } catch (err: any) {
+      const titlePart = err.name || 'Failed to load settings';
+      const message = err.message || err.toString();
+
+      showErrorDialog(titlePart, message, true);
+    }
     try {
       // The profile loader did rudimentary type-validation on profiles, but the validator checks for things
       // like invalid strings for application.pathManagementStrategy.

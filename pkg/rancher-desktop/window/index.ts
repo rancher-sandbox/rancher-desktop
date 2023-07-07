@@ -6,7 +6,7 @@ import Electron, {
 } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
-import { load as loadSettings } from '@pkg/config/settings';
+import { getSettings } from '@pkg/config/settings';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
@@ -178,7 +178,7 @@ export function openMain() {
   }
 
   window.on('closed', () => {
-    const cfg = loadSettings({ defaults: {}, locked: {} });
+    const cfg = getSettings();
 
     if (cfg.application.window.quitOnClose) {
       BrowserWindow.getAllWindows().forEach((window) => {
