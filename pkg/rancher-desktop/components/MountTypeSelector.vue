@@ -138,6 +138,7 @@ export default Vue.extend({
               >
                 <radio-button
                   :key="groupName+'-'+index"
+                  v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
                   :name="groupName"
                   :value="preferences.experimental.virtualMachine.mount.type"
                   :label="option.label"
@@ -148,15 +149,11 @@ export default Vue.extend({
                   @input="updateValue('experimental.virtualMachine.mount.type', $event)"
                 >
                   <template #label>
-                    <div
-                      v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
-                    >
-                      {{ option.label }}
-                      <labeled-badge
-                        v-if="option.experimental"
-                        :text="t('prefs.experimental')"
-                      />
-                    </div>
+                    {{ option.label }}
+                    <labeled-badge
+                      v-if="option.experimental"
+                      :text="t('prefs.experimental')"
+                    />
                   </template>
                 </radio-button>
               </template>
