@@ -239,12 +239,14 @@ func getClientConfig(configPath string) (*restclient.Config, error) {
 }
 
 func isTimeout(err error) bool {
-	var timeoutError interface {
+	type timeout interface {
 		Timeout() bool
 	}
 
+	var timeoutError timeout
+
 	if !errors.As(err, &timeoutError) {
-		return timeoutError.Timeout()
+		return timeoutError != nil && timeoutError.Timeout()
 	}
 
 	return false
