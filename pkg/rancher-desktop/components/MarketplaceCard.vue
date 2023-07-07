@@ -26,7 +26,7 @@
       <button
         v-if="!error"
         data-test="button-install"
-        :class="installed ? 'role-danger': 'role-primary'"
+        :class="isInstalled ? 'role-danger': 'role-primary'"
         class="btn btn-xs"
         :disabled="loading"
         @click="appInstallation(installationAction)"
@@ -46,6 +46,7 @@ import { Banner } from '@rancher/components';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import demoMetadata from '@pkg/utils/_demo_metadata.js';
+
 export default {
   components: { LoadingIndicator, Banner },
   props:      {
@@ -65,7 +66,6 @@ export default {
   data() {
     return {
       loading:          false,
-      installed:        null,
       extensionDetails: null,
       error:            null,
       response:         null,
@@ -74,7 +74,7 @@ export default {
   },
   computed: {
     installationAction() {
-      return this.installed ? 'uninstall' : 'install';
+      return this.isInstalled ? 'uninstall' : 'install';
     },
     versionedExtension() {
       return `${ this.extensionWithoutVersion }:${ this.extensionDetails?.version }`;
@@ -89,9 +89,9 @@ export default {
     },
     buttonLabel() {
       if (this.loading) {
-        return this.installed ? this.t('marketplace.sidebar.uninstallButton.loading') : this.t('marketplace.sidebar.installButton.loading');
+        return this.isInstalled ? this.t('marketplace.sidebar.uninstallButton.loading') : this.t('marketplace.sidebar.installButton.loading');
       } else {
-        return this.installed ? this.t('marketplace.sidebar.uninstallButton.label') : this.t('marketplace.sidebar.installButton.label');
+        return this.isInstalled ? this.t('marketplace.sidebar.uninstallButton.label') : this.t('marketplace.sidebar.installButton.label');
       }
     },
   },
@@ -103,7 +103,6 @@ export default {
       return;
     }
 
-    this.installed = this.isInstalled;
     this.extensionDetails = {
       name:
         this.metadata?.LatestVersion.Labels['org.opencontainers.image.title'] ||
@@ -138,15 +137,11 @@ export default {
 
         if (r.status === 201) {
           this.loading = false;
-
-          if (action === 'uninstall') {
-            this.installed = false;
-          } else {
-            this.installed = true;
-          }
         }
       })
         .finally(() => {
+          this.$emit('update:extension');
+
           setTimeout(() => {
             this.resetBanners();
           }, 3000);

@@ -177,9 +177,6 @@ Electron.app.whenReady().then(async() => {
 
     DashboardServer.getInstance().init();
 
-    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
-    await httpCommandServer.init();
-    await httpCredentialHelperServer.init();
     await setupNetworking();
     let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
@@ -212,6 +209,7 @@ Electron.app.whenReady().then(async() => {
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       }
     } catch (err) {
+      noModalDialogs = TransientSettings.value.noModalDialogs;
       if (err instanceof LockedFieldError || err instanceof DeploymentProfileError) {
         // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
         // and the `fatal` part means we're expecting the app to shutdown.
@@ -226,6 +224,9 @@ Electron.app.whenReady().then(async() => {
       }
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
+    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
+    await httpCommandServer.init();
+    await httpCredentialHelperServer.init();
 
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
@@ -272,7 +273,18 @@ Electron.app.whenReady().then(async() => {
       Electron.app.dock.hide();
     }
 
-    await dockerDirManager.ensureCredHelperConfigured();
+    try {
+      await dockerDirManager.ensureCredHelperConfigured();
+    } catch (ex: any) {
+      const errorTitle = 'Error configuring credential helper';
+
+      console.error(`${ errorTitle }:`, ex);
+
+      const title = ex.title ?? errorTitle;
+      const message = ex.message ?? ex.toString();
+
+      showErrorDialog(title, message, true);
+    }
 
     if (os.platform() === 'linux' || os.platform() === 'darwin') {
       try {

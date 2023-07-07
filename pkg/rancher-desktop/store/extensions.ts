@@ -5,7 +5,7 @@ import { ActionContext, MutationsType } from './ts-helpers';
 
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
 
-interface ExtensionState {
+export interface ExtensionState {
   version: string;
   metadata: ExtensionMetadata;
   labels: Record<string, string>;

@@ -73,7 +73,7 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 	DefaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.User, "user", "", "overrides the user setting in the config file")
-	rootCmd.PersistentFlags().StringVar(&connectionSettings.Host, "host", "", "default is localhost; most useful for WSL")
+	rootCmd.PersistentFlags().StringVar(&connectionSettings.Host, "host", "", "default is 127.0.0.1; most useful for WSL")
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Port, "port", "", "overrides the port setting in the config file")
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Password, "password", "", "overrides the password setting in the config file")
 }
@@ -95,7 +95,7 @@ func finishConnectionSettings() (bool, error) {
 		configPath = DefaultConfigPath
 	}
 	if connectionSettings.Host == "" {
-		connectionSettings.Host = "localhost"
+		connectionSettings.Host = "127.0.0.1"
 	}
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {

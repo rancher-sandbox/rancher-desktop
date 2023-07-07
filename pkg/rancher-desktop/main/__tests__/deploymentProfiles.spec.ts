@@ -51,6 +51,12 @@ describe('deployment profiles', () => {
 [${ FULL_DEFAULTS_PATH }\\application\\Telemetry]
 "ENABLED"=dword:1
 
+[${ FULL_DEFAULTS_PATH }\\application\\extensions\\installed]
+"bellingham"="WA"
+"portland"="OR"
+"shasta"="CA"
+"elko"="NV"
+
 [${ FULL_DEFAULTS_PATH }\\CONTAINERENGINE]
 "name"="moby"
 
@@ -76,12 +82,6 @@ describe('deployment profiles', () => {
 "montreal"=dword:1
 "riviere du loup"=dword:0
 "magog"=dword:0
-
-[${ FULL_DEFAULTS_PATH }\\extensions]
-"bellingham"="WA"
-"portland"="OR"
-"shasta"="CA"
-"elko"="NV"
 `;
 
     const lockedUserRegFile = `Windows Registry Editor Version 5.00
