@@ -1,6 +1,14 @@
+to_lower() {
+    echo "$@" | tr '[:upper:]' '[:lower:]'
+}
+
+to_upper() {
+    echo "$@" | tr '[:lower:]' '[:upper:]'
+}
+
 is_true() {
     # case-insensitive check; false values: '', '0', 'no', and 'false'
-    local value="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+    local value=$(to_lower "$1")
     if [[ $value =~ ^(0|no|false)?$ ]]; then
         false
     else
@@ -37,6 +45,57 @@ assert_nothing() {
     # This is a no-op, used to show that run() has been used to continue the
     # test even when the command failed, but the failure itself is ignored.
     true
+}
+
+########################################################################
+
+assert=assert
+refute=refute
+
+before() {
+    local assert=refute
+    local refute=assert
+    "$@"
+}
+
+refute_success() {
+    assert_failure
+}
+
+refute_failure() {
+    assert_success
+}
+
+refute_not_exists() {
+    assert_exists "$@"
+}
+
+########################################################################
+
+# Convert raw string into properly quoted JSON string
+json_string() {
+    echo -n "$1" | jq -Rr @json
+}
+
+# Join list elements by separator after converting them via the mapping function
+# Examples:
+#   join_map "/" echo usr local bin            =>   usr/local/bin
+#   join_map ", " json_string a b\ c\"d\\e f   =>   "a", "b c\"d\\e", "f"
+join_map() {
+    local sep=$1
+    local map=$2
+    shift 2
+
+    local elem result
+    for elem in "$@"; do
+        elem=$(eval "$map" '"$elem"')
+        if [[ -z $result ]]; then
+            result=$elem
+        else
+            result="${result}${sep}${elem}"
+        fi
+    done
+    echo "$result"
 }
 
 jq_output() {
@@ -102,14 +161,14 @@ try() {
     return "$status"
 }
 
-image_without_tag() {
+image_without_tag_as_json_string() {
     local image=$1
     # If the tag looks like a port number and follows something that looks
     # like a domain name, then don't strip the tag (e.g. foo.io:5000).
     if [[ ${image##*:} =~ ^[0-9]+$ && ${image%:*} =~ \.[a-z]+$ ]]; then
-        echo "$image"
+        json_string "$image"
     else
-        echo "${image%:*}"
+        json_string "${image%:*}"
     fi
 }
 
@@ -117,16 +176,7 @@ update_allowed_patterns() {
     local enabled=$1
     shift
 
-    local patterns=""
-    local image
-    for image in "$@"; do
-        image=$(image_without_tag "$image")
-        if [ -z "$patterns" ]; then
-            patterns="\"${image}\""
-        else
-            patterns="$patterns, \"${image}\""
-        fi
-    done
+    local patterns=$(join_map ", " image_without_tag_as_json_string "$@")
 
     # TODO TODO TODO
     # Once https://github.com/rancher-sandbox/rancher-desktop/issues/4939 has been
@@ -172,6 +222,9 @@ capture_logs() {
         mkdir -p "$logdir"
         cp -LR "$PATH_LOGS/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"$logdir/test_description"
+        # Capture settings.json
+        cp "$PATH_CONFIG_FILE" "$logdir"
+        foreach_profile export_profile "$logdir"
     fi
 }
 

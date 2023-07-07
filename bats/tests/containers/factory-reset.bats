@@ -1,6 +1,4 @@
 load '../helpers/load'
-assert=assert
-refute=refute
 
 @test 'factory reset' {
     factory_reset
@@ -154,20 +152,6 @@ rdctl_factory_reset() {
     else
         assert_exists "$PATH_CACHE"
     fi
-}
-
-refute_failure() {
-    assert_success
-}
-
-refute_not_exists() {
-    assert_exists "$@"
-}
-
-before() {
-    assert=refute
-    refute=assert
-    "$@"
 }
 
 check_directories() {
