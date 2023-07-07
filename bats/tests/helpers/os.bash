@@ -68,7 +68,7 @@ needs_port() {
         if [ "$(sysctl -n net.ipv4.ip_unprivileged_port_start)" -gt "$port" ]; then
             # Run sudo non-interactive, so don't prompt for password
             run sudo -n sysctl -w "net.ipv4.ip_unprivileged_port_start=$port"
-            if [ "$status" -ne 0 ]; then
+            if ((status > 0)); then
                 skip "net.ipv4.ip_unprivileged_port_start must be $port or less"
             fi
         fi
