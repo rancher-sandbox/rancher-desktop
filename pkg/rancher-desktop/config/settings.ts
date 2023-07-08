@@ -96,7 +96,7 @@ export const defaultSettings = {
     name: ContainerEngine.MOBY,
   },
   virtualMachine: {
-    memoryInGB:   2,
+    memoryInGB:   getDefaultMemory(),
     numberCPUs:   2,
     /**
      * when set to true Dnsmasq is disabled and all DNS resolution
@@ -170,29 +170,21 @@ let settings: Settings | undefined;
  * Load the settings file from disk, doing any migrations as necessary.
  */
 function loadFromDisk(): Settings {
+  // Throw an ENOENT error if the file doesn't exist; the caller should know what to do.
   const rawdata = fs.readFileSync(join(paths.config, 'settings.json'));
-  let settings;
+  const cfg = clone(defaultSettings);
 
   try {
-    settings = JSON.parse(rawdata.toString());
-  } catch {
-    save(defaultSettings);
+    // If the existing settings file is partial, fill in the missing fields with defaults.
+    merge(cfg, JSON.parse(rawdata.toString()));
 
-    return defaultSettings;
+    return migrateSettingsToCurrentVersion(cfg);
+  } catch (err: any) {
+    console.error(`Error JSON-parsing existing settings contents ${ rawdata }`, err);
+    console.error('The old settings file will be replaced with the default settings.');
+
+    return cfg;
   }
-
-  // clone settings because we check to see if the returned value is different
-  const cfg = updateSettings(clone(settings));
-
-  if (!Object.values(ContainerEngine).map(String).includes(cfg.containerEngine.name)) {
-    console.warn(`Replacing unrecognized saved container engine pref of '${ cfg.containerEngine.name }' with ${ ContainerEngine.CONTAINERD }`);
-    cfg.containerEngine.name = ContainerEngine.CONTAINERD;
-    save(cfg);
-  } else if (!_.isEqual(cfg, settings)) {
-    save(cfg);
-  }
-
-  return cfg;
 }
 
 export function save(cfg: Settings) {
@@ -216,12 +208,27 @@ export function save(cfg: Settings) {
   }
 }
 
+export function getSettings(): Settings {
+  return settings ?? defaultSettings;
+}
+
 /**
- * Remove all stored settings.
+ * createSettings
+ * - Called when either there's no settings file, or for testing purposes, where we want to use a particular deployment profile.
+ * @param {DeploymentProfileType} deploymentProfiles
+ * @returns default settings merged with any default profile
  */
-export async function clear() {
-  // The node version packed with electron might not have fs.rm yet.
-  await fs.promises.rm(paths.config, { recursive: true, force: true } as any);
+export function createSettings(deploymentProfiles: DeploymentProfileType): Settings {
+  const cfg = clone(defaultSettings);
+
+  merge(cfg, deploymentProfiles.defaults);
+
+  // If there's no deployment profile, put up the first-run dialog box.
+  if (!Object.keys(deploymentProfiles.defaults).length && !Object.keys(deploymentProfiles.locked).length) {
+    _isFirstRun = true;
+  }
+
+  return finishConfiguringSettings(cfg, deploymentProfiles);
 }
 
 /**
@@ -233,49 +240,32 @@ export function clearSettings() {
 }
 
 /**
- * Load the settings file or create it if not present.  If the settings have
- * already been loaded, return it without re-loading from disk.
+ * Load the settings file or create it if not present.
  */
 export function load(deploymentProfiles: DeploymentProfileType): Settings {
   if (settings) {
     return settings;
   }
   try {
-    settings = loadFromDisk();
+    return finishConfiguringSettings(loadFromDisk(), deploymentProfiles);
   } catch (err: any) {
-    settings = clone(defaultSettings);
     if (err.code === 'ENOENT') {
-      // If a deployment profile doesn't set `virtualMachine.memoryInGB`, assign a default value (a few lines down)
-      // based on the available memory.
-      settings.virtualMachine.memoryInGB = 0;
-
-      // If there is no settings file, use the contents of the selected defaults deployment profile.
-      // Whether or not there's a settings file, give highest priority to any settings in the locked profile
-      // (which is merged outside this if-block().
-      //
-      // The deployment profile always returns an empty object if there is no profile.
-      // This means that we treat an empty hash defaults profile, or an empty registry hive,
-      // as if there is no profile in place (for the purposes of setting the first-run entry).
-      merge(settings, deploymentProfiles.defaults);
-      if (!Object.keys(deploymentProfiles.defaults).length && !Object.keys(deploymentProfiles.locked).length) {
-        _isFirstRun = true;
-      }
+      return createSettings(deploymentProfiles);
+    } else {
+      // JSON problems in the settings file will be caught, and we let any
+      // other errors (most likely permission-related) bubble up to the surface
+      // and most likely result in a dialog box and the app shutting down.
+      throw err;
     }
   }
-  if ((os.platform() === 'darwin' || os.platform() === 'linux') &&
-    !settings.virtualMachine.memoryInGB) {
-    const totalMemoryInGB = os.totalmem() / 2 ** 30;
+}
 
-    // 25% of available ram up to a maximum of 6gb
-    settings.virtualMachine.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
-  }
-
-  // determine whether updates should be enabled
+function finishConfiguringSettings(cfg: Settings, deploymentProfiles: DeploymentProfileType): Settings {
   if (process.env.RD_FORCE_UPDATES_ENABLED) {
     console.debug('updates enabled via RD_FORCE_UPDATES_ENABLED');
-    settings.application.updater.enabled = true;
+    cfg.application.updater.enabled = true;
   } else if (os.platform() === 'linux' && !process.env.APPIMAGE) {
-    settings.application.updater.enabled = false;
+    cfg.application.updater.enabled = false;
   } else {
     const appVersion = getProductionVersion();
 
@@ -284,18 +274,29 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
     // CI builds use a version string like `git describe`, e.g. "v1.1.0-4140-g717225dc".
     // Versions like "1.9.0-tech-preview" are pre-releases and not CI builds, so should not disable auto-update.
     if (appVersion.match(/^v?\d+\.\d+\.\d+-\d+-g[0-9a-f]+$/) || appVersion.includes('?')) {
-      settings.application.updater.enabled = false;
+      cfg.application.updater.enabled = false;
       console.log('updates disabled');
     }
   }
   // Replace existing settings fields with whatever is set in the locked deployment-profile
-  merge(settings, deploymentProfiles.locked);
-  save(settings);
-  lockedSettings = determineLockedFields(deploymentProfiles.locked);
+  merge(cfg, deploymentProfiles.locked);
+  save(cfg);
+  // Update the global settings variable for later retrieval
+  settings = cfg;
 
-  return settings;
+  return cfg;
 }
 
+function getDefaultMemory() {
+  if (os.platform() === 'darwin' || os.platform() === 'linux') {
+    const totalMemoryInGB = os.totalmem() / 2 ** 30;
+
+    // 25% of available ram up to a maximum of 6gb
+    return Math.min(6, Math.round(totalMemoryInGB / 4.0));
+  } else {
+    return 2;
+  }
+}
 /**
  * Merge settings in-place with changes, returning the merged settings.
  * @param cfg Baseline settings.  This will be modified.
@@ -330,6 +331,10 @@ export function merge<T = Settings>(cfg: T, changes: RecursivePartial<RecursiveR
 
 export function getLockedSettings(): LockedSettingsType {
   return lockedSettings;
+}
+
+export function updateLockedFields(lockedDeploymentProfile: RecursivePartial<Settings>) {
+  lockedSettings = determineLockedFields(lockedDeploymentProfile);
 }
 
 /**
@@ -530,7 +535,7 @@ const updateTable: Record<number, (settings: any) => void> = {
   },
 };
 
-function updateSettings(settings: Settings) {
+function migrateSettingsToCurrentVersion(settings: Settings) {
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
@@ -549,6 +554,11 @@ function updateSettings(settings: Settings) {
     console.log(`Running settings version ${ CURRENT_SETTINGS_VERSION } but loaded a settings file for version ${ settings.version }: some settings will be ignored`);
   }
   settings.version = CURRENT_SETTINGS_VERSION;
+
+  if (!Object.values(ContainerEngine).map(String).includes(settings.containerEngine.name)) {
+    console.warn(`Replacing unrecognized saved container engine pref of '${ settings.containerEngine.name }' with ${ ContainerEngine.CONTAINERD }`);
+    settings.containerEngine.name = ContainerEngine.CONTAINERD;
+  }
 
   return _.defaultsDeep(settings, defaultSettings);
 }

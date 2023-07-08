@@ -42,6 +42,9 @@ taking_screenshots() {
 }
 
 ########################################################################
+: "${RD_TRACE:=false}"
+
+########################################################################
 # When RD_USE_GHCR_IMAGES is true, then all images will be pulled from
 # ghcr.io instead of docker.io, to avoid hitting the docker hub pull
 # rate limit.

@@ -5,10 +5,10 @@ alpineLimaISO:
 WSLDistro: "0.42"
 kuberlr: 0.4.2
 helm: 3.12.1
-dockerCLI: 24.0.2
+dockerCLI: 24.0.3
 dockerBuildx: 0.11.1
 dockerCompose: 2.19.1
-trivy: 0.43.0
+trivy: 0.43.1
 steve: 0.1.0-beta9
 guestAgent: 0.3.16
 rancherDashboard: desktop-v2.7.0.beta.1

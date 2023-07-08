@@ -31,7 +31,9 @@ load '../helpers/load'
 }
 
 @test 'Verify that the auto-start config is created' {
-
+    if using_npm_run_dev; then
+        skip "Autostart prefs don't work in dev mode"
+    fi
     if is_linux; then
         assert_file_exists "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/rancher-desktop.desktop"
     fi
@@ -55,7 +57,9 @@ load '../helpers/load'
 }
 
 @test 'Verify that the auto-start config is removed' {
-
+    if using_npm_run_dev; then
+        skip "Autostart prefs don't work in dev mode"
+    fi
     if is_linux; then
         assert_file_not_exists "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/rancher-desktop.desktop"
     fi

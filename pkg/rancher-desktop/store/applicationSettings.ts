@@ -1,7 +1,7 @@
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { load as loadSettings } from '@pkg/config/settings';
+import { getSettings } from '@pkg/config/settings';
 import type { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -16,7 +16,7 @@ type State = {
 export const state: () => State = () => {
   // While we load the settings from disk here, we only otherwise interact with
   // the settings only via ipcRenderer.
-  const cfg = loadSettings({ defaults: {}, locked: {} });
+  const cfg = getSettings();
 
   return {
     pathManagementStrategy: cfg.application.pathManagementStrategy,

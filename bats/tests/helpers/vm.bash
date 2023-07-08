@@ -9,6 +9,13 @@ wait_for_shell() {
     rdctl shell sync
 }
 
+pkill_by_path() {
+    local arg=$(readlink -f "$1")
+    if [[ -n $arg ]]; then
+        pkill -f "$arg"
+    fi
+}
+
 factory_reset() {
     if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
         capture_logs
@@ -17,9 +24,9 @@ factory_reset() {
     if using_npm_run_dev; then
         if is_unix; then
             run rdctl shutdown
-            run pkill -f "$(readlink -f "$PATH_REPO_ROOT/node_modules")"
-            run pkill -f "$(readlink -f "$PATH_RESOURCES")"
-            run pkill -f "$(readlink -f "$LIMA_HOME")"
+            run pkill_by_path "$PATH_REPO_ROOT/node_modules"
+            run pkill_by_path "$PATH_RESOURCES"
+            run pkill_by_path "$LIMA_HOME"
         else
             # TODO: kill `npm run dev` instance on Windows
             true
@@ -155,32 +162,67 @@ start_application() {
     fi
 }
 
-container_engine_info() {
+get_container_engine_info() {
     run ctrctl info
-    assert_success
+    echo "$output"
+    assert_success || return
     assert_output --partial "Server Version:"
 }
 
 docker_context_exists() {
     run docker_exe context ls -q
-    assert_success
+    assert_success || return
     assert_line "$RD_DOCKER_CONTEXT"
 }
 
-buildkitd_is_running() {
-    run rdctl shell rc-service --nocolor buildkitd status
-    assert_success
-    assert_output --partial 'status: started'
+assert_service_status() {
+    local service_name=$1
+    local expect=$2
+
+    run rc_service "$service_name" status
+    # Some services (e.g. k3s) report non-zero status when not running
+    if [[ $expect == started ]]; then
+        assert_success || return
+    fi
+    assert_output --partial "status: ${expect}"
+}
+
+wait_for_service_status() {
+    local service_name=$1
+    local expect=$2
+
+    trace "waiting for ${service_name} to be ${expect}"
+    try --max 30 --delay 5 assert_service_status "$service_name" "$expect"
+}
+
+rdctl_api_settings() {
+    run rdctl api /settings
+    echo "$output"
+    assert_success || return
+    refute_output undefined
 }
 
 wait_for_container_engine() {
-    try --max 12 --delay 10 container_engine_info
+    local CALLER=$(this_function)
+
+    trace "waiting for api /settings to be callable"
+    try --max 30 --delay 5 rdctl_api_settings
+
+    run jq_output .containerEngine.allowedImages.enabled
     assert_success
-    if using_docker; then
-        try --max 30 --delay 5 docker_context_exists
-        assert_success
+    if [[ $output == true ]]; then
+        wait_for_service_status openresty started
     else
-        try --max 30 --delay 5 buildkitd_is_running
-        assert_success
+        wait_for_service_status openresty stopped
     fi
+
+    if using_docker; then
+        trace "waiting for docker context to exist"
+        try --max 30 --delay 5 docker_context_exists
+    else
+        wait_for_service_status buildkitd started
+    fi
+
+    trace "waiting for container engine info to be available"
+    try --max 12 --delay 10 get_container_engine_info
 }
