@@ -8,6 +8,8 @@ import path from 'path';
 
 import electron from 'electron';
 
+let currentPaths: Paths|undefined;
+
 export interface Paths {
   /** appHome: the location of the main appdata directory. */
   appHome: string;
@@ -148,8 +150,7 @@ function getPaths(): Paths {
   let errorMsg = '';
 
   if (rdctlPath) {
-    try {
-      const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
+    const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
 
     if (result.status === 0 && result.stdout.length > 0) {
       pathsData = JSON.parse(result.stdout);
@@ -173,16 +174,19 @@ function getPaths(): Paths {
     };
   }
 
-  switch (process.platform) {
-  case 'darwin':
-    return new UnixPaths(pathsData);
-  case 'linux':
-    return new UnixPaths(pathsData);
-  case 'win32':
-    return new WindowsPaths(pathsData);
-  default:
-    throw new Error(`Platform "${ process.platform }" is not supported.`);
-  }
+    switch (process.platform) {
+    case 'darwin':
+      return new UnixPaths(pathsData);
+    case 'linux':
+      return new UnixPaths(pathsData);
+    case 'win32':
+      return new WindowsPaths(pathsData);
+    default:
+      throw new Error(`Platform "${ process.platform }" is not supported.`);
+    }
+  })();
+
+  return currentPaths;
 }
 
 export default getPaths();
