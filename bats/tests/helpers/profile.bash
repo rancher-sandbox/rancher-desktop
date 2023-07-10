@@ -47,7 +47,8 @@ PROFILE_TYPE=$PROFILE_DEFAULTS
 
 # profile_location is a registry key on Windows, or a filename on macOS and Linux.
 profile_location() {
-    local profile=$(to_upper "profile_${PROFILE_LOCATION}_${PROFILE_TYPE}" | tr - _)
+    local profile
+    profile=$(to_upper "profile_${PROFILE_LOCATION}_${PROFILE_TYPE}" | tr - _)
     echo "${!profile}"
 }
 
@@ -85,7 +86,8 @@ create_profile() {
         profile_plutil -create xml1
         ;;
     linux)
-        local filename=$(profile_location)
+        local filename
+        filename=$(profile_location)
         profile_sudo mkdir -p "$(dirname "$filename")"
         echo "{}" | profile_cat "$filename"
         ;;
@@ -117,7 +119,8 @@ export_profile() {
         local export="${dir}/profile.${PROFILE_LOCATION}.${PROFILE_TYPE}"
         case $OS in
         darwin | linux)
-            local filename=$(profile_location)
+            local filename
+            filename=$(profile_location)
             # Keep .plist or .json file extension
             cp "$filename" "${export}.${filename##*.}"
             ;;
@@ -243,7 +246,8 @@ count_setting_segments() {
 # Applies $expr against the profile and updates it in-places.
 profile_jq() {
     local expr=$1
-    local filename=$(profile_location)
+    local filename
+    filename=$(profile_location)
     # Need to use a temp file to avoid truncating the file before it has been read.
     jq "$expr" "$filename" | profile_cat "${filename}.tmp"
     profile_sudo mv "${filename}.tmp" "$filename"
@@ -259,11 +263,13 @@ profile_plutil() {
     # Make sure all the dictionaries for the setting path exist
     if [[ $action =~ ^-insert|-replace|-remove$ ]]; then
         local setting=$2
-        local count=$(count_setting_segments "$setting")
+        local count
+        count=$(count_setting_segments "$setting")
         if ((count > 1)); then
             local index
             for index in $(seq $((count - 1))); do
-                local keypath=$(echo "$setting" | cut -d . -f 1-"$index")
+                local keypath
+                keypath=$(echo "$setting" | cut -d . -f 1-"$index")
                 # Ignore error if dictionary already exists
                 run profile_sudo plutil -insert "$keypath" -dictionary "$(profile_location)"
             done
@@ -285,19 +291,23 @@ profile_reg() {
     local action=$1
     shift
 
-    local reg_key=$(profile_location)
+    local reg_key
+    reg_key=$(profile_location)
     if [[ $action =~ ^add|delete$ ]]; then
         local setting=$1
         shift
 
-        local count=$(count_setting_segments "$setting")
+        local count
+        count=$(count_setting_segments "$setting")
         if ((count > 1)); then
-            local reg_subkey=$(echo "$setting" | cut -d . -f 1-"$((count - 1))")
+            local reg_subkey
+            reg_subkey=$(echo "$setting" | cut -d . -f 1-"$((count - 1))")
             # reg_key uses backslashes instead of dot separators
             reg_key="${reg_key}\\${reg_subkey//./\\}"
         fi
 
-        local reg_value_name=$(echo "$setting" | cut -d . -f "$count")
+        local reg_value_name
+        reg_value_name=$(echo "$setting" | cut -d . -f "$count")
         # reg_value_name may be empty when deleting a registry key instead of a named value
         if [[ -n $reg_value_name ]]; then
             # turn protected dots back into regular dots again

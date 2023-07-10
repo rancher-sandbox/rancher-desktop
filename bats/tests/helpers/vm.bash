@@ -10,7 +10,8 @@ wait_for_shell() {
 }
 
 pkill_by_path() {
-    local arg=$(readlink -f "$1")
+    local arg
+    arg=$(readlink -f "$1")
     if [[ -n $arg ]]; then
         pkill -f "$arg"
     fi
@@ -215,7 +216,8 @@ rdctl_api_settings() {
 }
 
 wait_for_container_engine() {
-    local CALLER=$(this_function)
+    local CALLER
+    CALLER=$(this_function)
 
     trace "waiting for api /settings to be callable"
     try --max 30 --delay 5 rdctl_api_settings

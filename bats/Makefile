@@ -9,9 +9,8 @@ containers:
 # https://www.shellcheck.net/wiki/SC1091 -- Not following: xxx was not specified as input (see shellcheck -x)
 # https://www.shellcheck.net/wiki/SC2034 -- xxx appears unused. Verify use (or export if used externally)
 # https://www.shellcheck.net/wiki/SC2154 -- xxx is referenced but not assigned
-# https://www.shellcheck.net/wiki/SC2155 -- Declare and assign separately to avoid masking return values
 
-SC_EXCLUDES ?= SC1091,SC2034,SC2154,SC2155
+SC_EXCLUDES ?= SC1091,SC2034,SC2154
 
 .PHONY: lint
 lint:

@@ -17,8 +17,9 @@ assert_file_contents_equal() { # $have $want
     assert_file_exist "$have"
     assert_file_exist "$want"
 
-    local have_hash="$(md5sum "$have" | cut -d ' ' -f 1)"
-    local want_hash="$(md5sum "$want" | cut -d ' ' -f 1)"
+    local have_hash want_hash
+    have_hash="$(md5sum "$have" | cut -d ' ' -f 1)"
+    want_hash="$(md5sum "$want" | cut -d ' ' -f 1)"
     if [ "$have_hash" != "$want_hash" ]; then
         printf "expected : %s (%s)\nactual   : %s (%s)" \
             "$want" "$want_hash" "$have" "$have_hash" |

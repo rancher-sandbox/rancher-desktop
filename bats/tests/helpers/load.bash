@@ -62,7 +62,8 @@ export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
 # If called from foo() this function will call local_foo() if it exist.
 call_local_function() {
-    local func="local_$(calling_function)"
+    local func
+    func="local_$(calling_function)"
     if [ "$(type -t "$func")" = "function" ]; then
         eval "$func"
     fi

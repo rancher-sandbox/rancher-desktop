@@ -8,7 +8,8 @@ to_upper() {
 
 is_true() {
     # case-insensitive check; false values: '', '0', 'no', and 'false'
-    local value=$(to_lower "$1")
+    local value
+    value=$(to_lower "$1")
     if [[ $value =~ ^(0|no|false)?$ ]]; then
         false
     else
@@ -176,7 +177,8 @@ update_allowed_patterns() {
     local enabled=$1
     shift
 
-    local patterns=$(join_map ", " image_without_tag_as_json_string "$@")
+    local patterns
+    patterns=$(join_map ", " image_without_tag_as_json_string "$@")
 
     # TODO TODO TODO
     # Once https://github.com/rancher-sandbox/rancher-desktop/issues/4939 has been
@@ -218,7 +220,8 @@ unique_filename() {
 
 capture_logs() {
     if capturing_logs && [ -d "$PATH_LOGS" ]; then
-        local logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
+        local logdir
+        logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
         mkdir -p "$logdir"
         cp -LR "$PATH_LOGS/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"$logdir/test_description"
@@ -231,7 +234,8 @@ capture_logs() {
 take_screenshot() {
     if taking_screenshots; then
         if is_macos; then
-            local file=$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)
+            local file
+            file=$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)
             mkdir -p "$PATH_BATS_LOGS"
             # The terminal app must have "Screen Recording" permission;
             # otherwise only the desktop background is captured.
