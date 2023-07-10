@@ -52,6 +52,8 @@ if (!$SkipTools) {
         # Install and use latest node 16* version
         nvm install 16
         nvm use $(nvm list | Select-String '[16\.[0-9.]+]' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value })
+        # Install the yarn package manager
+        npm install --global yarn
     }
 }
 

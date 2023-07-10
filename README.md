@@ -71,9 +71,10 @@ You can now clone the repository and run `yarn`.
 3. Install [Scoop] via `iwr -useb get.scoop.sh | iex`.
 4. Install git, go, nvm, and unzip via `scoop install git go nvm python unzip`.
    Check node version with `nvm list`. If node v16 is not installed or set as the current version, then install using `nvm install 16` and set as current using `nvm use 16.xx.xx`.
-5. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
+5. Install the yarn package manager via `npm install --global yarn`
+6. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
    The [Desktop development with C++] workload needs to be selected, too.
-6. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
+7. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
 
    ```
    npm config set msvs_version <visual-studio-version-number>
@@ -111,6 +112,12 @@ Currently we build Rancher Desktop with Node 16. To install it, run:
 nvm install 16
 ```
 
+Next, you'll need to install the yarn package manager:
+
+```
+npm install --global yarn
+```
+
 You'll also need to run `brew install go` if you haven't installed go.
 
 Then you can install dependencies with:
@@ -137,6 +144,8 @@ Ensure you have the following installed:
   installed.** For example, on openSUSE Leap 15.3 you would need to install
   `nodejs16` and `nodejs16-devel`.
 
+- [yarn classic][yarn-classic]
+
 - Go 1.18 or later.
 
 - Dependencies described in the [`node-gyp` docs][node-gyp] installation.
@@ -156,6 +165,7 @@ to solve this issue.
 [Node.js]: https://nodejs.org/
 [ffi-napi]: https://www.npmjs.com/package/ffi-napi
 [node-gyp]: https://github.com/nodejs/node-gyp#on-unix
+[yarn-classic]: https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable
 
 
 ## Running
