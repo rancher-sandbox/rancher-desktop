@@ -1,4 +1,5 @@
 import buildUtils from './lib/build-utils';
+
 import { simpleSpawn } from 'scripts/simple_process';
 
 // The main purpose of this setTimeout is to keep the script waiting until the main async function finishes

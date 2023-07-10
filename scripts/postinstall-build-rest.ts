@@ -2,7 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { simpleSpawn } from 'scripts/simple_process';
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -13,6 +12,7 @@ import {
 import {
   DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
 } from 'scripts/lib/dependencies';
+import { simpleSpawn } from 'scripts/simple_process';
 
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).
