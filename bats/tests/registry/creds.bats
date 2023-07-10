@@ -157,8 +157,8 @@ verify_default_credStore() {
 @test 'restart container engine to refresh certs' {
     skip_for_insecure_registry
 
-    rc_service "$CONTAINER_ENGINE_SERVICE" restart
-    rc_service --ifstarted openresty restart
+    rdsudo rc-service "$CONTAINER_ENGINE_SERVICE" restart
+    rdsudo rc-service --ifstarted openresty restart
     wait_for_container_engine
     # when Moby is stopped, the containers are stopped as well
     if using_docker; then

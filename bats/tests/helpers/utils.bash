@@ -89,7 +89,7 @@ join_map() {
     local elem result
     for elem in "$@"; do
         elem=$(eval "$map" '"$elem"')
-        if [[ -z $result ]]; then
+        if [[ -z ${result:-} ]]; then
             result=$elem
         else
             result="${result}${sep}${elem}"
