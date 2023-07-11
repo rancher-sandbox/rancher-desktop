@@ -13,6 +13,7 @@ export async function simpleSpawn(
 ): Promise<void> {
   options ||= {};
   options.windowsHide ??= true;
+  options.stdio ??= 'inherit';
   const child = spawn(command, args ?? [], options);
   const currentLine: Record<'stdout' | 'stderr', string> = { stdout: '', stderr: '' };
 

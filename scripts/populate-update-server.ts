@@ -30,7 +30,8 @@ import path from 'path';
 import { Octokit } from 'octokit';
 import yaml from 'yaml';
 
-import { spawnFile } from '@pkg/utils/childProcess';
+import { simpleSpawn } from './simple_process';
+
 import { defined } from '@pkg/utils/typeUtils';
 
 /** Read input from the environment; throws an error if unset. */
@@ -229,7 +230,7 @@ async function updatePages(tag: string) {
   await fs.promises.writeFile(path.join(getInput('RD_OUTPUT_DIR'), 'response.json'),
     JSON.stringify(response),
     'utf-8');
-  await spawnFile('git',
+  await simpleSpawn('git',
     [
       '-c', `user.name=${ getInput('GITHUB_ACTOR') }`,
       '-c', `user.email=${ getInput('GITHUB_ACTOR') }@users.noreply.github.com`,
@@ -238,7 +239,7 @@ async function updatePages(tag: string) {
       stdio: ['ignore', 'inherit', 'inherit'],
       cwd:   getInput('RD_OUTPUT_DIR'),
     });
-  await spawnFile('git',
+  await simpleSpawn('git',
     ['push'], {
       stdio: ['ignore', 'inherit', 'inherit'],
       cwd:   getInput('RD_OUTPUT_DIR'),
