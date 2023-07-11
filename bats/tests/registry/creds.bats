@@ -121,7 +121,7 @@ verify_default_credStore() {
 @test 'create server certs for registry' {
     rdsudo apk add mkcert --force-broken-world --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing
     rdshell mkdir -p "$CAROOT"
-    rdshell "CAROOT=$CAROOT" TRUST_STORES=none mkcert -install
+    rdshell sh -c "CAROOT=\"$CAROOT\" TRUST_STORES=none mkcert -install"
     rdshell sh -c "mkdir -p \"$CERTS_DIR\"; cd \"$CERTS_DIR\"; CAROOT=\"$CAROOT\" mkcert \"$REGISTRY_HOST\""
 }
 
