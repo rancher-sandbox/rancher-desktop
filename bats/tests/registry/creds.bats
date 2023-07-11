@@ -2,7 +2,7 @@ load '../helpers/load'
 
 local_setup() {
     REGISTRY_PORT="5050"
-    DOCKER_CONFIG_FILE="$HOME/.docker/config.json"
+    DOCKER_CONFIG_FILE="$USERPROFILE/.docker/config.json"
 
     TEMP=/tmp
     if is_windows; then

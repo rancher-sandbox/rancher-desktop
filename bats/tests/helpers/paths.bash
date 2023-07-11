@@ -110,6 +110,11 @@ fi
 
 PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
 
+USERPROFILE=$HOME
+if using_windows_exe; then
+    USERPROFILE="$(win32env USERPROFILE)"
+fi
+
 host_path() {
     local path=$1
     if using_windows_exe; then

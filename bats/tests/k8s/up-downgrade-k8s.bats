@@ -75,11 +75,12 @@ verify_images() {
 
 verify_kuberlr_for_version() {
     local K8S_VERSION=$1
-    local KUBERLR_DIR="${HOME}/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+    local KUBERLR_DIR="${USERPROFILE}/.kuberlr/${OS}-${ARCH_FOR_KUBERLR}"
+
     rm -f "${KUBERLR_DIR}/kubectl"*
     run kubectl version
     assert_output --regexp "Client Version.*GitVersion:.v${K8S_VERSION}"
-    assert_exists "${KUBERLR_DIR}/kubectl${K8S_VERSION}"
+    assert_exists "${KUBERLR_DIR}/kubectl${K8S_VERSION}$EXE"
 }
 
 @test 'upgrade kubernetes' {
