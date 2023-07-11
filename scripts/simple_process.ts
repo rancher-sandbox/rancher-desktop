@@ -13,13 +13,13 @@ export async function simpleSpawn(
 ): Promise<void> {
   options ||= {};
   options.windowsHide ??= true;
-  const child = spawn(command, args ?? [], { windowsHide: true });
+  const child = spawn(command, args ?? [], options);
   const currentLine: Record<'stdout' | 'stderr', string> = { stdout: '', stderr: '' };
 
   for (const fd of ['stdout', 'stderr']) {
     const fdIndex = fd as 'stdout' | 'stderr';
 
-    child[fdIndex].on('data', (chunk: string) => {
+    child[fdIndex]?.on('data', (chunk: string) => {
       const currentChunk = chunk.toString();
       const lastNLIndex = currentChunk.lastIndexOf('\n');
 
