@@ -2,14 +2,8 @@ load '../helpers/load'
 
 local_setup() {
     CONTAINERD_NAMESPACE=rancher-desktop-extensions
-
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
-
-    if using_windows_exe; then
-        TESTDATA_DIR_CLI="$(wslpath -m "${TESTDATA_DIR}")"
-    else
-        TESTDATA_DIR_CLI="${TESTDATA_DIR}"
-    fi
+    TESTDATA_DIR_HOST=$(host_path "$TESTDATA_DIR")
 }
 
 assert_file_contents_equal() { # $have $want
@@ -61,7 +55,7 @@ encoded_id() { # variant
         ctrctl build \
             --tag "rd/extension/$extension" \
             --build-arg "variant=$extension" \
-            "$TESTDATA_DIR_CLI"
+            "$TESTDATA_DIR_HOST"
     done
     run ctrctl image list --format '{{ .Repository }}'
     assert_success

@@ -109,3 +109,11 @@ if is_windows; then
 fi
 
 PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
+
+host_path() {
+    local path=$1
+    if using_windows_exe; then
+        path=$(wslpath -w "$path")
+    fi
+    echo "$path"
+}
