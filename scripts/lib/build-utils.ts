@@ -462,7 +462,7 @@ export default {
   /**
    * Build the things we build with go
    */
-  buildGoUtilities(): Promise<void> {
+  async buildGoUtilities(): Promise<void> {
     const tasks = [];
 
     if (os.platform().startsWith('win')) {

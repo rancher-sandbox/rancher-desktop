@@ -16,22 +16,31 @@ export async function simpleSpawn(
   options.stdio ??= 'inherit';
   const child = spawn(command, args ?? [], options);
   const currentLine: Record<'stdout' | 'stderr', string> = { stdout: '', stderr: '' };
+  let sawStderr = false;
 
-  for (const fd of ['stdout', 'stderr']) {
-    const fdIndex = fd as 'stdout' | 'stderr';
+  child.stdout?.on('data', (chunk: string) => {
+    const currentChunk = chunk.toString();
+    const lastNLIndex = currentChunk.lastIndexOf('\n');
 
-    child[fdIndex]?.on('data', (chunk: string) => {
-      const currentChunk = chunk.toString();
-      const lastNLIndex = currentChunk.lastIndexOf('\n');
+    if (lastNLIndex === -1) {
+      currentLine.stdout += currentChunk;
+    } else {
+      console.log(currentLine.stdout + currentChunk.substring(0, lastNLIndex));
+      currentLine.stdout = currentChunk.substring(lastNLIndex + 1);
+    }
+  });
+  child.stderr?.on('data', (chunk: string) => {
+    const currentChunk = chunk.toString();
+    const lastNLIndex = currentChunk.lastIndexOf('\n');
 
-      if (lastNLIndex === -1) {
-        currentLine[fdIndex] += currentChunk;
-      } else {
-        console.log(currentLine[fdIndex] + currentChunk.substring(0, lastNLIndex));
-        currentLine[fdIndex] = currentChunk.substring(lastNLIndex + 1);
-      }
-    });
-  }
+    sawStderr ||= currentChunk.length > 0;
+    if (lastNLIndex === -1) {
+      currentLine.stderr += currentChunk;
+    } else {
+      console.log(currentLine.stderr + currentChunk.substring(0, lastNLIndex));
+      currentLine.stderr = currentChunk.substring(lastNLIndex + 1);
+    }
+  });
 
   await new Promise<void>((resolve, reject) => {
     child.on('exit', (code, signal) => {
@@ -41,7 +50,7 @@ export async function simpleSpawn(
       if (currentLine.stderr) {
         console.log(currentLine.stderr);
       }
-      if ((code === 0 && signal === null) || (code === null && signal === 'SIGTERM')) {
+      if (!sawStderr && ((code === 0 && signal === null) || (code === null && signal === 'SIGTERM'))) {
         return resolve();
       }
       reject(JSON.stringify({

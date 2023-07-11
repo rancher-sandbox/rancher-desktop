@@ -2,6 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import buildUtils from './lib/build-utils';
+
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -127,6 +129,7 @@ const keepScriptAlive = setTimeout(() => { }, 24 * 3600 * 1000);
       'scripts/generateCliCode.ts',
       'pkg/rancher-desktop/assets/specs/command-api.yaml',
       'src/go/rdctl/pkg/options/generated/options.go']);
+    await buildUtils.buildGoUtilities();
     exitCode = 0;
   } catch (e: any) {
     console.error('POSTINSTALL ERROR: ', e);
