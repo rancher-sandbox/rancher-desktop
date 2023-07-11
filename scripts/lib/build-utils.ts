@@ -462,7 +462,7 @@ export default {
   /**
    * Build the things we build with go
    */
-  async buildGoUtilities(): Promise<void> {
+  async buildGoUtilities() {
     const tasks = [];
 
     if (os.platform().startsWith('win')) {
@@ -478,7 +478,7 @@ export default {
     tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
     tasks.push(() => this.buildExtensionProxyImage());
 
-    return this.wait(...tasks);
+    return await this.wait(...tasks);
   },
 
 };
