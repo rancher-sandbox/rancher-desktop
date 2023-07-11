@@ -10,7 +10,8 @@ wait_for_shell() {
 }
 
 pkill_by_path() {
-    local arg=$(readlink -f "$1")
+    local arg
+    arg=$(readlink -f "$1")
     if [[ -n $arg ]]; then
         pkill -f "$arg"
     fi
@@ -67,9 +68,11 @@ start_container_engine() {
     local args=(
         --application.debug
         --application.updater.enabled=false
-        --container-engine.name="$RD_CONTAINER_ENGINE"
         --kubernetes.enabled=false
     )
+    if [ -n "$RD_CONTAINER_ENGINE" ]; then
+        args+=(--container-engine.name="$RD_CONTAINER_ENGINE")
+    fi
     if is_unix; then
         args+=(
             --application.admin-access=false
@@ -99,16 +102,25 @@ start_container_engine() {
     # TODO containerEngine.allowedImages.patterns and WSL.integrations
     # TODO cannot be set from the commandline yet
     image_allow_list="$(bool using_image_allow_list)"
-    wsl_integrations="{}"
     registry="docker.io"
     if using_ghcr_images; then
         registry="ghcr.io"
     fi
-    if is_windows; then
-        wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
-    fi
-    mkdir -p "$PATH_CONFIG"
-    cat <<EOF >"$PATH_CONFIG_FILE"
+    if is_true "${RD_USE_PROFILE:-}"; then
+        if is_windows; then
+            # Translate any dots in the distro name into $RD_PROTECTED_DOT (e.g. "Ubuntu-22.04")
+            # so that they are not treated as setting separator characters.
+            add_profile_bool "WSL.integrations.${WSL_DISTRO_NAME//./$RD_PROTECTED_DOT}" true
+        fi
+        add_profile_bool containerEngine.allowedImages.enabled "$image_allow_list"
+        add_profile_list containerEngine.allowedImages.patterns "$registry"
+    else
+        wsl_integrations="{}"
+        if is_windows; then
+            wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
+        fi
+        mkdir -p "$PATH_CONFIG"
+        cat <<EOF >"$PATH_CONFIG_FILE"
 {
   "version": 7,
   "WSL": { "integrations": $wsl_integrations },
@@ -120,6 +132,7 @@ start_container_engine() {
   }
 }
 EOF
+    fi
 
     if using_npm_run_dev; then
         # translate args back into the internal API format
@@ -179,7 +192,7 @@ assert_service_status() {
     local service_name=$1
     local expect=$2
 
-    run rc_service "$service_name" status
+    run rdsudo rc-service "$service_name" status
     # Some services (e.g. k3s) report non-zero status when not running
     if [[ $expect == started ]]; then
         assert_success || return
@@ -203,7 +216,8 @@ rdctl_api_settings() {
 }
 
 wait_for_container_engine() {
-    local CALLER=$(this_function)
+    local CALLER
+    CALLER=$(this_function)
 
     trace "waiting for api /settings to be callable"
     try --max 30 --delay 5 rdctl_api_settings

@@ -14,12 +14,6 @@ else
     CONTAINER_ENGINE_SERVICE=docker
 fi
 
-if is_unix; then
-    RC_SERVICE=rc-service
-elif is_windows; then
-    RC_SERVICE=wsl-service
-fi
-
 if is_macos; then
     CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-osxkeychain"
 elif is_linux; then
@@ -85,7 +79,4 @@ rdshell() {
 }
 rdsudo() {
     rdshell sudo "$@"
-}
-rc_service() {
-    rdsudo "$RC_SERVICE" "$@"
 }

@@ -21,6 +21,6 @@ jobs:
     - run: npm run build
     - run: npm run lint:nofix
     - name: Install shfmt
-      run: go install mvdan.cc/sh/v3/cmd/shfmt@v3.6.0
+      run: go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
     - run: make -C bats lint
     - run: npm test

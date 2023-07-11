@@ -2,7 +2,8 @@
 
 load '../helpers/load'
 # Ensure subshells don't inherit a path that includes ~/.rd/bin
-export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v /.rd/bin | tr '\n' ':')
+export PATH
+PATH=$(echo "$PATH" | tr ':' '\n' | grep -v /.rd/bin | tr '\n' ':')
 
 local_setup() {
     if is_windows; then

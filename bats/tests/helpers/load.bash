@@ -47,6 +47,9 @@ source "$PATH_BATS_HELPERS/paths.bash"
 # and PATH_* variables from paths.bash
 source "$PATH_BATS_HELPERS/commands.bash"
 
+# profile.bash uses is_xxx() from os.bash
+source "$PATH_BATS_HELPERS/profile.bash"
+
 # vm.bash uses various PATH_* variables from paths.bash,
 # rdctl from commands.bash, and jq_output from utils.bash
 source "$PATH_BATS_HELPERS/vm.bash"
@@ -59,7 +62,8 @@ export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
 # If called from foo() this function will call local_foo() if it exist.
 call_local_function() {
-    local func="local_$(calling_function)"
+    local func
+    func="local_$(calling_function)"
     if [ "$(type -t "$func")" = "function" ]; then
         eval "$func"
     fi
@@ -74,14 +78,14 @@ setup_file() {
 }
 
 teardown_file() {
-    call_local_function
-
     capture_logs
 
-    # On Linux & Windows if we don't shutdown Rancher Desktop bats test don't terminate
+    # On Linux & Windows if we don't shutdown Rancher Desktop bats tests don't terminate
     if is_linux || is_windows; then
         run rdctl shutdown
     fi
+
+    call_local_function
 }
 
 setup() {
@@ -95,9 +99,9 @@ setup() {
 }
 
 teardown() {
-    call_local_function
-
     if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
         take_screenshot
     fi
+
+    call_local_function
 }

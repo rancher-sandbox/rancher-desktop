@@ -56,11 +56,26 @@ using_ghcr_images() {
 }
 
 ########################################################################
+: "${RD_DELETE_PROFILES:=true}"
+
+deleting_profiles() {
+    is_true "$RD_DELETE_PROFILES"
+}
+
+########################################################################
 : "${RD_USE_IMAGE_ALLOW_LIST:=false}"
 
 using_image_allow_list() {
     is_true "$RD_USE_IMAGE_ALLOW_LIST"
 }
+
+########################################################################
+# RD_USE_PROFILE is for internal use. It uses a profile instead of
+# settings.json to set initial values for WSL integrations and allowed
+# images list because when settings.json exists the default profile is
+# ignored.
+
+: "${RD_USE_PROFILE:=false}"
 
 ########################################################################
 : "${RD_USE_VZ_EMULATION:=false}"
@@ -96,7 +111,7 @@ if using_networking_tunnel && ! is_windows; then
 fi
 
 ########################################################################
-if ! is_unix && [ -n "${RD_MOUNT_TYPE-}" ]; then
+if ! is_unix && [ -n "${RD_MOUNT_TYPE:-}" ]; then
     fatal "RD_MOUNT_TYPE only works on Linux and macOS"
 fi
 
@@ -125,6 +140,10 @@ validate_enum RD_9P_PROTOCOL_VERSION 9p2000 9p2000.u 9p2000.L
 : "${RD_9P_SECURITY_MODEL:=none}"
 
 validate_enum RD_9P_SECURITY_MODEL passthrough mapped-xattr mapped-file none
+
+########################################################################
+# Use RD_PROTECTED_DOT in profile settings for WSL distro names
+: "${RD_PROTECTED_DOT:=·}"
 
 ########################################################################
 # RD_LOCATION specifies the location where Rancher Desktop is installed

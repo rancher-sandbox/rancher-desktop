@@ -23,7 +23,8 @@ local_setup() {
 
 get_host() {
     if is_windows; then
-        local LB_IP=$(kubectl get svc traefik --namespace kube-system | awk 'NR==2{print $4}')
+        local LB_IP
+        LB_IP=$(kubectl get svc traefik --namespace kube-system | awk 'NR==2{print $4}')
         echo "$LB_IP.sslip.io"
     else
         echo "localhost"
