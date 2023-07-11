@@ -343,6 +343,6 @@ ensure_profile_is_deleted() {
 
 # Only run this once per test file. It cannot be part of setup_file() because
 # we want to be able to call fatal() and skip the rest of the tests.
-if [[ -z ${BATS_SUITE_TEST_NUMBER-} ]] && deleting_profiles; then
+if [[ -z ${BATS_SUITE_TEST_NUMBER:-} ]] && deleting_profiles; then
     foreach_profile ensure_profile_is_deleted
 fi

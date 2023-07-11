@@ -12,7 +12,7 @@ local_setup() {
 }
 
 write_allow_list() { # list
-    local list=${1-}
+    local list=${1:-}
     local allowed=true
 
     if [ -z "$list" ]; then

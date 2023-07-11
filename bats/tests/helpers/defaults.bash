@@ -111,7 +111,7 @@ if using_networking_tunnel && ! is_windows; then
 fi
 
 ########################################################################
-if ! is_unix && [ -n "${RD_MOUNT_TYPE-}" ]; then
+if ! is_unix && [ -n "${RD_MOUNT_TYPE:-}" ]; then
     fatal "RD_MOUNT_TYPE only works on Linux and macOS"
 fi
 

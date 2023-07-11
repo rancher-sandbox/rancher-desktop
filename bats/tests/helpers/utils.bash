@@ -203,7 +203,7 @@ EOF
 # will return /tmp/image.png, or /tmp/image_2.png, etc.
 unique_filename() {
     local basename=$1
-    local extension=${2-}
+    local extension=${2:-}
     local index=1
     local suffix=""
 

@@ -23,7 +23,7 @@ Linux)
 esac
 
 is_linux() {
-    if [ -z "${1-}" ]; then
+    if [ -z "${1:-}" ]; then
         test "$OS" = linux
     else
         test "$OS" = linux -a "$ARCH" = "$1"
@@ -31,7 +31,7 @@ is_linux() {
 }
 
 is_macos() {
-    if [ -z "${1-}" ]; then
+    if [ -z "${1:-}" ]; then
         test "$OS" = darwin
     else
         test "$OS" = darwin -a "$ARCH" = "$1"
@@ -39,7 +39,7 @@ is_macos() {
 }
 
 is_windows() {
-    if [ -z "${1-}" ]; then
+    if [ -z "${1:-}" ]; then
         test "$OS" = windows
     else
         test "$OS" = windows -a "$ARCH" = "$1"

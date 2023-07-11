@@ -106,7 +106,7 @@ start_container_engine() {
     if using_ghcr_images; then
         registry="ghcr.io"
     fi
-    if is_true "${RD_USE_PROFILE-}"; then
+    if is_true "${RD_USE_PROFILE:-}"; then
         if is_windows; then
             # Translate any dots in the distro name into $RD_PROTECTED_DOT (e.g. "Ubuntu-22.04")
             # so that they are not treated as setting separator characters.
