@@ -87,10 +87,11 @@ join_map() {
     local map=$2
     shift 2
 
-    local elem result
+    local elem
+    local result=""
     for elem in "$@"; do
         elem=$(eval "$map" '"$elem"')
-        if [[ -z ${result:-} ]]; then
+        if [[ -z $result ]]; then
             result=$elem
         else
             result="${result}${sep}${elem}"
