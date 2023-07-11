@@ -9,7 +9,7 @@ import { execFileSync } from 'child_process';
 const stdout = execFileSync('gofmt', ['-d', 'src/go']).toString();
 
 if (!stdout) {
-  process.exit(0);
+  return;
 }
 
 console.log(stdout);
