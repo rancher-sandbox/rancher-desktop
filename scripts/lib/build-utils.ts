@@ -389,9 +389,8 @@ export default {
       await addEntry(`${ layerHash }/VERSION`, Buffer.from('1.0'));
       await addEntry(`${ layerHash }/layer.tar`, fs.createReadStream(layerPath), layerOutput.bytesWritten);
       await addEntry(`${ layerHash }/json`, Buffer.from(JSON.stringify({
-        id:      layerHash,
-        created: '0000-01-01T00:00:00.0Z',
-        config:  {
+        id:     layerHash,
+        config: {
           ExposedPorts: { '80/tcp': {} },
           WorkingDir:   '/',
           Entrypoint:   [`/${ path.basename(executablePath) }`],
@@ -404,7 +403,6 @@ export default {
           Entrypoint:   [`/${ path.basename(executablePath) }`],
           WorkingDir:   '/',
         },
-        created: '0000-01-01T00:00:00.0Z',
         history: [],
         os:      'linux',
         rootfs:  {
