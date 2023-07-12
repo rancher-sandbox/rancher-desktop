@@ -17,9 +17,9 @@ pkill_by_path() {
 }
 
 clear_iptables_chain() {
-    local CHAIN=$1
+    local chain=$1
     local rule
-    wsl sudo iptables -L | awk '/^Chain ${CHAIN}/ {print $2}' | while IFS= read -r rule; do
+    wsl sudo iptables -L | awk '/^Chain ${chain}/ {print $2}' | while IFS= read -r rule; do
         wsl sudo iptables -X "$rule"
     done
 }
