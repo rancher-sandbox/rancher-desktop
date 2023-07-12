@@ -27,8 +27,6 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
-  /** The directory that used to hold provided binary integrations */
-  oldIntegration: string;
   /** Deployment Profile System-wide startup settings path. */
   deploymentProfileSystem: string;
   /** Deployment Profile User startup settings path. */
@@ -49,7 +47,6 @@ export class UnixPaths implements Paths {
   cache = '';
   resources = '';
   lima = '';
-  oldIntegration = '';
   integration = '';
   deploymentProfileSystem = '';
   deploymentProfileUser = '';
@@ -85,10 +82,6 @@ export class WindowsPaths implements Paths {
 
   get lima(): string {
     throw new Error('lima not available for Windows');
-  }
-
-  get oldIntegration(): string {
-    throw new Error('Internal error: oldIntegration path not available for Windows');
   }
 
   get integration(): string {

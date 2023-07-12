@@ -20,9 +20,7 @@ import * as settings from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
-import { removeLegacySymlinks, PermissionError } from '@pkg/integrations/legacy';
-import { PathManager } from '@pkg/integrations/pathManager';
-import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
+import { getPathManagerFor, PathManager } from '@pkg/integrations/pathManager';
 import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
@@ -294,18 +292,6 @@ Electron.app.whenReady().then(async() => {
       const message = ex.message ?? ex.toString();
 
       showErrorDialog(title, message, true);
-    }
-
-    if (os.platform() === 'linux' || os.platform() === 'darwin') {
-      try {
-        await removeLegacySymlinks(paths.oldIntegration);
-      } catch (error) {
-        if (error instanceof PermissionError) {
-          await window.openLegacyIntegrations();
-        } else {
-          throw error;
-        }
-      }
     }
 
     diagnostics.runChecks().catch(console.error);
