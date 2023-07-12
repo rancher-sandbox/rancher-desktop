@@ -69,6 +69,7 @@ export default Vue.extend({
     class="action-tabs"
     :no-content="true"
     :default-tab="activeTab"
+    :active-tab="activeTab"
     @changed="tabSelected"
   >
     <template #tabs>
@@ -99,6 +100,7 @@ export default Vue.extend({
       <component
         :is="`preferences-virtual-machine-${ activeTab }`"
         :preferences="preferences"
+        @update:tab="commitPreferences"
         v-on="$listeners"
       />
     </div>
