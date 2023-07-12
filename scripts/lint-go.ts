@@ -12,4 +12,3 @@ if (stdout) {
   console.log(stdout);
   process.exit(1);
 }
-
