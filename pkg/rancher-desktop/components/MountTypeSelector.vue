@@ -2,8 +2,9 @@
 import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import semver from 'semver';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters, mapState } from 'vuex';
 
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
@@ -13,11 +14,18 @@ import {
   CacheMode, MountType, ProtocolVersion, SecurityModel, Settings, VMType,
 } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
+import IncompatiblePreferencesAlert, { CompatiblePrefs } from '~/components/IncompatiblePreferencesAlert.vue';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+interface VuexBindings {
+  macOsVersion: semver.SemVer;
+  isArm: boolean;
+}
+
+export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   components: {
+    IncompatiblePreferencesAlert,
     LabeledBadge,
     RadioGroup,
     RdFieldset,
@@ -30,10 +38,16 @@ export default Vue.extend({
       type:     Object as PropType<Settings>,
       required: true,
     },
+    selectTab: {
+      type:     Function,
+      required: true,
+    },
   },
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
-    options(): { label: string, value: MountType, description: string, experimental: boolean, disabled: boolean }[] {
+    ...mapState('transientSettings', ['macOsVersion', 'isArm']),
+    options(): { label: string, value: MountType, description: string, experimental: boolean, disabled: boolean,
+      compatiblePrefs: CompatiblePrefs | [] }[] {
       const defaultOption = MountType.REVERSE_SSHFS;
 
       return Object.values(MountType)
@@ -50,11 +64,12 @@ export default Vue.extend({
         })
         .map((x) => {
           return {
-            label:        this.t(`virtualMachine.mount.type.options.${ x }.label`),
-            value:        x,
-            description:  this.t(`virtualMachine.mount.type.options.${ x }.description`, {}, true),
-            experimental: x !== defaultOption, // Mark experimental options
-            disabled:     x === MountType.VIRTIOFS && this.virtIoFsDisabled,
+            label:           this.t(`virtualMachine.mount.type.options.${ x }.label`),
+            value:           x,
+            description:     this.t(`virtualMachine.mount.type.options.${ x }.description`, {}, true),
+            experimental:    x !== defaultOption, // Mark experimental options
+            disabled:        x === MountType.VIRTIOFS && this.virtIoFsDisabled,
+            compatiblePrefs: this.getCompatiblePrefs(x),
           };
         });
     },
@@ -68,7 +83,13 @@ export default Vue.extend({
       return os.platform() === 'darwin';
     },
     virtIoFsDisabled(): boolean {
-      return this.preferences.experimental.virtualMachine.type !== VMType.VZ;
+      // virtiofs should only be disabled on macOS WITHOUT the possibility to select the VM type VZ. VZ doesn't need to
+      // be selected, yet. We're going to show a warning banner in that case.
+      return os.platform() === 'darwin' &&
+        (semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0')));
+    },
+    arch(): string {
+      return this.isArm ? 'arm64' : 'x64';
     },
   },
   methods: {
@@ -107,10 +128,30 @@ export default Vue.extend({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t('prefs.onlyWithVZ') };
+        tooltip = { content: this.t(`prefs.onlyWithVZ_${ this.arch }`) };
       }
 
       return tooltip;
+    },
+    getCompatiblePrefs(mountType: MountType): CompatiblePrefs | [] {
+      const compatiblePrefs: CompatiblePrefs = [];
+
+      if (os.platform() === 'darwin') {
+        switch (mountType) {
+        case MountType.NINEP:
+          if (this.preferences.experimental.virtualMachine.type === VMType.VZ) {
+            compatiblePrefs.push( { prefName: VMType.QEMU, tabName: 'emulation' } );
+          }
+          break;
+        case MountType.VIRTIOFS:
+          if (this.preferences.experimental.virtualMachine.type === VMType.QEMU) {
+            compatiblePrefs.push( { prefName: VMType.VZ, tabName: 'emulation' } );
+          }
+          break;
+        }
+      }
+
+      return compatiblePrefs;
     },
   },
 });
@@ -141,9 +182,7 @@ export default Vue.extend({
                   v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
                   :name="groupName"
                   :value="preferences.experimental.virtualMachine.mount.type"
-                  :label="option.label"
                   :val="option.value"
-                  :description="option.description"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
                   @input="updateValue('experimental.virtualMachine.mount.type', $event)"
@@ -153,6 +192,14 @@ export default Vue.extend({
                     <labeled-badge
                       v-if="option.experimental"
                       :text="t('prefs.experimental')"
+                    />
+                  </template>
+                  <template #description>
+                    {{ option.description }}
+                    <incompatible-preferences-alert
+                      v-if="option.value === preferences.experimental.virtualMachine.mount.type"
+                      :select-tab="selectTab"
+                      :compatible-prefs="option.compatiblePrefs"
                     />
                   </template>
                 </radio-button>
