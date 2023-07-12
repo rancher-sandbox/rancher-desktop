@@ -100,6 +100,7 @@ if is_windows; then
     PATH_DISTRO="$PATH_DATA/distro"
     PATH_DISTRO_DATA="$PATH_DATA/distro-data"
     PATH_EXTENSIONS="$PATH_DATA/extensions"
+    SYSTEM32="/mnt/c/Windows/System32"
 
     set_path_resources \
         "$PROGRAMFILES/Rancher Desktop" \
