@@ -7,8 +7,9 @@ import { mapGetters, mapState } from 'vuex';
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
-import { Settings, VMType } from '@pkg/config/settings';
+import { MountType, Settings, VMType } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
+import IncompatiblePreferencesAlert, { CompatiblePrefs } from '~/components/IncompatiblePreferencesAlert.vue';
 
 import type { PropType } from 'vue';
 
@@ -20,6 +21,7 @@ interface VuexBindings {
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-virtual-machine-emulation',
   components: {
+    IncompatiblePreferencesAlert,
     LabeledBadge,
     RadioGroup,
     RdFieldset,
@@ -31,21 +33,27 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       type:     Object as PropType<Settings>,
       required: true,
     },
+    selectTab: {
+      type:     Function,
+      required: true,
+    },
   },
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     ...mapState('transientSettings', ['macOsVersion', 'isArm']),
-    options(): { label: string, value: VMType, description: string, experimental: boolean, disabled: boolean }[] {
+    options(): { label: string, value: VMType, description: string, experimental: boolean, disabled: boolean,
+      compatiblePrefs: CompatiblePrefs | [] }[] {
       const defaultOption = VMType.QEMU;
 
       return Object.values(VMType)
         .map((x) => {
           return {
-            label:        this.t(`virtualMachine.type.options.${ x }.label`),
-            value:        x,
-            description:  this.t(`virtualMachine.type.options.${ x }.description`, {}, true),
-            experimental: x !== defaultOption, // Mark experimental option
-            disabled:     x === VMType.VZ && this.vzDisabled,
+            label:           this.t(`virtualMachine.type.options.${ x }.label`),
+            value:           x,
+            description:     this.t(`virtualMachine.type.options.${ x }.description`, {}, true),
+            experimental:    x !== defaultOption, // Mark experimental option
+            disabled:        x === VMType.VZ && this.vzDisabled,
+            compatiblePrefs: this.getCompatiblePrefs(x),
           };
         });
     },
@@ -78,6 +86,28 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
 
       return tooltip;
     },
+    getCompatiblePrefs(vmType: VMType): CompatiblePrefs | [] {
+      const compatiblePrefs: CompatiblePrefs = [];
+
+      switch (vmType) {
+      case VMType.QEMU:
+        if (this.preferences.experimental.virtualMachine.mount.type === MountType.VIRTIOFS) {
+          compatiblePrefs.push(
+            { prefName: MountType.REVERSE_SSHFS, tabName: 'volumes' },
+            { prefName: MountType.NINEP, tabName: 'volumes' } );
+        }
+        break;
+      case VMType.VZ:
+        if (this.preferences.experimental.virtualMachine.mount.type === MountType.NINEP) {
+          compatiblePrefs.push(
+            { prefName: MountType.REVERSE_SSHFS, tabName: 'volumes' },
+            { prefName: MountType.VIRTIOFS, tabName: 'volumes' } );
+        }
+        break;
+      }
+
+      return compatiblePrefs;
+    },
   },
 });
 </script>
@@ -107,9 +137,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                   v-tooltip="disabledVmTypeTooltip(option.disabled)"
                   :name="groupName"
                   :value="preferences.experimental.virtualMachine.type"
-                  :label="option.label"
                   :val="option.value"
-                  :description="option.description"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
                   @input="onChange('experimental.virtualMachine.type', $event)"
@@ -119,6 +147,14 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                     <labeled-badge
                       v-if="option.experimental"
                       :text="t('prefs.experimental')"
+                    />
+                  </template>
+                  <template #description>
+                    {{ option.description }}
+                    <incompatible-preferences-alert
+                      v-if="option.value === preferences.experimental.virtualMachine.type"
+                      :select-tab="selectTab"
+                      :compatible-prefs="option.compatiblePrefs"
                     />
                   </template>
                 </radio-button>

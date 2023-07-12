@@ -59,12 +59,18 @@ export default Vue.extend({
         },
       );
     },
+    selectTab(tab: string) {
+      const tabbed = this.$refs.tabbed as RdTabbed;
+
+      tabbed.$children[0].select(tab);
+    },
   },
 });
 </script>
 
 <template>
   <rd-tabbed
+    ref="tabbed"
     v-bind="$attrs"
     class="action-tabs"
     :no-content="true"
@@ -99,6 +105,7 @@ export default Vue.extend({
       <component
         :is="`preferences-virtual-machine-${ activeTab }`"
         :preferences="preferences"
+        :select-tab="selectTab"
         v-on="$listeners"
       />
     </div>
