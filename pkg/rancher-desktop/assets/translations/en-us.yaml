@@ -4779,7 +4779,9 @@ preferences:
       error: "There's a problem with the preferences selection."
   locked:
     tooltip: Locked due to organization's policy
-
+  incompatibleTypeWarningPre: 'The option requires'
+  incompatibleTypeWarningPost: 'to be selected.'
+  incompatiblePrefWarningOr: 'or'
 ##############################
 ### Integrations Page
 ##############################
