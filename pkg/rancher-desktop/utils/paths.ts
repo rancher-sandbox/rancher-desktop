@@ -122,6 +122,26 @@ function getRdctlPath(): string | null {
   return rdctlPath;
 }
 
+function getLogDir() {
+  const APP_NAME = 'rancher-desktop';
+  let auxDir = '';
+
+  switch (process.platform) {
+  case 'darwin':
+    return path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
+  case 'linux':
+    auxDir = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
+
+    return path.join(auxDir, APP_NAME, 'logs');
+  case 'win32':
+    auxDir = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
+
+    return path.join(auxDir, APP_NAME, 'logs');
+  default:
+    return 'will be caught later';
+  }
+}
+
 function getPaths(): Paths {
   const rdctlPath = getRdctlPath();
   let pathsData: Partial<Paths>|undefined;
@@ -139,13 +159,17 @@ function getPaths(): Paths {
   if (!pathsData) {
     const processType = process.type;
 
-    if (!errorMsg) {
-      errorMsg = `Internal error: attempting to load the paths module from a ${ processType } process.`;
-    }
     if (processType === 'renderer') {
+      if (!errorMsg) {
+        errorMsg = `Internal error: attempting to load the paths module from a ${ processType } process.`;
+      }
       alert(errorMsg);
+      throw new Error(errorMsg);
     }
-    throw new Error(errorMsg);
+    pathsData = {
+      resources: path.join(process.cwd(), 'resources'),
+      logs:      process.env['RD_LOGS_DIR'] || getLogDir(),
+    };
   }
 
   switch (process.platform) {
