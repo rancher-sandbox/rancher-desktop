@@ -1,12 +1,11 @@
 wait_for_shell() {
-    if is_unix; then
+    if is_windows; then
+        try --max 24 --delay 5 rdctl shell true
+    else
         try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
-        assert_success
         # wait until sshfs mounts are done
         try --max 12 --delay 5 rdctl shell test -d "$HOME/.rd"
-        assert_success
     fi
-    rdctl shell sync
 }
 
 pkill_by_path() {
