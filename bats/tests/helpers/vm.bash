@@ -153,27 +153,8 @@ start_container_engine() {
 }
 EOF
     fi
-
-    if using_dev_mode; then
-        # translate args back into the internal API format
-        local api_args=()
-        for arg in "${args[@]}"; do
-            api_args+=("$(apify_arg "$arg")")
-        done
-        if suppressing_modal_dialogs; then
-            # Don't apify this option
-            api_args+=(--no-modal-dialogs)
-        fi
-
-        yarn dev -- "${api_args[@]}" "$@" &
-    else
-        # Detach `rdctl start` because on Windows the process may not exit until
-        # Rancher Desktop itself quits.
-        if suppressing_modal_dialogs; then
-            args+=(--no-modal-dialogs)
-        fi
-        RD_TEST=bats rdctl start "${args[@]}" "$@" &
-    fi
+    args+=("$@")
+    launch_the_application "${args[@]}"
 }
 
 # shellcheck disable=SC2120
@@ -192,6 +173,31 @@ start_application() {
     # even though the apiserver is already running
     if using_docker; then
         wait_for_container_engine
+    fi
+}
+
+launch_the_application() {
+    local args=("$@")
+
+    if using_dev_mode; then
+        # translate args back into the internal API format
+        local api_args=()
+        for arg in "${args[@]}"; do
+            api_args+=("$(apify_arg "$arg")")
+        done
+        if suppressing_modal_dialogs; then
+            # Don't apify this option
+            api_args+=(--no-modal-dialogs)
+        fi
+
+        yarn dev "${api_args[@]}" &
+    else
+        # Detach `rdctl start` because on Windows the process may not exit until
+        # Rancher Desktop itself quits.
+        if suppressing_modal_dialogs; then
+            args+=(--no-modal-dialogs)
+        fi
+        RD_TEST=bats rdctl start "${args[@]}" &
     fi
 }
 
