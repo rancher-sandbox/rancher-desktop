@@ -124,22 +124,28 @@ function getRdctlPath(): string | null {
 
 function getPaths(): Paths {
   const rdctlPath = getRdctlPath();
-  let pathsData: Partial<Paths>;
+  let pathsData: Partial<Paths>|undefined;
+  let errorMsg = '';
 
   if (rdctlPath) {
     const result = spawnSync(rdctlPath, ['paths'], { encoding: 'utf8' });
 
-    if (result.status !== 0) {
-      throw new Error(`rdctl paths failed: ${ JSON.stringify(result) }`);
+    if (result.status === 0 && result.stdout.length > 0) {
+      pathsData = JSON.parse(result.stdout);
+    } else {
+      errorMsg = `rdctl paths failed: ${ JSON.stringify(result) }`;
     }
-    pathsData = JSON.parse(result.stdout);
-  } else {
-    // If rdctl hasn't been compiled yet, we can't use it to get paths.
-    // Define defaults that assume that we are running a script.
-    pathsData = {
-      resources: path.join(process.cwd(), 'resources'),
-      logs:      path.join(process.cwd(), 'script_logs'),
-    };
+  }
+  if (!pathsData) {
+    const processType = process.type;
+
+    if (!errorMsg) {
+      errorMsg = `Internal error: attempting to load the paths module from a ${ processType } process.`;
+    }
+    if (processType === 'renderer') {
+      alert(errorMsg);
+    }
+    throw new Error(errorMsg);
   }
 
   switch (process.platform) {
