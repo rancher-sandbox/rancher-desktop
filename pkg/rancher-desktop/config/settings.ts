@@ -4,7 +4,6 @@
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-// TODO: Find a way to share this value with scripts/generateCliCode.ts
 export const CURRENT_SETTINGS_VERSION = 9 as const;
 
 export enum VMType {
