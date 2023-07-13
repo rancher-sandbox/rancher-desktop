@@ -17,21 +17,6 @@ pkill_by_path() {
     fi
 }
 
-windows_cleanup() {
-    # Fixed in WSL 0.64.0, however below is a workaround for windows10
-    # https://github.com/microsoft/WSL/releases/tag/0.64.0
-    export WSL_UTF8=1
-    WSLENV="$WSLENV":WSL_UTF8
-    # match rancher-desktop and not rancher-desktop-data
-    if is_windows && wsl_exe -l -v | grep -Po '(?<=^| )rancher-desktop(?!-data(?=\b|$))'; then
-        run wsl_exe --distribution rancher-desktop ip link delete docker0
-        run wsl_exe --distribution rancher-desktop ip link delete nerdctl0
-
-        wsl_exe --distribution rancher-desktop iptables -F
-        wsl_exe --distribution rancher-desktop iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -I{} iptables -X {}
-    fi
-}
-
 factory_reset() {
     if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
         capture_logs
@@ -48,7 +33,13 @@ factory_reset() {
             true
         fi
     fi
-    windows_cleanup
+    if is_windows && wsl.exe -d rancher-desktop true >/dev/null; then
+        run wsl.exe --distribution rancher-desktop sudo ip link delete docker0
+        run wsl.exe --distribution rancher-desktop sudo ip link delete nerdctl0
+
+        wsl.exe --distribution rancher-desktop sudo iptables -F
+        wsl.exe --distribution rancher-desktop sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -I{} sudo iptables -X {}
+    fi
     rdctl factory-reset
 }
 

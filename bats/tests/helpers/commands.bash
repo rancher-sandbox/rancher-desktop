@@ -80,6 +80,3 @@ rdshell() {
 rdsudo() {
     rdshell sudo "$@"
 }
-wsl_exe() {
-    "$SYSTEM32/wsl.exe" "$@"
-}
