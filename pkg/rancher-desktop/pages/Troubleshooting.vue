@@ -124,11 +124,9 @@ export default {
     });
     ipcRenderer.on('is-debugging', (_, status) => {
       this.$data.isDebugging = status;
-      console.log(`QQQ: isDebugging: ${ status }`);
     });
     ipcRenderer.on('always-debugging', (_, status) => {
       this.$data.alwaysDebugging = status;
-      console.log(`QQQ: alwaysDebugging: ${ status }`);
     });
     ipcRenderer.send('settings-read');
     ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {

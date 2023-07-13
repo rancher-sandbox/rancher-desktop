@@ -162,6 +162,7 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
+    console.log(`QQQ: commandLineArgs: ${ commandLineArgs }`, commandLineArgs);
     setupProtocolHandlers();
 
     // make sure we have the macOS version cached before calling getMacOsVersion()

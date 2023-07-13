@@ -7,15 +7,6 @@ import { dirname, join } from 'path';
 
 import _ from 'lodash';
 
-try {
-  throw new Error('loading settingsImpl...');
-} catch (e: any) {
-  const blip = new Date().valueOf() % 1000000;
-  const processType = process.type;
-
-  fs.writeFileSync(`/tmp/${ blip }-${ processType }-settingsImpl.txt`, `settingsImpl loaded from ${ e.stack }`);
-}
-
 import {
   ContainerEngine, CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
   LockedSettingsType, Settings,

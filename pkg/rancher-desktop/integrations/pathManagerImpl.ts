@@ -3,9 +3,9 @@ import os from 'os';
 import path from 'path';
 
 import manageLinesInFile from '@pkg/integrations/manageLinesInFile';
+import { ManualPathManager, PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
 import mainEvents from '@pkg/main/mainEvents';
 import paths from '@pkg/utils/paths';
-import { ManualPathManager, PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
 
 /**
  * RcFilePathManager is for when the user wants Rancher Desktop to
