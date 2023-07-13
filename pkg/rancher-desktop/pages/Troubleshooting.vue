@@ -88,7 +88,7 @@ import _ from 'lodash';
 
 import TroubleshootingLineItem from '@pkg/components/TroubleshootingLineItem.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
-import { defaultSettings, runInDebugMode } from '@pkg/config/settings';
+import { defaultSettings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
@@ -99,8 +99,8 @@ export default {
     state:           ipcRenderer.sendSync('k8s-state'),
     settings:        defaultSettings,
     debugLocked:     false,
-    isDebugging:     runInDebugMode(defaultSettings.application.debug),
-    alwaysDebugging: runInDebugMode(false),
+    isDebugging:     false,
+    alwaysDebugging: false,
   }),
   computed: {
     debugModeTooltip() {
@@ -117,15 +117,22 @@ export default {
     });
     ipcRenderer.on('settings-read', (_, newSettings) => {
       this.$data.settings = newSettings;
-      this.$data.isDebugging = runInDebugMode(newSettings.application.debug);
+      ipcRenderer.send('get-debugging-statuses');
     });
     ipcRenderer.on('settings-update', (_, newSettings) => {
       this.$data.settings = newSettings;
+    });
+    ipcRenderer.on('is-debugging', (_, status) => {
+      this.$data.isDebugging = status;
+    });
+    ipcRenderer.on('always-debugging', (_, status) => {
+      this.$data.alwaysDebugging = status;
     });
     ipcRenderer.send('settings-read');
     ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
       this.$data.debugLocked = _.get(lockedFields, 'application.debug');
     });
+    ipcRenderer.send('get-debugging-statuses');
   },
   methods: {
     async factoryReset() {
@@ -163,8 +170,8 @@ export default {
       ipcRenderer.send('show-logs');
     },
     updateDebug(value) {
-      this.$data.isDebugging = runInDebugMode(value);
       ipcRenderer.invoke('settings-write', { application: { debug: value } });
+      ipcRenderer.send('get-debugging-statuses');
     },
     async resetKubernetes() {
       const cancelPosition = 1;

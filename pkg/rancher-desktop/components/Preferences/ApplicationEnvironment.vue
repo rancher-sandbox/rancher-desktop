@@ -6,6 +6,7 @@ import { mapGetters } from 'vuex';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
@@ -22,6 +23,12 @@ export default Vue.extend({
   computed: {
     ...mapGetters('applicationSettings', ['pathManagementStrategy']),
     ...mapGetters('preferences', ['isPreferenceLocked']),
+  },
+  mounted() {
+    ipcRenderer.on('settings-read', (_, currentSettings: Settings) => {
+      this.$store.dispatch('preferences/updatePreferencesData', { property: 'application.pathManagementStrategy', value: currentSettings.application.pathManagementStrategy });
+    });
+    ipcRenderer.send('settings-read');
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
