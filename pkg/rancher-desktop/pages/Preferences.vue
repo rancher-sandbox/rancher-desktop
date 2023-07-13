@@ -128,11 +128,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         ],
       });
 
-      if (result.response === cancelPosition) {
-        return false;
-      }
-
-      return true;
+      return result.response !== cancelPosition;
     },
     reloadPreferences() {
       window.location.reload();

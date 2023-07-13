@@ -29,7 +29,6 @@ export default Vue.extend({
       this.$store.dispatch('preferences/updatePreferencesData', { property: 'application.pathManagementStrategy', value: currentSettings.application.pathManagementStrategy });
     });
     ipcRenderer.send('settings-read');
-
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {

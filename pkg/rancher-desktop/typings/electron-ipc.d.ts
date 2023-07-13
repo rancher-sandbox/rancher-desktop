@@ -139,8 +139,8 @@ export interface IpcRendererEvents {
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
   'update-state': (state: import('@pkg/main/update').UpdateState) => void;
-  'always-debugging': (status) => void;
-  'is-debugging': (status) => void;
+  'always-debugging': (status: boolean) => void;
+  'is-debugging': (status: boolean) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@pkg/backend/k8s').State) => void;
   'k8s-current-engine': (engine: import('@pkg/config/settings').ContainerEngine) => void;
