@@ -2,7 +2,7 @@
  * This file contains the main process side code to install extensions.
  * @see @pkg/extensions for the renderer process code.
  */
-
+// import type { ContainerEngineClient } from '@pkg/backend/containerClient/types';
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { Settings } from '@pkg/config/settings';
 import type { RecursiveReadonly } from '@pkg/utils/typeUtils';

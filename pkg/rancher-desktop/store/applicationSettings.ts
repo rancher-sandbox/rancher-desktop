@@ -1,9 +1,11 @@
-
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { getSettings } from '@pkg/config/settings';
-import type { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import type { defaultSettings, Settings } from '@pkg/config/settings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+
+let pathManagementStrategy = PathManagementStrategy.RcFiles;
+let adminAccess = false;
 
 /**
  * State is the type of the state we are maintaining in this store.
@@ -42,6 +44,7 @@ export const actions = {
   async commitPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
     await ipcRenderer.invoke('settings-write', { application: { pathManagementStrategy: strategy } });
+    ipcRenderer.send('settings-read');
   },
   setAdminAccess({ commit, state }: AppActionContext, allowed: boolean) {
     if (allowed !== state.adminAccess) {
@@ -52,6 +55,7 @@ export const actions = {
     if (allowed !== state.adminAccess) {
       commit('SET_ADMIN_ACCESS', allowed);
       await ipcRenderer.invoke('settings-write', { application: { adminAccess: allowed } });
+      ipcRenderer.send('settings-read');
     }
   },
 };

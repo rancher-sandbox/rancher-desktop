@@ -27,7 +27,7 @@ import Nav from '@pkg/components/Nav.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
 import initExtensions from '@pkg/preload/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import { mainRoutes } from '@pkg/window';
+import { mainRoutes } from '@pkg/window/constants';
 
 export default {
   name:       'App',

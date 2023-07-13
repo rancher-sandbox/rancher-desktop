@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 
 import { BrowserWindow } from 'electron';

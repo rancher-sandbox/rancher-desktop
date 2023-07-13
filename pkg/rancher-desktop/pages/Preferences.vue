@@ -13,7 +13,7 @@ import type { NavItemName, TransientSettings } from '@pkg/config/transientSettin
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
-import { preferencesNavItems } from '@pkg/window/preferences';
+import { preferencesNavItems } from '@pkg/window/preferenceConstants';
 
 interface VuexBindings {
   credentials: Omit<ServerState, 'pid'>;

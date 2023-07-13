@@ -24,15 +24,6 @@ export const windowMapping: Record<string, number> = {};
 
 export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
 
-export const mainRoutes = [
-  { route: '/General' },
-  { route: '/PortForwarding' },
-  { route: '/Images' },
-  { route: '/Troubleshooting' },
-  { route: '/Diagnostics' },
-  { route: '/Extensions' },
-];
-
 /**
  * Restore or focus a window if it is already open
  * @param window The Electron Browser window to show or restore

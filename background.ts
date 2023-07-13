@@ -17,10 +17,12 @@ import { Steve } from '@pkg/backend/steve';
 import { LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import { Help } from '@pkg/config/help';
 import * as settings from '@pkg/config/settings';
+import * as settingsImpl from '@pkg/config/settingsImpl';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
 import { removeLegacySymlinks, PermissionError } from '@pkg/integrations/legacy';
-import { getPathManagerFor, PathManager } from '@pkg/integrations/pathManager';
+import { PathManager } from '@pkg/integrations/pathManager';
+import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
 import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
@@ -117,7 +119,7 @@ Electron.app.on('second-instance', async() => {
 // when settings change
 mainEvents.on('settings-update', async(newSettings) => {
   console.log(`mainEvents settings-update: ${ JSON.stringify(newSettings) }`);
-  const runInDebugMode = settings.runInDebugMode(newSettings.application.debug);
+  const runInDebugMode = settingsImpl.runInDebugMode(newSettings.application.debug);
 
   if (runInDebugMode) {
     setLogLevel('debug');
@@ -198,8 +200,8 @@ Electron.app.whenReady().then(async() => {
       throw ex;
     }
     try {
-      cfg = settings.load(deploymentProfiles);
-      settings.updateLockedFields(deploymentProfiles.locked);
+      cfg = settingsImpl.load(deploymentProfiles);
+      settingsImpl.updateLockedFields(deploymentProfiles.locked);
     } catch (err: any) {
       const titlePart = err.name || 'Failed to load settings';
       const message = err.message || err.toString();
@@ -213,7 +215,7 @@ Electron.app.whenReady().then(async() => {
       validateEarlySettings(settings.defaultSettings, deploymentProfiles.locked, {});
 
       if (commandLineArgs.length) {
-        cfg = updateFromCommandLine(cfg, settings.getLockedSettings(), commandLineArgs);
+        cfg = updateFromCommandLine(cfg, settingsImpl.getLockedSettings(), commandLineArgs);
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       }
     } catch (err) {
@@ -317,7 +319,7 @@ Electron.app.whenReady().then(async() => {
 });
 
 async function doFirstRunDialog() {
-  if (settings.firstRunDialogNeeded()) {
+  if (settingsImpl.firstRunDialogNeeded()) {
     await window.openFirstRunDialog();
   }
   firstRunDialogComplete = true;
@@ -546,8 +548,12 @@ ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
   preferencesSetDirtyFlag(dirtyFlag);
 });
 
+ipcMainProxy.on('get-debugging-statuses', () => {
+  window.send('is-debugging', settingsImpl.runInDebugMode(cfg.application.debug));
+  window.send('always-debugging', settingsImpl.runInDebugMode(false));
+});
 function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings>>) {
-  settings.save(settings.merge(cfg, arg));
+  settingsImpl.save(settingsImpl.merge(cfg, arg));
   mainEvents.emit('settings-update', cfg);
 }
 
@@ -598,7 +604,7 @@ ipcMainProxy.on('k8s-reset', async(_, arg) => {
 
 ipcMainProxy.handle('api-get-credentials', () => mainEvents.invoke('api-get-credentials'));
 
-ipcMainProxy.handle('get-locked-fields', () => settings.getLockedSettings());
+ipcMainProxy.handle('get-locked-fields', () => settingsImpl.getLockedSettings());
 
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
@@ -998,7 +1004,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       this.settingsValidator.k8sVersions = currentK8sVersions;
     }
 
-    const result = this.settingsValidator.validateSettings(existingSettings, newSettings, settings.getLockedSettings());
+    const result = this.settingsValidator.validateSettings(existingSettings, newSettings, settingsImpl.getLockedSettings());
 
     if (clearVersionsAfterTesting) {
       this.settingsValidator.k8sVersions = [];
@@ -1012,7 +1018,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   getLockedSettings() {
-    return jsonStringifyWithWhiteSpace(settings.getLockedSettings());
+    return jsonStringifyWithWhiteSpace(settingsImpl.getLockedSettings());
   }
 
   getDiagnosticCategories(): string[]|undefined {

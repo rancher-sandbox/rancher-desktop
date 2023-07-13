@@ -17,6 +17,7 @@ const cfg = _.merge(
     kubernetes:  { version: '1.23.4' },
     application: { pathManagementStrategy: PathManagementStrategy.Manual },
   });
+// cfg.virtualMachine.memoryInGB ||= getDefaultMemory();
 
 const subject = new SettingsValidator();
 let spyPlatform: jest.SpiedFunction<typeof os.platform>;

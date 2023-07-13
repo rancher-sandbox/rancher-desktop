@@ -7,6 +7,7 @@ import _ from 'lodash';
 import plist from 'plist';
 
 import * as settings from '../settings';
+import * as settingsImpl from '../settingsImpl';
 
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import paths from '@pkg/utils/paths';
@@ -37,7 +38,7 @@ describe('settings', () => {
         },
       };
       const changes = { a: 10, b: { c: 20, e: { } } };
-      const result = settings.merge(input, changes);
+      const result = settingsImpl.merge(input, changes);
 
       expect(result).toEqual({
         a: 10,
@@ -52,7 +53,7 @@ describe('settings', () => {
         a: [1, 2, 3, 4, 5], b: 3, c: 5,
       };
       const changes = { a: [1, 3, 5, 7], b: 4 };
-      const result = settings.merge(input, changes);
+      const result = settingsImpl.merge(input, changes);
 
       expect(result).toEqual({
         a: [1, 3, 5, 7], b: 4, c: 5,
@@ -61,14 +62,14 @@ describe('settings', () => {
     test('removes values set to undefined', () => {
       const input = { a: 1, b: { c: 3, d: 4 } };
       const changes = { b: { c: undefined } };
-      const result = settings.merge(input, changes);
+      const result = settingsImpl.merge(input, changes);
 
       expect(result).toEqual({ a: 1, b: { d: 4 } });
     });
     test('returns merged settings', () => {
       const input = { a: 1 };
       const changes = { a: 2 };
-      const result = settings.merge(input, changes);
+      const result = settingsImpl.merge(input, changes);
 
       expect(result).toBe(input);
       expect(input).toEqual({ a: 2 });
@@ -168,7 +169,7 @@ describe('settings', () => {
 
     beforeEach(() => {
       jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
-      settings.clearSettings();
+      settingsImpl.clearSettings();
     });
     afterEach(() => {
       mock.mockRestore();
@@ -296,9 +297,9 @@ describe('settings', () => {
         test('all fields are unlocked', async() => {
           const profiles = await readDeploymentProfiles();
 
-          settings.createSettings(profiles);
-          settings.updateLockedFields(profiles.locked);
-          verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+          settingsImpl.createSettings(profiles);
+          settingsImpl.updateLockedFields(profiles.locked);
+          verifyAllFieldsAreUnlocked(settingsImpl.getLockedSettings());
         });
       });
       describe('when there is a profile', () => {
@@ -326,12 +327,12 @@ describe('settings', () => {
                 .mockImplementation(createMocker(system, user));
               const profiles = await readDeploymentProfiles();
 
-              settings.createSettings(profiles);
-              settings.updateLockedFields(profiles.locked);
+              settingsImpl.createSettings(profiles);
+              settingsImpl.updateLockedFields(profiles.locked);
               if (shouldLock) {
-                verifyAllFieldsAreLocked(settings.getLockedSettings());
+                verifyAllFieldsAreLocked(settingsImpl.getLockedSettings());
               } else {
-                verifyAllFieldsAreUnlocked(settings.getLockedSettings());
+                verifyAllFieldsAreUnlocked(settingsImpl.getLockedSettings());
               }
             });
         });
@@ -376,7 +377,7 @@ describe('settings', () => {
           },
         },
       };
-      const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
+      const calculatedLockedFields = settingsImpl.determineLockedFields(lockedSettings);
 
       expect(calculatedLockedFields).toEqual(expectedLockedFields);
     });
@@ -407,14 +408,14 @@ describe('settings', () => {
         },
         kubernetes: { version: true },
       };
-      const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
+      const calculatedLockedFields = settingsImpl.determineLockedFields(lockedSettings);
 
       expect(calculatedLockedFields).toEqual(expectedLockedFields);
     });
     test('flattens an empty object', () => {
       const lockedSettings = { };
       const expectedLockedFields = { };
-      const calculatedLockedFields = settings.determineLockedFields(lockedSettings);
+      const calculatedLockedFields = settingsImpl.determineLockedFields(lockedSettings);
 
       expect(calculatedLockedFields).toEqual(expectedLockedFields);
     });
