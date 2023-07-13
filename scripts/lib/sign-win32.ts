@@ -76,6 +76,7 @@ export async function sign(workDir: string) {
     '/td', 'SHA256',
     '/tr', config.win.rfc3161TimeStampServer as string,
     '/du', 'https://rancherdesktop.io',
+    '/d', 'Rancher Desktop',
   ];
 
   if (certPassword.length > 0) {
@@ -114,6 +115,7 @@ async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBu
     '/td', 'SHA256',
     '/tr', config.win.rfc3161TimeStampServer as string,
     '/du', 'https://rancherdesktop.io',
+    '/d', 'Rancher Desktop',
     installerPath,
   ];
 
