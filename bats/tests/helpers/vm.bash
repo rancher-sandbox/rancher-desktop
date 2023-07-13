@@ -33,15 +33,14 @@ factory_reset() {
             true
         fi
     fi
-    rdctl factory-reset
+    if is_windows && wsl.exe -d rancher-desktop true >/dev/null; then
+        run wsl.exe --distribution rancher-desktop sudo ip link delete docker0
+        run wsl.exe --distribution rancher-desktop sudo ip link delete nerdctl0
 
-    if is_windows; then
-        run sudo ip link delete docker0
-        run sudo ip link delete nerdctl0
-
-        sudo iptables -F
-        sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -l sudo iptables -X
+        wsl.exe --distribution rancher-desktop sudo iptables -F
+        wsl.exe --distribution rancher-desktop sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -I{} sudo iptables -X {}
     fi
+    rdctl factory-reset
 }
 
 # Turn `rdctl start` arguments into `npm run dev` arguments
