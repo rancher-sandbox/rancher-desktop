@@ -33,6 +33,7 @@ else
 fi
 
 CONTAINERD_NAMESPACE=default
+WSL_DISTRO=rancher-desktop
 
 no_cr() {
     tr -d '\r'
@@ -79,4 +80,7 @@ rdshell() {
 }
 rdsudo() {
     rdshell sudo "$@"
+}
+wsl() {
+    wsl.exe -d "$WSL_DISTRO" "$@"
 }

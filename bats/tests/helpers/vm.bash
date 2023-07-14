@@ -33,12 +33,12 @@ factory_reset() {
             true
         fi
     fi
-    if is_windows && wsl.exe -d rancher-desktop true >/dev/null; then
-        run wsl.exe --distribution rancher-desktop sudo ip link delete docker0
-        run wsl.exe --distribution rancher-desktop sudo ip link delete nerdctl0
+    if is_windows && wsl true >/dev/null; then
+        run wsl sudo ip link delete docker0
+        run wsl sudo ip link delete nerdctl0
 
-        wsl.exe --distribution rancher-desktop sudo iptables -F
-        wsl.exe --distribution rancher-desktop sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -I{} sudo iptables -X {}
+        wsl sudo iptables -F
+        wsl sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -I{} wsl sudo iptables -X {}
     fi
     rdctl factory-reset
 }
