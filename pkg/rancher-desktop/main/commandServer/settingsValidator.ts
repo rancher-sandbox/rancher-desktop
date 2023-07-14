@@ -19,7 +19,7 @@ import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { parseImageReference, validateImageName, validateImageTag } from '@pkg/utils/dockerUtils';
 import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
-import { preferencesNavItems } from '@pkg/window/preferences';
+import { preferencesNavItems } from '@pkg/window/preferenceConstants';
 
 type settingsLike = Record<string, any>;
 

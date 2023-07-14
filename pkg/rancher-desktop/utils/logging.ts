@@ -37,6 +37,9 @@ export function setLogLevel(level: logLevel): void {
 
 export class Log {
   constructor(topic: string, directory = paths.logs) {
+    if (process.type === 'renderer') {
+      topic = `${ topic }-renderer`;
+    }
     this.path = path.join(directory, `${ topic }.log`);
     this.reopen();
     // The following lines only exist because TypeScript can't reason about

@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import { START_LINE, END_LINE } from '@pkg/integrations/manageLinesInFile';
-import { RcFilePathManager } from '@pkg/integrations/pathManager';
+import { RcFilePathManager } from '@pkg/integrations/pathManagerImpl';
 jest.mock('../../main/mainEvents');
 
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;

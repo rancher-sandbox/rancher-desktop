@@ -6,7 +6,8 @@ import { findHomeDir } from '@kubernetes/client-node';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
 import { State } from '@pkg/backend/k8s';
-import { Settings, ContainerEngine, runInDebugMode } from '@pkg/config/settings';
+import { Settings, ContainerEngine } from '@pkg/config/settings';
+import { runInDebugMode } from '@pkg/config/settingsImpl';
 import type { IntegrationManager } from '@pkg/integrations/integrationManager';
 import mainEvents from '@pkg/main/mainEvents';
 import BackgroundProcess from '@pkg/utils/backgroundProcess';

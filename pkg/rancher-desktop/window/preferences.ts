@@ -5,35 +5,10 @@ import { app, dialog } from 'electron';
 import { webRoot, createWindow } from '.';
 
 import { Help } from '@pkg/config/help';
-import { NavItemName } from '@pkg/config/transientSettings';
 import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
 import { getVersion } from '@pkg/utils/version';
-
-interface NavItems {
-  name: NavItemName;
-  tabs?: string[];
-}
-
-const wslTabs: string[] = ['integrations', 'network', 'proxy'];
-const vmLinuxTabs: string[] = ['hardware', 'volumes'];
-const vmDarwinTabs: string[] = vmLinuxTabs.concat(['network', 'emulation']);
-
-export const preferencesNavItems: NavItems[] = [
-  {
-    name: 'Application',
-    tabs: ['general', 'behavior', 'environment'],
-  },
-  {
-    name: process.platform === 'win32' ? 'WSL' : 'Virtual Machine',
-    tabs: process.platform === 'win32' ? wslTabs : ( process.platform === 'linux' ? vmLinuxTabs : vmDarwinTabs ),
-  },
-  {
-    name: 'Container Engine',
-    tabs: ['general', 'allowed-images'],
-  },
-  { name: 'Kubernetes' },
-];
+import { preferencesNavItems } from '@pkg/window/preferenceConstants';
 
 let isDirty = false;
 

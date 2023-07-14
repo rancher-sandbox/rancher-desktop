@@ -6,12 +6,13 @@ import Electron, {
 } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
-import { getSettings } from '@pkg/config/settings';
+import { getSettings } from '@pkg/config/settingsImpl';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
+import { mainRoutes } from '@pkg/window/constants';
 import { openPreferences } from '@pkg/window/preferences';
 
 const console = Logging[`window_${ process.type || 'unknown' }`];
@@ -23,15 +24,6 @@ const console = Logging[`window_${ process.type || 'unknown' }`];
 export const windowMapping: Record<string, number> = {};
 
 export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
-
-export const mainRoutes = [
-  { route: '/General' },
-  { route: '/PortForwarding' },
-  { route: '/Images' },
-  { route: '/Troubleshooting' },
-  { route: '/Diagnostics' },
-  { route: '/Extensions' },
-];
 
 /**
  * Restore or focus a window if it is already open
@@ -65,7 +57,6 @@ export function getWindow(name: string): Electron.BrowserWindow | null {
  * @param name The window identifier; this controls window re-use.
  * @param url The URL to load into the window.
  * @param options A hash of options used by `new BrowserWindow(options)`
- * @param prefs Options to control the new window.
  */
 export function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
   let window = getWindow(name);
@@ -439,6 +430,7 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * your dialog to show.
  *
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
+ * @param opts The usual browser-window options
  * @returns The opened window
  */
 export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
