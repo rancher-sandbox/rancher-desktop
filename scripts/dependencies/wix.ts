@@ -49,9 +49,8 @@ export class Wix implements Dependency {
     const major = Number(onlyNumbers[0]);
     const minor = Number(onlyNumbers.slice(1, 3));
     const patch = Number(onlyNumbers[3]);
-    const semverVersion = `${ major }.${ minor }.${ patch }`;
 
-    return semverVersion;
+    return `${ major }.${ minor }.${ patch }`;
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {

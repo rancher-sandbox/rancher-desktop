@@ -35,6 +35,7 @@ export const actions = {
   },
   async commitPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
+    cfg.application.pathManagementStrategy = strategy;
     await ipcRenderer.invoke('settings-write', { application: { pathManagementStrategy: strategy } });
   },
 };

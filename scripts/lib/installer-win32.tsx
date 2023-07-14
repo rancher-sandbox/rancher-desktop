@@ -33,7 +33,7 @@ function getPackageJson(appDir: string): Record<string, any> {
 function getAppVersion(appDir: string): string {
   const packageVersion = getPackageJson(appDir).version;
   // We have a git describe style version, 1.2.3-1234-gabcdef
-  const [__, semver, offset] = /^v?(\d+\.\d+\.\d+)(?:-(\d+))?/.exec(packageVersion) ?? [];
+  const [, semver, offset] = /^v?(\d+\.\d+\.\d+)(?:-(\d+))?/.exec(packageVersion) ?? [];
 
   if (!semver) {
     throw new Error(`Could not parse version string ${ packageVersion }`);
@@ -46,6 +46,7 @@ function getAppVersion(appDir: string): string {
  * Given an unpacked build, produce a MSI installer.
  * @param workDir Directory in which we can write temporary work files.
  * @param appDir Directory containing extracted application zip file.
+ * @param development True if we're in dev mode
  * @returns The path of the built installer.
  */
 export default async function buildInstaller(workDir: string, appDir: string, development = false): Promise<string> {
