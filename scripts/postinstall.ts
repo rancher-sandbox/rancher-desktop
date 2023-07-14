@@ -2,7 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { spawnFile } from '@pkg/utils/childProcess';
+import buildUtils from './lib/build-utils';
+
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -13,6 +14,7 @@ import {
 import {
   DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
 } from 'scripts/lib/dependencies';
+import { simpleSpawn } from 'scripts/simple_process';
 
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).
@@ -121,14 +123,13 @@ const keepScriptAlive = setTimeout(() => { }, 24 * 3600 * 1000);
 
   try {
     await runScripts();
-    await spawnFile('node',
-      ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'],
-      { stdio: 'inherit' });
-    await spawnFile('node', ['scripts/ts-wrapper.js',
+    await simpleSpawn('node',
+      ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps']);
+    await simpleSpawn('node', ['scripts/ts-wrapper.js',
       'scripts/generateCliCode.ts',
       'pkg/rancher-desktop/assets/specs/command-api.yaml',
-      'src/go/rdctl/pkg/options/generated/options.go'],
-    { stdio: 'inherit' });
+      'src/go/rdctl/pkg/options/generated/options.go']);
+    await buildUtils.buildGoUtilities();
     exitCode = 0;
   } catch (e: any) {
     console.error('POSTINSTALL ERROR: ', e);

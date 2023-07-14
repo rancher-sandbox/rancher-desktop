@@ -11,7 +11,7 @@ import * as path from 'path';
 
 import buildUtils from './lib/build-utils';
 
-import { spawnFile } from '@pkg/utils/childProcess';
+import { simpleSpawn } from 'scripts/simple_process';
 
 class Builder {
   async cleanup() {
@@ -53,8 +53,8 @@ class Builder {
     const nuxtBin = 'node_modules/nuxt/bin/nuxt.js';
     const nuxtOutDir = path.join(buildUtils.rendererSrcDir, 'dist');
 
-    await spawnFile('node', [nuxtBin, 'build', buildUtils.rendererSrcDir], { stdio: 'inherit' });
-    await spawnFile('node', [nuxtBin, 'generate', buildUtils.rendererSrcDir], { stdio: 'inherit' });
+    await simpleSpawn('node', [nuxtBin, 'build', buildUtils.rendererSrcDir]);
+    await simpleSpawn('node', [nuxtBin, 'generate', buildUtils.rendererSrcDir]);
     await fs.rename(nuxtOutDir, buildUtils.appDir);
   }
 

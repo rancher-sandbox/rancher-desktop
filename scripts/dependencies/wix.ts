@@ -6,7 +6,7 @@ import semver from 'semver';
 import { Dependency, DownloadContext, getPublishedReleaseTagNames } from '../lib/dependencies';
 import { download } from '../lib/download';
 
-import { spawnFile } from '@pkg/utils/childProcess';
+import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * Wix downloads the latest build of WiX3.
@@ -30,7 +30,7 @@ export class Wix implements Dependency {
 
     await fs.promises.mkdir(wixDir, { recursive: true });
     await download(url, archivePath);
-    await spawnFile('unzip', ['-o', archivePath, '-d', wixDir], { cwd: wixDir, stdio: 'inherit' });
+    await simpleSpawn('unzip', ['-o', archivePath, '-d', wixDir], { cwd: wixDir });
   }
 
   async getAvailableVersions(): Promise<string[]> {

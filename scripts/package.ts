@@ -10,8 +10,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import buildInstaller from './lib/installer-win32';
-
-import { spawnFile } from '@pkg/utils/childProcess';
+import { simpleSpawn } from './simple_process';
 
 /** Get the argument value (if any) for any of the given argument names */
 function getArgValue(args: string[], ...argNames: string[]): string | undefined {
@@ -61,7 +60,7 @@ class Builder {
 
     await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
     args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
-    await spawnFile('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { stdio: 'inherit', env });
+    await simpleSpawn('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { env });
 
     if (process.platform === 'win32') {
       const distDir = path.join(process.cwd(), 'dist');

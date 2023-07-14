@@ -456,7 +456,14 @@ export default {
    * Build the main process code.
    */
   buildMain(): Promise<void> {
-    const tasks = [() => this.buildJavaScript(this.webpackConfig)];
+    return this.wait(() => this.buildJavaScript(this.webpackConfig));
+  },
+
+  /**
+   * Build the things we build with go
+   */
+  async buildGoUtilities() {
+    const tasks = [];
 
     if (os.platform().startsWith('win')) {
       tasks.push(() => this.buildWSLHelper());
@@ -471,7 +478,7 @@ export default {
     tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
     tasks.push(() => this.buildExtensionProxyImage());
 
-    return this.wait(...tasks);
+    return await this.wait(...tasks);
   },
 
 };
