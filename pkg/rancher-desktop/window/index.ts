@@ -591,20 +591,6 @@ export async function openSudoPrompt(explanations: Record<string, string[]>): Pr
   return result;
 }
 
-export async function openLegacyIntegrations(): Promise<void> {
-  const window = openDialog(
-    'LegacyIntegrationNotification',
-    {
-      title:  'Rancher Desktop - Legacy Integrations',
-      parent: getWindow('main') ?? undefined,
-    },
-  );
-
-  await (new Promise<void>((resolve) => {
-    window.on('closed', resolve);
-  }));
-}
-
 export async function showMessageBox(options: Electron.MessageBoxOptions, couldBeModal = false) {
   const mainWindow = couldBeModal ? getWindow('main') : null;
 

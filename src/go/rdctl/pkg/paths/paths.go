@@ -28,8 +28,6 @@ type Paths struct {
 	Lima string `json:"lima,omitempty"`
 	// Directory holding provided binary resources.
 	Integration string `json:"integration,omitempty"`
-	// The directory that used to hold provided binary integrations.
-	OldIntegration string `json:"oldIntegration,omitempty"`
 	// Directory that holds resource files in the RD installation.
 	Resources string `json:"resources"`
 	// Deployment Profile System-wide startup settings path.

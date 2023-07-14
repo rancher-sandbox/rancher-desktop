@@ -9,7 +9,7 @@ import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsCodeSign'
 import defaults from 'lodash/defaultsDeep';
 import yaml from 'yaml';
 
-import * as childProcess from '@pkg/utils/childProcess';
+import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * Mandatory configuration for Windows.
@@ -90,7 +90,7 @@ export async function sign(workDir: string) {
       await fs.promises.access(fullPath);
       console.log(`Signing ${ fullPath }`);
 
-      await childProcess.spawnFile(toolPath, [...toolArgs, fullPath], { stdio: 'inherit' });
+      await simpleSpawn(toolPath, [...toolArgs, fullPath]);
     }
   }
 
@@ -117,5 +117,5 @@ async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBu
     installerPath,
   ];
 
-  await childProcess.spawnFile(toolPath, toolArgs, { stdio: 'inherit' });
+  await simpleSpawn(toolPath, toolArgs);
 }

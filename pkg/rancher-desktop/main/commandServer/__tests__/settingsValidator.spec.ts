@@ -7,6 +7,7 @@ import _ from 'lodash';
 import SettingsValidator from '../settingsValidator';
 
 import * as settings from '@pkg/config/settings';
+import { getDefaultMemory } from '@pkg/config/settingsImpl';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
@@ -17,7 +18,6 @@ const cfg = _.merge(
     kubernetes:  { version: '1.23.4' },
     application: { pathManagementStrategy: PathManagementStrategy.Manual },
   });
-
 const subject = new SettingsValidator();
 let spyPlatform: jest.SpiedFunction<typeof os.platform>;
 
@@ -29,6 +29,7 @@ afterEach(() => {
   spyPlatform.mockRestore();
 });
 
+cfg.virtualMachine.memoryInGB ||= getDefaultMemory();
 subject.k8sVersions = ['1.23.4', '1.0.0'];
 describe(SettingsValidator, () => {
   it('should do nothing when given existing settings', () => {

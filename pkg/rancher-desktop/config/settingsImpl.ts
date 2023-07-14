@@ -149,7 +149,7 @@ function finishConfiguringSettings(cfg: Settings, deploymentProfiles: Deployment
   return cfg;
 }
 
-function getDefaultMemory() {
+export function getDefaultMemory() {
   if (os.platform() === 'darwin' || os.platform() === 'linux') {
     const totalMemoryInGB = os.totalmem() / 2 ** 30;
 

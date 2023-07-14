@@ -42,7 +42,6 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 		Cache:                   filepath.Join(cacheHome, appName),
 		Lima:                    filepath.Join(dataHome, appName, "lima"),
 		Integration:             filepath.Join(altAppHome, "bin"),
-		OldIntegration:          filepath.Join(homeDir, ".local", "bin"),
 		DeploymentProfileSystem: filepath.Join("/etc", appName),
 		DeploymentProfileUser:   configHome,
 		ExtensionRoot:           filepath.Join(dataHome, appName, "extensions"),

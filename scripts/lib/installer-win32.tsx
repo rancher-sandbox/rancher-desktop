@@ -16,7 +16,7 @@ import yaml from 'yaml';
 
 import generateFileList from './installer-win32-gen';
 
-import { spawnFile } from '@pkg/utils/childProcess';
+import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * Return the contents of package.json embedded in the application.
@@ -33,7 +33,7 @@ function getPackageJson(appDir: string): Record<string, any> {
 function getAppVersion(appDir: string): string {
   const packageVersion = getPackageJson(appDir).version;
   // We have a git describe style version, 1.2.3-1234-gabcdef
-  const [__, semver, offset] = /^v?(\d+\.\d+\.\d+)(?:-(\d+))?/.exec(packageVersion) ?? [];
+  const [, semver, offset] = /^v?(\d+\.\d+\.\d+)(?:-(\d+))?/.exec(packageVersion) ?? [];
 
   if (!semver) {
     throw new Error(`Could not parse version string ${ packageVersion }`);
@@ -46,6 +46,7 @@ function getAppVersion(appDir: string): string {
  * Given an unpacked build, produce a MSI installer.
  * @param workDir Directory in which we can write temporary work files.
  * @param appDir Directory containing extracted application zip file.
+ * @param development True if we're in dev mode
  * @returns The path of the built installer.
  */
 export default async function buildInstaller(workDir: string, appDir: string, development = false): Promise<string> {
@@ -72,7 +73,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     path.join(process.cwd(), 'build', 'wix', 'verify.wxs'),
   ];
 
-  await Promise.all(inputs.map(input => spawnFile(
+  await Promise.all(inputs.map(input => simpleSpawn(
     path.join(wixDir, 'candle.exe'),
     [
       '-arch', 'x64',
@@ -84,10 +85,9 @@ export default async function buildInstaller(workDir: string, appDir: string, de
       '-wx',
       '-ext', 'WixFirewallExtension',
       input,
-    ],
-    { stdio: 'inherit' })));
+    ])));
   console.log('Linking WiX...');
-  await spawnFile(path.join(wixDir, 'light.exe'), [
+  await simpleSpawn(path.join(wixDir, 'light.exe'), [
     // Skip ICE 60, which checks for files with versions but no language (since
     // Windows Installer will always need to reinstall the file on a repair, in
     // case it's the wrong language).  This trips up our icon fonts, which we
@@ -113,7 +113,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     '-reusecab',
     '-loc', path.join(path.join(process.cwd(), 'build', 'wix', 'string-overrides.wxl')),
     ...inputs.map(n => path.join(workDir, `${ path.basename(n, '.wxs') }.wixobj`)),
-  ], { stdio: 'inherit' });
+  ]);
   console.log(`Built Windows installer: ${ outFile }`);
 
   return outFile;

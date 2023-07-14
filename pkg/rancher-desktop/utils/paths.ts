@@ -25,8 +25,6 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
-  /** The directory that used to hold provided binary integrations */
-  oldIntegration: string;
   /** Deployment Profile System-wide startup settings path. */
   deploymentProfileSystem: string;
   /** Deployment Profile User startup settings path. */
@@ -47,7 +45,6 @@ export class UnixPaths implements Paths {
   cache = '';
   resources = '';
   lima = '';
-  oldIntegration = '';
   integration = '';
   deploymentProfileSystem = '';
   deploymentProfileUser = '';
@@ -85,10 +82,6 @@ export class WindowsPaths implements Paths {
     throw new Error('lima not available for Windows');
   }
 
-  get oldIntegration(): string {
-    throw new Error('Internal error: oldIntegration path not available for Windows');
-  }
-
   get integration(): string {
     throw new Error('Internal error: integration path not available for Windows');
   }
@@ -122,26 +115,6 @@ function getRdctlPath(): string | null {
   return rdctlPath;
 }
 
-function getLogDir() {
-  const APP_NAME = 'rancher-desktop';
-  let auxDir = '';
-
-  switch (process.platform) {
-  case 'darwin':
-    return path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
-  case 'linux':
-    auxDir = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
-
-    return path.join(auxDir, APP_NAME, 'logs');
-  case 'win32':
-    auxDir = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
-
-    return path.join(auxDir, APP_NAME, 'logs');
-  default:
-    return 'will be caught later';
-  }
-}
-
 function getPaths(): Paths {
   const rdctlPath = getRdctlPath();
   let pathsData: Partial<Paths>|undefined;
@@ -159,17 +132,13 @@ function getPaths(): Paths {
   if (!pathsData) {
     const processType = process.type;
 
-    if (processType === 'renderer') {
-      if (!errorMsg) {
-        errorMsg = `Internal error: attempting to load the paths module from a ${ processType } process.`;
-      }
-      alert(errorMsg);
-      throw new Error(errorMsg);
+    if (!errorMsg) {
+      errorMsg = `Internal error: attempting to load the paths module from a ${ processType } process.`;
     }
-    pathsData = {
-      resources: path.join(process.cwd(), 'resources'),
-      logs:      process.env['RD_LOGS_DIR'] || getLogDir(),
-    };
+    if (processType === 'renderer') {
+      alert(errorMsg);
+    }
+    throw new Error(errorMsg);
   }
 
   switch (process.platform) {

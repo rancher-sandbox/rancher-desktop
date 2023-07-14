@@ -30,7 +30,6 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 		Config:                  filepath.Join(homeDir, "Library", "Preferences", appName),
 		Cache:                   filepath.Join(homeDir, "Library", "Caches", appName),
 		Lima:                    filepath.Join(appHome, "lima"),
-		OldIntegration:          "/usr/local/bin",
 		Integration:             filepath.Join(altAppHome, "bin"),
 		DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
 		DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),

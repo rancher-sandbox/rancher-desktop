@@ -4,16 +4,11 @@
  * The wrapper is needed because `gofmt -d` never exits with an error.
  * https://github.com/golang/go/issues/46289
  */
+import { execFileSync } from 'child_process';
 
-import { spawnFile } from '../pkg/rancher-desktop/utils/childProcess';
+const stdout = execFileSync('gofmt', ['-d', 'src/go']).toString();
 
-(async() => {
-  const { stdout } = await spawnFile('gofmt', ['-d', 'src/go'], { stdio: ['ignore', 'pipe', 'inherit'] });
-
-  if (!stdout) {
-    return;
-  }
-
+if (stdout) {
   console.log(stdout);
   process.exit(1);
-})();
+}
