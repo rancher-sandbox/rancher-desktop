@@ -15,10 +15,6 @@ export default Vue.extend({
       type:     Object as PropType<Settings>,
       required: true,
     },
-    selectTab: {
-      type:     Function,
-      required: true,
-    },
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
@@ -32,7 +28,7 @@ export default Vue.extend({
   <div class="virtual-machine-volumes">
     <mount-type-selector
       :preferences="preferences"
-      :select-tab="selectTab"
+      @update:tab="$emit('update:tab', $event)"
       @update="onChange"
     />
   </div>

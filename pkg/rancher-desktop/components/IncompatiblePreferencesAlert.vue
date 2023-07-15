@@ -11,14 +11,10 @@ export default Vue.extend({
       type:     Array as PropType<CompatiblePrefs>,
       required: true,
     },
-    selectTab: {
-      type:     Function,
-      required: true,
-    },
   },
   methods: {
     changeTab(tab: string) {
-      this.selectTab(tab);
+      this.$emit('update:tab', tab);
     },
   },
 });

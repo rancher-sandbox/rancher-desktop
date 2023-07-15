@@ -38,10 +38,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       type:     Object as PropType<Settings>,
       required: true,
     },
-    selectTab: {
-      type:     Function,
-      required: true,
-    },
   },
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
@@ -198,8 +194,8 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                     {{ option.description }}
                     <incompatible-preferences-alert
                       v-if="option.value === preferences.experimental.virtualMachine.mount.type"
-                      :select-tab="selectTab"
                       :compatible-prefs="option.compatiblePrefs"
+                      @update:tab="$emit('update:tab', $event)"
                     />
                   </template>
                 </radio-button>
