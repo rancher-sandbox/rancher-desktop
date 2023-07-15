@@ -37,6 +37,16 @@ interface ElectronBuilderConfiguration {
   win?: Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
 }
 
+async function getVersion() {
+  const version = JSON.parse(await fs.promises.readFile('package.json', 'utf-8'))['version'];
+
+  if (!version) {
+    throw new Error("Can't find the version field in package.json");
+  }
+
+  return version;
+}
+
 export async function sign(workDir: string) {
   const certFingerprint = process.env.CSC_FINGERPRINT ?? '';
   const certPassword = process.env.CSC_KEY_PASSWORD ?? '';
@@ -61,6 +71,7 @@ export async function sign(workDir: string) {
 
   const configText = await fs.promises.readFile(path.join(unpackedDir, 'electron-builder.yml'), 'utf-8');
   const config = yaml.parse(configText) as ElectronBuilderConfiguration;
+  const versionedAppName = `Rancher Desktop ${ await getVersion() }`;
 
   config.win ??= {};
   defaults(config.win, DEFAULT_WINDOWS_CONFIG);
@@ -76,6 +87,7 @@ export async function sign(workDir: string) {
     '/td', 'SHA256',
     '/tr', config.win.rfc3161TimeStampServer as string,
     '/du', 'https://rancherdesktop.io',
+    '/d', versionedAppName,
   ];
 
   if (certPassword.length > 0) {
@@ -100,6 +112,7 @@ export async function sign(workDir: string) {
 async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {
   const buildInstaller = (await import('./installer-win32')).default;
   const installerPath = await buildInstaller(workDir, unpackedDir);
+  const versionedAppName = `Rancher Desktop ${ await getVersion() }`;
 
   if (!config.win?.certificateSha1) {
     throw new Error(`Assertion error: certificate fingerprint not set`);
@@ -114,6 +127,7 @@ async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBu
     '/td', 'SHA256',
     '/tr', config.win.rfc3161TimeStampServer as string,
     '/du', 'https://rancherdesktop.io',
+    '/d', versionedAppName,
     installerPath,
   ];
 
