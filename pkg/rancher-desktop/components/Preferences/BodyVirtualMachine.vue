@@ -59,13 +59,6 @@ export default Vue.extend({
         },
       );
     },
-    selectTab(tab: string) {
-      console.log(tab);
-      console.log(this.activeTab);
-      // const tabbed = this.$refs.tabbed as RdTabbed;
-
-      // tabbed.$children[0].select(tab);
-    },
   },
 });
 </script>
