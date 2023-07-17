@@ -38,7 +38,10 @@ factory_reset() {
         run wsl sudo ip link delete nerdctl0
 
         wsl sudo iptables -F
-        wsl sudo iptables -L | awk '/^Chain CNI/ {print $2}' | xargs -I{} wsl sudo iptables -X {}
+        local rule
+        wsl sudo iptables -L | awk '/^Chain CNI/ {print $2}' | while IFS= read -r rule; do
+            wsl sudo iptables -X "$rule"
+        done
     fi
     rdctl factory-reset
 }
