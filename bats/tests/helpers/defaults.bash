@@ -150,13 +150,13 @@ validate_enum RD_9P_SECURITY_MODEL passthrough mapped-xattr mapped-file none
 #   system: default system-wide install location shared for all users
 #   user:   per-user install location
 #   dist:   use the result of `yarn package` in ../dist
-#   npm:    dev mode; start app with `cd ..; yarn dev`
+#   dev:    dev mode; start app with `cd ..; yarn dev`
 #   "":     use first location from the list above that contains the app
 
 : "${RD_LOCATION:=}"
 
-validate_enum RD_LOCATION system user dist npm ""
+validate_enum RD_LOCATION system user dist dev ""
 
-using_npm_run_dev() {
-    [ "$RD_LOCATION" = "npm" ]
+using_dev_mode() {
+    [ "$RD_LOCATION" = "dev" ]
 }

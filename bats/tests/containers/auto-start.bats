@@ -31,7 +31,7 @@ load '../helpers/load'
 }
 
 @test 'Verify that the auto-start config is created' {
-    if using_npm_run_dev; then
+    if using_dev_mode; then
         skip "Autostart prefs don't work in dev mode"
     fi
     if is_linux; then
@@ -57,7 +57,7 @@ load '../helpers/load'
 }
 
 @test 'Verify that the auto-start config is removed' {
-    if using_npm_run_dev; then
+    if using_dev_mode; then
         skip "Autostart prefs don't work in dev mode"
     fi
     if is_linux; then

@@ -22,7 +22,7 @@ factory_reset() {
         capture_logs
     fi
 
-    if using_npm_run_dev; then
+    if using_dev_mode; then
         if is_unix; then
             run rdctl shutdown
             run pkill_by_path "$PATH_REPO_ROOT/node_modules"
@@ -136,7 +136,7 @@ start_container_engine() {
 EOF
     fi
 
-    if using_npm_run_dev; then
+    if using_dev_mode; then
         # translate args back into the internal API format
         local api_args=()
         for arg in "${args[@]}"; do
