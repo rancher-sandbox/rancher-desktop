@@ -250,7 +250,11 @@ test.describe.serial('Main App Test', () => {
 
       // Start this collection of tests on the environment tab
       await application.nav.click();
-      await application.tabEnvironment.click();
+      if (os.platform() === 'win32') {
+        await application.tabGeneral.click();
+      } else {
+        await application.tabEnvironment.click();
+      }
 
       // This collection of tests is about making sure that we persist state
       // in the preferences window, so we close the preferences window before
