@@ -116,3 +116,26 @@ func (manager Manager) List() ([]Snapshot, error) {
 	}
 	return snapshots, nil
 }
+
+// Deletes a snapshot.
+func (manager Manager) Delete(id string) error {
+	dirEntries, err := os.ReadDir(manager.Paths.Snapshots)
+	if err != nil {
+		return fmt.Errorf("failed to read snapshots dir: %w", err)
+	}
+	found := false
+	for _, dirEntry := range dirEntries {
+		if dirEntry.Name() == id {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("snapshot with id %q does not exist", id)
+	}
+	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
+	if err = os.RemoveAll(snapshotDir); err != nil {
+		return fmt.Errorf("failed to remove dir %q: %w", snapshotDir, err)
+	}
+	return nil
+}
