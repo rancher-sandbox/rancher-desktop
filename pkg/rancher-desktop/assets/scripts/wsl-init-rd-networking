@@ -32,11 +32,16 @@ fi
     done
 )
 
-# mount bpffs to allow containers to leverage bpf, and make both bpffs and
-# cgroupfs shared mounts so the pods can mount them correctly
+# Mount bpffs to allow containers to leverage bpf, and make both bpffs and
+# cgroupfs shared mounts so the pods can mount them correctly.
 mount bpffs -t bpf /sys/fs/bpf
 mount --make-shared /sys/fs/bpf
 mount --make-shared /sys/fs/cgroup
+
+# Mount binfmt_misc to allow nerdctl to see which qemu-* handlers have been loaded.
+# It will display a warning for foreign platforms if their handler seems missing.
+mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+mount --make-shared /proc/sys/fs/binfmt_misc
 
 if [ -f /var/lib/resolv.conf ]; then
     ln -s -f /var/lib/resolv.conf /etc/resolv.conf
