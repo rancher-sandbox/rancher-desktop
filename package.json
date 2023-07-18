@@ -106,7 +106,7 @@
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.1",
     "@octokit/rest": "19.0.5",
-    "@playwright/test": "1.26.1",
+    "@playwright/test": "1.35.1",
     "@types/dompurify": "3.0.0",
     "@types/ejs": "3.1.2",
     "@types/ffi-napi": "4.0.7",

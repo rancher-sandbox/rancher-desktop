@@ -88,26 +88,6 @@ test.describe.serial('Main App Test', () => {
     await expect(application.pathManagement).toBeVisible();
   });
 
-  test('should render environment tab after close and reopen preferences modal', async() => {
-    test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
-    await preferencesWindow.close();
-
-    await new NavPage(page).preferencesButton.click();
-    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
-
-    expect(preferencesWindow).toBeDefined();
-
-    const { application } = new PreferencesPage(preferencesWindow);
-
-    await expect(application.nav).toHaveClass('preferences-nav-item active');
-    await expect(application.tabBehavior).toBeVisible();
-    await expect(application.tabEnvironment).toBeVisible();
-    await expect(application.administrativeAccess).not.toBeVisible();
-    await expect(application.automaticUpdates).not.toBeVisible();
-    await expect(application.statistics).not.toBeVisible();
-    await expect(application.pathManagement).toBeVisible();
-  });
-
   test('should navigate to virtual machine and render hardware tab', async() => {
     test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
     const { virtualMachine, application } = new PreferencesPage(preferencesWindow);
@@ -212,47 +192,11 @@ test.describe.serial('Main App Test', () => {
     await expect(containerEngine.tabAllowedImages).toBeVisible();
   });
 
-  test('should render container engine page after close and reopen preferences modal', async() => {
-    await preferencesWindow.close();
-
-    await new NavPage(page).preferencesButton.click();
-    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
-
-    expect(preferencesWindow).toBeDefined();
-    // Wait for the window to actually load (i.e. transition from
-    // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-    await preferencesWindow.waitForURL(/Preferences#/i);
-    const { containerEngine } = new PreferencesPage(preferencesWindow);
-
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
-    await expect(containerEngine.containerEngine).toBeVisible();
-
-    await expect(containerEngine.tabGeneral).toBeVisible();
-    await expect(containerEngine.tabAllowedImages).toBeVisible();
-  });
-
   test('should render allowed images tab after click on allowed images tab', async() => {
     const { containerEngine } = new PreferencesPage(preferencesWindow);
 
     await containerEngine.tabAllowedImages.click();
 
-    await expect(containerEngine.allowedImages).toBeVisible();
-    await expect(containerEngine.containerEngine).not.toBeVisible();
-  });
-
-  test('should render allowed image tab in container engine page after close and reopen preferences modal', async() => {
-    await preferencesWindow.close();
-
-    await new NavPage(page).preferencesButton.click();
-    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
-
-    expect(preferencesWindow).toBeDefined();
-    // Wait for the window to actually load (i.e. transition from
-    // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-    await preferencesWindow.waitForURL(/Preferences/);
-    const { containerEngine } = new PreferencesPage(preferencesWindow);
-
-    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
     await expect(containerEngine.allowedImages).toBeVisible();
     await expect(containerEngine.containerEngine).not.toBeVisible();
   });
@@ -298,5 +242,93 @@ test.describe.serial('Main App Test', () => {
     const { wsl } = new PreferencesPage(preferencesWindow);
 
     await expect(wsl.nav).not.toBeVisible();
+  });
+
+  test.describe.serial('Preferences State', () => {
+    test.beforeAll(async() => {
+      const { application } = new PreferencesPage(preferencesWindow);
+
+      // Start this collection of tests on the environment tab
+      await application.nav.click();
+      if (os.platform() === 'win32') {
+        await application.tabGeneral.click();
+      } else {
+        await application.tabEnvironment.click();
+      }
+
+      // This collection of tests is about making sure that we persist state
+      // in the preferences window, so we close the preferences window before
+      // beginning this test collection.
+      if (preferencesWindow) {
+        await preferencesWindow.close();
+      }
+    });
+
+    test.beforeEach(async() => {
+      await new NavPage(page).preferencesButton.click();
+      preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+    });
+
+    test.afterEach(async() => {
+      if (preferencesWindow) {
+        await preferencesWindow.close();
+      }
+    });
+
+    test('should render environment tab after close and reopen preferences modal', async() => {
+      test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
+
+      expect(preferencesWindow).toBeDefined();
+
+      const { application, containerEngine } = new PreferencesPage(preferencesWindow);
+
+      await application.tabEnvironment.click();
+
+      await expect(application.nav).toHaveClass('preferences-nav-item active');
+      await expect(application.tabBehavior).toBeVisible();
+      await expect(application.tabEnvironment).toBeVisible();
+      await expect(application.administrativeAccess).not.toBeVisible();
+      await expect(application.automaticUpdates).not.toBeVisible();
+      await expect(application.statistics).not.toBeVisible();
+      await expect(application.pathManagement).toBeVisible();
+
+      // Move onto the container engine before starting the next test
+      await containerEngine.nav.click();
+      await containerEngine.tabGeneral.click();
+    });
+
+    test('should render container engine page after close and reopen preferences modal', async() => {
+      expect(preferencesWindow).toBeDefined();
+      // Wait for the window to actually load (i.e. transition from
+      // app://index.html/#/preferences to app://index.html/#/Preferences#general)
+      await preferencesWindow.waitForURL(/Preferences#/i);
+      const { containerEngine } = new PreferencesPage(preferencesWindow);
+
+      if (os.platform() === 'win32') {
+        // We didn't run the previous test which landed on `tabGeneral`, so run that here.
+        await containerEngine.nav.click();
+        await containerEngine.tabGeneral.click();
+      }
+      await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+      await expect(containerEngine.containerEngine).toBeVisible();
+
+      await expect(containerEngine.tabGeneral).toBeVisible();
+      await expect(containerEngine.tabAllowedImages).toBeVisible();
+
+      // Move onto the allowed images tab before the next test
+      await containerEngine.tabAllowedImages.click();
+    });
+
+    test('should render allowed image tab in container engine page after close and reopen preferences modal', async() => {
+      expect(preferencesWindow).toBeDefined();
+      // Wait for the window to actually load (i.e. transition from
+      // app://index.html/#/preferences to app://index.html/#/Preferences#general)
+      await preferencesWindow.waitForURL(/Preferences/);
+      const { containerEngine } = new PreferencesPage(preferencesWindow);
+
+      await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+      await expect(containerEngine.allowedImages).toBeVisible();
+      await expect(containerEngine.containerEngine).not.toBeVisible();
+    });
   });
 });
