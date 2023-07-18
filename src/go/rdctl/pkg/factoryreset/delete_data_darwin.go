@@ -1,44 +1,40 @@
 package factoryreset
 
 import (
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
-	"github.com/sirupsen/logrus"
 	"os"
-	"path"
+	"path/filepath"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/sirupsen/logrus"
 )
 
-func DeleteData(removeKubernetesCache bool) error {
+func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
 
-	configDir, cacheDir, homeDir, err := getStandardDirs()
-	if err != nil {
-		return err
-	}
-	libraryPath := path.Join(homeDir, "Library")
-
-	altAppHomePath := path.Join(homeDir, ".rd")
-	appHomePath := path.Join(configDir, "rancher-desktop")
-	cachePath := path.Join(cacheDir, "rancher-desktop")
-	logsPath := os.Getenv("RD_LOGS_DIR")
-	if logsPath == "" {
-		logsPath = path.Join(libraryPath, "Logs", "rancher-desktop")
-	}
-	settingsPath := path.Join(libraryPath, "Preferences", "rancher-desktop")
-	updaterPath := path.Join(configDir, "Caches", "rancher-desktop-updater")
-
 	pathList := []string{
-		altAppHomePath,
-		appHomePath,
-		logsPath,
-		settingsPath,
-		updaterPath,
+		paths.AltAppHome,
+		paths.AppHome,
+		paths.Logs,
+		paths.Config,
 	}
-	if removeKubernetesCache {
-		pathList = append(pathList, cachePath)
+
+	// Get path that electron-updater stores cache data in. Technically this
+	// is the wrong directory to use for cache data, but it is set by electron-updater.
+	// TODO: investigate changing the directory electron-updater uses
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		logrus.Errorf("failed to get config dir: %s", err)
 	} else {
-		pathList = append(pathList, path.Join(cachePath, "updater-longhorn.json"))
+		pathList = append(pathList, filepath.Join(configDir, "Caches", "rancher-desktop-updater"))
 	}
-	return deleteUnixLikeData(homeDir, altAppHomePath, path.Join(homeDir, ".config"), pathList)
+
+	if removeKubernetesCache {
+		pathList = append(pathList, paths.Cache)
+	} else {
+		pathList = append(pathList, filepath.Join(paths.Cache, "updater-longhorn.json"))
+	}
+	return deleteUnixLikeData(paths, pathList)
 }

@@ -30,6 +30,7 @@ import (
 
 	dockerconfig "github.com/docker/docker/cli/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 )
 
@@ -53,7 +54,7 @@ func getStandardDirs() (string, string, string, error) {
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
 // or pull the path settings out of the shell profile files.
-func deleteUnixLikeData(homeDir string, altAppHomePath string, configHomePath string, pathList []string) error {
+func deleteUnixLikeData(paths paths.Paths, pathList []string) error {
 	if err := deleteLimaVM(); err != nil {
 		logrus.Errorf("Error trying to delete the Lima VM: %s\n", err)
 	}
@@ -65,8 +66,15 @@ func deleteUnixLikeData(homeDir string, altAppHomePath string, configHomePath st
 	if err := clearDockerContext(); err != nil {
 		logrus.Errorf("Error trying to clear the docker context %s", err)
 	}
-	if err := removeDockerCliPlugins(altAppHomePath); err != nil {
+	if err := removeDockerCliPlugins(paths.AltAppHome); err != nil {
 		logrus.Errorf("Error trying to remove docker plugins %s", err)
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// If we can't get home directory, none of the below code is valid
+		logrus.Errorf("Error trying to get home dir: %s", err)
+		return nil
 	}
 	rawPaths := []string{
 		".bashrc",
@@ -80,7 +88,7 @@ func deleteUnixLikeData(homeDir string, altAppHomePath string, configHomePath st
 	for i, s := range rawPaths {
 		rawPaths[i] = path.Join(homeDir, s)
 	}
-	rawPaths = append(rawPaths, path.Join(configHomePath, "fish", "config.fish"))
+	rawPaths = append(rawPaths, path.Join(homeDir, ".config", "fish", "config.fish"))
 
 	return removePathManagement(rawPaths)
 }
