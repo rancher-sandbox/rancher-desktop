@@ -2634,7 +2634,8 @@ prefs:
   experimental: Experimental
   onlyFromVentura_x64: This setting requires macOS 13.0 (Ventura) or later.
   onlyFromVentura_arm64: This setting requires macOS 13.3 (Ventura) or later.
-  onlyWithVZ: This setting requires using the VZ emulation mode.
+  onlyWithVZ_x64: This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
+  onlyWithVZ_arm64: This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
 
 principal:
   loading: Loading&hellip;
@@ -4779,7 +4780,9 @@ preferences:
       error: "There's a problem with the preferences selection."
   locked:
     tooltip: Locked due to organization's policy
-
+  incompatibleTypeWarningPre: 'The option requires'
+  incompatibleTypeWarningPost: 'to be selected.'
+  incompatiblePrefWarningOr: 'or'
 ##############################
 ### Integrations Page
 ##############################

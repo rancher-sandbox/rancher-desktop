@@ -326,6 +326,11 @@ export default class SettingsValidator {
 
       return false;
     }
+    if (desiredValue === MountType.NINEP && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU) {
+      errors.push(`Setting ${ fqname } to "${ MountType.NINEP }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
+
+      return false;
+    }
 
     return currentValue !== desiredValue;
   }
