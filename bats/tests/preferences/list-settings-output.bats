@@ -80,7 +80,7 @@ RD_USE_IMAGE_ALLOW_LIST=true
     # Just match a few of the lines near the start and the end of the output.
     # The unit tests do more comprehensive output checking.
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies]'
-    assert_output --partial '"pathManagementStrategy"="rcfiles"'
+    assert_output --partial '"adminAccess"=dword:0'
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\diagnostics]'
     assert_output --partial '"showMuted"=dword:0'
 }
