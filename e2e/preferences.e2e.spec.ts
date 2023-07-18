@@ -304,6 +304,11 @@ test.describe.serial('Main App Test', () => {
       await preferencesWindow.waitForURL(/Preferences#/i);
       const { containerEngine } = new PreferencesPage(preferencesWindow);
 
+      if (os.platform() === 'win32') {
+        // We didn't run the previous test which landed on `tabGeneral`, so run that here.
+        await containerEngine.nav.click();
+        await containerEngine.tabGeneral.click();
+      }
       await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
       await expect(containerEngine.containerEngine).toBeVisible();
 
