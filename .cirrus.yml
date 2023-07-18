@@ -1,6 +1,7 @@
 task:
   name: E2E/Integration Tests
-  timeout_in: 45
+  # As of 2023-07-18 "There is a hard limit of 2 hours for free tasks."
+  timeout_in: 60
   container:
     image: ubuntu:20.04
     kvm: true # required for E2E/Integrations tests
