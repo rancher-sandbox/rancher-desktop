@@ -6,7 +6,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import { expect, _electron, ElectronApplication } from '@playwright/test';
+import { expect, _electron, ElectronApplication, Locator } from '@playwright/test';
 import _, { GetFieldType } from 'lodash';
 import plist from 'plist';
 
@@ -251,6 +251,28 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
       stdout: ex.stdout, stderr: ex.stderr, message: ex.toString(),
     }).toBeUndefined();
     throw ex;
+  }
+}
+
+export async function waitForRestartVM(progressBar: Locator, options = { timeout: 10_000, interval: 200 }): Promise<void> {
+  const startTime = new Date().valueOf();
+  const endTime = startTime + options.timeout;
+
+  await progressBar.waitFor({ state: 'visible', timeout: 10_000 });
+  console.log(`Waiting for RD to restart the VM...`);
+  while (true) {
+    const caption: string = await progressBar.textContent() ?? '';
+
+    if (caption.startsWith('Starting virtual machine')) {
+      console.log(`Restart detected.`);
+      break;
+    }
+    const nowTime = new Date().valueOf();
+
+    if (nowTime > endTime) {
+      break;
+    }
+    await util.promisify(setTimeout)(options.interval);
   }
 }
 

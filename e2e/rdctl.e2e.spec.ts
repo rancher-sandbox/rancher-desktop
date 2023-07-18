@@ -22,14 +22,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect, test, _electron } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import _ from 'lodash';
 import fetch, { RequestInit } from 'node-fetch';
 import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, tool,
+  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, tool, waitForRestartVM,
 } from './utils/TestUtils';
 
 import {
@@ -896,6 +896,13 @@ test.describe('Command server', () => {
           const result = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(oldSettings)]);
 
           expect(result.stderr).toEqual('');
+          // Have to do this because we don't have any other way to see the current missing progress bar
+          // and have the next  `progressBecomesReady` test pass prematurely.
+
+          // Wait until progress bar show up. It takes roughly ~60s to start in CI
+          const progressBar = page.locator('.progress');
+
+          await waitForRestartVM(progressBar);
 
           // Since we just applied new settings, we must wait for the backend to restart.
           await (new NavPage(page)).progressBecomesReady();
@@ -1418,6 +1425,7 @@ test.describe('Command server', () => {
         const navPage = new NavPage(page);
 
         await tool('rdctl', 'api', '/v1/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
+        await waitForRestartVM(page.locator('.progress'));
         await navPage.progressBecomesReady();
       }
       const output = await retry(() => tool('nerdctl', 'info'));
@@ -1429,6 +1437,7 @@ test.describe('Command server', () => {
 
       await tool('rdctl', 'set', '--container-engine', 'moby');
       await expect(navPage.progressBar).not.toBeHidden();
+      await waitForRestartVM(navPage.progressBar);
       await navPage.progressBecomesReady();
       await expect(navPage.progressBar).toBeHidden();
       const output = await retry(() => tool('docker', 'info'), { delay: 500, tries: 60 });
