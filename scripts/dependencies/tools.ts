@@ -478,22 +478,23 @@ export class DockerProvidedCredHelpers implements Dependency, GitHubDependency {
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const version = context.versions.dockerProvidedCredentialHelpers;
-    const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
-    const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
     const credHelperNames = {
       linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
       darwin: ['docker-credential-osxkeychain'],
       win32:  ['docker-credential-wincred'],
     }[context.platform];
     const promises = [];
-    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
 
     for (const baseName of credHelperNames) {
-      const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;
+      const fullBaseName = `${ baseName }-v${ version }.${ context.goPlatform }-${ arch }`;
+      const fullBinName = context.platform.startsWith('win') ? `${ fullBaseName }.exe` : fullBaseName;
+      const sourceURL = `${ baseURL }/${ fullBinName }`;
+      const expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, fullBinName);
       const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
       const destPath = path.join(context.binDir, binName);
 
-      promises.push(downloadFunc(sourceUrl, destPath));
+      promises.push(download(sourceURL, destPath, { expectedChecksum } ));
     }
 
     await Promise.all(promises);
