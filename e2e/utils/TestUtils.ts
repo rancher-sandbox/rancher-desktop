@@ -211,15 +211,6 @@ export async function teardown(app: ElectronApplication, filename: string) {
   }
 }
 
-/**
- * helm teardown
- * it ensure that all helm test installation contents will be deleted.
- */
-export async function tearDownHelm() {
-  await helm('repo', 'remove', 'bitnami');
-  await kubectl('delete', 'deploy', 'nginx-sample', '--namespace', 'default');
-}
-
 export function getResourceBinDir(): string {
   const srcDir = path.dirname(__dirname);
 
