@@ -209,7 +209,7 @@ On Linux, start Rancher Desktop with the following command:
 rancher-desktop --remote-debugging-port="8315"
 ```
 
-On MacOS, start Rancher Desktop with the following command:
+On macOS, start Rancher Desktop with the following command:
 
 ```
 /Applications/Rancher\ Desktop.app/Contents/MacOS/Rancher\ Desktop --remote-debugging-port="8315"
@@ -367,7 +367,7 @@ AppImage builds [here](https://download.opensuse.org/repositories/isv:/Rancher:/
 ## API
 
 Rancher Desktop supports a limited HTTP-based API. The API is defined in
-`pkg/rancher-desktop/assets/specs/command-api.yaml`, and you can see examples of how its
+`pkg/rancher-desktop/assets/specs/command-api.yaml`, and you can see examples of how it's
 invoked in the client code at `go/src/rdctl`.
 
 ### Stability
