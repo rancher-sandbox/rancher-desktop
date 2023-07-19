@@ -7,7 +7,7 @@ load '../helpers/load'
 @test 'invalid k8s version' {
     start_kubernetes --kubernetes.version=moose
     wait_for_container_engine
-    # Can't use wait_for_api_server because it hardwires a valid k8s version and we're specifying an invalid one here.
+    # Can't use wait_for_api_server because it hard-wires a valid k8s version and we're specifying an invalid one here.
     # and we're specifying an invalid one here
     local timeout="$(($(date +%s) + 10 * 60))"
     until kubectl get --raw /readyz &>/dev/null; do
