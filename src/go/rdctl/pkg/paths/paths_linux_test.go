@@ -35,6 +35,7 @@ func TestGetPaths(t *testing.T) {
 			DeploymentProfileSystem: filepath.Join("/etc", appName),
 			DeploymentProfileUser:   filepath.Join(homeDir, ".config"),
 			ExtensionRoot:           filepath.Join(homeDir, ".local/share", appName, "extensions"),
+			Snapshots:               filepath.Join(homeDir, ".local/share", appName, "snapshots"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -72,6 +73,7 @@ func TestGetPaths(t *testing.T) {
 			DeploymentProfileSystem: filepath.Join("/etc", appName),
 			DeploymentProfileUser:   environment["XDG_CONFIG_HOME"],
 			ExtensionRoot:           filepath.Join(environment["XDG_DATA_HOME"], appName, "extensions"),
+			Snapshots:               filepath.Join(environment["XDG_DATA_HOME"], appName, "snapshots"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
