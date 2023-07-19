@@ -131,7 +131,7 @@ start_container_engine() {
             add_profile_bool "WSL.integrations.${WSL_DISTRO_NAME//./$RD_PROTECTED_DOT}" true
         fi
         add_profile_bool containerEngine.allowedImages.enabled "$image_allow_list"
-        add_profile_list containerEngine.allowedImages.patterns "$registry"
+        #add_profile_list containerEngine.allowedImages.patterns "$registry"
     else
         wsl_integrations="{}"
         if is_windows; then

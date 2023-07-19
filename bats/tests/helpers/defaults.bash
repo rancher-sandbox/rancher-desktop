@@ -28,7 +28,7 @@ capturing_logs() {
 }
 
 ########################################################################
-: "${RD_NO_MODAL_DIALOGS:=false}"
+: "${RD_NO_MODAL_DIALOGS:=true}"
 
 suppressing_modal_dialogs() {
     is_true "$RD_NO_MODAL_DIALOGS"

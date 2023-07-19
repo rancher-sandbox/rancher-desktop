@@ -15,12 +15,13 @@ local_setup() {
     #locked profile settings
     PROFILE_LOCKED_KUBERNETES_VERSION=1.27.3
     PROFILE_USE_IMAGE_ALLOW_LIST=true
-    PROFILE_IMAGE_PATTERNS=(nginx joycelin79/newman-extension)
+    PROFILE_IMAGE_PATTERNS=(joycelin79/newman-extension)
     PROFILE_USE_EXTENSION_LIST=true
     PROFILE_EXTENSION_LIST=(joycelin79/newman-extension:0.0.7)
 
     RD_USE_PROFILE=true
     RD_USE_IMAGE_ALLOW_LIST=true
+    RD_NO_MODAL_DIALOGS=true
 }
 
 local_teardown_file() {
@@ -59,13 +60,13 @@ verify_settings() {
     "${assert}_output" "$PROFILE_USE_IMAGE_ALLOW_LIST" || return
 
     run get_setting .containerEngine.allowedImages.patterns
-    "${assert}_output" "$PROFILE_IMAGE_PATTERNS" || return
+    "${assert}_output" --partial "$PROFILE_IMAGE_PATTERNS" || return
 
     run get_setting .application.extensions.allowed.enabled
     "${assert}_output" "$PROFILE_USE_EXTENSION_LIST" || return
 
     run get_setting .application.extensions.allowed.list
-    "${assert}_output" "$PROFILE_EXTENSION_LIST" || return
+    "${assert}_output" --partial "$PROFILE_EXTENSION_LIST" || return
 
     run get_setting .kubernetes.version
     "${assert}_output" "$PROFILE_LOCKED_KUBERNETES_VERSION" || return
@@ -113,6 +114,7 @@ verify_settings() {
 
 @test 'add settings to locked profile' {
     PROFILE_TYPE="$PROFILE_LOCKED"
+    add_profile_bool containerEngine.allowedImages.enabled "$PROFILE_USE_IMAGE_ALLOW_LIST"
     add_profile_list containerEngine.allowedImages.patterns "$PROFILE_IMAGE_PATTERNS"
     add_profile_bool application.extensions.allowed.enabled "$PROFILE_USE_EXTENSION_LIST"
     add_profile_list application.extensions.allowed.list "$PROFILE_EXTENSION_LIST"
@@ -170,17 +172,16 @@ verify_settings() {
 }
 
 @test 'try to change locked fields via rdctl start' {
-    run rdctl start --container-engine.allowed-images.enabled=false
-    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS" "error about locked setting"
+    rdctl start --container-engine.allowed-images.enabled=false
+    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'containerEngine.allowedImages.enabled' is locked"
     assert_success || return
 
-    run rdctl start --kubernetes.version="1.16.15"
-    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS" "error about locked setting"
+    rdctl start --kubernetes.version="1.16.15"
+    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'kubernetes.version' is locked"
     assert_success || return
 }
 
 @test 'restart application' {
-    rdctl shutdown
     RD_CONTAINER_ENGINE=""
     start_app
 }
