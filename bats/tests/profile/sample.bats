@@ -15,9 +15,9 @@ local_setup() {
     #locked profile settings
     PROFILE_LOCKED_KUBERNETES_VERSION=1.27.3
     PROFILE_USE_IMAGE_ALLOW_LIST=true
-    PROFILE_IMAGE_PATTERNS=(joycelin79/newman-extension)
+    PROFILE_IMAGE_PATTERNS=(joycelin79/newman-extension nginx)
     PROFILE_USE_EXTENSION_LIST=true
-    PROFILE_EXTENSION_LIST=(joycelin79/newman-extension:0.0.7)
+    PROFILE_EXTENSION_LIST=(joycelin79/newman-extension:0.0.7 nginx)
 
     RD_USE_PROFILE=true
     RD_USE_IMAGE_ALLOW_LIST=true
@@ -60,13 +60,13 @@ verify_settings() {
     "${assert}_output" "$PROFILE_USE_IMAGE_ALLOW_LIST" || return
 
     run get_setting .containerEngine.allowedImages.patterns
-    "${assert}_output" --partial "$PROFILE_IMAGE_PATTERNS" || return
+    "${assert}_output" --partial "${PROFILE_IMAGE_PATTERNS[@]}" || return
 
     run get_setting .application.extensions.allowed.enabled
     "${assert}_output" "$PROFILE_USE_EXTENSION_LIST" || return
 
     run get_setting .application.extensions.allowed.list
-    "${assert}_output" --partial "$PROFILE_EXTENSION_LIST" || return
+    "${assert}_output" --partial "${PROFILE_EXTENSION_LIST[@]}" || return
 
     run get_setting .kubernetes.version
     "${assert}_output" "$PROFILE_LOCKED_KUBERNETES_VERSION" || return
@@ -115,9 +115,9 @@ verify_settings() {
 @test 'add settings to locked profile' {
     PROFILE_TYPE="$PROFILE_LOCKED"
     add_profile_bool containerEngine.allowedImages.enabled "$PROFILE_USE_IMAGE_ALLOW_LIST"
-    add_profile_list containerEngine.allowedImages.patterns "$PROFILE_IMAGE_PATTERNS"
+    add_profile_list containerEngine.allowedImages.patterns "${PROFILE_IMAGE_PATTERNS[@]}"
     add_profile_bool application.extensions.allowed.enabled "$PROFILE_USE_EXTENSION_LIST"
-    add_profile_list application.extensions.allowed.list "$PROFILE_EXTENSION_LIST"
+    add_profile_list application.extensions.allowed.list "${PROFILE_EXTENSION_LIST[@]}"
     add_profile_string kubernetes.version "$PROFILE_LOCKED_KUBERNETES_VERSION"
 }
 
@@ -151,15 +151,15 @@ verify_settings() {
 }
 
 @test 'try to change locked fields via API' {
-    run rdctl api /v1/settings -X PUT --body '{"version": "$RD_API_VERSION" , "containerEngine": {"allowedImages": { "patterns": ["pattern1"] }}}'
+    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"containerEngine\": {\"allowedImages\": { \"patterns\": [ \"pattern1\" ] }}}"
     assert_failure || return
-    run rdctl api /v1/settings -X PUT --body '{"version": "$RD_API_VERSION", "containerEngine": {"allowedImages": {"enabled": false }}}'
+    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"containerEngine\": {\"allowedImages\": {\"enabled\": false }}}"
     assert_failure || return
-    run rdctl api /v1/settings -X PUT --body '{"version": "$RD_API_VERSION", "application": {"extensions": { "allowed": false }}}'
+    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"application\": {\"extensions\": { \"allowed\": false }}}"
     assert_failure || return
-    run rdctl api /v1/settings -X PUT --body '{"version": "$RD_API_VERSION", "application": {"extensions": { "list": ["pattern1"] }}}'
+    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"application\": {\"extensions\": { \"list\": [\"pattern1\"] }}}"
     assert_failure || return
-    run rdctl api /v1/settings -X PUT --body '{"version": "$RD_API_VERSION", "kubernetes": {"version": "1.16.15"}}'
+    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"kubernetes\": {\"version\": \"1.16.15\"}}"
     assert_failure || return
 }
 
