@@ -11,6 +11,7 @@ import WSLBackend, { Action } from '../wsl';
 
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import { BackendSettings, RestartReasons } from '@pkg/backend/backend';
+import BackendHelper from '@pkg/backend/backendHelper';
 import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
@@ -67,31 +68,11 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     return await K3sHelper.cachedVersionsOnly();
   }
 
-  get desiredVersion(): Promise<semver.SemVer> {
+  protected get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const storedVersion = semver.parse(this.cfg?.kubernetes?.version);
-      const version = storedVersion ?? availableVersions[0];
 
-      if (!version) {
-        throw new Error('No version available');
-      }
-
-      const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
-
-      if (matchedVersion) {
-        if (!storedVersion) {
-          // No (valid) stored version; save the selected one.
-          this.vm.writeSetting({ kubernetes: { version: matchedVersion.version } });
-        }
-
-        return matchedVersion;
-      }
-
-      console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
-      this.vm.writeSetting({ kubernetes: { version: availableVersions[0].version } });
-
-      return availableVersions[0];
+      return BackendHelper.getDesiredVersion(this.cfg?.kubernetes?.version, availableVersions, this.vm.writeSetting.bind(this.vm));
     })();
   }
 

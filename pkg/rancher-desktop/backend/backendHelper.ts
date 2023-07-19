@@ -3,6 +3,9 @@ import semver from 'semver';
 
 import { BackendSettings } from '@pkg/backend/backend';
 import { ContainerEngine } from '@pkg/config/settings';
+import Logging from '@pkg/utils/logging';
+
+const console = Logging.kube;
 
 export default class BackendHelper {
   /**
@@ -115,5 +118,54 @@ export default class BackendHelper {
    */
   static requiresCRIDockerd(engineName: string, kubeVersion: string | semver.SemVer): boolean {
     return engineName === ContainerEngine.MOBY && semver.gte(kubeVersion, '1.24.1') && semver.lte(kubeVersion, '1.24.3');
+  }
+
+  /**
+   * Validate the cfg.kubernetes.version string
+   * If it's valid and available, use it.
+   * Otherwise fall back to the first (recommended) available version.
+   */
+  static getDesiredVersion(currentConfigVersionString: string|undefined, availableVersions: semver.SemVer[], settingsWriter: (_: any) => void): semver.SemVer {
+    let storedVersion: semver.SemVer|null;
+    let matchedVersion: semver.SemVer|null|undefined;
+    const invalidK8sVersion1 = `Requested kubernetes version ${ currentConfigVersionString } is not a valid version.`;
+    const invalidK8sVersion2 = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
+    const invalidMessage = `${ invalidK8sVersion1 }${ availableVersions.length ? ` ${ invalidK8sVersion2 }` : '' }`;
+
+    if (currentConfigVersionString) {
+      storedVersion = semver.parse(currentConfigVersionString);
+      if (storedVersion) {
+        try {
+          matchedVersion = availableVersions.find(v => v.compare(storedVersion as semver.SemVer) === 0);
+          if (matchedVersion) {
+            return matchedVersion;
+          }
+        } catch (e: any) {
+          // Recover from a non-semver currentConfigVersionString string and log it.
+          if (e instanceof TypeError) {
+            console.log(invalidMessage);
+            if (!availableVersions.length) {
+              throw new Error('No version available');
+            }
+            settingsWriter({ kubernetes: { version: availableVersions[0].version } });
+
+            return availableVersions[0];
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        console.log(invalidMessage);
+      }
+    }
+    // If we're here either there's no existing cfg.k8s.version, or it isn't valid
+    if (!availableVersions.length) {
+      throw new Error('No version available');
+    }
+
+    // No (valid) stored version; save the selected one.
+    settingsWriter({ kubernetes: { version: availableVersions[0].version } });
+
+    return availableVersions[0];
   }
 }

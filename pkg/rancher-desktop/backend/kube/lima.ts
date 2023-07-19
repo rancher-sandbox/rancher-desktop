@@ -298,28 +298,8 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const storedVersion = semver.parse(this.cfg?.kubernetes?.version);
-      const version = storedVersion ?? availableVersions[0];
 
-      if (!version) {
-        throw new Error('No version available');
-      }
-
-      const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
-
-      if (matchedVersion) {
-        if (!storedVersion) {
-          // No (valid) stored version; save the selected one.
-          this.vm.writeSetting({ kubernetes: { version: matchedVersion.version } });
-        }
-
-        return matchedVersion;
-      }
-
-      console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
-      this.vm.writeSetting({ kubernetes: { version: availableVersions[0].version } });
-
-      return availableVersions[0];
+      return BackendHelper.getDesiredVersion(this.cfg?.kubernetes?.version, availableVersions, this.vm.writeSetting.bind(this.vm));
     })();
   }
 
