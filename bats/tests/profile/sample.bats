@@ -167,16 +167,49 @@ verify_settings() {
     verify_settings
 }
 
+@test 'change defaults profile setting' {
+    run rdctl set --application.start-in-background=false
+    assert_success || return
+    run rdctl set --application.auto-start=true
+    assert_success || return
+    run rdctl set --kubernetes.version=1.19.16
+    assert_failure || return
+}
+
+@test 'verify that the new defaults settings are applied' {
+    PROFILE_START_IN_BACKGROUND=false
+    verify_settings
+    run get_setting .application.autoStart
+    assert_output true || return
+}
+
+@test 'shutdown app' {
+    rdctl shutdown
+}
+
+@test 'restart app' {
+    RD_CONTAINER_ENGINE=""
+    start_app
+}
+
+@test 'verify that default profile is not applied again' {
+    PROFILE_START_IN_BACKGROUND=false
+    verify_settings
+    run get_setting .application.autoStart
+    assert_output true || return
+}
+
+
 @test 'shutdown Rancher Desktop' {
     rdctl shutdown
 }
 
 @test 'try to change locked fields via rdctl start' {
-    rdctl start --container-engine.allowed-images.enabled=false
+    rdctl start --container-engine.allowed-images.enabled=false --no-modal-dialogs
     try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'containerEngine.allowedImages.enabled' is locked"
     assert_success || return
 
-    rdctl start --kubernetes.version="1.16.15"
+    rdctl start --kubernetes.version="1.16.15" --no-modal-dialogs
     try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'kubernetes.version' is locked"
     assert_success || return
 }
@@ -187,25 +220,6 @@ verify_settings() {
 }
 
 @test 'ensure profile settings are preserved' {
-    verify_settings
-}
-
-@test 'change defaults profile setting' {
-    run rdctl set --application.start-in-background=false
-    assert_success || return
-    run rdctl set --application.auto-start=true
-    assert_success || return
-    run rdctl set --kubernetes.version=1.19.16
-    assert_failure || return
-}
-
-@test 'restart app' {
-    rdctl shutdown
-    RD_CONTAINER_ENGINE=""
-    start_app
-}
-
-@test 'verify that defaults settings are not applied again' {
     PROFILE_START_IN_BACKGROUND=false
     verify_settings
 }
