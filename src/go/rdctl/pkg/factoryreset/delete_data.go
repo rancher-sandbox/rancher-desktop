@@ -34,22 +34,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func getStandardDirs() (string, string, string, error) {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return "", "", "", err
-	}
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		return "", "", "", err
-	}
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", "", "", err
-	}
-	return configDir, cacheDir, homeDir, nil
-}
-
 // Most of the errors in this function are reported, but we continue to try to delete things,
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files

@@ -1,48 +1,52 @@
 package factoryreset
 
 import (
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
-	"github.com/sirupsen/logrus"
 	"os"
-	"path"
+	"path/filepath"
+	"strings"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/sirupsen/logrus"
 )
 
-func DeleteData(removeKubernetesCache bool) error {
+func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
 
-	configHomePath, cacheHomePath, homeDir, err := getStandardDirs()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		logrus.Errorf("Error getting home directory: %s", err)
 	}
-
 	dataDir := os.Getenv("XDG_DATA_HOME")
 	if dataDir == "" {
-		dataDir = path.Join(homeDir, ".local", "share")
+		dataDir = filepath.Join(homeDir, ".local", "share")
 	}
-	altAppHomePath := path.Join(homeDir, ".rd")
-	cachePath := path.Join(cacheHomePath, "rancher-desktop")
-	configPath := path.Join(configHomePath, "rancher-desktop")
-	electronConfigPath := path.Join(configHomePath, "Rancher Desktop")
-	dataHomePath := path.Join(dataDir, "rancher-desktop")
+	dataHomePath := filepath.Join(dataDir, "rancher-desktop")
+
+	// Electron stores things in ~/.config/Rancher Desktop. This is difficult
+	// to change. We should still clean up the directory on factory reset.
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		logrus.Errorf("Error getting config directory: %s", err)
+	}
+	electronConfigPath := filepath.Join(configPath, "Rancher Desktop")
 
 	pathList := []string{
-		altAppHomePath,
-		configPath,
+		paths.AltAppHome,
+		paths.Config,
 		electronConfigPath,
-		path.Join(homeDir, ".local", "state", "rancher-desktop"),
+		filepath.Join(homeDir, ".local", "state", "rancher-desktop"),
+		dataHomePath,
 	}
-	logsPath := os.Getenv("RD_LOGS_DIR")
-	if logsPath != "" {
-		pathList = append(pathList, logsPath, path.Join(dataHomePath, "lima"))
-	} else {
-		pathList = append(pathList, path.Join(dataHomePath))
+	if !strings.HasPrefix(paths.Logs, dataHomePath) {
+		pathList = append(pathList, paths.Logs)
 	}
 	if removeKubernetesCache {
-		pathList = append(pathList, cachePath)
+		pathList = append(pathList, paths.Cache)
 	} else {
-		pathList = append(pathList, path.Join(cachePath, "updater-longhorn.json"))
+		pathList = append(pathList, filepath.Join(paths.Cache, "updater-longhorn.json"))
 	}
-	return deleteUnixLikeData(homeDir, altAppHomePath, configHomePath, pathList)
+	return deleteUnixLikeData(paths, pathList)
 }
