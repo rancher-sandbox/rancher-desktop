@@ -124,17 +124,14 @@ test.describe.serial('Main App Test', () => {
     await expect(virtualMachine.mountType).toBeVisible();
     await expect(virtualMachine.reverseSshFs).toBeVisible();
     await expect(virtualMachine.ninep).toBeVisible();
+    await expect(virtualMachine.virtiofs).toBeVisible();
 
     if (os.platform() === 'darwin') {
-      await expect(virtualMachine.virtiofs).toBeVisible();
-
       if (parseInt(os.release()) < 22) {
         await expect(virtualMachine.virtiofs).toBeDisabled();
       } else {
         await expect(virtualMachine.virtiofs).not.toBeDisabled();
       }
-    } else {
-      await expect(virtualMachine.virtiofs).not.toBeVisible();
     }
 
     await expect(virtualMachine.reverseSshFs).toBeChecked();

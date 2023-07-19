@@ -47,14 +47,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       const defaultOption = MountType.REVERSE_SSHFS;
 
       return Object.values(MountType)
-        .filter((x) => {
-          // Filter because virtiofs is only available on MacOS from Ventura release
-          if (x === MountType.VIRTIOFS) {
-            return this.hasVirtIoFs;
-          }
-
-          return true;
-        })
         .sort((x, y) => { // Non-experimental (default) option should go first
           return x === defaultOption ? -1 : y === defaultOption ? 1 : 0;
         })
@@ -74,9 +66,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     },
     ninePSelected(): boolean {
       return this.preferences.experimental.virtualMachine.mount.type === MountType.NINEP;
-    },
-    hasVirtIoFs(): boolean {
-      return os.platform() === 'darwin';
     },
     virtIoFsDisabled(): boolean {
       // virtiofs should only be disabled on macOS WITHOUT the possibility to select the VM type VZ. VZ doesn't need to

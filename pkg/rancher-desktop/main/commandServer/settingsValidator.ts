@@ -321,8 +321,13 @@ export default class SettingsValidator {
   }
 
   protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
-    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ && os.platform() === 'darwin') {
       errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.VZ }".`);
+
+      return false;
+    }
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU && os.platform() === 'linux') {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
 
       return false;
     }
