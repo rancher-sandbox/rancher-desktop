@@ -49,13 +49,14 @@ task:
     apt-get update
     apt-get install --yes nodejs
     node --version && npm --version
+    npm install --global yarn
   # Info about Cirrus CI caching see: https://cirrus-ci.org/guide/writing-tasks/#cache-instruction
   node_modules_cache:
     folder: /home/ranchertest/src/node_modules
-    fingerprint_script: cat package-lock.json
+    fingerprint_script: cat yarn.lock
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
-      - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install npm ci
+      - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install yarn install --frozen-lockfile
       # `playwright install-deps` needs to be run as root, as it does apt-get things.
       - /usr/bin/env --chdir=/home/ranchertest/src ./node_modules/.bin/playwright install-deps
 
@@ -64,11 +65,11 @@ task:
     # CirrusCI caching doesn't seem to maintain the UID; we'll need to reset the ownership to ensure
     # we can build files in it.
     - chown -R ranchertest:ranchertest /home/ranchertest/src/node_modules
-    - ${SUDO_NON_ROOT_CMD} npm run postinstall
+    - ${SUDO_NON_ROOT_CMD} yarn postinstall
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - ${SUDO_NON_ROOT_CMD} xvfb-run --auto-servernum -- npm run test:e2e
+    - ${SUDO_NON_ROOT_CMD} xvfb-run --auto-servernum -- yarn test:e2e
 
   on_failure:
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197

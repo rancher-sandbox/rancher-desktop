@@ -10,7 +10,7 @@ Forces debug logging to always be enabled. Useful to debug first-run issues when
 
 ## RD_FORCE_UPDATES_ENABLED=anything
 
-When set, it will force auto-update to be enabled even in `npm run dev` mode. Updates will be checked and downloaded, but **not** installed.
+When set, it will force auto-update to be enabled even in `yarn dev` mode. Updates will be checked and downloaded, but **not** installed.
 
 ## RD_MOCK_MACOS_VERSION=semver
 

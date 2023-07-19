@@ -17,11 +17,11 @@ export default class BackendHelper {
   }
 
   /**
-   * Replacer function for string.replaceAll(/(\\*)(")/g, this.#escapeChar)
+   * Replacer function for string.replaceAll(/(\\*)(")/g, this.escapeChar)
    * It will backslash-escape the specified character unless it is already
    * preceded by an odd number of backslashes.
    */
-  static #escapeChar(match: any, slashes: string, char: string) {
+  private static escapeChar(match: any, slashes: string, char: string) {
     if (slashes.length % 2 === 0) {
       slashes += '\\';
     }
@@ -52,7 +52,7 @@ export default class BackendHelper {
     for (const pattern of allowedImages.patterns) {
       let host = 'registry-1.docker.io';
       // escape all unescaped double-quotes because the final pattern will be quoted to avoid nginx syntax errors
-      let repo = pattern.replaceAll(/(\\*)(")/g, this.#escapeChar).split('/');
+      let repo = pattern.replaceAll(/(\\*)(")/g, this.escapeChar).split('/');
 
       // no special cases for 'localhost' and 'host-without-dot:port'; they won't work within the VM
       if (repo[0].includes('.')) {
@@ -73,7 +73,7 @@ export default class BackendHelper {
       }
 
       // all dots in the host name are literal dots, but don't escape them if they are already escaped
-      host = host.replaceAll(/(\\*)(\.)/g, this.#escapeChar);
+      host = host.replaceAll(/(\\*)(\.)/g, this.escapeChar);
       // matching against http_host header, which may or may not include the port
       if (!host.includes(':')) {
         host += '(:443)?';

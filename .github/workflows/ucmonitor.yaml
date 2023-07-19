@@ -31,8 +31,8 @@ jobs:
         with:
           node-version: '16.x'
 
-      - run: npm ci
+      - run: yarn install --frozen-lockfile
 
-      - run: npm run ucmonitor
+      - run: yarn ucmonitor
         env:
           GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}

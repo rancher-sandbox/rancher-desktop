@@ -1,7 +1,7 @@
 /**
  * This script signs existing builds.
  *
- * Usage: npm run sign -- blahblah.zip
+ * Usage: yarn sign -- blahblah.zip
  *
  * Currently, only Windows is supported; mac support is planned.
  */

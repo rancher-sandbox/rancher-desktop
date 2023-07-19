@@ -100,7 +100,7 @@ In this case 123 is the corresponding issue number.
 
 Every pull request triggers a full run of testing in the CI system.
 The failures reported by the code style checker (aka the "linter") and the unit tests are usually
-clear and easy to fix (and can be avoided by running `npm test` locally before creating a commit).
+clear and easy to fix (and can be avoided by running `yarn test` locally before creating a commit).
 But when an integration, or e2e test, fails, it's sometimes useful to consult the log files
 for the run.
 

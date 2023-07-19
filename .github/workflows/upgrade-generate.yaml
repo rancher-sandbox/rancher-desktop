@@ -39,9 +39,9 @@ jobs:
     - name: Flag build for M1
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
-    - run: npm ci
-    - run: npm run build
-    - run: npm run package -- --${{ matrix.platform }} --publish=never
+    - run: yarn install --frozen-lockfile
+    - run: yarn build
+    - run: yarn package --${{ matrix.platform }} --publish=never
     - name: Upload Windows exe installer
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v3
@@ -87,7 +87,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
-    - run: npm ci
+    - run: yarn install --frozen-lockfile
     - name: Download installer (exe)
       id: exe
       uses: actions/download-artifact@v3

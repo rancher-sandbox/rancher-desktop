@@ -16,9 +16,9 @@
   },
   "scripts": {
     "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
-    "lint": "npm run lint:fix",
-    "lint:fix": "npm run lint:typescript:fix && npm run lint:go:fix ",
-    "lint:nofix": "npm run lint:typescript:nofix && npm run lint:go:nofix",
+    "lint": "yarn lint:fix",
+    "lint:fix": "yarn lint:typescript:fix && yarn lint:go:fix ",
+    "lint:nofix": "yarn lint:typescript:nofix && yarn lint:go:nofix",
     "lint:typescript:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --fix --report-unused-disable-directives .",
     "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --report-unused-disable-directives .",
     "lint:go:fix": "gofmt -w src/go",
@@ -28,14 +28,14 @@
     "package": "node scripts/ts-wrapper.js scripts/package.ts",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "wix": "node scripts/ts-wrapper.js scripts/wix.ts",
-    "test": "npm run lint:nofix && npm run test:unit && npm run test:extra",
-    "test:unit": "npm run test:unit:jest && npm run test:unit:nerdctl-stub && npm run test:unit:wsl-helper",
+    "test": "yarn lint:nofix && yarn test:unit && yarn test:extra",
+    "test:unit": "yarn test:unit:jest && yarn test:unit:nerdctl-stub && yarn test:unit:wsl-helper",
     "test:unit:jest": "jest",
-    "test:unit:watch": "npm run test:unit -- --watch",
+    "test:unit:watch": "yarn test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:unit:rdctl": "cd ./src/go/rdctl/ && go test ./...",
     "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
-    "test:extra": "npm run test:extra:api-schema",
+    "test:extra": "yarn test:extra:api-schema",
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
     "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
     "test:e2e:screenshots": "node scripts/ts-wrapper.js scripts/e2e.ts --config=screenshots/playwright-config.ts",
@@ -44,9 +44,9 @@
     "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts",
     "ucmonitor": "node scripts/ts-wrapper.js scripts/unreleased-change-monitor.ts",
     "dcmonitor": "node scripts/ts-wrapper.js scripts/docker-cli-monitor.ts",
-    "screenshots": "npm run screenshots:light && npm run screenshots:dark",
-    "screenshots:dark": "cross-env THEME=dark npm run test:e2e:screenshots",
-    "screenshots:light": "cross-env THEME=light npm run test:e2e:screenshots"
+    "screenshots": "yarn screenshots:light && yarn screenshots:dark",
+    "screenshots:dark": "cross-env THEME=dark yarn test:e2e:screenshots",
+    "screenshots:light": "cross-env THEME=light yarn test:e2e:screenshots"
   },
   "main": "dist/app/background.js",
   "dependencies": {
@@ -150,48 +150,21 @@
     "sass": "1.56.2",
     "sass-loader": "10.2.0",
     "ts-jest": "29.1.0",
+    "ts-loader": "8.4.0",
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.1.2",
+    "typescript": "4.5.4",
     "vue-eslint-parser": "^9.3.0",
     "vue-jest": "3.0.7",
     "vue-template-compiler": "2.6.14",
     "webpack": "4.46.0"
   },
+  "resolutions": {
+    "@types/ref-napi": "3.0.5",
+    "typescript": "4.5.4"
+  },
   "optionalDependencies": {
     "dmg-license": "1.0.11"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.js$": "babel-jest",
-      "^.+\\.ts$": "ts-jest",
-      "^.+\\.vue$": "vue-jest"
-    },
-    "transformIgnorePatterns": [
-      "/node_modules/(?!(yaml|jsonpath-plus)/)"
-    ],
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts",
-      "vue"
-    ],
-    "modulePathIgnorePatterns": [
-      "<rootDir>/dist",
-      "<rootDir>/pkg/rancher-desktop/dist",
-      "<rootDir>/.git",
-      "<rootDir>/e2e",
-      "<rootDir>/screenshots"
-    ],
-    "moduleNameMapper": {
-      "\\.css$": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
-      "^@pkg/assets/": "<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js",
-      "^@pkg/(.*)$": "<rootDir>/pkg/rancher-desktop/$1"
-    },
-    "preset": "ts-jest/presets/js-with-babel",
-    "setupFiles": [
-      "<rootDir>/pkg/rancher-desktop/utils/testUtils/setupElectron.ts"
-    ],
-    "testEnvironment": "jsdom"
   },
   "browserslist": [
     "> 1%",

@@ -27,12 +27,12 @@ set_path_resources() {
                 echo "- \"$system\""
                 echo "- \"$user\""
                 echo "- \"$dist\""
-                echo "and 'npm run dev' is unavailable outside repo clone"
+                echo "and 'yarn dev' is unavailable outside repo clone"
             ) >&3
             exit 1
         fi
     fi
-    if using_npm_run_dev; then
+    if using_dev_mode; then
         if is_windows; then
             fatal "npm operation not yet implemented for Windows"
         fi

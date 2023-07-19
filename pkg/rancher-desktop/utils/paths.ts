@@ -99,7 +99,7 @@ export class WindowsPaths implements Paths {
 function getRdctlPath(): string | null {
   let basePath: string;
 
-  // If we are running as a script (i.e. npm run postinstall), electron.app is undefined
+  // If we are running as a script (i.e. yarn postinstall), electron.app is undefined
   if (electron.app === undefined) {
     basePath = process.cwd();
   } else {

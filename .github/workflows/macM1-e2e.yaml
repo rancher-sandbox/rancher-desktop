@@ -24,7 +24,7 @@ jobs:
         with:
           go-version: '^1.18'
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
         #The next steps is a workaround for an unexpected failure in launching electron before running e2e tests
         #Such failure is addressed in issue #2915
       - name: add tools to PATH
@@ -52,13 +52,13 @@ jobs:
           EOF
       - name: Run Rancher Desktop in dev
         run: |
-          npm run dev -- --no-modal-dialogs &
+          yarn dev -- --no-modal-dialogs &
           sleep 200
           $HOME/.rd/bin/rdctl shutdown
           wait
       - name: Run e2e Tests
         continue-on-error: false
-        run: npm run test:e2e
+        run: yarn test:e2e
       - name: Failed tests
         if: failure()
         run: mkdir -p ./e2e/reports

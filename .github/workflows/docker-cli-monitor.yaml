@@ -32,8 +32,8 @@ jobs:
         with:
           node-version: '16.x'
 
-      - run: npm ci
+      - run: yarn install --frozen-lockfile
 
-      - run: npm run dcmonitor
+      - run: yarn dcmonitor
         env:
           GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}

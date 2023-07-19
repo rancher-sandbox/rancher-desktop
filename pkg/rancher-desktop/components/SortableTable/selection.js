@@ -1,4 +1,3 @@
-
 import $ from 'jquery';
 
 import { filterBy } from '@pkg/utils/array';

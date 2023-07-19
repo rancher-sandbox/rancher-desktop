@@ -17,7 +17,7 @@ async function run() {
     if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
       throw ex;
     }
-    console.error(`Could not find ${ appDir }, please run \`npm run build\` first.`);
+    console.error(`Could not find ${ appDir }, please run \`yarn build\` first.`);
     process.exit(1);
   }
 

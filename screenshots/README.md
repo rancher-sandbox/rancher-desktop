@@ -42,32 +42,32 @@ Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that t
 First, install dependencies with:
 
 ```
-npm install
+yarn
 ```
 
 Make sure you have run a "Factory Reset" before capturing screenshots, so they show the
 default settings and not your current configuration.
 
-On macOS and Linux, after the "Factory Reset" run the app once manually (`npm run dev`)
+On macOS and Linux, after the "Factory Reset" run the app once manually (`yarn dev`)
 to disable admin access. Otherwise the `screenshots` script will hang when the password
 prompt comes up.
 
 Then, capture screenshots in both dark & light mode:
 
 ```
-npm run screenshots
+yarn screenshots
 ```
 
 Light mode only:
 
 ```
-npm run screenshots:light
+yarn screenshots:light
 ```
 
 Dark mode only:
 
 ```
-npm run screenshots:dark
+yarn screenshots:dark
 ```
 
 
@@ -78,7 +78,7 @@ npm run screenshots:dark
   To use in `Windows`, allow the script enough time to write and copy each screenshot
   before moving to the next:
   ```
-  $Env:RD_ENV_SCREENSHOT_SLEEP = 5000; npm run screenshots
+  $Env:RD_ENV_SCREENSHOT_SLEEP = 5000; yarn screenshots
   ```
 
 - RD_MOCK_VERSION
@@ -86,7 +86,7 @@ npm run screenshots:dark
   Customize the app version, this is useful for populating documentation before release
   activities are finalized.
   ```
-  export RD_MOCK_VERSION=1.0.0; npm run screenshots
+  export RD_MOCK_VERSION=1.0.0; yarn screenshots
   ```
 
 ## Output

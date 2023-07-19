@@ -287,6 +287,11 @@ export class ExtensionImpl implements Extension {
     await Promise.all(Object.entries(metadata.ui).map(async([name, data]) => {
       try {
         await fs.promises.mkdir(path.join(uiDir, name), { recursive: true });
+
+        if (!data?.root) {
+          throw new Error('Error: installUI - data.root is undefined');
+        }
+
         await this.client.copyFile(
           this.image,
           data.root,

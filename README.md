@@ -17,7 +17,7 @@ It bundles a variety of other technologies in order to provide one cohesive appl
 It includes a command line tool, `rdctl`, which is written in Go.
 Most developer activities, such as running a development build, building/packaging
 Rancher Desktop, running unit tests, and running end-to-end tests, are done through
-`npm run` scripts. Some exceptions exist, such as running BATS tests.
+`yarn` scripts. Some exceptions exist, such as running BATS tests.
 
 
 ## Setup
@@ -58,7 +58,7 @@ with an existing Windows installation.
    npm config set msbuild_path "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
    ```
 
-You can now clone the repository and run `npm install`.
+You can now clone the repository and run `yarn`.
 
 [development virtual machine]: https://developer.microsoft.com/en-us/windows/downloads/virtual-machines/
 [automated setup script]: ./scripts/windows-setup.ps1
@@ -71,9 +71,10 @@ You can now clone the repository and run `npm install`.
 3. Install [Scoop] via `iwr -useb get.scoop.sh | iex`.
 4. Install git, go, nvm, and unzip via `scoop install git go nvm python unzip`.
    Check node version with `nvm list`. If node v16 is not installed or set as the current version, then install using `nvm install 16` and set as current using `nvm use 16.xx.xx`.
-5. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
+5. Install the yarn package manager via `npm install --global yarn`
+6. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
    The [Desktop development with C++] workload needs to be selected, too.
-6. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
+7. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
 
    ```
    npm config set msvs_version <visual-studio-version-number>
@@ -87,7 +88,7 @@ You can now clone the repository and run `npm install`.
    npm config set msbuild_path "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
    ```
 
-You can now clone the repository and run `npm install`.
+You can now clone the repository and run `yarn`.
 
 [Scoop]: https://scoop.sh/
 [Visual Studio docs]: https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio?view=vs-2022
@@ -111,11 +112,17 @@ Currently we build Rancher Desktop with Node 16. To install it, run:
 nvm install 16
 ```
 
+Next, you'll need to install the yarn package manager:
+
+```
+npm install --global yarn
+```
+
 You'll also need to run `brew install go` if you haven't installed go.
 
 Then you can install dependencies with:
 ```
-npm install
+yarn
 ```
 
 > ### ⚠️ Working on a mac with an M1 chip?
@@ -124,10 +131,10 @@ npm install
 >
 > ```
 > export M1=1
-> npm install
+> yarn 
 > ```
 >
-> You will want to run `git clean -fdx` to clean out any cached assets and re-downloaded with the correct arch before running `npm install` if you previously installed dependencies without setting `M1` first.
+> You will want to run `git clean -fdx` to clean out any cached assets and re-downloaded with the correct arch before running `yarn` if you previously installed dependencies without setting `M1` first.
 
 ### Linux
 
@@ -136,6 +143,8 @@ Ensure you have the following installed:
 - [Node.js][Node.js] v16. **Make sure you have any development packages
   installed.** For example, on openSUSE Leap 15.3 you would need to install
   `nodejs16` and `nodejs16-devel`.
+
+- [yarn classic][yarn-classic]
 
 - Go 1.18 or later.
 
@@ -146,7 +155,7 @@ Ensure you have the following installed:
 Then you can install dependencies with:
 
 ```
-npm install
+yarn
 ```
 
 You can then run Rancher Desktop as described below. It may fail on the first run -
@@ -156,6 +165,7 @@ to solve this issue.
 [Node.js]: https://nodejs.org/
 [ffi-napi]: https://www.npmjs.com/package/ffi-napi
 [node-gyp]: https://github.com/nodejs/node-gyp#on-unix
+[yarn-classic]: https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable
 
 
 ## Running
@@ -164,7 +174,7 @@ Once you have your dependencies installed you can run a development version
 of Rancher Desktop with:
 
 ```
-npm run dev
+yarn dev
 ```
 
 
@@ -173,13 +183,13 @@ npm run dev
 To run the unit tests:
 
 ```
-npm test
+yarn test
 ```
 
 To run the integration tests:
 
 ```
-npm run test:e2e
+yarn test:e2e
 ```
 
 
@@ -189,8 +199,8 @@ Rancher can be built from source on Windows, macOS or Linux.
 Cross-compilation is currently not supported. To run a build do:
 
 ```
-npm run build
-npm run package --publish=never
+yarn build
+yarn package --publish=never
 ```
 
 The build output goes to `dist/`.

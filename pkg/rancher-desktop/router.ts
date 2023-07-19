@@ -1,4 +1,3 @@
-
 import { RouteConfig } from 'vue-router';
 
 import Default from '@pkg/layouts/default.vue';

@@ -31,7 +31,7 @@ func GetRDPath() (string, error) {
 		return RDAppParentPath, nil
 	}
 
-	// This fallback is mostly for running `npm run dev` and using the installed app because there is no app
+	// This fallback is mostly for running `yarn dev` and using the installed app because there is no app
 	// that rdctl would launch directly in dev mode.
 	candidatePath := filepath.Join("/Applications", "Rancher Desktop.app")
 	usable, err = checkUsableApplication(candidatePath, false)

@@ -40,7 +40,7 @@ modules:
 
             zypak-wrapper /app/lib/io.rancherdesktop.app/rancher-desktop "$@"
     build-commands:
-      # Bundle electron build after npm run build -- --linux dir 
+      # Bundle electron build after yarn build -- --linux dir 
       - mkdir -p /app/lib/io.rancherdesktop.app
       - unzip rancher-desktop.zip -d /app/lib/io.rancherdesktop.app
       # Remove in app qemu binaries
