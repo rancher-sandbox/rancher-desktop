@@ -8,19 +8,14 @@ local_setup() {
     if is_windows; then
         # We need to use a directory that exists on the Win32 filesystem
         # so the ctrctl clients can correctly map the bind mounts.
+        # We can use host_path() on these paths because they will exist
+        # both here and in the rancher-desktop distro.
         TEMP="$(win32env TEMP)"
     fi
 
     AUTH_DIR="$TEMP/auth"
     CAROOT="$TEMP/caroot"
     CERTS_DIR="$TEMP/certs"
-
-    AUTH_DIR_HOST=$(host_path "$AUTH_DIR")
-    CERTS_DIR_HOST=$(host_path "$CERTS_DIR")
-    if using_windows_exe; then
-        mkdir -p "$AUTH_DIR_HOST"
-        mkdir -p "$CERTS_DIR_HOST"
-    fi
 
     if is_windows && using_docker; then
         # BUG BUG BUG
@@ -48,13 +43,14 @@ local_setup() {
 create_registry() {
     run ctrctl rm -f registry
     assert_nothing
+    rdshell mkdir -p "$CERTS_DIR"
     ctrctl run \
         --detach \
         --name registry \
         --restart always \
         -p "$REGISTRY_PORT:$REGISTRY_PORT" \
         -e "REGISTRY_HTTP_ADDR=0.0.0.0:$REGISTRY_PORT" \
-        -v "$CERTS_DIR_HOST:/certs" \
+        -v "$(host_path "$CERTS_DIR"):/certs" \
         -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/$REGISTRY_HOST.pem" \
         -e "REGISTRY_HTTP_TLS_KEY=/certs/$REGISTRY_HOST-key.pem" \
         "$@" \
@@ -85,8 +81,12 @@ skip_for_insecure_registry() {
 @test 'start container engine' {
     start_container_engine
 
+    wait_for_shell
+    for dir in "$AUTH_DIR" "$CAROOT" "$CERTS_DIR"; do
+        rdshell rm -rf "$dir"
+    done
+
     if using_image_allow_list; then
-        wait_for_shell
         update_allowed_patterns true "$IMAGE_REGISTRY" "$REGISTRY"
     fi
 }
@@ -119,9 +119,9 @@ verify_default_credStore() {
 
 @test 'create server certs for registry' {
     rdsudo apk add mkcert --force-broken-world --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing
-    rdshell mkdir -p "$CAROOT"
+    rdshell mkdir -p "$CAROOT" "$CERTS_DIR"
     rdshell sh -c "CAROOT=\"$CAROOT\" TRUST_STORES=none mkcert -install"
-    rdshell sh -c "mkdir -p \"$CERTS_DIR\"; cd \"$CERTS_DIR\"; CAROOT=\"$CAROOT\" mkcert \"$REGISTRY_HOST\""
+    rdshell sh -c "cd \"$CERTS_DIR\"; CAROOT=\"$CAROOT\" mkcert \"$REGISTRY_HOST\""
 }
 
 @test 'pull registry image' {
@@ -176,7 +176,7 @@ verify_default_credStore() {
     rdshell mkdir -p "$AUTH_DIR"
     echo "$HTPASSWD" | rdshell tee "$AUTH_DIR/htpasswd" >/dev/null
     create_registry \
-        -v "$AUTH_DIR_HOST:/auth" \
+        -v "$(host_path "$AUTH_DIR"):/auth" \
         -e REGISTRY_AUTH=htpasswd \
         -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
         -e REGISTRY_AUTH_HTPASSWD_REALM="Registry Realm"
