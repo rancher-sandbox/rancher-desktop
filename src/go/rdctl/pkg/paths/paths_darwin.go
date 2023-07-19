@@ -34,6 +34,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 		DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
 		DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
 		ExtensionRoot:           filepath.Join(appHome, "extensions"),
+		Snapshots:               filepath.Join(appHome, "snapshots"),
 	}
 	paths.Logs = os.Getenv("RD_LOGS_DIR")
 	if paths.Logs == "" {

@@ -21,7 +21,7 @@ export interface Paths {
   cache: string;
   /** Directory that holds resource files in the RD installation. */
   resources: string;
-  /** Directory holding Lima state (macOS-specific). */
+  /** Directory holding Lima state (Unix-specific). */
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
@@ -35,6 +35,8 @@ export interface Paths {
   wslDistro: string;
   /** Directory holding the WSL data distribution (Windows-specific). */
   wslDistroData: string;
+  /** Directory that holds snapshots. */
+  snapshots: string;
 }
 
 export class UnixPaths implements Paths {
@@ -49,6 +51,7 @@ export class UnixPaths implements Paths {
   deploymentProfileSystem = '';
   deploymentProfileUser = '';
   extensionRoot = '';
+  snapshots = '';
 
   constructor(pathsData: object) {
     Object.assign(this, pathsData);
@@ -92,6 +95,10 @@ export class WindowsPaths implements Paths {
 
   get deploymentProfileUser(): string {
     throw new Error('Internal error: Windows profiles will be read from Registry');
+  }
+
+  get snapshots(): string {
+    throw new Error('Internal error: snapshots not implemented for Windows');
   }
 }
 
