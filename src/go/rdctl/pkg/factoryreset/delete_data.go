@@ -25,27 +25,13 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"syscall"
 
-	dockerconfig "github.com/docker/cli/cli/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
+	dockerconfig "github.com/docker/docker/cli/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/sirupsen/logrus"
 )
-
-func DeleteData(removeKubernetesCache bool) error {
-	if err := autostart.EnsureAutostart(false); err != nil {
-		logrus.Errorf("Failed to remove autostart configuration: %s", err)
-	}
-
-	return map[string]func(bool) error{
-		"darwin":  deleteDarwinData,
-		"linux":   deleteLinuxData,
-		"windows": unregisterAndDeleteWindowsData,
-	}[runtime.GOOS](removeKubernetesCache)
-}
 
 func getStandardDirs() (string, string, string, error) {
 	configDir, err := os.UserConfigDir()
@@ -61,91 +47,6 @@ func getStandardDirs() (string, string, string, error) {
 		return "", "", "", err
 	}
 	return configDir, cacheDir, homeDir, nil
-}
-
-func deleteDarwinData(removeKubernetesCache bool) error {
-	configDir, cacheDir, homeDir, err := getStandardDirs()
-	if err != nil {
-		return err
-	}
-	libraryPath := path.Join(homeDir, "Library")
-
-	altAppHomePath := path.Join(homeDir, ".rd")
-	appHomePath := path.Join(configDir, "rancher-desktop")
-	cachePath := path.Join(cacheDir, "rancher-desktop")
-	logsPath := os.Getenv("RD_LOGS_DIR")
-	if logsPath == "" {
-		logsPath = path.Join(libraryPath, "Logs", "rancher-desktop")
-	}
-	settingsPath := path.Join(libraryPath, "Preferences", "rancher-desktop")
-	updaterPath := path.Join(configDir, "Caches", "rancher-desktop-updater")
-
-	pathList := []string{
-		altAppHomePath,
-		appHomePath,
-		logsPath,
-		settingsPath,
-		updaterPath,
-	}
-	if removeKubernetesCache {
-		pathList = append(pathList, cachePath)
-	} else {
-		pathList = append(pathList, path.Join(cachePath, "updater-longhorn.json"))
-	}
-	return deleteUnixLikeData(homeDir, altAppHomePath, path.Join(homeDir, ".config"), pathList)
-}
-
-func deleteLinuxData(removeKubernetesCache bool) error {
-	configHomePath, cacheHomePath, homeDir, err := getStandardDirs()
-	if err != nil {
-		return err
-	}
-
-	dataDir := os.Getenv("XDG_DATA_HOME")
-	if dataDir == "" {
-		dataDir = path.Join(homeDir, ".local", "share")
-	}
-	altAppHomePath := path.Join(homeDir, ".rd")
-	cachePath := path.Join(cacheHomePath, "rancher-desktop")
-	configPath := path.Join(configHomePath, "rancher-desktop")
-	electronConfigPath := path.Join(configHomePath, "Rancher Desktop")
-	dataHomePath := path.Join(dataDir, "rancher-desktop")
-
-	pathList := []string{
-		altAppHomePath,
-		configPath,
-		electronConfigPath,
-		path.Join(homeDir, ".local", "state", "rancher-desktop"),
-	}
-	logsPath := os.Getenv("RD_LOGS_DIR")
-	if logsPath != "" {
-		pathList = append(pathList, logsPath, path.Join(dataHomePath, "lima"))
-	} else {
-		pathList = append(pathList, path.Join(dataHomePath))
-	}
-	if removeKubernetesCache {
-		pathList = append(pathList, cachePath)
-	} else {
-		pathList = append(pathList, path.Join(cachePath, "updater-longhorn.json"))
-	}
-	return deleteUnixLikeData(homeDir, altAppHomePath, configHomePath, pathList)
-}
-
-func unregisterAndDeleteWindowsData(removeKubernetesCache bool) error {
-	if err := unregisterWSL(); err != nil {
-		logrus.Errorf("could not unregister WSL: %s", err)
-		return err
-	}
-	if err := deleteWindowsData(!removeKubernetesCache, "rancher-desktop"); err != nil {
-		logrus.Errorf("could not delete data: %s", err)
-		return err
-	}
-	if err := clearDockerContext(); err != nil {
-		logrus.Errorf("could not clear docker context: %s", err)
-		return err
-	}
-	logrus.Infoln("successfully cleared data.")
-	return nil
 }
 
 // Most of the errors in this function are reported, but we continue to try to delete things,
