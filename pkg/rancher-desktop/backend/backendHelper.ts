@@ -127,42 +127,42 @@ export default class BackendHelper {
    */
   static getDesiredVersion(currentConfigVersionString: string|undefined, availableVersions: semver.SemVer[], settingsWriter: (_: any) => void): semver.SemVer {
     let storedVersion: semver.SemVer|null;
-    let matchedVersion: semver.SemVer|null|undefined;
-    const invalidK8sVersion1 = `Requested kubernetes version ${ currentConfigVersionString } is not a valid version.`;
-    const invalidK8sVersion2 = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
-    const invalidMessage = `${ invalidK8sVersion1 }${ availableVersions.length ? ` ${ invalidK8sVersion2 }` : '' }`;
+    let matchedVersion: semver.SemVer|undefined;
+    const invalidK8sVersionMainMessage = `Requested kubernetes version ${ currentConfigVersionString } is not a valid version.`;
 
     if (currentConfigVersionString) {
       storedVersion = semver.parse(currentConfigVersionString);
       if (storedVersion) {
-        try {
-          matchedVersion = availableVersions.find(v => v.compare(storedVersion as semver.SemVer) === 0);
-          if (matchedVersion) {
-            return matchedVersion;
-          }
-        } catch (e: any) {
-          // Recover from a non-semver currentConfigVersionString string and log it.
-          if (e instanceof TypeError) {
-            console.log(invalidMessage);
-            if (!availableVersions.length) {
-              throw new Error('No version available');
+        matchedVersion = availableVersions.find((v) => {
+          try {
+            return v.compare(storedVersion as semver.SemVer) === 0;
+          } catch (err: any) {
+            console.error(`Can't compare versions ${ storedVersion } and ${ v }: `, err);
+            if (!(err instanceof TypeError)) {
+              return false;
             }
-            settingsWriter({ kubernetes: { version: availableVersions[0].version } });
-
-            return availableVersions[0];
-          } else {
-            throw e;
+            // We haven't seen a non-TypeError exception here, but it would be worthwhile to have it reported.
+            // This throw will cause the exception to appear in a non-fatal error reporting dialog box.
+            throw err;
           }
+        });
+        if (matchedVersion) {
+          return matchedVersion;
         }
-      } else {
-        console.log(invalidMessage);
       }
     }
     // If we're here either there's no existing cfg.k8s.version, or it isn't valid
     if (!availableVersions.length) {
+      if (currentConfigVersionString) {
+        console.log(invalidK8sVersionMainMessage);
+      } else {
+        console.log('Internal error: no available kubernetes versions found.');
+      }
       throw new Error('No version available');
     }
-
+    if (currentConfigVersionString) {
+      console.log(`${ invalidK8sVersionMainMessage } Falling back to the most recent stable version of ${ availableVersions[0] }`);
+    }
     // No (valid) stored version; save the selected one.
     settingsWriter({ kubernetes: { version: availableVersions[0].version } });
 
