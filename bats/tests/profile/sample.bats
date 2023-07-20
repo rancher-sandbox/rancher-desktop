@@ -15,18 +15,11 @@ local_teardown_file() {
     foreach_profile delete_profile
 }
 
-rdctl_api_settings() {
-    run rdctl api /settings
-    echo "$output"
-    assert_success || return
-    refute_output undefined
-}
-
 start_app() {
     # Store WSL integration and allowed images list in locked profile instead of settings.json
     PROFILE_TYPE=$PROFILE_LOCKED
     start_container_engine
-    try --max 20 --delay 5 rdctl_api_settings
+    try --max 20 --delay 5 rdctl api /settings
 
     RD_CONTAINER_ENGINE=$(jq_output .containerEngine.name)
     wait_for_container_engine
