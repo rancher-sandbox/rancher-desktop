@@ -10,11 +10,7 @@ is_true() {
     # case-insensitive check; false values: '', '0', 'no', and 'false'
     local value
     value=$(to_lower "$1")
-    if [[ $value =~ ^(0|no|false)?$ ]]; then
-        false
-    else
-        true
-    fi
+    [[ ! $value =~ ^(0|no|false)?$ ]]
 }
 
 is_false() {
@@ -22,7 +18,7 @@ is_false() {
 }
 
 bool() {
-    if eval "$1"; then
+    if "$@"; then
         echo "true"
     else
         echo "false"
@@ -35,7 +31,7 @@ validate_enum() {
     local var=$1
     shift
     for value in "$@"; do
-        if [ "${!var}" = "$value" ]; then
+        if [[ ${!var} == "$value" ]]; then
             return
         fi
     done
@@ -90,7 +86,7 @@ join_map() {
     local elem
     local result=""
     for elem in "$@"; do
-        elem=$(eval "$map" '"$elem"')
+        elem=$(eval "$map" '"$elem"') || return
         if [[ -z $result ]]; then
             result=$elem
         else
@@ -101,7 +97,12 @@ join_map() {
 }
 
 jq_output() {
-    jq -r "$@" <<<"${output}"
+    run jq -r "$@" <<<"${output}"
+    echo "$output"
+    if [[ $output == null ]]; then
+        status=1
+    fi
+    return "$status"
 }
 
 get_setting() {
@@ -151,10 +152,10 @@ try() {
         shift
     done
 
-    local count
-    for ((count = 0; count < max; ++count)); do
+    local count=0
+    while true; do
         run "$@"
-        if ((status == 0)); then
+        if ((status == 0 || ++count >= max)); then
             break
         fi
         sleep "$delay"
@@ -167,7 +168,7 @@ image_without_tag_as_json_string() {
     local image=$1
     # If the tag looks like a port number and follows something that looks
     # like a domain name, then don't strip the tag (e.g. foo.io:5000).
-    if [[ ${image##*:} =~ ^[0-9]+$ && ${image%:*} =~ \.[a-z]+$ ]]; then
+    if [[ ${image##*:} =~ ^[0-9]+(/|$) && ${image%:*} =~ \.[a-z]+$ ]]; then
         json_string "$image"
     else
         json_string "${image%:*}"
@@ -209,23 +210,22 @@ unique_filename() {
     local suffix=""
 
     while true; do
-        local filename="$basename$suffix$extension"
-        if [ ! -e "$filename" ]; then
+        local filename="${basename}${suffix}${extension}"
+        if [[ ! -e $filename ]]; then
             echo "$filename"
             return
         fi
-        index=$((index + 1))
-        suffix="_$index"
+        suffix="_$((++index))"
     done
 }
 
 capture_logs() {
-    if capturing_logs && [ -d "$PATH_LOGS" ]; then
+    if capturing_logs && [[ -d $PATH_LOGS ]]; then
         local logdir
         logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
         mkdir -p "$logdir"
-        cp -LR "$PATH_LOGS/" "$logdir"
-        echo "${BATS_TEST_DESCRIPTION:-teardown}" >"$logdir/test_description"
+        cp -LR "${PATH_LOGS}/" "$logdir"
+        echo "${BATS_TEST_DESCRIPTION:-teardown}" >"${logdir}/test_description"
         # Capture settings.json
         cp "$PATH_CONFIG_FILE" "$logdir"
         foreach_profile export_profile "$logdir"

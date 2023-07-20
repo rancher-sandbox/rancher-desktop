@@ -65,7 +65,7 @@ call_local_function() {
     local func
     func="local_$(calling_function)"
     if [ "$(type -t "$func")" = "function" ]; then
-        eval "$func"
+        "$func"
     fi
 }
 
