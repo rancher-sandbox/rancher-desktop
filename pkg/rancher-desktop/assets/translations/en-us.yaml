@@ -178,7 +178,7 @@ marketplace:
     installed: Installed
   banners:
     install: Extension {name} has been installed.
-    uninstall: Extension {name} has been uninstalled.
+    uninstall: Extension {name} has been removed.
   sidebar:
     installButton:
       label: Install
@@ -4757,7 +4757,7 @@ extensions:
   icon: icon-extension
   installed:
     list:
-      uninstall: Uninstall
+      uninstall: Remove
     emptyState:
       icon: icon-extension
       heading: No extensions installed
@@ -4766,8 +4766,8 @@ extensions:
         text: Browse Extensions
   view:
     emptyState:
-      heading: Extension uninstalled
-      body: '{extensionId} was uninstalled. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
+      heading: Extension removed
+      body: '{extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
 
 ##############################
 ### Preferences Page
