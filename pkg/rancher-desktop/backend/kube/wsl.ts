@@ -16,9 +16,12 @@ import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
+import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { showMessageBox } from '@pkg/window';
+
+const console = Logging.kube;
 
 export default class WSLKubernetesBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(vm: WSLBackend) {
