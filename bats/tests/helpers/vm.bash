@@ -228,19 +228,12 @@ wait_for_service_status() {
     try --max 30 --delay 5 assert_service_status "$service_name" "$expect"
 }
 
-rdctl_api_settings() {
-    run rdctl api /settings
-    echo "$output"
-    assert_success || return
-    refute_output undefined
-}
-
 wait_for_container_engine() {
     local CALLER
     CALLER=$(this_function)
 
     trace "waiting for api /settings to be callable"
-    try --max 30 --delay 5 rdctl_api_settings
+    try --max 30 --delay 5 rdctl api /settings
 
     run jq_output .containerEngine.allowedImages.enabled
     assert_success

@@ -27,7 +27,7 @@ while (<>) {
     # - $assert_success
     # - $ {assert}_success
     # - if [ $status -eq 0 ]
-    if (/(\$\{?)?(assert|refute|output\b|status\b)/) {
+    if (/(\$\{?)? (assert | refute | \b output \b | \b status \b)/x) {
         undef $run;
     }
     # Doesn't match on:
