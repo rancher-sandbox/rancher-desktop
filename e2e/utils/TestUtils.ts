@@ -270,7 +270,7 @@ export async function waitForRestartVM(progressBar: Locator, options = { timeout
     const nowTime = new Date().valueOf();
 
     if (nowTime > endTime) {
-      break;
+      throw new Error(`Failed to see the VM restart after ${ options.timeout / 1000 } seconds`);
     }
     await util.promisify(setTimeout)(options.interval);
   }
