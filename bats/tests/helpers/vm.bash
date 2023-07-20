@@ -189,6 +189,25 @@ docker_context_exists() {
     assert_line "$RD_DOCKER_CONTEXT"
 }
 
+get_service_pid() {
+    local service_name=$1
+    run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
+    assert_success || return
+    rdshell cat "$output"
+}
+
+assert_service_pid() {
+    local service_name=$1
+    local expected_pid=$2
+    run get_service_pid "$service_name"
+    assert_success
+    assert_output "$expected_pid"
+}
+
+refute_service_pid() {
+    ! assert_service_pid "$@"
+}
+
 assert_service_status() {
     local service_name=$1
     local expect=$2
