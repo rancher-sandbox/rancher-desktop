@@ -2,11 +2,7 @@ load '../helpers/load'
 
 local_setup() {
     CONTAINERD_NAMESPACE=rancher-desktop-extensions
-
-    TESTDATA_DIR="${PATH_BATS_ROOT}/tests/extensions/testdata/"
-    if using_windows_exe; then
-        TESTDATA_DIR="$(wslpath -m "${TESTDATA_DIR}")"
-    fi
+    TESTDATA_DIR_HOST=$(host_path "${PATH_BATS_ROOT}/tests/extensions/testdata/")
 }
 
 id() { # variant
@@ -38,7 +34,7 @@ encoded_id() { # variant
     for extension in vm-image vm-compose; do
         ctrctl build \
             --tag rd/extension/$extension \
-            --build-arg variant=$extension "$TESTDATA_DIR"
+            --build-arg variant=$extension "$TESTDATA_DIR_HOST"
     done
 }
 

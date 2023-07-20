@@ -9,12 +9,23 @@ load '../helpers/load'
     factory_reset
 }
 
+skip_on_legacy_networking() {
+    if is_windows && ! using_networking_tunnel; then
+        # The test also works with a firewall rule, but somehow the rule seems to
+        # stop working randomly and then needs to be deleted and recreated. We are
+        # not automating this just for the sake of the legacy implementation.
+        skip "This test requires the new networking tunnel on Windows"
+    fi
+}
+
 @test 'start container engine' {
+    skip_on_legacy_networking
     start_container_engine
     wait_for_container_engine
 }
 
 verify_host_connectivity() {
+    skip_on_legacy_networking
     run ctrctl run --rm alpine ping -c 5 "$1"
     assert_success
     assert_output --partial "5 packets transmitted, 5 packets received, 0% packet loss"

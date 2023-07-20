@@ -42,7 +42,7 @@ local_setup() {
     assert_success
 
     # Load the homepage; that can take a while because all the pods are still restarting
-    try --max 9 --delay 10 curl --silent --show-error "http://localhost:$output"
+    run try --max 9 --delay 10 curl --silent --show-error "http://localhost:$output"
     assert_success
     assert_output --regexp "(Just another WordPress site|<title>User&#039;s Blog!</title>)"
 }

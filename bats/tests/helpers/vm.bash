@@ -1,12 +1,11 @@
 wait_for_shell() {
-    if is_unix; then
+    if is_windows; then
+        try --max 24 --delay 5 rdctl shell true
+    else
         try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
-        assert_success
         # wait until sshfs mounts are done
         try --max 12 --delay 5 rdctl shell test -d "$HOME/.rd"
-        assert_success
     fi
-    rdctl shell sync
 }
 
 pkill_by_path() {
@@ -188,6 +187,25 @@ docker_context_exists() {
     run docker_exe context ls -q
     assert_success || return
     assert_line "$RD_DOCKER_CONTEXT"
+}
+
+get_service_pid() {
+    local service_name=$1
+    run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
+    assert_success || return
+    rdshell cat "$output"
+}
+
+assert_service_pid() {
+    local service_name=$1
+    local expected_pid=$2
+    run get_service_pid "$service_name"
+    assert_success
+    assert_output "$expected_pid"
+}
+
+refute_service_pid() {
+    ! assert_service_pid "$@"
 }
 
 assert_service_status() {

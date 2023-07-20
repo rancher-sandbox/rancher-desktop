@@ -62,26 +62,38 @@ assert_traefik_pods_are_up() {
 @test 'disable traefik' {
     # First check whether the traefik pods are up from the first launch
     try --max 30 --delay 10 assert_traefik_pods_are_up
-    assert_success
+
+    local k3s_pid
+    k3s_pid=$(get_service_pid k3s)
+
     # Disable traefik
     rdctl set --kubernetes.options.traefik=FALSE
+
+    # Wait until k3s has restarted
+    try --max 30 --delay 5 refute_service_pid k3s "$(k3s_pid)"
+
     wait_for_apiserver
     # Check if the traefik pods go down
     try --max 30 --delay 10 assert_traefik_pods_are_down
-    assert_success
 }
 
 @test 'enable traefik' {
+    local k3s_pid
+    k3s_pid=$(get_service_pid k3s)
+
     # Enable traefik
     rdctl set --kubernetes.options.traefik=TRUE
+
+    # Wait until k3s has restarted
+    try --max 30 --delay 5 refute_service_pid k3s "$(k3s_pid)"
+
     wait_for_apiserver
     # Check if the traefik pods come up
     try --max 30 --delay 10 assert_traefik_pods_are_up
-    assert_success
-    try --max 30 --delay 10 curl --head "http://$(get_host):80"
+    run try --max 30 --delay 10 curl --head "http://$(get_host):80"
     assert_success
     assert_output --regexp 'HTTP/[0-9.]* 404'
-    try --max 30 --delay 10 curl --head --insecure "https://$(get_host):443"
+    run try --max 30 --delay 10 curl --head --insecure "https://$(get_host):443"
     assert_success
     assert_output --regexp 'HTTP/[0-9.]* 404'
 }
