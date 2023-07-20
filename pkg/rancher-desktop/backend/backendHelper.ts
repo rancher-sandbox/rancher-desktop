@@ -1,9 +1,11 @@
+import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
 
 import { BackendSettings } from '@pkg/backend/backend';
 import { ContainerEngine } from '@pkg/config/settings';
 import Logging from '@pkg/utils/logging';
+import { showMessageBox } from '@pkg/window';
 
 const console = Logging.kube;
 
@@ -125,10 +127,10 @@ export default class BackendHelper {
    * If it's valid and available, use it.
    * Otherwise fall back to the first (recommended) available version.
    */
-  static getDesiredVersion(currentConfigVersionString: string|undefined, availableVersions: semver.SemVer[], settingsWriter: (_: any) => void): semver.SemVer {
+  static async getDesiredVersion(currentConfigVersionString: string|undefined, availableVersions: semver.SemVer[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
     let storedVersion: semver.SemVer|null;
     let matchedVersion: semver.SemVer|undefined;
-    const invalidK8sVersionMainMessage = `Requested kubernetes version ${ currentConfigVersionString } is not a valid version.`;
+    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a valid version.`;
 
     if (currentConfigVersionString) {
       storedVersion = semver.parse(currentConfigVersionString);
@@ -158,10 +160,25 @@ export default class BackendHelper {
       } else {
         console.log('Internal error: no available kubernetes versions found.');
       }
-      throw new Error('No version available');
+      throw new Error('No kubernetes version available.');
     }
     if (currentConfigVersionString) {
-      console.log(`${ invalidK8sVersionMainMessage } Falling back to the most recent stable version of ${ availableVersions[0] }`);
+      const message = invalidK8sVersionMainMessage;
+      const detail = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
+
+      if (noModalDialogs) {
+        console.log(`${ message } ${ detail }`);
+      } else {
+        const options: Electron.MessageBoxOptions = {
+          message,
+          detail,
+          type:    'warning',
+          buttons: ['OK'],
+          title:   'Invalid Kubernetes Version',
+        };
+
+        await showMessageBox(options, true);
+      }
     }
     // No (valid) stored version; save the selected one.
     settingsWriter({ kubernetes: { version: availableVersions[0].version } });
