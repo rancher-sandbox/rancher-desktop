@@ -139,3 +139,45 @@ func (manager Manager) Delete(id string) error {
 	}
 	return nil
 }
+
+// Restores Rancher Desktop to the state saved in a snapshot.
+func (manager Manager) Restore(id string) error {
+	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
+	metadataPath := filepath.Join(snapshotDir, "metadata.json")
+	contents, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return fmt.Errorf("failed to read metadata for snapshot %q: %w", id, err)
+	}
+	snapshot := Snapshot{}
+	if err := json.Unmarshal(contents, &snapshot); err != nil {
+		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
+	}
+
+	// restore settings.json
+	settingsPath := filepath.Join(manager.Paths.Config, "settings.json")
+	snapshotSettingsPath := filepath.Join(snapshotDir, "settings.json")
+	if err := copyFile(settingsPath, snapshotSettingsPath, false); err != nil {
+		return fmt.Errorf("failed to restore settings.json: %w", err)
+	}
+
+	// restore override.yaml
+	overridePath := filepath.Join(manager.Paths.Lima, "_config", "override.yaml")
+	snapshotOverridePath := filepath.Join(snapshotDir, "override.yaml")
+	if err := copyFile(overridePath, snapshotOverridePath, false); errors.Is(err, os.ErrNotExist) {
+		if err := os.RemoveAll(overridePath); err != nil {
+			return fmt.Errorf("failed to remove override.yaml: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to restore override.yaml: %w", err)
+	}
+
+	// restore VM image
+	for _, image := range []string{"basedisk", "diffdisk"} {
+		imagePath := filepath.Join(manager.Paths.Lima, "0", image)
+		snapshotImagePath := filepath.Join(snapshotDir, image)
+		if err := copyFile(imagePath, snapshotImagePath, true); err != nil {
+			return fmt.Errorf("failed to restore %s: %w", image, err)
+		}
+	}
+	return nil
+}
