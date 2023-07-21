@@ -9,8 +9,8 @@ updates:
     open-pull-requests-limit: 3
     labels: ["component/dependencies"]
 
-  # Maintain dependencies for npm
-  - package-ecosystem: "npm"
+  # Maintain dependencies for the JavaScript-based code
+  - package-ecosystem: "yarn"
     directory: "/"
     schedule:
       interval: "weekly"
