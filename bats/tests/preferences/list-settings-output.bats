@@ -98,7 +98,7 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 @test 'verify plutil is ok with the generated plist output' {
-    if !is_mac ; then
+    if ! is_mac; then
         skip
     fi
     run bash -o pipefail -c "rdctl list-settings --output plist | plutil -s -"
