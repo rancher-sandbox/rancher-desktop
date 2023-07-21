@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker-credential-helpers/credentials"
-	dockerconfig "github.com/docker/docker/cli/config"
+	dockerconfig "github.com/docker/cli/cli/config"
 )
 
 const configFileName = "plaintext-credentials.config.json"
