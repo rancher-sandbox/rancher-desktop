@@ -16,6 +16,25 @@ pkill_by_path() {
     fi
 }
 
+clear_iptables_chain() {
+    local CHAIN=$1
+    local rule
+    wsl sudo iptables -L | awk '/^Chain ${CHAIN}/ {print $2}' | while IFS= read -r rule; do
+        wsl sudo iptables -X "$rule"
+    done
+}
+
+flush_iptables() {
+    # reset default policies
+    wsl sudo iptables -P INPUT ACCEPT
+    wsl sudo iptables -P FORWARD ACCEPT
+    wsl sudo iptables -P OUTPUT ACCEPT
+    wsl sudo iptables -t nat -F
+    wsl sudo iptables -t mangle -F
+    wsl sudo iptables -F
+    wsl sudo iptables -X
+}
+
 factory_reset() {
     if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
         capture_logs
@@ -35,12 +54,10 @@ factory_reset() {
     if is_windows && wsl true >/dev/null; then
         run wsl sudo ip link delete docker0
         run wsl sudo ip link delete nerdctl0
-
-        wsl sudo iptables -F
-        local rule
-        wsl sudo iptables -L | awk '/^Chain CNI/ {print $2}' | while IFS= read -r rule; do
-            wsl sudo iptables -X "$rule"
-        done
+        # reset iptables to original state
+        flush_iptables
+        clear_iptables_chain "CNI"
+        clear_iptables_chain "KUBE"
     fi
     rdctl factory-reset
 }
