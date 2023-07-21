@@ -17207,9 +17207,9 @@ rancher-icons@rancher/icons#v2.0.0:
   version "2.0.0"
   resolved "https://codeload.github.com/rancher/icons/tar.gz/557a218db623f25193ed9bb2dba0fed964215bdc"
 
-rancher-icons@rancher/icons#v2.0.9:
-  version "2.0.9"
-  resolved "https://codeload.github.com/rancher/icons/tar.gz/09048239918c9eccf49f7770948efef63fb04f24"
+rancher-icons@rancher/icons#v2.0.18:
+  version "2.0.18"
+  resolved "https://codeload.github.com/rancher/icons/tar.gz/d8b4f221386c80105bc1456490c9ce591daec5fc"
 
 randombytes@^2.0.0, randombytes@^2.0.1, randombytes@^2.0.5, randombytes@^2.1.0:
   version "2.1.0"

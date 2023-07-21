@@ -219,7 +219,7 @@ export default {
               label:   this.t('images.manager.table.action.scan'),
               action:  'scanImage',
               enabled: true,
-              icon:    'icon icon-info',
+              icon:    'icon icon-info-circle',
             },
           ].filter(x => x.enabled);
           // ActionMenu callbacks - SortableTable assumes that these methods live

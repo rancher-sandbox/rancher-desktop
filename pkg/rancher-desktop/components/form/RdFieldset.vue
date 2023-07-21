@@ -56,7 +56,7 @@ export default Vue.extend({
         <i
           v-else-if="legendTooltip"
           v-tooltip="legendTooltip"
-          class="icon icon-info icon-lg"
+          class="icon icon-info-circle icon-lg"
         />
       </slot>
     </legend>
