@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/plist"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/reg"
 	"github.com/spf13/cobra"
 	"strings"
@@ -31,6 +32,7 @@ var outputSettingsFlags struct {
 
 const jsonFormat = "json"
 const regFormat = "reg"
+const plistFormat = "plist"
 const defaultsRegistrySection = "defaults"
 const lockedRegistrySection = "locked"
 
@@ -68,16 +70,25 @@ and Y is either "defaults" or "locked", depending on which deployment profile yo
 
 func init() {
 	rootCmd.AddCommand(listSettingsCmd)
-	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.Format, "output", "", jsonFormat, fmt.Sprintf("output format: %s|%s", jsonFormat, regFormat))
+	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.Format, "output", "", jsonFormat, fmt.Sprintf("output format: %s|%s|%s", jsonFormat, regFormat, plistFormat))
 	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryHive, "reg-hive", "", "", fmt.Sprintf(`registry hive: %s|%s (default "%s")`, reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
 	listSettingsCmd.Flags().StringVarP(&outputSettingsFlags.RegistryProfileType, "section", "", "", fmt.Sprintf(`registry section: %s|%s (default "%s")`, defaultsRegistrySection, lockedRegistrySection, defaultsRegistrySection))
 }
 
+func findString(needle string, haystack []string) bool {
+	for _, s := range haystack {
+		if needle == s {
+			return true
+		}
+	}
+	return false
+}
+
 func validateOutputFormatFlags() error {
-	if outputSettingsFlags.Format != jsonFormat && outputSettingsFlags.Format != regFormat {
+	if !findString(outputSettingsFlags.Format, []string{jsonFormat, regFormat, plistFormat}) {
 		return fmt.Errorf(`invalid output format of "%s"`, outputSettingsFlags.Format)
 	}
-	if outputSettingsFlags.Format == jsonFormat {
+	if outputSettingsFlags.Format != regFormat {
 		if outputSettingsFlags.RegistryHive != "" || outputSettingsFlags.RegistryProfileType != "" {
 			return fmt.Errorf("registry hive and profile can't be specified with json")
 		}
@@ -118,6 +129,8 @@ func getListSettings() (string, error) {
 			return "", err
 		}
 		return strings.Join(lines, "\n"), nil
+	} else if outputSettingsFlags.Format == plistFormat {
+		return plist.JsonToPlist(string(output))
 	} else {
 		// This shouldn't happen
 		return "", fmt.Errorf("internal error: unexpected output format of %s", outputSettingsFlags.Format)

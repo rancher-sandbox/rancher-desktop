@@ -3,6 +3,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/rdctl
 go 1.17
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service v0.0.0-20221207202230-8eef0a706010
 	github.com/sirupsen/logrus v1.9.0
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

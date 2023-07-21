@@ -85,6 +85,27 @@ RD_USE_IMAGE_ALLOW_LIST=true
     assert_output --partial '"showMuted"=dword:0'
 }
 
+@test 'generates plist output' {
+    run rdctl list-settings --output plist
+    assert_success
+    # Just match a few of the lines near the start and the end of the output.
+    # The unit tests do more comprehensive output checking.
+    assert_output --partial '<?xml version="1.0" encoding="UTF-8"?>'
+    assert_output --partial '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+    assert_output --partial '<plist version="1.0">'
+    assert_output --partial '    <key>application</key>'
+    assert_output --partial '</plist>'
+}
+
+@test 'verify plutil is ok with the generated plist output' {
+    if !is_mac ; then
+        skip
+    fi
+    run bash -o pipefail -c "rdctl list-settings --output plist | plutil -s -"
+    assert_success
+    assert_output ""
+}
+
 @test 'needs a shutdown' {
     rdctl shutdown
 }
