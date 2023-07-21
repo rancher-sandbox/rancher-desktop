@@ -22,10 +22,10 @@ export default {
 <template>
   <div ref="container" class="labeled-tooltip" :class="{[status]: true, hoverable: hover}">
     <template v-if="hover">
-      <i v-tooltip="value.content ? { ...{content: value.content, classes: [`tooltip-${status}`]}, ...value } : value" :class="{'hover':!value}" class="icon icon-info status-icon" />
+      <i v-tooltip="value.content ? { ...{content: value.content, classes: [`tooltip-${status}`]}, ...value } : value" :class="{'hover':!value}" class="icon icon-info-circle status-icon" />
     </template>
     <template v-else>
-      <i :class="{'hover':!value}" class="icon icon-info status-icon" />
+      <i :class="{'hover':!value}" class="icon icon-info-circle status-icon" />
       <div v-if="value" class="tooltip" x-placement="bottom">
         <div class="tooltip-arrow" />
         <div class="tooltip-inner">
