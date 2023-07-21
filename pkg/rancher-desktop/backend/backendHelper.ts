@@ -132,6 +132,16 @@ export default class BackendHelper {
     let matchedVersion: semver.SemVer|undefined;
     const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a valid version.`;
 
+    // If we're here either there's no existing cfg.k8s.version, or it isn't valid
+    if (!availableVersions.length) {
+      if (currentConfigVersionString) {
+        console.log(invalidK8sVersionMainMessage);
+      } else {
+        console.log('Internal error: no available kubernetes versions found.');
+      }
+      throw new Error('No kubernetes version available.');
+    }
+
     if (currentConfigVersionString) {
       storedVersion = semver.parse(currentConfigVersionString);
       if (storedVersion) {
@@ -152,17 +162,6 @@ export default class BackendHelper {
           return matchedVersion;
         }
       }
-    }
-    // If we're here either there's no existing cfg.k8s.version, or it isn't valid
-    if (!availableVersions.length) {
-      if (currentConfigVersionString) {
-        console.log(invalidK8sVersionMainMessage);
-      } else {
-        console.log('Internal error: no available kubernetes versions found.');
-      }
-      throw new Error('No kubernetes version available.');
-    }
-    if (currentConfigVersionString) {
       const message = invalidK8sVersionMainMessage;
       const detail = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
 
@@ -180,7 +179,7 @@ export default class BackendHelper {
         await showMessageBox(options, true);
       }
     }
-    // No (valid) stored version; save the selected one.
+    // No (valid) stored version; save the default one.
     settingsWriter({ kubernetes: { version: availableVersions[0].version } });
 
     return availableVersions[0];
