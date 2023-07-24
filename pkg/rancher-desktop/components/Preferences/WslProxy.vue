@@ -26,6 +26,14 @@ export default Vue.extend({
     isFieldDisabled() {
       return !(this.preferences.experimental.virtualMachine.proxy.enabled);
     },
+    noProxyText: {
+      get() {
+        return this.preferences.experimental.virtualMachine.proxy.noproxy.join('\n');
+      },
+      set(value: String) {
+        this.$store.dispatch('preferences/updatePreferencesData', { property: 'experimental.virtualMachine.proxy.noproxy', value: value.trim().split('\n') });
+      },
+    },
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
@@ -49,67 +57,83 @@ export default Vue.extend({
       />
     </rd-fieldset>
     <hr>
-    <rd-fieldset
-      data-test="addressTitle"
-      class="wsl-proxy-fieldset"
-      :legend-text="t('virtualMachine.proxy.addressTitle', { }, true)"
-    >
-      <rd-input
-        :placeholder="t('virtualMachine.proxy.address', { }, true)"
-        :disabled="isFieldDisabled"
-        :value="preferences.experimental.virtualMachine.proxy.address"
-        :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.address')"
-        class="wsl-proxy-field"
-        @input="onChange('experimental.virtualMachine.proxy.address', $event.target.value)"
-      />
-      <rd-input
-        type="number"
-        :placeholder="t('virtualMachine.proxy.port', { }, true)"
-        :disabled="isFieldDisabled"
-        :value="preferences.experimental.virtualMachine.proxy.port"
-        :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.port')"
-        class="wsl-proxy-field"
-        @input="onChange('experimental.virtualMachine.proxy.port', $event.target.value)"
-      />
-    </rd-fieldset>
-    <rd-fieldset
-      class="wsl-proxy-fieldset"
-      :legend-text="t('virtualMachine.proxy.authTitle', { }, true)"
-    >
-      <rd-input
-        :placeholder="t('virtualMachine.proxy.username', { }, true)"
-        :disabled="isFieldDisabled"
-        :value="preferences.experimental.virtualMachine.proxy.username"
-        :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.username')"
-        class="wsl-proxy-field"
-        @input="onChange('experimental.virtualMachine.proxy.username', $event.target.value)"
-      />
-      <rd-input
-        type="password"
-        :placeholder="t('virtualMachine.proxy.password', { }, true)"
-        :disabled="isFieldDisabled"
-        :value="preferences.experimental.virtualMachine.proxy.password"
-        :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.password')"
-        class="wsl-proxy-field"
-        @input="onChange('experimental.virtualMachine.proxy.password', $event.target.value)"
-      />
-    </rd-fieldset>
-    <rd-fieldset
-      class="wsl-proxy-fieldset"
-      :legend-text="t('virtualMachine.proxy.noproxyTitle', { }, true)"
-    >
-      <input
-        :placeholder="t('virtualMachine.proxy.noproxy', { }, true)"
-        :disabled="isFieldDisabled"
-        :value="preferences.experimental.virtualMachine.proxy.noproxy"
-        class="wsl-proxy-field"
-        @input="onChange('experimental.virtualMachine.proxy.noproxy', $event.target.value)"
-      />
-    </rd-fieldset>
+    <div class="proxy-row">
+      <div class="proxy-col">
+        <rd-fieldset
+          data-test="addressTitle"
+          class="wsl-proxy-fieldset"
+          :legend-text="t('virtualMachine.proxy.addressTitle', { }, true)"
+        >
+          <rd-input
+            :placeholder="t('virtualMachine.proxy.address', { }, true)"
+            :disabled="isFieldDisabled"
+            :value="preferences.experimental.virtualMachine.proxy.address"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.address')"
+            class="wsl-proxy-field"
+            @input="onChange('experimental.virtualMachine.proxy.address', $event.target.value)"
+          />
+          <rd-input
+            type="number"
+            :placeholder="t('virtualMachine.proxy.port', { }, true)"
+            :disabled="isFieldDisabled"
+            :value="preferences.experimental.virtualMachine.proxy.port"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.port')"
+            class="wsl-proxy-field"
+            @input="onChange('experimental.virtualMachine.proxy.port', $event.target.value)"
+          />
+        </rd-fieldset>
+        <rd-fieldset
+          class="wsl-proxy-fieldset"
+          :legend-text="t('virtualMachine.proxy.authTitle', { }, true)"
+        >
+          <rd-input
+            :placeholder="t('virtualMachine.proxy.username', { }, true)"
+            :disabled="isFieldDisabled"
+            :value="preferences.experimental.virtualMachine.proxy.username"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.username')"
+            class="wsl-proxy-field"
+            @input="onChange('experimental.virtualMachine.proxy.username', $event.target.value)"
+          />
+          <rd-input
+            type="password"
+            :placeholder="t('virtualMachine.proxy.password', { }, true)"
+            :disabled="isFieldDisabled"
+            :value="preferences.experimental.virtualMachine.proxy.password"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.password')"
+            class="wsl-proxy-field"
+            @input="onChange('experimental.virtualMachine.proxy.password', $event.target.value)"
+          />
+        </rd-fieldset>
+      </div>
+      <div class="proxy-col">
+        <rd-fieldset
+          :legend-text="t('virtualMachine.proxy.noproxyTitle', { }, true)"
+          :style="{ height: '100%' }"
+        >
+          <textarea
+            :placeholder="t('virtualMachine.proxy.noproxy', { }, true)"
+            :disabled="isFieldDisabled"
+            :value="preferences.experimental.virtualMachine.proxy.noproxy.join('\n')"
+            class="wsl-proxy-textarea"
+            @input="onChange('experimental.virtualMachine.proxy.noproxy', $event.target.value.split('\n'))"
+          />
+        </rd-fieldset>
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+  .proxy-row {
+    display: flex;
+    flex-direction: row;
+  }
+  .proxy-col {
+    padding: 0rem .5rem;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+  }
   .wsl-proxy {
     display: flex;
     flex-direction: column;
@@ -122,5 +146,10 @@ export default Vue.extend({
   }
   .wsl-proxy-field {
     width: 100%;
+  }
+  .wsl-proxy-textarea{
+    width: 100%;
+    height: 100%;
+    padding: 2px;
   }
 </style>

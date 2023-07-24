@@ -544,8 +544,9 @@ components:
                       type: string
                       x-rd-usage: if needed the username to connect to the proxy
                     noproxy:
-                      type: string
-                      x-rd-usage: comma-separated list of addresses not redicrected to the proxy
+                      type: array
+                      x-rd-usage: list of hostname to exclude from using the proxy
+                      items: { type: string }
         WSL:
           type: object
           x-rd-platforms: [win32]
