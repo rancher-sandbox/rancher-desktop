@@ -22,7 +22,7 @@ test.describe.serial('Main App Test', () => {
 
   test.beforeAll(async({ colorScheme }) => {
     createDefaultSettings({
-      application:     { updater: { enabled: true } },
+      application:     { updater: { enabled: false } },
       containerEngine: { allowedImages: { enabled: true, patterns: ['rancher/example'] } },
       diagnostics:     { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
