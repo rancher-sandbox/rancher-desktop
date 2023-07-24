@@ -4,9 +4,9 @@ import semver from 'semver';
 import Vue, { VueConstructor } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
-import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
+import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 import { MountType, Settings, VMType } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '~/components/IncompatiblePreferencesAlert.vue';
@@ -21,8 +21,8 @@ interface VuexBindings {
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-virtual-machine-emulation',
   components: {
+    TooltipIcon,
     IncompatiblePreferencesAlert,
-    LabeledBadge,
     RadioGroup,
     RdFieldset,
     RdCheckbox,
@@ -140,9 +140,8 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                 >
                   <template #label>
                     {{ option.label }}
-                    <labeled-badge
+                    <tooltip-icon
                       v-if="option.experimental"
-                      :text="t('prefs.experimental')"
                     />
                   </template>
                   <template #description>

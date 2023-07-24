@@ -8,8 +8,8 @@ import { mapGetters, mapState } from 'vuex';
 
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
-import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
+import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 import {
   CacheMode, MountType, ProtocolVersion, SecurityModel, Settings, VMType,
 } from '@pkg/config/settings';
@@ -25,8 +25,8 @@ interface VuexBindings {
 
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   components: {
+    TooltipIcon,
     IncompatiblePreferencesAlert,
-    LabeledBadge,
     RadioGroup,
     RdFieldset,
     RadioButton,
@@ -174,9 +174,8 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                 >
                   <template #label>
                     {{ option.label }}
-                    <labeled-badge
+                    <tooltip-icon
                       v-if="option.experimental"
-                      :text="t('prefs.experimental')"
                     />
                   </template>
                   <template #description>

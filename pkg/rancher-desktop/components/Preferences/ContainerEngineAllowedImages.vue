@@ -70,7 +70,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     <rd-fieldset
       data-test="allowedImages"
       :legend-text="t('allowedImages.label')"
-      :badge-text="t('prefs.experimental')"
+      :is-experimental="true"
     >
       <rd-checkbox
         :label="t('allowedImages.enable')"

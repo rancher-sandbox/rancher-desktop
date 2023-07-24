@@ -40,7 +40,7 @@ export default Vue.extend({
     <section class="wsl-proxy">
       <rd-fieldset
         :legend-text="t('virtualMachine.proxy.legend')"
-        :badge-text="t('prefs.experimental')"
+        :is-experimental="true"
       >
         <rd-checkbox
           :label="t('virtualMachine.proxy.label', { }, true)"
