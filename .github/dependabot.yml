@@ -45,7 +45,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
-    reviewers: [ "Nino-K" ]
+    reviewers: [ "ericpromislow" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/extension-proxy"
@@ -73,11 +73,13 @@ updates:
 
   - package-ecosystem: "gomod"
     directory: "/src/go/rdctl"
+    ignore:
+      - dependency-name: "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/generated/options"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
-    reviewers: [ "Nino-K" ]
+    reviewers: [ "ericpromislow" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/vtunnel"
@@ -89,6 +91,8 @@ updates:
 
   - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
+    ignore:
+    - dependency-name: "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
