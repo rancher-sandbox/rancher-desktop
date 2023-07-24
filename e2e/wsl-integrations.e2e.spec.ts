@@ -210,83 +210,86 @@ test.describe('WSL Integrations', () => {
     expect(wslIntegrationList.getByText('alpha')).not.toBeNull();
     expect(wslIntegrationList.getByText('beta')).not.toBeNull();
     expect(wslIntegrationList.getByText('gamma')).not.toBeNull();
-  });
 
-  /*
-  test('should show checkbox states', (async() => {
-    const integrations = wslPage.wslIntegrations;
-    const alpha = integrations.find(item => item.name === 'alpha');
-    const beta = wslPage.getIntegration('beta');
-    const gamma = wslPage.getIntegration('gamma');
+    expect(await wslPage.alpha.isChecked()).toBeFalsy();
+    expect(await wslPage.beta.isChecked()).toBeTruthy();
+    expect(await wslPage.gamma.isChecked()).toBeFalsy();
 
-    await expect(alpha.locator).toHaveCount(1);
-    await expect(alpha.checkbox).not.toBeChecked();
-    await expect(alpha.name).toHaveText('alpha');
-    await expect(alpha.error).not.toBeVisible();
+    const craftyErrorMessage = 'Error: some error';
+    let parent = wslPage.page.locator('[data-test="item-alpha-parent"]');
 
-    await expect(beta.locator).toHaveCount(1);
-    await expect(beta.checkbox).toBeChecked();
-    await expect(beta.name).toHaveText('beta');
-    await expect(beta.error).not.toBeVisible();
-
-    await expect(gamma.locator).toHaveCount(1);
-    await expect(gamma.checkbox).not.toBeChecked();
-    await expect(gamma.name).toHaveText('gamma');
-    await expect(gamma.error).toHaveText('some error');
+    await expect(parent.filter({ hasText: craftyErrorMessage })).toHaveCount(0);
+    parent = wslPage.page.locator('[data-test="item-beta-parent"]');
+    await expect(parent.filter({ hasText: craftyErrorMessage })).toHaveCount(0);
+    parent = wslPage.page.locator('[data-test="item-gamma-parent"]');
+    await expect(parent.filter({ hasText: craftyErrorMessage })).toHaveCount(1);
   });
 
   test('should allow enabling integration', async() => {
+    // This is how we do a reload...
     const { wsl: wslPage } = new PreferencesPage(preferencesWindow);
-    await wslPage.reload();
-    const integrations = wslPage.integrations;
 
-    await expect(integrations).toHaveCount(1, { timeout: 10_000 });
+    await wslPage.tabIntegrations.click();
+    await expect(wslPage.wslIntegrations).toBeVisible();
 
-    const alpha = wslPage.getIntegration('alpha');
+    await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
+    let alpha = wslPage.alpha;
 
-    await expect(alpha.checkbox).not.toBeChecked();
-    await alpha.assertEnabled();
-    await alpha.click();
-    await alpha.assertDisabled();
+    expect(await alpha.isChecked()).toBeFalsy();
+    expect(await alpha.isEnabled()).toBeTruthy();
+    // Don't know why force-true is necessary, playwright times out without it.
+    await alpha.click({ force: true });
     await writeConfig({ alpha: true });
-    await alpha.assertEnabled();
-    await expect(alpha.checkbox).toBeChecked();
+    // Now 'relocate' alpha
+    alpha = wslPage.alpha;
+    expect(await alpha.isChecked()).toBeTruthy();
+    expect(await alpha.isEnabled()).toBeTruthy();
   });
 
   test('should allow disabling integration', async() => {
-    await wslPage.reload();
-    const integrations = wslPage.integrations;
+    // This is how we do a reload...
+    const { wsl: wslPage } = new PreferencesPage(preferencesWindow);
 
-    await expect(integrations).toHaveCount(1, { timeout: 10_000 });
+    await wslPage.tabIntegrations.click();
+    await expect(wslPage.wslIntegrations).toBeVisible();
+    await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
 
-    const beta = wslPage.getIntegration('beta');
+    let beta = wslPage.beta;
 
-    await expect(beta.checkbox).toBeChecked();
-    await beta.assertEnabled();
-    await beta.click();
-    await beta.assertDisabled();
+    expect(await beta.isChecked()).toBeTruthy();
+    expect(await beta.isEnabled()).toBeTruthy();
+    await beta.click({ force: true });
     await writeConfig({ beta: false });
-    await beta.assertEnabled();
-    await expect(beta.checkbox).not.toBeChecked();
+    // Now 'relocate' beta
+    beta = wslPage.beta;
+    expect(await beta.isChecked()).toBeFalsy();
+    expect(await beta.isEnabled()).toBeTruthy();
   });
 
   test('should update invalid reason', async() => {
-    await wslPage.reload();
-    const integrations = wslPage.integrations;
+    let { wsl: wslPage } = new PreferencesPage(preferencesWindow);
 
-    await expect(integrations).toHaveCount(1, { timeout: 10_000 });
+    await wslPage.tabIntegrations.click();
+    await expect(wslPage.wslIntegrations).toBeVisible();
+    await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
 
-    const gamma = wslPage.getIntegration('gamma');
+    const gamma = wslPage.gamma;
+    const newErrorMessage = 'some other error';
 
-    await gamma.assertDisabled();
-    await expect(gamma.error).toHaveText('some error');
-    await writeConfig({ gamma: 'some other error' });
+    expect(await gamma.isChecked()).toBeFalsy();
+    expect(await gamma.isDisabled()).toBeTruthy();
+    await writeConfig({ gamma: newErrorMessage });
 
     await page.reload();
-    const newGamma = (await navPage.navigateTo('WSLIntegrations')).getIntegration('gamma');
+    ({ wsl: wslPage } = new PreferencesPage(preferencesWindow));
+    await wslPage.tabIntegrations.click();
+    await expect(wslPage.wslIntegrations).toBeVisible();
+    await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
+    const newGamma = wslPage.gamma;
 
-    await expect(newGamma.error).toHaveText('some other error');
-    await newGamma.assertDisabled();
+    expect(await newGamma.isDisabled()).toBeTruthy();
+    const parent = wslPage.page.locator('[data-test="item-gamma-parent"]');
+
+    await expect(parent.filter({ hasText: newErrorMessage })).toHaveCount(0);
   });
- */
 });

@@ -4,13 +4,14 @@
     <div
       v-for="item of integrationsList"
       :key="item.name"
-      :data-test="`item-${item.name}`"
+      :data-test="`item-${item.name}-parent`"
     >
       <checkbox
         :value="item.value"
         :label="item.name"
         :disabled="item.disabled"
         :description="item.description"
+        :data-test="`item-${item.name}`"
         @input="toggleIntegration(item.name, $event)"
       />
     </div>
