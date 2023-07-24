@@ -138,3 +138,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # ignore long runs of a single character:
 \b([A-Za-z])\g{-1}{3,}\b
+
+# Don't check names in dependabot.yaml reviewers section
+^\s+reviewers:\s*\[\s*"(?:Nino-K|ericpromislow)"\s*\]
