@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/docker/docker-credential-helpers/credentials"
-	dockerconfig "github.com/docker/docker/cli/config"
+	dockerconfig "github.com/docker/cli/cli/config"
 )
 
 type dockerConfigType map[string]interface{}
