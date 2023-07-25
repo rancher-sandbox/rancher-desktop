@@ -9,8 +9,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/docker/docker-credential-helpers/credentials"
 	dockerconfig "github.com/docker/cli/cli/config"
+	"github.com/docker/docker-credential-helpers/credentials"
 )
 
 type dockerConfigType map[string]interface{}
