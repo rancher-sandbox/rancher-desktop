@@ -1,27 +1,33 @@
 load '../helpers/load'
 
 local_setup() {
-    # profile settings should be the opposite of the default config
+    #  profile settings should be the opposite of the default config
     if using_docker; then
         PROFILE_CONTAINER_ENGINE=containerd
     else
         PROFILE_CONTAINER_ENGINE=moby
     fi
 
-    #defaults profile settings
+    # defaults profile settings
     PROFILE_START_IN_BACKGROUND=true
     PROFILE_DEFAULTS_KUBERNETES_VERSION="$RD_KUBERNETES_VERSION"
 
-    #locked profile settings
-    PROFILE_LOCKED_KUBERNETES_VERSION=1.27.3
-    PROFILE_USE_IMAGE_ALLOW_LIST=true
-    PROFILE_IMAGE_PATTERNS=(joycelin79/newman-extension nginx)
-    PROFILE_USE_EXTENSION_LIST=true
-    PROFILE_EXTENSION_LIST=(joycelin79/newman-extension:0.0.7 nginx)
-
+    PROFILE_IMAGE="joycelin79/newman-extension"
+    PROFILE_IMAGE_2="nginx"
+    PROFILE_TAG="0.0.7"
+    FORBIDDEN_TAG="0.0.5"
+    FORBIDDEN_EXTENSION="ignatandrei/blockly-automation"
+    KUBERNETES_RANDOM_VERSION="1.23.5"
     RD_USE_PROFILE=true
     RD_USE_IMAGE_ALLOW_LIST=true
     RD_NO_MODAL_DIALOGS=true
+
+    # locked profile settings
+    PROFILE_LOCKED_KUBERNETES_VERSION="1.27.3"
+    PROFILE_USE_IMAGE_ALLOW_LIST=true
+    PROFILE_IMAGE_PATTERNS=("$PROFILE_IMAGE" "$PROFILE_IMAGE_2")
+    PROFILE_USE_EXTENSION_LIST=true
+    PROFILE_EXTENSION_LIST=("$PROFILE_IMAGE:$PROFILE_TAG")
 }
 
 local_teardown_file() {
@@ -41,36 +47,45 @@ start_app() {
 verify_profiles() {
     PROFILE_TYPE=$PROFILE_LOCKED
     run profile_exists
-    "${assert}_success" || return
+    "${assert}_success"
 
     PROFILE_TYPE=$PROFILE_DEFAULTS
     run profile_exists
-    "${assert}_success" || return
+    "${assert}_success"
 }
 
 verify_settings() {
-    #settings from defaults profile
+    # settings from defaults profile
     run get_setting .containerEngine.name
-    "${assert}_output" "$PROFILE_CONTAINER_ENGINE" || return
+    "${assert}_output" "$PROFILE_CONTAINER_ENGINE"
 
     run get_setting .application.startInBackground
-    "${assert}_output" "$PROFILE_START_IN_BACKGROUND" || return
-    #settings from locked profile
+    "${assert}_output" "$PROFILE_START_IN_BACKGROUND"
+    # settings from locked profile
     run get_setting .containerEngine.allowedImages.enabled
-    "${assert}_output" "$PROFILE_USE_IMAGE_ALLOW_LIST" || return
+    "${assert}_output" "$PROFILE_USE_IMAGE_ALLOW_LIST"
 
     run get_setting .containerEngine.allowedImages.patterns
-    "${assert}_output" --partial "${PROFILE_IMAGE_PATTERNS[@]}" || return
+    "${assert}_output" --partial "${PROFILE_IMAGE_PATTERNS[@]}"
 
     run get_setting .application.extensions.allowed.enabled
-    "${assert}_output" "$PROFILE_USE_EXTENSION_LIST" || return
+    "${assert}_output" "$PROFILE_USE_EXTENSION_LIST"
 
     run get_setting .application.extensions.allowed.list
-    "${assert}_output" --partial "${PROFILE_EXTENSION_LIST[@]}" || return
+    "${assert}_output" --partial "${PROFILE_EXTENSION_LIST[@]}"
 
     run get_setting .kubernetes.version
-    "${assert}_output" "$PROFILE_LOCKED_KUBERNETES_VERSION" || return
-    refute_output "$PROFILE_DEFAULTS_KUBERNETES_VERSION" || return
+    "${assert}_output" "$PROFILE_LOCKED_KUBERNETES_VERSION"
+    refute_output "$PROFILE_DEFAULTS_KUBERNETES_VERSION"
+}
+
+install_extensions() {
+    run rdctl extension install "$FORBIDDEN_EXTENSION"
+    "${refute}_success"
+    run rdctl extension install "$PROFILE_IMAGE:$FORBIDDEN_TAG"
+    "${refute}_success"
+    run rdctl extension install "${PROFILE_EXTENSION_LIST[0]}"
+    assert_success
 }
 
 @test 'initial factory reset' {
@@ -83,12 +98,16 @@ verify_settings() {
     start_application
 }
 
-@test 'verify there are NO profiles created' {
+@test 'verify there were NO profiles created' {
     before verify_profiles
 }
 
 @test 'verify default settings were applied' {
     before verify_settings
+}
+
+@test 'verify all extensions can be installed' {
+    before install_extensions
 }
 
 @test 'factory reset before creating profiles' {
@@ -130,37 +149,37 @@ verify_settings() {
     verify_settings
 }
 
-@test 'try to install a not-allowed extension' {
-    run rdctl extension install ignatandrei/blockly-automation
-    assert_failure || return
-    run rdctl extension install joycelin79/newman-extension:0.0.5
-    assert_failure || return
-}
-
-@test 'install an allowed extension' {
-    run rdctl extension install joycelin79/newman-extension:0.0.7
-    assert_success || return
+@test 'install only allowed extensions' {
+    install_extensions
 }
 
 @test 'try to change locked fields via rdctl set' {
     run rdctl set --container-engine.allowed-images.enabled=false
-    assert_failure || return
+    assert_failure
+    assert_output --partial "field 'containerEngine.allowedImages.enabled' is locked"
 
-    run rdctl set --kubernetes.version="1.16.15"
-    assert_failure || return
+    run rdctl set --kubernetes.version="$KUBERNETES_RANDOM_VERSION"
+    assert_failure
+    assert_output --partial "field 'kubernetes.version' is locked"
+}
+
+api_set() {
+    local json
+    json=$(join_map ", " echo "\"version\": \"$RD_API_VERSION\"" "$@")
+    rdctl api /v1/settings -X PUT --body "{ $json }"
 }
 
 @test 'try to change locked fields via API' {
-    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"containerEngine\": {\"allowedImages\": { \"patterns\": [ \"pattern1\" ] }}}"
-    assert_failure || return
-    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"containerEngine\": {\"allowedImages\": {\"enabled\": false }}}"
-    assert_failure || return
-    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"application\": {\"extensions\": { \"allowed\": false }}}"
-    assert_failure || return
-    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"application\": {\"extensions\": { \"list\": [\"pattern1\"] }}}"
-    assert_failure || return
-    run rdctl api /v1/settings -X PUT --body "{\"version\": \"$RD_API_VERSION\", \"kubernetes\": {\"version\": \"1.16.15\"}}"
-    assert_failure || return
+    run api_set '"\"containerEngine\": {\"allowedImages\": { \"patterns\": [ \"pattern1\" ] }}}"'
+    assert_failure
+    run api_set '"\"containerEngine\": {\"allowedImages\": {\"enabled\": false }}}"'
+    assert_failure
+    run api_set '"\"application\": {\"extensions\": { \"allowed\": false }}}"'
+    assert_failure
+    run api_set '"\"application\": {\"extensions\": { \"list\": [\"pattern1\"] }}}"'
+    assert_failure
+    run api_set '"\"kubernetes\": {\"version\": \"1.16.15\"}}"'
+    assert_failure
 }
 
 @test 'ensure locked settings are preserved' {
@@ -169,18 +188,18 @@ verify_settings() {
 
 @test 'change defaults profile setting' {
     run rdctl set --application.start-in-background=false
-    assert_success || return
+    assert_success
     run rdctl set --application.auto-start=true
-    assert_success || return
-    run rdctl set --kubernetes.version=1.19.16
-    assert_failure || return
+    assert_success
+    run rdctl set --kubernetes.version="$KUBERNETES_RANDOM_VERSION"
+    assert_failure
 }
 
 @test 'verify that the new defaults settings are applied' {
     PROFILE_START_IN_BACKGROUND=false
     verify_settings
     run get_setting .application.autoStart
-    assert_output true || return
+    assert_output true
 }
 
 @test 'shutdown app' {
@@ -196,9 +215,8 @@ verify_settings() {
     PROFILE_START_IN_BACKGROUND=false
     verify_settings
     run get_setting .application.autoStart
-    assert_output true || return
+    assert_output true
 }
-
 
 @test 'shutdown Rancher Desktop' {
     rdctl shutdown
@@ -207,11 +225,11 @@ verify_settings() {
 @test 'try to change locked fields via rdctl start' {
     rdctl start --container-engine.allowed-images.enabled=false --no-modal-dialogs
     try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'containerEngine.allowedImages.enabled' is locked"
-    assert_success || return
+    assert_success
 
     rdctl start --kubernetes.version="1.16.15" --no-modal-dialogs
     try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'kubernetes.version' is locked"
-    assert_success || return
+    assert_success
 }
 
 @test 'restart application' {
