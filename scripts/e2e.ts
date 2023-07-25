@@ -56,7 +56,10 @@ class E2ETestRunner extends events.EventEmitter {
 
   #testProcess: null | childProcess.ChildProcess = null;
   startTestProcess(): Promise<void> {
-    const args = process.argv.slice(2).filter(x => x !== '--serial');
+    const args = process.argv.slice(2).filter(x => x !== '--serial').map((s) => {
+      return s[0] === '-' ? s : s.replace(/\\/g, '/');
+    });
+
     const spawnArgs = ['node_modules/@playwright/test/cli.js', 'test', '--config=e2e/config/playwright-config.ts'];
 
     if (process.env.CIRRUS_CI) {
