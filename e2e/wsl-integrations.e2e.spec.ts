@@ -18,7 +18,6 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe('WSL Integrations', () => {
-  // test.skip(true, 'TODO: https://github.com/rancher-sandbox/rancher-desktop/issues/2881');
   test.describe.configure({ mode: 'serial' });
   if (os.platform() !== 'win32') {
     test.skip();
@@ -48,7 +47,7 @@ test.describe('WSL Integrations', () => {
       });
   });
 
-  const writeConfig = async(opts?: { [k in 'alpha' | 'beta' | 'gamma']?: boolean | string }) => {
+  const writeConfig = async(opts?: {[k in 'alpha'|'beta'|'gamma']?: boolean|string}) => {
     const config: {
       commands: {
         args: string[],
