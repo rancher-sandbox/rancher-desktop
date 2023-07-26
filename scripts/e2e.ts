@@ -56,10 +56,7 @@ class E2ETestRunner extends events.EventEmitter {
 
   #testProcess: null | childProcess.ChildProcess = null;
   startTestProcess(): Promise<void> {
-    const args = process.argv.slice(2).filter(x => x !== '--serial').map((s) => {
-      return s[0] === '-' ? s : s.replace(/\\/g, '/');
-    });
-
+    const args = processArgsForPlaywright(process.argv);
     const spawnArgs = ['node_modules/@playwright/test/cli.js', 'test', '--config=e2e/config/playwright-config.ts'];
 
     if (process.env.CIRRUS_CI) {
@@ -137,4 +134,40 @@ function isCiOrDevelopmentTimeout() {
 
     return sleep(devTimeout);
   }
+}
+
+// Convert any single backslash into two, but leave pairs of backslashes alone.
+function escapeUnescapedBackslashes(s: string): string {
+  return s.replace(/\\(?:.|$)/g, m => m === '\\\\' ? m : `\\${ m }`);
+}
+
+/**
+ * The first 2 args are internal for yarn/npm and shouldn't be passed to playwright. Same with `--serial`.
+ * Now playwright treats paths as regexes, meaning that unescaped backslashes will normally be treated
+ * as meta-regex-characters and will be unlikely to match files. This wasn't an issue in the NPM world,
+ * because on Windows npm escaped each backslash: `.\e2e\foo.spec.ts` showed up as .\\e2e\\foo.spec.ts`.
+ * But Yarn doesn't escape the backslashes, so we need to escape them ourselves.
+ *
+ * I filed an upstream bug on Playwright, but they closed it due to the claim that paths are actually
+ * regexes: https://github.com/microsoft/playwright/issues/24408#issuecomment-1652146685 . This is so
+ * you can specify a command like `npx playwright foot head` and run any tests that match the terms
+ * `foot` or `head` but skip, for example, `thin-waist.spec.ts`.
+ *
+ * I don't think it's worth writing a bug against yarn on this. For whatever reason, the paths were
+ * escaped in the npm world but not yarn, and we can just allow both forms.
+ *
+ * The code assumes that anything starting with a '-' doesn't need escaping (because we don't invoke
+ * this script with any such options)
+ *
+ * @param args
+ */
+function processArgsForPlaywright(args: string[]): string[] {
+  args = process.argv.slice(2).filter(x => x !== '--serial');
+  if (process.platform !== 'win32') {
+    return args;
+  }
+
+  return args.map((s) => {
+    return s[0] === '-' ? s : escapeUnescapedBackslashes(s);
+  });
 }
