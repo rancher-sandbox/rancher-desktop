@@ -123,7 +123,9 @@ install_extensions() {
 
     PROFILE_TYPE=$PROFILE_DEFAULTS
     create_profile
-
+    if is_windows; then
+        add_profile_bool application.startInBackground "$PROFILE_START_IN_BACKGROUND"
+    fi
     verify_profiles
 }
 
@@ -175,14 +177,19 @@ api_set() {
 @test 'try to change locked fields via API' {
     run api_set '"\"containerEngine\": {\"allowedImages\": { \"patterns\": [ \"pattern1\" ] }}}"'
     assert_failure
+    assert_output --partial "field 'containerEngine.allowedImages.patterns' is locked"
     run api_set '"\"containerEngine\": {\"allowedImages\": {\"enabled\": false }}}"'
     assert_failure
+    assert_output --partial "field 'containerEngine.allowedImages.enabled' is locked"
     run api_set '"\"application\": {\"extensions\": { \"allowed\": false }}}"'
     assert_failure
+    assert_output --partial "field 'application.extensions.allowed' is locked"
     run api_set '"\"application\": {\"extensions\": { \"list\": [\"pattern1\"] }}}"'
     assert_failure
+    assert_output --partial "field 'application.extensions.list' is locked"
     run api_set '"\"kubernetes\": {\"version\": \"1.16.15\"}}"'
     assert_failure
+    assert_output --partial "field 'kubernetes.version' is locked"
 }
 
 @test 'ensure locked settings are preserved' {
