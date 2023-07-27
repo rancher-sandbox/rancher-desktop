@@ -78,7 +78,7 @@ load '../helpers/load'
 
 # The result of the `assert_output` for here-documents looks suspicious (I see it always passing),
 # but this serves to document the expected full reg output
-@test 'generates registry output' {
+@test 'generates registry output from settings' {
     run rdctl create-profile --output reg --from-settings
     assert_success
     # Just match a few of the lines near the start and the end of the output.
@@ -93,6 +93,17 @@ load '../helpers/load'
     run rdctl create-profile --from-settings
     assert_failure
     assert_output --partial $"an '--output FORMAT' option of either \"plist\" or \"reg\" must be specified"
+}
+
+@test 'encodes multi-string values and maps' {
+    run bash -c $'echo \'{"kubernetes": {"enabled": false}, "containerEngine": { "allowedImages": {"patterns": ["abc", "ghi", "def"] } }, "WSL": { "integrations": { "first": true, "second": false } } }\' | rdctl create-profile --output reg --hive hkcu --input - | cat -n | tr \'\t\' .'
+    assert_success
+    assert_output --partial '5.[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine]'
+    assert_output --partial '6.[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine\allowedImages]'
+    assert_output --partial '7."patterns"=hex(7):61,00,62,00,63,00,00,00,67,00,68,00,69,00,00,00,64,00,65,00,66,00,00,00,00,00'
+    assert_output --partial '11.[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\WSL\integrations]'
+    assert_output --partial '12."first"=dword:1'
+    assert_output --partial '13."second"=dword:0'
 }
 
 @test 'complains when an invalid output type is specified' {
@@ -111,15 +122,15 @@ load '../helpers/load'
 
 @test 'complains when multiple input sources are specified' {
     for type in reg plist; do
-        run rdctl create-profile --output $type --input somefile.txt -b moose
+        run rdctl create-profile --output $type --input some-file.txt -b moose
         assert_failure
         assert_output --partial "too many output format specified: must specify exactly one output format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
 
-        run rdctl create-profile --output $type --input somefile.txt --from-settings
+        run rdctl create-profile --output $type --input some-file.txt --from-settings
         assert_failure
         assert_output --partial "too many output format specified: must specify exactly one output format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
 
-        run rdctl create-profile --output $type --input somefile.txt -b moose --from-settings
+        run rdctl create-profile --output $type --input some-file.txt -b moose --from-settings
         assert_failure
         assert_output --partial "too many output format specified: must specify exactly one output format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
 
@@ -152,7 +163,7 @@ load '../helpers/load'
 }
 
 @test 'generates plist output from a command-line argument' {
-    run rdctl create-profile --output plist --body '{ "kubernetes": {"version": "moosehead" }}'
+    run rdctl create-profile --output plist --body '{ "kubernetes": {"version": "moose-head" }}'
     assert_success
     # Just match a few of the lines near the start and the end of the output.
     # The unit tests do more comprehensive output checking.
@@ -162,7 +173,7 @@ load '../helpers/load'
     assert_output --partial '<key>kubernetes</key>'
     assert_output --partial '<dict>'
     assert_output --partial '<key>version</key>'
-    assert_output --partial '<string>moosehead</string>'
+    assert_output --partial '<string>moose-head</string>'
     assert_output --partial '</dict>'
     assert_output --partial '</plist>'
 }
@@ -171,7 +182,7 @@ load '../helpers/load'
     if ! is_macos; then
         skip
     fi
-    run bash -o pipefail -c $"rdctl create-profile --output plist --body '{ \"kubernetes\": {\"version\": \"moosehead\" }}' | plutil -s -"
+    run bash -o pipefail -c $"rdctl create-profile --output plist --body '{ \"kubernetes\": {\"version\": \"moose-head\" }}' | plutil -s -"
     assert_success
     assert_output ""
 }

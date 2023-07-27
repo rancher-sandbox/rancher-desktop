@@ -34,7 +34,7 @@ const lockedType = "locked"
 
 // The distinction between 'system' and 'user' is only needed for registry output
 // because it gets written into the generated .reg data, while on macOS the distinction
-// is based on which directory the generated file is placed in.
+// is based on which directory the generated file is placed in (and what name it's given).
 const systemHive = "system"
 const userHive = "user"
 
@@ -53,9 +53,9 @@ var createProfileCmd = &cobra.Command{
 	Short: "Generate a deployment profile in either macOS plist or Windows registry format",
 	Long: `Use this to generate deployment profiles for Rancher Desktop settings.
 You can either convert the current listings in operation, or
-specify a JSON snippet, and convert the result to the desired target.
+specify a JSON snippet, and convert that to the desired target.
 MacOS plist files can be placed in the appropriate directory, while '.reg' files
-can be imported into the Windows registry using the 'reg /import ...' command.`,
+can be imported into the Windows registry using the 'reg import FILE' command.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
@@ -71,7 +71,7 @@ can be imported into the Windows registry using the 'reg /import ...' command.`,
 
 func init() {
 	rootCmd.AddCommand(createProfileCmd)
-	createProfileCmd.Flags().StringVar(&outputSettingsFlags.Format, "output", jsonFormat, fmt.Sprintf("output format: %s|%s", jsonFormat, regFormat))
+	createProfileCmd.Flags().StringVar(&outputSettingsFlags.Format, "output", "", fmt.Sprintf("output format: %s|%s", plistFormat, regFormat))
 	createProfileCmd.Flags().StringVar(&outputSettingsFlags.RegistryHive, "hive", "", fmt.Sprintf(`registry hive: %s|%s (default "%s")`, reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
 	createProfileCmd.Flags().StringVar(&outputSettingsFlags.RegistryProfileType, "type", "", fmt.Sprintf(`registry section: %s|%s (default "%s")`, defaultsType, lockedType, defaultsType))
 	createProfileCmd.Flags().StringVar(&InputFile, "input", "", "File containing a JSON document (- for standard input)")

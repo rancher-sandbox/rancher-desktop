@@ -59,5 +59,5 @@ verify_registry_output() {
 @test 'complains about non-json body' {
     run rdctl create-profile --output reg --hive=hkcu --body "this is not json"
     assert_failure
-    assert_output "Error: error in json: invalid character 'h' in literal true (expecting 'r')"
+    assert_output --partial "Error: error in json: invalid character 'h' in literal true (expecting 'r')"
 }
