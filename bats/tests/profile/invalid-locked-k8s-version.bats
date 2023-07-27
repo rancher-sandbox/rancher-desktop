@@ -2,6 +2,11 @@ load '../helpers/load'
 
 local_setup() {
     RD_USE_PROFILE=true
+    PROFILE_TYPE=$PROFILE_LOCKED
+}
+
+local_teardown_file() {
+    foreach_profile delete_profile
 }
 
 @test 'initial factory reset' {
@@ -9,16 +14,11 @@ local_setup() {
 }
 
 @test 'create profile' {
-    PROFILE_TYPE=$PROFILE_LOCKED
-    RD_USE_PROFILE=true
     create_profile
-    profile_exists
     add_profile_string kubernetes.version NattyBo
-    profile_exists
 }
 
-@test 'fails to start app with new profile' {
-    PROFILE_TYPE=$PROFILE_LOCKED
+@test 'fails to start app with an invalid locked k8s version' {
     # Have to set the version field or RD will think we're trying to change a locked field.
     RD_KUBERNETES_PREV_VERSION=NattyBo
     start_kubernetes
@@ -30,6 +30,14 @@ local_setup() {
     try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Kubernetes was unable to start: LockedFieldError: Locked kubernetes version 'NattyBo' isn't a valid version"
 }
 
-@test 'remove profiles' {
-    foreach_profile delete_profile
+@test 'recreate profile with a valid k8s version' {
+    add_profile_string kubernetes.version v1.27.1
+}
+
+@test 'fails to start app with a specified k8s version != locked k8s version' {
+    # Have to set the version field or RD will think we're trying to change a locked field.
+    RD_KUBERNETES_PREV_VERSION=v1.27.2
+    start_kubernetes
+    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Kubernetes was unable to start: LockedFieldError: Error in deployment profiles:"
+    assert_file_contains "$PATH_LOGS/background.log" "field 'kubernetes.version' is locked"
 }
