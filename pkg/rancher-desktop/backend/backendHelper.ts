@@ -188,6 +188,10 @@ export default class BackendHelper {
           // We can't switch to the default version, so throw a fatal error.
           throw new LockedFieldError(`Locked kubernetes version ${ currentConfigVersionString } isn't available.`);
         }
+      } else if (versionIsLocked) {
+        // If we're here, the user specified a non-version in the locked manifest.
+        // We can't switch to the default version, so throw a fatal error.
+        throw new LockedFieldError(`Locked kubernetes version '${ currentConfigVersionString }' isn't a valid version.`);
       }
       const message = invalidK8sVersionMainMessage;
       const detail = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
