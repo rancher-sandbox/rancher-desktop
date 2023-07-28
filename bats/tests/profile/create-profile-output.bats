@@ -13,10 +13,13 @@ load '../helpers/load'
     run rdctl create-profile --output=plist --from-settings --hive=fish
     assert_failure
     assert_output --partial "registry hive and type can't be specified with plist"
+    run rdctl create-profile --output plist --from-settings --type=writer
+    assert_failure
+    assert_output --partial "registry hive and type can't be specified with plist"
 }
 
 @test 'report unrecognized output-options' {
-    run rdctl create-profile '--output=pickle'
+    run rdctl create-profile --output=pickle
     assert_failure
     assert_output --partial $'received unrecognized \'--output FORMAT\' option of pickle; "plist" or "reg" must be specified'
 }
@@ -27,29 +30,48 @@ load '../helpers/load'
     assert_output --partial "invalid registry type of 'ruff' specified"
 }
 
+assert_current_output_contains_n_lines() {
+    # Verify that we're generating a plausible number of lines in the output (without specifying exactly what they should be).
+    local NUM_LINES=$1
+    run wc -l <<<$output
+    assert_success
+    assert_output --partial $NUM_LINES
+}
+
 @test 'generates registry output for hklm/defaults' {
     run rdctl create-profile --output reg --from-settings
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
+    assert_current_output_contains_n_lines 65
 
     run rdctl create-profile --output reg --hive=hklm --from-settings
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
+    assert_current_output_contains_n_lines 65
 
     run rdctl create-profile --output reg --hive=HKLM --type=Defaults --from-settings
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
+    assert_current_output_contains_n_lines 65
 
     run rdctl create-profile --output reg --type=DEFAULTS --from-settings
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
+    assert_current_output_contains_n_lines 65
 }
 
-@test 'generates default registry output from inline json' {
+@test 'generates registry output from inline json' {
     run rdctl create-profile --output reg --body '{"application": { "window": { "quitOnClose": true }}}'
     assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\window]'
-    assert_output --partial '"quitOnClose"=dword:1'
+    assert_output - <<'EOF'
+Windows Registry Editor Version 5.00
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies]
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop]
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults]
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\window]
+"quitOnClose"=dword:1
+EOF
 }
 
 @test 'generates registry output for hklm/locked' {
@@ -59,6 +81,7 @@ load '../helpers/load'
     run rdctl create-profile --output reg --type=LOCKED --from-settings
     assert_success
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\locked\application]'
+    assert_current_output_contains_n_lines 65
 }
 
 @test 'generates registry output for hkcu/defaults' {
@@ -68,25 +91,21 @@ load '../helpers/load'
     run rdctl create-profile --output reg --hive=hkcu --type=Defaults --from-settings
     assert_success
     assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
+    assert_current_output_contains_n_lines 65
 }
 
 @test 'generates registry output for hkcu/locked' {
     run rdctl create-profile --output reg --hive=HKCU --type=locked --from-settings
     assert_success
     assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\locked\application]'
+    assert_current_output_contains_n_lines 65
 }
 
-# The result of the `assert_output` for here-documents looks suspicious (I see it always passing),
-# but this serves to document the expected full reg output
 @test 'generates registry output from settings' {
     run rdctl create-profile --output reg --from-settings
     assert_success
-    # Just match a few of the lines near the start and the end of the output.
-    # The unit tests do more comprehensive output checking.
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies]'
-    assert_output --partial '"adminAccess"=dword:0'
     assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\diagnostics]'
-    assert_output --partial '"showMuted"=dword:0'
+    assert_current_output_contains_n_lines 65
 }
 
 @test 'complains when no output type is specified' {
@@ -132,9 +151,9 @@ complex_json_data() {
     echo '{"kubernetes": {"enabled": false}, "containerEngine": { "allowedImages": {"patterns": ["abc", "ghi", "def"] } }, "WSL": { "integrations": { "first": true, "second": false } } }'
 }
 
-assert_registry_output() {
+assert_registry_output_for_maps_and_lists() {
     assert_success
-    assert_output --partial - <<'EOF'
+    assert_output - <<'EOF'
 Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\SOFTWARE\Policies]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop]
@@ -153,12 +172,12 @@ EOF
 
 @test 'encodes multi-string values and maps from a file' {
     run rdctl create-profile --output reg --hive hkcu --input <(complex_json_data)
-    assert_registry_output
+    assert_registry_output_for_maps_and_lists
 }
 
 @test 'encodes multi-string values and maps from a json string' {
     run rdctl create-profile --output reg --hive hkcu --body "$(complex_json_data)"
-    assert_registry_output
+    assert_registry_output_for_maps_and_lists
 }
 
 @test 'complains when no input source is specified' {
