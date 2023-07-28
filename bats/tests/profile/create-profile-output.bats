@@ -193,6 +193,8 @@ simple_json_data() {
     echo '{ "kubernetes": {"version": "moose-head" }}'
 }
 
+export -f simple_json_data
+
 assert_moose_head_plist_output() {
     assert_success
     # Just match a few of the lines near the start and the end of the output.
@@ -226,9 +228,7 @@ EOF
     if ! is_macos; then
         skip
     fi
-    local PLIST_FILE="$BATS_TEST_TMPDIR/rdctl-create-profile.plist"
-    rdctl create-profile --output plist --input <(simple_json_data) >"$PLIST_FILE"
-    run plutil -s "$PLIST_FILE"
+    run bash -o pipefail -c "rdctl create-profile --output plist --input <(simple_json_data) | plutil -s -"
     assert_success
     assert_output ""
 }
@@ -304,19 +304,22 @@ json_with_special_chars() {
 }'
 }
 
+export -f json_with_special_chars
+
+# Actual output-testing of this input is done in `plist_test.go` -- the purpose of this test is to just
+# make sure that we're generating compliant data.
+
 @test 'verify converted special-char input is escaped and satisfies plutil' {
     if ! is_macos; then
         skip
     fi
-    special_char_input="$(json_with_special_chars)"
-    run bash -o pipefail -c "rdctl create-profile --output plist --body '$special_char_input' | plutil -s -"
+    run bash -o pipefail -c "json_with_special_chars | rdctl create-profile --output plist --input - | plutil -s -"
     assert_success
     assert_output ""
 }
 
 @test 'converted special-char output is long enough' {
-    special_char_input="$(json_with_special_chars)"
-    run bash -c "rdctl create-profile --output plist --body '$special_char_input'  | wc -l | sed -E -e 's/^[\t ]+//'"
+    run bash -c "json_with_special_chars | rdctl create-profile --output plist --input -  | wc -l | sed -E -e 's/^[\t ]+//'"
     assert_success
     assert_output "42"
 }
