@@ -149,7 +149,7 @@
     "raw-loader": "4.0.2",
     "sass": "1.64.1",
     "sass-loader": "10.2.0",
-    "ts-jest": "29.1.0",
+    "ts-jest": "29.1.1",
     "ts-loader": "8.4.0",
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.1.2",
