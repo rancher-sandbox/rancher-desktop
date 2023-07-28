@@ -329,9 +329,9 @@ EOF
     if ! is_macos; then
         skip "Test requires the plist utility and only works on macOS"
     fi
-    run bash -o pipefail -c "rdctl create-profile --output plist --from-settings | plutil -s -"
+    run rdctl create-profile --output plist --from-settings
     assert_success
-    assert_output ""
+    plutil -s - <<<"$output"
 }
 
 @test "don't need a running app for the rest of this test" {
@@ -404,8 +404,6 @@ simple_json_data() {
     echo '{ "kubernetes": {"version": "moose-head" }}'
 }
 
-export -f simple_json_data
-
 assert_moose_head_plist_output() {
     assert_success
     # Just match a few of the lines near the start and the end of the output.
@@ -439,9 +437,9 @@ EOF
     if ! is_macos; then
         skip "Test requires the plist utility and only works on macOS"
     fi
-    run bash -o pipefail -c "rdctl create-profile --output plist --input <(simple_json_data) | plutil -s -"
+    run rdctl create-profile --output plist --input <(simple_json_data)
     assert_success
-    assert_output ""
+    plutil -s - <<<"$output"
 }
 
 assert_complex_plist_output() {
@@ -515,8 +513,6 @@ json_with_special_chars() {
 }'
 }
 
-export -f json_with_special_chars
-
 # Actual output-testing of this input is done in `plist_test.go` -- the purpose of this test is to just
 # make sure that we're generating compliant data.
 
@@ -524,13 +520,55 @@ export -f json_with_special_chars
     if ! is_macos; then
         skip "Test requires the plist utility and only works on macOS"
     fi
-    run bash -o pipefail -c "json_with_special_chars | rdctl create-profile --output plist --input - | plutil -s -"
+    run rdctl create-profile --output plist --input <(json_with_special_chars)
     assert_success
-    assert_output ""
+    plutil -s - <<<"$output"
 }
 
-@test 'converted special-char output is long enough' {
-    run bash -c "json_with_special_chars | rdctl create-profile --output plist --input -  | wc -l | sed -E -e 's/^[\t ]+//'"
+@test 'verify converted special-char output' {
+    run rdctl create-profile --output plist --input <(json_with_special_chars)
     assert_success
-    assert_output "42"
+    assert_output - <<'END'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>application</key>
+    <dict>
+      <key>extensions</key>
+      <dict>
+        <key>allowed</key>
+        <dict>
+          <key>enabled</key>
+          <false/>
+          <key>list</key>
+          <array>
+            <string>less-than:&lt;</string>
+            <string>greater:&gt;</string>
+            <string>and:&amp;</string>
+            <string>d-quote:&#34;</string>
+            <string>emoji:😀</string>
+          </array>
+        </dict>
+        <key>installed</key>
+        <dict>
+          <key>key-with-ampersand: &amp;</key>
+          <true/>
+          <key>key-with-emoji: 🐤</key>
+          <false/>
+          <key>key-with-greater-than: &gt;</key>
+          <true/>
+          <key>key-with-less-than: &lt;</key>
+          <true/>
+        </dict>
+      </dict>
+    </dict>
+    <key>containerEngine</key>
+    <dict>
+      <key>name</key>
+      <string>freda-less-&lt;-than</string>
+    </dict>
+  </dict>
+</plist>
+END
 }
