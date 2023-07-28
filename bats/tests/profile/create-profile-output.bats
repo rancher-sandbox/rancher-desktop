@@ -38,26 +38,112 @@ assert_current_output_contains_n_lines() {
     assert_output --partial $NUM_LINES
 }
 
+assert_full_setting_registry_output() {
+    local HIVE=$1
+    local TYPE=$2
+    assert_success
+    assert_output - <<EOF
+Windows Registry Editor Version 5.00
+[$HIVE\SOFTWARE\Policies]
+[$HIVE\SOFTWARE\Policies\Rancher Desktop]
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE]
+"version"=dword:9
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application]
+"adminAccess"=dword:0
+"debug"=dword:1
+"pathManagementStrategy"="rcfiles"
+"autoStart"=dword:0
+"startInBackground"=dword:0
+"hideNotificationIcon"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\extensions]
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\extensions\allowed]
+"enabled"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\telemetry]
+"enabled"=dword:1
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\updater]
+"enabled"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\window]
+"quitOnClose"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\containerEngine]
+"name"="containerd"
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\containerEngine\allowedImages]
+"enabled"=dword:0
+"patterns"=hex(7):64,00,6f,00,63,00,6b,00,65,00,72,00,2e,00,69,00,6f,00,00,00,00,00
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\virtualMachine]
+"memoryInGB"=dword:6
+"numberCPUs"=dword:2
+"hostResolver"=dword:1
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\kubernetes]
+"version"=""
+"port"=dword:192b
+"enabled"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\kubernetes\options]
+"traefik"=dword:1
+"flannel"=dword:1
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\kubernetes\ingress]
+"localhostOnly"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental]
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine]
+"socketVMNet"=dword:0
+"networkingTunnel"=dword:0
+"type"="qemu"
+"useRosetta"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine\mount]
+"type"="reverse-sshfs"
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine\mount\9p]
+"securityModel"="none"
+"protocolVersion"="9p2000.L"
+"msizeInKib"=dword:80
+"cacheMode"="mmap"
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine\proxy]
+"enabled"=dword:0
+"address"=""
+"password"=""
+"port"=dword:c38
+"username"=""
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\portForwarding]
+"includeKubernetesServices"=dword:0
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\images]
+"showAll"=dword:1
+"namespace"="k8s.io"
+[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\diagnostics]
+"showMuted"=dword:0
+EOF
+}
+
 @test 'generates registry output for hklm/defaults' {
     run rdctl create-profile --output reg --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    assert_current_output_contains_n_lines 65
+    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
 
     run rdctl create-profile --output reg --hive=hklm --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    assert_current_output_contains_n_lines 65
+    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
 
     run rdctl create-profile --output reg --hive=HKLM --type=Defaults --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    assert_current_output_contains_n_lines 65
+    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
 
     run rdctl create-profile --output reg --type=DEFAULTS --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    assert_current_output_contains_n_lines 65
+    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
+}
+
+@test 'generates registry output for hklm/locked' {
+    run rdctl create-profile --output reg --hive=Hklm --type=Locked --from-settings
+    assert_full_setting_registry_output HKEY_LOCAL_MACHINE locked
+
+    run rdctl create-profile --output reg --type=LOCKED --from-settings
+    assert_full_setting_registry_output HKEY_LOCAL_MACHINE locked
+}
+
+@test 'generates registry output for hkcu/defaults' {
+    run rdctl create-profile --output reg --hive=Hkcu --from-settings
+    assert_full_setting_registry_output HKEY_CURRENT_USER defaults
+
+    run rdctl create-profile --output reg --hive=hkcu --type=Defaults --from-settings
+    assert_full_setting_registry_output HKEY_CURRENT_USER defaults
+}
+
+@test 'generates registry output for hkcu/locked' {
+    run rdctl create-profile --output reg --hive=HKCU --type=locked --from-settings
+    assert_full_setting_registry_output HKEY_CURRENT_USER locked
 }
 
 @test 'generates registry output from inline json' {
@@ -72,40 +158,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\window]
 "quitOnClose"=dword:1
 EOF
-}
-
-@test 'generates registry output for hklm/locked' {
-    run rdctl create-profile --output reg --hive=Hklm --type=Locked --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\locked\application]'
-    run rdctl create-profile --output reg --type=LOCKED --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\locked\application]'
-    assert_current_output_contains_n_lines 65
-}
-
-@test 'generates registry output for hkcu/defaults' {
-    run rdctl create-profile --output reg --hive=Hkcu --from-settings
-    assert_success
-    assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    run rdctl create-profile --output reg --hive=hkcu --type=Defaults --from-settings
-    assert_success
-    assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]'
-    assert_current_output_contains_n_lines 65
-}
-
-@test 'generates registry output for hkcu/locked' {
-    run rdctl create-profile --output reg --hive=HKCU --type=locked --from-settings
-    assert_success
-    assert_output --partial '[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\locked\application]'
-    assert_current_output_contains_n_lines 65
-}
-
-@test 'generates registry output from settings' {
-    run rdctl create-profile --output reg --from-settings
-    assert_success
-    assert_output --partial '[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\diagnostics]'
-    assert_current_output_contains_n_lines 65
 }
 
 @test 'complains when no output type is specified' {
