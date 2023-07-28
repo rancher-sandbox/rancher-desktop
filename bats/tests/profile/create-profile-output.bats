@@ -282,3 +282,41 @@ EOF
     run rdctl create-profile --output plist --body "$(complex_json_data)"
     assert_complex_plist_output
 }
+
+json_with_special_chars() {
+    echo '{ "application": {
+            "extensions": {
+                "allowed": {
+                  "enabled": false,
+                  "list": ["less-than:<", "greater:>", "and:&", "d-quote:\"", "emoji:😀"]
+                },
+                "installed": {
+                    "key-with-less-than: <": true,
+                    "key-with-ampersand: &": true,
+                    "key-with-greater-than: >": true,
+                    "key-with-emoji: 🐤": false
+                }
+            }
+        },
+        "containerEngine": {
+          "name": "freda-less-<-than"
+        }
+}'
+}
+
+@test 'verify converted special-char input is escaped and satisfies plutil' {
+    if ! is_macos; then
+        skip
+    fi
+    special_char_input="$(json_with_special_chars)"
+    run bash -o pipefail -c "rdctl create-profile --output plist --body '$special_char_input' | plutil -s -"
+    assert_success
+    assert_output ""
+}
+
+@test 'converted special-char output is long enough' {
+    special_char_input="$(json_with_special_chars)"
+    run bash -c "rdctl create-profile --output plist --body '$special_char_input'  | wc -l | sed -E -e 's/^[\t ]+//'"
+    assert_success
+    assert_output "42"
+}

@@ -332,4 +332,71 @@ func TestJsonToPlistFormat(t *testing.T) {
 </plist>
 `, s)
 	})
+
+	t.Run("Escapes problematic strings", func(t *testing.T) {
+		jsonBody := `{ "application": {
+										"extensions": {
+											"allowed": {
+											  "enabled": false,
+											  "list": ["less-than:<", "greater:>", "and:&", "d-quote:\"", "emoji:😀"]
+											},
+											"installed": {
+												"key-with-less-than: <": true,
+												"key-with-ampersand: &": true,
+												"key-with-greater-than: >": true,
+												"key-with-emoji: 🐤": false
+											}
+										}
+									},
+									"containerEngine": {
+									  "name": "freda-less-<-than"
+									}
+							}
+`
+		s, err := JsonToPlist(jsonBody)
+		assert.NoError(t, err)
+		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>application</key>
+    <dict>
+      <key>extensions</key>
+      <dict>
+        <key>allowed</key>
+        <dict>
+          <key>enabled</key>
+          <false/>
+          <key>list</key>
+          <array>
+            <string>less-than:&lt;</string>
+            <string>greater:&gt;</string>
+            <string>and:&amp;</string>
+            <string>d-quote:&#34;</string>
+            <string>emoji:😀</string>
+          </array>
+        </dict>
+        <key>installed</key>
+        <dict>
+          <key>key-with-ampersand: &amp;</key>
+          <true/>
+          <key>key-with-emoji: 🐤</key>
+          <false/>
+          <key>key-with-greater-than: &gt;</key>
+          <true/>
+          <key>key-with-less-than: &lt;</key>
+          <true/>
+        </dict>
+      </dict>
+    </dict>
+    <key>containerEngine</key>
+    <dict>
+      <key>name</key>
+      <string>freda-less-&lt;-than</string>
+    </dict>
+  </dict>
+</plist>
+`, s)
+	})
+
 }

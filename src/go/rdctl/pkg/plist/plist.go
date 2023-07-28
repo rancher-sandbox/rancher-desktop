@@ -1,14 +1,19 @@
-// Package reg is responsible for converting ServerSettingsForJSON structures into
-// importable Windows registry files by running `reg import FILE`.
+// This package exists because I looked at three commonly used JSON->PLIST transformers/encoders.
+// One of them (vinzenz/go-plist) was too low-level, and the other two
+// (distatus/go-plist and howett.net/plist) ignored the `omitempty` directive in structure tags,
+// producing a large number of '<dict></dict>' sequences in the generated output.
 //
-// Note that the `reg` command must be run with administrator privileges because it
-// modifies either a section of `HKEY_LOCAL_MACHINE` or `HKEY_CURRENT_USER\SOFTWARE\Policies`,
-// both of which require escalated privileges to be modified.
+// We already had a module that used reflection to convert objects into REGISTRY files, so it wasn't
+// very hard to take the same code and repurpose it to generate minimal plist files. One could make a
+// case that using a hardened XML library will avoid encoding problems, but given that we deal with
+// Hence this package.
 
 package plist
 
 import (
+	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"reflect"
@@ -16,13 +21,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"strings"
 )
-
-func xmlEscape(s string) string {
-	s1 := strings.ReplaceAll(s, "&", "&amp;")
-	s2 := strings.ReplaceAll(s1, "<", "&lt;")
-	s3 := strings.ReplaceAll(s2, ">", "&gt;")
-	return s3
-}
 
 const indentChange = "  "
 
@@ -66,7 +64,11 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 		retLines := make([]string, numValues+2)
 		retLines[0] = indent + "<array>"
 		for i := 0; i < numValues; i++ {
-			retLines[i+1] = fmt.Sprintf("%s<string>%s</string>", indent+indentChange, xmlEscape(v.Index(i).String()))
+			escapedString, err := xmlEscapeText(v.Index(i).String())
+			if err != nil {
+				return nil, err
+			}
+			retLines[i+1] = fmt.Sprintf("%s<string>%s</string>", indent+indentChange, escapedString)
 		}
 		retLines[numValues+1] = indent + "</array>"
 		return retLines, nil
@@ -83,7 +85,11 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
-				returnedLines = append(returnedLines, fmt.Sprintf(`%s<key>%s</key>`, indent+indentChange, keyAsString))
+				escapedString, err := xmlEscapeText(keyAsString)
+				if err != nil {
+					return nil, err
+				}
+				returnedLines = append(returnedLines, fmt.Sprintf(`%s<key>%s</key>`, indent+indentChange, escapedString))
 				returnedLines = append(returnedLines, innerLines...)
 			}
 		}
@@ -107,9 +113,22 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 	case reflect.Float32:
 		return []string{fmt.Sprintf("%s<float>%f</float>", indent, v.Float())}, nil
 	case reflect.String:
-		return []string{fmt.Sprintf("%s<string>%s</string>", indent, xmlEscape(v.String()))}, nil
+		escapedString, err := xmlEscapeText(v.String())
+		if err != nil {
+			return nil, err
+		}
+		return []string{fmt.Sprintf("%s<string>%s</string>", indent, escapedString)}, nil
 	}
 	return nil, fmt.Errorf("convertToPListLines: don't know how to process kind: %s, (%T), value: %v", kind, v, v)
+}
+
+func xmlEscapeText(s string) (string, error) {
+	recvBuffer := &bytes.Buffer{}
+	err := xml.EscapeText(recvBuffer, []byte(s))
+	if err != nil {
+		return "", err
+	}
+	return recvBuffer.String(), nil
 }
 
 // JsonToPlist converts the json settings to a reg file
