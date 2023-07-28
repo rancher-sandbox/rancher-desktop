@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker-credential-helpers/credentials"
-	dockerconfig "github.com/docker/docker/cli/config"
 )
 
 const configFileName = "plaintext-credentials.config.json"

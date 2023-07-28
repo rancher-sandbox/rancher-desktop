@@ -13,8 +13,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 3
+      interval: "daily"
+    open-pull-requests-limit: 5
     labels: ["component/dependencies"]
     ignore:
       - # Needs to be updated along with NodeJS version.
@@ -42,15 +42,15 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/src/go/docker-credential-none"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
-    reviewers: [ "Nino-K" ]
+    reviewers: [ "ericpromislow" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/extension-proxy"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
@@ -58,7 +58,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/src/go/mock-wsl"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
@@ -66,31 +66,37 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/src/go/nerdctl-stub"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/rdctl"
+    ignore:
+      # This is generated when running `postinstall` and not available to dependabot.
+      - dependency-name: "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/generated/options"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
-    reviewers: [ "Nino-K" ]
+    reviewers: [ "ericpromislow" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/vtunnel"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
+    ignore:
+    # This is generated when running `postinstall` and not available to dependabot.
+    - dependency-name: "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
