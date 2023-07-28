@@ -13,6 +13,7 @@ load '../helpers/load'
     run rdctl create-profile --output=plist --from-settings --hive=fish
     assert_failure
     assert_output --partial "registry hive and type can't be specified with plist"
+
     run rdctl create-profile --output plist --from-settings --type=writer
     assert_failure
     assert_output --partial "registry hive and type can't be specified with plist"
