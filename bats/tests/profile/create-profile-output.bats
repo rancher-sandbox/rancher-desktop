@@ -112,11 +112,12 @@ load '../helpers/load'
     assert_output --partial '<plist version="1.0">'
     assert_output --partial '    <key>application</key>'
     assert_output --partial '</plist>'
+    assert_current_output_contains_n_lines 150
 }
 
 @test 'verify plutil is ok with the generated plist output' {
     if ! is_macos; then
-        skip
+        skip "Test requires the plist utility and only works on macOS"
     fi
     run bash -o pipefail -c "rdctl create-profile --output plist --from-settings | plutil -s -"
     assert_success
@@ -226,7 +227,7 @@ EOF
 
 @test 'verify plutil is ok with the generated plist output from input file' {
     if ! is_macos; then
-        skip
+        skip "Test requires the plist utility and only works on macOS"
     fi
     run bash -o pipefail -c "rdctl create-profile --output plist --input <(simple_json_data) | plutil -s -"
     assert_success
@@ -311,7 +312,7 @@ export -f json_with_special_chars
 
 @test 'verify converted special-char input is escaped and satisfies plutil' {
     if ! is_macos; then
-        skip
+        skip "Test requires the plist utility and only works on macOS"
     fi
     run bash -o pipefail -c "json_with_special_chars | rdctl create-profile --output plist --input - | plutil -s -"
     assert_success
