@@ -8,3 +8,7 @@ hklm
 hkcu
 qword
 dword
+emoji
+distatus
+howett
+vinzenz
