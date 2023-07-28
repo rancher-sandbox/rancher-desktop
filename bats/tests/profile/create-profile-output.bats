@@ -30,17 +30,9 @@ load '../helpers/load'
     assert_output --partial "invalid registry type of 'ruff' specified"
 }
 
-assert_current_output_contains_n_lines() {
-    # Verify that we're generating a plausible number of lines in the output (without specifying exactly what they should be).
-    local NUM_LINES=$1
-    run wc -l <<<$output
-    assert_success
-    assert_output --partial $NUM_LINES
-}
-
 assert_full_setting_registry_output() {
-    local HIVE=$1
-    local TYPE=$2
+    HIVE=$1
+    TYPE=$2
     assert_success
     assert_output - <<EOF
 Windows Registry Editor Version 5.00
@@ -111,6 +103,162 @@ Windows Registry Editor Version 5.00
 EOF
 }
 
+assert_full_setting_plist_output() {
+    assert_success
+    assert_output - <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>version</key>
+    <integer>9</integer>
+    <key>application</key>
+    <dict>
+      <key>adminAccess</key>
+      <false/>
+      <key>debug</key>
+      <true/>
+      <key>extensions</key>
+      <dict>
+        <key>allowed</key>
+        <dict>
+          <key>enabled</key>
+          <false/>
+        </dict>
+      </dict>
+      <key>pathManagementStrategy</key>
+      <string>rcfiles</string>
+      <key>telemetry</key>
+      <dict>
+        <key>enabled</key>
+        <true/>
+      </dict>
+      <key>updater</key>
+      <dict>
+        <key>enabled</key>
+        <false/>
+      </dict>
+      <key>autoStart</key>
+      <false/>
+      <key>startInBackground</key>
+      <false/>
+      <key>hideNotificationIcon</key>
+      <false/>
+      <key>window</key>
+      <dict>
+        <key>quitOnClose</key>
+        <false/>
+      </dict>
+    </dict>
+    <key>containerEngine</key>
+    <dict>
+      <key>name</key>
+      <string>containerd</string>
+      <key>allowedImages</key>
+      <dict>
+        <key>enabled</key>
+        <false/>
+        <key>patterns</key>
+        <array>
+          <string>docker.io</string>
+        </array>
+      </dict>
+    </dict>
+    <key>virtualMachine</key>
+    <dict>
+      <key>memoryInGB</key>
+      <integer>6</integer>
+      <key>numberCPUs</key>
+      <integer>2</integer>
+      <key>hostResolver</key>
+      <true/>
+    </dict>
+    <key>kubernetes</key>
+    <dict>
+      <key>version</key>
+      <string></string>
+      <key>port</key>
+      <integer>6443</integer>
+      <key>enabled</key>
+      <false/>
+      <key>options</key>
+      <dict>
+        <key>traefik</key>
+        <true/>
+        <key>flannel</key>
+        <true/>
+      </dict>
+      <key>ingress</key>
+      <dict>
+        <key>localhostOnly</key>
+        <false/>
+      </dict>
+    </dict>
+    <key>experimental</key>
+    <dict>
+      <key>virtualMachine</key>
+      <dict>
+        <key>socketVMNet</key>
+        <false/>
+        <key>mount</key>
+        <dict>
+          <key>type</key>
+          <string>reverse-sshfs</string>
+          <key>9p</key>
+          <dict>
+            <key>securityModel</key>
+            <string>none</string>
+            <key>protocolVersion</key>
+            <string>9p2000.L</string>
+            <key>msizeInKib</key>
+            <integer>128</integer>
+            <key>cacheMode</key>
+            <string>mmap</string>
+          </dict>
+        </dict>
+        <key>networkingTunnel</key>
+        <false/>
+        <key>type</key>
+        <string>qemu</string>
+        <key>useRosetta</key>
+        <false/>
+        <key>proxy</key>
+        <dict>
+          <key>enabled</key>
+          <false/>
+          <key>address</key>
+          <string></string>
+          <key>password</key>
+          <string></string>
+          <key>port</key>
+          <integer>3128</integer>
+          <key>username</key>
+          <string></string>
+        </dict>
+      </dict>
+    </dict>
+    <key>portForwarding</key>
+    <dict>
+      <key>includeKubernetesServices</key>
+      <false/>
+    </dict>
+    <key>images</key>
+    <dict>
+      <key>showAll</key>
+      <true/>
+      <key>namespace</key>
+      <string>k8s.io</string>
+    </dict>
+    <key>diagnostics</key>
+    <dict>
+      <key>showMuted</key>
+      <false/>
+    </dict>
+  </dict>
+</plist>
+EOF
+}
+
 @test 'generates registry output for hklm/defaults' {
     run rdctl create-profile --output reg --from-settings
     assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
@@ -174,16 +322,7 @@ EOF
 
 @test 'generates plist output from settings' {
     run rdctl create-profile --output plist --from-settings
-    assert_success
-    # Just match a few of the lines near the start and the end of the output.
-    # The unit tests do more comprehensive output checking, as do the
-    # tests that work on a subset of the JSON input.
-    assert_output --partial '<?xml version="1.0" encoding="UTF-8"?>'
-    assert_output --partial '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
-    assert_output --partial '<plist version="1.0">'
-    assert_output --partial '    <key>application</key>'
-    assert_output --partial '</plist>'
-    assert_current_output_contains_n_lines 150
+    assert_full_setting_plist_output
 }
 
 @test 'verify plutil is ok with the generated plist output' {
