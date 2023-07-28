@@ -12,8 +12,8 @@ import (
 	"fmt"
 	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"reflect"
-	"sort"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"strings"
 )
 
@@ -25,23 +25,6 @@ func xmlEscape(s string) string {
 }
 
 const indentChange = "  "
-
-type mapKeyWithString struct {
-	mapKey    reflect.Value
-	stringKey string
-}
-
-func sortKeys(mapKeys []reflect.Value) []mapKeyWithString {
-	retVals := make([]mapKeyWithString, len(mapKeys))
-	for idx, key := range mapKeys {
-		mapKeyAsString := key.String()
-		retVals[idx] = mapKeyWithString{key, mapKeyAsString}
-	}
-	sort.Slice(retVals, func(i, j int) bool {
-		return retVals[i].stringKey < retVals[j].stringKey
-	})
-	return retVals
-}
 
 // convertToPListLines recursively reflects the supplied value into lines for a plist
 func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
@@ -93,10 +76,10 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 			return nil, nil
 		}
 		returnedLines := []string{indent + "<dict>"}
-		typedKeys := sortKeys(v.MapKeys())
+		typedKeys := utils.SortKeys(v.MapKeys())
 		for _, typedKey := range typedKeys {
-			keyAsString := typedKey.stringKey
-			innerLines, err := convertToPListLines(v.MapIndex(typedKey.mapKey), indent+indentChange)
+			keyAsString := typedKey.StringKey
+			innerLines, err := convertToPListLines(v.MapIndex(typedKey.MapKey), indent+indentChange)
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
