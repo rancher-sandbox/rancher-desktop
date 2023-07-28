@@ -97,7 +97,7 @@ func createProfile() (string, error) {
 	} else {
 		if !UseCurrentSettings {
 			// This should have been caught in validateProfileFormatFlags
-			return "", fmt.Errorf(`no output format specified: must specify exactly one output format of '--input FILE|-', '--body|-b STRING', or '--from-settings'`)
+			return "", fmt.Errorf(`no input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'`)
 		}
 		output, err = processRequestForUtility(doRequest("GET", versionCommand("", "settings")))
 	}
@@ -124,10 +124,10 @@ func validateProfileFormatFlags() error {
 		return fmt.Errorf(`received unrecognized '--output FORMAT' option of %s; "%s" or "%s" must be specified`, outputSettingsFlags.Format, plistFormat, regFormat)
 	}
 	if InputFile == "" && JSONBody == "" && !UseCurrentSettings {
-		return fmt.Errorf(`no output format specified: must specify exactly one output format of '--input FILE|-', '--body|-b STRING', or '--from-settings'`)
+		return fmt.Errorf(`no input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'`)
 	}
 	if (InputFile != "" && (JSONBody != "" || UseCurrentSettings)) || (JSONBody != "" && UseCurrentSettings) {
-		return fmt.Errorf(`too many output format specified: must specify exactly one output format of '--input FILE|-', '--body|-b STRING', or '--from-settings'`)
+		return fmt.Errorf(`too many input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'`)
 	}
 
 	if outputSettingsFlags.Format == plistFormat {
