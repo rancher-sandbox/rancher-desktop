@@ -37,69 +37,69 @@ assert_full_setting_registry_output() {
     assert_success
     assert_output - <<EOF
 Windows Registry Editor Version 5.00
-[$HIVE\SOFTWARE\Policies]
-[$HIVE\SOFTWARE\Policies\Rancher Desktop]
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE]
+[$HIVE\\SOFTWARE\\Policies]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE]
 "version"=dword:9
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application]
 "adminAccess"=dword:0
 "debug"=dword:1
 "pathManagementStrategy"="rcfiles"
 "autoStart"=dword:0
 "startInBackground"=dword:0
 "hideNotificationIcon"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\extensions]
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\extensions\allowed]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\extensions]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\extensions\\allowed]
 "enabled"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\telemetry]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\telemetry]
 "enabled"=dword:1
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\updater]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\updater]
 "enabled"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\application\window]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\window]
 "quitOnClose"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\containerEngine]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\containerEngine]
 "name"="containerd"
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\containerEngine\allowedImages]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\containerEngine\\allowedImages]
 "enabled"=dword:0
 "patterns"=hex(7):64,00,6f,00,63,00,6b,00,65,00,72,00,2e,00,69,00,6f,00,00,00,00,00
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\virtualMachine]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\virtualMachine]
 "memoryInGB"=dword:6
 "numberCPUs"=dword:2
 "hostResolver"=dword:1
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\kubernetes]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\kubernetes]
 "version"=""
 "port"=dword:192b
 "enabled"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\kubernetes\options]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\kubernetes\\options]
 "traefik"=dword:1
 "flannel"=dword:1
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\kubernetes\ingress]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\kubernetes\\ingress]
 "localhostOnly"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental]
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine]
 "socketVMNet"=dword:0
 "networkingTunnel"=dword:0
 "type"="qemu"
 "useRosetta"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine\mount]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine\\mount]
 "type"="reverse-sshfs"
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine\mount\9p]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine\\mount\\9p]
 "securityModel"="none"
 "protocolVersion"="9p2000.L"
 "msizeInKib"=dword:80
 "cacheMode"="mmap"
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\experimental\virtualMachine\proxy]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine\\proxy]
 "enabled"=dword:0
 "address"=""
 "password"=""
 "port"=dword:c38
 "username"=""
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\portForwarding]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\portForwarding]
 "includeKubernetesServices"=dword:0
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\images]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\images]
 "showAll"=dword:1
 "namespace"="k8s.io"
-[$HIVE\SOFTWARE\Policies\Rancher Desktop\\$TYPE\diagnostics]
+[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\diagnostics]
 "showMuted"=dword:0
 EOF
 }
@@ -509,7 +509,7 @@ json_with_special_chars() {
             }
         },
         "containerEngine": {
-          "name": "freda-less-<-than"
+          "name": "small-less-<-than"
         }
 }'
 }
@@ -567,7 +567,7 @@ json_with_special_chars() {
     <key>containerEngine</key>
     <dict>
       <key>name</key>
-      <string>freda-less-&lt;-than</string>
+      <string>small-less-&lt;-than</string>
     </dict>
   </dict>
 </plist>
