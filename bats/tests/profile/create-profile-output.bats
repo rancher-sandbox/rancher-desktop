@@ -516,24 +516,26 @@ EOF
 }
 
 json_with_special_chars() {
-    echo '{ "application": {
-            "extensions": {
-                "allowed": {
-                  "enabled": false,
-                  "list": ["less-than:<", "greater:>", "and:&", "d-quote:\"", "emoji:😀"]
-                },
-                "installed": {
-                    "key-with-less-than: <": true,
-                    "key-with-ampersand: &": true,
-                    "key-with-greater-than: >": true,
-                    "key-with-emoji: 🐤": false
-                }
-            }
+    cat <<'EOF'
+{ "application": {
+    "extensions": {
+        "allowed": {
+          "enabled": false,
+          "list": ["less-than:<", "greater:>", "and:&", "d-quote:\"", "emoji:😀"]
         },
-        "containerEngine": {
-          "name": "small-less-<-than"
+        "installed": {
+            "key-with-less-than: <": true,
+            "key-with-ampersand: &": true,
+            "key-with-greater-than: >": true,
+            "key-with-emoji: 🐤": false
         }
-}'
+    }
+  },
+  "containerEngine": {
+    "name": "small-less-<-than"
+  }
+}
+EOF
 }
 
 # Actual output-testing of this input is done in `plist_test.go` -- the purpose of this test is to just
