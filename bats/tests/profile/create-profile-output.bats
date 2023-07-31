@@ -9,6 +9,57 @@ load '../helpers/load'
     wait_for_container_engine
 }
 
+@test 'complains when no output type is specified' {
+    run rdctl create-profile --from-settings
+    assert_failure
+    assert_output --partial 'an "--output FORMAT" option of either "plist" or "reg" must be specified'
+}
+
+@test 'complains when an invalid output type is specified' {
+    run rdctl create-profile --from-settings --output=cabbage
+    assert_failure
+    assert_output --partial 'received unrecognized "--output FORMAT" option of "cabbage"; "plist" or "reg" must be specified'
+}
+
+@test 'complains when no input source is specified' {
+    for type in reg plist; do
+        run rdctl create-profile --output $type
+        assert_failure
+        assert_output --partial 'no input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
+    done
+}
+
+@test 'complains when no --input arg is specified' {
+    for type in reg plist; do
+        for input in input body; do
+            run rdctl create-profile --output "$type" --"$input"
+            assert_failure
+            assert_output --partial $"Error: flag needs an argument: --$input"
+        done
+    done
+}
+
+@test 'complains when multiple input sources are specified' {
+    for type in reg plist; do
+        run rdctl create-profile --output $type --input some-file.txt -b moose
+        assert_failure
+        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
+
+        run rdctl create-profile --output $type --input some-file.txt --from-settings
+        assert_failure
+        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
+
+        run rdctl create-profile --output $type --input some-file.txt -b moose --from-settings
+        assert_failure
+        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
+
+        run rdctl create-profile --output $type -b moose --from-settings
+        assert_failure
+        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
+
+    done
+}
+
 @test 'report invalid parameters for plist' {
     run rdctl create-profile --output=plist --from-settings --hive=fish
     assert_failure
@@ -22,14 +73,16 @@ load '../helpers/load'
 @test 'report unrecognized output-options' {
     run rdctl create-profile --output=pickle
     assert_failure
-    assert_output --partial $'received unrecognized \'--output FORMAT\' option of pickle; "plist" or "reg" must be specified'
+    assert_output --partial 'received unrecognized "--output FORMAT" option of "pickle"; "plist" or "reg" must be specified'
 }
 
 @test 'report unrecognized registry sub-options' {
     run rdctl create-profile --output=reg --hive=hklm --type=ruff --from-settings
     assert_failure
-    assert_output --partial "invalid registry type of 'ruff' specified"
+    assert_output --partial 'invalid registry type of "ruff" specified'
 }
+
+# Happy tests follow
 
 assert_full_setting_registry_output() {
     HIVE=$1
@@ -309,18 +362,6 @@ Windows Registry Editor Version 5.00
 EOF
 }
 
-@test 'complains when no output type is specified' {
-    run rdctl create-profile --from-settings
-    assert_failure
-    assert_output --partial $"an '--output FORMAT' option of either \"plist\" or \"reg\" must be specified"
-}
-
-@test 'complains when an invalid output type is specified' {
-    run rdctl create-profile --from-settings --output=cabbage
-    assert_failure
-    assert_output --partial $"received unrecognized '--output FORMAT' option of cabbage; \"plist\" or \"reg\" must be specified"
-}
-
 @test 'generates plist output from settings' {
     run rdctl create-profile --output plist --from-settings
     assert_full_setting_plist_output
@@ -372,43 +413,12 @@ EOF
     assert_registry_output_for_maps_and_lists
 }
 
-@test 'complains when no input source is specified' {
-    for type in reg plist; do
-        run rdctl create-profile --output $type
-        assert_failure
-        assert_output --partial "no input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
-    done
-}
-
-@test 'complains when multiple input sources are specified' {
-    for type in reg plist; do
-        run rdctl create-profile --output $type --input some-file.txt -b moose
-        assert_failure
-        assert_output --partial "too many input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
-
-        run rdctl create-profile --output $type --input some-file.txt --from-settings
-        assert_failure
-        assert_output --partial "too many input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
-
-        run rdctl create-profile --output $type --input some-file.txt -b moose --from-settings
-        assert_failure
-        assert_output --partial "too many input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
-
-        run rdctl create-profile --output $type -b moose --from-settings
-        assert_failure
-        assert_output --partial "too many input format specified: must specify exactly one input format of '--input FILE|-', '--body|-b STRING', or '--from-settings'"
-
-    done
-}
-
 simple_json_data() {
     echo '{ "kubernetes": {"version": "moose-head" }}'
 }
 
 assert_moose_head_plist_output() {
     assert_success
-    # Just match a few of the lines near the start and the end of the output.
-    # The unit tests do more comprehensive output checking.
     assert_output - <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
