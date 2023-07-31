@@ -7,6 +7,7 @@ export class ContainerEngineNav {
   readonly tabAllowedImages: Locator;
   readonly containerEngine: Locator;
   readonly allowedImages: Locator;
+  readonly allowedImagesCheckbox: Locator;
   readonly enabledLockedField: Locator;
 
   constructor(page: Page) {
@@ -16,6 +17,7 @@ export class ContainerEngineNav {
     this.tabAllowedImages = page.locator('.tab >> text=Allowed Images');
     this.containerEngine = page.locator('[data-test="containerEngine"]');
     this.allowedImages = page.locator('[data-test="allowedImages"]');
+    this.allowedImagesCheckbox = page.locator('[data-test="allowedImagesCheckbox"]');
     this.enabledLockedField = page.locator('[data-test="allowedImages"] > .rd-checkbox-container > .icon-lock');
   }
 }
