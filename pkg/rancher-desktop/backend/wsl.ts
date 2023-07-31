@@ -239,13 +239,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     throw new Error('Invalid state, no container engine client available.');
   }
 
-  /** Not used in wsl.ts */
+  /** A transient property that prevents prompting via modal UI elements. */
+  #noModalDialogs = false;
+
   get noModalDialogs() {
-    throw new Error("internalError: noModalDialogs shouldn't be used in WSL");
+    return this.#noModalDialogs;
   }
 
-  set noModalDialogs(_: boolean) {
-    // Nothing to do - this isn't used for WSL
+  set noModalDialogs(value: boolean) {
+    this.#noModalDialogs = value;
   }
 
   /** Vtunnel Proxy management singleton. */

@@ -153,7 +153,7 @@ export default {
           v-if="imageManagerProcessFinishedWithFailure"
           color="error"
         >
-          <span class="icon icon-info icon-lg " />
+          <span class="icon icon-info-circle icon-lg " />
           {{ errorText }}
         </banner>
       </slot>

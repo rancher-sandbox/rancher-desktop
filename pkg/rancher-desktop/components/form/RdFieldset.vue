@@ -2,12 +2,13 @@
 import Vue from 'vue';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
+import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 /**
  * Groups several controls as well as labels
  */
 export default Vue.extend({
   name:       'rd-fieldset',
-  components: { LabeledBadge },
+  components: { TooltipIcon, LabeledBadge },
   props:      {
     legendText: {
       type:    String,
@@ -20,6 +21,10 @@ export default Vue.extend({
     legendTooltip: {
       type:    String,
       default: '',
+    },
+    isExperimental: {
+      type:    Boolean,
+      default: false,
     },
     isLocked: {
       type:    Boolean,
@@ -45,6 +50,9 @@ export default Vue.extend({
           v-if="badgeText"
           :text="badgeText"
         />
+        <tooltip-icon
+          v-if="isExperimental"
+        />
         <i
           v-if="isLocked"
           v-tooltip="{
@@ -56,7 +64,7 @@ export default Vue.extend({
         <i
           v-else-if="legendTooltip"
           v-tooltip="legendTooltip"
-          class="icon icon-info icon-lg"
+          class="icon icon-info-circle icon-lg"
         />
       </slot>
     </legend>

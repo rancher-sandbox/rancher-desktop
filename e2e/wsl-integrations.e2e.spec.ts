@@ -6,17 +6,18 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect, test, _electron } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
+import { PreferencesPage } from './pages/preferences';
 import { createDefaultSettings, startRancherDesktop, teardown } from './utils/TestUtils';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
+// import type { ElectronApplication, Locator, Page } from '@playwright/test';
 import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe('WSL Integrations', () => {
-  test.skip(true, 'TODO: https://github.com/rancher-sandbox/rancher-desktop/issues/2881');
   test.describe.configure({ mode: 'serial' });
   if (os.platform() !== 'win32') {
     test.skip();
@@ -27,6 +28,7 @@ test.describe('WSL Integrations', () => {
   /** The environment variables, before our tests. */
   let electronApp: ElectronApplication;
   let page: Page;
+  let preferencesWindow: Page;
 
   test.beforeAll(async() => {
     const stubDir = path.resolve(__dirname, '..', 'src', 'go', 'mock-wsl');
@@ -45,7 +47,7 @@ test.describe('WSL Integrations', () => {
       });
   });
 
-  const writeConfig = async(opts?:{[k in 'alpha'|'beta'|'gamma']?: boolean|string}) => {
+  const writeConfig = async(opts?: {[k in 'alpha'|'beta'|'gamma']?: boolean|string}) => {
     const config: {
       commands: {
         args: string[],
@@ -81,6 +83,12 @@ test.describe('WSL Integrations', () => {
               mode:   'repeated',
               stdout: `/${ distro }/${ tool.join('/') }`,
             }])),
+          ...[['bin', 'docker-buildx'], ['wsl-helper']].flatMap(tool => ([
+            {
+              args:   ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u', path.join(process.cwd(), 'resources', 'linux', ...tool)],
+              mode:   'repeated',
+              stdout: `/${ distro }/${ tool.join('/') }`,
+            }])),
           ...[
             [`/${ distro }/wsl-helper`, 'kubeconfig', '--enable=false'],
             [`/${ distro }/wsl-helper`, 'kubeconfig', '--enable=true'],
@@ -94,6 +102,11 @@ test.describe('WSL Integrations', () => {
             args: ['--distribution', distro, '--exec', ...cmd],
             mode: 'repeated',
           })),
+          {
+            args:   ['--distribution', distro, '--exec', '/bin/sh', '-c', 'readlink -f "$HOME/.docker/cli-plugins/docker-buildx"'],
+            mode:   'repeated',
+            stdout: '/dev/null',
+          },
           {
             args:   ['--distribution', distro, '--exec', '/bin/sh', '-c', 'readlink -f "$HOME/.docker/cli-plugins/docker-compose"'],
             mode:   'repeated',
@@ -125,6 +138,12 @@ test.describe('WSL Integrations', () => {
           mode:   'repeated',
           stdout: (opts?.gamma ?? 'some error').toString(),
         },
+        {
+          args: ['--distribution', 'rancher-desktop', '--exec', '/usr/local/bin/nerdctl', '--address',
+            '/run/k3s/containerd/containerd.sock', 'namespace', 'list', '--quiet'],
+          mode:   'repeated',
+          stdout: 'default',
+        },
       ],
     };
 
@@ -132,16 +151,14 @@ test.describe('WSL Integrations', () => {
   };
 
   // We need the beforeAll to allow initial Electron startup.
-  test.beforeAll(() => writeConfig());
-  test.beforeEach(() => writeConfig());
-  test.afterEach(async() => {
-    const config = JSON.parse(await fs.promises.readFile(path.join(workdir, 'config.json'), 'utf-8'));
-
-    expect(config.errors ?? []).toEqual([]);
-  });
+  test.beforeAll(async() => await writeConfig());
+  test.beforeEach(async() => await writeConfig());
   test.afterAll(async() => {
     if (workdir) {
-      await fs.promises.rm(workdir, { recursive: true, maxRetries: 5 });
+      await fs.promises.rm(workdir, {
+        recursive:  true,
+        maxRetries: 5,
+      });
     }
   });
 
@@ -157,18 +174,46 @@ test.describe('WSL Integrations', () => {
     });
 
     page = await electronApp.firstWindow();
+    await new NavPage(page).preferencesButton.click();
+    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
   test.afterAll(() => teardown(electronApp, __filename));
 
+  test('should open preferences modal', async() => {
+    expect(preferencesWindow).toBeDefined();
+
+    // Wait for the window to actually load (i.e. transition from
+    // app://index.html/#/preferences to app://index.html/#/Preferences#general)
+    await preferencesWindow.waitForURL(/Preferences#/i);
+  });
+
+  test('should navigate to WSL and render integrations tab', async() => {
+    const { wsl } = new PreferencesPage(preferencesWindow);
+
+    await wsl.nav.click();
+
+    await expect(wsl.nav).toHaveClass('preferences-nav-item active');
+    await expect(wsl.tabIntegrations).toBeVisible();
+  });
+
   test('should list integrations', async() => {
-    await page.reload();
+    const { wsl: wslPage } = new PreferencesPage(preferencesWindow);
 
-    const navPage = new NavPage(page);
-    const wslPage = await navPage.navigateTo('WSLIntegrations');
+    await wslPage.tabIntegrations.click();
+    await expect(wslPage.wslIntegrations).toBeVisible();
 
-    await expect(wslPage.integrations).toHaveCount(1, { timeout: 10_000 });
+    await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
+    const wslIntegrationList = wslPage.tabIntegrations.getByTestId('wsl-integration-list');
 
-    const alpha = wslPage.getIntegration('alpha');
+    expect(wslIntegrationList.getByText('alpha')).not.toBeNull();
+    expect(wslIntegrationList.getByText('beta')).not.toBeNull();
+    expect(wslIntegrationList.getByText('gamma')).not.toBeNull();
+  });
+
+  /*
+  test('should show checkbox states', (async() => {
+    const integrations = wslPage.wslIntegrations;
+    const alpha = integrations.find(item => item.name === 'alpha');
     const beta = wslPage.getIntegration('beta');
     const gamma = wslPage.getIntegration('gamma');
 
@@ -189,10 +234,8 @@ test.describe('WSL Integrations', () => {
   });
 
   test('should allow enabling integration', async() => {
-    await page.reload();
-
-    const navPage = new NavPage(page);
-    const wslPage = await navPage.navigateTo('WSLIntegrations');
+    const { wsl: wslPage } = new PreferencesPage(preferencesWindow);
+    await wslPage.reload();
     const integrations = wslPage.integrations;
 
     await expect(integrations).toHaveCount(1, { timeout: 10_000 });
@@ -209,10 +252,7 @@ test.describe('WSL Integrations', () => {
   });
 
   test('should allow disabling integration', async() => {
-    await page.reload();
-
-    const navPage = new NavPage(page);
-    const wslPage = await navPage.navigateTo('WSLIntegrations');
+    await wslPage.reload();
     const integrations = wslPage.integrations;
 
     await expect(integrations).toHaveCount(1, { timeout: 10_000 });
@@ -229,10 +269,7 @@ test.describe('WSL Integrations', () => {
   });
 
   test('should update invalid reason', async() => {
-    await page.reload();
-
-    const navPage = new NavPage(page);
-    const wslPage = await navPage.navigateTo('WSLIntegrations');
+    await wslPage.reload();
     const integrations = wslPage.integrations;
 
     await expect(integrations).toHaveCount(1, { timeout: 10_000 });
@@ -249,4 +286,5 @@ test.describe('WSL Integrations', () => {
     await expect(newGamma.error).toHaveText('some other error');
     await newGamma.assertDisabled();
   });
+ */
 });

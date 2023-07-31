@@ -1,8 +1,13 @@
+import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
 
 import { BackendSettings } from '@pkg/backend/backend';
 import { ContainerEngine } from '@pkg/config/settings';
+import Logging from '@pkg/utils/logging';
+import { showMessageBox } from '@pkg/window';
+
+const console = Logging.kube;
 
 export default class BackendHelper {
   /**
@@ -115,5 +120,68 @@ export default class BackendHelper {
    */
   static requiresCRIDockerd(engineName: string, kubeVersion: string | semver.SemVer): boolean {
     return engineName === ContainerEngine.MOBY && semver.gte(kubeVersion, '1.24.1') && semver.lte(kubeVersion, '1.24.3');
+  }
+
+  /**
+   * Validate the cfg.kubernetes.version string
+   * If it's valid and available, use it.
+   * Otherwise fall back to the first (recommended) available version.
+   */
+  static async getDesiredVersion(currentConfigVersionString: string|undefined, availableVersions: semver.SemVer[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
+    let storedVersion: semver.SemVer|null;
+    let matchedVersion: semver.SemVer|undefined;
+    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a valid version.`;
+
+    // If we're here either there's no existing cfg.k8s.version, or it isn't valid
+    if (!availableVersions.length) {
+      if (currentConfigVersionString) {
+        console.log(invalidK8sVersionMainMessage);
+      } else {
+        console.log('Internal error: no available kubernetes versions found.');
+      }
+      throw new Error('No kubernetes version available.');
+    }
+
+    if (currentConfigVersionString) {
+      storedVersion = semver.parse(currentConfigVersionString);
+      if (storedVersion) {
+        matchedVersion = availableVersions.find((v) => {
+          try {
+            return v.compare(storedVersion as semver.SemVer) === 0;
+          } catch (err: any) {
+            console.error(`Can't compare versions ${ storedVersion } and ${ v }: `, err);
+            if (!(err instanceof TypeError)) {
+              return false;
+            }
+            // We haven't seen a non-TypeError exception here, but it would be worthwhile to have it reported.
+            // This throw will cause the exception to appear in a non-fatal error reporting dialog box.
+            throw err;
+          }
+        });
+        if (matchedVersion) {
+          return matchedVersion;
+        }
+      }
+      const message = invalidK8sVersionMainMessage;
+      const detail = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
+
+      if (noModalDialogs) {
+        console.log(`${ message } ${ detail }`);
+      } else {
+        const options: Electron.MessageBoxOptions = {
+          message,
+          detail,
+          type:    'warning',
+          buttons: ['OK'],
+          title:   'Invalid Kubernetes Version',
+        };
+
+        await showMessageBox(options, true);
+      }
+    }
+    // No (valid) stored version; save the default one.
+    settingsWriter({ kubernetes: { version: availableVersions[0].version } });
+
+    return availableVersions[0];
   }
 }

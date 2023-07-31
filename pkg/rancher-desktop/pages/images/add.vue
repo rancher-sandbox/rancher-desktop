@@ -11,7 +11,7 @@
       </div>
       <alert
         v-if="allowedImagesAlert"
-        :icon="'icon-info'"
+        :icon="'icon-info-circle'"
         :banner-text="allowedImagesAlert"
         :color="'info'"
       />

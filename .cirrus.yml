@@ -1,6 +1,7 @@
 task:
   name: E2E/Integration Tests
-  timeout_in: 45
+  # As of 2023-07-18 "There is a hard limit of 2 hours for free tasks."
+  timeout_in: 60
   container:
     image: ubuntu:20.04
     kvm: true # required for E2E/Integrations tests
@@ -35,7 +36,7 @@ task:
     apt-get install --yes --no-install-recommends ca-certificates gcc g++ curl git openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
   install_golang_script: |
-    curl -L https://go.dev/dl/go1.18rc1.linux-amd64.tar.gz | tar xz -C /usr/local --strip-components=1
+    curl -L https://go.dev/dl/go1.19.11.linux-amd64.tar.gz | tar xz -C /usr/local --strip-components=1
   # The process to install Node w/o sudo|bash requires a validation:
   # Step.1 - Check if node package is available on nodesource, if not it will fail
   # Step.2 - Add node key and update source list

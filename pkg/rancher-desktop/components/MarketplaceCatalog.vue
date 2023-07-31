@@ -52,20 +52,30 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     isMobyActive(): boolean {
       return this.containerEngine === ContainerEngine.MOBY;
     },
+    allowedListEnabled(): boolean {
+      return this.getPreferences.application.extensions.allowed.enabled;
+    },
+    allowedExtensions(): string[] {
+      return this.getPreferences.application.extensions.allowed.list;
+    },
     filteredExtensions(): FilteredExtensions {
-      let tempExtensions = this.extensions.map((item) => {
-        if (this.isInstalled(item.slug)) {
+      let tempExtensions = this.extensions
+        .filter((item) => {
+          return this.isAllowed(item.slug);
+        })
+        .map((item) => {
+          if (this.isInstalled(item.slug)) {
+            return {
+              ...item,
+              installed: true,
+            };
+          }
+
           return {
             ...item,
-            installed: true,
+            installed: false,
           };
-        }
-
-        return {
-          ...item,
-          installed: false,
-        };
-      });
+        });
 
       if (this.searchValue) {
         tempExtensions = tempExtensions.filter((item) => {
@@ -83,6 +93,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       this.installedExtensions = this.$store.getters['extensions/list'];
 
       return this.installedExtensions.find(item => item?.id === slug);
+    },
+    isAllowed(slug: string) {
+      return !this.allowedListEnabled || this.allowedExtensions.includes(slug);
     },
   },
 });

@@ -21,7 +21,7 @@
           color="error"
         >
           {{ hasError }}
-          <span class="icon icon-info icon-lg " />
+          <span class="icon icon-info-circle icon-lg " />
           {{ errorText }}
         </banner>
       </template>

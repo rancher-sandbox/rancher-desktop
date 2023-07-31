@@ -38,6 +38,7 @@ export default Vue.extend({
       :legend-text="t('integrations.windows.description', { }, true)"
     >
       <wsl-integration
+        data-test-id="wsl-integration-list"
         :integrations="getWslIntegrations"
         @integration-set="onChange"
       />
