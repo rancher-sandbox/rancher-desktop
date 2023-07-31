@@ -97,6 +97,20 @@ export class Tray {
     },
   ];
 
+  protected proxyContextMenu: Electron.MenuItemConstructorOptions[] = [
+    {
+      id:    'proxy',
+      label: 'Proxy is disabled',
+      type:  'normal',
+    },
+    { type: 'separator' },
+  ];
+
+  private updateProxy(settings: Settings) {
+    return () => mainEvents.emit(
+      'settings-write', { experimental: { virtualMachine: { proxy: { enabled: !settings.experimental.virtualMachine.proxy.enabled } } } });
+  }
+
   private isMacOs = () => {
     return os.platform() === 'darwin';
   };
@@ -318,6 +332,19 @@ export class Tray {
       logo = this.trayIconSet.error;
     }
 
+    const proxy = this.settings.experimental.virtualMachine.proxy;
+
+    if (proxy.address && proxy.port) {
+      // Add proxy to tray options
+      if (!this.contextMenuItems.find(item => item.id === 'proxy')) {
+        this.contextMenuItems = [...this.proxyContextMenu, ...this.contextMenuItems];
+      }
+      this.contextMenuItems = this.updateProxyState(proxy.enabled);
+    } else {
+      // Remove it from the tray options
+      this.contextMenuItems = this.contextMenuItems.filter(item => item.id !== 'proxy');
+    }
+
     const stateMenu = this.contextMenuItems.find(item => item.id === 'state');
 
     if (stateMenu) {
@@ -346,6 +373,13 @@ export class Tray {
 
   protected updateDashboardState = (enabled = true) => this.contextMenuItems
     .map(item => item.id === 'dashboard' ? { ...item, enabled } : item);
+
+  protected updateProxyState = (enabled = true) => this.contextMenuItems
+    .map(item => item.id === 'proxy' ? {
+      ...item,
+      label: `Proxy is ${ enabled ? 'enabled' : 'disabled' }`,
+      click: this.updateProxy(this.settings),
+    } : item);
 
   /**
    * Update the list of Kubernetes contexts in the tray menu.
