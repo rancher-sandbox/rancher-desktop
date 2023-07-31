@@ -61,19 +61,17 @@ export default {
           name:  'imageName',
           label: this.t('containers.manage.table.header.image'),
           sort:  ['imageName', 'containerName', 'imageName'],
-          width: '200px',
         },
         {
           name:  'ports',
           label: this.t('containers.manage.table.header.ports'),
           sort:  ['ports', 'containerName', 'imageName'],
-          width: 300,
         },
         {
           name:  'started',
           label: this.t('containers.manage.table.header.started'),
           sort:  ['si', 'containerName', 'imageName'],
-          width: 300,
+          width: 120,
         },
       ],
     };
@@ -196,11 +194,9 @@ export default {
   }
 
   .port-container{
-    // Two items per line, break line after 2 items
     display: grid;
     grid-auto-rows: 1fr;
     grid-gap: 5px;
     margin: 5px 0;
-
   }
 </style>
