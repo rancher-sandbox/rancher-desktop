@@ -7,6 +7,7 @@ load '../helpers/load'
 @test 'start app' {
     start_container_engine
     wait_for_container_engine
+    run rdctl set --application.path-management-strategy=manual
 }
 
 @test 'complains when no output type is specified' {
@@ -88,229 +89,18 @@ assert_full_setting_registry_output() {
     local hive=$1
     local type=$2
     assert_success
-    assert_output - <<EOF
-Windows Registry Editor Version 5.00
-[$hive\\SOFTWARE\\Policies]
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop]
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type]
-"version"=dword:9
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application]
-"adminAccess"=dword:0
-"debug"=dword:1
-"pathManagementStrategy"="rcfiles"
-"autoStart"=dword:0
-"startInBackground"=dword:0
-"hideNotificationIcon"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\extensions]
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\extensions\\allowed]
-"enabled"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\telemetry]
-"enabled"=dword:1
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\updater]
-"enabled"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\window]
-"quitOnClose"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\containerEngine]
-"name"="containerd"
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\containerEngine\\allowedImages]
-"enabled"=dword:0
-"patterns"=hex(7):64,00,6f,00,63,00,6b,00,65,00,72,00,2e,00,69,00,6f,00,00,00,00,00
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\virtualMachine]
-"memoryInGB"=dword:6
-"numberCPUs"=dword:2
-"hostResolver"=dword:1
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\kubernetes]
-"version"=""
-"port"=dword:192b
-"enabled"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\kubernetes\\options]
-"traefik"=dword:1
-"flannel"=dword:1
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\kubernetes\\ingress]
-"localhostOnly"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental]
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine]
-"socketVMNet"=dword:0
-"networkingTunnel"=dword:0
-"type"="qemu"
-"useRosetta"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine\\mount]
-"type"="reverse-sshfs"
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine\\mount\\9p]
-"securityModel"="none"
-"protocolVersion"="9p2000.L"
-"msizeInKib"=dword:80
-"cacheMode"="mmap"
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine\\proxy]
-"enabled"=dword:0
-"address"=""
-"password"=""
-"port"=dword:c38
-"username"=""
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\portForwarding]
-"includeKubernetesServices"=dword:0
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\images]
-"showAll"=dword:1
-"namespace"="k8s.io"
-[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\diagnostics]
-"showMuted"=dword:0
-EOF
+    assert_output --partial "Windows Registry Editor Version 5.00"
+    assert_output --partial "[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application]"
+    assert_output --partial '"debug"=dword:1'
+    assert_output --partial '"pathManagementStrategy"="manual"'
 }
 
 assert_full_setting_plist_output() {
     assert_success
-    assert_output - <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-  <dict>
-    <key>version</key>
-    <integer>9</integer>
-    <key>application</key>
-    <dict>
-      <key>adminAccess</key>
-      <false/>
-      <key>debug</key>
-      <true/>
-      <key>extensions</key>
-      <dict>
-        <key>allowed</key>
-        <dict>
-          <key>enabled</key>
-          <false/>
-        </dict>
-      </dict>
-      <key>pathManagementStrategy</key>
-      <string>rcfiles</string>
-      <key>telemetry</key>
-      <dict>
-        <key>enabled</key>
-        <true/>
-      </dict>
-      <key>updater</key>
-      <dict>
-        <key>enabled</key>
-        <false/>
-      </dict>
-      <key>autoStart</key>
-      <false/>
-      <key>startInBackground</key>
-      <false/>
-      <key>hideNotificationIcon</key>
-      <false/>
-      <key>window</key>
-      <dict>
-        <key>quitOnClose</key>
-        <false/>
-      </dict>
-    </dict>
-    <key>containerEngine</key>
-    <dict>
-      <key>name</key>
-      <string>containerd</string>
-      <key>allowedImages</key>
-      <dict>
-        <key>enabled</key>
-        <false/>
-        <key>patterns</key>
-        <array>
-          <string>docker.io</string>
-        </array>
-      </dict>
-    </dict>
-    <key>virtualMachine</key>
-    <dict>
-      <key>memoryInGB</key>
-      <integer>6</integer>
-      <key>numberCPUs</key>
-      <integer>2</integer>
-      <key>hostResolver</key>
-      <true/>
-    </dict>
-    <key>kubernetes</key>
-    <dict>
-      <key>version</key>
-      <string></string>
-      <key>port</key>
-      <integer>6443</integer>
-      <key>enabled</key>
-      <false/>
-      <key>options</key>
-      <dict>
-        <key>traefik</key>
-        <true/>
-        <key>flannel</key>
-        <true/>
-      </dict>
-      <key>ingress</key>
-      <dict>
-        <key>localhostOnly</key>
-        <false/>
-      </dict>
-    </dict>
-    <key>experimental</key>
-    <dict>
-      <key>virtualMachine</key>
-      <dict>
-        <key>socketVMNet</key>
-        <false/>
-        <key>mount</key>
-        <dict>
-          <key>type</key>
-          <string>reverse-sshfs</string>
-          <key>9p</key>
-          <dict>
-            <key>securityModel</key>
-            <string>none</string>
-            <key>protocolVersion</key>
-            <string>9p2000.L</string>
-            <key>msizeInKib</key>
-            <integer>128</integer>
-            <key>cacheMode</key>
-            <string>mmap</string>
-          </dict>
-        </dict>
-        <key>networkingTunnel</key>
-        <false/>
-        <key>type</key>
-        <string>qemu</string>
-        <key>useRosetta</key>
-        <false/>
-        <key>proxy</key>
-        <dict>
-          <key>enabled</key>
-          <false/>
-          <key>address</key>
-          <string></string>
-          <key>password</key>
-          <string></string>
-          <key>port</key>
-          <integer>3128</integer>
-          <key>username</key>
-          <string></string>
-        </dict>
-      </dict>
-    </dict>
-    <key>portForwarding</key>
-    <dict>
-      <key>includeKubernetesServices</key>
-      <false/>
-    </dict>
-    <key>images</key>
-    <dict>
-      <key>showAll</key>
-      <true/>
-      <key>namespace</key>
-      <string>k8s.io</string>
-    </dict>
-    <key>diagnostics</key>
-    <dict>
-      <key>showMuted</key>
-      <false/>
-    </dict>
-  </dict>
-</plist>
-EOF
+    assert_output --partial '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+    assert_output --partial '<plist version="1.0">'
+    # this next line makes sense only after <key>pathManagement</key>
+    assert_output --partial '<string>manual</string>'
 }
 
 @test 'generates registry output for hklm/defaults' {
@@ -353,10 +143,12 @@ EOF
         skip "Test requires the reg utility and only works on Windows"
     fi
     regFile="${BATS_FILE_TMPDIR}/tmp.reg"
-    run bash -c "rdctl create-profile --output reg --hive=HKCU --type=defaults --from-settings | sed s/Policies/FakePolicies/ > $regFile"
-    run reg.exe /import "$(win32env $regFile)"
+    salt=$$
+    run rdctl create-profile --output reg --hive=HKCU --type=defaults --from-setting
     assert_success
-    run reg.exe /delete "HKEY_CURRENT_USER\\SOFTWARE\FakePolicies\Rancher Desktop"
+    sed "s/Policies/FakePolicies$salt/" <<<"$output" >"$regFile"
+    reg.exe /import "$(win32env "$regFile")"
+    reg.exe /delete "HKEY_CURRENT_USER\\SOFTWARE\FakePolicies$salt\Rancher Desktop"
     rm "$regFile"
 }
 

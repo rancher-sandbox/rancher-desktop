@@ -7,10 +7,12 @@ containers:
 	bats --show-output-of-passing-tests ./tests/containers/
 
 # https://www.shellcheck.net/wiki/SC1091 -- Not following: xxx was not specified as input (see shellcheck -x)
+# https://www.shellcheck.net/wiki/SC2001 -- See if you can use ${variable//search/replace} instead:
+#                    												Makes more sense for echo stmts than changing file contents
 # https://www.shellcheck.net/wiki/SC2034 -- xxx appears unused. Verify use (or export if used externally)
 # https://www.shellcheck.net/wiki/SC2154 -- xxx is referenced but not assigned
 
-SC_EXCLUDES ?= SC1091,SC2034,SC2154
+SC_EXCLUDES ?= SC1091,SC2001,SC2034,SC2154
 
 .PHONY: lint
 lint:
