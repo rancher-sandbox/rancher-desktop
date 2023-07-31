@@ -179,14 +179,19 @@ assert_full_setting_plist_output() {
     if ! is_windows; then
         skip "Test requires the reg utility and only works on Windows"
     fi
-    regFile="${BATS_FILE_TMPDIR}/tmp.reg"
-    salt=$$
+    # We need to formulate /tmp as a directory both sides can see.
+    local bashSideTemp=$(wslpath -a /tmp)  # /mnt/c/tmp
+    local winSideTemp=$(wslpath -w "$bashSideTemp") # c:\tmp
+    local testFile=test.reg
+    local salt=$$
+    # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
+    local safePolicyName="fakeProfile${salt}"
     run rdctl create-profile --output reg --hive=HKCU --type=defaults --from-settings
     assert_success
-    sed "s/Policies/FakePolicies$salt/" <<<"$output" >"$regFile"
-    reg.exe /import "$(win32env "$regFile")"
-    reg.exe /delete "HKEY_CURRENT_USER\\SOFTWARE\FakePolicies$salt\Rancher Desktop"
-    rm "$regFile"
+    sed "s/Policies/${safePolicyName}/" <<<"$output" >"${bashSideTemp}/${testFile}"
+    reg.exe import "${winSideTemp}/${testFile}"
+    reg.exe delete "HKCU\\Software\\${safePolicyName}\\Rancher Desktop" /f /va
+    rm "${bashSideTemp}/${testFile}"
 }
 
 @test 'generates registry output from inline json' {
