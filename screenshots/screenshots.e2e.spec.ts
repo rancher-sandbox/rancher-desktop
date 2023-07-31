@@ -6,7 +6,9 @@ import { test, expect, _electron } from '@playwright/test';
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
-import { createDefaultSettings, createUserProfile, reportAsset, teardown } from '../e2e/utils/TestUtils';
+import {
+  createDefaultSettings, createUserProfile, reportAsset, teardown, tool,
+} from '../e2e/utils/TestUtils';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -18,12 +20,12 @@ test.describe.serial('Main App Test', () => {
   let context: BrowserContext;
   let page: Page;
   let navPage: NavPage;
-  const afterCheckedTimeout = 3000;
+  const afterCheckedTimeout = 200;
 
   test.beforeAll(async({ colorScheme }) => {
     createDefaultSettings({
       application:     { updater: { enabled: false } },
-      containerEngine: { allowedImages: { enabled: true, patterns: ['rancher/example'] } },
+      containerEngine: { allowedImages: { enabled: false, patterns: ['rancher/example'] } },
       diagnostics:     { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
 
@@ -60,12 +62,18 @@ test.describe.serial('Main App Test', () => {
 
     await page.waitForTimeout(2500);
 
+    await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
+    await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension');
+
     const navExtension = page.locator('[data-test="extension-nav-epinio"]');
 
     await expect(navExtension).toBeVisible({ timeout: 30000 });
   });
 
-  test.afterAll(() => {
+  test.afterAll(async({ colorScheme }) => {
+    await tool('rdctl', 'extension', 'uninstall', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
+    await tool('rdctl', 'extension', 'uninstall', 'docker/logs-explorer-extension');
+
     return teardown(electronApp, __filename);
   });
 
@@ -188,6 +196,9 @@ test.describe.serial('Main App Test', () => {
     await e2ePreferences.containerEngine.nav.click();
     await e2ePreferences.containerEngine.tabAllowedImages.click();
     await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
+    await e2ePreferences.containerEngine.allowedImagesCheckbox.click();
+    await page.waitForTimeout(afterCheckedTimeout);
+
     await screenshot.take('containerEngine', 'tabAllowedImages');
 
     await screenshot.take('kubernetes');

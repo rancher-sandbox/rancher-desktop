@@ -73,6 +73,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       :is-experimental="true"
     >
       <rd-checkbox
+        data-test="allowedImagesCheckbox"
         :label="t('allowedImages.enable')"
         :value="isAllowedImagesEnabled"
         :is-locked="isPreferenceLocked('containerEngine.allowedImages.enabled')"
