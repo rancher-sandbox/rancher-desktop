@@ -175,23 +175,43 @@ assert_full_setting_plist_output() {
     assert_full_setting_registry_output HKEY_CURRENT_USER locked
 }
 
+assert_check_registry_output() {
+    local mainOutput=$1
+    local bashSideTemp
+    local winSideTemp=
+    local testFile
+    local salt
+    local safePolicyName
+
+    assert_success
+
+    # We need to formulate /tmp as a directory both sides can see.
+    bashSideTemp=$(wslpath -a /tmp)           # e.g.: /mnt/c/tmp
+    winSideTemp=$(wslpath -w "$bashSideTemp") # c:\tmp
+    testFile=test.reg
+    salt=$$
+    # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
+    safePolicyName="fakeProfile${salt}"
+    sed "s/Policies/${safePolicyName}/" <<<"$mainOutput" >"${bashSideTemp}/${testFile}"
+    reg.exe import "${winSideTemp}\\${testFile}"
+    reg.exe delete "HKCU\\Software\\${safePolicyName}\\Rancher Desktop" /f /va
+    rm "${bashSideTemp}/${testFile}"
+}
+
 @test 'validate full-setting registry output on Windows' {
     if ! is_windows; then
         skip "Test requires the reg utility and only works on Windows"
     fi
-    # We need to formulate /tmp as a directory both sides can see.
-    local bashSideTemp=$(wslpath -a /tmp)  # /mnt/c/tmp
-    local winSideTemp=$(wslpath -w "$bashSideTemp") # c:\tmp
-    local testFile=test.reg
-    local salt=$$
-    # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
-    local safePolicyName="fakeProfile${salt}"
     run rdctl create-profile --output reg --hive=HKCU --type=defaults --from-settings
-    assert_success
-    sed "s/Policies/${safePolicyName}/" <<<"$output" >"${bashSideTemp}/${testFile}"
-    reg.exe import "${winSideTemp}/${testFile}"
-    reg.exe delete "HKCU\\Software\\${safePolicyName}\\Rancher Desktop" /f /va
-    rm "${bashSideTemp}/${testFile}"
+    assert_check_registry_output "$output"
+}
+
+@test 'validate special-characters' {
+    if ! is_windows; then
+        skip "Test requires the reg utility and only works on Windows"
+    fi
+    run bash -c 'json_with_special_chars | rdctl create-profile --output reg --hive=HKCU --type=defaults --input -'
+    assert_check_registry_output "$output"
 }
 
 @test 'generates registry output from inline json' {
