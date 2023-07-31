@@ -20329,10 +20329,10 @@ vue-shortkey@3.1.7, vue-shortkey@^3.1.7:
     custom-event-polyfill "^1.0.7"
     element-matches "^0.1.2"
 
-vue-slider-component@3.2.20:
-  version "3.2.20"
-  resolved "https://registry.yarnpkg.com/vue-slider-component/-/vue-slider-component-3.2.20.tgz#cf1eb00a5293a8033fe93e2a1b7b48fb3dadc166"
-  integrity sha512-S5+4d6zdL+/ClpDQoIgImIdXRv2b+75PIy3cDGsZsakhroJD6cSFA0juY/AblGqhvIkNcBIU354eOw6T26DWbA==
+vue-slider-component@3.2.24:
+  version "3.2.24"
+  resolved "https://registry.yarnpkg.com/vue-slider-component/-/vue-slider-component-3.2.24.tgz#9c931da3d10d0efde361138626a76d21c4359fd5"
+  integrity sha512-28hfotAL/CPXPwqHgVFyUwUEV0zweoc2wW0bgraGkoIcRZGlFjk8caYJLE8+Luug5t3b9tJm/NyDXpyIdmcYZg==
   dependencies:
     core-js "^3.6.5"
     vue-property-decorator "^8.0.0"
