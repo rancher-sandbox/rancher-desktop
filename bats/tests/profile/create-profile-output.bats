@@ -348,6 +348,18 @@ EOF
     assert_full_setting_registry_output HKEY_CURRENT_USER locked
 }
 
+@test 'validate full-setting registry output on Windows' {
+    if ! is_windows; then
+        skip "Test requires the reg utility and only works on Windows"
+    fi
+    regFile="${BATS_FILE_TMPDIR}/tmp.reg"
+    run bash -c "rdctl create-profile --output reg --hive=HKCU --type=defaults --from-settings | sed s/Policies/FakePolicies/ > $regFile"
+    run reg.exe /import "$(win32env $regFile)"
+    assert_success
+    run reg.exe /delete "HKEY_CURRENT_USER\\SOFTWARE\FakePolicies\Rancher Desktop"
+    rm "$regFile"
+}
+
 @test 'generates registry output from inline json' {
     run rdctl create-profile --output reg --body '{"application": { "window": { "quitOnClose": true }}}'
     assert_success
