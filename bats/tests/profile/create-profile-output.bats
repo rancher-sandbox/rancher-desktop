@@ -85,74 +85,74 @@ too_many_input_formats() {
 # Happy tests follow
 
 assert_full_setting_registry_output() {
-    HIVE=$1
-    TYPE=$2
+    local hive=$1
+    local type=$2
     assert_success
     assert_output - <<EOF
 Windows Registry Editor Version 5.00
-[$HIVE\\SOFTWARE\\Policies]
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop]
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE]
+[$hive\\SOFTWARE\\Policies]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type]
 "version"=dword:9
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application]
 "adminAccess"=dword:0
 "debug"=dword:1
 "pathManagementStrategy"="rcfiles"
 "autoStart"=dword:0
 "startInBackground"=dword:0
 "hideNotificationIcon"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\extensions]
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\extensions\\allowed]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\extensions]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\extensions\\allowed]
 "enabled"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\telemetry]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\telemetry]
 "enabled"=dword:1
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\updater]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\updater]
 "enabled"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\application\\window]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application\\window]
 "quitOnClose"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\containerEngine]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\containerEngine]
 "name"="containerd"
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\containerEngine\\allowedImages]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\containerEngine\\allowedImages]
 "enabled"=dword:0
 "patterns"=hex(7):64,00,6f,00,63,00,6b,00,65,00,72,00,2e,00,69,00,6f,00,00,00,00,00
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\virtualMachine]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\virtualMachine]
 "memoryInGB"=dword:6
 "numberCPUs"=dword:2
 "hostResolver"=dword:1
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\kubernetes]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\kubernetes]
 "version"=""
 "port"=dword:192b
 "enabled"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\kubernetes\\options]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\kubernetes\\options]
 "traefik"=dword:1
 "flannel"=dword:1
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\kubernetes\\ingress]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\kubernetes\\ingress]
 "localhostOnly"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental]
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine]
 "socketVMNet"=dword:0
 "networkingTunnel"=dword:0
 "type"="qemu"
 "useRosetta"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine\\mount]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine\\mount]
 "type"="reverse-sshfs"
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine\\mount\\9p]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine\\mount\\9p]
 "securityModel"="none"
 "protocolVersion"="9p2000.L"
 "msizeInKib"=dword:80
 "cacheMode"="mmap"
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\experimental\\virtualMachine\\proxy]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\experimental\\virtualMachine\\proxy]
 "enabled"=dword:0
 "address"=""
 "password"=""
 "port"=dword:c38
 "username"=""
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\portForwarding]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\portForwarding]
 "includeKubernetesServices"=dword:0
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\images]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\images]
 "showAll"=dword:1
 "namespace"="k8s.io"
-[$HIVE\\SOFTWARE\\Policies\\Rancher Desktop\\$TYPE\\diagnostics]
+[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\diagnostics]
 "showMuted"=dword:0
 EOF
 }
