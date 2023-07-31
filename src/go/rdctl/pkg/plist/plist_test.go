@@ -349,7 +349,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 										}
 									},
 									"containerEngine": {
-									  "name": "freda-less-<-than"
+									  "name": "name-less-<-than"
 									}
 							}
 `
@@ -392,7 +392,7 @@ func TestJsonToPlistFormat(t *testing.T) {
     <key>containerEngine</key>
     <dict>
       <key>name</key>
-      <string>freda-less-&lt;-than</string>
+      <string>name-less-&lt;-than</string>
     </dict>
   </dict>
 </plist>
