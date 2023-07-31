@@ -27,8 +27,6 @@
 </template>
 
 <script>
-// TODO: This won't work no matter what!
-// import Containers from '@pkg/components/Containers.vue';
 import SortableTable from '@pkg/components/SortableTable';
 import { shell } from 'electron';
 import { cloneDeep } from 'lodash';
@@ -126,7 +124,7 @@ export default {
       description: '',
     });
 
-    // Checks for the ddClient to be ready.
+    // INFO: We need to set hasContainers outside of the component in the global scope so it won't re-render when we get the list.
     const intervalId = setInterval(() => {
       if (hasContainers) {
         return;
@@ -166,13 +164,9 @@ export default {
     openUrl(port) {
       const hostPort = parseInt(port.split(':')[0]);
 
-      console.log('🚀 ~ file: Containers.vue:184 ~ openUrl ~ hostPort:', hostPort);
-
       if ([80, 443].includes(hostPort)) {
         hostPort === 80 ? shell.openExternal(`http://localhost`) : shell.openExternal(`https://localhost`);
       } else {
-        console.log('hostPort: ', hostPort);
-
         return shell.openExternal(`http://localhost:${ hostPort }`);
       }
     },
