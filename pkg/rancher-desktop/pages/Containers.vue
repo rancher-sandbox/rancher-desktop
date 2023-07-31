@@ -13,7 +13,7 @@
       <template #col:ports="{row}">
         <div class="port-container">
           <a
-            v-for="port in getUniquePorts(row.Ports).slice(0, 2)"
+            v-for="port in getUniquePorts(row.Ports)"
             :key="port"
             target="_blank"
             class="link"
@@ -67,11 +67,13 @@ export default {
           name:  'ports',
           label: this.t('containers.manage.table.header.ports'),
           sort:  ['ports', 'containerName', 'imageName'],
+          width: 300,
         },
         {
           name:  'started',
           label: this.t('containers.manage.table.header.started'),
           sort:  ['si', 'containerName', 'imageName'],
+          width: 300,
         },
       ],
     };
@@ -198,6 +200,7 @@ export default {
     display: grid;
     grid-auto-rows: 1fr;
     grid-gap: 5px;
+    margin: 5px 0;
 
   }
 </style>
