@@ -8,11 +8,12 @@
       :row-actions="false"
       :table-actions="false"
       :paging="true"
+      :loading="!containersList"
     >
       <template #col:ports="{row}">
         <div class="port-container">
           <a
-            v-for="port in getUniquePorts(row.Ports).slice(0,2)"
+            v-for="port in getUniquePorts(row.Ports).slice(0, 2)"
             :key="port"
             target="_blank"
             class="link"
@@ -60,11 +61,12 @@ export default {
           name:  'imageName',
           label: this.t('containers.manage.table.header.image'),
           sort:  ['imageName', 'containerName', 'imageName'],
+          width: '200px',
         },
         {
           name:  'ports',
           label: this.t('containers.manage.table.header.ports'),
-          sort:  ['imageName', 'containerName', 'imageName'],
+          sort:  ['ports', 'containerName', 'imageName'],
         },
         {
           name:  'started',
@@ -88,30 +90,30 @@ export default {
           container.containerName = container.Names[0].replace(/_[a-z0-9-]{36}_[0-9]+/, '');
           container.started = container.Status;
           container.imageName = container.Image;
-          // INFO: Disable for now until we get an API for it.
-          // container.availableActions = [
-          //   {
-          //     label:   'Stop',
-          //     action:  'stopContainer',
-          //     enabled: true,
-          //     icon:    'icon icon-upload',
-          //   }, {
-          //     label:      this.t('images.manager.table.action.delete'),
-          //     action:     'stopContainers',
-          //     enabled:    true,
-          //     icon:       'icon icon-delete',
-          //     bulkable:   true,
-          //     bulkAction: 'stopContainers',
-          //   },
-          // ];
 
-          // if (!container.stopContainer) {
-          //   container.stopContainer = this.stopContainer.bind(this, container);
-          // }
+          container.availableActions = [
+            {
+              label:   'Stop',
+              action:  'stopContainer',
+              enabled: true,
+              icon:    'icon icon-pause',
+            }, {
+              label:      this.t('images.manager.table.action.delete'),
+              action:     'deleteContainers',
+              enabled:    true,
+              icon:       'icon icon-delete',
+              bulkable:   true,
+              bulkAction: 'deleteContainers',
+            },
+          ];
 
-          // if (!container.stopContainers) {
-          //   container.stopContainers = this.stopContainers.bind(this, container);
-          // }
+          if (!container.stopContainer) {
+            container.stopContainer = this.stopContainer.bind(this, container);
+          }
+
+          if (!container.deleteContainers) {
+            container.deleteContainers = this.deleteContainers.bind(this, container);
+          }
 
           return container;
         });
@@ -148,6 +150,12 @@ export default {
     hasContainers = false;
   },
   methods: {
+    stopContainer() {
+      console.info('To implement');
+    },
+    deleteContainers() {
+      console.info('To implement');
+    },
     getUniquePorts(obj) {
       const uniquePorts = {};
 
@@ -186,9 +194,10 @@ export default {
   }
 
   .port-container{
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-    padding: 8px 5px;
+    // Two items per line, break line after 2 items
+    display: grid;
+    grid-auto-rows: 1fr;
+    grid-gap: 5px;
+
   }
 </style>

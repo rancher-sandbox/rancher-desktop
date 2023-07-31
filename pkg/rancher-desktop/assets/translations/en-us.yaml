@@ -201,7 +201,7 @@ containers:
         state: State
         containerName: Name
         image: Image
-        ports: Ports
+        ports: Port(s)
         started: Started
         actions: Actions
 
