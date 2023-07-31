@@ -7,7 +7,7 @@ load '../helpers/load'
 @test 'start app' {
     start_container_engine
     wait_for_container_engine
-    rdctl set --application.path-management-strategy=manual
+    rdctl set --images.namespace=change-to-k8s.io
 }
 
 @test 'complains when no output type is specified' {
@@ -128,15 +128,16 @@ assert_full_setting_registry_output() {
     assert_output --partial "Windows Registry Editor Version 5.00"
     assert_output --partial "[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application]"
     assert_output --partial '"debug"=dword:1'
-    assert_output --partial '"pathManagementStrategy"="manual"'
+    assert_output --partial "[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\images]"
+    assert_output --partial '"namespace"="change-to-k8s.io"'
 }
 
 assert_full_setting_plist_output() {
     assert_success
     assert_output --partial '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
     assert_output --partial '<plist version="1.0">'
-    # this next line makes sense only after <key>pathManagement</key>
-    assert_output --partial '<string>manual</string>'
+    # this next line makes sense only after <key>namespace</key>
+    assert_output --partial '<string>change-to-k8s.io</string>'
 }
 
 @test 'generates registry output for hklm/defaults' {
