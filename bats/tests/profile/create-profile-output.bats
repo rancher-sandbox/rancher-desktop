@@ -7,7 +7,7 @@ load '../helpers/load'
 @test 'start app' {
     start_container_engine
     wait_for_container_engine
-    run rdctl set --application.path-management-strategy=manual
+    rdctl set --application.path-management-strategy=manual
 }
 
 @test 'complains when no output type is specified' {
@@ -58,7 +58,7 @@ too_many_input_formats() {
 @test "complains when input file doesn't exist" {
     run rdctl create-profile --output reg --input /no/such/file/here
     assert_failure
-    assert_output --partial 'open /no/such/file/here: no such file or director'
+    assert_output --partial 'Error: open /no/such/file/here:'
 }
 
 @test 'report invalid parameters for plist' {
@@ -84,6 +84,42 @@ too_many_input_formats() {
 }
 
 # Happy tests follow
+
+# Sample input-generating functions
+
+complex_json_data() {
+    echo '{"kubernetes": {"enabled": false}, "containerEngine": { "allowedImages": {"patterns": ["abc", "ghi", "def"] } }, "WSL": { "integrations": { "first": true, "second": false } } }'
+}
+export -f complex_json_data
+
+simple_json_data() {
+    echo '{ "kubernetes": {"version": "moose-head" }}'
+}
+export -f simple_json_data
+
+json_with_special_chars() {
+    cat <<'EOF'
+{ "application": {
+    "extensions": {
+        "allowed": {
+          "enabled": false,
+          "list": ["less-than:<", "greater:>", "and:&", "d-quote:\"", "emoji:😀"]
+        },
+        "installed": {
+            "key-with-less-than: <": true,
+            "key-with-ampersand: &": true,
+            "key-with-greater-than: >": true,
+            "key-with-emoji: 🐤": false
+        }
+    }
+  },
+  "containerEngine": {
+    "name": "small-less-<-than"
+  }
+}
+EOF
+}
+export -f json_with_special_chars
 
 assert_full_setting_registry_output() {
     local hive=$1
@@ -144,7 +180,7 @@ assert_full_setting_plist_output() {
     fi
     regFile="${BATS_FILE_TMPDIR}/tmp.reg"
     salt=$$
-    run rdctl create-profile --output reg --hive=HKCU --type=defaults --from-setting
+    run rdctl create-profile --output reg --hive=HKCU --type=defaults --from-settings
     assert_success
     sed "s/Policies/FakePolicies$salt/" <<<"$output" >"$regFile"
     reg.exe /import "$(win32env "$regFile")"
@@ -184,10 +220,6 @@ EOF
     rdctl shutdown
 }
 
-complex_json_data() {
-    echo '{"kubernetes": {"enabled": false}, "containerEngine": { "allowedImages": {"patterns": ["abc", "ghi", "def"] } }, "WSL": { "integrations": { "first": true, "second": false } } }'
-}
-
 assert_registry_output_for_maps_and_lists() {
     assert_success
     assert_output - <<'EOF'
@@ -208,17 +240,13 @@ EOF
 }
 
 @test 'encodes multi-string values and maps from a file' {
-    run rdctl create-profile --output reg --hive hkcu --input <(complex_json_data)
+    run bash -o pipefail -c 'complex_json_data | rdctl create-profile --output reg --hive hkcu --input -'
     assert_registry_output_for_maps_and_lists
 }
 
 @test 'encodes multi-string values and maps from a json string' {
     run rdctl create-profile --output reg --hive hkcu --body "$(complex_json_data)"
     assert_registry_output_for_maps_and_lists
-}
-
-simple_json_data() {
-    echo '{ "kubernetes": {"version": "moose-head" }}'
 }
 
 assert_moose_head_plist_output() {
@@ -244,7 +272,7 @@ EOF
 }
 
 @test 'generates plist output from a file' {
-    run rdctl create-profile --output plist --input <(simple_json_data)
+    run bash -o pipefail -c 'simple_json_data | rdctl create-profile --output plist --input -'
     assert_moose_head_plist_output
 }
 
@@ -252,6 +280,7 @@ EOF
     if ! is_macos; then
         skip "Test requires the plist utility and only works on macOS"
     fi
+    # This input form is ok here because it won't run in WSL/Windows
     run rdctl create-profile --output plist --input <(simple_json_data)
     assert_success
     plutil -s - <<<"$output"
@@ -298,36 +327,13 @@ EOF
 }
 
 @test 'plist-encodes multi-string values and maps from a file' {
-    run rdctl create-profile --output plist --input <(complex_json_data)
+    run bash -o pipefail -c 'complex_json_data | rdctl create-profile --output plist --input -'
     assert_complex_plist_output
 }
 
 @test 'plist-encodes multi-string values and maps from a json string' {
     run rdctl create-profile --output plist --body "$(complex_json_data)"
     assert_complex_plist_output
-}
-
-json_with_special_chars() {
-    cat <<'EOF'
-{ "application": {
-    "extensions": {
-        "allowed": {
-          "enabled": false,
-          "list": ["less-than:<", "greater:>", "and:&", "d-quote:\"", "emoji:😀"]
-        },
-        "installed": {
-            "key-with-less-than: <": true,
-            "key-with-ampersand: &": true,
-            "key-with-greater-than: >": true,
-            "key-with-emoji: 🐤": false
-        }
-    }
-  },
-  "containerEngine": {
-    "name": "small-less-<-than"
-  }
-}
-EOF
 }
 
 # Actual output-testing of this input is done in `plist_test.go` -- the purpose of this test is to just
@@ -337,13 +343,14 @@ EOF
     if ! is_macos; then
         skip "Test requires the plist utility and only works on macOS"
     fi
+    # This input form is ok here because it won't run in WSL/Windows
     run rdctl create-profile --output plist --input <(json_with_special_chars)
     assert_success
     plutil -s - <<<"$output"
 }
 
 @test 'verify converted special-char output' {
-    run rdctl create-profile --output plist --input <(json_with_special_chars)
+    run bash -o pipefail -c 'json_with_special_chars | rdctl create-profile --output plist --input -'
     assert_success
     assert_output - <<'END'
 <?xml version="1.0" encoding="UTF-8"?>
