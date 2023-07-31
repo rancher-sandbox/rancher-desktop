@@ -39,35 +39,35 @@ load '../helpers/load'
     done
 }
 
+too_many_input_formats() {
+    run rdctl create-profile "$@"
+    assert_failure
+    assert_output --partial 'too many input formats specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
+}
+
 @test 'complains when multiple input sources are specified' {
     for type in reg plist; do
-        run rdctl create-profile --output $type --input some-file.txt -b moose
-        assert_failure
-        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
-
-        run rdctl create-profile --output $type --input some-file.txt --from-settings
-        assert_failure
-        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
-
-        run rdctl create-profile --output $type --input some-file.txt -b moose --from-settings
-        assert_failure
-        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
-
-        run rdctl create-profile --output $type -b moose --from-settings
-        assert_failure
-        assert_output --partial 'too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"'
-
+        too_many_input_formats --output $type --input some-file.txt -b moose
+        too_many_input_formats --output $type --input some-file.txt --from-settings
+        too_many_input_formats --output $type --input some-file.txt -b moose --from-settings
+        too_many_input_formats --output $type -b moose --from-settings
     done
+}
+
+@test "complains when input file doesn't exist" {
+    run rdctl create-profile --output reg --input /no/such/file/here
+    assert_failure
+    assert_output --partial 'open /no/such/file/here: no such file or director'
 }
 
 @test 'report invalid parameters for plist' {
     run rdctl create-profile --output=plist --from-settings --hive=fish
     assert_failure
-    assert_output --partial "registry hive and type can't be specified with plist"
+    assert_output --partial $"registry hive and type can't be specified with \"plist\""
 
     run rdctl create-profile --output plist --from-settings --type=writer
     assert_failure
-    assert_output --partial "registry hive and type can't be specified with plist"
+    assert_output --partial $"registry hive and type can't be specified with \"plist\""
 }
 
 @test 'report unrecognized output-options' {

@@ -127,12 +127,12 @@ func validateProfileFormatFlags() error {
 		return fmt.Errorf(`no input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"`)
 	}
 	if (InputFile != "" && (JSONBody != "" || UseCurrentSettings)) || (JSONBody != "" && UseCurrentSettings) {
-		return fmt.Errorf(`too many input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"`)
+		return fmt.Errorf(`too many input formats specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"`)
 	}
 
 	if outputSettingsFlags.Format == plistFormat {
 		if outputSettingsFlags.RegistryHive != "" || outputSettingsFlags.RegistryProfileType != "" {
-			return fmt.Errorf("registry hive and type can't be specified with plist")
+			return fmt.Errorf(`registry hive and type can't be specified with "plist"`)
 		}
 		return nil
 	}
