@@ -192,6 +192,7 @@ assert_check_registry_output() {
     salt=$$
     # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
     safePolicyName="fakeProfile${salt}"
+    # shellcheck disable=SC2001
     sed "s/Policies/${safePolicyName}/" <<<"$mainOutput" >"${bashSideTemp}/${testFile}"
     reg.exe import "${winSideTemp}\\${testFile}"
     reg.exe delete "HKCU\\Software\\${safePolicyName}\\Rancher Desktop" /f /va
