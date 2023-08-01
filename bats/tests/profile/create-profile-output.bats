@@ -184,6 +184,8 @@ assert_full_settings_plist_output() {
     assert_full_settings_registry_output HKEY_CURRENT_USER defaults
 }
 
+# This next directive makes no sense.
+# shellcheck disable=2030
 @test 'generates registry output for hkcu/locked' {
     run rdctl create-profile --output reg --hive=HKCU --type=locked --from-settings
     assert_full_settings_registry_output HKEY_CURRENT_USER locked
@@ -205,7 +207,7 @@ assert_check_registry_output() {
     salt=$$
     # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
     safePolicyName="fakeProfile${salt}"
-    # shellcheck disable=SC2001
+    # shellcheck disable=SC2001,SC2031
     sed "s/Policies/${safePolicyName}/" <<<"$output" >"${bashSideTemp}/${testFile}"
     reg.exe import "${winSideTemp}\\${testFile}"
     reg.exe delete "HKCU\\Software\\${safePolicyName}\\Rancher Desktop" /f /va
