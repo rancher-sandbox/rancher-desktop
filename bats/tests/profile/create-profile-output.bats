@@ -4,10 +4,12 @@ load '../helpers/load'
     factory_reset
 }
 
+BOGUS_CONTAINERD_NAMESPACE=change-to-k8s.io
+
 @test 'start app' {
     start_container_engine
     wait_for_container_engine
-    rdctl set --images.namespace=change-to-k8s.io
+    rdctl set --images.namespace="$BOGUS_CONTAINERD_NAMESPACE"
 }
 
 @test 'complains when no output type is specified' {
@@ -133,7 +135,7 @@ EOF
 }
 export -f json_with_special_chars
 
-assert_full_setting_registry_output() {
+assert_full_settings_registry_output() {
     local hive=$1
     local type=$2
     assert_success
@@ -141,54 +143,53 @@ assert_full_setting_registry_output() {
     assert_output --partial "[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\application]"
     assert_output --partial '"debug"=dword:1'
     assert_output --partial "[$hive\\SOFTWARE\\Policies\\Rancher Desktop\\$type\\images]"
-    assert_output --partial '"namespace"="change-to-k8s.io"'
+    assert_output --partial '"namespace"="'${BOGUS_CONTAINERD_NAMESPACE}'"'
 }
 
-assert_full_setting_plist_output() {
+assert_full_settings_plist_output() {
     assert_success
     assert_output --partial '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
     assert_output --partial '<plist version="1.0">'
     # this next line makes sense only after <key>namespace</key>
-    assert_output --partial '<string>change-to-k8s.io</string>'
+    assert_output --partial "<string>${BOGUS_CONTAINERD_NAMESPACE}</string>"
 }
 
 @test 'generates registry output for hklm/defaults' {
     run rdctl create-profile --output reg --from-settings
-    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
+    assert_full_settings_registry_output HKEY_LOCAL_MACHINE defaults
 
     run rdctl create-profile --output reg --hive=hklm --from-settings
-    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
+    assert_full_settings_registry_output HKEY_LOCAL_MACHINE defaults
 
     run rdctl create-profile --output reg --hive=HKLM --type=Defaults --from-settings
-    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
+    assert_full_settings_registry_output HKEY_LOCAL_MACHINE defaults
 
     run rdctl create-profile --output reg --type=DEFAULTS --from-settings
-    assert_full_setting_registry_output HKEY_LOCAL_MACHINE defaults
+    assert_full_settings_registry_output HKEY_LOCAL_MACHINE defaults
 }
 
 @test 'generates registry output for hklm/locked' {
     run rdctl create-profile --output reg --hive=Hklm --type=Locked --from-settings
-    assert_full_setting_registry_output HKEY_LOCAL_MACHINE locked
+    assert_full_settings_registry_output HKEY_LOCAL_MACHINE locked
 
     run rdctl create-profile --output reg --type=LOCKED --from-settings
-    assert_full_setting_registry_output HKEY_LOCAL_MACHINE locked
+    assert_full_settings_registry_output HKEY_LOCAL_MACHINE locked
 }
 
 @test 'generates registry output for hkcu/defaults' {
     run rdctl create-profile --output reg --hive=Hkcu --from-settings
-    assert_full_setting_registry_output HKEY_CURRENT_USER defaults
+    assert_full_settings_registry_output HKEY_CURRENT_USER defaults
 
     run rdctl create-profile --output reg --hive=hkcu --type=Defaults --from-settings
-    assert_full_setting_registry_output HKEY_CURRENT_USER defaults
+    assert_full_settings_registry_output HKEY_CURRENT_USER defaults
 }
 
 @test 'generates registry output for hkcu/locked' {
     run rdctl create-profile --output reg --hive=HKCU --type=locked --from-settings
-    assert_full_setting_registry_output HKEY_CURRENT_USER locked
+    assert_full_settings_registry_output HKEY_CURRENT_USER locked
 }
 
 assert_check_registry_output() {
-    local mainOutput=$1
     local bashSideTemp
     local winSideTemp=
     local testFile
@@ -205,7 +206,7 @@ assert_check_registry_output() {
     # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
     safePolicyName="fakeProfile${salt}"
     # shellcheck disable=SC2001
-    sed "s/Policies/${safePolicyName}/" <<<"$mainOutput" >"${bashSideTemp}/${testFile}"
+    sed "s/Policies/${safePolicyName}/" <<<"$output" >"${bashSideTemp}/${testFile}"
     reg.exe import "${winSideTemp}\\${testFile}"
     reg.exe delete "HKCU\\Software\\${safePolicyName}\\Rancher Desktop" /f /va
     rm "${bashSideTemp}/${testFile}"
@@ -216,7 +217,7 @@ assert_check_registry_output() {
         skip "Test requires the reg utility and only works on Windows"
     fi
     run rdctl create-profile --output reg --hive=HKCU --type=defaults --from-settings
-    assert_check_registry_output "$output"
+    assert_check_registry_output
 }
 
 @test 'validate special-characters' {
@@ -224,7 +225,7 @@ assert_check_registry_output() {
         skip "Test requires the reg utility and only works on Windows"
     fi
     run bash -c 'json_with_special_chars | rdctl create-profile --output reg --hive=HKCU --type=defaults --input -'
-    assert_check_registry_output "$output"
+    assert_check_registry_output
 }
 
 @test 'generates registry output from inline json' {
@@ -243,7 +244,7 @@ EOF
 
 @test 'generates plist output from settings' {
     run rdctl create-profile --output plist --from-settings
-    assert_full_setting_plist_output
+    assert_full_settings_plist_output
 }
 
 @test 'verify plutil is ok with the generated plist output' {
