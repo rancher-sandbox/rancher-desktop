@@ -17,7 +17,10 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -48,7 +51,11 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 		if err != nil {
 			return err
 		}
-		return factoryreset.DeleteData(removeKubernetesCache)
+		paths, err := paths.GetPaths()
+		if err != nil {
+			return fmt.Errorf("failed to get paths: %w", err)
+		}
+		return factoryreset.DeleteData(paths, removeKubernetesCache)
 	},
 }
 

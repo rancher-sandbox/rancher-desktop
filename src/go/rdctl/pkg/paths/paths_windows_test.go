@@ -23,8 +23,8 @@ func TestGetPaths(t *testing.T) {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
 		}
 		expectedPaths := Paths{
-			AppHome:       filepath.Join(homeDir, "AppData", "Roaming"),
-			AltAppHome:    filepath.Join(homeDir, "AppData", "Roaming"),
+			AppHome:       filepath.Join(homeDir, "AppData", "Roaming", appName),
+			AltAppHome:    filepath.Join(homeDir, "AppData", "Roaming", appName),
 			Config:        filepath.Join(homeDir, "AppData", "Roaming", appName),
 			Logs:          filepath.Join(homeDir, "AppData", "Local", appName, "logs"),
 			Cache:         filepath.Join(homeDir, "AppData", "Local", appName, "cache"),
@@ -60,7 +60,7 @@ func TestGetPaths(t *testing.T) {
 			AppHome:       filepath.Join(environment["APPDATA"], appName),
 			AltAppHome:    filepath.Join(environment["APPDATA"], appName),
 			Config:        filepath.Join(environment["APPDATA"], appName),
-			Logs:          filepath.Join(environment["LOCALAPPDATA"], appName, "logs"),
+			Logs:          environment["RD_LOGS_DIR"],
 			Cache:         filepath.Join(environment["LOCALAPPDATA"], appName, "cache"),
 			WslDistro:     filepath.Join(environment["LOCALAPPDATA"], appName, "distro"),
 			WslDistroData: filepath.Join(environment["LOCALAPPDATA"], appName, "distro-data"),

@@ -151,7 +151,7 @@ func KillRancherDesktop() error {
 				return nil
 			})
 			if err != nil {
-				logrus.Debugf("failed to get process name of pid %d: %w (skipping)", pid, err)
+				logrus.Debugf("failed to get process name of pid %d: %s (skipping)", pid, err)
 				return
 			}
 

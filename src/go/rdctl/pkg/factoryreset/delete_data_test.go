@@ -21,7 +21,6 @@ package factoryreset
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -169,9 +168,11 @@ func TestAddManagedBlock(t *testing.T) {
 	for _, path := range filenames {
 		assert.NoError(t, addBlock(path))
 	}
-	output, err := exec.Command("grep", append([]string{"-l", "MANAGED BY RANCHER DESKTOP"}, filenames...)...).CombinedOutput()
-	assert.NoError(t, err)
-	assert.Equal(t, len(strings.Split(string(output), "\n"))-1, len(filenames))
+	for _, filename := range filenames {
+		contents, err := os.ReadFile(filename)
+		assert.NoError(t, err)
+		assert.Contains(t, string(contents), "MANAGED BY RANCHER DESKTOP")
+	}
 }
 
 func verifyMgmtRemoved(t *testing.T, dotFile string) {
