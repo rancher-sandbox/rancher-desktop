@@ -30,7 +30,7 @@ load '../helpers/load'
     done
 }
 
-@test 'complains when no --input arg is specified' {
+@test 'complains when no --input or --body arg is specified' {
     for type in reg plist; do
         for input in input body; do
             run rdctl create-profile --output "$type" --"$input"
@@ -77,10 +77,22 @@ too_many_input_formats() {
     assert_output --partial 'received unrecognized "--output FORMAT" option of "pickle"; "plist" or "reg" must be specified'
 }
 
-@test 'report unrecognized registry sub-options' {
+@test 'report unrecognized registry type sub-option' {
     run rdctl create-profile --output=reg --hive=hklm --type=ruff --from-settings
     assert_failure
     assert_output --partial 'invalid registry type of "ruff" specified'
+}
+
+@test 'report unrecognized registry hive sub-option' {
+    run rdctl create-profile --output=reg --hive=stuff --type=locked --from-settings
+    assert_failure
+    assert_output --partial 'invalid registry hive of "stuff" specified'
+}
+
+@test 'report unrecognized registry hive and type sub-options reports only the bad hive' {
+    run rdctl create-profile --output=reg --hive=shelves --type=cows --from-settings
+    assert_failure
+    assert_output --partial 'invalid registry hive of "shelves" specified'
 }
 
 # Happy tests follow
