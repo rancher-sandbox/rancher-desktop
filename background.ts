@@ -817,7 +817,7 @@ function showErrorDialog(title: string, message: string, fatal?: boolean) {
     Electron.dialog.showErrorBox(title, message);
   }
   if (fatal) {
-    process.exit(0);
+    Electron.app.quit();
   }
 }
 
@@ -830,8 +830,12 @@ async function handleFailure(payload: any) {
     ({ name: titlePart, message } = payload);
   } else if (payload instanceof LockedFieldError) {
     showErrorDialog(titlePart, payload.message, true);
+
+    return;
   } else if (payload instanceof DeploymentProfileError) {
     showErrorDialog('Failed to load the deployment profile', payload.message, true);
+
+    return;
   } else if (payload instanceof Error) {
     secondaryMessage = payload.toString();
   } else if (typeof payload === 'number') {
