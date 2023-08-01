@@ -256,10 +256,6 @@ EOF
     plutil -s - <<<"$output"
 }
 
-@test "don't need a running app for the rest of this test" {
-    rdctl shutdown
-}
-
 assert_registry_output_for_maps_and_lists() {
     assert_success
     assert_output - <<'EOF'
@@ -435,4 +431,10 @@ EOF
   </dict>
 </plist>
 END
+}
+
+@test "don't need a running app for the rest of this test" {
+    if is_macos; then
+        rdctl shutdown
+    fi
 }
