@@ -67,7 +67,7 @@ class DevRunner extends events.EventEmitter {
       };
     }
 
-    return { home: 'http://localhost:8888/pages/General' };
+    return { home: 'http://localhost:8888' };
   }
 
   #mainProcess: childProcess.ChildProcess | null = null;
@@ -114,14 +114,13 @@ class DevRunner extends events.EventEmitter {
     await buildUtils.buildPreload();
     this.#rendererProcess = this.spawn(
       'Renderer process',
-      'node',
-      'node_modules/nuxt/bin/nuxt.js',
-      'dev',
+      'yarn',
+      'run',
+      'dev:ui',
       '--hostname',
       'localhost',
       '--port',
       this.rendererPort.toString(),
-      buildUtils.rendererSrcDir,
     );
 
     return Promise.resolve();

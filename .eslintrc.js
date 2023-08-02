@@ -19,6 +19,7 @@ module.exports = {
   ],
   // add your custom rules here
   rules: {
+    'import/namespace':         'off',
     'dot-notation':             'off',
     'generator-star-spacing':   'off',
     'guard-for-in':             'off',
