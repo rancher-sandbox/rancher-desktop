@@ -108,6 +108,7 @@ CIDATA
 cidfile
 cilogs
 Cim
+clonefile
 cloudca
 clusterdomain
 clusterflow
@@ -237,6 +238,7 @@ fdx
 featurename
 femto
 ffi
+ficlone
 filekey
 filestat
 FILETIMEs
@@ -324,6 +326,7 @@ ine
 Infof
 Infoln
 installable
+ioctl
 ipaddr
 ipam
 ipfs
