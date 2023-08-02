@@ -170,6 +170,7 @@ firstRun:
   kubernetesVersion:
     legend: Kubernetes Version
     cachedOnly: (cached versions only)
+  ok: OK
 marketplace:
   title: Extensions
   noResults: No extension found for the search criteria
@@ -412,7 +413,7 @@ legacyIntegrations:
     1.3.0. If you are seeing this message, Rancher Desktop was unable to remove the symlinks
     from the old directory automatically. You should remove them manually to prevent future
     path conflicts.
-  ok: Ok
+  ok: OK
 
 sudoPrompt:
   title: Administrative Access Required
