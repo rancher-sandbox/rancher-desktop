@@ -290,7 +290,7 @@ EOF
 }
 
 @test 'encodes multi-string values and maps from a file' {
-    run bash -o pipefail -c 'json_maps_and_lists | rdctl create-profile --output reg --hive hkcu --input -'
+    run rdctl create-profile --output reg --hive hkcu --body "$(json_maps_and_lists)"
     assert_registry_output_for_maps_and_lists
 }
 
@@ -322,7 +322,7 @@ EOF
 }
 
 @test 'generates plist output from a file' {
-    run bash -o pipefail -c 'simple_json_data | rdctl create-profile --output plist --input -'
+    run rdctl create-profile --output plist --body "$(simple_json_data)"
     assert_moose_head_plist_output
 }
 
@@ -377,7 +377,7 @@ EOF
 }
 
 @test 'plist-encodes multi-string values and maps from a file' {
-    run bash -o pipefail -c 'json_maps_and_lists | rdctl create-profile --output plist --input -'
+    run rdctl create-profile --output plist --body "$(json_maps_and_lists)"
     assert_complex_plist_output
 }
 
@@ -400,7 +400,7 @@ EOF
 }
 
 @test 'verify converted special-char output' {
-    run bash -o pipefail -c 'json_with_special_chars | rdctl create-profile --output plist --input -'
+    run rdctl create-profile --output plist --body "$(json_with_special_chars)"
     assert_success
     assert_output - <<'END'
 <?xml version="1.0" encoding="UTF-8"?>
