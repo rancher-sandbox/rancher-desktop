@@ -226,7 +226,7 @@ assert_check_registry_output() {
     if ! is_windows; then
         skip "Test requires the reg utility and only works on Windows"
     fi
-    run bash -c 'json_with_special_chars | rdctl create-profile --output reg --hive=HKCU --type=defaults --input -'
+    run rdctl create-profile --output reg --hive=HKCU --type=defaults --input <(json_with_special_chars)
     assert_check_registry_output
 }
 
