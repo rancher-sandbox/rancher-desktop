@@ -102,7 +102,7 @@ too_many_input_formats() {
 # Sample input-generating functions
 
 json_maps_and_lists() {
-cat <<'EOF'
+    cat <<'EOF'
 {
   "kubernetes": {
     "enabled": false
