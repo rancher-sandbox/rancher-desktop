@@ -113,7 +113,7 @@ export default Vue.extend({
       <template #col:uninstall="{row}">
         <td>
           <button
-            class="btn btn-sm role-primary"
+            class="btn btn-sm role-danger"
             @click="uninstall(`${ row.id }:${ row.version }`)"
           >
             {{ t('extensions.installed.list.uninstall') }}
