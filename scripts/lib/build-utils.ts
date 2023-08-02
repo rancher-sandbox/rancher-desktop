@@ -11,12 +11,10 @@ import stream from 'stream';
 import util from 'util';
 import zlib from 'zlib';
 
+import babelConfig from 'babel.config';
 import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
-
-import { RecursivePartial } from '@pkg/utils/typeUtils';
-import babelConfig from 'babel.config';
 
 /**
  * A promise that is resolved when the child exits.
@@ -181,23 +179,21 @@ export default {
    * WebPack configuration for the preload script
    */
   get webpackPreloadConfig(): webpack.Configuration {
-    function isRuleSetLoader(i: webpack.RuleSetUseItem): i is webpack.RuleSetLoader {
-      return typeof i === 'object';
-    }
-
-    const overrides: RecursivePartial<webpack.Configuration> = {
+    const overrides: webpack.Configuration = {
       target: 'electron-preload',
-      output: { libraryTarget: 'var', path: path.join(this.rootDir, 'resources') },
+      output: {
+        filename: '[name].js',
+        path:     path.join(this.rootDir, 'resources'),
+      },
     };
-    const result = _.merge({}, this.webpackConfig, overrides);
-    const rules = result.module?.rules ?? [];
-    const uses = rules.flatMap((r) => {
-      if (typeof r.use !== 'object') {
-        return [];
-      }
 
-      return Array.isArray(r.use) ? r.use : [r.use];
-    }).filter(isRuleSetLoader);
+    const result: webpack.Configuration = Object.assign({}, this.webpackConfig, overrides);
+    const rules = result.module?.rules ?? [];
+
+    const uses: webpack.RuleSetRule[] = rules.filter(
+      (rule): rule is webpack.RuleSetRule => typeof rule !== 'boolean' && typeof rule !== 'string',
+    );
+
     const tsLoader = uses.find(u => u.loader === 'ts-loader');
 
     if (tsLoader) {
@@ -218,10 +214,10 @@ export default {
         if (err) {
           return reject(err);
         }
-        if (stats.hasErrors()) {
+        if (stats?.hasErrors()) {
           return reject(new Error(stats.toString({ colors: true, errorDetails: true })));
         }
-        console.log(stats.toString({ colors: true }));
+        console.log(stats?.toString({ colors: true }));
         resolve();
       });
     });
