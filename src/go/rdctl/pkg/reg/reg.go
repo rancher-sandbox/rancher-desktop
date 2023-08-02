@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"reflect"
 	"strings"
 	"unicode/utf16"
@@ -90,17 +91,18 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 		if numValues == 0 {
 			return nil, nil
 		}
-		retLines := []string{fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
-		for _, key := range v.MapKeys() {
-			keyAsString := key.String()
-			innerLines, err := convertToRegFormat(append(pathParts, keyAsString), v.MapIndex(key), keyAsString)
+		returnedLines := []string{fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
+		typedKeys := utils.SortKeys(v.MapKeys())
+		for _, typedKey := range typedKeys {
+			keyAsString := typedKey.StringKey
+			innerLines, err := convertToRegFormat(append(pathParts, keyAsString), v.MapIndex(typedKey.MapKey), keyAsString)
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
-				retLines = append(retLines, innerLines...)
+				returnedLines = append(returnedLines, innerLines...)
 			}
 		}
-		return retLines, nil
+		return returnedLines, nil
 	case reflect.Interface:
 		if v.IsNil() {
 			return nil, nil
