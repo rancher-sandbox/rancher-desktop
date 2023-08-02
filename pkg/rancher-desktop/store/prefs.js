@@ -2,7 +2,7 @@
 import { SETTING } from '@pkg/config/settings';
 import { MANAGEMENT, STEVE } from '@pkg/config/types';
 import { clone } from '@pkg/utils/object';
-import Vue from 'vue';
+import { set } from 'vue';
 
 const definitions = {};
 
@@ -220,7 +220,7 @@ export const getters = {
 
 export const mutations = {
   load(state, { key, value }) {
-    Vue.set(state.data, key, value);
+    set(state.data, key, value);
   },
 
   cookiesLoaded(state) {
@@ -258,9 +258,9 @@ export const actions = {
           }
 
           if ( definition.parseJSON ) {
-            Vue.set(server.data, key, JSON.stringify(value));
+            set(server.data, key, JSON.stringify(value));
           } else {
-            Vue.set(server.data, key, value);
+            set(server.data, key, value);
           }
 
           await server.save({ redirectUnauthorized: false });
