@@ -73,7 +73,7 @@
         class="role-primary"
         @click="close"
       >
-        Ok
+        {{ t('firstRun.ok') }}
       </button>
     </div>
   </div>
