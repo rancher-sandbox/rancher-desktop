@@ -102,7 +102,19 @@ too_many_input_formats() {
 # Sample input-generating functions
 
 json_maps_and_lists() {
-    echo '{"kubernetes": {"enabled": false}, "containerEngine": { "allowedImages": {"patterns": ["abc", "ghi", "def"] } }, "WSL": { "integrations": { "first": true, "second": false } } }'
+cat <<'EOF'
+{
+  "kubernetes": {
+    "enabled": false
+  },
+  "containerEngine": {
+    "allowedImages": {"patterns": ["abc", "ghi", "def"] }
+  },
+  "WSL": {
+    "integrations": { "first": true, "second": false }
+  }
+}
+EOF
 }
 export -f json_maps_and_lists
 
