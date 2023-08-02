@@ -447,7 +447,7 @@ EOF
 END
 }
 
-@test "don't need a running app for the rest of this test" {
+@test "and shutdown" {
     if is_macos; then
         rdctl shutdown
     fi
