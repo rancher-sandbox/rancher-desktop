@@ -101,10 +101,10 @@ too_many_input_formats() {
 
 # Sample input-generating functions
 
-complex_json_data() {
+json_maps_and_lists() {
     echo '{"kubernetes": {"enabled": false}, "containerEngine": { "allowedImages": {"patterns": ["abc", "ghi", "def"] } }, "WSL": { "integrations": { "first": true, "second": false } } }'
 }
-export -f complex_json_data
+export -f json_maps_and_lists
 
 simple_json_data() {
     echo '{ "kubernetes": {"version": "moose-head" }}'
@@ -185,7 +185,7 @@ assert_full_settings_plist_output() {
 }
 
 # This next directive makes no sense.
-# shellcheck disable=2030
+# shellcheck disable=SC2030
 @test 'generates registry output for hkcu/locked' {
     run rdctl create-profile --output reg --hive=HKCU --type=locked --from-settings
     assert_full_settings_registry_output HKEY_CURRENT_USER locked
@@ -193,7 +193,7 @@ assert_full_settings_plist_output() {
 
 assert_check_registry_output() {
     local bashSideTemp
-    local winSideTemp=
+    local winSideTemp
     local testFile
     local salt
     local safePolicyName
@@ -278,12 +278,12 @@ EOF
 }
 
 @test 'encodes multi-string values and maps from a file' {
-    run bash -o pipefail -c 'complex_json_data | rdctl create-profile --output reg --hive hkcu --input -'
+    run bash -o pipefail -c 'json_maps_and_lists | rdctl create-profile --output reg --hive hkcu --input -'
     assert_registry_output_for_maps_and_lists
 }
 
 @test 'encodes multi-string values and maps from a json string' {
-    run rdctl create-profile --output reg --hive hkcu --body "$(complex_json_data)"
+    run rdctl create-profile --output reg --hive hkcu --body "$(json_maps_and_lists)"
     assert_registry_output_for_maps_and_lists
 }
 
@@ -365,12 +365,12 @@ EOF
 }
 
 @test 'plist-encodes multi-string values and maps from a file' {
-    run bash -o pipefail -c 'complex_json_data | rdctl create-profile --output plist --input -'
+    run bash -o pipefail -c 'json_maps_and_lists | rdctl create-profile --output plist --input -'
     assert_complex_plist_output
 }
 
 @test 'plist-encodes multi-string values and maps from a json string' {
-    run rdctl create-profile --output plist --body "$(complex_json_data)"
+    run rdctl create-profile --output plist --body "$(json_maps_and_lists)"
     assert_complex_plist_output
 }
 
