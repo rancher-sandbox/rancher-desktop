@@ -1,7 +1,6 @@
 <script lang="ts">
-import Vue from 'vue';
-
 import EmptyState from '@pkg/components/EmptyState.vue';
+import Vue from 'vue';
 
 export default Vue.extend({
   name:       'extensions-uninstalled',

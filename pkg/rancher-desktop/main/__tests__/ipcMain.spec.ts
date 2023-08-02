@@ -1,9 +1,8 @@
 import events from 'events';
 
-import Electron from 'electron';
-
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import { Log } from '@pkg/utils/logging';
+import Electron from 'electron';
 
 type Handler = (event: Electron.IpcMainInvokeEvent, ...args: any) => Promise<unknown>;
 
@@ -77,6 +76,7 @@ describe('IpcMainProxy', () => {
       (Electron.ipcMain as any)[prop] ??= () => {};
       expect(typeof emitter[prop]).toEqual('function');
       jest.spyOn(Electron.ipcMain, prop as keyof typeof Electron.ipcMain).mockImplementation((...args: any) => {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const meth = emitter[prop as keyof typeof emitter] as Function;
 
         return meth.apply(emitter, args);

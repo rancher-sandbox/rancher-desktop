@@ -7,19 +7,6 @@ import path from 'path';
 import stream from 'stream';
 import util from 'util';
 
-import _ from 'lodash';
-import * as reg from 'native-reg';
-import semver from 'semver';
-import tar from 'tar-stream';
-
-import {
-  BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
-} from './backend';
-import BackendHelper from './backendHelper';
-import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
-import K3sHelper from './k3sHelper';
-import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
-
 import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
@@ -56,6 +43,18 @@ import { wslHostIPv4Address } from '@pkg/utils/networks';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
+import _ from 'lodash';
+import * as reg from 'native-reg';
+import semver from 'semver';
+import tar from 'tar-stream';
+
+import {
+  BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
+} from './backend';
+import BackendHelper from './backendHelper';
+import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
+import K3sHelper from './k3sHelper';
+import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 import type { KubernetesBackend } from './k8s';
 

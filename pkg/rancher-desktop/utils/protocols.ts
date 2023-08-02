@@ -1,12 +1,11 @@
 import path from 'path';
 import { URL } from 'url';
 
-import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
-
 import { isDevEnv } from '@pkg/utils/environment';
 import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
 
 const console = Logging['protocol-handler'];
 

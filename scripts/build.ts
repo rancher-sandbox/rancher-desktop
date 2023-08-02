@@ -9,9 +9,9 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 
-import buildUtils from './lib/build-utils';
-
 import { simpleSpawn } from 'scripts/simple_process';
+
+import buildUtils from './lib/build-utils';
 
 class Builder {
   async cleanup() {

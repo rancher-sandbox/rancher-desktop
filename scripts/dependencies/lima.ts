@@ -5,13 +5,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import semver from 'semver';
-
-import { download, getResource } from '../lib/download';
-
 import {
   DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
 } from 'scripts/lib/dependencies';
+import semver from 'semver';
+
+import { download, getResource } from '../lib/download';
 
 export class LimaAndQemu implements Dependency, GitHubDependency {
   name = 'limaAndQemu';

@@ -1,7 +1,6 @@
 <script lang="ts">
-import Vue from 'vue';
-
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import Vue from 'vue';
 
 export default Vue.extend({
   name: 'preferences-layout',

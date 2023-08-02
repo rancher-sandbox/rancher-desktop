@@ -2,14 +2,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import yaml from 'yaml';
-
-import paths from './paths';
-
 import { spawnFile } from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import yaml from 'yaml';
+
+import paths from './paths';
 
 const console = Logging.background;
 

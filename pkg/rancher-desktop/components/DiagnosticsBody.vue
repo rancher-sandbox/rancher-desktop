@@ -1,15 +1,15 @@
 <script lang="ts">
+import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
+import EmptyState from '@pkg/components/EmptyState.vue';
+import SortableTable from '@pkg/components/SortableTable/index.vue';
+import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 import { ToggleSwitch } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
-import EmptyState from '@pkg/components/EmptyState.vue';
-import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { DiagnosticsResult } from '@pkg/main/diagnostics/diagnostics';
-import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 

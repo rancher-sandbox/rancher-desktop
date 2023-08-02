@@ -1,6 +1,5 @@
-import $ from 'jquery';
-
 import { _EDIT, _VIEW } from '@pkg/config/query-params';
+import $ from 'jquery';
 
 export default {
   inheritAttrs: false,

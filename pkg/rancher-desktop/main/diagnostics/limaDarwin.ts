@@ -1,11 +1,10 @@
+import mainEvents from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
 import Electron from 'electron';
 import semver from 'semver';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
-
-import mainEvents from '@pkg/main/mainEvents';
-import Logging from '@pkg/utils/logging';
-import { getMacOsVersion } from '@pkg/utils/osVersion';
 
 const console = Logging.diagnostics;
 

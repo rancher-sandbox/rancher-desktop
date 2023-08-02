@@ -1,12 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
+import { simpleSpawn } from 'scripts/simple_process';
 import semver from 'semver';
 
 import { Dependency, DownloadContext, getPublishedReleaseTagNames } from '../lib/dependencies';
 import { download } from '../lib/download';
-
-import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * Wix downloads the latest build of WiX3.

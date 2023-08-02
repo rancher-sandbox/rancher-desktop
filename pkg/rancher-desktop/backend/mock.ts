@@ -3,6 +3,11 @@ import fs from 'fs';
 import os from 'os';
 import util from 'util';
 
+import K3sHelper from '@pkg/backend/k3sHelper';
+import { Settings } from '@pkg/config/settings';
+import { ChildProcess } from '@pkg/utils/childProcess';
+import Logging, { Log } from '@pkg/utils/logging';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 import semver from 'semver';
 
 import {
@@ -13,12 +18,6 @@ import {
 } from './containerClient';
 import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
-
-import K3sHelper from '@pkg/backend/k3sHelper';
-import { Settings } from '@pkg/config/settings';
-import { ChildProcess } from '@pkg/utils/childProcess';
-import Logging, { Log } from '@pkg/utils/logging';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const console = Logging.mock;
 

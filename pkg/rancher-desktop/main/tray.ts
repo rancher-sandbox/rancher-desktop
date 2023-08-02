@@ -6,8 +6,6 @@ import os from 'os';
 import path from 'path';
 
 import { KubeConfig } from '@kubernetes/client-node';
-import Electron from 'electron';
-
 import { VMBackend } from '@pkg/backend/backend';
 import { State } from '@pkg/backend/k8s';
 import * as kubeconfig from '@pkg/backend/kubeconfig';
@@ -21,6 +19,7 @@ import paths from '@pkg/utils/paths';
 import { openMain, send } from '@pkg/window';
 import { openDashboard } from '@pkg/window/dashboard';
 import { openPreferences } from '@pkg/window/preferences';
+import Electron from 'electron';
 
 const console = Logging.background;
 const ipcMainProxy = getIpcMainProxy(console);

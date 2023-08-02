@@ -3,14 +3,13 @@ import os from 'os';
 import { join } from 'path';
 import stream from 'stream';
 
-import _ from 'lodash';
-import * as nativeReg from 'native-reg';
-
 import * as settings from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
+import _ from 'lodash';
+import * as nativeReg from 'native-reg';
 
 const console = Logging.deploymentProfile;
 

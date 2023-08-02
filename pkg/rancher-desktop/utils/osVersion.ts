@@ -1,9 +1,8 @@
 import * as process from 'process';
 
-import semver from 'semver';
-
 import { spawnFile } from '@pkg/utils/childProcess';
 import { Log } from '@pkg/utils/logging';
+import semver from 'semver';
 
 let macOsVersion: semver.SemVer;
 

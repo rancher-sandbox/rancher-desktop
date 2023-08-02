@@ -1,8 +1,8 @@
-import $ from 'jquery';
 
 import { filterBy } from '@pkg/utils/array';
 import { get } from '@pkg/utils/object';
 import { isMore, isRange, suppressContextMenu, isAlternate } from '@pkg/utils/platform';
+import $ from 'jquery';
 
 export const ALL = 'all';
 export const SOME = 'some';

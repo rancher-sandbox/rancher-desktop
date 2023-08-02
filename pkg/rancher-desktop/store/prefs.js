@@ -1,8 +1,8 @@
-import Vue from 'vue';
 
 import { SETTING } from '@pkg/config/settings';
 import { MANAGEMENT, STEVE } from '@pkg/config/types';
 import { clone } from '@pkg/utils/object';
+import Vue from 'vue';
 
 const definitions = {};
 

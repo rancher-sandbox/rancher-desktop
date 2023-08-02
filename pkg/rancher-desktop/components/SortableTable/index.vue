@@ -1,5 +1,8 @@
 <script>
 import ActionDropdown from '@pkg/components/ActionDropdown';
+import { removeObject } from '@pkg/utils/array';
+import { get, clone } from '@pkg/utils/object';
+import { dasherize, ucFirst } from '@pkg/utils/string';
 import { Checkbox } from '@rancher/components';
 import day from 'dayjs';
 import $ from 'jquery';
@@ -13,10 +16,6 @@ import grouping from './grouping';
 import paging from './paging';
 import selection from './selection';
 import sorting from './sorting';
-
-import { removeObject } from '@pkg/utils/array';
-import { get, clone } from '@pkg/utils/object';
-import { dasherize, ucFirst } from '@pkg/utils/string';
 
 export const COLUMN_BREAKPOINTS = {
   /**

@@ -3,13 +3,12 @@
  * It implements the "ddClient" API.
  */
 
+import clone from '@pkg/utils/clone';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import Electron from 'electron';
 
 import type { SpawnOptions } from '@pkg/main/extensions/types';
-import clone from '@pkg/utils/clone';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-/* eslint-disable import/namespace -- that rule doesn't work with TypeScript type-only imports. */
 import type { v1 } from '@docker/extension-api-client-types';
 
 // We use a bunch of symbols for names of properties we do not want to reflect
@@ -163,7 +162,7 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
         },
         close: {
           enumerable: true,
-          value:      function() {
+          value() {
             ipcRenderer.send('extensions/spawn/kill', execId);
             delete outstandingProcesses[execId];
           },

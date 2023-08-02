@@ -2,17 +2,15 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 
+import { spawnFile } from '@pkg/utils/childProcess';
+
+import getMacCertificates from '../mac-ca';
+
 // mock crypto to fake certificates.
 jest.mock('crypto');
 
 // mock child process execution to return our own results.
 jest.mock('@pkg/utils/childProcess');
-
-// eslint-disable-next-line import/first -- need to be after jest.mock() call.
-import getMacCertificates from '../mac-ca';
-
-// eslint-disable-next-line import/first -- need to be after jest.mock() call.
-import { spawnFile } from '@pkg/utils/childProcess';
 
 /**
  * testCertMock is a subset of crypto.X509Certificate with an additional bit to

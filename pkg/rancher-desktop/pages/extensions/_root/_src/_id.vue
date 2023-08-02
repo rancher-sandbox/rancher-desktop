@@ -1,10 +1,10 @@
 <script lang="ts">
-import { ipcRenderer } from 'electron';
-import Vue from 'vue';
 
 import ExtensionsError from '@pkg/components/ExtensionsError.vue';
 import ExtensionsUninstalled from '@pkg/components/ExtensionsUninstalled.vue';
 import { hexDecode } from '@pkg/utils/string-encode';
+import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 
 interface ExtensionsData {
   error: Error | undefined;

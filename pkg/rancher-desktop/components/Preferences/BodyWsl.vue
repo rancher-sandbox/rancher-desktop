@@ -1,17 +1,17 @@
 <script lang="ts">
 
-import Vue from 'vue';
-import { mapGetters, mapState } from 'vuex';
-
 import PreferencesWslIntegrations from '@pkg/components/Preferences/WslIntegrations.vue';
 import PreferencesWslNetwork from '@pkg/components/Preferences/WslNetwork.vue';
 import PreferencesWslProxy from '@pkg/components/Preferences/WslProxy.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
+import Vue from 'vue';
+import { mapGetters, mapState } from 'vuex';
+
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

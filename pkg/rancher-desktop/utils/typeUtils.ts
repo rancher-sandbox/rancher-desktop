@@ -6,7 +6,7 @@ export type RecursivePartial<T> = {
   [P in keyof T]?:
   T[P] extends (infer U)[] ? RecursivePartial<U>[] :
 
-    T[P] extends object ? RecursivePartial<T[P]> :
+    T[P] extends Record<string, unknown> ? RecursivePartial<T[P]> :
       T[P];
 };
 
@@ -14,7 +14,7 @@ export type RecursiveReadonly<T> = {
   readonly [P in keyof T]:
   T[P] extends (infer U)[] ? readonly RecursiveReadonly<U>[] :
 
-  T[P] extends object ? RecursiveReadonly<T[P]> :
+  T[P] extends Record<string, unknown> ? RecursiveReadonly<T[P]> :
   T[P];
 };
 
@@ -53,9 +53,9 @@ export type UpperSnakeCase<T extends string | symbol | number > =
  * @example RecursiveKeys<{a: { b: number}, c: number}> = 'a' | 'a.b' | 'c'
  */
 export type RecursiveKeys<T> =
-  object extends T ? string :
+  Record<string, unknown> extends T ? string :
   T extends readonly unknown[] ? RecursiveKeys<T[number]> :
-  T extends object ? keyof T & string | RecursiveKeysInner<T, keyof T & string> :
+  T extends Record<string, unknown> ? keyof T & string | RecursiveKeysInner<T, keyof T & string> :
   never;
 
 type RecursiveKeysInner<T, K extends string> = K extends keyof T ? `${ K }.${ RecursiveKeys<T[K]> }` : never;
@@ -65,7 +65,7 @@ type RecursiveKeysInner<T, K extends string> = K extends keyof T ? `${ K }.${ Re
  * the value type in T.
  */
 export type RecursiveTypes<T extends Record<string, any>> =
-  object extends T ? never :
+  Record<string, unknown> extends T ? never :
   {
     [P in RecursiveKeys<T>]:
       P extends keyof T ?
@@ -74,7 +74,7 @@ export type RecursiveTypes<T extends Record<string, any>> =
         (
           K extends keyof T ?
             (
-              T[K] extends object ?
+              T[K] extends Record<string, unknown> ?
                 ( R extends keyof RecursiveTypes<T[K]> ? RecursiveTypes<T[K]>[R] : never ) :
                 never
             ) :

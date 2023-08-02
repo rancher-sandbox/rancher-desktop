@@ -5,14 +5,6 @@ import path from 'path';
 import timers from 'timers';
 import util from 'util';
 
-import semver from 'semver';
-import yaml from 'yaml';
-
-import { Architecture, BackendSettings, RestartReasons } from '../backend';
-import BackendHelper from '../backendHelper';
-import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
-import LimaBackend, { Action } from '../lima';
-
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import SERVICE_CRI_DOCKERD_SCRIPT from '@pkg/assets/scripts/service-cri-dockerd.initd';
@@ -27,6 +19,13 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { showMessageBox } from '@pkg/window';
+import semver from 'semver';
+import yaml from 'yaml';
+
+import { Architecture, BackendSettings, RestartReasons } from '../backend';
+import BackendHelper from '../backendHelper';
+import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
+import LimaBackend, { Action } from '../lima';
 
 const console = Logging.kube;
 

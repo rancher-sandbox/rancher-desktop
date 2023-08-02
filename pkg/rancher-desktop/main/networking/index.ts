@@ -4,6 +4,9 @@ import https from 'https';
 import os from 'os';
 import util from 'util';
 
+import mainEvents from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
+import { windowMapping } from '@pkg/window';
 import Electron from 'electron';
 import LinuxCA from 'linux-ca';
 
@@ -11,10 +14,6 @@ import filterCert from './cert-parse';
 import getMacCertificates from './mac-ca';
 import ElectronProxyAgent from './proxy';
 import getWinCertificates from './win-ca';
-
-import mainEvents from '@pkg/main/mainEvents';
-import Logging from '@pkg/utils/logging';
-import { windowMapping } from '@pkg/window';
 
 const console = Logging.networking;
 
@@ -60,7 +59,7 @@ export default async function setupNetworking() {
       pluginDevUrls.some(x => url.startsWith(x))
     ) {
       event.preventDefault();
-      // eslint-disable-next-line n/no-callback-literal
+      // eslint-disable-next-line node/no-callback-literal
       callback(true);
 
       return;
@@ -68,7 +67,7 @@ export default async function setupNetworking() {
 
     if (dashboardUrls.some(x => url.startsWith(x)) && 'dashboard' in windowMapping) {
       event.preventDefault();
-      // eslint-disable-next-line n/no-callback-literal
+      // eslint-disable-next-line node/no-callback-literal
       callback(true);
 
       return;
@@ -85,7 +84,7 @@ export default async function setupNetworking() {
           // an attacker generating a cert with the same serial.
           if (cert === certificate.data.replace(/\r/g, '')) {
             console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
-            // eslint-disable-next-line n/no-callback-literal
+            // eslint-disable-next-line node/no-callback-literal
             callback(true);
 
             return;
@@ -98,7 +97,7 @@ export default async function setupNetworking() {
 
     console.log(`Not handling certificate error ${ error } for ${ url }`);
 
-    // eslint-disable-next-line n/no-callback-literal
+    // eslint-disable-next-line node/no-callback-literal
     callback(false);
   });
 

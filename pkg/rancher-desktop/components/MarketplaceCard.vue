@@ -42,10 +42,9 @@
 
 <script>
 
-import { Banner } from '@rancher/components';
-
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import demoMetadata from '@pkg/utils/_demo_metadata.js';
+import { Banner } from '@rancher/components';
 
 export default {
   components: { LoadingIndicator, Banner },

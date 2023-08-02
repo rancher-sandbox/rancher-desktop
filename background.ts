@@ -4,10 +4,6 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import Electron from 'electron';
-import _ from 'lodash';
-import semver from 'semver';
-
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
 import { getImageProcessor } from '@pkg/backend/images/imageFactory';
@@ -51,6 +47,9 @@ import { getVersion } from '@pkg/utils/version';
 import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
 import { openPreferences, preferencesSetDirtyFlag } from '@pkg/window/preferences';
+import Electron from 'electron';
+import _ from 'lodash';
+import semver from 'semver';
 
 Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);

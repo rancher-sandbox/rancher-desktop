@@ -53,7 +53,7 @@ export class UnixPaths implements Paths {
   extensionRoot = '';
   snapshots = '';
 
-  constructor(pathsData: object) {
+  constructor(pathsData: Record<string, unknown>) {
     Object.assign(this, pathsData);
   }
 
@@ -77,7 +77,7 @@ export class WindowsPaths implements Paths {
   wslDistro = '';
   wslDistroData = '';
 
-  constructor(pathsData: object) {
+  constructor(pathsData: Record<string, unknown>) {
     Object.assign(this, pathsData);
   }
 

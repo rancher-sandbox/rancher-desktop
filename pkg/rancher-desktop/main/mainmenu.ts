@@ -1,7 +1,7 @@
-import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
 import { getVersion, parseDocsVersion } from '@pkg/utils/version';
 import { openPreferences } from '@pkg/window/preferences';
+import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
 const baseUrl = `https://docs.rancherdesktop.io`;
 

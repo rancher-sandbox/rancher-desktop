@@ -32,6 +32,7 @@ export default Vue.extend({
      * listeners to supply a custom input event. Resolves an issue where the
      * entire vnode emits when using v-model.
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     computedListeners(): Record<string, Function | Function[]> & { input: (e: any) => any; } {
       return Object.assign(
         {},

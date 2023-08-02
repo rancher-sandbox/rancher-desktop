@@ -6,13 +6,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { spawnFile } from '@pkg/utils/childProcess';
 import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
 import { createDefaultSettings, retry, startRancherDesktop, teardown } from './utils/TestUtils';
-
-import { spawnFile } from '@pkg/utils/childProcess';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 

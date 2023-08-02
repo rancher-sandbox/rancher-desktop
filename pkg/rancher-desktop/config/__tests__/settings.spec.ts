@@ -3,14 +3,13 @@
 import fs from 'fs';
 import path from 'path';
 
+import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
+import paths from '@pkg/utils/paths';
 import _ from 'lodash';
 import plist from 'plist';
 
 import * as settings from '../settings';
 import * as settingsImpl from '../settingsImpl';
-
-import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
-import paths from '@pkg/utils/paths';
 
 class FakeFSError extends Error {
   public message = '';
