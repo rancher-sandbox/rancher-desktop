@@ -36,7 +36,8 @@ module.exports = {
       .loader('raw-loader');
 
     config.plugin('define-plugin').use(webpack.DefinePlugin, [{
-      'process.client': JSON.stringify(true),
+      'process.client':       JSON.stringify(true),
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
 
       'nuxt.publicRuntimeConfig': JSON.stringify({
         featureDiagnosticsFixes: process.env.RD_ENV_DIAGNOSTICS_FIXES === '1',

@@ -90,10 +90,16 @@ class E2ETestRunner extends events.EventEmitter {
    * Start the renderer process.
    */
   startRendererProcess(): Promise<void> {
-    this.#rendererProcess = this.spawn('Renderer process',
-      'node', 'node_modules/nuxt/bin/nuxt.js',
-      '--hostname', 'localhost',
-      '--port', this.rendererPort.toString(), buildUtils.rendererSrcDir);
+    this.#rendererProcess = this.spawn(
+      'Renderer process',
+      'yarn',
+      'run',
+      'build:ui',
+      '--hostname',
+      'localhost',
+      '--port',
+      this.rendererPort.toString(),
+    );
 
     return Promise.resolve();
   }
