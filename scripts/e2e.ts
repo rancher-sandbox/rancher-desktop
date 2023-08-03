@@ -90,18 +90,27 @@ class E2ETestRunner extends events.EventEmitter {
    * Start the renderer process.
    */
   startRendererProcess(): Promise<void> {
-    this.#rendererProcess = this.spawn(
-      'Renderer process',
-      'yarn',
-      'run',
-      'build:ui',
-      '--hostname',
-      'localhost',
-      '--port',
-      this.rendererPort.toString(),
-    );
+    return new Promise((resolve, reject) => {
+      this.#rendererProcess = this.spawn(
+        'Renderer process',
+        'yarn',
+        'run',
+        'build:ui',
+        '--hostname',
+        'localhost',
+        '--port',
+        this.rendererPort.toString(),
+      );
 
-    return Promise.resolve();
+      // Listen for the 'exit' event of the child process and resolve or reject the Promise accordingly.
+      this.#rendererProcess.on('exit', (code, _signal) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Renderer build failed with code ${ code }`));
+        }
+      });
+    });
   }
 
   async run() {
@@ -123,8 +132,10 @@ class E2ETestRunner extends events.EventEmitter {
       // Set feature flags
       process.env.RD_ENV_EXTENSIONS = '1';
 
+      // Start the renderer process and wait for it to complete the build.
+      await this.startRendererProcess();
+
       await buildUtils.wait(
-        () => this.startRendererProcess(),
         () => buildUtils.buildMain(),
         () => buildUtils.buildPreload(),
       );
