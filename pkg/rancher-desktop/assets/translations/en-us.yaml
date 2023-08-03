@@ -189,14 +189,9 @@ marketplace:
   moreInfo: More information
 containers:
   title: Containers
-  state:
-    k8sUnready: Waiting for Kubernetes to be ready
-    imagesUnready: Waiting for containers manager to be ready
-    unknown: 'Error: Unknown state; please reload.'
-    close: Close Output to Continue
   manage:
     table:
-      title: Running
+      showMore: more...
       header:
         state: State
         containerName: Name

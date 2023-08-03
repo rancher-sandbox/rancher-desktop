@@ -1,19 +1,19 @@
 <template>
   <div class="containers">
     <SortableTable
-      ref="containersTable"
       :headers="headers"
       key-field="Id"
       :rows="rows"
-      :row-actions="false"
-      :table-actions="false"
+      :row-actions="true"
       :paging="true"
+      :rows-per-page="10"
       :loading="!containersList"
+      @selection="handleSelection"
     >
-      <template #col:ports="{row}">
-        <div class="port-container">
+      <template #col:ports="{ row }">
+        <td class="port-container">
           <a
-            v-for="port in getUniquePorts(row.Ports)"
+            v-for="port in getUniquePorts(row.Ports).slice(0, 2)"
             :key="port"
             target="_blank"
             class="link"
@@ -21,7 +21,34 @@
           >
             {{ port }}
           </a>
-        </div>
+
+          <div v-if="shouldHaveDropdown(row.Ports)" class="dropdown">
+            <span>
+              {{ t('containers.manage.table.showMore') }}
+            </span>
+
+            <div class="dropdown-content">
+              <a
+                v-for="port in getUniquePorts(row.Ports).slice(2)"
+                :key="port"
+                target="_blank"
+                class="link"
+                @click="openUrl(port)"
+              >
+                {{ port }}
+              </a>
+            </div>
+          </div>
+        </td>
+      </template>
+
+      <template #col:containerState="{row}">
+        <td>
+          <badge-state
+            :color="isRunning(row) ? 'bg-success' : 'bg-darker'"
+            :label="row.State"
+          />
+        </td>
       </template>
     </SortableTable>
   </div>
@@ -29,29 +56,27 @@
 
 <script>
 import SortableTable from '@pkg/components/SortableTable';
+import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
-import { cloneDeep } from 'lodash';
 
-import { defaultSettings } from '@pkg/config/settings';
-let hasContainers = false;
+let ddClientReady = false;
 
 export default {
   name:       'Containers',
   title:      'Containers',
-  components: { SortableTable },
+  components: { SortableTable, BadgeState },
   data() {
     return {
-      settings:       defaultSettings,
+      ddClient:       null,
       containersList: null,
-      mountTable:     false,
-      headers:
-      [
+      selected:       [],
+      showRunning:    false,
+      headers:        [
         // INFO: Disable for now since we can only get the running containers.
-        // {
-        //   name:  'containerState',
-        //   label: this.t('containers.manage.table.header.state'),
-        //   sort:  ['containerName', 'image', 'imageName'],
-        // },
+        {
+          name:  'containerState',
+          label: this.t('containers.manage.table.header.state'),
+        },
         {
           name:  'containerName',
           label: this.t('containers.manage.table.header.containerName'),
@@ -82,41 +107,65 @@ export default {
         return [];
       }
 
-      const containers = cloneDeep(this.containersList);
+      const containers = structuredClone(this.containersList);
 
-      return containers
-        .map((container) => {
-          container.state = container.State;
-          container.containerName = container.Names[0].replace(/_[a-z0-9-]{36}_[0-9]+/, '');
-          container.started = container.Status;
-          container.imageName = container.Image;
+      return containers.map((container) => {
+        container.state = container.State;
+        container.containerName = container.Names[0].replace(
+          /_[a-z0-9-]{36}_[0-9]+/,
+          '',
+        );
+        container.started =
+          container.State === 'running' ? container.Status : '';
+        container.imageName = container.Image;
 
-          container.availableActions = [
-            {
-              label:   'Stop',
-              action:  'stopContainer',
-              enabled: true,
-              icon:    'icon icon-pause',
-            }, {
-              label:      this.t('images.manager.table.action.delete'),
-              action:     'deleteContainers',
-              enabled:    true,
-              icon:       'icon icon-delete',
-              bulkable:   true,
-              bulkAction: 'deleteContainers',
-            },
-          ];
+        container.availableActions = [
+          {
+            label:      'Stop',
+            action:     'stopContainer',
+            enabled:    this.isRunning(container),
+            icon:       'icon icon-pause',
+            bulkable:   true,
+            bulkAction: 'stopContainers',
+          },
+          {
+            label:      'Start',
+            action:     'startContainer',
+            enabled:    this.isStopped(container),
+            icon:       'icon icon-start',
+            bulkable:   true,
+            bulkAction: 'startContainer',
+          },
+          {
+            label:      this.t('images.manager.table.action.delete'),
+            action:     'deleteContainer',
+            enabled:    true,
+            icon:       'icon icon-delete',
+            bulkable:   true,
+            bulkAction: 'deleteContainers',
+          },
+        ];
 
-          if (!container.stopContainer) {
-            container.stopContainer = this.stopContainer.bind(this, container);
-          }
+        if (!container.stopContainer) {
+          container.stopContainer = () => {
+            this.stopContainer(container);
+          };
+        }
 
-          if (!container.deleteContainers) {
-            container.deleteContainers = this.deleteContainers.bind(this, container);
-          }
+        if (!container.startContainer) {
+          container.startContainer = () => {
+            this.startContainer(container);
+          };
+        }
 
-          return container;
-        });
+        if (!container.deleteContainer) {
+          container.deleteContainer = () => {
+            this.deleteContainer(container);
+          };
+        }
+
+        return container;
+      });
     },
   },
 
@@ -126,41 +175,94 @@ export default {
       description: '',
     });
 
-    // INFO: We need to set hasContainers outside of the component in the global scope so it won't re-render when we get the list.
-    const intervalId = setInterval(() => {
-      if (hasContainers) {
+    // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
+    setInterval(async() => {
+      if (ddClientReady || this.containersList) {
         return;
       }
 
-      if (window.ddClient) {
-        window.ddClient?.docker.listContainers().then((containers) => {
-          console.log(' containers;', containers);
-          // INFO: This will only get the currently running containers.
-          this.containersList = containers;
-          hasContainers = true;
-          this.mountTable = true;
-        });
+      console.debug('Checking for containers...');
 
-        clearInterval(intervalId);
+      if (window.ddClient) {
+        this.ddClient = window.ddClient;
+
+        await this.getContainers();
       }
     }, 1000);
   },
   beforeDestroy() {
-    clearInterval(this.intervalId);
-    hasContainers = false;
+    ddClientReady = false;
   },
   methods: {
-    stopContainer() {
-      console.info('To implement');
+    handleSelection(item) {
+      this.selected = [...item];
     },
-    deleteContainers() {
-      console.info('To implement');
+    async getContainers() {
+      const containers = await window.ddClient?.docker.listContainers({ all: true });
+
+      // Sorts by status, showing running first.
+      this.containersList = containers.sort((a, b) => {
+        if (a.State === 'running' && b.State !== 'running') {
+          return -1;
+        } else if (a.State !== 'running' && b.State === 'running') {
+          return 1;
+        } else {
+          return a.State.localeCompare(b.State);
+        }
+      });
+
+      ddClientReady = true;
+    },
+    async stopContainer(container) {
+      await this.execCommand('stop', container);
+    },
+    async startContainer(container) {
+      await this.execCommand('start', container);
+    },
+    async deleteContainer(container) {
+      await this.execCommand('rm', container);
+    },
+    isRunning(container) {
+      return container.State === 'running';
+    },
+    isStopped(container) {
+      return container.State === 'created' || container.State === 'exited';
+    },
+    async execCommand(command, container) {
+      try {
+        const ids =
+          this.selected.length > 1 ? [...this.selected.map(container => container.Id)] : [container.Id];
+
+        console.info(`Executing command ${ command } on container(s) ${ ids }`);
+
+        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
+          command,
+          [...ids],
+        );
+
+        if (stderr) {
+          throw new Error(stderr);
+        }
+
+        await this.getContainers();
+
+        return stdout;
+      } catch (error) {
+        // TODO: Remove ?
+        window.alert(error.message);
+        console.error(`Error executing command ${ command }`, error.message);
+      }
     },
     getUniquePorts(obj) {
       const uniquePorts = {};
 
       Object.keys(obj).forEach((key) => {
         const ports = obj[key];
+
+        if (!ports) {
+          return;
+        }
+
         const firstPort = ports[0].HostPort;
         const secondPort = ports[1].HostPort;
 
@@ -168,6 +270,13 @@ export default {
       });
 
       return Object.keys(uniquePorts);
+    },
+    shouldHaveDropdown(ports) {
+      if (!ports) {
+        return false;
+      }
+
+      return this.getUniquePorts(ports)?.length >= 3;
     },
     openUrl(port) {
       const hostPort = parseInt(port.split(':')[0]);
@@ -183,20 +292,51 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .link {
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  .state-container {
+.containers {
+  &-status {
     padding: 8px 5px;
-    margin-top: 5px;
+  }
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+
+  &-content {
+    display: none;
+    position: absolute;
+    z-index: 1;
+    padding-top: 5px;
+    border-start-start-radius: var(--border-radius);
+    background: var(--default);
+    padding: 5px;
+
+    a {
+      display: block;
+      padding: 5px 0;
+    }
   }
 
-  .port-container{
-    display: grid;
-    grid-auto-rows: 1fr;
-    grid-gap: 5px;
-    margin: 5px 0;
+  &:hover {
+    & > .dropdown-content {
+      display: block;
+    }
   }
+}
+
+.link {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.state-container {
+  padding: 8px 5px;
+  margin-top: 5px;
+}
+
+.port-container {
+  display: flex;
+  flex-direction: column;
+  margin: 5px 0;
+}
 </style>
