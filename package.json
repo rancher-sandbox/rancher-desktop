@@ -111,7 +111,7 @@
     "@types/ejs": "3.1.2",
     "@types/ffi-napi": "4.0.7",
     "@types/jest": "29.5.2",
-    "@types/lodash": "4.14.191",
+    "@types/lodash": "4.14.196",
     "@types/marked": "4.0.8",
     "@types/mustache": "4.2.2",
     "@types/node": "16.11.39",
