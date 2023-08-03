@@ -84,11 +84,44 @@ func TestManager(t *testing.T) {
 		})
 	}
 
+	t.Run("Create should disallow two snapshots with the same name", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := NewManager(paths)
+		snapshotName := "test-snapshot"
+		if _, err := manager.Create(snapshotName); err != nil {
+			t.Fatalf("failed to create first snapshot: %s", err)
+		}
+		if _, err := manager.Create(snapshotName); !errors.Is(err, ErrNameExists) {
+			t.Fatalf("failed to return error upon second snapshot with name %q", snapshotName)
+		}
+	})
+
+	t.Run("Create should disallow invalid names", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := NewManager(paths)
+		invalidNames := []string{
+			"test name",
+			"test/name",
+			"test?name",
+			"test\name",
+			"test!",
+			`"test"`,
+			`'test'`,
+			"testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
+				"testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest",
+		}
+		for _, invalidName := range invalidNames {
+			if _, err := manager.Create(invalidName); !errors.Is(err, ErrInvalidName) {
+				t.Errorf("name %q is invalid but no error was returned", invalidName)
+			}
+		}
+	})
+
 	t.Run("List", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := NewManager(paths)
 		for i := range []int{1, 2, 3} {
-			snapshotName := fmt.Sprintf("test snapshot %d", i)
+			snapshotName := fmt.Sprintf("test-snapshot-%d", i)
 			if _, err := manager.Create(snapshotName); err != nil {
 				t.Fatalf("failed to create snapshot %q: %s", snapshotName, err)
 			}
@@ -105,7 +138,7 @@ func TestManager(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := NewManager(paths)
-		snapshot, err := manager.Create("test snapshot")
+		snapshot, err := manager.Create("test-snapshot")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -132,7 +165,7 @@ func TestManager(t *testing.T) {
 		t.Run(fmt.Sprintf("Restore with includeOverrideYaml %t", includeOverrideYaml), func(t *testing.T) {
 			paths, testFiles := populateFiles(t, includeOverrideYaml)
 			manager := NewManager(paths)
-			snapshot, err := manager.Create("test snapshot")
+			snapshot, err := manager.Create("test-snapshot")
 			if err != nil {
 				t.Fatalf("failed to create snapshot: %s", err)
 			}
@@ -162,7 +195,7 @@ func TestManager(t *testing.T) {
 		if err := os.Remove(testFiles["override.yaml"].Path); err != nil {
 			t.Fatalf("failed to delete override.yaml: %s", err)
 		}
-		snapshot, err := manager.Create("test snapshot")
+		snapshot, err := manager.Create("test-snapshot")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -193,7 +226,7 @@ func TestManager(t *testing.T) {
 	t.Run("Restore should create any needed parent directories", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := NewManager(paths)
-		snapshot, err := manager.Create("test snapshot")
+		snapshot, err := manager.Create("test-snapshot")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}

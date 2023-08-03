@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
+
+var nameRegexp = *regexp.MustCompile("^[0-9a-zA-Z_-]{0,100}$")
+var ErrNameExists = errors.New("name already exists")
+var ErrInvalidName = fmt.Errorf("name does not match regex %q", nameRegexp.String())
 
 // Handles all snapshot-related functionality.
 type Manager struct {
@@ -24,6 +29,20 @@ func NewManager(paths paths.Paths) Manager {
 
 // Creates a new snapshot.
 func (manager Manager) Create(name string) (Snapshot, error) {
+	// validate name
+	currentSnapshots, err := manager.List()
+	if err != nil {
+		return Snapshot{}, fmt.Errorf("failed to list snapshots: %w", err)
+	}
+	for _, currentSnapshot := range currentSnapshots {
+		if currentSnapshot.Name == name {
+			return Snapshot{}, ErrNameExists
+		}
+	}
+	if !nameRegexp.MatchString(name) {
+		return Snapshot{}, ErrInvalidName
+	}
+
 	snapshot := Snapshot{
 		Created: time.Now(),
 		Name:    name,
@@ -37,8 +56,7 @@ func (manager Manager) Create(name string) (Snapshot, error) {
 	}
 
 	// do operations that can fail, rolling back if failure is encountered
-	err := manager.createFiles(snapshot)
-	if err != nil {
+	if err := manager.createFiles(snapshot); err != nil {
 		if err := os.RemoveAll(snapshotDir); err != nil {
 			return Snapshot{}, fmt.Errorf("failed to delete created snapshot directory: %w", err)
 		}
