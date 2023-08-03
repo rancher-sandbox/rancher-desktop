@@ -1,7 +1,7 @@
 load '../helpers/load'
 
 # Hey Jan: why does this keep changing?
-SNAPSHOT="$(basename "$(mktemp -u -t moby)")"
+SNAPSHOT="$(basename "$(mktemp -u -t moby.XXXXX)")"
 SNAPSHOT=moby-nginx-snapshot01
 
 local_setup() {
@@ -39,7 +39,6 @@ running_nginx() {
 }
 
 @test 'shutdown, make a snapshot, and clear everything' {
-    echo QQQ: SNAPSHOT when creating the snapshot: "$SNAPSHOT" 1>&3
     rdctl shutdown
     rdctl snapshot create "$SNAPSHOT"
     run rdctl snapshot list
@@ -63,18 +62,9 @@ running_nginx() {
 }
 
 @test 'shutdown and restore' {
-    echo QQQ: SNAPSHOT when searching the snapshot: "$SNAPSHOT" 1>&3
     rdctl shutdown
-    run rdctl snapshot list
+    run get_snapshot_id_from_name "$SNAPSHOT"
     assert_success
-    echo snapshot list -- "$output" 1>&3
-#    echo awk from output on moby-nginx-"$SNAPSHOT"  ...
-#    awk '/"moby-nginx-'$SNAPSHOT'"/' <<<"$output" 1>&3
-#    awk '/"moby-nginx-'$SNAPSHOT'"/ { print $1 }' <<<"$output" 1>&3
-    # shellcheck disable=SC2086 # dollar-1 belongs to awk, not bash
-    run awk /"$SNAPSHOT"'/ { print $1 }' <<<"$output"
-    assert_success
-    echo awk from output on "$SNAPSHOT" -- "$output" 1>&3
     rdctl snapshot restore "$output"
 }
 
@@ -88,6 +78,8 @@ running_nginx() {
         RD_TEST=bats rdctl start --no-modal-dialogs &
     fi
 
+    # Keep this variable in sync with
+    RD_CONTAINER_ENGINE=moby
     wait_for_container_engine
     wait_for_apiserver
     run rdctl api /settings

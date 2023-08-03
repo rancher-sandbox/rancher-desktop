@@ -31,6 +31,7 @@ source "$PATH_BATS_ROOT/bats-file/load.bash"
 
 source "$PATH_BATS_HELPERS/os.bash"
 source "$PATH_BATS_HELPERS/utils.bash"
+source "$PATH_BATS_HELPERS/snapshots.bash"
 
 # defaults.bash uses is_windows() from os.bash and
 # validate_enum() and is_true() from utils.bash.
