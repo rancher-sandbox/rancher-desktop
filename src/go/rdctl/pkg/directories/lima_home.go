@@ -19,9 +19,12 @@ package directories
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 )
 
 func SetupLimaHome() error {
@@ -54,6 +57,20 @@ func SetupLimaHome() error {
 	return nil
 }
 
+func getOSMajorVersion() (int, error) {
+	// syscall.Uname isn't available on macOS, so we need to shell out.
+	// This is only called once by `rdctl shutdown` and once by `rdctl shell` so there's no need to memoize the result
+	version, err := exec.Command("uname", "-r").CombinedOutput()
+	if err != nil {
+		return -1, err
+	}
+	before, _, found := strings.Cut(string(version), ".")
+	if !found || len(before) == 0 {
+		return -1, fmt.Errorf("Expected a version string, got: %s", string(version))
+	}
+	return strconv.Atoi(before)
+}
+
 func GetLimactlPath() (string, error) {
 	execPath, err := os.Executable()
 	if err != nil {
@@ -62,6 +79,14 @@ func GetLimactlPath() (string, error) {
 	execPath, err = filepath.EvalSymlinks(execPath)
 	if err != nil {
 		return "", err
+	}
+	if runtime.GOOS == "darwin" {
+		majorVersion, err := getOSMajorVersion()
+		if err == nil && majorVersion >= 22 {
+			// https://en.wikipedia.org/wiki/MacOS_version_history: maps darwin versions to macOS release version numbers and names
+			// macOS 13 | Ventura | 22
+			return path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl.ventura"), nil
+		}
 	}
 	return path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl"), nil
 }
