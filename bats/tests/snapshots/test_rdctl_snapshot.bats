@@ -46,13 +46,13 @@ load '../helpers/load'
     rdctl snapshot delete "$orig_id"
 }
 
-@test 'complain about restoring non-existent snapshot' {
+@test 'complain about restoring nonexistent snapshot' {
     run rdctl snapshot restore 'not a snapshot'
     assert_failure
     assert_output --partial 'snapshot with id "not a snapshot" does not exist'
 }
 
-@test 'complain about deleting non-existent snapshot' {
+@test 'complain about deleting nonexistent snapshot' {
     run rdctl snapshot delete 'not a snapshot'
     assert_failure
     assert_output --partial 'snapshot with id "not a snapshot" does not exist'
