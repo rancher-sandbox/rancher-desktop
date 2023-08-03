@@ -30,7 +30,6 @@ load '../helpers/load'
         assert_failure
         assert_output --partial "$c"
     done
-    run rdctl snapshot create "bad-char-\\"
 }
 
 @test 'fails to create duplicate snapshots' {
