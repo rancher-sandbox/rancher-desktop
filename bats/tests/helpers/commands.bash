@@ -45,6 +45,9 @@ ctrctl() {
         nerdctl "$@"
     fi
 }
+curl() {
+    command "curl$EXE" "$@"
+}
 docker() {
     docker_exe --context $RD_DOCKER_CONTEXT "$@"
 }
