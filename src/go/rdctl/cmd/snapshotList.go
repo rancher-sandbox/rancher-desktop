@@ -30,7 +30,7 @@ func (snapshots SortableSnapshots) Swap(i, j int) {
 }
 
 var snapshotListCmd = &cobra.Command{
-	Use:   "list",
+	Use:   "ls",
 	Short: "List snapshots",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		paths, err := paths.GetPaths()
@@ -41,6 +41,10 @@ var snapshotListCmd = &cobra.Command{
 		snapshots, err := manager.List()
 		if err != nil {
 			return fmt.Errorf("failed to list snapshots: %w", err)
+		}
+		if len(snapshots) == 0 {
+			fmt.Println("No snapshots present.")
+			return nil
 		}
 		sort.Sort(SortableSnapshots(snapshots))
 		writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
