@@ -1,4 +1,3 @@
-
 get_snapshot_id_from_name() {
     local name=$1
     run rdctl snapshot list

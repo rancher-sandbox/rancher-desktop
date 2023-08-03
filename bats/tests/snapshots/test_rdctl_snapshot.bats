@@ -11,12 +11,26 @@ load '../helpers/load'
     assert_failure
 }
 
+@test 'rejects overlong snapshot name' {
+    long_name=$(head -n 4 </dev/random | base64 | cut -b 1-120)
+    run rdctl snapshot create "$long_name"
+    assert_failure
+}
+
+@test 'complain about missing argument' {
+    for arg in create restore delete; do
+        run rdctl snapshot "$arg"
+        assert_failure
+    done
+}
+
 @test 'disallows special characters in snapshot names' {
-    for c in '!' '$' '^' '&' '*' '(' ')' '[' ']' '{' '}' ';' ':' '?' '/' "\\" "'" '"' '`' ; do
+    for c in '!' '$' '^' '&' '*' '(' ')' '[' ']' '{' '}' ';' ':' '?' '/' "'" '"' '`'; do
         run rdctl snapshot create "bad-char-${c}"
         assert_failure
         assert_output --partial "$c"
     done
+    run rdctl snapshot create "bad-char-\\"
 }
 
 @test 'fails to create duplicate snapshots' {
