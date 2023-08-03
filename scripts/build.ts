@@ -50,12 +50,7 @@ class Builder {
   }
 
   async buildRenderer() {
-    const nuxtBin = 'node_modules/nuxt/bin/nuxt.js';
-    const nuxtOutDir = path.join(buildUtils.rendererSrcDir, 'dist');
-
-    await simpleSpawn('node', [nuxtBin, 'build', buildUtils.rendererSrcDir]);
-    await simpleSpawn('node', [nuxtBin, 'generate', buildUtils.rendererSrcDir]);
-    await fs.rename(nuxtOutDir, buildUtils.appDir);
+    await simpleSpawn('yarn', ['build:ui']);
   }
 
   async build() {

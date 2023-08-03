@@ -26,6 +26,7 @@
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
     "build": "node scripts/ts-wrapper.js scripts/build.ts",
+    "build:ui": "VUE_CLI_SERVICE_CONFIG_PATH=pkg/rancher-desktop/vue.config.js vue-cli-service build",
     "package": "node scripts/ts-wrapper.js scripts/package.ts",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "wix": "node scripts/ts-wrapper.js scripts/wix.ts",

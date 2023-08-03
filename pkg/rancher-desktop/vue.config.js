@@ -16,7 +16,7 @@ modifiedBabelConfig.presets.unshift(['@vue/cli-plugin-babel/preset', { corejs: {
 
 module.exports = {
   publicPath:          '/',
-  outputDir:           path.resolve(rootDir, 'dist', 'vue'),
+  outputDir:           path.resolve(rootDir, 'dist', 'app'),
   productionSourceMap: false,
 
   chainWebpack: (config) => {
