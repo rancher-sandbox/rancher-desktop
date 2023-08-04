@@ -10,6 +10,8 @@ import util from 'util';
 
 import buildUtils from './lib/build-utils';
 
+import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
+
 const sleep = util.promisify(setTimeout);
 
 class E2ETestRunner extends events.EventEmitter {
@@ -97,6 +99,11 @@ class E2ETestRunner extends events.EventEmitter {
 
   async run() {
     try {
+      const deploymentProfiles = await readDeploymentProfiles();
+
+      if (Object.keys(deploymentProfiles.defaults).length > 0 || Object.keys(deploymentProfiles.locked).length > 0) {
+        throw new Error("Trying to run e2e tests with existing deployment profiles isn't supported.");
+      }
       process.env.NODE_ENV = 'test';
       process.env.RD_TEST = 'e2e';
 
