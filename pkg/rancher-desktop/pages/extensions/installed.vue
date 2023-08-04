@@ -6,11 +6,14 @@ import EmptyState from '@pkg/components/EmptyState.vue';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import NavIconExtension from '~/components/NavIconExtension.vue';
 
 export default Vue.extend({
   name:       'extensions-installed',
-  components: { SortableTable, EmptyState },
-  props:      {
+  components: {
+    NavIconExtension, SortableTable, EmptyState,
+  },
+  props: {
     credentials: {
       type:     Object as PropType<Omit<ServerState, 'pid'>>,
       required: true,
@@ -19,6 +22,11 @@ export default Vue.extend({
   data() {
     return {
       headers: [
+        {
+          name:  'icon',
+          label: ' ',
+          width: 35,
+        },
         {
           name:  'id',
           label: 'Name',
@@ -105,6 +113,11 @@ export default Vue.extend({
           </empty-state>
         </td>
       </template>
+      <template #col:icon="{row}">
+        <td>
+          <nav-icon-extension :extension-id="row.id" />
+        </td>
+      </template>
       <template #col:id="{row}">
         <td>
           {{ extensionTitle(row) }}
@@ -123,3 +136,10 @@ export default Vue.extend({
     </sortable-table>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.extension-icon {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+</style>
