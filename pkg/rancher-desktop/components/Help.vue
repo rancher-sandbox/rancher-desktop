@@ -21,10 +21,12 @@ export default Vue.extend({
   },
   methods: {
     openUrl() {
-      if (this.url) {
-        shell.openExternal(this.url);
-      } else {
-        this.$emit('open:url');
+      if (!this.disabled) {
+        if (this.url) {
+          shell.openExternal(this.url);
+        } else {
+          this.$emit('open:url');
+        }
       }
     },
   },
