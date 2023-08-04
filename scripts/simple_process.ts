@@ -1,4 +1,6 @@
-import { spawn, CommonSpawnOptions } from 'child_process';
+import { CommonSpawnOptions } from 'child_process';
+
+import spawn from 'cross-spawn';
 
 /**
  * A wrapper around child_process.spawnFile that doesn't depend on any of the @pkg code

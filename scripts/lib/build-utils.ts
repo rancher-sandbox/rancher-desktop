@@ -12,6 +12,7 @@ import util from 'util';
 import zlib from 'zlib';
 
 import babelConfig from 'babel.config';
+import spawn from 'cross-spawn';
 import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
@@ -82,7 +83,9 @@ export default {
     if (args.concat().pop() instanceof Object) {
       Object.assign(options, args.pop());
     }
-    const child = childProcess.spawn(command, args, options);
+
+    const child = spawn(command, args, options);
+
     const promise: Promise<void> = new Promise((resolve, reject) => {
       child.on('exit', (code, signal) => {
         if (signal && signal !== 'SIGTERM') {
