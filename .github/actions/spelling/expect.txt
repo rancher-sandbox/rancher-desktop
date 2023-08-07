@@ -689,6 +689,7 @@ splunk
 ssd
 sshfs
 sslip
+Ssr
 ssr
 statefulset
 stoinks
