@@ -102,7 +102,6 @@ export default Vue.extend({
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    color: grey;
   }
   .wsl-proxy-fieldset {
     display: flex;
