@@ -10,11 +10,10 @@ import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
-import { createDefaultSettings, startRancherDesktop, teardown } from './utils/TestUtils';
+import { createDefaultSettings, retry, startRancherDesktop, teardown } from './utils/TestUtils';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
-// import type { ElectronApplication, Locator, Page } from '@playwright/test';
 import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe('WSL Integrations', () => {
@@ -147,7 +146,10 @@ test.describe('WSL Integrations', () => {
       ],
     };
 
-    await fs.promises.writeFile(path.join(workdir, 'config.json'), JSON.stringify(config, undefined, 2));
+    // Sometimes trying to update this file triggers an EBUSY error, so retry it.
+    await retry(() => {
+      return fs.promises.writeFile(path.join(workdir, 'config.json'), JSON.stringify(config, undefined, 2));
+    }, { delay: 500, tries: 20 });
   };
 
   // We need the beforeAll to allow initial Electron startup.
