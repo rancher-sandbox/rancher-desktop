@@ -96,7 +96,7 @@ class E2ETestRunner extends events.EventEmitter {
         'yarn',
         'run',
         'build:ui',
-        '--hostname',
+        '--host',
         'localhost',
         '--port',
         this.rendererPort.toString(),

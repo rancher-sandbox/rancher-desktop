@@ -111,7 +111,7 @@ class DevRunner extends events.EventEmitter {
         'yarn',
         'run',
         'dev:ui',
-        '--hostname',
+        '--host',
         'localhost',
         '--port',
         this.rendererPort.toString(),
@@ -129,34 +129,39 @@ class DevRunner extends events.EventEmitter {
       // Wait for the renderer to finish, so that vue-cli output doesn't
       // clobber debugging output.
       const rendererEnv = this.rendererEnv();
-      const maxRetries = 10;
+
+      const maxRetries = 30;
       let retryCount = 0;
-      let devServerStarted = false;
+      const retryInterval = 1000;
 
-      const serverCheckInterval = setInterval(async() => {
-        if (devServerStarted) {
-          return;
-        }
-
+      const checkDevServer = async() => {
         try {
           const response = await fetch(rendererEnv.home, { agent: rendererEnv.agent });
 
           if (response.ok) {
-            clearInterval(serverCheckInterval);
-            if (!devServerStarted) {
-              console.info('Renderer process: dev server started');
-              devServerStarted = true;
-            }
+            console.info('Renderer process: dev server started');
             resolve();
+          } else {
+            // Retry if response is not okay
+            retryCount++;
+            if (retryCount < maxRetries) {
+              setTimeout(checkDevServer, retryInterval);
+            } else {
+              reject(new Error(`Renderer process: failed to connect`));
+            }
           }
         } catch (error) {
+          // Retry if fetch throws an error
           retryCount++;
-          if (retryCount >= maxRetries) {
-            clearInterval(serverCheckInterval);
-            reject(new Error(`Renderer build failed to connect after ${ maxRetries } attempts`));
+          if (retryCount < maxRetries) {
+            setTimeout(checkDevServer, retryInterval);
+          } else {
+            reject(new Error(`Renderer process: failed to connect`));
           }
         }
-      }, 1000);
+      };
+
+      checkDevServer();
     });
   }
 
