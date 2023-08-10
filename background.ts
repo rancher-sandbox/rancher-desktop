@@ -1033,12 +1033,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   protected buildSettingsVersionError(newSettings: RecursivePartial<settings.Settings>): string {
-    const firstPart = `updating settings requires specifying version = ${ settings.CURRENT_SETTINGS_VERSION }`;
+    const firstPart = `updating settings requires specifying version = "${ settings.CURRENT_SETTINGS_VERSION }"`;
 
     if (!('version' in newSettings)) {
       return `${ firstPart }, but no version was specified`;
     } else {
-      return `${ firstPart }, but received version ${ newSettings.version }`;
+      return `${ firstPart }, but received version "${ newSettings.version }"`;
     }
   }
 

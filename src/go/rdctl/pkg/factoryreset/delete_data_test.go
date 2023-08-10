@@ -64,7 +64,7 @@ func getExpectedContents(filename string) (string, error) {
 	if ok {
 		return text, nil
 	}
-	return "", fmt.Errorf("Can't find contents for dotfile %s", filename)
+	return "", fmt.Errorf("Can't find contents for dotfile %q", filename)
 }
 
 func populateFiles() error {

@@ -122,7 +122,7 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 	case reflect.String:
 		return []string{fmt.Sprintf(`"%s"="%s"`, jsonTag, escape(v.String()))}, nil
 	}
-	return nil, fmt.Errorf("convertToRegFormat: don't know how to process kind: %s, (%T), value: %v for var %s\n", kind, v, v, jsonTag)
+	return nil, fmt.Errorf("convertToRegFormat: don't know how to process kind: %q, (%T), value: %v for var %q\n", kind, v, v, jsonTag)
 }
 
 // Encode multi-stringSZ settings in comma-separated ucs2 little-endian bytes
@@ -152,11 +152,11 @@ func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) (
 
 	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]
 	if !ok {
-		return nil, fmt.Errorf("unrecognized hiveType of '%s', must be 'hklm' or 'hkcu'", hiveType)
+		return nil, fmt.Errorf(`unrecognized hiveType of %q, must be "hklm" or "hkcu"`, hiveType)
 	}
 	_, ok = map[string]bool{"defaults": true, "locked": true}[profileType]
 	if !ok {
-		return nil, fmt.Errorf("unrecognized profileType of '%s', must be 'defaults' or 'locked'", profileType)
+		return nil, fmt.Errorf(`unrecognized profileType of %q, must be "defaults" or "locked"`, profileType)
 	}
 	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &settings); err != nil {
 		return nil, fmt.Errorf("error in json: %s\n", err)

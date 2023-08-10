@@ -300,7 +300,7 @@ export class HttpCommandServer {
     const path = request.path;
     const pathParts = path.split('/');
 
-    const msg = `Invalid version /${ pathParts[1] } for endpoint "${ method } ${ path }" - use "/v${ neededVersion }/${ pathParts.slice(2).join('/') }"`;
+    const msg = `Invalid version "/${ pathParts[1] }" for endpoint "${ method } ${ path }" - use "/v${ neededVersion }/${ pathParts.slice(2).join('/') }"`;
 
     console.log(`Error handling ${ request.url }`, msg);
     response.status(400).type('txt').send(msg);

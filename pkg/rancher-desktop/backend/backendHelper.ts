@@ -129,7 +129,7 @@ export default class BackendHelper {
     const [, errors] = sv.validateSettings(cfg as Settings, { kubernetes: { version: newVersion.raw } }, settingsImpl.getLockedSettings());
 
     if (errors.length > 0) {
-      if (errors.some(err => err.match(/field '.*' is locked/))) {
+      if (errors.some(err => err.match(/field ".*" is locked/))) {
         throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
       } else {
         throw new Error(`Validation errors for requested version ${ newVersion }: ${ errors.join('\n') }`);

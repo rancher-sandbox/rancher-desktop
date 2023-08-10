@@ -83,7 +83,7 @@ func enumStringCheck(option string, specified string, allowedValues []string) er
 		firstPart := strings.Join(singleQuotedAllowedValues[:numVals - 1], ", ")
 		allowedString = fmt.Sprintf("%s, or %s", firstPart,  singleQuotedAllowedValues[numVals - 1])
 	}
-	return fmt.Errorf(`invalid value for option %s: <"%s">; must be %s`, option, specified, allowedString)
+	return fmt.Errorf(`invalid value for option %q: <"%s">; must be %s`, option, specified, allowedString)
 }
 
 func qualifiedPlatformName() string {
@@ -132,7 +132,7 @@ func UpdateFieldsForJSON(flags *pflag.FlagSet) (*ServerSettingsForJSON, error) {
 	const kebabPropertyName = kebabCase(flag.propertyName); _%>
 		if flags.Changed("<%- kebabPropertyName %>") {
 			<%_ if (flag.notAvailable) { _%>
-				return nil, fmt.Errorf("option --<%- kebabPropertyName %> is not available on %s", qualifiedPlatformName())
+				return nil, fmt.Errorf(`option "--<%- kebabPropertyName %>" is not available on %s`, qualifiedPlatformName())
 			<%_ } else { _%>
 				<%_ if (flag.enums) { _%>
 					if err := enumStringCheck("--<%- kebabPropertyName %>", specifiedSettings.<%- flag.capitalizedName %>, <%- flag.enums %>) ; err != nil {

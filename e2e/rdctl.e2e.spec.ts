@@ -252,23 +252,23 @@ test.describe('Command server', () => {
     expect(resp2.status).toEqual(400);
     const body = resp2.body.read().toString();
     const expectedWSL = {
-      win32: "Proposed field WSL.integrations should be an object, got <ceci n'est pas un objet>.",
-      lima:  "Changing field WSL.integrations via the API isn't supported.",
+      win32: `Proposed field "WSL.integrations" should be an object, got "ceci n'est pas un objet".`,
+      lima:  `Changing field "WSL.integrations" via the API isn't supported.`,
     }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedMemory = {
-      win32: "Changing field virtualMachine.memoryInGB via the API isn't supported.",
-      lima:  'Invalid value for virtualMachine.memoryInGB: <"carl">',
+      win32: `Changing field "virtualMachine.memoryInGB" via the API isn't supported.`,
+      lima:  `Invalid value for "virtualMachine.memoryInGB": <"carl">`,
     }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedLines = [
       'errors in attempt to update settings:',
       expectedWSL,
       expectedMemory,
-      `Invalid value for containerEngine.name: <{"status":"should be a scalar"}>; must be one of ["containerd","moby","docker"]`,
-      'Setting portForwarding should wrap an inner object, but got <bob>.',
-      'Invalid value for application.telemetry.enabled: <{"oops":15}>',
+      `Invalid value for "containerEngine.name": <{\"status\":\"should be a scalar\"}>; must be one of ["containerd","moby","docker"]`,
+      'Setting "portForwarding" should wrap an inner object, but got <bob>.',
+      'Invalid value for "application.telemetry.enabled": <{"oops":15}>',
     ];
 
-    expect(body.split(/\r?\n/g)).toEqual(expect.arrayContaining(expectedLines));
+    expect(body.split(/\r?\n/g).sort()).toEqual(expect.arrayContaining(expectedLines.sort()));
   });
 
   test('should reject invalid JSON, settings request', async() => {
@@ -325,7 +325,7 @@ test.describe('Command server', () => {
     }
     resp = await doRequest('/v1/settings', JSON.stringify(body), 'PUT');
     expect(resp.ok).toBeFalsy();
-    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but no version was specified`);
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = "${ CURRENT_SETTINGS_VERSION }", but no version was specified`);
   });
 
   test('should complain about an invalid version field', async() => {
@@ -343,7 +343,7 @@ test.describe('Command server', () => {
     }
     resp = await doRequest('/v1/settings', JSON.stringify(body), 'PUT');
     expect(resp.ok).toBeFalsy();
-    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but received version ${ CURRENT_SETTINGS_VERSION - 1 }`);
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = "${ CURRENT_SETTINGS_VERSION }", but received version "${ CURRENT_SETTINGS_VERSION - 1 }"`);
   });
 
   test('should require authentication, transient settings request', async() => {
@@ -560,7 +560,7 @@ test.describe('Command server', () => {
           }).toEqual({
             ok:     false,
             status: 400,
-            body:   `Invalid version /v0 for endpoint "${ method } /v0/${ endpoint }" - use "/v1/${ endpoint }"`,
+            body:   `Invalid version "/v0" for endpoint "${ method } /v0/${ endpoint }" - use "/v1/${ endpoint }"`,
           });
         }
       }
@@ -774,7 +774,7 @@ test.describe('Command server', () => {
           stdout, stderr, error,
         }).toEqual({
           error:  expect.any(Error),
-          stderr: expect.stringContaining(`Error: invalid value for option --container-engine: <"${ myEngine }">; must be 'containerd', 'docker', or 'moby'`),
+          stderr: expect.stringContaining(`Error: invalid value for option "--container-engine": <"${ myEngine }">; must be 'containerd', 'docker', or 'moby'`),
           stdout: '',
         });
         expect(stderr).not.toContain('Error: errors in attempt to update settings:');
@@ -915,7 +915,7 @@ test.describe('Command server', () => {
 
         for (const [option, newValue] of unsupportedOptions) {
           await expect(rdctl(['set', `--${ option }=${ newValue }`])).resolves
-            .toMatchObject({ stderr: expect.stringContaining(`Error: option --${ option } is not available on`) });
+            .toMatchObject({ stderr: expect.stringContaining(`Error: option "--${ option }" is not available on`) });
         }
       });
     });
@@ -1155,7 +1155,7 @@ test.describe('Command server', () => {
                 stdout, stderr, error,
               }).toEqual({
                 error:  expect.any(Error),
-                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for containerEngine.name: <"beefalo">; must be one of \["containerd","moby","docker"\]/),
+                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for "containerEngine.name": <"beefalo">; must be one of \["containerd","moby","docker"\]/),
                 stdout: expect.stringMatching(/{.*}/s),
               });
               expect(stderr).not.toContain('Usage:');

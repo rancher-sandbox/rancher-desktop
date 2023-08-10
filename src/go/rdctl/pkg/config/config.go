@@ -107,7 +107,7 @@ func finishConnectionSettings() (bool, error) {
 
 	var settings CLIConfig
 	if err = json.Unmarshal(content, &settings); err != nil {
-		return configPath != DefaultConfigPath, fmt.Errorf("error in config file %s: %w", configPath, err)
+		return configPath != DefaultConfigPath, fmt.Errorf("error in config file %q: %w", configPath, err)
 	}
 
 	if connectionSettings.User == "" {
