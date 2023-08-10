@@ -44,7 +44,7 @@ var snapshotListCmd = &cobra.Command{
 			return fmt.Errorf("failed to list snapshots: %w", err)
 		}
 		if len(snapshots) == 0 {
-			fmt.Println("No snapshots present.")
+			fmt.Fprintln(os.Stderr, "No snapshots present.")
 			return nil
 		}
 		sort.Sort(SortableSnapshots(snapshots))
