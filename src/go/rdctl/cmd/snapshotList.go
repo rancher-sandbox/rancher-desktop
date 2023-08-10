@@ -30,8 +30,9 @@ func (snapshots SortableSnapshots) Swap(i, j int) {
 }
 
 var snapshotListCmd = &cobra.Command{
-	Use:   "ls",
-	Short: "List snapshots",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List snapshots",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		paths, err := paths.GetPaths()
 		if err != nil {
