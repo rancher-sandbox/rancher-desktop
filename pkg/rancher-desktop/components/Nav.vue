@@ -2,7 +2,10 @@
   <nav>
     <ul>
       <li v-for="item in items" :key="item.route" :item="item.route">
-        <NuxtLink :to="item.route">
+        <NuxtLink
+          :class="{'nuxt-link-active': isRouteActive(item.route) }"
+          :to="item.route"
+        >
           {{ routes[item.route].name }}
           <badge-state
             v-if="item.error"
@@ -127,6 +130,12 @@ export default {
           id: hexEncode(id),
         },
       };
+    },
+    isRouteActive(route: string): boolean {
+      // It is needed e.g. for sub-route /images/add not matching /Images
+      const nuxt: NuxtApp = (this as any).$nuxt;
+
+      return nuxt.$route.path.split('/')[1] === route.substring(1).toLowerCase();
     },
   },
 };
