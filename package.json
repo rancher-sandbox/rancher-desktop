@@ -16,7 +16,6 @@
   },
   "scripts": {
     "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
-    "dev:ui": "cross-env VUE_CLI_SERVICE_CONFIG_PATH=pkg/rancher-desktop/vue.config.js vue-cli-service serve",
     "lint": "yarn lint:fix",
     "lint:fix": "yarn lint:typescript:fix && yarn lint:go:fix ",
     "lint:nofix": "yarn lint:typescript:nofix && yarn lint:go:nofix",
@@ -26,7 +25,6 @@
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
     "build": "node scripts/ts-wrapper.js scripts/build.ts",
-    "build:ui": "cross-env VUE_CLI_SERVICE_CONFIG_PATH=pkg/rancher-desktop/vue.config.js vue-cli-service build",
     "package": "node scripts/ts-wrapper.js scripts/package.ts",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "wix": "node scripts/ts-wrapper.js scripts/wix.ts",

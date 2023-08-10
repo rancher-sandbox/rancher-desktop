@@ -106,11 +106,12 @@ class DevRunner extends events.EventEmitter {
 
     return new Promise((resolve, reject) => {
       console.info('Renderer process: starting...');
+      process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
+
       this.#rendererProcess = this.spawn(
         'Renderer process',
-        'yarn',
-        'run',
-        'dev:ui',
+        'node_modules/.bin/vue-cli-service',
+        'serve',
         '--host',
         'localhost',
         '--port',
