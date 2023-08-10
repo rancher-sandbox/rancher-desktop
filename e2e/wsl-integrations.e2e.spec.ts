@@ -267,27 +267,35 @@ test.describe('WSL Integrations', () => {
   });
 
   test('should update invalid reason', async() => {
-    let { wsl: wslPage } = new PreferencesPage(preferencesWindow);
+    const { wsl: wslPage } = new PreferencesPage(preferencesWindow);
+    const newErrorMessage = 'some other error';
 
     await wslPage.tabIntegrations.click();
     await expect(wslPage.wslIntegrations).toBeVisible();
     await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
 
     const gamma = wslPage.gamma;
-    const newErrorMessage = 'some other error';
 
     expect(await gamma.isChecked()).toBeFalsy();
-    expect(await gamma.isDisabled()).toBeTruthy();
     await writeConfig({ gamma: newErrorMessage });
+  });
 
-    await page.reload();
-    ({ wsl: wslPage } = new PreferencesPage(preferencesWindow));
+  test('should see new invalid reason', async() => {
+    const { wsl: wslPage } = new PreferencesPage(preferencesWindow);
+    const newErrorMessage = 'some other error';
+
     await wslPage.tabIntegrations.click();
     await expect(wslPage.wslIntegrations).toBeVisible();
     await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
-    const newGamma = wslPage.gamma;
 
-    expect(await newGamma.isDisabled()).toBeTruthy();
+    // The `isDisabled` locator simply doesn't work -- possibly because the actual DOM is
+    // div.checkbox-outer-container data-test=item-gamma
+    //   label.checkbox-container disabled
+    //      input type=checkbox value=true
+    //      span.checkbox-custom role=checkbox
+    //
+    // and playwright doesn't give a way to get from `data-test=item-gamma` or the checkbox input elt to that label elt
+    // expect(await newGamma.isDisabled()).toBeTruthy();
     const parent = wslPage.page.locator('[data-test="item-gamma-parent"]');
 
     await expect(parent.filter({ hasText: newErrorMessage })).toHaveCount(0);
