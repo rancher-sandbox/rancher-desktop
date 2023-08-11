@@ -136,24 +136,29 @@ func listen(ctx context.Context, addr string) (net.Listener, error) {
 
 	go func() {
 		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				if !errors.Is(err, net.ErrClosed) {
-					log.Errorw("failed to accept connection", log.Fields{
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				conn, err := listener.Accept()
+				if err != nil {
+					if !errors.Is(err, net.ErrClosed) {
+						log.Errorw("failed to accept connection", log.Fields{
+							"error": err,
+							"addr":  addr,
+						})
+					}
+
+					return
+				}
+				// We don't handle any traffic; just unceremoniously
+				// close the connection and let the other side deal.
+				if err = conn.Close(); err != nil {
+					log.Errorw("failed to close connection", log.Fields{
 						"error": err,
 						"addr":  addr,
 					})
 				}
-
-				return
-			}
-			// We don't handle any traffic; just unceremoniously
-			// close the connection and let the other side deal.
-			if err = conn.Close(); err != nil {
-				log.Errorw("failed to close connection", log.Fields{
-					"error": err,
-					"addr":  addr,
-				})
 			}
 		}
 	}()
