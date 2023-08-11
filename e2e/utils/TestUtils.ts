@@ -399,40 +399,6 @@ export async function clearSettings(): Promise<string[]> {
   }
 }
 
-export async function clearUserProfiles(): Promise<string[]> {
-  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
-  const skipReasons: string[] = [];
-  // console.log('check settings');
-  // await util.promisify(setTimeout)(2 * 60_000);
-
-  if (platform === 'win32') {
-    for (const type of ['defaults', 'locked']) {
-      try {
-        const { stdout, stderr } = await childProcess.spawnFile('reg',
-          ['query', `HKCU\\SOFTWARE\\Policies\\Rancher Desktop\\${ type }`],
-          { stdio: ['ignore', 'pipe', 'pipe'] });
-
-        if (stderr.length === 0 && stdout.length > 0) {
-          skipReasons.push(`Need to remove registry hive "HKCU\\SOFTWARE\\Policies\\Rancher Desktop\\${ type }"`);
-        }
-      } catch { }
-    }
-
-    return skipReasons;
-  }
-  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileUser);
-
-  for (const fullPath of profilePaths) {
-    try {
-      await fs.promises.rm(fullPath, { force: true });
-    } catch (ex: any) {
-      skipReasons.push(`Failed to delete file ${ fullPath }: ${ ex }`);
-    }
-  }
-
-  return skipReasons;
-}
-
 export function verifyRegistryHive(hive: string): string[] {
   const haveAProfile = ['defaults', 'locked'].some(async(profileType) => {
     try {
@@ -482,6 +448,26 @@ function getDeploymentBaseNames(platform: 'linux'|'darwin'): string[] {
 
 function getDeploymentPaths(platform: 'linux'|'darwin', profileDir: string): string[] {
   return getDeploymentBaseNames(platform).map(basename => path.join(profileDir, basename))
+}
+
+export async function clearUserProfiles(): Promise<string[]> {
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
+  const skipReasons: string[] = [];
+
+  if (platform === 'win32') {
+    return await verifyNoRegistryHive('HKCU');
+  }
+  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileUser);
+
+  for (const fullPath of profilePaths) {
+    try {
+      await fs.promises.rm(fullPath, { force: true });
+    } catch (ex: any) {
+      skipReasons.push(`Failed to delete file ${ fullPath }: ${ ex }`);
+    }
+  }
+
+  return skipReasons;
 }
 
 export async function verifyUserProfiles(): Promise<string[]> {

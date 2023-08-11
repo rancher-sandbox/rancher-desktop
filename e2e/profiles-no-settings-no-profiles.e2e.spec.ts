@@ -56,45 +56,23 @@ test.describe.serial('KubernetesBackend', () => {
     electronApp = await startRancherDesktop(__filename, { mock: false, noModalDialogs: false });
     electronApp.on('window', async(openedPage: Page) => {
       windowCount += 1;
-      // console.log(`QQQ: window # ${ windowCount }`);
-      // try {
-      //   const title = await openedPage.title();
-      //   console.log(`QQQ: window # ${ windowCount }, title: <${ title }>`);
-      // } catch (e) {
-      //   console.error(`bad #1 happened: ${ e }`, e);
-      // }
-      // try {
-      //   console.log(`QQQ: contents: ${ JSON.stringify(await openedPage.content()) }`);
-      // } catch (e) {
-      //   console.error(`bad #2 happened: ${ e }`, e);
-      // }
       if (windowCount === 1) {
-        // try {
-        //   const button = openedPage.getByText('shnopskers');
-        //   if (button) {
-        //     console.log(`QQQ: about to click on non-existent button`);
-        //     await button.click({ timeout: 1 });
-        //     expect('should have thrown an exception').toEqual("didn't throw an exception");
-        //   } else {
-        //     // console.log(`QQQ: no shnopskers  button to click on`);
-        //   }
-        // } catch (e) {
-        //   console.error(`QQQ: error when clicking on a non-button: ${ e }`, e);
-        // }
-        const button = openedPage.getByText('OK');
+        try {
+          const button = openedPage.getByText('OK');
 
-        await util.promisify(setTimeout)(1_000);
-        if (button) {
-          await button.click();
+          if (button) {
+            await button.click({ timeout: 10_000 });
+          }
+
+          return;
+        } catch (e: any) {
+          console.log(`Attempt to press the OK button failed: ${ e }`);
         }
-
-        return;
       }
       navPage = new NavPage(openedPage);
 
       try {
         await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
-        // console.log(`QQQ: Saw the main title...`);
         page = openedPage;
         windowCountForMainPage = windowCount;
 
@@ -102,14 +80,8 @@ test.describe.serial('KubernetesBackend', () => {
       } catch (ex: any) {
         console.log(`Ignoring failed title-test: ${ ex.toString().substring(0, 10000) }`);
       }
-      // try {
-      //   console.log(`QQQ: contents: ${ JSON.stringify(await openedPage.content()).substring(0, 10000) }`);
-      // } catch (e) {
-      //   console.error(`bad #2 happened: ${ e }`, e);
-      // }
     });
 
-    // console.log(`QQQ: let's sit around and wait until page is defined...`);
     let iter = 0;
     const start = new Date().valueOf();
     const limit = 300 * 1_000 + start;
@@ -127,7 +99,6 @@ test.describe.serial('KubernetesBackend', () => {
       }
       await util.promisify(setTimeout)(100);
     }
-    // console.log(`QQQ: stopped waiting since we have a main page`);
     expect(windowCountForMainPage).toEqual(2);
     console.log(`Shutting down now because this test is finished...`);
     await tool('rdctl', 'shutdown', '--verbose');
