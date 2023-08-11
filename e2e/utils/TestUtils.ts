@@ -312,25 +312,37 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
   }
 }
 
+export interface startRancherDesktopOptions {
+  tracing?: boolean;
+  mock?: boolean;
+  env?: Record<string, string>;
+  noModalDialogs?: boolean;
+}
+
 /**
  * Run Rancher Desktop; return promise that resolves to commonly-used
  * playwright objects when it has started.
  * @param testPath The path to the test file.
- * @param options.tracing Whether to start tracing (defaults to true).
- * @param options.mock Whether to use the mock backend (defaults to true).
+ * @param options with sub-options:
+ *  options.tracing Whether to start tracing (defaults to true).
+ *  options.mock Whether to use the mock backend (defaults to true).
+ *  options.noModalDialogs Set to false if we want to see the first-run dialog (defaults to true).
  */
-export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean, env?: Record<string, string> }): Promise<ElectronApplication> {
+export async function startRancherDesktop(testPath: string, options?: startRancherDesktopOptions): Promise<ElectronApplication> {
   testInfo = { testPath, startTime: Date.now() };
+  const args = [
+    path.join(__dirname, '../../'),
+    '--disable-gpu',
+    '--whitelisted-ips=',
+    // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
+    '--disable-dev-shm-usage',
+  ];
 
+  if (options?.noModalDialogs ?? false) {
+    args.push('--no-modal-dialogs');
+  }
   const electronApp = await _electron.launch({
-    args: [
-      path.join(__dirname, '../../'),
-      '--disable-gpu',
-      '--whitelisted-ips=',
-      // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-      '--disable-dev-shm-usage',
-      '--no-modal-dialogs',
-    ],
+    args,
     env: {
       ...process.env,
       ...options?.env ?? {},
@@ -344,4 +356,184 @@ export async function startRancherDesktop(testPath: string, options?: { tracing?
   }
 
   return electronApp;
+}
+
+// Deployment-profile-related utilities
+
+function fileExistsSync(fullPath: string): boolean {
+  try {
+    fs.accessSync(fullPath);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function verifySettings(): Promise<string[]> {
+  const fullPath = path.join(paths.config, 'settings.json');
+
+  try {
+    await fs.promises.access(fullPath);
+
+    return [];
+  } catch {
+    return [`Settings file ${ fullPath } doesn't exist`];
+  }
+}
+
+export async function clearSettings(): Promise<string[]> {
+  const fullPath = path.join(paths.config, 'settings.json');
+
+  try {
+    await fs.promises.access(fullPath);
+    try {
+      await fs.promises.rm(fullPath, { force: true });
+
+      return [];
+    } catch (ex: any) {
+      return [`Failed to delete ${ fullPath } : ${ ex }`];
+    }
+  } catch {
+    return [];
+  }
+}
+
+export async function clearUserProfiles(): Promise<string[]> {
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
+  const skipReasons: string[] = [];
+  // console.log('check settings');
+  // await util.promisify(setTimeout)(2 * 60_000);
+
+  if (platform === 'win32') {
+    for (const type of ['defaults', 'locked']) {
+      try {
+        const { stdout, stderr } = await childProcess.spawnFile('reg',
+          ['query', `HKCU\\SOFTWARE\\Policies\\Rancher Desktop\\${ type }`],
+          { stdio: ['ignore', 'pipe', 'pipe'] });
+
+        if (stderr.length === 0 && stdout.length > 0) {
+          skipReasons.push(`Need to remove registry hive "HKCU\\SOFTWARE\\Policies\\Rancher Desktop\\${ type }"`);
+        }
+      } catch { }
+    }
+
+    return skipReasons;
+  }
+  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileUser);
+
+  for (const fullPath of profilePaths) {
+    try {
+      await fs.promises.rm(fullPath, { force: true });
+    } catch (ex: any) {
+      skipReasons.push(`Failed to delete file ${ fullPath }: ${ ex }`);
+    }
+  }
+
+  return skipReasons;
+}
+
+export function verifyRegistryHive(hive: string): string[] {
+  const haveAProfile = ['defaults', 'locked'].some(async(profileType) => {
+    try {
+      const { stdout } = await childProcess.spawnFile('reg',
+        ['query', `${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ profileType }`],
+        { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      if (stdout.length > 0) {
+        return true;
+      }
+    } catch { }
+
+    return false;
+  });
+
+  return haveAProfile ? [] : [`Need to add registry hive "${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\<defaults or locked>"`];
+}
+
+export async function verifyNoRegistryHive(hive: string): Promise<string[]> {
+  const skipReasons: string[] = [];
+
+  for (const type of ['defaults', 'locked']) {
+    try {
+      const { stdout } = await childProcess.spawnFile('reg',
+        ['query', `${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ type }`],
+        { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      if (stdout.length === 0) {
+        continue;
+      }
+    } catch { }
+    skipReasons.push(`Need to remove registry hive "${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ type }"`);
+  }
+
+  return skipReasons;
+}
+
+function getDeploymentBaseNames(platform: 'linux'|'darwin'): string[] {
+  if (platform === 'linux') {
+    return ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'];
+  } else if (platform === 'darwin') {
+    return ['io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist'];
+  } else {
+    throw new Error(`Unexpected platform ${ platform }`);
+  }
+}
+
+function getDeploymentPaths(platform: 'linux'|'darwin', profileDir: string): string[] {
+  return getDeploymentBaseNames(platform).map(basename => path.join(profileDir, basename))
+}
+
+export async function verifyUserProfiles(): Promise<string[]> {
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
+  // console.log('check settings');
+  // await util.promisify(setTimeout)(2 * 60_000);
+
+  if (platform === 'win32') {
+    return verifyRegistryHive('HKCU');
+  }
+  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileUser);
+  const haveAProfileFile = profilePaths.some(async(fullPath) => {
+    try {
+      await fs.promises.access(fullPath);
+
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  if (!haveAProfileFile) {
+    await createUserProfile(
+      { containerEngine: { allowedImages: { enabled: true } } },
+      { containerEngine: { allowedImages: { enabled: true, patterns: [__filename] } }, kubernetes: { version: 'chaff' } },
+    );
+  }
+
+  return [];
+}
+
+export async function verifyNoSystemProfiles(): Promise<string[]> {
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
+
+  if (platform === 'win32') {
+    return await verifyNoRegistryHive('HKLM');
+  }
+  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
+
+  return profilePaths.filter(fileExistsSync);
+}
+
+export function verifySystemProfiles(): string[] {
+  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
+  // console.log('check settings');
+  // await util.promisify(setTimeout)(2 * 60_000);
+
+  if (platform === 'win32') {
+    return verifyRegistryHive('HKLM');
+  }
+  const fullPaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
+  const haveAProfileFile = fullPaths.some(fileExistsSync);
+
+  return haveAProfileFile ? [] : [`Need to create system profile file ${ fullPaths.join(' and/or ') }`];
 }
