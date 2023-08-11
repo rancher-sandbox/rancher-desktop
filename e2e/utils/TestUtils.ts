@@ -312,25 +312,37 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
   }
 }
 
+export interface startRancherDesktopOptions {
+  tracing?: boolean;
+  mock?: boolean;
+  env?: Record<string, string>;
+  noModalDialogs?: boolean;
+}
+
 /**
  * Run Rancher Desktop; return promise that resolves to commonly-used
  * playwright objects when it has started.
  * @param testPath The path to the test file.
- * @param options.tracing Whether to start tracing (defaults to true).
- * @param options.mock Whether to use the mock backend (defaults to true).
+ * @param options with sub-options:
+ *  options.tracing Whether to start tracing (defaults to true).
+ *  options.mock Whether to use the mock backend (defaults to true).
+ *  options.noModalDialogs Set to false if we want to see the first-run dialog (defaults to true).
  */
-export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean, env?: Record<string, string> }): Promise<ElectronApplication> {
+export async function startRancherDesktop(testPath: string, options?: startRancherDesktopOptions): Promise<ElectronApplication> {
   testInfo = { testPath, startTime: Date.now() };
+  const args = [
+    path.join(__dirname, '../../'),
+    '--disable-gpu',
+    '--whitelisted-ips=',
+    // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
+    '--disable-dev-shm-usage',
+  ];
 
+  if (options?.noModalDialogs ?? false) {
+    args.push('--no-modal-dialogs');
+  }
   const electronApp = await _electron.launch({
-    args: [
-      path.join(__dirname, '../../'),
-      '--disable-gpu',
-      '--whitelisted-ips=',
-      // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-      '--disable-dev-shm-usage',
-      '--no-modal-dialogs',
-    ],
+    args,
     env: {
       ...process.env,
       ...options?.env ?? {},
