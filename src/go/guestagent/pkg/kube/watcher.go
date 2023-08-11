@@ -135,6 +135,12 @@ func WatchForServices(
 			state = stateWatching
 		case stateWatching:
 			select {
+			case <-ctx.Done():
+				log.Debugw("kubernetes watcher: context closed", log.Fields{
+					"error": ctx.Err(),
+				})
+
+				return ctx.Err()
 			case err = <-errorCh:
 				log.Debugw("kubernetes: got error, rolling back", log.Fields{
 					"error": err,
