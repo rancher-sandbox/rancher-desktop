@@ -7,7 +7,7 @@ import util from 'util';
 
 import { expect, Page } from '@playwright/test';
 
-import { createUserProfile, startRancherDesktop, tool } from './TestUtils';
+import { createDefaultSettings, createUserProfile, startRancherDesktop, tool } from './TestUtils';
 import { NavPage } from '../pages/nav-page';
 
 import * as childProcess from '@pkg/utils/childProcess';
@@ -28,11 +28,11 @@ export async function verifySettings(): Promise<string[]> {
 
   try {
     await fs.promises.access(fullPath);
-
-    return [];
   } catch {
-    return [`Settings file ${ fullPath } doesn't exist`];
+    createDefaultSettings();
   }
+
+  return [];
 }
 
 export async function clearSettings(): Promise<string[]> {
