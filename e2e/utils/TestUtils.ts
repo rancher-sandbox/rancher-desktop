@@ -400,7 +400,7 @@ export async function clearSettings(): Promise<string[]> {
 }
 
 export function verifyRegistryHive(hive: string): string[] {
-  const haveAProfile = ['defaults', 'locked'].some(async(profileType) => {
+  const haveProfile = ['defaults', 'locked'].some(async(profileType) => {
     try {
       const { stdout } = await childProcess.spawnFile('reg',
         ['query', `${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ profileType }`],
@@ -414,7 +414,7 @@ export function verifyRegistryHive(hive: string): string[] {
     return false;
   });
 
-  return haveAProfile ? [] : [`Need to add registry hive "${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\<defaults or locked>"`];
+  return haveProfile ? [] : [`Need to add registry hive "${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\<defaults or locked>"`];
 }
 
 export async function verifyNoRegistryHive(hive: string): Promise<string[]> {
@@ -479,7 +479,7 @@ export async function verifyUserProfiles(): Promise<string[]> {
     return verifyRegistryHive('HKCU');
   }
   const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileUser);
-  const haveAProfileFile = profilePaths.some(async(fullPath) => {
+  const haveProfileFile = profilePaths.some(async(fullPath) => {
     try {
       await fs.promises.access(fullPath);
 
@@ -489,7 +489,7 @@ export async function verifyUserProfiles(): Promise<string[]> {
     }
   });
 
-  if (!haveAProfileFile) {
+  if (!haveProfileFile) {
     await createUserProfile(
       { containerEngine: { allowedImages: { enabled: true } } },
       { containerEngine: { allowedImages: { enabled: true, patterns: [__filename] } }, kubernetes: { version: 'chaff' } },
@@ -519,7 +519,7 @@ export function verifySystemProfiles(): string[] {
     return verifyRegistryHive('HKLM');
   }
   const fullPaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
-  const haveAProfileFile = fullPaths.some(fileExistsSync);
+  const haveProfileFile = fullPaths.some(fileExistsSync);
 
-  return haveAProfileFile ? [] : [`Need to create system profile file ${ fullPaths.join(' and/or ') }`];
+  return haveProfileFile ? [] : [`Need to create system profile file ${ fullPaths.join(' and/or ') }`];
 }
