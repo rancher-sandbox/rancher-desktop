@@ -14,21 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import util from 'util';
+import { test } from '@playwright/test';
 
-import { test, expect } from '@playwright/test';
-
-import { NavPage } from './pages/nav-page';
-import {
-  clearSettings, clearUserProfiles, startRancherDesktop, teardown, tool, verifyNoSystemProfiles,
-} from './utils/TestUtils';
-
-import type { ElectronApplication, Page } from '@playwright/test';
+import { clearSettings, clearUserProfiles, testForFirstRunWindow, verifyNoSystemProfiles } from './utils/ProfileUtils';
 
 test.describe.serial('KubernetesBackend', () => {
-  let electronApp: ElectronApplication|undefined;
-  let page: Page;
-  let navPage: NavPage;
   let skipReasons: string[];
   let skipReason = '';
 
@@ -42,66 +32,8 @@ test.describe.serial('KubernetesBackend', () => {
     }
   });
 
-  test.afterAll(() => {
-    if (electronApp) {
-      teardown(electronApp, __filename);
-    }
-  });
-
   test('should start with the first-run window', async() => {
     test.skip(skipReason !== '', skipReason);
-    let windowCount = 0;
-    let windowCountForMainPage = 0;
-
-    electronApp = await startRancherDesktop(__filename, { mock: false, noModalDialogs: false });
-    electronApp.on('window', async(openedPage: Page) => {
-      windowCount += 1;
-      if (windowCount === 1) {
-        try {
-          const button = openedPage.getByText('OK');
-
-          if (button) {
-            await button.click({ timeout: 10_000 });
-          }
-
-          return;
-        } catch (e: any) {
-          console.log(`Attempt to press the OK button failed: ${ e }`);
-        }
-      }
-      navPage = new NavPage(openedPage);
-
-      try {
-        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
-        page = openedPage;
-        windowCountForMainPage = windowCount;
-
-        return;
-      } catch (ex: any) {
-        console.log(`Ignoring failed title-test: ${ ex.toString().substring(0, 10000) }`);
-      }
-    });
-
-    let iter = 0;
-    const start = new Date().valueOf();
-    const limit = 300 * 1_000 + start;
-
-    // eslint-disable-next-line no-unmodified-loop-condition
-    while (page === undefined) {
-      const now = new Date().valueOf();
-
-      iter += 1;
-      if (iter % 100 === 0) {
-        console.log(`waiting for main window, iter ${ iter }...`);
-      }
-      if (now > limit) {
-        throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
-      }
-      await util.promisify(setTimeout)(100);
-    }
-    expect(windowCountForMainPage).toEqual(2);
-    console.log(`Shutting down now because this test is finished...`);
-    await tool('rdctl', 'shutdown', '--verbose');
-    electronApp = undefined;
+    await testForFirstRunWindow();
   });
 });
