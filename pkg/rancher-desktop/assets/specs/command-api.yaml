@@ -523,6 +523,9 @@ components:
                 useRosetta:
                   type: boolean
                   x-rd-platforms: [darwin]
+                vzNAT:
+                  type: boolean
+                  x-rd-platforms: [darwin]
                 proxy:
                   type: object
                   x-rd-platforms: [win32]

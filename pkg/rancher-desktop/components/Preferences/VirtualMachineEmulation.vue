@@ -163,14 +163,20 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         class="col span-6 vz-sub-options"
       >
         <rd-fieldset
-          data-test="useRosetta"
-          :legend-text="t('virtualMachine.useRosetta.legend')"
+          data-test="vzOptions"
+          :legend-text="t('virtualMachine.vzOptions.label')"
         >
           <rd-checkbox
-            :label="t('virtualMachine.useRosetta.label')"
+            :label="t('virtualMachine.vzOptions.rosetta.label')"
             :value="preferences.experimental.virtualMachine.useRosetta"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.useRosetta')"
             @input="onChange('experimental.virtualMachine.useRosetta', $event)"
+          />
+          <rd-checkbox
+            :label="t('virtualMachine.vzOptions.vzNAT.label')"
+            :value="preferences.experimental.virtualMachine.vzNAT"
+            :is-locked="isPreferenceLocked('experimental.virtualMachine.vzNAT')"
+            @input="onChange('experimental.virtualMachine.vzNAT', $event)"
           />
         </rd-fieldset>
       </div>

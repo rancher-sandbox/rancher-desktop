@@ -364,9 +364,12 @@ virtualMachine:
       vz:
         label: VZ
         description: Use the Apple Virtualization framework.
-  useRosetta:
-    legend: VZ Option
-    label: Enable Rosetta support
+  vzOptions:
+    label: VZ Options
+    rosetta:
+      label: Enable Rosetta support
+    vzNAT:
+      label: Enable VZ NAT networking
 
 containerEngine:
   label: Container Engine

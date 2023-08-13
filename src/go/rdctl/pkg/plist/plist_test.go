@@ -277,6 +277,8 @@ func TestJsonToPlistFormat(t *testing.T) {
         <string>qemu</string>
         <key>useRosetta</key>
         <false/>
+				<key>vzNAT</key>
+        <true/>
         <key>proxy</key>
         <dict>
           <key>enabled</key>
