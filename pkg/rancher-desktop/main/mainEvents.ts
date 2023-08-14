@@ -101,6 +101,11 @@ interface MainEventNames {
   'diagnostics-trigger'(id: string): DiagnosticsCheckerResult | undefined;
 
   /**
+   * Emitted on application relaunch.
+   */
+  'relaunch'(): void;
+
+  /**
    * Emitted on application quit.  Note that at this point we're committed to
    * quitting.
    */
