@@ -24,9 +24,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
-var restartVerbose bool
-
 // restartCmd represents the restart command
 var restartCmd = &cobra.Command{
 	Use:   "restart",
@@ -36,14 +33,12 @@ var restartCmd = &cobra.Command{
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
-		if restartVerbose {
+		if commonShutdownSettings.Verbose {
 			logrus.SetLevel(logrus.TraceLevel)
 		}
+		commonShutdownSettings.WaitForShutdown = true
 		cmd.SilenceUsage = true
-		result, err := doShutdown(&shutdownSettingsStruct{
-			Verbose:         restartVerbose,
-			WaitForShutdown: true,
-		}, shutdown.Shutdown)
+		result, err := doShutdown(&commonShutdownSettings, shutdown.Shutdown)
 		if err != nil {
 			return err
 		}
@@ -56,7 +51,7 @@ var restartCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(restartCmd)
-	restartCmd.Flags().BoolVar(&restartVerbose, "verbose", false, "be verbose")
+	restartCmd.Flags().BoolVar(&commonShutdownSettings.Verbose, "verbose", false, "be verbose")
 	restartCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "path to main executable")
 	restartCmd.Flags().BoolVarP(&noModalDialogs, "no-modal-dialogs", "", false, "avoid displaying dialog boxes")
 }
