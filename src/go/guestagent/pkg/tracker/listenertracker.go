@@ -46,6 +46,16 @@ func NewListenerTracker() *ListenerTracker {
 func (l *ListenerTracker) AddListener(ctx context.Context, ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
 
+	var oldListener net.Listener
+
+	l.mutex.Lock()
+	oldListener = l.listeners[addr]
+	l.mutex.Unlock()
+
+	if oldListener != nil {
+		return nil
+	}
+
 	listener, err := listen(ctx, addr)
 	if err != nil {
 		return err
