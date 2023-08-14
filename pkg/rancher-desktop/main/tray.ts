@@ -91,6 +91,15 @@ export class Tray {
     },
     { type: 'separator' },
     {
+      id:    'restart',
+      label: 'Restart Rancher Desktop',
+      type:  'normal',
+      click() {
+        Electron.app.relaunch();
+        Electron.app.exit();
+      }
+    },
+    {
       label: 'Quit Rancher Desktop',
       role:  'quit',
       type:  'normal',
