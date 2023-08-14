@@ -65,6 +65,12 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 			}
 		}
 
+		select {
+		case <-ctx.Done():
+			return nil
+		default: // continue the loop
+		}
+
 		// Wait for next loop
 		time.Sleep(updateInterval)
 	}
