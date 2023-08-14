@@ -105,7 +105,7 @@
     "@nuxtjs/eslint-config-typescript": "12.0.0",
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.1",
-    "@octokit/rest": "19.0.5",
+    "@octokit/rest": "20.0.1",
     "@playwright/test": "1.35.1",
     "@types/dompurify": "3.0.0",
     "@types/ejs": "3.1.2",
