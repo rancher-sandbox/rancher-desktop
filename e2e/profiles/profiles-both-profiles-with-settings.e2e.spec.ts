@@ -16,15 +16,20 @@ limitations under the License.
 
 import { test } from '@playwright/test';
 
-import { clearSettings, clearUserProfiles, testForNoFirstRunWindow, verifySystemProfile } from './utils/ProfileUtils';
+import {
+  testForNoFirstRunWindow,
+  verifySettings,
+  verifySystemProfile,
+  verifyUserProfile,
+} from '../utils/ProfileUtils';
 
-test.describe.serial('KubernetesBackend', () => {
+test.describe.serial('sys-profile with settings', () => {
   let skipReasons: string[];
   let skipReason = '';
 
   test.beforeAll(async() => {
-    skipReasons = (await clearSettings());
-    skipReasons.push(...(await clearUserProfiles()));
+    skipReasons = (await verifySettings());
+    skipReasons.push(...(await verifyUserProfile()));
     skipReasons.push(...(await verifySystemProfile()));
     if (skipReasons.length > 0) {
       skipReason = `Profile requirements for this test: ${ skipReasons.join(', ') }`;

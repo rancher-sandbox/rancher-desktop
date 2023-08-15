@@ -17,11 +17,11 @@ limitations under the License.
 import { test } from '@playwright/test';
 
 import {
+  clearUserProfiles,
   testForNoFirstRunWindow,
   verifySettings,
   verifySystemProfile,
-  verifyUserProfile,
-} from './utils/ProfileUtils';
+} from '../utils/ProfileUtils';
 
 test.describe.serial('sys-profile with settings', () => {
   let skipReasons: string[];
@@ -29,7 +29,7 @@ test.describe.serial('sys-profile with settings', () => {
 
   test.beforeAll(async() => {
     skipReasons = (await verifySettings());
-    skipReasons.push(...(await verifyUserProfile()));
+    skipReasons.push(...(await clearUserProfiles()));
     skipReasons.push(...(await verifySystemProfile()));
     if (skipReasons.length > 0) {
       skipReason = `Profile requirements for this test: ${ skipReasons.join(', ') }`;
