@@ -102,9 +102,11 @@ class E2ETestRunner extends events.EventEmitter {
     try {
       // Don't check for existing deployment profiles if we're doing a deployment-profile e2e test.
       // Note the admittedly weak deciding factor: does the test filename start with the word 'profiles-'?
-      const pathArg = process.argv.find(arg => path.dirname(arg).endsWith('e2e'));
+      const thisScriptArgIndex = process.argv.findIndex(arg => path.basename(arg) === 'e2e.ts');
+      const remainingArgs = process.argv.slice(thisScriptArgIndex + 1);
 
-      if (pathArg && !path.basename(pathArg).startsWith('profiles-')) {
+      if (!remainingArgs.every(arg => arg.includes('profiles') &&
+        (path.basename(arg) === 'profiles' || path.basename(arg).startsWith('profiles-')))) {
         const deploymentProfiles = await readDeploymentProfiles();
 
         if (Object.keys(deploymentProfiles.defaults).length > 0 || Object.keys(deploymentProfiles.locked).length > 0) {
