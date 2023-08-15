@@ -19,7 +19,6 @@ module.exports = {
   ],
   // add your custom rules here
   rules: {
-    'import/namespace':         'off',
     'dot-notation':             'off',
     'generator-star-spacing':   'off',
     'guard-for-in':             'off',
@@ -174,6 +173,7 @@ module.exports.extends.splice(
 module.exports.extends.push('plugin:import/typescript');
 
 Object.assign(module.exports.rules, {
+  'import/namespace':             'off',
   // Allow console.log &c.
   'no-console':                   'off',
   // Allow throw with non-error
