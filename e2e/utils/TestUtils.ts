@@ -447,7 +447,7 @@ function getDeploymentBaseNames(platform: 'linux'|'darwin'): string[] {
 }
 
 function getDeploymentPaths(platform: 'linux'|'darwin', profileDir: string): string[] {
-  return getDeploymentBaseNames(platform).map(basename => path.join(profileDir, basename))
+  return getDeploymentBaseNames(platform).map(basename => path.join(profileDir, basename));
 }
 
 export async function clearUserProfiles(): Promise<string[]> {
