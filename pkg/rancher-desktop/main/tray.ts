@@ -95,8 +95,8 @@ export class Tray {
       label: 'Restart Rancher Desktop',
       type:  'normal',
       click() {
-        mainEvents.emit('relaunch');
-        mainEvents.emit('quit');
+        Electron.app.relaunch();
+        Electron.app.quit();
       }
     },
     {
