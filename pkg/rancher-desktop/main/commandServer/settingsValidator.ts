@@ -31,7 +31,7 @@ type settingsLike = Record<string, any>;
  * @param desiredValue The new value that the user is setting.
  * @param errors An array that any validation errors should be appended to.
  * @param fqname The fully qualified name of the setting, for formatting in error messages.
- * @returns Whether the setting has changed.
+ * @returns boolean - true if the setting has been changed otherwise false.
  */
 type ValidatorFunc<S, C, D> =
   (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => boolean;
@@ -370,12 +370,10 @@ export default class SettingsValidator {
 
   protected checkMulti<S, C, D>(...validators: ValidatorFunc<S, C, D>[]) {
     return (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
-      let retval = true;
+      let retval = false;
 
       for (const validator of validators) {
-        // No further validation is performed if the left-hand side is not truthy.
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND_assignment#description
-        retval &&= validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
+        retval = validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname) || retval;
       }
 
       return retval;
