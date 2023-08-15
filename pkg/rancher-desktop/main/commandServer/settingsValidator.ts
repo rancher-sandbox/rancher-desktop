@@ -370,12 +370,10 @@ export default class SettingsValidator {
 
   protected checkMulti<S, C, D>(...validators: ValidatorFunc<S, C, D>[]) {
     return (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
-      let retval = true;
+      let retval = false;
 
       for (const validator of validators) {
-        // No further validation is performed if the left-hand side is not truthy.
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND_assignment#description
-        retval &&= validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname);
+        retval = validator.call(this, mergedSettings, currentValue, desiredValue, errors, fqname) || retval;
       }
 
       return retval;
