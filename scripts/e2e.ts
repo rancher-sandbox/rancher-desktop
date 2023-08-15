@@ -105,8 +105,7 @@ class E2ETestRunner extends events.EventEmitter {
       const thisScriptArgIndex = process.argv.findIndex(arg => path.basename(arg) === 'e2e.ts');
       const remainingArgs = process.argv.slice(thisScriptArgIndex + 1);
 
-      if (!remainingArgs.every(arg => arg.includes('profiles') &&
-        (path.basename(arg) === 'profiles' || path.basename(arg).startsWith('profiles-')))) {
+      if (!remainingArgs.every(arg => path.basename(arg).startsWith('profiles-'))) {
         const deploymentProfiles = await readDeploymentProfiles();
 
         if (Object.keys(deploymentProfiles.defaults).length > 0 || Object.keys(deploymentProfiles.locked).length > 0) {

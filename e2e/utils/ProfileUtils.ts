@@ -192,7 +192,7 @@ export async function verifyNoSystemProfiles(): Promise<string[]> {
 
   for (const profilePath of profilePaths) {
     if (await fileExists(profilePath)) {
-      existingProfiles.push(profilePath);
+      existingProfiles.push(`Need to delete system profile ${ profilePath }`);
     }
   }
 
