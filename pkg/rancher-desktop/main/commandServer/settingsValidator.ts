@@ -241,7 +241,7 @@ export default class SettingsValidator {
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
-          errors.push(`Setting "${ fqname }" should be a simple value, but got "${ JSON.stringify(newSettings[k]) }".`);
+          errors.push(`Setting "${ fqname }" should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
         }
       } else if (typeof allowedSettings[k] === 'function') {
         const validator: ValidatorFunc<S, any, any> = allowedSettings[k];

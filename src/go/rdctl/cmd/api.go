@@ -77,7 +77,7 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 		endpoint = fmt.Sprintf("/%s", versionCommand(apiVersion, endpoint))
 	}
 	if apiSettings.InputFile != "" && apiSettings.Body != "" {
-		return fmt.Errorf(`api command: "--body" and "--input" options cannot both be specified`)
+		return fmt.Errorf("api command: --body and --input options cannot both be specified")
 	}
 	// No longer emit usage info on errors
 	cmd.SilenceUsage = true
