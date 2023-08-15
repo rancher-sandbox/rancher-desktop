@@ -31,7 +31,7 @@ type settingsLike = Record<string, any>;
  * @param desiredValue The new value that the user is setting.
  * @param errors An array that any validation errors should be appended to.
  * @param fqname The fully qualified name of the setting, for formatting in error messages.
- * @returns Whether the setting has changed.
+ * @returns boolean - true if the setting has been changed otherwise false.
  */
 type ValidatorFunc<S, C, D> =
   (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => boolean;
