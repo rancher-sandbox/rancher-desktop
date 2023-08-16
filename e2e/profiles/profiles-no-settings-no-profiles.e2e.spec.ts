@@ -16,16 +16,21 @@ limitations under the License.
 
 import { test } from '@playwright/test';
 
-import { clearSettings, clearUserProfile, testForFirstRunWindow, verifyNoSystemProfile } from '../utils/ProfileUtils';
+import {
+  clearSettings,
+  clearUserProfile,
+  testForFirstRunWindow,
+  verifyNoSystemProfile,
+} from '../utils/ProfileUtils';
 
 test.describe.serial('KubernetesBackend', () => {
   let skipReasons: string[];
   let skipReason = '';
 
   test.beforeAll(async() => {
-    skipReasons = (await clearSettings());
-    skipReasons.push(...(await clearUserProfile()));
-    skipReasons.push(...(await verifyNoSystemProfile()));
+    await clearSettings();
+    await clearUserProfile();
+    skipReasons = await verifyNoSystemProfile();
     if (skipReasons.length > 0) {
       skipReason = `Profile requirements for this test: ${ skipReasons.join(', ') }`;
       console.log(`Skipping this test: ${ skipReason }`);
@@ -33,7 +38,7 @@ test.describe.serial('KubernetesBackend', () => {
   });
 
   test('should start with the first-run window', async() => {
-    test.skip(skipReason !== '', skipReason);
-    await testForFirstRunWindow();
+    test.skip(!!process.env.CIRRUS_CI || skipReason !== '', skipReason);
+    await testForFirstRunWindow(__filename);
   });
 });

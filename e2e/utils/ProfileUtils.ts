@@ -7,47 +7,31 @@ import util from 'util';
 
 import { expect, Page } from '@playwright/test';
 
-import { createDefaultSettings, createUserProfile, startRancherDesktop, tool } from './TestUtils';
+import {
+  createDefaultSettings, createUserProfile, startRancherDesktop, retry, teardown,
+} from './TestUtils';
 import { NavPage } from '../pages/nav-page';
 
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 
-export async function clearSettings(): Promise<string[]> {
+export async function clearSettings(): Promise<void> {
   const fullPath = path.join(paths.config, 'settings.json');
 
-  try {
-    await fs.promises.access(fullPath);
-    try {
-      await fs.promises.rm(fullPath, { force: true });
-
-      return [];
-    } catch (ex: any) {
-      return [`Failed to delete ${ fullPath } : ${ ex }`];
-    }
-  } catch {
-    return [];
-  }
+  await fs.promises.rm(fullPath, { force: true });
 }
 
-export async function clearUserProfile(): Promise<string[]> {
+export async function clearUserProfile(): Promise<void> {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
-  const skipReasons: string[] = [];
 
   if (platform === 'win32') {
-    return await verifyNoRegistryHive('HKCU');
+    return await verifyNoRegistrySubtree('HKCU');
   }
   const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileUser);
 
   for (const fullPath of profilePaths) {
-    try {
-      await fs.promises.rm(fullPath, { force: true });
-    } catch (ex: any) {
-      skipReasons.push(`Failed to delete file ${ fullPath }: ${ ex }`);
-    }
+    await fs.promises.rm(fullPath, { force: true });
   }
-
-  return skipReasons;
 }
 
 async function fileExists(fullPath: string): Promise<boolean> {
@@ -71,123 +55,90 @@ function getDeploymentBaseNames(platform: 'linux'|'darwin'): string[] {
 }
 
 function getDeploymentPaths(platform: 'linux'|'darwin', profileDir: string): string[] {
-  return getDeploymentBaseNames(platform).map(basename => path.join(profileDir, basename));
+  let baseNames = getDeploymentBaseNames(platform);
+
+  if (platform === 'linux' && profileDir === paths.deploymentProfileSystem) {
+    // macOS profile base-names are the same in both directories
+    // linux ones change...
+    baseNames = baseNames.map(s => s.replace('rancher-desktop.', ''));
+  }
+
+  return baseNames.map(baseName => path.join(profileDir, baseName));
 }
 
-export async function hasRegistryHive(hive: string): Promise<boolean> {
+async function hasSystemRegistrySubtree(): Promise<boolean> {
   for (const profileType of ['defaults', 'locked']) {
-    try {
-      const { stdout } = await childProcess.spawnFile('reg',
-        ['query', `${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ profileType }`],
-        { stdio: ['ignore', 'pipe', 'pipe'] });
+    for (const variant of ['Policies\\Rancher Desktop', 'Rancher Desktop\\Profile']) {
+      try {
+        const { stdout } = await childProcess.spawnFile('reg',
+          ['query', `HKLM\\SOFTWARE\\${ variant }\\${ profileType }`],
+          { stdio: ['ignore', 'pipe', 'pipe'] });
 
-      if (stdout.length > 0) {
-        return true;
-      }
-    } catch { }
+        if (stdout.length > 0) {
+          return true;
+        }
+      } catch { }
+    }
   }
 
   return false;
 }
 
-export async function hasUserProfile(): Promise<boolean> {
-  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
-
-  if (platform === 'win32') {
-    return await hasRegistryHive('HKCU');
+export async function verifySystemRegistrySubtree(): Promise<string[]> {
+  if (await hasSystemRegistrySubtree()) {
+    return [];
+  } else {
+    return [`Need to add registry subtree "HKLM\\SOFTWARE\\Policies\\Rancher Desktop\\<defaults or locked>"`];
   }
-
-  for (const profilePath of getDeploymentPaths(platform, paths.deploymentProfileUser)) {
-    try {
-      await fs.promises.access(profilePath);
-
-      return true;
-    } catch { }
-  }
-
-  return false;
 }
 
-export async function verifyRegistryHive(hive: string): Promise<string[]> {
-  let hasProfile = false;
-
-  for (const profileType of ['defaults', 'locked']) {
-    try {
-      const { stdout } = await childProcess.spawnFile('reg',
-        ['query', `${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ profileType }`],
-        { stdio: ['ignore', 'pipe', 'pipe'] });
-
-      if (stdout.length > 0) {
-        hasProfile = true;
-        break;
-      }
-    } catch { }
-  }
-
-  return hasProfile ? [] : [`Need to add registry hive "${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\<defaults or locked>"`];
-}
-
-export async function verifySettings(): Promise<string[]> {
+export async function verifySettings(): Promise<void> {
   const fullPath = path.join(paths.config, 'settings.json');
 
-  try {
-    await fs.promises.access(fullPath);
-  } catch {
+  if (!await fileExists(fullPath)) {
     createDefaultSettings();
   }
-
-  return [];
 }
 
-export async function verifyNoRegistryHive(hive: string): Promise<string[]> {
-  const skipReasons: string[] = [];
+export async function verifyNoRegistrySubtree(hive: string): Promise<void> {
+  for (const variant of ['Policies\\Rancher Desktop', 'Rancher Desktop\\Profile']) {
+    const registryPath = `${ hive }\\SOFTWARE\\${ variant }`;
 
-  for (const profileType of ['defaults', 'locked']) {
     try {
       const { stdout } = await childProcess.spawnFile('reg',
-        ['query', `${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ profileType }`],
+        ['query', registryPath],
         { stdio: ['ignore', 'pipe', 'pipe'] });
 
       if (stdout.length === 0) {
         continue;
       }
-    } catch { }
-    skipReasons.push(`Need to remove registry hive "${ hive }\\SOFTWARE\\Policies\\Rancher Desktop\\${ profileType }"`);
+    } catch {
+      continue;
+    }
+    try {
+      await childProcess.spawnFile('reg', ['delete', registryPath, '/f'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    } catch (ex: any) {
+      throw new Error(`Need to remove registry hive "${ registryPath }" (tried, got error ${ ex }`);
+    }
   }
-
-  return skipReasons;
 }
 
-export async function verifyUserProfile(): Promise<string[]> {
-  const platform = os.platform() as 'win32' | 'darwin' | 'linux';
-  // console.log('check settings');
-  // await util.promisify(setTimeout)(2 * 60_000);
-
-  if (platform === 'win32') {
-    return verifyRegistryHive('HKCU');
-  }
-  for (const profilePath of getDeploymentPaths(platform, paths.deploymentProfileUser)) {
-    try {
-      await fs.promises.access(profilePath);
-
-      return [];
-    } catch { }
-  }
-  await createUserProfile(
-    { containerEngine: { allowedImages: { enabled: true } } },
-    { containerEngine: { allowedImages: { enabled: true, patterns: [__filename] } }, kubernetes: { version: 'chaff' } },
-  );
-
-  return [];
+export async function verifyUserProfile(): Promise<void> {
+  await clearUserProfile();
+  await createUserProfile({ containerEngine: { allowedImages: { enabled: true } } }, null);
 }
 
 export async function verifyNoSystemProfile(): Promise<string[]> {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
   if (platform === 'win32') {
-    return await verifyNoRegistryHive('HKLM');
+    try {
+      await verifyNoRegistrySubtree('HKLM');
+    } catch (ex: any) {
+      return [ex.message];
+    }
   }
-  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
+  const profilePaths = getDeploymentPaths(platform as 'linux'|'darwin', paths.deploymentProfileSystem);
   const existingProfiles = [];
 
   for (const profilePath of profilePaths) {
@@ -201,11 +152,9 @@ export async function verifyNoSystemProfile(): Promise<string[]> {
 
 export async function verifySystemProfile(): Promise<string[]> {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
-  // console.log('check settings');
-  // await util.promisify(setTimeout)(2 * 60_000);
 
   if (platform === 'win32') {
-    return await verifyRegistryHive('HKLM');
+    return await verifySystemRegistrySubtree();
   }
   const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
 
@@ -224,32 +173,32 @@ export async function verifySystemProfile(): Promise<string[]> {
 // 2. Verify the main window is the first window
 // 3. Verify we get a fatal error and it's captured in a log file.
 
-export async function testForFirstRunWindow() {
+export async function testForFirstRunWindow(testPath: string) {
   let page: Page|undefined;
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
-  const electronApp = await startRancherDesktop(__filename, { mock: false, noModalDialogs: false });
+  const electronApp = await startRancherDesktop(testPath, { mock: false, noModalDialogs: false });
 
   electronApp.on('window', async(openedPage: Page) => {
     windowCount += 1;
     if (windowCount === 1) {
-      try {
+      await retry(async() => {
         const button = openedPage.getByText('OK');
 
         if (button) {
           await button.click({ timeout: 10_000 });
         }
+      }, { delay: 100, tries: 50 });
 
-        return;
-      } catch (e: any) {
-        console.log(`Attempt to press the OK button failed: ${ e }`);
-      }
+      return;
     }
     navPage = new NavPage(openedPage);
 
     try {
-      await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+      await retry(async() => {
+        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+      });
       page = openedPage;
       windowCountForMainPage = windowCount;
 
@@ -258,42 +207,48 @@ export async function testForFirstRunWindow() {
       console.log(`Ignoring failed title-test: ${ ex.toString().substring(0, 10000) }`);
     }
   });
+  try {
+    let iter = 0;
+    const start = new Date().valueOf();
+    const limit = 300 * 1_000 + start;
 
-  let iter = 0;
-  const start = new Date().valueOf();
-  const limit = 300 * 1_000 + start;
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (page === undefined) {
+      const now = new Date().valueOf();
 
-  // eslint-disable-next-line no-unmodified-loop-condition
-  while (page === undefined) {
-    const now = new Date().valueOf();
-
-    iter += 1;
-    if (iter % 100 === 0) {
-      console.log(`waiting for main window, iter ${ iter }...`);
+      iter += 1;
+      if (iter % 100 === 0) {
+        console.log(`waiting for main window, iter ${ iter }...`);
+      }
+      if (now > limit) {
+        throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
+      }
+      await util.promisify(setTimeout)(100);
     }
-    if (now > limit) {
-      throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
-    }
-    await util.promisify(setTimeout)(100);
+    expect(windowCountForMainPage).toEqual(2);
+    console.log(`Shutting down now because this test is finished...`);
+  } finally {
+    await teardown(electronApp, testPath);
   }
-  expect(windowCountForMainPage).toEqual(2);
-  console.log(`Shutting down now because this test is finished...`);
-  await tool('rdctl', 'shutdown', '--verbose');
 }
 
-export async function testForNoFirstRunWindow() {
+// See comments above testForFirstRunWindow for an explanation of this function.
+
+export async function testForNoFirstRunWindow(testPath: string) {
   let page: Page|undefined;
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
-  const electronApp = await startRancherDesktop(__filename, { mock: false, noModalDialogs: false });
+  const electronApp = await startRancherDesktop(testPath, { mock: false, noModalDialogs: false });
 
   electronApp.on('window', async(openedPage: Page) => {
     windowCount += 1;
     navPage = new NavPage(openedPage);
 
     try {
-      await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+      await retry(async() => {
+        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+      });
       page = openedPage;
       windowCountForMainPage = windowCount;
 
@@ -310,28 +265,32 @@ export async function testForNoFirstRunWindow() {
       console.error(`Expecting to get an error when clicking on a non-button: ${ e }`, e);
     }
   });
+  try {
+    let iter = 0;
+    const start = new Date().valueOf();
+    const limit = 300 * 1_000 + start;
 
-  let iter = 0;
-  const start = new Date().valueOf();
-  const limit = 300 * 1_000 + start;
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (page === undefined) {
+      const now = new Date().valueOf();
 
-  // eslint-disable-next-line no-unmodified-loop-condition
-  while (page === undefined) {
-    const now = new Date().valueOf();
-
-    iter += 1;
-    if (iter % 100 === 0) {
-      console.log(`waiting for main window, iter ${ iter }...`);
+      iter += 1;
+      if (iter % 100 === 0) {
+        console.log(`waiting for main window, iter ${ iter }...`);
+      }
+      if (now > limit) {
+        throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
+      }
+      await util.promisify(setTimeout)(100);
     }
-    if (now > limit) {
-      throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
-    }
-    await util.promisify(setTimeout)(100);
+    expect(windowCountForMainPage).toEqual(1);
+    console.log(`Shutting down now because this test is finished...`);
+  } finally {
+    await teardown(electronApp, testPath);
   }
-  expect(windowCountForMainPage).toEqual(1);
-  console.log(`Shutting down now because this test is finished...`);
-  await tool('rdctl', 'shutdown', '--verbose');
 }
+
+// See comments above testForFirstRunWindow for an explanation of this function.
 
 export async function runWaitForLogfile(testPath: string, logPath: string) {
   let windowCount = 0;
@@ -341,29 +300,39 @@ export async function runWaitForLogfile(testPath: string, logPath: string) {
     windowCount += 1;
     console.log('There should be no windows for this test.');
   });
+  try {
+    let iter = 0;
+    const start = new Date().valueOf();
+    const limit = 300 * 1_000 + start;
 
-  let iter = 0;
-  const start = new Date().valueOf();
-  const limit = 300 * 1_000 + start;
+    while (true) {
+      const now = new Date().valueOf();
 
-  while (true) {
-    const now = new Date().valueOf();
+      iter += 1;
+      if (iter % 100 === 0) {
+        console.log(`waiting for logs, iter ${ iter }...`);
+      }
+      try {
+        const statInfo = await fs.promises.lstat(logPath);
 
-    iter += 1;
-    if (iter % 100 === 0) {
-      console.log(`waiting for logs, iter ${ iter }...`);
-    }
-    try {
-      const statInfo = await fs.promises.lstat(logPath);
-
-      if (statInfo && statInfo.size > 160) {
+        if (statInfo && statInfo.size > 160) {
+          break;
+        }
+      } catch {}
+      if (now > limit) {
+        throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
+      }
+      if (windowCount > 0) {
         break;
       }
-    } catch {}
-    if (now > limit) {
-      throw new Error(`timed out waiting for ${ limit / 1000 } seconds`);
+      await util.promisify(setTimeout)(100);
     }
-    await util.promisify(setTimeout)(100);
+  } finally {
+    try {
+      // Race condition: the app might have already shut down due to the fatal profile error.
+      await teardown(electronApp, testPath);
+    } catch {
+    }
   }
 
   return windowCount;

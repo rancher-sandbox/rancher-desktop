@@ -17,28 +17,24 @@ limitations under the License.
 import { test } from '@playwright/test';
 
 import {
-  clearSettings,
   clearUserProfile,
   testForNoFirstRunWindow,
   verifyNoSystemProfile,
-  verifyUserProfile,
+  verifySettings,
 } from '../utils/ProfileUtils';
 
-test.describe.serial('KubernetesBackend', () => {
+test.describe.serial('sys-profile with settings', () => {
   let skipReasons: string[];
   let skipReason = '';
 
   test.beforeAll(async() => {
-    await clearSettings();
-    await verifyUserProfile();
+    await verifySettings();
+    await clearUserProfile();
     skipReasons = await verifyNoSystemProfile();
     if (skipReasons.length > 0) {
       skipReason = `Profile requirements for this test: ${ skipReasons.join(', ') }`;
       console.log(`Skipping this test: ${ skipReason }`);
     }
-  });
-  test.afterAll(async() => {
-    await clearUserProfile();
   });
 
   test('should start with the main window', async() => {

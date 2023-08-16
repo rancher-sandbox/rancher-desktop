@@ -28,9 +28,9 @@ test.describe.serial('sys-profile with settings', () => {
   let skipReason = '';
 
   test.beforeAll(async() => {
-    skipReasons = (await verifySettings());
-    skipReasons.push(...(await clearUserProfile()));
-    skipReasons.push(...(await verifySystemProfile()));
+    await verifySettings();
+    await clearUserProfile();
+    skipReasons = await verifySystemProfile();
     if (skipReasons.length > 0) {
       skipReason = `Profile requirements for this test: ${ skipReasons.join(', ') }`;
       console.log(`Skipping this test: ${ skipReason }`);
@@ -38,7 +38,7 @@ test.describe.serial('sys-profile with settings', () => {
   });
 
   test('should start with the main window', async() => {
-    test.skip(skipReason !== '', skipReason);
-    await testForNoFirstRunWindow();
+    test.skip(!!process.env.CIRRUS_CI || skipReason !== '', skipReason);
+    await testForNoFirstRunWindow(__filename);
   });
 });

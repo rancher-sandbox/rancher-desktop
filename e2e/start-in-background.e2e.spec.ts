@@ -1,8 +1,10 @@
 import path from 'path';
 
-import { test, expect, _electron, ElectronApplication } from '@playwright/test';
+import { test, expect, ElectronApplication } from '@playwright/test';
 
-import { createDefaultSettings, packageLogs, startRancherDesktop, teardownApp } from './utils/TestUtils';
+import {
+  createDefaultSettings, packageLogs, startRancherDesktop, teardownApp, tool,
+} from './utils/TestUtils';
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
@@ -20,7 +22,7 @@ test.describe.serial('startInBackground setting', () => {
     await expect(checkWindowOpened(electronApp)).resolves.toBe(true);
     const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-startInBackgroundFalse.zip`);
 
-    electronApp.context().tracing.stop({ path: tracePath });
+    await electronApp.context().tracing.stop({ path: tracePath });
     await teardownApp(electronApp);
   });
 
@@ -29,9 +31,10 @@ test.describe.serial('startInBackground setting', () => {
     const electronApp = await startRancherDesktop(__filename);
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(false);
+    await tool('rdctl', 'set', '--application.start-in-background=false');
     const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-startInBackgroundTrue.zip`);
 
-    electronApp.context().tracing.stop({ path: tracePath });
+    await electronApp.context().tracing.stop({ path: tracePath });
     await teardownApp(electronApp);
   });
 });

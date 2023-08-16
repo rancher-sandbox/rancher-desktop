@@ -46,9 +46,9 @@ test.describe.serial('KubernetesBackend', () => {
 
   test.beforeAll(async() => {
     await fs.promises.rm(logPath, { force: true });
-    skipReasons = (await clearSettings());
-    skipReasons.push(...(await clearUserProfile()));
-    skipReasons.push(...(await verifyNoSystemProfile()));
+    await clearSettings();
+    await clearUserProfile();
+    skipReasons = await verifyNoSystemProfile();
     switch (process.platform) {
     case 'darwin':
       await createInvalidDarwinUserProfile(`<?xml version="1.0" encoding="UTF-8"?>
@@ -64,7 +64,7 @@ test.describe.serial('KubernetesBackend', () => {
       break;
     case 'linux':
       await createInvalidLinuxUserProfile(`{"kubernetes":{"version":["str`);
-      errorMatcher = new RegExp(`Error in ${ path.join(paths.deploymentProfileUser, 'rancher-desktop.defaults.json') }.*Unfinished string at EOF`);
+      errorMatcher = new RegExp(`Error starting up: DeploymentProfileError: Error parsing deployment profile from ${ path.join(paths.deploymentProfileUser, 'rancher-desktop.defaults.json') }: SyntaxError: Unterminated string in JSON`);
       break;
     case 'win32':
       skipReasons.push(`This test doesn't make sense on Windows yet`);
@@ -78,8 +78,16 @@ test.describe.serial('KubernetesBackend', () => {
     }
   });
 
+  test.afterAll(async() => {
+    // The invalid user-profiles can interfere with subsequent tests.
+    await clearSettings();
+    if (process.platform !== 'win32') {
+      await clearUserProfile();
+    }
+  });
+
   test('should see logs complaining about invalid profile structure', async() => {
-    test.skip(skipReason !== '', skipReason);
+    test.skip(!!process.env.CIRRUS_CI || skipReason !== '', skipReason);
     const windowCount = await runWaitForLogfile(__filename, logPath);
     const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 

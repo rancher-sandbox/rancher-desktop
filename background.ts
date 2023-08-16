@@ -298,8 +298,8 @@ Electron.app.whenReady().then(async() => {
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
-  } catch (ex) {
-    console.error('Error starting up:', ex);
+  } catch (ex: any) {
+    console.error(`Error starting up: ${ ex }`, ex.stack);
     gone = true;
     Electron.app.quit();
   }
