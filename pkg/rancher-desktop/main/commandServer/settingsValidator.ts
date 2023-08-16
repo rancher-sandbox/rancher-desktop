@@ -230,7 +230,7 @@ export default class SettingsValidator {
         if (typeof (newSettings[k]) === 'object') {
           changeNeeded = this.checkProposedSettings(mergedSettings, allowedSettings[k], currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
-          errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
+          errors.push(`Setting "${ fqname }" should wrap an inner object, but got <${ newSettings[k] }>.`);
         }
       } else if (typeof (newSettings[k]) === 'object') {
         if (typeof allowedSettings[k] === 'function') {
@@ -241,7 +241,7 @@ export default class SettingsValidator {
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
-          errors.push(`Setting ${ fqname } should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
+          errors.push(`Setting "${ fqname }" should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
         }
       } else if (typeof allowedSettings[k] === 'function') {
         const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
@@ -255,7 +255,7 @@ export default class SettingsValidator {
 
         if (isLocked) {
           // A delayed error condition, raised only if we try to change a field in a locked object
-          errors.push(`field '${ prefix }.${ k }' is locked`);
+          errors.push(`field "${ prefix }.${ k }" is locked`);
         } else {
           changeNeeded = true;
         }
@@ -266,7 +266,7 @@ export default class SettingsValidator {
   }
 
   protected invalidSettingMessage(fqname: string, desiredValue: any): string {
-    return `Invalid value for ${ fqname }: <${ JSON.stringify(desiredValue) }>`;
+    return `Invalid value for "${ fqname }": <${ JSON.stringify(desiredValue) }>`;
   }
 
   /**
@@ -423,7 +423,7 @@ export default class SettingsValidator {
         return false;
       }
       if (!validValues.includes(desiredValue)) {
-        errors.push(`Invalid value for ${ fqname }: <${ JSON.stringify(desiredValue) }>; ${ explanation }`);
+        errors.push(`Invalid value for "${ fqname }": <${ JSON.stringify(desiredValue) }>; ${ explanation }`);
 
         return false;
       }
@@ -456,7 +456,7 @@ export default class SettingsValidator {
   }
 
   protected notSupported(fqname: string) {
-    return `Changing field ${ fqname } via the API isn't supported.`;
+    return `Changing field "${ fqname }" via the API isn't supported.`;
   }
 
   protected checkUnchanged<S>(mergedSettings: S, currentValue: any, desiredValue: any, errors: string[], fqname: string): boolean {
@@ -503,7 +503,7 @@ export default class SettingsValidator {
 
     if (duplicateValues.length > 0) {
       duplicateValues.sort(Intl.Collator().compare);
-      errors.push(`field '${ fqname }' has duplicate entries: "${ duplicateValues.join('", "') }"`);
+      errors.push(`field "${ fqname }" has duplicate entries: "${ duplicateValues.join('", "') }"`);
 
       return false;
     }

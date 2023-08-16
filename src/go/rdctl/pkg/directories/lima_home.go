@@ -66,7 +66,7 @@ func getOSMajorVersion() (int, error) {
 	}
 	before, _, found := strings.Cut(string(version), ".")
 	if !found || len(before) == 0 {
-		return -1, fmt.Errorf("Expected a version string, got: %s", string(version))
+		return -1, fmt.Errorf("Expected a version string, got: %q", string(version))
 	}
 	return strconv.Atoi(before)
 }

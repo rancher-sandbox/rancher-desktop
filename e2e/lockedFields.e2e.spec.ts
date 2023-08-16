@@ -123,12 +123,12 @@ test.describe('Locked fields', () => {
     await expect(rdctl(['set', `--container-engine.allowed-images.enabled=${ newEnabled }`]))
       .resolves.toMatchObject({
         stdout: '',
-        stderr: expect.stringContaining("field 'containerEngine.allowedImages.enabled' is locked"),
+        stderr: expect.stringContaining(`field "containerEngine.allowedImages.enabled" is locked`),
       });
     await expect(rdctl(['set', `--kubernetes.version=${ proposedK8sVersion }`]))
       .resolves.toMatchObject({
         stdout: '',
-        stderr: expect.stringContaining("field 'kubernetes.version' is locked"),
+        stderr: expect.stringContaining(`field "kubernetes.version" is locked`),
       });
     await expect(rdctl(['set', `--kubernetes.version=${ lockedK8sVersion }`]))
       .resolves.toMatchObject({

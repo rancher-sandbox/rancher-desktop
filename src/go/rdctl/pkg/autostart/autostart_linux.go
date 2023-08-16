@@ -118,7 +118,7 @@ func findApplicationFilePath() (string, error) {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
-			return "", fmt.Errorf("failed to read data dir %s: %w", dataDir, err)
+			return "", fmt.Errorf("failed to read data dir %q: %w", dataDir, err)
 		}
 		for _, dirEntry := range dirEntries {
 			fileName := dirEntry.Name()
@@ -137,7 +137,7 @@ func getAutostartFileData() (autostartFileData, error) {
 	rancherDesktopSymlinkPath := filepath.Join(xdg.Home, ".rd", "bin", "rancher-desktop")
 	appImagePath, err := filepath.EvalSymlinks(rancherDesktopSymlinkPath)
 	if err != nil {
-		return autostartFileData{}, fmt.Errorf("failed to resolve %s: %w", rancherDesktopSymlinkPath, err)
+		return autostartFileData{}, fmt.Errorf("failed to resolve %q: %w", rancherDesktopSymlinkPath, err)
 	}
 
 	return autostartFileData{

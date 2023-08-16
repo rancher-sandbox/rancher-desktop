@@ -80,7 +80,7 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 					logrus.Errorf("Ignoring error trying to delete lima subtree: %s", err)
 				}
 			default:
-				return fmt.Errorf("internal error: unknown shutdown initiating command of '%s'", initiatingCommand)
+				return fmt.Errorf("internal error: unknown shutdown initiating command of %q", initiatingCommand)
 			}
 		}
 	}
@@ -94,7 +94,7 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 	case "linux":
 		return s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
 	default:
-		return fmt.Errorf("unhandled runtime: %s", runtime.GOOS)
+		return fmt.Errorf("unhandled runtime: %q", runtime.GOOS)
 	}
 }
 

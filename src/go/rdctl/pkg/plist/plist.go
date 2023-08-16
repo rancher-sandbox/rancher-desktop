@@ -119,7 +119,7 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 		}
 		return []string{fmt.Sprintf("%s<string>%s</string>", indent, escapedString)}, nil
 	}
-	return nil, fmt.Errorf("convertToPListLines: don't know how to process kind: %s, (%T), value: %v", kind, v, v)
+	return nil, fmt.Errorf("convertToPListLines: don't know how to process kind: %q, (%T), value: %v", kind, v, v)
 }
 
 func xmlEscapeText(s string) (string, error) {

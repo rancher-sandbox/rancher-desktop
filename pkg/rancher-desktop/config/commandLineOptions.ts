@@ -136,7 +136,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
   if (errors.length > 0) {
     const errorString = `Error in command-line options:\n${ errors.join('\n') }`;
 
-    if (errors.some(error => /field '.+?' is locked/.test(error))) {
+    if (errors.some(error => /field ".+?" is locked/.test(error))) {
       throw new LockedFieldError(errorString);
     }
     throw new Error(errorString);

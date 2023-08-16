@@ -178,7 +178,7 @@ func removePathManagement(dotFiles []string) error {
 		newContents := strings.Join(newParts, "")
 		filestat, err := os.Stat(dotFile)
 		if err != nil {
-			return fmt.Errorf("error trying to stat %s: %w", dotFile, err)
+			return fmt.Errorf("error trying to stat %q: %w", dotFile, err)
 		}
 		if err = os.WriteFile(dotFile, []byte(newContents), filestat.Mode()); err != nil {
 			logrus.Errorf("error trying to update %s: %s\n", dotFile, err)

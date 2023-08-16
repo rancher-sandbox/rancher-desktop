@@ -181,7 +181,7 @@ describe(SettingsValidator, () => {
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: false,
-            errors:       [`Invalid value for ${ prefix }${ key }: <${ JSON.stringify(invalidValue) }>`],
+            errors:       [`Invalid value for "${ prefix }${ key }": <${ JSON.stringify(invalidValue) }>`],
           });
         });
 
@@ -248,7 +248,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       [expect.stringContaining('Invalid value for containerEngine.name: <"">;')],
+        errors:       [expect.stringContaining('Invalid value for "containerEngine.name": <"">;')],
       });
     });
 
@@ -276,7 +276,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       [expect.stringContaining('Invalid value for containerEngine.name: <"pikachu">; must be one of ["containerd","moby","docker"]')],
+        errors:       [expect.stringContaining('Invalid value for "containerEngine.name": <"pikachu">; must be one of ["containerd","moby","docker"]')],
       });
     });
   });
@@ -301,7 +301,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       ["Changing field WSL.integrations via the API isn't supported."],
+        errors:       [`Changing field "WSL.integrations" via the API isn't supported.`],
       });
     });
 
@@ -310,7 +310,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       ['Invalid value for WSL.integrations.distribution: <3>'],
+        errors:       ['Invalid value for "WSL.integrations.distribution": <3>'],
       });
     });
 
@@ -407,7 +407,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       [`Invalid value for application.pathManagementStrategy: <"invalid value">; must be one of ["manual","rcfiles"]`],
+        errors:       [`Invalid value for "application.pathManagementStrategy": <"invalid value">; must be one of ["manual","rcfiles"]`],
       });
     });
   });
@@ -426,7 +426,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       [`field 'containerEngine.allowedImages.patterns' has duplicate entries: "pattern2"`],
+        errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern2"'],
       });
     });
     it('complains about multiple duplicates', () => {
@@ -442,7 +442,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       [`field 'containerEngine.allowedImages.patterns' has duplicate entries: "pattern1", "Pattern2"`],
+        errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern1", "Pattern2"'],
       });
     });
   });
@@ -468,7 +468,7 @@ describe(SettingsValidator, () => {
 
             expect({ needToUpdate, errors }).toEqual({
               needToUpdate: false,
-              errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
+              errors:       ['field "containerEngine.allowedImages.enabled" is locked'],
             });
           });
           it('can be set to the same value', () => {
@@ -498,7 +498,7 @@ describe(SettingsValidator, () => {
 
             expect({ needToUpdate, errors }).toEqual({
               needToUpdate: false,
-              errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+              errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
             });
           });
 
@@ -514,7 +514,7 @@ describe(SettingsValidator, () => {
 
             expect({ needToUpdate, errors }).toEqual({
               needToUpdate: false,
-              errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+              errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
             });
           });
 
@@ -585,14 +585,14 @@ describe(SettingsValidator, () => {
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: false,
-            errors:       ["field 'containerEngine.allowedImages.enabled' is locked"],
+            errors:       ['field "containerEngine.allowedImages.enabled" is locked'],
           });
 
           input = { containerEngine: { allowedImages: { patterns: ['picasso'].concat(currentPatterns) } } };
           ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: false,
-            errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+            errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
           });
 
           input = { containerEngine: { allowedImages: { patterns: currentPatterns.slice(1) } } };
@@ -600,7 +600,7 @@ describe(SettingsValidator, () => {
 
           expect({ needToUpdate, errors }).toEqual({
             needToUpdate: false,
-            errors:       ["field 'containerEngine.allowedImages.patterns' is locked"],
+            errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
           });
         });
 
@@ -657,7 +657,7 @@ describe(SettingsValidator, () => {
 
     expect({ needToUpdate, errors }).toEqual({
       needToUpdate: false,
-      errors:       Object.keys(unchangeableFieldsAndValues).map(key => `Changing field ${ key } via the API isn't supported.`),
+      errors:       Object.keys(unchangeableFieldsAndValues).map(key => `Changing field "${ key }" via the API isn't supported.`),
     });
   });
 
@@ -666,7 +666,7 @@ describe(SettingsValidator, () => {
 
     expect(needToUpdate).toBeFalsy();
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toContain('Setting kubernetes should wrap an inner object, but got <5>');
+    expect(errors[0]).toContain('Setting "kubernetes" should wrap an inner object, but got <5>');
 
     [needToUpdate, errors] = subject.validateSettings(cfg, {
       containerEngine: { name: { expected: 'a string' } as unknown as settings.ContainerEngine },
@@ -679,9 +679,9 @@ describe(SettingsValidator, () => {
     expect(needToUpdate).toBeFalsy();
     expect(errors).toHaveLength(3);
     expect(errors).toEqual([
-      `Invalid value for containerEngine.name: <{"expected":"a string"}>; must be one of ["containerd","moby","docker"]`,
+      `Invalid value for "containerEngine.name": <{"expected":"a string"}>; must be one of ["containerd","moby","docker"]`,
       'Kubernetes version "[object Object]" not found.',
-      "Setting kubernetes.options should wrap an inner object, but got <ceci n'est pas un objet>.",
+      `Setting "kubernetes.options" should wrap an inner object, but got <ceci n'est pas un objet>.`,
     ]);
   });
 

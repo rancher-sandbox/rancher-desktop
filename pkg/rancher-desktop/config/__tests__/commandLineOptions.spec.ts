@@ -199,7 +199,7 @@ describe('commandLineOptions', () => {
           } else {
             expect(() => {
               updateFromCommandLine(prefs, lockedSettings, [newOption]);
-            }).toThrow(`Changing field ${ accessor } via the API isn't supported`);
+            }).toThrow(`Changing field "${ accessor }" via the API isn't supported`);
           }
         }
       }
