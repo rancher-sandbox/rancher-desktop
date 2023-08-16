@@ -53,7 +53,6 @@ class E2ETestRunner extends events.EventEmitter {
   }
 
   exit() {
-    this.#rendererProcess?.kill();
     this.#testProcess?.kill();
   }
 
@@ -85,33 +84,20 @@ class E2ETestRunner extends events.EventEmitter {
     });
   }
 
-  #rendererProcess: null | childProcess.ChildProcess = null;
   /**
    * Start the renderer process.
    */
-  startRendererProcess(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
+  buildRenderer(): Promise<void> {
+    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
 
-      this.#rendererProcess = this.spawn(
-        'Renderer process',
-        'node_modules/.bin/vue-cli-service',
-        'build',
-        '--host',
-        'localhost',
-        '--port',
-        this.rendererPort.toString(),
-      );
-
-      // Listen for the 'exit' event of the child process and resolve or reject the Promise accordingly.
-      this.#rendererProcess.on('exit', (code, _signal) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Renderer build failed with code ${ code }`));
-        }
-      });
-    });
+    return buildUtils.spawn(
+      'node_modules/.bin/vue-cli-service',
+      'build',
+      '--host',
+      'localhost',
+      '--port',
+      this.rendererPort.toString(),
+    );
   }
 
   async run() {
@@ -134,7 +120,7 @@ class E2ETestRunner extends events.EventEmitter {
       process.env.RD_ENV_EXTENSIONS = '1';
 
       // Start the renderer process and wait for it to complete the build.
-      await this.startRendererProcess();
+      await this.buildRenderer();
 
       await buildUtils.wait(
         () => buildUtils.buildMain(),
