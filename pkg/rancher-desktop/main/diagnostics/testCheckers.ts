@@ -15,7 +15,10 @@ class CheckTesting implements DiagnosticsChecker {
 
   category = DiagnosticsCategory.Testing;
   applicable(): Promise<boolean> {
-    return Promise.resolve(/^dev|test/i.test(process.env.NODE_ENV ?? '') && !process.env.RD_MOCK_FOR_SCREENSHOTS);
+    const isDevEnv = /^dev/i.test(process.env.NODE_ENV ?? '');
+    const isE2ETest = /^e2e/i.test(process.env.RD_TEST ?? '');
+
+    return Promise.resolve((isDevEnv || isE2ETest) && !process.env.RD_MOCK_FOR_SCREENSHOTS);
   }
 
   check() {

@@ -30,7 +30,10 @@ export default {
    * Determine if we are building for a development build.
    */
   get isDevelopment() {
-    return /^(?:dev|test)/.test(process.env.NODE_ENV ?? '');
+    const isDevEnv = /^dev/i.test(process.env.NODE_ENV ?? '');
+    const isE2ETest = /^e2e/i.test(process.env.RD_TEST ?? '');
+
+    return isDevEnv || isE2ETest;
   },
 
   get serial() {

@@ -3,4 +3,7 @@
  * @returns True if Rancher Desktop is running in a development or test
  * environment
  */
-export const isDevEnv = /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
+const isDev = /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
+const isE2E = /^e2e/i.test(process.env.RD_TEST ?? '');
+
+export const isDevEnv = isDev || isE2E;
