@@ -168,12 +168,13 @@ test.describe.serial('Main App Test', () => {
       await expect(virtualMachine.vz).not.toBeDisabled();
       await virtualMachine.vz.click();
       await expect(virtualMachine.useRosetta).toBeVisible();
-
       if (os.arch() === 'arm64') {
         await expect(virtualMachine.useRosetta).not.toBeDisabled();
       } else {
         await expect(virtualMachine.useRosetta).toBeDisabled();
       }
+      await expect(virtualMachine.vzNAT).toBeVisible();
+      await expect(virtualMachine.vzNAT).not.toBeDisabled();
     }
   });
 

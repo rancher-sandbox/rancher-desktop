@@ -265,6 +265,7 @@ func TestJsonToRegFormat(t *testing.T) {
     "virtualMachine": {
       "type": "qemu",
       "useRosetta": false,
+			"vzNAT": true,
       "socketVMNet": false,
       "mount": {
         "type": "reverse-sshfs",

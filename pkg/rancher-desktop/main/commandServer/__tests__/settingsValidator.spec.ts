@@ -76,6 +76,7 @@ describe(SettingsValidator, () => {
       ['experimental', 'virtualMachine', 'mount', 'type'],
       ['experimental', 'virtualMachine', 'type'],
       ['experimental', 'virtualMachine', 'useRosetta'],
+      ['experimental', 'virtualMachine', 'vzNAT'],
       ['kubernetes', 'version'],
       ['version'],
       ['WSL', 'integrations'],

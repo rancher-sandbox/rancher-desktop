@@ -140,7 +140,7 @@ export type LimaConfiguration = {
     hosts?: Record<string, string>;
   }
   portForwards?: Array<Record<string, any>>;
-  networks?: Array<Record<string, string>>;
+  networks?: Array<Record<string, string | boolean>>;
 };
 
 /**
@@ -701,7 +701,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (os.platform() === 'darwin') {
       if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
         console.log('vde/socket_vmnet are not supported in VZ emulation');
-        delete config.networks;
+        config.networks = [];
+        if (this.cfg?.experimental.virtualMachine.vzNAT) {
+          console.log('Setting up vzNAT bridge networking');
+          config.networks = [{ vzNAT: true }];
+        }
       } else if (allowRoot) {
         const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
           return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
@@ -2102,6 +2106,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
       'experimental.virtualMachine.mount.type':               undefined,
       'experimental.virtualMachine.useRosetta':               undefined,
+      'experimental.virtualMachine.vzNAT':                    undefined,
       'experimental.virtualMachine.type':                     undefined,
     }));
     if (process.platform === 'darwin') {

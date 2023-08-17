@@ -113,6 +113,8 @@ export const defaultSettings = {
       type:        VMType.QEMU,
       /** can only be used when type is VMType.VZ, and only on aarch64 */
       useRosetta:  false,
+      /** Use VZ NAT for network bridging */
+      vzNAT:       process.platform === 'darwin',
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
       mount:       {

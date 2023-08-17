@@ -123,6 +123,7 @@ export default class SettingsValidator {
           socketVMNet:      this.checkPlatform('darwin', this.checkBoolean),
           networkingTunnel: this.checkPlatform('win32', this.checkBoolean),
           useRosetta:       this.checkPlatform('darwin', this.checkRosetta),
+          vzNAT:            this.checkPlatform('darwin', this.checkVzNAT),
           type:             this.checkPlatform('darwin', this.checkMulti(
             this.checkEnum(...Object.values(VMType)),
             this.checkVMType),
@@ -301,6 +302,11 @@ export default class SettingsValidator {
       }
     }
 
+    return currentValue !== desiredValue;
+  }
+
+  protected checkVzNAT(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
+    // VZ NAT is added for VZ machines, and ignored for others
     return currentValue !== desiredValue;
   }
 
