@@ -1,5 +1,7 @@
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
+import { isDevEnv } from '@pkg/utils/environment';
+
 /**
  * Sample tests for testing
  */
@@ -15,10 +17,7 @@ class CheckTesting implements DiagnosticsChecker {
 
   category = DiagnosticsCategory.Testing;
   applicable(): Promise<boolean> {
-    const isDevEnv = /^dev/i.test(process.env.NODE_ENV ?? '');
-    const isE2ETest = /^e2e/i.test(process.env.RD_TEST ?? '');
-
-    return Promise.resolve((isDevEnv || isE2ETest) && !process.env.RD_MOCK_FOR_SCREENSHOTS);
+    return Promise.resolve(isDevEnv && !process.env.RD_MOCK_FOR_SCREENSHOTS);
   }
 
   check() {

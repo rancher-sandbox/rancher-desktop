@@ -15,6 +15,7 @@ import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
 
+import { isDevEnv } from '@pkg/utils/environment';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import babelConfig from 'babel.config';
 
@@ -30,10 +31,7 @@ export default {
    * Determine if we are building for a development build.
    */
   get isDevelopment() {
-    const isDevEnv = /^dev/i.test(process.env.NODE_ENV ?? '');
-    const isE2ETest = /^e2e/i.test(process.env.RD_TEST ?? '');
-
-    return isDevEnv || isE2ETest;
+    return isDevEnv;
   },
 
   get serial() {
