@@ -13,8 +13,9 @@ import (
 // Copies a file from src to dst. If copyOnWrite is true, attempts to
 // use ioctl FICLONE to do the copy. If ioctl FICLONE is not supported
 // by the underlying filesystem, falls back to a plain copy. If
-// copyOnWrite is false, does a plain copy.
-func copyFile(dst, src string, copyOnWrite bool) error {
+// copyOnWrite is false, does a plain copy. fileMode specifies the
+// permissions that are applied to the destination file.
+func copyFile(dst, src string, copyOnWrite bool, fileMode os.FileMode) error {
 	srcFd, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
@@ -23,9 +24,9 @@ func copyFile(dst, src string, copyOnWrite bool) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return fmt.Errorf("failed to create destination parent dir: %w", err)
 	}
-	dstFd, err := os.Create(dst)
+	dstFd, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, fileMode)
 	if err != nil {
-		return fmt.Errorf("failed to create destination file: %w", err)
+		return fmt.Errorf("failed to open destination file: %w", err)
 	}
 	defer dstFd.Close()
 	if copyOnWrite {

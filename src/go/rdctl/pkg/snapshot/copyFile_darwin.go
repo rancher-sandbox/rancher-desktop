@@ -15,7 +15,7 @@ import (
 // by the underlying filesystem, or src and dst are on different
 // drives, falls back to a plain copy. If copyOnWrite is false, does a
 // plain copy.
-func copyFile(dst, src string, copyOnWrite bool) error {
+func copyFile(dst, src string, copyOnWrite bool, fileMode os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return fmt.Errorf("failed to create destination parent dir: %w", err)
 	}
@@ -31,9 +31,9 @@ func copyFile(dst, src string, copyOnWrite bool) error {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
 	defer srcFd.Close()
-	dstFd, err := os.Create(dst)
+	dstFd, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, fileMode)
 	if err != nil {
-		return fmt.Errorf("failed to create destination file: %w", err)
+		return fmt.Errorf("failed to open destination file: %w", err)
 	}
 	defer dstFd.Close()
 	if _, err := io.Copy(dstFd, srcFd); err != nil {

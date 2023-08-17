@@ -35,6 +35,8 @@ type snapshotFile struct {
 	CopyOnWrite bool
 	// Whether it is ok for the file to not be present.
 	MissingOk bool
+	// The permissions the file should have.
+	FileMode os.FileMode
 }
 
 func NewManager(paths paths.Paths) Manager {
@@ -51,24 +53,42 @@ func (manager Manager) getSnapshotFiles(id string) []snapshotFile {
 			SnapshotPath: filepath.Join(snapshotDir, "settings.json"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
+			FileMode:     0o644,
 		},
 		{
 			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "override.yaml"),
 			SnapshotPath: filepath.Join(snapshotDir, "override.yaml"),
 			CopyOnWrite:  false,
 			MissingOk:    true,
+			FileMode:     0o644,
 		},
 		{
 			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "basedisk"),
 			SnapshotPath: filepath.Join(snapshotDir, "basedisk"),
 			CopyOnWrite:  true,
 			MissingOk:    false,
+			FileMode:     0o644,
 		},
 		{
 			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "diffdisk"),
 			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
 			CopyOnWrite:  true,
 			MissingOk:    false,
+			FileMode:     0o644,
+		},
+		{
+			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "user"),
+			SnapshotPath: filepath.Join(snapshotDir, "user"),
+			CopyOnWrite:  false,
+			MissingOk:    false,
+			FileMode:     0o600,
+		},
+		{
+			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "user.pub"),
+			SnapshotPath: filepath.Join(snapshotDir, "user.pub"),
+			CopyOnWrite:  false,
+			MissingOk:    false,
+			FileMode:     0o644,
 		},
 	}
 	for i := range files {
@@ -117,7 +137,7 @@ func (manager Manager) Create(name string) (Snapshot, error) {
 func (manager Manager) createFiles(snapshot Snapshot) error {
 	files := manager.getSnapshotFiles(snapshot.ID)
 	for _, file := range files {
-		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite)
+		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
 		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
 			continue
 		} else if err != nil {
@@ -243,7 +263,7 @@ func (manager Manager) rollBackRestore(files []snapshotFile) {
 func (manager Manager) restoreFiles(files []snapshotFile) error {
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)
-		err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite)
+		err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
 		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
 			if err := os.RemoveAll(file.WorkingPath); err != nil {
 				return fmt.Errorf("failed to remove %s: %w", filename, err)
