@@ -98,19 +98,19 @@ func (manager Manager) getSnapshotFiles(id string) []snapshotFile {
 }
 
 // Creates a new snapshot.
-func (manager Manager) Create(name string) (Snapshot, error) {
+func (manager Manager) Create(name string) (*Snapshot, error) {
 	// validate name
 	currentSnapshots, err := manager.List()
 	if err != nil {
-		return Snapshot{}, fmt.Errorf("failed to list snapshots: %w", err)
+		return nil, fmt.Errorf("failed to list snapshots: %w", err)
 	}
 	for _, currentSnapshot := range currentSnapshots {
 		if currentSnapshot.Name == name {
-			return Snapshot{}, fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
+			return nil, fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
 		}
 	}
 	if !nameRegexp.MatchString(name) {
-		return Snapshot{}, fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
+		return nil, fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
 
 	snapshot := Snapshot{
@@ -123,12 +123,12 @@ func (manager Manager) Create(name string) (Snapshot, error) {
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
 	if err := manager.createFiles(snapshot); err != nil {
 		if err := os.RemoveAll(snapshotDir); err != nil {
-			return Snapshot{}, fmt.Errorf("failed to delete created snapshot directory: %w", err)
+			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
 		}
-		return Snapshot{}, fmt.Errorf("failed to consummate snapshot: %w", err)
+		return nil, fmt.Errorf("failed to consummate snapshot: %w", err)
 	}
 
-	return snapshot, nil
+	return &snapshot, nil
 }
 
 // Does all of the things that can fail when creating a snapshot,
