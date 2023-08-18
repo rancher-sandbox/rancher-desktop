@@ -104,7 +104,6 @@ class E2ETestRunner extends events.EventEmitter {
       if (Object.keys(deploymentProfiles.defaults).length > 0 || Object.keys(deploymentProfiles.locked).length > 0) {
         throw new Error("Trying to run e2e tests with existing deployment profiles isn't supported.");
       }
-      process.env.NODE_ENV = 'test';
       process.env.RD_TEST = 'e2e';
 
       // Set feature flags

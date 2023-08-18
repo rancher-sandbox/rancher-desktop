@@ -305,7 +305,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       this.emit('progress');
     });
 
-    if (!(process.env.NODE_ENV ?? '').includes('test')) {
+    if (!(process.env.RD_TEST ?? '').includes('e2e')) {
       process.on('exit', async() => {
         // Attempt to shut down any stray qemu processes.
         await this.lima('stop', '--force', MACHINE_NAME);

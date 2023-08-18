@@ -197,7 +197,7 @@ export default new Proxy<Module>({}, {
  * the system, so that logs from another instance are not deleted.
  */
 export function clearLoggingDirectory(): void {
-  if (process.env.NODE_ENV === 'test' || process.type !== 'browser') {
+  if (process.env.RD_TEST === 'e2e' || process.type !== 'browser') {
     return;
   }
 
