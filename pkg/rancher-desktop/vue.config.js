@@ -7,8 +7,6 @@ const babelConfig = require('../../babel.config');
 const packageMeta = require('../../package.json');
 
 const rootDir = path.resolve(__dirname, '..', '..');
-const isDevelopment = /^(?:dev|test)/.test(process.env.NODE_ENV ?? '');
-const mode = isDevelopment ? 'development' : 'production';
 const corejsVersion = parseFloat(/\d+\.\d+/.exec(packageMeta.dependencies['core-js']));
 const modifiedBabelConfig = _.cloneDeep(babelConfig);
 
@@ -20,7 +18,6 @@ module.exports = {
   productionSourceMap: false,
 
   chainWebpack: (config) => {
-    config.mode(mode);
     config.target('electron-renderer');
     config.resolve.alias.set('@pkg', path.resolve(rootDir, 'pkg', 'rancher-desktop'));
 
