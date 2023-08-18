@@ -1200,24 +1200,34 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     await this.writeFile(`/etc/conf.d/${ service }`, contents);
   }
 
+  /**
+   * Read the configuration file for an OpenRC service.
+   * @param service The name of the OpenRC service to read.
+   */
   protected async readConf(service: string): Promise<Record<string, string>> {
+    // Matches a k/v-pair and groups it into separated key and value, e.g.:
+    // ["key1:"value1"", "key1", ""value1""]
     const confRegex = /(?:^|^)\s*?([\w]+)(?:\s*=\s*?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*(?:[\w.-])*|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/;
     const conf = await this.readFile(`/etc/conf.d/${ service }`);
 
-    const confFields = conf.split(/\r?\n/).map(line => confRegex.exec(line)).filter(defined) as Array<RegExpExecArray>;
+    const confFields = conf.split(/\r?\n/) // Splits config in array of k/v-pairs (["key1:"value1"", "key2:"value2""])
+      // Maps the array into [["key1:"value1"", "key1", ""value1""], ["key2:"value2"", "key2", ""value2""]]
+      .map(line => confRegex.exec(line))
+      .filter(defined) as Array<RegExpExecArray>;
 
-    const result = confFields.reduce((res, curr) => {
+    return confFields.reduce((res, curr) => {
       const key = curr[1];
-      const value = curr[2].replace(/^(['"])([\s\S]*)\1$/mg, '$2');
+      const value = curr[2].replace(/^(['"])([\s\S]*)\1$/mg, '$2'); // Removes redundant quotes from value
 
       return { ...res, ...{ [key]: value } };
     }, {} as Record<string, string>);
-
-    console.log(result);
-
-    return result;
   }
 
+  /**
+   * Updates a service config with the given settings.
+   * @param service The name of the OpenRC service to configure.
+   * @param settings A mapping of configuration values.
+   */
   protected async modifyConf(service: string, settings: Record<string, string>) {
     const current = await this.readConf(service);
     const contents = { ...current, ...settings };
