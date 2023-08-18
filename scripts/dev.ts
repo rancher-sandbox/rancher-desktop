@@ -116,6 +116,8 @@ class DevRunner extends events.EventEmitter {
         'localhost',
         '--port',
         this.rendererPort.toString(),
+        '--skip-plugins',
+        'eslint',
       );
 
       // Listen for the 'exit' event of the child process and resolve or reject the Promise accordingly.

@@ -90,7 +90,12 @@ class E2ETestRunner extends events.EventEmitter {
   buildRenderer(): Promise<void> {
     process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
 
-    return buildUtils.spawn('node_modules/.bin/vue-cli-service', 'build');
+    return buildUtils.spawn(
+      'node_modules/.bin/vue-cli-service',
+      'build',
+      '--skip-plugins',
+      'eslint',
+    );
   }
 
   async run() {
