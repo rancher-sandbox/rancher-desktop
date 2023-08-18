@@ -106,11 +106,11 @@ func (manager Manager) Create(name string) (Snapshot, error) {
 	}
 	for _, currentSnapshot := range currentSnapshots {
 		if currentSnapshot.Name == name {
-			return Snapshot{}, ErrNameExists
+			return Snapshot{}, fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
 		}
 	}
 	if !nameRegexp.MatchString(name) {
-		return Snapshot{}, ErrInvalidName
+		return Snapshot{}, fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
 
 	snapshot := Snapshot{
