@@ -34,31 +34,35 @@ var snapshotListCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Short:   "List snapshots",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		paths, err := paths.GetPaths()
-		if err != nil {
-			return fmt.Errorf("failed to get paths: %w", err)
-		}
-		manager := snapshot.NewManager(paths)
-		snapshots, err := manager.List()
-		if err != nil {
-			return fmt.Errorf("failed to list snapshots: %w", err)
-		}
-		if len(snapshots) == 0 {
-			fmt.Fprintln(os.Stderr, "No snapshots present.")
-			return nil
-		}
-		sort.Sort(SortableSnapshots(snapshots))
-		writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-		fmt.Fprintf(writer, "ID\tName\tCreated\n")
-		for _, snapshot := range snapshots {
-			prettyCreated := snapshot.Created.Format(time.RFC1123)
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", snapshot.ID, snapshot.Name, prettyCreated)
-		}
-		writer.Flush()
-		return nil
+		return listSnapshot(cmd, args)
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotListCmd)
+}
+
+func listSnapshot(cmd *cobra.Command, args []string) error {
+	paths, err := paths.GetPaths()
+	if err != nil {
+		return fmt.Errorf("failed to get paths: %w", err)
+	}
+	manager := snapshot.NewManager(paths)
+	snapshots, err := manager.List()
+	if err != nil {
+		return fmt.Errorf("failed to list snapshots: %w", err)
+	}
+	if len(snapshots) == 0 {
+		fmt.Fprintln(os.Stderr, "No snapshots present.")
+		return nil
+	}
+	sort.Sort(SortableSnapshots(snapshots))
+	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
+	fmt.Fprintf(writer, "ID\tName\tCreated\n")
+	for _, snapshot := range snapshots {
+		prettyCreated := snapshot.Created.Format(time.RFC1123)
+		fmt.Fprintf(writer, "%s\t%s\t%s\n", snapshot.ID, snapshot.Name, prettyCreated)
+	}
+	writer.Flush()
+	return nil
 }
