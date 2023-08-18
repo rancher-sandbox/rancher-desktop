@@ -1491,4 +1491,45 @@ export default {
       },
     ],
   },
+  'vklokun/docker-desktop-extension': {
+    CreatedTime: '2023-02-07T09:03:55.184297Z',
+    Categories:  [
+      'kubernetes',
+      'security',
+    ],
+    LatestVersion: {
+      Tag:                '0.1.0',
+      ManifestListDigest: 'sha256:7e58a467994ce752dd66510993e9fe27324ce2d41d8b82bd401d2e4e09790494',
+      Platforms:          [
+        {
+          OS:      'linux',
+          Arch:    'amd64',
+          Size:    49171991,
+          Created: '2023-01-23T15:10:33.627762878Z',
+        },
+        {
+          OS:      'linux',
+          Arch:    'arm64',
+          Size:    32061043,
+          Created: '2023-01-23T15:10:33.135804533Z',
+        },
+      ],
+      Labels: {
+        'com.docker.desktop.extension.api.version':  '\u003E= 0.2.3',
+        'com.docker.desktop.extension.icon':         'https://desktop.docker.com/extensions/vklokun_docker-desktop-extension/raw_githubusercontent_com/cncf/artwork/ec3936fa0256c768b538247d20f130d293a9faed/projects/kubescape/stacked/color/kubescape-stacked-color.svg',
+        'com.docker.extension.account-info':         'required',
+        'com.docker.extension.additional-urls':      '',
+        'com.docker.extension.categories':           'kubernetes,security',
+        'com.docker.extension.changelog':            '',
+        'com.docker.extension.detailed-description': "\u003Ch1\u003EKubescape Extension for Docker Desktop\u003C/h1\u003E \u003Cp\u003EKubescape helps harden your Kubernetes cluster by providing insight into your cluster's security posture. Some of the features that help you achieve this are - regular configuration and image scans, visualizing your RBAC rules and suggesting automatic fixes where applicable. \u003C/p\u003E \u003Cp\u003E The Kubescape Extension for Docker Desktop works by installing the Kubescape in-cluster components, connecting them to ARMO Platform and providing insights into the Kubernetes cluster deployed by Docker Desktop via the dashboard on ARMO Platform.",
+        'com.docker.extension.publisher-url':        'https://cloud.armosec.io/',
+        'com.docker.extension.screenshots':          '[{"url":"https://desktop.docker.com/extensions/vklokun_docker-desktop-extension/raw_githubusercontent_com/kubescape/docker-desktop-extension/main/docs/screenshots/dark-01.png","alt":"Kubescape Extension for Docker Desktop, Select Provider screen"},{"url":"https://desktop.docker.com/extensions/vklokun_docker-desktop-extension/raw_githubusercontent_com/kubescape/docker-desktop-extension/main/docs/screenshots/dark-02.png","alt":"Kubescape Extension for Docker Desktop, Sign Up screen"},{"url":"https://desktop.docker.com/extensions/vklokun_docker-desktop-extension/raw_githubusercontent_com/kubescape/docker-desktop-extension/main/docs/screenshots/dark-03.png","alt":"Kubescape Extension for Docker Desktop, Secure Your Cluster screen"},{"url":"https://desktop.docker.com/extensions/vklokun_docker-desktop-extension/raw_githubusercontent_com/kubescape/docker-desktop-extension/main/docs/screenshots/dark-04.png","alt":"Kubescape Extension for Docker Desktop, Cluster Secured screen"},{"url":"https://desktop.docker.com/extensions/vklokun_docker-desktop-extension/raw_githubusercontent_com/kubescape/docker-desktop-extension/main/docs/screenshots/dark-05.png","alt":"Kubescape Extension for Docker Desktop, Monitor screen"}]',
+        'org.opencontainers.image.description':      'Secure your Kubernetes cluster and gain insight into your cluster’s security posture via an easy-to-use online dashboard.',
+        'org.opencontainers.image.licenses':         'Apache-2.0',
+        'org.opencontainers.image.title':            'Kubescape',
+        'org.opencontainers.image.vendor':           'ARMO',
+      },
+    },
+    PreviousVersions: [],
+  },
 };
