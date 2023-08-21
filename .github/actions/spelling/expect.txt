@@ -68,7 +68,6 @@ bindir
 binfmt
 bitnami
 blkio
-blockly
 bootfs
 bosco
 bottlesofbeeronthewall
@@ -315,8 +314,6 @@ iex
 ifaces
 ifnotstart
 ifstarted
-Ignat
-ignatandrei
 iidfile
 iife
 IMAGENAME
@@ -687,7 +684,6 @@ somepaththatshouldnevereverexist
 spc
 splatform
 splunk
-Srivastav
 ssd
 sshfs
 sslip
