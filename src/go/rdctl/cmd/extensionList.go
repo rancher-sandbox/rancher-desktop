@@ -27,23 +27,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// lsCmd represents the ls command
-var lsCmd = &cobra.Command{
-	Use:     "ls",
-	Aliases: []string{"list"},
+// listCmd represents the list command
+var listCmd = &cobra.Command{
+	Use:     "list",
+	Aliases: []string{"ls"},
 	Short:   "List currently installed images",
 	Long:    `List currently installed images.`,
+	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("rdctl extension ls takes no additional arguments, got %s", args)
-		}
 		cmd.SilenceUsage = true
 		return listExtensions()
 	},
 }
 
 func init() {
-	extensionCmd.AddCommand(lsCmd)
+	extensionCmd.AddCommand(listCmd)
 }
 
 func listExtensions() error {
@@ -57,7 +55,7 @@ func listExtensions() error {
 	}{}
 	err = json.Unmarshal(result, &extensionList)
 	if err != nil {
-		return fmt.Errorf("failed to json-unmarshal results of `extensions ls`: %w", err)
+		return fmt.Errorf("failed to unmarshal extension list API response: %w", err)
 	}
 	if len(extensionList) == 0 {
 		fmt.Println("No extensions are installed.")

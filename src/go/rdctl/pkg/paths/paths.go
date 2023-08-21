@@ -24,7 +24,7 @@ type Paths struct {
 	WslDistro string `json:"wslDistro,omitempty"`
 	// Directory holding the WSL data distribution (Windows-specific).
 	WslDistroData string `json:"wslDistroData,omitempty"`
-	// Directory holding Lima state (macOS-specific).
+	// Directory holding Lima state (Unix-specific).
 	Lima string `json:"lima,omitempty"`
 	// Directory holding provided binary resources.
 	Integration string `json:"integration,omitempty"`
@@ -36,6 +36,8 @@ type Paths struct {
 	DeploymentProfileUser string `json:"deploymentProfileUser,omitempty"`
 	// Directory that holds extension data.
 	ExtensionRoot string `json:"extensionRoot"`
+	// Directory that holds snapshots
+	Snapshots string `json:"snapshots,omitempty"`
 }
 
 func getResourcesPath() (string, error) {

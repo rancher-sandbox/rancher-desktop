@@ -27,7 +27,7 @@ var extensionCmd = &cobra.Command{
 	Short: "Manage extensions",
 	Long: `rdctl extension - manage installed extensions
 `,
-	Use: "extension [install | uninstall | ls] [options...]",
+	Use: "extension [install | uninstall | list] [options...]",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		return fmt.Errorf("No subcommand given.\n\nUsage: rdctl %s", cmd.Use)

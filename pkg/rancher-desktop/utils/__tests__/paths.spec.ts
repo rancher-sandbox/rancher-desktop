@@ -87,6 +87,11 @@ describe('paths', () => {
       linux:  '%HOME%/.local/share/rancher-desktop/extensions/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/extensions/',
     },
+    snapshots: {
+      win32:  new Error('not implemented'),
+      linux:  '%HOME%/.local/share/rancher-desktop/snapshots/',
+      darwin: '%HOME%/Library/Application Support/rancher-desktop/snapshots/',
+    },
   };
 
   const table = Object.entries(cases).flatMap(
