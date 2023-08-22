@@ -292,7 +292,7 @@ export const demoMarketplace = {
     },
     {
       id:                    '',
-      name:                  'Excalidraw',
+      name:                  'Excalidraw', // spellcheck-ignore-line
       containerd_compatible: true,
       moby_compatible:       false,
       slug:                  'ivancurkovic046/excalidraw-docker-extension',
@@ -300,7 +300,7 @@ export const demoMarketplace = {
       publisher:             { name: 'ivan-curkovic' },
       created_at:            '2023-03-03T14:04:13.137523964Z',
       updated_at:            '2023-03-03T12:28:02.177373287Z',
-      short_description:     'Docker Extension for the Excalidraw - virtual whiteboard for sketching hand-draw like diagrams',
+      short_description:     'Docker Extension for the Excalidraw - virtual whiteboard for sketching hand-draw like diagrams', // spellcheck-ignore-line
       source:                'community',
       extension_reviewed:    false,
       popularity:            0,

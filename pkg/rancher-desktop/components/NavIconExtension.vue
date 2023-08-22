@@ -8,7 +8,7 @@ const knownMonochromeIcons = [
   'julianb90/tachometer',
   'prakhar1989/dive-in',
   'joycelin79/newman-extension',
-  'ivancurkovic046/excalidraw-docker-extension',
+  'ivancurkovic046/excalidraw-docker-extension', // spellcheck-ignore-line
 ];
 
 export default Vue.extend({
