@@ -172,14 +172,14 @@ export const demoMarketplace = {
     },
     {
       id:                    '',
-      name:                  'Blockly Automation',
+      name:                  'Blockly Automation', // spellcheck-ignore-line
       containerd_compatible: true,
       slug:                  'ignatandrei/blockly-automation',
       type:                  'extension',
       publisher:             { name: 'Andrei Ignat' },
       created_at:            '2023-03-20T10:04:32.721062423Z',
       updated_at:            '2022-06-06T04:25:38.6530251Z',
-      short_description:     'A extension that displays lowCode with Blockly for any Docker command',
+      short_description:     'A extension that displays lowCode with Blockly for any Docker command', // spellcheck-ignore-line
       source:                'community',
       extension_reviewed:    false,
       popularity:            0,

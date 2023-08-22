@@ -141,3 +141,16 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # Don't check names in dependabot.yaml reviewers section
 ^\s+reviewers:\s*\[\s*"(?:Nino-K|ericpromislow)"\s*\]
+
+# Directives to avoid extension-related publisher names and repositories:
+
+# Directives to skip a full line
+^.*spellcheck-ignore-line.*$
+
+# Ignore extension names (usually based on a github repository)
+^\s*\bslug:\s*'.*?/.*?'\s*,\s*$
+
+# Ignore extension publishers' names in these two contexts:
+^\s*\bpublisher:\s*\{\s*name:\s*'.*?'.*?\}
+# https://specs.opencontainers.org/image-spec/annotations/?v=v1.0.1 defines possible names after the 'image.' part
+'org\.opencontainers\.image\.[.a-z]+'\s*:\s*'.*?'\s*,

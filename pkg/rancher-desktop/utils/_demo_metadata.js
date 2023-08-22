@@ -1042,7 +1042,7 @@ export default {
       },
     ],
   },
-  'ignatandrei/blockly-automation': {
+  'ignatandrei/blockly-automation': { // spellcheck-ignore-line
     CreatedTime: '2023-03-20T10:04:32.721062423Z',
     Categories:  [
       'development',
