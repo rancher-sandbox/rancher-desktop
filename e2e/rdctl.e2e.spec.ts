@@ -905,7 +905,9 @@ test.describe('Command server', () => {
           await waitForRestartVM(progressBar);
 
           // Since we just applied new settings, we must wait for the backend to restart.
-          await (new NavPage(page)).progressBecomesReady();
+          while (await progressBar.count() > 0) {
+            await progressBar.waitFor({ state: 'detached', timeout: Math.round(240_000) });
+          }
         });
       });
 
