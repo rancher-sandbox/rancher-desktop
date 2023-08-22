@@ -244,7 +244,7 @@ export const demoMarketplace = {
     },
     {
       id:                    '',
-      name:                  'Kubescape',
+      name:                  'Kubescape', // spellcheck-ignore-line
       containerd_compatible: true,
       slug:                  'vklokun/docker-desktop-extension',
       type:                  'extension',
