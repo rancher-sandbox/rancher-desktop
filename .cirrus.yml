@@ -5,8 +5,8 @@ task:
   container:
     image: ubuntu:20.04
     kvm: true # required for E2E/Integrations tests
-    cpu: 8
-    memory: 16G
+    cpu: 3
+    memory: 8G
   env:
     DEBIAN_FRONTEND: noninteractive
     CI: true
