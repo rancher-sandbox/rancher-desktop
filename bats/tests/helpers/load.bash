@@ -81,7 +81,7 @@ teardown_file() {
     capture_logs
 
     # On Linux & Windows if we don't shutdown Rancher Desktop bats tests don't terminate
-    if is_linux || is_windows; then
+    if is_linux || is_windows || [[ $RD_LOCATION == dev ]]; then
         run rdctl shutdown
     fi
 
