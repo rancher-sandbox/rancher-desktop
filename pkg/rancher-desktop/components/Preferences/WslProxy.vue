@@ -1,4 +1,5 @@
 <script lang="ts">
+import _ from 'lodash';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -38,6 +39,20 @@ export default Vue.extend({
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    },
+    splitAndTrim(value: string): string[] {
+      // If the text area ends with multiple blank lines, trim off all but the last
+      // This lets the user enter new values at the end but doesn't complain about duplicates.
+      // It has the effect of also trimming extra whitespace at the end as the textarea is updated.
+      const splitValues = value.split('\n');
+      const lastNonEmptyLine = _.findLastIndex(splitValues, s => !!s.trim());
+
+      return lastNonEmptyLine >= splitValues.length - 2 ? splitValues : splitValues.slice(0, lastNonEmptyLine + 2);
+      // What's going on with this final line:
+      // [v1, v2, v3]: lastNonEmptyLine = 2, >= splitValues.length - 2 == 1, so return the full array
+      // [v1, v2, v3, '   ']: lastNonEmptyLine = 2, >= splitValues.length - 2 == 2, so return the full array
+      // [v1, v2, v3, '   ', '']: lastNonEmptyLine = 2, < splitValues.length - 2 == 3, so return A.slice(0, 4)
+      //                           which returns the first 3 non-empty values and the first all-space value (A[3])
     },
   },
 });
@@ -115,7 +130,7 @@ export default Vue.extend({
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.noproxy.join('\n')"
             class="wsl-proxy-textarea"
-            @input="onChange('experimental.virtualMachine.proxy.noproxy', $event.target.value.split('\n'))"
+            @input="onChange('experimental.virtualMachine.proxy.noproxy', splitAndTrim($event.target.value))"
           />
         </rd-fieldset>
       </div>
