@@ -252,7 +252,7 @@ test.describe('Command server', () => {
     expect(resp2.status).toEqual(400);
     const body = resp2.body.read().toString();
     const expectedWSL = {
-      win32: `Proposed field "WSL.integrations" should be an object, got <"ceci n'est pas un objet">.`,
+      win32: `Proposed field "WSL.integrations" should be an object, got <ceci n'est pas un objet>.`,
       lima:  `Changing field "WSL.integrations" via the API isn't supported.`,
     }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedMemory = {

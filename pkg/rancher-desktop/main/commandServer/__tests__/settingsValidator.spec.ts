@@ -292,7 +292,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       ['Proposed field WSL.integrations should be an object, got <3>.'],
+        errors:       ['Proposed field "WSL.integrations" should be an object, got <3>.'],
       });
     });
 

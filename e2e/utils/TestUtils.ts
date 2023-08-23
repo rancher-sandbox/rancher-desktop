@@ -257,13 +257,14 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
 export async function waitForRestartVM(progressBar: Locator, options = { timeout: 10_000, interval: 200 }): Promise<void> {
   const startTime = new Date().valueOf();
   const endTime = startTime + options.timeout;
+  const startingCaption = process.platform === 'win32' ? 'Starting WSL environment' : 'Starting virtual machine';
 
   await progressBar.waitFor({ state: 'visible', timeout: 10_000 });
   console.log(`Waiting for RD to restart the VM...`);
   while (true) {
     const caption: string = await progressBar.textContent() ?? '';
 
-    if (caption.startsWith('Starting virtual machine')) {
+    if (caption.startsWith(startingCaption)) {
       console.log(`Restart detected.`);
       break;
     }
