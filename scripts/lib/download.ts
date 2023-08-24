@@ -2,7 +2,7 @@
  * Helpers for downloading files.
  */
 
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
@@ -19,6 +19,8 @@ export type DownloadOptions = {
   overwrite?: boolean;
   // The file mode required.
   access?: number;
+  // The file needs a new ad-hoc signature.
+  codesign?: boolean;
 };
 
 export type ArchiveDownloadOptions = DownloadOptions & {
@@ -101,6 +103,14 @@ export async function download(url: string, destPath: string, options: DownloadO
         console.error(ex);
       }
     }
+  }
+
+  if (options.codesign) {
+    spawnSync(
+      'codesign',
+      ['--force', '--sign', '-', destPath],
+      { stdio: 'inherit' },
+    );
   }
 }
 
