@@ -513,18 +513,25 @@ export default class SettingsValidator {
   }
 
   protected findDuplicates(list: string[]): string[] {
+    let whiteSpaceMembers = [];
     const firstInstance = new Set<string>();
     const duplicates = new Set<string>();
+    const isWhiteSpaceRE = /^\s*$/;
 
     for (const member of list) {
-      if (!firstInstance.has(member)) {
+      if (isWhiteSpaceRE.test(member)) {
+        whiteSpaceMembers.push(member);
+      } else if (!firstInstance.has(member)) {
         firstInstance.add(member);
       } else {
         duplicates.add(member);
       }
     }
+    if (whiteSpaceMembers.length === 1) {
+      whiteSpaceMembers = [];
+    }
 
-    return Array.from(duplicates);
+    return Array.from(duplicates).concat(whiteSpaceMembers);
   }
 
   protected checkInstalledExtensions(
