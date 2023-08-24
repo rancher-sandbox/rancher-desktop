@@ -89,3 +89,5 @@
 ^pkg/rancher-desktop/assets/scripts/logrotate-k3s$
 ignore$
 /translations/(?!en)
+^\Qpkg/rancher-desktop/utils/_demo_marketplace_items.js\E$
+^\Qpkg/rancher-desktop/utils/_demo_metadata.js\E$

@@ -172,14 +172,14 @@ export const demoMarketplace = {
     },
     {
       id:                    '',
-      name:                  'Blockly Automation', // spellcheck-ignore-line
+      name:                  'Blockly Automation',
       containerd_compatible: true,
       slug:                  'ignatandrei/blockly-automation',
       type:                  'extension',
       publisher:             { name: 'Andrei Ignat' },
       created_at:            '2023-03-20T10:04:32.721062423Z',
       updated_at:            '2022-06-06T04:25:38.6530251Z',
-      short_description:     'A extension that displays lowCode with Blockly for any Docker command', // spellcheck-ignore-line
+      short_description:     'A extension that displays lowCode with Blockly for any Docker command',
       source:                'community',
       extension_reviewed:    false,
       popularity:            0,
@@ -244,7 +244,7 @@ export const demoMarketplace = {
     },
     {
       id:                    '',
-      name:                  'Kubescape', // spellcheck-ignore-line
+      name:                  'Kubescape',
       containerd_compatible: true,
       slug:                  'vklokun/docker-desktop-extension',
       type:                  'extension',
@@ -292,7 +292,7 @@ export const demoMarketplace = {
     },
     {
       id:                    '',
-      name:                  'Excalidraw', // spellcheck-ignore-line
+      name:                  'Excalidraw',
       containerd_compatible: true,
       moby_compatible:       false,
       slug:                  'ivancurkovic046/excalidraw-docker-extension',
@@ -300,7 +300,7 @@ export const demoMarketplace = {
       publisher:             { name: 'ivan-curkovic' },
       created_at:            '2023-03-03T14:04:13.137523964Z',
       updated_at:            '2023-03-03T12:28:02.177373287Z',
-      short_description:     'Docker Extension for the Excalidraw - virtual whiteboard for sketching hand-draw like diagrams', // spellcheck-ignore-line
+      short_description:     'Docker Extension for the Excalidraw - virtual whiteboard for sketching hand-draw like diagrams',
       source:                'community',
       extension_reviewed:    false,
       popularity:            0,
