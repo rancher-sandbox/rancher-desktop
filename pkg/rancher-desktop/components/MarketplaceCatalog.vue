@@ -85,7 +85,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         });
       }
 
-      return tempExtensions.filter(item => this.isMobyActive || item.containerd_compatible);
+      return tempExtensions.filter(item => this.isMobyActive ? item.moby_compatible ?? true : item.containerd_compatible);
     },
   },
   methods: {
