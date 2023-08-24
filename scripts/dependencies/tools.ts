@@ -493,8 +493,10 @@ export class DockerProvidedCredHelpers implements Dependency, GitHubDependency {
       const expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, fullBinName);
       const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
       const destPath = path.join(context.binDir, binName);
+      // starting with the 0.7.0 the upstream releases have a broken ad-hoc signature
+      const codesign = context.platform === 'darwin';
 
-      promises.push(download(sourceURL, destPath, { expectedChecksum } ));
+      promises.push(download(sourceURL, destPath, { expectedChecksum, codesign } ));
     }
 
     await Promise.all(promises);
