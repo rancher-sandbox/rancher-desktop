@@ -34,6 +34,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func addAppHomeWithoutSnapshots(appHome string) []string {
+	haveSnapshots := false
+	if snapshots, err := os.ReadDir(filepath.Join(appHome, "snapshots")); err == nil {
+		haveSnapshots = len(snapshots) > 0
+	}
+	if !haveSnapshots {
+		return []string{appHome}
+	}
+	appHomeMembers, err := os.ReadDir(appHome)
+	if err != nil {
+		logrus.Errorf("failed to read contents of dir %s: %s", appHome, err)
+		return []string{appHome}
+	}
+	pathList := make([]string, 0, len(appHomeMembers))
+	//pathList := []string{}
+	for _, entry := range appHomeMembers {
+		if filepath.Base(entry.Name()) != "snapshots" {
+			pathList = append(pathList, entry.Name())
+		}
+	}
+	return pathList
+}
+
 // Most of the errors in this function are reported, but we continue to try to delete things,
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files

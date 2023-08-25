@@ -29,7 +29,7 @@
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "wix": "node scripts/ts-wrapper.js scripts/wix.ts",
     "test": "yarn lint:nofix && yarn test:unit && yarn test:extra",
-    "test:unit": "yarn test:unit:jest && yarn test:unit:nerdctl-stub && yarn test:unit:wsl-helper",
+    "test:unit": "yarn test:unit:jest && yarn test:unit:nerdctl-stub && yarn test:unit:wsl-helper && yarn test:unit:rdctl",
     "test:unit:jest": "jest",
     "test:unit:watch": "yarn test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",

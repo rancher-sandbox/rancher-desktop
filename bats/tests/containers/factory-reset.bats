@@ -156,28 +156,28 @@ rdctl_factory_reset() {
 
 check_directories() {
     # Check if all expected directories are created after starting application/ are deleted after a factory reset
-    delete_dir=("$PATH_APP_HOME" "$PATH_CONFIG")
+    delete_dir=("$PATH_CONFIG")
     if is_unix; then
         delete_dir+=("$HOME/.rd")
+        # We can't make any general assertion on AppHome/snapshots - we don't know if it was created or not
+        # So just assert on the other members of AppHome
         if is_macos; then
-            # LIMA_HOME is under PATH_APP_HOME
-            delete_dir+=("$PATH_LOGS")
+            delete_dir+=("$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/lima" "$PATH_APP_HOME/rd-engine.json" "$PATH_LOGS")
+            # TODO on macOS (not implemented by `rdctl factory-reset`)
+            # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
+            # this one only exists after an update has been downloaded
+            # ~/Library/Application Support/Caches/rancher-desktop-updater
         elif is_linux; then
-            # Both PATH_LOGS and LIMA_HOME are under PATH_DATA
-            delete_dir+=("$PATH_DATA")
+            delete_dir+=("$PATH_DATA/lima" "$PATH_DATA/logs")
         fi
-        # TODO on macOS (not implemented by `rdctl factory-reset`)
-        # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
-        # this one only exists after an update has been downloaded
-        # ~/Library/Application Support/Caches/rancher-desktop-updater
     fi
 
     if is_windows; then
-        delete_dir+=("$PATH_LOGS" "$PATH_DISTRO" "$PATH_DISTRO_DATA")
+        delete_dir+=("$PATH_LOGS" "$PATH_DISTRO" "$PATH_DISTRO_DATA" "$PATH_APP_HOME")
     fi
 
     for dir in "${delete_dir[@]}"; do
-        echo "$assert that $dir does not exist"
+        echo "$assert that $dir does not exist" 1>&3
         "${assert}_not_exists" "$dir"
     done
 }
