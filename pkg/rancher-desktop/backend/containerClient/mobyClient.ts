@@ -117,7 +117,7 @@ export class MobyClient implements ContainerEngineClient {
 
     const container = await this.makeContainer(imageID);
 
-    cleanups.push(() => spawnFile(this.executable, ['rm', container], { stdio: console }));
+    cleanups.push(() => this.runClient(['rm', container], console));
 
     try {
       if (this.vm.backend === 'wsl') {
@@ -137,10 +137,9 @@ export class MobyClient implements ContainerEngineClient {
           '/usr/bin/tar', '--extract', '--file', archive, '--dereference',
           '--directory', wslDestPath);
       } else {
-        await spawnFile(
-          this.executable,
+        await this.runClient(
           ['cp', '--follow-link', `${ container }:${ sourcePath }`, destinationPath],
-          { stdio: console });
+          console);
       }
     } finally {
       await this.runCleanups(cleanups);
@@ -253,13 +252,8 @@ export class MobyClient implements ContainerEngineClient {
       [options.service, ...options.command],
     ].flat();
 
-    return Promise.resolve(spawn(executable('docker-compose'), args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env:   {
-        ...process.env,
-        DOCKER_HOST: this.endpoint,
-      },
-    }));
+    return Promise.resolve(this.runClient(args, 'stream',
+      { ...options, executable: 'docker-compose' }));
   }
 
   async composePort(options: ContainerComposePortOptions): Promise<string> {
