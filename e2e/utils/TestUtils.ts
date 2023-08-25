@@ -254,17 +254,16 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
   }
 }
 
-export async function waitForRestartVM(progressBar: Locator, options = { timeout: -1, interval: 200 }): Promise<void> {
+export async function waitForRestartVM(progressBar: Locator): Promise<void> {
+  const timeout = process.platform === 'win32' ? 20_000 : 20_000; // msec
+  const interval = 200; // msec
   const startTime = new Date().valueOf();
-  let endTime = startTime + options.timeout;
+  let endTime = startTime + timeout;
   const startingCaption = process.platform === 'win32' ? 'Starting WSL environment' : 'Starting virtual machine';
   let currentCaption = '';
   const timeStripPattern = /^(.*?)\s*(?:\d+[sm]\s*)?$/;
 
-  if (options.timeout < 0) {
-    options.timeout = process.platform === 'win32' ? 20_000 : 20_000;
-  }
-  await progressBar.waitFor({ state: 'visible', timeout: options.timeout });
+  await progressBar.waitFor({ state: 'visible', timeout });
   console.log(`Waiting for RD to restart the VM...`);
   while (true) {
     const caption: string = await progressBar.textContent() ?? '';
@@ -278,11 +277,11 @@ export async function waitForRestartVM(progressBar: Locator, options = { timeout
 
     if (currentCaption !== captionBase) {
       currentCaption = captionBase;
-      endTime = nowTime + options.timeout;
+      endTime = nowTime + timeout;
     } else if (nowTime > endTime) {
-      throw new Error(`Failed to see the VM restart after ${ options.timeout / 1000 } seconds`);
+      throw new Error(`Failed to see the VM restart after ${ timeout / 1000 } seconds`);
     }
-    await util.promisify(setTimeout)(options.interval);
+    await util.promisify(setTimeout)(interval);
   }
 }
 
