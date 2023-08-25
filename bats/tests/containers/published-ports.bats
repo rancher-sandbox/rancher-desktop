@@ -20,12 +20,18 @@ verify_container_published_port() {
     assert_output --partial 'Welcome to nginx!'
 }
 
-@test 'container published port binding on localhost' {
+@test 'container published port binding to localhost' {
     run_container_with_published_port "127.0.0.1:8080:80"
     verify_container_published_port "http://127.0.0.1:8080"
 }
 
-@test 'container published port binding on 0.0.0.0' {
+@test 'container published port binding to localhost should not be accessible via 0.0.0.0' {
+    skip_unless_host_ip
+    run curl --head "http://${HOST_IP}:8080"
+    assert_output --partial "curl: (7) Failed to connect"
+}
+
+@test 'container published port binding to 0.0.0.0' {
     skip_unless_host_ip
     run_container_with_published_port "8081:80"
     verify_container_published_port "http://${HOST_IP}:8081"
