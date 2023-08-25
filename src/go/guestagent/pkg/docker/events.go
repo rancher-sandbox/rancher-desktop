@@ -16,6 +16,8 @@ package docker
 
 import (
 	"context"
+	"fmt"
+	"os/exec"
 	"strconv"
 
 	"github.com/Masterminds/log-go"
@@ -23,6 +25,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
@@ -96,6 +99,14 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
 					if err != nil {
 						log.Errorf("adding port mapping to tracker failed: %v", err)
+					}
+
+					err = createLoopbackIPtablesRules(
+						container.NetworkSettings.DefaultNetworkSettings.IPAddress,
+						container.NetworkSettings.NetworkSettingsBase.Ports)
+
+					if err != nil {
+						log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
 					}
 				}
 			case stopEvent, dieEvent:
@@ -192,4 +203,44 @@ func validatePortMapping(portMap nat.PortMap) {
 			delete(portMap, k)
 		}
 	}
+}
+
+// When the port binding is bound to 127.0.0.1, we add an additional DNAT rule in the main
+// DOCKER chain after the existing rule (using --append).
+// This is necessary because the initial DOCKER DNAT rule that is created by docker only allows
+// the traffic to be routed to localhost from localhost. Therefore, we add an additional rule to
+// allow traffic to any destination IP address which allows the service to be discoverable through
+// namespaced network's subnet.
+// This is required as the traffic is routed via vm-switch over the tap network.
+// The existing DNAT rule are as follows:
+// DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
+// We enter the following rule after the existing rule:
+// DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
+func createLoopbackIPtablesRules(containerIP string, portMappings nat.PortMap) error {
+	var errs []error
+
+	for portProto, portBindings := range portMappings {
+		for _, portBinding := range portBindings {
+			if portBinding.HostIP == "127.0.0.1" {
+				//nolint:gosec // no security concern with the potentially tainted command arguments
+				iptableCmd := exec.Command("iptables",
+					"--table", "nat",
+					"--append", "DOCKER",
+					"--protocol", "tcp",
+					"--destination", "0.0.0.0/0",
+					"--jump", "DNAT",
+					"--dport", portBinding.HostPort,
+					"--to-destination", fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
+				if err := iptableCmd.Run(); err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+
+	if len(errs) != 0 {
+		return fmt.Errorf("%w: %+v", containerd.ErrExecIptablesRule, errs)
+	}
+
+	return nil
 }
