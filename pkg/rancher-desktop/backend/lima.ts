@@ -140,7 +140,7 @@ export type LimaConfiguration = {
     hosts?: Record<string, string>;
   }
   portForwards?: Array<Record<string, any>>;
-  networks?: Array<Record<string, string>>;
+  networks?: Array<Record<string, string | boolean>>;
 };
 
 /**
@@ -700,8 +700,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     if (os.platform() === 'darwin') {
       if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
-        console.log('vde/socket_vmnet are not supported in VZ emulation');
-        delete config.networks;
+        console.log('Using vzNAT networking stack');
+        config.networks = [{
+          interface: 'vznat',
+          vzNAT:     true,
+        }];
       } else if (allowRoot) {
         const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
           return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
@@ -1641,8 +1644,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Get the network interface name and address to listen on for services;
    * used for flannel configuration.
    */
-  async getListeningInterface() {
-    if (this.cfg?.experimental.virtualMachine.type === VMType.QEMU) {
+  async getListeningInterface(allowSudo: boolean) {
+    if (allowSudo && this.cfg?.experimental.virtualMachine.type === VMType.QEMU) {
       const bridgedIP = await this.getInterfaceAddr('rd0');
 
       if (bridgedIP) {
@@ -1661,6 +1664,16 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         return { iface: 'rd1', addr: sharedIP };
       }
       console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
+    }
+    if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
+      const vznatIP = await this.getInterfaceAddr('vznat');
+
+      if (vznatIP) {
+        console.log(`Using ${ vznatIP } on vznat network`);
+
+        return { iface: 'vznat', addr: vznatIP };
+      }
+      console.log(`vznat interface does not have an IPv4 address`);
     }
 
     return { iface: 'eth0', addr: await this.ipAddress };

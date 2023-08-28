@@ -12,4 +12,5 @@ ssh
 tini
 ubuntu
 vinzenz
+vznat
 workarounds

@@ -328,9 +328,9 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, desiredVersion.version).toString(),
     };
 
-    if (allowSudo && os.platform() === 'darwin') {
+    if (os.platform() === 'darwin') {
       if (cfg.kubernetes.options.flannel) {
-        const { iface, addr } = await this.vm.getListeningInterface();
+        const { iface, addr } = await this.vm.getListeningInterface(allowSudo);
 
         config.ADDITIONAL_ARGS += ` --flannel-iface ${ iface }`;
         if (addr) {
