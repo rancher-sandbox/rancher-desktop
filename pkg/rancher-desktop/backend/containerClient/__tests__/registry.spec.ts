@@ -18,11 +18,7 @@ describe('Headers', () => {
   });
 });
 
-/***
- * Skipping these tests while the registry is down for migration
- * TODO: Re-enable these tests rancher-sandbox/rancher-desktop/issues/5390
- */
-describe.skip('DockerRegistry', () => {
+describe('DockerRegistry', () => {
   describe('getTags', () => {
     it('should get tags from unauthenticated registry', async() => {
       const reference = 'registry.opensuse.org/opensuse/leap';
