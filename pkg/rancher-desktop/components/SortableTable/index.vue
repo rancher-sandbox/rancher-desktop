@@ -1284,7 +1284,7 @@ $spacing: 10px;
 }
 
 .fixed-header-actions {
-  padding: 0 0 20px 0;
+  padding: 1px 0 20px 0;
   width: 100%;
   z-index: z-index('fixedTableHeader');
   background: transparent;
