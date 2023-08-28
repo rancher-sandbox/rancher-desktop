@@ -81,6 +81,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
     // There should never be a first-run window after that.
     let runFunc = testForFirstRunWindow;
     let i = 0;
+    let numSkipped = 0;
 
     for (const settingsFunc of [clearSettings, verifySettings]) {
       for (const userProfileFunc of [clearUserProfile, verifyUserProfile]) {
@@ -89,6 +90,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
 
           if (skipReasons.length > 0) {
             console.log(`Skipping test where ${ systemProfileFunc === verifySystemProfile ? "there's no system profile" : 'there is a system profile' }`);
+            numSkipped += 1;
           } else {
             await settingsFunc();
             await userProfileFunc();
@@ -99,6 +101,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
         }
       }
     }
+    // Half the tests require a system profile, half require no system-profile, so we should always skip half of them.
+    expect(numSkipped).toEqual(4);
   });
 
   test.describe('problematic user profiles', () => {
@@ -110,7 +114,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
       skipReasons = await verifyNoSystemProfile();
     });
 
-    test('non-existent settings', async() => {
+    test('nonexistent settings', async() => {
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
         await createNonexistentDataUserRegistryProfile();
@@ -121,7 +125,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
 
         await createUserProfile(s1 as RecursivePartial<Settings>, null);
       }
-      await testForFirstRunWindow(`${ __filename }-non-existent-settings`);
+      await testForFirstRunWindow(`${ __filename }-nonexistent-settings`);
     });
 
     test('invalid format', async() => {
