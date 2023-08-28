@@ -226,7 +226,6 @@ export async function testForFirstRunWindow(testPath: string) {
       await util.promisify(setTimeout)(100);
     }
     expect(windowCountForMainPage).toEqual(2);
-    console.log(`Shutting down now because this test is finished...`);
   } finally {
     await teardown(electronApp, testPath);
   }
@@ -284,7 +283,6 @@ export async function testForNoFirstRunWindow(testPath: string) {
       await util.promisify(setTimeout)(100);
     }
     expect(windowCountForMainPage).toEqual(1);
-    console.log(`Shutting down now because this test is finished...`);
   } finally {
     await teardown(electronApp, testPath);
   }
@@ -292,7 +290,7 @@ export async function testForNoFirstRunWindow(testPath: string) {
 
 // See comments above testForFirstRunWindow for an explanation of this function.
 
-export async function runWaitForLogfile(testPath: string, logPath: string) {
+export async function testWaitForLogfile(testPath: string, logPath: string) {
   let windowCount = 0;
   const electronApp = await startRancherDesktop(testPath, { mock: false, noModalDialogs: true });
 
