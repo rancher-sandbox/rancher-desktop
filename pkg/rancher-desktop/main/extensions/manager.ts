@@ -140,9 +140,10 @@ export class ExtensionManagerImpl implements ExtensionManager {
         return this.execStreaming(event, options, await this.spawnDockerCli(event, options));
       case 'container':
         return this.execStreaming(event, options, await this.spawnContainer(event, options));
+      default:
+        console.error(`Unexpected scope ${ options.scope }`);
+        throw new Error(`Unexpected scope ${ options.scope }`);
       }
-      console.error(`Unexpected scope ${ options.scope }`);
-      throw new Error(`Unexpected scope ${ options.scope }`);
     });
 
     this.setMainHandler('extensions/spawn/blocking', async(event, options) => {
@@ -153,9 +154,10 @@ export class ExtensionManagerImpl implements ExtensionManager {
         return this.execBlocking(await this.spawnDockerCli(event, options));
       case 'container':
         return this.execBlocking(await this.spawnContainer(event, options));
+      default: 
+        console.error(`Unexpected scope ${ options.scope }`);
+        throw new Error(`Unexpected scope ${ options.scope }`);
       }
-      console.error(`Unexpected scope ${ options.scope }`);
-      throw new Error(`Unexpected scope ${ options.scope }`);
     });
 
     this.setMainHandler('extensions/ui/show-open', (event, options) => {
