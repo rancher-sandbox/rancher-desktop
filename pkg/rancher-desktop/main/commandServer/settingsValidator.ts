@@ -476,7 +476,7 @@ export default class SettingsValidator {
    */
   protected checkBooleanMapping<S>(mergedSettings: S, currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
-      errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
+      errors.push(`Proposed field "${ fqname }" should be an object, got <${ desiredValue }>.`);
 
       return false;
     }
