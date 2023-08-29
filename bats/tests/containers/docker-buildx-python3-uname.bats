@@ -7,7 +7,7 @@ local_setup() {
     TEMP=/tmp
     if is_windows; then
         # We need to use a directory that exists on the Win32 filesystem
-        # so the ctrctl clients can correctly map the bind mounts.
+        # so the docker clients can correctly map the bind mounts.
         # We can use host_path() on these paths because they will exist
         # both here and in the rancher-desktop distro.
         TEMP="$(win32env TEMP)"
@@ -37,14 +37,11 @@ EOF
 }
 
 @test 'build the container' {
-    run docker buildx create --name "$BUILDX_INSTANCE"
-    assert_success
-    run docker buildx use "$BUILDX_INSTANCE"
-    assert_success
+    docker buildx create --name "$BUILDX_INSTANCE"
+    docker buildx use "$BUILDX_INSTANCE"
     cd "$WORK_DIR"
-    run docker buildx build -t testbuild:00 --platform linux/amd64 --load .
-    assert_success
-    run docker run testbuild:00
+    docker buildx build -t testbuild:00 --platform linux/amd64 --load .
+    run docker run --platform linux/amd64 testbuild:00
     assert_success
     assert_output "Running on x86_64"
 }
