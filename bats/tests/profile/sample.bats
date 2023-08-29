@@ -169,9 +169,10 @@ install_extensions() {
 }
 
 api_set() {
-    local json
-    json=$(join_map ", " echo "\"version\": \"$RD_API_VERSION\"" "$@")
-    rdctl api /v1/settings -X PUT --body "{ $json }"
+    local body version
+    version=$(get_setting .version)
+    body=$(join_map ", " echo "\"version\": \"$version\"" "$@")
+    rdctl api /v1/settings -X PUT --body "{ $body }"
 }
 
 @test 'try to change locked fields via API' {

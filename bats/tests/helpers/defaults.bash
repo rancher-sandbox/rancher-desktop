@@ -160,7 +160,3 @@ validate_enum RD_LOCATION system user dist dev ""
 using_dev_mode() {
     [ "$RD_LOCATION" = "dev" ]
 }
-
-########################################################################
-# BUG BUG BUG WORKAROUND API CALLS NEED TO SPECIFY A VERSION
-: "${RD_API_VERSION:=8}"
