@@ -245,3 +245,15 @@ take_screenshot() {
         fi
     fi
 }
+
+skip_unless_host_ip() {
+    if using_windows_exe; then
+        HOST_IP=$(netsh.exe interface ip show addresses 'vEthernet (WSL)' | grep -Po 'IP Address:\s+\K[\d.]+')
+    else
+        # TODO determine if the Lima VM has its own IP address
+        HOST_IP=""
+    fi
+    if [[ -z $HOST_IP ]]; then
+        skip "Test requires a routable host ip address"
+    fi
+}
