@@ -161,11 +161,11 @@ install_extensions() {
 @test 'try to change locked fields via rdctl set' {
     run rdctl set --container-engine.allowed-images.enabled=false
     assert_failure
-    assert_output --partial "field 'containerEngine.allowedImages.enabled' is locked"
+    assert_output --partial 'field "containerEngine.allowedImages.enabled" is locked'
 
     run rdctl set --kubernetes.version="$KUBERNETES_RANDOM_VERSION"
     assert_failure
-    assert_output --partial "field 'kubernetes.version' is locked"
+    assert_output --partial 'field "kubernetes.version" is locked'
 }
 
 api_set() {
@@ -176,21 +176,21 @@ api_set() {
 }
 
 @test 'try to change locked fields via API' {
-    run api_set '"\"containerEngine\": {\"allowedImages\": { \"patterns\": [ \"pattern1\" ] }}}"'
+    run api_set '"containerEngine": {"allowedImages": {"patterns": ["pattern1"]}}'
     assert_failure
-    assert_output --partial "field 'containerEngine.allowedImages.patterns' is locked"
-    run api_set '"\"containerEngine\": {\"allowedImages\": {\"enabled\": false }}}"'
+    assert_output --partial 'field "containerEngine.allowedImages.patterns" is locked'
+    run api_set '"containerEngine": {"allowedImages": {"enabled": false}}'
     assert_failure
-    assert_output --partial "field 'containerEngine.allowedImages.enabled' is locked"
-    run api_set '"\"application\": {\"extensions\": { \"allowed\": false }}}"'
+    assert_output --partial 'field "containerEngine.allowedImages.enabled" is locked'
+    run api_set '"application": {"extensions": {"allowed": {"enabled": false}}}'
     assert_failure
-    assert_output --partial "field 'application.extensions.allowed' is locked"
-    run api_set '"\"application\": {\"extensions\": { \"list\": [\"pattern1\"] }}}"'
+    assert_output --partial 'field "application.extensions.allowed.enabled" is locked'
+    run api_set '"application": {"extensions": {"allowed": {"list": ["pattern1"]}}}'
     assert_failure
-    assert_output --partial "field 'application.extensions.list' is locked"
-    run api_set '"\"kubernetes\": {\"version\": \"1.16.15\"}}"'
+    assert_output --partial 'field "application.extensions.allowed.list" is locked'
+    run api_set '"kubernetes": {"version": "1.16.15"}'
     assert_failure
-    assert_output --partial "field 'kubernetes.version' is locked"
+    assert_output --partial 'field "kubernetes.version" is locked'
 }
 
 @test 'ensure locked settings are preserved' {
@@ -235,11 +235,11 @@ api_set() {
 
 @test 'try to change locked fields via rdctl start' {
     rdctl start --container-engine.allowed-images.enabled=false --no-modal-dialogs
-    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'containerEngine.allowedImages.enabled' is locked"
+    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "containerEngine.allowedImages.enabled" is locked'
     assert_success
 
     rdctl start --kubernetes.version="1.16.15" --no-modal-dialogs
-    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'kubernetes.version' is locked"
+    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "kubernetes.version" is locked'
     assert_success
 }
 
