@@ -135,7 +135,13 @@ export default {
       // It is needed e.g. for sub-route /images/add not matching /Images
       const nuxt: NuxtApp = (this as any).$nuxt;
 
-      return nuxt.$route.path.split('/')[1] === route.substring(1).toLowerCase();
+      // Prevents the parent item "Extensions" to be shown as active if an extension child (e.g. Epinio, Logs Explorer,
+      // ...) is selected.
+      if (nuxt.$route.name !== 'rdx-root-src-id') {
+        return nuxt.$route.path.split('/')[1] === route.substring(1).toLowerCase();
+      }
+
+      return false;
     },
   },
 };
