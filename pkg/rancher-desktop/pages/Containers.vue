@@ -198,7 +198,7 @@ export default {
       this.selected = [...item];
     },
     async getContainers() {
-      const containers = await window.ddClient?.docker.listContainers({ all: true });
+      const containers = await this.ddClient?.docker.listContainers({ all: true });
 
       // Sorts by status, showing running first.
       this.containersList = containers.sort((a, b) => {
