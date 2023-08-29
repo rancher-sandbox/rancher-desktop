@@ -4,7 +4,7 @@ import path from 'path';
 import * as K8s from '@pkg/backend/k8s';
 import { getSettings } from '@pkg/config/settingsImpl';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
-import { isDevEnv } from '@pkg/utils/environment';
+import { isDevBuild } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
@@ -22,7 +22,7 @@ const console = Logging[`window_${ process.type || 'unknown' }`];
  */
 export const windowMapping: Record<string, number> = {};
 
-export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
+export const webRoot = `app://${ isDevBuild ? '' : '.' }`;
 
 /**
  * Restore or focus a window if it is already open
