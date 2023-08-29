@@ -5,6 +5,13 @@ local_setup() {
     TESTDATA_DIR_HOST=$(host_path "${PATH_BATS_ROOT}/tests/extensions/testdata/")
 }
 
+local_teardown_file() {
+    if using_docker; then
+        docker context use default
+        docker context rm bats-invalid-context
+    fi
+}
+
 id() { # variant
     echo "rd/extension/$1"
 }
@@ -20,6 +27,17 @@ encoded_id() { # variant
 @test 'start container engine' {
     RD_ENV_EXTENSIONS=1 start_container_engine
     wait_for_container_engine
+}
+
+@test 'default to custom docker context' {
+    if ! using_docker; then
+        skip 'docker context only applies when using docker backend'
+    fi
+    # Remove the context if it previously existed.
+    run docker context rm --force bats-invalid-context
+    assert_nothing
+    docker context create bats-invalid-context --docker 'host=tcp://invalid.test:99999'
+    docker context use bats-invalid-context
 }
 
 @test 'no extensions installed' {
