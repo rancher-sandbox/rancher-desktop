@@ -154,7 +154,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
         return this.execBlocking(await this.spawnDockerCli(event, options));
       case 'container':
         return this.execBlocking(await this.spawnContainer(event, options));
-      default: 
+      default:
         console.error(`Unexpected scope ${ options.scope }`);
         throw new Error(`Unexpected scope ${ options.scope }`);
       }
