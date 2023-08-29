@@ -48,10 +48,9 @@ func addAppHomeWithoutSnapshots(appHome string) []string {
 		return []string{appHome}
 	}
 	pathList := make([]string, 0, len(appHomeMembers))
-	//pathList := []string{}
 	for _, entry := range appHomeMembers {
 		if filepath.Base(entry.Name()) != "snapshots" {
-			pathList = append(pathList, entry.Name())
+			pathList = append(pathList, filepath.Join(appHome, entry.Name()))
 		}
 	}
 	return pathList
