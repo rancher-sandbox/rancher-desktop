@@ -84,8 +84,19 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
             .includes(this.searchValue.toLowerCase());
         });
       }
+      const filteredExtensions = tempExtensions.filter(item => this.isMobyActive ? item.moby_compatible ?? true : item.containerd_compatible);
+      const collator = new Intl.Collator('en', { sensitivity: 'base' });
 
-      return tempExtensions.filter(item => this.isMobyActive ? item.moby_compatible ?? true : item.containerd_compatible);
+      return filteredExtensions.sort((s1, s2) => {
+        const s1Publisher = s1.publisher.name;
+        const s2Publisher = s2.publisher.name;
+
+        if (s1Publisher.includes('SUSE') !== s2Publisher.includes('SUSE') ) {
+          return s1Publisher.includes('SUSE') ? -1 : 1;
+        }
+
+        return collator.compare(s1.name, s2.name);
+      });
     },
   },
   methods: {
