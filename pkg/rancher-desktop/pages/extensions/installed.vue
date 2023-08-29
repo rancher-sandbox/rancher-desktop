@@ -136,10 +136,3 @@ export default Vue.extend({
     </sortable-table>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.extension-icon {
-  height: 1.5rem;
-  width: 1.5rem;
-}
-</style>

@@ -8,6 +8,7 @@ const knownMonochromeIcons = [
   'julianb90/tachometer',
   'prakhar1989/dive-in',
   'joycelin79/newman-extension',
+  'ivancurkovic046/excalidraw-docker-extension', // spellcheck-ignore-line
 ];
 
 export default Vue.extend({
@@ -54,6 +55,11 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
+  .extension-icon {
+    max-height: 1.5rem;
+    max-width: 1.5rem;
+  }
+
   /**
     * Change the icon colors by setting a class 'known-monochrome' containing dark theme properties.
     */

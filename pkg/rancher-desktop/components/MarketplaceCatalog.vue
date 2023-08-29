@@ -6,7 +6,7 @@ import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
 import { Settings, ContainerEngine } from '@pkg/config/settings';
-import { ExtensionState } from '~/store/extensions.js';
+import { ExtensionState } from '@pkg/store/extensions.js';
 type FilteredExtensions = typeof demoMarketplace.summaries;
 
 interface installedExtensions extends ExtensionState {
@@ -85,7 +85,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         });
       }
 
-      return tempExtensions.filter(item => this.isMobyActive || item.containerd_compatible);
+      return tempExtensions.filter(item => this.isMobyActive ? item.moby_compatible ?? true : item.containerd_compatible);
     },
   },
   methods: {

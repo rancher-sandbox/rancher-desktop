@@ -274,10 +274,6 @@ export class ExtensionManagerImpl implements ExtensionManager {
    * extensions.
    */
   protected isSupported(repo: string): boolean {
-    if (!this.containerd) {
-      return true;
-    }
-
     const desired = parseImageReference(repo);
 
     if (!desired) {
@@ -294,7 +290,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
           continue;
         }
 
-        supported[new URL(slug.name, slug.registry).toString()] = item.containerd_compatible;
+        supported[new URL(slug.name, slug.registry).toString()] = this.containerd ? item.containerd_compatible : item.moby_compatible ?? true;
       }
 
       this.#supportedExtensions = supported;
