@@ -33,6 +33,9 @@ encoded_id() { # variant
     if ! using_docker; then
         skip 'docker context only applies when using docker backend'
     fi
+    # Remove the context if it previously existed.
+    run docker context rm --force bats-invalid-context
+    assert_nothing
     docker context create bats-invalid-context --docker 'host=tcp://invalid.test:99999'
     docker context use bats-invalid-context
 }
