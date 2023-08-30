@@ -19,22 +19,22 @@ func TestJsonToRegFormat(t *testing.T) {
 			{
 				hiveType:      "bad-hive",
 				profileType:   "defaults",
-				expectedError: "unrecognized hiveType of 'bad-hive', must be 'hklm' or 'hkcu'",
+				expectedError: `unrecognized hiveType of "bad-hive", must be "hklm" or "hkcu"`,
 			},
 			{
 				hiveType:      "bad-hive",
 				profileType:   "locked",
-				expectedError: "unrecognized hiveType of 'bad-hive', must be 'hklm' or 'hkcu'",
+				expectedError: `unrecognized hiveType of "bad-hive", must be "hklm" or "hkcu"`,
 			},
 			{
 				hiveType:      "hkcu",
 				profileType:   "bad-profile",
-				expectedError: "unrecognized profileType of 'bad-profile', must be 'defaults' or 'locked'",
+				expectedError: `unrecognized profileType of "bad-profile", must be "defaults" or "locked"`,
 			},
 			{
 				hiveType:      "hklm",
 				profileType:   "bad-profile",
-				expectedError: "unrecognized profileType of 'bad-profile', must be 'defaults' or 'locked'",
+				expectedError: `unrecognized profileType of "bad-profile", must be "defaults" or "locked"`,
 			},
 		}
 		for _, testCase := range testCases {

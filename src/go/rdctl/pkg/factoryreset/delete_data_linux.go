@@ -23,8 +23,6 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 		paths.AltAppHome,
 		paths.Config,
 		paths.Logs,
-		paths.Lima,
-		paths.ExtensionRoot,
 		filepath.Join(homeDir, ".local", "state", "rancher-desktop"),
 	}
 
@@ -42,5 +40,7 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	} else {
 		pathList = append(pathList, filepath.Join(paths.Cache, "updater-longhorn.json"))
 	}
+	appHomeDirs := addAppHomeWithoutSnapshots(filepath.Dir(paths.Lima))
+	pathList = append(pathList, appHomeDirs...)
 	return deleteUnixLikeData(paths, pathList)
 }

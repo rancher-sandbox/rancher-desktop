@@ -18,9 +18,10 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 		paths.AltAppHome,
 		paths.Config,
 		paths.Logs,
-		paths.Lima,
 		paths.ExtensionRoot,
 	}
+	appHomeDirs := addAppHomeWithoutSnapshots(paths.AppHome)
+	pathList = append(pathList, appHomeDirs...)
 
 	// Get path that electron-updater stores cache data in. Technically this
 	// is the wrong directory to use for cache data, but it is set by electron-updater.
