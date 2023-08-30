@@ -23,9 +23,9 @@ local_setup() {
     DEFAULTS_KUBERNETES_VERSION="$RD_KUBERNETES_VERSION"
 
     LOCKED_KUBERNETES_VERSION="1.27.3"
-    LOCKED_ALLOWED_IMAGES_ENABLED=$RD_USE_IMAGE_ALLOW_LIST
+    LOCKED_ALLOWED_IMAGES_ENABLED=true
     LOCKED_ALLOWED_IMAGES_PATTERNS=("$ALLOWED_EXTENSION_NAME" "$IMAGE_NGINX")
-    LOCKED_EXTENSIONS_ALLOWED_ENABLED=$RD_USE_IMAGE_ALLOW_LIST
+    LOCKED_EXTENSIONS_ALLOWED_ENABLED=true
     LOCKED_EXTENSIONS_ALLOWED_LIST=("$ALLOWED_EXTENSION_NAME:$ALLOWED_EXTENSION_TAG")
 }
 
@@ -123,9 +123,7 @@ install_extensions() {
 
     PROFILE_TYPE=$PROFILE_DEFAULTS
     create_profile
-    if is_windows; then
-        add_profile_bool application.startInBackground "$DEFAULTS_START_IN_BACKGROUND"
-    fi
+    add_profile_bool application.startInBackground "$DEFAULTS_START_IN_BACKGROUND"
     verify_profiles
 }
 
@@ -171,8 +169,8 @@ install_extensions() {
 api_set() {
     local body version
     version=$(get_setting .version)
-    body=$(join_map ", " echo "\"version\": \"$version\"" "$@")
-    rdctl api /v1/settings -X PUT --body "{ $body }"
+    body=$(jq ".version=$version" <<<"{$1}")
+    rdctl api /v1/settings -X PUT --body "$body"
 }
 
 @test 'try to change locked fields via API' {
