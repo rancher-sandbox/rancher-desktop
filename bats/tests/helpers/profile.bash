@@ -94,6 +94,8 @@ create_profile() {
     windows)
         # Make sure any old profile data at this location is removed
         run profile_reg delete "."
+        # Create subkey so that profile_exists returns true now
+        profile_reg add "."
         ;;
     esac
 }

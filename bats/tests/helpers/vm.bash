@@ -130,8 +130,10 @@ start_container_engine() {
             # so that they are not treated as setting separator characters.
             add_profile_bool "WSL.integrations.${WSL_DISTRO_NAME//./$RD_PROTECTED_DOT}" true
         fi
-        add_profile_bool containerEngine.allowedImages.enabled "$image_allow_list"
-        #add_profile_list containerEngine.allowedImages.patterns "$registry"
+        # TODO Figure out the interaction between RD_USE_PROFILE and RD_USE_IMAGE_ALLOW_LIST!
+        # TODO For now we need to avoid overwriting settings that may already exist in the profile.
+        # add_profile_bool containerEngine.allowedImages.enabled "$image_allow_list"
+        # add_profile_list containerEngine.allowedImages.patterns "$registry"
     else
         wsl_integrations="{}"
         if is_windows; then
