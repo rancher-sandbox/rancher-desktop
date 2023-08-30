@@ -134,6 +134,8 @@ export async function verifyNoSystemProfile(): Promise<string[]> {
   if (platform === 'win32') {
     try {
       await verifyNoRegistrySubtree('HKLM');
+
+      return [];
     } catch (ex: any) {
       return [ex.message];
     }

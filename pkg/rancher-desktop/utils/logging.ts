@@ -208,7 +208,13 @@ export function clearLoggingDirectory(): void {
       const topic = path.basename(entry.name, '.log');
 
       if (!logs.has(topic)) {
-        fs.unlinkSync(path.join(paths.logs, entry.name));
+        const fullPath = path.join(paths.logs, entry.name);
+
+        try {
+          fs.unlinkSync(fullPath);
+        } catch (ex: any) {
+          console.log(`Failed to delete log file ${ fullPath }: ${ ex }`);
+        }
       }
     }
   }

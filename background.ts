@@ -185,7 +185,7 @@ Electron.app.whenReady().then(async() => {
       deploymentProfiles = await readDeploymentProfiles();
     } catch (ex: any) {
       if (ex instanceof DeploymentProfileError) {
-        // Need to do a heuristic to see if we have `--no-modal-errors` on the command-line.
+        // Need to do a heuristic to see if we have `--no-modal-dialogs` on the command-line.
         // Normally we don't process the command-line arguments before we know what our locked fields are,
         // but we need to see if we don't want to deal with dialog boxes.
         if (commandLineArgs.includes('--no-modal-dialogs')) {
