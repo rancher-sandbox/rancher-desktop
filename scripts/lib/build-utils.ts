@@ -15,7 +15,6 @@ import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
 
-import { isDevEnv } from '@pkg/utils/environment';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import babelConfig from 'babel.config';
 
@@ -30,9 +29,7 @@ export default {
   /**
    * Determine if we are building for a development build.
    */
-  get isDevelopment() {
-    return isDevEnv;
-  },
+  isDevelopment: true,
 
   get serial() {
     return process.argv.includes('--serial');
@@ -175,7 +172,7 @@ export default {
         ],
       },
       plugins: [
-        new webpack.EnvironmentPlugin({ NODE_ENV: process.env.NODE_ENV || 'production' }),
+        new webpack.EnvironmentPlugin({ NODE_ENV: mode }),
       ],
     };
   },
