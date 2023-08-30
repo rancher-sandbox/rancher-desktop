@@ -6,7 +6,6 @@
 
 import childProcess from 'child_process';
 import events from 'events';
-import path from 'path';
 import util from 'util';
 
 import buildUtils from './lib/build-utils';
@@ -100,16 +99,13 @@ class E2ETestRunner extends events.EventEmitter {
 
   async run() {
     try {
-      // Don't check for existing deployment profiles if we're doing a deployment-profile e2e test.
-      // Note the admittedly weak deciding factor: does the test filename start with the word 'profiles-'?
-      const thisScriptArgIndex = process.argv.findIndex(arg => path.basename(arg) === 'e2e.ts');
-      const remainingArgs = process.argv.slice(thisScriptArgIndex + 1);
-
-      if (!remainingArgs.every(arg => path.basename(arg) === 'profiles' || path.basename(arg).startsWith('profiles-'))) {
+      if (!process.env.RD_TEST_ALLOW_PROFILE) {
         const deploymentProfiles = await readDeploymentProfiles();
 
         if (Object.keys(deploymentProfiles.defaults).length > 0 || Object.keys(deploymentProfiles.locked).length > 0) {
-          throw new Error("Trying to run e2e tests with existing deployment profiles isn't supported.");
+          throw new Error(["Trying to run e2e tests with existing deployment profiles isn't supported.",
+            'Set environment variable RD_TEST_ALLOW_PROFILE=true to override this check',
+          ].join('\n'));
         }
       }
       process.env.RD_TEST = 'e2e';

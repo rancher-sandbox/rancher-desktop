@@ -25,6 +25,7 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
+import { verifyNoSystemProfile } from './utils/ProfileUtils';
 import {
   createDefaultSettings, createUserProfile, startRancherDesktop, teardown, tool,
 } from './utils/TestUtils';
@@ -114,7 +115,9 @@ test.describe('Locked fields', () => {
 
   test('should not allow a locked field to be changed via rdctl set', async() => {
     const { stdout, stderr, error } = await rdctl(['list-settings']);
+    const skipReasons = await verifyNoSystemProfile();
 
+    test.skip(skipReasons.length > 0, skipReasons.join('\n'));
     expect({ stderr, error }).toEqual({ error: undefined, stderr: '' });
     const originalSettings = JSON.parse(stdout);
     const newEnabled = !originalSettings.containerEngine.allowedImages.enabled;

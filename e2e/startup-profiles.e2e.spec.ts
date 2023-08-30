@@ -87,7 +87,12 @@ test.describe.serial('track startup windows based on existing profiles and setti
       for (const userProfileFunc of [clearUserProfile, verifyUserProfile]) {
         for (const systemProfileFunc of [verifyNoSystemProfile, verifySystemProfile]) {
           const skipReasons = await systemProfileFunc();
+          const parts = [`Standard test ${ i }: settings: ${ settingsFunc === clearSettings ? 'deleted' : 'existing' }, `,
+            `user profile: ${ userProfileFunc === clearUserProfile ? 'deleted' : 'existing' }, `,
+            `system profile: ${ systemProfileFunc === verifyNoSystemProfile ? 'deleted' : 'existing' }`,
+          ];
 
+          console.log(parts.join(''));
           if (skipReasons.length > 0) {
             console.log(`Skipping test where ${ systemProfileFunc === verifySystemProfile ? "there's no system profile" : 'there is a system profile' }`);
             numSkipped += 1;
