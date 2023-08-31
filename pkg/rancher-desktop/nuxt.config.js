@@ -66,6 +66,7 @@ export default {
     '~/plugins/directives',
     '~/plugins/clean-html-directive',
     { src: '~/plugins/extend-router' },
+    '~/plugins/vee-validate',
   ],
   router: {
     mode:          'hash',
