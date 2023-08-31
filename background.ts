@@ -557,6 +557,10 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 
 mainEvents.on('settings-write', writeSettings);
 
+mainEvents.on('extensions/ui/uninstall', (id) => {
+  window.send('ok:extensions/uninstall', id);
+});
+
 ipcMainProxy.on('extensions/open', (_event, id, path) => {
   window.openExtension(id, path);
 });

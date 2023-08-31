@@ -251,6 +251,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
         // If this extension is explicitly not supported, don't re-install it.
         console.log(`Uninstalling unsupported extension ${ repo }:${ tag }`);
         mainEvents.emit('settings-write', { application: { extensions: { installed: { [repo]: undefined } } } });
+        mainEvents.emit('extensions/ui/uninstall', repo);
         continue;
       }
 
