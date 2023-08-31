@@ -26,7 +26,7 @@ skip_on_legacy_networking() {
 
 verify_host_connectivity() {
     skip_on_legacy_networking
-    run ctrctl run --rm alpine ping -c 5 "$1"
+    run ctrctl run --rm "$IMAGE_BUSYBOX" timeout -s INT 10 ping -c 5 "$1"
     assert_success
     assert_output --partial "5 packets transmitted, 5 packets received, 0% packet loss"
 }
