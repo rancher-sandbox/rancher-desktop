@@ -101,6 +101,12 @@ interface MainEventNames {
   'diagnostics-trigger'(id: string): DiagnosticsCheckerResult | undefined;
 
   /**
+   * Emitted when an extension is uninstalled via the extension manager.
+   * @param id The ID of the extension that was uninstalled.
+   */
+  'extensions/ui/uninstall'(id: string): void;
+
+  /**
    * Emitted on application quit.  Note that at this point we're committed to
    * quitting.
    */
