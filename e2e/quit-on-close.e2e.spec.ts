@@ -1,8 +1,6 @@
-import path from 'path';
+import { test, expect, ElectronApplication } from '@playwright/test';
 
-import { test, expect, _electron, ElectronApplication } from '@playwright/test';
-
-import { createDefaultSettings, packageLogs, startRancherDesktop } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, startRancherDesktop, teardown } from './utils/TestUtils';
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
@@ -26,13 +24,14 @@ test.describe.serial('quitOnClose setting', () => {
     createDefaultSettings({ application: { window: { quitOnClose: false } } });
     const electronApp = await startRancherDesktop(__filename);
 
-    await electronApp.firstWindow();
-
-    await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(false);
-    const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-quitOnCloseFalse.zip`);
-
-    electronApp.context().tracing.stop({ path: tracePath });
-    await electronApp.close();
+    try {
+      await electronApp.firstWindow();
+      await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(false);
+    } finally {
+      try {
+        await teardown(electronApp, __filename);
+      } catch { }
+    }
   });
 });
 

@@ -15,6 +15,11 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 const console = Logging.deploymentProfile;
 
 export class DeploymentProfileError extends Error {
+  toString() {
+    // This is needed on linux. Without it, we get a randomish replacement
+    // for 'DeploymentProfileError' (like 'ys Error')
+    return `DeploymentProfileError: ${ this.message }`;
+  }
 }
 
 const REGISTRY_PROFILE_PATHS = [

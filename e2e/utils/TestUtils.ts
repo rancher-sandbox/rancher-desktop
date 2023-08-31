@@ -25,7 +25,7 @@ export async function createUserProfile(userProfile: RecursivePartial<Settings>|
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
   if (platform === 'win32') {
-    throw new Error(`Not doing win32 profiles yet`);
+    return await createWindowsUserLegacyProfile(userProfile, lockedFields);
   } else if (platform === 'linux') {
     return await createLinuxUserProfile(userProfile, lockedFields);
   } else {
@@ -46,6 +46,36 @@ async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|nu
     await fs.promises.writeFile(userLocksPath, JSON.stringify(lockedFields, undefined, 2));
   } else {
     await fs.promises.rm(userLocksPath, { force: true });
+  }
+}
+
+function convertToRegistryLegacy(s: string) {
+  return s.replace(/Policies\\Rancher Desktop/g, 'Rancher Desktop\\Profile')
+    .replace('SOFTWARE\\Policies]', 'SOFTWARE\\Rancher Desktop]');
+}
+
+async function createWindowsUserLegacyProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+  const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-profiles'));
+
+  try {
+    for (const packet of [['defaults', userProfile], ['locked', lockedFields]]) {
+      const [registryType, settings] = packet;
+
+      if (settings && Object.keys(settings).length > 0) {
+        const genResult = convertToRegistryLegacy(await tool('rdctl', 'create-profile', '--body', JSON.stringify(settings),
+          '--output=reg', '--hive=hkcu', `--type=${ registryType }`));
+        const regFile = path.join(workdir, 'test.reg');
+
+        try {
+          await fs.promises.writeFile(regFile, genResult);
+          await childProcess.spawnFile('reg.exe', ['IMPORT', regFile], { stdio: 'ignore' });
+        } catch (ex: any) {
+          throw new Error(`Error trying to create a user registry hive: ${ ex }`);
+        }
+      }
+    }
+  } finally {
+    await fs.promises.rm(workdir, { recursive: true, force: true });
   }
 }
 
@@ -321,25 +351,38 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
   }
 }
 
+export interface startRancherDesktopOptions {
+  tracing?: boolean;
+  mock?: boolean;
+  env?: Record<string, string>;
+  noModalDialogs?: boolean;
+}
+
 /**
  * Run Rancher Desktop; return promise that resolves to commonly-used
  * playwright objects when it has started.
  * @param testPath The path to the test file.
- * @param options.tracing Whether to start tracing (defaults to true).
- * @param options.mock Whether to use the mock backend (defaults to true).
+ * @param options with sub-options:
+ *  options.tracing Whether to start tracing (defaults to true).
+ *  options.mock Whether to use the mock backend (defaults to true).
+ *  options.env The environment to use
+ *  options.noModalDialogs Set to false if we want to see the first-run dialog (defaults to true).
  */
-export async function startRancherDesktop(testPath: string, options?: { tracing?: boolean, mock?: boolean, env?: Record<string, string> }): Promise<ElectronApplication> {
+export async function startRancherDesktop(testPath: string, options?: startRancherDesktopOptions): Promise<ElectronApplication> {
   testInfo = { testPath, startTime: Date.now() };
+  const args = [
+    path.join(__dirname, '../../'),
+    '--disable-gpu',
+    '--whitelisted-ips=',
+    // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
+    '--disable-dev-shm-usage',
+  ];
 
+  if (options?.noModalDialogs ?? false) {
+    args.push('--no-modal-dialogs');
+  }
   const electronApp = await _electron.launch({
-    args: [
-      path.join(__dirname, '../../'),
-      '--disable-gpu',
-      '--whitelisted-ips=',
-      // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
-      '--disable-dev-shm-usage',
-      '--no-modal-dialogs',
-    ],
+    args,
     env: {
       ...process.env,
       ...options?.env ?? {},
