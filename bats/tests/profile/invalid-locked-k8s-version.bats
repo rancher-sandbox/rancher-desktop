@@ -24,8 +24,10 @@ local_teardown_file() {
     start_kubernetes
     # Don't do wait_for_container_engine because RD will shut down in the middle
     # and the function will take a long time to time out making futile queries.
-    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Error Starting Kubernetes"
-    try --max 2 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Locked kubernetes version 'NattyBo' isn't a valid version"
+    # The app should exit gracefully; after that we can check for contents.
+    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Child exited cleanly."
+    assert_file_contains "$PATH_LOGS/background.log" "Error Starting Kubernetes"
+    assert_file_contains "$PATH_LOGS/background.log" "Locked kubernetes version 'NattyBo' isn't a valid version"
 }
 
 @test 'recreate profile with a valid k8s version' {
@@ -37,6 +39,8 @@ local_teardown_file() {
     # Have to set the version field or RD will think we're trying to change a locked field.
     RD_KUBERNETES_PREV_VERSION=v1.27.2
     start_kubernetes
-    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Error Starting Kubernetes"
-    try --max 2 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "field 'kubernetes.version' is locked"
+    # The app should exit gracefully; after that we can check for contents.
+    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Child exited cleanly."
+    assert_file_contains "$PATH_LOGS/background.log" "Error Starting Kubernetes"
+    assert_file_contains "$PATH_LOGS/background.log" 'field "kubernetes.version" is locked'
 }

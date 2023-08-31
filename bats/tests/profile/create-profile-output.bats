@@ -213,8 +213,8 @@ assert_check_registry_output() {
     assert_success
 
     # We need to formulate /tmp as a directory both sides can see.
-    bashSideTemp=$(wslpath -a /tmp)           # e.g.: /mnt/c/tmp
-    winSideTemp=$(wslpath -w "$bashSideTemp") # c:\tmp
+    winSideTemp=$(wslpath -a -m /tmp)            # //wsl$/distro/tmp
+    bashSideTemp=$(wslpath -a -u "$winSideTemp") # /tmp
     testFile=test.reg
     salt=$$
     # Can't write into ...\Policies\ as non-administrator, so populate a different directory.
@@ -238,7 +238,7 @@ assert_check_registry_output() {
     if ! is_windows; then
         skip "Test requires the reg utility and only works on Windows"
     fi
-    run rdctl create-profile --output reg --hive=HKCU --type=defaults --input <(json_with_special_chars)
+    run rdctl create-profile --output reg --hive=HKCU --type=defaults --input - <<<"$(json_with_special_chars)"
     assert_check_registry_output
 }
 
