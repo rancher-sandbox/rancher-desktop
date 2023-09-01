@@ -513,18 +513,15 @@ export default class SettingsValidator {
   }
 
   protected findDuplicates(list: string[]): string[] {
-    // Just ignore whitespace
     const firstInstance = new Set<string>();
     const duplicates = new Set<string>();
-    const hasNonWhiteSpaceRE = /\S/;
 
-    for (const member of list) {
-      if (hasNonWhiteSpaceRE.test(member)) {
-        if (!firstInstance.has(member)) {
-          firstInstance.add(member);
-        } else {
-          duplicates.add(member);
-        }
+    // Ignore whitespace entries
+    for (const member of list.filter(s => s.match(/\S/))) {
+      if (!firstInstance.has(member)) {
+        firstInstance.add(member);
+      } else {
+        duplicates.add(member);
       }
     }
 

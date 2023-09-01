@@ -462,22 +462,6 @@ describe(SettingsValidator, () => {
         errors:       [],
       });
     });
-    it('allows exactly one whitespace value', () => {
-      const input: RecursivePartial<settings.Settings> = {
-        containerEngine: {
-          allowedImages: {
-            enabled:  true,
-            patterns: ['pattern1', 'pattern2', '\t', 'pattern3'],
-          },
-        },
-      };
-      const [needToUpdate, errors] = subject.validateSettings(cfg, input);
-
-      expect({ needToUpdate, errors }).toEqual({
-        needToUpdate: true,
-        errors:       [],
-      });
-    });
   });
 
   describe('locked fields', () => {
