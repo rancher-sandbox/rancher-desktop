@@ -84,7 +84,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
             .includes(this.searchValue.toLowerCase());
         });
       }
-      const filteredExtensions = tempExtensions.filter(item => this.isMobyActive ? item.moby_compatible ?? true : item.containerd_compatible);
+      const filteredExtensions = tempExtensions.filter(item => this.isMobyActive || item.containerd_compatible);
       const collator = new Intl.Collator('en', { sensitivity: 'base' });
 
       return filteredExtensions.sort((s1, s2) => {
