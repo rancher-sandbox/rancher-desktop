@@ -167,13 +167,6 @@ test.describe.serial('Main App Test', () => {
       await screenshot.take('virtualMachine', 'tabVolumes_9P');
 
       if (isMac) {
-        if (await e2ePreferences.virtualMachine.virtiofs.isEnabled()) {
-          await e2ePreferences.virtualMachine.virtiofs.click();
-          await expect(e2ePreferences.virtualMachine.virtiofs).toBeChecked();
-          await page.waitForTimeout(afterCheckedTimeout);
-          await screenshot.take('virtualMachine', 'tabVolumes_virtiofs');
-        }
-
         await e2ePreferences.virtualMachine.tabNetwork.click();
         await expect(e2ePreferences.virtualMachine.socketVmNet).toBeVisible();
         await screenshot.take('virtualMachine', 'tabNetwork');
@@ -185,7 +178,18 @@ test.describe.serial('Main App Test', () => {
         if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
           await e2ePreferences.virtualMachine.vz.click();
           await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
+        }
+
+        await e2ePreferences.virtualMachine.tabVolumes.click();
+        if (await e2ePreferences.virtualMachine.virtiofs.isEnabled()) {
+          await e2ePreferences.virtualMachine.virtiofs.click();
+          await expect(e2ePreferences.virtualMachine.virtiofs).toBeChecked();
           await page.waitForTimeout(afterCheckedTimeout);
+          await screenshot.take('virtualMachine', 'tabVolumes_virtiofs');
+        }
+
+        await e2ePreferences.virtualMachine.tabEmulation.click();
+        if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
           await screenshot.take('virtualMachine', 'tabEmulation_vz');
         }
       }
