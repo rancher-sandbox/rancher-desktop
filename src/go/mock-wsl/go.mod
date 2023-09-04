@@ -5,5 +5,5 @@ go 1.18
 require (
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 	golang.org/x/sys v0.11.0
-	golang.org/x/text v0.12.0
+	golang.org/x/text v0.13.0
 )
