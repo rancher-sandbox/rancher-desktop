@@ -50,6 +50,14 @@
           />
         </td>
       </template>
+
+      <template #col:imageName="{row}">
+        <td>
+          <span v-tooltip="getTooltipConfig(row.imageName)">
+            {{ shortSha(row.imageName) }}
+          </span>
+        </td>
+      </template>
     </SortableTable>
   </div>
 </template>
@@ -211,6 +219,11 @@ export default {
         }
       });
 
+      // Filter out images from "kube-system" namespace
+      this.containersList = this.containersList.filter((container) => {
+        return !container.Labels['io.kubernetes.pod.namespace'] || container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+      });
+
       ddClientReady = true;
     },
     async stopContainer(container) {
@@ -252,6 +265,20 @@ export default {
         window.alert(error.message);
         console.error(`Error executing command ${ command }`, error.message);
       }
+    },
+    shortSha(sha) {
+      if (!sha.startsWith('sha256:')) {
+        return sha;
+      }
+
+      return `${ sha.slice(0, 10) }..${ sha.slice(-5) }`;
+    },
+    getTooltipConfig(sha) {
+      if (!sha.startsWith('sha256:')) {
+        return { content: undefined };
+      }
+
+      return { content: sha };
     },
     getUniquePorts(obj) {
       const uniquePorts = {};
