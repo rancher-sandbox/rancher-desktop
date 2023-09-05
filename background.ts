@@ -467,10 +467,8 @@ Electron.app.on('before-quit', async(event) => {
     await k8smanager?.stop();
 
     console.log(`2: Child exited cleanly.`);
-  } catch (ex) {
-    if (isK8sError(ex)) {
-      console.log(`2: Child exited with code ${ ex.errCode }`);
-    }
+  } catch (ex: any) {
+    console.log(`2: Child exited with code ${ isK8sError(ex) ? ex.errCode : (ex.errCode ?? '<unknown>') }`);
     handleFailure(ex);
   } finally {
     gone = true;

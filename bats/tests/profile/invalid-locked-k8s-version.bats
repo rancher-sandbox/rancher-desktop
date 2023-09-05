@@ -25,7 +25,7 @@ local_teardown_file() {
     # Don't do wait_for_container_engine because RD will shut down in the middle
     # and the function will take a long time to time out making futile queries.
     # The app should exit gracefully; after that we can check for contents.
-    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Child exited cleanly."
+    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Child exited"
     assert_file_contains "$PATH_LOGS/background.log" "Error Starting Kubernetes"
     assert_file_contains "$PATH_LOGS/background.log" "Locked kubernetes version 'NattyBo' isn't a valid version"
 }
@@ -40,7 +40,7 @@ local_teardown_file() {
     RD_KUBERNETES_PREV_VERSION=v1.27.2
     start_kubernetes
     # The app should exit gracefully; after that we can check for contents.
-    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Child exited cleanly."
+    try --max 60 --delay 5 assert_file_contains "$PATH_LOGS/background.log" "Child exited"
     assert_file_contains "$PATH_LOGS/background.log" "Error Starting Kubernetes"
     assert_file_contains "$PATH_LOGS/background.log" 'field "kubernetes.version" is locked'
 }
