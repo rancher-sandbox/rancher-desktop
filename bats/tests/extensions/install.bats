@@ -36,6 +36,20 @@ encoded_id() { # variant
 
 @test 'start container engine' {
     RD_ENV_EXTENSIONS=1 start_container_engine
+}
+
+@test 'switch to cgroup v2' {
+    # TODO TODO TODO This is a workaround because #5363 hasn't been fixed yet
+    if is_windows; then
+        skip "Skipped because switching cgroup layout is not needed on Windows"
+    fi
+    wait_for_shell
+    rdctl shell sudo sed -E -i 's/#(rc_cgroup_mode).*/\1="unified"/' /etc/rc.conf
+    rdctl shutdown
+    RD_ENV_EXTENSIONS=1 start_container_engine
+}
+
+@test 'wait for container engine' {
     wait_for_container_engine
 }
 
