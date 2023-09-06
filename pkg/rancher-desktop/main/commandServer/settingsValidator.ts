@@ -516,8 +516,8 @@ export default class SettingsValidator {
     const firstInstance = new Set<string>();
     const duplicates = new Set<string>();
 
-    // Ignore whitespace entries
-    for (const member of list.filter(s => s.match(/\S/))) {
+    // Ignore all-whitespace entries, and also ignore whitespace padding
+    for (const member of list.map(s => s.trim()).filter(s => s)) {
       if (!firstInstance.has(member)) {
         firstInstance.add(member);
       } else {
