@@ -111,7 +111,16 @@ json_maps_and_lists() {
     "allowedImages": {"patterns": ["abc", "ghi", "def"] }
   },
   "WSL": {
-    "integrations": { "first": true, "second": false }
+    "integrations": { "second": false, "first": true }
+  },
+  "application":  {
+    "extensions":  {
+      "allowed": {
+        "enabled": true,
+        "list":    []
+      },
+      "installed": { }
+    }
   }
 }
 EOF
@@ -123,9 +132,15 @@ simple_json_data() {
 }
 export -f simple_json_data
 
+# Verify that fields in this structure appear alphabetically in reg output,
+# and in the same order as the settings struct in plutil output.
 json_with_special_chars() {
     cat <<'EOF'
-{ "application": {
+{
+  "containerEngine": {
+    "name": "small-less-<-than"
+  },
+  "application": {
     "extensions": {
         "allowed": {
           "enabled": false,
@@ -138,9 +153,6 @@ json_with_special_chars() {
             "key-with-emoji: 🐤": false
         }
     }
-  },
-  "containerEngine": {
-    "name": "small-less-<-than"
   }
 }
 EOF
@@ -270,6 +282,7 @@ EOF
     plutil -s - <<<"$output"
 }
 
+# Verify that the fields given in `json_maps_and_lists` are resorted alphabetically, ignoring case
 assert_registry_output_for_maps_and_lists() {
     assert_success
     assert_output - <<'EOF'
@@ -277,6 +290,12 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\SOFTWARE\Policies]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults]
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]
+"enabled"=dword:1
+"list"=hex(7):00,00,00,00
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\installed]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine\allowedImages]
 "patterns"=hex(7):61,00,62,00,63,00,00,00,67,00,68,00,69,00,00,00,64,00,65,00,66,00,00,00,00,00
@@ -287,11 +306,6 @@ Windows Registry Editor Version 5.00
 "first"=dword:1
 "second"=dword:0
 EOF
-}
-
-@test 'encodes multi-string values and maps from a file' {
-    run rdctl create-profile --output reg --hive hkcu --body "$(json_maps_and_lists)"
-    assert_registry_output_for_maps_and_lists
 }
 
 @test 'encodes multi-string values and maps from a json string' {
@@ -343,6 +357,23 @@ assert_complex_plist_output() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>application</key>
+    <dict>
+      <key>extensions</key>
+      <dict>
+        <key>allowed</key>
+        <dict>
+          <key>enabled</key>
+          <true/>
+          <key>list</key>
+          <array>
+          </array>
+        </dict>
+        <key>installed</key>
+        <dict>
+        </dict>
+      </dict>
+    </dict>
     <key>containerEngine</key>
     <dict>
       <key>allowedImages</key>

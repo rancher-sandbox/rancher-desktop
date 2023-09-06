@@ -184,6 +184,9 @@ func TestJsonToPlistFormat(t *testing.T) {
             <string>ok</string>
           </array>
         </dict>
+        <key>installed</key>
+        <dict>
+        </dict>
       </dict>
       <key>pathManagementStrategy</key>
       <string>rcfiles</string>
@@ -217,6 +220,9 @@ func TestJsonToPlistFormat(t *testing.T) {
       <dict>
         <key>enabled</key>
         <false/>
+        <key>patterns</key>
+        <array>
+        </array>
       </dict>
     </dict>
     <key>virtualMachine</key>
