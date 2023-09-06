@@ -1,15 +1,21 @@
 <script lang="ts">
+import { ValidationObserver } from 'vee-validate';
 import Vue from 'vue';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
+
 /**
  * Groups several controls as well as labels
  */
 export default Vue.extend({
   name:       'rd-fieldset',
-  components: { TooltipIcon, LabeledBadge },
-  props:      {
+  components: {
+    TooltipIcon,
+    LabeledBadge,
+    ValidationObserver,
+  },
+  props: {
     legendText: {
       type:    String,
       default: '',
@@ -42,39 +48,44 @@ export default Vue.extend({
 </script>
 
 <template>
-  <fieldset class="rd-fieldset">
-    <legend>
-      <slot name="legend">
-        <span>{{ legendText }}</span>
-        <labeled-badge
-          v-if="badgeText"
-          :text="badgeText"
-        />
-        <tooltip-icon
-          v-if="isExperimental"
-        />
-        <i
-          v-if="isLocked"
-          v-tooltip="{
-            content: lockedTooltip,
-            placement: 'right'
-          }"
-          class="icon icon-lock"
-        />
-        <i
-          v-else-if="legendTooltip"
-          v-tooltip="legendTooltip"
-          class="icon icon-info-circle icon-lg"
-        />
+  <ValidationObserver
+    ref="validator"
+    slim
+  >
+    <fieldset class="rd-fieldset">
+      <legend>
+        <slot name="legend">
+          <span>{{ legendText }}</span>
+          <labeled-badge
+            v-if="badgeText"
+            :text="badgeText"
+          />
+          <tooltip-icon
+            v-if="isExperimental"
+          />
+          <i
+            v-if="isLocked"
+            v-tooltip="{
+              content: lockedTooltip,
+              placement: 'right'
+            }"
+            class="icon icon-lock"
+          />
+          <i
+            v-else-if="legendTooltip"
+            v-tooltip="legendTooltip"
+            class="icon icon-info-circle icon-lg"
+          />
+        </slot>
+      </legend>
+      <slot
+        name="default"
+        :is-locked="isLocked"
+      >
+        <!-- Slot content -->
       </slot>
-    </legend>
-    <slot
-      name="default"
-      :is-locked="isLocked"
-    >
-      <!-- Slot content -->
-    </slot>
-  </fieldset>
+    </fieldset>
+  </ValidationObserver>
 </template>
 
 <style lang="scss" scoped>

@@ -32,6 +32,11 @@ export default Vue.extend({
       kubernetesPort:     6443,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
+      rules:              {
+        name:  'k8s_port',
+        rule:  'required',
+        error: 'Kubernetes port is required',
+      },
     };
   },
   computed: {
@@ -152,6 +157,7 @@ export default Vue.extend({
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.port"
         :is-locked="isPreferenceLocked('kubernetes.port')"
+        :rules="rules"
         @input="onChange('kubernetes.port', castToNumber($event.target.value))"
       />
     </rd-fieldset>
