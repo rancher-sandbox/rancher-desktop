@@ -105,9 +105,6 @@ export function clearSettings() {
  * Load the settings file or create it if not present.
  */
 export function load(deploymentProfiles: DeploymentProfileType): Settings {
-  if (settings) {
-    return settings;
-  }
   try {
     return finishConfiguringSettings(loadFromDisk(), deploymentProfiles);
   } catch (err: any) {

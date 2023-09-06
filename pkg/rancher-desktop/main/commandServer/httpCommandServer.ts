@@ -9,6 +9,7 @@ import _ from 'lodash';
 import type { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
+import { State } from '@pkg/backend/backend';
 import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import mainEvents from '@pkg/main/mainEvents';
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
@@ -17,6 +18,11 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
+
+export type BackendState = {
+  vmState: State,
+  locked: boolean,
+};
 
 export type ServerState = {
   user: string;
@@ -63,6 +69,7 @@ export class HttpCommandServer {
         '/v1/settings':              [0, this.listSettings],
         '/v1/settings/locked':       [0, this.listLockedSettings],
         '/v1/transient_settings':    [0, this.listTransientSettings],
+        '/v1/backend_state':         [1, this.getBackendState],
       },
       post: { '/v1/diagnostic_checks': [0, this.diagnosticRunChecks] },
       put:  {
@@ -71,6 +78,7 @@ export class HttpCommandServer {
         '/v1/settings':           [0, this.updateSettings],
         '/v1/shutdown':           [0, this.wrapShutdown],
         '/v1/transient_settings': [0, this.updateTransientSettings],
+        '/v1/backend_state':      [1, this.setBackendState],
       },
     } as const,
     {
@@ -630,6 +638,27 @@ export class HttpCommandServer {
       }
     }
   }
+
+  protected getBackendState(_: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const backendState = this.commandWorker.getBackendState();
+
+    console.debug('GET backend_state: succeeded 200');
+    response.status(200).json(backendState);
+
+    return Promise.resolve();
+  }
+
+  protected async setBackendState(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const [data] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+    const state = JSON.parse(data)
+    console.debug('PUT backend_state: succeeded 202');
+    response.status(202).type('txt').send('Received backend state.');
+    setImmediate(() => {
+      this.commandWorker.setBackendState(state);
+    });
+
+    return Promise.resolve();
+  }
 }
 
 interface commandContext {
@@ -655,6 +684,10 @@ export interface CommandWorkerInterface {
   runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultCollection>;
   getTransientSettings: (context: commandContext) => string;
   updateTransientSettings: (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
+  /** Get the state of the backend */
+  getBackendState: () => BackendState;
+  /** Set the desired state of the backend */
+  setBackendState: (state: BackendState) => void;
 
   // #region extensions
   /** List the installed extensions with their versions */

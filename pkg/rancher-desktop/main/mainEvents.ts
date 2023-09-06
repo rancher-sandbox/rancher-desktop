@@ -111,6 +111,14 @@ interface MainEventNames {
    * quitting.
    */
   'quit'(): void;
+
+  /**
+   * Emitted when the "locked" state is requested. This state is enabled when
+   * a snapshot is being created or restored. It disables the UI, prevents the
+   * user from making changes to settings, and possibly prevents other actions
+   * that could mess with snapshot operations.
+   */
+  'locked-update'(locked: boolean): void;
 }
 
 /**

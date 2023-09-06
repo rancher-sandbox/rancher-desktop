@@ -8,6 +8,7 @@ import Electron from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
 
+import { State } from '@pkg/backend/backend';
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
 import { getImageProcessor } from '@pkg/backend/images/imageFactory';
@@ -22,7 +23,7 @@ import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
 import { PathManager } from '@pkg/integrations/pathManager';
 import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
-import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer, BackendState } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
@@ -78,6 +79,11 @@ let enabledK8s: boolean;
 let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
 let noModalDialogs = false;
+// Indicates whether the UI should be locked, settings changes should be disallowed
+// and possibly other things should be disallowed. As of the time of writing,
+// set to true when a snapshot is being created or restored.
+let locked = false;
+let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
 /**
  * pendingRestartContext is needed because with the CLI it's possible to change
@@ -179,7 +185,6 @@ Electron.app.whenReady().then(async() => {
     DashboardServer.getInstance().init();
 
     await setupNetworking();
-    let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
@@ -297,7 +302,7 @@ Electron.app.whenReady().then(async() => {
 
     diagnostics.runChecks().catch(console.error);
 
-    await startBackend(cfg);
+    await startBackend();
   } catch (ex: any) {
     console.error(`Error starting up: ${ ex }`, ex.stack);
     gone = true;
@@ -388,7 +393,7 @@ async function checkBackendValid() {
  *
  * @precondition cfg.kubernetes.version is set.
  */
-async function startBackend(cfg: settings.Settings) {
+async function startBackend() {
   await checkBackendValid();
   try {
     await startK8sManager();
@@ -1227,6 +1232,29 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       } finally {
         window.send('extensions/changed');
       }
+    }
+  }
+
+  getBackendState(): BackendState {
+    return {
+      vmState: k8smanager.state,
+      locked,
+    };
+  }
+
+  async setBackendState(state: BackendState): Promise<void> {
+    locked = state.locked;
+    mainEvents.emit('locked-update', locked);
+    switch (state.vmState) {
+    case State.STARTED:
+      cfg = settingsImpl.load(deploymentProfiles);
+      mainEvents.emit('settings-update', cfg);
+
+      return await startBackend();
+    case State.STOPPED:
+      return await k8smanager.stop();
+    default:
+      throw new Error(`invalid desired VM state ${ state.vmState }`);
     }
   }
 }
