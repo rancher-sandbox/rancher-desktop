@@ -107,6 +107,11 @@ install_extensions() {
 }
 
 @test 'verify all extensions can be installed' {
+    if using_vz_emulation; then
+        # BUG BUG BUG https://github.com/rancher-sandbox/rancher-desktop/issues/5465
+        skip "Skipping extension installation under VZ emulation"
+    fi
+
     #WORKAROUND `rdctl` tries to install extensions before app is ready.
     wait_for_container_engine
     sleep 30
@@ -153,6 +158,11 @@ install_extensions() {
 }
 
 @test 'install only allowed extensions' {
+    if using_vz_emulation; then
+        # BUG BUG BUG https://github.com/rancher-sandbox/rancher-desktop/issues/5465
+        skip "Skipping extension installation under VZ emulation"
+    fi
+
     install_extensions
 }
 
