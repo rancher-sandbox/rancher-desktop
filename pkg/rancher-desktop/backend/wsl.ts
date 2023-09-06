@@ -852,7 +852,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.writeFile(`/etc/moproxy/proxy.ini`, '; no proxy defined');
     }
 
-    await this.modifyConf('moproxy', { MOPROXY_NOPROXY: proxy.noproxy.join(',') });
+    await this.modifyConf('moproxy', { MOPROXY_NOPROXY: proxy.noproxy.filter(ip => ip).join(',') });
   }
 
   /**
