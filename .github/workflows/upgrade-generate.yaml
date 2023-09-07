@@ -26,6 +26,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
+        cache: yarn
     - uses: actions/setup-python@v4
       with:
         python-version: '3.x'
@@ -87,6 +88,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
+        cache: yarn
     - run: yarn install --frozen-lockfile
     - name: Download installer (exe)
       id: exe
