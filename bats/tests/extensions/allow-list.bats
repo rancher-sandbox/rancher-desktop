@@ -55,7 +55,8 @@ check_extension_installed() { # refute, name
         skip "Skipped because switching cgroup layout is not needed on Windows"
     fi
     wait_for_shell
-    rdctl shell sudo sed -E -i 's/#(rc_cgroup_mode).*/\1="unified"/' /etc/rc.conf
+    rdsudo sed -E -i 's/#(rc_cgroup_mode).*/\1="unified"/' /etc/rc.conf
+    rdsudo sync
     rdctl shutdown
     RD_ENV_EXTENSIONS=1 start_container_engine
 }
