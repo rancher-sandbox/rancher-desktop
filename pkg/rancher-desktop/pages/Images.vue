@@ -26,6 +26,11 @@ import Images from '@pkg/components/Images.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
+const ImageMangerStates = Object.freeze({
+  UNREADY: 'IMAGE_MANAGER_UNREADY',
+  READY:   'READY',
+});
+
 export default {
   components: { Images },
   data() {
@@ -40,10 +45,10 @@ export default {
   computed: {
     state() {
       if (![K8sState.STARTED, K8sState.DISABLED].includes(this.k8sState)) {
-        return 'IMAGE_MANAGER_UNREADY';
+        return ImageMangerStates.UNREADY;
       }
 
-      return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
+      return this.imageManagerState ? ImageMangerStates.READY : ImageMangerStates.UNREADY;
     },
     rancherImages() {
       return this.images
@@ -67,14 +72,14 @@ export default {
   },
 
   watch: {
-    imageManagerState: {
+    state: {
       handler(state) {
         this.$store.dispatch(
           'page/setHeader',
           { title: this.t('images.title') },
         );
 
-        if (!state) {
+        if (!state || state === ImageMangerStates.UNREADY) {
           return;
         }
 
