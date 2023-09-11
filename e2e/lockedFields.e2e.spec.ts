@@ -35,12 +35,10 @@ import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
 import { reopenLogs } from '@pkg/utils/logging';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 test.describe('Locked fields', () => {
-  test.skip(process.platform === 'win32', 'TODO: Implement testing on Windows');
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let page: Page;
   const appPath = path.join(__dirname, '../');
   let deploymentProfile: DeploymentProfileType|null = null;
@@ -91,12 +89,6 @@ test.describe('Locked fields', () => {
       { containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } }, kubernetes: { version: lockedK8sVersion } },
     );
     electronApp = await startRancherDesktop(__filename);
-    context = electronApp.context();
-
-    await context.tracing.start({
-      screenshots: true,
-      snapshots:   true,
-    });
     page = await electronApp.firstWindow();
   });
 
