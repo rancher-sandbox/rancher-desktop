@@ -39,6 +39,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
+        cache: yarn
     - uses: actions/setup-python@v4
       with:
         python-version: '3.x'
@@ -161,6 +162,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
+        cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000
     - uses: actions/download-artifact@v3
