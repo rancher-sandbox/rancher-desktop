@@ -2,11 +2,11 @@
 import Vue, { VueConstructor } from 'vue';
 import { mapGetters } from 'vuex';
 
-import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
-
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
 import { Settings, ContainerEngine } from '@pkg/config/settings';
 import { ExtensionState } from '@pkg/store/extensions.js';
+import { demoMarketplace } from '@pkg/utils/_demo_marketplace_items.js';
+
 type FilteredExtensions = typeof demoMarketplace.summaries;
 
 interface installedExtensions extends ExtensionState {
@@ -88,13 +88,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       const collator = new Intl.Collator('en', { sensitivity: 'base' });
 
       return filteredExtensions.sort((s1, s2) => {
-        const s1Publisher = s1.publisher.name;
-        const s2Publisher = s2.publisher.name;
-
-        if (s1Publisher.includes('SUSE') !== s2Publisher.includes('SUSE') ) {
-          return s1Publisher.includes('SUSE') ? -1 : 1;
-        }
-
         return collator.compare(s1.name, s2.name);
       });
     },
