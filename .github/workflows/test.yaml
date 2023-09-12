@@ -20,6 +20,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: '^1.18'
+        cache-dependency-path: src/go/**/go.sum
     - run: yarn install --frozen-lockfile
     - run: yarn build
     - run: yarn lint:nofix

@@ -32,9 +32,7 @@ jobs:
         with:
           go-version: '^1.18'
           cache: 'true'
-          # This appears to only allow caching one dependency; pick one at
-          # random.
-          cache-dependency-path: src/go/rdctl/go.sum
+          cache-dependency-path: src/go/**/go.sum
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Run e2e Tests
