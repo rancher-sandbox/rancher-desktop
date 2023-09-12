@@ -29,7 +29,7 @@ import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, tool, waitForRestartVM,
+  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, waitForRestartVM,
 } from './utils/TestUtils';
 
 import {
