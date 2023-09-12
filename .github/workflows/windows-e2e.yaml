@@ -21,7 +21,7 @@ jobs:
       - run: Remove-Item -Path "$HOME/AppData/Roaming/rancher-desktop" -Recurse -Force -ErrorAction Ignore
       - name: Remove golang module cache
         run: Remove-Item -Path "$HOME/go/pkg/mod" -Recurse -Force -ErrorAction Ignore
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: actions/setup-node@v3
