@@ -12,16 +12,14 @@ var snapshotCreateCmd = &cobra.Command{
 	Use:   "create <name>",
 	Short: "Create a snapshot",
 	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return snapshotCreate(cmd, args)
-	},
+	RunE:  stopBackendCallFuncAndRestartBackend(createSnapshot),
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotCreateCmd)
 }
 
-func snapshotCreate(cmd *cobra.Command, args []string) error {
+func createSnapshot(cmd *cobra.Command, args []string) error {
 	paths, err := paths.GetPaths()
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
