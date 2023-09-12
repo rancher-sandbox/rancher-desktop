@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os/exec"
-	"runtime"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
@@ -32,14 +30,5 @@ func snapshotCreate(cmd *cobra.Command, args []string) error {
 	if _, err := manager.Create(args[0]); err != nil {
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
-
-	// exclude snapshots directory from time machine backups if on macOS
-	if runtime.GOOS == "darwin" {
-		cmd := exec.Command("tmutil", "addexclusion", paths.Snapshots)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to add exclusion to TimeMachine: %w", err)
-		}
-	}
-
 	return nil
 }
