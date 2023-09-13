@@ -20,10 +20,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"regexp"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -64,7 +66,13 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 	var result []byte
 	var contents []byte
 	var err error
-	var errorPacket *APIError
+	var errorPacket *client.APIError
+
+	connectionInfo, err := config.GetConnectionInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
+	}
+	rdClient := client.NewRDClient(connectionInfo)
 
 	if len(args) == 0 || len(args[0]) == 0 {
 		return fmt.Errorf("api command: no endpoint specified")
@@ -74,7 +82,7 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 	}
 	endpoint := args[0]
 	if endpoint != "/" && regexp.MustCompile(`^/v\d+(?:/|$)`).FindString(endpoint) == "" {
-		endpoint = fmt.Sprintf("/%s", versionCommand(apiVersion, endpoint))
+		endpoint = fmt.Sprintf("/%s", client.VersionCommand(client.ApiVersion, endpoint))
 	}
 	if apiSettings.InputFile != "" && apiSettings.Body != "" {
 		return fmt.Errorf("api command: --body and --input options cannot both be specified")
@@ -86,29 +94,30 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 			apiSettings.Method = "PUT"
 		}
 		if apiSettings.InputFile == "-" {
-			contents, err = ioutil.ReadAll(os.Stdin)
+			contents, err = io.ReadAll(os.Stdin)
 		} else {
-			contents, err = ioutil.ReadFile(apiSettings.InputFile)
+			contents, err = os.ReadFile(apiSettings.InputFile)
 		}
 		if err != nil {
 			return err
 		}
-		result, errorPacket, err = processRequestForAPI(doRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBuffer(contents)))
+		response, err := rdClient.DoRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBuffer(contents))
+		result, errorPacket, err = client.ProcessRequestForAPI(response, err)
 	} else if apiSettings.Body != "" {
 		if apiSettings.Method == "" {
 			apiSettings.Method = "PUT"
 		}
-		result, errorPacket, err = processRequestForAPI(doRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBufferString(apiSettings.Body)))
+		result, errorPacket, err = client.ProcessRequestForAPI(rdClient.DoRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBufferString(apiSettings.Body)))
 	} else {
 		if apiSettings.Method == "" {
 			apiSettings.Method = "GET"
 		}
-		result, errorPacket, err = processRequestForAPI(doRequest(apiSettings.Method, endpoint))
+		result, errorPacket, err = client.ProcessRequestForAPI(rdClient.DoRequest(apiSettings.Method, endpoint))
 	}
 	return displayAPICallResult(result, errorPacket, err)
 }
 
-func displayAPICallResult(result []byte, errorPacket *APIError, err error) error {
+func displayAPICallResult(result []byte, errorPacket *client.APIError, err error) error {
 	if err != nil {
 		return err
 	}

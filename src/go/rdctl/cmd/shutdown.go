@@ -18,6 +18,9 @@ package cmd
 
 import (
 	"fmt"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	rdconfig "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -61,7 +64,13 @@ func init() {
 }
 
 func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
-	output, _ := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
-	err := shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
+	var output []byte
+	connectionInfo, err := rdconfig.GetConnectionInfo()
+	if err == nil {
+		rdClient := client.NewRDClient(connectionInfo)
+		request, err := rdClient.DoRequest("PUT", client.VersionCommand("", "shutdown"))
+		output, _ = client.ProcessRequestForUtility(request, err)
+	}
+	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
 	return output, err
 }

@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -97,7 +96,7 @@ func finishConnectionSettings() (bool, error) {
 	if connectionSettings.Host == "" {
 		connectionSettings.Host = "127.0.0.1"
 	}
-	content, err := ioutil.ReadFile(configPath)
+	content, err := os.ReadFile(configPath)
 	if err != nil {
 		// If the default config file isn't available, it might not have been created yet,
 		// so don't complain if we don't need it.

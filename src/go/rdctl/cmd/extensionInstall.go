@@ -19,6 +19,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -41,12 +43,17 @@ func init() {
 }
 
 func installExtension(args []string) error {
+	connectionInfo, err := config.GetConnectionInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
+	}
+	rdClient := client.NewRDClient(connectionInfo)
 	imageID := args[0]
-	endpoint := fmt.Sprintf("/%s/extensions/install?id=%s", apiVersion, imageID)
+	endpoint := fmt.Sprintf("/%s/extensions/install?id=%s", client.ApiVersion, imageID)
 	// https://stackoverflow.com/questions/20847357/golang-http-client-always-escaped-the-url
 	// Looks like http.NewRequest(method, url) escapes the URL
 
-	result, errorPacket, err := processRequestForAPI(doRequest("POST", endpoint))
+	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("POST", endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult(result, errorPacket, err)
 	}

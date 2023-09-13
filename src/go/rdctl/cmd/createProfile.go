@@ -18,10 +18,12 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/plist"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/reg"
 	"github.com/spf13/cobra"
@@ -90,16 +92,22 @@ func createProfile() (string, error) {
 		output = []byte(JSONBody)
 	} else if InputFile != "" {
 		if InputFile == "-" {
-			output, err = ioutil.ReadAll(os.Stdin)
+			output, err = io.ReadAll(os.Stdin)
 		} else {
-			output, err = ioutil.ReadFile(InputFile)
+			output, err = os.ReadFile(InputFile)
 		}
 	} else {
 		if !UseCurrentSettings {
 			// This should have been caught in validateProfileFormatFlags
 			return "", fmt.Errorf(`no input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"`)
 		}
-		output, err = processRequestForUtility(doRequest("GET", versionCommand("", "settings")))
+		connectionInfo, err := config.GetConnectionInfo()
+		if err != nil {
+			return "", fmt.Errorf("failed to get connection info: %w", err)
+		}
+		rdClient := client.NewRDClient(connectionInfo)
+		response, err := rdClient.DoRequest("GET", client.VersionCommand("", "settings"))
+		output, err = client.ProcessRequestForUtility(response, err)
 	}
 	if err != nil {
 		return "", err

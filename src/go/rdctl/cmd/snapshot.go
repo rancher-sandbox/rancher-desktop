@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"github.com/spf13/cobra"
 	"os/exec"
 	"runtime"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/spf13/cobra"
 )
 
 var snapshotCmd = &cobra.Command{
