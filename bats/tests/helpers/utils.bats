@@ -215,7 +215,7 @@ get_json_test_data() {
     assert_failure
     assert_counter_is 1
     # "try" should not have called "sleep 5" at all
-    ((SECONDS < 2))
+    ((SECONDS < 5))
 }
 
 @test 'try will stop as soon as the command succeeds' {
@@ -228,12 +228,12 @@ get_json_test_data() {
 }
 
 @test 'try will return after max retries' {
-    run try --max 3 --delay 2 inc_counter
+    run try --max 3 --delay 3 inc_counter
     assert_failure
     assert_counter_is 3
-    # "try" should have called "sleep 2" exactly twice
-    ((SECONDS >= 4))
-    ((SECONDS < 6))
+    # "try" should have called "sleep 3" exactly twice
+    ((SECONDS >= 6))
+    ((SECONDS < 9))
 }
 
 ########################################################################
