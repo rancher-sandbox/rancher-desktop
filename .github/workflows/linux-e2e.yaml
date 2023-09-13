@@ -1,0 +1,51 @@
+name: e2e tests on Linux
+
+on:
+  workflow_dispatch:
+  schedule:
+  - cron: '15 8 * * 1-5'
+
+jobs:
+  e2e-tests:
+    timeout-minutes: 90
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: yarn
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '^1.18'
+          cache-dependency-path: src/go/**/go.sum
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Disable admin-access before start up
+        run: |
+          mkdir -p $HOME/.config/rancher-desktop
+          cat <<EOF > $HOME/.config/rancher-desktop/settings.json
+            {
+              "version": 5,
+              "application": {
+                "adminAccess": false
+              }
+            }
+          EOF
+      - name: Run e2e Tests
+        continue-on-error: false
+        run: yarn test:e2e
+      - name: Upload failure reports
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: e2etest-artifacts
+          path: ./e2e/reports/*
+      - name: Clean up test environment
+        run: |
+          rm -f ~/.config/rancher-desktop.defaults.json
+          rm -f ~/.config/rancher-desktop.locked.json
+        if: always()
