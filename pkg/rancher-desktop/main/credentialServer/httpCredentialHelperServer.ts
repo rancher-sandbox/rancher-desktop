@@ -46,7 +46,7 @@ function requireJSONOutput(stdout: string): boolean {
 }
 
 export function getServerCredentialsPath(): string {
-  return path.join(paths.appHome, SERVER_FILE_BASENAME);
+  return path.join(paths.config, SERVER_FILE_BASENAME);
 }
 
 function ensureEndsWithNewline(s: string) {

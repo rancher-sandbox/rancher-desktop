@@ -66,7 +66,7 @@ encoded_id() { # variant
 
 @test 'extension API - require auth' {
     local port
-    run cat "${PATH_APP_HOME}/rd-engine.json"
+    run cat "${PATH_CONFIG}/rd-engine.json"
     assert_success
     port="$(jq_output .port)"
     assert [ -n "$port" ]

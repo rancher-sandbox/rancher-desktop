@@ -20,6 +20,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -64,6 +65,13 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 		if configDir, err = wslifyConfigDir(); err != nil {
 			log.Fatalf("Can't get WSL config-dir: %v", err)
 		}
+	} else if runtime.GOOS == "darwin" {
+		// os.UserConfigDir() => ~/Library/Application Support, not ~/Library/Preferences
+		configDir = os.Getenv("HOME")
+		if configDir == "" {
+			log.Fatalf("Can't get the home directory: %v", errors.New("$HOME is not defined"))
+		}
+		configDir += "/Library/Preferences"
 	} else {
 		configDir, err = os.UserConfigDir()
 		if err != nil {

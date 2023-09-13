@@ -395,6 +395,17 @@ const updateTable: Record<number, (settings: any) => void> = {
       delete settings.extensions;
     }
   },
+  9: (_) => {
+    // On macOS, this version deletes credential-server.json and rd-engine.json from paths.appHome
+    // This happens on startup, so new instances of these files will be created in paths.config
+    // paths.config === paths.appHome on linux and Windows, so this only needs to be done on macOS
+    if (process.platform === 'darwin') {
+      for (const filename of ['credential-server.json', 'rd-engine.json']) {
+        // Ignore non-existent files (but if we're moving from settings 9 to 10 on macOS, they should exist
+        fs.rmSync(join(paths.appHome, filename), { force: true });
+      }
+    }
+  },
 };
 
 function migrateSettingsToCurrentVersion(settings: Settings) {

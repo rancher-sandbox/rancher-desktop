@@ -257,7 +257,7 @@ describeWithCreds('Credentials server', () => {
   });
 
   test('should emit connection information', async() => {
-    const dataPath = path.join(paths.appHome, 'credential-server.json');
+    const dataPath = path.join(paths.config, 'credential-server.json');
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
     serverState = JSON.parse(dataRaw);

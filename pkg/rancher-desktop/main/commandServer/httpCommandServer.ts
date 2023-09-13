@@ -102,9 +102,9 @@ export class HttpCommandServer {
         upstreamServerAddress: `${ localHost }:${ SERVER_PORT }`,
       });
     }
-    const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
+    const statePath = path.join(paths.config, SERVER_FILE_BASENAME);
 
-    await fs.promises.mkdir(paths.appHome, { recursive: true });
+    await fs.promises.mkdir(paths.config, { recursive: true });
     await fs.promises.writeFile(statePath,
       jsonStringifyWithWhiteSpace(this.externalState),
       { mode: 0o600 });

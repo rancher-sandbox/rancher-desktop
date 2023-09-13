@@ -49,7 +49,7 @@ test.describe.serial('KubernetesBackend', () => {
     });
 
     test('should emit connection information', async() => {
-      const dataPath = path.join(paths.appHome, 'rd-engine.json');
+      const dataPath = path.join(paths.config, 'rd-engine.json');
       const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
       serverState = JSON.parse(dataRaw);

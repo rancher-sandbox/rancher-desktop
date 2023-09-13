@@ -132,7 +132,7 @@ test.describe('Command server', () => {
   });
 
   test('should emit connection information', async() => {
-    const dataPath = path.join(paths.appHome, 'rd-engine.json');
+    const dataPath = path.join(paths.config, 'rd-engine.json');
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
     serverState = JSON.parse(dataRaw);
@@ -571,8 +571,8 @@ test.describe('Command server', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
         let parameters: string[];
-        const configFilePath = path.join(paths.appHome, 'rd-engine.json');
-        const backupPath = path.join(paths.appHome, 'rd-engine.json.bak');
+        const configFilePath = path.join(paths.config, 'rd-engine.json');
+        const backupPath = path.join(paths.config, 'rd-engine.json.bak');
 
         test.beforeAll(async() => {
           const dataRaw = await fs.promises.readFile(configFilePath, 'utf-8');
