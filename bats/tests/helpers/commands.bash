@@ -19,11 +19,8 @@ if is_macos; then
 elif is_linux; then
     CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-pass"
 elif is_windows; then
-    if using_windows_exe; then
-        CRED_HELPER="$PATH_RESOURCES/win32/bin/docker-credential-wincred.exe"
-    else
-        CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-pass"
-    fi
+    # Our docker-cli for WSL defaults to "wincred.exe" as well
+    CRED_HELPER="$PATH_RESOURCES/win32/bin/docker-credential-wincred.exe"
 fi
 
 if is_windows; then
