@@ -348,11 +348,11 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 
 	// Do bind mounts
 	for bindKey, target := range mapping {
-		mountPath := path.Join(b.mountRoot, bindKey) 
+		mountPath := path.Join(b.mountRoot, bindKey)
 		logEntry := logrus.WithFields(logrus.Fields{
 			"container": templates["id"],
-			"bind": mountPath,
-			"target": target,
+			"bind":      mountPath,
+			"target":    target,
 		})
 		err := b.prepareMountPath(target, bindKey)
 		if err != nil {
