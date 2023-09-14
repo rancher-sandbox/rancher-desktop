@@ -247,14 +247,23 @@ api_set() {
     rdctl shutdown
 }
 
-@test 'try to change locked fields via rdctl start' {
+@test 'try to change locked fields via rdctl start and watch it fail' {
     rdctl start --container-engine.allowed-images.enabled=false --no-modal-dialogs
     try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "containerEngine.allowedImages.enabled" is locked'
-    assert_success
+
+    # The `rdctl start` command above (and below) is expected to fail. We wait until we see the failure
+    # message in the log file, but at that time the process may still be running.
+    # Make sure that Rancher Desktop has really stopped; otherwise `rdctl start` may not launch a new instance
+    if is_macos; then
+        # BUG BUG BUG
+        # It should be possible to run `rdctl shutdown` to ensure that Rancher Desktop isn't running
+        # but that doesn't always work: https://github.com/rancher-sandbox/rancher-desktop/issues/5513
+        # BUG BUG BUG
+        try --max 10 --delay 5 osascript -e 'if application "Rancher Desktop" is running then' -e 'error' -e 'end if'
+    fi
 
     rdctl start --kubernetes.version="1.16.15" --no-modal-dialogs
     try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "kubernetes.version" is locked'
-    assert_success
 }
 
 @test 'restart application' {
