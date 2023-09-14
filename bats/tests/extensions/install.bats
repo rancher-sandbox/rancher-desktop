@@ -12,14 +12,9 @@ assert_file_contents_equal() { # $have $want
     assert_file_exist "$want"
 
     local have_hash want_hash
-    if is_macos; then
-        # md5sum is not available on macOS unless you install GNU coreutils
-        have_hash="$(md5 -q "$have")"
-        want_hash="$(md5 -q "$want")"
-    else
-        have_hash="$(md5sum "$have" | cut -d ' ' -f 1)"
-        want_hash="$(md5sum "$want" | cut -d ' ' -f 1)"
-    fi
+    # md5sum is not available on macOS unless you install GNU coreutils
+    have_hash="$(openssl md5 -r "$have" | cut -d ' ' -f 1)"
+    want_hash="$(openssl md5 -r "$want" | cut -d ' ' -f 1)"
     if [ "$have_hash" != "$want_hash" ]; then
         printf "expected : %s (%s)\nactual   : %s (%s)" \
             "$want" "$want_hash" "$have" "$have_hash" |
