@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# This script runs the GitHub Runner executable.  This needs a separate script
+# so that we can load the JIT config (which is stored as a file).
+
+exec xvfb-run --auto-servernum --server-args='-screen 0 1280x960x24' \
+    ./run.sh --jitconfig "$(cat "${CREDENTIALS_DIRECTORY}/RUNNER_JIT_CONFIG")"

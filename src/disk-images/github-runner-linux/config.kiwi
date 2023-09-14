@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<image schemaversion="7.4" name="github-runner-linux">
+    <description type="system">
+        <author>Mook-as</author>
+        <contact>mook-as@users.github.io</contact>
+        <specification>GitHub runner (Linux) for Rancher Desktop</specification>
+    </description>
+    <preferences>
+        <type image="oem" filesystem="xfs" firmware="uefi" format="qcow2">
+            <size unit="G">1024</size>
+            <oemconfig>
+                <oem-unattended>true</oem-unattended>
+            </oemconfig>
+        </type>
+        <version>1.0.0</version>
+        <packagemanager>zypper</packagemanager>
+        <locale>en_US</locale>
+        <keytable>us</keytable>
+        <timezone>UTC</timezone>
+        <rpm-excludedocs>true</rpm-excludedocs>
+    </preferences>
+    <repository type="rpm-md" imageinclude="true">
+        <source path="obs://openSUSE:Leap:15.5/standard"/>
+    </repository>
+    <packages type="image">
+        <!-- base image -->
+        <package name="dracut"/>
+        <package name="dracut-kiwi-oem-repart"/>
+        <package name="kernel-default"/>
+        <package name="openSUSE-build-key"/>
+        <package name="patterns-base-bootloader"/>
+        <!-- GitHub runner dependencies -->
+        <package name="lttng-ust"/>
+        <package name="libopenssl1_1"/>
+        <package name="krb5"/>
+        <package name="zlib"/>
+        <package name="libicu &lt; 65"/>
+        <package name="sudo"/>
+        <package name="git"/>
+        <!-- Depdencies for building Rancher Desktop -->
+        <package name="jq"/>
+        <package name="nodejs-devel"/>
+        <namedCollection name="devel_basis"/>
+        <namedCollection name="devel_C_C++"/>
+        <!-- Dependencies for running Rancher Desktop -->
+        <package name="openssh-clients"/> <!-- for lima -->
+        <package name="xvfb-run"/> <!-- run things under x11 -->
+        <package name="chromium"/> <!-- things we need to run Electron -->
+        <package name="libgtk-3-0"/> <!-- also for Electron -->
+        <package name="noto-sans-fonts"/> <!-- need any font -->
+    </packages>
+    <packages type="bootstrap">
+        <package name="glibc-locale"/>
+        <package name="openSUSE-release"/>
+    </packages>
+    <users>
+        <user pwdformat="plain" password="suse" home="/root" name="root" groups="root"/>
+        <user pwdformat="plain" password="suse" name="runner" groups="runner,docker,kvm"/>
+    </users>
+</image>

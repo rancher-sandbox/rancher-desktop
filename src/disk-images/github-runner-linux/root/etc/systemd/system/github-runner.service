@@ -1,0 +1,20 @@
+[Unit]
+Description=GitHub Runner Service
+After=network.target
+# We only run this if the JIT config exists (i.e. this isn't being run manually)
+ConditionPathExists=/sys/firmware/qemu_fw_cfg/by_name/opt/github-jit-config/raw
+SuccessAction=poweroff-immediate
+FailureAction=poweroff-immediate
+
+[Service]
+Type=simple
+KillMode=process
+KillSignal=SIGTERM
+TimeoutStopSec=5min
+User=runner
+WorkingDirectory=/runner
+ExecStart=/usr/local/bin/start-runner
+LoadCredential=RUNNER_JIT_CONFIG:/sys/firmware/qemu_fw_cfg/by_name/opt/github-jit-config/raw
+
+[Install]
+WantedBy=multi-user.target
