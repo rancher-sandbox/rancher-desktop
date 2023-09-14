@@ -44,3 +44,23 @@ func SortKeys(mapKeys []reflect.Value) []mapKeyWithString {
 	})
 	return retVals
 }
+
+type structFieldWithString struct {
+	StructField  reflect.StructField
+	FieldName    string
+	lowerCaseKey string // only for sorting
+}
+
+func SortStructFields(structType reflect.Type) []structFieldWithString {
+	numTypedFields := structType.NumField()
+	newInterimFields := make([]structFieldWithString, numTypedFields)
+	for i := 0; i < numTypedFields; i++ {
+		fieldTag := structType.Field(i).Tag.Get("json")
+		fieldName, _, _ := strings.Cut(fieldTag, ",")
+		newInterimFields[i] = structFieldWithString{structType.Field(i), fieldName, strings.ToLower(fieldName)}
+	}
+	sort.Slice(newInterimFields, func(i, j int) bool {
+		return newInterimFields[i].lowerCaseKey < newInterimFields[j].lowerCaseKey
+	})
+	return newInterimFields
+}
