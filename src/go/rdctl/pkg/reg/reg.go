@@ -29,7 +29,7 @@ func escape(s string) string {
 //
 // Params:
 // pathParts: represents the registry path to the current item
-// structType: a reflection on the ServerSettingsForJSON struct, so we can determine how to interpret each field in the instance
+// structType: type information on the current field for the `value` parameter
 // value: the reflected value of the current field, based on a simple map[string]interface{} JSON-parse
 // jsonTag: the name of the field, used in json (and the registry)
 // path: a dotted representation of the fully-qualified name of the field
@@ -51,10 +51,10 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 	}
 	switch kind {
 	case reflect.Struct:
-		// This is very different from plist-processing of structs.
-		// In the plist world we want to preserve order of fields in the original JSON,
-		// because that's what the plutil converter does.
-		// In the registry world better to order the fields alphabetically
+		// Processing here is similar to struct fields in plist.go
+		// In the plist world we want to order the fields according to their
+		// position in the defined ServerSettingsForJSON struct.
+		// In the registry world the fields are ordered alphabetically ignoring case.
 		//
 		if value.Kind() != reflect.Map {
 			return nil, fmt.Errorf("expecting actual kind for a typed struct to be a map, got %v", value.Kind())
@@ -63,8 +63,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		sortedStructFields := utils.SortStructFields(structType)
 		scalarReturnedLines := make([]string, 0, numTypedFields)
 		nestedReturnedLines := make([]string, 0)
-		for i := 0; i < numTypedFields; i++ {
-			compoundStructField := sortedStructFields[i]
+		for _, compoundStructField := range sortedStructFields {
 			fieldName := compoundStructField.FieldName
 			valueElement := value.MapIndex(reflect.ValueOf(fieldName))
 			if valueElement.IsValid() {
@@ -75,7 +74,6 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 				if len(newRetLines) == 0 {
 					continue
 				}
-				// With the current schema, only structs may contain nested structs.
 				// If the first character of the first line is a '[' it's a struct. Otherwise it's a scalar.
 				// ']' placed here to appease my IDE's linter.
 				if newRetLines[0][0] == '[' {
@@ -110,17 +108,11 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		}
 		return []string{fmt.Sprintf(`"%s"=hex(7):%s`, jsonTag, stringToMultiStringHexBytes(arrayValues))}, nil
 	case reflect.Map:
-		// If it's a map (always of string => bool|string|int), the typed and actual values are the same
-		// The only difference is that if the field isn't specified in the input, there will be an instance
-		// in `structType` but not `value`.
 		returnedLines := []string{fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
-		actualKeys := utils.SortKeys(value.MapKeys())
-		for _, actualKey := range actualKeys {
-			keyAsString := actualKey.StringKey
-			// If it's a map (always of string => bool|string|int), the typed and actual values are the same
-			// The only difference is that if the field isn't specified in the input, there will be an instance
-			// in `typedValue` but not `actualValue`.
-			innerLines, err := convertToRegFormat(append(pathParts, keyAsString), structType.Elem(), value.MapIndex(actualKey.MapKey), keyAsString, path+"."+keyAsString)
+		mapKeys := utils.SortKeys(value.MapKeys())
+		for _, mapKey := range mapKeys {
+			keyAsString := mapKey.StringKey
+			innerLines, err := convertToRegFormat(append(pathParts, keyAsString), structType.Elem(), value.MapIndex(mapKey.MapKey), keyAsString, path+"."+keyAsString)
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
@@ -184,7 +176,6 @@ func stringToMultiStringHexBytes(values []string) string {
 // @param settingsBodyAsJSON - options marshaled as JSON
 // @returns: array of strings, intended for writing to a reg file
 func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) ([]string, error) {
-	// See comments on the reason for the two kinds of JSON variables in plist.go:JsonToPlist
 	var actualSettingsJSON map[string]interface{}
 
 	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]

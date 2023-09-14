@@ -7,17 +7,6 @@ import (
 	"strings"
 )
 
-func FindTypedFieldIndex(fieldName string, v reflect.Value, numTypedFields int) int {
-	for i := 0; i < numTypedFields; i++ {
-		typedFieldTag := v.Type().Field(i).Tag.Get("json")
-		typedFieldName := strings.Replace(typedFieldTag, ",omitempty", "", 1)
-		if typedFieldName == fieldName {
-			return i
-		}
-	}
-	return -1
-}
-
 // Get the steps-th parent directory of fullPath.
 func GetParentDir(fullPath string, steps int) string {
 	fullPath = filepath.Clean(fullPath)

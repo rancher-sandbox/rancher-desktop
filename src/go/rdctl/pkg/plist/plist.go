@@ -26,7 +26,7 @@ const indentChange = "  "
 
 // convertToPListLines recursively reflects the supplied value into lines for a plist
 
-// structType: a reflection on the ServerSettingsForJSON struct, so we can determine how to interpret each field in the instance
+// structType: type information on the current field for the `value` parameter
 // value: the reflected value of the current field, based on a simple map[string]interface{} JSON-parse
 // indent: the leading whitespace for each line so the generated XML is more readable
 // path: a dotted representation of the fully-qualified name of the field
@@ -101,13 +101,10 @@ func convertToPListLines(structType reflect.Type, value reflect.Value, indent, p
 		return retLines, nil
 	case reflect.Map:
 		returnedLines := []string{indent + "<dict>"}
-		actualKeys := utils.SortKeys(value.MapKeys())
-		for _, actualKey := range actualKeys {
-			keyAsString := actualKey.StringKey
-			// If it's a map (always of string => bool|string|int), the typed and actual values are the same
-			// The only difference is that if the field isn't specified in the input, there will be an instance
-			// in `typedValue` but not `actualValue`.
-			innerLines, err := convertToPListLines(structType.Elem(), value.MapIndex(actualKey.MapKey), indent+indentChange, path+"."+keyAsString)
+		mapKeys := utils.SortKeys(value.MapKeys())
+		for _, mapKey := range mapKeys {
+			keyAsString := mapKey.StringKey
+			innerLines, err := convertToPListLines(structType.Elem(), value.MapIndex(mapKey.MapKey), indent+indentChange, path+"."+keyAsString)
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
