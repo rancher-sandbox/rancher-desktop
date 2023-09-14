@@ -2,6 +2,16 @@ load '../helpers/load'
 
 local_setup() {
     REGISTRY_PORT="5050"
+    if is_windows && ! using_windows_exe; then
+        # TODO TODO TODO
+        # RD will only modify the Windows version of .docker/config.json;
+        # there is no WSL integration support for it. Therefore this test
+        # always needs to modify the Windows version and not touch the
+        # Linux one. This may change depending on:
+        # https://github.com/rancher-sandbox/rancher-desktop/issues/5523
+        # TODO TODO TODO
+        USERPROFILE="$(win32env USERPROFILE)"
+    fi
     DOCKER_CONFIG_FILE="$USERPROFILE/.docker/config.json"
 
     TEMP=/tmp
