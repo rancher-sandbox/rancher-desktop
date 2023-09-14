@@ -269,7 +269,7 @@ export default class DockerDirManager {
     if (currentCredsStore && await this.credHelperWorking(currentCredsStore)) {
       return currentCredsStore;
     }
-    if (process.env.CIRRUS_CI && await this.credHelperWorking('none')) {
+    if (process.env.CI && await this.credHelperWorking('none')) {
       return 'none';
     }
 

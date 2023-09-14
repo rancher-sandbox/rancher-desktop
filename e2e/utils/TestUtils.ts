@@ -157,8 +157,8 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
 }
 
 export async function packageLogs(testPath: string) {
-  if (!process.env.CIRRUS_CI) {
-    console.log('Skipping packaging logs, not running in Cirrus CI');
+  if (!process.env.CI) {
+    console.log('Skipping packaging logs, not running in CI');
 
     return;
   }
