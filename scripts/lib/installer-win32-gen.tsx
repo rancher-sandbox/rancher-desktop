@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /** @jsx Element.new */
 
 import crypto from 'crypto';
@@ -336,7 +337,7 @@ export default async function generateFileList(rootPath: string): Promise<string
       })}
     </ComponentGroup>,
     )}
-  </Fragment>)
+  </Fragment>);
 
   // @ts-ignore
   return jsxElement.toXML();

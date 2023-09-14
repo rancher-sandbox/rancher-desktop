@@ -8,10 +8,10 @@ import childProcess from 'child_process';
 import events from 'events';
 import util from 'util';
 
-import buildUtils from './lib/build-utils';
-
 import * as settings from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
+
+import buildUtils from './lib/build-utils';
 
 const sleep = util.promisify(setTimeout);
 

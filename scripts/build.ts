@@ -57,7 +57,7 @@ class Builder {
         'build',
         '--skip-plugins',
         'eslint',
-      ]
+      ],
     );
   }
 
