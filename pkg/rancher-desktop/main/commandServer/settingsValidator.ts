@@ -65,6 +65,7 @@ export default class SettingsValidator {
   allowedTransientSettings: TransientSettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
   lockedSettings: LockedSettingsType = { };
+  isFatal = false;
 
   validateSettings(
     currentSettings: Settings,
@@ -72,6 +73,7 @@ export default class SettingsValidator {
     lockedSettings: LockedSettingsType = {},
   ): [boolean, string[]] {
     this.lockedSettings = lockedSettings;
+    this.isFatal = false;
     this.allowedSettings ||= {
       version:     this.checkUnchanged,
       application: {
@@ -257,6 +259,7 @@ export default class SettingsValidator {
         if (isLocked) {
           // A delayed error condition, raised only if we try to change a field in a locked object
           errors.push(`field "${ prefix }.${ k }" is locked`);
+          this.isFatal = true;
         } else {
           changeNeeded = true;
         }
@@ -278,6 +281,7 @@ export default class SettingsValidator {
     return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
       if (!['darwin', 'linux'].includes(os.platform())) {
         if (!_.isEqual(currentValue, desiredValue)) {
+          this.isFatal = true;
           errors.push(this.notSupported(fqname));
         }
 
@@ -292,11 +296,13 @@ export default class SettingsValidator {
     if (desiredValue && !currentValue) {
       if (mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
         errors.push(`Setting ${ fqname } can only be enabled when experimental.virtual-machine.type is "${ VMType.VZ }".`);
+        this.isFatal = true;
 
         return false;
       }
       if (!Electron.app.runningUnderARM64Translation && os.arch() !== 'arm64') {
         errors.push(`Setting ${ fqname } can only be enabled on aarch64 systems.`);
+        this.isFatal = true;
 
         return false;
       }
@@ -308,10 +314,12 @@ export default class SettingsValidator {
   protected checkVMType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
     if (desiredValue === VMType.VZ) {
       if (os.arch() === 'arm64' && semver.gt('13.3.0', getMacOsVersion())) {
+        this.isFatal = true;
         errors.push(`Setting ${ fqname } to "${ VMType.VZ }" on ARM requires macOS 13.3 (Ventura) or later.`);
 
         return false;
       } else if (semver.gt('13.0.0', getMacOsVersion())) {
+        this.isFatal = true;
         errors.push(`Setting ${ fqname } to "${ VMType.VZ }" on Intel requires macOS 13.0 (Ventura) or later.`);
 
         return false;
@@ -324,16 +332,19 @@ export default class SettingsValidator {
   protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
     if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ && os.platform() === 'darwin') {
       errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.VZ }".`);
+      this.isFatal = true;
 
       return false;
     }
     if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU && os.platform() === 'linux') {
       errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
+      this.isFatal = true;
 
       return false;
     }
     if (desiredValue === MountType.NINEP && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU) {
       errors.push(`Setting ${ fqname } to "${ MountType.NINEP }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
+      this.isFatal = true;
 
       return false;
     }
@@ -346,6 +357,7 @@ export default class SettingsValidator {
       if (os.platform() !== platform) {
         if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(this.notSupported(fqname));
+          this.isFatal = true;
         }
 
         return false;
@@ -360,6 +372,7 @@ export default class SettingsValidator {
       if (mergedSettings.experimental.virtualMachine.mount.type !== MountType.NINEP) {
         if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(`Setting ${ fqname } can only be changed when experimental.virtualMachine.mount.type is "${ MountType.NINEP }".`);
+          this.isFatal = true;
         }
 
         return false;
@@ -425,6 +438,7 @@ export default class SettingsValidator {
       }
       if (!validValues.includes(desiredValue)) {
         errors.push(`Invalid value for "${ fqname }": <${ JSON.stringify(desiredValue) }>; ${ explanation }`);
+        this.isFatal = true;
 
         return false;
       }
