@@ -36,7 +36,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	}
 	altAppHome := filepath.Join(homeDir, ".rd")
 	paths := Paths{
-		AppHome:                 filepath.Join(configHome, appName),
+		AppHome:                 filepath.Join(dataHome, appName),
 		AltAppHome:              altAppHome,
 		Config:                  filepath.Join(configHome, appName),
 		Cache:                   filepath.Join(cacheHome, appName),

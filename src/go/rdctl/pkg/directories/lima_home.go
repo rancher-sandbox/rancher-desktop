@@ -18,6 +18,7 @@ package directories
 
 import (
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"os/exec"
 	"path"
@@ -28,24 +29,11 @@ import (
 )
 
 func SetupLimaHome() error {
-	var candidatePath string
-	if runtime.GOOS == "linux" {
-		dataDir := os.Getenv("XDG_DATA_HOME")
-		if dataDir == "" {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				return err
-			}
-			dataDir = path.Join(homeDir, ".local", "share")
-		}
-		candidatePath = path.Join(dataDir, "rancher-desktop", "lima")
-	} else {
-		configDir, err := os.UserConfigDir()
-		if err != nil {
-			return err
-		}
-		candidatePath = path.Join(configDir, "rancher-desktop", "lima")
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return err
 	}
+	candidatePath := path.Join(appPaths.AppHome, "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
 		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)
