@@ -146,7 +146,7 @@ Ensure you have the following installed:
 
 - [yarn classic][yarn-classic]
 
-- Go 1.18 or later.
+- Go 1.19 or later.
 
 - Dependencies described in the [`node-gyp` docs][node-gyp] installation.
   This is required to install the [`ffi-napi`][ffi-napi] npm package. These docs mention
