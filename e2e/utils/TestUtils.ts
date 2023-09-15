@@ -356,6 +356,7 @@ export interface startRancherDesktopOptions {
   mock?: boolean;
   env?: Record<string, string>;
   noModalDialogs?: boolean;
+  timeout?: number;
 }
 
 /**
@@ -377,11 +378,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
     // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
     '--disable-dev-shm-usage',
   ];
-
-  if (options?.noModalDialogs ?? false) {
-    args.push('--no-modal-dialogs');
-  }
-  const electronApp = await _electron.launch({
+  const launchOptions: Record<string, any> = {
     args,
     env: {
       ...process.env,
@@ -389,7 +386,15 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
       RD_LOGS_DIR: reportAsset(testPath, 'log'),
       ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },
-  });
+  };
+
+  if (options?.noModalDialogs ?? false) {
+    args.push('--no-modal-dialogs');
+  }
+  if (options?.timeout) {
+    launchOptions.timeout = options?.timeout;
+  }
+  const electronApp = await _electron.launch(launchOptions);
 
   if (options?.tracing ?? true) {
     await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
