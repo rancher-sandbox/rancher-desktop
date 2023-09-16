@@ -8,7 +8,7 @@ helm: 3.12.3
 dockerCLI: 24.0.6
 dockerBuildx: 0.11.2
 dockerCompose: 2.21.0
-trivy: 0.45.0
+trivy: 0.45.1
 steve: 0.1.0-beta9
 guestAgent: 0.3.18
 rancherDashboard: desktop-v2.7.0.beta.1
