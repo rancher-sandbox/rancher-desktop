@@ -87,7 +87,11 @@ describe(SettingsValidator, () => {
       'application.adminAccess':                      'linux',
       'experimental.virtualMachine.socketVMNet':      'darwin',
       'experimental.virtualMachine.networkingTunnel': 'win32',
-      'experimental.virtualMachine.proxy':            'win32',
+      'experimental.virtualMachine.proxy.enabled':    'win32',
+      'experimental.virtualMachine.proxy.address':    'win32',
+      'experimental.virtualMachine.proxy.password':   'win32',
+      'experimental.virtualMachine.proxy.port':       'win32',
+      'experimental.virtualMachine.proxy.username':   'win32',
       'kubernetes.ingress.localhostOnly':             'win32',
       'virtualMachine.hostResolver':                  'win32',
       'virtualMachine.memoryInGB':                    'darwin',
@@ -128,7 +132,7 @@ describe(SettingsValidator, () => {
           });
         }
 
-        it('should allow no change', () => {
+        it('should never complain when nothing is changed', () => {
           const input = _.set({}, keyPath, _.get(cfg, keyPath));
           const [needToUpdate, errors] = subject.validateSettings(cfg, input);
 
