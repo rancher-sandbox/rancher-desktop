@@ -423,27 +423,6 @@ export const actions = {
 
     return dispatch('set', { key: THEME, value });
   },
-
-  setBrandStyle({ rootState, rootGetters }, dark = false) {
-    if (rootState.managementReady) {
-      try {
-        const brandSetting = rootGetters['management/byId'](MANAGEMENT.SETTING, SETTING.BRAND);
-
-        if (brandSetting && brandSetting.value && brandSetting.value !== '') {
-          const brand = brandSetting.value;
-
-          const brandMeta = require(`~/assets/brand/${ brand }/metadata.json`);
-          const hasStylesheet = brandMeta.hasStylesheet === 'true';
-
-          if (hasStylesheet) {
-            document.body.classList.add(brand);
-          } else {
-            // TODO option apply color at runtime
-          }
-        }
-      } catch {}
-    }
-  },
 };
 
 function getLoginRoute(route) {

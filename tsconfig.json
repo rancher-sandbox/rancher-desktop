@@ -16,9 +16,6 @@
     "experimentalDecorators": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "pkg/rancher-desktop/*"
-      ],
       "@pkg/*": [
         "pkg/rancher-desktop/*"
       ],
