@@ -9,45 +9,42 @@ load '../helpers/load'
     wait_for_container_engine
 }
 
+proxy_set() {
+    local field=$1
+    local value=$2
+
+    payload="$(printf '{ "version": %d, "experimental": { "virtualMachine": { "proxy": { "%s": %s }}}}' "$(get_setting .version)" "$field" "$value")"
+    run rdctl api settings -X PUT --body "$payload"
+    assert_failure
+    assert_output --partial "Changing field \"experimental.virtualMachine.proxy.${field}\" via the API isn't supported"
+}
+
 @test 'complain about windows-specific vm settings' {
     skip_on_windows
     run rdctl api /settings
     assert_success
-    proxyEnabled=$(jq .experimental.virtualMachine.proxy.enabled <<<"$output")
-    settingsTemplateStart='{ "version": '$(get_setting .version)', "experimental": { "virtualMachine": { "proxy":'
-    settingsTemplateEnd='} } }'
-    case $proxyEnabled in
-    'true') oppositeEnabled=false ;;
-    'false') oppositeEnabled=true ;;
-    '') oppositeEnabled=true ;;
-    *) oppositeEnabled=false ;;
-    esac
+    run jq .experimental.virtualMachine.proxy.enabled <<<"$output"
+    assert_success
+    assert_output false
 
-    run rdctl api settings -X PUT --body $"$settingsTemplateStart { \"enabled\" : $oppositeEnabled } $settingsTemplateEnd"
-    assert_failure
-    assert_output --partial $"Changing field \"experimental.virtualMachine.proxy.enabled\" via the API isn't supported"
+    proxy_set enabled true
 
     for field in address password username; do
-        run rdctl api settings -X PUT --body $"$settingsTemplateStart { \"$field\" :\"smorgasbord\" } $settingsTemplateEnd"
-        assert_failure
-        assert_output --partial "$(printf $'Changing field "experimental.virtualMachine.proxy.%s" via the API isn\'t supported' $field)"
+        # Need to include the quotes for a string-value
+        proxy_set $field '"smorgasbord"'
     done
 
-    run rdctl api settings -X PUT --body $"$settingsTemplateStart { \"port\" : -1 } $settingsTemplateEnd"
-    assert_failure
-    assert_output --partial $"Changing field \"experimental.virtualMachine.proxy.port\" via the API isn't supported"
-
-    run rdctl api settings -X PUT --body $"$settingsTemplateStart { \"noproxy\" : [\"buffalo\"] } $settingsTemplateEnd"
-    assert_failure
-    assert_output --partial $"Changing field \"experimental.virtualMachine.proxy.noproxy\" via the API isn't supported"
+    proxy_set port -1
+    proxy_set noproxy '["buffalo"]'
 }
 
 @test 'ignores echoing current vm settings' {
     skip_on_windows
     run rdctl api /settings
     assert_success
-    proxyPart=$(jq .experimental.virtualMachine.proxy <<<"$output")
-    payload='{ "version": '$(get_setting .version)', "experimental": { "virtualMachine": { "proxy": '"$proxyPart"' } } }'
+    run jq_output .experimental.virtualMachine.proxy
+    assert_success
+    payload="$(printf '{ "version": %s, "experimental": { "virtualMachine": { "proxy": %s } } }' "$(get_setting .version)" "$output")"
     run rdctl api settings -X PUT --body "$payload"
     assert_success
 }
