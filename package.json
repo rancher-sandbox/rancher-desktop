@@ -137,7 +137,6 @@
     "@types/ref-struct-di": "1.1.6",
     "@types/semver": "7.5.0",
     "@types/tar-stream": "2.2.2",
-    "@types/webpack": "^5.28.1",
     "@types/which": "3.0.0",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
