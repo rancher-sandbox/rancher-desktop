@@ -173,7 +173,6 @@ module.exports.extends.splice(
 module.exports.extends.push('plugin:import/typescript');
 
 Object.assign(module.exports.rules, {
-  'import/namespace':             'off',
   // Allow console.log &c.
   'no-console':                   'off',
   // Allow throw with non-error

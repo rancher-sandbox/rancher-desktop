@@ -1,3 +1,5 @@
+/* eslint-disable import/namespace */
+
 /**
  * This is the preload script that is exposed to extension frontends.
  * It implements the "ddClient" API.
