@@ -71,13 +71,17 @@ jobs:
         RD_USE_IMAGE_ALLOW_LIST: "true"
 
     - name: Consolidate logs
-      if: ${{ success() || failure() }}
+      if: ${{ !cancelled() }}
       run: |
-        cp -R "$TMPDIR/bats/logs/" logs
+        # bats/logs may not exist if the workflow is being tested with e.g. tests/helpers/utils.bats
+        if [ -d "$TMPDIR/bats/logs" ]; then
+            cp -R "$TMPDIR/bats/logs/" logs
+        fi
         cp "$TMPDIR/bats/report.tap" logs
+        "$TMPDIR/bats/scripts/rename-logs.sh" logs
 
     - name: Upload logs
-      if: ${{ success() || failure() }}
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.engine }}.logs
