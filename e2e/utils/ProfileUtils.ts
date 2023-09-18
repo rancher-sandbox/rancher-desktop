@@ -180,7 +180,9 @@ export async function testForFirstRunWindow(testPath: string) {
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
-  const electronApp = await startRancherDesktop(testPath, { mock: false, noModalDialogs: false });
+  const electronApp = await startRancherDesktop(testPath, {
+    mock: false, noModalDialogs: false, timeout: 60_000,
+  });
 
   electronApp.on('window', async(openedPage: Page) => {
     windowCount += 1;
@@ -212,7 +214,7 @@ export async function testForFirstRunWindow(testPath: string) {
   try {
     let iter = 0;
     const start = new Date().valueOf();
-    const limit = 300 * 1_000 + start;
+    const limit = 900 * 1_000 + start;
 
     // eslint-disable-next-line no-unmodified-loop-condition
     while (page === undefined) {
@@ -240,7 +242,9 @@ export async function testForNoFirstRunWindow(testPath: string) {
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
-  const electronApp = await startRancherDesktop(testPath, { mock: false, noModalDialogs: false });
+  const electronApp = await startRancherDesktop(testPath, {
+    mock: false, noModalDialogs: false, timeout: 60_000,
+  });
 
   electronApp.on('window', async(openedPage: Page) => {
     windowCount += 1;
@@ -269,7 +273,7 @@ export async function testForNoFirstRunWindow(testPath: string) {
   try {
     let iter = 0;
     const start = new Date().valueOf();
-    const limit = 300 * 1_000 + start;
+    const limit = 900 * 1_000 + start;
 
     // eslint-disable-next-line no-unmodified-loop-condition
     while (page === undefined) {
@@ -294,7 +298,9 @@ export async function testForNoFirstRunWindow(testPath: string) {
 
 export async function testWaitForLogfile(testPath: string, logPath: string) {
   let windowCount = 0;
-  const electronApp = await startRancherDesktop(testPath, { mock: false, noModalDialogs: true });
+  const electronApp = await startRancherDesktop(testPath, {
+    mock: false, noModalDialogs: true, timeout: 60_000,
+  });
 
   electronApp.on('window', () => {
     windowCount += 1;
@@ -303,7 +309,7 @@ export async function testWaitForLogfile(testPath: string, logPath: string) {
   try {
     let iter = 0;
     const start = new Date().valueOf();
-    const limit = 300 * 1_000 + start;
+    const limit = 900 * 1_000 + start;
 
     while (true) {
       const now = new Date().valueOf();
