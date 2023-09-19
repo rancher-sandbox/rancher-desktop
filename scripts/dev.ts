@@ -164,7 +164,7 @@ class DevRunner extends events.EventEmitter {
         }
       };
 
-      checkDevServer();
+      checkDevServer().catch(e => console.error(e));
     });
   }
 
