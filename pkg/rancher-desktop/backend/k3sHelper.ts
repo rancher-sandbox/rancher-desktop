@@ -20,7 +20,6 @@ import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
 import { checkConnectivity } from '@pkg/main/networking';
-import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
 import * as childProcess from '@pkg/utils/childProcess';
 import fetch from '@pkg/utils/fetch';
@@ -804,6 +803,8 @@ export default class K3sHelper extends events.EventEmitter {
     let host: string | undefined;
 
     console.log(`Waiting for K3s server to be ready on port ${ port }...`);
+    const timeout = (new Date().valueOf()) + 300 * 1_000;
+
     while (true) {
       try {
         host = await getHost();
@@ -845,8 +846,8 @@ export default class K3sHelper extends events.EventEmitter {
           socket.on('error', reject);
         });
         break;
-      } catch (error) {
-        if (!isUnixError(error)) {
+      } catch (error: any) {
+        if (!error.code) {
           console.error(error);
 
           return;
@@ -860,6 +861,11 @@ export default class K3sHelper extends events.EventEmitter {
         default:
           // Unrecognized error; log but continue waiting.
           console.error(error);
+        }
+        if (new Date().valueOf() > timeout) {
+          console.log(`failed to connect: ${ error }`);
+
+          return;
         }
         await util.promisify(setTimeout)(1_000);
       }
@@ -1067,41 +1073,50 @@ export default class K3sHelper extends events.EventEmitter {
    */
   async getCompatibleKubectlVersion(version: semver.SemVer): Promise<void> {
     const commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
+    const numAttempts = 10;
 
-    try {
-      const { stdout, stderr } = await childProcess.spawnFile(executable('kubectl'),
-        commandArgs,
-        { stdio: ['ignore', 'pipe', 'pipe'] });
+    for (let i = 0; i < numAttempts; i++) {
+      try {
+        const { stdout, stderr } = await childProcess.spawnFile(executable('kubectl'),
+          commandArgs,
+          { stdio: ['ignore', 'pipe', 'pipe'] });
 
-      if (stdout) {
-        console.info(stdout);
-      }
-      if (stderr) {
-        console.log(stderr);
-      }
-    } catch (ex: any) {
-      console.error(`Error priming kuberlr: ${ ex }`);
-      console.log(`Output from kuberlr:\nex.stdout: [${ ex.stdout ?? 'none' }],\nex.stderr: [${ ex.stderr ?? 'none' }]`);
-      const pattern = /Right kubectl missing, downloading.+Error while trying to get contents of .+\/kubernetes-release/s;
+        if (stdout) {
+          console.info(stdout);
+        }
+        if (stderr) {
+          console.log(stderr);
+        }
+        break;
+      } catch (ex: any) {
+        if (i < numAttempts - 1) {
+          console.log(`Error trying to run kubectl --context rancher-desktop cluster-info: ${ ex }, attempt ${ i + 1 }, wait 1 sec and retry`);
+          await this.delayForWaitLimiting();
+          continue;
+        }
+        console.error(`Error priming kuberlr: ${ ex }`);
+        console.log(`Output from kuberlr:\nex.stdout: [${ ex.stdout ?? 'none' }],\nex.stderr: [${ ex.stderr ?? 'none' }]`);
+        const pattern = /Right kubectl missing, downloading.+Error while trying to get contents of .+\/kubernetes-release/s;
 
-      if (pattern.test(ex.stderr)) {
-        const major = version.major;
-        const minor = version.minor;
-        const lowMinor = minor === 0 ? 0 : minor - 1;
-        const highMinor = minor + 1;
-        const homeDirName = os.platform().startsWith('win') ? (findHomeDir() ?? '%HOME%') : '~';
-        const kuberlrCacheDirName = `${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`;
-        const options: Electron.MessageBoxOptions = {
-          message: "Can't download a compatible version of kubectl in offline-mode",
-          detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in '${ path.join(homeDirName, '.kuberlr', kuberlrCacheDirName) }'`,
-          type:    'error',
-          buttons: ['OK'],
-          title:   'Network failure',
-        };
+        if (pattern.test(ex.stderr)) {
+          const major = version.major;
+          const minor = version.minor;
+          const lowMinor = minor === 0 ? 0 : minor - 1;
+          const highMinor = minor + 1;
+          const homeDirName = os.platform().startsWith('win') ? (findHomeDir() ?? '%HOME%') : '~';
+          const kuberlrCacheDirName = `${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`;
+          const options: Electron.MessageBoxOptions = {
+            message: "Can't download a compatible version of kubectl in offline-mode",
+            detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in '${ path.join(homeDirName, '.kuberlr', kuberlrCacheDirName) }'`,
+            type:    'error',
+            buttons: ['OK'],
+            title:   'Network failure',
+          };
 
-        await showMessageBox(options, true);
-      } else {
-        console.log('Failed to match a kuberlr network access issue.');
+          await showMessageBox(options, true);
+        } else {
+          console.log('Failed to match a kuberlr network access issue.');
+        }
       }
     }
   }
