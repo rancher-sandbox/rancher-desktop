@@ -90,9 +90,9 @@ function haveCredentialServerHelper(): boolean {
 
     return !result.error;
   } catch (err: any) {
-    if (err.code === 'ENOENT' && process.env.CIRRUS_CI) {
+    if (err.code === 'ENOENT' && process.env.CI) {
       try {
-        console.log('Attempting to set up docker-credential-none on CIRRUS CI.');
+        console.log('Attempting to set up docker-credential-none on CI.');
         fs.mkdirSync(dockerDir, { recursive: true });
         fs.writeFileSync(dockerConfigPath, JSON.stringify({ credsStore: 'none' }, undefined, 2));
 
@@ -231,14 +231,14 @@ describeWithCreds('Credentials server', () => {
   });
 
   test.afterAll(async() => {
-    if (originalDockerConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
+    if (originalDockerConfigContents !== undefined && !process.env.CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
       try {
         await fs.promises.writeFile(dockerConfigPath, originalDockerConfigContents);
       } catch (e: any) {
         console.error(`Failed to restore config file ${ dockerConfigPath }: `, e);
       }
     }
-    if (originalPlaintextConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
+    if (originalPlaintextConfigContents !== undefined && !process.env.CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
       try {
         await fs.promises.writeFile(plaintextConfigPath, originalPlaintextConfigContents);
       } catch (e: any) {
