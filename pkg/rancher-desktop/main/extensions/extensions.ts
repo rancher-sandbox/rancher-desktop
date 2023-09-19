@@ -31,10 +31,12 @@ type ComposeFile = {
       type: string;
       source?: string;
       target: string;
+      // The snake_case naming convention follows the Docker Compose spec
       // eslint-disable-next-line camelcase
       read_only?: boolean;
       bind?: {
         propagation?: string;
+        // The snake_case naming convention follows the Docker Compose spec
         // eslint-disable-next-line camelcase
         create_host_path?: boolean;
         selinux?: 'z' | 'Z';

@@ -31,6 +31,7 @@ export default Vue.extend({
      * Ensure that the correct value is emitted by overriding the default
      * listeners to supply a custom input event. Resolves an issue where the
      * entire vnode emits when using v-model.
+     * TODO: Issue #5544 Don't use Function as a type
      */
     // eslint-disable-next-line @typescript-eslint/ban-types
     computedListeners(): Record<string, Function | Function[]> & { input: (e: any) => any; } {

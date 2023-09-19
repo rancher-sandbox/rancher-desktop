@@ -43,9 +43,11 @@ const console = Logging.k8s;
 export type ShortVersion = string;
 
 export interface ReleaseAPIEntry {
+  // The snake_case naming convention follows the structure of the API response
   // eslint-disable-next-line camelcase
   tag_name: string;
   assets: {
+    // The snake_case naming convention follows the structure of the API response
     // eslint-disable-next-line camelcase
     browser_download_url: string;
     name: string;

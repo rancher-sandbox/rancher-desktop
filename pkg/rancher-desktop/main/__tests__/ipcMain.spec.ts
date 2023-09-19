@@ -76,6 +76,7 @@ describe('IpcMainProxy', () => {
       (Electron.ipcMain as any)[prop] ??= () => {};
       expect(typeof emitter[prop]).toEqual('function');
       jest.spyOn(Electron.ipcMain, prop as keyof typeof Electron.ipcMain).mockImplementation((...args: any) => {
+        //  TODO: Issue #5544 Don't use Function as a type
         // eslint-disable-next-line @typescript-eslint/ban-types
         const meth = emitter[prop as keyof typeof emitter] as Function;
 
