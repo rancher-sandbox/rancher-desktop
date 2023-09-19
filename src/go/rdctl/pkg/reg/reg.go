@@ -67,7 +67,11 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 			fieldName := compoundStructField.FieldName
 			valueElement := value.MapIndex(reflect.ValueOf(fieldName))
 			if valueElement.IsValid() {
-				newRetLines, err := convertToRegFormat(append(pathParts, fieldName), compoundStructField.StructField.Type, valueElement, fieldName, path+"."+fieldName)
+				newRetLines, err := convertToRegFormat(append(pathParts, fieldName),
+					compoundStructField.StructField.Type,
+					valueElement,
+					fieldName,
+					path+"."+fieldName)
 				if err != nil {
 					return nil, err
 				}
