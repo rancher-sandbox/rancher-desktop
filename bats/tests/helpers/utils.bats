@@ -4,7 +4,12 @@ load '../helpers/load'
 
 local_setup() {
     COUNTER="${BATS_FILE_TMPDIR}/counter"
+    reset_counter
+}
+
+reset_counter() {
     echo 0 >"$COUNTER"
+    SECONDS=0
 }
 
 # Increment counter file. Return success when counter >= max.
@@ -211,11 +216,11 @@ get_json_test_data() {
 ########################################################################
 
 @test 'try will run command at least once' {
-    run try --max 0 --delay 5 inc_counter
+    run try --max 0 --delay 15 inc_counter
     assert_failure
     assert_counter_is 1
-    # "try" should not have called "sleep 5" at all
-    ((SECONDS < 5))
+    # "try" should not have called "sleep 15" at all
+    ((SECONDS < 15))
 }
 
 @test 'try will stop as soon as the command succeeds' {
@@ -224,7 +229,16 @@ get_json_test_data() {
     assert_counter_is 2
     # "try" should have called "sleep 3" exactly once
     ((SECONDS >= 3))
-    ((SECONDS < 6))
+    if ((SECONDS >= 6)); then
+        # maybe slow machine; try again with longer sleep
+        reset_counter
+        run try --max 3 --delay 15 inc_counter 2
+        assert_success
+        assert_counter_is 2
+        # "try" should have called "sleep 15" exactly once
+        ((SECONDS >= 15))
+        ((SECONDS < 30))
+    fi
 }
 
 @test 'try will return after max retries' {
@@ -233,7 +247,16 @@ get_json_test_data() {
     assert_counter_is 3
     # "try" should have called "sleep 3" exactly twice
     ((SECONDS >= 6))
-    ((SECONDS < 9))
+    if ((SECONDS >= 9)); then
+        # maybe slow machine; try again with longer sleep
+        reset_counter
+        run try --max 3 --delay 15 inc_counter
+        assert_failure
+        assert_counter_is 3
+        # "try" should have called "sleep 15" exactly twice
+        ((SECONDS >= 30))
+        ((SECONDS < 45))
+    fi
 }
 
 ########################################################################
