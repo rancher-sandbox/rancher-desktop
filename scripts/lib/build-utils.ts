@@ -190,10 +190,10 @@ export default {
       },
     };
 
-    const result: webpack.Configuration = Object.assign({}, this.webpackConfig, overrides);
+    const result = Object.assign({}, this.webpackConfig, overrides);
     const rules = result.module?.rules ?? [];
 
-    const uses: webpack.RuleSetRule[] = rules.filter(
+    const uses = rules.filter(
       (rule): rule is webpack.RuleSetRule => typeof rule !== 'boolean' && typeof rule !== 'string',
     );
 
