@@ -56,8 +56,8 @@ func convertToPListLines(structType reflect.Type, value reflect.Value, indent, p
 		returnedLines := []string{indent + "<dict>"}
 		// Typed fields are ordered according to options.ServerSettingsForJSON
 		// By walking the list of fields in the structure type, and expanding only those fields
-		// that are specifed, we get a consistent order in the output
-		// (e.g. `updater` always appears before `autoStart` in `application`
+		// that are specified, we get a consistent order in the output
+		// (e.g. `updater` always appears before `autoStart` in `application`)
 		for i := 0; i < numTypedFields; i++ {
 			field := structType.Field(i)
 			fieldName, _, _ := strings.Cut(field.Tag.Get("json"), ",")
