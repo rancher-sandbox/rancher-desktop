@@ -15,34 +15,61 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"reflect"
-
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"strings"
+
+	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
 const indentChange = "  "
 
 // convertToPListLines recursively reflects the supplied value into lines for a plist
-func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
-	kind := v.Kind()
+
+// structType: type information on the current field for the `value` parameter
+// value: the reflected value of the current field, based on a simple map[string]interface{} JSON-parse
+// indent: the leading whitespace for each line so the generated XML is more readable
+// path: a dotted representation of the fully-qualified name of the field
+//
+// Returns two values:
+//
+//	an array of lines representing the generated XML
+//	an error: the only non-nil error this function can return is when it encounters an unhandled data type
+
+func convertToPListLines(structType reflect.Type, value reflect.Value, indent, path string) ([]string, error) {
+	kind := structType.Kind()
+	if value.Kind() == reflect.Interface && kind != reflect.Interface {
+		if value.IsNil() {
+			return nil, nil
+		}
+		return convertToPListLines(structType, value.Elem(), indent, path)
+	}
+	if value.Kind() == reflect.Ptr {
+		return nil, fmt.Errorf("plist generation: got an unexpected pointer for %s value %v, expecting type %v", path, value, structType)
+	}
 	switch kind {
 	case reflect.Struct:
-		numFields := v.NumField()
+		if value.Kind() != reflect.Map {
+			return nil, fmt.Errorf("expecting actual kind for a typed struct %s to be a map, got %v", path, value.Kind())
+		}
+		numTypedFields := structType.NumField()
 		returnedLines := []string{indent + "<dict>"}
-		for i := 0; i < numFields; i++ {
-			fieldTag := v.Type().Field(i).Tag.Get("json")
-			fieldName := strings.Replace(fieldTag, ",omitempty", "", 1)
-			newRetLines, err := convertToPListLines(v.Field(i), indent+indentChange)
-			if err != nil {
-				return nil, err
+		// Typed fields are ordered according to options.ServerSettingsForJSON
+		// By walking the list of fields in the structure type, and expanding only those fields
+		// that are specified, we get a consistent order in the output
+		// (e.g. `updater` always appears before `autoStart` in `application`)
+		for i := 0; i < numTypedFields; i++ {
+			field := structType.Field(i)
+			fieldName, _, _ := strings.Cut(field.Tag.Get("json"), ",")
+			valueElement := value.MapIndex(reflect.ValueOf(fieldName))
+			if valueElement.IsValid() {
+				newRetLines, err := convertToPListLines(field.Type, valueElement, indent+indentChange, path+"."+fieldName)
+				if err != nil {
+					return nil, err
+				}
+				returnedLines = append(returnedLines, fmt.Sprintf(`%s<key>%s</key>`, indent+indentChange, fieldName))
+				returnedLines = append(returnedLines, newRetLines...)
 			}
-			if len(newRetLines) == 0 {
-				continue
-			}
-			returnedLines = append(returnedLines, fmt.Sprintf(`%s<key>%s</key>`, indent+indentChange, fieldName))
-			returnedLines = append(returnedLines, newRetLines...)
 		}
 		if len(returnedLines) == 1 {
 			return nil, nil
@@ -50,21 +77,21 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 		returnedLines = append(returnedLines, indent+"</dict>")
 		return returnedLines, nil
 	case reflect.Ptr:
-		if v.IsNil() {
-			return nil, nil
-		} else {
-			return convertToPListLines(v.Elem(), indent)
-		}
+		return convertToPListLines(structType.Elem(), value, indent, path)
 	case reflect.Slice, reflect.Array:
-		// Currently, all arrays in the options are arrays of strings
-		numValues := v.Len()
-		if numValues == 0 {
-			return nil, nil
+		if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+			return nil, fmt.Errorf("expected slice or array at %s, got %v", path, value.Kind())
 		}
+		// Currently, all arrays in the options are arrays of strings
+		numValues := value.Len()
 		retLines := make([]string, numValues+2)
 		retLines[0] = indent + "<array>"
 		for i := 0; i < numValues; i++ {
-			escapedString, err := xmlEscapeText(v.Index(i).String())
+			item := value.Index(i)
+			for item.Kind() == reflect.Interface || item.Kind() == reflect.Pointer {
+				item = item.Elem()
+			}
+			escapedString, err := xmlEscapeText(item.String())
 			if err != nil {
 				return nil, err
 			}
@@ -73,15 +100,11 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 		retLines[numValues+1] = indent + "</array>"
 		return retLines, nil
 	case reflect.Map:
-		numValues := len(v.MapKeys())
-		if numValues == 0 {
-			return nil, nil
-		}
 		returnedLines := []string{indent + "<dict>"}
-		typedKeys := utils.SortKeys(v.MapKeys())
-		for _, typedKey := range typedKeys {
-			keyAsString := typedKey.StringKey
-			innerLines, err := convertToPListLines(v.MapIndex(typedKey.MapKey), indent+indentChange)
+		mapKeys := utils.SortKeys(value.MapKeys())
+		for _, mapKey := range mapKeys {
+			keyAsString := mapKey.StringKey
+			innerLines, err := convertToPListLines(structType.Elem(), value.MapIndex(mapKey.MapKey), indent+indentChange, path+"."+keyAsString)
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
@@ -93,33 +116,36 @@ func convertToPListLines(v reflect.Value, indent string) ([]string, error) {
 				returnedLines = append(returnedLines, innerLines...)
 			}
 		}
-		if len(returnedLines) == 1 {
-			return nil, nil
-		}
 		returnedLines = append(returnedLines, indent+"</dict>")
 		return returnedLines, nil
 	case reflect.Interface:
-		if v.IsNil() {
-			return nil, nil
+		// Since we allow whatever here, just use the actual type of the value.
+		// But if it's an interface{} we'll need to dereference it first to avoid
+		// an infinite loop.
+		for value.Kind() == reflect.Interface {
+			value = value.Elem()
 		}
-		return convertToPListLines(v.Elem(), indent)
+		return convertToPListLines(value.Type(), value, indent, path)
 	case reflect.Bool:
-		boolValue := map[bool]string{true: "true", false: "false"}[v.Bool()]
+		boolValue := map[bool]string{true: "true", false: "false"}[value.Bool()]
 		return []string{fmt.Sprintf("%s<%s/>", indent, boolValue)}, nil
 	case reflect.Int, reflect.Int8, reflect.Int16,
 		reflect.Int32, reflect.Uint, reflect.Uint8, reflect.Uint16,
 		reflect.Uint32, reflect.Int64, reflect.Uint64:
-		return []string{fmt.Sprintf("%s<integer>%d</integer>", indent, v.Int())}, nil
+		if value.CanConvert(reflect.TypeOf(int64(0))) {
+			value = value.Convert(reflect.TypeOf(int64(0)))
+		}
+		return []string{fmt.Sprintf("%s<integer>%d</integer>", indent, value.Int())}, nil
 	case reflect.Float32:
-		return []string{fmt.Sprintf("%s<float>%f</float>", indent, v.Float())}, nil
+		return []string{fmt.Sprintf("%s<float>%f</float>", indent, value.Float())}, nil
 	case reflect.String:
-		escapedString, err := xmlEscapeText(v.String())
+		escapedString, err := xmlEscapeText(value.String())
 		if err != nil {
 			return nil, err
 		}
 		return []string{fmt.Sprintf("%s<string>%s</string>", indent, escapedString)}, nil
 	}
-	return nil, fmt.Errorf("convertToPListLines: don't know how to process kind: %q, (%T), value: %v", kind, v, v)
+	return nil, fmt.Errorf("convertToPListLines: don't know how to process %s kind: %q, (%T), value: %v", path, kind, structType, value)
 }
 
 func xmlEscapeText(s string) (string, error) {
@@ -131,14 +157,20 @@ func xmlEscapeText(s string) (string, error) {
 	return recvBuffer.String(), nil
 }
 
-// JsonToPlist converts the json settings to a reg file
+// JsonToPlist converts the json settings to plist-compatible xml text.
 func JsonToPlist(settingsBodyAsJSON string) (string, error) {
-	var settingsJSON options.ServerSettingsForJSON
+	var actualSettingsJSON map[string]interface{}
 
-	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &settingsJSON); err != nil {
-		return "", fmt.Errorf("error in json: %s\n", err)
+	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &actualSettingsJSON); err != nil {
+		return "", fmt.Errorf("error in json: %s", err)
 	}
-	lines, err := convertToPListLines(reflect.ValueOf(settingsJSON), indentChange)
+	// We use the type as a schema, mainly to distinguish the absence of an array or map from an empty instance
+	// - see https://github.com/golang/go/issues/27589
+	// And the reason why the type-free parse isn't sufficient is that it doesn't distinguish
+	// hashes (like `diagnostics.mutedChecks`) from subtrees.
+	// By walking the two data structures in parallel the converter can figure out exactly which fields were specified,
+	// and how to interpret their values.
+	lines, err := convertToPListLines(reflect.TypeOf(options.ServerSettingsForJSON{}), reflect.ValueOf(actualSettingsJSON), indentChange, "")
 	if err != nil {
 		return "", err
 	}

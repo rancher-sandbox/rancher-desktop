@@ -29,37 +29,62 @@ func escape(s string) string {
 //
 // Params:
 // pathParts: represents the registry path to the current item
-// v: the reflected value of the current field
+// structType: type information on the current field for the `value` parameter
+// value: the reflected value of the current field, based on a simple map[string]interface{} JSON-parse
 // jsonTag: the name of the field, used in json (and the registry)
+// path: a dotted representation of the fully-qualified name of the field
 //
 // Returns two values:
 //
 //	an array of lines representing the current value
 //	an error: the only non-nil error this function can return is when it encounters an unhandled value type
-func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]string, error) {
-	kind := v.Kind()
+func convertToRegFormat(pathParts []string, structType reflect.Type, value reflect.Value, jsonTag, path string) ([]string, error) {
+	kind := structType.Kind()
+	if value.Kind() == reflect.Interface && kind != reflect.Interface {
+		if value.IsNil() {
+			return nil, nil
+		}
+		return convertToRegFormat(pathParts, structType, value.Elem(), jsonTag, path)
+	}
+	if value.Kind() == reflect.Ptr {
+		return nil, fmt.Errorf("reg-file generation: got an unexpected pointer for %s value %v, expecting type %v", path, value, structType)
+	}
 	switch kind {
 	case reflect.Struct:
-		numFields := v.NumField()
-		scalarReturnedLines := make([]string, 0, numFields)
+		// Processing here is similar to struct fields in plist.go
+		// In the plist world we want to order the fields according to their
+		// position in the defined ServerSettingsForJSON struct.
+		// In the registry world the fields are ordered alphabetically ignoring case.
+		//
+		if value.Kind() != reflect.Map {
+			return nil, fmt.Errorf("expecting actual kind for a typed struct to be a map, got %v", value.Kind())
+		}
+		numTypedFields := structType.NumField()
+		sortedStructFields := utils.SortStructFields(structType)
+		scalarReturnedLines := make([]string, 0, numTypedFields)
 		nestedReturnedLines := make([]string, 0)
-		for i := 0; i < numFields; i++ {
-			fieldTag := v.Type().Field(i).Tag.Get("json")
-			fieldName := strings.Replace(fieldTag, ",omitempty", "", 1)
-			newRetLines, err := convertToRegFormat(append(pathParts, fieldName), v.Field(i), fieldName)
-			if err != nil {
-				return nil, err
-			}
-			if len(newRetLines) == 0 {
-				continue
-			}
-			// With the current schema, only structs may contain nested structs.
-			// If the first character of the first line is a '[' it's a struct. Otherwise it's a scalar.
-			// ']' placed here to appease my IDE's linter.
-			if newRetLines[0][0] == '[' {
-				nestedReturnedLines = append(nestedReturnedLines, newRetLines...)
-			} else {
-				scalarReturnedLines = append(scalarReturnedLines, newRetLines...)
+		for _, compoundStructField := range sortedStructFields {
+			fieldName := compoundStructField.FieldName
+			valueElement := value.MapIndex(reflect.ValueOf(fieldName))
+			if valueElement.IsValid() {
+				newRetLines, err := convertToRegFormat(append(pathParts, fieldName),
+					compoundStructField.StructField.Type,
+					valueElement,
+					fieldName,
+					path+"."+fieldName)
+				if err != nil {
+					return nil, err
+				}
+				if len(newRetLines) == 0 {
+					continue
+				}
+				// If the first character of the first line is a '[' it's a struct. Otherwise it's a scalar.
+				// ']' placed here to appease my IDE's linter.
+				if newRetLines[0][0] == '[' {
+					nestedReturnedLines = append(nestedReturnedLines, newRetLines...)
+				} else {
+					scalarReturnedLines = append(scalarReturnedLines, newRetLines...)
+				}
 			}
 		}
 		if len(scalarReturnedLines) == 0 && len(nestedReturnedLines) == 0 {
@@ -70,32 +95,28 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 		retLines = append(retLines, nestedReturnedLines...)
 		return retLines, nil
 	case reflect.Ptr:
-		if v.IsNil() {
-			return nil, nil
-		} else {
-			return convertToRegFormat(pathParts, v.Elem(), jsonTag)
-		}
+		return convertToRegFormat(pathParts, structType.Elem(), value, jsonTag, path)
 	case reflect.Slice, reflect.Array:
-		// Currently, all arrays in the options are arrays of strings
-		numValues := v.Len()
-		if numValues == 0 {
-			return nil, nil
+		if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+			return nil, fmt.Errorf("expected slice or array at %s, got %v", path, value.Kind())
 		}
+		// Currently, all arrays in the options are arrays of strings
+		numValues := value.Len()
 		arrayValues := make([]string, numValues)
 		for i := 0; i < numValues; i++ {
-			arrayValues[i] = v.Index(i).String()
+			item := value.Index(i)
+			for item.Kind() == reflect.Interface || item.Kind() == reflect.Pointer {
+				item = item.Elem()
+			}
+			arrayValues[i] = item.String()
 		}
 		return []string{fmt.Sprintf(`"%s"=hex(7):%s`, jsonTag, stringToMultiStringHexBytes(arrayValues))}, nil
 	case reflect.Map:
-		numValues := len(v.MapKeys())
-		if numValues == 0 {
-			return nil, nil
-		}
 		returnedLines := []string{fmt.Sprintf("[%s]", strings.Join(pathParts, "\\"))}
-		typedKeys := utils.SortKeys(v.MapKeys())
-		for _, typedKey := range typedKeys {
-			keyAsString := typedKey.StringKey
-			innerLines, err := convertToRegFormat(append(pathParts, keyAsString), v.MapIndex(typedKey.MapKey), keyAsString)
+		mapKeys := utils.SortKeys(value.MapKeys())
+		for _, mapKey := range mapKeys {
+			keyAsString := mapKey.StringKey
+			innerLines, err := convertToRegFormat(append(pathParts, keyAsString), structType.Elem(), value.MapIndex(mapKey.MapKey), keyAsString, path+"."+keyAsString)
 			if err != nil {
 				return nil, err
 			} else if len(innerLines) > 0 {
@@ -104,25 +125,34 @@ func convertToRegFormat(pathParts []string, v reflect.Value, jsonTag string) ([]
 		}
 		return returnedLines, nil
 	case reflect.Interface:
-		if v.IsNil() {
-			return nil, nil
+		// Since we allow whatever here, just use the actual type of the value.
+		// But if it's an interface{} we'll need to dereference it first to avoid
+		// an infinite loop.
+		for value.Kind() == reflect.Interface {
+			value = value.Elem()
 		}
-		return convertToRegFormat(pathParts, v.Elem(), jsonTag)
+		return convertToRegFormat(pathParts, value.Type(), value, jsonTag, path)
 	case reflect.Bool:
-		boolValue := map[bool]int{true: 1, false: 0}[v.Bool()]
+		boolValue := map[bool]int{true: 1, false: 0}[value.Bool()]
 		return []string{fmt.Sprintf(`"%s"=dword:%d`, jsonTag, boolValue)}, nil
 	case reflect.Int, reflect.Int8, reflect.Int16,
 		reflect.Int32, reflect.Uint, reflect.Uint8, reflect.Uint16,
 		reflect.Uint32:
-		return []string{fmt.Sprintf(`"%s"=dword:%x`, jsonTag, v.Int())}, nil
+		if value.CanConvert(reflect.TypeOf(int64(0))) {
+			value = value.Convert(reflect.TypeOf(int64(0)))
+		}
+		return []string{fmt.Sprintf(`"%s"=dword:%x`, jsonTag, value.Int())}, nil
 	case reflect.Int64, reflect.Uint64:
-		return []string{fmt.Sprintf(`"%s"=qword:%x`, jsonTag, v.Int())}, nil
+		if value.CanConvert(reflect.TypeOf(int64(0))) {
+			value = value.Convert(reflect.TypeOf(int64(0)))
+		}
+		return []string{fmt.Sprintf(`"%s"=qword:%x`, jsonTag, value.Int())}, nil
 	case reflect.Float32, reflect.Float64:
-		return []string{fmt.Sprintf(`"%s"=dword:%x`, jsonTag, int(v.Float()))}, nil
+		return []string{fmt.Sprintf(`"%s"=dword:%x`, jsonTag, int(value.Float()))}, nil
 	case reflect.String:
-		return []string{fmt.Sprintf(`"%s"="%s"`, jsonTag, escape(v.String()))}, nil
+		return []string{fmt.Sprintf(`"%s"="%s"`, jsonTag, escape(value.String()))}, nil
 	}
-	return nil, fmt.Errorf("convertToRegFormat: don't know how to process kind: %q, (%T), value: %v for var %q\n", kind, v, v, jsonTag)
+	return nil, fmt.Errorf("convertToRegFormat: don't know how to process %s kind: %q, (%T), value: %v for var %q\n", path, kind, structType, value, jsonTag)
 }
 
 // Encode multi-stringSZ settings in comma-separated ucs2 little-endian bytes
@@ -138,17 +168,19 @@ func stringToMultiStringHexBytes(values []string) string {
 		hexChars[2*i] = s[2:4]
 		hexChars[2*i+1] = s[0:2]
 	}
+	if len(hexChars) == 0 {
+		return "00,00,00,00"
+	}
 	return strings.Join(hexChars, ",") + ",00,00,00,00"
 }
 
 // JsonToReg - convert the json settings to a reg file
 // @param hiveType: "hklm" or "hkcu"
 // @param profileType: "defaults" or "locked"
-// @param settings - options marshaled as JSON
+// @param settingsBodyAsJSON - options marshaled as JSON
 // @returns: array of strings, intended for writing to a reg file
-
 func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) ([]string, error) {
-	var settings options.ServerSettingsForJSON
+	var actualSettingsJSON map[string]interface{}
 
 	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]
 	if !ok {
@@ -158,11 +190,11 @@ func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) (
 	if !ok {
 		return nil, fmt.Errorf(`unrecognized profileType of %q, must be "defaults" or "locked"`, profileType)
 	}
-	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &settings); err != nil {
-		return nil, fmt.Errorf("error in json: %s\n", err)
+	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &actualSettingsJSON); err != nil {
+		return nil, fmt.Errorf("error in json: %s", err)
 	}
 	headerLines := []string{"Windows Registry Editor Version 5.00"}
-	bodyLines, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop", profileType}, reflect.ValueOf(settings), "")
+	bodyLines, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop", profileType}, reflect.TypeOf(options.ServerSettingsForJSON{}), reflect.ValueOf(actualSettingsJSON), "", "")
 	if err != nil {
 		return nil, err
 	}
