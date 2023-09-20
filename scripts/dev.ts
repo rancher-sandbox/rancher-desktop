@@ -177,10 +177,7 @@ class DevRunner extends events.EventEmitter {
     process.env.NODE_ENV = 'development';
     try {
       await this.startRendererProcess();
-
-      await buildUtils.wait(
-        () => this.startMainProcess(),
-      );
+      await this.startMainProcess();
 
       await new Promise((resolve, reject) => {
         this.on('error', reject);
