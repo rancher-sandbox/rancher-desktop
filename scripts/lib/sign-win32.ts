@@ -65,7 +65,7 @@ export async function sign(workDir: string) {
   const whiteList: Record<string, Array<string>> = {
     '.':                ['Rancher Desktop.exe'],
     [resourcesRootDir]: ['wsl-helper.exe'],
-    [internalDir]:      ['host-resolver.exe', 'privileged-service.exe', 'steve.exe', 'vtunnel.exe'],
+    [internalDir]:      ['host-resolver.exe', 'host-switch.exe', 'privileged-service.exe', 'steve.exe', 'vtunnel.exe'],
     [binDir]:           ['docker.exe', 'docker-credential-none.exe', 'nerdctl.exe', 'rdctl.exe'],
   };
 
