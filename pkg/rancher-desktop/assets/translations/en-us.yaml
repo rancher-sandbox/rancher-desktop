@@ -188,6 +188,19 @@ marketplace:
       label: Remove
       loading: Removing...
   moreInfo: More information
+containers:
+  title: Containers
+  manage:
+    table:
+      showMore: more...
+      header:
+        state: State
+        containerName: Name
+        image: Image
+        ports: Port(s)
+        started: Started
+        actions: Actions
+
 images:
   title: Images
   state:
