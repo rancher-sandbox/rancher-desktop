@@ -1,5 +1,3 @@
-/* eslint-disable import/namespace */
-
 /**
  * This is the preload script that is exposed to extension frontends.
  * It implements the "ddClient" API.
@@ -279,6 +277,12 @@ ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
   delete outstandingProcesses[id];
 });
 
+/**
+ * TODO: #5298 investigate removal after upgrading eslint
+ * During the nuxt removal, import/namespace started failing. This might work
+ * properly again after updating to the latest version of eslint
+ */
+// eslint-disable-next-line import/namespace
 class Client implements v1.DockerDesktopClient {
   constructor(info: {arch: string, hostname: string}) {
     Object.assign(this.host, info);
