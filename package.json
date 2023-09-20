@@ -81,7 +81,7 @@
     "ref-napi": "3.0.3",
     "ref-struct-di": "1.1.1",
     "semver": "7.5.4",
-    "socks-proxy-agent": "7.0.0",
+    "socks-proxy-agent": "8.0.2",
     "sudo-prompt": "9.2.1",
     "tar-stream": "3.0.0",
     "utf-8-validate": "6.0.3",

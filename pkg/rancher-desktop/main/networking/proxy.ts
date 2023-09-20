@@ -114,13 +114,13 @@ class CustomSocksProxyAgent extends SocksProxyAgent {
       hostname, port, protocol,
     });
 
-    super(mergedOpts);
+    super(proxyURL, mergedOpts);
     this.options = opts;
   }
 
   callback(req: ClientRequest, opts: RequestOptions): Promise<net.Socket> {
-    const mergedOptions = Object.assign({}, this.options, opts);
+    const mergedOptions: CustomAgentConnectOpts = Object.assign({}, this.options, opts);
 
-    return super.callback(req, mergedOptions);
+    return super.connect(req, mergedOptions);
   }
 }
