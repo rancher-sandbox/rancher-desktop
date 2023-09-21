@@ -5,14 +5,13 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
+import paths from '@pkg/utils/paths';
 import fetch from 'node-fetch';
 import semver from 'semver';
 
 import K3sHelper, {
   buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry,
 } from '../k3sHelper';
-
-import paths from '@pkg/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
 const { Response: FetchResponse } = jest.requireActual('node-fetch');

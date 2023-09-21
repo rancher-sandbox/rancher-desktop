@@ -3,14 +3,6 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import _ from 'lodash';
-
-import {
-  ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
-  ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
-  ContainerRunClientOptions, ContainerComposePortOptions, ContainerBasicOptions,
-} from './types';
-
 import { VMExecutor } from '@pkg/backend/backend';
 import dockerRegistry from '@pkg/backend/containerClient/registry';
 import { ErrorCommand, spawn, spawnFile } from '@pkg/utils/childProcess';
@@ -18,6 +10,13 @@ import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
+import _ from 'lodash';
+
+import {
+  ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
+  ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
+  ContainerRunClientOptions, ContainerComposePortOptions, ContainerBasicOptions,
+} from './types';
 
 const console = Logging.moby;
 

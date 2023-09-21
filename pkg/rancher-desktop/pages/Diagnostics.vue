@@ -1,9 +1,8 @@
 <script lang="ts">
 
+import DiagnosticsBody from '@pkg/components/DiagnosticsBody.vue';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
-
-import DiagnosticsBody from '@pkg/components/DiagnosticsBody.vue';
 
 export default Vue.extend({
   name:       'diagnostics',

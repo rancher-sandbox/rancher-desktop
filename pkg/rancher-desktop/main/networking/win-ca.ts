@@ -2,12 +2,11 @@
  * This module iterates through system certificates on Windows.
  */
 
+import Logging from '@pkg/utils/logging';
 import ffi from 'ffi-napi';
 import _ from 'lodash';
 import ref from 'ref-napi';
 import refStructDi from 'ref-struct-di';
-
-import Logging from '@pkg/utils/logging';
 
 const console = Logging.networking;
 const Struct = refStructDi(ref);

@@ -21,12 +21,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
 
-import type { ServiceEntry } from '@pkg/backend/k8s';
 import PortForwarding from '@pkg/components/PortForwarding.vue';
 import { defaultSettings, Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import Vue from 'vue';
+
+import type { ServiceEntry } from '@pkg/backend/k8s';
 
 export default Vue.extend({
   components: { PortForwarding },

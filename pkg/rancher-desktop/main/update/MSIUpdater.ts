@@ -2,6 +2,8 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+import mainEvents from '@pkg/main/mainEvents';
+import paths from '@pkg/utils/paths';
 import { AllPublishOptions, newError } from 'builder-util-runtime';
 import { NsisUpdater } from 'electron-updater';
 import { InstallOptions } from 'electron-updater/out/BaseUpdater';
@@ -9,9 +11,6 @@ import { ElectronHttpExecutor } from 'electron-updater/out/electronHttpExecutor'
 import { findFile } from 'electron-updater/out/providers/Provider';
 import { verifySignature } from 'electron-updater/out/windowsExecutableCodeSignatureVerifier';
 import { Lazy } from 'lazy-val';
-
-import mainEvents from '@pkg/main/mainEvents';
-import paths from '@pkg/utils/paths';
 
 import type { AppAdapter } from 'electron-updater/out/AppAdapter';
 import type { DownloadUpdateOptions } from 'electron-updater/out/AppUpdater';

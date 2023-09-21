@@ -1,13 +1,13 @@
 import os from 'os';
 
+import DockerDirManager from '@pkg/utils/dockerDirManager';
+
 import { Architecture, VMBackend } from './backend';
 import LimaKubernetesBackend from './kube/lima';
 import WSLKubernetesBackend from './kube/wsl';
 import LimaBackend from './lima';
 import MockBackend from './mock';
 import WSLBackend from './wsl';
-
-import DockerDirManager from '@pkg/utils/dockerDirManager';
 
 export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): VMBackend {
   const platform = os.platform();

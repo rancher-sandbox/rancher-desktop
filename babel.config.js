@@ -5,10 +5,28 @@ const electronVersion = parseInt(/\d+/.exec(packageJson.devDependencies.electron
 module.exports = {
   presets: [
     [
-      '@babel/preset-env', { targets: { electron: electronVersion } },
-      '@babel/preset-typescript',
+      '@vue/cli-plugin-babel/preset',
+      { useBuiltIns: false },
+    ],
+    [
+      '@babel/preset-env',
+      {
+        targets: {
+          node:     'current',
+          electron: electronVersion,
+        },
+      },
     ],
   ],
+  env: {
+    test: {
+      presets: [
+        ['@babel/env',
+          { targets: { node: 'current' } },
+        ],
+      ],
+    },
+  },
   plugins: [
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-proposal-nullish-coalescing-operator',

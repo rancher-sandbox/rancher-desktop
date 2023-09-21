@@ -6,6 +6,9 @@
 import os from 'os';
 import path from 'path';
 
+import { ContainerEngine, Settings } from '@pkg/config/settings';
+import { spawnFile } from '@pkg/utils/childProcess';
+import { Log } from '@pkg/utils/logging';
 import {
   ElectronApplication, Page, test, expect, JSHandle, TestInfo,
 } from '@playwright/test';
@@ -14,10 +17,6 @@ import { NavPage } from './pages/nav-page';
 import {
   createDefaultSettings, getFullPathForTool, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
 } from './utils/TestUtils';
-
-import { ContainerEngine, Settings } from '@pkg/config/settings';
-import { spawnFile } from '@pkg/utils/childProcess';
-import { Log } from '@pkg/utils/logging';
 
 import type { BrowserView, BrowserWindow } from 'electron';
 

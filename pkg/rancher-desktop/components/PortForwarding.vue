@@ -86,11 +86,10 @@
 </template>
 
 <script lang="ts">
-import { Banner, Checkbox } from '@rancher/components';
-import Vue from 'vue';
-
 import * as K8s from '@pkg/backend/k8s';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
+import { Banner, Checkbox } from '@rancher/components';
+import Vue from 'vue';
 
 import type { PropType } from 'vue';
 
@@ -102,7 +101,7 @@ export default Vue.extend({
   },
   directives: {
     focus: {
-      inserted: function(element) {
+      inserted(element) {
         element.focus();
       },
     },

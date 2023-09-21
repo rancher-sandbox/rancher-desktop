@@ -1,8 +1,5 @@
 <script lang="ts">
 
-import Vue from 'vue';
-import { mapGetters, mapState } from 'vuex';
-
 import PreferencesContainerEngineAllowedImages from '@pkg/components/Preferences/ContainerEngineAllowedImages.vue';
 import PreferencesContainerEngineGeneral from '@pkg/components/Preferences/ContainerEngineGeneral.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
@@ -11,6 +8,8 @@ import { Settings } from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
+import Vue from 'vue';
+import { mapGetters, mapState } from 'vuex';
 
 import type { PropType } from 'vue';
 

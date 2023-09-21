@@ -88,6 +88,7 @@ bulkable
 bulkaction
 Buttondrop
 cacerts
+camelcase
 camelpunch
 CAPI
 caroot
@@ -657,6 +658,7 @@ servernum
 serviceaccount
 servicemonitor
 setproxy
+SFC
 sharedscripts
 sharex
 sharkanodo
@@ -687,6 +689,7 @@ splunk
 ssd
 sshfs
 sslip
+Ssr
 ssr
 statefulset
 stoinks

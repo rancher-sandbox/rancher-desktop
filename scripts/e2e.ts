@@ -8,10 +8,10 @@ import childProcess from 'child_process';
 import events from 'events';
 import util from 'util';
 
-import buildUtils from './lib/build-utils';
-
 import * as settings from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
+
+import buildUtils from './lib/build-utils';
 
 const sleep = util.promisify(setTimeout);
 
@@ -53,7 +53,6 @@ class E2ETestRunner extends events.EventEmitter {
   }
 
   exit() {
-    this.#rendererProcess?.kill();
     this.#testProcess?.kill();
   }
 
@@ -85,17 +84,18 @@ class E2ETestRunner extends events.EventEmitter {
     });
   }
 
-  #rendererProcess: null | childProcess.ChildProcess = null;
   /**
    * Start the renderer process.
    */
-  startRendererProcess(): Promise<void> {
-    this.#rendererProcess = this.spawn('Renderer process',
-      'node', 'node_modules/nuxt/bin/nuxt.js',
-      '--hostname', 'localhost',
-      '--port', this.rendererPort.toString(), buildUtils.rendererSrcDir);
+  buildRenderer(): Promise<void> {
+    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
 
-    return Promise.resolve();
+    return buildUtils.spawn(
+      'node_modules/.bin/vue-cli-service',
+      'build',
+      '--skip-plugins',
+      'eslint',
+    );
   }
 
   async run() {
@@ -117,8 +117,10 @@ class E2ETestRunner extends events.EventEmitter {
       // Set feature flags
       process.env.RD_ENV_EXTENSIONS = '1';
 
+      // Start the renderer process and wait for it to complete the build.
+      await this.buildRenderer();
+
       await buildUtils.wait(
-        () => this.startRendererProcess(),
         () => buildUtils.buildMain(),
         () => buildUtils.buildPreload(),
       );

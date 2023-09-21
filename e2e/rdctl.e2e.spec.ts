@@ -22,16 +22,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { expect, test } from '@playwright/test';
-import _ from 'lodash';
-import fetch, { RequestInit } from 'node-fetch';
-import yaml from 'yaml';
-
-import { NavPage } from './pages/nav-page';
-import {
-  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, waitForRestartVM,
-} from './utils/TestUtils';
-
 import {
   ContainerEngine,
   Settings,
@@ -48,6 +38,15 @@ import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
+import { expect, test } from '@playwright/test';
+import _ from 'lodash';
+import fetch, { RequestInit } from 'node-fetch';
+import yaml from 'yaml';
+
+import { NavPage } from './pages/nav-page';
+import {
+  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, waitForRestartVM,
+} from './utils/TestUtils';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 

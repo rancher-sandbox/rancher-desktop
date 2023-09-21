@@ -1,8 +1,9 @@
 <script lang="ts">
-import Vue from 'vue';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
+import Vue from 'vue';
+
 /**
  * Groups several controls as well as labels
  */

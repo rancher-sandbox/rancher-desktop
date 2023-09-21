@@ -1,12 +1,11 @@
 import path from 'path';
 import { URL } from 'url';
 
-import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
-
-import { isDevEnv } from '@pkg/utils/environment';
+import { isDevBuild } from '@pkg/utils/environment';
 import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
 
 const console = Logging['protocol-handler'];
 
@@ -17,7 +16,7 @@ const console = Logging['protocol-handler'];
  * and provided path
  */
 function redirectedUrl(relPath: string) {
-  if (isDevEnv) {
+  if (isDevBuild) {
     return `http://localhost:8888${ relPath }`;
   }
 
@@ -51,7 +50,7 @@ function getProtocolResponse(
   redirectUrl: string,
   relPath: string,
 ): ProtocolResponse {
-  if (isDevEnv) {
+  if (isDevBuild) {
     return {
       method:   request.method,
       referrer: request.referrer,
@@ -77,7 +76,7 @@ export const protocolsRegistered = Latch();
  * production environments.
  */
 function setupAppProtocolHandler() {
-  const registrationProtocol = isDevEnv ? protocol.registerHttpProtocol : protocol.registerFileProtocol;
+  const registrationProtocol = isDevBuild ? protocol.registerHttpProtocol : protocol.registerFileProtocol;
 
   registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);

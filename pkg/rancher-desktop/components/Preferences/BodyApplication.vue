@@ -1,17 +1,17 @@
 <script lang="ts">
 
-import Vue from 'vue';
-import { mapGetters, mapState } from 'vuex';
-
 import PreferencesApplicationBehavior from '@pkg/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@pkg/components/Preferences/ApplicationEnvironment.vue';
 import PreferencesApplicationGeneral from '@pkg/components/Preferences/ApplicationGeneral.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
+import Vue from 'vue';
+import { mapGetters, mapState } from 'vuex';
+
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

@@ -1,6 +1,5 @@
-import { app } from 'electron';
-
 import { spawnFile } from '@pkg/utils/childProcess';
+import { app } from 'electron';
 
 export function getProductionVersion() {
   try {

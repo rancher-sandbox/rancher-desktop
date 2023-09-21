@@ -1,9 +1,5 @@
 import os from 'os';
 
-import Electron from 'electron';
-import _ from 'lodash';
-import semver from 'semver';
-
 import {
   CacheMode,
   defaultSettings,
@@ -20,6 +16,9 @@ import { parseImageReference, validateImageName, validateImageTag } from '@pkg/u
 import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
+import Electron from 'electron';
+import _ from 'lodash';
+import semver from 'semver';
 
 type settingsLike = Record<string, any>;
 

@@ -1,12 +1,11 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
-
 import SystemPreferences from '@pkg/components/SystemPreferences.vue';
 import { defaultSettings, Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import type { PropType } from 'vue';
 

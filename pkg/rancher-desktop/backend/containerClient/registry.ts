@@ -85,7 +85,7 @@ declare module '@pkg/utils/fetch' {
 
 Object.defineProperties(Headers.prototype, {
   [getAsList]: {
-    value: function(this: Headers, key: string): string[] | null {
+    value(this: Headers, key: string): string[] | null {
       const collator = Intl.Collator(undefined, { usage: 'search', sensitivity: 'accent' });
 
       for (const [k, v] of Object.entries(this.raw())) {

@@ -12,31 +12,22 @@
     "allowJs": true,
     "sourceMap": true,
     "strict": true,
-    "noEmit": true,
+    "noEmit": false,
     "experimentalDecorators": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./*"
-      ],
       "@pkg/*": [
         "./*"
-      ],
-      "@shell/core/*": [
-        "../../node_modules/@rancher/shell/core"
-      ],
+      ]
     },
     "typeRoots": [
       "../../node_modules",
       "../../node_modules/@types",
-      "../../node_modules/@rancher/shell/types",
-      "../../node_modules/@rancher/shell/core"
     ],    
     "types": [
       "@nuxt/types",
       "@types/node",
-      "@types/jest",
-      "rancher"
+      "@types/jest"
     ]
   },
   "exclude": [

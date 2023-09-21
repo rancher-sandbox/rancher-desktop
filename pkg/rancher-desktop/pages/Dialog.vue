@@ -1,10 +1,9 @@
 <script lang="ts">
 import os from 'os';
 
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
-
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name:       'rd-dialog',

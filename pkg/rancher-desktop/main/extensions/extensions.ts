@@ -3,6 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
+import mainEvents from '@pkg/main/mainEvents';
+import { parseImageReference } from '@pkg/utils/dockerUtils';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { defined } from '@pkg/utils/typeUtils';
 import _ from 'lodash';
 import yaml from 'yaml';
 
@@ -11,11 +16,6 @@ import {
 } from './types';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
-import mainEvents from '@pkg/main/mainEvents';
-import { parseImageReference } from '@pkg/utils/dockerUtils';
-import Logging from '@pkg/utils/logging';
-import paths from '@pkg/utils/paths';
-import { defined } from '@pkg/utils/typeUtils';
 
 /**
  * ComposeFile describes the contents of a compose file.
@@ -31,9 +31,13 @@ type ComposeFile = {
       type: string;
       source?: string;
       target: string;
+      // The snake_case naming convention follows the Docker Compose spec
+      // eslint-disable-next-line camelcase
       read_only?: boolean;
       bind?: {
         propagation?: string;
+        // The snake_case naming convention follows the Docker Compose spec
+        // eslint-disable-next-line camelcase
         create_host_path?: boolean;
         selinux?: 'z' | 'Z';
       };

@@ -1,8 +1,7 @@
-import Vue from 'vue';
 
-import { SETTING } from '@pkg/config/settings';
-import { MANAGEMENT, STEVE } from '@pkg/config/types';
+import { STEVE } from '@pkg/config/types';
 import { clone } from '@pkg/utils/object';
+import { set } from 'vue';
 
 const definitions = {};
 
@@ -220,7 +219,7 @@ export const getters = {
 
 export const mutations = {
   load(state, { key, value }) {
-    Vue.set(state.data, key, value);
+    set(state.data, key, value);
   },
 
   cookiesLoaded(state) {
@@ -258,9 +257,9 @@ export const actions = {
           }
 
           if ( definition.parseJSON ) {
-            Vue.set(server.data, key, JSON.stringify(value));
+            set(server.data, key, JSON.stringify(value));
           } else {
-            Vue.set(server.data, key, value);
+            set(server.data, key, value);
           }
 
           await server.save({ redirectUnauthorized: false });
@@ -422,27 +421,6 @@ export const actions = {
     const value = getters[THEME] === 'light' ? 'dark' : 'light';
 
     return dispatch('set', { key: THEME, value });
-  },
-
-  setBrandStyle({ rootState, rootGetters }, dark = false) {
-    if (rootState.managementReady) {
-      try {
-        const brandSetting = rootGetters['management/byId'](MANAGEMENT.SETTING, SETTING.BRAND);
-
-        if (brandSetting && brandSetting.value && brandSetting.value !== '') {
-          const brand = brandSetting.value;
-
-          const brandMeta = require(`~/assets/brand/${ brand }/metadata.json`);
-          const hasStylesheet = brandMeta.hasStylesheet === 'true';
-
-          if (hasStylesheet) {
-            document.body.classList.add(brand);
-          } else {
-            // TODO option apply color at runtime
-          }
-        }
-      } catch {}
-    }
   },
 };
 

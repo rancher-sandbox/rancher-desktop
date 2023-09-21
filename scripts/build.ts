@@ -9,9 +9,9 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 
-import buildUtils from './lib/build-utils';
-
 import { simpleSpawn } from 'scripts/simple_process';
+
+import buildUtils from './lib/build-utils';
 
 class Builder {
   async cleanup() {
@@ -50,12 +50,15 @@ class Builder {
   }
 
   async buildRenderer() {
-    const nuxtBin = 'node_modules/nuxt/bin/nuxt.js';
-    const nuxtOutDir = path.join(buildUtils.rendererSrcDir, 'dist');
-
-    await simpleSpawn('node', [nuxtBin, 'build', buildUtils.rendererSrcDir]);
-    await simpleSpawn('node', [nuxtBin, 'generate', buildUtils.rendererSrcDir]);
-    await fs.rename(nuxtOutDir, buildUtils.appDir);
+    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
+    await simpleSpawn(
+      'node_modules/.bin/vue-cli-service',
+      [
+        'build',
+        '--skip-plugins',
+        'eslint',
+      ],
+    );
   }
 
   async build() {

@@ -1,7 +1,7 @@
 @use 'sass:math';
 
-@import "~assets/styles/base/functions";
-@import "~assets/styles/base/_variables";
+@import "@pkg/assets/styles/base/_functions";
+@import "@pkg/assets/styles/base/_variables";
 
 
 $COLUMNS: 6 10 11 12 23 24;

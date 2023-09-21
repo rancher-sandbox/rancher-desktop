@@ -1,8 +1,9 @@
+import { ContainerEngineClient } from '@pkg/backend/containerClient';
+import { RecursiveReadonly } from '@pkg/utils/typeUtils';
+
 import { ExtensionManager } from './types';
 
-import { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { Settings } from '@pkg/config/settings';
-import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 export * from './types';
 

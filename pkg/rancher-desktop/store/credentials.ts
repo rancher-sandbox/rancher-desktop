@@ -1,8 +1,9 @@
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import Latch from '@pkg/utils/latch';
+
 import { ActionContext, MutationsType } from './ts-helpers';
 
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import Latch from '@pkg/utils/latch';
 
 export type Credentials = Omit<ServerState, 'pid'>;
 

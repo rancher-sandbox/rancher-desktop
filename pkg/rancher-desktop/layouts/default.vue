@@ -18,8 +18,6 @@
 
 <script>
 
-import { mapGetters, mapState } from 'vuex';
-
 import ActionMenu from '@pkg/components/ActionMenu.vue';
 import BackendProgress from '@pkg/components/BackendProgress.vue';
 import Header from '@pkg/components/Header.vue';
@@ -28,6 +26,7 @@ import TheTitle from '@pkg/components/TheTitle.vue';
 import initExtensions from '@pkg/preload/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { mainRoutes } from '@pkg/window/constants';
+import { mapGetters, mapState } from 'vuex';
 
 export default {
   name:       'App',

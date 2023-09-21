@@ -1,8 +1,5 @@
 <script lang="ts">
 
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
-
 import { VersionEntry } from '@pkg/backend/k8s';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
@@ -11,6 +8,8 @@ import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import type { PropType } from 'vue';
 

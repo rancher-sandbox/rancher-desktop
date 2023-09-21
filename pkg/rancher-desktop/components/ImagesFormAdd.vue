@@ -41,7 +41,7 @@ export default Vue.extend({
     action: {
       type:     String,
       required: true,
-      validator(value) {
+      validator(value: string) {
         return ['pull', 'build'].includes(value);
       },
     },

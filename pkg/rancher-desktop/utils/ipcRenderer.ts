@@ -2,9 +2,8 @@
  * This is a typed version of Electron.ipcRenderer
  */
 
-import { ipcRenderer as ipcRendererImpl } from 'electron';
-
 import { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg/typings/electron-ipc';
+import { ipcRenderer as ipcRendererImpl } from 'electron';
 
 interface IpcRenderer {
   on<eventName extends keyof IpcRendererEvents>(

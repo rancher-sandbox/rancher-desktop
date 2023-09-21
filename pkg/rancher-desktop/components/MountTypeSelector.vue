@@ -1,11 +1,7 @@
 <script lang="ts">
 import os from 'os';
 
-import { RadioButton, RadioGroup } from '@rancher/components';
-import semver from 'semver';
-import Vue, { VueConstructor } from 'vue';
-import { mapGetters, mapState } from 'vuex';
-
+import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
@@ -14,7 +10,10 @@ import {
   CacheMode, MountType, ProtocolVersion, SecurityModel, Settings, VMType,
 } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import IncompatiblePreferencesAlert, { CompatiblePrefs } from '~/components/IncompatiblePreferencesAlert.vue';
+import { RadioButton, RadioGroup } from '@rancher/components';
+import semver from 'semver';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters, mapState } from 'vuex';
 
 import type { PropType } from 'vue';
 
@@ -109,7 +108,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     updateValue<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$emit('update', property, value);
     },
-    disabledVirtIoFsTooltip(disabled: boolean): { content: string } | {} {
+    disabledVirtIoFsTooltip(disabled: boolean): { content: string } | Record<string, never> {
       let tooltip = {};
 
       if (disabled) {

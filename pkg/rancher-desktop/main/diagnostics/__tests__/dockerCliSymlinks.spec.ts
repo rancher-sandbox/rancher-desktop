@@ -18,6 +18,12 @@ jest.mock('electron', () => {
   };
 });
 
+// eslint-disable-next-line import/first -- Need to mock first
+import paths from '@pkg/utils/paths';
+
+// eslint-disable-next-line import/first -- Need to mock first
+import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
+
 // Mock fs.promises.readdir() for the default export.
 jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
   expect(dir).toEqual(path.join(appDir, 'resources', os.platform(), 'bin'));
@@ -25,12 +31,6 @@ jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
 
   return Promise.resolve([]);
 });
-
-// eslint-disable-next-line import/first -- Need to mock first.
-import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
-
-// eslint-disable-next-line import/first -- Need to mock first.
-import paths from '@pkg/utils/paths';
 
 const { mkdtemp, rm } = jest.requireActual('fs/promises');
 const describeUnix = process.platform === 'win32' ? describe.skip : describe;

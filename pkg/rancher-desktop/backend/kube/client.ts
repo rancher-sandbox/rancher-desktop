@@ -6,7 +6,6 @@ import stream from 'stream';
 import util from 'util';
 
 import * as k8s from '@kubernetes/client-node';
-
 import Logging from '@pkg/utils/logging';
 import { defined } from '@pkg/utils/typeUtils';
 

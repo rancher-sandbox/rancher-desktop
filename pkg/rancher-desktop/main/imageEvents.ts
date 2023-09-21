@@ -4,13 +4,12 @@
 
 import path from 'path';
 
-import Electron from 'electron';
-
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import Logging from '@pkg/utils/logging';
 import * as window from '@pkg/window';
+import Electron from 'electron';
 
 const console = Logging.images;
 const ipcMainProxy = getIpcMainProxy(console);

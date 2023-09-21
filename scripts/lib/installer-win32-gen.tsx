@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /** @jsx Element.new */
 
 import crypto from 'crypto';
@@ -163,6 +164,7 @@ export default async function generateFileList(rootPath: string): Promise<string
   const descendantDirs = getDescendantDirs(rootDir).filter(d => d.files.length > 0);
 
   const specialComponents: Record<string, (d: directory, f: { name: string, id: string }) => Element | null> = {
+    // @ts-ignore
     'Rancher Desktop.exe': (d, f) => {
       return <Component>
         <File
@@ -198,6 +200,7 @@ export default async function generateFileList(rootPath: string): Promise<string
       return null;
     },
 
+    // @ts-ignore
     'wix-install-wsl.ps1': (d, f) => {
       return <Component>
         <Condition>NOT WSLKERNELINSTALLED</Condition>
@@ -211,6 +214,7 @@ export default async function generateFileList(rootPath: string): Promise<string
       </Component>;
     },
 
+    // @ts-ignore
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>
         <Condition>{'MSIINSTALLPERUSER <> 1'}</Condition>
@@ -273,7 +277,7 @@ export default async function generateFileList(rootPath: string): Promise<string
 
   rootDir.files.push({ name: 'wix-install-wsl.ps1', id: 'f_install_wsl' });
 
-  return (<Fragment>
+  const jsxElement = (<Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="APPLICATIONFOLDER" Name="Rancher Desktop">
@@ -333,5 +337,8 @@ export default async function generateFileList(rootPath: string): Promise<string
       })}
     </ComponentGroup>,
     )}
-  </Fragment>).toXML();
+  </Fragment>);
+
+  // @ts-ignore
+  return jsxElement.toXML();
 }

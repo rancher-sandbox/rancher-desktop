@@ -1,9 +1,9 @@
 <script lang="ts">
+import RdInput from '@pkg/components/RdInput.vue';
+import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import Vue from 'vue';
 import VueSlider from 'vue-slider-component';
 
-import RdInput from '@pkg/components/RdInput.vue';
-import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import 'vue-slider-component/theme/default.css';
 
 export default Vue.extend({

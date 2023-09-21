@@ -5,13 +5,12 @@ import stream from 'stream';
 import tls from 'tls';
 import { URL } from 'url';
 
+import Logging from '@pkg/utils/logging';
 import { Agent, ClientRequest, RequestOptions, AgentCallbackReturn } from 'agent-base';
 import Electron from 'electron';
 import HttpProxyAgent from 'http-proxy-agent';
 import { HttpsProxyAgent, HttpsProxyAgentOptions } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
-
-import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
 

@@ -16,9 +16,6 @@
     "experimentalDecorators": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "pkg/rancher-desktop/*"
-      ],
       "@pkg/*": [
         "pkg/rancher-desktop/*"
       ],
@@ -33,14 +30,15 @@
     ],    
     "types": [
       "@types/node",
-      "@types/jest",
-      "rancher"
+      "@types/jest"
     ]
   },
   "exclude": [
     "node_modules",
     ".nuxt",
-    "dist"
+    "dist",
+    "scripts/lib/installer-*.tsx",
+    "scripts/lib/installer-win32-gen.tsx"
   ],
   "include": [
     "**/*",

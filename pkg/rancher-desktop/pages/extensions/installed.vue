@@ -1,12 +1,12 @@
 <script lang="ts">
+import EmptyState from '@pkg/components/EmptyState.vue';
+import NavIconExtension from '@pkg/components/NavIconExtension.vue';
+import SortableTable from '@pkg/components/SortableTable/index.vue';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import Vue, { PropType } from 'vue';
 import { mapGetters } from 'vuex';
 
-import EmptyState from '@pkg/components/EmptyState.vue';
-import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import NavIconExtension from '~/components/NavIconExtension.vue';
 
 export default Vue.extend({
   name:       'extensions-installed',

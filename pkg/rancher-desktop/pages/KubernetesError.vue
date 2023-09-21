@@ -38,9 +38,8 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
-
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import Vue from 'vue';
 
 export default Vue.extend({
   layout: 'dialog',

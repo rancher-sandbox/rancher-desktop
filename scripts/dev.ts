@@ -7,7 +7,6 @@
 import childProcess from 'child_process';
 import events from 'events';
 import https from 'https';
-import util from 'util';
 
 import fetch from 'node-fetch';
 
@@ -67,23 +66,15 @@ class DevRunner extends events.EventEmitter {
       };
     }
 
-    return { home: 'http://localhost:8888/pages/General' };
+    return { home: 'http://localhost:8888' };
   }
 
   #mainProcess: childProcess.ChildProcess | null = null;
   async startMainProcess() {
+    console.info('Main process: starting...');
     try {
       await buildUtils.buildMain();
-      const rendererEnv = this.rendererEnv();
 
-      // Wait for the renderer to finish, so that the output from nuxt doesn't
-      // clobber debugging output.
-      while (true) {
-        if ((await fetch(rendererEnv.home, { agent: rendererEnv.agent })).ok) {
-          break;
-        }
-        await util.promisify(setTimeout)(1000);
-      }
       this.#mainProcess = this.spawn(
         'Main process',
         'node',
@@ -112,19 +103,69 @@ class DevRunner extends events.EventEmitter {
    */
   async startRendererProcess(): Promise<void> {
     await buildUtils.buildPreload();
-    this.#rendererProcess = this.spawn(
-      'Renderer process',
-      'node',
-      'node_modules/nuxt/bin/nuxt.js',
-      'dev',
-      '--hostname',
-      'localhost',
-      '--port',
-      this.rendererPort.toString(),
-      buildUtils.rendererSrcDir,
-    );
 
-    return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      console.info('Renderer process: starting...');
+      process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
+
+      this.#rendererProcess = this.spawn(
+        'Renderer process',
+        'node_modules/.bin/vue-cli-service',
+        'serve',
+        '--host',
+        'localhost',
+        '--port',
+        this.rendererPort.toString(),
+        '--skip-plugins',
+        'eslint',
+      );
+
+      // Listen for the 'exit' event of the child process and resolve or reject the Promise accordingly.
+      this.#rendererProcess.on('exit', (code, _signal) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Renderer build failed with code ${ code }`));
+        }
+      });
+
+      // Wait for the renderer to finish, so that vue-cli output doesn't
+      // clobber debugging output.
+      const rendererEnv = this.rendererEnv();
+
+      const maxRetries = 30;
+      let retryCount = 0;
+      const retryInterval = 1000;
+
+      const checkDevServer = async() => {
+        try {
+          const response = await fetch(rendererEnv.home, { agent: rendererEnv.agent });
+
+          if (response.ok) {
+            console.info('Renderer process: dev server started');
+            resolve();
+          } else {
+            // Retry if response is not okay
+            retryCount++;
+            if (retryCount < maxRetries) {
+              setTimeout(checkDevServer, retryInterval);
+            } else {
+              reject(new Error(`Renderer process: failed to connect`));
+            }
+          }
+        } catch (error) {
+          // Retry if fetch throws an error
+          retryCount++;
+          if (retryCount < maxRetries) {
+            setTimeout(checkDevServer, retryInterval);
+          } else {
+            reject(new Error(`Renderer process: failed to connect`));
+          }
+        }
+      };
+
+      checkDevServer().catch(e => console.error(e));
+    });
   }
 
   exit() {
@@ -135,10 +176,9 @@ class DevRunner extends events.EventEmitter {
   async run() {
     process.env.NODE_ENV = 'development';
     try {
-      await buildUtils.wait(
-        () => this.startRendererProcess(),
-        () => this.startMainProcess(),
-      );
+      await this.startRendererProcess();
+      await this.startMainProcess();
+
       await new Promise((resolve, reject) => {
         this.on('error', reject);
       });

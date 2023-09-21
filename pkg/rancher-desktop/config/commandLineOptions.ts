@@ -1,7 +1,5 @@
 import { join } from 'path';
 
-import _ from 'lodash';
-
 import { LockedSettingsType, Settings } from '@pkg/config/settings';
 import { save, turnFirstRunOff } from '@pkg/config/settingsImpl';
 import { TransientSettings } from '@pkg/config/transientSettings';
@@ -9,6 +7,7 @@ import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursiveKeys, RecursivePartial } from '@pkg/utils/typeUtils';
+import _ from 'lodash';
 
 const console = Logging.settings;
 
@@ -68,7 +67,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
       processingExternalArguments = false;
       continue;
     }
-    const currentValue: boolean|string|number|object|undefined = _.get(cfg, fqFieldName);
+    const currentValue: boolean|string|number|Record<string, undefined>|undefined = _.get(cfg, fqFieldName);
 
     if (currentValue === undefined) {
       // Ignore unrecognized command-line options until we get to one we recognize

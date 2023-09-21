@@ -3,10 +3,10 @@
  */
 
 import Electron from 'electron';
+import semver from 'semver';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
-import semver from 'semver';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().

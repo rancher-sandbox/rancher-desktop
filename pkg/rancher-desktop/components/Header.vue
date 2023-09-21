@@ -1,7 +1,6 @@
 <script lang="ts">
-import Vue from 'vue';
-
 import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
+import Vue from 'vue';
 
 export default Vue.extend({
   name:       'rd-header',

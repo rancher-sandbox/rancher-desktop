@@ -3,13 +3,13 @@ import http from 'http';
 import path from 'path';
 import { URL } from 'url';
 
-import runCredentialHelper from './credentialUtils';
-
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
 import * as serverHelper from '@pkg/main/serverHelper';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+
+import runCredentialHelper from './credentialUtils';
 
 export type ServerState = {
   user: string;

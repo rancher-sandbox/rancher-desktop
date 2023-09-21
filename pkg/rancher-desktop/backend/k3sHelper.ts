@@ -9,13 +9,6 @@ import util from 'util';
 
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
-import _ from 'lodash';
-import { Response } from 'node-fetch';
-import semver from 'semver';
-import yaml from 'yaml';
-
-import { Architecture, VMExecutor } from './backend';
-
 import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
@@ -32,6 +25,12 @@ import safeRename from '@pkg/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 import { showMessageBox } from '@pkg/window';
+import _ from 'lodash';
+import { Response } from 'node-fetch';
+import semver from 'semver';
+import yaml from 'yaml';
+
+import { Architecture, VMExecutor } from './backend';
 
 import type Electron from 'electron';
 
@@ -44,10 +43,12 @@ const console = Logging.k8s;
 export type ShortVersion = string;
 
 export interface ReleaseAPIEntry {
-
+  // The snake_case naming convention follows the structure of the API response
+  // eslint-disable-next-line camelcase
   tag_name: string;
   assets: {
-
+    // The snake_case naming convention follows the structure of the API response
+    // eslint-disable-next-line camelcase
     browser_download_url: string;
     name: string;
   }[];

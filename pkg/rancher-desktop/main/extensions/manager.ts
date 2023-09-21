@@ -2,6 +2,15 @@ import { ChildProcessByStdio, spawn } from 'child_process';
 import path from 'path';
 import { Readable } from 'stream';
 
+import { ContainerEngine, Settings } from '@pkg/config/settings';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
+import mainEvents from '@pkg/main/mainEvents';
+import { demoMarketplace } from '@pkg/utils/_demo_marketplace_items';
+import { parseImageReference } from '@pkg/utils/dockerUtils';
+import fetch, { RequestInit } from '@pkg/utils/fetch';
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
+import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 import Electron, { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
@@ -12,16 +21,7 @@ import {
 } from './types';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
-import { ContainerEngine, Settings } from '@pkg/config/settings';
-import { getIpcMainProxy } from '@pkg/main/ipcMain';
-import mainEvents from '@pkg/main/mainEvents';
 import type { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg/typings/electron-ipc';
-import { demoMarketplace } from '@pkg/utils/_demo_marketplace_items';
-import { parseImageReference } from '@pkg/utils/dockerUtils';
-import fetch, { RequestInit } from '@pkg/utils/fetch';
-import Logging from '@pkg/utils/logging';
-import paths from '@pkg/utils/paths';
-import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 const console = Logging.extensions;
 const ipcMain = getIpcMainProxy(console);

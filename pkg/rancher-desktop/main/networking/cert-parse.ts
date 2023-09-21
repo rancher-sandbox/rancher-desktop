@@ -43,10 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-import forge, { asn1 } from 'node-forge';
-
 import Logging from '@pkg/utils/logging';
 import { defined } from '@pkg/utils/typeUtils';
+import forge, { asn1 } from 'node-forge';
 
 const console = Logging.background;
 

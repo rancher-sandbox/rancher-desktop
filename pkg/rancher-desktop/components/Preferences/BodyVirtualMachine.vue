@@ -1,9 +1,6 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
-import { mapGetters, mapState } from 'vuex';
-
 import PreferencesVirtualMachineEmulation from '@pkg/components/Preferences/VirtualMachineEmulation.vue';
 import PreferencesVirtualMachineHardware from '@pkg/components/Preferences/VirtualMachineHardware.vue';
 import PreferencesVirtualMachineNetwork from '@pkg/components/Preferences/VirtualMachineNetwork.vue';
@@ -11,9 +8,12 @@ import PreferencesVirtualMachineVolumes from '@pkg/components/Preferences/Virtua
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { Settings } from '@pkg/config/settings';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
+import Vue from 'vue';
+import { mapGetters, mapState } from 'vuex';
+
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 

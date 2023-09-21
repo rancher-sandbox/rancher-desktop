@@ -24,10 +24,9 @@ import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import ejs from 'ejs';
 import yaml from 'yaml';
-
-import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 
 interface commandFlagType {
   /**

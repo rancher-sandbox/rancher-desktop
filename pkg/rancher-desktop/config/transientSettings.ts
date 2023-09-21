@@ -1,6 +1,5 @@
-import _ from 'lodash';
-
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
+import _ from 'lodash';
 
 export const navItemNames = [
   'Application',

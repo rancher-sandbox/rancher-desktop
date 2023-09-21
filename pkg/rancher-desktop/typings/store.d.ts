@@ -21,7 +21,7 @@ type storeActions = Record<string, never>
   & Actions<'diagnostics', typeof DiagnosticsActions>
   & Actions<'credentials', typeof CredentialsActions>
   & Actions<'extensions', typeof ExtensionsActions>
-  & Actions<'transientSettings', typeof TransientSettingsActions>
+  & Actions<'transientSettings', typeof TransientSettingsActions>;
 
 declare module 'vuex/types' {
   export interface Dispatch {

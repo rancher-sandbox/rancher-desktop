@@ -1,6 +1,5 @@
-import { Options } from 'http-proxy-middleware';
-
 import Logging from '@pkg/utils/logging';
+import { Options } from 'http-proxy-middleware';
 
 const console = Logging.dashboardServer;
 const logProvider = () => console;
