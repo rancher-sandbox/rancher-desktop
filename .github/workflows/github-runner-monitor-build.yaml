@@ -1,0 +1,36 @@
+# This workflow builds the GitHub runner
+name: 'GitHub Runner: Build Monitor'
+
+on:
+  push:
+    paths: [ src/go/github-runner-monitor/** ]
+  pull_request:
+    paths: [ src/go/github-runner-monitor/** ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        sparse-checkout: src/go/github-runner-monitor
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: src/go/github-runner-monitor/go.mod
+        cache-dependency-path: src/go/github-runner-monitor/go.sum
+    - run: go build .
+      working-directory: src/go/github-runner-monitor
+    - uses: actions/upload-artifact@v3
+      with:
+        name: github-runner-linux
+        path: src/go/github-runner-monitor/github-runner-monitor
+        if-no-files-found: error
+    - uses: golangci/golangci-lint-action@v3.7.0
+      with:
+        working-directory: src/go/github-runner-monitor
+        only-new-issues: true
