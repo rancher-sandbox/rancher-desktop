@@ -1,6 +1,6 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/nerdctl-stub/generate
 
-go 1.17
+go 1.21
 
 require github.com/sirupsen/logrus v1.8.1
 
