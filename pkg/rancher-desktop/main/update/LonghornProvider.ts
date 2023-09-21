@@ -276,7 +276,7 @@ export async function getWslVersion(): Promise<string | undefined> {
     return undefined;
   }
 
-  const matches = stdout.match(/^WSL .*? ([0-9.]+)$/m);
+  const matches = stdout.match(/^WSL[ -].*? ([0-9.]+)$/m);
 
   if (!matches || matches.length !== 2) {
     throw new Error(`failed to find WSL version from stdout "${ stdout }"`);
@@ -299,7 +299,14 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
   };
 
   if (process.platform === 'win32') {
-    requestPayload.extraInfo.wslVersion = await getWslVersion();
+    try {
+      requestPayload.extraInfo.wslVersion = await getWslVersion();
+    } catch (ex) {
+      // If we fail to get the version, still send the update ping but mark it
+      // as invalid.
+      console.error('Failed to get WSL version:', ex);
+      requestPayload.extraInfo.wslVersion = '<error>';
+    }
   }
 
   // If we are using anything on `github.io` as the update server, we're
