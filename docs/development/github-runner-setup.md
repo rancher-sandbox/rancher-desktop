@@ -66,3 +66,40 @@ Icon | Context
 [Scoop]: https://github.com/ScoopInstaller/Install#typical-installation
 [requires admin]: https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#windows
 [instructions]: https://github.com/rancher-sandbox/rancher-desktop/settings/actions/runners/new?arch=x64&os=win
+
+## Linux
+
+### Prerequisites
+
+The runner configuration we have tested is:
+
+- Ubuntu 22.04
+- 32GB memory
+
+### Configuration
+
+- `sudo apt install liblttng-ust1 make g++ xvfb curl docker.io`
+- `sudo useradd --groups docker,kvm --create-home runner`
+- `sudo mkdir /runner`
+- `sudo chown runner:runner /runner`
+- Download the runner code per GitHub instructions (currently 2.309.0); the
+  instructions show up when going through adding a runner in the repoistory
+  settings.
+- Configure the runner (also in GitHub instructions):
+
+  `./config.sh --url https://github.com/rancher-sandbox/rancher-desktop
+   --token …`
+- Register the runner as a service:
+
+  `sudo ./svc.sh install runner`
+- Run the service under X11:
+
+  Create `/etc/systemd/system/actions.runner.….service.d/run-in-xvfb.conf` with
+  contents:
+  ```ini
+  [Service]
+  ExecStart=
+  ExecStart=/usr/bin/xvfb-run -a /runner/runsvc.sh
+  ```
+- Start the service:
+  `sudo systemctl enable --now actions.runner.….service`
