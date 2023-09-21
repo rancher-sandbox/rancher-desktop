@@ -17,12 +17,10 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type shutdownSettingsStruct struct {
@@ -63,15 +61,7 @@ func init() {
 }
 
 func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
-	output, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
-	if err != nil {
-		action := "will look for internal Rancher Desktop processes to end."
-		if errors.Is(err, os.ErrNotExist) {
-			logrus.Warnf("There's no connection-info file; %s.\n", action)
-		} else {
-			logrus.Warnf("Ignoring error %s; %s.\n", err, action)
-		}
-	}
-	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
+	output, _ := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
+	err := shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
 	return output, err
 }
