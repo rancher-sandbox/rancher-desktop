@@ -428,6 +428,7 @@ magog
 mariadb
 marshel
 mcapps
+mcxalr
 messageformat
 metainfo
 metricsection

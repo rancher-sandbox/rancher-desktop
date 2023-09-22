@@ -280,6 +280,13 @@ const fwdCompatLimactlBin = 'limactl.ventura';
 // Version of Darwin the forward compatible limactl binary was built for.
 const fwdCompatLimactlDarwinVer = '22.1.0';
 
+// XXX stupid hack for https://github.com/rancher-sandbox/rancher-desktop/issues/4867
+async function promiseSerial(args: Promise<unknown>[]) {
+  for (const arg of args) {
+    await arg;
+  }
+}
+
 /**
  * LimaBackend implements all the Lima-specific functionality for Rancher
  * Desktop.  This is used on macOS and Linux.
@@ -1796,7 +1803,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.progressTracker.action('Starting Backend', 10, async() => {
       try {
         await this.ensureArchitectureMatch();
-        await Promise.all([
+        await promiseSerial([
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
           this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(this.#adminAccess)),
         ]);
@@ -1862,7 +1869,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.kubeBackend.deleteIncompatibleData(kubernetesVersion);
         }
 
-        await Promise.all([
+        await promiseSerial([
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
           this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
@@ -1886,7 +1893,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
-        await Promise.all([
+        await promiseSerial([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
         ]);
