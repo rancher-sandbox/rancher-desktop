@@ -245,6 +245,9 @@ Electron.app.whenReady().then(async() => {
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
 
+    locked = fs.existsSync(path.join(paths.appHome, 'snapshot.lock'));
+    mainEvents.emit('locked-update', locked);
+
     mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already

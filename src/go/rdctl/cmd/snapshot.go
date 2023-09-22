@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -43,6 +44,15 @@ func init() {
 
 func stopBackendCallFuncAndRestartBackend(wrappedFunction cobraFunc) cobraFunc {
 	return func(cmd *cobra.Command, args []string) error {
+		paths, err := paths.GetPaths()
+		if err != nil {
+			return fmt.Errorf("failed to get paths: %w", err)
+		}
+		if err := createSnapshotLock(paths); err != nil {
+			return err
+		}
+		defer removeSnapshotLock(paths)
+
 		connectionInfo, err := config.GetConnectionInfo()
 		if errors.Is(err, os.ErrNotExist) {
 			// If we cannot get connection info from config file (and it
@@ -106,4 +116,27 @@ func waitForVMState(rdClient client.RDClient, desiredState string) error {
 		time.Sleep(interval)
 	}
 	return fmt.Errorf("timed out waiting for backend state %q", desiredState)
+}
+
+func createSnapshotLock(paths paths.Paths) error {
+	if err := os.MkdirAll(paths.AppHome, 0o755); err != nil {
+		return fmt.Errorf("failed to create snapshot lock parent directory: %w", err)
+	}
+	lockPath := filepath.Join(paths.AppHome, "snapshot.lock")
+	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
+	if errors.Is(err, os.ErrExist) {
+		return errors.New("snapshot lock file already exists; if there is no snapshot operation in progress, you and remove this error with `rdctl snapshot clean`")
+	} else if err != nil {
+		return fmt.Errorf("unexpected error acquiring snapshot lock: %w", err)
+	}
+	defer file.Close()
+	return nil
+}
+
+func removeSnapshotLock(paths paths.Paths) error {
+	lockPath := filepath.Join(paths.AppHome, "snapshot.lock")
+	if err := os.RemoveAll(lockPath); err != nil {
+		fmt.Errorf("failed to remove snapshot lock: %w", err)
+	}
+	return nil
 }
