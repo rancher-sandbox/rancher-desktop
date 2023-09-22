@@ -40,6 +40,7 @@
 \.jks$
 \.jpe?g$
 \.key$
+\.kiwi$
 \.lib$
 \.lock$
 \.map$
@@ -92,3 +93,4 @@ ignore$
 ^\Qpkg/rancher-desktop/utils/_demo_marketplace_items.js\E$
 ^\Qpkg/rancher-desktop/utils/_demo_metadata.js\E$
 (?:^|/)pkg/rancher-desktop/nuxt/
+^\Qsrc/disk-images/github-runner-linux/root/etc/sysconfig/network/ifcfg-\E

@@ -3,7 +3,7 @@
 #======================================
 # Include functions & variables
 #--------------------------------------
-test -f /.kconfig && . /.kconfig
+test -f /.kconfig && . /.kconfig # spellcheck-ignore-line
 test -f /.profile && . /.profile
 
 suseSetupProduct
@@ -13,10 +13,10 @@ suseSetupProduct
 #--------------------------------------
 
 # It's unclear why this is needed
-rpmkeys --import /usr/lib/rpm/gnupg/keys/gpg-pubkey-*.asc
+rpmkeys --import /usr/lib/rpm/gnupg/keys/gpg-pubkey-*.asc # spellcheck-ignore-line
 
 #======================================
-# Runner Prepration
+# Runner Preparation
 #--------------------------------------
 chown runner:runner /runner
 

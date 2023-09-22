@@ -71,20 +71,20 @@ func Run(ctx context.Context, c Config) (<-chan struct{}, error) {
 	qemuArgs := []string{
 		"-name", c.Name,
 		// "Q35" machine, try to use hardware acceleration
-		"-machine", "q35,accel=kvm:hvf:tcg",
+		"-machine", "q35,accel=kvm:hvf:tcg", // spellcheck-ignore-line
 		// Use host CPU to allow virtualization.
 		"-cpu", "host",
-		"-smp", getDefault(c.Cpus, "2"),
-		"-m", getDefault(c.Memory, "16G"),
-		"-numa", "node,memdev=dimm1",
-		"-object", fmt.Sprintf("memory-backend-ram,id=dimm1,size=%s", getDefault(c.Memory, "16G")),
+		"-smp", getDefault(c.Cpus, "2"), // spellcheck-ignore-line
+		"-m", getDefault(c.Memory, "16G"), // spellcheck-ignore-line
+		"-numa", "node,memdev=dimm1", // spellcheck-ignore-line
+		"-object", fmt.Sprintf("memory-backend-ram,id=dimm1,size=%s", getDefault(c.Memory, "16G")), // spellcheck-ignore-line
 		"-device", "virtio-balloon-pci,id=balloon1,deflate-on-oom=off,disable-modern=false",
 		// Disk descriptions. The disk is used as a snapshot (no writing changes).
-		"-device", "virtio-blk-pci,disable-modern=false,drive=vda,scsi=off,config-wce=off,serial=vda",
-		"-drive", fmt.Sprintf("id=vda,file=%s,aio=io_uring,format=qcow2,if=none", c.Disk),
+		"-device", "virtio-blk-pci,disable-modern=false,drive=vda,scsi=off,config-wce=off,serial=vda", // spellcheck-ignore-line
+		"-drive", fmt.Sprintf("id=vda,file=%s,aio=io_uring,format=qcow2,if=none", c.Disk), // spellcheck-ignore-line
 		"-snapshot",
 		// Create network explicitly. Use user-mode to avoid dealing with setup.
-		"-nic", "user,model=virtio-net-pci",
+		"-nic", "user,model=virtio-net-pci", // spellcheck-ignore-line
 		// Pass in qemu control socket; it's always 3 (after stdin/stdout/stderr).
 		"-qmp", "unix:fd=3,server=on",
 		// Set up VNC for debugging, but have it look for a free port automatically.

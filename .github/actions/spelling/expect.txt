@@ -336,12 +336,14 @@ itp
 iwr
 jan
 jetstack
+jitconfig
 joycelin
 jpe
 jsmith
 julianb
 karl
 Kaspersky
+kata
 kde
 KDM
 keychain
@@ -544,6 +546,7 @@ pdp
 persistentvolume
 persistentvolumeclaim
 PFlags
+PGID
 pgrep
 pidfile
 pids
@@ -567,6 +570,8 @@ portforward
 portmap
 portproxy
 postrotate
+Powerdown
+poweroff
 PQgrl
 prakhar
 prebuilds
@@ -589,6 +594,7 @@ pushable
 pvc
 PWSTR
 qcow
+qmp
 rackspace
 rancherdesktop
 rancherkubernetesengine

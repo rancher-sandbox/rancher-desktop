@@ -16,9 +16,7 @@ jobs:
       options: --privileged
     steps:
     - run: >-
-        zypper --non-interactive install
-        python3-kiwi kiwi-systemdeps-disk-images
-        sudo tar
+        zypper --non-interactive install python3-kiwi kiwi-systemdeps-disk-images sudo tar
     - run: echo 'ALL ALL=(ALL:ALL) NOPASSWD:ALL' > /etc/sudoers.d/nopasswd
     - uses: actions/checkout@v4
       with:
