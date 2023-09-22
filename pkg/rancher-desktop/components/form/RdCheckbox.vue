@@ -22,7 +22,6 @@ export default Vue.extend({
 <template>
   <div class="rd-checkbox-container">
     <checkbox
-      :class="{ 'locked' : isLocked && !$attrs.disabled }"
       :disabled="$attrs.disabled || isLocked"
       v-bind="$attrs"
       v-on="$listeners"
@@ -39,13 +38,3 @@ export default Vue.extend({
     </slot>
   </div>
 </template>
-
-<style lang="scss" scoped>
-  .locked::v-deep .checkbox-container span.checkbox-custom {
-    background-color: var(--checkbox-locked-bg);
-    border-color: var(--checkbox-locked-border);
-    &::after {
-      border-color: var(--checkbox-tick-locked);
-    }
-  }
-</style>
