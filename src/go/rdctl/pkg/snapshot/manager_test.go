@@ -167,7 +167,12 @@ func TestManager(t *testing.T) {
 		if len(snapshots) != 0 {
 			t.Fatalf("unexpected length of snapshots slice after delete %d", len(snapshots))
 		}
-		err = manager.Delete("no-such-snapshot-id")
+	})
+
+	t.Run("Operations on nonexistent snapshots flag errors", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := NewManager(paths)
+		err := manager.Delete("no-such-snapshot-id")
 		if err == nil {
 			t.Errorf("Failed to complain when asked to delete a nonexistent snapshot")
 		}
