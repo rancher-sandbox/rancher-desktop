@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -14,6 +15,8 @@ import (
 
 // Like []snapshot.Snapshot but sortable by date created.
 type SortableSnapshots []snapshot.Snapshot
+
+var outputJsonFormat bool
 
 func (snapshots SortableSnapshots) Len() int {
 	return len(snapshots)
@@ -34,15 +37,23 @@ var snapshotListCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Short:   "List snapshots",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listSnapshot(cmd, args)
+		if err := cobra.NoArgs(cmd, args); err != nil {
+			return err
+		}
+		if snapshot.OutputUTCTime && !outputJsonFormat {
+			return fmt.Errorf(`specifying "--utc" makes sense only when "--json" is specified`)
+		}
+		return listSnapshot()
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotListCmd)
+	snapshotListCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
+	snapshotListCmd.Flags().BoolVarP(&snapshot.OutputUTCTime, "utc", "", false, "output json format")
 }
 
-func listSnapshot(cmd *cobra.Command, args []string) error {
+func listSnapshot() error {
 	paths, err := paths.GetPaths()
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
@@ -57,6 +68,22 @@ func listSnapshot(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	sort.Sort(SortableSnapshots(snapshots))
+	if outputJsonFormat {
+		return jsonOutput(snapshots)
+	}
+	return tabularOutput(snapshots)
+}
+
+func jsonOutput(snapshots []snapshot.Snapshot) error {
+	jsonBuffer, err := json.Marshal(snapshots)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(jsonBuffer))
+	return nil
+}
+
+func tabularOutput(snapshots []snapshot.Snapshot) error {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	fmt.Fprintf(writer, "ID\tName\tCreated\n")
 	for _, snapshot := range snapshots {
