@@ -1,6 +1,6 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service
 
-go 1.18
+go 1.21
 
 require (
 	github.com/Microsoft/go-winio v0.5.2

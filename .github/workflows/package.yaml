@@ -45,7 +45,7 @@ jobs:
         python-version: '3.x'
     - uses: actions/setup-go@v4
       with:
-        go-version: '^1.18'
+        go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
     - name: Install Windows dependencies
       if: runner.os == 'Windows'
@@ -157,7 +157,7 @@ jobs:
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
     - uses: actions/setup-go@v4
       with:
-        go-version: '^1.18'
+        go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
     - uses: actions/setup-node@v3
       with:
