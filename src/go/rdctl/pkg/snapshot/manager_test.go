@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
@@ -108,15 +109,14 @@ func TestManager(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := NewManager(paths)
 		invalidNames := []string{
-			"test name",
-			"test/name",
-			"test?name",
-			"test\name",
 			"test!",
 			`"test"`,
 			`'test'`,
 			"testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
 				"testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest",
+		}
+		for _, c := range strings.Split("!$^&*()[]{};:?/'` \\\"", "") {
+			invalidNames = append(invalidNames, fmt.Sprintf("invalid%sname", c)) // spellcheck-ignore-line
 		}
 		for _, invalidName := range invalidNames {
 			if _, err := manager.Create(invalidName); !errors.Is(err, ErrInvalidName) {
@@ -166,6 +166,19 @@ func TestManager(t *testing.T) {
 		}
 		if len(snapshots) != 0 {
 			t.Fatalf("unexpected length of snapshots slice after delete %d", len(snapshots))
+		}
+	})
+
+	t.Run("Operations on nonexistent snapshots flag errors", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := NewManager(paths)
+		err := manager.Delete("no-such-snapshot-id")
+		if err == nil {
+			t.Errorf("Failed to complain when asked to delete a nonexistent snapshot")
+		}
+		err = manager.Restore("no-such-snapshot-id")
+		if err == nil {
+			t.Errorf("Failed to complain when asked to restore a nonexistent snapshot")
 		}
 	})
 
