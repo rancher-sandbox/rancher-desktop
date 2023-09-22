@@ -7,13 +7,9 @@ local_setup() {
     SNAPSHOT=moby-nginx-snapshot01
 }
 
-@test 'factory reset and delete the snapshot if it exists' {
+@test 'factory reset and delete all the snapshots' {
+    delete_all_snapshots
     factory_reset
-    run get_snapshot_id_from_name "$SNAPSHOT"
-    assert_success
-    if [[ -n $output ]]; then
-        rdctl snapshot delete "$output"
-    fi
 }
 
 @test 'start up in moby' {
@@ -30,7 +26,8 @@ local_setup() {
 
 @test 'shutdown, make a snapshot, and clear everything' {
     rdctl shutdown
-    rdctl snapshot create "$SNAPSHOT"
+    run rdctl snapshot create "$SNAPSHOT"
+    assert_success
     run rdctl snapshot list
     assert_success
     assert_output --partial "$SNAPSHOT"

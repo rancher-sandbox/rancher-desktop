@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -12,8 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Like []snapshot.Snapshot but sortable by date created.
+// SortableSnapshots are []snapshot.Snapshot sortable by date created.
 type SortableSnapshots []snapshot.Snapshot
+
+var outputJsonFormat bool
 
 func (snapshots SortableSnapshots) Len() int {
 	return len(snapshots)
@@ -34,34 +37,54 @@ var snapshotListCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Short:   "List snapshots",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listSnapshot(cmd, args)
+		if err := cobra.NoArgs(cmd, args); err != nil {
+			return err
+		}
+		return listSnapshot()
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotListCmd)
+	snapshotListCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
 }
 
-func listSnapshot(cmd *cobra.Command, args []string) error {
-	paths, err := paths.GetPaths()
+func listSnapshot() error {
+	snapshotPaths, err := paths.GetPaths()
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
-	manager := snapshot.NewManager(paths)
+	manager := snapshot.NewManager(snapshotPaths)
 	snapshots, err := manager.List()
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
+	sort.Sort(SortableSnapshots(snapshots))
+	if outputJsonFormat {
+		return jsonOutput(snapshots)
+	}
+	return tabularOutput(snapshots)
+}
+
+func jsonOutput(snapshots []snapshot.Snapshot) error {
+	jsonBuffer, err := json.Marshal(snapshots)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(jsonBuffer))
+	return nil
+}
+
+func tabularOutput(snapshots []snapshot.Snapshot) error {
 	if len(snapshots) == 0 {
 		fmt.Fprintln(os.Stderr, "No snapshots present.")
 		return nil
 	}
-	sort.Sort(SortableSnapshots(snapshots))
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	fmt.Fprintf(writer, "ID\tName\tCreated\n")
-	for _, snapshot := range snapshots {
-		prettyCreated := snapshot.Created.Format(time.RFC1123)
-		fmt.Fprintf(writer, "%s\t%s\t%s\n", snapshot.ID, snapshot.Name, prettyCreated)
+	for _, aSnapshot := range snapshots {
+		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
+		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.ID, aSnapshot.Name, prettyCreated)
 	}
 	writer.Flush()
 	return nil
