@@ -63,10 +63,6 @@ func listSnapshot() error {
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
-	if len(snapshots) == 0 {
-		fmt.Fprintln(os.Stderr, "No snapshots present.")
-		return nil
-	}
 	sort.Sort(SortableSnapshots(snapshots))
 	if outputJsonFormat {
 		return jsonOutput(snapshots)
@@ -84,6 +80,10 @@ func jsonOutput(snapshots []snapshot.Snapshot) error {
 }
 
 func tabularOutput(snapshots []snapshot.Snapshot) error {
+	if len(snapshots) == 0 {
+		fmt.Fprintln(os.Stderr, "No snapshots present.")
+		return nil
+	}
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	fmt.Fprintf(writer, "ID\tName\tCreated\n")
 	for _, snapshot := range snapshots {

@@ -1,9 +1,16 @@
 get_snapshot_id_from_name() {
     local name=$1
-    run rdctl snapshot list
+    run rdctl snapshot list --json
     assert_success
-    # shellcheck disable=SC2086 # dollar-1 belongs to awk, not bash
-    run awk /"$name"'/ { print $1 }' <<<"$output"
+    run jq_output '.[] | select(.name == "'"$name"'") | .ID'
     assert_success
     echo "$output"
+}
+
+delete_all_snapshots() {
+    run rdctl snapshot list --json
+    for x in $(jq_output '.[].ID'); do
+        run rdctl snapshot delete "$x"
+        assert_nothing
+    done
 }
