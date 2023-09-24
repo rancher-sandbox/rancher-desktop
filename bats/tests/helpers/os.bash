@@ -52,13 +52,13 @@ is_unix() {
 
 skip_on_windows() {
     if is_windows; then
-        skip "This test is not applicable on Windows."
+        skip "${1:-This test is not applicable on Windows.}"
     fi
 }
 
 skip_on_unix() {
     if is_unix; then
-        skip "This test is not applicable on MacOS/Linux."
+        skip "${1:-This test is not applicable on MacOS/Linux.}"
     fi
 }
 
