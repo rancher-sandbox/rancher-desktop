@@ -179,7 +179,7 @@ start_application() {
 launch_the_application() {
     local args=("$@")
 
-    if using_dev_mode; then
+    if using_dev_mode && ! is_windows; then
         # translate args back into the internal API format
         local api_args=()
         for arg in "${args[@]}"; do

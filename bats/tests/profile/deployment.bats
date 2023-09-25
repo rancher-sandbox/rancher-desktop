@@ -37,7 +37,7 @@ start_app() {
     # Store WSL integration and allowed images list in locked profile instead of settings.json
     PROFILE_TYPE=$PROFILE_LOCKED
     start_container_engine
-    try --max 20 --delay 5 rdctl api /settings
+    try --max 40 --delay 5 rdctl api /settings
 
     RD_CONTAINER_ENGINE=$(jq_output .containerEngine.name)
     wait_for_container_engine
@@ -248,19 +248,21 @@ api_set() {
 }
 
 @test 'try to change locked fields via rdctl start and watch it fail' {
-    if using_dev_mode && is_macos; then
-        skip "rdctl start doesn't work on mac in dev mode"
+    launch_the_application --container-engine.allowed-images.enabled=false
+    if using_dev_mode; then
+        numTries=36
+    else
+        numTries=12
     fi
-    rdctl start --container-engine.allowed-images.enabled=false --no-modal-dialogs
-    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "containerEngine.allowedImages.enabled" is locked'
+    try --max $numTries --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "containerEngine.allowedImages.enabled" is locked'
 
-    # The `rdctl start` command above (and below) is expected to fail. We wait until we see the failure
+    # The app-launch commands are expected to fail. We wait until we see the failure
     # message in the log file, but at that time the process may still be running.
-    # Make sure that Rancher Desktop has really stopped; otherwise `rdctl start` may not launch a new instance
+    # Make sure that Rancher Desktop has really stopped; otherwise `rdctl start/yarn dev` may not launch a new instance
     rdctl shutdown
 
-    rdctl start --kubernetes.version="1.16.15" --no-modal-dialogs
-    try --max 10 --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "kubernetes.version" is locked'
+    launch_the_application --kubernetes.version="1.16.15"
+    try --max $numTries --delay 5 assert_file_contains "$PATH_LOGS/background.log" 'field "kubernetes.version" is locked'
     # And again verify that the app is no longer running
     rdctl shutdown
 }
