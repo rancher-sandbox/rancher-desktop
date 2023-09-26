@@ -12,7 +12,11 @@ var snapshotRestoreCmd = &cobra.Command{
 	Use:   "restore <id>",
 	Short: "Restore a snapshot",
 	Args:  cobra.ExactArgs(1),
-	RunE:  wrapSnapshotOperation(restoreSnapshot),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+		err := wrapSnapshotOperation(restoreSnapshot)(cmd, args)
+		return exitWithJSONOrErrorCondition(err)
+	},
 }
 
 func init() {

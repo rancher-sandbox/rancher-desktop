@@ -26,15 +26,31 @@ local_setup() {
     assert_output 'No snapshots present.'
 }
 
-@test 'verify snapshot-list output with snapshots' {
+@test 'create three snapshots, allowing for restarts' {
+    # Ensure the app is up and running
+    wait_for_container_engine
+    wait_for_apiserver
+    wait_for_backend
     # Sleep 5 seconds after creating each snapshot so later we can verify
     # that the differences in each snapshot's creation time makes sense.
+
     rdctl snapshot create cows_fish_capers
     sleep 5
+    wait_for_container_engine
+    wait_for_apiserver
+    wait_for_backend
     rdctl snapshot create world-buffalo-federation
     sleep 5
+    wait_for_container_engine
+    wait_for_apiserver
+    wait_for_backend
     rdctl snapshot create run-like-an-antelope
+    wait_for_container_engine
+    wait_for_apiserver
+    wait_for_backend
+}
 
+@test 'verify snapshot-list output with snapshots' {
     run rdctl snapshot list --json
     assert_success
     ID0=$(jq_output 'select(.name == "cows_fish_capers").id')
@@ -59,5 +75,34 @@ local_setup() {
     assert_output --regexp "${ID0}.* cows_fish_capers "
     assert_output --regexp "${ID1}.* world-buffalo-federation "
     assert_output --regexp "${ID2}.* run-like-an-antelope "
+}
+
+@test 'verify k8s is off' {
+    run rdctl api /v1/settings
+    assert_success
+    run jq_output .kubernetes.enabled
+    assert_success
+    case $output in
+    "true")
+        rdctl set --kubernetes.enabled=false
+        wait_for_container_engine
+        wait_for_backend
+        ;;
+    esac
+}
+
+@test 'create a snapshot with k8s off' {
+    rdctl snapshot create anime-walnut-festival
+    wait_for_container_engine
+    wait_for_backend
+}
+
+@test 'and verify the new snapshot is listed' {
+    run rdctl snapshot list
+    assert_success
+    assert_output --partial anime-walnut-festival
+}
+
+@test 'and clean up' {
     delete_all_snapshots
 }

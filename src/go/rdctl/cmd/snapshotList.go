@@ -16,8 +16,6 @@ import (
 // SortableSnapshots are []snapshot.Snapshot sortable by date created.
 type SortableSnapshots []snapshot.Snapshot
 
-var outputJsonFormat bool
-
 func (snapshots SortableSnapshots) Len() int {
 	return len(snapshots)
 }
@@ -38,6 +36,7 @@ var snapshotListCmd = &cobra.Command{
 	Short:   "List snapshots",
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		return listSnapshot()
 	},
 }
@@ -50,16 +49,16 @@ func init() {
 func listSnapshot() error {
 	paths, err := p.GetPaths()
 	if err != nil {
-		return fmt.Errorf("failed to get paths: %w", err)
+		return exitWithJSONOrErrorCondition(fmt.Errorf("failed to get paths: %w", err))
 	}
 	manager := snapshot.NewManager(paths)
 	snapshots, err := manager.List()
 	if err != nil {
-		return fmt.Errorf("failed to list snapshots: %w", err)
+		return exitWithJSONOrErrorCondition(fmt.Errorf("failed to list snapshots: %w", err))
 	}
 	sort.Sort(SortableSnapshots(snapshots))
 	if outputJsonFormat {
-		return jsonOutput(snapshots)
+		return exitWithJSONOrErrorCondition(jsonOutput(snapshots))
 	}
 	return tabularOutput(snapshots)
 }
