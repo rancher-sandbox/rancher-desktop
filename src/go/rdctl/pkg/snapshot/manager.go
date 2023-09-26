@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,66 +37,22 @@ type snapshotFile struct {
 	FileMode os.FileMode
 }
 
+// Returns a string of length n that is comprised of random letters
+// and numbers. From:
+// https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
+func randomString(n int) string {
+	letters := "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
 func NewManager(paths paths.Paths) Manager {
 	return Manager{
 		Paths: paths,
 	}
-}
-
-func (manager Manager) getSnapshotFiles(id string) []snapshotFile {
-	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
-	files := []snapshotFile{
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Config, "settings.json"),
-			SnapshotPath: filepath.Join(snapshotDir, "settings.json"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "override.yaml"),
-			SnapshotPath: filepath.Join(snapshotDir, "override.yaml"),
-			CopyOnWrite:  false,
-			MissingOk:    true,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "basedisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "basedisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "diffdisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "user"),
-			SnapshotPath: filepath.Join(snapshotDir, "user"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o600,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "user.pub"),
-			SnapshotPath: filepath.Join(snapshotDir, "user.pub"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "lima.yaml"),
-			SnapshotPath: filepath.Join(snapshotDir, "lima.yaml"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-	}
-	return files
 }
 
 // Creates a new snapshot.
@@ -122,7 +79,7 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 
 	// do operations that can fail, rolling back if failure is encountered
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
-	if err := manager.createFiles(snapshot); err != nil {
+	if err := createFiles(manager.Paths, snapshot); err != nil {
 		if err := os.RemoveAll(snapshotDir); err != nil {
 			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
 		}
@@ -130,38 +87,6 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 	}
 
 	return &snapshot, nil
-}
-
-// Does all of the things that can fail when creating a snapshot,
-// so that the snapshot creation can easily be rolled back upon
-// a failure.
-func (manager Manager) createFiles(snapshot Snapshot) error {
-	files := manager.getSnapshotFiles(snapshot.ID)
-	for _, file := range files {
-		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
-		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			continue
-		} else if err != nil {
-			return fmt.Errorf("failed to copy %s: %w", filepath.Base(file.WorkingPath), err)
-		}
-	}
-
-	// Create metadata.json file. This is done last because we consider
-	// the presence of this file to be the hallmark of a complete and
-	// valid snapshot.
-	metadataPath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, "metadata.json")
-	metadataFile, err := os.Create(metadataPath)
-	if err != nil {
-		return fmt.Errorf("failed to create metadata file: %w", err)
-	}
-	defer metadataFile.Close()
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(snapshot); err != nil {
-		return fmt.Errorf("failed to write metadata file: %w", err)
-	}
-
-	return nil
 }
 
 // Returns snapshots that are present on system.
@@ -222,27 +147,10 @@ func (manager Manager) Restore(id string) error {
 		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
 	}
 
-	files := manager.getSnapshotFiles(snapshot.ID)
-	if err := manager.restoreFiles(files); err != nil {
+	files := getSnapshotFiles(manager.Paths, snapshot.ID)
+	if err := restoreFiles(files); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 
-	return nil
-}
-
-// Restores the files from their location in a snapshot directory
-// to their working location.
-func (manager Manager) restoreFiles(files []snapshotFile) error {
-	for _, file := range files {
-		filename := filepath.Base(file.WorkingPath)
-		err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
-		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			if err := os.RemoveAll(file.WorkingPath); err != nil {
-				return fmt.Errorf("failed to remove %s: %w", filename, err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("failed to restore %s: %w", filename, err)
-		}
-	}
 	return nil
 }
