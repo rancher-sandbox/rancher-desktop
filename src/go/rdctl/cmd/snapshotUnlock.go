@@ -16,14 +16,23 @@ This command removes the filesystem lock. It should not be needed under
 normal circumstances.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		paths, err := p.GetPaths()
+		cmd.SilenceUsage = true
+		err := unlockSnapshot()
 		if err != nil {
-			return fmt.Errorf("failed to get paths: %w", err)
+			return exitWithJSONOrErrorCondition(err)
 		}
-		return removeBackendLock(paths.AppHome)
+		return nil
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotUnlockCmd)
+}
+
+func unlockSnapshot() error {
+	paths, err := p.GetPaths()
+	if err != nil {
+		return fmt.Errorf("failed to get paths: %w", err)
+	}
+	return removeBackendLock(paths.AppHome)
 }
