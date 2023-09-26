@@ -342,6 +342,50 @@ paths:
               schema:
                 type: string
 
+  /v1/backend_state:
+    get:
+      operationId: getBackendState
+      summary:  Get the current backend state
+      responses:
+        '200':
+          description: The current backend state
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - vmState
+                  - locked
+                properties:
+                  vmState:
+                    type: string
+                  locked:
+                    type: boolean
+    put:
+      operationId: setBackendState
+      summary:  Set the desired backend state
+      requestBody:
+        description: >-
+          JSON block consisting of some or all of desired backend state, with changes applied
+          to the parts of backend state that are specified.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vmState:
+                  type: string
+                locked:
+                  type: boolean
+        required: true
+      responses:
+        '202':
+          description: The desired backend state was accepted.
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   schemas:
     preferences:
