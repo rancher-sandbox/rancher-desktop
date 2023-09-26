@@ -42,7 +42,8 @@ var rootCmd = &cobra.Command{
 	Args: cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		ctx, _ := signal.NotifyContext(cmd.Context(), unix.SIGINT, unix.SIGTERM, unix.SIGHUP)
+		ctx, stop := signal.NotifyContext(cmd.Context(), unix.SIGINT, unix.SIGTERM, unix.SIGHUP)
+		defer stop()
 
 		config := monitor.Config{
 			RunnerCount:   viper.GetInt("runner-count"),
