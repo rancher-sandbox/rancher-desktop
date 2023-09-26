@@ -650,7 +650,8 @@ export class HttpCommandServer {
 
   protected async setBackendState(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const [data] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
-    const state = JSON.parse(data)
+    const state = JSON.parse(data);
+
     console.debug('PUT backend_state: succeeded 202');
     response.status(202).type('txt').send('Received backend state.');
     setImmediate(() => {

@@ -44,6 +44,10 @@ func populateFiles(t *testing.T, includeOverrideYaml bool) (p.Paths, map[string]
 			Path:     filepath.Join(paths.Lima, "_config", "user.pub"),
 			Contents: "user public SSH key",
 		},
+		"lima.yaml": {
+			Path:     filepath.Join(paths.Lima, "0", "lima.yaml"),
+			Contents: "this is yaml",
+		},
 	}
 	if includeOverrideYaml {
 		testFiles["override.yaml"] = TestFile{

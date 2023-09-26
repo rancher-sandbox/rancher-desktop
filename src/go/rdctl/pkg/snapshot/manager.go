@@ -90,6 +90,13 @@ func (manager Manager) getSnapshotFiles(id string) []snapshotFile {
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
+		{
+			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "lima.yaml"),
+			SnapshotPath: filepath.Join(snapshotDir, "lima.yaml"),
+			CopyOnWrite:  false,
+			MissingOk:    false,
+			FileMode:     0o644,
+		},
 	}
 	for i := range files {
 		files[i].BackupPath = fmt.Sprintf("%s.backup", files[i].WorkingPath)
