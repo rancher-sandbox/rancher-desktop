@@ -2,12 +2,7 @@ package snapshot
 
 import (
 	"math/rand"
-	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // Returns a string of length n that is comprised of random letters
 // and numbers. From:
