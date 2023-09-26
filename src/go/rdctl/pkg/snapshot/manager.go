@@ -25,9 +25,6 @@ type Manager struct {
 type snapshotFile struct {
 	// The path that Rancher Desktop uses.
 	WorkingPath string
-	// The path that the file is backed up to before attempting
-	// a Restore.
-	BackupPath string
 	// The path that the file is put at in a snapshot.
 	SnapshotPath string
 	// Whether clonefile (macOS) or ioctl_ficlone (Linux) should be used
@@ -97,9 +94,6 @@ func (manager Manager) getSnapshotFiles(id string) []snapshotFile {
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
-	}
-	for i := range files {
-		files[i].BackupPath = fmt.Sprintf("%s.backup", files[i].WorkingPath)
 	}
 	return files
 }
@@ -229,40 +223,11 @@ func (manager Manager) Restore(id string) error {
 	}
 
 	files := manager.getSnapshotFiles(snapshot.ID)
-	if err := manager.createBackups(files); err != nil {
-		manager.rollBackRestore(files)
-		return fmt.Errorf("failed to create backups: %w", err)
-	}
 	if err := manager.restoreFiles(files); err != nil {
-		manager.rollBackRestore(files)
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
-	if err := manager.removeBackups(files); err != nil {
-		return fmt.Errorf("failed to remove backups: %w", err)
-	}
 
 	return nil
-}
-
-// Creates backups of working files so that they can be restored
-// if the Restore fails.
-func (manager Manager) createBackups(files []snapshotFile) error {
-	for _, file := range files {
-		err := os.Rename(file.WorkingPath, file.BackupPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("failed to back up %s: %w", filepath.Base(file.WorkingPath), err)
-		}
-	}
-	return nil
-}
-
-// Called when something goes wrong in the process of restoring a snapshot.
-// Does not do any error checking; just tries to put the working files
-// back in the state they were before Restore was called.
-func (manager Manager) rollBackRestore(files []snapshotFile) {
-	for _, file := range files {
-		os.Rename(file.BackupPath, file.WorkingPath)
-	}
 }
 
 // Restores the files from their location in a snapshot directory
@@ -277,16 +242,6 @@ func (manager Manager) restoreFiles(files []snapshotFile) error {
 			}
 		} else if err != nil {
 			return fmt.Errorf("failed to restore %s: %w", filename, err)
-		}
-	}
-	return nil
-}
-
-// Removes backups made during a Restore.
-func (manager Manager) removeBackups(files []snapshotFile) error {
-	for _, file := range files {
-		if err := os.RemoveAll(file.BackupPath); err != nil {
-			return fmt.Errorf("failed to remove %s: %w", filepath.Base(file.BackupPath), err)
 		}
 	}
 	return nil
