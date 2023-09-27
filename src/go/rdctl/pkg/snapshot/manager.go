@@ -34,6 +34,24 @@ func randomString(n int) string {
 	return string(b)
 }
 
+// Writes the data in a Snapshot to the metadata.json file in a snapshot
+// directory. This is done last because we consider the presence of this file to
+// be the hallmark of a complete and valid snapshot.
+func writeMetadataFile(paths paths.Paths, snapshot Snapshot) error {
+	metadataPath := filepath.Join(paths.Snapshots, snapshot.ID, "metadata.json")
+	metadataFile, err := os.Create(metadataPath)
+	if err != nil {
+		return fmt.Errorf("failed to create metadata file: %w", err)
+	}
+	defer metadataFile.Close()
+	encoder := json.NewEncoder(metadataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(snapshot); err != nil {
+		return fmt.Errorf("failed to write metadata file: %w", err)
+	}
+	return nil
+}
+
 func NewManager(paths paths.Paths) Manager {
 	return Manager{
 		Paths: paths,

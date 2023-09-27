@@ -1,7 +1,8 @@
+//go:build unix
+
 package snapshot
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
@@ -93,22 +94,9 @@ func createFiles(paths paths.Paths, snapshot Snapshot) error {
 			return fmt.Errorf("failed to copy %s: %w", filepath.Base(file.WorkingPath), err)
 		}
 	}
-
-	// Create metadata.json file. This is done last because we consider
-	// the presence of this file to be the hallmark of a complete and
-	// valid snapshot.
-	metadataPath := filepath.Join(paths.Snapshots, snapshot.ID, "metadata.json")
-	metadataFile, err := os.Create(metadataPath)
-	if err != nil {
-		return fmt.Errorf("failed to create metadata file: %w", err)
+	if err := writeMetadataFile(paths, snapshot); err != nil {
+		return err
 	}
-	defer metadataFile.Close()
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(snapshot); err != nil {
-		return fmt.Errorf("failed to write metadata file: %w", err)
-	}
-
 	return nil
 }
 
