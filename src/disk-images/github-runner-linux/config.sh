@@ -22,6 +22,8 @@ test -f /.profile && . /.profile
 
 suseSetupProduct
 
+set -o errexit
+
 #======================================
 # Import RPM keys
 #--------------------------------------
@@ -32,6 +34,7 @@ rpmkeys --import /usr/lib/rpm/gnupg/keys/gpg-pubkey-*.asc # spellcheck-ignore-li
 #======================================
 # Runner Preparation
 #--------------------------------------
+mkdir /runner
 chown runner:runner /runner
 
 url="https://api.github.com/repos/actions/runner/releases/latest"
