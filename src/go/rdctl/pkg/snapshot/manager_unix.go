@@ -9,6 +9,21 @@ import (
 	"path/filepath"
 )
 
+// Represents a file that is included in a snapshot.
+type snapshotFile struct {
+	// The path that Rancher Desktop uses.
+	WorkingPath string
+	// The path that the file is put at in a snapshot.
+	SnapshotPath string
+	// Whether clonefile (macOS) or ioctl_ficlone (Linux) should be used
+	// when copying the file around.
+	CopyOnWrite bool
+	// Whether it is ok for the file to not be present.
+	MissingOk bool
+	// The permissions the file should have.
+	FileMode os.FileMode
+}
+
 func getSnapshotFiles(paths paths.Paths, id string) []snapshotFile {
 	snapshotDir := filepath.Join(paths.Snapshots, id)
 	files := []snapshotFile{
@@ -99,7 +114,8 @@ func createFiles(paths paths.Paths, snapshot Snapshot) error {
 
 // Restores the files from their location in a snapshot directory
 // to their working location.
-func restoreFiles(files []snapshotFile) error {
+func restoreFiles(paths paths.Paths, snapshot Snapshot) error {
+	files := getSnapshotFiles(paths, snapshot.ID)
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)
 		err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)

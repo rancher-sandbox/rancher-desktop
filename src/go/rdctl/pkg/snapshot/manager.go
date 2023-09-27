@@ -22,21 +22,6 @@ type Manager struct {
 	Paths paths.Paths
 }
 
-// Represents a file that is included in a snapshot.
-type snapshotFile struct {
-	// The path that Rancher Desktop uses.
-	WorkingPath string
-	// The path that the file is put at in a snapshot.
-	SnapshotPath string
-	// Whether clonefile (macOS) or ioctl_ficlone (Linux) should be used
-	// when copying the file around.
-	CopyOnWrite bool
-	// Whether it is ok for the file to not be present.
-	MissingOk bool
-	// The permissions the file should have.
-	FileMode os.FileMode
-}
-
 // Returns a string of length n that is comprised of random letters
 // and numbers. From:
 // https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
@@ -147,8 +132,7 @@ func (manager Manager) Restore(id string) error {
 		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
 	}
 
-	files := getSnapshotFiles(manager.Paths, snapshot.ID)
-	if err := restoreFiles(files); err != nil {
+	if err := restoreFiles(manager.Paths, snapshot); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 
