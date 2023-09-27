@@ -505,6 +505,7 @@ nsis
 NSISUNINSTALLCOMMAND
 nspr
 nss
+nullglob
 nuxt
 nuxtjs
 nxt
@@ -770,6 +771,7 @@ vde
 ventura
 vertificate
 vfoo
+vhdx
 virt
 virtio
 virtiofs
