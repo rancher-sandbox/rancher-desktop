@@ -256,7 +256,7 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 
 const CREATE_NO_WINDOW = 0x08000000
 
-func unregisterWSL() error {
+func UnregisterWSL() error {
 	cmd := exec.Command("wsl", "--list", "--quiet")
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
 	rawBytes, err := cmd.CombinedOutput()

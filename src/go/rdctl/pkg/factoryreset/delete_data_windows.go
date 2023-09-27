@@ -10,7 +10,7 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
-	if err := unregisterWSL(); err != nil {
+	if err := UnregisterWSL(); err != nil {
 		logrus.Errorf("could not unregister WSL: %s", err)
 		return err
 	}
