@@ -36,17 +36,15 @@ var snapshotListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List snapshots",
+	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.NoArgs(cmd, args); err != nil {
-			return err
-		}
 		return listSnapshot()
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotListCmd)
-	snapshotListCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
+	snapshotListCmd.Flags().BoolVar(&outputJsonFormat, "json", false, "output json format")
 }
 
 func listSnapshot() error {
@@ -67,11 +65,13 @@ func listSnapshot() error {
 }
 
 func jsonOutput(snapshots []snapshot.Snapshot) error {
-	jsonBuffer, err := json.Marshal(snapshots)
-	if err != nil {
-		return err
+	for _, aSnapshot := range snapshots {
+		jsonBuffer, err := json.Marshal(aSnapshot)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsonBuffer))
 	}
-	fmt.Println(string(jsonBuffer))
 	return nil
 }
 

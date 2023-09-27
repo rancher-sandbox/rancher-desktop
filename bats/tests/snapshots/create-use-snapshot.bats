@@ -75,6 +75,10 @@ local_setup() {
     try --max 48 --delay 5 running_nginx
 }
 
+@test 'delete all the snapshots' {
+    delete_all_snapshots
+}
+
 running_nginx() {
     run kubectl get pods -A
     assert_success

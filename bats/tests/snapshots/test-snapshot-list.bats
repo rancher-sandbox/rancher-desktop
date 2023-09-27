@@ -21,7 +21,7 @@ local_setup() {
 @test 'verify empty snapshot-list output' {
     run rdctl snapshot list --json
     assert_success
-    assert_output '[]'
+    assert_output ''
     run rdctl snapshot list
     assert_success
     assert_output 'No snapshots present.'
@@ -43,11 +43,11 @@ local_setup() {
     assert_output --partial " run-like-an-antelope "
     run rdctl snapshot list --json
     assert_success
-    ID0=$(jq_output '.[0].ID')
-    ID1=$(jq_output '.[1].ID')
-    ID2=$(jq_output '.[2].ID')
-    DATE1="$(jq_output '.[1].created')"
-    DATE2="$(jq_output '.[2].created')"
+    ID0=$(jq_output 'select(.name == "cows_fish_capers").id')
+    ID1=$(jq_output 'select(.name == "world-buffalo-federation").id')
+    ID2=$(jq_output 'select(.name == "run-like-an-antelope").id')
+    DATE1=$(jq_output 'select(.name == "world-buffalo-federation").created')
+    DATE2=$(jq_output 'select(.name == "run-like-an-antelope").created')
     if is_macos; then
         TIME1=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE1" +%s 2>/dev/null)
         TIME2=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE2" +%s 2>/dev/null)
@@ -63,4 +63,5 @@ local_setup() {
     assert_output --regexp "${ID0}.*cows_fish_capers"
     assert_output --regexp "${ID1}.*world-buffalo-federation"
     assert_output --regexp "${ID2}.*run-like-an-antelope"
+    delete_all_snapshots
 }
