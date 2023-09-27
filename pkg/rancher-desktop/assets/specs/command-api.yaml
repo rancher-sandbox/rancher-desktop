@@ -307,6 +307,67 @@ paths:
               schema:
                 type: string
 
+  /v1/snapshots:
+    get:
+      operationId: listSnapshots
+      summary:  List the snapshots
+      responses:
+        '200':
+          description: The snapshots list in JSON format
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref" : "#/components/schemas/snapshot"
+
+  /v1/snapshot:
+    post:
+      operationId: createSnapshot
+      summary: Creates a new snapshot
+      responses:
+        '200':
+          description: The snapshot was created
+        '400':
+          description: The snapshot could not be created.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+    delete:
+      operationId: deleteSnapshot
+      summary:  Deletes a snapshot
+      parameters:
+      - in: query
+        name: id
+      responses:
+        '200':
+          description: The snapshot was deleted.
+        '404':
+          description: The snapshot could not be deleted.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v1/snapshot/restore:
+    post:
+      operationId: restoreSnapshot
+      summary: Restore a snapshot
+      parameters:
+      - in: query
+        name: id
+      responses:
+        '202':
+          description: The snapshot was restored.
+        '404':
+          description: The snapshot could not be restored.
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /v1/transient_settings:
     get:
       operationId: listTransientSettings
