@@ -27,6 +27,9 @@ let lockedSettings: LockedSettingsType = {};
 let _isFirstRun = false;
 let settings: Settings | undefined;
 
+// This is used to track whether we moved the settings.json from Roaming to Local on Windows
+let didAppdataRoamingMigration = false;
+
 /**
  * Load the settings file from disk, doing any migrations as necessary.
  */
@@ -109,6 +112,12 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
     return finishConfiguringSettings(loadFromDisk(), deploymentProfiles);
   } catch (err: any) {
     if (err.code === 'ENOENT') {
+      if (migrateSettingsLocationOnWindows()) {
+        // If this call succeeds, call the function again. There's a global boolean that guards
+        // the call from succeeding more than once in a run (or more likely, more than once forever).
+        return load(deploymentProfiles);
+      }
+
       return createSettings(deploymentProfiles);
     } else {
       // JSON problems in the settings file will be caught, and we let any
@@ -250,6 +259,34 @@ function fileIsWritable(path: string) {
   } catch (_) {
     return false;
   }
+}
+
+function migrateSettingsLocationOnWindows(): boolean {
+  if (didAppdataRoamingMigration || process.platform !== 'win32') {
+    return false;
+  }
+  const appData = process.env['APPDATA'];
+  const rdAppHomeDir = paths.appHome;
+
+  if (!appData || !rdAppHomeDir) {
+    return false;
+  }
+  const oldConfigPath = join(appData, 'rancher-desktop', 'settings.json');
+  const newConfigPath = join(rdAppHomeDir, 'settings.json');
+
+  if (!fileExists(oldConfigPath) || fileExists(newConfigPath)) {
+    return false;
+  }
+  try {
+    fs.copyFileSync(oldConfigPath, newConfigPath);
+    didAppdataRoamingMigration = true;
+
+    return true;
+  } catch {
+    // Ignore any other problems, so create a new settings file.
+  }
+
+  return false;
 }
 
 /**

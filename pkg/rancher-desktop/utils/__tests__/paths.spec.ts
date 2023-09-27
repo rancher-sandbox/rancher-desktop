@@ -23,17 +23,17 @@ jest.mock('electron', () => {
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
     appHome: {
-      win32:  '%APPDATA%/rancher-desktop/',
+      win32:  '%LOCALAPPDATA%/rancher-desktop/',
       linux:  '%HOME%/.local/share/rancher-desktop/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/',
     },
     altAppHome: {
-      win32:  '%APPDATA%/rancher-desktop/',
+      win32:  '%LOCALAPPDATA%/rancher-desktop/',
       linux:  '%HOME%/.rd/',
       darwin: '%HOME%/.rd/',
     },
     config: {
-      win32:  '%APPDATA%/rancher-desktop/',
+      win32:  '%LOCALAPPDATA%/rancher-desktop/',
       linux:  '%HOME%/.config/rancher-desktop/',
       darwin: '%HOME%/Library/Preferences/rancher-desktop/',
     },

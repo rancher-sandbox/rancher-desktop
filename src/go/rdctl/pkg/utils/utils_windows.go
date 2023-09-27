@@ -42,17 +42,16 @@ func GetRDPath() (string, error) {
 	dir, err := directories.GetLocalAppDataDirectory()
 	if err == nil {
 		dataPaths = append(dataPaths, dir)
+	} else {
+		dataPaths = append(dataPaths, filepath.Join(homedir, "AppData", "Local"))
 	}
 	// %APPDATA%
 	dir, err = directories.GetRoamingAppDataDirectory()
 	if err == nil {
 		dataPaths = append(dataPaths, dir)
+	} else {
+		dataPaths = append(dataPaths, filepath.Join(homedir, "AppData", "Roaming"))
 	}
-	dataPaths = append(
-		dataPaths,
-		filepath.Join(homedir, "AppData", "Local"),
-		filepath.Join(homedir, "AppData", "Roaming"),
-	)
 	for _, dataDir := range dataPaths {
 		candidatePath := filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
 		_, err := os.Stat(candidatePath)

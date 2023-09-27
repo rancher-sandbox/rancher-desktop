@@ -26,11 +26,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	if localAppData == "" {
 		localAppData = filepath.Join(homeDir, "AppData", "Local")
 	}
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		appData = filepath.Join(homeDir, "AppData", "Roaming")
-	}
-	appHome := filepath.Join(appData, appName)
+	appHome := filepath.Join(localAppData, appName)
 	paths := Paths{
 		AppHome:       appHome,
 		AltAppHome:    appHome,

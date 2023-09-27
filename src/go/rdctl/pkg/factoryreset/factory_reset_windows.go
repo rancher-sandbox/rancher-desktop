@@ -206,10 +206,6 @@ func deleteWindowsData(keepSystemImages bool, appName string) error {
 func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, error) {
 	// Ordered from least important to most, so that if delete fails we
 	// still keep some useful data.
-	appData, err := directories.GetRoamingAppDataDirectory()
-	if err != nil {
-		return nil, fmt.Errorf("could not get AppData folder: %w", err)
-	}
 	localAppData, err := directories.GetLocalAppDataDirectory()
 	if err != nil {
 		return nil, fmt.Errorf("could not get LocalAppData folder: %w", err)
@@ -264,8 +260,14 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 	if deleteLocalRDAppData {
 		dirs = append(dirs, localRDAppData)
 	}
-
-	dirs = append(dirs, path.Join(appData, appName))
+	roamingAppData, err := directories.GetRoamingAppDataDirectory()
+	if err == nil {
+		dirs = append(dirs, path.Join(roamingAppData, appName))
+		// Electron stores some files in AppData\Roaming\Rancher Desktop
+		dirs = append(dirs, path.Join(roamingAppData, "Rancher Desktop"))
+	} else {
+		logrus.Errorf("Could not get AppData (roaming) folder: %s\n", err)
+	}
 	return dirs, nil
 }
 
