@@ -81,10 +81,16 @@ func getSnapshotFiles(paths paths.Paths, id string) []snapshotFile {
 	return files
 }
 
+type Snapshotter struct{}
+
+func NewSnapshotter() Snapshotter {
+	return Snapshotter{}
+}
+
 // Does all of the things that can fail when creating a snapshot,
 // so that the snapshot creation can easily be rolled back upon
 // a failure.
-func createFiles(paths paths.Paths, snapshot Snapshot) error {
+func (snapshotter Snapshotter) CreateFiles(paths paths.Paths, snapshot Snapshot) error {
 	files := getSnapshotFiles(paths, snapshot.ID)
 	for _, file := range files {
 		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
@@ -102,7 +108,7 @@ func createFiles(paths paths.Paths, snapshot Snapshot) error {
 
 // Restores the files from their location in a snapshot directory
 // to their working location.
-func restoreFiles(paths paths.Paths, snapshot Snapshot) error {
+func (snapshotter Snapshotter) RestoreFiles(paths paths.Paths, snapshot Snapshot) error {
 	files := getSnapshotFiles(paths, snapshot.ID)
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)

@@ -17,11 +17,6 @@ var nameRegexp = *regexp.MustCompile("^[0-9a-zA-Z_-]{0,100}$")
 var ErrNameExists = errors.New("name already exists")
 var ErrInvalidName = fmt.Errorf("name does not match regex %q", nameRegexp.String())
 
-// Handles all snapshot-related functionality.
-type Manager struct {
-	Paths paths.Paths
-}
-
 // Returns a string of length n that is comprised of random letters
 // and numbers. From:
 // https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
@@ -52,9 +47,19 @@ func writeMetadataFile(paths paths.Paths, snapshot Snapshot) error {
 	return nil
 }
 
+// Handles all snapshot-related functionality.
+type Manager struct {
+	Paths paths.Paths
+	// Types that implement Snapshotter are responsible for copying/creating
+	// files that need to be copied/created for the creation and restoration of
+	// snapshots.
+	Snapshotter Snapshotter
+}
+
 func NewManager(paths paths.Paths) Manager {
 	return Manager{
-		Paths: paths,
+		Paths:       paths,
+		Snapshotter: NewSnapshotter(),
 	}
 }
 
@@ -82,7 +87,7 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 
 	// do operations that can fail, rolling back if failure is encountered
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
-	if err := createFiles(manager.Paths, snapshot); err != nil {
+	if err := manager.Snapshotter.CreateFiles(manager.Paths, snapshot); err != nil {
 		if err := os.RemoveAll(snapshotDir); err != nil {
 			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
 		}
@@ -150,7 +155,7 @@ func (manager Manager) Restore(id string) error {
 		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
 	}
 
-	if err := restoreFiles(manager.Paths, snapshot); err != nil {
+	if err := manager.Snapshotter.RestoreFiles(manager.Paths, snapshot); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 

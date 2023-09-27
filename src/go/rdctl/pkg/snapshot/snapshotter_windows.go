@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -55,7 +55,17 @@ func copyFile(dst, src string) error {
 	return nil
 }
 
-func createFiles(paths paths.Paths, snapshot Snapshot) error {
+type Snapshotter struct {
+	WSL wsl.WSL
+}
+
+func NewSnapshotter() Snapshotter {
+	return Snapshotter{
+		WSL: wsl.WSLImpl{},
+	}
+}
+
+func (snapshotter Snapshotter) CreateFiles(paths paths.Paths, snapshot Snapshot) error {
 	// ensure snapshot directory is created
 	snapshotDir := filepath.Join(paths.Snapshots, snapshot.ID)
 	if err := os.MkdirAll(snapshotDir, 0o755); err != nil {
@@ -65,8 +75,7 @@ func createFiles(paths paths.Paths, snapshot Snapshot) error {
 	// export WSL distros to snapshot directory
 	for _, distro := range getWslDistros(paths) {
 		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".vhdx")
-		cmd := exec.Command("wsl.exe", "--export", "--vhd", distro.Name, snapshotDistroPath)
-		if err := cmd.Run(); err != nil {
+		if err := snapshotter.WSL.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
 			return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
 		}
 	}
@@ -84,7 +93,7 @@ func createFiles(paths paths.Paths, snapshot Snapshot) error {
 	return nil
 }
 
-func restoreFiles(paths paths.Paths, snapshot Snapshot) error {
+func (snapshotter Snapshotter) RestoreFiles(paths paths.Paths, snapshot Snapshot) error {
 	// restore WSL distros
 	if err := factoryreset.UnregisterWSL(); err != nil {
 		return fmt.Errorf("failed to unregister WSL distros: %w", err)
@@ -92,9 +101,7 @@ func restoreFiles(paths paths.Paths, snapshot Snapshot) error {
 	snapshotDir := filepath.Join(paths.Snapshots, snapshot.ID)
 	for _, distro := range getWslDistros(paths) {
 		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".vhdx")
-		cmd := exec.Command("wsl.exe", "--import", distro.Name, distro.WorkingDirPath, snapshotDistroPath, "--vhd")
-		if output, err := cmd.Output(); err != nil {
-			fmt.Println(string(output))
+		if err := snapshotter.WSL.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
 			return fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
 		}
 	}
