@@ -24,9 +24,42 @@ cleanup() {
 trap cleanup EXIT
 
 WORKDIR="$(mktemp --tmpdir --directory kiwi.github-runner-linux.XXXXXX)"
+IMAGE_NAME="${1:-}"
 
-sudo kiwi ${DEBUG:+--debug} system build \
+if [[ "${#@}" -gt 0 ]]; then
+    shift
+fi
+
+global_options=()
+local_options=()
+
+while [[ "${#@}" -gt 0 ]]; do
+    case "$1" in
+    --color-output) global_options+=("$1");;
+    --config=*) global_options+=("$1");;
+    --config) global_options+=("$1" "$2"); shift;;
+    --logfile=*) global_options+=("$1");;
+    --logfile) global_options+=("$1" "$2"); shift;;
+    --debug) global_options+=("$1");;
+    --debug-run-scripts-in-screen) global_options+=("$1");;
+    --version|-v) global_options+=("$1");;
+    --profile=*) global_options+=("$1");;
+    --profile) global_options+=("$1" "$2"); shift;;
+    --shared-cache-dir=*) global_options+=("$1");;
+    --shared-cache-dir) global_options+=("$1" "$2"); shift;;
+    --temp-dir=*) global_options+=("$1");;
+    --temp-dir) global_options+=("$1" "$2"); shift;;
+    *) local_options+=("$1");;
+    esac
+    shift
+done
+
+sudo kiwi "${global_options[@]}" system build \
     --description "${PWD}" \
-    --target-dir "${WORKDIR}"
+    --target-dir "${WORKDIR}" \
+    "${local_options[@]}"
 
-cp "${WORKDIR}"/github-runner-linux.x86_64-*.qcow2 "./${1:-}"
+shopt -s nullglob # One of the two below will be missing
+cp "${WORKDIR}"/github-runner-linux.x86_64-*.qcow2 \
+   "${WORKDIR}"/github-runner-linux.x86_64-*.vhdx \
+   "${IMAGE_NAME:-./}"

@@ -6,19 +6,33 @@
         <contact>mook-as@users.github.io</contact>
         <specification>GitHub runner (Linux) for Rancher Desktop</specification>
     </description>
+    <profiles>
+        <profile name="qcow2" description="qcow2 image for qemu" import="true"/>
+        <profile name="vhdx" description="vhdx image for Hyper-V"/>
+    </profiles>
     <preferences>
-        <type image="oem" filesystem="xfs" firmware="uefi" format="qcow2">
-            <size unit="G">1024</size>
-            <oemconfig>
-                <oem-unattended>true</oem-unattended>
-            </oemconfig>
-        </type>
         <version>1.0.0</version>
         <packagemanager>zypper</packagemanager>
         <locale>en_US</locale>
         <keytable>us</keytable>
         <timezone>UTC</timezone>
         <rpm-excludedocs>true</rpm-excludedocs>
+    </preferences>
+    <preferences profiles="qcow2">
+        <type image="oem" filesystem="xfs" firmware="uefi" format="qcow2">
+            <size unit="G">1024</size>
+            <oemconfig>
+                <oem-unattended>true</oem-unattended>
+            </oemconfig>
+        </type>
+    </preferences>
+    <preferences profiles="vhdx">
+        <type image="oem" filesystem="xfs" firmware="uefi" format="vhdx">
+            <size unit="G">1024</size>
+            <oemconfig>
+                <oem-unattended>true</oem-unattended>
+            </oemconfig>
+        </type>
     </preferences>
     <repository type="rpm-md" imageinclude="true">
         <source path="obs://openSUSE:Leap:15.5/standard"/>
