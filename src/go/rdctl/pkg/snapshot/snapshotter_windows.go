@@ -101,6 +101,9 @@ func (snapshotter Snapshotter) RestoreFiles(paths paths.Paths, snapshot Snapshot
 	snapshotDir := filepath.Join(paths.Snapshots, snapshot.ID)
 	for _, distro := range getWslDistros(paths) {
 		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".vhdx")
+		if err := os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
+			return fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
+		}
 		if err := snapshotter.WSL.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
 			return fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
 		}
