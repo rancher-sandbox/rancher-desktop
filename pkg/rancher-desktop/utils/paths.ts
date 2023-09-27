@@ -103,7 +103,7 @@ export class WindowsPaths implements Paths {
 }
 
 // Gets the path to rdctl. Returns null if rdctl cannot be found.
-function getRdctlPath(): string | null {
+export function getRdctlPath(): string | null {
   let basePath: string;
 
   // If we are running as a script (i.e. yarn postinstall), electron.app is undefined
