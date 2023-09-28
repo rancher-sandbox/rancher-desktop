@@ -9,7 +9,7 @@ on:
         description: Override repository (e.g. rancher-desktop)
         type: string
       branch:
-        description: Override branch (e.g. main)
+        description: Override branch (e.g. main, or PR#)
         type: string
       tests:
         description: 'Tests (e.g. tests/containers/*)'
@@ -48,6 +48,8 @@ jobs:
         : ${OWNER:=$GH_OWNER}
         : ${REPO:=${GH_REPOSITORY#$GH_OWNER/}}
         : ${BRANCH:=$GH_REF_NAME}
+        # If BRANCH is a number, assume it is supposed to be a PR
+        [[ $BRANCH =~ ^[0-9]+$ ]] && PR=$BRANCH
         "$TMPDIR/$SCRIPT"
       env:
         GH_TOKEN: ${{ github.token }}
