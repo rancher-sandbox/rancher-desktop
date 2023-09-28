@@ -26,8 +26,7 @@ local_setup() {
 
 @test 'shutdown, make a snapshot, and clear everything' {
     rdctl shutdown
-    run rdctl snapshot create "$SNAPSHOT"
-    assert_success
+    rdctl snapshot create "$SNAPSHOT"
     run rdctl snapshot list
     assert_success
     assert_output --partial "$SNAPSHOT"
