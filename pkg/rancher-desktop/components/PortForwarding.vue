@@ -15,6 +15,7 @@
     <SortableTable
       :headers="headers"
       :rows="rows"
+      no-rows-key="portForwarding.sortableTables.noRows"
       key-field="key"
       default-sort-by="namespace"
       :table-actions="false"
