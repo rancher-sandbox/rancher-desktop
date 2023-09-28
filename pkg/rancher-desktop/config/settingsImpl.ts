@@ -5,6 +5,8 @@ import fs from 'fs';
 import os from 'os';
 import { dirname, join } from 'path';
 
+import _ from 'lodash';
+
 import {
   ContainerEngine, CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
   LockedSettingsType, Settings,
@@ -15,7 +17,6 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getProductionVersion } from '@pkg/utils/version';
-import _ from 'lodash';
 
 const console = Logging.settings;
 

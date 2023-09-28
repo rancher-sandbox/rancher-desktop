@@ -17,10 +17,6 @@ limitations under the License.
 import fs from 'fs';
 import path from 'path';
 
-import { Settings } from '@pkg/config/settings';
-import * as childProcess from '@pkg/utils/childProcess';
-import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { expect, test } from '@playwright/test';
 
 import {
@@ -35,6 +31,11 @@ import {
   verifyUserProfile,
 } from './utils/ProfileUtils';
 import { createUserProfile, reportAsset } from './utils/TestUtils';
+
+import { Settings } from '@pkg/config/settings';
+import * as childProcess from '@pkg/utils/childProcess';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 async function createInvalidDarwinUserProfile(contents: string) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.defaults.plist');

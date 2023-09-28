@@ -109,7 +109,11 @@ export default {
 <template>
   <thead>
     <tr :class="{'loading': loading}">
-      <th v-if="tableActions" :width="checkWidth" align="middle">
+      <th
+        v-if="tableActions"
+        :width="checkWidth"
+        align="middle"
+      >
         <Checkbox
           v-model="isAll"
           class="check"
@@ -117,7 +121,10 @@ export default {
           :disabled="noRows || noResults"
         />
       </th>
-      <th v-if="subExpandColumn" :width="expandWidth"></th>
+      <th
+        v-if="subExpandColumn"
+        :width="expandWidth"
+      ></th>
       <th
         v-for="col in columns"
         :key="col.name"
@@ -126,17 +133,32 @@ export default {
         :class="{ sortable: col.sort, [col.breakpoint]: !!col.breakpoint}"
         @click.prevent="changeSort($event, col)"
       >
-        <span v-if="col.sort" v-tooltip="col.tooltip">
+        <span
+          v-if="col.sort"
+          v-tooltip="col.tooltip"
+        >
           <span v-html="labelFor(col)" />
           <span class="icon-stack">
             <i class="icon icon-sort icon-stack-1x faded" />
-            <i v-if="isCurrent(col) && !descending" class="icon icon-sort-down icon-stack-1x" />
-            <i v-if="isCurrent(col) && descending" class="icon icon-sort-up icon-stack-1x" />
+            <i
+              v-if="isCurrent(col) && !descending"
+              class="icon icon-sort-down icon-stack-1x"
+            />
+            <i
+              v-if="isCurrent(col) && descending"
+              class="icon icon-sort-up icon-stack-1x"
+            />
           </span>
         </span>
-        <span v-else v-tooltip="col.tooltip">{{ labelFor(col) }}</span>
+        <span
+          v-else
+          v-tooltip="col.tooltip"
+        >{{ labelFor(col) }}</span>
       </th>
-      <th v-if="rowActions" :width="rowActionsWidth">
+      <th
+        v-if="rowActions"
+        :width="rowActionsWidth"
+      >
       </th>
     </tr>
   </thead>

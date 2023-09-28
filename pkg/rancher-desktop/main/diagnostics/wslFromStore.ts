@@ -1,10 +1,10 @@
 import os from 'os';
 import path from 'path';
 
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
-
-import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 const console = Logging.diagnostics;
 

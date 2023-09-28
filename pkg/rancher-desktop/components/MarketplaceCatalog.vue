@@ -1,11 +1,12 @@
 <script lang="ts">
-import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
-import { Settings, ContainerEngine } from '@pkg/config/settings';
-import { ExtensionState } from '@pkg/store/extensions.js';
 import Vue, { VueConstructor } from 'vue';
 import { mapGetters } from 'vuex';
 
 import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
+
+import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
+import { Settings, ContainerEngine } from '@pkg/config/settings';
+import { ExtensionState } from '@pkg/store/extensions.js';
 
 type FilteredExtensions = typeof demoMarketplace.summaries;
 
@@ -107,11 +108,21 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
 
 <template>
   <div>
-    <input v-model="searchValue" type="text" placeholder="Search" />
-    <div v-if="filteredExtensions.length === 0" class="extensions-content-missing">
+    <input
+      v-model="searchValue"
+      type="text"
+      placeholder="Search"
+    />
+    <div
+      v-if="filteredExtensions.length === 0"
+      class="extensions-content-missing"
+    >
       {{ t('marketplace.noResults') }}
     </div>
-    <div v-if="!loading" class="extensions-content">
+    <div
+      v-if="!loading"
+      class="extensions-content"
+    >
       <div
         v-for="item in filteredExtensions"
         :key="item.slug"

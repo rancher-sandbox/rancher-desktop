@@ -2,7 +2,10 @@
   <div class="container">
     <div class="page-body">
       <div class="error-header">
-        <img id="logo" src="../../../resources/icons/logo-square-red@2x.png" />
+        <img
+          id="logo"
+          src="../../../resources/icons/logo-square-red@2x.png"
+        />
         <span>
           <h2 data-test="k8s-error-header">
             Kubernetes Error
@@ -15,21 +18,39 @@
           <h4>{{ titlePart }}</h4>
           <pre id="main-message">{{ mainMessage }}</pre>
         </div>
-        <div v-if="lastCommand" class="error-part">
+        <div
+          v-if="lastCommand"
+          class="error-part"
+        >
           <h4>Last command run:</h4>
           <p>{{ lastCommand }}</p>
         </div>
-        <div v-if="lastCommandComment" class="error-part">
+        <div
+          v-if="lastCommandComment"
+          class="error-part"
+        >
           <h4>Context:</h4>
           <p>{{ lastCommandComment }}</p>
         </div>
-        <div v-if="lastLogLines.length" class="error-part grow">
-          <h4>Some recent <a href="#" @click.prevent="showLogs">logfile</a> lines:</h4>
+        <div
+          v-if="lastLogLines.length"
+          class="error-part grow"
+        >
+          <h4>
+            Some recent <a
+              href="#"
+              @click.prevent="showLogs"
+            >logfile</a> lines:
+          </h4>
           <pre id="log-lines">{{ joinedLastLogLines }}</pre>
         </div>
       </div>
     </div>
-    <button data-test="accept-btn" class="role-primary primary-action" @click="close">
+    <button
+      data-test="accept-btn"
+      class="role-primary primary-action"
+      @click="close"
+    >
       Close
     </button>
   </div>
@@ -38,8 +59,9 @@
 <script lang="ts">
 import os from 'os';
 
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   layout: 'dialog',

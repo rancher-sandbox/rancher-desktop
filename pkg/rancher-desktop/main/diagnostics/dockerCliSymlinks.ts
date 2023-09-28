@@ -2,10 +2,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-
-import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 const console = Logging.diagnostics;
 

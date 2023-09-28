@@ -1,6 +1,7 @@
 <script lang="ts">
-import { hexEncode } from '@pkg/utils/string-encode';
 import Vue from 'vue';
+
+import { hexEncode } from '@pkg/utils/string-encode';
 
 const knownMonochromeIcons = [
   'ghcr.io/rancher-sandbox/epinio-desktop-extension',

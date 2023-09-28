@@ -15,9 +15,10 @@ import {
   newContexts,
   newUsers,
 } from '@kubernetes/client-node/dist/config_types';
-import { executable } from '@pkg/utils/resources';
 import _ from 'lodash';
 import yaml from 'yaml';
+
+import { executable } from '@pkg/utils/resources';
 
 interface Cluster {
   readonly name: string;

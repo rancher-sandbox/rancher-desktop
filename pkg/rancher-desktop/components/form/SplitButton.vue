@@ -160,8 +160,16 @@ export default SplitButton;
       @click="show"
     >
     </button>
-    <div v-if="showing" class="background" @click="hide" @contextmenu.prevent></div>
-    <ul v-if="showing" class="list-unstyled menu">
+    <div
+      v-if="showing"
+      class="background"
+      @click="hide"
+      @contextmenu.prevent
+    ></div>
+    <ul
+      v-if="showing"
+      class="list-unstyled menu"
+    >
       <li
         v-for="opt in computedOptions"
         :key="opt.id"
@@ -176,7 +184,10 @@ export default SplitButton;
         @keypress.enter.prevent="popupTrigger"
         @mouseover="popupHover"
       >
-        <i v-if="opt.icon" :class="{icon: true, [`icon-${opt.icon}`]: true}" />
+        <i
+          v-if="opt.icon"
+          :class="{icon: true, [`icon-${opt.icon}`]: true}"
+        />
         <span v-text="opt.label" />
       </li>
     </ul>

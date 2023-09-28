@@ -1,15 +1,15 @@
 <script lang="ts">
-import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
-import EmptyState from '@pkg/components/EmptyState.vue';
-import SortableTable from '@pkg/components/SortableTable/index.vue';
-import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 import { ToggleSwitch } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
+import EmptyState from '@pkg/components/EmptyState.vue';
+import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { DiagnosticsResult } from '@pkg/main/diagnostics/diagnostics';
+import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 
@@ -99,7 +99,10 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="diagnostics" data-test="diagnostics">
+  <div
+    class="diagnostics"
+    data-test="diagnostics"
+  >
     <div class="status">
       <div class="result-info">
         <div class="item-results">
@@ -112,7 +115,10 @@ export default Vue.extend({
         />
       </div>
       <div class="spacer" />
-      <diagnostics-button-run class="button-run" :time-last-run="timeLastRun" />
+      <diagnostics-button-run
+        class="button-run"
+        :time-last-run="timeLastRun"
+      />
     </div>
     <sortable-table
       key-field="id"
@@ -134,7 +140,10 @@ export default Vue.extend({
             :heading="emptyStateHeading"
             :body="emptyStateBody"
           >
-            <template v-if="areAllRowsMuted" #primary-action>
+            <template
+              v-if="areAllRowsMuted"
+              #primary-action
+            >
               <button
                 class="btn role-primary"
                 @click="toggleMute"
@@ -146,8 +155,15 @@ export default Vue.extend({
         </td>
       </template>
       <template #group-row="{group}">
-        <tr :ref="`group-${group.ref}`" class="group-row" :aria-expanded="expanded[group.ref]">
-          <td class="col-description" role="columnheader">
+        <tr
+          :ref="`group-${group.ref}`"
+          class="group-row"
+          :aria-expanded="expanded[group.ref]"
+        >
+          <td
+            class="col-description"
+            role="columnheader"
+          >
             <div class="group-tab">
               <i
                 data-title="Toggle Expand"
@@ -161,7 +177,10 @@ export default Vue.extend({
               {{ group.ref }}
             </div>
           </td>
-          <td class="col-mute" role="columnheader">
+          <td
+            class="col-mute"
+            role="columnheader"
+          >
             <span>Mute</span>
           </td>
         </tr>
@@ -169,7 +188,11 @@ export default Vue.extend({
       <template #col:description="{row}">
         <td>
           <span v-html="markdown(row.description)"></span>
-          <a v-if="row.documentation" :href="row.documentation" class="doclink"><span class="icon icon-external-link" /></a>
+          <a
+            v-if="row.documentation"
+            :href="row.documentation"
+            class="doclink"
+          ><span class="icon icon-external-link" /></a>
         </td>
       </template>
       <template #col:mute="{row}">
@@ -182,18 +205,27 @@ export default Vue.extend({
           />
         </td>
       </template>
-      <template v-if="featureFixes" #sub-row="{row}">
+      <template
+        v-if="featureFixes"
+        #sub-row="{row}"
+      >
         <tr>
           <!--We want an empty data cell so description will align with name-->
           <td></td>
-          <td v-if="row.fixes.length > 0" class="sub-row">
+          <td
+            v-if="row.fixes.length > 0"
+            class="sub-row"
+          >
             {{ row.fixes.map(fix => fix.description).join('\n') }}
           </td>
           <td v-else>
             (No fixes available)
           </td>
           <!--Empty data cells for remaining columns for row highlight-->
-          <td v-for="header in headers.length - 1" :key="header.name" />
+          <td
+            v-for="header in headers.length - 1"
+            :key="header.name"
+          />
         </tr>
       </template>
     </sortable-table>

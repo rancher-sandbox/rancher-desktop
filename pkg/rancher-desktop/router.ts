@@ -1,9 +1,10 @@
 
+import { RouteConfig } from 'vue-router';
+
 import Default from '@pkg/layouts/default.vue';
 import Images from '@pkg/pages/Images.vue';
 import PortForwarding from '@pkg/pages/PortForwarding.vue';
 import Troubleshooting from '@pkg/pages/Troubleshooting.vue';
-import { RouteConfig } from 'vue-router';
 
 const routes: RouteConfig[] = [
   {

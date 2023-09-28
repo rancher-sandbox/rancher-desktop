@@ -1,7 +1,8 @@
 <script lang="ts">
-import PreferencesAlert from '@pkg/components/Preferences/Alert.vue';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+
+import PreferencesAlert from '@pkg/components/Preferences/Alert.vue';
 
 export default Vue.extend({
   name:       'preferences-footer',

@@ -11,11 +11,12 @@ import stream from 'stream';
 import util from 'util';
 import zlib from 'zlib';
 
-import babelConfig from 'babel.config';
 import spawn from 'cross-spawn';
 import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
+
+import babelConfig from 'babel.config';
 
 /**
  * A promise that is resolved when the child exits.

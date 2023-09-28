@@ -1,15 +1,16 @@
 <script lang="ts">
 
+import { RadioButton, RadioGroup } from '@rancher/components';
+import semver from 'semver';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters, mapState } from 'vuex';
+
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 import { MountType, Settings, VMType } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import { RadioButton, RadioGroup } from '@rancher/components';
-import semver from 'semver';
-import Vue, { VueConstructor } from 'vue';
-import { mapGetters, mapState } from 'vuex';
 
 import type { PropType } from 'vue';
 

@@ -5,14 +5,15 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import * as childProcess from '@pkg/utils/childProcess';
-import paths from '@pkg/utils/paths';
 import { expect, Page } from '@playwright/test';
 
 import {
   createDefaultSettings, createUserProfile, startRancherDesktop, retry, teardown,
 } from './TestUtils';
 import { NavPage } from '../pages/nav-page';
+
+import * as childProcess from '@pkg/utils/childProcess';
+import paths from '@pkg/utils/paths';
 
 export async function clearSettings(): Promise<void> {
   const fullPath = path.join(paths.config, 'settings.json');

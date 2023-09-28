@@ -3,12 +3,21 @@
    -->
 
 <template>
-  <div v-if="progressBusy" class="progress">
+  <div
+    v-if="progressBusy"
+    class="progress"
+  >
     <!-- Wrap a label in a container, and make that flex horizontally to let
       it grow as needed without contributing to the width of the nav column. -->
     <div class="label-container">
-      <label class="details" :title="progressDetails">{{ progressDetails }}</label>
-      <label class="duration" :title="progressDuration">{{ progressDuration }}</label>
+      <label
+        class="details"
+        :title="progressDetails"
+      >{{ progressDetails }}</label>
+      <label
+        class="duration"
+        :title="progressDuration"
+      >{{ progressDuration }}</label>
     </div>
     <Progress
       :indeterminate="progressIndeterminate"
@@ -19,10 +28,11 @@
 </template>
 
 <script lang="ts">
-import Progress from '@pkg/components/Progress.vue';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import Vue from 'vue';
 import Component from 'vue-class-component';
+
+import Progress from '@pkg/components/Progress.vue';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 @Component({ components: { Progress } })
 class BackendProgress extends Vue {

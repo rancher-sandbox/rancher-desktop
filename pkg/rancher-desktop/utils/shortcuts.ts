@@ -1,8 +1,9 @@
 import os from 'os';
 
+import { BrowserWindow } from 'electron';
+
 import { toArray } from '@pkg/utils/array';
 import Logging from '@pkg/utils/logging';
-import { BrowserWindow } from 'electron';
 
 const log = Logging.shortcuts;
 

@@ -84,11 +84,12 @@
 
 <script>
 
+import _ from 'lodash';
+
 import TroubleshootingLineItem from '@pkg/components/TroubleshootingLineItem.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import _ from 'lodash';
 
 export default {
   name:       'Troubleshooting',

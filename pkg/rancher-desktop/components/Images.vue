@@ -3,7 +3,10 @@
   -->
 <template>
   <div>
-    <div v-if="state === 'READY'" ref="fullWindow">
+    <div
+      v-if="state === 'READY'"
+      ref="fullWindow"
+    >
       <SortableTable
         ref="imagesTable"
         class="imagesTable"
@@ -32,7 +35,12 @@
                 :value="selectedNamespace"
                 @change="handleChangeNamespace($event)"
               >
-                <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+                <option
+                  v-for="item in imageNamespaces"
+                  :key="item"
+                  :value="item"
+                  :selected="item === selectedNamespace"
+                >
                   {{ item }}
                 </option>
               </select>
@@ -80,14 +88,15 @@
 </template>
 
 <script>
-import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
 import SortableTable from '@pkg/components/SortableTable';
-import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import { parseSi } from '@pkg/utils/units';
 import { Card, Checkbox } from '@rancher/components';
 import _ from 'lodash';
 import { mapState, mapMutations } from 'vuex';
+
+import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
+import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { parseSi } from '@pkg/utils/units';
 
 export default {
   components: {

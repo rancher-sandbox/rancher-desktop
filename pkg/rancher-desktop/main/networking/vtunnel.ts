@@ -3,11 +3,12 @@
 import fs from 'fs';
 import path from 'path';
 
+import yaml from 'yaml';
+
 import BackgroundProcess from '@pkg/utils/backgroundProcess';
 import * as childProcess from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import yaml from 'yaml';
 
 const vtunnelConfig = 'vtunnel-config.yaml';
 

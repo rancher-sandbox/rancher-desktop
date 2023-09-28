@@ -183,7 +183,10 @@ export default {
       </td>
     </template>
     <template #sub-row="{row, fullColspan}">
-      <td :colspan="fullColspan" class="sub-row">
+      <td
+        :colspan="fullColspan"
+        class="sub-row"
+      >
         <div class="details">
           <div class="col description">
             <section>

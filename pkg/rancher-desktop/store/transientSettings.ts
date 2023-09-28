@@ -1,11 +1,11 @@
-import { defaultTransientSettings, TransientSettings } from '@pkg/config/transientSettings';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 import _ from 'lodash';
 import semver from 'semver';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
+import { defaultTransientSettings, TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { GetterTree } from 'vuex';
 

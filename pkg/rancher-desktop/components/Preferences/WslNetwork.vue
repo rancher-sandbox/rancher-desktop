@@ -1,11 +1,12 @@
 <script lang="ts">
 
+import Vue, { PropType } from 'vue';
+import { mapGetters } from 'vuex';
+
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import Vue, { PropType } from 'vue';
-import { mapGetters } from 'vuex';
 
 export default Vue.extend({
   name:       'preferences-wsl-network',

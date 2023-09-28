@@ -27,7 +27,11 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="preferences-nav-item" :class="{ active }" @click="navClicked">
+  <div
+    class="preferences-nav-item"
+    :class="{ active }"
+    @click="navClicked"
+  >
     <slot>Menu Item</slot>
   </div>
 </template>

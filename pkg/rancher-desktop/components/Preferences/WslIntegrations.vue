@@ -1,11 +1,12 @@
 <script lang="ts">
 
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
 import WslIntegration from '@pkg/components/WSLIntegration.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
 
 import type { PropType } from 'vue';
 

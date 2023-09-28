@@ -1,12 +1,13 @@
 <script lang="ts">
 
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
 import RdInput from '@pkg/components/RdInput.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
 
 import type { PropType } from 'vue';
 

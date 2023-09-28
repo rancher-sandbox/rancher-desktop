@@ -1,7 +1,8 @@
 
+import { FetchError } from 'node-fetch';
+
 import dockerRegistry, { getAsList } from '@pkg/backend/containerClient/registry';
 import { Headers } from '@pkg/utils/fetch';
-import { FetchError } from 'node-fetch';
 
 describe('Headers', () => {
   test('getAsList', () => {

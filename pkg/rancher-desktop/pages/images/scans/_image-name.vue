@@ -36,12 +36,13 @@
 
 <script>
 
+import { Banner } from '@rancher/components';
+
 import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
 import ImagesScanResults from '@pkg/components/ImagesScanResults.vue';
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import { Banner } from '@rancher/components';
 
 export default {
   name: 'images-scan-details',

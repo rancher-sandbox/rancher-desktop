@@ -4,9 +4,6 @@ import https from 'https';
 import os from 'os';
 import util from 'util';
 
-import mainEvents from '@pkg/main/mainEvents';
-import Logging from '@pkg/utils/logging';
-import { windowMapping } from '@pkg/window';
 import Electron from 'electron';
 import LinuxCA from 'linux-ca';
 
@@ -14,6 +11,10 @@ import filterCert from './cert-parse';
 import getMacCertificates from './mac-ca';
 import ElectronProxyAgent from './proxy';
 import getWinCertificates from './win-ca';
+
+import mainEvents from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
+import { windowMapping } from '@pkg/window';
 
 const console = Logging.networking;
 

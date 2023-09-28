@@ -1,4 +1,8 @@
 
+import Electron from 'electron';
+import merge from 'lodash/merge';
+import semver from 'semver';
+
 import { BackendSettings } from '@pkg/backend/backend';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -6,9 +10,6 @@ import * as settingsImpl from '@pkg/config/settingsImpl';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import Logging from '@pkg/utils/logging';
 import { showMessageBox } from '@pkg/window';
-import Electron from 'electron';
-import merge from 'lodash/merge';
-import semver from 'semver';
 
 const console = Logging.kube;
 

@@ -12,10 +12,11 @@ import path from 'path';
 
 import asar from '@electron/asar';
 import Mustache from 'mustache';
-import { simpleSpawn } from 'scripts/simple_process';
 import yaml from 'yaml';
 
 import generateFileList from './installer-win32-gen';
+
+import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * Return the contents of package.json embedded in the application.

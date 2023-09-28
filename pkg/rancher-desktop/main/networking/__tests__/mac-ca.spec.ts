@@ -2,9 +2,9 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 
-import { spawnFile } from '@pkg/utils/childProcess';
-
 import getMacCertificates from '../mac-ca';
+
+import { spawnFile } from '@pkg/utils/childProcess';
 
 // mock crypto to fake certificates.
 jest.mock('crypto');

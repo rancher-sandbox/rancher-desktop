@@ -51,12 +51,18 @@ export default Vue.extend({
 
 <template>
   <div class="diagnostics-actions">
-    <button class="btn btn-xs role-secondary" @click="onClick">
+    <button
+      class="btn btn-xs role-secondary"
+      @click="onClick"
+    >
       <span class="icon icon-refresh icon-diagnostics"></span>
       Rerun
     </button>
     <div class="diagnostics-status-history">
-      Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
+      Last run: <span
+        class="elapsed-timespan"
+        :title="timeLastRunTooltip"
+      >{{ friendlyTimeLastRun }}</span>
     </div>
   </div>
 </template>

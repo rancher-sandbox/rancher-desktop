@@ -8,14 +8,22 @@
     <h2>{{ t('sudoPrompt.title') }}</h2>
     <p>{{ t('sudoPrompt.message', { }, true) }}</p>
     <ul class="reasons">
-      <li v-for="(paths, reason) in explanations" :key="reason">
+      <li
+        v-for="(paths, reason) in explanations"
+        :key="reason"
+      >
         <details>
           <summary>{{ SUDO_REASON_DESCRIPTION[reason].title }}</summary>
           <p>{{ SUDO_REASON_DESCRIPTION[reason].description.replace(/\s+/g, ' ') }}</p>
           <p>{{ t('sudoPrompt.explanation') }}</p>
           <code>
             <ul>
-              <li v-for="path in paths" :key="path" class="monospace" v-text="path" />
+              <li
+                v-for="path in paths"
+                :key="path"
+                class="monospace"
+                v-text="path"
+              />
             </ul>
           </code>
         </details>
@@ -27,16 +35,21 @@
       v-model="suppress"
       label="Always run without administrative access"
     />
-    <button ref="accept" class="role-primary primary-action" @click="close">
+    <button
+      ref="accept"
+      class="role-primary primary-action"
+      @click="close"
+    >
       {{ t('sudoPrompt.buttonText') }}
     </button>
   </div>
 </template>
 
 <script lang="ts">
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 type SudoReason = 'networking' | 'docker-socket';
 

@@ -4,16 +4,17 @@ import path from 'path';
 import { URL } from 'url';
 import util from 'util';
 
-import * as childProcess from '@pkg/utils/childProcess';
-import fetch from '@pkg/utils/fetch';
-import Logging from '@pkg/utils/logging';
-import { getMacOsVersion } from '@pkg/utils/osVersion';
-import paths from '@pkg/utils/paths';
 import { newError, CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
 import semver from 'semver';
+
+import * as childProcess from '@pkg/utils/childProcess';
+import fetch from '@pkg/utils/fetch';
+import Logging from '@pkg/utils/logging';
+import { getMacOsVersion } from '@pkg/utils/osVersion';
+import paths from '@pkg/utils/paths';
 
 const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
@@ -103,7 +104,6 @@ export type UpgradeResponderRequestPayload = {
 export interface GitHubReleaseAsset {
   url: string;
 
-  // eslint-disable-next-line camelcase
   browser_download_url: string;
   id: number;
   name: string;
@@ -119,14 +119,12 @@ interface GitHubReleaseInfo {
   url: string;
   id: number;
 
-  // eslint-disable-next-line camelcase
   tag_name: string;
   name: string;
   body: string;
   draft: boolean;
   prerelease: boolean;
 
-  // eslint-disable-next-line camelcase
   published_at: string;
   assets: GitHubReleaseAsset[];
 }

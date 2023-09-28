@@ -2,7 +2,10 @@
   <div class="extensions mt-10">
     <div class="extensions-card">
       <div class="extensions-card-header">
-        <img :src="extension.logo_url.small" alt="" />
+        <img
+          :src="extension.logo_url.small"
+          alt=""
+        />
         <div class="extensions-card-header-top">
           <span class="extensions-card-header-title">{{ extension.name }}</span>
           <span class="extensions-card-header-subtitle">{{
@@ -14,13 +17,20 @@
         <span>{{ extension.short_description }}</span>
       </div>
 
-      <a :href="extensionLink" target="_blank">
+      <a
+        :href="extensionLink"
+        target="_blank"
+      >
         {{ t('marketplace.moreInfo') }}
         <i class="icon icon-external-link " />
       </a>
     </div>
     <div class="extensions-card-footer">
-      <Banner v-if="error" color="error" class="banner">
+      <Banner
+        v-if="error"
+        color="error"
+        class="banner"
+      >
         {{ error }}
       </Banner>
       <button
@@ -31,7 +41,11 @@
         :disabled="loading"
         @click="appInstallation(installationAction)"
       >
-        <span v-if="loading" name="loading" :is-loading="loading">
+        <span
+          v-if="loading"
+          name="loading"
+          :is-loading="loading"
+        >
           <loading-indicator>{{ buttonLabel }}</loading-indicator>
         </span>
         <span v-if="!loading">{{ buttonLabel }}</span>
@@ -42,9 +56,10 @@
 
 <script>
 
+import { Banner } from '@rancher/components';
+
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import demoMetadata from '@pkg/utils/_demo_metadata.js';
-import { Banner } from '@rancher/components';
 
 export default {
   components: { LoadingIndicator, Banner },

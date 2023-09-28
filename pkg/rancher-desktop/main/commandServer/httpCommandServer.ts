@@ -3,6 +3,12 @@ import http from 'http';
 import path from 'path';
 import { URL } from 'url';
 
+import express from 'express';
+import _ from 'lodash';
+
+import type { Settings } from '@pkg/config/settings';
+import type { TransientSettings } from '@pkg/config/transientSettings';
+import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import mainEvents from '@pkg/main/mainEvents';
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
@@ -11,12 +17,6 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
-import express from 'express';
-import _ from 'lodash';
-
-import type { Settings } from '@pkg/config/settings';
-import type { TransientSettings } from '@pkg/config/transientSettings';
-import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 
 export type ServerState = {
   user: string;

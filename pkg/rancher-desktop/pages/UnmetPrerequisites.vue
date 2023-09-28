@@ -7,7 +7,11 @@
     </ul>
     <p>{{ t('unmetPrerequisites.action') }}</p>
     <div class="button-area">
-      <button data-test="accept-btn" class="role-primary" @click="close">
+      <button
+        data-test="accept-btn"
+        class="role-primary"
+        @click="close"
+      >
         {{ t('unmetPrerequisites.buttonText') }}
       </button>
     </div>
@@ -15,8 +19,9 @@
 </template>
 
 <script lang="ts">
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   layout: 'dialog',

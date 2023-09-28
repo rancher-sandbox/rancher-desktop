@@ -1,8 +1,8 @@
 import os from 'os';
 
-import { spawnFile } from '@pkg/utils/childProcess';
-
 import getWinCertificates from '../win-ca';
+
+import { spawnFile } from '@pkg/utils/childProcess';
 
 const testWin32 = os.platform() === 'win32' ? test : test.skip;
 

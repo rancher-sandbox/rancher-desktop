@@ -2,16 +2,17 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { Settings, ContainerEngine } from '@pkg/config/settings';
-import fetch from '@pkg/utils/fetch';
-import paths from '@pkg/utils/paths';
-import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
 import { test, expect, _electron } from '@playwright/test';
 import _ from 'lodash';
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, getAlternateSetting, startRancherDesktop, teardown } from './utils/TestUtils';
+
+import { Settings, ContainerEngine } from '@pkg/config/settings';
+import fetch from '@pkg/utils/fetch';
+import paths from '@pkg/utils/paths';
+import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 

@@ -1,12 +1,13 @@
 import fs from 'fs';
 import os from 'os';
 
+import _ from 'lodash';
+
 import { getObjectRepresentation, LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import clone from '@pkg/utils/clone';
 import { RecursiveKeys } from '@pkg/utils/typeUtils';
-import _ from 'lodash';
 
 describe('commandLineOptions', () => {
   let prefs: settings.Settings;

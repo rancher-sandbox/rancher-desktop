@@ -10,7 +10,11 @@
         :is-locked="autoUpdateLocked"
       />
     </div>
-    <card v-if="hasUpdate" ref="updateInfo" :show-highlight-border="false">
+    <card
+      v-if="hasUpdate"
+      ref="updateInfo"
+      :show-highlight-border="false"
+    >
       <template #title>
         <div class="type-title">
           <h3>Update Available</h3>
@@ -21,23 +25,41 @@
           <p>
             {{ statusMessage }}
           </p>
-          <p v-if="updateReady" class="update-notification">
+          <p
+            v-if="updateReady"
+            class="update-notification"
+          >
             Restart the application to apply the update.
           </p>
         </div>
-        <details v-if="detailsMessage" class="release-notes">
+        <details
+          v-if="detailsMessage"
+          class="release-notes"
+        >
           <summary>Release Notes</summary>
-          <div ref="releaseNotes" v-html="detailsMessage" />
+          <div
+            ref="releaseNotes"
+            v-html="detailsMessage"
+          />
         </details>
       </template>
       <template #actions>
-        <button v-if="updateReady" ref="applyButton" class="btn role-secondary" :disabled="applying" @click="applyUpdate">
+        <button
+          v-if="updateReady"
+          ref="applyButton"
+          class="btn role-secondary"
+          :disabled="applying"
+          @click="applyUpdate"
+        >
           {{ applyMessage }}
         </button>
         <span v-else></span>
       </template>
     </card>
-    <card v-else-if="unsupportedUpdateAvailable" :show-highlight-border="false">
+    <card
+      v-else-if="unsupportedUpdateAvailable"
+      :show-highlight-border="false"
+    >
       <template #title>
         <div class="type-title">
           <h3>Latest Version Not Supported</h3>
@@ -61,13 +83,14 @@
 </template>
 
 <script lang="ts">
-import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
-import { UpdateState } from '@pkg/main/update';
 import { Card } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
 import Component from 'vue-class-component';
+
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
+import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
 

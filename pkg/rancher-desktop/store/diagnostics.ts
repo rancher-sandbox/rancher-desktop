@@ -1,12 +1,12 @@
-import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 import _ from 'lodash';
 import { GetterTree } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
+import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 interface DiagnosticsState {
   diagnostics: Array<DiagnosticsResult>,

@@ -23,9 +23,10 @@ limitations under the License.
 
 import fs from 'fs';
 
+import yaml from 'yaml';
+
 import { defaultSettings } from '@pkg/config/settings';
 import { RecursiveReadonly } from '@pkg/utils/typeUtils';
-import yaml from 'yaml';
 
 const schemaPath = 'pkg/rancher-desktop/assets/specs/command-api.yaml';
 

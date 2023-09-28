@@ -1,5 +1,6 @@
-import Logging from '@pkg/utils/logging';
 import Electron from 'electron';
+
+import Logging from '@pkg/utils/logging';
 
 const console = Logging.commandLine;
 

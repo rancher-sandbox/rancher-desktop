@@ -1,7 +1,8 @@
-import Logging from '@pkg/utils/logging';
 import fetch from 'node-fetch';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+
+import Logging from '@pkg/utils/logging';
 
 const console = Logging.diagnostics;
 let allowSuccessfulConnectionDiagnosticLog = true;

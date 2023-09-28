@@ -1,7 +1,11 @@
 <template>
   <nav>
     <ul>
-      <li v-for="item in items" :key="item.route" :item="item.route">
+      <li
+        v-for="item in items"
+        :key="item.route"
+        :item="item.route"
+      >
         <NuxtLink
           :class="{'nuxt-link-active': isRouteActive(item.route) }"
           :to="item.route"
@@ -42,7 +46,6 @@
 import os from 'os';
 
 import { NuxtApp } from '@nuxt/types/app';
-import { hexEncode } from '@pkg/utils/string-encode';
 import { BadgeState } from '@rancher/components';
 import { PropType } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
@@ -51,6 +54,7 @@ import NavIconExtension from './NavIconExtension.vue';
 import NavItem from './NavItem.vue';
 
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
+import { hexEncode } from '@pkg/utils/string-encode';
 
 type ExtensionWithUI = ExtensionMetadata & {
   ui: { 'dashboard-tab': { title: string } };

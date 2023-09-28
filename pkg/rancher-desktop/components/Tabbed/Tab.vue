@@ -84,7 +84,11 @@ export default {
   >
     <h2 v-if="shouldShowHeader">
       {{ label }}
-      <i v-if="tooltip" v-tooltip="tooltip" class="icon icon-info-circle icon-lg" />
+      <i
+        v-if="tooltip"
+        v-tooltip="tooltip"
+        class="icon icon-info-circle icon-lg"
+      />
     </h2>
     <slot v-bind="{active}" />
   </section>

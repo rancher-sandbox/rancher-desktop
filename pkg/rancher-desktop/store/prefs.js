@@ -1,7 +1,8 @@
 
+import { set } from 'vue';
+
 import { STEVE } from '@pkg/config/types';
 import { clone } from '@pkg/utils/object';
-import { set } from 'vue';
 
 const definitions = {};
 
@@ -229,7 +230,7 @@ export const mutations = {
 
 export const actions = {
   async set({ dispatch, commit }, opt) {
-    let { key, value } = opt; // eslint-disable-line prefer-const
+    let { key, value } = opt;
     const definition = definitions[key];
     let server;
 

@@ -1,10 +1,10 @@
-import { defaultSettings } from '@pkg/config/settings';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
+import { defaultSettings } from '@pkg/config/settings';
 import type { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 /**
  * State is the type of the state we are maintaining in this store.

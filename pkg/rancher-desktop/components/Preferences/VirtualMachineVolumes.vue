@@ -1,9 +1,10 @@
 <script lang="ts">
 
+import Vue from 'vue';
+
 import MountTypeSelector from '@pkg/components/MountTypeSelector.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import Vue from 'vue';
 
 import type { PropType } from 'vue';
 

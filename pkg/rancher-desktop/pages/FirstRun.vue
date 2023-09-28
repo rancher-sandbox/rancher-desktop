@@ -22,7 +22,10 @@
             - On macOS Chrome / Electron can't style the <option> elements.
             - We do the best we can by instead using <optgroup> for a recommended section.
             -->
-        <optgroup v-if="recommendedVersions.length > 0" label="Recommended Versions">
+        <optgroup
+          v-if="recommendedVersions.length > 0"
+          label="Recommended Versions"
+        >
           <option
             v-for="item in recommendedVersions"
             :key="item.version.version"
@@ -32,7 +35,10 @@
             {{ versionName(item) }}
           </option>
         </optgroup>
-        <optgroup v-if="nonRecommendedVersions.length > 0" label="Other Versions">
+        <optgroup
+          v-if="nonRecommendedVersions.length > 0"
+          label="Other Versions"
+        >
           <option
             v-for="item in nonRecommendedVersions"
             :key="item.version.version"
@@ -82,6 +88,10 @@
 <script lang="ts">
 import os from 'os';
 
+import _ from 'lodash';
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
 import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
@@ -89,13 +99,9 @@ import RdSelect from '@pkg/components/RdSelect.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { defaultSettings } from '@pkg/config/settings';
+import type { ContainerEngine } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import _ from 'lodash';
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
-
-import type { ContainerEngine } from '@pkg/config/settings';
 
 export default Vue.extend({
   components: {

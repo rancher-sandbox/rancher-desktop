@@ -1,9 +1,10 @@
 <script>
-import { addObject, removeObject, findBy } from '@pkg/utils/array';
-import { sortBy } from '@pkg/utils/sort';
 import findIndex from 'lodash/findIndex';
 import head from 'lodash/head';
 import isEmpty from 'lodash/isEmpty';
+
+import { addObject, removeObject, findBy } from '@pkg/utils/array';
+import { sortBy } from '@pkg/utils/sort';
 
 export default {
   name: 'Tabbed',
@@ -244,15 +245,30 @@ export default {
           {{ tab.labelDisplay }}
         </a>
       </li>
-      <li v-if="sideTabs && !sortedTabs.length" class="tab disabled">
+      <li
+        v-if="sideTabs && !sortedTabs.length"
+        class="tab disabled"
+      >
         <a href="#">(None)</a>
       </li>
-      <ul v-if="sideTabs && showTabsAddRemove" class="tab-list-footer">
+      <ul
+        v-if="sideTabs && showTabsAddRemove"
+        class="tab-list-footer"
+      >
         <li>
-          <button type="button" class="btn bg-transparent" @click="tabAddClicked">
+          <button
+            type="button"
+            class="btn bg-transparent"
+            @click="tabAddClicked"
+          >
             <i class="icon icon-plus icon-lg" />
           </button>
-          <button type="button" class="btn bg-transparent" :disabled="!sortedTabs.length" @click="tabRemoveClicked">
+          <button
+            type="button"
+            class="btn bg-transparent"
+            :disabled="!sortedTabs.length"
+            @click="tabRemoveClicked"
+          >
             <i class="icon icon-minus icon-lg" />
           </button>
         </li>

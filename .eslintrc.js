@@ -235,6 +235,9 @@ Object.assign(module.exports.rules, {
   'import/first':                    'error',
   'valid-typeof':                    'error',
   '@typescript-eslint/no-namespace': 'error',
+
+  // destructuring: don't error if `a` is reassigned, but `b` is never reassigned
+  'prefer-const': ['error', { destructuring: 'all' }],
 });
 module.exports.rules['key-spacing'][1].align.mode = 'strict';
 

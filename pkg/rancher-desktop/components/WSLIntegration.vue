@@ -1,6 +1,9 @@
 <template>
   <section class="wsl-integrations">
-    <h3 v-if="description" v-text="description" />
+    <h3
+      v-if="description"
+      v-text="description"
+    />
     <div
       v-for="item of integrationsList"
       :key="item.name"
