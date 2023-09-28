@@ -2,12 +2,13 @@ import { Server } from 'http';
 import net from 'net';
 import path from 'path';
 
-import Logging from '@pkg/utils/logging';
-import paths from '@pkg/utils/paths';
 import express from 'express';
 import { createProxyMiddleware, Options, RequestHandler } from 'http-proxy-middleware';
 
 import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
+
+import Logging from '@pkg/utils/logging';
+import paths from '@pkg/utils/paths';
 
 const ProxyKeys = ['/k8s', '/pp', '/api', '/apis', '/v1', '/v3', '/v3-public', '/api-ui', '/meta', '/v1-*'] as const;
 

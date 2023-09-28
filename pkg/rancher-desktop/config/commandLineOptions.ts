@@ -1,5 +1,7 @@
 import { join } from 'path';
 
+import _ from 'lodash';
+
 import { LockedSettingsType, Settings } from '@pkg/config/settings';
 import { save, turnFirstRunOff } from '@pkg/config/settingsImpl';
 import { TransientSettings } from '@pkg/config/transientSettings';
@@ -7,7 +9,6 @@ import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursiveKeys, RecursivePartial } from '@pkg/utils/typeUtils';
-import _ from 'lodash';
 
 const console = Logging.settings;
 

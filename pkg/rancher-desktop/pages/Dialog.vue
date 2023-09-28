@@ -1,9 +1,10 @@
 <script lang="ts">
 import os from 'os';
 
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
+
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name:       'rd-dialog',
@@ -45,19 +46,34 @@ export default Vue.extend({
 
 <template>
   <div class="dialog-container">
-    <div v-if="message" class="message">
+    <div
+      v-if="message"
+      class="message"
+    >
       <slot name="message">
         {{ message }}
       </slot>
     </div>
-    <div v-if="detail" class="detail">
+    <div
+      v-if="detail"
+      class="detail"
+    >
       <slot name="detail">
-        <span class="detail-span" v-html="detail" />
+        <span
+          class="detail-span"
+          v-html="detail"
+        />
       </slot>
     </div>
-    <div v-if="checkboxLabel" class="checkbox">
+    <div
+      v-if="checkboxLabel"
+      class="checkbox"
+    >
       <slot name="checkbox">
-        <checkbox v-model="checkboxChecked" :label="checkboxLabel" />
+        <checkbox
+          v-model="checkboxChecked"
+          :label="checkboxLabel"
+        />
       </slot>
     </div>
     <div

@@ -27,11 +27,12 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
-import { defined } from '@pkg/utils/typeUtils';
 import { Octokit } from 'octokit';
 import yaml from 'yaml';
 
 import { simpleSpawn } from './simple_process';
+
+import { defined } from '@pkg/utils/typeUtils';
 
 /** Read input from the environment; throws an error if unset. */
 function getInput(name: string) {

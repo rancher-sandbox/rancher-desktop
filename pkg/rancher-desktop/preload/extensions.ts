@@ -3,11 +3,11 @@
  * It implements the "ddClient" API.
  */
 
-import clone from '@pkg/utils/clone';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import Electron from 'electron';
 
 import type { SpawnOptions } from '@pkg/main/extensions/types';
+import clone from '@pkg/utils/clone';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 import type { v1 } from '@docker/extension-api-client-types';
 
@@ -277,11 +277,7 @@ ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
   delete outstandingProcesses[id];
 });
 
-/**
- * TODO: #5298 investigate removal after upgrading eslint
- * During the nuxt removal, import/namespace started failing. This might work
- * properly again after updating to the latest version of eslint
- */
+// During the nuxt removal, import/namespace started failing
 // eslint-disable-next-line import/namespace
 class Client implements v1.DockerDesktopClient {
   constructor(info: {arch: string, hostname: string}) {

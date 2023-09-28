@@ -1,8 +1,9 @@
 <script>
 
+import { Banner } from '@rancher/components';
+
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import { Banner } from '@rancher/components';
 
 export default {
   name: 'images-output-window',

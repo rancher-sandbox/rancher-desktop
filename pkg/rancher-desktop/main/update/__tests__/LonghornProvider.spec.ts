@@ -1,8 +1,9 @@
-import { spawnFile } from '@pkg/utils/childProcess';
-import fetch from '@pkg/utils/fetch';
 import semver from 'semver';
 
 import { queryUpgradeResponder, getWslVersion, UpgradeResponderRequestPayload } from '../LonghornProvider';
+
+import { spawnFile } from '@pkg/utils/childProcess';
+import fetch from '@pkg/utils/fetch';
 
 const itWindows = process.platform === 'win32' ? it : it.skip;
 const itUnix = process.platform !== 'win32' ? it : it.skip;

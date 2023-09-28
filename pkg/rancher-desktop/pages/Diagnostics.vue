@@ -1,8 +1,9 @@
 <script lang="ts">
 
-import DiagnosticsBody from '@pkg/components/DiagnosticsBody.vue';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+
+import DiagnosticsBody from '@pkg/components/DiagnosticsBody.vue';
 
 export default Vue.extend({
   name:       'diagnostics',
@@ -25,5 +26,8 @@ export default Vue.extend({
 </script>
 
 <template>
-  <diagnostics-body :rows="diagnostics" :time-last-run="timeLastRun"></diagnostics-body>
+  <diagnostics-body
+    :rows="diagnostics"
+    :time-last-run="timeLastRun"
+  ></diagnostics-body>
 </template>

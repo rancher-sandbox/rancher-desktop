@@ -1,7 +1,8 @@
 
+import { shell } from 'electron';
+
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { parseDocsVersion } from '@pkg/utils/version';
-import { shell } from 'electron';
 
 type Paths = Record<string, string>;
 

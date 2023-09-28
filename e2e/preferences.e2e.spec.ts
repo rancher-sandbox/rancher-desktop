@@ -1,11 +1,12 @@
 import os from 'os';
 
-import { reopenLogs } from '@pkg/utils/logging';
 import { test, expect, _electron } from '@playwright/test';
 
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
 import { createDefaultSettings, startRancherDesktop, teardown, tool } from './utils/TestUtils';
+
+import { reopenLogs } from '@pkg/utils/logging';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 

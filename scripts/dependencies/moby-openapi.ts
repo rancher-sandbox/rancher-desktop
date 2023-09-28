@@ -1,11 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 
-import { DownloadContext, Dependency, getOctokit } from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
 import semver from 'semver';
 
 import { download } from '../lib/download';
+
+import { DownloadContext, Dependency, getOctokit } from 'scripts/lib/dependencies';
+import { simpleSpawn } from 'scripts/simple_process';
 
 // This downloads the moby openAPI specification (for WSL-helper) and generates
 // ./src/go/wsl-helper/pkg/dockerproxy/models/...

@@ -1,6 +1,7 @@
 <script lang="ts">
-import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
 import Vue from 'vue';
+
+import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
 
 export default Vue.extend({
   name:       'rd-header',
@@ -15,7 +16,10 @@ export default Vue.extend({
 
 <template>
   <header>
-    <div alt="Rancher Desktop" class="logo">
+    <div
+      alt="Rancher Desktop"
+      class="logo"
+    >
       <img src="@pkg/assets/images/logo.svg">
     </div>
     <div class="header-actions">

@@ -28,7 +28,10 @@ export default Vue.extend({
   <div class="empty-state">
     <div class="empty-state-icon">
       <slot name="icon">
-        <span class="icon" :class="icon"></span>
+        <span
+          class="icon"
+          :class="icon"
+        ></span>
       </slot>
     </div>
     <div class="empty-state-heading">
@@ -41,7 +44,10 @@ export default Vue.extend({
         {{ body }}
       </slot>
     </div>
-    <div v-if="hasPrimaryActionSlot" class="empty-state-primary-action">
+    <div
+      v-if="hasPrimaryActionSlot"
+      class="empty-state-primary-action"
+    >
       <slot name="primary-action"></slot>
     </div>
   </div>

@@ -1,6 +1,7 @@
 <script lang="ts">
-import PreferencesNavItem from '@pkg/components/Preferences/ModalNavItem.vue';
 import Vue from 'vue';
+
+import PreferencesNavItem from '@pkg/components/Preferences/ModalNavItem.vue';
 
 export default Vue.extend({
   name:       'preferences-nav',

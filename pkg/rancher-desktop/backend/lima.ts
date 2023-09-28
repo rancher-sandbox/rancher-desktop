@@ -10,6 +10,23 @@ import path from 'path';
 import stream from 'stream';
 import util from 'util';
 
+import Electron from 'electron';
+import merge from 'lodash/merge';
+import omit from 'lodash/omit';
+import zip from 'lodash/zip';
+import semver from 'semver';
+import sudo from 'sudo-prompt';
+import tar from 'tar-stream';
+import yaml from 'yaml';
+
+import {
+  Architecture, BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
+} from './backend';
+import BackendHelper from './backendHelper';
+import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
+import * as K8s from './k8s';
+import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
+
 import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 import DEFAULT_CONFIG from '@pkg/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@pkg/assets/networks-config.yaml';
@@ -32,22 +49,6 @@ import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 import { openSudoPrompt } from '@pkg/window';
-import Electron from 'electron';
-import merge from 'lodash/merge';
-import omit from 'lodash/omit';
-import zip from 'lodash/zip';
-import semver from 'semver';
-import sudo from 'sudo-prompt';
-import tar from 'tar-stream';
-import yaml from 'yaml';
-
-import {
-  Architecture, BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
-} from './backend';
-import BackendHelper from './backendHelper';
-import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
-import * as K8s from './k8s';
-import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 /* eslint @typescript-eslint/switch-exhaustiveness-check: "error" */
 

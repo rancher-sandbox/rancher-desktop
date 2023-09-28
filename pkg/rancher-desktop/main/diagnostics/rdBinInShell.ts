@@ -1,14 +1,15 @@
 import os from 'os';
 import path from 'path';
 
+import which from 'which';
+
+import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
+
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import mainEvents from '@pkg/main/mainEvents';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
-import which from 'which';
-
-import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
 const console = Logging.diagnostics;
 const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH:';

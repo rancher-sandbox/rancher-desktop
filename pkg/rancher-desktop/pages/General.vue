@@ -37,12 +37,13 @@
 
 <script>
 
+import _ from 'lodash';
+
 import TelemetryOptIn from '@pkg/components/TelemetryOptIn.vue';
 import UpdateStatus from '@pkg/components/UpdateStatus.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { networkStatus } from '@pkg/utils/networks';
-import _ from 'lodash';
 
 export default {
   name:       'General',

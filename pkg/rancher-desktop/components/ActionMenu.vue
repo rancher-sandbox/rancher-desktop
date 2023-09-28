@@ -1,8 +1,9 @@
 <script>
-import { isAlternate } from '@pkg/utils/platform';
-import { AUTO, CENTER, fitOnScreen } from '@pkg/utils/position';
 import $ from 'jquery';
 import { mapGetters } from 'vuex';
+
+import { isAlternate } from '@pkg/utils/platform';
+import { AUTO, CENTER, fitOnScreen } from '@pkg/utils/position';
 
 const HIDDEN = 'hide';
 const CALC = 'calculate';
@@ -96,13 +97,31 @@ export default {
 
 <template>
   <div v-if="showing">
-    <div class="background" @click="hide" @contextmenu.prevent></div>
-    <ul class="list-unstyled menu" :style="style">
-      <li v-for="opt in options" :key="opt.action" :class="{divider: opt.divider}" @click="execute(opt, $event)">
-        <i v-if="opt.icon" :class="{icon: true, [opt.icon]: true}" />
+    <div
+      class="background"
+      @click="hide"
+      @contextmenu.prevent
+    ></div>
+    <ul
+      class="list-unstyled menu"
+      :style="style"
+    >
+      <li
+        v-for="opt in options"
+        :key="opt.action"
+        :class="{divider: opt.divider}"
+        @click="execute(opt, $event)"
+      >
+        <i
+          v-if="opt.icon"
+          :class="{icon: true, [opt.icon]: true}"
+        />
         <span v-html="opt.label" />
       </li>
-      <li v-if="!hasOptions(options)" class="no-actions">
+      <li
+        v-if="!hasOptions(options)"
+        class="no-actions"
+      >
         <span v-t="'sortableTable.noActions'" />
       </li>
     </ul>

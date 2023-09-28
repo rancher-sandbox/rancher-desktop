@@ -33,7 +33,10 @@
         </div>
       </template>
       <template #col:listenPort="{row}">
-        <div v-if="serviceBeingEditedIs(row)" class="listen-port-div">
+        <div
+          v-if="serviceBeingEditedIs(row)"
+          class="listen-port-div"
+        >
           <input
             v-focus
             type="number"
@@ -50,7 +53,10 @@
         </div>
       </template>
       <template #row-actions="{row}">
-        <div v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)" class="action-div">
+        <div
+          v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)"
+          class="action-div"
+        >
           <button
             class="btn btn-sm role-tertiary"
             @click="emitEditPortForward(row.row)"
@@ -58,7 +64,10 @@
             Forward
           </button>
         </div>
-        <div v-else-if="serviceBeingEditedIs(row.row)" class="action-div">
+        <div
+          v-else-if="serviceBeingEditedIs(row.row)"
+          class="action-div"
+        >
           <button
             class="btn btn-sm role-tertiary btn-icon"
             @click="emitCancelEditPortForward(row.row)"
@@ -72,7 +81,10 @@
             <span class="icon icon-checkmark icon-lg" />
           </button>
         </div>
-        <div v-else class="action-div">
+        <div
+          v-else
+          class="action-div"
+        >
           <button
             class="btn btn-sm role-tertiary"
             @click="emitCancelPortForward(row.row)"
@@ -86,10 +98,11 @@
 </template>
 
 <script lang="ts">
-import * as K8s from '@pkg/backend/k8s';
-import SortableTable from '@pkg/components/SortableTable/index.vue';
 import { Banner, Checkbox } from '@rancher/components';
 import Vue from 'vue';
+
+import * as K8s from '@pkg/backend/k8s';
+import SortableTable from '@pkg/components/SortableTable/index.vue';
 
 import type { PropType } from 'vue';
 

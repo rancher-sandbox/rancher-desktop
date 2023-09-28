@@ -22,7 +22,10 @@
             {{ port }}
           </a>
 
-          <div v-if="shouldHaveDropdown(row.Ports)" class="dropdown">
+          <div
+            v-if="shouldHaveDropdown(row.Ports)"
+            class="dropdown"
+          >
             <span>
               {{ t('containers.manage.table.showMore') }}
             </span>

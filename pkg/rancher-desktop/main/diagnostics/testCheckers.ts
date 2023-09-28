@@ -1,6 +1,6 @@
-import { isDevEnv } from '@pkg/utils/environment';
-
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+
+import { isDevEnv } from '@pkg/utils/environment';
 
 /**
  * Sample tests for testing

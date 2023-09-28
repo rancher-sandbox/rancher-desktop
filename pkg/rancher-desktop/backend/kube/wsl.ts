@@ -3,6 +3,12 @@ import path from 'path';
 import timers from 'timers';
 import util from 'util';
 
+import semver from 'semver';
+
+import { KubeClient } from './client';
+import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
+import WSLBackend, { Action } from '../wsl';
+
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import { BackendSettings, RestartReasons } from '@pkg/backend/backend';
 import BackendHelper from '@pkg/backend/backendHelper';
@@ -14,11 +20,6 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { showMessageBox } from '@pkg/window';
-import semver from 'semver';
-
-import { KubeClient } from './client';
-import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
-import WSLBackend, { Action } from '../wsl';
 
 const console = Logging.kube;
 

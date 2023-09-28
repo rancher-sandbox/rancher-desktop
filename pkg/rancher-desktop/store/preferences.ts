@@ -1,11 +1,11 @@
-import { CURRENT_SETTINGS_VERSION, defaultSettings, Settings, LockedSettingsType } from '@pkg/config/settings';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
+import { CURRENT_SETTINGS_VERSION, defaultSettings, Settings, LockedSettingsType } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { GetterTree } from 'vuex';
 

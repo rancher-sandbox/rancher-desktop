@@ -51,8 +51,15 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="bar" :class="{indeterminate}" :style="barStyle">
-    <div class="indicator" :style="indicatorStyle"></div>
+  <div
+    class="bar"
+    :class="{indeterminate}"
+    :style="barStyle"
+  >
+    <div
+      class="indicator"
+      :style="indicatorStyle"
+    ></div>
   </div>
 </template>
 

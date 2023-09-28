@@ -27,9 +27,6 @@ import process from 'process';
 import stream from 'stream';
 
 import { findHomeDir } from '@kubernetes/client-node';
-import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
-import { spawnFile } from '@pkg/utils/childProcess';
-import paths from '@pkg/utils/paths';
 import { expect, test, _electron } from '@playwright/test';
 import fetch from 'node-fetch';
 
@@ -37,6 +34,10 @@ import { NavPage } from './pages/nav-page';
 import {
   createDefaultSettings, getFullPathForTool, retry, startRancherDesktop, teardown, tool,
 } from './utils/TestUtils';
+
+import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
+import { spawnFile } from '@pkg/utils/childProcess';
+import paths from '@pkg/utils/paths';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 

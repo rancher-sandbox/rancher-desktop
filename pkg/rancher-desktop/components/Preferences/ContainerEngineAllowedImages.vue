@@ -1,12 +1,13 @@
 <script lang="ts">
 
+import { StringList } from '@rancher/components';
+import Vue, { VueConstructor } from 'vue';
+import { mapGetters } from 'vuex';
+
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import { StringList } from '@rancher/components';
-import Vue, { VueConstructor } from 'vue';
-import { mapGetters } from 'vuex';
 
 import type { PropType } from 'vue';
 

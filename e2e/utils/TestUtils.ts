@@ -6,14 +6,15 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
+import { expect, _electron, ElectronApplication, Locator } from '@playwright/test';
+import _, { GetFieldType } from 'lodash';
+import plist from 'plist';
+
 import { defaultSettings, LockedSettingsType, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
-import { expect, _electron, ElectronApplication, Locator } from '@playwright/test';
-import _, { GetFieldType } from 'lodash';
-import plist from 'plist';
 
 let testInfo: undefined | {
   testPath: string;

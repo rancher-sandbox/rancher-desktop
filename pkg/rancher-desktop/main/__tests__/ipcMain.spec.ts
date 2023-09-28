@@ -1,8 +1,9 @@
 import events from 'events';
 
+import Electron from 'electron';
+
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import { Log } from '@pkg/utils/logging';
-import Electron from 'electron';
 
 type Handler = (event: Electron.IpcMainInvokeEvent, ...args: any) => Promise<unknown>;
 

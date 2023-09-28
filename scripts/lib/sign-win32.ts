@@ -7,8 +7,9 @@ import path from 'path';
 
 import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsCodeSign';
 import defaults from 'lodash/defaultsDeep';
-import { simpleSpawn } from 'scripts/simple_process';
 import yaml from 'yaml';
+
+import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * Mandatory configuration for Windows.

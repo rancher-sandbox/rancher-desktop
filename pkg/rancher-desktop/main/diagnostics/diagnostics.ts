@@ -1,8 +1,8 @@
 
+import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
+
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
-
-import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
 const console = Logging.diagnostics;
 
@@ -23,8 +23,6 @@ export type DiagnosticsResult = DiagnosticsCheckerResult & {
  * clients over the HTTP API.
  */
 export type DiagnosticsResultCollection = {
-  // The snake_case naming convention follows the structure of the API response
-  // eslint-disable-next-line camelcase
   last_update: string,
   checks: Array<DiagnosticsResult>,
 };

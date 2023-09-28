@@ -69,7 +69,6 @@ export function parseSi(inValue, opt) {
 
   inValue = inValue.replace(/,/g, '');
 
-  // eslint-disable-next-line prefer-const
   let [, valStr, unit, incStr] = inValue.match(/^([0-9.-]+)\s*([^0-9.-]?)([^0-9.-]?)/);
   const val = parseFloat(valStr);
 

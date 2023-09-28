@@ -2,9 +2,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { Log } from '@pkg/utils/logging';
-
 import * as childProcess from '../childProcess';
+
+import { Log } from '@pkg/utils/logging';
 
 describe(childProcess.spawnFile, () => {
   function makeArg(fn: () => void) {

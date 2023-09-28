@@ -1,5 +1,7 @@
 <script lang="ts">
 
+import Vue from 'vue';
+
 import PreferencesBodyApplication from '@pkg/components/Preferences/BodyApplication.vue';
 import PreferencesBodyContainerEngine from '@pkg/components/Preferences/BodyContainerEngine.vue';
 import PreferencesBodyKubernetes from '@pkg/components/Preferences/BodyKubernetes.vue';
@@ -7,7 +9,6 @@ import PreferencesBodyVirtualMachine from '@pkg/components/Preferences/BodyVirtu
 import PreferencesBodyWsl from '@pkg/components/Preferences/BodyWsl.vue';
 import PreferencesHelp from '@pkg/components/Preferences/Help.vue';
 import { Settings } from '@pkg/config/settings';
-import Vue from 'vue';
 
 import type { PropType } from 'vue';
 

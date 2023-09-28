@@ -1,5 +1,8 @@
 <script lang="ts">
 
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
 import { VersionEntry } from '@pkg/backend/k8s';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
@@ -8,8 +11,6 @@ import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
-import Vue from 'vue';
-import { mapGetters } from 'vuex';
 
 import type { PropType } from 'vue';
 
@@ -119,7 +120,10 @@ export default Vue.extend({
             - On macOS Chrome / Electron can't style the <option> elements.
             - We do the best we can by instead using <optgroup> for a recommended section.
             -->
-        <optgroup v-if="recommendedVersions.length > 0" label="Recommended Versions">
+        <optgroup
+          v-if="recommendedVersions.length > 0"
+          label="Recommended Versions"
+        >
           <option
             v-for="item in recommendedVersions"
             :key="item.version.version"
@@ -129,7 +133,10 @@ export default Vue.extend({
             {{ versionName(item) }}
           </option>
         </optgroup>
-        <optgroup v-if="nonRecommendedVersions.length > 0" label="Other Versions">
+        <optgroup
+          v-if="nonRecommendedVersions.length > 0"
+          label="Other Versions"
+        >
           <option
             v-for="item in nonRecommendedVersions"
             :key="item.version.version"

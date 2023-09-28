@@ -3,14 +3,15 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import {
-  DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
-} from 'scripts/lib/dependencies';
 import semver from 'semver';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
+
+import {
+  DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
+} from 'scripts/lib/dependencies';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
