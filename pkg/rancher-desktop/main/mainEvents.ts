@@ -118,7 +118,7 @@ interface MainEventNames {
    * user from making changes to settings, and possibly prevents other actions
    * that could mess with snapshot operations.
    */
-  'locked-update'(locked: boolean): void;
+  'backend-locked-update'(locked: string): void;
 }
 
 /**

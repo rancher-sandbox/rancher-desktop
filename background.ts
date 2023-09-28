@@ -64,6 +64,8 @@ if (!Electron.app.requestSingleInstanceLock()) {
 
 clearLoggingDirectory();
 
+const SNAPSHOT_OPERATION = "Snapshot operation in progress";
+
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
@@ -82,7 +84,7 @@ let noModalDialogs = false;
 // Indicates whether the UI should be locked, settings changes should be disallowed
 // and possibly other things should be disallowed. As of the time of writing,
 // set to true when a snapshot is being created or restored.
-let locked = false;
+let backendIsLocked = "";
 let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
 /**
@@ -245,8 +247,10 @@ Electron.app.whenReady().then(async() => {
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
 
-    locked = fs.existsSync(path.join(paths.appHome, 'snapshot.lock'));
-    mainEvents.emit('locked-update', locked);
+    if (fs.existsSync(path.join(paths.appHome, 'backend.lock'))) {
+      backendIsLocked = SNAPSHOT_OPERATION;
+    }
+    mainEvents.emit('backend-locked-update', backendIsLocked);
 
     mainEvents.emit('settings-update', cfg);
 
@@ -1241,13 +1245,13 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   getBackendState(): BackendState {
     return {
       vmState: k8smanager.state,
-      locked,
+      locked: !!backendIsLocked,
     };
   }
 
   async setBackendState(state: BackendState): Promise<void> {
-    locked = state.locked;
-    mainEvents.emit('locked-update', locked);
+    backendIsLocked = state.locked ? SNAPSHOT_OPERATION : "";
+    mainEvents.emit('backend-locked-update', backendIsLocked);
     switch (state.vmState) {
     case State.STARTED:
       cfg = settingsImpl.load(deploymentProfiles);

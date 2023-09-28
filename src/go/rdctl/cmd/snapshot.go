@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const backendLockName = "backend.lock"
+
 type cobraFunc func(cmd *cobra.Command, args []string) error
 
 var snapshotCmd = &cobra.Command{
@@ -51,10 +53,10 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
-		if err := createSnapshotLock(paths); err != nil {
+		if err := createBackendLock(paths); err != nil {
 			return err
 		}
-		defer removeSnapshotLock(paths.AppHome)
+		defer removeBackendLock(paths.AppHome)
 
 		connectionInfo, err := config.GetConnectionInfo()
 		if errors.Is(err, os.ErrNotExist) {
@@ -121,29 +123,29 @@ func waitForVMState(rdClient client.RDClient, desiredState string) error {
 	return fmt.Errorf("timed out waiting for backend state %q", desiredState)
 }
 
-func createSnapshotLock(paths p.Paths) error {
+func createBackendLock(paths p.Paths) error {
 	if err := os.MkdirAll(paths.AppHome, 0o755); err != nil {
-		return fmt.Errorf("failed to create snapshot lock parent directory: %w", err)
+		return fmt.Errorf("failed to create backend lock parent directory: %w", err)
 	}
 	// Create an empty file whose presence signifies that the
 	// backend is locked.
-	lockPath := filepath.Join(paths.AppHome, "snapshot.lock")
+	lockPath := filepath.Join(paths.AppHome, backendLockName)
 	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
 	if errors.Is(err, os.ErrExist) {
-		return errors.New("snapshot lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")
+		return errors.New("backend lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")
 	} else if err != nil {
-		return fmt.Errorf("unexpected error acquiring snapshot lock: %w", err)
+		return fmt.Errorf("unexpected error acquiring backend lock: %w", err)
 	}
 	if err := file.Close(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to close snapshot lock file descriptor: %s", err)
+		fmt.Fprintf(os.Stderr, "failed to close backend lock file descriptor: %s", err)
 	}
 	return nil
 }
 
-func removeSnapshotLock(appHome string) error {
-	lockPath := filepath.Join(appHome, "snapshot.lock")
+func removeBackendLock(appHome string) error {
+	lockPath := filepath.Join(appHome, backendLockName)
 	if err := os.RemoveAll(lockPath); err != nil {
-		return fmt.Errorf("failed to remove snapshot lock: %w", err)
+		return fmt.Errorf("failed to remove backend lock: %w", err)
 	}
 	return nil
 }

@@ -20,7 +20,7 @@ not have to use it under normal circumstances.`,
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
-		return removeSnapshotLock(paths.AppHome)
+		return removeBackendLock(paths.AppHome)
 	},
 }
 
