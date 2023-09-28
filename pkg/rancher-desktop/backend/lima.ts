@@ -823,10 +823,24 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   /**
    * Run `limactl` with the given arguments.
    */
-  async lima(this: Readonly<this>, ...args: string[]): Promise<void> {
+  async lima(...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
+    // XXX Hack: Make a copy of limactl to see if that works around mcxalr(1)
+    // Note that we need to copy lima-guestagent to the same directory so that
+    // limactl can find it. See also:
+    // https://pkg.go.dev/github.com/lima-vm/lima@v0.17.2/pkg/usrlocalsharelima#Dir
+    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'limactl-'));
+
     try {
-      const { stdout, stderr } = await childProcess.spawnFile(LimaBackend.limactl, args,
+      const limactl = path.join(workDir, path.basename(LimaBackend.limactl));
+
+      await fs.promises.copyFile(LimaBackend.limactl, limactl, fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
+      await fs.promises.copyFile(
+        path.join(paths.resources, os.platform(), 'lima', 'share', 'lima', `lima-guestagent.Linux-${ this.arch }`),
+        path.join(workDir, `lima-guestagent.Linux-${ this.arch }`),
+        fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
+
+      const { stdout, stderr } = await childProcess.spawnFile(limactl, args,
         { env: LimaBackend.limaEnv, stdio: ['ignore', 'pipe', 'pipe'] });
       const formatBreak = stderr || stdout ? '\n' : '';
 
@@ -834,6 +848,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     } catch (ex) {
       console.error(`> limactl ${ args.join(' ') }\n$`, ex);
       throw ex;
+    } finally {
+      await fs.promises.rm(workDir, { recursive: true });
     }
   }
 
