@@ -450,7 +450,7 @@ describe(SettingsValidator, () => {
         errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern1", "Pattern2"'],
       });
     });
-    it('ignores whitespace duplicates', () => {
+    it('complains about multiple duplicates that contain only whitespace lengths', () => {
       const input: RecursivePartial<settings.Settings> = {
         containerEngine: {
           allowedImages: {
@@ -462,8 +462,8 @@ describe(SettingsValidator, () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, input);
 
       expect({ needToUpdate, errors }).toEqual({
-        needToUpdate: true,
-        errors:       [],
+        needToUpdate: false,
+        errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "", "\t", "  "'],
       });
     });
     it('allows exactly one whitespace value', () => {
