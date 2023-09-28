@@ -6,6 +6,7 @@ set -o xtrace
 : ${OWNER:=rancher-sandbox}
 : ${REPO:=rancher-desktop}
 : ${BRANCH:=main}
+: ${PR:=}
 : ${WORKFLOW:=Package}
 : ${RESULTS:=30}
 
@@ -14,6 +15,11 @@ set -o xtrace
 if ! [[ $RD_LOCATION =~ ^(system|user)$ ]]; then
     echo "RD_LOCATION must be either 'system' or 'user'"
     exit 1
+fi
+
+# Get branch name for PR
+if [[ -n $PR ]]; then
+    BRANCH=$(gh api "repos/$OWNER/$REPO/pulls/$PR" --jq .head.ref)
 fi
 
 # Get a list of all successful workflow runs for this repo.
@@ -73,7 +79,7 @@ fi
 
 unzip -o "$TMPDIR/$FILENAME" "$ZIP" -d "$TMPDIR"
 
-# Extract from inner archive into ~/Applications
+# Extract from inner archive into /Applications
 DEST="/Applications"
 if [ "$RD_LOCATION" = "user" ]; then
     DEST="$HOME/$DEST"
@@ -85,10 +91,11 @@ unzip -o "$TMPDIR/$ZIP" "$APP/*" -d "$DEST" >/dev/null
 
 download_artifact "bats.tar.gz"
 
-# Despite the name the downloaded bats.tar.gz is actually a ZIP file; extract in place
+# Despite the name, the downloaded bats.tar.gz is actually a ZIP file; extract in place
 unzip -o "$TMPDIR/bats.tar.gz" bats.tar.gz -d "$TMPDIR"
 
 # Unpack bats into $TMPDIR/bats
-rm -rf "$TMPDIR/bats"
-mkdir "$TMPDIR/bats"
-tar xfz "$TMPDIR/bats.tar.gz" -C "$TMPDIR/bats"
+DEST="$TMPDIR/bats"
+rm -rf "$DEST"
+mkdir "$DEST"
+tar xfz "$TMPDIR/bats.tar.gz" -C "$DEST"
