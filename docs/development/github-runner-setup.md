@@ -66,3 +66,45 @@ Icon | Context
 [Scoop]: https://github.com/ScoopInstaller/Install#typical-installation
 [requires admin]: https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#windows
 [instructions]: https://github.com/rancher-sandbox/rancher-desktop/settings/actions/runners/new?arch=x64&os=win
+
+## Linux
+
+### Prerequisites
+
+- A host machine with `qemu-system-x86_64` (ideally with working KVM
+  acceleration).
+- A minimum of 6GB of RAM per ephemeral worker (plus overhead).
+
+### Configuration
+
+1. Build the image found in [`/src/disk-images/github-runner-linux`], or
+   download the image built via GitHub Actions.
+1. Build [`/src/go/github-runner-monitor`], or download the executable built via
+   GitHub Actions.
+1. Generate a GitHub access token (classic coarse-grained) with `repo`
+   privileges.
+1. On the runner host, execute the monitor:
+   ```
+   /usr/bin/env GITHUB_AUTH_TOKEN=ghp_000000000000000000 ./github-runner-monitor
+   ```
+   Use `./github-runner-monitor --help` to see options available, such as the
+   number of CPUs / amount of RAM to allocate per runner, or the number of
+   runners to maintain at a time.
+1. Alternatively, set up a systemd unit or similar, possibly based on:
+   ```ini
+   [Unit]
+   Description=GitHub Runner Monitor
+   After=network.target
+
+   [Service]
+   Type=simple
+   TimeoutStopSec=5min
+   Environment="GITHUB_AUTH_TOKEN=ghp_000000000000000000"
+   ExecStart=/usr/local/bin/github-runner-monitor
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+[`/src/disk-images/github-runner-linux`]: /src/disk-images/github-runner-linux
+[`/src/go/github-runner-monitor`]: /src/go/github-runner-monitor

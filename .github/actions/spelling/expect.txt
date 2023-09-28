@@ -258,6 +258,7 @@ gazornaanplatt
 gcs
 GENERALIZEDTIME
 getwindowid
+ghp
 gitmodules
 gitrepo
 gke
@@ -336,12 +337,14 @@ itp
 iwr
 jan
 jetstack
+jitconfig
 joycelin
 jpe
 jsmith
 julianb
 karl
 Kaspersky
+kata
 kde
 KDM
 keychain
@@ -502,6 +505,7 @@ nsis
 NSISUNINSTALLCOMMAND
 nspr
 nss
+nullglob
 nuxt
 nuxtjs
 nxt
@@ -544,6 +548,7 @@ pdp
 persistentvolume
 persistentvolumeclaim
 PFlags
+PGID
 pgrep
 pidfile
 pids
@@ -567,6 +572,8 @@ portforward
 portmap
 portproxy
 postrotate
+Powerdown
+poweroff
 PQgrl
 prakhar
 prebuilds
@@ -589,6 +596,7 @@ pushable
 pvc
 PWSTR
 qcow
+qmp
 rackspace
 rancherdesktop
 rancherkubernetesengine
@@ -763,6 +771,7 @@ vde
 ventura
 vertificate
 vfoo
+vhdx
 virt
 virtio
 virtiofs

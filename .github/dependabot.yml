@@ -56,6 +56,14 @@ updates:
     reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
+    directory: "/src/go/github-runner-monitor"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "mook-as" ]
+
+  - package-ecosystem: "gomod"
     directory: "/src/go/mock-wsl"
     schedule:
       interval: "daily"
