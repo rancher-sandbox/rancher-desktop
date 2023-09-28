@@ -277,7 +277,7 @@ k8s:
 portForwarding:
   title: Port Forwarding
   sortableTables:
-    noRows: There are no port forwardings to show
+    noRows: There are no port forwarding to show
 general:
   title: Welcome to Rancher Desktop
   description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
