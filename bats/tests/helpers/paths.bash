@@ -34,7 +34,7 @@ set_path_resources() {
     fi
     if using_dev_mode; then
         if is_windows; then
-            fatal "npm operation not yet implemented for Windows"
+            fatal "yarn operation not yet implemented for Windows"
         fi
         PATH_RESOURCES="$PATH_REPO_ROOT/resources"
     else

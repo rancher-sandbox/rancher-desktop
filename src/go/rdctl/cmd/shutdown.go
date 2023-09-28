@@ -17,13 +17,7 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"net/url"
-	"os"
-	"strings"
-
-	rdconfig "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -67,22 +61,7 @@ func init() {
 }
 
 func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
-	output, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			if strings.Contains(err.Error(), rdconfig.DefaultConfigPath) {
-				logrus.Debugf("Can't find default config file %s, assuming Rancher Desktop isn't running.\n", rdconfig.DefaultConfigPath)
-				// It's probably not running, so shutdown is a no-op
-				return nil, nil
-			}
-			return nil, err
-		}
-		urlError := new(url.Error)
-		if errors.As(err, &urlError) {
-			return []byte("Rancher Desktop is currently not running (or can't be shutdown via this command)."), nil
-		}
-		return nil, err
-	}
-	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
+	output, _ := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
+	err := shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
 	return output, err
 }
