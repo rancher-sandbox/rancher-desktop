@@ -68,15 +68,16 @@ verify_no_nginx() {
     try --max 18 --delay 10 verify_no_nginx
 }
 
-@test 'ignores duplicate whitespace in string-list properties' {
-    version="$(get_setting .version)"
-    run rdctl api -X PUT settings --body '{"containerEngine": {"allowedImages": {"patterns": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}, "version": '"$version"'}'
-    assert_success
-    assert_output --partial 'settings updated; no restart required'
+@test 'complain about duplicate whitespace in string-list properties' {
+    run rdctl api -X PUT settings --body '{"containerEngine": {"allowedImages": {"patterns": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}}'
+    assert_failure
+    assert_output --partial 'field "containerEngine.allowedImages.patterns" has duplicate entries:'
+    refute_output --partial stub
 
-    run rdctl api -X PUT settings --body '{"experimental": {"virtualMachine": {"proxy": {"noproxy": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}}, "version": '"$version"'}'
-    assert_success
-    assert_output --partial 'settings updated; no restart required'
+    run rdctl api -X PUT settings --body '{"experimental": {"virtualMachine": {"proxy": {"noproxy": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}}}'
+    assert_failure
+    assert_output --partial 'field "experimental.virtualMachine.proxy.noproxy" has duplicate entries:'
+    refute_output --partial stub
 }
 
 @test 'set patterns with the allowed list disabled' {
