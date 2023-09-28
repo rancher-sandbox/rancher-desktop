@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -13,7 +13,7 @@ var pathsCmd = &cobra.Command{
 	Use:    "paths",
 	Short:  "Print the paths to directories that Rancher Desktop uses",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		paths, err := paths.GetPaths()
+		paths, err := p.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to construct Paths: %w", err)
 		}

@@ -19,8 +19,14 @@ import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
+/**
+ * Represents the current or desired state of the backend/main process.
+ */
 export type BackendState = {
+  // The state of the VM/backend.
   vmState: State,
+  // Whether the backend is locked. If true, changes cannot
+  // be made by the user until it is unlocked.
   locked: boolean,
 };
 

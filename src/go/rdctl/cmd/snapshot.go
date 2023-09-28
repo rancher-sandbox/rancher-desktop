@@ -12,7 +12,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var snapshotCmd = &cobra.Command{
 	Short:  "Manage Rancher Desktop snapshots",
 	Hidden: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		paths, err := paths.GetPaths()
+		paths, err := p.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
@@ -42,16 +42,19 @@ func init() {
 	rootCmd.AddCommand(snapshotCmd)
 }
 
-func stopBackendCallFuncAndRestartBackend(wrappedFunction cobraFunc) cobraFunc {
+// If the main process is running, stops the backend, calls the
+// passed function, and restarts the backend. If it cannot connect
+// to the main process, just calls the passed function.
+func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 	return func(cmd *cobra.Command, args []string) error {
-		paths, err := paths.GetPaths()
+		paths, err := p.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
 		if err := createSnapshotLock(paths); err != nil {
 			return err
 		}
-		defer removeSnapshotLock(paths)
+		defer removeSnapshotLock(paths.AppHome)
 
 		connectionInfo, err := config.GetConnectionInfo()
 		if errors.Is(err, os.ErrNotExist) {
@@ -82,7 +85,7 @@ func stopBackendCallFuncAndRestartBackend(wrappedFunction cobraFunc) cobraFunc {
 			VMState: "STOPPED",
 			Locked:  true,
 		}
-		if err := rdClient.PutBackendState(desiredState); err != nil {
+		if err := rdClient.UpdateBackendState(desiredState); err != nil {
 			return fmt.Errorf("failed to stop backend: %w", err)
 		}
 		if err := waitForVMState(rdClient, "STOPPED"); err != nil {
@@ -96,7 +99,7 @@ func stopBackendCallFuncAndRestartBackend(wrappedFunction cobraFunc) cobraFunc {
 			VMState: "STARTED",
 			Locked:  false,
 		}
-		startVMErr := rdClient.PutBackendState(desiredState)
+		startVMErr := rdClient.UpdateBackendState(desiredState)
 		waitForStartedErr := waitForVMState(rdClient, "STARTED")
 		return errors.Join(functionErr, startVMErr, waitForStartedErr)
 	}
@@ -118,25 +121,29 @@ func waitForVMState(rdClient client.RDClient, desiredState string) error {
 	return fmt.Errorf("timed out waiting for backend state %q", desiredState)
 }
 
-func createSnapshotLock(paths paths.Paths) error {
+func createSnapshotLock(paths p.Paths) error {
 	if err := os.MkdirAll(paths.AppHome, 0o755); err != nil {
 		return fmt.Errorf("failed to create snapshot lock parent directory: %w", err)
 	}
+	// Create an empty file whose presence signifies that the
+	// backend is locked.
 	lockPath := filepath.Join(paths.AppHome, "snapshot.lock")
 	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
 	if errors.Is(err, os.ErrExist) {
-		return errors.New("snapshot lock file already exists; if there is no snapshot operation in progress, you and remove this error with `rdctl snapshot clean`")
+		return errors.New("snapshot lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")
 	} else if err != nil {
 		return fmt.Errorf("unexpected error acquiring snapshot lock: %w", err)
 	}
-	defer file.Close()
+	if err := file.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to close snapshot lock file descriptor: %s", err)
+	}
 	return nil
 }
 
-func removeSnapshotLock(paths paths.Paths) error {
-	lockPath := filepath.Join(paths.AppHome, "snapshot.lock")
+func removeSnapshotLock(appHome string) error {
+	lockPath := filepath.Join(appHome, "snapshot.lock")
 	if err := os.RemoveAll(lockPath); err != nil {
-		fmt.Errorf("failed to remove snapshot lock: %w", err)
+		return fmt.Errorf("failed to remove snapshot lock: %w", err)
 	}
 	return nil
 }

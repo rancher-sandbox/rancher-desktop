@@ -30,7 +30,7 @@ type RDClient interface {
 	DoRequest(method string, command string) (*http.Response, error)
 	DoRequestWithPayload(method string, command string, payload io.Reader) (*http.Response, error)
 	GetBackendState() (BackendState, error)
-	PutBackendState(state BackendState) error
+	UpdateBackendState(state BackendState) error
 }
 
 func validateBackendState(state BackendState) error {
@@ -107,7 +107,7 @@ func (client *RDClientImpl) GetBackendState() (BackendState, error) {
 	return state, nil
 }
 
-func (client *RDClientImpl) PutBackendState(state BackendState) error {
+func (client *RDClientImpl) UpdateBackendState(state BackendState) error {
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
 	if err := encoder.Encode(state); err != nil {
