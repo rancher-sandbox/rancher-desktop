@@ -152,21 +152,7 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
     log:   'logs',
   }[type];
 
-  // Note that CirrusCI doesn't upload folders...
   return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
-}
-
-export async function packageLogs(testPath: string) {
-  if (!process.env.CIRRUS_CI) {
-    console.log('Skipping packaging logs, not running in CirrusCI');
-
-    return;
-  }
-  const logDir = reportAsset(testPath, 'log');
-  const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
-
-  console.log(`Packaging logs to ${ outputPath }...`);
-  await childProcess.spawnFile('tar', ['cfh', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
 /**
@@ -226,7 +212,6 @@ export async function teardown(app: ElectronApplication, filename: string) {
   const context = app.context();
 
   await context.tracing.stop({ path: reportAsset(filename) });
-  await packageLogs(filename);
   await teardownApp(app);
 
   if (testInfo?.testPath === filename) {
