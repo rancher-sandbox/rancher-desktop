@@ -38,7 +38,7 @@ export default Vue.extend({
         this.$data.reason = 'Requires Windows version 10-1909 or newer';
         break;
       case 'macOS-release':
-        this.$data.reason = 'Requires MacOS version 10.15 or newer';
+        this.$data.reason = 'Requires macOS version 10.15 or newer';
         break;
       case 'linux-nested':
         this.$data.reason = 'Nested virtualization not enabled on this host';

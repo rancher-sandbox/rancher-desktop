@@ -17,7 +17,7 @@ go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
 ```
 mkdir tmp
 docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v5.4.2 generate -i /local/src/assets/specs/command-api.yaml -g html -o /local/tmp/
-open tmp/index.html # (MacOS)
+open tmp/index.html # (macOS)
 start tmp/index.html # (Powershell)
 xdg-open tmp/index.html # (linux, replace with path to a specific browser if you prefer).
 ```

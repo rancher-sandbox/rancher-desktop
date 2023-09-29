@@ -12,8 +12,11 @@
 # git index header
 index (?:[0-9a-z]{7,40},|)[0-9a-z]{7,40}\.\.[0-9a-z]{7,40}
 
+# file permissions
+['"`\s][-bcdLlpsw](?:[-r][-w][-Ssx]){2}[-r][-w][-SsTtx]\+?['"`\s]
+
 # css url wrappings
-\burl\([^)]*\)
+\burl\([^)]+\)
 
 # cid urls
 (['"])cid:.*?\g{-1}
@@ -130,6 +133,8 @@ themes\.googleusercontent\.com/static/fonts/[^/\s"]+/v\d+/[^.]+.
 (?:\[`?[0-9a-f]+`?\]\(https:/|)/(?:www\.|)github\.com(?:/[^/\s"]+){2,}(?:/[^/\s")]+)(?:[0-9a-f]+(?:[-0-9a-zA-Z/#.]*|)\b|)
 # GitHub SHAs
 \bgithub\.com(?:/[^/\s"]+){2}[@#][0-9a-f]+\b
+# GitHub SHA refs
+\[([0-9a-f]+)\]\(https://(?:www\.|)github.com/[-\w]+/[-\w]+/commit/\g{-1}[0-9a-f]*
 # GitHub wiki
 \bgithub\.com/(?:[^/]+/){2}wiki/(?:(?:[^/]+/|)_history|[^/]+(?:/_compare|)/[0-9a-f.]{40,})\b
 # githubusercontent
@@ -141,7 +146,7 @@ themes\.googleusercontent\.com/static/fonts/[^/\s"]+/v\d+/[^.]+.
 # git.io
 \bgit\.io/[0-9a-zA-Z]+
 # GitHub JSON
-"node_id": "[-a-zA-Z=;:/0-9+]*"
+"node_id": "[-a-zA-Z=;:/0-9+_]*"
 # Contributor
 \[[^\]]+\]\(https://github\.com/[^/\s"]+/?\)
 # GHSA
@@ -386,6 +391,8 @@ ipfs://[0-9a-zA-Z]{3,}
 
 # URL escaped characters
 \%[0-9A-F][A-F]
+# lower URL escaped characters
+\%[0-9a-f][a-f](?=[a-z]{2,})
 # IPv6
 \b(?:[0-9a-fA-F]{0,4}:){3,7}[0-9a-fA-F]{0,4}\b
 # c99 hex digits (not the full format, just one I've seen)
@@ -418,7 +425,7 @@ sha\d+:[0-9]*[a-f]{3,}[0-9a-f]*
 # hex digits including css/html color classes:
 (?:[\\0][xX]|\\u|[uU]\+|#x?|\%23)[0-9_a-fA-FgGrR]*?[a-fA-FgGrR]{2,}[0-9_a-fA-FgGrR]*(?:[uUlL]{0,3}|[iu]\d+)\b
 # integrity
-integrity=(['"])sha\d+-[-a-zA-Z=;:/0-9+]{40,}\g{-1}
+integrity=(['"])(?:\s*sha\d+-[-a-zA-Z=;:/0-9+]{40,})+\g{-1}
 
 # https://www.gnu.org/software/groff/manual/groff.html
 # man troff content
@@ -433,8 +440,8 @@ integrity=(['"])sha\d+-[-a-zA-Z=;:/0-9+]{40,}\g{-1}
 # Localized .desktop content
 Name\[[^\]]+\]=.*
 
-# IServiceProvider
-\bI(?=(?:[A-Z][a-z]{2,})+\b)
+# IServiceProvider / isAThing
+\b(?:I|isA)(?=(?:[A-Z][a-z]{2,})+\b)
 
 # crypt
 (['"])\$2[ayb]\$.{56}\g{-1}
@@ -444,6 +451,9 @@ Name\[[^\]]+\]=.*
 
 # go.sum
 \bh1:\S+
+
+# scala modules
+("[^"]+"\s*%%?\s*){2,3}"[^"]+"
 
 # Input to GitHub JSON
 content: (['"])[-a-zA-Z=;:/0-9+]*=\g{-1}
@@ -456,7 +466,7 @@ content: (['"])[-a-zA-Z=;:/0-9+]*=\g{-1}
 
 # Python string prefix / binary prefix
 # Note that there's a high false positive rate, remove the `?=` and search for the regex to see if the matches seem like reasonable strings
-(?<!')\b(?:B|BR|Br|F|FR|Fr|R|RB|RF|Rb|Rf|U|UR|Ur|b|bR|br|f|fR|fr|r|rB|rF|rb|rf|u|uR|ur)'(?:[A-Z]{3,}|[A-Z][a-z]{2,}|[a-z]{3,})
+(?<!')\b(?:B|BR|Br|F|FR|Fr|R|RB|RF|Rb|Rf|U|UR|Ur|b|bR|br|f|fR|fr|r|rB|rF|rb|rf|u|uR|ur)'(?=[A-Z]{3,}|[A-Z][a-z]{2,}|[a-z]{3,})
 
 # Regular expressions for (P|p)assword
 \([A-Z]\|[a-z]\)[a-z]+
@@ -473,13 +483,27 @@ content: (['"])[-a-zA-Z=;:/0-9+]*=\g{-1}
 # javascript replace regex
 \.replace\(/[^/\s"]*/[gim]*\s*,
 # assign regex
-= /[^*].*/
+= /[^*]*?(?:[a-z]{3,}|[A-Z]{3,}|[A-Z][a-z]{2,}).*/
+# perl regex test
+[!=]~ (?:/.*/|m\{.*?\}|m<.*?>|m([|!/@#,;']).*?\g{-1})
+
+# perl qr regex
+(?<!\$)\bqr(?:\{.*?\}|<.*?>|\(.*?\)|([|!/@#,;']).*?\g{-1})
 
 # Go regular expressions
 regexp?\.MustCompile\(`[^`]*`\)
 
+# regex choice
+\(\?:[^)]+\|[^)]+\)
+
+# proto
+^\s*(\w+)\s\g{-1} =
+
 # sed regular expressions
 sed 's/(?:[^/]*?[a-zA-Z]{3,}[^/]*?/){2}
+
+# node packages
+(["'])\@[^/'" ]+/[^/'" ]+\g{-1}
 
 # go install
 go install(?:\s+[a-z]+\.[-@\w/.]+)+
@@ -495,7 +519,7 @@ go install(?:\s+[a-z]+\.[-@\w/.]+)+
 -[0-9a-f]{10}-\w{5}\s
 
 # posthog secrets
-posthog\.init\((['"])phc_[^"',]+\g{-1},
+([`'"])phc_[^"',]+\g{-1}
 
 # xcode
 
@@ -512,21 +536,29 @@ customObjectInstantitationMethod
 \.fa-[-a-z0-9]+
 
 # bearer auth
-(['"])Bearer .*?\g{-1}
+(['"])Bear[e][r] .*?\g{-1}
 
 # basic auth
 (['"])Basic [-a-zA-Z=;:/0-9+]{3,}\g{-1}
 
 # base64 encoded content
-(['"])[-a-zA-Z=;:/0-9+]+=\g{-1}
+([`'"])[-a-zA-Z=;:/0-9+]+=\g{-1}
 # base64 encoded content in xml/sgml
-#>[-a-zA-Z=;:/0-9+]+=</
+>[-a-zA-Z=;:/0-9+]+=</
+# base64 encoded content, possibly wrapped in mime
+(?:^|[\s=;:?])[-a-zA-Z=;:/0-9+]{50,}(?:[\s=;:?]|$)
+
+# encoded-word
+=\?[-a-zA-Z0-9"*%]+\?[BQ]\?[^?]{0,75}\?=
 
 # Time Zones
 \b(?:Africa|Atlantic|America|Antarctica|Asia|Australia|Europe|Indian|Pacific)(?:/\w+)+
 
 # linux kernel info
 ^(?:bugs|flags|Features)\s+:.*
+
+# systemd mode
+systemd.*?running in system mode \([-+].*\)$
 
 # Update Lorem based on your content (requires `ge` and `w` from https://github.com/jsoref/spelling; and `review` from https://github.com/check-spelling/check-spelling/wiki/Looking-for-items-locally )
 # grep '^[^#].*lorem' .github/actions/spelling/patterns.txt|perl -pne 's/.*i..\?://;s/\).*//' |tr '|' "\n"|sort -f |xargs -n1 ge|perl -pne 's/^[^:]*://'|sort -u|w|sed -e 's/ .*//'|w|review -
@@ -544,8 +576,11 @@ customObjectInstantitationMethod
 # This corpus only had capital letters, but you probably want lowercase ones as well.
 \b[LN]'+[a-z]{2,}\b
 
-# latex
+# latex (check-spelling <= 0.0.21)
 \\(?:n(?:ew|ormal|osub)|r(?:enew)|t(?:able(?:of|)|he|itle))(?=[a-z]+)
+
+# latex (check-spelling >= 0.0.22)
+\\\w{2,}\{
 
 # eslint
 "varsIgnorePattern": ".+"
@@ -556,9 +591,14 @@ customObjectInstantitationMethod
 # in a version of check-spelling after @0.0.21 printf markers won't be automatically consumed
 # printf markers
 #(?<!\\)\\[nrt](?=[a-z]{2,})
+# alternate markers if you run into latex and friends
+#(?<!\\)\\[nrt](?=[a-z]{2,})(?=.*['"`])
 
 # apache
 a2(?:en|dis)
+
+# weak e-tag
+W/"[^"]+"
 
 # the negative lookahead here is to allow catching 'templatesz' as a misspelling
 # but to otherwise recognize a Windows path with \templates\foo.template or similar:
@@ -568,13 +608,19 @@ a2(?:en|dis)
 
 # version suffix <word>v#
 (?:(?<=[A-Z]{2})V|(?<=[a-z]{2}|[A-Z]{2})v)\d+(?:\b|(?=[a-zA-Z_]))
-# Compiler flags (Scala)
-(?:^|[\t ,>"'`=(])-J-[DPWXY](?=[A-Z]{2,}|[A-Z][a-z]|[a-z]{2,})
-# Compiler flags
-#(?:^|[\t ,>"'`=(])-[DPWXYLlf](?=[A-Z]{2,}|[A-Z][a-z]|[a-z]{2,})
+
+# Compiler flags (Unix, Java/Scala)
+# Use if you have things like `-Pdocker` and want to treat them as `docker`
+#(?:^|[\t ,>"'`=(])-(?:(?:J-|)[DPWXY]|[Llf])(?=[A-Z]{2,}|[A-Z][a-z]|[a-z]{2,})
+
+# Compiler flags (Windows / PowerShell)
+# This is a subset of the more general compiler flags pattern.
+# It avoids matching `-Path` to prevent it from being treated as `ath`
+#(?:^|[\t ,"'`=(])-(?:[DPL](?=[A-Z]{2,})|[WXYlf](?=[A-Z]{2,}|[A-Z][a-z]|[a-z]{2,}))
 
 # Compiler flags (linker)
 ,-B
+
 # curl arguments
 \b(?:\\n|)curl(?:\s+-[a-zA-Z]{1,2}\b)*(?:\s+-[a-zA-Z]{3,})(?:\s+-[a-zA-Z]+)*
 # set arguments
