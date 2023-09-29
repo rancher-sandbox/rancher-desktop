@@ -18,7 +18,6 @@ package directories
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"os/exec"
 	"path"
@@ -28,12 +27,8 @@ import (
 	"strings"
 )
 
-func SetupLimaHome() error {
-	appPaths, err := paths.GetPaths()
-	if err != nil {
-		return err
-	}
-	candidatePath := path.Join(appPaths.AppHome, "lima")
+func SetupLimaHome(appHome string) error {
+	candidatePath := path.Join(appHome, "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
 		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)

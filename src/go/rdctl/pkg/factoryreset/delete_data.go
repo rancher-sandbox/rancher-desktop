@@ -30,7 +30,7 @@ import (
 
 	dockerconfig "github.com/docker/docker/cli/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,7 +60,7 @@ func addAppHomeWithoutSnapshots(appHome string) []string {
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
 // or pull the path settings out of the shell profile files.
-func deleteUnixLikeData(paths paths.Paths, pathList []string) error {
+func deleteUnixLikeData(paths p.Paths, pathList []string) error {
 	if err := deleteLimaVM(); err != nil {
 		logrus.Errorf("Error trying to delete the Lima VM: %s\n", err)
 	}
@@ -100,7 +100,8 @@ func deleteUnixLikeData(paths paths.Paths, pathList []string) error {
 }
 
 func deleteLimaVM() error {
-	if err := directories.SetupLimaHome(); err != nil {
+	paths, err := p.GetPaths()
+	if err := directories.SetupLimaHome(paths.AppHome); err != nil {
 		return err
 	}
 	execPath, err := os.Executable()
