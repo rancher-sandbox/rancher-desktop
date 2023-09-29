@@ -80,17 +80,10 @@ Icon | Context
 1. Build the image found in [`/src/disk-images/github-runner-linux`], or
    download the image built via GitHub Actions.
 1. Build [`/src/go/github-runner-monitor`], or download the executable built via
-   GitHub Actions.
-1. Generate a GitHub access token (classic coarse-grained) with `repo`
-   privileges.
-1. On the runner host, execute the monitor:
-   ```
-   /usr/bin/env GITHUB_AUTH_TOKEN=ghp_000000000000000000 ./github-runner-monitor
-   ```
-   Use `./github-runner-monitor --help` to see options available, such as the
-   number of CPUs / amount of RAM to allocate per runner, or the number of
-   runners to maintain at a time.
-1. Alternatively, set up a systemd unit or similar, possibly based on:
+   GitHub Actions.  See that directory for details.
+1. Generate a GitHub access token (fine-grained), scoped to only the repository,
+   with _Administration write_ permissions.
+1. Set up a systemd unit or similar, possibly based on:
    ```ini
    [Unit]
    Description=GitHub Runner Monitor
@@ -100,6 +93,10 @@ Icon | Context
    Type=simple
    TimeoutStopSec=5min
    Environment="GITHUB_AUTH_TOKEN=ghp_000000000000000000"
+   # Environment="RUNNER_COUNT=12345"
+   # Environment="CPUS=12345"
+   # Environment="MEMORY=12345"
+   # Environment="DISK=/path/to/image"
    ExecStart=/usr/local/bin/github-runner-monitor
 
    [Install]
@@ -108,3 +105,9 @@ Icon | Context
 
 [`/src/disk-images/github-runner-linux`]: /src/disk-images/github-runner-linux
 [`/src/go/github-runner-monitor`]: /src/go/github-runner-monitor
+
+### Current configuration
+
+Based on the size of the host we're using, we're currently using 4 runners with
+3 vCPUs and 6 GB of RAM.  They have the labels `self-hosted`, `Linux`, `X64`,
+and `ephemeral`.
