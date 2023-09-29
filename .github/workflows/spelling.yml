@@ -101,33 +101,33 @@ jobs:
         post_comment: 0
         use_magic_file: 1
         experimental_apply_changes_via_bot: ${{ github.repository_owner != 'rancher-sandbox' && 1 }}
+        report-timing: 1
+        warnings: bad-regex,binary-file,deprecated-feature,large-file,limited-references,no-newline-at-eof,noisy-file,non-alpha-in-dictionary,token-is-substring,unexpected-line-ending,whitespace-in-dictionary,minified-file,unsupported-configuration,no-files-to-check
         use_sarif: ${{ (!github.event.pull_request || (github.event.pull_request.head.repo.full_name == github.repository)) && 1 }}
         extra_dictionary_limit: 20
-        dictionary_source_prefixes: |
-          {"cspell": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20220816/dictionaries/", "cspell1": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20230509/dictionaries/"}
         extra_dictionaries:
-          cspell1:software-terms/dict/softwareTerms.txt
-          cspell1:k8s/dict/k8s.txt
-          cspell1:node/dict/node.txt
-          cspell1:aws/aws.txt
-          cspell1:python/src/python/python-lib.txt
-          cspell1:php/dict/php.txt
-          cspell1:typescript/dict/typescript.txt
-          cspell1:golang/dict/go.txt
-          cspell1:filetypes/filetypes.txt
-          cspell1:html/dict/html.txt
-          cspell1:npm/dict/npm.txt
-          cspell1:shell/dict/shell-all-words.txt
-          cspell1:fullstack/dict/fullstack.txt
-          cspell1:python/src/common/extra.txt
-          cspell1:java/src/java.txt
-          cspell1:dotnet/dict/dotnet.txt
-          cspell1:css/dict/css.txt
-          cspell1:django/dict/django.txt
-          cspell1:docker/src/docker-words.txt
-          cspell1:cpp/src/stdlib-cmath.txt
-          cspell1:python/src/python/python.txt
-          cspell1:powershell/dict/powershell.txt
+          cspell:software-terms/dict/softwareTerms.txt
+          cspell:k8s/dict/k8s.txt
+          cspell:node/dict/node.txt
+          cspell:aws/aws.txt
+          cspell:golang/dict/go.txt
+          cspell:php/dict/php.txt
+          cspell:python/src/python/python-lib.txt
+          cspell:typescript/dict/typescript.txt
+          cspell:npm/dict/npm.txt
+          cspell:shell/dict/shell-all-words.txt
+          cspell:html/dict/html.txt
+          cspell:filetypes/filetypes.txt
+          cspell:fullstack/dict/fullstack.txt
+          cspell:python/src/common/extra.txt
+          cspell:java/src/java.txt
+          cspell:dotnet/dict/dotnet.txt
+          cspell:css/dict/css.txt
+          cspell:django/dict/django.txt
+          cspell:docker/src/docker-words.txt
+          cspell:cpp/src/stdlib-cmath.txt
+          cspell:python/src/python/python.txt
+          cspell:powershell/dict/powershell.txt
 
   update:
     name: Update PR

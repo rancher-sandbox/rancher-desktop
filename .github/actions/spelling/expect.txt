@@ -21,7 +21,6 @@ alpline
 amazonec
 amazoneks
 ANamespace
-anchore
 andsection
 apify
 apiservice
@@ -88,7 +87,6 @@ bulkable
 bulkaction
 Buttondrop
 cacerts
-camelcase
 camelpunch
 CAPI
 caroot
@@ -169,7 +167,6 @@ decamelize
 dedot
 deepmap
 deepmerge
-defattr
 destinationrule
 DETECTEXCEPTIONS
 developercertificate
@@ -232,6 +229,7 @@ externalservice
 factoryreset
 fakercfile
 fanotify
+fattr
 fav
 fcb
 fdx
@@ -273,6 +271,7 @@ googlegke
 googleoauth
 gosec
 govet
+govmm
 gpg
 gpu
 grafana
@@ -291,8 +290,6 @@ Hec
 heketi
 helmcharts
 hicolor
-HKCU
-HKLM
 HMR
 hocs
 horizontalpodautoscaler
@@ -507,14 +504,12 @@ nspr
 nss
 nullglob
 nuxt
-nuxtjs
 nxt
 nydus
 oapi
 objectset
 octicons
 oidc
-oldpackage
 onecore
 oom
 openapitools
@@ -604,7 +599,6 @@ ranchertest
 rawdata
 rcfiles
 rcompare
-rdconfig
 rdctl
 rddepman
 rdinstall
@@ -698,7 +692,6 @@ ssd
 sshfs
 sslip
 Ssr
-ssr
 statefulset
 stoinks
 storageclass

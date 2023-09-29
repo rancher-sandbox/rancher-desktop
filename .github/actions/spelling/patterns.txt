@@ -1,53 +1,52 @@
 # See https://github.com/check-spelling/check-spelling/wiki/Configuration-Examples:-patterns
 
 # Automatically suggested patterns
-# hit-count: 2030 file-count: 6
+# hit-count: 1262 file-count: 4
 # ANSI color codes
 (?:\\(?:u00|x)1[Bb]|\x1b|\\u\{1[Bb]\})\[\d+(?:;\d+|)m
 
-# hit-count: 1143 file-count: 19
+# hit-count: 743 file-count: 13
 # hex runs
 \b[0-9a-fA-F]{16,}\b
 
-# hit-count: 446 file-count: 98
+# hit-count: 739 file-count: 6
+# base64 encoded content, possibly wrapped in mime
+(?:^|[\s=;:?])[-a-zA-Z=;:/0-9+]{50,}(?:[\s=;:?]|$)
+
+# hit-count: 215 file-count: 101
 # https/http/file urls
 (?:\b(?:https?|ftp|file)://)[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]
 
-# hit-count: 185 file-count: 7
+# hit-count: 94 file-count: 3
 # sha
 sha\d+:[0-9]*[a-f]{3,}[0-9a-f]*
 
-# hit-count: 52 file-count: 13
+# hit-count: 46 file-count: 34
+# GitHub SHAs (markdown)
+(?:\[`?[0-9a-f]+`?\]\(https:/|)/(?:www\.|)github\.com(?:/[^/\s"]+){2,}(?:/[^/\s")]+)(?:[0-9a-f]+(?:[-0-9a-zA-Z/#.]*|)\b|)
+
+# hit-count: 44 file-count: 10
 # version suffix <word>v#
 (?:(?<=[A-Z]{2})V|(?<=[a-z]{2}|[A-Z]{2})v)\d+(?:\b|(?=[a-zA-Z_]))
 
-# hit-count: 43 file-count: 1
-# AWS S3
-\b\w*\.s3[^.]*\.amazonaws\.com/[-\w/&#%_?:=]*
-
-# hit-count: 38 file-count: 4
-# uuid:
-\b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\b
+# hit-count: 25 file-count: 25
+# node packages
+(["'])\@[^/'" ]+/[^/'" ]+\g{-1}
 
 # hit-count: 16 file-count: 9
 # in a version of check-spelling after @0.0.21 printf markers won't be automatically consumed
 # printf markers
 (?<!\\)\\n(?=[a-z]{2,})
 
-# hit-count: 14 file-count: 3
-# URL escaped characters
-\%[0-9A-F][A-F]
+# hit-count: 10 file-count: 2
+# uuid:
+\b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\b
 
-# hit-count: 13 file-count: 3
-# hex digits including css/html color classes:
-(?:[\\0][xX]|[uU]\+|#x?|\%23)[0-9_a-fA-FgGrR]*?[a-fA-FgGrR]{2,}[0-9_a-fA-FgGrR]*(?:[uUlL]{0,3}|[iu]\d+)\b
-\\u[0-9A-F]{4}
-
-# hit-count: 12 file-count: 3
+# hit-count: 10 file-count: 1
 # css url wrappings
-\burl\([^)]*\)
+\burl\([^)]+\)
 
-# hit-count: 9 file-count: 9
+# hit-count: 8 file-count: 8
 # JavaScript regular expressions
 # javascript test regex
 /.*/[gim]*\.test\(
@@ -56,48 +55,61 @@ sha\d+:[0-9]*[a-f]{3,}[0-9a-f]*
 # javascript replace regex
 \.replace\(/[^/\s"]*/[gim]*\s*,
 
-# hit-count: 7 file-count: 6
-# assign regex
-= /[^*].*/
-
-# hit-count: 5 file-count: 3
-# sha-... -- uses a fancy capture
-(\\?['"]|&quot;)[0-9a-f]{40,}\g{-1}
-
-# hit-count: 5 file-count: 3
+# hit-count: 6 file-count: 4
 # tar arguments
 \b(?:\\n|)g?tar(?:\.exe|)(?:(?:\s+--[-a-zA-Z]+|\s+-[a-zA-Z]+|\s[ABGJMOPRSUWZacdfh-pr-xz]+\b)(?:=[^ ]*|))+
+
+# hit-count: 4 file-count: 3
+# base64 encoded content
+([`'"])[-a-zA-Z=;:/0-9+]+=\g{-1}
+
+# hit-count: 4 file-count: 2
+# URL escaped characters
+\%[0-9A-F][A-F]
 
 # hit-count: 4 file-count: 2
 # go install
 go install(?:\s+[a-z]+\.[-@\w/.]+)+
 
-# hit-count: 3 file-count: 2
-# IServiceProvider
-\bI(?=(?:[A-Z][a-z]{2,})+\b)
+# hit-count: 3 file-count: 3
+# stackexchange -- https://stackexchange.com/feeds/sites
+\b(?:askubuntu|serverfault|stack(?:exchange|overflow)|superuser).com/(?:questions/\w+/[-\w]+|a/)
 
 # hit-count: 3 file-count: 2
-# javascript match regex
-\.match\(/[^/\s"]*/[gim]*\s*
+# hex digits including css/html color classes:
+(?:[\\0][xX]|\\u|[uU]\+|#x?|\%23)[0-9_a-fA-FgGrR]*?[a-fA-FgGrR]{2,}[0-9_a-fA-FgGrR]*(?:[uUlL]{0,3}|[iu]\d+)\b
 
 # hit-count: 3 file-count: 2
-# base64 encoded content
-(['"])[-a-zA-Z=;:/0-9+]+=\g{-1}
+# IServiceProvider / isAThing
+\b(?:I|isA)(?=(?:[A-Z][a-z]{2,})+\b)
 
 # hit-count: 2 file-count: 2
-# data url in parens
-\(data:(?:[^) ][^)]*?|)(?:[A-Z]{3,}|[A-Z][a-z]{2,}|[a-z]{3,})[^)]*\)
+# sha-... -- uses a fancy capture
+(\\?['"]|&quot;)[0-9a-f]{40,}\g{-1}
 
-# hit-count: 1 file-count: 1
-# Go regular expressions
-regexp?\.MustCompile\(`[^`]*`\)
+# hit-count: 2 file-count: 2
+# assign regex
+= /[^*]*?(?:[a-z]{3,}|[A-Z]{3,}|[A-Z][a-z]{2,}).*/
+
+# hit-count: 2 file-count: 2
+# regex choice
+\(\?:[^)]+\|[^)]+\)
 
 # hit-count: 1 file-count: 1
 # gist github
 \bgist\.github\.com/[^/\s"]+/[0-9a-f]+
 
-# GitHub repositories and paths from there
-\bgithub\.com/[/a-zA-Z0-f_-]*/
+# hit-count: 1 file-count: 1
+# lower URL escaped characters
+\%[0-9a-f][a-f](?=[a-z]{2,})
+
+# hit-count: 1 file-count: 1
+# javascript match regex
+\.match\(/[^/\s"]*/[gim]*\s*
+
+# hit-count: 1 file-count: 1
+# Go regular expressions
+regexp?\.MustCompile\(`[^`]*`\)
 
 # Questionably acceptable forms of `in to`
 # Personally, I prefer `log into`, but people object
@@ -107,9 +119,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 # to opt in
 \bto opt in\b
 
-# check-spelling@v0.0.21
-\\r(?:ancher|esources)
-
 # typos in translation keys
 ^\s*(?:calllback|objectReferance|requriedInt):$
 
@@ -118,20 +127,19 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # adduser and friends
 \s-g (\w+)\s+\g{-1}\s
-
 # acceptable duplicates
 # ls directory listings
 [-bcdlpsw](?:[-r][-w][-Ssx]){3}\s+\d+\s+\S+\s+\S+\s+\d+\s+
 # mount
 \bmount\s+-t\s+(\w+)\s+\g{-1}\b
 # C types and repeated CSS values
-\s(BUG|builder|center|div|inherit|long|LONG|none|normal|solid|thin|TODO|transparent|very)(?: \g{-1})+\s
+\s(auto|BUG|builder|center|div|inherit|long|LONG|none|normal|solid|thin|TODO|transparent|very)(?: \g{-1})+\s
 # C struct
 \bstruct\s+(\w+)\s+\g{-1}\b
 # go templates
 \s(\w+)\s+\g{-1}\s+\`(?:graphql|inject|json|yaml):
 # doxygen / javadoc / .net
-(?:[\\@](?:brief|groupname|t?param|return|retval)|(?:public|private)(?:\s+static|\s+readonly)*)\s+(\w+)\s+\g{-1}\s
+(?:[\\@](?:brief|groupname|t?param|return|retval)|(?:public|private)(?:\s+static|\s+readonly)*)(?:\s+\{\w+\}|)\s+(\w+)\s+\g{-1}\s
 
 # Commit message -- Signed-off-by and friends
 ^\s*(?:(?:Based-on-patch|Co-authored|Helped|Mentored|Reported|Reviewed|Signed-off)-by|Thanks-to): (?:[^<]*<[^>]*>|[^<]*)\s*$
