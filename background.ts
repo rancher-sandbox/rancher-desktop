@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import Electron from 'electron';
+import Electron, { MessageBoxOptions } from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
 
@@ -758,7 +758,7 @@ ipcMainProxy.on('show-logs', async(event) => {
 
   if (error) {
     const browserWindow = Electron.BrowserWindow.fromWebContents(event.sender);
-    const options = {
+    const options: MessageBoxOptions = {
       message: error,
       type:    'error',
       title:   `Error opening logs`,

@@ -77,8 +77,10 @@ export const protocolsRegistered = Latch();
  * production environments.
  */
 function setupAppProtocolHandler() {
+  // eslint-disable-next-line deprecation/deprecation
   const registrationProtocol = isDevBuild ? protocol.registerHttpProtocol : protocol.registerFileProtocol;
 
+  // eslint-disable-next-line deprecation/deprecation
   registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);
     const redirectUrl = redirectedUrl(relPath);
@@ -97,6 +99,7 @@ function setupAppProtocolHandler() {
  * issues with slashes).  Base64 was not available in Vue.
  */
 function setupExtensionProtocolHandler() {
+  // eslint-disable-next-line deprecation/deprecation
   protocol.registerFileProtocol('x-rd-extension', (request, callback) => {
     const url = new URL(request.url);
     // Re-encoding the extension ID here also ensures it doesn't contain any
