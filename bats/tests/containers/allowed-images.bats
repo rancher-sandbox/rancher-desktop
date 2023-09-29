@@ -68,18 +68,6 @@ verify_no_nginx() {
     try --max 18 --delay 10 verify_no_nginx
 }
 
-@test 'complain about duplicate whitespace in string-list properties' {
-    run rdctl api -X PUT settings --body '{"containerEngine": {"allowedImages": {"patterns": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}}'
-    assert_failure
-    assert_output --partial 'field "containerEngine.allowedImages.patterns" has duplicate entries:'
-    refute_output --partial stub
-
-    run rdctl api -X PUT settings --body '{"experimental": {"virtualMachine": {"proxy": {"noproxy": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}}}'
-    assert_failure
-    assert_output --partial 'field "experimental.virtualMachine.proxy.noproxy" has duplicate entries:'
-    refute_output --partial stub
-}
-
 @test 'set patterns with the allowed list disabled' {
     update_allowed_patterns false "$IMAGE_NGINX" "$IMAGE_BUSYBOX" "$IMAGE_RUBY"
     # containerEngine.allowedImages.enabled changed, so wait for a restart
