@@ -21,7 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"io/ioutil"
 	"log"
 	"os"
@@ -67,11 +67,11 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 		}
 		configDir = filepath.Join(configDir, "rancher-desktop")
 	} else {
-		appPaths, err := paths.GetPaths()
+		paths, err := p.GetPaths()
 		if err != nil {
 			log.Fatalf("failed to get paths: %s", err)
 		}
-		configDir = appPaths.AppHome
+		configDir = paths.AppHome
 	}
 	DefaultConfigPath = filepath.Join(configDir, "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
