@@ -342,6 +342,7 @@ export interface startRancherDesktopOptions {
   env?: Record<string, string>;
   noModalDialogs?: boolean;
   timeout?: number;
+  logName?: string;
 }
 
 /**
@@ -368,7 +369,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
     env: {
       ...process.env,
       ...options?.env ?? {},
-      RD_LOGS_DIR: reportAsset(testPath, 'log'),
+      RD_LOGS_DIR: reportAsset(options?.logName ?? testPath, 'log'),
       ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },
   };

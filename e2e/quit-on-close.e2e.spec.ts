@@ -1,28 +1,28 @@
 import { test, expect, ElectronApplication } from '@playwright/test';
 
-import { createDefaultSettings, packageLogs, startRancherDesktop, teardown } from './utils/TestUtils';
+import { createDefaultSettings, reportAsset, startRancherDesktop, teardown } from './utils/TestUtils';
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('quitOnClose setting', () => {
-  test.afterAll(async() => {
-    await packageLogs(__filename);
-  });
-
   test('should quit when quitOnClose is true and window is closed', async() => {
+    const logName = `${ __filename }-quitOnCloseTrue`;
     createDefaultSettings({ application: { window: { quitOnClose: true } } });
-    const electronApp = await startRancherDesktop(__filename, { tracing: false });
+    const electronApp = await startRancherDesktop(__filename, { logName });
 
     await electronApp.firstWindow();
 
     await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(true);
+    await electronApp.context().tracing.stop({ path: reportAsset(logName, 'trace') });
   });
 
   test('should not quit when quitOnClose is false and window is closed', async() => {
+    const logName = `${ __filename }-quitOnCloseFalse`;
+
     createDefaultSettings({ application: { window: { quitOnClose: false } } });
-    const electronApp = await startRancherDesktop(__filename);
+    const electronApp = await startRancherDesktop(__filename, { logName });
 
     try {
       await electronApp.firstWindow();
