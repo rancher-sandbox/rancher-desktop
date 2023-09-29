@@ -101,6 +101,9 @@ func deleteUnixLikeData(paths p.Paths, pathList []string) error {
 
 func deleteLimaVM() error {
 	paths, err := p.GetPaths()
+	if err != nil {
+		return err
+	}
 	if err := directories.SetupLimaHome(paths.AppHome); err != nil {
 		return err
 	}
