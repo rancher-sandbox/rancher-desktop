@@ -26,16 +26,24 @@ func (wsl WSLImpl) UnregisterDistros() error {
 
 func (wsl WSLImpl) ExportDistro(distroName, fileName string) error {
 	cmd := exec.Command("wsl.exe", "--export", "--vhd", distroName, fileName)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to export WSL distro %q: %w", distroName, err)
+	if output, err := cmd.Output(); err != nil {
+		return fmt.Errorf("failed to export WSL distro %q: %w", distroName, wrapWSLError(output, err))
 	}
 	return nil
 }
 
 func (wsl WSLImpl) ImportDistro(distroName, installLocation, fileName string) error {
 	cmd := exec.Command("wsl.exe", "--import", distroName, installLocation, fileName, "--vhd")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to import WSL distro %q: %w", distroName, err)
+	if output, err := cmd.Output(); err != nil {
+		return fmt.Errorf("failed to import WSL distro %q: %w", distroName, wrapWSLError(output, err))
 	}
 	return nil
+}
+
+// When we run a wsl.exe *exec.Cmd, and the command fails, the
+// returned error is not helpful. However, the text it outputs is
+// helpful. wrapWSLError combines the two to provide more helpful
+// error text.
+func wrapWSLError(output []byte, err error) error {
+	return fmt.Errorf("%w: %s", err, string(output))
 }
