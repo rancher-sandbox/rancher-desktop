@@ -1249,7 +1249,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     };
   }
 
-  async setBackendState(state: BackendState): Promise<void> {
+  setBackendState(state: BackendState): void {
     backendIsLocked = state.locked ? SNAPSHOT_OPERATION : '';
     mainEvents.emit('backend-locked-update', backendIsLocked);
     switch (state.vmState) {
@@ -1257,11 +1257,19 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       cfg = settingsImpl.load(deploymentProfiles);
       mainEvents.emit('settings-update', cfg);
 
-      return await startBackend();
+      setImmediate(() => {
+        startBackend();
+      });
+
+      return;
     case State.STOPPED:
-      return await k8smanager.stop();
+      setImmediate(() => {
+        k8smanager.stop();
+      });
+
+      return;
     default:
-      throw new Error(`invalid desired VM state ${ state.vmState }`);
+      throw new Error(`invalid desired VM state "${ state.vmState }"`);
     }
   }
 }

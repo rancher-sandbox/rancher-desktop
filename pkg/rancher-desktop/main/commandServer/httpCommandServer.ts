@@ -655,14 +655,20 @@ export class HttpCommandServer {
   }
 
   protected async setBackendState(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    let result = 'received backend state';
+    let statusCode = 202;
     const [data] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
     const state = JSON.parse(data);
 
-    console.debug('PUT backend_state: succeeded 202');
-    response.status(202).type('txt').send('Received backend state.');
-    setImmediate(() => {
+    try {
       this.commandWorker.setBackendState(state);
-    });
+    } catch (ex) {
+      console.error(`error in setBackendState:`, ex);
+      statusCode = 500;
+      result = `internal error: ${ ex }`;
+    }
+    console.debug(`setBackendState: write back status ${ statusCode }, result: ${ result }`);
+    response.status(statusCode).type('txt').send(result);
 
     return Promise.resolve();
   }
