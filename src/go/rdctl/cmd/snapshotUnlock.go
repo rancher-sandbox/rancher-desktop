@@ -9,11 +9,11 @@ import (
 var snapshotUnlockCmd = &cobra.Command{
 	Use:   "unlock",
 	Short: "Remove snapshot lock",
-	Long: `If an error occurs while doing a snapshot operation, sometimes the
-filesystem lock used to prevent simultaneous snapshot operations
-can be left behind. It then becomes impossible to work with
-snapshots. This command removes the filesystem lock. You should
-not have to use it under normal circumstances.`,
+	Long: `If an error occurs while doing a snapshot operation, the filesystem
+lock that is used to prevent simultaneous snapshot operations can be
+left behind. It then becomes impossible to run any snapshot operations.
+This command removes the filesystem lock. It should not be needed under
+normal circumstances.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		paths, err := p.GetPaths()

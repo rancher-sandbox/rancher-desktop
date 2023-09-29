@@ -6,10 +6,10 @@ import { URL } from 'url';
 import express from 'express';
 import _ from 'lodash';
 
+import { State } from '@pkg/backend/backend';
 import type { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
-import { State } from '@pkg/backend/backend';
 import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import mainEvents from '@pkg/main/mainEvents';
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
