@@ -95,7 +95,7 @@ After finishing to develop a BATS test suite, you can locally verify the syntax 
 
   1. Make sure to have installed `shellcheck` and `shfmt`.
 
-     On MacOS:
+     On macOS:
      - Assuming you have Homebrew:
        ```sh
        brew install shfmt shellcheck

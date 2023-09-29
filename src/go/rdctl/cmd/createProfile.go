@@ -54,7 +54,7 @@ var createProfileCmd = &cobra.Command{
 	Long: `Use this to generate deployment profiles for Rancher Desktop settings.
 You can either convert the current listings in operation, or
 specify a JSON snippet, and convert that to the desired target.
-MacOS plist files can be placed in the appropriate directory, while ".reg" files
+macOS plist files can be placed in the appropriate directory, while ".reg" files
 can be imported into the Windows registry using the "eg import FILE" command.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {

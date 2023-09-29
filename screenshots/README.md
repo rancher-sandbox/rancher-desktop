@@ -12,7 +12,7 @@ light & dark mode.
 
 ## Prerequisites
 
-### MacOS
+### macOS
 
 `screencapture` is required. It is part of the OS, so doesn't need to be installed
 separately. See https://ss64.com/osx/screencapture.html

@@ -154,3 +154,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # Allow golangci in GitHub workflows:
 \buses:\s*golangci/golangci-lint-action\b
+
+# on macOS, MacOS is used for the internal folder name within an app...
+(["/])MacOS\g{-1}
