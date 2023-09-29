@@ -104,63 +104,37 @@ clear and easy to fix (and can be avoided by running `yarn test` locally before 
 But when an integration, or e2e test, fails, it's sometimes useful to consult the log files
 for the run.
 
-Here's how to see more details for a failed run:
+1. Click on the _Details_ link next to the failing E2E test notification, and
+   navigate to the summary view of the test.
 
-1. The test results can be found by first going to the GitHub page for the PR.
+   ![Failure summary screenshot](docs/assets/images/contributing/e2e-summary.png)
+2. From the bottom of the summary view, locate the `failure-reports.zip` link
+   and download it.  (You must be logged in to GitHub to be able to download
+   that file.)
 
-   1. For a sample, click on an open PR at https://github.com/rancher-sandbox/rancher-desktop/pulls?q=is%3Aopen+is%3Apr
-
-   2. Look for the list of checks
-
-   3. Find the `E2E/Integration Tests` entry
-
-   4. Click on the `Details` link
-
-![Failing E2E tests link](./docs/assets/images/cilogs/screenshot01.png)
-
-This takes you to a more detailed view of the test, and which tests failed, but the log files are a few more clicks away.
-
-2. Scroll to the bottom and click on the link that reads `View more details on Cirrus CI`.
-
-![Link to Cirrus CI](./docs/assets/images/cilogs/screenshot02.png)
-
-3. Once the full test run has completed, the `Artifacts` button acts like a file-system browser.
-   The key here is to *not* click on the download button, but to click anywhere else on the row containing the button.
-
-![artifacts expansion button](./docs/assets/images/cilogs/screenshot03.png)
-
-4. This opens up a file browser. Now click on the list-view icon (the left of the two icons at the right of the row).
-
-![list-view button](./docs/assets/images/cilogs/screenshot04.png)
-
-5. Find the `.tar` file for the failed test, and click on it to download it into your designated `downloads` directory.
-
-![tar-file link](./docs/assets/images/cilogs/screenshot05.png)
-
-6. Because each test's tar file contains the same log files, it's a good idea to extract them into a separate
-directory. For example, if you're working with PR 2672:
-
-```bash
-Downloads$ mkdir pr2672
-Downloads$ cd pr2672
-Downloads/pr2672$ unzip ../playwright.zip
-Downloads/pr2672$ cd e2e/reports
-Downloads/pr2672/e2e/reports$ mkdir backend
-Downloads/pr2672/e2e/reports$ cd backend
-Downloads/pr2672/e2e/reports/backend$ tar xf ../backend.e2e.spec.ts-logs.tar
-Downloads/pr2672/e2e/reports/backend$ ls
-background.log     k8s.log              lima.serial.log    settings.log
-images.log         lima.ha.stderr.log   mock.log           steve.log
-integrations.log   lima.ha.stdout.log   networking.log     update.log
-k3s.log            lima.log             server.log         wsl.log
-```
-
-At this point, ideally,
-the failure in the integration run will be tied to an exception in a log file related to the change in the PR.
-
-Also note that due to code transpilation,
-the file names and line numbers in the log files will not usually correspond to the lines in the source code.
-You might want to add some `console.log` statements around some changed code that isn't working as expected.
+   ![Failure reports screenshot](docs/assets/images/contributing/e2e-failure-reports.png)
+3. Extract that file to find the logs; they are in directories named after each
+   test.  For example, a subset of the log files may include:
+   ```
+   $ ls -l
+   total 62204
+   drwxr-xr-x 29 nobody nobody      928 Oct 12  2020 backend.e2e.spec.ts-logs
+   -rw-r--r--  1 nobody nobody 31616936 Oct 12  2020 backend.e2e.spec.ts-pw-trace.zip
+   $ ls backend.e2e.spec.ts-logs/
+   background.log         k8s.log             networking.log
+   commandLine.log        kube.log            protocol-handler.log
+   dashboardServer.log    lima.ha.stderr.log  server.log
+   deploymentProfile.log  lima.ha.stdout.log  settings.log
+   diagnostics.log        lima.log            shortcuts.log
+   extensions.log         lima.serial.log     steve.log
+   images.log             moby.log            update.log
+   integrations.log       mock.log            window_browser.log
+   k3s.log                nerdctl.log         wsl.log
+   ```
+4. It may be useful to go to https://trace.playwright.dev/ to examine the
+   Playwright traces; they are the files named `*-pw-trace.zip`.  This can be
+   useful for seeing the state of the UI when waiting for elements to appear,
+   disappear, etc.
 
 ## Semantic Versioning
 
