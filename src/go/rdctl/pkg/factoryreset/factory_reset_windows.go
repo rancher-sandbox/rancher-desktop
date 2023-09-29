@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -217,39 +216,40 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 	}
 	dirs := []string{path.Join(localAppData, fmt.Sprintf("%s-updater", appName))}
 	localRDAppData := path.Join(localAppData, appName)
-	if keepSystemImages {
-		// We need to unpack the local appData dir, so we don't delete the main cached downloads
-		// Specifically, don't delete .../cache/k3s & k3s-versions.json
-		files, err := ioutil.ReadDir(localRDAppData)
-		if err != nil {
-			if !errors.Is(err, os.ErrNotExist) {
-				return nil, fmt.Errorf("could not get files in folder %s: %w", localRDAppData, err)
+
+	// add files in %LOCALAPPDATA%\rancher-desktop
+	deleteLocalRDAppData := true
+	appDataFiles, err := os.ReadDir(localRDAppData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory %q: %w", localRDAppData, err)
+	}
+	for _, appDataFile := range appDataFiles {
+		fileName := appDataFile.Name()
+		if fileName == "snapshots" {
+			// Never delete snapshots directory during factory reset
+			deleteLocalRDAppData = false
+		} else if fileName == "cache" && keepSystemImages {
+			// Don't delete cache\k3s & cache\k3s-versions.json if keeping system images
+			cacheDir := filepath.Join(localRDAppData, fileName)
+			cacheDirFiles, err := os.ReadDir(cacheDir)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read directory %q: %w", cacheDir, err)
 			}
-		} else {
-			for _, file := range files {
-				baseName := file.Name()
-				if strings.ToLower(baseName) != "cache" {
-					dirs = append(dirs, path.Join(localRDAppData, baseName))
-				} else {
-					cacheDir := path.Join(localRDAppData, baseName)
-					cacheFiles, err := ioutil.ReadDir(cacheDir)
-					if err != nil {
-						logrus.Infof("could not get files in folder %s: %s", cacheDir, err)
-					} else {
-						for _, cacheDirFile := range cacheFiles {
-							cacheDirFileName := cacheDirFile.Name()
-							lcFileName := strings.ToLower(cacheDirFileName)
-							if lcFileName != "k3s" && lcFileName != "k3s-versions.json" {
-								dirs = append(dirs, path.Join(cacheDir, cacheDirFileName))
-							}
-						}
-					}
+			for _, cacheDirFile := range cacheDirFiles {
+				cacheFileName := cacheDirFile.Name()
+				if cacheFileName != "k3s" && cacheFileName != "k3s-versions.json" {
+					dirs = append(dirs, filepath.Join(cacheDir, cacheFileName))
 				}
 			}
+			deleteLocalRDAppData = false
+		} else {
+			dirs = append(dirs, filepath.Join(localRDAppData, fileName))
 		}
-	} else {
+	}
+	if deleteLocalRDAppData {
 		dirs = append(dirs, localRDAppData)
 	}
+
 	dirs = append(dirs, path.Join(appData, appName))
 	return dirs, nil
 }
