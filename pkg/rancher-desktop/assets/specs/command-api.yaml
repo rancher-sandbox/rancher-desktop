@@ -320,8 +320,6 @@ paths:
                 type: array
                 items:
                   "$ref" : "#/components/schemas/snapshot"
-
-  /v1/snapshot:
     post:
       operationId: createSnapshot
       summary: Creates a new snapshot
@@ -334,7 +332,6 @@ paths:
             text/plain:
               schema:
                 type: string
-
     delete:
       operationId: deleteSnapshot
       summary:  Deletes a snapshot

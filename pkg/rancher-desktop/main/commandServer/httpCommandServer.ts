@@ -98,10 +98,10 @@ export class HttpCommandServer {
     {
       get:  { '/v1/snapshots': [0, this.listSnapshots] },
       post: {
-        '/v1/snapshot':         [0, this.createSnapshot],
+        '/v1/snapshots':        [0, this.createSnapshot],
         '/v1/snapshot/restore': [0, this.restoreSnapshot],
       },
-      delete: { '/v1/snapshot': [0, this.deleteSnapshot] },
+      delete: { '/v1/snapshots': [0, this.deleteSnapshot] },
     } as const,
   );
 
