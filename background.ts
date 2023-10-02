@@ -1275,19 +1275,19 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     }
   }
 
-  async listSnapshots(context: CommandWorkerInterface.CommandContext): Promise<Snapshot[]> {
+  async listSnapshots(context: CommandWorkerInterface.CommandContext) {
     return await Snapshots.list();
   }
 
-  async createSnapshot(context: CommandWorkerInterface.CommandContext, snapshot: Snapshot): Promise<void> {
+  async createSnapshot(context: CommandWorkerInterface.CommandContext, snapshot: Snapshot) {
     return await Snapshots.create(snapshot);
   }
 
-  async restoreSnapshot(context: CommandWorkerInterface.CommandContext, id: string): Promise<void> {
+  async restoreSnapshot(context: CommandWorkerInterface.CommandContext, id: string) {
     return await Snapshots.restore(id);
   }
 
-  async deleteSnapshot(context: CommandWorkerInterface.CommandContext, id: string): Promise<void> {
+  async deleteSnapshot(context: CommandWorkerInterface.CommandContext, id: string) {
     return await Snapshots.delete(id);
   }
 }
