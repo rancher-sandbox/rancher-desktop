@@ -51,7 +51,7 @@ class SnapshotsImpl {
   async list(): Promise<Snapshot[]> {
     const response = await this.rdctl(['snapshot', 'list']);
 
-    if (response.stderr) {
+    if (response.error) {
       return [];
     }
 
@@ -61,7 +61,7 @@ class SnapshotsImpl {
   async create(snapshot: Snapshot) : Promise<void> {
     const response = await this.rdctl(['snapshot', 'create', snapshot.name]);
 
-    if (response.stderr) {
+    if (response.error) {
       console.debug(response.stderr);
       throw new SnapshotsError(response.stderr);
     }
@@ -70,7 +70,7 @@ class SnapshotsImpl {
   async restore(id: string) : Promise<void> {
     const response = await this.rdctl(['snapshot', 'restore', id]);
 
-    if (response.stderr) {
+    if (response.error) {
       console.debug(response.stderr);
       throw new SnapshotsError(response.stderr);
     }
@@ -79,7 +79,7 @@ class SnapshotsImpl {
   async delete(id: string) : Promise<void> {
     const response = await this.rdctl(['snapshot', 'delete', id]);
 
-    if (response.stderr) {
+    if (response.error) {
       console.debug(response.stderr);
       throw new SnapshotsError(response.stderr);
     }
