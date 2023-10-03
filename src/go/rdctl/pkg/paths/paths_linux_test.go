@@ -24,7 +24,7 @@ func TestGetPaths(t *testing.T) {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
 		}
 		expectedPaths := Paths{
-			AppHome:                 filepath.Join(homeDir, ".config", appName),
+			AppHome:                 filepath.Join(homeDir, ".local/share", appName),
 			AltAppHome:              filepath.Join(homeDir, ".rd"),
 			Config:                  filepath.Join(homeDir, ".config", appName),
 			Logs:                    filepath.Join(homeDir, ".local/share", appName, "logs"),
@@ -62,7 +62,7 @@ func TestGetPaths(t *testing.T) {
 		}
 
 		expectedPaths := Paths{
-			AppHome:                 filepath.Join(environment["XDG_CONFIG_HOME"], appName),
+			AppHome:                 filepath.Join(environment["XDG_DATA_HOME"], appName),
 			AltAppHome:              filepath.Join(homeDir, ".rd"),
 			Config:                  filepath.Join(environment["XDG_CONFIG_HOME"], appName),
 			Logs:                    environment["RD_LOGS_DIR"],

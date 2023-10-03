@@ -27,25 +27,8 @@ import (
 	"strings"
 )
 
-func SetupLimaHome() error {
-	var candidatePath string
-	if runtime.GOOS == "linux" {
-		dataDir := os.Getenv("XDG_DATA_HOME")
-		if dataDir == "" {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				return err
-			}
-			dataDir = path.Join(homeDir, ".local", "share")
-		}
-		candidatePath = path.Join(dataDir, "rancher-desktop", "lima")
-	} else {
-		configDir, err := os.UserConfigDir()
-		if err != nil {
-			return err
-		}
-		candidatePath = path.Join(configDir, "rancher-desktop", "lima")
-	}
+func SetupLimaHome(appHome string) error {
+	candidatePath := path.Join(appHome, "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
 		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)

@@ -159,17 +159,15 @@ check_directories() {
     delete_dir=("$PATH_CONFIG")
     if is_unix; then
         delete_dir+=("$HOME/.rd")
+        delete_dir+=("$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json" "$LIMA_HOME" "$PATH_LOGS")
         # We can't make any general assertion on AppHome/snapshots - we don't know if it was created or not
         # So just assert on the other members of AppHome
-        if is_macos; then
-            delete_dir+=("$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/lima" "$PATH_APP_HOME/rd-engine.json" "$PATH_LOGS")
-            # TODO on macOS (not implemented by `rdctl factory-reset`)
-            # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
-            # this one only exists after an update has been downloaded
-            # ~/Library/Application Support/Caches/rancher-desktop-updater
-        elif is_linux; then
-            delete_dir+=("$PATH_DATA/lima" "$PATH_DATA/logs")
-        fi
+        # if is_macos; then
+        # TODO on macOS (not implemented by `rdctl factory-reset`)
+        # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
+        # this one only exists after an update has been downloaded
+        # ~/Library/Application Support/Caches/rancher-desktop-updater
+        # fi
     fi
 
     if is_windows; then

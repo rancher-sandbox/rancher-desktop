@@ -24,7 +24,7 @@ describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
     appHome: {
       win32:  '%APPDATA%/rancher-desktop/',
-      linux:  '%HOME%/.config/rancher-desktop/',
+      linux:  '%HOME%/.local/share/rancher-desktop/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/',
     },
     altAppHome: {
@@ -126,16 +126,6 @@ describe('paths', () => {
       const actual = path.normalize(path.resolve(paths[propName]));
 
       expect(actual).toEqual(cleaned);
-    }
-  });
-
-  it('lima should be in one of the main subtrees', () => {
-    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
-    const platform = os.platform();
-
-    if (['darwin', 'linux'].includes(platform)) {
-      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toEqual(platform === 'darwin');
-      expect(pathsToDelete.some( dir => '/bobs/friendly/llama/farm'.startsWith(dir))).toBeFalsy();
     }
   });
 });

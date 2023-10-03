@@ -29,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +51,6 @@ type ConnectionInfo struct {
 var (
 	connectionSettings ConnectionInfo
 
-	configDir  string
 	configPath string
 	// DefaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
 	DefaultConfigPath string
@@ -58,18 +58,21 @@ var (
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
 func DefineGlobalFlags(rootCmd *cobra.Command) {
+	var configDir string
 	var err error
 	if runtime.GOOS == "linux" && isWSLDistro() {
 		if configDir, err = wslifyConfigDir(); err != nil {
 			log.Fatalf("Can't get WSL config-dir: %v", err)
 		}
+		configDir = filepath.Join(configDir, "rancher-desktop")
 	} else {
-		configDir, err = os.UserConfigDir()
+		paths, err := p.GetPaths()
 		if err != nil {
-			log.Fatalf("Can't get config-dir: %v", err)
+			log.Fatalf("failed to get paths: %s", err)
 		}
+		configDir = paths.AppHome
 	}
-	DefaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
+	DefaultConfigPath = filepath.Join(configDir, "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.User, "user", "", "overrides the user setting in the config file")
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Host, "host", "", "default is 127.0.0.1; most useful for WSL")

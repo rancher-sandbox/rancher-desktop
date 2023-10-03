@@ -27,6 +27,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,7 +57,10 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 		return s.waitForAppToDieOrKillIt(factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
 	}
 	var err error
-	if err = directories.SetupLimaHome(); err != nil {
+	paths, err := p.GetPaths()
+	if err != nil {
+		logrus.Errorf("Ignoring error trying to get application paths: %s", err)
+	} else if err = directories.SetupLimaHome(paths.AppHome); err != nil {
 		logrus.Errorf("Ignoring error trying to get lima directory: %s", err)
 	} else {
 		limaCtlPath, err = directories.GetLimactlPath()

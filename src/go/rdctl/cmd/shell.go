@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/encoding/unicode"
@@ -61,7 +62,6 @@ func init() {
 func doShellCommand(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	var commandName string
-	var err error
 	if runtime.GOOS == "windows" {
 		commandName = "wsl"
 		distroName := "rancher-desktop"
@@ -74,7 +74,11 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 			"--exec", "/usr/local/bin/wsl-exec"},
 			args...)
 	} else {
-		if err = directories.SetupLimaHome(); err != nil {
+		paths, err := p.GetPaths()
+		if err != nil {
+			return err
+		}
+		if err = directories.SetupLimaHome(paths.AppHome); err != nil {
 			return err
 		}
 		commandName, err = directories.GetLimactlPath()

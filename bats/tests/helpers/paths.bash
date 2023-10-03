@@ -65,13 +65,12 @@ if is_macos; then
 fi
 
 if is_linux; then
-    PATH_APP_HOME="$HOME/.config/rancher-desktop"
+    PATH_APP_HOME="$HOME/.local/share/rancher-desktop"
     PATH_CONFIG="$HOME/.config/rancher-desktop"
     PATH_CACHE="$HOME/.cache/rancher-desktop"
-    PATH_DATA="$HOME/.local/share/rancher-desktop"
-    PATH_LOGS="$PATH_DATA/logs"
-    PATH_EXTENSIONS="$PATH_DATA/extensions"
-    LIMA_HOME="$PATH_DATA/lima"
+    PATH_LOGS="$PATH_APP_HOME/logs"
+    PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
+    LIMA_HOME="$PATH_APP_HOME/lima"
 
     set_path_resources \
         "/opt/rancher-desktop" \

@@ -40,7 +40,7 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	} else {
 		pathList = append(pathList, filepath.Join(paths.Cache, "updater-longhorn.json"))
 	}
-	appHomeDirs := addAppHomeWithoutSnapshots(filepath.Dir(paths.Lima))
+	appHomeDirs := addAppHomeWithoutSnapshots(paths.AppHome)
 	pathList = append(pathList, appHomeDirs...)
 	return deleteUnixLikeData(paths, pathList)
 }
