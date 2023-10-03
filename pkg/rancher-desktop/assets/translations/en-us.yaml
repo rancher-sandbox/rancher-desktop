@@ -190,6 +190,8 @@ marketplace:
   moreInfo: More information
 containers:
   title: Containers
+  sortableTables:
+    noRows: There are no containers to show
   manage:
     table:
       showMore: more...
@@ -203,6 +205,8 @@ containers:
 
 images:
   title: Images
+  sortableTables:
+    noRows: There are no images to show
   state:
     k8sUnready: Waiting for Kubernetes to be ready
     imagesUnready: Waiting for image manager to be ready
@@ -272,6 +276,8 @@ k8s:
     cancel: Cancel
 portForwarding:
   title: Port Forwarding
+  sortableTables:
+    noRows: There are no port forwarding entries to show
 general:
   title: Welcome to Rancher Desktop
   description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.

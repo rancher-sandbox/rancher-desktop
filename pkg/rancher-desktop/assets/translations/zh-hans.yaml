@@ -891,6 +891,20 @@ configmap:
     binaryData:
       label: 二进制数据
 
+containers:
+  sortableTables:
+    noRows: 没有要显示的容器
+
+images:
+  title: Images
+  sortableTables:
+    noRows: 没有要显示的镜像
+
+portForwarding:
+  sortableTables:
+    noRows: 没有可显示的端口转发规则
+
+
 containerResourceLimit:
   cpuPlaceholder: 例如：1000
   helpText: 请配置容器可以使用的默认资源配额

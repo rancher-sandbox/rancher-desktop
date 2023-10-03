@@ -15,6 +15,7 @@
         default-sort-by="imageName"
         :headers="headers"
         :rows="rows"
+        no-rows-key="images.sortableTables.noRows"
         :table-actions="true"
         :paging="true"
         @selection="updateSelection"
