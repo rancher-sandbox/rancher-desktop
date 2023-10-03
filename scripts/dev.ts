@@ -9,6 +9,7 @@ import events from 'events';
 import https from 'https';
 
 import fetch from 'node-fetch';
+import psTree from 'ps-tree';
 
 import buildUtils from './lib/build-utils';
 
@@ -168,8 +169,43 @@ class DevRunner extends events.EventEmitter {
     });
   }
 
+  /**
+   * Kill child processes associated with the given parent PID.
+   * @param parentPID - Parent PID whose child processes need to be terminated.
+   */
+  killChildProcesses(parentPID: number) {
+    psTree(parentPID, (err: Error | null, children: readonly psTree.PS[]) => {
+      if (err) {
+        console.error(`Error getting child processes with PID ${ parentPID }:`, { err });
+      } else {
+        children.forEach((child: psTree.PS) => {
+          try {
+            process.kill(Number(child.PID));
+          } catch (error: any) {
+            if (error.code === 'ESRCH') {
+              console.log(`Child process with PID ${ child.PID } not found.`);
+            } else {
+              console.error(`Error killing child process with PID ${ child.PID }: ${ error.message }`);
+            }
+          }
+        });
+      }
+    });
+  }
+
   exit() {
-    this.#rendererProcess?.kill();
+    // Terminate the renderer process if it exists
+    if (this.#rendererProcess) {
+      this.#rendererProcess.kill();
+
+      if (this.#rendererProcess.pid) {
+        this.killChildProcesses(this.#rendererProcess.pid);
+      }
+
+      // Set to null in the event that exit() invokes multiple times
+      this.#rendererProcess = null;
+    }
+
     this.#mainProcess?.kill();
   }
 
