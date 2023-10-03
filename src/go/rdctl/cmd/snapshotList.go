@@ -53,7 +53,7 @@ func listSnapshot() error {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
 	manager := snapshot.NewManager(paths)
-	snapshots, err := manager.List()
+	snapshots, err := manager.List(false)
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}

@@ -68,15 +68,16 @@ func NewSnapshotterImpl(p paths.Paths) SnapshotterImpl {
 }
 
 func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
-	// ensure snapshot directory is created
-	snapshotDir := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID)
-	if err := os.MkdirAll(snapshotDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create snapshot directory %q: %w", snapshotDir, err)
+	// Create metadata.json file. This happens first because creation
+	// of subsequent files may take a while, and we always need to
+	// have access to snapshot metadata.
+	if err := writeMetadataFile(snapshotter.Paths, snapshot); err != nil {
+		return err
 	}
 
 	// export WSL distros to snapshot directory
 	for _, distro := range getWslDistros(snapshotter.Paths) {
-		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
+		snapshotDistroPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, distro.Name+".tar")
 		if err := snapshotter.WSL.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
 			return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
 		}
@@ -89,9 +90,13 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 		return fmt.Errorf("failed to copy %q to snapshot directory: %w", workingSettingsPath, err)
 	}
 
-	if err := writeMetadataFile(snapshotter.Paths, snapshot); err != nil {
-		return err
+	// Create complete.txt file. This is done last because its presence
+	// signifies a complete and valid snapshot.
+	completeFilePath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, completeFileName)
+	if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
+		return fmt.Errorf("failed to write %q: %w", completeFileName, err)
 	}
+
 	return nil
 }
 
