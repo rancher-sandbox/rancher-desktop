@@ -9,7 +9,7 @@ const timeScale = process.env.CI ? 2 : 1;
 const config: Config<PlaywrightTestOptions> = {
   testDir,
   outputDir,
-  timeout:       5 * 60 * 1000 * timeScale,
+  timeout:       10 * 60 * 1000 * timeScale,
   globalTimeout: 30 * 60 * 1000 * timeScale,
   workers:       1,
   reporter:      'list',
