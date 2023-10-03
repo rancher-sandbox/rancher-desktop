@@ -31,6 +31,7 @@ import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 import DEFAULT_CONFIG from '@pkg/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@pkg/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
+import BUILDKIT_WRAPPER_SCRIPT from '@pkg/assets/scripts/buildkit-wrapper';
 import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
@@ -1699,8 +1700,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async writeBuildkitScripts() {
+    const conf = `${ SERVICE_BUILDKITD_CONF }\nbuildkitd_command="/usr/local/bin/buildkit-wrapper"\n`;
+
     await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
-    await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+    await this.writeFile(`/etc/conf.d/buildkitd`, conf, 0o644);
+    await this.writeFile(`/usr/local/bin/buildkit-wrapper`, BUILDKIT_WRAPPER_SCRIPT, 0o755);
   }
 
   protected async configureOpenResty(config: BackendSettings) {

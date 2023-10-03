@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# This script mounts cgroup v2 from /sys/fs/cgroup/unified to /sys/fs/cgroup
+# before launching buildkitd.  This works around a buildkit issue [1] where it
+# treats cgroup v1/hybrid as if it were cgroup v2.
+#
+# [1]: https://github.com/moby/buildkit/issues/4108
+#
+# Usage: $0 <buildkitd args...>
+
+set -o errexit -o nounset -o xtrace
+
+if [ -z "${BUILDKIT_WRAPPER_INSIDE:-}" ]; then
+  exec /usr/bin/env BUILDKIT_WRAPPER_INSIDE=1 /usr/bin/unshare --mount --propagation shared "$0" "$@"
+fi
+unset BUILDKIT_WRAPPER_INSIDE
+
+/bin/mount -o bind,private /sys/fs/cgroup/unified /sys/fs/cgroup
+exec /usr/local/bin/buildkitd "$@"
