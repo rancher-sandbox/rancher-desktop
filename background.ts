@@ -8,6 +8,7 @@ import Electron from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
 
+import { State } from '@pkg/backend/backend';
 import BackendHelper from '@pkg/backend/backendHelper';
 import K8sFactory from '@pkg/backend/factory';
 import { getImageProcessor } from '@pkg/backend/images/imageFactory';
@@ -22,7 +23,7 @@ import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
 import { PathManager } from '@pkg/integrations/pathManager';
 import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
-import { CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer, BackendState } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
@@ -63,6 +64,8 @@ if (!Electron.app.requestSingleInstanceLock()) {
 
 clearLoggingDirectory();
 
+const SNAPSHOT_OPERATION = 'Snapshot operation in progress';
+
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
@@ -78,6 +81,11 @@ let enabledK8s: boolean;
 let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
 let noModalDialogs = false;
+// Indicates whether the UI should be locked, settings changes should be disallowed
+// and possibly other things should be disallowed. As of the time of writing,
+// set to true when a snapshot is being created or restored.
+let backendIsLocked = '';
+let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
 /**
  * pendingRestartContext is needed because with the CLI it's possible to change
@@ -179,7 +187,6 @@ Electron.app.whenReady().then(async() => {
     DashboardServer.getInstance().init();
 
     await setupNetworking();
-    let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
@@ -240,6 +247,11 @@ Electron.app.whenReady().then(async() => {
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
 
+    if (fs.existsSync(path.join(paths.appHome, 'backend.lock'))) {
+      backendIsLocked = SNAPSHOT_OPERATION;
+    }
+    mainEvents.emit('backend-locked-update', backendIsLocked);
+
     mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already
@@ -297,7 +309,7 @@ Electron.app.whenReady().then(async() => {
 
     diagnostics.runChecks().catch(console.error);
 
-    await startBackend(cfg);
+    await startBackend();
   } catch (ex: any) {
     console.error(`Error starting up: ${ ex }`, ex.stack);
     gone = true;
@@ -388,7 +400,7 @@ async function checkBackendValid() {
  *
  * @precondition cfg.kubernetes.version is set.
  */
-async function startBackend(cfg: settings.Settings) {
+async function startBackend() {
   await checkBackendValid();
   try {
     await startK8sManager();
@@ -1227,6 +1239,37 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       } finally {
         window.send('extensions/changed');
       }
+    }
+  }
+
+  getBackendState(): BackendState {
+    return {
+      vmState: k8smanager.state,
+      locked:  !!backendIsLocked,
+    };
+  }
+
+  setBackendState(state: BackendState): void {
+    backendIsLocked = state.locked ? SNAPSHOT_OPERATION : '';
+    mainEvents.emit('backend-locked-update', backendIsLocked);
+    switch (state.vmState) {
+    case State.STARTED:
+      cfg = settingsImpl.load(deploymentProfiles);
+      mainEvents.emit('settings-update', cfg);
+
+      setImmediate(() => {
+        startBackend();
+      });
+
+      return;
+    case State.STOPPED:
+      setImmediate(() => {
+        k8smanager.stop();
+      });
+
+      return;
+    default:
+      throw new Error(`invalid desired VM state "${ state.vmState }"`);
     }
   }
 }

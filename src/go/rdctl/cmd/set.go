@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"github.com/spf13/cobra"
 )
@@ -44,6 +46,12 @@ func init() {
 }
 
 func doSetCommand(cmd *cobra.Command) error {
+	connectionInfo, err := config.GetConnectionInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
+	}
+	rdClient := client.NewRDClient(connectionInfo)
+
 	changedSettings, err := options.UpdateFieldsForJSON(cmd.Flags())
 	if err != nil {
 		cmd.SilenceUsage = true
@@ -57,7 +65,8 @@ func doSetCommand(cmd *cobra.Command) error {
 		return err
 	}
 
-	result, err := processRequestForUtility(doRequestWithPayload("PUT", versionCommand("", "settings"), bytes.NewBuffer(jsonBuffer)))
+	response, err := rdClient.DoRequestWithPayload("PUT", client.VersionCommand("", "settings"), bytes.NewBuffer(jsonBuffer))
+	result, err := client.ProcessRequestForUtility(response, err)
 	if err != nil {
 		return err
 	}

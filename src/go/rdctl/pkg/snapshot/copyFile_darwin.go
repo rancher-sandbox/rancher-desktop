@@ -31,7 +31,7 @@ func copyFile(dst, src string, copyOnWrite bool, fileMode os.FileMode) error {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
 	defer srcFd.Close()
-	dstFd, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, fileMode)
+	dstFd, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		return fmt.Errorf("failed to open destination file: %w", err)
 	}

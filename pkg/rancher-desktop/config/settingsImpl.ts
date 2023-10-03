@@ -55,7 +55,7 @@ export function save(cfg: Settings) {
 
     fs.writeFileSync(join(paths.config, 'settings.json'), rawdata);
 
-    // update the in-memory copy so subsequent calls to settings.load() will
+    // update the in-memory copy so subsequent calls to getSettings() will
     // return an up to date settings object
     settings = cfg;
   } catch (err) {
@@ -105,9 +105,6 @@ export function clearSettings() {
  * Load the settings file or create it if not present.
  */
 export function load(deploymentProfiles: DeploymentProfileType): Settings {
-  if (settings) {
-    return settings;
-  }
   try {
     return finishConfiguringSettings(loadFromDisk(), deploymentProfiles);
   } catch (err: any) {

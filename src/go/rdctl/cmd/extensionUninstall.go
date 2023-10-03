@@ -21,6 +21,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -41,9 +43,14 @@ func init() {
 }
 
 func uninstallExtension(args []string) error {
+	connectionInfo, err := config.GetConnectionInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
+	}
+	rdClient := client.NewRDClient(connectionInfo)
 	imageID := args[0]
-	endpoint := fmt.Sprintf("/%s/extensions/uninstall?id=%s", apiVersion, imageID)
-	result, errorPacket, err := processRequestForAPI(doRequest("POST", endpoint))
+	endpoint := fmt.Sprintf("/%s/extensions/uninstall?id=%s", client.ApiVersion, imageID)
+	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("POST", endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult(result, errorPacket, err)
 	}

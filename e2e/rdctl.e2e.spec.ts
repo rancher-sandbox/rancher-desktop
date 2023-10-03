@@ -595,7 +595,7 @@ test.describe('Command server', () => {
             stdout, stderr, error,
           }).toEqual({
             error:  expect.any(Error),
-            stderr: expect.stringContaining(`Error: open ${ configFilePath }: ${ ENOENTMessage }`),
+            stderr: expect.stringContaining(`Error: failed to get connection info: open ${ configFilePath }: ${ ENOENTMessage }`),
             stdout: '',
           });
           expect(stderr).not.toContain('Usage:');
@@ -622,7 +622,7 @@ test.describe('Command server', () => {
               stdout, stderr, error,
             }).toEqual({
               error:  expect.any(Error),
-              stderr: expect.stringContaining(`Error: open ${ configFilePath }: ${ ENOENTMessage }`),
+              stderr: expect.stringContaining(`Error: failed to get connection info: open ${ configFilePath }: ${ ENOENTMessage }`),
               stdout: '',
             });
             expect(stderr).not.toContain('Usage:');
@@ -641,7 +641,7 @@ test.describe('Command server', () => {
                 stdout, stderr, error,
               }).toEqual({
                 error:  expect.any(Error),
-                stderr: expect.stringContaining(`Error: open ${ configFile }: ${ ENOENTMessage }`),
+                stderr: expect.stringContaining(`Error: failed to get connection info: open ${ configFile }: ${ ENOENTMessage }`),
                 stdout: '',
               });
               expect(stderr).not.toContain('Usage:');

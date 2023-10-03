@@ -24,7 +24,7 @@ func copyFile(dst, src string, copyOnWrite bool, fileMode os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return fmt.Errorf("failed to create destination parent dir: %w", err)
 	}
-	dstFd, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, fileMode)
+	dstFd, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		return fmt.Errorf("failed to open destination file: %w", err)
 	}

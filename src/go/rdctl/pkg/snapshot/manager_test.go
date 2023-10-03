@@ -1,3 +1,5 @@
+//go:build unix
+
 package snapshot
 
 import (
@@ -43,6 +45,10 @@ func populateFiles(t *testing.T, includeOverrideYaml bool) (p.Paths, map[string]
 		"user.pub": {
 			Path:     filepath.Join(paths.Lima, "_config", "user.pub"),
 			Contents: "user public SSH key",
+		},
+		"lima.yaml": {
+			Path:     filepath.Join(paths.Lima, "0", "lima.yaml"),
+			Contents: "this is yaml",
 		},
 	}
 	if includeOverrideYaml {

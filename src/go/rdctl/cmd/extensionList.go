@@ -24,6 +24,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -45,8 +47,13 @@ func init() {
 }
 
 func listExtensions() error {
-	endpoint := fmt.Sprintf("/%s/extensions", apiVersion)
-	result, errorPacket, err := processRequestForAPI(doRequest("GET", endpoint))
+	connectionInfo, err := config.GetConnectionInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
+	}
+	rdClient := client.NewRDClient(connectionInfo)
+	endpoint := fmt.Sprintf("/%s/extensions", client.ApiVersion)
+	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("GET", endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult([]byte{}, errorPacket, err)
 	}
