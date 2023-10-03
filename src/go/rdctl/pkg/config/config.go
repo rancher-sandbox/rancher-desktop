@@ -21,8 +21,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -31,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
