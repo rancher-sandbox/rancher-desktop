@@ -5,24 +5,8 @@ import { getRdctlPath } from '@pkg/utils/paths';
 
 const console = Logging.snapshots;
 
-function parseFields(line: string): string[] {
-  return line?.split(/\s{2,}/) || [];
-}
-
 function parseLines(line: string): string[] {
   return line?.split(/\r?\n/) || [];
-}
-
-function parseRows(response: SpawnResult) {
-  const data = parseLines(response.stdout).filter(line => line);
-  const [header, ...lines] = data;
-
-  const fields = parseFields(header);
-
-  return lines.map(line => fields.reduce((acc, f, index) => ({
-    ...acc,
-    [f.toLowerCase()]: parseFields(line)[index],
-  }), {} as Snapshot));
 }
 
 class SnapshotsError {
@@ -48,13 +32,15 @@ class SnapshotsImpl {
   }
 
   async list(): Promise<Snapshot[]> {
-    const response = await this.rdctl(['snapshot', 'list']);
+    const response = await this.rdctl(['snapshot', 'list', '--json']);
 
     if (response.error) {
       return [];
     }
 
-    return parseRows(response);
+    const data = parseLines(response.stdout).filter(line => line);
+
+    return data.map((line) => JSON.parse(line));
   }
 
   async create(snapshot: Snapshot) : Promise<void> {
