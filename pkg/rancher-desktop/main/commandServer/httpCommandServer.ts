@@ -694,6 +694,8 @@ export class HttpCommandServer {
 
       if (payloadError) {
         response.status(400).type('txt').send('The snapshot is invalid');
+
+        return;
       }
 
       const snapshot = JSON.parse(data);
@@ -708,8 +710,9 @@ export class HttpCommandServer {
     } catch (error: any) {
       if (error.isSnapshotError) {
         response.status(400).type('txt').send(error.message);
+      } else {
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -728,8 +731,9 @@ export class HttpCommandServer {
       } catch (error: any) {
         if (error.isSnapshotError) {
           response.status(400).type('txt').send(error.message);
+        } else {
+          throw error;
         }
-        throw error;
       }
     }
   }
@@ -749,8 +753,9 @@ export class HttpCommandServer {
       } catch (error: any) {
         if (error.isSnapshotError) {
           response.status(400).type('txt').send(error.message);
+        } else {
+          throw error;
         }
-        throw error;
       }
     }
   }

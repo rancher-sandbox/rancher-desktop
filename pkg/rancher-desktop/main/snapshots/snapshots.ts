@@ -40,7 +40,7 @@ class SnapshotsImpl {
 
     const data = parseLines(response.stdout).filter(line => line);
 
-    return data.map((line) => JSON.parse(line));
+    return data.map(line => JSON.parse(line));
   }
 
   async create(snapshot: Snapshot) : Promise<void> {
