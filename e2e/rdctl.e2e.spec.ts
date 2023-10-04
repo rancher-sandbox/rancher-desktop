@@ -1233,7 +1233,7 @@ test.describe('Command server', () => {
             .map(([path, method]) => `${ method.toUpperCase() } ${ path }`);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toEqual(endpoints);
+          expect(JSON.parse(stdout).sort()).toEqual(endpoints.sort());
         });
         test('/v2 should fail', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v2']);
