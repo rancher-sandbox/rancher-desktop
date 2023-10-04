@@ -509,7 +509,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } catch (error) {
       console.log(`WSL distro "${ distro.name }" ${ error }`);
       if ((typeof error === 'object' && error) || typeof error === 'string') {
-        return `Error: ${ error }`;
+        return `${ error }`;
       } else {
         return `Error: unexpected error getting state of distro`;
       }
