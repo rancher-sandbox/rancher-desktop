@@ -1,8 +1,7 @@
+import { Snapshot, SpawnResult } from '@pkg/main/snapshots/types';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import { getRdctlPath } from '@pkg/utils/paths';
-
-import { Snapshot, SpawnResult } from './types';
 
 const console = Logging.snapshots;
 
