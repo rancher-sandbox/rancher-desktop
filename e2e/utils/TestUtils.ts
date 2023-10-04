@@ -337,7 +337,6 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
 }
 
 export interface startRancherDesktopOptions {
-  tracing?: boolean;
   mock?: boolean;
   env?: Record<string, string>;
   noModalDialogs?: boolean;
@@ -382,9 +381,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
   }
   const electronApp = await _electron.launch(launchOptions);
 
-  if (options?.tracing ?? true) {
-    await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
-  }
+  await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
 
   return electronApp;
 }
