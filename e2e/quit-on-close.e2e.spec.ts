@@ -9,12 +9,14 @@ import { createDefaultSettings, reportAsset, startRancherDesktop, teardown } fro
 test.describe.serial('quitOnClose setting', () => {
   test('should quit when quitOnClose is true and window is closed', async() => {
     const logName = `${ __filename }-quitOnCloseTrue`;
+
     createDefaultSettings({ application: { window: { quitOnClose: true } } });
     const electronApp = await startRancherDesktop(__filename, { logName });
 
     await electronApp.firstWindow();
 
     await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(true);
+    // Don't call teardown[App] here, because the app already exited.
     await electronApp.context().tracing.stop({ path: reportAsset(logName, 'trace') });
   });
 

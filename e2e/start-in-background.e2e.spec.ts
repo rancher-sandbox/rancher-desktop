@@ -1,10 +1,6 @@
-import path from 'path';
-
 import { test, expect, ElectronApplication } from '@playwright/test';
 
-import {
-  createDefaultSettings, reportAsset, startRancherDesktop, teardownApp, tool,
-} from './utils/TestUtils';
+import { createDefaultSettings, startRancherDesktop, teardown, tool } from './utils/TestUtils';
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
@@ -17,8 +13,7 @@ test.describe.serial('startInBackground setting', () => {
     const electronApp = await startRancherDesktop(__filename, { logName });
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(true);
-    await electronApp.context().tracing.stop({ path: reportAsset(logName, 'trace') });
-    await teardownApp(electronApp);
+    await teardown(electronApp, logName);
   });
 
   test('window should not appear when startInBackground is true', async() => {
@@ -28,9 +23,7 @@ test.describe.serial('startInBackground setting', () => {
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(false);
     await tool('rdctl', 'set', '--application.start-in-background=false');
-
-    await electronApp.context().tracing.stop({ path: reportAsset(logName, 'trace') });
-    await teardownApp(electronApp);
+    await teardown(electronApp, logName);
   });
 });
 
