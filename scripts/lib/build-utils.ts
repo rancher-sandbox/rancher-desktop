@@ -12,6 +12,7 @@ import util from 'util';
 import zlib from 'zlib';
 
 import spawn from 'cross-spawn';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
@@ -175,6 +176,7 @@ export default {
       },
       plugins: [
         new webpack.EnvironmentPlugin({ NODE_ENV: mode }),
+        new ForkTsCheckerWebpackPlugin(),
       ],
     };
   },
