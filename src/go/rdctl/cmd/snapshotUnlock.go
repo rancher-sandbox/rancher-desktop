@@ -19,7 +19,7 @@ normal circumstances.`,
 		cmd.SilenceUsage = true
 		err := unlockSnapshot()
 		if err != nil {
-			return exitWithJSONOrErrorCondition(err)
+			return exitWithJsonOrErrorCondition(err)
 		}
 		return nil
 	},

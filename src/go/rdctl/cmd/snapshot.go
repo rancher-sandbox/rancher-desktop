@@ -38,7 +38,7 @@ func init() {
 	snapshotErrors = make([]error, 0)
 }
 
-func exitWithJSONOrErrorCondition(e error) error {
+func exitWithJsonOrErrorCondition(e error) error {
 	if e != nil {
 		snapshotErrors = append(snapshotErrors, e)
 	}

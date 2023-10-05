@@ -49,16 +49,16 @@ func init() {
 func listSnapshot() error {
 	paths, err := p.GetPaths()
 	if err != nil {
-		return exitWithJSONOrErrorCondition(fmt.Errorf("failed to get paths: %w", err))
+		return exitWithJsonOrErrorCondition(fmt.Errorf("failed to get paths: %w", err))
 	}
 	manager := snapshot.NewManager(paths)
 	snapshots, err := manager.List()
 	if err != nil {
-		return exitWithJSONOrErrorCondition(fmt.Errorf("failed to list snapshots: %w", err))
+		return exitWithJsonOrErrorCondition(fmt.Errorf("failed to list snapshots: %w", err))
 	}
 	sort.Sort(SortableSnapshots(snapshots))
 	if outputJsonFormat {
-		return exitWithJSONOrErrorCondition(jsonOutput(snapshots))
+		return exitWithJsonOrErrorCondition(jsonOutput(snapshots))
 	}
 	return tabularOutput(snapshots)
 }
