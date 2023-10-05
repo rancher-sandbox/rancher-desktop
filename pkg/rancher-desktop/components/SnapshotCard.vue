@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import Vue from 'vue';
 
 import { Snapshot } from '@pkg/main/snapshots/types';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 import type { PropType } from 'vue';
 
@@ -48,10 +49,20 @@ export default Vue.extend<Computed, Methods, Computed, Props>({
   methods: {
     async restore() {
       await this.$store.dispatch('snapshots/restore', this.snapshot.id);
+      ipcRenderer.send('snapshot', {
+        type:   'restore',
+        result: 'success',
+        name:   this.snapshot.name,
+      });
     },
 
     async remove() {
       await this.$store.dispatch('snapshots/delete', this.snapshot.id);
+      ipcRenderer.send('snapshot', {
+        type:   'delete',
+        result: 'success',
+        name:   this.snapshot.name,
+      });
     },
   },
 });

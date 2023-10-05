@@ -1,12 +1,15 @@
 <script lang="ts">
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
 import SnapshotCard from '@pkg/components/SnapshotCard.vue';
-import { Snapshot } from '@pkg/main/snapshots/types';
+import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 interface Data {
+  snapshotEvent: SnapshotEvent | null;
   snapshotsPollingInterval: ReturnType<typeof setInterval> | null;
   isEmpty: boolean;
 }
@@ -20,11 +23,16 @@ interface Computed {
 }
 
 export default Vue.extend<Data, Methods, Computed, never>({
-  components: { EmptyState, SnapshotCard },
+  components: {
+    Banner,
+    EmptyState,
+    SnapshotCard,
+  },
 
   data(): Data {
     return {
       snapshotsPollingInterval: null,
+      snapshotEvent:            null,
       isEmpty:                  false,
     };
   },
@@ -38,6 +46,12 @@ export default Vue.extend<Data, Methods, Computed, never>({
   },
 
   beforeMount() {
+    ipcRenderer.on('snapshot', (_, event) => {
+      this.snapshotEvent = event;
+    });
+    if (this.$route.params) {
+      this.snapshotEvent = this.$route.params.event as any;
+    }
     this.$store.dispatch('snapshots/fetch');
     this.pollingStart();
   },
@@ -46,6 +60,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
     if (this.snapshotsPollingInterval) {
       clearInterval(this.snapshotsPollingInterval);
     }
+    ipcRenderer.removeAllListeners('snapshot');
   },
 
   methods: {
@@ -60,6 +75,13 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
 <template>
   <div class="snapshots">
+    <Banner
+      v-if="snapshotEvent"
+      class="banner mb-20"
+      color="success"
+    >
+      {{ t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.name }) }}
+    </Banner>
     <div
       v-for="item of snapshots"
       :key="item.id"
