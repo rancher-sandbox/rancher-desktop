@@ -152,21 +152,7 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
     log:   'logs',
   }[type];
 
-  // Note that CirrusCI doesn't upload folders...
   return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
-}
-
-export async function packageLogs(testPath: string) {
-  if (!process.env.CIRRUS_CI) {
-    console.log('Skipping packaging logs, not running in CirrusCI');
-
-    return;
-  }
-  const logDir = reportAsset(testPath, 'log');
-  const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
-
-  console.log(`Packaging logs to ${ outputPath }...`);
-  await childProcess.spawnFile('tar', ['cfh', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
 /**
@@ -226,7 +212,6 @@ export async function teardown(app: ElectronApplication, filename: string) {
   const context = app.context();
 
   await context.tracing.stop({ path: reportAsset(filename) });
-  await packageLogs(filename);
   await teardownApp(app);
 
   if (testInfo?.testPath === filename) {
@@ -352,11 +337,11 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
 }
 
 export interface startRancherDesktopOptions {
-  tracing?: boolean;
   mock?: boolean;
   env?: Record<string, string>;
   noModalDialogs?: boolean;
   timeout?: number;
+  logName?: string;
 }
 
 /**
@@ -383,7 +368,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
     env: {
       ...process.env,
       ...options?.env ?? {},
-      RD_LOGS_DIR: reportAsset(testPath, 'log'),
+      RD_LOGS_DIR: reportAsset(options?.logName ?? testPath, 'log'),
       ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },
   };
@@ -396,9 +381,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
   }
   const electronApp = await _electron.launch(launchOptions);
 
-  if (options?.tracing ?? true) {
-    await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
-  }
+  await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
 
   return electronApp;
 }

@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: failure()
         with:
-          name: e2etest-artifacts
+          name: failure-reports.zip
           path: ./e2e/reports/*
       - name: Clean up test environment
         run: |

@@ -1,41 +1,29 @@
-import path from 'path';
-
 import { test, expect, ElectronApplication } from '@playwright/test';
 
-import {
-  createDefaultSettings, packageLogs, startRancherDesktop, teardownApp, tool,
-} from './utils/TestUtils';
+import { createDefaultSettings, startRancherDesktop, teardown, tool } from './utils/TestUtils';
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('startInBackground setting', () => {
-  test.afterAll(async() => {
-    await packageLogs(__filename);
-  });
-
   test('window should appear when startInBackground is false', async() => {
     createDefaultSettings({ application: { startInBackground: false } });
-    const electronApp = await startRancherDesktop(__filename);
+    const logName = `${ __filename }-startInBackgroundFalse`;
+    const electronApp = await startRancherDesktop(__filename, { logName });
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(true);
-    const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-startInBackgroundFalse.zip`);
-
-    await electronApp.context().tracing.stop({ path: tracePath });
-    await teardownApp(electronApp);
+    await teardown(electronApp, logName);
   });
 
   test('window should not appear when startInBackground is true', async() => {
     createDefaultSettings({ application: { startInBackground: true } });
-    const electronApp = await startRancherDesktop(__filename);
+    const logName = `${ __filename }-startInBackgroundTrue`;
+    const electronApp = await startRancherDesktop(__filename, { logName });
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(false);
     await tool('rdctl', 'set', '--application.start-in-background=false');
-    const tracePath = path.join(__dirname, 'reports', `${ path.basename(__filename) }-startInBackgroundTrue.zip`);
-
-    await electronApp.context().tracing.stop({ path: tracePath });
-    await teardownApp(electronApp);
+    await teardown(electronApp, logName);
   });
 });
 
