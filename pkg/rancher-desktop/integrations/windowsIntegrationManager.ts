@@ -249,7 +249,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
     await Promise.all(
       (await this.supportedDistros).map((distro) => {
-          return this.syncDistroSocketProxy(distro.name, !reason);
+        return this.syncDistroSocketProxy(distro.name, !reason);
       }),
     );
   }
