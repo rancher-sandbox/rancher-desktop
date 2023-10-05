@@ -24,11 +24,11 @@ func deleteSnapshot(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	paths, err := p.GetPaths()
 	if err != nil {
-		return exitWithJSONOrErrorCondition(fmt.Errorf("failed to get paths: %w", err))
+		return exitWithJsonOrErrorCondition(fmt.Errorf("failed to get paths: %w", err))
 	}
 	manager := snapshot.NewManager(paths)
 	if err = manager.Delete(args[0]); err != nil {
-		return exitWithJSONOrErrorCondition(fmt.Errorf("failed to delete snapshot: %w", err))
+		return exitWithJsonOrErrorCondition(fmt.Errorf("failed to delete snapshot: %w", err))
 	}
 	return nil
 }

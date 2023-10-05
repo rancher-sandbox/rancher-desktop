@@ -17,7 +17,7 @@ var snapshotCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := wrapSnapshotOperation(createSnapshot)(cmd, args)
-		return exitWithJSONOrErrorCondition(err)
+		return exitWithJsonOrErrorCondition(err)
 	},
 }
 
