@@ -249,54 +249,55 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
     await Promise.all(
       (await this.supportedDistros).map((distro) => {
-        try {
           return this.syncDistroSocketProxy(distro.name, !reason);
-        } catch (error) {
-          console.error(`syncSocketProxy ${ distro.name } Error: ${ error }`);
-        }
       }),
     );
   }
 
   /**
-   * SyncDistroProcessState ensures that the background process for the given
+   * syncDistroSocketProxy ensures that the background process for the given
    * distribution is started or stopped, as desired.
    * @param distro The distribution to manage.
    * @param shouldRun Whether the docker socket proxy should be running.
+   * @note this function can not throw because the callers are expecting promises.
    */
   protected async syncDistroSocketProxy(distro: string, shouldRun: boolean) {
-    console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
-    if (shouldRun && this.settings.WSL?.integrations?.[distro] === true) {
-      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
-      const logStream = Logging[`wsl-helper.${ distro }`];
+    try {
+      console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
+      if (shouldRun && this.settings.WSL?.integrations?.[distro] === true) {
+        const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+        const logStream = Logging[`wsl-helper.${ distro }`];
 
-      this.distroSocketProxyProcesses[distro] ??= new BackgroundProcess(
-        `${ distro } socket proxy`,
-        {
-          spawn: async() => {
-            return spawn(await this.wslExe,
-              ['--distribution', distro, '--user', 'root', '--exec', executable,
-                'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
-              {
-                stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
-                windowsHide: true,
-              },
-            );
-          },
-          destroy: async(child) => {
-            child.kill('SIGTERM');
-            // Ensure we kill the WSL-side process; sometimes things can get out
-            // of sync.
-            await this.execCommand({ distro, root: true },
-              executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
-          },
-        });
-      this.distroSocketProxyProcesses[distro].start();
-    } else {
-      await this.distroSocketProxyProcesses[distro]?.stop();
-      if (!(distro in (this.settings.WSL?.integrations ?? {}))) {
-        delete this.distroSocketProxyProcesses[distro];
+        this.distroSocketProxyProcesses[distro] ??= new BackgroundProcess(
+          `${ distro } socket proxy`,
+          {
+            spawn: async() => {
+              return spawn(await this.wslExe,
+                ['--distribution', distro, '--user', 'root', '--exec', executable,
+                  'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
+                {
+                  stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
+                  windowsHide: true,
+                },
+              );
+            },
+            destroy: async(child) => {
+              child.kill('SIGTERM');
+              // Ensure we kill the WSL-side process; sometimes things can get out
+              // of sync.
+              await this.execCommand({ distro, root: true },
+                executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
+            },
+          });
+        this.distroSocketProxyProcesses[distro].start();
+      } else {
+        await this.distroSocketProxyProcesses[distro]?.stop();
+        if (!(distro in (this.settings.WSL?.integrations ?? {}))) {
+          delete this.distroSocketProxyProcesses[distro];
+        }
       }
+    } catch (error) {
+      console.error(`Error syncing ${ distro } distro socket proxy: ${ error }`);
     }
   }
 
@@ -355,6 +356,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
+  /**
+   * syncDistroDockerPlugin ensures that a plugin is accessible in the given distro.
+   * @param distro The distribution to manage.
+   * @param pluginName The plugin to validate.
+   * @note this function can not throw because the callers are expecting promises.
+   */
   protected async syncDistroDockerPlugin(distro: string, pluginName: string) {
     try {
       const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
