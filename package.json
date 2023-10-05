@@ -20,7 +20,7 @@
     "lint:fix": "yarn lint:typescript:fix && yarn lint:go:fix ",
     "lint:nofix": "yarn lint:typescript:nofix && yarn lint:go:nofix",
     "lint:typescript:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --fix --report-unused-disable-directives .",
-    "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --report-unused-disable-directives .",
+    "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --report-unused-disable-directives --max-warnings=0 .",
     "lint:go:fix": "gofmt -w src/go",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
