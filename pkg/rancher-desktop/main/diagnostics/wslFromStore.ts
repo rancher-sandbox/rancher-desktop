@@ -14,6 +14,7 @@ class CheckWSLFromStore implements DiagnosticsChecker {
   }
 
   async check() {
+    // Microsoft Store URL for WSL; product ID is from searching the store.
     const storeURL = 'ms-windows-store://pdp/?ProductId=9P9TQF7MRM4R&mode=mini';
     const version = await getWSLVersion();
 

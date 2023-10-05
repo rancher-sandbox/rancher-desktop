@@ -26,7 +26,9 @@ type WSLInfo struct {
 }
 
 const (
-	kPackageFamily            = "MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe" // spellcheck-ignore-line
+	// kPackageFamily is the package family for the WSL app (MSIX).
+	kPackageFamily = "MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe" // spellcheck-ignore-line
+	// kMsiUpgradeCode is the upgrade code for the WSL kernel (for in-box WSL2)
 	kMsiUpgradeCode           = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
 	PACKAGE_INFORMATION_BASIC = 0x00000000
 	PACKAGE_INFORMATION_FULL  = 0x00000100
@@ -87,10 +89,10 @@ func getPackageNames(packageFamily string) ([]string, error) {
 		return nil, fmt.Errorf("error getting package names: %w: %w", windows.Errno(rv), err)
 	}
 
-	result := make([]string, 0, count)
+	result := make([]string, count)
 	slice := unsafe.Slice((**uint16)(unsafe.Pointer(unsafe.SliceData(packageNames))), count)
-	for _, ptr := range slice {
-		result = append(result, windows.UTF16PtrToString(ptr))
+	for i, ptr := range slice {
+		result[i] = windows.UTF16PtrToString(ptr)
 	}
 
 	return result, nil

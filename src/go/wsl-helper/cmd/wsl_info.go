@@ -38,11 +38,7 @@ var wslInfoCmd = &cobra.Command{
 		}
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetIndent("", "  ")
-		err = encoder.Encode(info)
-		if err != nil {
-			return err
-		}
-		return nil
+		return encoder.Encode(info)
 	},
 }
 
