@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -58,6 +59,19 @@ func exitWithJsonOrErrorCondition(e error) error {
 		os.Exit(exitStatus)
 	}
 	return errors.Join(snapshotErrors...)
+}
+
+func getSnapshotId(manager snapshot.Manager, idOrName string) (string, error) {
+	snapshots, err := manager.List()
+	if err != nil {
+		return "", fmt.Errorf("failed to list snapshots: %w", err)
+	}
+	for _, candidate := range snapshots {
+		if idOrName == candidate.Name || idOrName == candidate.ID {
+			return candidate.ID, nil
+		}
+	}
+	return "", fmt.Errorf(`can't find a snapshot with name or ID "%s"`, idOrName)
 }
 
 // If the main process is running, stops the backend, calls the

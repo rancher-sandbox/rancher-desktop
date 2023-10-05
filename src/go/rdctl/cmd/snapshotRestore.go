@@ -21,6 +21,8 @@ var snapshotRestoreCmd = &cobra.Command{
 
 func init() {
 	snapshotCmd.AddCommand(snapshotRestoreCmd)
+	snapshotRestoreCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
+
 }
 
 func restoreSnapshot(_ *cobra.Command, args []string) error {
@@ -29,7 +31,11 @@ func restoreSnapshot(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
 	manager := snapshot.NewManager(paths)
-	if err := manager.Restore(args[0]); err != nil {
+	id, err := getSnapshotId(manager, args[0])
+	if err != nil {
+		return fmt.Errorf("can't restore snapshot: %w", err)
+	}
+	if err := manager.Restore(id); err != nil {
 		return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
 	}
 	return nil
