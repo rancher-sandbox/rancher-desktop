@@ -4716,6 +4716,30 @@ resourceQuota:
   resourceType:
     label: Resource Type
 
+snapshots:
+  title: Snapshots
+  action:
+    create: Create Snapshot
+  card:
+    body:
+      name: Name
+      createdAt: Created At
+      notes: Description
+    action:
+      restore: Restore
+      remove: Delete
+  create:
+    title: 'Create a new Snapshot'
+    name:
+      label: Snapshot Name
+    notes:
+      label: Description
+    actions:
+      submit: Create
+      back: Cancel
+    info: 'Please be aware that the system will be unavailable during creation of a new Snapshot'
+
+
 ##############################
 ### Troubleshooting Page
 ##############################

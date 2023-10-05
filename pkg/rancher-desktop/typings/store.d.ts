@@ -4,6 +4,7 @@ import type { actions as DiagnosticsActions } from '@pkg/store/diagnostics';
 import type { actions as ExtensionsActions } from '@pkg/store/extensions';
 import type { actions as PageActions } from '@pkg/store/page';
 import type { actions as PreferencesActions } from '@pkg/store/preferences';
+import type { actions as SnapshotsActions } from '@pkg/store/snapshots';
 import type { actions as TransientSettingsActions } from '@pkg/store/transientSettings';
 
 type Actions<
@@ -21,6 +22,7 @@ type storeActions = Record<string, never>
   & Actions<'diagnostics', typeof DiagnosticsActions>
   & Actions<'credentials', typeof CredentialsActions>
   & Actions<'extensions', typeof ExtensionsActions>
+  & Actions<'snapshots', typeof SnapshotsActions>
   & Actions<'transientSettings', typeof TransientSettingsActions>;
 
 declare module 'vuex/types' {
