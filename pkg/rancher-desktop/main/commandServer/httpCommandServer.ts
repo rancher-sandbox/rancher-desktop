@@ -14,6 +14,7 @@ import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import mainEvents from '@pkg/main/mainEvents';
 import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
 import * as serverHelper from '@pkg/main/serverHelper';
+import { Snapshot } from '@pkg/main/snapshots/types';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
@@ -93,6 +94,14 @@ export class HttpCommandServer {
         '/v1/extensions/install':   [1, this.installExtension],
         '/v1/extensions/uninstall': [1, this.uninstallExtension],
       },
+    } as const,
+    {
+      get:  { '/v1/snapshots': [0, this.listSnapshots] },
+      post: {
+        '/v1/snapshots':        [0, this.createSnapshot],
+        '/v1/snapshot/restore': [0, this.restoreSnapshot],
+      },
+      delete: { '/v1/snapshots': [0, this.deleteSnapshot] },
     } as const,
   );
 
@@ -672,6 +681,84 @@ export class HttpCommandServer {
 
     return Promise.resolve();
   }
+
+  protected async listSnapshots(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const snapshots = await this.commandWorker.listSnapshots(context);
+
+    response.status(200).type('json').send(snapshots);
+  }
+
+  protected async createSnapshot(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    try {
+      const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+
+      if (payloadError) {
+        response.status(400).type('txt').send('The snapshot is invalid');
+
+        return;
+      }
+
+      const snapshot = JSON.parse(data);
+
+      if (!snapshot.name) {
+        response.status(400).type('txt').send('The name field is required');
+      } else {
+        await this.commandWorker.createSnapshot(context, snapshot);
+
+        response.status(200).type('txt').send('Snapshot successfully created');
+      }
+    } catch (error: any) {
+      if (error.isSnapshotError) {
+        response.status(400).type('txt').send(error.message);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  protected async restoreSnapshot(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const id = request.query.id ?? '';
+
+    if (!id) {
+      response.status(400).type('txt').send('Snapshot id is required in query parameters');
+    } else if (typeof id !== 'string') {
+      response.status(400).type('txt').send(`Invalid snapshot id ${ JSON.stringify(id) }: not a string.`);
+    } else {
+      try {
+        await this.commandWorker.restoreSnapshot(context, id);
+
+        response.status(200).type('txt').send('Snapshot successfully restored');
+      } catch (error: any) {
+        if (error.isSnapshotError) {
+          response.status(400).type('txt').send(error.message);
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  protected async deleteSnapshot(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const id = request.query.id ?? '';
+
+    if (!id) {
+      response.status(400).type('txt').send('Snapshot id is required in query parameters');
+    } else if (typeof id !== 'string') {
+      response.status(400).type('txt').send(`Invalid snapshot id ${ JSON.stringify(id) }: not a string.`);
+    } else {
+      try {
+        await this.commandWorker.deleteSnapshot(context, id);
+
+        response.status(200).type('txt').send('Snapshot successfully deleted');
+      } catch (error: any) {
+        if (error.isSnapshotError) {
+          response.status(400).type('txt').send(error.message);
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
 }
 
 interface commandContext {
@@ -712,6 +799,10 @@ export interface CommandWorkerInterface {
    */
   installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}>;
   // #endregion
+  listSnapshots: (context: commandContext) => Promise<Snapshot[]>;
+  createSnapshot: (context: commandContext, snapshot: Snapshot) => Promise<void>;
+  deleteSnapshot: (context: commandContext, id: string) => Promise<void>;
+  restoreSnapshot: (context: commandContext, id: string) => Promise<void>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by
