@@ -259,7 +259,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * distribution is started or stopped, as desired.
    * @param distro The distribution to manage.
    * @param shouldRun Whether the docker socket proxy should be running.
-   * @note this function can not throw because the callers are expecting promises.
+   * @note this function must not throw.
    */
   protected async syncDistroSocketProxy(distro: string, shouldRun: boolean) {
     try {
@@ -360,7 +360,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * syncDistroDockerPlugin ensures that a plugin is accessible in the given distro.
    * @param distro The distribution to manage.
    * @param pluginName The plugin to validate.
-   * @note this function can not throw because the callers are expecting promises.
+   * @note this function must not throw.
    */
   protected async syncDistroDockerPlugin(distro: string, pluginName: string) {
     try {
