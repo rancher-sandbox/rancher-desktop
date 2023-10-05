@@ -25,7 +25,7 @@ func (wsl WSLImpl) UnregisterDistros() error {
 }
 
 func (wsl WSLImpl) ExportDistro(distroName, fileName string) error {
-	cmd := exec.Command("wsl.exe", "--export", "--vhd", distroName, fileName)
+	cmd := exec.Command("wsl.exe", "--export", distroName, fileName)
 	if output, err := cmd.Output(); err != nil {
 		return fmt.Errorf("failed to export WSL distro %q: %w", distroName, wrapWSLError(output, err))
 	}
@@ -33,7 +33,7 @@ func (wsl WSLImpl) ExportDistro(distroName, fileName string) error {
 }
 
 func (wsl WSLImpl) ImportDistro(distroName, installLocation, fileName string) error {
-	cmd := exec.Command("wsl.exe", "--import", distroName, installLocation, fileName, "--vhd")
+	cmd := exec.Command("wsl.exe", "--import", distroName, installLocation, fileName)
 	if output, err := cmd.Output(); err != nil {
 		return fmt.Errorf("failed to import WSL distro %q: %w", distroName, wrapWSLError(output, err))
 	}

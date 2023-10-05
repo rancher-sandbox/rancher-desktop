@@ -74,7 +74,7 @@ func (snapshotter Snapshotter) CreateFiles(paths paths.Paths, snapshot Snapshot)
 
 	// export WSL distros to snapshot directory
 	for _, distro := range getWslDistros(paths) {
-		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".vhdx")
+		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
 		if err := snapshotter.WSL.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
 			return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
 		}
@@ -100,7 +100,7 @@ func (snapshotter Snapshotter) RestoreFiles(paths paths.Paths, snapshot Snapshot
 	}
 	snapshotDir := filepath.Join(paths.Snapshots, snapshot.ID)
 	for _, distro := range getWslDistros(paths) {
-		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".vhdx")
+		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
 		if err := os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
 			return fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
 		}
