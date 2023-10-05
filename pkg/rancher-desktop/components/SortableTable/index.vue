@@ -1421,6 +1421,10 @@ $spacing: 10px;
 
     & > BUTTON {
       display: none; // Handled dynamically
+
+      i {
+        margin: 4px;
+      }
     }
 
     & > BUTTON:not(:last-of-type) {
