@@ -10,6 +10,14 @@ export type SpawnResult = {
   error?: any
 };
 
+export interface SnapshotDialog {
+  name?: string,
+  header: string,
+  infoBanner?: string,
+  showProgressBar?: boolean,
+  showLogo?: boolean,
+}
+
 export interface Snapshot {
   id: string,
   name: string,

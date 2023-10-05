@@ -6,7 +6,7 @@ import Electron from 'electron';
 import semver from 'semver';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
-import { SnapshotEvent } from '@pkg/main/snapshots/types';
+import { SnapshotDialog, SnapshotEvent } from '@pkg/main/snapshots/types';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
@@ -132,6 +132,10 @@ export interface IpcMainInvokeEvents {
 
   // #region Host
   'host/isArm': () => boolean;
+  // #endregion
+
+  // #region Snapshots
+  'show-snapshots-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
   // #endregion
 }
 
