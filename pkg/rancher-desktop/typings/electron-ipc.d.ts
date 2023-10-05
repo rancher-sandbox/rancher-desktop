@@ -6,6 +6,7 @@ import Electron from 'electron';
 import semver from 'semver';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
+import { SnapshotEvent } from '@pkg/main/snapshots/types';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
@@ -88,6 +89,10 @@ export interface IpcMainEvents {
   /** Show a notification */
   'extensions/ui/toast': (level: 'success' | 'warning' | 'error', message: string) => void;
   'ok:extensions/getContentArea': (payload: { x: number, y: number }) => void;
+  // #endregion
+
+  // #region Snapshots
+  'snapshot': (event: SnapshotEvent) => void;
   // #endregion
 }
 
@@ -195,5 +200,9 @@ export interface IpcRendererEvents {
 
   // #region Host
   'host/isArm': (isArm: boolean) => void;
+  // #endregion
+
+  // #region Snapshots
+  'snapshot': (event: SnapshotEvent) => void;
   // #endregion
 }

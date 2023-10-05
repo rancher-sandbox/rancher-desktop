@@ -769,6 +769,10 @@ ipcMainProxy.on('get-app-version', async(event) => {
   event.reply('get-app-version', await getVersion());
 });
 
+ipcMainProxy.on('snapshot', (event, args) => {
+  event.reply('snapshot', args);
+});
+
 ipcMainProxy.handle('versions/macOs', () => {
   return getMacOsVersion();
 });

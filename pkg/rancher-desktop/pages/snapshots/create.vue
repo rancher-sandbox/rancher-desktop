@@ -4,6 +4,8 @@ import { Banner, LabeledInput, TextAreaAutoGrow } from '@rancher/components';
 import dayjs from 'dayjs';
 import Vue from 'vue';
 
+import { SnapshotEvent } from '@pkg/main/snapshots/types';
+
 const defaultName = () => {
   const dateString = dayjs().format('YYYY-MM-DD_HH_mm_ss');
 
@@ -17,7 +19,7 @@ interface Data {
 }
 
 interface Methods {
-  goBack: () => void;
+  goBack: (event: SnapshotEvent) => void;
   submit: () => void;
 }
 
@@ -55,8 +57,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
   },
 
   methods: {
-    goBack() {
-      this.$router.push({ name: 'Snapshots' });
+    goBack(event: SnapshotEvent) {
+      this.$router.push({
+        name:   'Snapshots',
+        params: { event } as any,
+      });
     },
     async submit() {
       document.getSelection()?.removeAllRanges();
@@ -67,7 +72,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
       await this.$store.dispatch('snapshots/create', { name, notes });
 
-      this.goBack();
+      this.goBack({
+        type:   'create',
+        result: 'success',
+        name,
+      });
     },
   },
 });
