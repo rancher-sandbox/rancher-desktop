@@ -36,7 +36,7 @@ import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
 import setupNetworking from '@pkg/main/networking';
 import { Snapshots } from '@pkg/main/snapshots/snapshots';
-import { Snapshot } from '@pkg/main/snapshots/types';
+import { Snapshot, SnapshotDialog } from '@pkg/main/snapshots/types';
 import { Tray } from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -821,6 +821,49 @@ ipcMainProxy.handle('show-message-box-rd', async(_event, options: Electron.Messa
     }
 
     response = { response: options.cancelId };
+  });
+
+  await (new Promise<void>((resolve) => {
+    dialog.on('closed', resolve);
+  }));
+
+  return response;
+});
+
+ipcMainProxy.handle('show-snapshots-dialog', async(
+  _event,
+  options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
+) => {
+  const mainWindow = window.getWindow('main');
+
+  const dialog = window.openDialog(
+    'SnapshotsDialog',
+    {
+      modal:  true,
+      parent: mainWindow || undefined,
+      frame:  false,
+      height: 300,
+    });
+
+  let response: any;
+
+  dialog.webContents.on('ipc-message', (_event, channel, args) => {
+    if (channel === 'dialog/mounted') {
+      dialog.webContents.send('dialog/options', options);
+    }
+
+    if (channel === 'dialog/close') {
+      response = args || { response: options.window.cancelId };
+      dialog.close();
+    }
+  });
+
+  dialog.on('close', () => {
+    if (response) {
+      return;
+    }
+
+    response = { response: options.window.cancelId };
   });
 
   await (new Promise<void>((resolve) => {

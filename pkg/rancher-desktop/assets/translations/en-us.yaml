@@ -4742,6 +4742,17 @@ snapshots:
     icon: icon-search
     heading: No snapshots found
     body: Click on Create Snapshot to get started
+  dialog:
+    restore:
+      header: Are you sure you want to restore this Snapshot?
+      actions:
+        ok: 'Yes, restore'
+        cancel: 'Back'
+    delete:
+      header: Are you sure you want to delete this Snapshot?
+      actions:
+        ok: 'Yes, delete'
+        cancel: 'Back'
   info:
     restore:
       success: '{snapshot} was successfully restored'
