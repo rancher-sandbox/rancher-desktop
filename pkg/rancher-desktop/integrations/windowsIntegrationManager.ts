@@ -255,44 +255,49 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   /**
-   * SyncDistroProcessState ensures that the background process for the given
+   * syncDistroSocketProxy ensures that the background process for the given
    * distribution is started or stopped, as desired.
    * @param distro The distribution to manage.
    * @param shouldRun Whether the docker socket proxy should be running.
+   * @note this function must not throw.
    */
   protected async syncDistroSocketProxy(distro: string, shouldRun: boolean) {
-    console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
-    if (shouldRun && this.settings.WSL?.integrations?.[distro] === true) {
-      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
-      const logStream = Logging[`wsl-helper.${ distro }`];
+    try {
+      console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
+      if (shouldRun && this.settings.WSL?.integrations?.[distro] === true) {
+        const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+        const logStream = Logging[`wsl-helper.${ distro }`];
 
-      this.distroSocketProxyProcesses[distro] ??= new BackgroundProcess(
-        `${ distro } socket proxy`,
-        {
-          spawn: async() => {
-            return spawn(await this.wslExe,
-              ['--distribution', distro, '--user', 'root', '--exec', executable,
-                'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
-              {
-                stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
-                windowsHide: true,
-              },
-            );
-          },
-          destroy: async(child) => {
-            child.kill('SIGTERM');
-            // Ensure we kill the WSL-side process; sometimes things can get out
-            // of sync.
-            await this.execCommand({ distro, root: true },
-              executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
-          },
-        });
-      this.distroSocketProxyProcesses[distro].start();
-    } else {
-      await this.distroSocketProxyProcesses[distro]?.stop();
-      if (!(distro in (this.settings.WSL?.integrations ?? {}))) {
-        delete this.distroSocketProxyProcesses[distro];
+        this.distroSocketProxyProcesses[distro] ??= new BackgroundProcess(
+          `${ distro } socket proxy`,
+          {
+            spawn: async() => {
+              return spawn(await this.wslExe,
+                ['--distribution', distro, '--user', 'root', '--exec', executable,
+                  'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
+                {
+                  stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
+                  windowsHide: true,
+                },
+              );
+            },
+            destroy: async(child) => {
+              child.kill('SIGTERM');
+              // Ensure we kill the WSL-side process; sometimes things can get out
+              // of sync.
+              await this.execCommand({ distro, root: true },
+                executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
+            },
+          });
+        this.distroSocketProxyProcesses[distro].start();
+      } else {
+        await this.distroSocketProxyProcesses[distro]?.stop();
+        if (!(distro in (this.settings.WSL?.integrations ?? {}))) {
+          delete this.distroSocketProxyProcesses[distro];
+        }
       }
+    } catch (error) {
+      console.error(`Error syncing ${ distro } distro socket proxy: ${ error }`);
     }
   }
 
@@ -351,30 +356,40 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
+  /**
+   * syncDistroDockerPlugin ensures that a plugin is accessible in the given distro.
+   * @param distro The distribution to manage.
+   * @param pluginName The plugin to validate.
+   * @note this function must not throw.
+   */
   protected async syncDistroDockerPlugin(distro: string, pluginName: string) {
-    const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
-    const destDir = '$HOME/.docker/cli-plugins';
-    const destPath = `${ destDir }/${ pluginName }`;
-    const state = this.settings.WSL?.integrations?.[distro] === true;
+    try {
+      const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
+      const destDir = '$HOME/.docker/cli-plugins';
+      const destPath = `${ destDir }/${ pluginName }`;
+      const state = this.settings.WSL?.integrations?.[distro] === true;
 
-    console.debug(`Syncing ${ distro } ${ pluginName }: ${ srcPath } -> ${ destDir }`);
-    if (state) {
-      await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
-      await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
-    } else {
-      try {
-        // This is preferred to doing the readlink and rm in one long /bin/sh
-        // statement because then we rely on the distro's readlink supporting
-        // the -n option. Gnu/linux readlink supports -f, On macOS the -f means
-        // something else (not that we're likely to see macos WSLs).
-        const targetPath = (await this.captureCommand({ distro }, '/bin/sh', '-c', `readlink -f "${ destPath }"`)).trimEnd();
+      console.debug(`Syncing ${ distro } ${ pluginName }: ${ srcPath } -> ${ destDir }`);
+      if (state) {
+        await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
+        await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
+      } else {
+        try {
+          // This is preferred to doing the readlink and rm in one long /bin/sh
+          // statement because then we rely on the distro's readlink supporting
+          // the -n option. Gnu/linux readlink supports -f, On macOS the -f means
+          // something else (not that we're likely to see macos WSLs).
+          const targetPath = (await this.captureCommand({ distro }, '/bin/sh', '-c', `readlink -f "${ destPath }"`)).trimEnd();
 
-        if (targetPath === srcPath) {
-          await this.execCommand({ distro }, '/bin/sh', '-c', `rm "${ destPath }"`);
+          if (targetPath === srcPath) {
+            await this.execCommand({ distro }, '/bin/sh', '-c', `rm "${ destPath }"`);
+          }
+        } catch (err) {
+          console.log(`Failed to readlink/rm ${ destPath }`, err);
         }
-      } catch (err) {
-        console.log(`Failed to readlink/rm ${ destPath }`, err);
       }
+    } catch (error) {
+      console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`);
     }
   }
 
@@ -499,9 +514,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         return `Error: ${ stdout.trim() }`;
       }
     } catch (error) {
-      console.log(`WSL distro "${ distro.name }" error: ${ error }`);
+      console.log(`WSL distro "${ distro.name }" ${ error }`);
       if ((typeof error === 'object' && error) || typeof error === 'string') {
-        return `Error: ${ error }`;
+        return `${ error }`;
       } else {
         return `Error: unexpected error getting state of distro`;
       }
