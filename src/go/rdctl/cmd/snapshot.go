@@ -42,20 +42,22 @@ func exitWithJsonOrErrorCondition(e error) error {
 		snapshotErrors = append(snapshotErrors, e)
 	}
 	if outputJsonFormat {
+		exitStatus := 0
 		for _, snapshotError := range snapshotErrors {
 			if snapshotError != nil {
-				errorPayload := errorPayloadType{snapshotError.Error() }
+				exitStatus = 1
+				errorPayload := errorPayloadType{snapshotError.Error()}
 				jsonBuffer, err := json.Marshal(errorPayload)
 				if err != nil {
-					return fmt.Errorf("error json-converting error messages: %w", err)
+					snapshotErrors = append(snapshotErrors, fmt.Errorf("error json-converting error messages: %w", err))
+					return errors.Join(snapshotErrors...)
 				}
 				fmt.Fprintf(os.Stdout, string(jsonBuffer)+"\n")
 			}
 		}
-		return nil
-	} else {
-		return errors.Join(snapshotErrors...)
+		os.Exit(exitStatus)
 	}
+	return errors.Join(snapshotErrors...)
 }
 
 // If the main process is running, stops the backend, calls the
