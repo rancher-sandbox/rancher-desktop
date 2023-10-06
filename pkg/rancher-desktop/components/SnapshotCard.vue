@@ -13,7 +13,7 @@ function formatDate(value: string) {
   return dayjs(value).format('YYYY-MM-DD HH:mm');
 }
 
-export default Vue.extend<any, any, any, any>({
+export default Vue.extend({
   name:  'snapshot-card',
   props: {
     value: {
