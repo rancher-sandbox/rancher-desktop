@@ -7081,12 +7081,30 @@ forever-agent@~0.6.1:
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha512-j0KLYPhm6zeac4lz3oJ3o65qvgQCcPubiyotZrXqEaG4hNagNYO8qdlUrX5vwqv9ohqeT/Z3j6+yW067yWWdUw==
 
-fork-ts-checker-notifier-webpack-plugin@^7.0.0:
+fork-ts-checker-notifier-webpack-plugin@7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/fork-ts-checker-notifier-webpack-plugin/-/fork-ts-checker-notifier-webpack-plugin-7.0.0.tgz#96901e5e18b599cbd26f4182a45c1a3aa4df355d"
   integrity sha512-sVjH3Zl8VTxhtOw33z/kOCte7xBkEpBHcj/8KPohZBtD+w/fJrDuep3m0j4xHCFZH34cECErqh+YqKTTbwp3Ew==
   dependencies:
     node-notifier "^10.0.1"
+
+fork-ts-checker-webpack-plugin@9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-9.0.0.tgz#e12b9e6116d32b07a2dbc0ea08f62b1cea24d35a"
+  integrity sha512-Kw3JjsfGs0piB0V2Em8gCuo51O3p4KyCOK0Tn8X57oq2mSNBrMmONALRBw5frcmWsOVU7iELXXsJ+FVxJeQuhA==
+  dependencies:
+    "@babel/code-frame" "^7.16.7"
+    chalk "^4.1.2"
+    chokidar "^3.5.3"
+    cosmiconfig "^7.0.1"
+    deepmerge "^4.2.2"
+    fs-extra "^10.0.0"
+    memfs "^3.4.1"
+    minimatch "^3.0.4"
+    node-abort-controller "^3.0.1"
+    schema-utils "^3.1.1"
+    semver "^7.3.5"
+    tapable "^2.2.1"
 
 fork-ts-checker-webpack-plugin@^6.4.0:
   version "6.5.3"
@@ -7106,24 +7124,6 @@ fork-ts-checker-webpack-plugin@^6.4.0:
     schema-utils "2.7.0"
     semver "^7.3.2"
     tapable "^1.0.0"
-
-fork-ts-checker-webpack-plugin@^9.0.0:
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-9.0.0.tgz#e12b9e6116d32b07a2dbc0ea08f62b1cea24d35a"
-  integrity sha512-Kw3JjsfGs0piB0V2Em8gCuo51O3p4KyCOK0Tn8X57oq2mSNBrMmONALRBw5frcmWsOVU7iELXXsJ+FVxJeQuhA==
-  dependencies:
-    "@babel/code-frame" "^7.16.7"
-    chalk "^4.1.2"
-    chokidar "^3.5.3"
-    cosmiconfig "^7.0.1"
-    deepmerge "^4.2.2"
-    fs-extra "^10.0.0"
-    memfs "^3.4.1"
-    minimatch "^3.0.4"
-    node-abort-controller "^3.0.1"
-    schema-utils "^3.1.1"
-    semver "^7.3.5"
-    tapable "^2.2.1"
 
 form-data@^2.5.0:
   version "2.5.1"
