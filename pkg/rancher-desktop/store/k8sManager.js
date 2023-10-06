@@ -1,3 +1,4 @@
+import { State as EngineStates } from '@pkg/backend/k8s';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export const state = () => ({ k8sState: ipcRenderer.sendSync('k8s-state') });
@@ -17,5 +18,8 @@ export const actions = {
 export const getters = {
   getK8sState({ k8sState }) {
     return k8sState;
+  },
+  isReady({ k8sState }) {
+    return [EngineStates.STARTED, EngineStates.DISABLED].includes(k8sState);
   },
 };
