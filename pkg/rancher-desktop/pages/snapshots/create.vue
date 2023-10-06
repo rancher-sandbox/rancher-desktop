@@ -4,12 +4,7 @@ import { Banner, LabeledInput, TextAreaAutoGrow } from '@rancher/components';
 import Vue from 'vue';
 
 const defaultName = () => {
-  const dateString = new Date()
-    .toISOString()
-    .slice(0, 19)
-    .replace('T', '_')
-    .replace(/-/g, '_')
-    .replace(/:/g, '_');
+const dateString = dayjs().format('YYYY-MM-DD_HH_mm_ss');
 
   return `snap_${ dateString }`;
 };
