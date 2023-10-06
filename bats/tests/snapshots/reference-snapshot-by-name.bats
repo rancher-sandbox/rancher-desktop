@@ -88,6 +88,16 @@ local_setup() {
     assert_output $"can't delete snapshot: can't find a snapshot with name or ID \"the-nomadic-pond\""
 }
 
+@test 'fails to create a snapshot where proposed name is a current ID' {
+    run get_snapshot_id_from_name "$SNAPSHOT"
+    assert_success
+    refute_output ""
+    snapshotID="$output"
+    run rdctl snapshot create "$snapshotID"
+    assert_failure
+    assert_output --partial $"proposed snapshot name \"$snapshotID\" is the ID of snapshot \"$SNAPSHOT\""
+}
+
 @test 'delete all the snapshots' {
     rdctl snapshot delete "$SNAPSHOT"
     run rdctl snapshot list --json

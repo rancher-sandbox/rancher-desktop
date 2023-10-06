@@ -114,6 +114,8 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 	for _, currentSnapshot := range currentSnapshots {
 		if currentSnapshot.Name == name {
 			return nil, fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
+		} else if currentSnapshot.ID == name {
+			return nil, fmt.Errorf(`proposed snapshot name "%s" is the ID of snapshot "%s"`, name, currentSnapshot.Name)
 		}
 	}
 	if !nameRegexp.MatchString(name) {
