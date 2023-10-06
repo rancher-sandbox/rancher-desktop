@@ -70,6 +70,7 @@
 import SortableTable from '@pkg/components/SortableTable';
 import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
+import { mapGetters } from 'vuex';
 
 let ddClientReady = false;
 
@@ -114,6 +115,7 @@ export default {
     };
   },
   computed: {
+    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     rows() {
       if (!this.containersList) {
         return [];
@@ -195,7 +197,7 @@ export default {
 
       console.debug('Checking for containers...');
 
-      if (window.ddClient) {
+      if (window.ddClient && this.isK8sReady) {
         this.ddClient = window.ddClient;
 
         await this.getContainers();
