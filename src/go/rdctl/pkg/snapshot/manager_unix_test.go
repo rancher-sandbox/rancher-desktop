@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
