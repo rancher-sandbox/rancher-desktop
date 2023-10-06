@@ -8,7 +8,11 @@ interface Data {
   snapshotsPollingInterval: ReturnType<typeof setInterval> | undefined;
 }
 
-export default Vue.extend<Data, any, any, any>({
+interface VuexBindings {
+  snapshots: Snapshot[]
+}
+
+export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   components: { SnapshotCard },
 
   data(): Data {
