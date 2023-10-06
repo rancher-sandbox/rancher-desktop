@@ -8,17 +8,20 @@ export default Vue.extend({
       default: 'icon-alert',
     },
     heading: {
-      type:    String,
-      default: 'Empty state',
+      type:     String,
+      required: true,
     },
     body: {
       type:    String,
-      default: 'This is an example of an empty state.',
+      default: '',
     },
   },
   computed: {
     hasPrimaryActionSlot(): boolean {
       return !!this.$slots['primary-action'];
+    },
+    hasBody(): boolean {
+      return !!this.body || !!this.$slots['body'];
     },
   },
 });
@@ -39,7 +42,10 @@ export default Vue.extend({
         {{ heading }}
       </slot>
     </div>
-    <div class="empty-state-body">
+    <div
+      v-if="hasBody"
+      class="empty-state-body"
+    >
       <slot name="body">
         {{ body }}
       </slot>
