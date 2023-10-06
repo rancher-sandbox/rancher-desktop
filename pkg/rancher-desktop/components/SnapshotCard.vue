@@ -10,10 +10,7 @@ function formatDate(value: string) {
     return 'n/a';
   }
 
-  const leadingZero = (v: number) => `${ v < 10 ? '0' : '' }${ v }`;
-  const d = new Date(value);
-
-  return `${ d.getFullYear() }-${ leadingZero(d.getMonth() + 1) }-${ leadingZero(d.getDate()) } ${ leadingZero(d.getHours()) }:${ leadingZero(d.getMinutes()) }`;
+  return dayjs(value).format('YYYY-MM-DD HH:mm');
 }
 
 export default Vue.extend<any, any, any, any>({
