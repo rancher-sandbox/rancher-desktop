@@ -1,19 +1,22 @@
 export type SnapshotEvent = {
   type: 'restore' | 'delete' | 'create',
-  result: 'success' | 'cancel',
-  name: string
+  result?: 'success' | 'cancel',
+  error?: string | null,
+  snapshot?: Snapshot,
 };
 
 export type SpawnResult = {
   stdout: string,
   stderr: string,
-  error?: any
+  error?: any,
 };
 
 export interface SnapshotDialog {
-  name?: string,
   header: string,
-  infoBanner?: string,
+  snapshot?: Snapshot,
+  message?: string,
+  detail?: string,
+  info?: string | null,
   showProgressBar?: boolean,
   showLogo?: boolean,
 }

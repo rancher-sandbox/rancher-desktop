@@ -773,6 +773,14 @@ ipcMainProxy.on('snapshot', (event, args) => {
   event.reply('snapshot', args);
 });
 
+ipcMainProxy.on('dialog/error', (event, args) => {
+  window.getWindow(args.dialog)?.webContents.send('dialog/error', args.error);
+});
+
+ipcMainProxy.on('dialog/close', (event, args) => {
+  window.getWindow(args.dialog)?.close();
+});
+
 ipcMainProxy.handle('versions/macOs', () => {
   return getMacOsVersion();
 });
@@ -831,7 +839,7 @@ ipcMainProxy.handle('show-message-box-rd', async(_event, options: Electron.Messa
 });
 
 ipcMainProxy.handle('show-snapshots-dialog', async(
-  _event,
+  event,
   options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
 ) => {
   const mainWindow = window.getWindow('main');
@@ -850,6 +858,7 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   dialog.webContents.on('ipc-message', (_event, channel, args) => {
     if (channel === 'dialog/mounted') {
       dialog.webContents.send('dialog/options', options);
+      event.sender.sendToFrame(event.frameId, 'dialog/mounted');
     }
 
     if (channel === 'dialog/close') {

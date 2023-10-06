@@ -15,9 +15,16 @@ function formatDate(value: string) {
   return dayjs(value).format('YYYY-MM-DD HH:mm');
 }
 
+interface Data {
+  value: Snapshot
+}
+
 interface Methods {
   restore: () => void,
   remove: () => void,
+  showConfirmationDialog: (type: 'restore' | 'delete') => Promise<number>,
+  showRestoringSnapshotDialog: () => Promise<void>,
+  removeAllListeners: () => void,
 }
 
 interface Computed {
@@ -28,7 +35,7 @@ interface Props {
   value: Snapshot
 }
 
-export default Vue.extend<Computed, Methods, Computed, Props>({
+export default Vue.extend<Data, Methods, Computed, Props>({
   name:  'snapshot-card',
   props: {
     value: {
@@ -51,12 +58,23 @@ export default Vue.extend<Computed, Methods, Computed, Props>({
       const ok = await this.showConfirmationDialog('restore');
 
       if (ok) {
-        await this.$store.dispatch('snapshots/restore', this.snapshot.id);
-        ipcRenderer.send('snapshot', {
-          type:   'restore',
-          result: 'success',
-          name:   this.snapshot.name,
+        ipcRenderer.on('dialog/mounted', async() => {
+          const error = await this.$store.dispatch('snapshots/restore', this.snapshot.id);
+
+          if (error) {
+            ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error: this.t('snapshots.dialog.restoring.error', { error }) });
+          } else {
+            ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+            ipcRenderer.send('snapshot', {
+              type:     'restore',
+              result:   'success',
+              snapshot: this.snapshot,
+            });
+          }
         });
+
+        await this.showRestoringSnapshotDialog();
+        this.removeAllListeners();
       }
     },
 
@@ -66,9 +84,9 @@ export default Vue.extend<Computed, Methods, Computed, Props>({
       if (ok) {
         await this.$store.dispatch('snapshots/delete', this.snapshot.id);
         ipcRenderer.send('snapshot', {
-          type:   'delete',
-          result: 'success',
-          name:   this.snapshot.name,
+          type:     'delete',
+          result:   'success',
+          snapshot: this.snapshot,
         });
       }
     },
@@ -78,9 +96,6 @@ export default Vue.extend<Computed, Methods, Computed, Props>({
         'show-snapshots-dialog',
         {
           window: {
-            message: '',
-            detail:  '',
-            type:    'question',
             buttons: [
               this.t(`snapshots.dialog.${ type }.actions.cancel`),
               this.t(`snapshots.dialog.${ type }.actions.ok`),
@@ -88,13 +103,39 @@ export default Vue.extend<Computed, Methods, Computed, Props>({
             cancelId: 1,
           },
           format: {
-            header: this.t(`snapshots.dialog.${ type }.header`),
-            name:   this.snapshot.name,
+            header:          this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
+            info:            type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`) : null,
+            snapshot:        this.snapshot,
+            showProgressBar: true,
           },
         },
       );
 
       return confirm.response;
+    },
+
+    async showRestoringSnapshotDialog() {
+      await ipcRenderer.invoke(
+        'show-snapshots-dialog',
+        {
+          window: {
+            type:    'question',
+            buttons: [
+              // this.t('snapshots.dialog.restoring.actions.cancel'),
+            ],
+            cancelId: 1,
+          },
+          format: {
+            header:          this.t('snapshots.dialog.restoring.header', { snapshot: this.snapshot.name }),
+            showProgressBar: true,
+            message:         this.t('snapshots.dialog.restoring.message', { snapshot: this.snapshot.name }),
+          },
+        },
+      );
+    },
+
+    removeAllListeners() {
+      ipcRenderer.removeAllListeners('dialog/mounted');
     },
   },
 });
@@ -102,10 +143,15 @@ export default Vue.extend<Computed, Methods, Computed, Props>({
 </script>
 
 <template>
-  <div class="snapshot-card">
+  <div
+    v-if="snapshot"
+    class="snapshot-card"
+  >
     <div class="content">
       <div class="header">
-        <h2>{{ snapshot.name }}</h2>
+        <h2>
+          {{ snapshot.name }}
+        </h2>
       </div>
       <div class="body">
         <div class="created">

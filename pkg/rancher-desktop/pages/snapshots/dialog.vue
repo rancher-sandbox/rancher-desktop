@@ -1,43 +1,53 @@
 <script lang="ts">
 import os from 'os';
 
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
-  name:   'snapshots-dialog',
-  layout: 'dialog',
+  name:       'snapshots-dialog',
+  components: { Banner },
+  layout:     'dialog',
   data() {
     return {
-      name:            '',
       header:          '',
       message:         '',
-      detail:          '',
-      buttons:         [],
-      infoBanner:      '',
+      snapshot:        null,
+      info:            '',
       showProgressBar: false,
       showLogo:        false,
+      buttons:         [],
+      error:           null,
       response:        0,
       cancelId:        0,
     };
   },
 
   mounted() {
-    ipcRenderer.on('dialog/options', (_event, { window, format }: any) => {
-      this.name = format.name;
+    ipcRenderer.on('dialog/error', (_event, error) => {
+      this.error = error;
+    });
+
+    ipcRenderer.on('dialog/options', (_event, { window, format }) => {
       this.header = format.header;
-      this.message = window.message;
-      this.detail = window.detail;
-      this.buttons = window.buttons;
-      this.infoBanner = format.infoBanner;
-      this.showProgressBar = format.showProgressBar;
-      this.showLogo = format.showLogo;
+      this.message = format.message;
+      this.snapshot = format.snapshot;
+      this.info = format.info;
+      this.showProgressBar = format.showProgressBar || false;
+      this.showLogo = format.showLogo || false;
+      this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;
       ipcRenderer.send('dialog/ready');
     });
 
     ipcRenderer.send('dialog/mounted');
+  },
+
+  beforeDestroy() {
+    ipcRenderer.removeAllListeners('dialog/error');
+    ipcRenderer.removeAllListeners('dialog/options');
   },
 
   methods: {
@@ -54,30 +64,79 @@ export default Vue.extend({
 <template>
   <div class="dialog-container">
     <div
+      v-if="showLogo"
+      alt="Rancher Desktop"
+      class="logo"
+    >
+      <img src="@pkg/assets/images/logo.svg">
+    </div>
+    <div
       v-if="header"
       class="header"
     >
       <slot name="header">
-        {{ header }}
+        <h1>{{ header }}</h1>
       </slot>
     </div>
+    <hr class="separator">
     <div
       v-if="message"
       class="message"
     >
+      <i class="icon icon-info-circle icon-lg" />
       <slot name="message">
-        {{ message }}
+        <span class="value">{{ message }}</span>
       </slot>
     </div>
     <div
-      v-if="detail"
-      class="detail"
+      v-if="snapshot"
+      class="snapshot"
     >
-      <slot name="detail">
-        <span
-          class="detail-span"
-          v-html="detail"
-        />
+      <slot name="snapshot">
+        <div class="content">
+          <div class="header">
+            <h2>
+              {{ snapshot.name }}
+            </h2>
+          </div>
+          <div class="body">
+            <div class="created">
+              <span>{{ t('snapshots.card.body.createdAt') }}: </span>
+              <span class="value">{{ snapshot.created }}</span>
+            </div>
+            <div class="notes">
+              <span>{{ t('snapshots.card.body.notes') }}: </span>
+              <span class="value">{{ snapshot.notes || 'n/a' }}</span>
+            </div>
+          </div>
+        </div>
+      </slot>
+    </div>
+
+    <div
+      v-if="info"
+      class="info"
+    >
+      <slot name="info">
+        <Banner
+          class="banner mb-20"
+          color="info"
+        >
+          {{ info }}
+        </Banner>
+      </slot>
+    </div>
+    <div
+      v-if="error"
+      class="error"
+    >
+      <slot name="error">
+        <Banner
+          class="banner mb-20"
+          color="error"
+        >
+          {{ error }}
+        </Banner>
       </slot>
     </div>
     <div
@@ -85,9 +144,13 @@ export default Vue.extend({
       :class="{ 'actions-reverse': isDarwin() }"
     >
       <slot name="actions">
-        <template v-if="!buttons.length">
-          <button class="btn role-primary">
-            OK
+        <template v-if="error">
+          <button
+            class="btn"
+            :class="'role-secondary'"
+            @click="close(index)"
+          >
+            {{ t('snapshots.dialog.buttons.error') }}
           </button>
         </template>
         <template v-else>
@@ -111,36 +174,81 @@ export default Vue.extend({
     display: flex;
     width: 45rem;
     max-width: 45rem;
+    padding: 10px;
+  }
+
+  .logo {
+    margin: auto;
+    width: 215px;
+    height: 40px;
+  }
+
+  .header {
+    H1 {
+      margin: 0;
+    }
+  }
+
+  .separator {
+    height: 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    width: 100%;
+  }
+
+  .snapshot {
+    .content {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      padding: 5px;
+
+      .header {
+        h2 {
+          max-width: 500px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .content .body {
+      .value {
+        color: var(--input-label);
+      }
+    }
   }
 
   .message {
-    font-size: 1.5rem;
-    line-height: 2rem;
-    font-weight: 600;
-  }
+    .icon {
+      margin-top: 5px;
+      margin-right: 4px;
+    }
 
-  .detail {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
+    .value {
+      color: var(--input-label);
+    }
 
-  .detail-span {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    font-size: 1.3rem;
+    line-height: 2rem;
   }
 
   .actions {
-    margin-top: 30rem;
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
     gap: 0.25rem;
-    padding-top: 1rem;
+    padding-top: 3rem;
   }
 
   .actions-reverse {
     justify-content: flex-start;
     flex-direction: row-reverse;
+  }
+
+  .error {
+    color: red;
   }
 </style>
