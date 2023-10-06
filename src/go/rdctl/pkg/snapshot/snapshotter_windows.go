@@ -31,7 +31,7 @@ func getWslDistros(paths paths.Paths) []wslDistro {
 	}
 }
 
-// Note: on Windows, there are syscalls such as CopyFile and CopyFileEx
+// Note: on Windows, there are system calls such as CopyFile and CopyFileEx
 // that may speed up the process of copying a file, but they appear to require
 // loading DLL's. This approach works fine for copying smaller files, but if
 // we need to copy big files it may be worth the complexity to use the syscall.

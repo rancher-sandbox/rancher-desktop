@@ -7,7 +7,7 @@ import (
 )
 
 type WSL interface {
-	// Unregisters all WSL distros pertaining to Rancher Desktop.
+	// Deletes all WSL distros pertaining to Rancher Desktop.
 	UnregisterDistros() error
 	// Exports a distro as a .vhdx file and stores the result at
 	// the path given in fileName.
