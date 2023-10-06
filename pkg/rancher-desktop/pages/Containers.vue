@@ -73,6 +73,7 @@ import { shell } from 'electron';
 import { mapGetters } from 'vuex';
 
 let ddClientReady = false;
+let containerCheckInterval = null;
 
 export default {
   name:       'Containers',
@@ -190,7 +191,7 @@ export default {
     });
 
     // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
-    setInterval(async() => {
+    containerCheckInterval = setInterval(async() => {
       if (ddClientReady || this.containersList) {
         return;
       }
@@ -206,6 +207,7 @@ export default {
   },
   beforeDestroy() {
     ddClientReady = false;
+    clearInterval(containerCheckInterval);
   },
   methods: {
     handleSelection(item) {
