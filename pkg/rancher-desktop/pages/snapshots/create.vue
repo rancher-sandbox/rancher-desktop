@@ -3,8 +3,10 @@
 import { Banner, LabeledInput, TextAreaAutoGrow } from '@rancher/components';
 import dayjs from 'dayjs';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
-import { SnapshotEvent } from '@pkg/main/snapshots/types';
+import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 const defaultName = () => {
   const dateString = dayjs().format('YYYY-MM-DD_HH_mm_ss');
@@ -21,9 +23,12 @@ interface Data {
 interface Methods {
   goBack: (event: SnapshotEvent) => void;
   submit: () => void;
+  showCreatingSnapshotDialog: () => Promise<void>;
+  removeAllListeners: () => void;
 }
 
 interface Computed {
+  snapshots: Snapshot[];
   valid: boolean;
 }
 
@@ -43,8 +48,10 @@ export default Vue.extend<Data, Methods, Computed, never>({
   },
 
   computed: {
+    ...mapGetters('snapshots', { snapshots: 'list' }),
     valid() {
-      return !!this.name;
+      /** TODO show validation error on the UI */
+      return !!this.name && !this.snapshots.find((s: Snapshot) => s.name === this.name);
     },
   },
 
@@ -63,20 +70,57 @@ export default Vue.extend<Data, Methods, Computed, never>({
         params: { event } as any,
       });
     },
+
     async submit() {
-      document.getSelection()?.removeAllRanges();
       this.creating = true;
+      document.getSelection()?.removeAllRanges();
 
       /** TODO limit notes length */
       const { name, notes } = this;
 
-      await this.$store.dispatch('snapshots/create', { name, notes });
+      ipcRenderer.on('dialog/mounted', async() => {
+        const error = await this.$store.dispatch('snapshots/create', { name, notes });
 
-      this.goBack({
-        type:   'create',
-        result: 'success',
-        name,
+        if (error) {
+          ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error: this.t('snapshots.dialog.creating.error', { error }) });
+        } else {
+          ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+
+          this.goBack({
+            type:     'create',
+            result:   'success',
+            snapshot: { name } as Snapshot,
+          });
+        }
       });
+
+      await this.showCreatingSnapshotDialog();
+
+      this.creating = false;
+      this.removeAllListeners();
+    },
+
+    async showCreatingSnapshotDialog() {
+      await ipcRenderer.invoke(
+        'show-snapshots-dialog',
+        {
+          window: {
+            buttons: [
+              // this.t('snapshots.dialog.creating.actions.cancel'),
+            ],
+            cancelId: 1,
+          },
+          format: {
+            header:          this.t('snapshots.dialog.creating.header', { snapshot: this.name }),
+            showProgressBar: true,
+            message:         this.t('snapshots.dialog.creating.message'),
+          },
+        },
+      );
+    },
+
+    removeAllListeners() {
+      ipcRenderer.removeAllListeners('dialog/mounted');
     },
   },
 });

@@ -19,7 +19,8 @@ interface Methods {
 }
 
 interface Computed {
-  snapshots: Snapshot[]
+  snapshots: Snapshot[],
+  snapshotsInfo: any,
 }
 
 export default Vue.extend<Data, Methods, Computed, never>({
@@ -37,7 +38,19 @@ export default Vue.extend<Data, Methods, Computed, never>({
     };
   },
 
-  computed: { ...mapGetters('snapshots', { snapshots: 'list' }) },
+  computed: {
+    ...mapGetters('snapshots', { snapshots: 'list' }),
+    snapshotsInfo() {
+      if (this.snapshotEvent) {
+        return {
+          ...this.snapshotEvent,
+          name: this.snapshotEvent.snapshot?.name,
+        };
+      }
+
+      return null;
+    },
+  },
 
   watch: {
     snapshots(list) {
@@ -76,11 +89,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
 <template>
   <div class="snapshots">
     <Banner
-      v-if="snapshotEvent"
+      v-if="snapshotsInfo"
       class="banner mb-20"
       color="success"
     >
-      {{ t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.name }) }}
+      {{ t(`snapshots.info.${ snapshotsInfo.type }.${ snapshotsInfo.result }`, { snapshot: snapshotsInfo.name }) }}
     </Banner>
     <div
       v-for="item of snapshots"
