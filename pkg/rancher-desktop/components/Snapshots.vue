@@ -5,8 +5,7 @@ import { mapGetters } from 'vuex';
 import SnapshotCard from '@pkg/components/SnapshotCard.vue';
 
 interface Data {
-  // eslint-disable-next-line no-undef
-  snapshotsPollingInterval: NodeJS.Timer | null,
+  snapshotsPollingInterval: ReturnType<typeof setInterval> | undefined;
 }
 
 export default Vue.extend<Data, any, any, any>({
