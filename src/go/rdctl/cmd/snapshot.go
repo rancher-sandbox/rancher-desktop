@@ -11,7 +11,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,6 @@ type errorPayloadType struct {
 
 var outputJsonFormat bool
 var snapshotErrors []error
-var errorPayload = errorPayloadType{}
 
 const backendLockName = "backend.lock"
 
@@ -45,7 +44,7 @@ func exitWithJsonOrErrorCondition(e error) error {
 	if outputJsonFormat {
 		for _, snapshotError := range snapshotErrors {
 			if snapshotError != nil {
-				errorPayload.Error = snapshotError.Error()
+				errorPayload := errorPayloadType{snapshotError.Error() }
 				jsonBuffer, err := json.Marshal(errorPayload)
 				if err != nil {
 					return fmt.Errorf("error json-converting error messages: %w", err)
@@ -64,14 +63,14 @@ func exitWithJsonOrErrorCondition(e error) error {
 // to the main process, just calls the passed function.
 func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 	return func(cmd *cobra.Command, args []string) error {
-		paths, err := p.GetPaths()
+		appPaths, err := paths.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
-		if err := createBackendLock(paths); err != nil {
+		if err := createBackendLock(appPaths); err != nil {
 			return err
 		}
-		defer removeBackendLock(paths.AppHome)
+		defer removeBackendLock(appPaths.AppHome)
 
 		connectionInfo, err := config.GetConnectionInfo()
 		if errors.Is(err, os.ErrNotExist) {
@@ -132,6 +131,7 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 	}
 }
 
+// Normally snapshots can be created at state STARTED or DISABLED
 func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
 	interval := 1 * time.Second
 	numIntervals := 120
@@ -150,13 +150,13 @@ func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
 	return fmt.Errorf("timed out waiting for backend state in %s", desiredStates)
 }
 
-func createBackendLock(paths p.Paths) error {
-	if err := os.MkdirAll(paths.AppHome, 0o755); err != nil {
+func createBackendLock(appPaths paths.Paths) error {
+	if err := os.MkdirAll(appPaths.AppHome, 0o755); err != nil {
 		return fmt.Errorf("failed to create backend lock parent directory: %w", err)
 	}
 	// Create an empty file whose presence signifies that the
 	// backend is locked.
-	lockPath := filepath.Join(paths.AppHome, backendLockName)
+	lockPath := filepath.Join(appPaths.AppHome, backendLockName)
 	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
 	if errors.Is(err, os.ErrExist) {
 		return errors.New("backend lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")

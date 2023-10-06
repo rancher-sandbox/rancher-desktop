@@ -17,11 +17,7 @@ normal circumstances.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		err := unlockSnapshot()
-		if err != nil {
-			return exitWithJsonOrErrorCondition(err)
-		}
-		return nil
+		return exitWithJsonOrErrorCondition(unlockSnapshot())
 	},
 }
 

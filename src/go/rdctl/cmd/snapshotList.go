@@ -37,7 +37,7 @@ var snapshotListCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return listSnapshot()
+		return exitWithJsonOrErrorCondition(listSnapshot())
 	},
 }
 
@@ -49,16 +49,16 @@ func init() {
 func listSnapshot() error {
 	paths, err := p.GetPaths()
 	if err != nil {
-		return exitWithJsonOrErrorCondition(fmt.Errorf("failed to get paths: %w", err))
+		return fmt.Errorf("failed to get paths: %w", err)
 	}
 	manager := snapshot.NewManager(paths)
 	snapshots, err := manager.List()
 	if err != nil {
-		return exitWithJsonOrErrorCondition(fmt.Errorf("failed to list snapshots: %w", err))
+		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
 	sort.Sort(SortableSnapshots(snapshots))
 	if outputJsonFormat {
-		return exitWithJsonOrErrorCondition(jsonOutput(snapshots))
+		return jsonOutput(snapshots)
 	}
 	return tabularOutput(snapshots)
 }
