@@ -184,7 +184,7 @@ export default {
       config.plugins ??= [];
       config.plugins.push((new ForkTsCheckerWebpackPlugin() as unknown) as webpack.EnvironmentPlugin);
       config.plugins.push((new ForkTsCheckerNotifierWebpackPlugin({
-        title: 'TypeScript',
+        title:           'TypeScript',
         excludeWarnings: false,
       }) as unknown) as webpack.EnvironmentPlugin);
     }
