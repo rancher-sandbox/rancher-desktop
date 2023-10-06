@@ -1,4 +1,5 @@
 <script lang="ts">
+import dayjs from 'dayjs';
 import Vue from 'vue';
 
 import { Snapshot } from '@pkg/main/snapshots/types';
@@ -13,7 +14,20 @@ function formatDate(value: string) {
   return dayjs(value).format('YYYY-MM-DD HH:mm');
 }
 
-export default Vue.extend({
+interface Methods {
+  restore: () => void,
+  remove: () => void,
+}
+
+interface Computed {
+  snapshot: Snapshot
+}
+
+interface Props {
+  value: Snapshot
+}
+
+export default Vue.extend<Computed, Methods, Computed, Props>({
   name:  'snapshot-card',
   props: {
     value: {

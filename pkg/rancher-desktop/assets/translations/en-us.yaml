@@ -4738,6 +4738,10 @@ snapshots:
       submit: Create
       back: Cancel
     info: 'Please be aware that the system will be unavailable during creation of a new Snapshot'
+  empty:
+    icon: icon-search
+    heading: Snapshots list is empty
+    body: Click on Create Snapshot to create one
 
 
 ##############################

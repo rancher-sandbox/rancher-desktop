@@ -2,21 +2,31 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import EmptyState from '@pkg/components/EmptyState.vue';
 import SnapshotCard from '@pkg/components/SnapshotCard.vue';
+import { Snapshot } from '@pkg/main/snapshots/types';
 
 interface Data {
-  snapshotsPollingInterval: ReturnType<typeof setInterval> | undefined;
+  snapshotsPollingInterval: ReturnType<typeof setInterval> | null;
+  isEmpty: boolean;
 }
 
-interface VuexBindings {
+interface Methods {
+  pollingStart: () => void,
+}
+
+interface Computed {
   snapshots: Snapshot[]
 }
 
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
-  components: { SnapshotCard },
+export default Vue.extend<Data, Methods, Computed, never>({
+  components: { EmptyState, SnapshotCard },
 
   data(): Data {
-    return { snapshotsPollingInterval: null };
+    return {
+      snapshotsPollingInterval: null,
+      isEmpty:                  false,
+    };
   },
 
   computed: { ...mapGetters('snapshots', { snapshots: 'list' }) },
@@ -24,9 +34,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   watch: {
     snapshots: {
       handler(neu) {
+        this.isEmpty = neu?.length === 0;
         this.$emit('change', neu);
       },
-      immediate: true,
     },
   },
 
@@ -36,7 +46,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   },
 
   beforeDestroy() {
-    clearInterval(this.snapshotsPollingInterval);
+    if (this.snapshotsPollingInterval) {
+      clearInterval(this.snapshotsPollingInterval);
+    }
   },
 
   methods: {
@@ -59,6 +71,15 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         class="mb-20"
         :value="item"
       />
+    </div>
+    <div v-if="isEmpty">
+      <empty-state
+        class="mt-10"
+        :icon="t('snapshots.empty.icon')"
+        :heading="t('snapshots.empty.heading')"
+        :body="t('snapshots.empty.body')"
+      >
+      </empty-state>
     </div>
   </div>
 </template>
