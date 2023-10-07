@@ -13,6 +13,7 @@ var snapshotDeleteCmd = &cobra.Command{
 	Short: "Delete a snapshot",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		err := deleteSnapshot(cmd, args)
 		return exitWithJsonOrErrorCondition(err)
 	},
@@ -24,7 +25,6 @@ func init() {
 }
 
 func deleteSnapshot(cmd *cobra.Command, args []string) error {
-	cmd.SilenceUsage = true
 	appPaths, err := paths.GetPaths()
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
