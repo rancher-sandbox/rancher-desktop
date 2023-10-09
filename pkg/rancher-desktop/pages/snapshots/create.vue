@@ -51,7 +51,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
       'page/setHeader',
       { title: this.t('snapshots.create.title') },
     );
-    (this.$refs.nameInput as any)?.focus();
     (this.$refs.nameInput as any)?.select();
   },
 

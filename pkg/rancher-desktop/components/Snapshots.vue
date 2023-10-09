@@ -32,11 +32,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
   computed: { ...mapGetters('snapshots', { snapshots: 'list' }) },
 
   watch: {
-    snapshots: {
-      handler(neu) {
-        this.isEmpty = neu?.length === 0;
-        this.$emit('change', neu);
-      },
+    snapshots(list) {
+      this.isEmpty = list?.length === 0;
     },
   },
 
