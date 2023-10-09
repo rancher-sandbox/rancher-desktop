@@ -11,7 +11,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 const defaultName = () => {
   const dateString = dayjs().format('YYYY-MM-DD_HH_mm_ss');
 
-  return `snap_${ dateString }`;
+  return `Snap_${ dateString }`;
 };
 
 interface Data {
@@ -113,7 +113,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
           format: {
             header:          this.t('snapshots.dialog.creating.header', { snapshot: this.name }),
             showProgressBar: true,
-            message:         this.t('snapshots.dialog.creating.message'),
+            message:         this.t('snapshots.dialog.creating.message', { }, true),
           },
         },
       );

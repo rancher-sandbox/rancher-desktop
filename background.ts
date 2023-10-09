@@ -855,14 +855,13 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   const dialog = window.openDialog(
     'SnapshotsDialog',
     {
-      modal:       true,
-      parent:      mainWindow || undefined,
-      frame:       false,
-      height:      300,
-      alwaysOnTop: true,
-      center:      true,
-      closable:    false,
-      movable:     false,
+      modal:    true,
+      parent:   mainWindow || undefined,
+      frame:    false,
+      height:   500,
+      center:   true,
+      closable: false,
+      movable:  false,
     });
 
   let response: any;
