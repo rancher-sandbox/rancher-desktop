@@ -58,6 +58,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       const ok = await this.showConfirmationDialog('restore');
 
       if (ok) {
+        ipcRenderer.send('preferences-close');
         ipcRenderer.on('dialog/mounted', async() => {
           const error = await this.$store.dispatch('snapshots/restore', this.snapshot.id);
 
