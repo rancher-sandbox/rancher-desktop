@@ -4745,31 +4745,25 @@ snapshots:
   dialog:
     restore:
       header: Are you sure you want to restore this Snapshot?
-      info: 'Please be aware that the current installation, including preferences, will be replaced.
-            If the preference window is open it will be automatically closed and all unsaved changed discarded.'
+      info: 'Please be aware that the current installation, including preferences, will be replaced. If the preference window is open it will be automatically closed and all unsaved changed discarded.'
       actions:
         ok: 'Yes, restore'
-        cancel: 'Back'
+        cancel: 'Cancel'
     delete:
       header: Are you sure you want to delete this Snapshot?
       info: 'text'
       actions:
         ok: 'Yes, delete'
-        cancel: 'Back'
+        cancel: 'Cancel'
     restoring:
       header: 'Restoring {snapshot}'
-      message: 'Please wait some minutes for the Snapshot restoration.
-                The time depends on your machine resources, while creating the snapshot the system will be unavailable.
-                Once the process is finished the system will restart,
-                with the {snapshot} active.'
+      message: 'Please wait some minutes for the Snapshot restoration.<br/>The time depends on your machine resources, while creating the snapshot the system will be unavailable.<br/><br/>Once the process is finished the system will restart, with the {snapshot} active.'
       error: 'Error: {error}'
       actions:
         cancel: 'Cancel'
     creating:
       header: 'Creating {snapshot}'
-      message: 'Please wait some minutes for the Snapshot creation.
-                The time depends on your machine resources, while creating the snapshot the system will be unavailable.
-                Once the process is finished the system will restart.'
+      message: 'Please wait some minutes for the Snapshot creation.<br/>The time depends on your machine resources, while creating the snapshot the system will be unavailable.<br/><br/>Once the process is finished the system will restart.'
       error: 'Error: {error}'
       actions:
         cancel: 'Cancel'

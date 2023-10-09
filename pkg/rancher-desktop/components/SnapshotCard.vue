@@ -105,8 +105,8 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           },
           format: {
             header:          this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
-            info:            type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`) : null,
             snapshot:        this.snapshot,
+            info:            type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : null,
             showProgressBar: true,
           },
         },
@@ -128,8 +128,8 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           },
           format: {
             header:          this.t('snapshots.dialog.restoring.header', { snapshot: this.snapshot.name }),
+            message:         this.t('snapshots.dialog.restoring.message', { snapshot: this.snapshot.name }, true),
             showProgressBar: true,
-            message:         this.t('snapshots.dialog.restoring.message', { snapshot: this.snapshot.name }),
           },
         },
       );

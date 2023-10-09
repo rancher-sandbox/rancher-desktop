@@ -160,7 +160,7 @@ export default {
             showLogo:        true,
             showProgressBar: true,
             /** ToDo put here operation type information from 'state' */
-            message:         this.t('snapshots.dialog.creating.message'),
+            message:         this.t('snapshots.dialog.creating.message', {}, true),
           },
         },
       );

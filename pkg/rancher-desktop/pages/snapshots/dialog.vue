@@ -63,85 +63,90 @@ export default Vue.extend({
 
 <template>
   <div class="dialog-container">
-    <div
-      v-if="showLogo"
-      alt="Rancher Desktop"
-      class="logo"
-    >
-      <img src="@pkg/assets/images/logo.svg">
-    </div>
-    <div
-      v-if="header"
-      class="header"
-    >
-      <slot name="header">
-        <h1>{{ header }}</h1>
-      </slot>
-    </div>
-    <hr class="separator">
-    <div
-      v-if="message"
-      class="message"
-    >
-      <i class="icon icon-info-circle icon-lg" />
-      <slot name="message">
-        <span class="value">{{ message }}</span>
-      </slot>
-    </div>
-    <div
-      v-if="snapshot"
-      class="snapshot"
-    >
-      <slot name="snapshot">
-        <div class="content">
-          <div class="header">
-            <h2>
-              {{ snapshot.name }}
-            </h2>
-          </div>
-          <div class="body">
-            <div class="created">
-              <span>{{ t('snapshots.card.body.createdAt') }}: </span>
-              <span class="value">{{ snapshot.created }}</span>
+    <div class="dialog-body">
+      <div
+        v-if="showLogo"
+        alt="Rancher Desktop"
+        class="logo"
+      >
+        <img src="@pkg/assets/images/logo.svg">
+      </div>
+      <div
+        v-if="header"
+        class="header"
+      >
+        <slot name="header">
+          <h1>{{ header }}</h1>
+        </slot>
+      </div>
+      <hr class="separator">
+      <div
+        v-if="message"
+        class="message"
+      >
+        <i class="icon icon-info-circle icon-lg" />
+        <slot name="message">
+          <span
+            class="value"
+            v-html="message"
+          />
+        </slot>
+      </div>
+      <div
+        v-if="snapshot"
+        class="snapshot"
+      >
+        <slot name="snapshot">
+          <div class="content">
+            <div class="header">
+              <h2>
+                {{ snapshot.name }}
+              </h2>
             </div>
-            <div class="notes">
-              <span>{{ t('snapshots.card.body.notes') }}: </span>
-              <span class="value">{{ snapshot.notes || 'n/a' }}</span>
+            <div class="body">
+              <div class="created">
+                <span>{{ t('snapshots.card.body.createdAt') }}: </span>
+                <span class="value">{{ snapshot.created }}</span>
+              </div>
+              <div class="notes">
+                <span>{{ t('snapshots.card.body.notes') }}: </span>
+                <span class="value">{{ snapshot.notes || 'n/a' }}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </slot>
-    </div>
+        </slot>
+      </div>
 
-    <div
-      v-if="info"
-      class="info"
-    >
-      <slot name="info">
-        <Banner
-          class="banner mb-20"
-          color="info"
-        >
-          {{ info }}
-        </Banner>
-      </slot>
+      <div
+        v-if="info"
+        class="info"
+      >
+        <slot name="info">
+          <Banner
+            class="banner mb-20"
+            color="info"
+          >
+            <span v-html="info" />
+          </Banner>
+        </slot>
+      </div>
+      <div
+        v-if="error"
+        class="error"
+      >
+        <slot name="error">
+          <Banner
+            class="banner mb-20"
+            color="error"
+          >
+            <span v-html="error" />
+          </Banner>
+        </slot>
+      </div>
     </div>
     <div
-      v-if="error"
-      class="error"
-    >
-      <slot name="error">
-        <Banner
-          class="banner mb-20"
-          color="error"
-        >
-          {{ error }}
-        </Banner>
-      </slot>
-    </div>
-    <div
-      class="actions"
-      :class="{ 'actions-reverse': isDarwin() }"
+      class="dialog-actions"
+      :class="{ 'dialog-actions-reverse': isDarwin() }"
     >
       <slot name="actions">
         <template v-if="error">
@@ -171,84 +176,92 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .dialog-container {
-    display: flex;
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-rows: 30rem auto;
     width: 45rem;
-    max-width: 45rem;
     padding: 10px;
-  }
 
-  .logo {
-    margin: auto;
-    width: 215px;
-    height: 40px;
-  }
-
-  .header {
-    H1 {
-      margin: 0;
-    }
-  }
-
-  .separator {
-    height: 0;
-    border: 0;
-    border-top: 1px solid var(--border);
-    width: 100%;
-  }
-
-  .snapshot {
-    .content {
+    .dialog-body {
+      margin-top: 0.25rem;
       display: flex;
       flex-direction: column;
-      flex-grow: 1;
-      padding: 5px;
+      gap: 1.25rem;
+
+      .logo {
+        margin: 0 auto 5px auto;
+        width: 215px;
+        height: 40px;
+      }
 
       .header {
-        h2 {
-          max-width: 500px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        H1 {
+          margin: 0;
         }
       }
-    }
 
-    .content .body {
-      .value {
-        color: var(--input-label);
+      .separator {
+        height: 0;
+        border: 0;
+        border-top: 1px solid var(--border);
+        width: 100%;
+      }
+
+      .snapshot {
+        .content {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          padding: 5px;
+
+          .header {
+            h2 {
+              max-width: 500px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+          }
+        }
+
+        .content .body {
+          .value {
+            color: var(--input-label);
+          }
+        }
+      }
+
+      .message {
+        .icon {
+          margin-top: 5px;
+          margin-right: 4px;grid-auto-flow: column;
+        }
+
+        .value {
+          color: var(--input-label);
+        }
+
+        display: flex;
+        font-size: 1.3rem;
+        line-height: 2rem;
+      }
+
+      .info, .error {
+        margin: 0;
+        padding: 5px 0 0 0;
       }
     }
-  }
 
-  .message {
-    .icon {
-      margin-top: 5px;
-      margin-right: 4px;
+    .dialog-actions {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      gap: 0.25rem;
     }
 
-    .value {
-      color: var(--input-label);
+    .dialog-actions-reverse {
+      justify-content: flex-start;
+      flex-direction: row-reverse;
     }
-
-    display: flex;
-    font-size: 1.3rem;
-    line-height: 2rem;
-  }
-
-  .actions {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    gap: 0.25rem;
-    padding-top: 3rem;
-  }
-
-  .actions-reverse {
-    justify-content: flex-start;
-    flex-direction: row-reverse;
-  }
-
-  .error {
-    color: red;
   }
 </style>
