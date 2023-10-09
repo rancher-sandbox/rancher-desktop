@@ -79,6 +79,14 @@ export default {
 
   beforeMount() {
     initExtensions();
+    ipcRenderer.once('backend-locked', (event, state) => {
+      this.showCreatingSnapshotDialog(state);
+    });
+    ipcRenderer.once('backend-unlocked', () => {
+      ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+      ipcRenderer.removeAllListeners('backend-locked');
+    });
+    ipcRenderer.send('backend-state-check');
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
     });
@@ -109,6 +117,8 @@ export default {
   beforeDestroy() {
     ipcRenderer.off('k8s-check-state');
     ipcRenderer.off('extensions/getContentArea');
+    ipcRenderer.removeAllListeners('backend-locked');
+    ipcRenderer.removeAllListeners('backend-unlocked');
   },
 
   methods: {
@@ -130,6 +140,29 @@ export default {
 
         this.$router.push({ path: this.paths[idx] });
       }
+    },
+    showCreatingSnapshotDialog(state) {
+      /** ToDo state should contain info about operation in progress and snapshot name */
+      ipcRenderer.invoke(
+        'show-snapshots-dialog',
+        {
+          window: {
+            buttons: [
+              // this.t('snapshots.dialog.creating.actions.cancel'),
+            ],
+            cancelId: 1,
+          },
+          format: {
+            /** ToDo put here operation type and snapshot name from 'state' */
+            // header:          this.t('snapshots.dialog.creating.header', { snapshot: state.snapshot.name }),
+            header:          'Creating or restoring Snapshot',
+            showLogo:        true,
+            showProgressBar: true,
+            /** ToDo put here operation type information from 'state' */
+            message:         this.t('snapshots.dialog.creating.message'),
+          },
+        },
+      );
     },
   },
 };

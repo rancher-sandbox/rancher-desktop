@@ -510,6 +510,14 @@ Electron.app.on('activate', async() => {
   window.openMain();
 });
 
+mainEvents.on('backend-locked-update', () => {
+  window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked', backendIsLocked);
+});
+
+ipcMainProxy.on('backend-state-check', (event) => {
+  event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked', backendIsLocked);
+});
+
 ipcMainProxy.on('settings-read', (event) => {
   event.reply('settings-read', cfg);
 });
@@ -847,10 +855,14 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   const dialog = window.openDialog(
     'SnapshotsDialog',
     {
-      modal:  true,
-      parent: mainWindow || undefined,
-      frame:  false,
-      height: 300,
+      modal:       true,
+      parent:      mainWindow || undefined,
+      frame:       false,
+      height:      300,
+      alwaysOnTop: true,
+      center:      true,
+      closable:    false,
+      movable:     false,
     });
 
   let response: any;
