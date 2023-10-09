@@ -71,10 +71,10 @@ export class Tray {
       },
     },
     {
-      id:      'preferences',
-      label:   'Open preferences dialog',
-      type:    'normal',
-      click:   openPreferences,
+      id:    'preferences',
+      label: 'Open preferences dialog',
+      type:  'normal',
+      click: openPreferences,
     },
     {
       id:      'dashboard',

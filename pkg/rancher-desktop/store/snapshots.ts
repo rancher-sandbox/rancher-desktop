@@ -4,7 +4,6 @@ import { fetchAPI } from './credentials';
 import { ActionContext, MutationsType } from './ts-helpers';
 
 import { Snapshot } from '@pkg/main/snapshots/types';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 interface SnapshotsState {
   snapshots: Snapshot[]
