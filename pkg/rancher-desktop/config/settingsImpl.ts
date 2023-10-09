@@ -297,7 +297,7 @@ function parseSaveError(err: any) {
  * current defaults, so we won't need an entry for every version change, as
  * most changes will get picked up from the defaults.
  */
-const updateTable: Record<number, (settings: any) => void> = {
+export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
     // Implement setting change from version 3 to 4
     if ('rancherMode' in settings.kubernetes) {
