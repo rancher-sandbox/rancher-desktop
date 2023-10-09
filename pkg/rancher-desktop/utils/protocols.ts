@@ -77,9 +77,11 @@ export const protocolsRegistered = Latch();
  * production environments.
  */
 function setupAppProtocolHandler() {
+  // TODO: #5659 - Deprecated in Electron 25; replace with protocol.handle
   // eslint-disable-next-line deprecation/deprecation
   const registrationProtocol = isDevBuild ? protocol.registerHttpProtocol : protocol.registerFileProtocol;
 
+  // TODO: #5659 - Deprecated in Electron 25; replace with protocol.handle
   // eslint-disable-next-line deprecation/deprecation
   registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);
@@ -99,6 +101,7 @@ function setupAppProtocolHandler() {
  * issues with slashes).  Base64 was not available in Vue.
  */
 function setupExtensionProtocolHandler() {
+  // TODO: #5659 - Deprecated in Electron 25; replace with protocol.handle
   // eslint-disable-next-line deprecation/deprecation
   protocol.registerFileProtocol('x-rd-extension', (request, callback) => {
     const url = new URL(request.url);
