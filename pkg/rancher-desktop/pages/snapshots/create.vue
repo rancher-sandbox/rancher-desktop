@@ -71,6 +71,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
     },
 
     async submit() {
+      ipcRenderer.send('preferences-close');
       this.creating = true;
       document.getSelection()?.removeAllRanges();
 
