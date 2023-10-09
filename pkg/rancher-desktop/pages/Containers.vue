@@ -201,7 +201,11 @@ export default {
       if (window.ddClient && this.isK8sReady) {
         this.ddClient = window.ddClient;
 
-        await this.getContainers();
+        try {
+          await this.getContainers();
+        } catch (error) {
+          console.error('There was a problem fetching containers:', { error });
+        }
       }
     }, 1000);
   },
