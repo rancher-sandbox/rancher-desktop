@@ -24,7 +24,6 @@ interface Methods {
   goBack: (event: SnapshotEvent) => void;
   submit: () => void;
   showCreatingSnapshotDialog: () => Promise<void>;
-  removeAllListeners: () => void;
 }
 
 interface Computed {
@@ -97,7 +96,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       await this.showCreatingSnapshotDialog();
 
       this.creating = false;
-      this.removeAllListeners();
+      ipcRenderer.removeAllListeners('dialog/mounted');
     },
 
     async showCreatingSnapshotDialog() {
@@ -117,10 +116,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
           },
         },
       );
-    },
-
-    removeAllListeners() {
-      ipcRenderer.removeAllListeners('dialog/mounted');
     },
   },
 });

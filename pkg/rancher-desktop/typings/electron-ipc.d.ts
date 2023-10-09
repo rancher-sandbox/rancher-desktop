@@ -13,6 +13,7 @@ import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
  * i.e. ipcRenderer.send() -> ipcMain.on().
  */
 export interface IpcMainEvents {
+  'backend-state-check': () => string;
   'k8s-restart': () => void;
   'settings-read': () => void;
   'k8s-versions': () => void;
@@ -145,6 +146,8 @@ export interface IpcMainInvokeEvents {
  * process, i.e. webContents.send() -> ipcRenderer.on().
  */
 export interface IpcRendererEvents {
+  'backend-locked': (state: string) => void;
+  'backend-unlocked': (state: string) => void;
   'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
