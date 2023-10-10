@@ -4,30 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 var nameRegexp = *regexp.MustCompile("^[0-9a-zA-Z_-]{0,100}$")
 var ErrNameExists = errors.New("name already exists")
 var ErrInvalidName = fmt.Errorf("name does not match regex %q", nameRegexp.String())
-
-// Returns a string of length n that is comprised of random letters
-// and numbers. From:
-// https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
-func randomString(n int) string {
-	letters := "abcdefghijklmnopqrstuvwxyz0123456789"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
 
 // Writes the data in a Snapshot to the metadata.json file in a snapshot
 // directory. This is done last because we consider the presence of this file to
@@ -79,10 +67,14 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 		return nil, fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
 
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate ID for snapshot: %w", err)
+	}
 	snapshot := Snapshot{
 		Created: time.Now(),
 		Name:    name,
-		ID:      randomString(10),
+		ID:      id.String(),
 	}
 
 	// do operations that can fail, rolling back if failure is encountered
