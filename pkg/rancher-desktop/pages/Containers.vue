@@ -70,8 +70,10 @@
 import SortableTable from '@pkg/components/SortableTable';
 import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
+import { mapGetters } from 'vuex';
 
 let ddClientReady = false;
+let containerCheckInterval = null;
 
 export default {
   name:       'Containers',
@@ -114,6 +116,7 @@ export default {
     };
   },
   computed: {
+    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     rows() {
       if (!this.containersList) {
         return [];
@@ -188,22 +191,27 @@ export default {
     });
 
     // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
-    setInterval(async() => {
+    containerCheckInterval = setInterval(async() => {
       if (ddClientReady || this.containersList) {
         return;
       }
 
       console.debug('Checking for containers...');
 
-      if (window.ddClient) {
+      if (window.ddClient && this.isK8sReady) {
         this.ddClient = window.ddClient;
 
-        await this.getContainers();
+        try {
+          await this.getContainers();
+        } catch (error) {
+          console.error('There was a problem fetching containers:', { error });
+        }
       }
     }, 1000);
   },
   beforeDestroy() {
     ddClientReady = false;
+    clearInterval(containerCheckInterval);
   },
   methods: {
     handleSelection(item) {
