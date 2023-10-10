@@ -20,6 +20,9 @@ func copyFile(dst, src string, copyOnWrite bool, fileMode os.FileMode) error {
 		return fmt.Errorf("failed to create destination parent dir: %w", err)
 	}
 	if copyOnWrite {
+		if err := os.RemoveAll(dst); err != nil {
+			return fmt.Errorf("failed to remove existing destination file: %w", err)
+		}
 		if err := unix.Clonefile(src, dst, 0); err == nil {
 			return nil
 		} else if !errors.Is(err, unix.ENOTSUP) && !errors.Is(err, unix.EXDEV) {
