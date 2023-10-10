@@ -50,8 +50,8 @@ const (
 	vsockHandshakePort   = 6669
 	vsockDialPort        = 6656
 	defaultTapDevice     = "eth0"
-	defaultNSVeth        = "veth0"
-	rancherDesktopNSVeth = "veth1"
+	defaultNSVeth        = "veth-rd0"
+	rancherDesktopNSVeth = "veth-rd1"
 	defaultNamespacePID  = 1
 	cidrOnes             = 24
 	cidrBits             = 32
@@ -80,7 +80,10 @@ func main() {
 	}
 	logrus.Debugf("successful connection to host on CID: %v and Port: %d: connection: %+v", vsock.CIDHost, vsockDialPort, vsockConn)
 
-	originNS, _ := netns.Get()
+	originNS, err := netns.Get()
+	if err != nil {
+		logrus.Errorf("failed getting a handle to the current namespace: %v", err)
+	}
 
 	// setup network namespace
 	ns, err := configureNamespace()
@@ -110,10 +113,13 @@ func main() {
 	}
 	logrus.Infof("successfully started the vm-switch running with a PID: %v", vmSwitchCmd.Process.Pid)
 
-	if err := createVethPair(defaultNamespacePID, vmSwitchCmd.Process.Pid); err != nil {
+	err = createVethPair(defaultNamespacePID,
+		vmSwitchCmd.Process.Pid,
+		defaultNSVeth,
+		rancherDesktopNSVeth)
+	if err != nil {
 		logrus.Fatal(err)
 	}
-	logrus.Infof("created veth pair  %s and %s", defaultNSVeth, rancherDesktopNSVeth)
 
 	if err := configureVethPair(rancherDesktopNSVeth, "192.168.1.2"); err != nil {
 		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", rancherDesktopNSVeth, err)
@@ -196,7 +202,7 @@ func configureVMSwitch(
 	return vmSwitchCmd
 }
 
-func createVethPair(defaultNsPid, peerNsPid int) error {
+func createVethPair(defaultNsPid, peerNsPid int, defaultNSVeth, rancherDesktopNSVeth string) error {
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{
 			Name:      defaultNSVeth,
