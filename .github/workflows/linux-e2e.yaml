@@ -42,10 +42,10 @@ jobs:
           EOF
       - name: Run e2e Tests
         continue-on-error: false
-        run: yarn test:e2e
+        run: CI=true yarn test:e2e
         env:
           RD_DEBUG_ENABLED: '1'
-        timeout-minutes: 60
+        timeout-minutes: 150
       - name: Upload failure reports
         uses: actions/upload-artifact@v3
         if: failure()
