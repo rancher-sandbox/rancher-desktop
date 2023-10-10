@@ -37,17 +37,14 @@ func writeMetadataFile(paths paths.Paths, snapshot Snapshot) error {
 
 // Handles all snapshot-related functionality.
 type Manager struct {
-	Paths paths.Paths
-	// Types that implement Snapshotter are responsible for copying/creating
-	// files that need to be copied/created for the creation and restoration of
-	// snapshots.
+	Paths       paths.Paths
 	Snapshotter Snapshotter
 }
 
 func NewManager(paths paths.Paths) Manager {
 	return Manager{
 		Paths:       paths,
-		Snapshotter: NewSnapshotter(),
+		Snapshotter: NewSnapshotterImpl(paths),
 	}
 }
 
@@ -79,7 +76,7 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 
 	// do operations that can fail, rolling back if failure is encountered
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
-	if err := manager.Snapshotter.CreateFiles(manager.Paths, snapshot); err != nil {
+	if err := manager.Snapshotter.CreateFiles(snapshot); err != nil {
 		if err := os.RemoveAll(snapshotDir); err != nil {
 			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
 		}
@@ -147,7 +144,7 @@ func (manager Manager) Restore(id string) error {
 		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
 	}
 
-	if err := manager.Snapshotter.RestoreFiles(manager.Paths, snapshot); err != nil {
+	if err := manager.Snapshotter.RestoreFiles(snapshot); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 

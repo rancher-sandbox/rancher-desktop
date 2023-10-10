@@ -40,7 +40,9 @@ func populateFiles(t *testing.T, includeOverrideYaml bool) (p.Paths, map[string]
 
 func newTestManager(paths p.Paths) Manager {
 	manager := NewManager(paths)
-	manager.Snapshotter.WSL = wsl.MockWSL{}
+	snapshotter := NewSnapshotterImpl(paths)
+	snapshotter.WSL = wsl.MockWSL{}
+	manager.Snapshotter = snapshotter
 	return manager
 }
 
