@@ -10,9 +10,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 )
 
-// Note that the includeOverrideYaml argument only exists to match
-// the interface for the Unix Manager tests. It is not used on Windows.
-func populateFiles(t *testing.T, includeOverrideYaml bool) (p.Paths, map[string]TestFile) {
+func populateFiles(t *testing.T, _ bool) (p.Paths, map[string]TestFile) {
 	baseDir := t.TempDir()
 	paths := p.Paths{
 		Config:        filepath.Join(baseDir, "config"),
