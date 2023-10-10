@@ -316,6 +316,13 @@ export default class SettingsValidator {
 
         return false;
       }
+      if (mergedSettings.experimental.virtualMachine.mount.type === MountType.NINEP) {
+        errors.push(
+          `Setting ${ fqname } to "${ VMType.VZ }" requires that experimental.virtual-machine.mount.type is ` +
+          `"${ MountType.REVERSE_SSHFS }" or "${ MountType.VIRTIOFS }".`);
+
+        return false;
+      }
     }
 
     return currentValue !== desiredValue;

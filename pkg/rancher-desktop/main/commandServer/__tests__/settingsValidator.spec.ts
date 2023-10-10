@@ -3,12 +3,15 @@
 import os from 'os';
 
 import _ from 'lodash';
+import { SemVer } from 'semver';
 
 import SettingsValidator from '../settingsValidator';
 
 import * as settings from '@pkg/config/settings';
+import { MountType, VMType } from '@pkg/config/settings';
 import { getDefaultMemory } from '@pkg/config/settingsImpl';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
+import * as osVersion from '@pkg/utils/osVersion';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 const cfg = _.merge(
@@ -778,5 +781,86 @@ describe(SettingsValidator, () => {
     expect(errors).toEqual([
       'Kubernetes version "" not found.',
     ]);
+  });
+
+  describe('experimental.virtualMachine.type', () => {
+    let spyArch: jest.SpiedFunction<typeof os.arch>;
+    let spyMacOsVersion: jest.SpiedFunction<typeof osVersion.getMacOsVersion>;
+
+    beforeEach(() => {
+      spyPlatform.mockReturnValue('darwin');
+      spyArch = jest.spyOn(os, 'arch');
+      spyMacOsVersion = jest.spyOn(osVersion, 'getMacOsVersion');
+    });
+
+    afterEach(() => {
+      spyArch.mockRestore();
+      spyMacOsVersion.mockRestore();
+    });
+
+    function checkForError(needToUpdate: boolean, errors: string[], errorMessage: string) {
+      expect(needToUpdate).toBeFalsy();
+      expect(errors).toHaveLength(1);
+      expect(errors).toEqual([
+        errorMessage,
+      ]);
+    }
+
+    function getVMTypeSetting(vmType: VMType) {
+      return {
+        experimental: {
+          virtualMachine: {
+            type: vmType,
+          },
+        },
+      };
+    }
+
+    function getMountTypeSetting(mountType: MountType) {
+      return {
+        experimental: {
+          virtualMachine: {
+            mount: {
+              type: mountType,
+            },
+          },
+        },
+      };
+    }
+
+    it('should reject VZ if architecture is arm and macOS version < 13.3.0', () => {
+      spyArch.mockReturnValue('arm64');
+      spyMacOsVersion.mockReturnValue(new SemVer('13.2.0'));
+      const [needToUpdate, errors] = subject.validateSettings(
+        cfg, getVMTypeSetting(VMType.VZ));
+
+      checkForError(
+        needToUpdate, errors,
+        'Setting experimental.virtualMachine.type to \"vz\" on ARM requires macOS 13.3 (Ventura) or later.',
+      );
+    });
+
+    it('should reject VZ if architecture is Intel macOS version < 13.0.0', () => {
+      spyMacOsVersion.mockReturnValue(new SemVer('12.0.0'));
+      const [needToUpdate, errors] = subject.validateSettings(
+        cfg, getVMTypeSetting(VMType.VZ));
+
+      checkForError(
+        needToUpdate, errors,
+        'Setting experimental.virtualMachine.type to \"vz\" on Intel requires macOS 13.0 (Ventura) or later.',
+      );
+    });
+
+    it('should reject VZ if mount type is 9p', () => {
+      spyMacOsVersion.mockReturnValue(new SemVer('13.3.0'));
+      const [needToUpdate, errors] = subject.validateSettings(
+        _.merge({}, cfg, getMountTypeSetting(MountType.NINEP)), getVMTypeSetting(VMType.VZ));
+
+      checkForError(
+        needToUpdate, errors,
+        'Setting experimental.virtualMachine.type to \"vz\" requires that ' +
+        'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"virtiofs\".',
+      );
+    });
   });
 });
