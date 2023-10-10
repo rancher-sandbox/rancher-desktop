@@ -479,14 +479,16 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
     return window;
   }
 
-  Shortcuts.register(
-    window,
-    { key: 'Escape' },
-    () => {
-      window.close();
-    },
-    'Close dialog',
-  );
+  if (opts === undefined || opts.closable) {
+    Shortcuts.register(
+      window,
+      { key: 'Escape' },
+      () => {
+        window.close();
+      },
+      'Close dialog',
+    );
+  }
 
   return window;
 }
