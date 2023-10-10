@@ -324,6 +324,15 @@ export default class SettingsValidator {
         return false;
       }
     }
+    if (desiredValue === VMType.QEMU) {
+      if (mergedSettings.experimental.virtualMachine.mount.type === MountType.VIRTIOFS && os.platform() === 'darwin') {
+        errors.push(
+          `Setting ${ fqname } to "${ VMType.QEMU }" requires that experimental.virtual-machine.mount.type is ` +
+          `"${ MountType.REVERSE_SSHFS }" or "${ MountType.NINEP }".`);
+
+        return false;
+      }
+    }
 
     return currentValue !== desiredValue;
   }
