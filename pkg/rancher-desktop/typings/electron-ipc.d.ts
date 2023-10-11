@@ -94,7 +94,7 @@ export interface IpcMainEvents {
   // #endregion
 
   // #region Snapshots
-  'snapshot': (event: SnapshotEvent) => void;
+  'snapshot': (event: SnapshotEvent | null) => void;
   // #endregion
 }
 
@@ -213,6 +213,6 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region Snapshots
-  'snapshot': (event: SnapshotEvent) => void;
+  'snapshot': (event: SnapshotEvent | null) => void;
   // #endregion
 }

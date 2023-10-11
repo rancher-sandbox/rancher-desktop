@@ -87,9 +87,9 @@ export default Vue.extend<Data, Methods, Computed, never>({
           ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
 
           this.goBack({
-            type:     'create',
-            result:   'success',
-            snapshot: { name } as Snapshot,
+            type:         'create',
+            result:       'success',
+            snapshotName: name,
           });
         }
       });

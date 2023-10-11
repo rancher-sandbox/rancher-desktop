@@ -62,6 +62,9 @@ export default Vue.extend<Data, Methods, Computed, Props>({
     async restore() {
       const ok = await this.showConfirmationDialog('restore');
 
+      /** Clear old event on Snapshots page */
+      ipcRenderer.send('snapshot', null);
+
       if (ok) {
         ipcRenderer.send('preferences-close');
         ipcRenderer.on('dialog/mounted', async() => {
@@ -72,9 +75,9 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           } else {
             ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
             ipcRenderer.send('snapshot', {
-              type:     'restore',
-              result:   'success',
-              snapshot: this.snapshot,
+              type:         'restore',
+              result:       'success',
+              snapshotName: this.snapshot?.name,
             });
           }
         });
@@ -87,12 +90,15 @@ export default Vue.extend<Data, Methods, Computed, Props>({
     async remove() {
       const ok = await this.showConfirmationDialog('delete');
 
+      /** Clear old event on Snapshots page */
+      ipcRenderer.send('snapshot', null);
+
       if (ok) {
         await this.$store.dispatch('snapshots/delete', this.snapshot.id);
         ipcRenderer.send('snapshot', {
-          type:     'delete',
-          result:   'success',
-          snapshot: this.snapshot,
+          type:         'delete',
+          result:       'success',
+          snapshotName: this.snapshot?.name,
         });
       }
     },

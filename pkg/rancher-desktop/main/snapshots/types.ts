@@ -1,8 +1,8 @@
 export type SnapshotEvent = {
-  type: 'restore' | 'delete' | 'create',
+  type?: 'restore' | 'delete' | 'create',
   result?: 'success' | 'cancel',
-  error?: string | null,
-  snapshot?: Snapshot,
+  error?: string,
+  snapshotName?: string,
 };
 
 export type SpawnResult = {
