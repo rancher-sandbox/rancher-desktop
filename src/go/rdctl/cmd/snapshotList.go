@@ -69,6 +69,17 @@ func jsonOutput(snapshots []snapshot.Snapshot) error {
 		if err != nil {
 			return err
 		}
+		// And we need to hide the ID field
+		snapshotWithoutID := map[string]string{}
+		err = json.Unmarshal(jsonBuffer, &snapshotWithoutID)
+		if err != nil {
+			return err
+		}
+		delete(snapshotWithoutID, "id")
+		jsonBuffer, err = json.Marshal(snapshotWithoutID)
+		if err != nil {
+			return err
+		}
 		fmt.Println(string(jsonBuffer))
 	}
 	return nil
@@ -80,10 +91,10 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 		return nil
 	}
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	fmt.Fprintf(writer, "ID\tName\tCreated\n")
+	fmt.Fprintf(writer, "Name\tCreated\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.ID, aSnapshot.Name, prettyCreated)
+		fmt.Fprintf(writer, "%s\t%s\n", aSnapshot.Name, prettyCreated)
 	}
 	writer.Flush()
 	return nil

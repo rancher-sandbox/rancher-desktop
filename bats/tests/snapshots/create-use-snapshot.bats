@@ -4,7 +4,7 @@ local_setup() {
     if is_windows; then
         skip "snapshots test not applicable on Windows"
     fi
-    SNAPSHOT=moby-nginx-snapshot01
+    SNAPSHOT=the-ubiquitous-flounder
 }
 
 @test 'factory reset and delete all the snapshots' {
@@ -50,15 +50,10 @@ local_setup() {
 
 # This should be one long test because if `snapshot restore` fails there's no point starting up
 @test 'shutdown, restore, restart and verify snapshot state' {
-    local snapshotID
     rdctl shutdown
-    run get_snapshot_id_from_name "$SNAPSHOT"
+    run rdctl snapshot restore "$SNAPSHOT"
     assert_success
-    refute_output ""
-    snapshotID="$output"
-    run rdctl snapshot restore "$snapshotID"
-    assert_success
-    refute_output --partial $"failed to restore snapshot \"$snapshotID\""
+    refute_output --partial $"failed to restore snapshot \"$SNAPSHOT\""
 
     launch_the_application
 
@@ -74,8 +69,46 @@ local_setup() {
     try --max 48 --delay 5 running_nginx
 }
 
+@test 'verify identification errors' {
+    run rdctl snapshot restore 'the-nomadic-pond'
+    assert_failure
+    assert_output --partial $"Error: can't restore snapshot: can't find a snapshot with name \"the-nomadic-pond\""
+    run rdctl snapshot restore 'the-nomadic-pond' --json
+    assert_failure
+    run jq_output '.error'
+    assert_success
+    assert_output --partial $"can't restore snapshot: can't find a snapshot with name \"the-nomadic-pond\""
+    run rdctl snapshot delete 'the-nomadic-pond'
+    assert_failure
+    assert_output --partial $"Error: can't delete snapshot: can't find a snapshot with name \"the-nomadic-pond\""
+    run rdctl snapshot delete 'the-nomadic-pond' --json
+    assert_failure
+    run jq_output '.error'
+    assert_success
+    assert_output $"can't delete snapshot: can't find a snapshot with name \"the-nomadic-pond\""
+}
+
+@test 'can create a snapshot where proposed name is a current ID' {
+    run ls -1 "$PATH_APP_HOME"/snapshots
+    assert_success
+    refute_output ""
+    run head -n 1 <<<"$output"
+    assert_success
+    refute_output ""
+    snapshotID="$output"
+    rdctl snapshot create "$snapshotID"
+    # And we can delete that snapshot
+    run rdctl snapshot delete "$snapshotID" --json
+    assert_success
+    assert_output ""
+
+}
+
 @test 'delete all the snapshots' {
-    delete_all_snapshots
+    rdctl snapshot delete "$SNAPSHOT"
+    run rdctl snapshot list --json
+    assert_success
+    assert_output ''
 }
 
 running_nginx() {
