@@ -6,9 +6,10 @@ import (
 )
 
 type Snapshot struct {
-	Created time.Time `json:"created"`
-	Name    string    `json:"name"`
-	ID      string    `json:"id,omitempty"`
+	Created     time.Time `json:"created"`
+	Name        string    `json:"name"`
+	ID          string    `json:"id,omitempty"`
+	Description string    `json:"description"`
 }
 
 func (s *Snapshot) getTimeString() string {

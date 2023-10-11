@@ -62,7 +62,7 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 }
 
 // Creates a new snapshot.
-func (manager Manager) Create(name string) (*Snapshot, error) {
+func (manager Manager) Create(name, description string) (*Snapshot, error) {
 	// validate name
 	currentSnapshots, err := manager.List()
 	if err != nil {
@@ -82,9 +82,10 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 		return nil, fmt.Errorf("failed to generate ID for snapshot: %w", err)
 	}
 	snapshot := Snapshot{
-		Created: time.Now(),
-		Name:    name,
-		ID:      id.String(),
+		Created:     time.Now(),
+		Name:        name,
+		ID:          id.String(),
+		Description: description,
 	}
 
 	// do operations that can fail, rolling back if failure is encountered

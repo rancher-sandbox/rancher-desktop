@@ -81,10 +81,10 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 		return nil
 	}
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	fmt.Fprintf(writer, "NAME\tCREATED\n")
+	fmt.Fprintf(writer, "NAME\tDESCRIPTION\tCREATED\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		fmt.Fprintf(writer, "%s\t%s\n", aSnapshot.Name, prettyCreated)
+		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, aSnapshot.Description, prettyCreated)
 	}
 	writer.Flush()
 	return nil

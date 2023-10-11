@@ -12,6 +12,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ var snapshotErrors []error
 
 const backendLockName = "backend.lock"
 
-type cobraFunc func(cmd *cobra.Command, args []string) error
+type cobraFunc func(cmd *cobra.Command) error
 
 var snapshotCmd = &cobra.Command{
 	Use:    "snapshot",
@@ -64,7 +65,7 @@ func exitWithJsonOrErrorCondition(e error) error {
 // passed function, and restarts the backend. If it cannot connect
 // to the main process, just calls the passed function.
 func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command) error {
 		appPaths, err := paths.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
@@ -76,7 +77,7 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		if err := ensureBackendStopped(cmd); err != nil {
 			return err
 		}
-		if err := wrappedFunction(cmd, args); err != nil {
+		if err := wrappedFunction(cmd); err != nil {
 			factoryreset.DeleteData(appPaths, true)
 			return err
 		}
@@ -89,12 +90,34 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 	}
 }
 
-func ensureBackendStarted() error {
+func getSnapshotIdAndManager(args []string) (snapshot.Manager, string, error) {
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return snapshot.Manager{}, "", fmt.Errorf("failed to get paths: %w", err)
+	}
+	manager := snapshot.NewManager(appPaths)
+	id, err := manager.GetSnapshotId(args[0])
+	return manager, id, err
+}
+
+func getConnectionInfo() (*config.ConnectionInfo, error) {
 	connectionInfo, err := config.GetConnectionInfo()
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to get connection info: %w", err)
+	// If we cannot get connection info from config file (and it
+	// is not specified by the user) then assume main process is
+	// not running.
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get connection info: %w", err)
+	}
+	return connectionInfo, nil
+}
+
+func ensureBackendStarted() error {
+	connectionInfo, err := getConnectionInfo()
+	if err != nil || connectionInfo == nil {
+		return err
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 	desiredState := client.BackendState{
@@ -109,11 +132,9 @@ func ensureBackendStarted() error {
 }
 
 func ensureBackendStopped(cmd *cobra.Command) error {
-	connectionInfo, err := config.GetConnectionInfo()
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to get connection info: %w", err)
+	connectionInfo, err := getConnectionInfo()
+	if err != nil || connectionInfo == nil {
+		return err
 	}
 
 	// Ensure backend is running if the main process is running at all

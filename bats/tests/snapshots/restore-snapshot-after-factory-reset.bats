@@ -49,7 +49,7 @@ local_setup() {
     assert_output --partial containerd
 }
 
-@test 'delete all the snapshots' {
+@test 'delete the snapshot and verify there are no others' {
     rdctl snapshot delete "$SNAPSHOT"
     run rdctl snapshot list --json
     assert_success

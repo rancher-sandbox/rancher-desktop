@@ -17,10 +17,10 @@ func TestManager(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
 		snapshotName := "test-snapshot"
-		if _, err := manager.Create(snapshotName); err != nil {
+		if _, err := manager.Create(snapshotName, ""); err != nil {
 			t.Fatalf("failed to create first snapshot: %s", err)
 		}
-		if _, err := manager.Create(snapshotName); !errors.Is(err, ErrNameExists) {
+		if _, err := manager.Create(snapshotName, ""); !errors.Is(err, ErrNameExists) {
 			t.Fatalf("failed to return error upon second snapshot with name %q", snapshotName)
 		}
 	})
@@ -39,7 +39,7 @@ func TestManager(t *testing.T) {
 			invalidNames = append(invalidNames, fmt.Sprintf("invalid%sname", c)) // spellcheck-ignore-line
 		}
 		for _, invalidName := range invalidNames {
-			if _, err := manager.Create(invalidName); !errors.Is(err, ErrInvalidName) {
+			if _, err := manager.Create(invalidName, ""); !errors.Is(err, ErrInvalidName) {
 				t.Errorf("name %q is invalid but no error was returned", invalidName)
 			}
 		}
@@ -50,7 +50,7 @@ func TestManager(t *testing.T) {
 		manager := newTestManager(paths)
 		for i := range []int{1, 2, 3} {
 			snapshotName := fmt.Sprintf("test-snapshot-%d", i)
-			if _, err := manager.Create(snapshotName); err != nil {
+			if _, err := manager.Create(snapshotName, ""); err != nil {
 				t.Fatalf("failed to create snapshot %q: %s", snapshotName, err)
 			}
 		}
@@ -66,7 +66,7 @@ func TestManager(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create("test-snapshot")
+		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}

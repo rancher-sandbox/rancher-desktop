@@ -89,6 +89,7 @@ local_setup() {
 }
 
 @test 'create a snapshot with k8s off' {
+    # This tests that wait_for_backend accepts the DISABLED state as a final state.
     rdctl snapshot create anime-walnut-festival
     wait_for_container_engine
     wait_for_backend
