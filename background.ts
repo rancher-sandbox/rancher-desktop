@@ -781,6 +781,10 @@ ipcMainProxy.on('snapshot', (event, args) => {
   event.reply('snapshot', args);
 });
 
+ipcMainProxy.on('dialog/options', (event, args) => {
+  window.getWindow(args.dialog)?.webContents.send('dialog/options', args.options);
+});
+
 ipcMainProxy.on('dialog/error', (event, args) => {
   window.getWindow(args.dialog)?.webContents.send('dialog/error', args.error);
 });
@@ -870,6 +874,10 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
     if (channel === 'dialog/mounted') {
       dialog.webContents.send('dialog/options', options);
       event.sender.sendToFrame(event.frameId, 'dialog/mounted');
+    }
+
+    if (channel === 'dialog/action') {
+      event.sender.sendToFrame(event.frameId, 'dialog/action');
     }
 
     if (channel === 'dialog/close') {

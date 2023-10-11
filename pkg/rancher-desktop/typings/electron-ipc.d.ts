@@ -50,6 +50,8 @@ export interface IpcMainEvents {
   'dialog/ready': () => void;
   'dialog/mounted': () => void;
   /** For message box only */
+  'dialog/options': (...args: any) => void;
+  'dialog/action': (...args: any) => void;
   'dialog/error': (...args: any) => void;
   'dialog/close': (...args: any[]) => void;
   // #endregion
@@ -180,6 +182,7 @@ export interface IpcRendererEvents {
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
+  'dialog/action': (...args: any) => void;
   'dialog/error': (...args: any) => void;
   'dashboard-open': () => void;
   // #endregion

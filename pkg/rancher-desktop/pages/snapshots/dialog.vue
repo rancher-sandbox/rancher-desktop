@@ -51,8 +51,8 @@ export default Vue.extend({
   },
 
   methods: {
-    close(index: number) {
-      ipcRenderer.send('dialog/close', { response: index });
+    onCLick(index: number) {
+      ipcRenderer.send('dialog/action', { response: index });
     },
     isDarwin() {
       return os.platform().startsWith('darwin');
@@ -153,7 +153,7 @@ export default Vue.extend({
           <button
             class="btn"
             :class="'role-secondary'"
-            @click="close(index)"
+            @click="onClick(index)"
           >
             {{ t('snapshots.dialog.buttons.error') }}
           </button>
@@ -164,7 +164,7 @@ export default Vue.extend({
             :key="index"
             class="btn"
             :class="index ? 'role-primary' : 'role-secondary'"
-            @click="close(index)"
+            @click="onCLick(index)"
           >
             {{ buttonText }}
           </button>

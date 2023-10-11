@@ -78,6 +78,19 @@ export default Vue.extend<Data, Methods, Computed, never>({
       /** TODO limit notes length */
       const { name, notes } = this;
 
+      ipcRenderer.on('dialog/action', (event, args) => {
+        // ipcRenderer.send('dialog/options', {
+        //   dialog:  'SnapshotsDialog',
+        //   options: {
+        //     format: {
+        //       header: 'ciao',
+        //     }
+        //   },
+        // });
+        console.log(args);
+        debugger;
+      });
+
       ipcRenderer.on('dialog/mounted', async() => {
         const error = await this.$store.dispatch('snapshots/create', { name, notes });
 
@@ -106,7 +119,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
         {
           window: {
             buttons: [
-              // this.t('snapshots.dialog.creating.actions.cancel'),
+              this.t('snapshots.dialog.creating.actions.cancel'),
             ],
             cancelId: 1,
           },
