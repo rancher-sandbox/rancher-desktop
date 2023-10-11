@@ -131,7 +131,7 @@ yarn
 >
 > ```
 > export M1=1
-> yarn 
+> yarn
 > ```
 >
 > You will want to run `git clean -fdx` to clean out any cached assets and re-downloaded with the correct arch before running `yarn` if you previously installed dependencies without setting `M1` first.
@@ -146,7 +146,7 @@ Ensure you have the following installed:
 
 - [yarn classic][yarn-classic]
 
-- Go 1.19 or later.
+- Go 1.21 or later.
 
 - Dependencies described in the [`node-gyp` docs][node-gyp] installation.
   This is required to install the [`ffi-napi`][ffi-napi] npm package. These docs mention
