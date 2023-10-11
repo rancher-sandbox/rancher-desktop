@@ -5,7 +5,7 @@ export type SpawnResult = {
 };
 
 export interface Snapshot {
-  id?: string,
+  id: string,
   name: string,
-  created?: Date,
+  created: string,
 }

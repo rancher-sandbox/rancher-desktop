@@ -165,7 +165,7 @@ test.describe('Command server', () => {
       ok:      true,
       headers: expect.objectContaining({
         'access-control-allow-headers': 'Authorization',
-        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-methods': 'GET, PUT, DELETE',
         'access-control-allow-origin':  '*',
       }),
     }));
@@ -182,7 +182,7 @@ test.describe('Command server', () => {
       ok:      true,
       headers: expect.objectContaining({
         'access-control-allow-headers': 'Authorization',
-        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-methods': 'GET, PUT, DELETE',
         'access-control-allow-origin':  '*',
       }),
     }));
@@ -367,7 +367,7 @@ test.describe('Command server', () => {
       ok:      true,
       headers: expect.objectContaining({
         'access-control-allow-headers': 'Authorization',
-        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-methods': 'GET, PUT, DELETE',
         'access-control-allow-origin':  '*',
       }),
     }));
@@ -384,7 +384,7 @@ test.describe('Command server', () => {
       ok:      true,
       headers: expect.objectContaining({
         'access-control-allow-headers': 'Authorization',
-        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-methods': 'GET, PUT, DELETE',
         'access-control-allow-origin':  '*',
       }),
     }));

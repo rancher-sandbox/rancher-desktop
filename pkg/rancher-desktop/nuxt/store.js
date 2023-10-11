@@ -28,6 +28,7 @@ let store = {};
   resolveStoreModules(require('../store/page.ts'), 'page.ts')
   resolveStoreModules(require('../store/preferences.ts'), 'preferences.ts')
   resolveStoreModules(require('../store/prefs.js'), 'prefs.js')
+  resolveStoreModules(require('../store/snapshots.ts'), 'snapshots.ts')
   resolveStoreModules(require('../store/transientSettings.ts'), 'transientSettings.ts')
   resolveStoreModules(require('../store/ts-helpers.ts'), 'ts-helpers.ts')
 
@@ -47,6 +48,7 @@ let store = {};
       '../store/page.ts',
       '../store/preferences.ts',
       '../store/prefs.js',
+      '../store/snapshots.ts',
       '../store/transientSettings.ts',
       '../store/ts-helpers.ts',
     ], () => {

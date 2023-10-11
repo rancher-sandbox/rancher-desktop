@@ -5,6 +5,7 @@ import Router from 'vue-router';
 import scrollBehavior from '@pkg/nuxt/router.scrollBehavior';
 import { interopDefault } from '@pkg/nuxt/utils';
 
+const _4e9ebc18 = () => interopDefault(import('./pages/Snapshots.vue' /* webpackChunkName: "pages/Snapshots" */));
 const _4b9ecc18 = () => interopDefault(import('./pages/Containers.vue' /* webpackChunkName: "pages/Containers" */));
 const _01130ad8 = () => interopDefault(import('./pages/DenyRoot.vue' /* webpackChunkName: "pages/DenyRoot" */));
 const _075a3596 = () => interopDefault(import('./pages/Diagnostics.vue' /* webpackChunkName: "pages/Diagnostics" */));
@@ -20,6 +21,7 @@ const _57372a92 = () => interopDefault(import('./pages/SudoPrompt.vue' /* webpac
 const _e938e378 = () => interopDefault(import('./pages/Troubleshooting.vue' /* webpackChunkName: "pages/Troubleshooting" */));
 const _3f6156a0 = () => interopDefault(import('./pages/UnmetPrerequisites.vue' /* webpackChunkName: "pages/UnmetPrerequisites" */));
 const _e2b699b6 = () => interopDefault(import('./pages/extensions/installed.vue' /* webpackChunkName: "pages/extensions/installed" */));
+const _20fa1c71 = () => interopDefault(import('./pages/snapshots/create.vue' /* webpackChunkName: "pages/snapshots/create" */));
 const _20fa1c70 = () => interopDefault(import('./pages/images/add.vue' /* webpackChunkName: "pages/images/add" */));
 const _1165c4f2 = () => interopDefault(import('./pages/images/scans/_image-name.vue' /* webpackChunkName: "pages/images/scans/_image-name" */));
 const _65f243c3 = () => interopDefault(import('./pages/extensions/_root/_src/_id.vue' /* webpackChunkName: "pages/extensions/_root/_src/_id" */));
@@ -36,6 +38,10 @@ export const routerOptions = {
   scrollBehavior,
 
   routes: [{
+    path:      '/Snapshots',
+    component: _4e9ebc18,
+    name:      'Snapshots',
+  }, {
     path:      '/Containers',
     component: _4b9ecc18,
     name:      'Containers',
@@ -103,6 +109,10 @@ export const routerOptions = {
     path:      '/images/scans/:image-name?',
     component: _1165c4f2,
     name:      'images-scans-image-name',
+  }, {
+    path:      '/snapshots/create',
+    component: _20fa1c71,
+    name:      'snapshots-create',
   }, {
     path:      '/extensions/:root?/:src?/:id?',
     component: _65f243c3,

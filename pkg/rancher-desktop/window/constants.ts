@@ -4,6 +4,7 @@ export const mainRoutes = [
   { route: '/PortForwarding' },
   { route: '/Images' },
   { route: '/Troubleshooting' },
+  { route: '/Snapshots' },
   { route: '/Diagnostics' },
   { route: '/Extensions' },
 ];
