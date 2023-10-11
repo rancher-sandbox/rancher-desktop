@@ -12,8 +12,6 @@ import util from 'util';
 import zlib from 'zlib';
 
 import spawn from 'cross-spawn';
-import ForkTsCheckerNotifierWebpackPlugin from 'fork-ts-checker-notifier-webpack-plugin';
-import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import _ from 'lodash';
 import tar from 'tar-stream';
 import webpack from 'webpack';
@@ -179,15 +177,6 @@ export default {
         new webpack.EnvironmentPlugin({ NODE_ENV: mode }),
       ],
     };
-
-    if (this.isDevelopment) {
-      config.plugins ??= [];
-      config.plugins.push((new ForkTsCheckerWebpackPlugin() as unknown) as webpack.EnvironmentPlugin);
-      config.plugins.push((new ForkTsCheckerNotifierWebpackPlugin({
-        title:           'TypeScript',
-        excludeWarnings: false,
-      }) as unknown) as webpack.EnvironmentPlugin);
-    }
 
     return config;
   },
