@@ -82,7 +82,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
         const error = await this.$store.dispatch('snapshots/create', { name, notes });
 
         if (error) {
-          ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error: this.t('snapshots.dialog.creating.error', { error }) });
+          ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
         } else {
           ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
 

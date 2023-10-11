@@ -17,9 +17,9 @@ export default Vue.extend({
       snapshot:        null,
       info:            '',
       showProgressBar: false,
-      showLogo:        false,
-      buttons:         [],
       error:           null,
+      bodyStyle:       {},
+      buttons:         [],
       response:        0,
       cancelId:        0,
     };
@@ -36,9 +36,10 @@ export default Vue.extend({
       this.snapshot = format.snapshot;
       this.info = format.info;
       this.showProgressBar = format.showProgressBar || false;
-      this.showLogo = format.showLogo || false;
+      this.bodyStyle = this.calculateBodyStyle(format.type);
       this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;
+
       ipcRenderer.send('dialog/ready');
     });
 
@@ -57,20 +58,22 @@ export default Vue.extend({
     isDarwin() {
       return os.platform().startsWith('darwin');
     },
+    calculateBodyStyle(type: string) {
+      return { height: `${ type === 'question' ? 265 : 400 }px` };
+    },
+    showLogs() {
+      ipcRenderer.send('show-logs');
+    },
   },
 });
 </script>
 
 <template>
   <div class="dialog-container">
-    <div class="dialog-body">
-      <div
-        v-if="showLogo"
-        alt="Rancher Desktop"
-        class="logo"
-      >
-        <img src="@pkg/assets/images/logo.svg">
-      </div>
+    <div
+      :style="bodyStyle"
+      class="dialog-body"
+    >
       <div
         v-if="header"
         class="header"
@@ -84,7 +87,6 @@ export default Vue.extend({
         v-if="message"
         class="message"
       >
-        <i class="icon icon-info-circle icon-lg" />
         <slot name="message">
           <span
             class="value"
@@ -102,21 +104,23 @@ export default Vue.extend({
               <h2>
                 {{ snapshot.name }}
               </h2>
-            </div>
-            <div class="body">
               <div class="created">
-                <span>{{ t('snapshots.card.body.createdAt') }}: </span>
-                <span class="value">{{ snapshot.created }}</span>
+                <span
+                  v-if="snapshot.formattedCreateDate"
+                  class="value"
+                  v-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
+                />
               </div>
-              <div class="notes">
-                <span>{{ t('snapshots.card.body.notes') }}: </span>
-                <span class="value">{{ snapshot.notes || 'n/a' }}</span>
-              </div>
+            </div>
+            <div
+              v-if="snapshot.notes"
+              class="notes"
+            >
+              <span class="value">{{ snapshot.notes }}</span>
             </div>
           </div>
         </slot>
       </div>
-
       <div
         v-if="info"
         class="info"
@@ -140,6 +144,11 @@ export default Vue.extend({
             color="error"
           >
             <span v-html="error" />
+            <span>. </span>
+            <a
+              href="#"
+              @click.prevent="showLogs"
+            >{{ t('snapshots.dialog.showLogs') }}</a>
           </Banner>
         </slot>
       </div>
@@ -176,9 +185,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .dialog-container {
-    display: grid;
-    grid-auto-flow: row;
-    grid-template-rows: 30rem auto;
+    display: block;
     width: 45rem;
     padding: 10px;
 
@@ -187,12 +194,6 @@ export default Vue.extend({
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
-
-      .logo {
-        margin: 0 auto 5px auto;
-        width: 215px;
-        height: 40px;
-      }
 
       .header {
         H1 {
@@ -211,32 +212,32 @@ export default Vue.extend({
         .content {
           display: flex;
           flex-direction: column;
+          gap: 15px;
           flex-grow: 1;
-          padding: 5px;
-
+          min-width: 300px;
           .header {
             h2 {
               max-width: 500px;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
+              margin: 0 0 5px 0;
             }
+          }
+          .notes {
+            max-width: 500px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
 
-        .content .body {
-          .value {
-            color: var(--input-label);
-          }
+        .value {
+          color: var(--input-label);
         }
       }
 
       .message {
-        .icon {
-          margin-top: 5px;
-          margin-right: 4px;grid-auto-flow: column;
-        }
-
         .value {
           color: var(--input-label);
         }
@@ -249,6 +250,10 @@ export default Vue.extend({
       .info, .error {
         margin: 0;
         padding: 5px 0 0 0;
+        A {
+          text-decoration: underline;
+          color: unset;
+        }
       }
     }
 

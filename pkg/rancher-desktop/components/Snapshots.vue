@@ -100,7 +100,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       :closable="true"
       @close="snapshotEvent=null"
     >
-      {{ t(`snapshots.info.${ snapshotsInfo.type }.${ snapshotsInfo.result }`, { snapshot: snapshotsInfo.name }) }}
+      <span v-html="t(`snapshots.info.${ snapshotsInfo.type }.${ snapshotsInfo.result }`, { snapshot: snapshotsInfo.name }, true)" />
     </Banner>
     <div
       v-for="item of snapshots"

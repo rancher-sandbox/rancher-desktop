@@ -858,11 +858,16 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
       modal:    true,
       parent:   mainWindow || undefined,
       frame:    false,
-      height:   500,
+      height:   options.format.type === 'question' ? 365 : 500,
       center:   true,
       closable: false,
       movable:  false,
     });
+
+  /** On Linux it does nothing */
+  if (options.format.type !== 'question') {
+    mainWindow?.setOpacity(0.7);
+  }
 
   let response: any;
 
@@ -879,6 +884,10 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   });
 
   dialog.on('close', () => {
+    if (mainWindow) {
+      mainWindow.setOpacity(1);
+    }
+
     if (response) {
       return;
     }

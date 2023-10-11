@@ -9,10 +9,15 @@ import type { PropType } from 'vue';
 
 function formatDate(value: string) {
   if (!value) {
-    return 'n/a';
+    return null;
   }
 
-  return dayjs(value).format('YYYY-MM-DD HH:mm');
+  const date = dayjs(value);
+
+  return {
+    date: date.format('YYYY-MM-DD'),
+    time: date.format('HH:mm'),
+  };
 }
 
 interface Data {
@@ -28,7 +33,7 @@ interface Methods {
 }
 
 interface Computed {
-  snapshot: Snapshot
+  snapshot: Snapshot & { formattedCreateDate: { date: string, time: string } | null }
 }
 
 interface Props {
@@ -48,7 +53,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
     snapshot() {
       return {
         ...this.value,
-        created: formatDate(this.value.created),
+        formattedCreateDate: formatDate(this.value.created),
       };
     },
   },
@@ -63,7 +68,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           const error = await this.$store.dispatch('snapshots/restore', this.snapshot.id);
 
           if (error) {
-            ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error: this.t('snapshots.dialog.restoring.error', { error }) });
+            ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
           } else {
             ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
             ipcRenderer.send('snapshot', {
@@ -93,7 +98,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
     },
 
     async showConfirmationDialog(type: 'restore' | 'delete') {
-      const confirm = await ipcRenderer.invoke(
+      const confirm: { response: number } = await ipcRenderer.invoke(
         'show-snapshots-dialog',
         {
           window: {
@@ -108,6 +113,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
             snapshot:        this.snapshot,
             info:            type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : null,
             showProgressBar: true,
+            type:            'question',
           },
         },
       );
@@ -153,30 +159,33 @@ export default Vue.extend<Data, Methods, Computed, Props>({
         <h2>
           {{ snapshot.name }}
         </h2>
-      </div>
-      <div class="body">
         <div class="created">
-          <span>{{ t('snapshots.card.body.createdAt') }}: </span>
-          <span class="value">{{ snapshot.created }}</span>
+          <span
+            v-if="snapshot.formattedCreateDate"
+            class="value"
+            v-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
+          />
         </div>
-        <div class="notes">
-          <span>{{ t('snapshots.card.body.notes') }}: </span>
-          <span class="value">{{ snapshot.notes || 'n/a' }}</span>
-        </div>
+      </div>
+      <div
+        v-if="snapshot.notes"
+        class="notes"
+      >
+        <span class="value">{{ snapshot.notes }}</span>
       </div>
     </div>
     <div class="actions">
-      <button
-        class="btn btn-xs role-primary restore"
-        @click="restore"
-      >
-        {{ t('snapshots.card.action.restore') }}
-      </button>
       <button
         class="btn btn-xs role-secondary remove"
         @click="remove"
       >
         {{ t('snapshots.card.action.remove') }}
+      </button>
+      <button
+        class="btn btn-xs role-primary restore"
+        @click="restore"
+      >
+        {{ t('snapshots.card.action.restore') }}
       </button>
     </div>
   </div>
@@ -184,11 +193,18 @@ export default Vue.extend<Data, Methods, Computed, Props>({
 
 <style lang="scss" scoped>
   .snapshot-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 300px;
     border: 1px solid var(--border);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    min-height: 130px;
 
     .content {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      flex-grow: 1;
       min-width: 300px;
       .header {
         h2 {
@@ -196,34 +212,28 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          margin: 0 0 5px 0;
         }
+      }
+      .notes {
+        max-width: 550px;
+        word-wrap: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
 
     .actions {
-      max-width: 200px;
-    }
-
-    .content, .actions {
       display: flex;
-      flex-direction: column;
-      gap: 15px;
-      flex-grow: 1;
-      padding: 20px;
-    }
-
-    .content .body {
-      .value {
-        color: var(--input-label);
+      .btn {
+        width: 145px;
+        height: 30px;
+        margin-left: 10px;
       }
     }
 
-    .notes {
-      max-width: 500px;
-      word-wrap: break-word;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .value {
+      color: var(--input-label);
     }
-
   }
 </style>

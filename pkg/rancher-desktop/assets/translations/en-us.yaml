@@ -4724,10 +4724,7 @@ snapshots:
   action:
     create: Create Snapshot
   card:
-    body:
-      name: Name
-      createdAt: Created At
-      notes: Description
+    created: "Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'"
     action:
       restore: Restore
       remove: Delete
@@ -4740,7 +4737,7 @@ snapshots:
     actions:
       submit: Create
       back: Cancel
-    info: 'Please be aware that the system will be unavailable during creation of a new Snapshot'
+    info: 'Rancher Desktop will be temporarily unavailable while creating a new Snapshot'
   empty:
     icon: icon-search
     heading: No snapshots found
@@ -4750,37 +4747,39 @@ snapshots:
       header: Are you sure you want to restore this Snapshot?
       info: 'Please be aware that the current installation, including preferences, will be replaced. If the preference window is open it will be automatically closed and all unsaved changed discarded.'
       actions:
-        ok: 'Yes, restore'
+        ok: 'Restore'
         cancel: 'Cancel'
     delete:
       header: Are you sure you want to delete this Snapshot?
       info: 'text'
       actions:
-        ok: 'Yes, delete'
+        ok: 'Delete'
         cancel: 'Cancel'
     restoring:
       header: 'Restoring {snapshot}'
-      message: 'Please wait some minutes for the Snapshot restoration.<br/>The time depends on your machine resources, while creating the snapshot the system will be unavailable.<br/><br/>Once the process is finished the system will restart, with the {snapshot} active.'
-      error: 'Error: {error}'
+      message: "Please wait some minutes for the Snapshot restoration.<br/>The time depends on your machine resources.<br/>While creating the snapshot Rancher Desktop will be unavailable.<br/><br/>Once the process is finished the VM will restart, with the '<b>'{snapshot} active'</b>'."
       actions:
         cancel: 'Cancel'
     creating:
       header: 'Creating {snapshot}'
-      message: 'Please wait some minutes for the Snapshot creation.<br/>The time depends on your machine resources, while creating the snapshot the system will be unavailable.<br/><br/>Once the process is finished the system will restart.'
-      error: 'Error: {error}'
+      message: 'Please wait some minutes for the Snapshot creation.<br/>The time depends on your machine resources.<br/>While creating the snapshot Rancher Desktop will be unavailable.<br/><br/>Once the process is finished the VM will restart.'
       actions:
         cancel: 'Cancel'
     buttons:
       error: Close
+    generic:
+      header: Snapshot operation in progress
+      message: 'Please wait some minutes for the Snapshot operation.<br/>The time depends on your machine resources.<br/>While operation is in progress Rancher Desktop will be unavailable.<br/><br/>Once the process is finished the VM will restart.'
+    showLogs: Show logs
   info:
     restore:
-      success: 'Restored {snapshot}'
+      success: "Restored '<b>'{snapshot}'</b>'"
       cancel: 'Cancelled restoration of {snapshot}'
     create:
-      success: 'Created {snapshot}'
+      success: "Created '<b>'{snapshot}'</b>'"
       cancel: 'Cancelled creation of {snapshot}'
     delete:
-      success: 'Deleted {snapshot}'
+      success: "Deleted '<b>'{snapshot}'</b>'"
 
 
 ##############################
