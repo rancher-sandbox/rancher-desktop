@@ -4744,7 +4744,7 @@ snapshots:
     body: Click on Create Snapshot to get started
   dialog:
     restore:
-      header: Are you sure you want to restore this Snapshot?
+      header: Restore snapshot?
       info: 'Please be aware that the current installation, including preferences, will be replaced. If the preference window is open it will be automatically closed and all unsaved changed discarded.'
       actions:
         ok: 'Restore'
