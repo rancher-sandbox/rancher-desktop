@@ -855,13 +855,14 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   const dialog = window.openDialog(
     'SnapshotsDialog',
     {
+      title:    options.format.type === 'question' ? 'Snapshots' : undefined,
       modal:    true,
       parent:   mainWindow || undefined,
-      frame:    false,
+      frame:    options.format.type === 'question',
       height:   options.format.type === 'question' ? 365 : 500,
       center:   true,
-      closable: false,
-      movable:  false,
+      closable: options.format.type === 'question',
+      movable:  options.format.type === 'question',
     });
 
   const onMainWindowMove = () => {
@@ -879,7 +880,7 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
     }
   };
 
-  if (mainWindow) {
+  if (mainWindow && options.format.type !== 'question') {
     mainWindow.on('move', onMainWindowMove);
 
     if (options.format.type !== 'question') {

@@ -111,7 +111,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
               this.t(`snapshots.dialog.${ type }.actions.cancel`),
               this.t(`snapshots.dialog.${ type }.actions.ok`),
             ],
-            cancelId: 1,
+            cancelId: 0,
           },
           format: {
             header:          this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
