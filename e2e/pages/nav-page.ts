@@ -92,19 +92,17 @@ export class NavPage {
     const finalStates = ['STARTED', 'ERROR', 'DISABLED'];
 
     for (i = 0; i < maxAllowedStateChanges && !finalStates.includes(backendState); i++) {
-      console.log(`QQQ: Backend is currently at state ${ backendState }, waiting for a change...`);
+      if (backendState !== 'STARTING') {
+        console.log(`Backend is currently at state ${ backendState }, waiting for a change...`);
+      }
       backendState = await this.moveToNextState(backendState, timeout);
     }
     if (i === maxAllowedStateChanges && !finalStates.includes(backendState)) {
       throw new Error(`The backend is stuck in state ${ backendState }; doesn't look good`);
     }
-    console.log(`QQQ: Arrived at state ${ backendState }`);
 
     // Wait until progress bar be detached. With that we can make sure the services were started
     // This seems to sometimes return too early; actually check the result.
-    if (await this.progressBar.count() > 0) {
-      throw new Error(`QQQ: oh toes there's still a progress bar`);
-    }
     while (await this.progressBar.count() > 0) {
       await this.progressBar.waitFor({ state: 'detached', timeout: Math.round(timeout * 0.6) });
     }

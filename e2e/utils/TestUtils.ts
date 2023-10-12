@@ -8,6 +8,7 @@ import util from 'util';
 
 import { expect, _electron, ElectronApplication, Locator } from '@playwright/test';
 import _, { GetFieldType } from 'lodash';
+import { Page } from 'playwright-core';
 import plist from 'plist';
 
 import { defaultSettings, LockedSettingsType, Settings } from '@pkg/config/settings';
@@ -384,4 +385,17 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
   await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
 
   return electronApp;
+}
+
+export async function startSlowerDesktop(filename: string, defaultSettings: RecursivePartial<Settings> = {}): Promise<Array<ElectronApplication | Page>> {
+  const launchOptions: startRancherDesktopOptions = { mock: false };
+
+  createDefaultSettings(defaultSettings);
+  if (process.env.CI) {
+    launchOptions.timeout = 120_000; // default is 30_000 msec but the CI is very slow
+  }
+  const electronApp = await startRancherDesktop(filename, launchOptions);
+  const page = await electronApp.firstWindow();
+
+  return [electronApp, page];
 }

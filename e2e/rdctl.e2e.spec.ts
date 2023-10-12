@@ -29,7 +29,7 @@ import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getAlternateSetting, kubectl, retry, startRancherDesktop, teardown, waitForRestartVM,
+  getAlternateSetting, kubectl, retry, startSlowerDesktop, teardown, waitForRestartVM,
 } from './utils/TestUtils';
 
 import {
@@ -116,9 +116,10 @@ test.describe('Command server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
-    createDefaultSettings({ kubernetes: { enabled: true } });
-    electronApp = await startRancherDesktop(__filename, { mock: false });
-    page = await electronApp.firstWindow();
+    const result = await startSlowerDesktop(__filename, { kubernetes: { enabled: true } });
+
+    electronApp = result[0] as ElectronApplication;
+    page = result[1] as Page;
   });
 
   test.afterAll(() => teardown(electronApp, __filename));

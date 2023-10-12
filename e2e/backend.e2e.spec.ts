@@ -2,12 +2,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { test, expect, _electron } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import _ from 'lodash';
 import semver from 'semver';
 
 import { NavPage } from './pages/nav-page';
-import { createDefaultSettings, getAlternateSetting, startRancherDesktop, teardown } from './utils/TestUtils';
+import { getAlternateSetting, startSlowerDesktop, teardown } from './utils/TestUtils';
 
 import { Settings, ContainerEngine } from '@pkg/config/settings';
 import fetch from '@pkg/utils/fetch';
@@ -21,10 +21,10 @@ test.describe.serial('KubernetesBackend', () => {
   let page: Page;
 
   test.beforeAll(async() => {
-    createDefaultSettings();
+    const result = await startSlowerDesktop(__filename);
 
-    electronApp = await startRancherDesktop(__filename, { mock: false });
-    page = await electronApp.firstWindow();
+    electronApp = result[0] as ElectronApplication;
+    page = result[1] as Page;
   });
 
   test.afterAll(() => teardown(electronApp, __filename));
