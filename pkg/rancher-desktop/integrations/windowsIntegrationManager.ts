@@ -121,6 +121,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       await Promise.all([
         this.syncHostSocketProxy(),
         this.syncHostDockerPlugins(),
+        this.syncHostFile(),
         ...(await this.supportedDistros).map(distro => this.syncDistro(distro.name, kubeconfigPath)),
       ]);
     } catch (ex) {
@@ -413,6 +414,27 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       }
     } catch (error) {
       console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`);
+    }
+  }
+
+  protected async syncHostFile() {
+    const hostEntry = '192.168.1.2 host.rancher-desktop.internal host.docker.internal';
+    const hostsFilePath = '/etc/hosts';
+
+    try {
+      const data = await fs.promises.readFile(hostsFilePath, 'utf8');
+
+      if (data.includes(hostEntry)) {
+        console.log(`Entry "${ hostEntry }" already exists in hosts file.`);
+
+        return;
+      }
+      const newData = `${ data }\n\${hostEntry}\n`;
+
+      await fs.promises.writeFile(hostsFilePath, newData, 'utf8');
+      console.log(`Entry "${ hostEntry }" added to hosts file.`);
+    } catch (err) {
+      console.error(`Error updating hosts file: ${ err }`);
     }
   }
 
