@@ -418,23 +418,29 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   protected async syncHostFile() {
-    const hostEntry = '192.168.1.2 host.rancher-desktop.internal host.docker.internal';
-    const hostsFilePath = '/etc/hosts';
+    await Promise.all(
+      (await this.supportedDistros).map((distro) => {
+        return this.updateHostFile(distro.name);
+      }),
+    );
+  }
 
-    try {
-      const data = await fs.promises.readFile(hostsFilePath, 'utf8');
+  protected async updateHostFile(distro: string) {
+    if (this.settings.experimental?.virtualMachine?.networkingTunnel) {
+      const vethIPAddr = '192.168.1.2';
+      const contents = await fs.promises.readFile(`\\\\wsl$\\${ distro }\\etc\\hosts`, 'utf-8');
+      const lines = contents.split(/\r?\n/g)
+        .filter(line => !line.includes('host.docker.internal'));
+      const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
+      const extra = [
+        '# BEGIN Rancher Desktop configuration.',
+        `${ vethIPAddr } ${ hosts.join(' ') }`,
+        '# END Rancher Desktop configuration.',
+      ].map(l => `${ l }\n`).join('');
 
-      if (data.includes(hostEntry)) {
-        console.log(`Entry "${ hostEntry }" already exists in hosts file.`);
-
-        return;
-      }
-      const newData = `${ data }\n\${hostEntry}\n`;
-
-      await fs.promises.writeFile(hostsFilePath, newData, 'utf8');
-      console.log(`Entry "${ hostEntry }" added to hosts file.`);
-    } catch (err) {
-      console.error(`Error updating hosts file: ${ err }`);
+      await fs.promises.writeFile(
+        `\\\\wsl$\\${ distro }\\etc\\hosts`,
+        lines.join('\n') + extra, 'utf-8');
     }
   }
 
