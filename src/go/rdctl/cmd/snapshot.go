@@ -10,6 +10,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
@@ -75,19 +76,15 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		if err := ensureBackendStopped(cmd); err != nil {
 			return err
 		}
-		functionErr := wrappedFunction(cmd, args)
-		if functionErr != nil {
-			snapshotErrors = append(snapshotErrors, functionErr)
+		if err := wrappedFunction(cmd, args); err != nil {
+			factoryreset.DeleteData(appPaths, true)
+			return err
 		}
 		// Note that this does not wait for the backend to be in the
 		// STARTED state. This allows removeBackendLock() to be called
 		// as a deferred function while keeping the state of the backend
 		// lock file in sync with the main process backendIsLocked variable.
-		restartBackendErr := ensureBackendStarted()
-		if restartBackendErr != nil {
-			snapshotErrors = append(snapshotErrors, restartBackendErr)
-		}
-		return nil
+		return ensureBackendStarted()
 	}
 }
 
