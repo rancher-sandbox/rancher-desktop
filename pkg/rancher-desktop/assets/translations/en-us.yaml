@@ -4745,6 +4745,15 @@ snapshots:
     icon: icon-search
     heading: No snapshots found
     body: Click on Create Snapshot to get started
+  info:
+    restore:
+      success: 'Restored {snapshot}'
+      cancel: 'Cancelled restoration of {snapshot}'
+    create:
+      success: 'Created {snapshot}'
+      cancel: 'Cancelled creation of {snapshot}'
+    delete:
+      success: 'Deleted {snapshot}'
 
 
 ##############################

@@ -1,3 +1,9 @@
+export type SnapshotEvent = {
+  type: 'restore' | 'delete' | 'create',
+  result: 'success' | 'cancel',
+  name: string
+};
+
 export type SpawnResult = {
   stdout: string,
   stderr: string,
