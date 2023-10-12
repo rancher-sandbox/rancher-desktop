@@ -4745,7 +4745,7 @@ snapshots:
   info:
     restore:
       success: 'Restored {snapshot}'
-      cancel: 'You successfully cancelled the restoration of {snapshot}'
+      cancel: 'Cancelled restoration of {snapshot}'
     create:
       success: 'Created {snapshot}'
       cancel: 'You successfully cancelled the creation of {snapshot}'
