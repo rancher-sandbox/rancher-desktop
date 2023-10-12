@@ -60,7 +60,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
     goBack(event: SnapshotEvent) {
       this.$router.push({
         name:   'Snapshots',
-        params: { event } as any,
+        params: { ...event },
       });
     },
     async submit() {
