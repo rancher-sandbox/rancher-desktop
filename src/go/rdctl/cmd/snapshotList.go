@@ -16,8 +16,6 @@ import (
 // SortableSnapshots are []snapshot.Snapshot sortable by date created.
 type SortableSnapshots []snapshot.Snapshot
 
-var outputJsonFormat bool
-
 func (snapshots SortableSnapshots) Len() int {
 	return len(snapshots)
 }
@@ -38,7 +36,8 @@ var snapshotListCmd = &cobra.Command{
 	Short:   "List snapshots",
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listSnapshot()
+		cmd.SilenceUsage = true
+		return exitWithJsonOrErrorCondition(listSnapshot())
 	},
 }
 

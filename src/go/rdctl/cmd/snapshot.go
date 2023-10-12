@@ -1,20 +1,26 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
+
+type errorPayloadType struct {
+	Error string `json:"error,omitempty"`
+}
+
+var outputJsonFormat bool
+var snapshotErrors []error
 
 const backendLockName = "backend.lock"
 
@@ -24,24 +30,34 @@ var snapshotCmd = &cobra.Command{
 	Use:    "snapshot",
 	Short:  "Manage Rancher Desktop snapshots",
 	Hidden: true,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		paths, err := p.GetPaths()
-		if err != nil {
-			return fmt.Errorf("failed to get paths: %w", err)
-		}
-		// exclude snapshots directory from time machine backups if on macOS
-		if runtime.GOOS == "darwin" {
-			cmd := exec.Command("tmutil", "addexclusion", paths.Snapshots)
-			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("failed to add exclusion to TimeMachine: %w", err)
-			}
-		}
-		return nil
-	},
 }
 
 func init() {
 	rootCmd.AddCommand(snapshotCmd)
+	snapshotErrors = make([]error, 0)
+}
+
+func exitWithJsonOrErrorCondition(e error) error {
+	if e != nil {
+		snapshotErrors = append(snapshotErrors, e)
+	}
+	if outputJsonFormat {
+		exitStatus := 0
+		for _, snapshotError := range snapshotErrors {
+			if snapshotError != nil {
+				exitStatus = 1
+				errorPayload := errorPayloadType{snapshotError.Error()}
+				jsonBuffer, err := json.Marshal(errorPayload)
+				if err != nil {
+					snapshotErrors = append(snapshotErrors, fmt.Errorf("error json-converting error messages: %w", err))
+					return errors.Join(snapshotErrors...)
+				}
+				fmt.Fprintf(os.Stdout, string(jsonBuffer)+"\n")
+			}
+		}
+		os.Exit(exitStatus)
+	}
+	return errors.Join(snapshotErrors...)
 }
 
 // If the main process is running, stops the backend, calls the
@@ -49,14 +65,14 @@ func init() {
 // to the main process, just calls the passed function.
 func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 	return func(cmd *cobra.Command, args []string) error {
-		paths, err := p.GetPaths()
+		appPaths, err := paths.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
-		if err := createBackendLock(paths); err != nil {
+		if err := createBackendLock(appPaths); err != nil {
 			return err
 		}
-		defer removeBackendLock(paths.AppHome)
+		defer removeBackendLock(appPaths.AppHome)
 
 		connectionInfo, err := config.GetConnectionInfo()
 		if errors.Is(err, os.ErrNotExist) {
@@ -78,8 +94,8 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		} else if err != nil {
 			return fmt.Errorf("failed to get backend state: %w", err)
 		}
-		if state.VMState != "STARTED" {
-			return errors.New("Rancher Desktop must be fully running or fully shut down to do this action")
+		if state.VMState != "STARTED" && state.VMState != "DISABLED" {
+			return fmt.Errorf("Rancher Desktop must be fully running or fully shut down to do a snapshot-%s action, state is currently %v", cmd.Name(), state.VMState)
 		}
 
 		// Stop and lock the backend
@@ -90,11 +106,14 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		if err := rdClient.UpdateBackendState(desiredState); err != nil {
 			return fmt.Errorf("failed to stop backend: %w", err)
 		}
-		if err := waitForVMState(rdClient, "STOPPED"); err != nil {
+		if err := waitForVMState(rdClient, []string{"STOPPED"}); err != nil {
 			return fmt.Errorf("error waiting for backend to stop: %w", err)
 		}
 
 		functionErr := wrappedFunction(cmd, args)
+		if functionErr != nil {
+			snapshotErrors = append(snapshotErrors, functionErr)
+		}
 
 		// Start and unlock the backend
 		desiredState = client.BackendState{
@@ -102,12 +121,20 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 			Locked:  false,
 		}
 		startVMErr := rdClient.UpdateBackendState(desiredState)
-		waitForStartedErr := waitForVMState(rdClient, "STARTED")
-		return errors.Join(functionErr, startVMErr, waitForStartedErr)
+		if startVMErr != nil {
+			snapshotErrors = append(snapshotErrors, startVMErr)
+		}
+
+		waitForStartedErr := waitForVMState(rdClient, []string{"STARTED", "DISABLED"})
+		if waitForStartedErr != nil {
+			snapshotErrors = append(snapshotErrors, waitForStartedErr)
+		}
+		return nil
 	}
 }
 
-func waitForVMState(rdClient client.RDClient, desiredState string) error {
+// Normally snapshots can be created at state STARTED or DISABLED
+func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
 	interval := 1 * time.Second
 	numIntervals := 120
 	for i := 0; i < numIntervals; i = i + 1 {
@@ -115,21 +142,23 @@ func waitForVMState(rdClient client.RDClient, desiredState string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get backend state: %w", err)
 		}
-		if state.VMState == desiredState {
-			return nil
+		for _, desiredState := range desiredStates {
+			if state.VMState == desiredState {
+				return nil
+			}
 		}
 		time.Sleep(interval)
 	}
-	return fmt.Errorf("timed out waiting for backend state %q", desiredState)
+	return fmt.Errorf("timed out waiting for backend state in %s", desiredStates)
 }
 
-func createBackendLock(paths p.Paths) error {
-	if err := os.MkdirAll(paths.AppHome, 0o755); err != nil {
+func createBackendLock(appPaths paths.Paths) error {
+	if err := os.MkdirAll(appPaths.AppHome, 0o755); err != nil {
 		return fmt.Errorf("failed to create backend lock parent directory: %w", err)
 	}
 	// Create an empty file whose presence signifies that the
 	// backend is locked.
-	lockPath := filepath.Join(paths.AppHome, backendLockName)
+	lockPath := filepath.Join(appPaths.AppHome, backendLockName)
 	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
 	if errors.Is(err, os.ErrExist) {
 		return errors.New("backend lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")
