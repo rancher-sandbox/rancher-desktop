@@ -79,7 +79,7 @@ export default {
 
   beforeMount() {
     initExtensions();
-    ipcRenderer.once('backend-locked', (event, state) => {
+    ipcRenderer.once('backend-locked', (event) => {
       ipcRenderer.send('preferences-close');
       this.showCreatingSnapshotDialog();
     });

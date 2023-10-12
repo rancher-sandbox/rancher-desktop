@@ -49,7 +49,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
   computed: {
     ...mapGetters('snapshots', { snapshots: 'list' }),
     valid() {
-      /** TODO show validation error on the UI */
       return !!this.name && !this.snapshots.find((s: Snapshot) => s.name === this.name);
     },
   },

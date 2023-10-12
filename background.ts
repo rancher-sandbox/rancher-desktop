@@ -511,11 +511,11 @@ Electron.app.on('activate', async() => {
 });
 
 mainEvents.on('backend-locked-update', () => {
-  window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked', backendIsLocked);
+  window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
 });
 
 ipcMainProxy.on('backend-state-check', (event) => {
-  event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked', backendIsLocked);
+  event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
 });
 
 ipcMainProxy.on('settings-read', (event) => {

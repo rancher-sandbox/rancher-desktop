@@ -50,7 +50,7 @@ export interface IpcMainEvents {
   'dialog/ready': () => void;
   'dialog/mounted': () => void;
   /** For message box only */
-  'dialog/error': (...args: any) => void;
+  'dialog/error': (args: Record<string, string>) => void;
   'dialog/close': (...args: any[]) => void;
   // #endregion
 
@@ -146,8 +146,8 @@ export interface IpcMainInvokeEvents {
  * process, i.e. webContents.send() -> ipcRenderer.on().
  */
 export interface IpcRendererEvents {
-  'backend-locked': (state: string) => void;
-  'backend-unlocked': (state: string) => void;
+  'backend-locked': () => void;
+  'backend-unlocked': () => void;
   'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
@@ -180,7 +180,7 @@ export interface IpcRendererEvents {
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
-  'dialog/error': (...args: any) => void;
+  'dialog/error': (error: string) => void;
   'dashboard-open': () => void;
   // #endregion
 

@@ -12,16 +12,15 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      header:          '',
-      message:         '',
-      snapshot:        null,
-      info:            '',
-      showProgressBar: false,
-      error:           null,
-      bodyStyle:       {},
-      buttons:         [],
-      response:        0,
-      cancelId:        0,
+      header:    '',
+      message:   '',
+      snapshot:  null,
+      info:      '',
+      bodyStyle: {},
+      error:     '',
+      buttons:   [],
+      response:  0,
+      cancelId:  0,
     };
   },
 
@@ -35,7 +34,6 @@ export default Vue.extend({
       this.message = format.message;
       this.snapshot = format.snapshot;
       this.info = format.info;
-      this.showProgressBar = format.showProgressBar || false;
       this.bodyStyle = this.calculateBodyStyle(format.type);
       this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;

@@ -29,7 +29,6 @@ interface Methods {
   remove: () => void,
   showConfirmationDialog: (type: 'restore' | 'delete') => Promise<number>,
   showRestoringSnapshotDialog: () => Promise<void>,
-  removeAllListeners: () => void,
 }
 
 interface Computed {
@@ -83,7 +82,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
         });
 
         await this.showRestoringSnapshotDialog();
-        this.removeAllListeners();
+        ipcRenderer.removeAllListeners('dialog/mounted');
       }
     },
 
@@ -145,10 +144,6 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           },
         },
       );
-    },
-
-    removeAllListeners() {
-      ipcRenderer.removeAllListeners('dialog/mounted');
     },
   },
 });
