@@ -142,7 +142,6 @@ export default Vue.extend({
             color="error"
           >
             <span v-html="error" />
-            <span>. </span>
             <a
               href="#"
               @click.prevent="showLogs"
@@ -248,6 +247,13 @@ export default Vue.extend({
       .info, .error {
         margin: 0;
         padding: 5px 0 0 0;
+        span {
+          max-width: 500px;
+          word-wrap: break-word;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-right: 5px;
+        }
         A {
           text-decoration: underline;
           color: unset;
