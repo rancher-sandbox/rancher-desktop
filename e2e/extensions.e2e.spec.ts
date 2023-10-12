@@ -12,7 +12,7 @@ import {
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getFullPathForTool, getResourceBinDir, reportAsset, retry, startRancherDesktop, teardown,
+  getFullPathForTool, getResourceBinDir, reportAsset, retry, startSlowerDesktop, teardown,
 } from './utils/TestUtils';
 
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -61,12 +61,13 @@ test.describe.serial('Extensions', () => {
   }
 
   test.beforeAll(async() => {
-    createDefaultSettings({
+    const result = await startSlowerDesktop(__filename, {
       containerEngine: { name: ContainerEngine.MOBY },
       kubernetes:      { enabled: false },
     });
-    app = await startRancherDesktop(__filename, { mock: false });
-    page = await app.firstWindow();
+
+    app = result[0] as ElectronApplication;
+    page = result[1] as Page;
   });
 
   test.afterAll(() => teardown(app, __filename));

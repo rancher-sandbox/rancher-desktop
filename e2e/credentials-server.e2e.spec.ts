@@ -27,12 +27,12 @@ import process from 'process';
 import stream from 'stream';
 
 import { findHomeDir } from '@kubernetes/client-node';
-import { expect, test, _electron } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import fetch from 'node-fetch';
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, getFullPathForTool, retry, startRancherDesktop, teardown, tool,
+  getFullPathForTool, retry, startSlowerDesktop, teardown, tool,
 } from './utils/TestUtils';
 
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
@@ -225,9 +225,10 @@ describeWithCreds('Credentials server', () => {
 
   test.beforeAll(async() => {
     await tool('rdctl', 'factory-reset', '--verbose');
-    createDefaultSettings({ kubernetes: { enabled: false } });
-    electronApp = await startRancherDesktop(__filename, { mock: false });
-    page = await electronApp.firstWindow();
+    const result = await startSlowerDesktop(__filename, { kubernetes: { enabled: false } });
+
+    electronApp = result[0] as ElectronApplication;
+    page = result[1] as Page;
   });
 
   test.afterAll(async() => {
