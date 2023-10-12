@@ -864,9 +864,28 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
       movable:  false,
     });
 
-  /** On Linux it does nothing */
-  if (options.format.type !== 'question') {
-    mainWindow?.setOpacity(0.7);
+  const onMainWindowMove = () => {
+    /** Lock dialog position */
+    if (mainWindow && dialog) {
+      const mainWindowPos = mainWindow.getPosition();
+
+      const mainWindowDim = mainWindow.getSize();
+      const dialogDim = dialog.getSize();
+
+      const x = Math.floor(mainWindowPos[0] + ((mainWindowDim[0] - dialogDim[0]) / 2));
+      const y = Math.floor(mainWindowPos[1]);
+
+      dialog.setPosition(x, y);
+    }
+  };
+
+  if (mainWindow) {
+    mainWindow.on('move', onMainWindowMove);
+
+    if (options.format.type !== 'question') {
+      /** On Linux it does nothing */
+      mainWindow.setOpacity(0.7);
+    }
   }
 
   let response: any;
@@ -885,6 +904,7 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
 
   dialog.on('close', () => {
     if (mainWindow) {
+      mainWindow.off('move', onMainWindowMove);
       mainWindow.setOpacity(1);
     }
 
