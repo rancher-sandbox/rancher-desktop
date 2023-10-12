@@ -4745,7 +4745,7 @@ snapshots:
   dialog:
     restore:
       header: Restore snapshot?
-      info: 'Please be aware that the current installation, including preferences, will be replaced. If the preference window is open it will be automatically closed and all unsaved changed discarded.'
+      info: 'Restoring this snapshot will replace your current installation, including preferences. If the preference window is open, it will be automatically closed, and any unsaved changes will be discarded.'
       actions:
         ok: 'Restore'
         cancel: 'Cancel'
