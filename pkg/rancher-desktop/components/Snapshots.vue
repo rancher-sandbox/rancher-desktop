@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
+import isEmpty from 'lodash/isEmpty';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -49,12 +50,12 @@ export default Vue.extend<Data, Methods, Computed, never>({
     ipcRenderer.on('snapshot', (_, event) => {
       this.snapshotEvent = event;
     });
-    if (this.$route.params) {
-   const { type, result, name } = this.$route.params as SnapshotEvent;
+    if (!isEmpty(this.$route.params)) {
+      const { type, result, name } = this.$route.params as SnapshotEvent;
 
-   this.snapshotEvent = {
-     type, result, name,
-   };
+      this.snapshotEvent = {
+        type, result, name,
+      };
     }
     this.$store.dispatch('snapshots/fetch');
     this.pollingStart();
@@ -83,6 +84,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
       v-if="snapshotEvent"
       class="banner mb-20"
       color="success"
+      :closable="true"
+      @close="snapshotEvent=null"
     >
       {{ t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.name }) }}
     </Banner>
