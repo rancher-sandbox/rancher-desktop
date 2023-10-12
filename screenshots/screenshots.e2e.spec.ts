@@ -10,6 +10,8 @@ import {
   createDefaultSettings, createUserProfile, reportAsset, teardown, tool,
 } from '../e2e/utils/TestUtils';
 
+import { ContainerEngine } from '@pkg/config/settings';
+
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
 const isWin = os.platform() === 'win32';
@@ -25,8 +27,11 @@ test.describe.serial('Main App Test', () => {
   test.beforeAll(async({ colorScheme }) => {
     createDefaultSettings({
       application:     { updater: { enabled: false } },
-      containerEngine: { allowedImages: { enabled: false, patterns: ['rancher/example'] } },
-      diagnostics:     { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
+      containerEngine: {
+        allowedImages: { enabled: false, patterns: ['rancher/example'] },
+        name:          ContainerEngine.CONTAINERD,
+      },
+      diagnostics: { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
 
     // Not supporting locked fields on Windows yet
