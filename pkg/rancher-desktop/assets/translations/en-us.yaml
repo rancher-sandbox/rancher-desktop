@@ -4744,7 +4744,7 @@ snapshots:
     body: Click on Create Snapshot to get started
   info:
     restore:
-      success: '{snapshot} was successfully restored'
+      success: 'Restored {snapshot}'
       cancel: 'You successfully cancelled the restoration of {snapshot}'
     create:
       success: 'Created {snapshot}'
