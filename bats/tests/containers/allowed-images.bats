@@ -68,21 +68,6 @@ verify_no_nginx() {
     try --max 18 --delay 10 verify_no_nginx
 }
 
-@test 'ignores duplicate whitespace in allowed images list' {
-    version="$(get_setting .version)"
-    run rdctl api -X PUT settings --body '{"containerEngine": {"allowedImages": {"patterns": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}, "version": '"$version"'}'
-    assert_success
-    assert_output --partial 'settings updated; no restart required'
-}
-
-@test 'ignores duplicate whitespace in noproxy list' {
-    skip_on_unix "experimental.virtualMachine.proxy is only supported on Windows right now"
-    version="$(get_setting .version)"
-    run rdctl api -X PUT settings --body '{"experimental": {"virtualMachine": {"proxy": {"noproxy": ["c-stub", " ", "d-stub", "    ", "e-stub", ""] }}}, "version": '"$version"'}'
-    assert_success
-    assert_output --partial 'settings updated; no restart required'
-}
-
 @test 'set patterns with the allowed list disabled' {
     update_allowed_patterns false "$IMAGE_NGINX" "$IMAGE_BUSYBOX" "$IMAGE_RUBY"
     # containerEngine.allowedImages.enabled changed, so wait for a restart

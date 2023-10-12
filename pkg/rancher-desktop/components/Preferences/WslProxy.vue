@@ -1,5 +1,6 @@
 <script lang="ts">
 
+import { StringList } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -14,7 +15,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-wsl-proxy',
   components: {
-    RdCheckbox, RdFieldset, RdInput,
+    RdCheckbox, RdFieldset, RdInput, StringList,
   },
   props: {
     preferences: {
@@ -35,10 +36,23 @@ export default Vue.extend({
         this.$store.dispatch('preferences/updatePreferencesData', { property: 'experimental.virtualMachine.proxy.noproxy', value: value.trim().split('\n') });
       },
     },
+    noproxyErrorMessages(): { duplicate: string } {
+      return { duplicate: this.t('virtualMachine.proxy.noproxy.errors.duplicate') };
+    },
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    },
+    onType(item: string) {
+      if (item) {
+        this.$store.dispatch('preferences/setCanApply', item.trim().length > 0);
+      }
+    },
+    onDuplicate(err: boolean) {
+      if (err) {
+        this.$store.dispatch('preferences/setCanApply', false);
+      }
     },
   },
 });
@@ -70,7 +84,6 @@ export default Vue.extend({
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.address"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.address')"
-            class="wsl-proxy-field"
             @input="onChange('experimental.virtualMachine.proxy.address', $event.target.value)"
           />
           <rd-input
@@ -79,7 +92,6 @@ export default Vue.extend({
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.port"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.port')"
-            class="wsl-proxy-field"
             @input="onChange('experimental.virtualMachine.proxy.port', $event.target.value)"
           />
         </rd-fieldset>
@@ -92,7 +104,6 @@ export default Vue.extend({
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.username"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.username')"
-            class="wsl-proxy-field"
             @input="onChange('experimental.virtualMachine.proxy.username', $event.target.value)"
           />
           <rd-input
@@ -101,22 +112,24 @@ export default Vue.extend({
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.password"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.password')"
-            class="wsl-proxy-field"
             @input="onChange('experimental.virtualMachine.proxy.password', $event.target.value)"
           />
         </rd-fieldset>
       </div>
       <div class="proxy-col">
         <rd-fieldset
-          :legend-text="t('virtualMachine.proxy.noproxyTitle', { }, true)"
-          :style="{ height: '100%' }"
+          :legend-text="t('virtualMachine.proxy.noproxy.legend', { }, true)"
         >
-          <textarea
-            :placeholder="t('virtualMachine.proxy.noproxy', { }, true)"
-            :disabled="isFieldDisabled"
-            :value="preferences.experimental.virtualMachine.proxy.noproxy.join('\n')"
-            class="wsl-proxy-textarea"
-            @input="onChange('experimental.virtualMachine.proxy.noproxy', $event.target.value.split('\n'))"
+          <string-list
+            :placeholder="t('virtualMachine.proxy.noproxy.placeholder', { }, true)"
+            :readonly="isFieldDisabled"
+            :actions-position="'left'"
+            :items="preferences.experimental.virtualMachine.proxy.noproxy"
+            :error-messages="noproxyErrorMessages"
+            bulk-addition-delimiter=","
+            @change="onChange('experimental.virtualMachine.proxy.noproxy', $event)"
+            @type:item="onType($event)"
+            @errors="onDuplicate($event.duplicate)"
           />
         </rd-fieldset>
       </div>
@@ -128,29 +141,32 @@ export default Vue.extend({
   .proxy-row {
     display: flex;
     flex-direction: row;
+    gap: 1rem;
   }
   .proxy-col {
-    padding: 0rem .5rem;
-    width: 50%;
     display: flex;
     flex-direction: column;
+    gap: 1rem;
+    width: 50%;
+
+    .string-list::v-deep {
+      .string-list-box {
+        min-height: unset;
+        height: 195px;
+      }
+
+      .string-list-footer {
+        padding-right: 2rem;
+      }
+    }
   }
   .wsl-proxy {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
   }
   .wsl-proxy-fieldset {
     display: flex;
     flex-direction: row;
     gap: .5rem;
-  }
-  .wsl-proxy-field {
-    width: 100%;
-  }
-  .wsl-proxy-textarea{
-    width: 100%;
-    height: 100%;
-    padding: 2px;
   }
 </style>

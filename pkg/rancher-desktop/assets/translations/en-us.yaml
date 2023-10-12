@@ -371,8 +371,11 @@ virtualMachine:
     authTitle: Authentication information
     username: Username
     password: Password
-    noproxyTitle: No proxy hostname list
-    noproxy: List of hostname to not redirect to the proxy
+    noproxy:
+      legend: No proxy hostname list
+      placeholder: Hostname to not redirect to the proxy
+      errors:
+        duplicate: Error, item is duplicate.
   socketVmNet:
     legend: Enable socket-vmnet
     label: Use socket-vmnet instead of vde-vmnet

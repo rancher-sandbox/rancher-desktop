@@ -297,7 +297,7 @@ function parseSaveError(err: any) {
  * current defaults, so we won't need an entry for every version change, as
  * most changes will get picked up from the defaults.
  */
-const updateTable: Record<number, (settings: any) => void> = {
+export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
     // Implement setting change from version 3 to 4
     if ('rancherMode' in settings.kubernetes) {
@@ -390,6 +390,19 @@ const updateTable: Record<number, (settings: any) => void> = {
       settings.application.extensions ??= {};
       settings.application.extensions.installed = settings.extensions;
       delete settings.extensions;
+    }
+  },
+  9: (settings) => {
+    // Rancher Desktop 1.11
+    // Use string-list component instead of textarea for noproxy field. Blanks that
+    // were accepted by the textarea need to be filtered out.
+    if (settings.experimental.virtualMachine.proxy.noproxy.length > 0) {
+      settings.experimental.virtualMachine.proxy.noproxy =
+        settings.experimental.virtualMachine.proxy.noproxy.map((entry: string) => {
+          return entry.trim();
+        }).filter((entry: string) => {
+          return entry.length > 0;
+        });
     }
   },
 };

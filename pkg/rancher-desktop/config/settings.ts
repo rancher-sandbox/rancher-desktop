@@ -4,7 +4,7 @@
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 9 as const;
+export const CURRENT_SETTINGS_VERSION = 10 as const;
 
 export enum VMType {
   QEMU = 'qemu',

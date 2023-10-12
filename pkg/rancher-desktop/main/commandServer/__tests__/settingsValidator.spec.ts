@@ -450,12 +450,12 @@ describe(SettingsValidator, () => {
         errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern1", "Pattern2"'],
       });
     });
-    it('complains about multiple duplicates ignoring whitespace padding', () => {
+    it('complains about multiple duplicates that contain only whitespace lengths', () => {
       const input: RecursivePartial<settings.Settings> = {
         containerEngine: {
           allowedImages: {
             enabled:  true,
-            patterns: ['pattern31  ', '  Pattern32', '  pattern33  ', 'Pattern32  ', 'pattern31'],
+            patterns: ['pattern1', '  ', 'pattern2', '\t', 'pattern3', ''],
           },
         },
       };
@@ -463,15 +463,15 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern31", "Pattern32"'],
+        errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "", "\t", "  "'],
       });
     });
-    it('ignores all-whitespace duplicates', () => {
+    it('allows exactly one whitespace value', () => {
       const input: RecursivePartial<settings.Settings> = {
         containerEngine: {
           allowedImages: {
             enabled:  true,
-            patterns: ['pattern1', '  ', 'pattern2', '\t', 'pattern3', ''],
+            patterns: ['pattern1', 'pattern2', '\t', 'pattern3'],
           },
         },
       };
