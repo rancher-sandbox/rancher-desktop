@@ -4750,7 +4750,7 @@ snapshots:
         ok: 'Restore'
         cancel: 'Cancel'
     delete:
-      header: Are you sure you want to delete this Snapshot?
+      header: Permanently delete snapshot?
       info: 'text'
       actions:
         ok: 'Delete'
