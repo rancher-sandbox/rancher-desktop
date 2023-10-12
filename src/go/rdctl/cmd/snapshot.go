@@ -72,60 +72,86 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 			return err
 		}
 		defer removeBackendLock(appPaths.AppHome)
-
-		connectionInfo, err := config.GetConnectionInfo()
-		if errors.Is(err, os.ErrNotExist) {
-			// If we cannot get connection info from config file (and it
-			// is not specified by the user) then assume main process is
-			// not running.
-			return wrappedFunction(cmd, args)
-		} else if err != nil {
-			return fmt.Errorf("failed to get connection info: %w", err)
+		if err := ensureBackendStopped(cmd); err != nil {
+			return err
 		}
-
-		// Ensure backend is running if the main process is running at all
-		rdClient := client.NewRDClient(connectionInfo)
-		state, err := rdClient.GetBackendState()
-		if errors.Is(err, client.ErrConnectionRefused) {
-			// If we cannot connect to the server, assume that the main
-			// process is not running.
-			return wrappedFunction(cmd, args)
-		} else if err != nil {
-			return fmt.Errorf("failed to get backend state: %w", err)
-		}
-		if state.VMState != "STARTED" && state.VMState != "DISABLED" {
-			return fmt.Errorf("Rancher Desktop must be fully running or fully shut down to do a snapshot-%s action, state is currently %v", cmd.Name(), state.VMState)
-		}
-
-		// Stop and lock the backend
-		desiredState := client.BackendState{
-			VMState: "STOPPED",
-			Locked:  true,
-		}
-		if err := rdClient.UpdateBackendState(desiredState); err != nil {
-			return fmt.Errorf("failed to stop backend: %w", err)
-		}
-		if err := waitForVMState(rdClient, []string{"STOPPED"}); err != nil {
-			return fmt.Errorf("error waiting for backend to stop: %w", err)
-		}
-
 		functionErr := wrappedFunction(cmd, args)
 		if functionErr != nil {
 			snapshotErrors = append(snapshotErrors, functionErr)
 		}
-
-		// Start and unlock the backend
-		desiredState = client.BackendState{
-			VMState: "STARTED",
-			Locked:  false,
+		// Note that this does not wait for the backend to be in the
+		// STARTED state. This allows removeBackendLock() to be called
+		// as a deferred function while keeping the state of the backend
+		// lock file in sync with the main process backendIsLocked variable.
+		restartBackendErr := ensureBackendStarted()
+		if restartBackendErr != nil {
+			snapshotErrors = append(snapshotErrors, restartBackendErr)
 		}
-		startVMErr := rdClient.UpdateBackendState(desiredState)
-		if startVMErr != nil {
-			snapshotErrors = append(snapshotErrors, startVMErr)
-		}
-
 		return nil
 	}
+}
+
+func getConnectionInfo() (*config.ConnectionInfo, error) {
+	connectionInfo, err := config.GetConnectionInfo()
+	// If we cannot get connection info from config file (and it
+	// is not specified by the user) then assume main process is
+	// not running.
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("failed to get connection info: %w", err)
+	}
+	return connectionInfo, nil
+}
+
+func ensureBackendStarted() error {
+	connectionInfo, err := getConnectionInfo()
+	if err != nil {
+		return err
+	}
+	rdClient := client.NewRDClient(connectionInfo)
+	desiredState := client.BackendState{
+		VMState: "STARTED",
+		Locked:  false,
+	}
+	err = rdClient.UpdateBackendState(desiredState)
+	if err != nil && !errors.Is(err, client.ErrConnectionRefused) {
+		return fmt.Errorf("failed to restart backend: %w", err)
+	}
+	return nil
+}
+
+func ensureBackendStopped(cmd *cobra.Command) error {
+	connectionInfo, err := getConnectionInfo()
+	if err != nil {
+		return err
+	}
+
+	// Ensure backend is running if the main process is running at all
+	rdClient := client.NewRDClient(connectionInfo)
+	state, err := rdClient.GetBackendState()
+	if errors.Is(err, client.ErrConnectionRefused) {
+		// If we cannot connect to the server, assume that the main
+		// process is not running.
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to get backend state: %w", err)
+	}
+	if state.VMState != "STARTED" && state.VMState != "DISABLED" {
+		return fmt.Errorf("Rancher Desktop must be fully running or fully shut down to do a snapshot-%s action, state is currently %v", cmd.Name(), state.VMState)
+	}
+
+	// Stop and lock the backend
+	desiredState := client.BackendState{
+		VMState: "STOPPED",
+		Locked:  true,
+	}
+	if err := rdClient.UpdateBackendState(desiredState); err != nil {
+		return fmt.Errorf("failed to stop backend: %w", err)
+	}
+	if err := waitForVMState(rdClient, []string{"STOPPED"}); err != nil {
+		return fmt.Errorf("error waiting for backend to stop: %w", err)
+	}
+
+	return nil
 }
 
 // Normally snapshots can be created at state STARTED or DISABLED
