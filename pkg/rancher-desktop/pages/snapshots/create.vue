@@ -112,7 +112,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
           format: {
             header:          this.t('snapshots.dialog.creating.header', { snapshot: this.name }),
             showProgressBar: true,
-            message:         this.t('snapshots.dialog.creating.message', { }, true),
+            message:         this.t('snapshots.dialog.creating.message', { snapshot: this.name }, true),
           },
         },
       );
