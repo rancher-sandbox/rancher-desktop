@@ -4762,7 +4762,7 @@ snapshots:
         cancel: 'Cancel'
     creating:
       header: 'Creating {snapshot}'
-      message: 'Please wait some minutes for the Snapshot creation.<br/>The time depends on your machine resources.<br/>While creating the snapshot Rancher Desktop will be unavailable.<br/><br/>Once the process is finished the VM will restart.'
+      message: 'Please wait while snapshot {snapshot} is created.<br/>This may take some time, depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot is complete, the VM will restart.'
       actions:
         cancel: 'Cancel'
     buttons:
