@@ -124,10 +124,6 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 			snapshotErrors = append(snapshotErrors, startVMErr)
 		}
 
-		waitForStartedErr := waitForVMState(rdClient, []string{"STARTED", "DISABLED"})
-		if waitForStartedErr != nil {
-			snapshotErrors = append(snapshotErrors, waitForStartedErr)
-		}
 		return nil
 	}
 }
