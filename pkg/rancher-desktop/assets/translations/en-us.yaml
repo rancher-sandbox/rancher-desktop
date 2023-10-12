@@ -4748,7 +4748,7 @@ snapshots:
       cancel: 'Cancelled restoration of {snapshot}'
     create:
       success: 'Created {snapshot}'
-      cancel: 'You successfully cancelled the creation of {snapshot}'
+      cancel: 'Cancelled creation of {snapshot}'
     delete:
       success: '{snapshot} was successfully deleted'
 
