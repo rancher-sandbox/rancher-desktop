@@ -50,7 +50,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
       this.snapshotEvent = event;
     });
     if (this.$route.params) {
-      this.snapshotEvent = this.$route.params.event as any;
+   const { type, result, name } = this.$route.params as SnapshotEvent;
+
+   this.snapshotEvent = {
+     type, result, name,
+   };
     }
     this.$store.dispatch('snapshots/fetch');
     this.pollingStart();
