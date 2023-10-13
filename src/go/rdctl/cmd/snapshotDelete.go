@@ -30,9 +30,9 @@ func deleteSnapshot(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
 	manager := snapshot.NewManager(appPaths)
-	id, err := getSnapshotId(manager, args[0])
+	id, err := manager.GetSnapshotId(args[0])
 	if err != nil {
-		return fmt.Errorf("can't delete snapshot: %w", err)
+		return err
 	}
 	if err = manager.Delete(id); err != nil {
 		return fmt.Errorf("failed to delete snapshot: %w", err)

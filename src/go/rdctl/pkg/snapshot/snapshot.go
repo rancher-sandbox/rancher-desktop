@@ -8,7 +8,7 @@ import (
 type Snapshot struct {
 	Created time.Time `json:"created"`
 	Name    string    `json:"name"`
-	ID      string    `json:"id"`
+	ID      string    `json:"id,omitempty"`
 }
 
 func (s *Snapshot) getTimeString() string {

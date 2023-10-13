@@ -31,9 +31,9 @@ func restoreSnapshot(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
 	manager := snapshot.NewManager(appPaths)
-	id, err := getSnapshotId(manager, args[0])
+	id, err := manager.GetSnapshotId(args[0])
 	if err != nil {
-		return fmt.Errorf("can't restore snapshot: %w", err)
+		return err
 	}
 	if err := manager.Restore(id); err != nil {
 		return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
