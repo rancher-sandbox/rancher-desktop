@@ -1,5 +1,10 @@
 <template>
-  <div class="wrapper">
+  <div
+    class="wrapper"
+    :class="{
+      'blur': blur
+    }"
+  >
     <rd-header
       class="header"
       @open-preferences="openPreferences"
@@ -42,6 +47,10 @@ export default {
     TheTitle,
   },
 
+  data() {
+    return { blur: false };
+  },
+
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
     if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
@@ -79,6 +88,9 @@ export default {
 
   beforeMount() {
     initExtensions();
+    ipcRenderer.on('window/blur', (event, blur) => {
+      this.blur = blur;
+    });
     ipcRenderer.once('backend-locked', (event) => {
       ipcRenderer.send('preferences-close');
       this.showCreatingSnapshotDialog();
@@ -120,6 +132,7 @@ export default {
     ipcRenderer.off('extensions/getContentArea');
     ipcRenderer.removeAllListeners('backend-locked');
     ipcRenderer.removeAllListeners('backend-unlocked');
+    ipcRenderer.removeAllListeners('window/blur');
   },
 
   methods: {
@@ -178,6 +191,10 @@ export default {
   background-color: var(--body-bg);
   width: 100vw;
   height: 100vh;
+
+  &.blur {
+   opacity: 0.2;
+  }
 
   .header {
     grid-area: header;

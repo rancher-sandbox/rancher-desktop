@@ -201,6 +201,10 @@ export interface IpcRendererEvents {
   'ok:extensions/uninstall': (id: string) => void;
   // #endregion
 
+  // #region window
+  'window/blur': (state: boolean) => void;
+  // #endregion
+
   // #region preferences
   'preferences/changed': () => void;
   // #endregion
