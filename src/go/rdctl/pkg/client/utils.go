@@ -42,7 +42,10 @@ func ProcessRequestForAPI(response *http.Response, err error) ([]byte, *APIError
 }
 
 func ProcessRequestForUtility(response *http.Response, err error) ([]byte, error) {
-	if err != nil {
+	// Combine platform-specific connection refused errors into a
+	// platform-agnostic connection refused error to keep consumers
+	// of this code clean.
+	if err := handleConnectionRefused(err); err != nil {
 		return nil, err
 	}
 	statusMessage := ""

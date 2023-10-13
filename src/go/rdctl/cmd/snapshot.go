@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
@@ -87,7 +86,7 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		// Ensure backend is running if the main process is running at all
 		rdClient := client.NewRDClient(connectionInfo)
 		state, err := rdClient.GetBackendState()
-		if errors.Is(err, syscall.ECONNREFUSED) {
+		if errors.Is(err, client.ErrConnectionRefused) {
 			// If we cannot connect to the server, assume that the main
 			// process is not running.
 			return wrappedFunction(cmd, args)
@@ -140,7 +139,7 @@ func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
 	for i := 0; i < numIntervals; i = i + 1 {
 		state, err := rdClient.GetBackendState()
 		if err != nil {
-			return fmt.Errorf("failed to get backend state: %w", err)
+			return fmt.Errorf("failed to poll backend state: %w", err)
 		}
 		for _, desiredState := range desiredStates {
 			if state.VMState == desiredState {

@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"io"
@@ -14,6 +15,8 @@ const (
 	Version    = "1.1.0"
 	ApiVersion = "v1"
 )
+
+var ErrConnectionRefused = errors.New("connection refused")
 
 type BackendState struct {
 	VMState string `json:"vmState"`

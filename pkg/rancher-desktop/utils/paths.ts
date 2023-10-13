@@ -76,6 +76,7 @@ export class WindowsPaths implements Paths {
   extensionRoot = '';
   wslDistro = '';
   wslDistroData = '';
+  snapshots = '';
 
   constructor(pathsData: Record<string, unknown>) {
     Object.assign(this, pathsData);
@@ -95,10 +96,6 @@ export class WindowsPaths implements Paths {
 
   get deploymentProfileUser(): string {
     throw new Error('Internal error: Windows profiles will be read from Registry');
-  }
-
-  get snapshots(): string {
-    throw new Error('Internal error: snapshots not implemented for Windows');
   }
 }
 

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
@@ -16,92 +17,35 @@ var nameRegexp = *regexp.MustCompile("^[0-9a-zA-Z_-]{0,100}$")
 var ErrNameExists = errors.New("name already exists")
 var ErrInvalidName = fmt.Errorf("name does not match regex %q", nameRegexp.String())
 
-// Handles all snapshot-related functionality.
-type Manager struct {
-	Paths paths.Paths
+// Writes the data in a Snapshot to the metadata.json file in a snapshot
+// directory. This is done last because we consider the presence of this file to
+// be the hallmark of a complete and valid snapshot.
+func writeMetadataFile(paths paths.Paths, snapshot Snapshot) error {
+	metadataPath := filepath.Join(paths.Snapshots, snapshot.ID, "metadata.json")
+	metadataFile, err := os.Create(metadataPath)
+	if err != nil {
+		return fmt.Errorf("failed to create metadata file: %w", err)
+	}
+	defer metadataFile.Close()
+	encoder := json.NewEncoder(metadataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(snapshot); err != nil {
+		return fmt.Errorf("failed to write metadata file: %w", err)
+	}
+	return nil
 }
 
-// Represents a file that is included in a snapshot.
-type snapshotFile struct {
-	// The path that Rancher Desktop uses.
-	WorkingPath string
-	// The path that the file is backed up to before attempting
-	// a Restore.
-	BackupPath string
-	// The path that the file is put at in a snapshot.
-	SnapshotPath string
-	// Whether clonefile (macOS) or ioctl_ficlone (Linux) should be used
-	// when copying the file around.
-	CopyOnWrite bool
-	// Whether it is ok for the file to not be present.
-	MissingOk bool
-	// The permissions the file should have.
-	FileMode os.FileMode
+// Handles all snapshot-related functionality.
+type Manager struct {
+	Paths       paths.Paths
+	Snapshotter Snapshotter
 }
 
 func NewManager(paths paths.Paths) Manager {
 	return Manager{
-		Paths: paths,
+		Paths:       paths,
+		Snapshotter: NewSnapshotterImpl(paths),
 	}
-}
-
-func (manager Manager) getSnapshotFiles(id string) []snapshotFile {
-	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
-	files := []snapshotFile{
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Config, "settings.json"),
-			SnapshotPath: filepath.Join(snapshotDir, "settings.json"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "override.yaml"),
-			SnapshotPath: filepath.Join(snapshotDir, "override.yaml"),
-			CopyOnWrite:  false,
-			MissingOk:    true,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "basedisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "basedisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "diffdisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "user"),
-			SnapshotPath: filepath.Join(snapshotDir, "user"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o600,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "_config", "user.pub"),
-			SnapshotPath: filepath.Join(snapshotDir, "user.pub"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
-			WorkingPath:  filepath.Join(manager.Paths.Lima, "0", "lima.yaml"),
-			SnapshotPath: filepath.Join(snapshotDir, "lima.yaml"),
-			CopyOnWrite:  false,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-	}
-	for i := range files {
-		files[i].BackupPath = fmt.Sprintf("%s.backup", files[i].WorkingPath)
-	}
-	return files
 }
 
 // Creates a new snapshot.
@@ -120,15 +64,19 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 		return nil, fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
 
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate ID for snapshot: %w", err)
+	}
 	snapshot := Snapshot{
 		Created: time.Now(),
 		Name:    name,
-		ID:      randomString(10),
+		ID:      id.String(),
 	}
 
 	// do operations that can fail, rolling back if failure is encountered
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
-	if err := manager.createFiles(snapshot); err != nil {
+	if err := manager.Snapshotter.CreateFiles(snapshot); err != nil {
 		if err := os.RemoveAll(snapshotDir); err != nil {
 			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
 		}
@@ -136,38 +84,6 @@ func (manager Manager) Create(name string) (*Snapshot, error) {
 	}
 
 	return &snapshot, nil
-}
-
-// Does all of the things that can fail when creating a snapshot,
-// so that the snapshot creation can easily be rolled back upon
-// a failure.
-func (manager Manager) createFiles(snapshot Snapshot) error {
-	files := manager.getSnapshotFiles(snapshot.ID)
-	for _, file := range files {
-		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
-		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			continue
-		} else if err != nil {
-			return fmt.Errorf("failed to copy %s: %w", filepath.Base(file.WorkingPath), err)
-		}
-	}
-
-	// Create metadata.json file. This is done last because we consider
-	// the presence of this file to be the hallmark of a complete and
-	// valid snapshot.
-	metadataPath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, "metadata.json")
-	metadataFile, err := os.Create(metadataPath)
-	if err != nil {
-		return fmt.Errorf("failed to create metadata file: %w", err)
-	}
-	defer metadataFile.Close()
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(snapshot); err != nil {
-		return fmt.Errorf("failed to write metadata file: %w", err)
-	}
-
-	return nil
 }
 
 // Returns snapshots that are present on system.
@@ -228,66 +144,9 @@ func (manager Manager) Restore(id string) error {
 		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
 	}
 
-	files := manager.getSnapshotFiles(snapshot.ID)
-	if err := manager.createBackups(files); err != nil {
-		manager.rollBackRestore(files)
-		return fmt.Errorf("failed to create backups: %w", err)
-	}
-	if err := manager.restoreFiles(files); err != nil {
-		manager.rollBackRestore(files)
+	if err := manager.Snapshotter.RestoreFiles(snapshot); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
-	if err := manager.removeBackups(files); err != nil {
-		return fmt.Errorf("failed to remove backups: %w", err)
-	}
 
-	return nil
-}
-
-// Creates backups of working files so that they can be restored
-// if the Restore fails.
-func (manager Manager) createBackups(files []snapshotFile) error {
-	for _, file := range files {
-		err := os.Rename(file.WorkingPath, file.BackupPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("failed to back up %s: %w", filepath.Base(file.WorkingPath), err)
-		}
-	}
-	return nil
-}
-
-// Called when something goes wrong in the process of restoring a snapshot.
-// Does not do any error checking; just tries to put the working files
-// back in the state they were before Restore was called.
-func (manager Manager) rollBackRestore(files []snapshotFile) {
-	for _, file := range files {
-		os.Rename(file.BackupPath, file.WorkingPath)
-	}
-}
-
-// Restores the files from their location in a snapshot directory
-// to their working location.
-func (manager Manager) restoreFiles(files []snapshotFile) error {
-	for _, file := range files {
-		filename := filepath.Base(file.WorkingPath)
-		err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
-		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			if err := os.RemoveAll(file.WorkingPath); err != nil {
-				return fmt.Errorf("failed to remove %s: %w", filename, err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("failed to restore %s: %w", filename, err)
-		}
-	}
-	return nil
-}
-
-// Removes backups made during a Restore.
-func (manager Manager) removeBackups(files []snapshotFile) error {
-	for _, file := range files {
-		if err := os.RemoveAll(file.BackupPath); err != nil {
-			return fmt.Errorf("failed to remove %s: %w", filepath.Base(file.BackupPath), err)
-		}
-	}
 	return nil
 }

@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/docker/docker v20.10.22+incompatible
+	github.com/google/uuid v1.3.1
 	github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service v0.0.0-20221207202230-8eef0a706010
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1

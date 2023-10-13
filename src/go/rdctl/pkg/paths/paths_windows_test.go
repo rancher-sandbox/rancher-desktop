@@ -32,6 +32,7 @@ func TestGetPaths(t *testing.T) {
 			WslDistroData: filepath.Join(homeDir, "AppData", "Local", appName, "distro-data"),
 			Resources:     fakeResourcesPath,
 			ExtensionRoot: filepath.Join(homeDir, "AppData", "Local", appName, "extensions"),
+			Snapshots:     filepath.Join(homeDir, "AppData", "Local", appName, "snapshots"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -66,6 +67,7 @@ func TestGetPaths(t *testing.T) {
 			WslDistroData: filepath.Join(environment["LOCALAPPDATA"], appName, "distro-data"),
 			Resources:     fakeResourcesPath,
 			ExtensionRoot: filepath.Join(environment["LOCALAPPDATA"], appName, "extensions"),
+			Snapshots:     filepath.Join(environment["LOCALAPPDATA"], appName, "snapshots"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {

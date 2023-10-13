@@ -39,6 +39,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 		WslDistro:     filepath.Join(localAppData, appName, "distro"),
 		WslDistroData: filepath.Join(localAppData, appName, "distro-data"),
 		ExtensionRoot: filepath.Join(localAppData, appName, "extensions"),
+		Snapshots:     filepath.Join(localAppData, appName, "snapshots"),
 	}
 	paths.Logs = os.Getenv("RD_LOGS_DIR")
 	if paths.Logs == "" {
