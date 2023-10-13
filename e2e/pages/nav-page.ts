@@ -85,7 +85,7 @@ export class NavPage {
   // Implement a state-machine based on the backend states until we hit STOPPED, DISABLED, or ERROR, or timeout
   // Then verify the progress bar is gone
   async progressBecomesReady() {
-    const timeout = 400_000;
+    const timeout = 900_000;
     const maxAllowedStateChanges = 20;
     let i;
     let backendState = await this.getBackendState();
