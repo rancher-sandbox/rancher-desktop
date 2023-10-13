@@ -137,7 +137,8 @@ export interface IpcMainInvokeEvents {
   // #endregion
 
   // #region Snapshots
-  'show-snapshots-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
+  'show-snapshots-confirm-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
+  'show-snapshots-blocking-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
   // #endregion
 }
 

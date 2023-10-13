@@ -159,7 +159,7 @@ export default Vue.extend({
           <button
             class="btn"
             :class="'role-secondary'"
-            @click="close(index)"
+            @click="close(cancelId)"
           >
             {{ t('snapshots.dialog.buttons.error') }}
           </button>

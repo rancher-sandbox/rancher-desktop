@@ -21,7 +21,7 @@ interface Data {
 }
 
 interface Methods {
-  goBack: (event: SnapshotEvent) => void;
+  goBack: (event: SnapshotEvent | null) => void;
   submit: () => void;
   showCreatingSnapshotDialog: () => Promise<void>;
 }
@@ -62,7 +62,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
   },
 
   methods: {
-    goBack(event: SnapshotEvent) {
+    goBack(event: SnapshotEvent | null) {
       this.$router.push({
         name:   'Snapshots',
         params: { ...event },
@@ -101,7 +101,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
     async showCreatingSnapshotDialog() {
       await ipcRenderer.invoke(
-        'show-snapshots-dialog',
+        'show-snapshots-blocking-dialog',
         {
           window: {
             buttons: [

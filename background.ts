@@ -846,7 +846,7 @@ ipcMainProxy.handle('show-message-box-rd', async(_event, options: Electron.Messa
   return response;
 });
 
-ipcMainProxy.handle('show-snapshots-dialog', async(
+ipcMainProxy.handle('show-snapshots-confirm-dialog', async(
   event,
   options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
 ) => {
@@ -855,37 +855,78 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   const dialog = window.openDialog(
     'SnapshotsDialog',
     {
-      title:    options.format.type === 'question' ? 'Snapshots' : undefined,
-      modal:    true,
-      parent:   mainWindow || undefined,
-      frame:    options.format.type === 'question',
-      height:   options.format.type === 'question' ? 365 : 500,
-      center:   true,
-      closable: options.format.type === 'question',
-      movable:  options.format.type === 'question',
+      title:   'Snapshots',
+      modal:   true,
+      parent:  mainWindow || undefined,
+      frame:   true,
+      movable: true,
+      height:  365,
+      width:   650,
+    });
+
+  if (os.platform() !== 'linux' && mainWindow && dialog) {
+    window.centerDialog(mainWindow, dialog, 0, 50);
+  }
+
+  let response: any;
+
+  dialog.webContents.on('ipc-message', (_event, channel, args) => {
+    if (channel === 'dialog/mounted') {
+      options.format.type = 'question';
+      dialog.webContents.send('dialog/options', options);
+    }
+
+    if (channel === 'dialog/close') {
+      response = args || { response: options.window.cancelId };
+      dialog.close();
+    }
+  });
+
+  dialog.on('close', () => {
+    if (response) {
+      return;
+    }
+
+    response = { response: options.window.cancelId };
+  });
+
+  await (new Promise<void>((resolve) => {
+    dialog.on('closed', resolve);
+  }));
+
+  return response;
+});
+
+ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
+  event,
+  options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
+) => {
+  const mainWindow = window.getWindow('main');
+
+  const dialog = window.openDialog(
+    'SnapshotsDialog',
+    {
+      modal:   true,
+      parent:  mainWindow || undefined,
+      frame:   false,
+      movable: false,
+      height:  500,
+      width:   700,
     });
 
   const onMainWindowMove = () => {
-    /** Lock dialog position */
     if (mainWindow && dialog) {
-      const mainWindowPos = mainWindow.getPosition();
-
-      const mainWindowDim = mainWindow.getSize();
-      const dialogDim = dialog.getSize();
-
-      const x = Math.floor(mainWindowPos[0] + ((mainWindowDim[0] - dialogDim[0]) / 2));
-      const y = Math.floor(mainWindowPos[1]);
-
-      dialog.setPosition(x, y);
+      window.centerDialog(mainWindow, dialog);
     }
   };
 
-  if (mainWindow && options.format.type !== 'question') {
-    mainWindow.on('move', onMainWindowMove);
-
-    if (options.format.type !== 'question') {
-      /** On Linux it does nothing */
-      mainWindow.setOpacity(0.7);
+  if (mainWindow && dialog) {
+    if (os.platform() === 'linux') {
+      /** Lock dialog position */
+      mainWindow.on('move', onMainWindowMove);
+    } else {
+      /** Center the dialog on main window, only for MacOs, Windows */
+      window.centerDialog(mainWindow, dialog, 0, 50);
     }
   }
 
@@ -893,6 +934,7 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
 
   dialog.webContents.on('ipc-message', (_event, channel, args) => {
     if (channel === 'dialog/mounted') {
+      options.format.type = 'operation';
       dialog.webContents.send('dialog/options', options);
       event.sender.sendToFrame(event.frameId, 'dialog/mounted');
     }
@@ -904,9 +946,8 @@ ipcMainProxy.handle('show-snapshots-dialog', async(
   });
 
   dialog.on('close', () => {
-    if (mainWindow) {
+    if (os.platform() === 'linux' && mainWindow) {
       mainWindow.off('move', onMainWindowMove);
-      mainWindow.setOpacity(1);
     }
 
     if (response) {

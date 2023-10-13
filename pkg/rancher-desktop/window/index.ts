@@ -618,3 +618,23 @@ export function send(channel: string, ...args: any[]) {
     }
   }
 }
+
+/**
+ * Center the dialog window in the middle of parent window - used on Windows / MacOs
+ * @param window parent window
+ * @param dialog dialog window
+ * @param offsetX
+ * @param offsetY
+ */
+export function centerDialog(window: BrowserWindow, dialog: BrowserWindow, offsetX = 0, offsetY = 0) {
+  const windowBounds = window.getBounds();
+  const dialogBounds = dialog.getBounds();
+
+  console.log(windowBounds)
+  console.log(dialogBounds);
+
+  const x = Math.floor(windowBounds.x + ((windowBounds.width - dialogBounds.width) / 2) + offsetX);
+  const y = Math.floor(windowBounds.y + offsetY);
+
+  dialog.setPosition(x, y);
+}

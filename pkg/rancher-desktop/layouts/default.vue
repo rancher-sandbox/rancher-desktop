@@ -144,7 +144,7 @@ export default {
     },
     showCreatingSnapshotDialog() {
       ipcRenderer.invoke(
-        'show-snapshots-dialog',
+        'show-snapshots-blocking-dialog',
         {
           window: {
             buttons: [

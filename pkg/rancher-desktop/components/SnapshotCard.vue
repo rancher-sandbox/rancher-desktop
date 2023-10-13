@@ -104,7 +104,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
 
     async showConfirmationDialog(type: 'restore' | 'delete') {
       const confirm: { response: number } = await ipcRenderer.invoke(
-        'show-snapshots-dialog',
+        'show-snapshots-confirm-dialog',
         {
           window: {
             buttons: [
@@ -118,7 +118,6 @@ export default Vue.extend<Data, Methods, Computed, Props>({
             snapshot:        this.snapshot,
             info:            type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : null,
             showProgressBar: true,
-            type:            'question',
           },
         },
       );
@@ -128,10 +127,9 @@ export default Vue.extend<Data, Methods, Computed, Props>({
 
     async showRestoringSnapshotDialog() {
       await ipcRenderer.invoke(
-        'show-snapshots-dialog',
+        'show-snapshots-blocking-dialog',
         {
           window: {
-            type:    'question',
             buttons: [
               // this.t('snapshots.dialog.restoring.actions.cancel'),
             ],

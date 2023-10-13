@@ -25,4 +25,5 @@ export interface Snapshot {
   id: string,
   name: string,
   created: string,
+  notes?: string,
 }
