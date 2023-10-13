@@ -630,7 +630,7 @@ export function centerDialog(window: BrowserWindow, dialog: BrowserWindow, offse
   const windowBounds = window.getBounds();
   const dialogBounds = dialog.getBounds();
 
-  console.log(windowBounds)
+  console.log(windowBounds);
   console.log(dialogBounds);
 
   const x = Math.floor(windowBounds.x + ((windowBounds.width - dialogBounds.width) / 2) + offsetX);
