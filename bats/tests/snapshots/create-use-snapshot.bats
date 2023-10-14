@@ -74,18 +74,18 @@ local_setup() {
     for action in restore delete; do
         run rdctl snapshot "$action" 'the-nomadic-pond'
         assert_failure
-        assert_output "Error: can't find a snapshot with name \"the-nomadic-pond\""
+        assert_output "Error: can't find snapshot \"the-nomadic-pond\""
 
         run rdctl snapshot "$action" 'the-nomadic-pond' --json
         assert_failure
         run jq_output '.error'
         assert_success
-        assert_output "can't find a snapshot with name \"the-nomadic-pond\""
+        assert_output "can't find snapshot \"the-nomadic-pond\""
     done
 }
 
 @test 'can create a snapshot where proposed name is a current ID' {
-    run ls -1 "$PATH_SNAPSHOTS_DIR"
+    run ls -1 "$PATH_SNAPSHOTS"
     assert_success
     refute_output ""
     run head -n 1 <<<"$output"
@@ -101,7 +101,7 @@ local_setup() {
 
 @test "factory-reset doesn't delete a non-empty snapshots directory" {
     rdctl factory-reset
-    assert_exists "$PATH_SNAPSHOTS_DIR"
+    assert_exists "$PATH_SNAPSHOTS"
 }
 
 @test 'delete all the snapshots' {
@@ -113,7 +113,7 @@ local_setup() {
 
 @test 'factory-reset does delete an empty snapshots directory' {
     rdctl factory-reset
-    assert_not_exists "$PATH_SNAPSHOTS_DIR"
+    assert_not_exists "$PATH_SNAPSHOTS"
 }
 
 running_nginx() {

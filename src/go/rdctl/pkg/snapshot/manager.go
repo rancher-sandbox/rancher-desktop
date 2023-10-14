@@ -58,7 +58,7 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 			return candidate.ID, nil
 		}
 	}
-	return "", fmt.Errorf(`can't find a snapshot with name %q`, desiredName)
+	return "", fmt.Errorf(`can't find snapshot %q`, desiredName)
 }
 
 // Creates a new snapshot.
