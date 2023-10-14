@@ -48,6 +48,19 @@ func NewManager(paths paths.Paths) Manager {
 	}
 }
 
+func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
+	snapshots, err := manager.List()
+	if err != nil {
+		return "", fmt.Errorf("failed to list snapshots: %w", err)
+	}
+	for _, candidate := range snapshots {
+		if desiredName == candidate.Name {
+			return candidate.ID, nil
+		}
+	}
+	return "", fmt.Errorf(`can't find snapshot %q`, desiredName)
+}
+
 // Creates a new snapshot.
 func (manager Manager) Create(name string) (*Snapshot, error) {
 	// validate name

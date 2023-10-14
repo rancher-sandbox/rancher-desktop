@@ -65,6 +65,7 @@ func listSnapshot() error {
 
 func jsonOutput(snapshots []snapshot.Snapshot) error {
 	for _, aSnapshot := range snapshots {
+		aSnapshot.ID = ""
 		jsonBuffer, err := json.Marshal(aSnapshot)
 		if err != nil {
 			return err
@@ -80,10 +81,10 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 		return nil
 	}
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	fmt.Fprintf(writer, "ID\tName\tCreated\n")
+	fmt.Fprintf(writer, "NAME\tCREATED\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.ID, aSnapshot.Name, prettyCreated)
+		fmt.Fprintf(writer, "%s\t%s\n", aSnapshot.Name, prettyCreated)
 	}
 	writer.Flush()
 	return nil

@@ -4,7 +4,7 @@ local_setup() {
     if is_windows; then
         skip "snapshots test not applicable on Windows"
     fi
-    SNAPSHOT=moby-nginx-snapshot01
+    SNAPSHOT=the-ubiquitous-flounder
 }
 
 @test 'factory reset and delete all the snapshots' {
@@ -50,15 +50,10 @@ local_setup() {
 
 # This should be one long test because if `snapshot restore` fails there's no point starting up
 @test 'shutdown, restore, restart and verify snapshot state' {
-    local snapshotID
     rdctl shutdown
-    run get_snapshot_id_from_name "$SNAPSHOT"
+    run rdctl snapshot restore "$SNAPSHOT"
     assert_success
-    refute_output ""
-    snapshotID="$output"
-    run rdctl snapshot restore "$snapshotID"
-    assert_success
-    refute_output --partial $"failed to restore snapshot \"$snapshotID\""
+    refute_output --partial fail
 
     launch_the_application
 
@@ -66,6 +61,7 @@ local_setup() {
     RD_CONTAINER_ENGINE=moby
     wait_for_container_engine
     wait_for_apiserver
+
     run rdctl api /settings
     assert_success
     run jq_output .containerEngine.name
@@ -74,8 +70,50 @@ local_setup() {
     try --max 48 --delay 5 running_nginx
 }
 
+@test 'verify identification errors' {
+    for action in restore delete; do
+        run rdctl snapshot "$action" 'the-nomadic-pond'
+        assert_failure
+        assert_output "Error: can't find snapshot \"the-nomadic-pond\""
+
+        run rdctl snapshot "$action" 'the-nomadic-pond' --json
+        assert_failure
+        run jq_output '.error'
+        assert_success
+        assert_output "can't find snapshot \"the-nomadic-pond\""
+    done
+}
+
+@test 'can create a snapshot where proposed name is a current ID' {
+    run ls -1 "$PATH_SNAPSHOTS"
+    assert_success
+    refute_output ""
+    run head -n 1 <<<"$output"
+    assert_success
+    refute_output ""
+    snapshot_id=$output
+    rdctl snapshot create "$snapshot_id"
+    # And we can delete that snapshot
+    run rdctl snapshot delete "$snapshot_id" --json
+    assert_success
+    assert_output ""
+}
+
+@test "factory-reset doesn't delete a non-empty snapshots directory" {
+    rdctl factory-reset
+    assert_exists "$PATH_SNAPSHOTS"
+}
+
 @test 'delete all the snapshots' {
-    delete_all_snapshots
+    rdctl snapshot delete "$SNAPSHOT"
+    run rdctl snapshot list --json
+    assert_success
+    assert_output ''
+}
+
+@test 'factory-reset does delete an empty snapshots directory' {
+    rdctl factory-reset
+    assert_not_exists "$PATH_SNAPSHOTS"
 }
 
 running_nginx() {

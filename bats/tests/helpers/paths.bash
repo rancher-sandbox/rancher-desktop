@@ -108,6 +108,7 @@ if is_windows; then
 fi
 
 PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
+PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
 
 USERPROFILE=$HOME
 if using_windows_exe; then

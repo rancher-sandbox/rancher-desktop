@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
@@ -13,6 +13,7 @@ var snapshotDeleteCmd = &cobra.Command{
 	Short: "Delete a snapshot",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		err := deleteSnapshot(cmd, args)
 		return exitWithJsonOrErrorCondition(err)
 	},
@@ -24,13 +25,16 @@ func init() {
 }
 
 func deleteSnapshot(cmd *cobra.Command, args []string) error {
-	cmd.SilenceUsage = true
-	paths, err := p.GetPaths()
+	appPaths, err := paths.GetPaths()
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
-	manager := snapshot.NewManager(paths)
-	if err = manager.Delete(args[0]); err != nil {
+	manager := snapshot.NewManager(appPaths)
+	id, err := manager.GetSnapshotId(args[0])
+	if err != nil {
+		return err
+	}
+	if err = manager.Delete(id); err != nil {
 		return fmt.Errorf("failed to delete snapshot: %w", err)
 	}
 	return nil

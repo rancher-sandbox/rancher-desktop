@@ -53,9 +53,6 @@ local_setup() {
 @test 'verify snapshot-list output with snapshots' {
     run rdctl snapshot list --json
     assert_success
-    ID0=$(jq_output 'select(.name == "cows_fish_capers").id')
-    ID1=$(jq_output 'select(.name == "world-buffalo-federation").id')
-    ID2=$(jq_output 'select(.name == "run-like-an-antelope").id')
     DATE1=$(jq_output 'select(.name == "world-buffalo-federation").created')
     DATE2=$(jq_output 'select(.name == "run-like-an-antelope").created')
     if is_macos; then
@@ -72,9 +69,9 @@ local_setup() {
 
     run rdctl snapshot list
     assert_success
-    assert_output --regexp "${ID0}.* cows_fish_capers "
-    assert_output --regexp "${ID1}.* world-buffalo-federation "
-    assert_output --regexp "${ID2}.* run-like-an-antelope "
+    assert_output --partial "cows_fish_capers"
+    assert_output --partial "world-buffalo-federation"
+    assert_output --partial "run-like-an-antelope"
 }
 
 @test 'verify k8s is off' {

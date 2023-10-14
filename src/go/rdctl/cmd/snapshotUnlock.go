@@ -23,6 +23,8 @@ normal circumstances.`,
 
 func init() {
 	snapshotCmd.AddCommand(snapshotUnlockCmd)
+	snapshotUnlockCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
+
 }
 
 func unlockSnapshot() error {
