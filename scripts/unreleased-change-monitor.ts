@@ -1,6 +1,6 @@
 import { Octokit } from 'octokit';
 
-import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
+import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostSwitch } from 'scripts/dependencies/wsl';
 import {
@@ -19,6 +19,7 @@ type UnreleasedChangeMonitoringDependency = Dependency & GitHubDependency;
 type DependencyState = { dependency: UnreleasedChangeMonitoringDependency } & HasUnreleasedChangesResult;
 
 const dependencies: UnreleasedChangeMonitoringDependency[] = [
+  new Lima(),
   new LimaAndQemu(),
   new WSLDistro(),
   new tools.DockerCLI(),
