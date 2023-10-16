@@ -22,6 +22,7 @@ test.describe.serial('Main App Test', () => {
   let context: BrowserContext;
   let page: Page;
   let navPage: NavPage;
+  let screenshot: MainWindowScreenshots;
   const afterCheckedTimeout = 200;
 
   test.beforeAll(async({ colorScheme }) => {
@@ -60,6 +61,7 @@ test.describe.serial('Main App Test', () => {
     await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
     navPage = new NavPage(page);
+    screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
 
     await page.emulateMedia({ colorScheme });
 
@@ -82,185 +84,253 @@ test.describe.serial('Main App Test', () => {
     return teardown(electronApp, __filename);
   });
 
-  test('Main Page', async({ colorScheme }) => {
-    const screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
+  test.describe('Main Page', () => {
+    test('General Page', async({ colorScheme }) => {
+      await screenshot.take('General');
+    });
 
-    await screenshot.take('General');
-    await screenshot.take('PortForwarding', navPage);
+    test('PortForwarding Page', async({ colorScheme }) => {
+      await screenshot.take('PortForwarding', navPage);
+    });
 
-    const imagesPage = await navPage.navigateTo('Images');
+    test('Images Page', async({ colorScheme }) => {
+      const imagesPage = await navPage.navigateTo('Images');
 
-    await expect(imagesPage.rows).toBeVisible();
-    await screenshot.take('Images');
+      await expect(imagesPage.rows).toBeVisible();
+      await screenshot.take('Images');
+    });
 
-    await screenshot.take('Troubleshooting', navPage);
+    test('Troubleshooting Page', async({ colorScheme }) => {
+      await screenshot.take('Troubleshooting', navPage);
+    });
 
-    const diagnosticsPage = await navPage.navigateTo('Diagnostics');
+    test('Diagnostics Page', async({ colorScheme }) => {
+      const diagnosticsPage = await navPage.navigateTo('Diagnostics');
 
-    // show diagnostics badge
-    await expect(diagnosticsPage.diagnostics).toBeVisible();
-    await diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
-    // wait for the red bullet to appear on the Diagnostics page label
-    await page.waitForTimeout(1000);
+      // show diagnostics badge
+      await expect(diagnosticsPage.diagnostics).toBeVisible();
+      await diagnosticsPage.checkerRows('MOCK_CHECKER').muteButton.click();
+      // wait for the red bullet to appear on the Diagnostics page label
+      await page.waitForTimeout(1000);
 
-    await screenshot.take('Diagnostics');
+      await screenshot.take('Diagnostics');
+    });
 
-    const extensionsPage = await navPage.navigateTo('Extensions');
+    test('Extensions Page', async({ colorScheme }) => {
+      const extensionsPage = await navPage.navigateTo('Extensions');
 
-    await expect(extensionsPage.cardEpinio).toBeVisible();
-    await screenshot.take('Extensions');
+      await expect(extensionsPage.cardEpinio).toBeVisible();
+      await screenshot.take('Extensions');
 
-    await extensionsPage.tabInstalled.click();
+      await extensionsPage.tabInstalled.click();
 
-    await screenshot.take('Extensions-Installed');
+      await screenshot.take('Extensions-Installed');
 
-    await extensionsPage.tabCatalog.click();
+      await extensionsPage.tabCatalog.click();
+    });
   });
 
-  test('Preferences Page', async({ colorScheme }) => {
-    await navPage.preferencesButton.click();
+  test.describe('Preferences Page', () => {
+    let prefScreenshot: PreferencesScreenshots;
+    let preferencesPage: Page;
+    let e2ePreferences: PreferencesPage;
 
-    await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+    test.beforeAll(async({ colorScheme }) => {
+      await navPage.preferencesButton.click();
+      await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+      preferencesPage = electronApp.windows()[1];
+      await preferencesPage.emulateMedia({ colorScheme });
+      e2ePreferences = new PreferencesPage(preferencesPage);
+      prefScreenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+    });
 
-    const preferencesPage = electronApp.windows()[1];
+    test.afterAll(async({ colorScheme }) => {
+      await preferencesPage.close({ runBeforeUnload: true });
+    });
 
-    await preferencesPage.emulateMedia({ colorScheme });
+    test.describe('Application Page', () => {
+      test('General Tab', async({ colorScheme }) => {
+        // enable Apply button
+        await e2ePreferences.application.automaticUpdatesCheckbox.click();
+        await preferencesPage.waitForTimeout(200);
 
-    const e2ePreferences = new PreferencesPage(preferencesPage);
-    const screenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+        await prefScreenshot.take('application', 'tabGeneral');
+      });
 
-    // enable Apply button
-    await e2ePreferences.application.automaticUpdatesCheckbox.click();
-    await preferencesPage.waitForTimeout(200);
+      test('Behavior Tab', async() => {
+        await e2ePreferences.application.nav.click();
+        await e2ePreferences.application.tabBehavior.click();
+        await expect(e2ePreferences.application.autoStart).toBeVisible();
+        await prefScreenshot.take('application', 'tabBehavior');
+      });
 
-    await screenshot.take('application', 'tabGeneral');
+      test('Environment Tab', async() => {
+        test.skip( isWin, 'Linux & Mac only test');
 
-    await e2ePreferences.application.nav.click();
-    await e2ePreferences.application.tabBehavior.click();
-    await expect(e2ePreferences.application.autoStart).toBeVisible();
-    await screenshot.take('application', 'tabBehavior');
-
-    if (isWin) {
-      await e2ePreferences.wsl.nav.click();
-      await screenshot.take('wsl', 'tabNetwork');
-
-      await e2ePreferences.wsl.tabIntegrations.click();
-      await expect(e2ePreferences.wsl.wslIntegrations).toBeVisible();
-      await screenshot.take('wsl', 'tabIntegrations');
-
-      await e2ePreferences.wsl.tabProxy.click();
-      await expect(e2ePreferences.wsl.addressTitle).toBeVisible();
-      await screenshot.take('wsl', 'tabProxy');
-    } else {
-      // Linux & Mac
-      await e2ePreferences.application.nav.click();
-      await e2ePreferences.application.tabEnvironment.click();
-      await expect(e2ePreferences.application.pathManagement).toBeVisible();
-      await screenshot.take('application', 'tabEnvironment');
-
-      await e2ePreferences.virtualMachine.nav.click();
-      await expect(e2ePreferences.virtualMachine.memory).toBeVisible();
-      await screenshot.take('virtualMachine', 'tabHardware');
-
-      await e2ePreferences.virtualMachine.tabVolumes.click();
-      await expect(e2ePreferences.virtualMachine.mountType).toBeVisible();
-      await screenshot.take('virtualMachine', 'tabVolumes');
-
-      await e2ePreferences.virtualMachine.ninep.click();
-      await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
-      await page.waitForTimeout(afterCheckedTimeout);
-      await screenshot.take('virtualMachine', 'tabVolumes_9P');
-
-      if (isMac) {
-        await e2ePreferences.virtualMachine.tabNetwork.click();
-        await expect(e2ePreferences.virtualMachine.socketVmNet).toBeVisible();
-        await screenshot.take('virtualMachine', 'tabNetwork');
-
-        await e2ePreferences.virtualMachine.tabEmulation.click();
-        await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
-        await screenshot.take('virtualMachine', 'tabEmulation');
-
-        if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-          await e2ePreferences.virtualMachine.vz.click();
-          await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
-        }
-
-        await e2ePreferences.virtualMachine.tabVolumes.click();
-        if (await e2ePreferences.virtualMachine.virtiofs.isEnabled()) {
-          await e2ePreferences.virtualMachine.virtiofs.click();
-          await expect(e2ePreferences.virtualMachine.virtiofs).toBeChecked();
-          await page.waitForTimeout(afterCheckedTimeout);
-          await screenshot.take('virtualMachine', 'tabVolumes_virtiofs');
-        }
-
-        await e2ePreferences.virtualMachine.tabEmulation.click();
-        if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-          await screenshot.take('virtualMachine', 'tabEmulation_vz');
-        }
-      }
-    }
-
-    await screenshot.take('containerEngine', 'tabGeneral');
-
-    await e2ePreferences.containerEngine.nav.click();
-    await e2ePreferences.containerEngine.tabAllowedImages.click();
-    await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
-    await e2ePreferences.containerEngine.allowedImagesCheckbox.click();
-    await page.waitForTimeout(afterCheckedTimeout);
-
-    await screenshot.take('containerEngine', 'tabAllowedImages');
-
-    await screenshot.take('kubernetes');
-
-    await preferencesPage.close({ runBeforeUnload: true });
-  });
-
-  test('Preferences Page, locked fields', async({ colorScheme }) => {
-    // ToDo, locked fields tooltips are not captured on Windows.
-
-    await navPage.preferencesButton.click();
-
-    const prefPage = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
-
-    // Mock locked Fields API response
-    await prefPage.route(/^.*\/settings\/locked/, async(route) => {
-      await route.fulfill({
-        body: JSON.stringify({
-          containerEngine: {
-            allowedImages: {
-              enabled:  true,
-              patterns: true,
-            },
-          },
-          kubernetes: { version: true },
-        }),
-        status:  200,
-        headers: {},
+        await e2ePreferences.application.nav.click();
+        await e2ePreferences.application.tabEnvironment.click();
+        await expect(e2ePreferences.application.pathManagement).toBeVisible();
+        await prefScreenshot.take('application', 'tabEnvironment');
       });
     });
 
-    const preferencesPage = electronApp.windows()[1];
+    test.describe('WSL Page', () => {
+      test.skip( !isWin, 'Windows only test');
 
-    await preferencesPage.emulateMedia({ colorScheme });
+      test('Network Tab', async() => {
+        await e2ePreferences.wsl.nav.click();
+        await prefScreenshot.take('wsl', 'tabNetwork');
+      });
 
-    const e2ePreferences = new PreferencesPage(preferencesPage);
-    const screenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+      test('Integrations Tab', async() => {
+        await e2ePreferences.wsl.tabIntegrations.click();
+        await expect(e2ePreferences.wsl.wslIntegrations).toBeVisible();
+        await prefScreenshot.take('wsl', 'tabIntegrations');
+      });
 
-    await e2ePreferences.containerEngine.nav.click();
-    await e2ePreferences.containerEngine.tabAllowedImages.click();
-    await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
+      test('Proxy Tab', async() => {
+        await e2ePreferences.wsl.tabProxy.click();
+        await expect(e2ePreferences.wsl.addressTitle).toBeVisible();
+        await prefScreenshot.take('wsl', 'tabProxy');
+      });
+    });
 
-    await e2ePreferences.containerEngine.enabledLockedField.hover();
-    await preferencesPage.waitForTimeout(250);
-    await screenshot.take('containerEngine', 'tabAllowedImages_lockedFields');
+    test.describe('Virtual Machine Page', () => {
+      test.skip(isWin, 'Linux & Mac only tests');
 
-    await e2ePreferences.kubernetes.nav.click();
-    await expect(e2ePreferences.kubernetes.kubernetesVersionLockedFields).toBeVisible();
+      test('Hardware Tab', async() => {
+        await e2ePreferences.virtualMachine.nav.click();
+        await expect(e2ePreferences.virtualMachine.memory).toBeVisible();
+        await prefScreenshot.take('virtualMachine', 'tabHardware');
+      });
 
-    await e2ePreferences.kubernetes.kubernetesVersionLockedFields.hover();
-    await preferencesPage.waitForTimeout(250);
-    await screenshot.take('kubernetes', 'lockedFields');
+      test('VolumesTab', async() => {
+        await e2ePreferences.virtualMachine.tabVolumes.click();
+        await expect(e2ePreferences.virtualMachine.mountType).toBeVisible();
+        await prefScreenshot.take('virtualMachine', 'tabVolumes');
 
-    await preferencesPage.close({ runBeforeUnload: true });
+        await e2ePreferences.virtualMachine.ninep.click();
+        await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
+        await page.waitForTimeout(afterCheckedTimeout);
+        await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+      });
+
+      test.describe('Mac only tests', () => {
+        test.skip(!isMac, 'Mac only test');
+
+        test('NetworkTab', async() => {
+          await e2ePreferences.virtualMachine.tabNetwork.click();
+          await expect(e2ePreferences.virtualMachine.socketVmNet).toBeVisible();
+          await prefScreenshot.take('virtualMachine', 'tabNetwork');
+        });
+
+        test('EmulationTab', async() => {
+          await e2ePreferences.virtualMachine.tabEmulation.click();
+          await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
+          await prefScreenshot.take('virtualMachine', 'tabEmulation');
+        });
+
+        test('VolumesTab-virtiofs', async() => {
+          if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
+            await e2ePreferences.virtualMachine.vz.click();
+            await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
+          }
+
+          await e2ePreferences.virtualMachine.tabVolumes.click();
+          if (await e2ePreferences.virtualMachine.virtiofs.isEnabled()) {
+            await e2ePreferences.virtualMachine.virtiofs.click();
+            await expect(e2ePreferences.virtualMachine.virtiofs).toBeChecked();
+            await page.waitForTimeout(afterCheckedTimeout);
+            await prefScreenshot.take('virtualMachine', 'tabVolumes_virtiofs');
+          }
+        });
+
+        test('EmulationTab-vz', async() => {
+          await e2ePreferences.virtualMachine.tabEmulation.click();
+          if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
+            await prefScreenshot.take('virtualMachine', 'tabEmulation_vz');
+          }
+        });
+      });
+    });
+
+    test.describe('Container Engine Page', () => {
+      test('GeneralTab', async() => {
+        await prefScreenshot.take('containerEngine', 'tabGeneral');
+      });
+
+      test('AllowedImagesTab', async() => {
+        await e2ePreferences.containerEngine.nav.click();
+        await e2ePreferences.containerEngine.tabAllowedImages.click();
+        await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
+        await e2ePreferences.containerEngine.allowedImagesCheckbox.click();
+        await page.waitForTimeout(afterCheckedTimeout);
+
+        await prefScreenshot.take('containerEngine', 'tabAllowedImages');
+      });
+    });
+
+    test('Kubernetes Page', async() => {
+      await prefScreenshot.take('kubernetes');
+    });
+  });
+
+  test.describe('Preferences Page, locked fields', () => {
+    // ToDo, locked fields tooltips are not captured on Windows.
+
+    let prefScreenshot: PreferencesScreenshots;
+    let prefPage: Page;
+    let preferencesPage: Page;
+    let e2ePreferences: PreferencesPage;
+
+    test.beforeAll(async({ colorScheme }) => {
+      await navPage.preferencesButton.click();
+
+      prefPage = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+      // Mock locked Fields API response
+      await prefPage.route(/^.*\/settings\/locked/, async(route) => {
+        await route.fulfill({
+          body: JSON.stringify({
+            containerEngine: {
+              allowedImages: {
+                enabled:  true,
+                patterns: true,
+              },
+            },
+            kubernetes: { version: true },
+          }),
+          status:  200,
+          headers: {},
+        });
+      });
+
+      preferencesPage = electronApp.windows()[1];
+      await preferencesPage.emulateMedia({ colorScheme });
+      e2ePreferences = new PreferencesPage(preferencesPage);
+      prefScreenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+    });
+
+    test.afterAll(async({ colorScheme }) => {
+      await preferencesPage.close({ runBeforeUnload: true });
+    });
+
+    test('Allowed Images - locked fields', async() => {
+      await e2ePreferences.containerEngine.nav.click();
+      await e2ePreferences.containerEngine.tabAllowedImages.click();
+      await expect(e2ePreferences.containerEngine.allowedImages).toBeVisible();
+
+      await e2ePreferences.containerEngine.enabledLockedField.hover();
+      await preferencesPage.waitForTimeout(250);
+      await prefScreenshot.take('containerEngine', 'tabAllowedImages_lockedFields');
+    });
+
+    test('Kubernetes - locked fields', async() => {
+      await e2ePreferences.kubernetes.nav.click();
+      await expect(e2ePreferences.kubernetes.kubernetesVersionLockedFields).toBeVisible();
+
+      await e2ePreferences.kubernetes.kubernetesVersionLockedFields.hover();
+      await preferencesPage.waitForTimeout(250);
+      await prefScreenshot.take('kubernetes', 'lockedFields');
+    });
   });
 });
