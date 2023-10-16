@@ -912,7 +912,8 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
       movable: false,
       height:  500,
       width:   700,
-    });
+    },
+    false);
 
   const onMainWindowMove = () => {
     if (mainWindow && dialog) {

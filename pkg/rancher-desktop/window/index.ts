@@ -433,7 +433,7 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @param opts The usual browser-window options
  * @returns The opened window
  */
-export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
+export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions, escapeKey = true) {
   console.debug('openDialog() id: ', id);
   const window = createWindow(
     id,
@@ -479,7 +479,7 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
     return window;
   }
 
-  if (!opts || opts.closable) {
+  if (escapeKey) {
     Shortcuts.register(
       window,
       { key: 'Escape' },
