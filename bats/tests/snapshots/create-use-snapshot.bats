@@ -1,9 +1,6 @@
 load '../helpers/load'
 
 local_setup() {
-    if is_windows; then
-        skip "snapshots test not applicable on Windows"
-    fi
     SNAPSHOT=the-ubiquitous-flounder
 }
 
@@ -17,6 +14,7 @@ local_setup() {
     start_kubernetes
     wait_for_container_engine
     wait_for_apiserver
+    wait_for_backend
 }
 
 @test 'push an nginx pod and verify' {

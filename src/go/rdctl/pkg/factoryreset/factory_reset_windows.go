@@ -214,25 +214,40 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 	if err != nil {
 		return nil, fmt.Errorf("could not get LocalAppData folder: %w", err)
 	}
-	dirs := []string{path.Join(localAppData, fmt.Sprintf("%s-updater", appName))}
-	localRDAppData := path.Join(localAppData, appName)
+	dirs := []string{filepath.Join(localAppData, fmt.Sprintf("%s-updater", appName))}
+	localRDAppData := filepath.Join(localAppData, appName)
 
 	// add files in %LOCALAPPDATA%\rancher-desktop
 	deleteLocalRDAppData := true
 	appDataFiles, err := os.ReadDir(localRDAppData)
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		return dirs, nil
+	} else if err != nil {
 		return nil, fmt.Errorf("failed to read directory %q: %w", localRDAppData, err)
 	}
 	for _, appDataFile := range appDataFiles {
 		fileName := appDataFile.Name()
 		if fileName == "snapshots" {
-			// Never delete snapshots directory during factory reset
-			deleteLocalRDAppData = false
+			// Only delete snapshots directory if it is empty
+			snapshotsDir := filepath.Join(localRDAppData, fileName)
+			snapshotsDirContents, err := os.ReadDir(snapshotsDir)
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			} else if err != nil {
+				return nil, fmt.Errorf("failed to read directory %q: %w", snapshotsDir, err)
+			}
+			if len(snapshotsDirContents) == 0 {
+				dirs = append(dirs, snapshotsDir)
+			} else {
+				deleteLocalRDAppData = false
+			}
 		} else if fileName == "cache" && keepSystemImages {
 			// Don't delete cache\k3s & cache\k3s-versions.json if keeping system images
 			cacheDir := filepath.Join(localRDAppData, fileName)
 			cacheDirFiles, err := os.ReadDir(cacheDir)
-			if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			} else if err != nil {
 				return nil, fmt.Errorf("failed to read directory %q: %w", cacheDir, err)
 			}
 			for _, cacheDirFile := range cacheDirFiles {
