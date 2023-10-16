@@ -65,13 +65,13 @@ export default class SettingsValidator {
   allowedTransientSettings: TransientSettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
   lockedSettings: LockedSettingsType = { };
-  isFatal = false;
+  protected isFatal = false;
 
   validateSettings(
     currentSettings: Settings,
     newSettings: RecursivePartial<Settings>,
     lockedSettings: LockedSettingsType = {},
-  ): [boolean, string[]] {
+  ): [boolean, string[], boolean] {
     this.lockedSettings = lockedSettings;
     this.isFatal = false;
     this.allowedSettings ||= {
@@ -168,7 +168,7 @@ export default class SettingsValidator {
       '',
     );
 
-    return [needToUpdate && errors.length === 0, errors];
+    return [needToUpdate && errors.length === 0, errors, this.isFatal];
   }
 
   validateTransientSettings(

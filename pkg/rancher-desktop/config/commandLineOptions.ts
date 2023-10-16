@@ -134,7 +134,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     }
     settingsValidator.k8sVersions = limitedK8sVersionList;
   }
-  const [needToUpdate, errors] = settingsValidator.validateSettings(cfg, newSettings, lockedFields);
+  const [needToUpdate, errors, isFatal] = settingsValidator.validateSettings(cfg, newSettings, lockedFields);
 
   if (errors.length > 0) {
     const errorString = `Error in command-line options:\n${ errors.join('\n') }`;
@@ -142,7 +142,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     if (errors.some(error => /field ".+?" is locked/.test(error))) {
       throw new LockedFieldError(errorString);
     }
-    if (settingsValidator.isFatal) {
+    if (isFatal) {
       throw new FatalCommandLineOptionError(errorString);
     }
     throw new Error(errorString);
