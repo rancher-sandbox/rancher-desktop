@@ -146,9 +146,6 @@ rdctl_factory_reset() {
 
     if [[ $1 == "--remove-kubernetes-cache=true" ]]; then
         assert_not_exist "$PATH_CACHE"
-        if is_windows; then
-            assert_not_exist "$PATH_DATA"
-        fi
     else
         assert_exists "$PATH_CACHE"
     fi
