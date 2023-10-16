@@ -147,9 +147,7 @@ export default {
         'show-snapshots-blocking-dialog',
         {
           window: {
-            buttons: [
-              // this.t('snapshots.dialog.generic.actions.cancel'),
-            ],
+            buttons:  [],
             cancelId: 1,
           },
           format: {

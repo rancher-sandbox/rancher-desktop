@@ -130,9 +130,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
         'show-snapshots-blocking-dialog',
         {
           window: {
-            buttons: [
-              // this.t('snapshots.dialog.restoring.actions.cancel'),
-            ],
+            buttons:  [],
             cancelId: 1,
           },
           format: {
