@@ -3,6 +3,8 @@ name: e2e tests on Linux
 on:
   workflow_dispatch:
   push:
+    branches-ignore:
+      - 'dependabot/**'
   pull_request:
 
 jobs:
