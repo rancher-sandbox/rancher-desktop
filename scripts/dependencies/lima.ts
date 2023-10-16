@@ -13,10 +13,10 @@ import {
   DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
 } from 'scripts/lib/dependencies';
 
-export class LimaAndQemu implements Dependency, GitHubDependency {
-  name = 'limaAndQemu';
+export class Lima implements Dependency, GitHubDependency {
+  name = 'lima';
   githubOwner = 'rancher-sandbox';
-  githubRepo = 'lima-and-qemu';
+  githubRepo = 'rancher-desktop-lima';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
@@ -27,22 +27,25 @@ export class LimaAndQemu implements Dependency, GitHubDependency {
     // fwdCompatLimactlBin or fwdCompatLimactlDarwinVer
     // constants in backend/lima.ts.
     const fwdCompatLimactlBin = 'limactl.ventura';
-    let fwdCompatLimactlTarGz = fwdCompatLimactlBin;
 
     if (platform === 'darwin') {
-      platform = 'macos';
+      platform = 'macos-11.amd64';
       if (process.env.M1) {
-        platform = `macos-aarch64`;
-        fwdCompatLimactlTarGz = `${ fwdCompatLimactlTarGz }-aarch64`;
+        platform = `macos-11.arm64`;
       }
+    } else {
+      platform = 'linux.amd64';
     }
-    const url = `${ baseUrl }/v${ context.versions.limaAndQemu }/lima-and-qemu.${ platform }.tar.gz`;
+
+    const url = `${ baseUrl }/v${ context.versions.lima }/lima.${ platform }.tar.gz`;
     const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
     const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
-    const tarPath = path.join(context.resourcesDir, context.platform, `lima-v${ context.versions.limaAndQemu }.tgz`);
+    const tarPath = path.join(context.resourcesDir, context.platform, `lima.${ platform }.v${ context.versions.lima }.tgz`);
 
     await download(url, tarPath, {
-      expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
+      expectedChecksum,
+      checksumAlgorithm: 'sha512',
+      access:            fs.constants.W_OK,
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
 
@@ -61,17 +64,20 @@ export class LimaAndQemu implements Dependency, GitHubDependency {
 
     // Download and install forward compatible limactl binary built for the newest Darwin versions
     if (context.platform === 'darwin') {
-      const limactlUrl = `${ baseUrl }/v${ context.versions.limaAndQemu }/${ fwdCompatLimactlTarGz }.tar.gz`;
-      const limactlExpectedChecksum = (await getResource(`${ limactlUrl }.sha512sum`)).split(/\s+/)[0];
-      const limactlDir = path.join(context.resourcesDir, context.platform, 'lima', 'bin');
-      const limactlTarPath = path.join(context.resourcesDir, context.platform, `limactl-v${ context.versions.limaAndQemu }.tgz`);
+      platform = platform.replace('macos-11', 'macos-12');
+      const url = `${ baseUrl }/v${ context.versions.lima }/lima.${ platform }.tar.gz`;
+      const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
+      const tarPath = path.join(context.resourcesDir, context.platform, `lima.${ platform }.v${ context.versions.lima }.tgz`);
 
-      await download(limactlUrl, limactlTarPath, {
-        expectedChecksum: limactlExpectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
+      await download(url, tarPath, {
+        expectedChecksum,
+        checksumAlgorithm: 'sha512',
+        access:            fs.constants.W_OK,
       });
 
-      const limactlChild = childProcess.spawn('/usr/bin/tar', ['-xf', limactlTarPath, '-s', `/limactl/${ fwdCompatLimactlBin }/`],
-        { cwd: limactlDir, stdio: 'inherit' });
+      const limactlChild = childProcess.spawn('/usr/bin/tar',
+        ['-xf', tarPath, '-s', `/limactl/${ fwdCompatLimactlBin }/`, '--exclude', 'lima-guestagent*'],
+        { cwd: limaDir, stdio: 'inherit' });
 
       await new Promise<void>((resolve, reject) => {
         limactlChild.on('exit', (code, signal) => {
@@ -83,6 +89,67 @@ export class LimaAndQemu implements Dependency, GitHubDependency {
         });
       });
     }
+  }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semver1 = semver.coerce(version1);
+    const semver2 = semver.coerce(version2);
+
+    if (semver1 === null || semver2 === null) {
+      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+    }
+
+    return semver.rcompare(semver1, semver2);
+  }
+}
+
+export class LimaAndQemu implements Dependency, GitHubDependency {
+  name = 'limaAndQemu';
+  githubOwner = 'rancher-sandbox';
+  githubRepo = 'lima-and-qemu';
+
+  async download(context: DownloadContext): Promise<void> {
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
+    let platform: string = context.platform;
+
+    if (platform === 'darwin') {
+      platform = 'macos';
+      if (process.env.M1) {
+        platform = `macos-aarch64`;
+      }
+    }
+    const url = `${ baseUrl }/v${ context.versions.limaAndQemu }/lima-and-qemu.${ platform }.tar.gz`;
+    const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
+    const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
+    const tarPath = path.join(context.resourcesDir, context.platform, `lima-and-qemu.v${ context.versions.limaAndQemu }.tgz`);
+
+    await download(url, tarPath, {
+      expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
+    });
+    await fs.promises.mkdir(limaDir, { recursive: true });
+
+    const child = childProcess.spawn('/usr/bin/tar', ['-xf', tarPath, '--exclude', 'lima*'],
+      { cwd: limaDir, stdio: 'inherit' });
+
+    await new Promise<void>((resolve, reject) => {
+      child.on('exit', (code, signal) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Lima-and-QEMU extract failed with ${ code || signal }`));
+        }
+      });
+    });
   }
 
   async getAvailableVersions(): Promise<string[]> {

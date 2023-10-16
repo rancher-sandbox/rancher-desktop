@@ -4,7 +4,7 @@ import path from 'path';
 
 import buildUtils from './lib/build-utils';
 
-import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
+import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
@@ -30,6 +30,7 @@ const userTouchedDependencies = [
 
 // Dependencies that are specific to unix hosts.
 const unixDependencies = [
+  new Lima(),
   new LimaAndQemu(),
   new AlpineLimaISO(),
 ];

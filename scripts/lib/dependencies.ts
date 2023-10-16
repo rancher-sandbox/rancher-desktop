@@ -31,6 +31,7 @@ export type AlpineLimaISOVersion = {
 };
 
 export type DependencyVersions = {
+  lima: string;
   limaAndQemu: string;
   alpineLimaISO: AlpineLimaISOVersion;
   WSLDistro: string;
