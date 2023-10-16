@@ -4,6 +4,7 @@ import path from 'path';
 import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
+import { lockedSettings } from './test-data/preferences';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import {
@@ -289,19 +290,7 @@ test.describe.serial('Main App Test', () => {
       prefPage = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
       // Mock locked Fields API response
       await prefPage.route(/^.*\/settings\/locked/, async(route) => {
-        await route.fulfill({
-          body: JSON.stringify({
-            containerEngine: {
-              allowedImages: {
-                enabled:  true,
-                patterns: true,
-              },
-            },
-            kubernetes: { version: true },
-          }),
-          status:  200,
-          headers: {},
-        });
+        await route.fulfill(lockedSettings);
       });
 
       preferencesPage = electronApp.windows()[1];
