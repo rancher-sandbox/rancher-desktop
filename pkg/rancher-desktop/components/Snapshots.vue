@@ -96,6 +96,9 @@ export default Vue.extend<Data, Methods, Computed, never>({
       }, 1500);
     },
     adjustCardsHeight() {
+      /**
+       * height = window height - page header - space reserved for snapshot event
+       */
       this.cardsStyle = `height: ${ window?.innerHeight - 150 - (this.snapshotEvent ? 75 : 0) }px`;
     },
     toggleMainScrollbar(value: boolean) {
