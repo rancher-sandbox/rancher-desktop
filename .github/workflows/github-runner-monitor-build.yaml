@@ -26,6 +26,8 @@ jobs:
         cache-dependency-path: src/go/github-runner-monitor/go.sum
     - run: go build .
       working-directory: src/go/github-runner-monitor
+      env:
+        CGO_ENABLED: '0'
     - uses: actions/upload-artifact@v3
       with:
         name: github-runner-linux
