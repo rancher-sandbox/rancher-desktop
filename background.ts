@@ -171,9 +171,14 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
-    // Reset `noModalDialogs` on non-error paths, but if an error occurs during command processing,
-    // we'll need to know whether this was set in advance. It's very unlikely that a string option is set
-    // to this exact string though.
+    // Normally `noModalDialogs` is set when we call `updateFromCommandLine(.., commandLineArgs)`
+    // But if there's an error either in that function, or before, we'll need to know if we should
+    // display the error in a modal-dialog or not. So check the current command-line arguments for that.
+    //
+    // It's very unlikely that a string option is set to this exact string though.
+    // `rdctl start --images.namespace --no-modal-dialogs`
+    // is syntactically correct, but unlikely (because why would someone create a
+    // containerd namespace called "--no-modal-dialogs"?
     noModalDialogs = commandLineArgs.includes('--no-modal-dialogs');
     setupProtocolHandlers();
 
@@ -1115,9 +1120,6 @@ function validateEarlySettings(cfg: settings.Settings, newSettings: RecursivePar
 
   if (errors.length > 0) {
     throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
-  }
-  if (errors.length > 0) {
-    throw new FatalCommandLineOptionError(`Error in command-line options:\n${ errors.join('\n') }`);
   }
 }
 
