@@ -4769,7 +4769,7 @@ snapshots:
       error: Close
     generic:
       header: Snapshot operation in progress
-      message: 'Please wait some minutes for the Snapshot operation.<br/>The time depends on your machine resources.<br/>While operation is in progress Rancher Desktop will be unavailable.<br/><br/>Once the process is finished the VM will restart.'
+      message: 'Pleas wait while the snapshot operation is active.'<br/>This may take some time, depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.'
     showLogs: Show logs
   info:
     restore:
