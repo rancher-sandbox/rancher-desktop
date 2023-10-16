@@ -82,17 +82,6 @@ export default Vue.extend({
       </div>
       <hr class="separator">
       <div
-        v-if="message"
-        class="message"
-      >
-        <slot name="message">
-          <span
-            class="value"
-            v-html="message"
-          />
-        </slot>
-      </div>
-      <div
         v-if="snapshot"
         class="snapshot"
       >
@@ -117,6 +106,17 @@ export default Vue.extend({
               <span class="value">{{ snapshot.notes }}</span>
             </div>
           </div>
+        </slot>
+      </div>
+      <div
+        v-if="message"
+        class="message"
+      >
+        <slot name="message">
+          <span
+            class="value"
+            v-html="message"
+          />
         </slot>
       </div>
       <div

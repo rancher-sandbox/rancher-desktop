@@ -116,7 +116,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           format: {
             header:          this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
             snapshot:        this.snapshot,
-            info:            type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : null,
+            message:         type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : '',
             showProgressBar: true,
           },
         },
