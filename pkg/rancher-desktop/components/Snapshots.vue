@@ -13,10 +13,13 @@ interface Data {
   snapshotEvent: SnapshotEvent | null;
   snapshotsPollingInterval: ReturnType<typeof setInterval> | null;
   isEmpty: boolean;
+  cardsStyle: string;
 }
 
 interface Methods {
   pollingStart: () => void,
+  adjustCardsHeight: () => void;
+  toggleMainScrollbar: (value: boolean) => void;
 }
 
 interface Computed {
@@ -35,6 +38,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       snapshotsPollingInterval: null,
       snapshotEvent:            null,
       isEmpty:                  false,
+      cardsStyle:               '',
     };
   },
 
@@ -43,6 +47,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
   watch: {
     snapshots(list) {
       this.isEmpty = list?.length === 0;
+    },
+    snapshotEvent: {
+      handler() {
+        this.adjustCardsHeight();
+      },
     },
   },
 
@@ -65,11 +74,19 @@ export default Vue.extend<Data, Methods, Computed, never>({
     };
   },
 
+  mounted() {
+    this.toggleMainScrollbar(false);
+    this.adjustCardsHeight();
+    addEventListener('resize', this.adjustCardsHeight);
+  },
+
   beforeDestroy() {
     if (this.snapshotsPollingInterval) {
       clearInterval(this.snapshotsPollingInterval);
     }
     ipcRenderer.removeAllListeners('snapshot');
+    removeEventListener('resize', this.adjustCardsHeight);
+    this.toggleMainScrollbar(true);
   },
 
   methods: {
@@ -78,41 +95,60 @@ export default Vue.extend<Data, Methods, Computed, never>({
         this.$store.dispatch('snapshots/fetch');
       }, 1500);
     },
+    adjustCardsHeight() {
+      this.cardsStyle = `height: ${ window?.innerHeight - 150 - (this.snapshotEvent ? 75 : 0) }px`;
+    },
+    toggleMainScrollbar(value: boolean) {
+      const main = document.getElementsByTagName('main')?.[0];
+
+      if (main) {
+        main.style.overflowY = value ? 'auto' : 'hidden';
+      }
+    },
   },
 });
 </script>
 
 <template>
   <div class="snapshots">
-    <Banner
-      v-if="snapshotEvent"
-      class="banner mb-20"
-      :color="snapshotEvent.result"
-      :closable="true"
-      @close="snapshotEvent=null"
-    >
-      <span
-        class="event-message"
-        v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
-      />
-    </Banner>
     <div
-      v-for="(item) of snapshots"
-      :key="item.name"
+      v-if="snapshotEvent"
+      class="event"
     >
-      <SnapshotCard
-        class="mb-20"
-        :value="item"
-      />
-    </div>
-    <div v-if="isEmpty">
-      <empty-state
-        class="mt-10"
-        :icon="t('snapshots.empty.icon')"
-        :heading="t('snapshots.empty.heading')"
-        :body="t('snapshots.empty.body')"
+      <Banner
+        class="banner mb-20"
+        :color="snapshotEvent.result"
+        :closable="true"
+        @close="snapshotEvent=null"
       >
-      </empty-state>
+        <span
+          class="event-message"
+          v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
+        />
+      </Banner>
+    </div>
+    <div
+      :style="cardsStyle"
+      class="cards"
+    >
+      <div
+        v-for="(item) of snapshots"
+        :key="item.name"
+      >
+        <SnapshotCard
+          class="mb-20"
+          :value="item"
+        />
+      </div>
+      <div v-if="isEmpty">
+        <empty-state
+          class="mt-10"
+          :icon="t('snapshots.empty.icon')"
+          :heading="t('snapshots.empty.heading')"
+          :body="t('snapshots.empty.body')"
+        >
+        </empty-state>
+      </div>
     </div>
   </div>
 </template>
@@ -122,5 +158,19 @@ export default Vue.extend<Data, Methods, Computed, never>({
     word-wrap: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .snapshots {
+    > * {
+      padding: 0 5px 0 5px;
+    }
+
+    .event {
+      margin-top: 0;
+    }
+
+    .cards {
+      margin-top: 13px;
+      overflow-y: auto;
+    }
   }
 </style>

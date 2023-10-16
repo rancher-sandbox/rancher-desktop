@@ -28,9 +28,3 @@ export default Vue.extend({
     />
   </div>
 </template>
-
-<style lang="scss" scoped>
-  .snapshots-page {
-    padding-top: 13px;
-  }
-</style>
