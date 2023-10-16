@@ -861,7 +861,7 @@ ipcMainProxy.handle('show-snapshots-confirm-dialog', async(
       frame:   true,
       movable: true,
       height:  365,
-      width:   650,
+      width:   640,
     });
 
   if (os.platform() !== 'linux' && mainWindow && dialog) {

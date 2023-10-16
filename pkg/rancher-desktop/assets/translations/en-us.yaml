@@ -4757,19 +4757,19 @@ snapshots:
         cancel: 'Cancel'
     restoring:
       header: 'Restoring {snapshot}'
-      message: "Please wait while snapshot {snapshot} is restored. This may take some time, depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the '<b>'{snapshot} snapshot active'</b>'."
+      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is restored. This may take some time, depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active."
       actions:
         cancel: 'Cancel'
     creating:
       header: 'Creating {snapshot}'
-      message: "Please wait while snapshot {snapshot} is created.'<br/>'This may take some time, depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart."
+      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is created.'<br/>'This may take some time, depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart."
       actions:
         cancel: 'Cancel'
     buttons:
       error: Close
     generic:
       header: Snapshot operation in progress
-      message: 'Pleas wait while the snapshot operation is active.'<br/>This may take some time, depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.'
+      message: "Please wait while the snapshot operation is active.<br/>This may take some time, depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart."
     showLogs: Show logs
   info:
     restore:

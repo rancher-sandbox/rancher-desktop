@@ -152,7 +152,7 @@ export default {
           },
           format: {
             /** ToDo put here operation type and snapshot name from 'state' */
-            header:          this.t('snapshots.dialog.generic.header'),
+            header:          this.t('snapshots.dialog.generic.header', {}, true),
             /** ToDo put here operation type information from 'state' */
             message:         this.t('snapshots.dialog.generic.message', {}, true),
             showProgressBar: true,
