@@ -4,6 +4,7 @@ import { fetchAPI } from './credentials';
 import { ActionContext, MutationsType } from './ts-helpers';
 
 import { Snapshot } from '@pkg/main/snapshots/types';
+
 interface SnapshotsState {
   snapshots: Snapshot[]
 }
@@ -25,7 +26,9 @@ export const actions = {
     if (!response.ok) {
       console.log(`fetchSnapshots: failed: status: ${ response.status }:${ response.statusText }`);
 
-      return;
+      const error = await response.text();
+
+      return error;
     }
     const snapshots: Snapshot[] = await response.json();
 
@@ -40,7 +43,9 @@ export const actions = {
     if (!response.ok) {
       console.log(`createSnapshot: failed: status: ${ response.status }:${ response.statusText }`);
 
-      return;
+      const error = await response.text();
+
+      return error;
     }
 
     await dispatch('fetch');
@@ -52,7 +57,9 @@ export const actions = {
     if (!response.ok) {
       console.log(`deleteSnapshot: failed: status: ${ response.status }:${ response.statusText }`);
 
-      return;
+      const error = await response.text();
+
+      return error;
     }
 
     await dispatch('fetch');
@@ -63,6 +70,10 @@ export const actions = {
 
     if (!response.ok) {
       console.log(`restoreSnapshot: failed: status: ${ response.status }:${ response.statusText }`);
+
+      const error = await response.text();
+
+      return error;
     }
   },
 };

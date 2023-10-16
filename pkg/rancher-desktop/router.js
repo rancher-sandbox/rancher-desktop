@@ -22,6 +22,7 @@ const _e938e378 = () => interopDefault(import('./pages/Troubleshooting.vue' /* w
 const _3f6156a0 = () => interopDefault(import('./pages/UnmetPrerequisites.vue' /* webpackChunkName: "pages/UnmetPrerequisites" */));
 const _e2b699b6 = () => interopDefault(import('./pages/extensions/installed.vue' /* webpackChunkName: "pages/extensions/installed" */));
 const _20fa1c71 = () => interopDefault(import('./pages/snapshots/create.vue' /* webpackChunkName: "pages/snapshots/create" */));
+const _4e9ebc17 = () => interopDefault(import('./pages/snapshots/dialog.vue' /* webpackChunkName: "pages/snapshots/dialog" */));
 const _20fa1c70 = () => interopDefault(import('./pages/images/add.vue' /* webpackChunkName: "pages/images/add" */));
 const _1165c4f2 = () => interopDefault(import('./pages/images/scans/_image-name.vue' /* webpackChunkName: "pages/images/scans/_image-name" */));
 const _65f243c3 = () => interopDefault(import('./pages/extensions/_root/_src/_id.vue' /* webpackChunkName: "pages/extensions/_root/_src/_id" */));
@@ -113,6 +114,10 @@ export const routerOptions = {
     path:      '/snapshots/create',
     component: _20fa1c71,
     name:      'snapshots-create',
+  }, {
+    path:      '/SnapshotsDialog',
+    component: _4e9ebc17,
+    name:      'SnapshotsDialog',
   }, {
     path:      '/extensions/:root?/:src?/:id?',
     component: _65f243c3,

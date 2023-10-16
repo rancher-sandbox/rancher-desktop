@@ -3,8 +3,8 @@ export const mainRoutes = [
   { route: '/Containers' },
   { route: '/PortForwarding' },
   { route: '/Images' },
-  { route: '/Troubleshooting' },
   { route: '/Snapshots' },
+  { route: '/Troubleshooting' },
   { route: '/Diagnostics' },
   { route: '/Extensions' },
 ];

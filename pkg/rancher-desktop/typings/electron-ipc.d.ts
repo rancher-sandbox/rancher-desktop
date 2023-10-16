@@ -6,13 +6,14 @@ import Electron from 'electron';
 import semver from 'semver';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
-import { SnapshotEvent } from '@pkg/main/snapshots/types';
+import { SnapshotDialog, SnapshotEvent } from '@pkg/main/snapshots/types';
 import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
  */
 export interface IpcMainEvents {
+  'backend-state-check': () => string;
   'k8s-restart': () => void;
   'settings-read': () => void;
   'k8s-versions': () => void;
@@ -49,6 +50,7 @@ export interface IpcMainEvents {
   'dialog/ready': () => void;
   'dialog/mounted': () => void;
   /** For message box only */
+  'dialog/error': (args: Record<string, string>) => void;
   'dialog/close': (...args: any[]) => void;
   // #endregion
 
@@ -92,7 +94,7 @@ export interface IpcMainEvents {
   // #endregion
 
   // #region Snapshots
-  'snapshot': (event: SnapshotEvent) => void;
+  'snapshot': (event: SnapshotEvent | null) => void;
   // #endregion
 }
 
@@ -133,6 +135,11 @@ export interface IpcMainInvokeEvents {
   // #region Host
   'host/isArm': () => boolean;
   // #endregion
+
+  // #region Snapshots
+  'show-snapshots-confirm-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
+  'show-snapshots-blocking-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
+  // #endregion
 }
 
 /**
@@ -140,6 +147,8 @@ export interface IpcMainInvokeEvents {
  * process, i.e. webContents.send() -> ipcRenderer.on().
  */
 export interface IpcRendererEvents {
+  'backend-locked': () => void;
+  'backend-unlocked': () => void;
   'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
@@ -168,9 +177,11 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region dialog
+  'dialog/mounted': () => void;
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
+  'dialog/error': (error: string) => void;
   'dashboard-open': () => void;
   // #endregion
 
@@ -203,6 +214,6 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region Snapshots
-  'snapshot': (event: SnapshotEvent) => void;
+  'snapshot': (event: SnapshotEvent | null) => void;
   // #endregion
 }

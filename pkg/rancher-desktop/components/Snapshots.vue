@@ -20,7 +20,7 @@ interface Methods {
 }
 
 interface Computed {
-  snapshots: Snapshot[]
+  snapshots: Snapshot[],
 }
 
 export default Vue.extend<Data, Methods, Computed, never>({
@@ -47,18 +47,22 @@ export default Vue.extend<Data, Methods, Computed, never>({
   },
 
   beforeMount() {
+    this.$store.dispatch('snapshots/fetch');
+    this.pollingStart();
+
     ipcRenderer.on('snapshot', (_, event) => {
       this.snapshotEvent = event;
     });
-    if (!isEmpty(this.$route.params)) {
-      const { type, result, name } = this.$route.params as SnapshotEvent;
 
-      this.snapshotEvent = {
-        type, result, name,
-      };
+    if (isEmpty(this.$route.params)) {
+      return;
     }
-    this.$store.dispatch('snapshots/fetch');
-    this.pollingStart();
+
+    const { type, result, snapshotName } = this.$route.params as SnapshotEvent;
+
+    this.snapshotEvent = {
+      type, result, snapshotName,
+    };
   },
 
   beforeDestroy() {
@@ -87,7 +91,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       :closable="true"
       @close="snapshotEvent=null"
     >
-      {{ t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.name }) }}
+      <span v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName }, true)" />
     </Banner>
     <div
       v-for="item of snapshots"

@@ -433,7 +433,7 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @param opts The usual browser-window options
  * @returns The opened window
  */
-export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
+export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions, escapeKey = true) {
   console.debug('openDialog() id: ', id);
   const window = createWindow(
     id,
@@ -479,14 +479,16 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
     return window;
   }
 
-  Shortcuts.register(
-    window,
-    { key: 'Escape' },
-    () => {
-      window.close();
-    },
-    'Close dialog',
-  );
+  if (escapeKey) {
+    Shortcuts.register(
+      window,
+      { key: 'Escape' },
+      () => {
+        window.close();
+      },
+      'Close dialog',
+    );
+  }
 
   return window;
 }
@@ -615,4 +617,21 @@ export function send(channel: string, ...args: any[]) {
       window.webContents.send(channel, ...args);
     }
   }
+}
+
+/**
+ * Center the dialog window in the middle of parent window - used on Windows / MacOs
+ * @param window parent window
+ * @param dialog dialog window
+ * @param offsetX
+ * @param offsetY
+ */
+export function centerDialog(window: BrowserWindow, dialog: BrowserWindow, offsetX = 0, offsetY = 0) {
+  const windowBounds = window.getBounds();
+  const dialogBounds = dialog.getBounds();
+
+  const x = Math.floor(windowBounds.x + ((windowBounds.width - dialogBounds.width) / 2) + offsetX);
+  const y = Math.floor(windowBounds.y + offsetY);
+
+  dialog.setPosition(x, y);
 }

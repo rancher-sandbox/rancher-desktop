@@ -4724,10 +4724,7 @@ snapshots:
   action:
     create: Create Snapshot
   card:
-    body:
-      name: Name
-      createdAt: Created At
-      notes: Description
+    created: "Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'"
     action:
       restore: Restore
       remove: Delete
@@ -4740,20 +4737,49 @@ snapshots:
     actions:
       submit: Create
       back: Cancel
-    info: 'Please be aware that the system will be unavailable during creation of a new Snapshot'
+    info: 'Rancher Desktop will be temporarily unavailable while creating a new Snapshot'
   empty:
     icon: icon-search
     heading: No snapshots found
     body: Click on Create Snapshot to get started
+  dialog:
+    restore:
+      header: Restore snapshot?
+      info: 'Restoring this snapshot will replace your current installation, including preferences. If the preference window is open, it will be automatically closed, and any unsaved changes will be discarded.'
+      actions:
+        ok: 'Restore'
+        cancel: 'Cancel'
+    delete:
+      header: Permanently delete snapshot?
+      info: 'text'
+      actions:
+        ok: 'Delete'
+        cancel: 'Cancel'
+    restoring:
+      header: 'Restoring {snapshot}'
+      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is restored. This may take some time, depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active."
+      actions:
+        cancel: 'Cancel'
+    creating:
+      header: 'Creating {snapshot}'
+      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is created.'<br/>'This may take some time, depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart."
+      actions:
+        cancel: 'Cancel'
+    buttons:
+      error: Close
+    generic:
+      header: Snapshot operation in progress
+      message: "Please wait while the snapshot operation is active.<br/>This may take some time, depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart."
+    showLogs: Show logs
   info:
     restore:
-      success: 'Restored {snapshot}'
+      success: "Restored '<b>'{snapshot}'</b>'"
       cancel: 'Cancelled restoration of {snapshot}'
     create:
-      success: 'Created {snapshot}'
+      success: "Created '<b>'{snapshot}'</b>'"
       cancel: 'Cancelled creation of {snapshot}'
     delete:
-      success: 'Deleted {snapshot}'
+      success: "Deleted '<b>'{snapshot}'</b>'"
 
 
 ##############################

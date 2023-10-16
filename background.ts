@@ -36,7 +36,7 @@ import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
 import setupNetworking from '@pkg/main/networking';
 import { Snapshots } from '@pkg/main/snapshots/snapshots';
-import { Snapshot } from '@pkg/main/snapshots/types';
+import { Snapshot, SnapshotDialog } from '@pkg/main/snapshots/types';
 import { Tray } from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -510,6 +510,14 @@ Electron.app.on('activate', async() => {
   window.openMain();
 });
 
+mainEvents.on('backend-locked-update', () => {
+  window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
+});
+
+ipcMainProxy.on('backend-state-check', (event) => {
+  event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
+});
+
 ipcMainProxy.on('settings-read', (event) => {
   event.reply('settings-read', cfg);
 });
@@ -773,6 +781,14 @@ ipcMainProxy.on('snapshot', (event, args) => {
   event.reply('snapshot', args);
 });
 
+ipcMainProxy.on('dialog/error', (event, args) => {
+  window.getWindow(args.dialog)?.webContents.send('dialog/error', args.error);
+});
+
+ipcMainProxy.on('dialog/close', (event, args) => {
+  window.getWindow(args.dialog)?.close();
+});
+
 ipcMainProxy.handle('versions/macOs', () => {
   return getMacOsVersion();
 });
@@ -821,6 +837,125 @@ ipcMainProxy.handle('show-message-box-rd', async(_event, options: Electron.Messa
     }
 
     response = { response: options.cancelId };
+  });
+
+  await (new Promise<void>((resolve) => {
+    dialog.on('closed', resolve);
+  }));
+
+  return response;
+});
+
+ipcMainProxy.handle('show-snapshots-confirm-dialog', async(
+  event,
+  options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
+) => {
+  const mainWindow = window.getWindow('main');
+
+  const dialog = window.openDialog(
+    'SnapshotsDialog',
+    {
+      title:   'Snapshots',
+      modal:   true,
+      parent:  mainWindow || undefined,
+      frame:   true,
+      movable: true,
+      height:  365,
+      width:   640,
+    });
+
+  if (os.platform() !== 'linux' && mainWindow && dialog) {
+    window.centerDialog(mainWindow, dialog, 0, 50);
+  }
+
+  let response: any;
+
+  dialog.webContents.on('ipc-message', (_event, channel, args) => {
+    if (channel === 'dialog/mounted') {
+      options.format.type = 'question';
+      dialog.webContents.send('dialog/options', options);
+    }
+
+    if (channel === 'dialog/close') {
+      response = args || { response: options.window.cancelId };
+      dialog.close();
+    }
+  });
+
+  dialog.on('close', () => {
+    if (response) {
+      return;
+    }
+
+    response = { response: options.window.cancelId };
+  });
+
+  await (new Promise<void>((resolve) => {
+    dialog.on('closed', resolve);
+  }));
+
+  return response;
+});
+
+ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
+  event,
+  options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
+) => {
+  const mainWindow = window.getWindow('main');
+
+  const dialog = window.openDialog(
+    'SnapshotsDialog',
+    {
+      modal:   true,
+      parent:  mainWindow || undefined,
+      frame:   false,
+      movable: false,
+      height:  500,
+      width:   700,
+    },
+    false);
+
+  const onMainWindowMove = () => {
+    if (mainWindow && dialog) {
+      window.centerDialog(mainWindow, dialog);
+    }
+  };
+
+  if (mainWindow && dialog) {
+    if (os.platform() === 'linux') {
+      /** Lock dialog position */
+      mainWindow.on('move', onMainWindowMove);
+    } else {
+      /** Center the dialog on main window, only for MacOs, Windows */
+      window.centerDialog(mainWindow, dialog, 0, 50);
+    }
+  }
+
+  let response: any;
+
+  dialog.webContents.on('ipc-message', (_event, channel, args) => {
+    if (channel === 'dialog/mounted') {
+      options.format.type = 'operation';
+      dialog.webContents.send('dialog/options', options);
+      event.sender.sendToFrame(event.frameId, 'dialog/mounted');
+    }
+
+    if (channel === 'dialog/close') {
+      response = args || { response: options.window.cancelId };
+      dialog.close();
+    }
+  });
+
+  dialog.on('close', () => {
+    if (os.platform() === 'linux' && mainWindow) {
+      mainWindow.off('move', onMainWindowMove);
+    }
+
+    if (response) {
+      return;
+    }
+
+    response = { response: options.window.cancelId };
   });
 
   await (new Promise<void>((resolve) => {

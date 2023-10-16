@@ -30,6 +30,7 @@ const ipcMainProxy = getIpcMainProxy(console);
  */
 export class Tray {
   protected trayMenu: Electron.Tray;
+  protected backendIsLocked = '';
   protected kubernetesState = State.STOPPED;
   private settings: Settings;
   private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
@@ -179,6 +180,7 @@ export class Tray {
     this.buildFromConfig();
     this.watchForChanges();
 
+    mainEvents.on('backend-locked-update', this.backendStateEvent);
     mainEvents.on('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.on('settings-update', this.settingsUpdateEvent);
 
@@ -201,6 +203,10 @@ export class Tray {
       });
     }, 5000);
   }
+
+  private backendStateEvent = (backendIsLocked: string) => {
+    this.backendStateChanged(backendIsLocked);
+  };
 
   private k8sStateChangedEvent = (mgr: VMBackend) => {
     this.k8sStateChanged(mgr.state);
@@ -267,6 +273,11 @@ export class Tray {
     } catch (err) {
       console.log(`Error trying to update context menu: ${ err }`);
     }
+  }
+
+  protected backendStateChanged(backendIsLocked: string) {
+    this.backendIsLocked = backendIsLocked;
+    this.updateMenu();
   }
 
   /**
@@ -338,6 +349,13 @@ export class Tray {
     if (networkStatusItem) {
       networkStatusItem.label = `Network status: ${ this.currentNetworkStatus }`;
     }
+
+    for (const item of this.contextMenuItems) {
+      if (item.id === 'preferences' || item.id === 'dashboard' || item.id === 'contexts') {
+        item.enabled = !this.backendIsLocked;
+      }
+    }
+
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
     this.trayMenu.setContextMenu(contextMenu);

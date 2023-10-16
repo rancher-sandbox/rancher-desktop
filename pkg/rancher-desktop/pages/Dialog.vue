@@ -10,6 +10,7 @@ export default Vue.extend({
   name:       'rd-dialog',
   components: { Checkbox },
   layout:     'dialog',
+
   data() {
     return {
       message:         '',
@@ -21,6 +22,7 @@ export default Vue.extend({
       cancelId:        0,
     };
   },
+
   mounted() {
     ipcRenderer.on('dialog/options', (_event, options: any) => {
       this.message = options.message;
@@ -33,6 +35,11 @@ export default Vue.extend({
 
     ipcRenderer.send('dialog/mounted');
   },
+
+  beforeDestroy() {
+    ipcRenderer.removeAllListeners('dialog/options');
+  },
+
   methods: {
     close(index: number) {
       ipcRenderer.send('dialog/close', { response: index, checkboxChecked: this.checkboxChecked });
