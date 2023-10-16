@@ -16,13 +16,11 @@ supports_vz_emulation() {
         minor_version="${major_minor_version#*.}"
         if ((major_version >= 14)); then
             return 0
-        elif ((major_version <= 12)); then
-            return 1
-        elif ((minor_version >= 3)); then
-            return 0
-        elif [[ "$(uname -m)" == x86_64 ]]; then
-            # Versions 12.0.x .. 12.2.x work only on x86, not m1
-            return 0
+        elif ((major_version == 13)); then
+            # Versions 13.0.x .. 13.2.x work only on x86_64, not aarch64
+            if ((minor_version >= 3)) || [[ "$(uname -m)" == x86_64 ]]; then
+                return 0
+            fi
         fi
     fi
     return 1
