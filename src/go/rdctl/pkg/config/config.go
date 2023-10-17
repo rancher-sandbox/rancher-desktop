@@ -20,6 +20,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -40,7 +41,7 @@ type CLIConfig struct {
 	Port     int
 }
 
-// ConnectionInfo stores the parameters needed to connect to an HTTP server
+// ConnectionInfo stores the parameters needed to connect to the main process.
 type ConnectionInfo struct {
 	User     string
 	Password string
@@ -49,12 +50,14 @@ type ConnectionInfo struct {
 }
 
 var (
-	connectionSettings ConnectionInfo
+	connectionInfoFlags ConnectionInfo
 
 	configPath string
 	// DefaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
 	DefaultConfigPath string
 )
+
+var ErrMainProcessNotRunning = errors.New("main process not running")
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
 func DefineGlobalFlags(rootCmd *cobra.Command) {
@@ -74,58 +77,96 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 	}
 	DefaultConfigPath = filepath.Join(configDir, "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
-	rootCmd.PersistentFlags().StringVar(&connectionSettings.User, "user", "", "overrides the user setting in the config file")
-	rootCmd.PersistentFlags().StringVar(&connectionSettings.Host, "host", "", "default is 127.0.0.1; most useful for WSL")
-	rootCmd.PersistentFlags().StringVar(&connectionSettings.Port, "port", "", "overrides the port setting in the config file")
-	rootCmd.PersistentFlags().StringVar(&connectionSettings.Password, "password", "", "overrides the password setting in the config file")
+	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.User, "user", "", "overrides the user setting in the config file")
+	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.Host, "host", "", "default is 127.0.0.1; most useful for WSL")
+	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.Port, "port", "", "overrides the port setting in the config file")
+	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.Password, "password", "", "overrides the password setting in the config file")
 }
 
-// GetConnectionInfo returns the connection info if it has it, and an error message explaining why
-// it isn't available if it doesn't have it.
-// So if the user runs an `rdctl` command after a factory reset, there is no config file (in the default location),
-// but it might not be necessary. So only use the error message for the missing file if it is actually needed.
+// GetConnectionInfo gathers config from multiple sources and returns
+// it as one *ConnectionInfo.
+//
+// If the user has specified a non-default path to the config
+// file, that path must exist and be successfully parsed. Also,
+// GetConnectionInfo must be able to create a valid *ConnectionInfo.
+// If any of these conditions are not satisfied, an error is returned.
+//
+// If the user has not specified a non-default path to the config
+// file, and GetConnectionInfo cannot create a valid *ConnectionInfo,
+// it assumes the main process is not running and returns
+// ErrMainProcessNotRunning.
 func GetConnectionInfo() (*ConnectionInfo, error) {
-	isImmediateError, err := finishConnectionSettings()
-	if err != nil && (isImmediateError || insufficientConnectionInfo()) {
-		return nil, err
+	// Create default *ConnectionInfo
+	connectionInfo := &ConnectionInfo{
+		Host: "127.0.0.1",
 	}
-	return &connectionSettings, nil
-}
 
-func finishConnectionSettings() (bool, error) {
+	// Overwrite connectionInfo values with values from config file, if present.
 	if configPath == "" {
 		configPath = DefaultConfigPath
 	}
-	if connectionSettings.Host == "" {
-		connectionSettings.Host = "127.0.0.1"
-	}
 	content, err := os.ReadFile(configPath)
+	if err != nil && configPath != DefaultConfigPath {
+		return nil, fmt.Errorf("failed to read config file %q: %w", configPath, err)
+	}
+	var configFileSettings CLIConfig
+	err = json.Unmarshal(content, &configFileSettings)
 	if err != nil {
-		// If the default config file isn't available, it might not have been created yet,
-		// so don't complain if we don't need it.
-		// But if the user specified their own --config-path and it's not readable, complain immediately.
-		return configPath != DefaultConfigPath, err
+		if configPath != DefaultConfigPath {
+			return nil, fmt.Errorf("failed to unmarshal config file %q: %w", configPath, err)
+		}
+	} else {
+		if configFileSettings.Port != 0 {
+			connectionInfo.Port = strconv.Itoa(configFileSettings.Port)
+		}
+		if configFileSettings.User != "" {
+			connectionInfo.User = configFileSettings.User
+		}
+		if configFileSettings.Password != "" {
+			connectionInfo.Password = configFileSettings.Password
+		}
 	}
 
-	var settings CLIConfig
-	if err = json.Unmarshal(content, &settings); err != nil {
-		return configPath != DefaultConfigPath, fmt.Errorf("error in config file %q: %w", configPath, err)
+	// Overwrite connectionInfo values with values from CLI flags, if present.
+	if connectionInfoFlags.Host != "" {
+		connectionInfo.Host = connectionInfoFlags.Host
+	}
+	if connectionInfoFlags.Port != "" {
+		connectionInfo.Port = connectionInfoFlags.Port
+	}
+	if connectionInfoFlags.User != "" {
+		connectionInfo.User = connectionInfoFlags.User
+	}
+	if connectionInfoFlags.Password != "" {
+		connectionInfo.Password = connectionInfoFlags.Password
 	}
 
-	if connectionSettings.User == "" {
-		connectionSettings.User = settings.User
+	if err := validateConnectionInfo(connectionInfo); err != nil {
+		if configPath == DefaultConfigPath {
+			return nil, ErrMainProcessNotRunning
+		} else {
+			return nil, fmt.Errorf("invalid connection info: %w", err)
+		}
 	}
-	if connectionSettings.Password == "" {
-		connectionSettings.Password = settings.Password
-	}
-	if connectionSettings.Port == "" {
-		connectionSettings.Port = strconv.Itoa(settings.Port)
-	}
-	return false, nil
+
+	return connectionInfo, nil
 }
 
-func insufficientConnectionInfo() bool {
-	return connectionSettings.Port == "" || connectionSettings.User == "" || connectionSettings.Password == ""
+func validateConnectionInfo(connectionInfo *ConnectionInfo) error {
+	errs := []error{}
+	if connectionInfo.Host == "" {
+		errs = append(errs, fmt.Errorf("invalid host %q", connectionInfo.Host))
+	}
+	if connectionInfo.Port == "" {
+		errs = append(errs, fmt.Errorf("invalid port %q", connectionInfo.Port))
+	}
+	if connectionInfo.User == "" {
+		errs = append(errs, fmt.Errorf("invalid user %q", connectionInfo.User))
+	}
+	if connectionInfo.Password == "" {
+		errs = append(errs, fmt.Errorf("invalid password %q", connectionInfo.Password))
+	}
+	return errors.Join(errs...)
 }
 
 // determines if we are running in a wsl linux distro
