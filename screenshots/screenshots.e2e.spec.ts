@@ -5,6 +5,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import { lockedSettings } from './test-data/preferences';
+import { snapshotsList } from './test-data/snapshots';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import {
@@ -115,6 +116,31 @@ test.describe.serial('Main App Test', () => {
       await page.waitForTimeout(1000);
 
       await screenshot.take('Diagnostics');
+    });
+
+    test('Snapshots Page', async({ colorScheme }) => {
+      const snapshotsPage = await navPage.navigateTo('Snapshots');
+
+      await expect(snapshotsPage.snapshotsPage).toBeVisible();
+      // Wait for create button to be actively visible
+      await expect(snapshotsPage.createSnapshotButton).toBeVisible();
+      await screenshot.take('Snapshots-Empty');
+
+      await snapshotsPage.createSnapshotButton.click();
+      // Wait for create button to disappear
+      await expect(snapshotsPage.createSnapshotButton).not.toBeVisible();
+      await expect(snapshotsPage.createSnapshotNameInput).toBeVisible();
+      await expect(snapshotsPage.createSnapshotDescInput).toBeVisible();
+      await snapshotsPage.createSnapshotNameInput.fill('Snapshot 1');
+      await snapshotsPage.createSnapshotDescInput.fill('Snapshot 1 description');
+      await screenshot.take('Snapshot-Create');
+
+      await page.route(/^.*\/snapshots/, async(route) => {
+        await route.fulfill(snapshotsList);
+      });
+      await navPage.navigateTo('Snapshots');
+      await expect(snapshotsPage.snapshotsPage).toBeVisible();
+      await screenshot.take('Snapshots-List');
     });
 
     test('Extensions Page', async({ colorScheme }) => {

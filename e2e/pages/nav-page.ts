@@ -5,6 +5,7 @@ import { ExtensionsPage } from './extensions-page';
 import { ImagesPage } from './images-page';
 import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
+import { SnapshotsPage } from './snapshots-page';
 import { TroubleshootingPage } from './troubleshooting-page';
 import { WSLIntegrationsPage } from './wsl-integrations-page';
 import { tool } from '../utils/TestUtils';
@@ -17,6 +18,7 @@ const pageConstructors = {
   PortForwarding:  (page: Page) => new PortForwardPage(page),
   Images:          (page: Page) => new ImagesPage(page),
   Troubleshooting: (page: Page) => new TroubleshootingPage(page),
+  Snapshots:       (page: Page) => new SnapshotsPage(page),
   Diagnostics:     (page: Page) => new DiagnosticsPage(page),
   Extensions:      (page: Page) => new ExtensionsPage(page),
 };
