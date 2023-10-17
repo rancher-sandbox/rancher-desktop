@@ -717,15 +717,15 @@ export class HttpCommandServer {
   }
 
   protected async restoreSnapshot(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
-    const id = request.query.id ?? '';
+    const name = request.query.name ?? '';
 
-    if (!id) {
-      response.status(400).type('txt').send('Snapshot id is required in query parameters');
-    } else if (typeof id !== 'string') {
-      response.status(400).type('txt').send(`Invalid snapshot id ${ JSON.stringify(id) }: not a string.`);
+    if (!name) {
+      response.status(400).type('txt').send('Snapshot name is required in query parameters');
+    } else if (typeof name !== 'string') {
+      response.status(400).type('txt').send(`Invalid snapshot name ${ JSON.stringify(name) }: not a string.`);
     } else {
       try {
-        await this.commandWorker.restoreSnapshot(context, id);
+        await this.commandWorker.restoreSnapshot(context, name);
 
         response.status(200).type('txt').send('Snapshot successfully restored');
       } catch (error: any) {
@@ -739,15 +739,15 @@ export class HttpCommandServer {
   }
 
   protected async deleteSnapshot(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
-    const id = request.query.id ?? '';
+    const name = request.query.name ?? '';
 
-    if (!id) {
-      response.status(400).type('txt').send('Snapshot id is required in query parameters');
-    } else if (typeof id !== 'string') {
-      response.status(400).type('txt').send(`Invalid snapshot id ${ JSON.stringify(id) }: not a string.`);
+    if (!name) {
+      response.status(400).type('txt').send('Snapshot name is required in query parameters');
+    } else if (typeof name !== 'string') {
+      response.status(400).type('txt').send(`Invalid snapshot name ${ JSON.stringify(name) }: not a string.`);
     } else {
       try {
-        await this.commandWorker.deleteSnapshot(context, id);
+        await this.commandWorker.deleteSnapshot(context, name);
 
         response.status(200).type('txt').send('Snapshot successfully deleted');
       } catch (error: any) {
@@ -801,8 +801,8 @@ export interface CommandWorkerInterface {
   // #endregion
   listSnapshots: (context: commandContext) => Promise<Snapshot[]>;
   createSnapshot: (context: commandContext, snapshot: Snapshot) => Promise<void>;
-  deleteSnapshot: (context: commandContext, id: string) => Promise<void>;
-  restoreSnapshot: (context: commandContext, id: string) => Promise<void>;
+  deleteSnapshot: (context: commandContext, name: string) => Promise<void>;
+  restoreSnapshot: (context: commandContext, name: string) => Promise<void>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

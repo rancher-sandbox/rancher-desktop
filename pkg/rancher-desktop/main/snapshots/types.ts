@@ -1,6 +1,6 @@
 export type SnapshotEvent = {
   type?: 'restore' | 'delete' | 'create',
-  result?: 'success' | 'cancel',
+  result?: 'success' | 'cancel' | 'error',
   error?: string,
   snapshotName?: string,
 };
@@ -22,7 +22,6 @@ export interface SnapshotDialog {
 }
 
 export interface Snapshot {
-  id: string,
   name: string,
   created: string,
   notes?: string,

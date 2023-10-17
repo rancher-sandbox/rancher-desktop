@@ -337,7 +337,7 @@ paths:
       summary:  Deletes a snapshot
       parameters:
       - in: query
-        name: id
+        name: name
       responses:
         '200':
           description: The snapshot was deleted.
@@ -354,7 +354,7 @@ paths:
       summary: Restore a snapshot
       parameters:
       - in: query
-        name: id
+        name: name
       responses:
         '202':
           description: The snapshot was restored.

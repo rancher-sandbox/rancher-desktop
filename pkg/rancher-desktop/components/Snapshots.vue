@@ -87,15 +87,15 @@ export default Vue.extend<Data, Methods, Computed, never>({
     <Banner
       v-if="snapshotEvent"
       class="banner mb-20"
-      color="success"
+      :color="snapshotEvent.result"
       :closable="true"
       @close="snapshotEvent=null"
     >
-      <span v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName }, true)" />
+      <span v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)" />
     </Banner>
     <div
-      v-for="item of snapshots"
-      :key="item.id"
+      v-for="(item) of snapshots"
+      :key="item.name"
     >
       <SnapshotCard
         class="mb-20"

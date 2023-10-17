@@ -1422,12 +1422,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return await Snapshots.create(snapshot);
   }
 
-  async restoreSnapshot(context: CommandWorkerInterface.CommandContext, id: string) {
-    return await Snapshots.restore(id);
+  async restoreSnapshot(context: CommandWorkerInterface.CommandContext, name: string) {
+    return await Snapshots.restore(name);
   }
 
-  async deleteSnapshot(context: CommandWorkerInterface.CommandContext, id: string) {
-    return await Snapshots.delete(id);
+  async deleteSnapshot(context: CommandWorkerInterface.CommandContext, name: string) {
+    return await Snapshots.delete(name);
   }
 }
 
