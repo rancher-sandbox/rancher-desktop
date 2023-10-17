@@ -27,12 +27,13 @@ const GatewayDomain = "gateway.rancher-desktop.internal"
 const defaultHostFilePath = "/etc/hosts"
 
 // AppendHostFile reads the content of a host file
-// and appends slice of entries to the file. The entries are
-// provided in the following format e.g:
-// 	newEntries := []string{
-//		"127.0.0.1,example.com",
-//		"127.0.0.1,another-example.com",
-//	}
+// and appends a slice of entries to the file. The entries are
+// provided in the following format, e.g.:
+//
+//   newEntries := []string{
+//     "127.0.0.1 example.com",
+//     "127.0.0.1 another-example.com",
+//   }
 func AppendHostFile(entries []string) error {
 	hostFile, err := os.OpenFile(defaultHostFilePath, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
