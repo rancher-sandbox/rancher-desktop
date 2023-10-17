@@ -69,7 +69,7 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
-		if err := createBackendLock(appPaths); err != nil {
+		if err := createBackendLock(appPaths.AppHome); err != nil {
 			return err
 		}
 		defer removeBackendLock(appPaths.AppHome)
@@ -81,9 +81,10 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 			return err
 		}
 		// Note that this does not wait for the backend to be in the
-		// STARTED state. This allows removeBackendLock() to be called
-		// as a deferred function while keeping the state of the backend
-		// lock file in sync with the main process backendIsLocked variable.
+		// STARTED (or DISABLED if k8s is disabled) state. This allows
+		// removeBackendLock() to be called as a deferred function while
+		// keeping the state of the backend lock file in sync with the
+		// main process backendIsLocked variable.
 		return ensureBackendStarted()
 	}
 }
@@ -170,13 +171,13 @@ func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
 	return fmt.Errorf("timed out waiting for backend state in %s", desiredStates)
 }
 
-func createBackendLock(appPaths paths.Paths) error {
-	if err := os.MkdirAll(appPaths.AppHome, 0o755); err != nil {
+func createBackendLock(appHome string) error {
+	if err := os.MkdirAll(appHome, 0o755); err != nil {
 		return fmt.Errorf("failed to create backend lock parent directory: %w", err)
 	}
 	// Create an empty file whose presence signifies that the
 	// backend is locked.
-	lockPath := filepath.Join(appPaths.AppHome, backendLockName)
+	lockPath := filepath.Join(appHome, backendLockName)
 	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
 	if errors.Is(err, os.ErrExist) {
 		return errors.New("backend lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")
