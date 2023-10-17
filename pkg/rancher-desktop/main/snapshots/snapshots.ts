@@ -13,8 +13,11 @@ class SnapshotsError {
   readonly isSnapshotError = true;
   message: string;
 
-  constructor(stderr: string) {
-    this.message = parseLines(stderr)[0];
+  constructor(response: SpawnResult) {
+    console.debug(response.stdout);
+    const value = JSON.parse(response.stdout);
+
+    this.message = value?.error;
   }
 }
 
@@ -44,29 +47,26 @@ class SnapshotsImpl {
   }
 
   async create(snapshot: Snapshot) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'create', snapshot.name]);
+    const response = await this.rdctl(['snapshot', 'create', snapshot.name, '--json']);
 
     if (response.error) {
-      console.debug(response.stderr);
-      throw new SnapshotsError(response.stderr);
+      throw new SnapshotsError(response);
     }
   }
 
   async restore(name: string) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'restore', name]);
+    const response = await this.rdctl(['snapshot', 'restore', name, '--json']);
 
     if (response.error) {
-      console.debug(response.stderr);
-      throw new SnapshotsError(response.stderr);
+      throw new SnapshotsError(response);
     }
   }
 
   async delete(name: string) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'delete', name]);
+    const response = await this.rdctl(['snapshot', 'delete', name, '--json']);
 
     if (response.error) {
-      console.debug(response.stderr);
-      throw new SnapshotsError(response.stderr);
+      throw new SnapshotsError(response);
     }
   }
 }
