@@ -39,14 +39,14 @@ local_setup() {
     rdctl snapshot create world-buffalo-federation
     sleep 5
 
-    rdctl snapshot create run-like-an-antelope
+    rdctl snapshot create "emoji's 😍 are cool"
 }
 
 @test 'verify snapshot-list output with snapshots' {
     run rdctl snapshot list --json
     assert_success
     DATE1=$(jq_output 'select(.name == "world-buffalo-federation").created')
-    DATE2=$(jq_output 'select(.name == "run-like-an-antelope").created')
+    DATE2=$(jq_output $'select(.name == "emoji\'s 😍 are cool").created')
     if is_macos; then
         TIME1=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE1" +%s 2>/dev/null)
         TIME2=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE2" +%s 2>/dev/null)
@@ -63,7 +63,7 @@ local_setup() {
     assert_success
     assert_output --partial "cows_fish_capers"
     assert_output --partial "world-buffalo-federation"
-    assert_output --partial "run-like-an-antelope"
+    assert_output --partial "emoji's 😍 are cool"
 }
 
 @test 'verify k8s is off' {
@@ -91,5 +91,10 @@ local_setup() {
 }
 
 @test 'and clean up' {
+    # Snapshots containing whitespace need to be deleted outside for loops
+    rdctl snapshot delete "emoji's 😍 are cool"
     delete_all_snapshots
+    run rdctl snapshot list
+    assert_success
+    assert_output 'No snapshots present.'
 }

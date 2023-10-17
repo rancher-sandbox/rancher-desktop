@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,8 +14,9 @@ import (
 
 const completeFileName = "complete.txt"
 const completeFileContents = "The presence of this file indicates that this snapshot is complete and valid."
+const maxNameLength = 250
+const nameDisplayCutoffSize = 30
 
-var nameRegexp = *regexp.MustCompile("^[0-9a-zA-Z_-]{0,100}$")
 var ErrNameExists = errors.New("name already exists")
 var ErrInvalidName = fmt.Errorf("name does not match regex %q", nameRegexp.String())
 var ErrIncompleteSnapshot = errors.New("snapshot is not complete")
@@ -68,7 +68,26 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 
 // ValidateName - does syntactic validation on the name
 func (manager Manager) ValidateName(name string) error {
-	currentSnapshots, err := manager.List(false)
+	if len(name) == 0 {
+		return fmt.Errorf("a snapshot name may not be the empty string")
+	}
+	reportedName := name
+	if len(reportedName) > nameDisplayCutoffSize {
+		reportedName = reportedName[0:nameDisplayCutoffSize] + "..."
+	}
+	if len(name) > maxNameLength {
+		return fmt.Errorf(`invalid name %q: max length is %d, %d were specified`, reportedName, maxNameLength, len(name))
+	}
+	if isWhitespaceRegexp.MatchString(name[0:1]) {
+		return fmt.Errorf(`invalid name %q: may not start with a white-space character`, reportedName)
+	}
+	if isWhitespaceRegexp.MatchString(name[len(name)-1:]) {
+		if len(name) > nameDisplayCutoffSize {
+			reportedName = "..." + name[len(name)-nameDisplayCutoffSize:]
+		}
+		return fmt.Errorf(`invalid name %q: may not end with a white-space character`, reportedName)
+	}
+	currentSnapshots, err := manager.List()
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
@@ -76,9 +95,6 @@ func (manager Manager) ValidateName(name string) error {
 		if currentSnapshot.Name == name {
 			return fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
 		}
-	}
-	if !nameRegexp.MatchString(name) {
-		return fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
 	return nil
 }
