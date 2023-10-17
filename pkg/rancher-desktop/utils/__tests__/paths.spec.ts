@@ -88,7 +88,7 @@ describe('paths', () => {
       darwin: '%HOME%/Library/Application Support/rancher-desktop/extensions/',
     },
     snapshots: {
-      win32:  new Error('not implemented'),
+      win32:  '%LOCALAPPDATA%/rancher-desktop/snapshots/',
       linux:  '%HOME%/.local/share/rancher-desktop/snapshots/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/snapshots/',
     },

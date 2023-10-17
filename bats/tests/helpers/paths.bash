@@ -52,6 +52,7 @@ if is_macos; then
     PATH_LOGS="$HOME/Library/Logs/rancher-desktop"
     PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
     LIMA_HOME="$PATH_APP_HOME/lima"
+    PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
 
     ELECTRON_DIST_ARCH="mac"
     if is_macos arm64; then
@@ -71,6 +72,7 @@ if is_linux; then
     PATH_LOGS="$PATH_APP_HOME/logs"
     PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
     LIMA_HOME="$PATH_APP_HOME/lima"
+    PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
 
     set_path_resources \
         "/opt/rancher-desktop" \
@@ -99,6 +101,7 @@ if is_windows; then
     PATH_DISTRO="$PATH_DATA/distro"
     PATH_DISTRO_DATA="$PATH_DATA/distro-data"
     PATH_EXTENSIONS="$PATH_DATA/extensions"
+    PATH_SNAPSHOTS="$LOCALAPPDATA/rancher-desktop/snapshots"
 
     set_path_resources \
         "$PROGRAMFILES/Rancher Desktop" \
@@ -108,7 +111,6 @@ if is_windows; then
 fi
 
 PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
-PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
 
 USERPROFILE=$HOME
 if using_windows_exe; then
