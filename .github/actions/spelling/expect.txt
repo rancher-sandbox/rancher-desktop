@@ -294,6 +294,7 @@ hicolor
 HMR
 hocs
 horizontalpodautoscaler
+hostfile
 hosthandshake
 hoverable
 hpa
