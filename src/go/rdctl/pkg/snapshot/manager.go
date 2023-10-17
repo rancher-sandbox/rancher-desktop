@@ -131,7 +131,7 @@ func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 
 		completeFileExists := true
 		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
-		if _, err := os.Stat(completeFilePath); errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(completeFilePath); err != nil {
 			completeFileExists = false
 		}
 		if !includeIncomplete && !completeFileExists {
@@ -176,7 +176,7 @@ func (manager Manager) Delete(id string) error {
 func (manager Manager) Restore(id string) error {
 	// Before doing anything, ensure that the snapshot is complete
 	completeFilePath := filepath.Join(manager.Paths.Snapshots, id, completeFileName)
-	if _, err := os.Stat(completeFilePath); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(completeFilePath); err != nil {
 		return fmt.Errorf("snapshot %q: %w", id, ErrIncompleteSnapshot)
 	}
 
