@@ -2,7 +2,7 @@
 // +build windows
 
 /*
-Copyright © 2021 SUSE LLC
+Copyright © 2023 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import (
 	"encoding/json"
 	"os"
 
-	wslutils "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/wsl-utils"
 	"github.com/spf13/cobra"
+
+	wslutils "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/wsl-utils"
 )
 
 // wslInfoCmd represents the `wsl info` command.

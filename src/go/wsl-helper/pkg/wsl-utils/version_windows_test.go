@@ -1,5 +1,18 @@
-//go:build windows
-// +build windows
+/*
+Copyright © 2023 SUSE LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 package wslutils
 
@@ -61,12 +74,12 @@ func TestIsInboxWSLInstalled(t *testing.T) {
 	t.Run("not installed", func(t *testing.T) {
 		overrideFunc := func(ctx context.Context, args ...string) (string, error) {
 			assert.EqualValues(t, []string{"--status"}, args)
-			// We want to mock an executable that exits with code "50".
+			// We want to mock an executable that exits with `wslExitNotInstalled`.
 			// We do this by running ourselves, but using the TestWithExitCode
 			// function above to return a fixed value passed through the
 			// environment.
 			cmd := exec.CommandContext(ctx, os.Args[0], "-test.run", "^TestWithExitCode$")
-			cmd.Env = append(cmd.Env, "TEST_EXIT_CODE_VALUE=50")
+			cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_EXIT_CODE_VALUE=%d", wslExitNotInstalled))
 			return "", cmd.Run()
 		}
 		ctx := context.WithValue(context.Background(), &kWSLExeOverride, overrideFunc)
@@ -103,7 +116,7 @@ func TestIsInboxWSLInstalled(t *testing.T) {
 		}
 		ctx := context.WithValue(context.Background(), &kWSLExeOverride, overrideFunc)
 		// Use the upgrade code for "Microsoft Update Health Tools", which is
-		// installed from Windows Update.
+		// automatically installed from Windows Update.
 		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{2E5106FD-42A1-4BBE-9C29-7E1D34CB79A1}")
 		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx)
 		assert.NoError(t, err)

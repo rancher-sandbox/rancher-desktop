@@ -1,5 +1,18 @@
-//go:build windows
-// +build windows
+/*
+Copyright © 2023 SUSE LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 package wslutils
 
@@ -32,6 +45,9 @@ const (
 	kMsiUpgradeCode           = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
 	PACKAGE_INFORMATION_BASIC = 0x00000000
 	PACKAGE_INFORMATION_FULL  = 0x00000100
+	// wslExitNotInstalled is the exit code from `wsl --status` when WSL is not
+	// installed.
+	wslExitNotInstalled = 50
 )
 
 var (
@@ -50,6 +66,15 @@ var (
 	// kUpgradeCodeOverride is a context key to override the MSI file to look for.
 	kUpgradeCodeOverride = &struct{}{}
 )
+
+// errorFromWin32 wraps a Win32 return value into an error, with a message in
+// the form of: {msg}: {rv}: {error}
+func errorFromWin32(msg string, rv uintptr, err error) error {
+	if err != nil {
+		return fmt.Errorf("%s: %w: %w", msg, windows.Errno(rv), err)
+	}
+	return fmt.Errorf("%s: %w", msg, windows.Errno(rv))
+}
 
 // getPackageNames returns the package names for the given package family.
 func getPackageNames(packageFamily string) ([]string, error) {
@@ -72,7 +97,7 @@ func getPackageNames(packageFamily string) ([]string, error) {
 		// This is expected: we didn't provide any buffer
 		break
 	default:
-		return nil, fmt.Errorf("error getting buffer size: %w: %w", windows.Errno(rv), err)
+		return nil, errorFromWin32("error getting buffer size", rv, err)
 	}
 
 	packageNames := make([]uintptr, count)
@@ -86,7 +111,7 @@ func getPackageNames(packageFamily string) ([]string, error) {
 		uintptr(unsafe.Pointer(unsafe.SliceData(packageNameBuffer))),
 	)
 	if rv != uintptr(windows.ERROR_SUCCESS) {
-		return nil, fmt.Errorf("error getting package names: %w: %w", windows.Errno(rv), err)
+		return nil, errorFromWin32("error getting package names", rv, err)
 	}
 
 	result := make([]string, count)
@@ -142,7 +167,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 		uintptr(unsafe.Pointer(&packageInfoReference)),
 	)
 	if rv != uintptr(windows.ERROR_SUCCESS) {
-		return nil, fmt.Errorf("error opening package info: %w: %w", windows.Errno(rv), err)
+		return nil, errorFromWin32("error opening package info", rv, err)
 	}
 	defer closePackageInfo.Call(packageInfoReference)
 
@@ -161,7 +186,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 		// This is expected: we didn't provide any buffer
 		break
 	default:
-		return nil, fmt.Errorf("error getting buffer size: %w: %w", windows.Errno(rv), err)
+		return nil, errorFromWin32("error getting buffer size", rv, err)
 	}
 
 	buf := make([]byte, bufferLength)
@@ -173,7 +198,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 		uintptr(unsafe.Pointer(&count)),
 	)
 	if rv != uintptr(windows.ERROR_SUCCESS) {
-		return nil, fmt.Errorf("error getting package info: %w: %w", windows.Errno(rv), err)
+		return nil, errorFromWin32("error getting package info", rv, err)
 	}
 	infos := unsafe.Slice((*packageInfo)(unsafe.Pointer(unsafe.SliceData(buf))), count)
 	for _, info := range infos {
@@ -216,8 +241,7 @@ func isInboxWSLInstalled(ctx context.Context) (bool, bool, error) {
 
 	output, err := runWSLExeFunc(ctx, "--status")
 	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) && exitErr.ExitCode() == 50 {
-		// When WSL is not installed, we seem to get exit code 50
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == wslExitNotInstalled {
 		return false, false, nil
 	} else if err != nil {
 		logrus.WithError(err).Trace("wsl.exe --status exited")
@@ -251,9 +275,7 @@ func isInboxWSLInstalled(ctx context.Context) (bool, bool, error) {
 	case uintptr(windows.ERROR_NO_MORE_ITEMS):
 		return true, false, nil
 	default:
-		err = windows.Errno(rv)
-		err = fmt.Errorf("error querying Windows Installer database: %w", err)
-		return false, false, err
+		return false, false, errorFromWin32("error querying Windows Installer database", rv, nil)
 	}
 }
 
