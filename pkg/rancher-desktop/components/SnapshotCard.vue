@@ -67,7 +67,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       if (ok) {
         ipcRenderer.send('preferences-close');
         ipcRenderer.on('dialog/mounted', async() => {
-          const error = await this.$store.dispatch('snapshots/restore', this.snapshot.id);
+          const error = await this.$store.dispatch('snapshots/restore', this.snapshot.name);
 
           if (error) {
             ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
@@ -93,7 +93,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       ipcRenderer.send('snapshot', null);
 
       if (ok) {
-        await this.$store.dispatch('snapshots/delete', this.snapshot.id);
+        await this.$store.dispatch('snapshots/delete', this.snapshot.name);
         ipcRenderer.send('snapshot', {
           type:         'delete',
           result:       'success',

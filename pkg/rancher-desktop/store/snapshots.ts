@@ -51,8 +51,8 @@ export const actions = {
     await dispatch('fetch');
   },
 
-  async delete({ rootState, dispatch }: SnapshotsActionContext, id: string) {
-    const response = await fetchAPI(`/v1/snapshots?id=${ id }`, rootState, { method: 'DELETE' });
+  async delete({ rootState, dispatch }: SnapshotsActionContext, name: string) {
+    const response = await fetchAPI(`/v1/snapshots?name=${ name }`, rootState, { method: 'DELETE' });
 
     if (!response.ok) {
       console.log(`deleteSnapshot: failed: status: ${ response.status }:${ response.statusText }`);
@@ -65,8 +65,8 @@ export const actions = {
     await dispatch('fetch');
   },
 
-  async restore({ rootState }: SnapshotsActionContext, id: string) {
-    const response = await fetchAPI(`/v1/snapshot/restore?id=${ id }`, rootState, { method: 'POST' });
+  async restore({ rootState }: SnapshotsActionContext, name: string) {
+    const response = await fetchAPI(`/v1/snapshot/restore?name=${ name }`, rootState, { method: 'POST' });
 
     if (!response.ok) {
       console.log(`restoreSnapshot: failed: status: ${ response.status }:${ response.statusText }`);

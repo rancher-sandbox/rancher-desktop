@@ -52,8 +52,8 @@ class SnapshotsImpl {
     }
   }
 
-  async restore(id: string) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'restore', id]);
+  async restore(name: string) : Promise<void> {
+    const response = await this.rdctl(['snapshot', 'restore', name]);
 
     if (response.error) {
       console.debug(response.stderr);
@@ -61,8 +61,8 @@ class SnapshotsImpl {
     }
   }
 
-  async delete(id: string) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'delete', id]);
+  async delete(name: string) : Promise<void> {
+    const response = await this.rdctl(['snapshot', 'delete', name]);
 
     if (response.error) {
       console.debug(response.stderr);
