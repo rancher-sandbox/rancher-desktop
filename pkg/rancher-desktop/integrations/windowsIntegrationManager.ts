@@ -427,20 +427,17 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected async updateHostFile(distro: string) {
     if (this.settings.experimental?.virtualMachine?.networkingTunnel) {
-      const vethIPAddr = '192.168.1.2';
-      const contents = await fs.promises.readFile(`\\\\wsl$\\${ distro }\\etc\\hosts`, 'utf-8');
-      const lines = contents.split(/\r?\n/g)
-        .filter(line => !line.includes('host.docker.internal'));
-      const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
-      const extra = [
-        '# BEGIN Rancher Desktop configuration.',
-        `${ vethIPAddr } ${ hosts.join(' ') }`,
-        '# END Rancher Desktop configuration.',
-      ].map(l => `${ l }\n`).join('');
-
-      await fs.promises.writeFile(
-        `\\\\wsl$\\${ distro }\\etc\\hosts`,
-        lines.join('\n') + extra, 'utf-8');
+      try {
+        console.debug(`Update ${ distro } host file`);
+        await this.execCommand(
+          { distro },
+          await this.getLinuxToolPath(distro, 'wsl-helper'),
+          'update-host',
+          '--entries=192.168.1.2,gateway.rancher-desktop.internal',
+        );
+      } catch (error: any) {
+        console.error(`Could not update ${ distro } host file`, error);
+      }
     }
   }
 
