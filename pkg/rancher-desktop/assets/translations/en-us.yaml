@@ -4780,6 +4780,7 @@ snapshots:
       cancel: 'Cancelled creation of {snapshot}'
     delete:
       success: "Deleted '<b>'{snapshot}'</b>'"
+      error: 'Delete error: {error}'
 
 
 ##############################

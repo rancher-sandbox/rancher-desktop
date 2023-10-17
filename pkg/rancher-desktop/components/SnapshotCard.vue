@@ -93,11 +93,13 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       ipcRenderer.send('snapshot', null);
 
       if (ok) {
-        await this.$store.dispatch('snapshots/delete', this.snapshot.name);
+        const error = await this.$store.dispatch('snapshots/delete', this.snapshot.name);
+
         ipcRenderer.send('snapshot', {
           type:         'delete',
-          result:       'success',
-          snapshotName: this.snapshot?.name,
+          result:       error ? 'error' : 'success',
+          error,
+          snapshotName: this.snapshot.name,
         });
       }
     },
