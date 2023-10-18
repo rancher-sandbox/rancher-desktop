@@ -236,11 +236,19 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
     return false;
   }
 
-  const result = await doInitialUpdateCheck(doInstall);
+  try {
+    const result = await doInitialUpdateCheck(doInstall);
 
-  state = State.CHECKED;
+    state = State.CHECKED;
 
-  return result;
+    return result;
+  } catch (ex) {
+    // If the initial update check fails, don't prevent application startup.
+    state = State.ERROR;
+    console.error(`Error setting up updater:`, ex);
+
+    return false;
+  }
 }
 
 /**
