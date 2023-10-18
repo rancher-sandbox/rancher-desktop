@@ -89,21 +89,12 @@ func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
 	}
 }
 
-func getConnectionInfo() (*config.ConnectionInfo, error) {
-	connectionInfo, err := config.GetConnectionInfo()
-	// If we cannot get connection info from config file (and it
-	// is not specified by the user) then assume main process is
-	// not running.
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("failed to get connection info: %w", err)
-	}
-	return connectionInfo, nil
-}
-
 func ensureBackendStarted() error {
-	connectionInfo, err := getConnectionInfo()
-	if err != nil {
-		return err
+	connectionInfo, err := config.GetConnectionInfo()
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 	desiredState := client.BackendState{
@@ -118,9 +109,11 @@ func ensureBackendStarted() error {
 }
 
 func ensureBackendStopped(cmd *cobra.Command) error {
-	connectionInfo, err := getConnectionInfo()
-	if err != nil {
-		return err
+	connectionInfo, err := config.GetConnectionInfo()
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to get connection info: %w", err)
 	}
 
 	// Ensure backend is running if the main process is running at all
