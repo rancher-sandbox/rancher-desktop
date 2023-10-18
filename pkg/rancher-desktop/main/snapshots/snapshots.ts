@@ -15,9 +15,14 @@ class SnapshotsError {
 
   constructor(response: SpawnResult) {
     console.debug(response.stdout);
-    const value = JSON.parse(response.stdout);
 
-    this.message = value?.error;
+    try {
+      const value = JSON.parse(response.stdout);
+
+      this.message = value?.error;
+    } catch (error) {
+      this.message = 'Cannot parse error message from `rdctl snapshot` command';
+    }
   }
 }
 
@@ -47,7 +52,18 @@ class SnapshotsImpl {
   }
 
   async create(snapshot: Snapshot) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'create', snapshot.name, '--json']);
+    const command = [
+      'snapshot',
+      'create',
+      snapshot.name,
+      '--json',
+    ];
+
+    if (snapshot.description) {
+      command.push(`--description "${ snapshot.description }"`);
+    }
+
+    const response = await this.rdctl(command);
 
     if (response.error) {
       throw new SnapshotsError(response);
