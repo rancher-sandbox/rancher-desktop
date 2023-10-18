@@ -25,7 +25,7 @@ var snapshotErrors []error
 
 const backendLockName = "backend.lock"
 
-type cobraFunc func(cmd *cobra.Command) error
+type cobraFunc func() error
 
 var snapshotCmd = &cobra.Command{
 	Use:    "snapshot",
@@ -64,30 +64,30 @@ func exitWithJsonOrErrorCondition(e error) error {
 // If the main process is running, stops the backend, calls the
 // passed function, and restarts the backend. If it cannot connect
 // to the main process, just calls the passed function.
-func wrapSnapshotOperation(wrappedFunction cobraFunc) cobraFunc {
-	return func(cmd *cobra.Command) error {
-		appPaths, err := paths.GetPaths()
-		if err != nil {
-			return fmt.Errorf("failed to get paths: %w", err)
-		}
-		if err := createBackendLock(appPaths.AppHome); err != nil {
-			return err
-		}
-		defer removeBackendLock(appPaths.AppHome)
-		if err := ensureBackendStopped(cmd); err != nil {
-			return err
-		}
-		if err := wrappedFunction(cmd); err != nil {
-			factoryreset.DeleteData(appPaths, true)
-			return err
-		}
-		// Note that this does not wait for the backend to be in the
-		// STARTED (or DISABLED if k8s is disabled) state. This allows
-		// removeBackendLock() to be called as a deferred function while
-		// keeping the state of the backend lock file in sync with the
-		// main process backendIsLocked variable.
-		return ensureBackendStarted()
+func wrapSnapshotOperation(cmd *cobra.Command, resetOnFailure bool, wrappedFunction cobraFunc) error {
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return fmt.Errorf("failed to get paths: %w", err)
 	}
+	if err := createBackendLock(appPaths.AppHome); err != nil {
+		return err
+	}
+	defer removeBackendLock(appPaths.AppHome)
+	if err := ensureBackendStopped(cmd); err != nil {
+		return err
+	}
+	if err := wrappedFunction(); err != nil {
+		if resetOnFailure {
+			factoryreset.DeleteData(appPaths, true)
+		}
+		return err
+	}
+	// Note that this does not wait for the backend to be in the
+	// STARTED (or DISABLED if k8s is disabled) state. This allows
+	// removeBackendLock() to be called as a deferred function while
+	// keeping the state of the backend lock file in sync with the
+	// main process backendIsLocked variable.
+	return ensureBackendStarted()
 }
 
 func getSnapshotIdAndManager(args []string) (snapshot.Manager, string, error) {

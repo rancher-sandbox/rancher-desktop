@@ -29,14 +29,14 @@ func init() {
 }
 
 func createSnapshot(cmd *cobra.Command, args []string) error {
-	return wrapSnapshotOperation(func(_ *cobra.Command) error {
+	return wrapSnapshotOperation(cmd, false, func() error {
 		appPaths, err := paths.GetPaths()
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
 		manager := snapshot.NewManager(appPaths)
 		if _, err := manager.Create(args[0], snapshotDescription); err != nil {
-			return fmt.Errorf("failed to create snapshot %q: %w", args[0], err)
+			return fmt.Errorf("failed to create snapshot: %w", err)
 		}
 		// exclude snapshots directory from time machine backups if on macOS
 		if runtime.GOOS == "darwin" {
@@ -50,5 +50,5 @@ func createSnapshot(cmd *cobra.Command, args []string) error {
 			}
 		}
 		return nil
-	})(cmd)
+	})
 }
