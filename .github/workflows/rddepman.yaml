@@ -34,6 +34,11 @@ jobs:
           node-version: '16.x'
           cache: yarn
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - run: pip install setuptools
       - run: yarn install --frozen-lockfile
 
       - run: yarn rddepman

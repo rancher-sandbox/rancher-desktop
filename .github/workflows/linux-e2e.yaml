@@ -29,6 +29,8 @@ jobs:
         with:
           go-version: '^1.21'
           cache-dependency-path: src/go/**/go.sum
+      # For now, we don't need to `pip install setuptools` because we're not on
+      # Python 3.12; we will need that later, however.
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Disable admin-access before start up
