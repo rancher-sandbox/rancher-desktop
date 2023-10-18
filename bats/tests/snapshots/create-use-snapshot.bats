@@ -91,7 +91,8 @@ local_setup() {
     run rdctl snapshot create "$SNAPSHOT" --json
     assert_failure
     run jq_output '.error'
-    assert_output "failed to create snapshot: invalid name \"$SNAPSHOT\": name already exists"
+    assert_output "invalid name \"$SNAPSHOT\": name already exists"
+    assert_exists "$PATH_APP_HOME/rd-engine.json"
 }
 
 @test 'can create a snapshot where proposed name is a current ID' {

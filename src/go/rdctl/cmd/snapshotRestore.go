@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 
 	"github.com/spf13/cobra"
 )
@@ -22,11 +24,16 @@ func init() {
 }
 
 func restoreSnapshot(cmd *cobra.Command, args []string) error {
-	manager, id, err := getSnapshotIdAndManager(args)
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return fmt.Errorf("failed to get paths: %w", err)
+	}
+	manager := snapshot.NewManager(appPaths)
+	id, err := manager.GetSnapshotId(args[0])
 	if err != nil {
 		return err
 	}
-	return wrapSnapshotOperation(cmd, true, func() error {
+	return wrapSnapshotOperation(cmd, appPaths, true, func() error {
 		if err := manager.Restore(id); err != nil {
 			return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
 		}

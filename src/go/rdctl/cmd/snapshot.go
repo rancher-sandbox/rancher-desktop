@@ -12,7 +12,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
 
@@ -64,11 +63,7 @@ func exitWithJsonOrErrorCondition(e error) error {
 // If the main process is running, stops the backend, calls the
 // passed function, and restarts the backend. If it cannot connect
 // to the main process, just calls the passed function.
-func wrapSnapshotOperation(cmd *cobra.Command, resetOnFailure bool, wrappedFunction cobraFunc) error {
-	appPaths, err := paths.GetPaths()
-	if err != nil {
-		return fmt.Errorf("failed to get paths: %w", err)
-	}
+func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFailure bool, wrappedFunction cobraFunc) error {
 	if err := createBackendLock(appPaths.AppHome); err != nil {
 		return err
 	}
@@ -88,16 +83,6 @@ func wrapSnapshotOperation(cmd *cobra.Command, resetOnFailure bool, wrappedFunct
 	// keeping the state of the backend lock file in sync with the
 	// main process backendIsLocked variable.
 	return ensureBackendStarted()
-}
-
-func getSnapshotIdAndManager(args []string) (snapshot.Manager, string, error) {
-	appPaths, err := paths.GetPaths()
-	if err != nil {
-		return snapshot.Manager{}, "", fmt.Errorf("failed to get paths: %w", err)
-	}
-	manager := snapshot.NewManager(appPaths)
-	id, err := manager.GetSnapshotId(args[0])
-	return manager, id, err
 }
 
 func getConnectionInfo() (*config.ConnectionInfo, error) {

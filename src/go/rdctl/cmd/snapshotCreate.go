@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"os/exec"
-	"runtime"
-
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os/exec"
+	"runtime"
+	"strings"
 )
 
 var snapshotDescription string
@@ -29,26 +30,47 @@ func init() {
 }
 
 func createSnapshot(cmd *cobra.Command, args []string) error {
-	return wrapSnapshotOperation(cmd, false, func() error {
-		appPaths, err := paths.GetPaths()
-		if err != nil {
-			return fmt.Errorf("failed to get paths: %w", err)
-		}
-		manager := snapshot.NewManager(appPaths)
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return fmt.Errorf("failed to get paths: %w", err)
+	}
+	manager := snapshot.NewManager(appPaths)
+	if err := manager.ValidateNewName(args[0]); err != nil {
+		return err
+	}
+	err = wrapSnapshotOperation(cmd, appPaths, false, func() error {
 		if _, err := manager.Create(args[0], snapshotDescription); err != nil {
 			return fmt.Errorf("failed to create snapshot: %w", err)
 		}
-		// exclude snapshots directory from time machine backups if on macOS
-		if runtime.GOOS == "darwin" {
-			appPaths, err := paths.GetPaths()
-			if err != nil {
-				return fmt.Errorf("failed to get paths: %w", err)
-			}
-			cmd := exec.Command("tmutil", "addexclusion", appPaths.Snapshots)
-			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("failed to add exclusion to TimeMachine: %w", err)
-			}
-		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	if runtime.GOOS != "darwin" {
+		return nil
+	}
+	// exclude snapshots directory from time machine backups if on macOS
+	execCmd := exec.Command("tmutil", "isexcluded", appPaths.Snapshots)
+	output, err := execCmd.CombinedOutput()
+	// If a tmutil command fails, report it, but don't return failure status to the caller,
+	// as the snapshot was definitely created, and we need to continue that processing.
+	msg := fmt.Errorf("")
+	if err != nil {
+		msg = fmt.Errorf("`tmutil isexcluded` failed: %w: %s\n", err, output)
+	} else if !strings.Contains(string(output), "[Excluded]") {
+		execCmd = exec.Command("tmutil", "addexclusion", appPaths.Snapshots)
+		output, err = execCmd.CombinedOutput()
+		if err != nil {
+			msg = fmt.Errorf("`tmutil addexclusion` failed to add exclusion to TimeMachine: %w: %s\n", err, output)
+		}
+	}
+	if msg.Error() != "" {
+		if outputJsonFormat {
+			snapshotErrors = append(snapshotErrors, msg)
+		} else {
+			logrus.Errorln(msg)
+		}
+	}
+	return nil
 }
