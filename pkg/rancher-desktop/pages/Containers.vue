@@ -12,35 +12,37 @@
       @selection="handleSelection"
     >
       <template #col:ports="{ row }">
-        <td class="port-container">
-          <a
-            v-for="port in getUniquePorts(row.Ports).slice(0, 2)"
-            :key="port"
-            target="_blank"
-            class="link"
-            @click="openUrl(port)"
-          >
-            {{ port }}
-          </a>
+        <td>
+          <div class="port-container">
+            <a
+              v-for="port in getUniquePorts(row.Ports).slice(0, 2)"
+              :key="port"
+              target="_blank"
+              class="link"
+              @click="openUrl(port)"
+            >
+              {{ port }}
+            </a>
 
-          <div
-            v-if="shouldHaveDropdown(row.Ports)"
-            class="dropdown"
-          >
-            <span>
-              {{ t('containers.manage.table.showMore') }}
-            </span>
+            <div
+              v-if="shouldHaveDropdown(row.Ports)"
+              class="dropdown"
+            >
+              <span>
+                {{ t('containers.manage.table.showMore') }}
+              </span>
 
-            <div class="dropdown-content">
-              <a
-                v-for="port in getUniquePorts(row.Ports).slice(2)"
-                :key="port"
-                target="_blank"
-                class="link"
-                @click="openUrl(port)"
-              >
-                {{ port }}
-              </a>
+              <div class="dropdown-content">
+                <a
+                  v-for="port in getUniquePorts(row.Ports).slice(2)"
+                  :key="port"
+                  target="_blank"
+                  class="link"
+                  @click="openUrl(port)"
+                >
+                  {{ port }}
+                </a>
+              </div>
             </div>
           </div>
         </td>
@@ -376,6 +378,5 @@ export default {
 .port-container {
   display: flex;
   flex-direction: column;
-  margin: 5px 0;
 }
 </style>
