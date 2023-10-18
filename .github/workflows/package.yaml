@@ -54,8 +54,9 @@ jobs:
     - name: Flag build for M1
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
-      # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
-    - run: yarn install --frozen-lockfile --network-timeout 1000000
+    - run: pip install setuptools
+    - # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
+      run: yarn install --frozen-lockfile --network-timeout 1000000
     - run: yarn build
     - run: yarn package --${{ matrix.platform }} --publish=never
     - name: Build bats.tar.gz

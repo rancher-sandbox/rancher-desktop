@@ -31,6 +31,10 @@ jobs:
         with:
           go-version: '^1.21'
           cache-dependency-path: src/go/**/go.sum
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install setuptools
       - name: Install dependencies
         run: yarn install --frozen-lockfile
         #The next steps is a workaround for an unexpected failure in launching electron before running e2e tests

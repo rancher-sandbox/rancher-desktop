@@ -39,6 +39,10 @@ jobs:
           go-version: '^1.21'
           cache: 'true'
           cache-dependency-path: src/go/**/go.sum
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install setuptools
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Run e2e Tests
