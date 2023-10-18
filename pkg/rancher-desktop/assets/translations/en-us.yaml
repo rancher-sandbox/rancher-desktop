@@ -280,7 +280,7 @@ portForwarding:
     noRows: There are no port forwarding entries to show
 general:
   title: Welcome to Rancher Desktop
-  description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
+  description: Rancher Desktop provides a seamless desktop environment comprising a virtual machine, essential components such as container engines, Kubernetes, and CLI tools such as docker, nerdctl, helm, and more, all wrapped in a user-friendly GUI application.
 about:
   title: About
   versions:
