@@ -30,10 +30,10 @@ const defaultHostFilePath = "/etc/hosts"
 // and appends a slice of entries to the file. The entries are
 // provided in the following format, e.g.:
 //
-//   newEntries := []string{
-//     "127.0.0.1 example.com",
-//     "127.0.0.1 another-example.com",
-//   }
+//	newEntries := []string{
+//	  "127.0.0.1 example.com",
+//	  "127.0.0.1 another-example.com",
+//	}
 func AppendHostFile(entries []string) error {
 	hostFile, err := os.OpenFile(defaultHostFilePath, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {

@@ -430,7 +430,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       try {
         console.debug(`Update ${ distro } host file`);
         await this.execCommand(
-          { distro },
+          { distro, root: true },
           await this.getLinuxToolPath(distro, 'wsl-helper'),
           'update-host',
           '--entries=192.168.1.2,gateway.rancher-desktop.internal',
