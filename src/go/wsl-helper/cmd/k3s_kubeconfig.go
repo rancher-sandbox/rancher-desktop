@@ -86,12 +86,6 @@ var k3sKubeconfigCmd = &cobra.Command{
 			return err
 		}
 
-		if rdNetworking {
-			// vm-switch in rdNetworking binds to localhost:Port by default.
-			// Since k3s.yaml comes with servers preset at 127.0.0.1, there
-			// is nothing for us to do here, just write the config and return.
-			return yaml.NewEncoder(os.Stdout).Encode(config)
-		}
 		ip, err := getClusterIP()
 		if err != nil {
 			return err
@@ -106,10 +100,15 @@ var k3sKubeconfigCmd = &cobra.Command{
 			if server.Hostname() != "127.0.0.1" {
 				continue
 			}
-			if server.Port() != "" {
-				server.Host = net.JoinHostPort(ip.String(), server.Port())
+			if rdNetworking {
+				server.Host = "gateway.rancher-desktop.internal:6443"
 			} else {
-				server.Host = ip.String()
+				if server.Port() != "" {
+					server.Host = net.JoinHostPort(ip.String(), server.Port())
+				} else {
+					server.Host = ip.String()
+				}
+
 			}
 			config.Clusters[clusterIdx].Cluster.Server = server.String()
 		}
