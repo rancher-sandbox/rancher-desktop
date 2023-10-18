@@ -100,10 +100,10 @@ export default Vue.extend({
               </div>
             </div>
             <div
-              v-if="snapshot.notes"
-              class="notes"
+              v-if="snapshot.description"
+              class="description"
             >
-              <span class="value">{{ snapshot.notes }}</span>
+              <span class="value">{{ snapshot.description }}</span>
             </div>
           </div>
         </slot>
@@ -221,7 +221,7 @@ export default Vue.extend({
               margin: 0 0 5px 0;
             }
           }
-          .notes {
+          .description {
             max-width: 500px;
             white-space: nowrap;
             overflow: hidden;

@@ -167,10 +167,10 @@ export default Vue.extend<Data, Methods, Computed, Props>({
         </div>
       </div>
       <div
-        v-if="snapshot.notes"
-        class="notes"
+        v-if="snapshot.description"
+        class="description"
       >
-        <span class="value">{{ snapshot.notes }}</span>
+        <span class="value">{{ snapshot.description }}</span>
       </div>
     </div>
     <div class="actions">
@@ -214,7 +214,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           margin: 0 0 5px 0;
         }
       }
-      .notes {
+      .description {
         max-width: 550px;
         word-wrap: break-word;
         overflow: hidden;

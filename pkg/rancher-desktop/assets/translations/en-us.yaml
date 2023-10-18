@@ -4732,7 +4732,7 @@ snapshots:
     title: 'Create a new Snapshot'
     name:
       label: Snapshot Name
-    notes:
+    description:
       label: Description
     actions:
       submit: Create

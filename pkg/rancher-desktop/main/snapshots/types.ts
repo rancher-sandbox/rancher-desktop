@@ -24,5 +24,5 @@ export interface SnapshotDialog {
 export interface Snapshot {
   name: string,
   created: string,
-  notes?: string,
+  description?: string,
 }
