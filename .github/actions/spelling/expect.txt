@@ -211,6 +211,7 @@ epinio
 EPONY
 ERRFILE
 errgroup
+Errorln
 estargz
 ESXi
 etcdbackup
@@ -326,6 +327,7 @@ ioctl
 ipaddr
 ipam
 ipfs
+isexcluded
 isthebestmeshuggahalbum
 istio
 istiod
