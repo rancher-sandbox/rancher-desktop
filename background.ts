@@ -903,6 +903,9 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
 ) => {
   const mainWindow = window.getWindow('main');
 
+  const height = 500;
+  const width = 700;
+
   const dialog = window.openDialog(
     'SnapshotsDialog',
     {
@@ -910,8 +913,8 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
       parent:  mainWindow || undefined,
       frame:   false,
       movable: false,
-      height:  500,
-      width:   700,
+      height,
+      width,
     },
     false);
 
@@ -929,6 +932,8 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
       /** Center the dialog on main window, only for MacOs, Windows */
       window.centerDialog(mainWindow, dialog, 0, 50);
     }
+
+    window.setMinimumSize(mainWindow, height + 50, width + 50);
   }
 
   let response: any;

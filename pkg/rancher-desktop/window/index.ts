@@ -635,3 +635,20 @@ export function centerDialog(window: BrowserWindow, dialog: BrowserWindow, offse
 
   dialog.setPosition(x, y);
 }
+
+/**
+ * Set the window to a minimum size
+ * @param window
+ * @param minHeight
+ * @param minWidth
+ */
+export function setMinimumSize(window: BrowserWindow, minHeight: number, minWidth: number) {
+  const { height, width } = window.getBounds();
+
+  const newHeight = height < minHeight ? minHeight : height;
+  const newWidth = width < minWidth ? minWidth : width;
+
+  if (newHeight !== height || newWidth !== width) {
+    window.setSize(newWidth, newHeight);
+  }
+}
