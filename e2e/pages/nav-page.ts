@@ -1,5 +1,6 @@
 import util from 'util';
 
+import { ContainersPage } from './containers-page';
 import { DiagnosticsPage } from './diagnostics-page';
 import { ExtensionsPage } from './extensions-page';
 import { ImagesPage } from './images-page';
@@ -15,6 +16,7 @@ import type { Page, Locator } from '@playwright/test';
 const pageConstructors = {
   K8s:             (page: Page) => new K8sPage(page),
   WSLIntegrations: (page: Page) => new WSLIntegrationsPage(page),
+  Containers:      (page: Page) => new ContainersPage(page),
   PortForwarding:  (page: Page) => new PortForwardPage(page),
   Images:          (page: Page) => new ImagesPage(page),
   Troubleshooting: (page: Page) => new TroubleshootingPage(page),

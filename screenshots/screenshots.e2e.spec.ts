@@ -4,6 +4,7 @@ import path from 'path';
 import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
+import { containersList } from './test-data/containers';
 import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
 import { NavPage } from '../e2e/pages/nav-page';
@@ -89,6 +90,22 @@ test.describe.serial('Main App Test', () => {
   test.describe('Main Page', () => {
     test('General Page', async({ colorScheme }) => {
       await screenshot.take('General');
+    });
+
+    test('Containers Page', async() => {
+      const containersPage = await navPage.navigateTo('Containers');
+
+      await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
+        return containersList;
+      });
+      await containersPage.page.evaluate(() => {
+        // eslint-disable-next-line
+        // @ts-ignore
+        window.ddClient.docker.listContainers = listContainersMock;
+      });
+
+      await expect(containersPage.page.getByRole('row')).toHaveCount(6);
+      await screenshot.take('Containers');
     });
 
     test('PortForwarding Page', async({ colorScheme }) => {
