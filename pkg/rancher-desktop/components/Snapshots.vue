@@ -18,7 +18,7 @@ interface Data {
 
 interface Methods {
   pollingStart: () => void,
-  adjustCardsHeight: () => void;
+  setCardsHeight: () => void;
   toggleMainScrollbar: (value: boolean) => void;
 }
 
@@ -48,10 +48,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
     snapshots(list) {
       this.isEmpty = list?.length === 0;
     },
-    snapshotEvent: {
-      handler() {
-        this.adjustCardsHeight();
-      },
+    snapshotEvent() {
+      this.setCardsHeight();
     },
   },
 
@@ -76,8 +74,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
   mounted() {
     this.toggleMainScrollbar(false);
-    this.adjustCardsHeight();
-    addEventListener('resize', this.adjustCardsHeight);
+    this.setCardsHeight();
+    addEventListener('resize', this.setCardsHeight);
   },
 
   beforeDestroy() {
@@ -85,7 +83,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       clearInterval(this.snapshotsPollingInterval);
     }
     ipcRenderer.removeAllListeners('snapshot');
-    removeEventListener('resize', this.adjustCardsHeight);
+    removeEventListener('resize', this.setCardsHeight);
     this.toggleMainScrollbar(true);
   },
 
@@ -95,7 +93,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
         this.$store.dispatch('snapshots/fetch');
       }, 1500);
     },
-    adjustCardsHeight() {
+    setCardsHeight() {
       /**
        * height = window height - page header - space reserved for snapshot event
        */
