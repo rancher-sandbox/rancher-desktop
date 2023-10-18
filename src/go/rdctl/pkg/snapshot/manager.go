@@ -107,6 +107,9 @@ func (manager Manager) List() ([]Snapshot, error) {
 	}
 	snapshots := make([]Snapshot, 0, len(dirEntries))
 	for _, dirEntry := range dirEntries {
+		if _, err := uuid.Parse(dirEntry.Name()); err != nil {
+			continue
+		}
 		snapshot := Snapshot{}
 		metadataPath := filepath.Join(manager.Paths.Snapshots, dirEntry.Name(), "metadata.json")
 		contents, err := os.ReadFile(metadataPath)
