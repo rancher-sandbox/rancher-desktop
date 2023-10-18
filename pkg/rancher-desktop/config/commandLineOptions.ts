@@ -14,6 +14,8 @@ const console = Logging.settings;
 
 export class LockedFieldError extends Error {}
 
+export class FatalCommandLineOptionError extends Error {}
+
 /**
  * Takes an array of strings, presumably from a command-line used to launch the app.
  * Key operations:
@@ -73,6 +75,7 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     if (currentValue === undefined) {
       // Ignore unrecognized command-line options until we get to one we recognize
       if (processingExternalArguments) {
+        console.warn(`Unrecognized command-line argument ${ arg }`);
         continue;
       }
       throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
@@ -131,13 +134,16 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     }
     settingsValidator.k8sVersions = limitedK8sVersionList;
   }
-  const [needToUpdate, errors] = settingsValidator.validateSettings(cfg, newSettings, lockedFields);
+  const [needToUpdate, errors, isFatal] = settingsValidator.validateSettings(cfg, newSettings, lockedFields);
 
   if (errors.length > 0) {
     const errorString = `Error in command-line options:\n${ errors.join('\n') }`;
 
     if (errors.some(error => /field ".+?" is locked/.test(error))) {
       throw new LockedFieldError(errorString);
+    }
+    if (isFatal) {
+      throw new FatalCommandLineOptionError(errorString);
     }
     throw new Error(errorString);
   }

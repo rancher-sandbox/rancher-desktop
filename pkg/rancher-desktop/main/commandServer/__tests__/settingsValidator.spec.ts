@@ -185,11 +185,12 @@ describe(SettingsValidator, () => {
           }
 
           const input = _.set({}, keyPath, invalidValue);
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+          const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, input);
 
-          expect({ needToUpdate, errors }).toEqual({
+          expect({ needToUpdate, errors, isFatal }).toEqual({
             needToUpdate: false,
             errors:       [`Invalid value for "${ prefix }${ key }": <${ JSON.stringify(invalidValue) }>`],
+            isFatal:      false,
           });
         });
 
@@ -252,11 +253,12 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject setting to NONE', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { containerEngine: { name: settings.ContainerEngine.NONE } });
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { containerEngine: { name: settings.ContainerEngine.NONE } });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [expect.stringContaining('Invalid value for "containerEngine.name": <"">;')],
+        isFatal:      true,
       });
     });
 
@@ -277,14 +279,15 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject invalid values', () => {
-      const [needToUpdate, errors] = subject.validateSettings(
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(
         cfg,
         { containerEngine: { name: 'pikachu' as settings.ContainerEngine } },
       );
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [expect.stringContaining('Invalid value for "containerEngine.name": <"pikachu">; must be one of ["containerd","moby","docker"]')],
+        isFatal:      true,
       });
     });
   });
@@ -295,30 +298,33 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject invalid values', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: 3 as unknown as Record<string, boolean> } });
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { WSL: { integrations: 3 as unknown as Record<string, boolean> } });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       ['Proposed field "WSL.integrations" should be an object, got <3>.'],
+        isFatal:      false,
       });
     });
 
     it('should reject being set on non-Windows', () => {
       spyPlatform.mockReturnValue('haiku');
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { foo: true } } });
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { WSL: { integrations: { foo: true } } });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [`Changing field "WSL.integrations" via the API isn't supported.`],
+        isFatal:      true,
       });
     });
 
     it('should reject invalid configuration', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, { WSL: { integrations: { distribution: 3 as unknown as boolean } } });
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { WSL: { integrations: { distribution: 3 as unknown as boolean } } });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       ['Invalid value for "WSL.integrations.distribution": <3>'],
+        isFatal:      false,
       });
     });
 
@@ -346,16 +352,17 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject an unknown version', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, {
         kubernetes: {
           version: '3.2.1',
           enabled: true,
         },
       });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [`Kubernetes version "3.2.1" not found.`],
+        isFatal:      false,
       });
     });
 
@@ -371,7 +378,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject a non-version value', () => {
-      const [needToUpdate, errors] = subject.validateSettings(
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(
         cfg,
         {
           kubernetes: {
@@ -380,9 +387,10 @@ describe(SettingsValidator, () => {
           },
         });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [`Kubernetes version "pikachu" not found.`],
+        isFatal:      false,
       });
     });
   });
@@ -410,12 +418,13 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject invalid values', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg,
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg,
         { application: { pathManagementStrategy: 'invalid value' as PathManagementStrategy } });
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [`Invalid value for "application.pathManagementStrategy": <"invalid value">; must be one of ["manual","rcfiles"]`],
+        isFatal:      true,
       });
     });
   });
@@ -430,11 +439,12 @@ describe(SettingsValidator, () => {
           },
         },
       };
-      const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, input);
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern2"'],
+        isFatal:      false,
       });
     });
     it('complains about multiple duplicates', () => {
@@ -446,11 +456,12 @@ describe(SettingsValidator, () => {
           },
         },
       };
-      const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, input);
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "pattern1", "Pattern2"'],
+        isFatal:      false,
       });
     });
     it('complains about multiple duplicates that contain only whitespace lengths', () => {
@@ -462,11 +473,12 @@ describe(SettingsValidator, () => {
           },
         },
       };
-      const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, input);
 
-      expect({ needToUpdate, errors }).toEqual({
+      expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       ['field "containerEngine.allowedImages.patterns" has duplicate entries: "", "\t", "  "'],
+        isFatal:      false,
       });
     });
     it('allows exactly one whitespace value', () => {
@@ -504,11 +516,12 @@ describe(SettingsValidator, () => {
 
           it("can't be changed", () => {
             const input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: true } } };
-            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+            const [needToUpdate, errors, isFatal] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
-            expect({ needToUpdate, errors }).toEqual({
+            expect({ needToUpdate, errors, isFatal }).toEqual({
               needToUpdate: false,
               errors:       ['field "containerEngine.allowedImages.enabled" is locked'],
+              isFatal:      true,
             });
           });
           it('can be set to the same value', () => {
@@ -534,11 +547,12 @@ describe(SettingsValidator, () => {
                 },
               },
             };
-            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+            const [needToUpdate, errors, isFatal] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
-            expect({ needToUpdate, errors }).toEqual({
+            expect({ needToUpdate, errors, isFatal }).toEqual({
               needToUpdate: false,
               errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
+              isFatal:      true,
             });
           });
 
@@ -550,11 +564,12 @@ describe(SettingsValidator, () => {
                 },
               },
             };
-            const [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+            const [needToUpdate, errors, isFatal] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
-            expect({ needToUpdate, errors }).toEqual({
+            expect({ needToUpdate, errors, isFatal }).toEqual({
               needToUpdate: false,
               errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
+              isFatal:      true,
             });
           });
 
@@ -621,26 +636,29 @@ describe(SettingsValidator, () => {
           const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
           const currentPatterns = allowedImageListConfig.containerEngine.allowedImages.patterns;
           let input: RecursivePartial<settings.Settings> = { containerEngine: { allowedImages: { enabled: !currentEnabled } } };
-          let [needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
+          let [needToUpdate, errors, isFatal] = subject.validateSettings(allowedImageListConfig, input, lockedSettings);
 
-          expect({ needToUpdate, errors }).toEqual({
+          expect({ needToUpdate, errors, isFatal }).toEqual({
             needToUpdate: false,
             errors:       ['field "containerEngine.allowedImages.enabled" is locked'],
+            isFatal:      true,
           });
 
           input = { containerEngine: { allowedImages: { patterns: ['picasso'].concat(currentPatterns) } } };
-          ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
-          expect({ needToUpdate, errors }).toEqual({
+          ([needToUpdate, errors, isFatal] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
+          expect({ needToUpdate, errors, isFatal }).toEqual({
             needToUpdate: false,
             errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
+            isFatal:      true,
           });
 
           input = { containerEngine: { allowedImages: { patterns: currentPatterns.slice(1) } } };
-          ([needToUpdate, errors] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
+          ([needToUpdate, errors, isFatal] = subject.validateSettings(allowedImageListConfig, input, lockedSettings));
 
-          expect({ needToUpdate, errors }).toEqual({
+          expect({ needToUpdate, errors, isFatal }).toEqual({
             needToUpdate: false,
             errors:       ['field "containerEngine.allowedImages.patterns" is locked'],
+            isFatal:      true,
           });
         });
 
@@ -693,11 +711,12 @@ describe(SettingsValidator, () => {
       _.set(input, path, value);
     }
 
-    const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+    const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, input);
 
-    expect({ needToUpdate, errors }).toEqual({
+    expect({ needToUpdate, errors, isFatal }).toEqual({
       needToUpdate: false,
       errors:       Object.keys(unchangeableFieldsAndValues).map(key => `Changing field "${ key }" via the API isn't supported.`),
+      isFatal:      false,
     });
   });
 
@@ -727,7 +746,7 @@ describe(SettingsValidator, () => {
 
   // Add some fields that are very unlikely to ever collide with newly introduced fields.
   it('should ignore unrecognized settings', () => {
-    const [needToUpdate, errors] = subject.validateSettings(cfg, {
+    const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, {
       kubernetes: {
         'durian-sharkanodo': 3,
         version:             cfg.version,
@@ -745,9 +764,10 @@ describe(SettingsValidator, () => {
       'feijoa - Alps': [],
     } as unknown as settings.Settings);
 
-    expect({ needToUpdate, errors }).toEqual({
+    expect({ needToUpdate, errors, isFatal }).toEqual({
       needToUpdate: false,
       errors:       expect.objectContaining({ length: 1 }),
+      isFatal:      false,
     });
   });
 

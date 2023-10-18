@@ -15,7 +15,7 @@ import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
 import { Steve } from '@pkg/backend/steve';
-import { LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
+import { FatalCommandLineOptionError, LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import { Help } from '@pkg/config/help';
 import * as settings from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
@@ -171,6 +171,15 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
+    // Normally `noModalDialogs` is set when we call `updateFromCommandLine(.., commandLineArgs)`
+    // But if there's an error either in that function, or before, we'll need to know if we should
+    // display the error in a modal-dialog or not. So check the current command-line arguments for that.
+    //
+    // It's very unlikely that a string option is set to this exact string though.
+    // `rdctl start --images.namespace --no-modal-dialogs`
+    // is syntactically correct, but unlikely (because why would someone create a
+    // containerd namespace called "--no-modal-dialogs"?
+    noModalDialogs = commandLineArgs.includes('--no-modal-dialogs');
     setupProtocolHandlers();
 
     // make sure we have the macOS version cached before calling getMacOsVersion()
@@ -194,12 +203,6 @@ Electron.app.whenReady().then(async() => {
       deploymentProfiles = await readDeploymentProfiles();
     } catch (ex: any) {
       if (ex instanceof DeploymentProfileError) {
-        // Need to do a heuristic to see if we have `--no-modal-dialogs` on the command-line.
-        // Normally we don't process the command-line arguments before we know what our locked fields are,
-        // but we need to see if we don't want to deal with dialog boxes.
-        if (commandLineArgs.includes('--no-modal-dialogs')) {
-          noModalDialogs = true;
-        }
         await handleFailure(ex);
       } else {
         console.log(`Got an unexpected deployment profile error ${ ex }`, ex);
@@ -226,9 +229,9 @@ Electron.app.whenReady().then(async() => {
         cfg = updateFromCommandLine(cfg, settingsImpl.getLockedSettings(), commandLineArgs);
         k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       }
-    } catch (err) {
+    } catch (err: any) {
       noModalDialogs = TransientSettings.value.noModalDialogs;
-      if (err instanceof LockedFieldError || err instanceof DeploymentProfileError) {
+      if (err instanceof LockedFieldError || err instanceof DeploymentProfileError || err instanceof FatalCommandLineOptionError) {
         // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
         // and the `fatal` part means we're expecting the app to shutdown.
         // Errors related to either deployment profiles or
@@ -239,6 +242,8 @@ Electron.app.whenReady().then(async() => {
           console.log('Internal error trying to show a failure dialog: ', err2);
           process.exit(2);
         });
+      } else if (!noModalDialogs) {
+        showErrorDialog('Invalid command-line arguments', err.message, false);
       }
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
@@ -320,7 +325,7 @@ Electron.app.whenReady().then(async() => {
 });
 
 async function doFirstRunDialog() {
-  if (settingsImpl.firstRunDialogNeeded()) {
+  if (!noModalDialogs && settingsImpl.firstRunDialogNeeded()) {
     await window.openFirstRunDialog();
   }
   firstRunDialogComplete = true;
@@ -989,6 +994,10 @@ async function handleFailure(payload: any) {
     return;
   } else if (payload instanceof DeploymentProfileError) {
     showErrorDialog('Failed to load the deployment profile', payload.message, true);
+
+    return;
+  } else if (payload instanceof FatalCommandLineOptionError) {
+    showErrorDialog('Error in command-line options', payload.message, true);
 
     return;
   } else if (payload instanceof Error) {
