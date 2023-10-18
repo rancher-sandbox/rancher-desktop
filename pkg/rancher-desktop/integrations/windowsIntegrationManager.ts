@@ -420,24 +420,33 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncHostFile() {
     await Promise.all(
       (await this.supportedDistros).map((distro) => {
-        return this.updateHostFile(distro.name);
+        return this.updateHostsFile(distro.name);
       }),
     );
   }
 
-  protected async updateHostFile(distro: string) {
-    if (this.settings.experimental?.virtualMachine?.networkingTunnel) {
-      try {
-        console.debug(`Update ${ distro } host file`);
+  protected async updateHostsFile(distro: string) {
+    const entry = '192.168.1.2,gateway.rancher-desktop.internal';
+
+    try {
+      console.debug(`Update ${ distro } host file`);
+      if (this.settings.experimental?.virtualMachine?.networkingTunnel) {
         await this.execCommand(
           { distro, root: true },
           await this.getLinuxToolPath(distro, 'wsl-helper'),
           'update-host',
-          '--entries=192.168.1.2,gateway.rancher-desktop.internal',
+          `--entries=${ entry }`,
         );
-      } catch (error: any) {
-        console.error(`Could not update ${ distro } host file`, error);
+      } else {
+        await this.execCommand(
+          { distro, root: true },
+          await this.getLinuxToolPath(distro, 'wsl-helper'),
+          'remove-host',
+          `--entries=${ entry }`,
+        );
       }
+    } catch (error: any) {
+      console.error(`Could not update ${ distro } host file`, error);
     }
   }
 

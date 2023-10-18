@@ -23,23 +23,32 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/host"
 )
 
-var updateHostFileCmd = &cobra.Command{
+var updateHostsFileCmd = &cobra.Command{
 	Use:   "update-host",
 	Short: "Appends a given entry to host file",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		remove, err := cmd.Flags().GetBool("remove")
+		if err != nil {
+			return err
+		}
+		if remove {
+			host.RemoveHostsFileEntry()
+			return nil
+		}
 		entries, err := cmd.Flags().GetStringSlice("entries")
 		if err != nil {
 			return err
 		}
-		return host.AppendHostFile(entries)
+		return host.AppendHostsFile(entries)
 	},
 }
 
 func init() {
-	updateHostFileCmd.Flags().StringSlice(
+	updateHostsFileCmd.Flags().StringSlice(
 		"entries",
 		[]string{fmt.Sprintf("%s,%s", host.GatewayIP, host.GatewayDomain)},
 		"Array of host file entries to append")
-	updateHostFileCmd.MarkFlagRequired("entries")
-	rootCmd.AddCommand(updateHostFileCmd)
+	updateHostsFileCmd.MarkFlagRequired("entries")
+	updateHostsFileCmd.Flags().Bool("remove", false, "Remove RD gateway from hosts file")
+	rootCmd.AddCommand(updateHostsFileCmd)
 }
