@@ -302,8 +302,8 @@ export default {
           return;
         }
 
-        const firstPort = ports[0].HostPort;
-        const secondPort = ports[1].HostPort;
+        const firstPort = ports[0]?.HostPort || '';
+        const secondPort = ports[1]?.HostPort || '';
 
         uniquePorts[`${ firstPort }:${ secondPort }`] = true;
       });
