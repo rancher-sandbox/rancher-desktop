@@ -120,19 +120,58 @@ local_setup() {
     assert_output ""
 }
 
+@test 'very long descriptions are truncated in the table view' {
+    snapshot_name=aarons_farm
+    description_part="very long description names are truncated in the table view"
+    long_description="$description_part, repeat: $description_part"
+
+    rdctl snapshot create "$snapshot_name" --description "$long_description"
+
+    run rdctl snapshot list --json
+    assert_success
+    run jq_output "$(printf 'select(.name == "%s").description' "$snapshot_name")"
+    assert_success
+    assert_output "$long_description"
+
+    run rdctl snapshot list
+    assert_success
+    run grep "$snapshot_name" <<<"$output"
+    assert_success
+    # Shouldn't have the whole description, but part of it
+    refute_output --partial "$long_description"
+    assert_output --partial "$description_part"
+}
+
+@test 'table view truncates descriptions at an internal newline' {
+    snapshot_name=petes_circus
+    part1="there's a new"
+    description="$part1
+line somewhere in this description"
+
+    rdctl snapshot create "$snapshot_name" --description "$description"
+
+    run rdctl snapshot list --json
+    assert_success
+    run jq_output "$(printf 'select(.name == "%s").description' "$snapshot_name")"
+    assert_success
+    assert_output "$description"
+
+    run rdctl snapshot list
+    assert_success
+    run grep "$snapshot_name" <<<"$output"
+    assert_success
+    # Shouldn't have the whole description, but part of it
+    refute_output --partial "$description"
+    assert_output --partial "$part1"
+}
+
 @test "factory-reset doesn't delete a non-empty snapshots directory" {
     rdctl factory-reset
     assert_exists "$PATH_SNAPSHOTS"
 }
 
-@test 'delete all the snapshots' {
-    rdctl snapshot delete "$SNAPSHOT"
-    run rdctl snapshot list --json
-    assert_success
-    assert_output ''
-}
-
 @test 'factory-reset does delete an empty snapshots directory' {
+    delete_all_snapshots
     rdctl factory-reset
     assert_not_exists "$PATH_SNAPSHOTS"
 }

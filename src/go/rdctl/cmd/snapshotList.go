@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -81,10 +82,21 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 		return nil
 	}
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	fmt.Fprintf(writer, "NAME\tDESCRIPTION\tCREATED\n")
+	fmt.Fprintf(writer, "NAME\tCREATED\tDESCRIPTION\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, aSnapshot.Description, prettyCreated)
+		desc := aSnapshot.Description
+		idx := strings.Index(desc, "\n")
+		if idx >= 0 {
+			// If the description starts with a newline, it will appear empty in this view.
+			// Use the json view to get the full description
+			desc = desc[0: idx]
+		}
+		if len(desc) > 63 {
+			desc = desc[0:60]+"..."
+		}
+
+		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, prettyCreated, desc)
 	}
 	writer.Flush()
 	return nil
