@@ -62,7 +62,6 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 }
 
 // ValidateName - does syntactic validation on the name
-// This assumes that we will only want to create a single snapshot
 func (manager Manager) ValidateName(name string) error {
 	// validate name
 	currentSnapshots, err := manager.List()

@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"os/exec"
 	"runtime"
-	"strings"
 )
 
 var snapshotDescription string
@@ -52,21 +51,10 @@ func createSnapshot(cmd *cobra.Command, args []string) error {
 	}
 
 	// exclude snapshots directory from time machine backups if on macOS
-	execCmd := exec.Command("tmutil", "isexcluded", appPaths.Snapshots)
+	execCmd := exec.Command("tmutil", "addexclusion", appPaths.Snapshots)
 	output, err := execCmd.CombinedOutput()
-	// If a tmutil command fails, report it, but don't return failure status to the caller,
-	// as the snapshot was definitely created, and we need to continue processing it.
-	msg := fmt.Errorf("")
 	if err != nil {
-		msg = fmt.Errorf("`tmutil isexcluded` failed: %w: %s\n", err, output)
-	} else if !strings.Contains(string(output), "[Excluded]") {
-		execCmd = exec.Command("tmutil", "addexclusion", appPaths.Snapshots)
-		output, err = execCmd.CombinedOutput()
-		if err != nil {
-			msg = fmt.Errorf("`tmutil addexclusion` failed to add exclusion to TimeMachine: %w: %s\n", err, output)
-		}
-	}
-	if msg.Error() != "" {
+		msg := fmt.Errorf("`tmutil addexclusion` failed to add exclusion to TimeMachine: %w: %s", err, output)
 		if outputJsonFormat {
 			snapshotErrors = append(snapshotErrors, msg)
 		} else {

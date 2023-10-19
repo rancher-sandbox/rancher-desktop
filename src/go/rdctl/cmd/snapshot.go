@@ -24,8 +24,6 @@ var snapshotErrors []error
 
 const backendLockName = "backend.lock"
 
-type cobraFunc func() error
-
 var snapshotCmd = &cobra.Command{
 	Use:    "snapshot",
 	Short:  "Manage Rancher Desktop snapshots",
@@ -63,7 +61,7 @@ func exitWithJsonOrErrorCondition(e error) error {
 // If the main process is running, stops the backend, calls the
 // passed function, and restarts the backend. If it cannot connect
 // to the main process, just calls the passed function.
-func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFailure bool, wrappedFunction cobraFunc) error {
+func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFailure bool, wrappedFunction func() error) error {
 	if err := createBackendLock(appPaths.AppHome); err != nil {
 		return err
 	}
