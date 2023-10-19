@@ -47,12 +47,9 @@ func TestAppendHostsFile(t *testing.T) {
 	content, err := os.ReadFile(tempHostsFile)
 	assert.NoError(t, err)
 
-	assert.Contains(t,
-		string(content),
-		host.BeginConfig,
-		fmt.Sprintf("%s %s", host.GatewayIP, host.GatewayDomain),
-		host.EndConfig,
-	)
+	assert.Contains(t, string(content), host.BeginConfig)
+	assert.Contains(t, string(content), fmt.Sprintf("%s %s", host.GatewayIP, host.GatewayDomain))
+	assert.Contains(t, string(content), host.EndConfig)
 }
 
 func TestAppendHostsFileAlreadyExist(t *testing.T) {
@@ -87,22 +84,25 @@ func TestRemoveHostFileEntry(t *testing.T) {
 	content, err := os.ReadFile(tempHostsFile)
 	assert.NoError(t, err)
 
-	assert.NotContains(t,
-		string(content),
-		host.BeginConfig,
-		fmt.Sprintf("%s %s", host.GatewayIP, host.GatewayDomain),
-		host.EndConfig,
-	)
+	assert.NotContains(t, string(content), host.BeginConfig)
+	assert.NotContains(t, string(content), fmt.Sprintf("%s %s", host.GatewayIP, host.GatewayDomain))
+	assert.NotContains(t, string(content), host.EndConfig)
 }
 
 func TestRemoveHostFileEntryNotExist(t *testing.T) {
 	tempDir := t.TempDir()
 	tempHostsFile := filepath.Join(tempDir, "hosts")
 
-	err := os.WriteFile(tempHostsFile, []byte(hostsFileContent), 0644)
+	hostFileBytes := []byte(hostsFileContent)
+	err := os.WriteFile(tempHostsFile, hostFileBytes, 0644)
 	assert.NoError(t, err)
 
 	assert.NoError(t, host.RemoveHostsFileEntry(tempHostsFile))
+
+	content, err := os.ReadFile(tempHostsFile)
+	assert.NoError(t, err)
+
+	assert.Equal(t, hostFileBytes, content)
 }
 
 func createTempHostFile(t *testing.T) (string, error) {

@@ -95,7 +95,7 @@ func RemoveHostsFileEntry(hostsFilePath string) error {
 	}
 	defer hostsFile.Close()
 
-	tempFile, err := os.CreateTemp("", "tempfile")
+	tempFile, err := os.CreateTemp("", "tmpRDHostsFile")
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func configExist(hostsFilePath string) (bool, error) {
 	scanner := bufio.NewScanner(hostFile)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, BeginConfig) {
+		if strings.Contains(line, EndConfig) {
 			return true, nil
 		}
 	}
