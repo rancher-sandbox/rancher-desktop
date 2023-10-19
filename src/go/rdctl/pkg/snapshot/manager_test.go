@@ -16,7 +16,7 @@ type TestFile struct {
 
 func TestManager(t *testing.T) {
 
-	t.Run("Create should disallow two snapshots with the same name, even when the first is incomplete", func(t *testing.T) {
+	t.Run("ValidateName should disallow two snapshots with the same name, but only when the first is complete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
 		snapshotName := "test-snapshot"
@@ -27,16 +27,19 @@ func TestManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to create first snapshot: %s", err)
 		}
+		if err := manager.ValidateName(snapshotName); err == nil {
+			t.Fatalf("name validation failed to return error when complete snapshot with name %q exists", snapshotName)
+		}
 		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
 		if err := os.Remove(completeFilePath); err != nil {
 			t.Fatalf("failed to remove %q from first snapshot: %s", completeFileName, err)
 		}
-		if err := manager.ValidateName(snapshotName); err == nil {
-			t.Fatalf("failed to return error upon second snapshot with name %q", snapshotName)
+		if err := manager.ValidateName(snapshotName); err != nil {
+			t.Fatalf("name validation returned error when complete snapshot with name %q does not exist: %s", snapshotName, err)
 		}
 	})
 
-	t.Run("Create should disallow invalid names", func(t *testing.T) {
+	t.Run("ValidateName should disallow invalid names", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
 		invalidNames := []string{
@@ -116,15 +119,10 @@ func TestManager(t *testing.T) {
 		}
 	})
 
-	t.Run("Operations on nonexistent snapshots return errors", func(t *testing.T) {
+	t.Run("Restore should return an error if asked to restore a nonexistent snapshot", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		err := manager.Delete("no-such-snapshot-id")
-		if err == nil {
-			t.Errorf("Failed to complain when asked to delete a nonexistent snapshot")
-		}
-		err = manager.Restore("no-such-snapshot-id")
-		if err == nil {
+		if err := manager.Restore("no-such-snapshot-id"); err == nil {
 			t.Errorf("Failed to complain when asked to restore a nonexistent snapshot")
 		}
 	})

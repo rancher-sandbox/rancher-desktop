@@ -68,7 +68,7 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 
 // ValidateName - does syntactic validation on the name
 func (manager Manager) ValidateName(name string) error {
-	currentSnapshots, err := manager.List(true)
+	currentSnapshots, err := manager.List(false)
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
@@ -129,11 +129,10 @@ func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 		}
 		snapshot.Created = snapshot.Created.Local()
 
-		completeFileExists := true
 		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
-		if _, err := os.Stat(completeFilePath); err != nil {
-			completeFileExists = false
-		}
+		_, err = os.Stat(completeFilePath)
+		completeFileExists := err == nil
+
 		if !includeIncomplete && !completeFileExists {
 			continue
 		}
@@ -145,20 +144,6 @@ func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 
 // Deletes a snapshot.
 func (manager Manager) Delete(id string) error {
-	dirEntries, err := os.ReadDir(manager.Paths.Snapshots)
-	if err != nil {
-		return fmt.Errorf("failed to read snapshots dir: %w", err)
-	}
-	found := false
-	for _, dirEntry := range dirEntries {
-		if dirEntry.Name() == id {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return fmt.Errorf("snapshot with id %q does not exist", id)
-	}
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
 	// Remove complete.txt file. This must be done first because restoring
 	// from a partially-deleted snapshot could result in errors.
@@ -166,7 +151,7 @@ func (manager Manager) Delete(id string) error {
 	if err := os.RemoveAll(completeFilePath); err != nil {
 		return fmt.Errorf("failed to remove %q: %w", completeFileName, err)
 	}
-	if err = os.RemoveAll(snapshotDir); err != nil {
+	if err := os.RemoveAll(snapshotDir); err != nil {
 		return fmt.Errorf("failed to remove dir %q: %w", snapshotDir, err)
 	}
 	return nil
