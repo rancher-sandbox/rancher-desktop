@@ -25,9 +25,9 @@ import (
 const (
 	GatewayIP           = "192.168.1.2"
 	GatewayDomain       = "gateway.rancher-desktop.internal"
-	defaultHostFilePath = "/etc/hosts"
-	beginConfig         = "# BEGIN Rancher Desktop configuration."
-	endConfig           = "# END Rancher Desktop configuration."
+	BeginConfig         = "# BEGIN Rancher Desktop configuration."
+	EndConfig           = "# END Rancher Desktop configuration."
+	DefaultHostFilePath = "/etc/hosts"
 )
 
 // AppendHostsFile reads the content of a host file
@@ -38,8 +38,8 @@ const (
 //	  "127.0.0.1,example.com",
 //	  "127.0.0.1,another-example.com",
 //	}
-func AppendHostsFile(entries []string) error {
-	exist, err := entryExist(entries)
+func AppendHostsFile(entries []string, hostsFilePath string) error {
+	exist, err := entryExist(entries, hostsFilePath)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func AppendHostsFile(entries []string) error {
 		return nil
 	}
 
-	hostFile, err := os.OpenFile(defaultHostFilePath, os.O_WRONLY|os.O_APPEND, 0644)
+	hostFile, err := os.OpenFile(hostsFilePath, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
@@ -55,18 +55,17 @@ func AppendHostsFile(entries []string) error {
 
 	writer := bufio.NewWriter(hostFile)
 
-	_, err = writer.WriteString(fmt.Sprintln(beginConfig))
+	_, err = writer.WriteString(fmt.Sprintf("\n%s\n", BeginConfig))
 	if err != nil {
 		return err
 	}
 	for _, entry := range entries {
-
 		_, err := writer.WriteString(strings.ReplaceAll(entry, ",", " ") + "\n")
 		if err != nil {
 			return fmt.Errorf("error writing to /etc/hosts file: %w", err)
 		}
 	}
-	_, err = writer.WriteString(fmt.Sprintln(endConfig))
+	_, err = writer.WriteString(fmt.Sprintln(EndConfig))
 	if err != nil {
 		return err
 	}
@@ -81,8 +80,8 @@ func AppendHostsFile(entries []string) error {
 // RemoveHostsFileEntry reads the content of a host file
 // and removes any specific host declaration that belongs
 // to Rancher Desktop.
-func RemoveHostsFileEntry() error {
-	exist, err := configExist()
+func RemoveHostsFileEntry(hostsFilePath string) error {
+	exist, err := configExist(hostsFilePath)
 	if err != nil {
 		return err
 	}
@@ -90,7 +89,7 @@ func RemoveHostsFileEntry() error {
 		return nil
 	}
 
-	hostsFile, err := os.Open(defaultHostFilePath)
+	hostsFile, err := os.Open(hostsFilePath)
 	if err != nil {
 		return err
 	}
@@ -109,10 +108,10 @@ func RemoveHostsFileEntry() error {
 		line := scanner.Text()
 
 		// Check if we are inside Rancher Desktop configuration
-		if strings.Contains(line, beginConfig) {
+		if strings.Contains(line, BeginConfig) {
 			insideRancherConfig = true
 			continue
-		} else if strings.Contains(line, endConfig) {
+		} else if strings.Contains(line, EndConfig) {
 			insideRancherConfig = false
 			continue
 		}
@@ -135,15 +134,15 @@ func RemoveHostsFileEntry() error {
 	}
 
 	// Replace the original file with the temporary file
-	if err := os.Rename(tempFile.Name(), defaultHostFilePath); err != nil {
+	if err := os.Rename(tempFile.Name(), hostsFilePath); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func configExist() (bool, error) {
-	hostFile, err := os.OpenFile(defaultHostFilePath, os.O_RDWR, 0644)
+func configExist(hostsFilePath string) (bool, error) {
+	hostFile, err := os.OpenFile(hostsFilePath, os.O_RDWR, 0644)
 	if err != nil {
 		return false, err
 	}
@@ -151,15 +150,15 @@ func configExist() (bool, error) {
 	scanner := bufio.NewScanner(hostFile)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, beginConfig) {
+		if strings.Contains(line, BeginConfig) {
 			return true, nil
 		}
 	}
 	return false, nil
 }
 
-func entryExist(entries []string) (bool, error) {
-	hostFile, err := os.OpenFile(defaultHostFilePath, os.O_RDWR, 0644)
+func entryExist(entries []string, hostsFilePath string) (bool, error) {
+	hostFile, err := os.OpenFile(hostsFilePath, os.O_RDWR, 0644)
 	if err != nil {
 		return false, err
 	}

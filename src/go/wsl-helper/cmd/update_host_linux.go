@@ -32,14 +32,14 @@ var updateHostsFileCmd = &cobra.Command{
 			return err
 		}
 		if remove {
-			host.RemoveHostsFileEntry()
+			host.RemoveHostsFileEntry(host.DefaultHostFilePath)
 			return nil
 		}
 		entries, err := cmd.Flags().GetStringSlice("entries")
 		if err != nil {
 			return err
 		}
-		return host.AppendHostsFile(entries)
+		return host.AppendHostsFile(entries, host.DefaultHostFilePath)
 	},
 }
 
