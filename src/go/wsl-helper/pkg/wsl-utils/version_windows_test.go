@@ -19,12 +19,14 @@ package wslutils
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -70,9 +72,22 @@ func TestWithExitCode(t *testing.T) {
 	os.Exit(int(code))
 }
 
+// mockRun overrides the WSL runner to use the given function.
+func mockRun(ctx context.Context, fn func(context.Context, ...string) error) (context.Context, *wslRunnerImpl) {
+	runner := &wslRunnerImpl{
+		stdout: io.Discard,
+		stderr: io.Discard,
+		runFn:  fn,
+	}
+	return context.WithValue(ctx, &kWSLExeOverride, func() WSLRunner { return runner }), runner
+}
+
 func TestIsInboxWSLInstalled(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
 	t.Run("not installed", func(t *testing.T) {
-		overrideFunc := func(ctx context.Context, args ...string) (string, error) {
+		ctx, _ := mockRun(context.Background(), func(ctx context.Context, args ...string) error {
 			assert.EqualValues(t, []string{"--status"}, args)
 			// We want to mock an executable that exits with `wslExitNotInstalled`.
 			// We do this by running ourselves, but using the TestWithExitCode
@@ -80,45 +95,53 @@ func TestIsInboxWSLInstalled(t *testing.T) {
 			// environment.
 			cmd := exec.CommandContext(ctx, os.Args[0], "-test.run", "^TestWithExitCode$")
 			cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_EXIT_CODE_VALUE=%d", wslExitNotInstalled))
-			return "", cmd.Run()
-		}
-		ctx := context.WithValue(context.Background(), &kWSLExeOverride, overrideFunc)
-		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx)
+			return cmd.Run()
+		})
+		// Use a random GUID here
+		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{60486CC7-CD7A-4514-9E88-7F21E8A81679}")
+		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.False(t, hasWSL, "WSL should not be installed")
 		assert.False(t, hasKernel, "kernel should not be installed")
 	})
 	t.Run("installed without kernel", func(t *testing.T) {
-		overrideFunc := func(ctx context.Context, args ...string) (string, error) {
+		var ctx context.Context
+		var runner *wslRunnerImpl
+		ctx, runner = mockRun(context.Background(), func(ctx context.Context, args ...string) error {
 			assert.EqualValues(t, []string{"--status"}, args)
 			// When WSL (inbox) is installed but no kernel, `wsl --status`
 			// returns with exit code 0.
-			return strings.Join([]string{
+			for _, line := range []string{
 				"Default Version: 2",
 				"",
 				"... Something about updates...",
 				"The WSL 2 kernel file is not found. To update or restore the kernel please run 'wsl --update'.",
-				"\r\n",
-			}, "\r\n"), nil
-		}
-		ctx := context.WithValue(context.Background(), &kWSLExeOverride, overrideFunc)
+				"",
+			} {
+				_, err := io.WriteString(runner.stdout, line+"\r\n")
+				assert.NoError(t, err)
+			}
+			return nil
+		})
 		// Use a random GUID here
 		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{0C32EDDD-2674-4F32-B415-B715AF90BE74}")
-		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx)
+		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.True(t, hasWSL, "WSL should be installed")
 		assert.False(t, hasKernel, "kernel should not be installed")
 	})
 	t.Run("installed with kernel", func(t *testing.T) {
-		overrideFunc := func(ctx context.Context, args ...string) (string, error) {
+		var ctx context.Context
+		var runner *wslRunnerImpl
+		ctx, runner = mockRun(context.Background(), func(ctx context.Context, args ...string) error {
 			assert.EqualValues(t, []string{"--status"}, args)
-			return "Hello world\r\n", nil
-		}
-		ctx := context.WithValue(context.Background(), &kWSLExeOverride, overrideFunc)
+			io.WriteString(runner.stdout, "Hello world\r\n")
+			return nil
+		})
 		// Use the upgrade code for "Microsoft Update Health Tools", which is
 		// automatically installed from Windows Update.
 		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{2E5106FD-42A1-4BBE-9C29-7E1D34CB79A1}")
-		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx)
+		hasWSL, hasKernel, err := isInboxWSLInstalled(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.True(t, hasWSL, "WSL should be installed")
 		assert.True(t, hasKernel, "kernel should be installed")

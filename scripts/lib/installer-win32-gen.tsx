@@ -200,18 +200,9 @@ export default async function generateFileList(rootPath: string): Promise<string
       return null;
     },
 
-    // @ts-ignore
-    'wix-install-wsl.ps1': (d, f) => {
-      return <Component>
-        <Condition>NOT WSLKERNELINSTALLED</Condition>
-        <File
-          Name={f.name}
-          Source="build\\wix-install-wsl.ps1"
-          ReadOnly="yes"
-          KeyPath="yes"
-          Id={f.id}
-        />
-      </Component>;
+    'wix-install-wsl.ps1': () => {
+      // TODO: Remove this file.
+      return null;
     },
 
     // @ts-ignore

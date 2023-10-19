@@ -9,6 +9,7 @@ import childProcess from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+import buildUtils from './lib/build-utils';
 import buildInstaller from './lib/installer-win32';
 import { simpleSpawn } from './simple_process';
 
@@ -61,21 +62,24 @@ class Builder {
     await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
     args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
     await simpleSpawn('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { env });
+  }
 
-    if (process.platform === 'win32') {
-      const distDir = path.join(process.cwd(), 'dist');
-      const appDir = path.join(distDir, 'win-unpacked');
-      const targetList = getArgValue(args, '-w', '--win', '--windows');
+  async buildInstaller() {
+    const appDir = path.join(buildUtils.distDir, 'win-unpacked');
+    const args = process.argv.slice(2).filter(x => x !== '--serial');
+    const targetList = getArgValue(args, '-w', '--win', '--windows');
 
-      if (targetList !== 'zip') {
-        // Only build installer if we're not asked not to.
-        await buildInstaller(distDir, appDir);
-      }
+    if (targetList !== 'zip') {
+      // Only build installer if we're not asked not to.
+      await buildInstaller(buildUtils.distDir, appDir);
     }
   }
 
   async run() {
     await this.package();
+    if (process.platform === 'win32') {
+      await this.buildInstaller();
+    }
   }
 }
 

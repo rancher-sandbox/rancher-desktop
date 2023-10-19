@@ -80,6 +80,7 @@ bugtracker
 buildctl
 buildkit
 buildkitd
+buildmode
 buildroot
 buildsystem
 bulbasaur
@@ -175,6 +176,7 @@ dfile
 diffdisk
 digitalocean
 dirents
+dismapi
 distatus
 distros
 Dlg
@@ -304,7 +306,7 @@ hosthandshake
 hoverable
 howett
 hpa
-HRESULT
+hresult
 htpasswd
 httpconfig
 Huawei
@@ -330,6 +332,7 @@ ine
 Infof
 Infoln
 installable
+INSTALLMESSAGE
 ioctl
 ipaddr
 ipam
@@ -463,6 +466,7 @@ MPyo
 MRM
 MSFT
 msiexec
+MSIHANDLE
 MSIINSTALLPERUSER
 MSIX
 msize
@@ -760,6 +764,7 @@ transitioning
 trivy
 TVar
 tvf
+UAC
 UBR
 ucmonitor
 UEFI
@@ -821,12 +826,13 @@ wordpress
 workdir
 Wrapf
 wsl
+wslapi
 wslconfig
 WSLENV
 WSLg
 wslify
 WSLIs
-WSLKERNELINSTALLED
+WSLINSTALLED
 wslutils
 WWID
 wwn
