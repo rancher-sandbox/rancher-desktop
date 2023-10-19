@@ -87,30 +87,30 @@ local_setup() {
 }
 
 @test "attempt to create a snapshot with an existing name is flagged and doesn't do factory-reset" {
-    # RD state is currently stopped, so best to shut it down
+    # Shutdown RD for faster snapshot creation
+    # Also verify that the failed creation doesn't trigger a factory-reset and remove settings.json
     rdctl shutdown
-    assert_exists "$PATH_APP_HOME/rd-engine.json"
+    assert_exists "$PATH_CONFIG_FILE"
     run rdctl snapshot create "$SNAPSHOT" --json
     assert_failure
     run jq_output '.error'
+    assert_success
     assert_output "invalid name \"$SNAPSHOT\": name already exists"
-    assert_exists "$PATH_APP_HOME/rd-engine.json"
+    assert_exists "$PATH_CONFIG_FILE"
 }
 
 @test 'can create a snapshot where proposed name is a current ID' {
     run ls -1 "$PATH_SNAPSHOTS"
     assert_success
     refute_output ""
-    run head -n 1 <<<"$output"
-    assert_success
-    refute_output ""
-    snapshot_id=$output
+    snapshot_id="${lines[0]}"
+    test -n "$snapshot_id"
     snapshot_description="second snapshot made with the --description option with \\ and \" and '."
 
     rdctl snapshot create "$snapshot_id" --description "$snapshot_description"
     run rdctl snapshot list --json
     assert_success
-    run jq_output "$(printf 'select(.name == "%s").description' "$snapshot_id")"
+    run jq_output "select(.name == \"$snapshot_id\").description"
     assert_success
     assert_output "$snapshot_description"
 
@@ -129,7 +129,7 @@ local_setup() {
 
     run rdctl snapshot list --json
     assert_success
-    run jq_output "$(printf 'select(.name == "%s").description' "$snapshot_name")"
+    run jq_output "select(.name == \"$snapshot_name\").description"
     assert_success
     assert_output "$long_description"
 
@@ -144,15 +144,15 @@ local_setup() {
 
 @test 'table view truncates descriptions at an internal newline' {
     snapshot_name=retinal_asparagus
+    newline=$'\n'
     part1="there's a new"
-    description="$part1
-line somewhere in this description"
+    description="${part1}${newline}line somewhere in this description"
 
     rdctl snapshot create "$snapshot_name" --description "$description"
 
     run rdctl snapshot list --json
     assert_success
-    run jq_output "$(printf 'select(.name == "%s").description' "$snapshot_name")"
+    run jq_output "select(.name == \"$snapshot_name\").description"
     assert_success
     assert_output "$description"
 
