@@ -33,34 +33,17 @@ func GetRDPath() (string, error) {
 		return candidatePath, nil
 	}
 
-	homedir, err := os.UserHomeDir()
+	dataDir, err := directories.GetLocalAppDataDirectory()
 	if err != nil {
-		homedir = ""
+		return "", err
 	}
-	dataPaths := []string{}
-	// %LOCALAPPDATA%
-	dir, err := directories.GetLocalAppDataDirectory()
+	candidatePath := filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
+	_, err := os.Stat(candidatePath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return "", fmt.Errorf("failed to check existence of %q: %w", candidatePath, err)
+	}
 	if err == nil {
-		dataPaths = append(dataPaths, dir)
-	} else {
-		dataPaths = append(dataPaths, filepath.Join(homedir, "AppData", "Local"))
-	}
-	// %APPDATA%
-	dir, err = directories.GetRoamingAppDataDirectory()
-	if err == nil {
-		dataPaths = append(dataPaths, dir)
-	} else {
-		dataPaths = append(dataPaths, filepath.Join(homedir, "AppData", "Roaming"))
-	}
-	for _, dataDir := range dataPaths {
-		candidatePath := filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
-		_, err := os.Stat(candidatePath)
-		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return "", fmt.Errorf("failed to check existence of %q: %w", candidatePath, err)
-		}
-		if err == nil {
-			return candidatePath, nil
-		}
+		return candidatePath, nil
 	}
 
 	return "", errors.New("search locations exhausted")

@@ -153,7 +153,7 @@ rdctl_factory_reset() {
 
 check_directories() {
     # Check if all expected directories are created after starting application/ are deleted after a factory reset
-    delete_dir=("$PATH_CONFIG_FILE" "$PATH_LOGS" "$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json")
+    delete_dir=("$PATH_LOGS" "$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json")
     if is_unix; then
         # On Windows "$PATH_CONFIG" == "$PATH_APP_HOME"
         delete_dir+=("$HOME/.rd" "$LIMA_HOME" "$PATH_CONFIG")
@@ -167,8 +167,8 @@ check_directories() {
 
     if is_windows; then
         # On Windows $PATH_CONFIG is the same as $PATH_APP_HOME
-        delete_dir+=("$PATH_DISTRO" "$PATH_DISTRO_DATA")
-        # What about  $PATH_APP_HOME/vtunnel-config.yaml ?
+        delete_dir+=("$PATH_CONFIG_FILE" "$PATH_DISTRO" "$PATH_DISTRO_DATA")
+        # TODO: What about  $PATH_APP_HOME/vtunnel-config.yaml ?
     fi
 
     for dir in "${delete_dir[@]}"; do
