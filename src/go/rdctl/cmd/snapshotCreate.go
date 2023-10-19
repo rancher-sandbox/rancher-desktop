@@ -35,7 +35,7 @@ func createSnapshot(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
 	manager := snapshot.NewManager(appPaths)
-	if err := manager.ValidateNewName(args[0]); err != nil {
+	if err := manager.ValidateName(args[0]); err != nil {
 		return err
 	}
 	err = wrapSnapshotOperation(cmd, appPaths, false, func() error {

@@ -61,14 +61,9 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 	return "", fmt.Errorf(`can't find snapshot %q`, desiredName)
 }
 
-// Make this a map because in tests we validate more than one name in a run
-// If the non-test code needs to create more than one snapshot in a single run,
-// this variable shouldn't need to be changed
-var validateNameChecked = make(map[string]bool)
-
-// ValidateNewName - does syntactic validation on the name
+// ValidateName - does syntactic validation on the name
 // This assumes that we will only want to create a single snapshot
-func (manager Manager) ValidateNewName(name string) error {
+func (manager Manager) ValidateName(name string) error {
 	// validate name
 	currentSnapshots, err := manager.List()
 	if err != nil {
@@ -82,20 +77,11 @@ func (manager Manager) ValidateNewName(name string) error {
 	if !nameRegexp.MatchString(name) {
 		return fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
-	validateNameChecked[name] = true
 	return nil
 }
 
 // Creates a new snapshot.
 func (manager Manager) Create(name, description string) (*Snapshot, error) {
-	_, ok := validateNameChecked[name]
-	if !ok {
-		err := manager.ValidateNewName(name)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ID for snapshot: %w", err)

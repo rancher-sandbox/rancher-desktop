@@ -90,10 +90,14 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 		if idx >= 0 {
 			// If the description starts with a newline, it will appear empty in this view.
 			// Use the json view to get the full description
-			desc = desc[0: idx]
+			desc = desc[0:idx]
 		}
 		if len(desc) > 63 {
-			desc = desc[0:60]+"..."
+			desc = desc[0:60] + "..."
+		} else if idx >= 0 {
+			// The string was truncated because of a newline, so add an ellipsis to show that
+			// Do this even if the newline was the last character - we've still truncated *something*.
+			desc += "..."
 		}
 
 		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, prettyCreated, desc)

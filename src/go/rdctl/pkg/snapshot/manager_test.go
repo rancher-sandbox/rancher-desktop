@@ -1,7 +1,6 @@
 package snapshot
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -17,10 +16,13 @@ func TestManager(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
 		snapshotName := "test-snapshot"
+		if err := manager.ValidateName(snapshotName); err != nil {
+			t.Fatalf("failed to validate first snapshot: %s", err)
+		}
 		if _, err := manager.Create(snapshotName, ""); err != nil {
 			t.Fatalf("failed to create first snapshot: %s", err)
 		}
-		if _, err := manager.Create(snapshotName, ""); !errors.Is(err, ErrNameExists) {
+		if err := manager.ValidateName(snapshotName); err == nil {
 			t.Fatalf("failed to return error upon second snapshot with name %q", snapshotName)
 		}
 	})
@@ -39,7 +41,7 @@ func TestManager(t *testing.T) {
 			invalidNames = append(invalidNames, fmt.Sprintf("invalid%sname", c)) // spellcheck-ignore-line
 		}
 		for _, invalidName := range invalidNames {
-			if _, err := manager.Create(invalidName, ""); !errors.Is(err, ErrInvalidName) {
+			if err := manager.ValidateName(invalidName); err == nil {
 				t.Errorf("name %q is invalid but no error was returned", invalidName)
 			}
 		}
