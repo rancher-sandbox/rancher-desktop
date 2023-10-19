@@ -21,11 +21,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"net"
-	"net/url"
 	"os"
 	"path"
-	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
