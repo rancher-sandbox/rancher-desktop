@@ -42,10 +42,7 @@ type kubeConfig struct {
 	Extras map[string]interface{} `yaml:",inline"`
 }
 
-var (
-	k3sKubeconfigViper = viper.New()
-	rdNetworking       bool
-)
+var k3sKubeconfigViper = viper.New()
 
 // k3sKubeconfigCmd represents the `k3s kubeconfig` command.
 var k3sKubeconfigCmd = &cobra.Command{
@@ -69,7 +66,6 @@ var k3sKubeconfigCmd = &cobra.Command{
 				time.Sleep(time.Second)
 			}
 		}()
-		var err error
 		timeout := time.After(10 * time.Second)
 		var configFile *os.File
 		select {
@@ -78,48 +74,54 @@ var k3sKubeconfigCmd = &cobra.Command{
 		case configFile = <-ch:
 			break
 		}
-
-		var config kubeConfig
-		defer configFile.Close()
-		err = yaml.NewDecoder(configFile).Decode(&config)
+		config, err := updateClusterIP(configFile, false)
 		if err != nil {
 			return err
-		}
-
-		ip, err := getClusterIP()
-		if err != nil {
-			return err
-		}
-		// Fix up any clusters at 127.0.0.1, using the IP address we found.
-		for clusterIdx, cluster := range config.Clusters {
-			server, err := url.Parse(cluster.Cluster.Server)
-			if err != nil {
-				// Ignore any clusters with invalid servers
-				continue
-			}
-			if server.Hostname() != "127.0.0.1" {
-				continue
-			}
-			if rdNetworking {
-				server.Host = "gateway.rancher-desktop.internal:6443"
-			} else {
-				if server.Port() != "" {
-					server.Host = net.JoinHostPort(ip.String(), server.Port())
-				} else {
-					server.Host = ip.String()
-				}
-
-			}
-			config.Clusters[clusterIdx].Cluster.Server = server.String()
 		}
 		// Emit the result
 		err = yaml.NewEncoder(os.Stdout).Encode(config)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	},
+}
+
+func updateClusterIP(configFile *os.File, rdNetworking bool) (kubeConfig, error) {
+	var config kubeConfig
+	defer configFile.Close()
+	err := yaml.NewDecoder(configFile).Decode(&config)
+	if err != nil {
+		return config, err
+	}
+
+	ip, err := getClusterIP()
+	if err != nil {
+		return config, err
+	}
+	// Fix up any clusters at 127.0.0.1, using the IP address we found.
+	for clusterIdx, cluster := range config.Clusters {
+		server, err := url.Parse(cluster.Cluster.Server)
+		if err != nil {
+			// Ignore any clusters with invalid servers
+			continue
+		}
+		if server.Hostname() != "127.0.0.1" {
+			continue
+		}
+		if rdNetworking {
+			server.Host = "gateway.rancher-desktop.internal:6443"
+		} else {
+			if server.Port() != "" {
+				server.Host = net.JoinHostPort(ip.String(), server.Port())
+			} else {
+				server.Host = ip.String()
+			}
+
+		}
+		config.Clusters[clusterIdx].Cluster.Server = server.String()
+	}
+	return config, nil
 }
 
 func getClusterIP() (net.IP, error) {
@@ -158,7 +160,6 @@ func getClusterIP() (net.IP, error) {
 
 func init() {
 	k3sKubeconfigCmd.Flags().String("k3sconfig", "/etc/rancher/k3s/k3s.yaml", "Path to k3s kubeconfig")
-	k3sKubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	k3sKubeconfigViper.AutomaticEnv()
 	k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags())
 	k3sCmd.AddCommand(k3sKubeconfigCmd)

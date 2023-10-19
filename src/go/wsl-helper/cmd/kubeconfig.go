@@ -21,16 +21,22 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path"
 	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 	"k8s.io/client-go/util/homedir"
 )
 
-var kubeconfigViper = viper.New()
+var (
+	kubeconfigViper = viper.New()
+	rdNetworking    bool
+)
 
 // kubeconfigCmd represents the kubeconfig command, used to set up a symlink on
 // the Linux side to point at the Windows-side kubeconfig.  Note that we must
@@ -44,7 +50,6 @@ var kubeconfigCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configPath := kubeconfigViper.GetString("kubeconfig")
 		enable := kubeconfigViper.GetBool("enable")
-		show := kubeconfigViper.GetBool("show")
 
 		if configPath == "" {
 			return errors.New("Windows kubeconfig not supplied")
@@ -57,55 +62,34 @@ var kubeconfigCmd = &cobra.Command{
 		cmd.SilenceUsage = true
 
 		configDir := path.Join(homedir.HomeDir(), ".kube")
-		linkPath := path.Join(configDir, "config")
-		if show {
-			// The output is "true", "false", or an error message for UI.
-			// We will only return nil in this path.
-			target, err := os.Readlink(linkPath)
-			if err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					fmt.Println("false")
-				} else if errors.Is(err, syscall.EINVAL) {
-					fmt.Printf("File %s exists and is not a symlink\n", linkPath)
-				} else {
-					fmt.Printf("%s\n", err)
-				}
-			} else if target == configPath {
-				fmt.Println("true")
-			} else {
-				// For a symlink pointing elsewhere, we assume we can overwrite.
-				fmt.Println("false")
-			}
-			return nil
+
+		configFile, err := os.Open(configPath)
+		if err != nil {
+			return err
 		}
+
+		kubeConfig, err := updateClusterIP(configFile, rdNetworking)
+
+		var finalKubeConfigFile *os.File
 		if enable {
+			finalKubeConfigFile, err = os.Create(configDir)
+			if err != nil {
+				return err
+			}
+			defer finalKubeConfigFile.Close()
 			err = os.Mkdir(configDir, 0o750)
 			if err != nil && !errors.Is(err, os.ErrExist) {
 				// The error already contains the full path, we can't do better.
 				return err
 			}
-			err = os.Symlink(configPath, linkPath)
+			err = yaml.NewEncoder(finalKubeConfigFile).Encode(kubeConfig)
 			if err != nil {
-				if errors.Is(err, os.ErrExist) {
-					// If it already exists, do nothing; even if it's not a symlink.
-					return nil
-				}
 				return err
 			}
 		} else {
-			// No need to create if we want to remove it
-			target, err := os.Readlink(linkPath)
-			if err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					return nil
-				}
+			err = os.Remove(finalKubeConfigFile.Name())
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
 				return err
-			}
-			if target == configPath {
-				err = os.Remove(linkPath)
-				if err != nil && !errors.Is(err, os.ErrNotExist) {
-					return err
-				}
 			}
 		}
 		return nil
@@ -115,7 +99,7 @@ var kubeconfigCmd = &cobra.Command{
 func init() {
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
-	kubeconfigCmd.PersistentFlags().Bool("show", false, "Get the current state rather than set it")
+	kubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	kubeconfigViper.AutomaticEnv()
 	kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())
 	rootCmd.AddCommand(kubeconfigCmd)
