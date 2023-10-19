@@ -279,19 +279,21 @@ wait_for_container_engine() {
     try --max 12 --delay 10 get_container_engine_info
 }
 
-wait_for_backend() {
-    local timeout="$(($(date +%s) + 10 * 60))"
-    while true; do
-        run rdctl api /v1/backend_state
-        if ((status == 0)); then
-            run jq_output .vmState
-            case "$output" in
-            STARTED) return 0 ;;
-            DISABLED) return 0 ;;
-            esac
-        fi
-        assert [ "$(date +%s)" -lt "$timeout" ]
-        sleep 1
-    done
+# See definition of `State` in
+# pkg/rancher-desktop/backend/backend.ts for an explanation of each state.
+assert_backend_available() {
+    run rdctl api /v1/backend_state
+    if ((status == 0)); then
+        run jq_output .vmState
+        case "$output" in
+        ERROR) return 0 ;;
+        STARTED) return 0 ;;
+        DISABLED) return 0 ;;
+        esac
+    fi
     return 1
+}
+
+wait_for_backend() {
+    try --max 60 --delay 10 assert_backend_available
 }

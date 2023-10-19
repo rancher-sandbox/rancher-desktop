@@ -61,30 +61,35 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 	return "", fmt.Errorf(`can't find snapshot %q`, desiredName)
 }
 
-// Creates a new snapshot.
-func (manager Manager) Create(name string) (*Snapshot, error) {
+// ValidateName - does syntactic validation on the name
+func (manager Manager) ValidateName(name string) error {
 	// validate name
 	currentSnapshots, err := manager.List()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list snapshots: %w", err)
+		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
 	for _, currentSnapshot := range currentSnapshots {
 		if currentSnapshot.Name == name {
-			return nil, fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
+			return fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
 		}
 	}
 	if !nameRegexp.MatchString(name) {
-		return nil, fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
+		return fmt.Errorf("invalid name %q: %w", name, ErrInvalidName)
 	}
+	return nil
+}
 
+// Creates a new snapshot.
+func (manager Manager) Create(name, description string) (*Snapshot, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ID for snapshot: %w", err)
 	}
 	snapshot := Snapshot{
-		Created: time.Now(),
-		Name:    name,
-		ID:      id.String(),
+		Created:     time.Now(),
+		Name:        name,
+		ID:          id.String(),
+		Description: description,
 	}
 
 	// do operations that can fail, rolling back if failure is encountered

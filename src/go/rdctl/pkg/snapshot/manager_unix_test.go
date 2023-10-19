@@ -74,7 +74,7 @@ func TestManagerUnix(t *testing.T) {
 
 			// create snapshot
 			testManager := newTestManager(paths)
-			snapshot, err := testManager.Create("test-snapshot")
+			snapshot, err := testManager.Create("test-snapshot", "")
 			if err != nil {
 				t.Fatalf("unexpected error creating snapshot: %s", err)
 			}
@@ -101,7 +101,7 @@ func TestManagerUnix(t *testing.T) {
 		t.Run(fmt.Sprintf("Restore with includeOverrideYaml %t", includeOverrideYaml), func(t *testing.T) {
 			paths, testFiles := populateFiles(t, includeOverrideYaml)
 			manager := newTestManager(paths)
-			snapshot, err := manager.Create("test-snapshot")
+			snapshot, err := manager.Create("test-snapshot", "")
 			if err != nil {
 				t.Fatalf("failed to create snapshot: %s", err)
 			}
@@ -131,7 +131,7 @@ func TestManagerUnix(t *testing.T) {
 		if err := os.Remove(testFiles["override.yaml"].Path); err != nil {
 			t.Fatalf("failed to delete override.yaml: %s", err)
 		}
-		snapshot, err := manager.Create("test-snapshot")
+		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -162,7 +162,7 @@ func TestManagerUnix(t *testing.T) {
 	t.Run("Restore should create any needed parent directories", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create("test-snapshot")
+		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}

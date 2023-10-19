@@ -50,7 +50,7 @@ func TestManagerWindows(t *testing.T) {
 
 		// create snapshot
 		testManager := newTestManager(paths)
-		snapshot, err := testManager.Create("test-snapshot")
+		snapshot, err := testManager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("unexpected error creating snapshot: %s", err)
 		}
@@ -70,7 +70,7 @@ func TestManagerWindows(t *testing.T) {
 	t.Run("Restore should work properly", func(t *testing.T) {
 		paths, testFiles := populateFiles(t, false)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create("test-snapshot")
+		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -96,7 +96,7 @@ func TestManagerWindows(t *testing.T) {
 	t.Run("Restore should create any needed parent directories", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create("test-snapshot")
+		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}

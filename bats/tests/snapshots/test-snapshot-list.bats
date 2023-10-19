@@ -26,28 +26,20 @@ local_setup() {
     assert_output 'No snapshots present.'
 }
 
-@test 'create three snapshots, allowing for restarts' {
-    # Ensure the app is up and running
-    wait_for_container_engine
-    wait_for_apiserver
-    wait_for_backend
+@test 'create three snapshots with RD turned off, spaced every 5 seconds' {
+    # It's much faster to create snapshots when RD isn't running.
+    rdctl shutdown
+
     # Sleep 5 seconds after creating each snapshot so later we can verify
     # that the differences in each snapshot's creation time makes sense.
 
     rdctl snapshot create cows_fish_capers
     sleep 5
-    wait_for_container_engine
-    wait_for_apiserver
-    wait_for_backend
+
     rdctl snapshot create world-buffalo-federation
     sleep 5
-    wait_for_container_engine
-    wait_for_apiserver
-    wait_for_backend
+
     rdctl snapshot create run-like-an-antelope
-    wait_for_container_engine
-    wait_for_apiserver
-    wait_for_backend
 }
 
 @test 'verify snapshot-list output with snapshots' {
@@ -75,20 +67,18 @@ local_setup() {
 }
 
 @test 'verify k8s is off' {
+    start_container_engine
+    wait_for_container_engine
+    wait_for_backend
     run rdctl api /v1/settings
     assert_success
     run jq_output .kubernetes.enabled
     assert_success
-    case $output in
-    "true")
-        rdctl set --kubernetes.enabled=false
-        wait_for_container_engine
-        wait_for_backend
-        ;;
-    esac
+    assert_output "false"
 }
 
 @test 'create a snapshot with k8s off' {
+    # This tests that wait_for_backend accepts the DISABLED state as a final state.
     rdctl snapshot create anime-walnut-festival
     wait_for_container_engine
     wait_for_backend
