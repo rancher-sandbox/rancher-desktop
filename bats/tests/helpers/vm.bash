@@ -279,6 +279,8 @@ wait_for_container_engine() {
     try --max 12 --delay 10 get_container_engine_info
 }
 
+# See definition of `State` in
+# pkg/rancher-desktop/backend/backend.ts for an explanation of each state.
 assert_backend_available() {
     run rdctl api /v1/backend_state
     if ((status == 0)); then

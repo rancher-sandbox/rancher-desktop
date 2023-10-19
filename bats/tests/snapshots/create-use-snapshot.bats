@@ -24,12 +24,14 @@ local_setup() {
 
 @test 'shutdown, make a snapshot, and run factory-reset' {
     rdctl shutdown
+
     snapshot_description="first snapshot"
     rdctl snapshot create "$SNAPSHOT" --description "$snapshot_description"
     run rdctl snapshot list
     assert_success
     assert_output --partial "$SNAPSHOT"
     assert_output --partial "$snapshot_description"
+
     rdctl factory-reset
 }
 
@@ -104,12 +106,13 @@ local_setup() {
     refute_output ""
     snapshot_id=$output
     snapshot_description="second snapshot made with the --description option with \\ and \" and '."
+
     rdctl snapshot create "$snapshot_id" --description "$snapshot_description"
     run rdctl snapshot list --json
     assert_success
     run jq_output "$(printf 'select(.name == "%s").description' "$snapshot_id")"
     assert_success
-    assert_output --partial "$snapshot_description"
+    assert_output "$snapshot_description"
 
     # And we can delete that snapshot
     run rdctl snapshot delete "$snapshot_id" --json
