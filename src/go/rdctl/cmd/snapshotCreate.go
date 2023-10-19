@@ -50,11 +50,12 @@ func createSnapshot(cmd *cobra.Command, args []string) error {
 	if runtime.GOOS != "darwin" {
 		return nil
 	}
+
 	// exclude snapshots directory from time machine backups if on macOS
 	execCmd := exec.Command("tmutil", "isexcluded", appPaths.Snapshots)
 	output, err := execCmd.CombinedOutput()
 	// If a tmutil command fails, report it, but don't return failure status to the caller,
-	// as the snapshot was definitely created, and we need to continue that processing.
+	// as the snapshot was definitely created, and we need to continue processing it.
 	msg := fmt.Errorf("")
 	if err != nil {
 		msg = fmt.Errorf("`tmutil isexcluded` failed: %w: %s\n", err, output)

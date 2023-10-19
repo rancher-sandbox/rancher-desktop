@@ -61,7 +61,9 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 	return "", fmt.Errorf(`can't find snapshot %q`, desiredName)
 }
 
-// Make this a map just in case we support creating more than one snapshot in a run
+// Make this a map because in tests we validate more than one name in a run
+// If the non-test code needs to create more than one snapshot in a single run,
+// this variable shouldn't need to be changed
 var validateNameChecked = make(map[string]bool)
 
 // ValidateNewName - does syntactic validation on the name

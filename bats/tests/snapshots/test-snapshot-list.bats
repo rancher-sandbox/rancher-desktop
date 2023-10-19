@@ -26,7 +26,7 @@ local_setup() {
     assert_output 'No snapshots present.'
 }
 
-@test 'create three snapshots with RD turned off, allowing for restarts' {
+@test 'create three snapshots with RD turned off, spaced every 5 seconds' {
     # It's much faster to create snapshots when RD isn't running.
     rdctl shutdown
 
