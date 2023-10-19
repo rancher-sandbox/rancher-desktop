@@ -121,7 +121,7 @@ local_setup() {
 }
 
 @test 'very long descriptions are truncated in the table view' {
-    snapshot_name=aarons_farm
+    snapshot_name=armadillo_farm
     description_part="very long description names are truncated in the table view"
     long_description="$description_part, repeat: $description_part"
 
@@ -143,7 +143,7 @@ local_setup() {
 }
 
 @test 'table view truncates descriptions at an internal newline' {
-    snapshot_name=petes_circus
+    snapshot_name=retinal_asparagus
     part1="there's a new"
     description="$part1
 line somewhere in this description"
