@@ -426,6 +426,7 @@ logdna
 loglines
 logrus
 logz
+lovelace
 lsb
 mabels
 macarm
@@ -433,9 +434,11 @@ machinedeployment
 machineset
 macx
 magog
+mailcatch
 mariadb
 marshel
 mcapps
+mcnulty
 messageformat
 metainfo
 metricsection
@@ -520,6 +523,7 @@ objectset
 octicons
 oidc
 onecore
+oneoff
 oom
 openapitools
 openldapconfig
@@ -549,6 +553,7 @@ PCERT
 PCRYPT
 pcs
 pdp
+penpot
 persistentvolume
 persistentvolumeclaim
 PFlags
@@ -575,6 +580,7 @@ POptions
 portforward
 portmap
 portproxy
+postgresql
 postrotate
 Powerdown
 poweroff
