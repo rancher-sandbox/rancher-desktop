@@ -48,7 +48,6 @@ func init() {
 		"entries",
 		[]string{fmt.Sprintf("%s,%s", host.GatewayIP, host.GatewayDomain)},
 		"Array of host file entries to append")
-	updateHostsFileCmd.MarkFlagRequired("entries")
 	updateHostsFileCmd.Flags().Bool("remove", false, "Remove RD gateway from hosts file")
 	rootCmd.AddCommand(updateHostsFileCmd)
 }

@@ -441,8 +441,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         await this.execCommand(
           { distro, root: true },
           await this.getLinuxToolPath(distro, 'wsl-helper'),
-          'remove-host',
-          `--entries=${ entry }`,
+          'update-host',
+          `--remove`,
         );
       }
     } catch (error: any) {

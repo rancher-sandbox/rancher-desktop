@@ -39,7 +39,7 @@ const (
 //	  "127.0.0.1,another-example.com",
 //	}
 func AppendHostsFile(entries []string, hostsFilePath string) error {
-	exist, err := entryExist(entries, hostsFilePath)
+	exist, err := configExist(hostsFilePath)
 	if err != nil {
 		return err
 	}
@@ -152,24 +152,6 @@ func configExist(hostsFilePath string) (bool, error) {
 		line := scanner.Text()
 		if strings.Contains(line, BeginConfig) {
 			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func entryExist(entries []string, hostsFilePath string) (bool, error) {
-	hostFile, err := os.OpenFile(hostsFilePath, os.O_RDWR, 0644)
-	if err != nil {
-		return false, err
-	}
-	defer hostFile.Close()
-	scanner := bufio.NewScanner(hostFile)
-	for scanner.Scan() {
-		line := scanner.Text()
-		for _, entry := range entries {
-			if strings.Contains(line, strings.ReplaceAll(entry, ",", " ")) {
-				return true, nil
-			}
 		}
 	}
 	return false, nil
