@@ -37,8 +37,8 @@ func GetRDPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	candidatePath := filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
-	_, err := os.Stat(candidatePath)
+	candidatePath = filepath.Join(dataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe")
+	_, err = os.Stat(candidatePath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return "", fmt.Errorf("failed to check existence of %q: %w", candidatePath, err)
 	}

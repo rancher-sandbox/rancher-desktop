@@ -102,7 +102,6 @@ if is_windows; then
     PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
     PATH_SNAPSHOTS="$PATH_APP_HOME/rancher-desktop/snapshots"
 
-
     set_path_resources \
         "$PROGRAMFILES/Rancher Desktop" \
         "$LOCALAPPDATA/Programs/Rancher Desktop" \
