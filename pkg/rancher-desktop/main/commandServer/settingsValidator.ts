@@ -511,10 +511,10 @@ export default class SettingsValidator {
       return false;
     }
 
-    let changed = false;
+    let changed = Object.keys(currentValue).some(k => !(k in desiredValue));
 
     for (const [key, value] of Object.entries(desiredValue)) {
-      if (typeof value !== 'boolean') {
+      if (typeof value !== 'boolean' && value !== null) {
         errors.push(this.invalidSettingMessage(`${ fqname }.${ key }`, desiredValue[key]));
       } else {
         changed ||= currentValue[key] !== value;

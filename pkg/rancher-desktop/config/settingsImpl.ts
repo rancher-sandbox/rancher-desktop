@@ -172,9 +172,9 @@ export function merge<T = Settings>(cfg: T, changes: RecursivePartial<RecursiveR
       }
     }
     if (typeof srcValue === 'object' && srcValue) {
-      // For objects, setting a value to `undefined` will remove it.
+      // For objects, setting a value to `undefined` or `null` will remove it.
       for (const [key, value] of Object.entries(srcValue)) {
-        if (typeof value === 'undefined') {
+        if (typeof value === 'undefined' || value === null) {
           delete srcValue[key];
           if (typeof objValue === 'object' && objValue) {
             delete objValue[key];
