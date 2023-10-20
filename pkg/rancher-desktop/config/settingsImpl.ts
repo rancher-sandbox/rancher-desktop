@@ -260,7 +260,7 @@ function fileIsWritable(path: string) {
 
 /*
  * The purpose of this function is to let RD stop using AppData\Roaming on Windows, and store almost everything
- * in Local\Roaming. The only file it needs to preserve is `AppData\Roaming\rancher-desktop\settings.json`.
+ * in AppData\Local. The only file it needs to preserve is `AppData\Roaming\rancher-desktop\settings.json`.
  * This is called by the loader when it doesn't find that file in `Local\...`. So it looks to see if it's
  * in `Roaming\...`, and if it is, will move it to `Local\...` and then load it.
  */
