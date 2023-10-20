@@ -91,10 +91,14 @@ func NewSnapshotterImpl(p paths.Paths) Snapshotter {
 	}
 }
 
-// Does all of the things that can fail when creating a snapshot,
-// so that the snapshot creation can easily be rolled back upon
-// a failure.
 func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
+	// Create metadata.json file. This happens first because creation
+	// of subsequent files may take a while, and we always need to
+	// have access to snapshot metadata.
+	if err := writeMetadataFile(snapshotter.Paths, snapshot); err != nil {
+		return err
+	}
+
 	files := getSnapshotFiles(snapshotter.Paths, snapshot.ID)
 	for _, file := range files {
 		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
@@ -104,9 +108,14 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 			return fmt.Errorf("failed to copy %s: %w", filepath.Base(file.WorkingPath), err)
 		}
 	}
-	if err := writeMetadataFile(snapshotter.Paths, snapshot); err != nil {
-		return err
+
+	// Create complete.txt file. This is done last because its presence
+	// signifies a complete and valid snapshot.
+	completeFilePath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, completeFileName)
+	if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
+		return fmt.Errorf("failed to write %q: %w", completeFileName, err)
 	}
+
 	return nil
 }
 
