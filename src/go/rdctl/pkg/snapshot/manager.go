@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
@@ -18,7 +19,6 @@ const maxNameLength = 250
 const nameDisplayCutoffSize = 30
 
 var ErrNameExists = errors.New("name already exists")
-var ErrInvalidName = fmt.Errorf("name does not match regex %q", nameRegexp.String())
 var ErrIncompleteSnapshot = errors.New("snapshot is not complete")
 
 func writeMetadataFile(appPaths paths.Paths, snapshot Snapshot) error {
@@ -69,25 +69,28 @@ func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
 // ValidateName - does syntactic validation on the name
 func (manager Manager) ValidateName(name string) error {
 	if len(name) == 0 {
-		return fmt.Errorf("a snapshot name may not be the empty string")
+		return fmt.Errorf("snapshot name must not be the empty string")
 	}
 	reportedName := name
 	if len(reportedName) > nameDisplayCutoffSize {
-		reportedName = reportedName[0:nameDisplayCutoffSize] + "..."
+		reportedName = reportedName[0:nameDisplayCutoffSize] + "…"
 	}
 	if len(name) > maxNameLength {
 		return fmt.Errorf(`invalid name %q: max length is %d, %d were specified`, reportedName, maxNameLength, len(name))
 	}
-	if isWhitespaceRegexp.MatchString(name[0:1]) {
-		return fmt.Errorf(`invalid name %q: may not start with a white-space character`, reportedName)
+	if err := checkForInvalidCharacter(name); err != nil {
+		return err
 	}
-	if isWhitespaceRegexp.MatchString(name[len(name)-1:]) {
+	if unicode.IsSpace(rune(name[0])) {
+		return fmt.Errorf(`invalid name %q: must not start with a white-space character`, reportedName)
+	}
+	if unicode.IsSpace(rune(name[len(name)-1])) {
 		if len(name) > nameDisplayCutoffSize {
-			reportedName = "..." + name[len(name)-nameDisplayCutoffSize:]
+			reportedName = "…" + name[len(name)-nameDisplayCutoffSize:]
 		}
-		return fmt.Errorf(`invalid name %q: may not end with a white-space character`, reportedName)
+		return fmt.Errorf(`invalid name %q: must not end with a white-space character`, reportedName)
 	}
-	currentSnapshots, err := manager.List()
+	currentSnapshots, err := manager.List(false)
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
@@ -196,5 +199,14 @@ func (manager Manager) Restore(id string) error {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 
+	return nil
+}
+
+func checkForInvalidCharacter(name string) error {
+	for idx, c := range name {
+		if !unicode.IsPrint(rune(c)) {
+			return fmt.Errorf("invalid character value %d at position %d in name: all characters must be printable or a space", c, idx)
+		}
+	}
 	return nil
 }
