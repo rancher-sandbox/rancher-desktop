@@ -94,7 +94,6 @@ if is_windows; then
 
     PATH_APP_HOME="$LOCALAPPDATA/rancher-desktop"
     PATH_CONFIG="$LOCALAPPDATA/rancher-desktop"
-    PATH_DATA="$LOCALAPPDATA/rancher-desktop"
     PATH_CACHE="$PATH_APP_HOME/cache"
     PATH_LOGS="$PATH_APP_HOME/logs"
     PATH_DISTRO="$PATH_APP_HOME/distro"
