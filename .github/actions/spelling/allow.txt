@@ -1,17 +1,6 @@
-coreutils
-distatus
-dword
 emoji
 github
-hkcu
-hklm
-howett
 https
-qword
-skopeo
 ssh
-tini
 ubuntu
-vinzenz
-vznat
 workarounds

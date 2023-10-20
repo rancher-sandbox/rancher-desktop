@@ -102,7 +102,7 @@ cgroupns
 cgroups
 checkpath
 chirico
-CIDATA
+cidata
 cidfile
 cilogs
 Cim
@@ -137,6 +137,7 @@ constrainttemplate
 CONTAINERENGINE
 coredns
 corejs
+coreutils
 cpuset
 crds
 credfwd
@@ -174,6 +175,7 @@ dfile
 diffdisk
 digitalocean
 dirents
+distatus
 distros
 Dlg
 dlgbmp
@@ -194,6 +196,7 @@ dports
 dri
 DSL
 Duex
+dword
 eagerzeroedthick
 eastus
 ebegin
@@ -291,11 +294,14 @@ Hec
 heketi
 helmcharts
 hicolor
+hkcu
+hklm
 HMR
 hocs
 horizontalpodautoscaler
 hosthandshake
 hoverable
+howett
 hpa
 HRESULT
 htpasswd
@@ -454,8 +460,8 @@ MRM
 MSFT
 msiexec
 MSIINSTALLPERUSER
-msize
 MSIX
+msize
 MSRDC
 msvs
 mszip
@@ -595,6 +601,7 @@ pvc
 PWSTR
 qcow
 qmp
+qword
 rackspace
 rancherdesktop
 rancherkubernetesengine
@@ -678,6 +685,7 @@ sincosl
 singleparsesection
 sio
 sirupsen
+skopeo
 sku
 SLAs
 SLIRP
@@ -728,6 +736,7 @@ thanosruler
 Thu
 timekey
 timespan
+tini
 TKE
 tmpconfig
 tmpfs
@@ -768,6 +777,7 @@ ventura
 vertificate
 vfoo
 vhdx
+vinzenz
 virt
 virtio
 virtiofs
@@ -787,6 +797,7 @@ vtun
 vtunnel
 vuex
 vul
+vznat
 Warnf
 webcontents
 whatsnew
