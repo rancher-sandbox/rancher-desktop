@@ -13,11 +13,22 @@ class SnapshotsError {
   readonly isSnapshotError = true;
   message: string;
 
-  constructor(response: SpawnResult) {
-    console.debug(response.stdout);
-    const value = JSON.parse(response.stdout);
+  constructor(args: string[], response: SpawnResult) {
+    console.error(`snapshot error: command rdctl ${ args.join(' ') } => error ${ response.stdout }`);
+    try {
+      const value = JSON.parse(response.stdout);
 
-    this.message = value?.error;
+      this.message = value?.error;
+      if (!this.message) {
+        console.error(`Empty or no error field found in the output`);
+        this.message = 'Something went wrong with the `rdctl snapshot` command; the details are in the snapshots log file';
+      }
+    } catch (error) {
+      const msg = 'Cannot parse error message from `rdctl snapshot` command';
+
+      console.error(`${ msg }: ${ error }`);
+      this.message = msg;
+    }
   }
 }
 
@@ -47,26 +58,39 @@ class SnapshotsImpl {
   }
 
   async create(snapshot: Snapshot) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'create', snapshot.name, '--json']);
+    const args = [
+      'snapshot',
+      'create',
+      snapshot.name,
+      '--json',
+    ];
+
+    if (snapshot.description) {
+      args.push('--description', snapshot.description);
+    }
+
+    const response = await this.rdctl(args);
 
     if (response.error) {
-      throw new SnapshotsError(response);
+      throw new SnapshotsError(args, response);
     }
   }
 
   async restore(name: string) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'restore', name, '--json']);
+    const args = ['snapshot', 'restore', name, '--json'];
+    const response = await this.rdctl(args);
 
     if (response.error) {
-      throw new SnapshotsError(response);
+      throw new SnapshotsError(args, response);
     }
   }
 
   async delete(name: string) : Promise<void> {
-    const response = await this.rdctl(['snapshot', 'delete', name, '--json']);
+    const args = ['snapshot', 'delete', name, '--json'];
+    const response = await this.rdctl(args);
 
     if (response.error) {
-      throw new SnapshotsError(response);
+      throw new SnapshotsError(args, response);
     }
   }
 }

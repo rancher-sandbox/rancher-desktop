@@ -128,6 +128,8 @@ export default Vue.extend<Data, Methods, Computed, Props>({
     },
 
     async showRestoringSnapshotDialog() {
+      const snapshot = this.snapshot.name.length > 32 ? `${ this.snapshot.name.substring(0, 30) }...` : this.snapshot.name;
+
       await ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
@@ -136,8 +138,8 @@ export default Vue.extend<Data, Methods, Computed, Props>({
             cancelId: 1,
           },
           format: {
-            header:          this.t('snapshots.dialog.restoring.header', { snapshot: this.snapshot.name }),
-            message:         this.t('snapshots.dialog.restoring.message', { snapshot: this.snapshot.name }, true),
+            header:          this.t('snapshots.dialog.restoring.header', { snapshot }),
+            message:         this.t('snapshots.dialog.restoring.message', { snapshot }, true),
             showProgressBar: true,
           },
         },
@@ -167,10 +169,10 @@ export default Vue.extend<Data, Methods, Computed, Props>({
         </div>
       </div>
       <div
-        v-if="snapshot.notes"
-        class="notes"
+        v-if="snapshot.description"
+        class="description"
       >
-        <span class="value">{{ snapshot.notes }}</span>
+        <span class="value">{{ snapshot.description }}</span>
       </div>
     </div>
     <div class="actions">
@@ -214,7 +216,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           margin: 0 0 5px 0;
         }
       }
-      .notes {
+      .description {
         max-width: 550px;
         word-wrap: break-word;
         overflow: hidden;

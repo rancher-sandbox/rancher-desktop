@@ -16,7 +16,7 @@ const defaultName = () => {
 
 interface Data {
   name: string,
-  notes: string,
+  description: string,
   creating: boolean,
 }
 
@@ -40,9 +40,9 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
   data() {
     return {
-      name:     defaultName(),
-      notes:    '',
-      creating: false,
+      name:        defaultName(),
+      description: '',
+      creating:    false,
     };
   },
 
@@ -74,11 +74,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
       this.creating = true;
       document.getSelection()?.removeAllRanges();
 
-      /** TODO limit notes length */
-      const { name, notes } = this;
+      /** TODO limit description length */
+      const { name, description } = this;
 
       ipcRenderer.on('dialog/mounted', async() => {
-        const error = await this.$store.dispatch('snapshots/create', { name, notes });
+        const error = await this.$store.dispatch('snapshots/create', { name, description });
 
         if (error) {
           ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
@@ -100,6 +100,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
     },
 
     async showCreatingSnapshotDialog() {
+      const name = this.name.length > 32 ? `${ this.name.substring(0, 30) }...` : this.name;
+
       await ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
@@ -108,9 +110,9 @@ export default Vue.extend<Data, Methods, Computed, never>({
             cancelId: 1,
           },
           format: {
-            header:          this.t('snapshots.dialog.creating.header', { snapshot: this.name }),
+            header:          this.t('snapshots.dialog.creating.header', { snapshot: name }),
             showProgressBar: true,
-            message:         this.t('snapshots.dialog.creating.message', { snapshot: this.name }, true),
+            message:         this.t('snapshots.dialog.creating.message', { snapshot: name }, true),
           },
         },
       );
@@ -137,14 +139,13 @@ export default Vue.extend<Data, Methods, Computed, never>({
           class="input"
           type="text"
           :disabled="creating"
-          :maxlength="35"
         />
       </div>
-      <div class="field notes-field">
-        <label>{{ t('snapshots.create.notes.label') }}</label>
+      <div class="field description-field">
+        <label>{{ t('snapshots.create.description.label') }}</label>
         <TextAreaAutoGrow
-          ref="notesInput"
-          v-model="notes"
+          ref="descriptionInput"
+          v-model="description"
           class="input"
           :disabled="creating"
         />
@@ -182,7 +183,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       margin-top: 5px;
     }
 
-    .notes-field .input {
+    .description-field .input {
       min-height: 200px;
     }
 

@@ -91,7 +91,10 @@ export default Vue.extend<Data, Methods, Computed, never>({
       :closable="true"
       @close="snapshotEvent=null"
     >
-      <span v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)" />
+      <span
+        class="event-message"
+        v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
+      />
     </Banner>
     <div
       v-for="(item) of snapshots"
@@ -113,3 +116,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+  .event-message {
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
