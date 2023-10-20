@@ -176,6 +176,24 @@ get_json_test_data() {
     assert_output --partial "parse error"
 }
 
+@test 'jq_output does not return a newline when the output is "nothing"' {
+    output=""
+    output=$(
+        jq_output .Anything
+        echo "."
+    )
+    assert_output "."
+}
+
+@test 'jq_output does return a newline when the output is the empty string' {
+    output='{"Empty": ""}'
+    output=$(
+        jq_output .Empty
+        echo "."
+    )
+    assert_output $'\n.'
+}
+
 ########################################################################
 
 @test 'this_function' {
