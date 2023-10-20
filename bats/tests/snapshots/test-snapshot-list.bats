@@ -2,6 +2,9 @@ load '../helpers/load'
 
 local_setup() {
     skip_on_windows "snapshots test not applicable on Windows"
+    NON_ALNUM_SNAPSHOT_NAME='@#$%'
+    MULTI_WORD_SNAPSHOT_NAME='cant have quotes or backslashes in a json select expression.'
+    EMOJI_SNAPSHOT_NAME="emoji's 😍 are cool"
 }
 
 @test 'factory reset and delete all the snapshots' {
@@ -33,20 +36,20 @@ local_setup() {
     # Sleep 5 seconds after creating each snapshot so later we can verify
     # that the differences in each snapshot's creation time makes sense.
 
-    rdctl snapshot create cows_fish_capers
+    rdctl snapshot create "$NON_ALNUM_SNAPSHOT_NAME"
     sleep 5
 
-    rdctl snapshot create world-buffalo-federation
+    rdctl snapshot create "$MULTI_WORD_SNAPSHOT_NAME"
     sleep 5
 
-    rdctl snapshot create run-like-an-antelope
+    rdctl snapshot create "$EMOJI_SNAPSHOT_NAME"
 }
 
 @test 'verify snapshot-list output with snapshots' {
     run rdctl snapshot list --json
     assert_success
-    DATE1=$(jq_output 'select(.name == "world-buffalo-federation").created')
-    DATE2=$(jq_output 'select(.name == "run-like-an-antelope").created')
+    DATE1=$(jq_output "select(.name == \"$MULTI_WORD_SNAPSHOT_NAME\").created")
+    DATE2=$(jq_output "select(.name == \"$EMOJI_SNAPSHOT_NAME\").created")
     if is_macos; then
         TIME1=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE1" +%s 2>/dev/null)
         TIME2=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE2" +%s 2>/dev/null)
@@ -61,9 +64,9 @@ local_setup() {
 
     run rdctl snapshot list
     assert_success
-    assert_output --partial "cows_fish_capers"
-    assert_output --partial "world-buffalo-federation"
-    assert_output --partial "run-like-an-antelope"
+    assert_output --partial "$NON_ALNUM_SNAPSHOT_NAME"
+    assert_output --partial "$MULTI_WORD_SNAPSHOT_NAME"
+    assert_output --partial "$EMOJI_SNAPSHOT_NAME"
 }
 
 @test 'verify k8s is off' {
@@ -92,4 +95,7 @@ local_setup() {
 
 @test 'and clean up' {
     delete_all_snapshots
+    run rdctl snapshot list
+    assert_success
+    assert_output 'No snapshots present.'
 }

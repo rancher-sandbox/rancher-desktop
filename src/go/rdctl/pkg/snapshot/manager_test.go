@@ -42,19 +42,68 @@ func TestManager(t *testing.T) {
 	t.Run("ValidateName should disallow invalid names", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
+		oversizeName :=
+			// 251 characters is too long (and the indentation here is what our linter demands)
+			"12345678911234567892123456789312345678941234567895123456789612345678971234567898" +
+				"12345678991234567890123456789112345678921234567893123456789412345678951234567896" +
+				"12345678971234567898123456789912345678901234567891123456789212345678931234567894" +
+				"12345678951"
+		nameWithTab := "can't contain a \t tab"
 		invalidNames := []string{
-			"test!",
-			`"test"`,
-			`'test'`,
-			"testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest" +
-				"testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest",
-		}
-		for _, c := range strings.Split("!$^&*()[]{};:?/'` \\\"", "") {
-			invalidNames = append(invalidNames, fmt.Sprintf("invalid%sname", c)) // spellcheck-ignore-line
+			"", // empty string not allowed
+			" can't start with a space",
+			`can't end with a "space" `,
+			oversizeName,
+			nameWithTab,
+			"can't contain a \n newline",
+			"can't contain a \r carriage-return",
+			"can't contain a \x00 null-byte",
+			"can't contain a \x07 control character",
 		}
 		for _, invalidName := range invalidNames {
 			if err := manager.ValidateName(invalidName); err == nil {
 				t.Errorf("name %q is invalid but no error was returned", invalidName)
+			}
+		}
+		// The above loop verifies that each invalid name is found invalid.
+		// The following code verifies that we get the actual
+		err := manager.ValidateName(oversizeName)
+		if err == nil {
+			t.Error("oversize name is invalid but no error was returned")
+		} else if !strings.Contains(err.Error(), "…") {
+			t.Errorf("No ellipsis in reported name")
+		}
+		err = manager.ValidateName(nameWithTab)
+		if err == nil {
+			t.Error("name with tab is invalid but no error was returned")
+		} else if !strings.Contains(err.Error(), "invalid character value 9 at position 16 in name: all characters must be printable or a space") {
+			t.Errorf("failed to report unprintable character in name, got %s", err.Error())
+		}
+		longishNameEndingWithSpace := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
+		endOfLongishString := longishNameEndingWithSpace[len(longishNameEndingWithSpace)-nameDisplayCutoffSize:]
+		err = manager.ValidateName(longishNameEndingWithSpace)
+		if err == nil {
+			t.Error(" name ending with space not caught")
+		} else if !strings.Contains(err.Error(), "…"+endOfLongishString) {
+			t.Errorf("Longish invalid name not truncated as expected")
+		}
+	})
+
+	t.Run("Should create these valid names", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := newTestManager(paths)
+		validNames := []string{
+			`no "spaces" at either end`,
+			// 250 characters is ok
+			"12345678911234567892123456789312345678941234567895123456789612345678971234567898" +
+				"12345678991234567890123456789112345678921234567893123456789412345678951234567896" +
+				"12345678971234567898123456789912345678901234567891123456789212345678931234567894" +
+				"1234567895",
+			"french student: élève",
+		}
+		for _, validName := range validNames {
+			if err := manager.ValidateName(validName); err != nil {
+				t.Errorf("Name %s should be valid", validName)
 			}
 		}
 	})
