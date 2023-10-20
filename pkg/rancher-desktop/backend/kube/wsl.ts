@@ -172,7 +172,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
   }
 
-  async start(config: BackendSettings, activeVersion: semver.SemVer): Promise<string> {
+  async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: KubeClient): Promise<string> {
     if (!config) {
       throw new Error('no config!');
     }
@@ -218,7 +218,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
           async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig', rdNetworking));
       });
 
-    const client = this.client = new KubeClient();
+    const client = this.client = kubeClient || new KubeClient();
 
     await this.progressTracker.action(
       'Waiting for services',

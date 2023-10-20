@@ -7,6 +7,7 @@ import LimaBackend from './lima';
 import MockBackend from './mock';
 import WSLBackend from './wsl';
 
+import { LimaKubernetesBackendMock, WSLKubernetesBackendMock } from '@pkg/backend/mock_screenshots';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 
 export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): VMBackend {
@@ -20,11 +21,19 @@ export default function factory(arch: Architecture, dockerDirManager: DockerDirM
   case 'linux':
   case 'darwin':
     return new LimaBackend(arch, dockerDirManager, (backend: LimaBackend) => {
-      return new LimaKubernetesBackend(arch, backend);
+      if (process.env.RD_MOCK_FOR_SCREENSHOTS) {
+        return new LimaKubernetesBackendMock(arch, backend);
+      } else {
+        return new LimaKubernetesBackend(arch, backend);
+      }
     });
   case 'win32':
     return new WSLBackend((backend: WSLBackend) => {
-      return new WSLKubernetesBackend(backend);
+      if (process.env.RD_MOCK_FOR_SCREENSHOTS) {
+        return new WSLKubernetesBackendMock(backend);
+      } else {
+        return new WSLKubernetesBackend(backend);
+      }
     });
   default:
     throw new Error(`OS "${ platform }" is not supported.`);

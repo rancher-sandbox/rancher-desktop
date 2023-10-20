@@ -108,6 +108,9 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('PortForwarding Page', async({ colorScheme }) => {
+      const portForwardingPage = await navPage.navigateTo('PortForwarding');
+
+      await expect(portForwardingPage.page.getByRole('row')).toHaveCount(4);
       await screenshot.take('PortForwarding', navPage);
     });
 
