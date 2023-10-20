@@ -100,6 +100,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
     },
 
     async showCreatingSnapshotDialog() {
+      const name = this.name.length > 32 ? `${ this.name.substring(0, 30) }...` : this.name;
+
       await ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
@@ -108,9 +110,9 @@ export default Vue.extend<Data, Methods, Computed, never>({
             cancelId: 1,
           },
           format: {
-            header:          this.t('snapshots.dialog.creating.header', { snapshot: this.name }),
+            header:          this.t('snapshots.dialog.creating.header', { snapshot: name }),
             showProgressBar: true,
-            message:         this.t('snapshots.dialog.creating.message', { snapshot: this.name }, true),
+            message:         this.t('snapshots.dialog.creating.message', { snapshot: name }, true),
           },
         },
       );
@@ -137,7 +139,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
           class="input"
           type="text"
           :disabled="creating"
-          :maxlength="35"
         />
       </div>
       <div class="field description-field">
