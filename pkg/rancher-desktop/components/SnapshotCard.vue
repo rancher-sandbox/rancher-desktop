@@ -128,6 +128,8 @@ export default Vue.extend<Data, Methods, Computed, Props>({
     },
 
     async showRestoringSnapshotDialog() {
+      const snapshot = this.snapshot.name.length > 32 ? `${ this.snapshot.name.substring(0, 30) }...` : this.snapshot.name;
+
       await ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
@@ -136,8 +138,8 @@ export default Vue.extend<Data, Methods, Computed, Props>({
             cancelId: 1,
           },
           format: {
-            header:          this.t('snapshots.dialog.restoring.header', { snapshot: this.snapshot.name }),
-            message:         this.t('snapshots.dialog.restoring.message', { snapshot: this.snapshot.name }, true),
+            header:          this.t('snapshots.dialog.restoring.header', { snapshot }),
+            message:         this.t('snapshots.dialog.restoring.message', { snapshot }, true),
             showProgressBar: true,
           },
         },
