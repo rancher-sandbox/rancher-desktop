@@ -116,13 +116,36 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   async sync(): Promise<void> {
     try {
+      const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
+
       await Promise.all([
-        this.syncSocketProxy(),
-        this.syncDockerPlugins(),
-        this.syncKubeconfig(),
+        this.syncHostSocketProxy(),
+        this.syncHostDockerPlugins(),
+        ...(await this.supportedDistros).map(distro => this.syncDistro(distro.name, kubeconfigPath)),
       ]);
+    } catch (ex) {
+      console.error(`Integration sync: Error: ${ ex }`);
     } finally {
       mainEvents.emit('integration-update', await this.listIntegrations());
+    }
+  }
+
+  async syncDistro(distro: string, kubeconfigPath: string): Promise<void> {
+    let state = this.settings.WSL?.integrations?.[distro] === true;
+
+    console.debug(`Integration sync: ${ distro } -> ${ state }`);
+    try {
+      await Promise.all([
+        this.syncDistroSocketProxy(distro, state),
+        this.syncDistroDockerPlugins(distro, state),
+        this.syncDistroKubeconfig(distro, kubeconfigPath, state),
+      ]);
+    } catch (ex) {
+      console.error(`Failed to sync integration for ${ distro }: ${ ex }`);
+      mainEvents.emit('settings-write', { WSL: { integrations: { [distro]: false } } });
+      state = false;
+    } finally {
+      await this.markIntegration(distro, state);
     }
   }
 
@@ -229,16 +252,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     return stdout.trim();
   }
 
-  protected async syncSocketProxy(): Promise<void> {
-    let reason = '';
-
-    if (!this.enforcing) {
-      reason = 'not enforcing';
-    } else if (!this.backendReady) {
-      reason = 'backend not ready';
-    } else if (this.settings.containerEngine?.name !== ContainerEngine.MOBY) {
-      reason = `unsupported container engine ${ this.settings.containerEngine?.name }`;
-    }
+  protected async syncHostSocketProxy(): Promise<void> {
+    const reason = this.dockerSocketProxyReason;
 
     console.debug(`Syncing Win32 socket proxy: ${ reason ? `should not run (${ reason })` : 'should run' }`);
     if (!reason) {
@@ -246,25 +261,35 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } else {
       await this.windowsSocketProxyProcess.stop();
     }
+  }
 
-    await Promise.all(
-      (await this.supportedDistros).map((distro) => {
-        return this.syncDistroSocketProxy(distro.name, !reason);
-      }),
-    );
+  /**
+   * Get the reason that the docker socket should not run; if it _should_ run,
+   * returns undefined.
+   */
+  get dockerSocketProxyReason(): string | undefined {
+    if (!this.enforcing) {
+      return 'not enforcing';
+    } else if (!this.backendReady) {
+      return 'backend not ready';
+    } else if (this.settings.containerEngine?.name !== ContainerEngine.MOBY) {
+      return `unsupported container engine ${ this.settings.containerEngine?.name }`;
+    }
   }
 
   /**
    * syncDistroSocketProxy ensures that the background process for the given
    * distribution is started or stopped, as desired.
    * @param distro The distribution to manage.
-   * @param shouldRun Whether the docker socket proxy should be running.
+   * @param state Whether integration is enabled for the given distro.
    * @note this function must not throw.
    */
-  protected async syncDistroSocketProxy(distro: string, shouldRun: boolean) {
+  protected async syncDistroSocketProxy(distro: string, state: boolean) {
     try {
+      const shouldRun = state && !this.dockerSocketProxyReason;
+
       console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
-      if (shouldRun && this.settings.WSL?.integrations?.[distro] === true) {
+      if (shouldRun) {
         const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
         const logStream = Logging[`wsl-helper.${ distro }`];
 
@@ -301,18 +326,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
-  protected async syncDockerPlugins() {
-    const wslPluginNames = await this.getWslDockerCliPluginNames();
-    const hostPluginNames = await this.getHostDockerCliPluginNames();
+  protected async syncHostDockerPlugins() {
+    const pluginNames = await this.getHostDockerCliPluginNames();
 
-    const promises: Promise<void>[] = hostPluginNames.map(hostPluginName => this.syncHostDockerPlugin(hostPluginName) );
-
-    for (const wslPluginName of wslPluginNames) {
-      promises.push(
-        ...(await this.supportedDistros).map(distro => this.syncDistroDockerPlugin(distro.name, wslPluginName )),
-      );
-    }
-    await Promise.all(promises);
+    await Promise.all(pluginNames.map(name => this.syncHostDockerPlugin(name)));
   }
 
   protected async getWslDockerCliPluginNames(): Promise<string[]> {
@@ -356,18 +373,24 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
+  protected async syncDistroDockerPlugins(distro: string, state: boolean): Promise<void> {
+    const names = await this.getWslDockerCliPluginNames();
+
+    await Promise.all(names.map(name => this.syncDistroDockerPlugin(distro, name, state)));
+  }
+
   /**
    * syncDistroDockerPlugin ensures that a plugin is accessible in the given distro.
    * @param distro The distribution to manage.
    * @param pluginName The plugin to validate.
+   * @param state Whether the plugin should be exposed.
    * @note this function must not throw.
    */
-  protected async syncDistroDockerPlugin(distro: string, pluginName: string) {
+  protected async syncDistroDockerPlugin(distro: string, pluginName: string, state: boolean) {
     try {
       const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
       const destDir = '$HOME/.docker/cli-plugins';
       const destPath = `${ destDir }/${ pluginName }`;
-      const state = this.settings.WSL?.integrations?.[distro] === true;
 
       console.debug(`Syncing ${ distro } ${ pluginName }: ${ srcPath } -> ${ destDir }`);
       if (state) {
@@ -393,36 +416,22 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
-  protected async syncKubeconfig() {
-    const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
-
-    await Promise.all(
-      (await this.supportedDistros).map((distro) => {
-        return this.syncDistroKubeconfig(distro.name, kubeconfigPath);
-      }),
-    );
-  }
-
-  protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string) {
-    const state = this.settings.WSL?.integrations?.[distro] === true;
-
+  protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string, state: boolean) {
     try {
       console.debug(`Syncing ${ distro } kubeconfig`);
-      if (this.settings.kubernetes?.enabled) {
-        await this.execCommand(
-          {
-            distro,
-            env: {
-              ...process.env,
-              KUBECONFIG: kubeconfigPath,
-              WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
-            },
+      await this.execCommand(
+        {
+          distro,
+          env: {
+            ...process.env,
+            KUBECONFIG: kubeconfigPath,
+            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
           },
-          await this.getLinuxToolPath(distro, 'wsl-helper'),
-          'kubeconfig',
-          `--enable=${ state }`,
-        );
-      }
+        },
+        await this.getLinuxToolPath(distro, 'wsl-helper'),
+        'kubeconfig',
+        `--enable=${ state && this.settings.kubernetes?.enabled }`,
+      );
     } catch (error: any) {
       if (typeof error?.stdout === 'string') {
         error.stdout = error.stdout.replace(/\0/g, '');
@@ -470,6 +479,17 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     })();
   }
 
+  protected async markIntegration(distro: string, state: boolean): Promise<void> {
+    try {
+      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+      const mode = state ? 'set' : 'delete';
+
+      await this.execCommand({ distro, root: true }, executable, 'wsl', 'integration-state', `--mode=${ mode }`);
+    } catch (ex) {
+      console.error(`Failed to mark integration for ${ distro }:`, ex);
+    }
+  }
+
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
@@ -490,24 +510,13 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
       return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${ distro.version }).`;
     }
-    if (!this.settings.kubernetes?.enabled) {
-      return this.settings.WSL?.integrations?.[distro.name] ?? false;
-    }
     try {
       const executable = await this.getLinuxToolPath(distro.name, 'wsl-helper');
-      const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
       const stdout = await this.captureCommand(
-        {
-          distro: distro.name,
-          env:    {
-            ...process.env,
-            KUBECONFIG: kubeconfigPath,
-            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
-          },
-        },
-        executable, 'kubeconfig', '--show');
+        { distro: distro.name },
+        executable, 'wsl', 'integration-state', '--mode=show');
 
-      console.debug(`WSL distro "${ distro.name }: wsl-helper output: "${ stdout }"`);
+      console.debug(`WSL distro "${ distro.name }": wsl-helper output: "${ stdout.trim() }"`);
       if (['true', 'false'].includes(stdout.trim())) {
         return stdout.trim() === 'true';
       } else {

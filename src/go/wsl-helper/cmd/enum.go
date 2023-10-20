@@ -13,19 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package cmd
 
-import (
-	"github.com/spf13/cobra"
-)
+import "fmt"
 
-// k3sCmd represents the k3s command
-var wslCmd = &cobra.Command{
-	Use:    "wsl",
-	Short:  "Commands for interacting with WSL",
-	Hidden: true,
+// enumValue describes an enumeration for use with github.com/spf13/pflag
+type enumValue struct {
+	allowed []string // Allowed values
+	val     string   // Current value
 }
 
-func init() {
-	rootCmd.AddCommand(wslCmd)
+func (v *enumValue) String() string {
+	return v.val
+}
+
+func (v *enumValue) Set(newVal string) error {
+	for _, candidate := range v.allowed {
+		if candidate == newVal {
+			v.val = candidate
+			return nil
+		}
+	}
+	return fmt.Errorf("value %q is not one of the allowed values: %+v", newVal, v.allowed)
+}
+
+func (v *enumValue) Type() string {
+	return "enum"
 }
