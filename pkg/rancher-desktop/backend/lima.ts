@@ -1703,10 +1703,24 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
   }
 
+  protected async getResolver() {
+    try {
+      const limaEnv = await this.execCommand({ capture: true, root: true },
+        'grep', 'LIMA_CIDATA_SLIRP_DNS', '/mnt/lima-cidata/lima.env');
+      const match = limaEnv.match('LIMA_CIDATA_SLIRP_DNS=([0-9.]+)');
+
+      return match ? match[1] : SLIRP.DNS;
+    } catch (ex: any) {
+      console.error(`Could not get resolver address: ${ ex?.stderr || ex }`);
+
+      // This will be wrong for VZ emulation
+      return SLIRP.DNS;
+    }
+  }
+
   protected async configureOpenResty(config: BackendSettings) {
     const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
-    // TODO: don't use hardcoded IP address
-    const resolver = `resolver ${ SLIRP.DNS } ipv6=off;\n`;
+    const resolver = `resolver ${ await this.getResolver() } ipv6=off;\n`;
 
     await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
     await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
