@@ -97,10 +97,19 @@ join_map() {
 }
 
 jq_output() {
-    run jq -r "$@" <<<"${output}"
-    echo "$output"
-    if [[ $output == null ]]; then
-        status=1
+    local json=$output
+    run jq -r "$@" <<<"${json}"
+    if [[ -n $output ]]; then
+        echo "$output"
+        if [[ $output == null ]]; then
+            status=1
+        fi
+    elif ((status == 0)); then
+        # The command succeeded, so we should be able to run it again without error
+        # If the jq command emitted a newline, then we want to emit a newline too.
+        if [ "$(jq -r "$@" <<<"${json}" | wc -c)" -gt 0 ]; then
+            echo ""
+        fi
     fi
     return "$status"
 }

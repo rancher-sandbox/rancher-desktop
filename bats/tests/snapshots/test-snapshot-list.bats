@@ -3,7 +3,7 @@ load '../helpers/load'
 local_setup() {
     skip_on_windows "snapshots test not applicable on Windows"
     NON_ALNUM_SNAPSHOT_NAME='@#$%'
-    MULTI_WORD_SNAPSHOT_NAME='cant have quotes or backslashes in a json select expression.'
+    MULTI_WORD_SNAPSHOT_NAME='=with '\''single'\'' and "double" quotes, /slashes/, and \backslashes\.'
     EMOJI_SNAPSHOT_NAME="emoji's 😍 are cool"
 }
 
@@ -45,11 +45,17 @@ local_setup() {
     rdctl snapshot create "$EMOJI_SNAPSHOT_NAME"
 }
 
+created() {
+    local name
+    name=$(json_string "$1")
+    jq_output "select(.name == $name).created"
+}
+
 @test 'verify snapshot-list output with snapshots' {
     run rdctl snapshot list --json
     assert_success
-    DATE1=$(jq_output "select(.name == \"$MULTI_WORD_SNAPSHOT_NAME\").created")
-    DATE2=$(jq_output "select(.name == \"$EMOJI_SNAPSHOT_NAME\").created")
+    DATE1=$(created "$MULTI_WORD_SNAPSHOT_NAME")
+    DATE2=$(created "$EMOJI_SNAPSHOT_NAME")
     if is_macos; then
         TIME1=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE1" +%s 2>/dev/null)
         TIME2=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE2" +%s 2>/dev/null)
