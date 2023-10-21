@@ -1,0 +1,42 @@
+load '../helpers/load'
+
+local_setup() {
+    skip_on_unix 'roaming appdata => local appdata migration is windows-only'
+    ROAMING_HOME="$(win32env APPDATA)/rancher-desktop"
+}
+
+@test 'factory reset' {
+    factory_reset
+}
+
+@test 'start app, create a setting, and move settings to roaming' {
+    start_container_engine
+    wait_for_container_engine
+
+    rdctl api -X PUT /settings --body '{ "version": '"$(get_setting .version)"', "WSL": {"integrations": { "beaker" : true }}}'
+    rdctl shutdown
+    mkdir -p "$ROAMING_HOME"
+    mv "$PATH_CONFIG_FILE" "$ROAMING_HOME/settings.json"
+}
+
+@test 'restart app, verify settings has been migrated' {
+    launch_the_application
+    wait_for_container_engine
+
+    run rdctl api /settings
+    assert_success
+    run jq_output .WSL.integrations.beaker
+    assert_success
+    assert_output true
+}
+
+@test 'verify the settings file exists in both Local/ and Roaming/' {
+    # Migration doesn't delete it from Roaming/ in case the user decides to roll back to an earlier version.
+    test -f "$PATH_CONFIG_FILE"
+    test -f "$ROAMING_HOME/settings.json"
+}
+
+@test 'verify factory-reset deletes all of Roaming/rancher-desktop' {
+    rdctl factory-reset
+    assert_not_exists "$ROAMING_HOME"
+}

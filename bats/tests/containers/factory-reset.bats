@@ -146,9 +146,6 @@ rdctl_factory_reset() {
 
     if [[ $1 == "--remove-kubernetes-cache=true" ]]; then
         assert_not_exist "$PATH_CACHE"
-        if is_windows; then
-            assert_not_exist "$PATH_DATA"
-        fi
     else
         assert_exists "$PATH_CACHE"
     fi
@@ -156,22 +153,22 @@ rdctl_factory_reset() {
 
 check_directories() {
     # Check if all expected directories are created after starting application/ are deleted after a factory reset
-    delete_dir=("$PATH_CONFIG")
+    delete_dir=("$PATH_LOGS" "$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json")
     if is_unix; then
-        delete_dir+=("$HOME/.rd")
-        delete_dir+=("$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json" "$LIMA_HOME" "$PATH_LOGS")
+        # On Windows "$PATH_CONFIG" == "$PATH_APP_HOME"
+        delete_dir+=("$HOME/.rd" "$LIMA_HOME" "$PATH_CONFIG")
         # We can't make any general assertion on AppHome/snapshots - we don't know if it was created or not
         # So just assert on the other members of AppHome
-        # if is_macos; then
         # TODO on macOS (not implemented by `rdctl factory-reset`)
         # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
         # this one only exists after an update has been downloaded
         # ~/Library/Application Support/Caches/rancher-desktop-updater
-        # fi
     fi
 
     if is_windows; then
-        delete_dir+=("$PATH_LOGS" "$PATH_DISTRO" "$PATH_DISTRO_DATA" "$PATH_APP_HOME")
+        # On Windows $PATH_CONFIG is the same as $PATH_APP_HOME
+        delete_dir+=("$PATH_CONFIG_FILE" "$PATH_DISTRO" "$PATH_DISTRO_DATA")
+        # TODO: What about  $PATH_APP_HOME/vtunnel-config.yaml ?
     fi
 
     for dir in "${delete_dir[@]}"; do

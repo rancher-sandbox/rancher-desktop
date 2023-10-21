@@ -29,7 +29,7 @@ import (
 	"strconv"
 	"strings"
 
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -66,11 +66,11 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 		}
 		configDir = filepath.Join(configDir, "rancher-desktop")
 	} else {
-		paths, err := p.GetPaths()
+		appPaths, err := paths.GetPaths()
 		if err != nil {
 			log.Fatalf("failed to get paths: %s", err)
 		}
-		configDir = paths.AppHome
+		configDir = appPaths.AppHome
 	}
 	DefaultConfigPath = filepath.Join(configDir, "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
@@ -138,10 +138,10 @@ func isWSLDistro() bool {
 	return fi.Mode()&os.ModeSymlink == os.ModeSymlink
 }
 
-func getAppDataPath() (string, error) {
+func getLocalAppDataPath() (string, error) {
 	var outBuf bytes.Buffer
 	// changes the codepage to 65001 which is UTF-8
-	subCommand := `chcp 65001 >nul & echo %APPDATA%`
+	subCommand := `chcp 65001 >nul & echo %LOCALAPPDATA%`
 	cmd := exec.Command("cmd.exe", "/c", subCommand)
 	cmd.Stdout = &outBuf
 	// We are intentionally not using CombinedOutput and
@@ -154,7 +154,7 @@ func getAppDataPath() (string, error) {
 }
 
 func wslifyConfigDir() (string, error) {
-	path, err := getAppDataPath()
+	path, err := getLocalAppDataPath()
 	if err != nil {
 		return "", err
 	}

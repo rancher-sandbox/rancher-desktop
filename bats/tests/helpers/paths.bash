@@ -89,19 +89,17 @@ win32env() {
 }
 
 if is_windows; then
-    APPDATA="$(win32env APPDATA)"
     LOCALAPPDATA="$(win32env LOCALAPPDATA)"
     PROGRAMFILES="$(win32env ProgramFiles)"
 
-    PATH_APP_HOME="$APPDATA/rancher-desktop"
-    PATH_CONFIG="$APPDATA/rancher-desktop"
-    PATH_DATA="$LOCALAPPDATA/rancher-desktop"
-    PATH_CACHE="$PATH_DATA/cache"
-    PATH_LOGS="$PATH_DATA/logs"
-    PATH_DISTRO="$PATH_DATA/distro"
-    PATH_DISTRO_DATA="$PATH_DATA/distro-data"
-    PATH_EXTENSIONS="$PATH_DATA/extensions"
-    PATH_SNAPSHOTS="$LOCALAPPDATA/rancher-desktop/snapshots"
+    PATH_APP_HOME="$LOCALAPPDATA/rancher-desktop"
+    PATH_CONFIG="$LOCALAPPDATA/rancher-desktop"
+    PATH_CACHE="$PATH_APP_HOME/cache"
+    PATH_LOGS="$PATH_APP_HOME/logs"
+    PATH_DISTRO="$PATH_APP_HOME/distro"
+    PATH_DISTRO_DATA="$PATH_APP_HOME/distro-data"
+    PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
+    PATH_SNAPSHOTS="$PATH_APP_HOME/rancher-desktop/snapshots"
 
     set_path_resources \
         "$PROGRAMFILES/Rancher Desktop" \

@@ -18,7 +18,6 @@ jobs:
       - run: wsl --unregister rancher-desktop-data
         continue-on-error: true
       - run: Remove-Item -Path "$HOME/AppData/Local/rancher-desktop" -Recurse -Force -ErrorAction Ignore
-      - run: Remove-Item -Path "$HOME/AppData/Roaming/rancher-desktop" -Recurse -Force -ErrorAction Ignore
       - name: Remove golang module cache
         run: Remove-Item -Path "$HOME/go/pkg/mod" -Recurse -Force -ErrorAction Ignore
       - uses: actions/checkout@v4
