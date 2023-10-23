@@ -21,8 +21,11 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,10 +33,9 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-var (
-	kubeconfigViper = viper.New()
-	rdNetworking    bool
-)
+var kubeconfigViper = viper.New()
+
+const rdCluster = "rancher-desktop"
 
 // kubeconfigCmd represents the kubeconfig command, used to set up a symlink on
 // the Linux side to point at the Windows-side kubeconfig.  Note that we must
@@ -45,36 +47,45 @@ var kubeconfigCmd = &cobra.Command{
 	Long:  `This command configures the Kubernetes configuration inside a WSL2 distribution.`,
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		configPath := kubeconfigViper.GetString("kubeconfig")
+		winConfigPath := kubeconfigViper.GetString("kubeconfig")
 		enable := kubeconfigViper.GetBool("enable")
 
-		if configPath == "" {
+		if winConfigPath == "" {
 			return errors.New("Windows kubeconfig not supplied")
 		}
 
-		_, err := os.Stat(configPath)
+		_, err := os.Stat(winConfigPath)
 		if err != nil {
 			return fmt.Errorf("could not open Windows kubeconfig: %w", err)
 		}
 		cmd.SilenceUsage = true
 
-		configDir := path.Join(homedir.HomeDir(), ".kube")
-
-		configFile, err := os.Open(configPath)
+		winConfig, err := readKubeConfig(winConfigPath)
 		if err != nil {
 			return err
 		}
 
-		kubeConfig, err := updateClusterIP(configFile, rdNetworking)
+		linuxConfigDir := path.Join(homedir.HomeDir(), ".kube")
+		linuxConfig, err := readKubeConfig(filepath.Join(linuxConfigDir, "config"))
+		if err != nil {
+			return err
+		}
+
+		cleanConfig := removeExistingRDCluster(rdCluster, &linuxConfig)
+
+		kubeConfig, err := updateClusterIP(winConfig, *cleanConfig, rdNetworking)
 
 		var finalKubeConfigFile *os.File
 		if enable {
-			finalKubeConfigFile, err = os.Create(configDir)
+			if err := os.MkdirAll(linuxConfigDir, 0o750); err != nil {
+				return err
+			}
+			finalKubeConfigFile, err = os.Create(filepath.Join(linuxConfigDir, "config"))
 			if err != nil {
 				return err
 			}
 			defer finalKubeConfigFile.Close()
-			err = os.Mkdir(configDir, 0o750)
+			err = os.MkdirAll(linuxConfigDir, 0o750)
 			if err != nil && !errors.Is(err, os.ErrExist) {
 				// The error already contains the full path, we can't do better.
 				return err
@@ -83,14 +94,96 @@ var kubeconfigCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-		} else {
-			err = os.Remove(finalKubeConfigFile.Name())
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
 		}
 		return nil
 	},
+}
+
+func readKubeConfig(configPath string) (kubeConfig, error) {
+	var config kubeConfig
+	configFile, err := os.Open(configPath)
+	if err != nil {
+		return config, err
+	}
+	defer configFile.Close()
+	err = yaml.NewDecoder(configFile).Decode(&config)
+	if err != nil {
+		return config, err
+	}
+
+	return config, nil
+}
+
+func updateClusterIP(winConfig, linuxConfig kubeConfig, rdNetworking bool) (kubeConfig, error) {
+	ip, err := getClusterIP()
+	if err != nil {
+		return winConfig, err
+	}
+	// Fix up any clusters at 127.0.0.1, using the IP address we found.
+	for clusterIdx, cluster := range winConfig.Clusters {
+		server, err := url.Parse(cluster.Cluster.Server)
+		if err != nil {
+			// Ignore any clusters with invalid servers
+			continue
+		}
+		if server.Hostname() != "127.0.0.1" {
+			continue
+		}
+		if rdNetworking {
+			server.Host = "gateway.rancher-desktop.internal:6443"
+		} else {
+			if server.Port() != "" {
+				server.Host = net.JoinHostPort(ip.String(), server.Port())
+			} else {
+				server.Host = ip.String()
+			}
+
+		}
+		winConfig.Clusters[clusterIdx].Name = "rancher-desktop"
+		winConfig.Clusters[clusterIdx].Cluster.Server = server.String()
+	}
+	return mergeKubeConfigs(winConfig, linuxConfig), nil
+}
+
+func removeExistingRDCluster(clusterName string, config *kubeConfig) *kubeConfig {
+	var newClusters []struct {
+		Name    string `yaml:"name"`
+		Cluster struct {
+			Server string
+			Extras map[string]interface{} `yaml:",inline"`
+		}
+		Extras map[string]interface{} `yaml:",inline"`
+	}
+
+	for _, cluster := range config.Clusters {
+		if cluster.Name != clusterName {
+			newClusters = append(newClusters, cluster)
+		}
+	}
+	config.Clusters = newClusters
+	return config
+}
+
+func mergeKubeConfigs(winConfig, linuxConfig kubeConfig) kubeConfig {
+	mergedConfig := winConfig
+
+	for _, linuxCluster := range linuxConfig.Clusters {
+		// Check if a cluster with the same name already exists in the mergedConfig
+		exists := false
+		for _, winCluster := range mergedConfig.Clusters {
+			if winCluster.Name == linuxCluster.Name {
+				exists = true
+				break
+			}
+		}
+
+		// If the cluster doesn't exist in winConfig, add it to the mergedConfig
+		if !exists {
+			mergedConfig.Clusters = append(mergedConfig.Clusters, linuxCluster)
+		}
+	}
+
+	return mergedConfig
 }
 
 func init() {
