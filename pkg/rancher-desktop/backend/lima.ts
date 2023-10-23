@@ -699,13 +699,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     delete (config as Record<string, unknown>).paths;
 
     if (os.platform() === 'darwin') {
-      if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
-        console.log('Using vzNAT networking stack');
-        config.networks = [{
-          interface: 'vznat',
-          vzNAT:     true,
-        }];
-      } else if (allowRoot) {
+      if (allowRoot) {
         const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
           return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
         });
@@ -723,6 +717,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         } else {
           console.log('Could not find any acceptable host networks for bridging.');
         }
+      } else if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
+        console.log('Using vzNAT networking stack');
+        config.networks = [{
+          interface: 'vznat',
+          vzNAT:     true,
+        }];
       } else {
         console.log('Administrator access disallowed, not using vde/socket_vmnet.');
         delete config.networks;
@@ -1645,7 +1645,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * used for flannel configuration.
    */
   async getListeningInterface(allowSudo: boolean) {
-    if (allowSudo && this.cfg?.experimental.virtualMachine.type === VMType.QEMU) {
+    if (allowSudo) {
       const bridgedIP = await this.getInterfaceAddr('rd0');
 
       if (bridgedIP) {
@@ -1761,9 +1761,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @precondition The VM configuration is correct.
    */
   protected async startVM() {
-    const vmnet = this.cfg?.experimental?.virtualMachine?.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
+    let vmnet = this.cfg?.experimental?.virtualMachine.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
     let allowRoot = this.#adminAccess;
 
+    // Lima does not support the vde_vmnet daemon in VZ emulation mode
+    if (this.cfg?.experimental?.virtualMachine.type === VMType.VZ) {
+      vmnet = VMNet.SOCKET;
+    }
     // We need both the lima config + the lima network config to correctly check if we need sudo
     // access; but if it's denied, we need to regenerate both again to account for the change.
     allowRoot &&= await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo(vmnet));
