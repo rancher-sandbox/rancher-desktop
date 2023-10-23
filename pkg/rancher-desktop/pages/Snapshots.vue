@@ -23,6 +23,7 @@ export default Vue.extend({
   <div>
     <nuxt-child />
     <Snapshots
+      data-test="snapshotsPage"
       class="snapshots-page"
     />
   </div>
