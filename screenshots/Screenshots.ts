@@ -2,6 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
@@ -83,10 +84,7 @@ export class Screenshots {
 
       if (os.platform() === 'win32') {
         // sleep to allow ShareX to write screenshot
-        await (new Promise((resolve) => {
-          setTimeout(resolve, this.sleepDuration);
-        }));
-
+        await util.promisify(setTimeout)(this.sleepDuration);
         const screenshotsPath = path.resolve(process.cwd(), 'resources', 'ShareX', 'ShareX', 'Screenshots', `${ dayjs().format('YYYY-MM') }`);
         const screenshots = fs.readdirSync(screenshotsPath);
 

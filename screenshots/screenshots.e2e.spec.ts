@@ -39,13 +39,10 @@ test.describe.serial('Main App Test', () => {
       diagnostics: { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
 
-    // Not supporting locked fields on Windows yet
-    if (!isWin) {
-      await createUserProfile(
-        { containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
-        {},
-      );
-    }
+    await createUserProfile(
+      { containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
+      {},
+    );
 
     electronApp = await _electron.launch({
       args: [
