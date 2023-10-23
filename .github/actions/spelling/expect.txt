@@ -299,6 +299,7 @@ hklm
 HMR
 hocs
 horizontalpodautoscaler
+hostfile
 hosthandshake
 hoverable
 howett

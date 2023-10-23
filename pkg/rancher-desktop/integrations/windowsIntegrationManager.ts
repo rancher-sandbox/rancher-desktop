@@ -121,6 +121,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       await Promise.all([
         this.syncHostSocketProxy(),
         this.syncHostDockerPlugins(),
+        this.syncHostFile(),
         ...(await this.supportedDistros).map(distro => this.syncDistro(distro.name, kubeconfigPath)),
       ]);
     } catch (ex) {
@@ -413,6 +414,39 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       }
     } catch (error) {
       console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`);
+    }
+  }
+
+  protected async syncHostFile() {
+    await Promise.all(
+      (await this.supportedDistros).map((distro) => {
+        return this.updateHostsFile(distro.name);
+      }),
+    );
+  }
+
+  protected async updateHostsFile(distro: string) {
+    const entry = '192.168.1.2,gateway.rancher-desktop.internal';
+
+    try {
+      console.debug(`Update ${ distro } host file`);
+      if (this.settings.experimental?.virtualMachine?.networkingTunnel) {
+        await this.execCommand(
+          { distro, root: true },
+          await this.getLinuxToolPath(distro, 'wsl-helper'),
+          'update-host',
+          `--entries=${ entry }`,
+        );
+      } else {
+        await this.execCommand(
+          { distro, root: true },
+          await this.getLinuxToolPath(distro, 'wsl-helper'),
+          'update-host',
+          `--remove`,
+        );
+      }
+    } catch (error: any) {
+      console.error(`Could not update ${ distro } host file`, error);
     }
   }
 
