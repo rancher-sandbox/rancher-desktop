@@ -9,6 +9,7 @@ import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
+import { clearUserProfile } from '../e2e/utils/ProfileUtils';
 import {
   createDefaultSettings, createUserProfile, reportAsset, teardown, tool,
 } from '../e2e/utils/TestUtils';
@@ -81,6 +82,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(async({ colorScheme }) => {
+    await clearUserProfile();
     await tool('rdctl', 'extension', 'uninstall', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
     await tool('rdctl', 'extension', 'uninstall', 'docker/logs-explorer-extension');
 
