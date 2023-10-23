@@ -72,6 +72,10 @@ func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFail
 	if err := wrappedFunction(); err != nil {
 		if resetOnFailure {
 			factoryreset.DeleteData(appPaths, true)
+		} else {
+			if err := ensureBackendStarted(); err != nil {
+				snapshotErrors = append(snapshotErrors, err)
+			}
 		}
 		return err
 	}
