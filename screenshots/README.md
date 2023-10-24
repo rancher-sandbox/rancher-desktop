@@ -32,6 +32,19 @@ System Preferences -> Security & Privacy -> Privacy -> Screen Recording.
 Extract the `ShareX-15.0.0-portable.zip` into the resources directory, so that the
 `ShareX.exe` is located under `{path-to-rancher-desktop}\resources\ShareX\ShareX.exe`.
 
+If the script is just hanging while taking the first screenshot, you can try to:
+
+1. Set the `RD_ENV_SCREENSHOT_SLEEP` environment variable
+   [as explained here](#environment-variables).
+2. If the first option doesn't resolve the issue, try to disable the ShareX sound and
+   toast effects.
+
+   In order to do so, uncheck `Play sound after capture is made`, `Play sound after
+   task is completed` and `Show toast notification after task is completed` at: ShareX
+   menu -> Task Settings -> General -> Notifications.
+
+   See https://github.com/ShareX/ShareX/issues/3338#issuecomment-845916205.
+
 ### Linux
 
 `gnome-screenshot` is required. See https://github.com/GNOME/gnome-screenshot
