@@ -6,8 +6,8 @@
     <div>
       <ul>
         <li>Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
-        <li>
-          Project Links:
+        <li class="project-links">
+          <span>Project Links:</span>
           <a href="https://github.com/rancher-sandbox/rancher-desktop">Homepage</a>
           <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Issues</a>
         </li>
@@ -151,5 +151,9 @@ export default {
       margin-bottom: .5em;
     }
   }
+}
+
+.project-links > * {
+  margin-right: .25em;
 }
 </style>
