@@ -118,10 +118,10 @@ func (manager Manager) Create(name, description string) (*Snapshot, error) {
 	// do operations that can fail, rolling back if failure is encountered
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
 	if err := manager.Snapshotter.CreateFiles(snapshot); err != nil {
-		if err := os.RemoveAll(snapshotDir); err != nil {
-			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
+		if err2 := os.RemoveAll(snapshotDir); err != nil {
+			err = errors.Join(err, fmt.Errorf("failed to delete created snapshot directory: %w", err2))
 		}
-		return nil, fmt.Errorf("failed to consummate snapshot: %w", err)
+		return nil, err
 	}
 
 	return &snapshot, nil
