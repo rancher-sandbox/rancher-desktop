@@ -2,7 +2,6 @@ package snapshot
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"io"
@@ -102,7 +101,7 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 
 func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 	// restore WSL distros
-	if err := factoryreset.UnregisterWSL(); err != nil {
+	if err := snapshotter.WSL.UnregisterDistros(); err != nil {
 		return fmt.Errorf("failed to unregister WSL distros: %w", err)
 	}
 	snapshotDir := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID)
