@@ -40,7 +40,7 @@ func writeMetadataFile(appPaths paths.Paths, snapshot Snapshot) error {
 	return nil
 }
 
-// Handles all snapshot-related functionality.
+// Manager handles all snapshot-related functionality.
 type Manager struct {
 	Paths       paths.Paths
 	Snapshotter Snapshotter
@@ -53,7 +53,7 @@ func NewManager(paths paths.Paths) Manager {
 	}
 }
 
-func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
+func (manager Manager) GetSnapshotId(desiredName string) (string, error) {
 	snapshots, err := manager.List(false)
 	if err != nil {
 		return "", fmt.Errorf("failed to list snapshots: %w", err)
@@ -102,7 +102,7 @@ func (manager Manager) ValidateName(name string) error {
 	return nil
 }
 
-// Creates a new snapshot.
+// Create a new snapshot.
 func (manager Manager) Create(name, description string) (*Snapshot, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
@@ -118,16 +118,16 @@ func (manager Manager) Create(name, description string) (*Snapshot, error) {
 	// do operations that can fail, rolling back if failure is encountered
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
 	if err := manager.Snapshotter.CreateFiles(snapshot); err != nil {
-		if err := os.RemoveAll(snapshotDir); err != nil {
-			return nil, fmt.Errorf("failed to delete created snapshot directory: %w", err)
+		if err2 := os.RemoveAll(snapshotDir); err != nil {
+			err = errors.Join(err, fmt.Errorf("failed to delete created snapshot directory: %w", err2))
 		}
-		return nil, fmt.Errorf("failed to consummate snapshot: %w", err)
+		return nil, err
 	}
 
 	return &snapshot, nil
 }
 
-// Returns snapshots that are present on the system. If includeIncomplete is
+// List snapshots that are present on the system. If includeIncomplete is
 // true, includes snapshots that are currently being created, are currently
 // being deleted, or are otherwise incomplete and cannot be restored from.
 func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
@@ -164,7 +164,7 @@ func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 	return snapshots, nil
 }
 
-// Deletes a snapshot.
+// Delete a snapshot.
 func (manager Manager) Delete(id string) error {
 	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
 	// Remove complete.txt file. This must be done first because restoring
@@ -179,7 +179,7 @@ func (manager Manager) Delete(id string) error {
 	return nil
 }
 
-// Restores Rancher Desktop to the state saved in a snapshot.
+// Restore Rancher Desktop to the state saved in a snapshot.
 func (manager Manager) Restore(id string) error {
 	// Before doing anything, ensure that the snapshot is complete
 	completeFilePath := filepath.Join(manager.Paths.Snapshots, id, completeFileName)
