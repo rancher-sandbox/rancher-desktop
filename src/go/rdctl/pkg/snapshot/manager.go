@@ -53,7 +53,7 @@ func NewManager(paths paths.Paths) Manager {
 	}
 }
 
-func (manager *Manager) GetSnapshotId(desiredName string) (string, error) {
+func (manager Manager) GetSnapshotId(desiredName string) (string, error) {
 	snapshots, err := manager.List(false)
 	if err != nil {
 		return "", fmt.Errorf("failed to list snapshots: %w", err)
