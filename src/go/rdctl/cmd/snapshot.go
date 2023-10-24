@@ -72,12 +72,9 @@ func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFail
 	if err := wrappedFunction(); err != nil {
 		if resetOnFailure {
 			factoryreset.DeleteData(appPaths, true)
-		} else {
-			if err := ensureBackendStarted(); err != nil {
-				snapshotErrors = append(snapshotErrors, err)
-			}
+			return err
 		}
-		return err
+		snapshotErrors = append(snapshotErrors, err)
 	}
 	// Note that this does not wait for the backend to be in the
 	// STARTED (or DISABLED if k8s is disabled) state. This allows
