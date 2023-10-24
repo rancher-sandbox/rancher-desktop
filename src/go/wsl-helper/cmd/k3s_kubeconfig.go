@@ -33,13 +33,25 @@ import (
 
 type kubeConfig struct {
 	Clusters []struct {
-		Name    string `yaml:"name"`
 		Cluster struct {
 			Server string
 			Extras map[string]interface{} `yaml:",inline"`
-		}
+		} `yaml:"cluster"`
+		Name   string                 `yaml:"name"`
 		Extras map[string]interface{} `yaml:",inline"`
-	} `yaml:",omitempty"`
+	} `yaml:"clusters"`
+	Contexts []struct {
+		Context struct {
+			Extras map[string]interface{} `yaml:",inline"`
+		} `yaml:"context"`
+		Name   string                 `yaml:"name"`
+		Extras map[string]interface{} `yaml:",inline"`
+	} `yaml:"contexts"`
+	CurrentContext string `yaml:"current-context"`
+	Users          []struct {
+		Name   string                 `yaml:"name"`
+		Extras map[string]interface{} `yaml:",inline"`
+	} `yaml:"users"`
 	Extras map[string]interface{} `yaml:",inline"`
 }
 

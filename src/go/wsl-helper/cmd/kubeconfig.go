@@ -20,7 +20,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"net/url"
 	"os"
@@ -50,14 +49,14 @@ var kubeconfigCmd = &cobra.Command{
 		winConfigPath := kubeconfigViper.GetString("kubeconfig")
 		enable := kubeconfigViper.GetBool("enable")
 
+		if !enable {
+			return nil
+		}
+
 		if winConfigPath == "" {
 			return errors.New("Windows kubeconfig not supplied")
 		}
 
-		_, err := os.Stat(winConfigPath)
-		if err != nil {
-			return fmt.Errorf("could not open Windows kubeconfig: %w", err)
-		}
 		cmd.SilenceUsage = true
 
 		winConfig, err := readKubeConfig(winConfigPath)
@@ -67,33 +66,26 @@ var kubeconfigCmd = &cobra.Command{
 
 		linuxConfigDir := path.Join(homedir.HomeDir(), ".kube")
 		linuxConfig, err := readKubeConfig(filepath.Join(linuxConfigDir, "config"))
-		if err != nil {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 
-		cleanConfig := removeExistingRDCluster(rdCluster, &linuxConfig)
+		cleanConfig := removeExistingRDConfig(rdCluster, &linuxConfig)
 
-		kubeConfig, err := updateClusterIP(winConfig, *cleanConfig, rdNetworking)
+		kubeConfig, err := updateKubeConfig(winConfig, *cleanConfig, rdNetworking)
 
 		var finalKubeConfigFile *os.File
-		if enable {
-			if err := os.MkdirAll(linuxConfigDir, 0o750); err != nil {
-				return err
-			}
-			finalKubeConfigFile, err = os.Create(filepath.Join(linuxConfigDir, "config"))
-			if err != nil {
-				return err
-			}
-			defer finalKubeConfigFile.Close()
-			err = os.MkdirAll(linuxConfigDir, 0o750)
-			if err != nil && !errors.Is(err, os.ErrExist) {
-				// The error already contains the full path, we can't do better.
-				return err
-			}
-			err = yaml.NewEncoder(finalKubeConfigFile).Encode(kubeConfig)
-			if err != nil {
-				return err
-			}
+		if err := os.MkdirAll(linuxConfigDir, 0o750); err != nil {
+			return err
+		}
+		finalKubeConfigFile, err = os.Create(filepath.Join(linuxConfigDir, "config"))
+		if err != nil {
+			return err
+		}
+		defer finalKubeConfigFile.Close()
+		err = yaml.NewEncoder(finalKubeConfigFile).Encode(kubeConfig)
+		if err != nil {
+			return err
 		}
 		return nil
 	},
@@ -114,76 +106,107 @@ func readKubeConfig(configPath string) (kubeConfig, error) {
 	return config, nil
 }
 
-func updateClusterIP(winConfig, linuxConfig kubeConfig, rdNetworking bool) (kubeConfig, error) {
-	ip, err := getClusterIP()
-	if err != nil {
-		return winConfig, err
-	}
-	// Fix up any clusters at 127.0.0.1, using the IP address we found.
+// updateKubeConfig reads the kube config from windows side it also
+// modifies the cluster's server host to an appropriate address.
+// It then merges the config with an existing configuration on
+// users distro and returns the merged config.
+func updateKubeConfig(winConfig, linuxConfig kubeConfig, rdNetworking bool) (kubeConfig, error) {
 	for clusterIdx, cluster := range winConfig.Clusters {
+		// Ignore any non rancher-desktop clusters
+		if winConfig.Clusters[clusterIdx].Name != rdCluster {
+			continue
+		}
 		server, err := url.Parse(cluster.Cluster.Server)
 		if err != nil {
 			// Ignore any clusters with invalid servers
 			continue
 		}
-		if server.Hostname() != "127.0.0.1" {
-			continue
-		}
-		if rdNetworking {
-			server.Host = "gateway.rancher-desktop.internal:6443"
-		} else {
-			if server.Port() != "" {
-				server.Host = net.JoinHostPort(ip.String(), server.Port())
-			} else {
-				server.Host = ip.String()
+		host := "gateway.rancher-desktop.internal"
+		if !rdNetworking {
+			ip, err := getClusterIP()
+			if err != nil {
+				return winConfig, err
 			}
 
+			host = ip.String()
 		}
-		winConfig.Clusters[clusterIdx].Name = "rancher-desktop"
+		if server.Port() != "" {
+			host = net.JoinHostPort(host, server.Port())
+		}
+		server.Host = host
 		winConfig.Clusters[clusterIdx].Cluster.Server = server.String()
 	}
 	return mergeKubeConfigs(winConfig, linuxConfig), nil
 }
 
-func removeExistingRDCluster(clusterName string, config *kubeConfig) *kubeConfig {
-	var newClusters []struct {
-		Name    string `yaml:"name"`
+func removeExistingRDConfig(name string, config *kubeConfig) *kubeConfig {
+	// Remove clusters with the specified name
+	var filteredClusters []struct {
 		Cluster struct {
 			Server string
 			Extras map[string]interface{} `yaml:",inline"`
-		}
+		} `yaml:"cluster"`
+		Name   string                 `yaml:"name"`
 		Extras map[string]interface{} `yaml:",inline"`
 	}
-
 	for _, cluster := range config.Clusters {
-		if cluster.Name != clusterName {
-			newClusters = append(newClusters, cluster)
+		if cluster.Name != name {
+			filteredClusters = append(filteredClusters, cluster)
 		}
 	}
-	config.Clusters = newClusters
+	config.Clusters = filteredClusters
+
+	// Remove contexts with the specified name
+	var filteredContexts []struct {
+		Context struct {
+			Cluster string
+			User    string
+			Extras  map[string]interface{} `yaml:",inline"`
+		} `yaml:"context"`
+		Name   string                 `yaml:"name"`
+		Extras map[string]interface{} `yaml:",inline"`
+	}
+	for _, context := range config.Contexts {
+		if context.Name != name {
+			filteredContexts = append(filteredContexts, context)
+		}
+	}
+	config.Contexts = filteredContexts
+
+	// Remove users with the specified name
+	var filteredUsers []struct {
+		Name   string                 `yaml:"name"`
+		Extras map[string]interface{} `yaml:",inline"`
+	}
+	for _, user := range config.Users {
+		if user.Name != name {
+			filteredUsers = append(filteredUsers, user)
+		}
+	}
+	config.Users = filteredUsers
+
 	return config
 }
 
 func mergeKubeConfigs(winConfig, linuxConfig kubeConfig) kubeConfig {
-	mergedConfig := winConfig
-
-	for _, linuxCluster := range linuxConfig.Clusters {
-		// Check if a cluster with the same name already exists in the mergedConfig
-		exists := false
-		for _, winCluster := range mergedConfig.Clusters {
-			if winCluster.Name == linuxCluster.Name {
-				exists = true
-				break
-			}
+	for _, ctx := range winConfig.Clusters {
+		if ctx.Name == rdCluster {
+			linuxConfig.Clusters = append(linuxConfig.Clusters, ctx)
 		}
-
-		// If the cluster doesn't exist in winConfig, add it to the mergedConfig
-		if !exists {
-			mergedConfig.Clusters = append(mergedConfig.Clusters, linuxCluster)
+	}
+	for _, ctx := range winConfig.Contexts {
+		if ctx.Name == rdCluster {
+			linuxConfig.Contexts = append(linuxConfig.Contexts, ctx)
 		}
 	}
 
-	return mergedConfig
+	for _, user := range winConfig.Users {
+		if user.Name == rdCluster {
+			linuxConfig.Users = append(linuxConfig.Users, user)
+		}
+	}
+
+	return linuxConfig
 }
 
 func init() {
