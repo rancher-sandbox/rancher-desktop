@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2 data-test="k8s-settings-header">
-      Welcome to Rancher Desktop
+      Welcome to Rancher Desktop by SUSE
     </h2>
     <rd-checkbox
       label="Enable Kubernetes"

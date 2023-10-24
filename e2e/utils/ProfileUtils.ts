@@ -201,7 +201,7 @@ export async function testForFirstRunWindow(testPath: string) {
 
     try {
       await retry(async() => {
-        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop by SUSE');
       });
       page = openedPage;
       windowCountForMainPage = windowCount;
@@ -252,7 +252,7 @@ export async function testForNoFirstRunWindow(testPath: string) {
 
     try {
       await retry(async() => {
-        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop by SUSE');
       });
       page = openedPage;
       windowCountForMainPage = windowCount;

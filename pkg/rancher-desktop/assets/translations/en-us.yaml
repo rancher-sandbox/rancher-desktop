@@ -279,7 +279,7 @@ portForwarding:
   sortableTables:
     noRows: There are no port forwarding entries to show
 general:
-  title: Welcome to Rancher Desktop
+  title: Welcome to Rancher Desktop by SUSE
   description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
 about:
   title: About
