@@ -12,16 +12,28 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      header:    '',
-      message:   '',
-      snapshot:  null,
-      info:      '',
-      bodyStyle: {},
-      error:     '',
-      buttons:   [],
-      response:  0,
-      cancelId:  0,
+      header:            '',
+      message:           '',
+      snapshot:          null,
+      info:              '',
+      bodyStyle:         {},
+      error:             '',
+      buttons:           [],
+      response:          0,
+      cancelId:          0,
+      snapshotEventType: '',
+      credentials:       {
+        user:     '',
+        password: '',
+        port:     0,
+      },
     };
+  },
+
+  async fetch() {
+    this.credentials = await this.$store.dispatch(
+      'credentials/fetchCredentials',
+    );
   },
 
   mounted() {
@@ -34,6 +46,7 @@ export default Vue.extend({
       this.message = format.message;
       this.snapshot = format.snapshot;
       this.info = format.info;
+      this.snapshotEventType = format.snapshotEventType;
       this.bodyStyle = this.calculateBodyStyle(format.type);
       this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;
@@ -51,6 +64,11 @@ export default Vue.extend({
 
   methods: {
     close(index: number) {
+      if (this.error && this.snapshotEventType === 'restore') {
+        this.quit();
+
+        return;
+      }
       ipcRenderer.send('dialog/close', { response: index });
     },
     isDarwin() {
@@ -61,6 +79,20 @@ export default Vue.extend({
     },
     showLogs() {
       ipcRenderer.send('show-logs');
+    },
+    quit() {
+      fetch(
+        `http://localhost:${ this.credentials?.port }/v1/shutdown`,
+        {
+          method:  'PUT',
+          headers: new Headers({
+            Authorization: `Basic ${ window.btoa(
+              `${ this.credentials?.user }:${ this.credentials?.password }`,
+            ) }`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }),
+        },
+      );
     },
   },
 });
