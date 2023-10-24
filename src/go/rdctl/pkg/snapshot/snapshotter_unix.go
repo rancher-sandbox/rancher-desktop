@@ -50,13 +50,6 @@ func getSnapshotFiles(paths paths.Paths, id string) []snapshotFile {
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "0", "diffdisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
-		},
-		{
 			WorkingPath:  filepath.Join(paths.Lima, "_config", "user"),
 			SnapshotPath: filepath.Join(snapshotDir, "user"),
 			CopyOnWrite:  false,
@@ -99,6 +92,10 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 		return err
 	}
 
+	if err := snapshotter.createDiffdisk(snapshot); err != nil {
+		return err
+	}
+
 	files := getSnapshotFiles(snapshotter.Paths, snapshot.ID)
 	for _, file := range files {
 		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
@@ -119,9 +116,37 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 	return nil
 }
 
+// createDiffdisk copies the working diffdisk or diffdisk.raw to the
+// snapshot directory. If diffdisk.raw is present, diffdisk is not copied
+// to the snapshot directory. The two should never be present at the same
+// time.
+func (snapshotter SnapshotterImpl) createDiffdisk(snapshot Snapshot) error {
+	diffdiskRawWorkingPath := filepath.Join(snapshotter.Paths.Lima, "0", "diffdisk.raw")
+	diffdiskRawSnapshotPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "diffdisk.raw")
+	err := copyFile(diffdiskRawSnapshotPath, diffdiskRawWorkingPath, true, 0o644)
+	if err == nil {
+		return nil
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to copy diffdisk.raw: %w", err)
+	}
+
+	diffdiskWorkingPath := filepath.Join(snapshotter.Paths.Lima, "0", "diffdisk")
+	diffdiskSnapshotPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "diffdisk")
+	err = copyFile(diffdiskSnapshotPath, diffdiskWorkingPath, true, 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to copy diffdisk: %w", err)
+	}
+
+	return nil
+}
+
 // Restores the files from their location in a snapshot directory
 // to their working location.
 func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
+	if err := snapshotter.restoreDiffdisk(snapshot); err != nil {
+		return err
+	}
+
 	files := getSnapshotFiles(snapshotter.Paths, snapshot.ID)
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)
@@ -134,5 +159,36 @@ func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 			return fmt.Errorf("failed to restore %s: %w", filename, err)
 		}
 	}
+	return nil
+}
+
+// restoreDiffdisk copies either diffdisk.raw or diffdisk from a snapshot
+// to its working location. If diffdisk.raw is present in the snapshot directory,
+// it does not attempt to restore diffdisk. Both should never be present in a
+// single snapshot directory.
+func (snapshotter SnapshotterImpl) restoreDiffdisk(snapshot Snapshot) error {
+	diffdiskRawWorkingPath := filepath.Join(snapshotter.Paths.Lima, "0", "diffdisk.raw")
+	diffdiskRawSnapshotPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "diffdisk.raw")
+	diffdiskWorkingPath := filepath.Join(snapshotter.Paths.Lima, "0", "diffdisk")
+	diffdiskSnapshotPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "diffdisk")
+
+	for _, filePath := range []string{diffdiskWorkingPath, diffdiskRawWorkingPath} {
+		if err := os.RemoveAll(filePath); err != nil {
+			return fmt.Errorf("failed to remove %q: %w", filePath, err)
+		}
+	}
+
+	err := copyFile(diffdiskRawWorkingPath, diffdiskRawSnapshotPath, true, 0o644)
+	if err == nil {
+		return nil
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to copy diffdisk.raw: %w", err)
+	}
+
+	err = copyFile(diffdiskWorkingPath, diffdiskSnapshotPath, true, 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to copy diffdisk: %w", err)
+	}
+
 	return nil
 }
