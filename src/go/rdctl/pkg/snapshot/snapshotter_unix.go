@@ -123,16 +123,25 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 // to their working location.
 func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 	files := getSnapshotFiles(snapshotter.Paths, snapshot.ID)
+	var err error
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)
-		err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
+		err = copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
 		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			if err := os.RemoveAll(file.WorkingPath); err != nil {
-				return fmt.Errorf("failed to remove %s: %w", filename, err)
+			if err = os.RemoveAll(file.WorkingPath); err != nil {
+				err = fmt.Errorf("failed to remove %s: %w", filename, err)
+				break
 			}
 		} else if err != nil {
-			return fmt.Errorf("failed to restore %s: %w", filename, err)
+			err = fmt.Errorf("failed to restore %s: %w", filename, err)
+			break
 		}
 	}
-	return nil
+	if err != nil {
+		for _, file := range files {
+			_ = os.Remove(file.WorkingPath)
+		}
+		_ = os.RemoveAll(snapshotter.Paths.Lima)
+	}
+	return err
 }

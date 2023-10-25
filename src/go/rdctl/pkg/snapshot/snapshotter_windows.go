@@ -101,26 +101,34 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 
 func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 	// restore WSL distros
-	if err := snapshotter.WSL.UnregisterDistros(); err != nil {
+	var err error
+	if err = snapshotter.WSL.UnregisterDistros(); err != nil {
 		return fmt.Errorf("failed to unregister WSL distros: %w", err)
 	}
 	snapshotDir := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID)
 	for _, distro := range getWslDistros(snapshotter.Paths) {
 		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
-		if err := os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
-			return fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
+		if err = os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
+			err = fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
+			break
 		}
-		if err := snapshotter.WSL.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
-			return fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
+		if err = snapshotter.WSL.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
+			err = fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
+			break
 		}
 	}
 
 	// copy settings.json back to its working location
 	workingSettingsPath := filepath.Join(snapshotter.Paths.Config, "settings.json")
 	snapshotSettingsPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "settings.json")
-	if err := copyFile(workingSettingsPath, snapshotSettingsPath); err != nil {
-		return fmt.Errorf("failed to restore %q: %w", workingSettingsPath, err)
+	if err == nil {
+		if err = copyFile(workingSettingsPath, snapshotSettingsPath); err != nil {
+			err = fmt.Errorf("failed to restore %q: %w", workingSettingsPath, err)
+		}
 	}
-
-	return nil
+	if err != nil {
+		_ = os.Remove(workingSettingsPath)
+		_ = snapshotter.WSL.UnregisterDistros()
+	}
+	return err
 }
