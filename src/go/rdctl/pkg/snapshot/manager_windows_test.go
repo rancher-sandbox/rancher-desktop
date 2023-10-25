@@ -10,7 +10,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 )
 
-func populateFiles(t *testing.T, _ bool) (p.Paths, map[string]TestFile) {
+func populateFiles(t *testing.T, _ ...string) (p.Paths, map[string]TestFile) {
 	baseDir := t.TempDir()
 	paths := p.Paths{
 		Config:        filepath.Join(baseDir, "config"),
@@ -46,7 +46,7 @@ func newTestManager(paths p.Paths) Manager {
 
 func TestManagerWindows(t *testing.T) {
 	t.Run("Create should create the necessary files", func(t *testing.T) {
-		paths, _ := populateFiles(t, false)
+		paths, _ := populateFiles(t)
 
 		// create snapshot
 		testManager := newTestManager(paths)
@@ -68,7 +68,7 @@ func TestManagerWindows(t *testing.T) {
 	})
 
 	t.Run("Restore should work properly", func(t *testing.T) {
-		paths, testFiles := populateFiles(t, false)
+		paths, testFiles := populateFiles(t)
 		manager := newTestManager(paths)
 		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
@@ -94,7 +94,7 @@ func TestManagerWindows(t *testing.T) {
 	})
 
 	t.Run("Restore should create any needed parent directories", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t)
 		manager := newTestManager(paths)
 		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {

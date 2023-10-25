@@ -17,7 +17,7 @@ type TestFile struct {
 func TestManager(t *testing.T) {
 
 	t.Run("ValidateName should disallow two snapshots with the same name, but only when the first is complete", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 		manager := newTestManager(paths)
 		snapshotName := "test-snapshot"
 		if err := manager.ValidateName(snapshotName); err != nil {
@@ -40,7 +40,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("ValidateName should disallow invalid names", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 		manager := newTestManager(paths)
 		oversizeName :=
 			// 251 characters is too long (and the indentation here is what our linter demands)
@@ -90,7 +90,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("Should create these valid names", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 		manager := newTestManager(paths)
 		validNames := []string{
 			`no "spaces" at either end`,
@@ -110,7 +110,7 @@ func TestManager(t *testing.T) {
 
 	for _, includeIncomplete := range []bool{true, false} {
 		t.Run(fmt.Sprintf("List with includeIncomplete %t", includeIncomplete), func(t *testing.T) {
-			paths, _ := populateFiles(t, true)
+			paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 			manager := newTestManager(paths)
 			lastSnapshot := &Snapshot{}
 			for i := range []int{1, 2, 3} {
@@ -143,7 +143,7 @@ func TestManager(t *testing.T) {
 	}
 
 	t.Run("Delete", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 		manager := newTestManager(paths)
 		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
@@ -169,7 +169,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("Restore should return an error if asked to restore a nonexistent snapshot", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 		manager := newTestManager(paths)
 		if err := manager.Restore("no-such-snapshot-id"); err == nil {
 			t.Errorf("Failed to complain when asked to restore a nonexistent snapshot")
@@ -177,7 +177,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("Restore should return the proper error if asked to restore from an incomplete snapshot", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
+		paths, _ := populateFiles(t, "diffdisk", "override.yaml")
 		manager := newTestManager(paths)
 		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
