@@ -44,17 +44,18 @@ const lockedUri = (port: number) => uri(port, 'settings/locked');
 /**
  * Normalize WSL integrations configuration.
  * @param integrations The source collection, containing all WSL integrations.
- * @param mode How normalization should take place
+ * @param mode How normalization should take place.
+ *    'diff': Normalize for comparing to see if changes need to be applied.
+ *    'submit': Normalize for submitting preferences.
  * @returns Returns a new object with normalized WSL configuration.
  */
 const normalizeWslIntegrations = (integrations: Record<string, boolean>, mode: 'diff' | 'submit') => {
   const normalizeFn = {
-    diff:   (entries: [string, boolean][]) => entries.filter(([, v]) => v === true),
+    diff:   (entries: [string, boolean][]) => entries.filter(([, v]) => v),
     submit: (entries: [string, boolean][]) => entries.map(([k, v]) => [k, v || null] as const),
   }[mode];
-  const someVal = Object.fromEntries(normalizeFn(Object.entries(integrations)));
 
-  return someVal;
+  return Object.fromEntries(normalizeFn(Object.entries(integrations)));
 };
 
 /**
