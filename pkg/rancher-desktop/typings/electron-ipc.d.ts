@@ -181,7 +181,7 @@ export interface IpcRendererEvents {
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
-  'dialog/error': (error: string) => void;
+  'dialog/error': (args: any) => void;
   'dashboard-open': () => void;
   // #endregion
 

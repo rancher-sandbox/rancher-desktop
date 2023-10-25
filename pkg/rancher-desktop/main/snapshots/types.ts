@@ -19,6 +19,7 @@ export interface SnapshotDialog {
   info?: string | null,
   showProgressBar?: boolean,
   type?: string,
+  snapshotEventType?: SnapshotEvent['type'],
 }
 
 export interface Snapshot {

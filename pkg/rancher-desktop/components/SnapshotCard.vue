@@ -1,7 +1,9 @@
 <script lang="ts">
 import dayjs from 'dayjs';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
+import { State as EngineStates } from '@pkg/backend/k8s';
 import { Snapshot } from '@pkg/main/snapshots/types';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -32,7 +34,9 @@ interface Methods {
 }
 
 interface Computed {
-  snapshot: Snapshot & { formattedCreateDate: { date: string, time: string } | null }
+  snapshot: Snapshot & { formattedCreateDate: { date: string, time: string } | null },
+  isRestoreDisabled: boolean,
+  getK8sState: EngineStates,
 }
 
 interface Props {
@@ -49,11 +53,17 @@ export default Vue.extend<Data, Methods, Computed, Props>({
   },
 
   computed: {
+    ...mapGetters('k8sManager', { getK8sState: 'getK8sState' }),
     snapshot() {
       return {
         ...this.value,
         formattedCreateDate: formatDate(this.value.created),
       };
+    },
+    isRestoreDisabled(): boolean {
+      const k8sState = this.getK8sState;
+
+      return ![EngineStates.STARTED, EngineStates.DISABLED, EngineStates.ERROR].includes(k8sState);
     },
   },
 
@@ -70,7 +80,15 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           const error = await this.$store.dispatch('snapshots/restore', this.snapshot.name);
 
           if (error) {
-            ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
+            ipcRenderer.send(
+              'dialog/error',
+              {
+                dialog:           'SnapshotsDialog',
+                error,
+                errorTitle:       this.t('snapshots.dialog.restore.error.header'),
+                errorDescription: this.t('snapshots.dialog.restore.error.description', { snapshot: this.snapshot.name }, true),
+                errorButton:      this.t('snapshots.dialog.restore.error.buttonText'),
+              });
           } else {
             ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
             ipcRenderer.send('snapshot', {
@@ -138,9 +156,10 @@ export default Vue.extend<Data, Methods, Computed, Props>({
             cancelId: 1,
           },
           format: {
-            header:          this.t('snapshots.dialog.restoring.header', { snapshot }),
-            message:         this.t('snapshots.dialog.restoring.message', { snapshot }, true),
-            showProgressBar: true,
+            header:            this.t('snapshots.dialog.restoring.header', { snapshot }),
+            message:           this.t('snapshots.dialog.restoring.message', { snapshot }, true),
+            showProgressBar:   true,
+            snapshotEventType: 'restore',
           },
         },
       );
@@ -184,6 +203,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       </button>
       <button
         class="btn btn-xs role-primary restore"
+        :disabled="isRestoreDisabled"
         @click="restore"
       >
         {{ t('snapshots.card.action.restore') }}

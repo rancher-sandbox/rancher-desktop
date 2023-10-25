@@ -4749,6 +4749,10 @@ snapshots:
       actions:
         ok: 'Restore'
         cancel: 'Cancel'
+      error:
+        header: 'Error restoring snapshot'
+        description: "Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again."
+        buttonText: 'Quit Rancher Desktop'
     delete:
       header: Permanently delete snapshot?
       info: 'text'

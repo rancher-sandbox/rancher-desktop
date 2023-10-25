@@ -787,7 +787,7 @@ ipcMainProxy.on('snapshot', (event, args) => {
 });
 
 ipcMainProxy.on('dialog/error', (event, args) => {
-  window.getWindow(args.dialog)?.webContents.send('dialog/error', args.error);
+  window.getWindow(args.dialog)?.webContents.send('dialog/error', args);
 });
 
 ipcMainProxy.on('dialog/close', (event, args) => {

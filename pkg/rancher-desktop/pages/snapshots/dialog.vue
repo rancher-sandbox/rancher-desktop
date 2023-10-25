@@ -12,21 +12,39 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      header:    '',
-      message:   '',
-      snapshot:  null,
-      info:      '',
-      bodyStyle: {},
-      error:     '',
-      buttons:   [],
-      response:  0,
-      cancelId:  0,
+      header:            '',
+      message:           '',
+      snapshot:          null,
+      info:              '',
+      bodyStyle:         {},
+      error:             '',
+      errorTitle:        '',
+      errorDescription:  '',
+      errorButton:       '',
+      buttons:           [],
+      response:          0,
+      cancelId:          0,
+      snapshotEventType: '',
+      credentials:       {
+        user:     '',
+        password: '',
+        port:     0,
+      },
     };
   },
 
+  async fetch() {
+    this.credentials = await this.$store.dispatch(
+      'credentials/fetchCredentials',
+    );
+  },
+
   mounted() {
-    ipcRenderer.on('dialog/error', (_event, error) => {
-      this.error = error;
+    ipcRenderer.on('dialog/error', (_event, args) => {
+      this.error = args.error;
+      this.errorTitle = args.errorTitle;
+      this.errorDescription = args.errorDescription;
+      this.errorButton = args.errorButton;
     });
 
     ipcRenderer.on('dialog/options', (_event, { window, format }) => {
@@ -34,6 +52,7 @@ export default Vue.extend({
       this.message = format.message;
       this.snapshot = format.snapshot;
       this.info = format.info;
+      this.snapshotEventType = format.snapshotEventType;
       this.bodyStyle = this.calculateBodyStyle(format.type);
       this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;
@@ -51,6 +70,11 @@ export default Vue.extend({
 
   methods: {
     close(index: number) {
+      if (this.error && this.snapshotEventType === 'restore') {
+        this.quit();
+
+        return;
+      }
       ipcRenderer.send('dialog/close', { response: index });
     },
     isDarwin() {
@@ -61,6 +85,20 @@ export default Vue.extend({
     },
     showLogs() {
       ipcRenderer.send('show-logs');
+    },
+    quit() {
+      fetch(
+        `http://localhost:${ this.credentials?.port }/v1/shutdown`,
+        {
+          method:  'PUT',
+          headers: new Headers({
+            Authorization: `Basic ${ window.btoa(
+              `${ this.credentials?.user }:${ this.credentials?.password }`,
+            ) }`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }),
+        },
+      );
     },
   },
 });
@@ -77,7 +115,12 @@ export default Vue.extend({
         class="header"
       >
         <slot name="header">
-          <h1>{{ header }}</h1>
+          <h1 v-if="errorTitle">
+            {{ errorTitle }}
+          </h1>
+          <h1 v-else>
+            {{ header }}
+          </h1>
         </slot>
       </div>
       <hr class="separator">
@@ -109,7 +152,16 @@ export default Vue.extend({
         </slot>
       </div>
       <div
-        v-if="message"
+        v-if="errorDescription"
+        class="message"
+      >
+        <span
+          class="value"
+          v-html="errorDescription"
+        />
+      </div>
+      <div
+        v-else-if="message"
         class="message"
       >
         <slot name="message">
@@ -161,7 +213,12 @@ export default Vue.extend({
             :class="'role-secondary'"
             @click="close(cancelId)"
           >
-            {{ t('snapshots.dialog.buttons.error') }}
+            <template v-if="errorButton">
+              {{ errorButton }}
+            </template>
+            <template v-else>
+              {{ t('snapshots.dialog.buttons.error') }}
+            </template>
           </button>
         </template>
         <template v-else>
