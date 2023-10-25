@@ -684,6 +684,7 @@ sharkanodo
 shasta
 shazbat
 shortkey
+shortlived
 showmuted
 sigch
 sigevent
