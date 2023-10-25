@@ -42,31 +42,34 @@ const settingsUri = (port: number) => uri(port, 'settings');
 const lockedUri = (port: number) => uri(port, 'settings/locked');
 
 /**
- * Creates an object composed of active WSL Integrations.
- * @param integrations: The source collection, containing all WSL integrations.
- * @returns Returns a new object, containing only active WSL Integrations.
+ * Normalize WSL integrations configuration.
+ * @param integrations The source collection, containing all WSL integrations.
+ * @param mode How normalization should take place.
+ *    'diff': Normalize for comparing to see if changes need to be applied.
+ *    'submit': Normalize for submitting preferences.
+ * @returns Returns a new object with normalized WSL configuration.
  */
-const pickWslIntegrations = (integrations: Record<string, boolean>) => {
-  const someVal = Object.fromEntries(
-    Object
-      .entries(integrations)
-      .filter(([_key, val]) => val === true),
-  );
+const normalizeWslIntegrations = (integrations: Record<string, boolean>, mode: 'diff' | 'submit') => {
+  const normalizeFn = {
+    diff:   (entries: [string, boolean][]) => entries.filter(([, v]) => v),
+    submit: (entries: [string, boolean][]) => entries.map(([k, v]) => [k, v || null] as const),
+  }[mode];
 
-  return someVal;
+  return Object.fromEntries(normalizeFn(Object.entries(integrations)));
 };
 
 /**
  * Normalizes preferences for consistent usage between API and UI
- * @param preferences: The preferences object to normalize.
+ * @param preferences The preferences object to normalize.
+ * @param mode How the preferences should be normalized.
  * @returns Returns a new object, containing normalized preferences data.
  */
-const normalizePreferences = (preferences: Settings) => {
+const normalizePreferences = (preferences: Settings, mode: 'diff' | 'submit') => {
   return {
     ...preferences,
     WSL: {
       ...preferences.WSL,
-      integrations: pickWslIntegrations(preferences.WSL.integrations),
+      integrations: normalizeWslIntegrations(preferences.WSL.integrations, mode),
     },
   };
 };
@@ -186,7 +189,7 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(payload ?? getters.getPreferencesNormalized),
+        body: JSON.stringify(payload ?? normalizePreferences(getters.getPreferences, 'submit')),
       });
 
     await dispatch(
@@ -252,7 +255,7 @@ export const actions = {
       port, user, password, preferences,
     }: ProposePreferencesPayload,
   ): Promise<Severities> {
-    const proposal = preferences || getters.getPreferencesNormalized;
+    const proposal = preferences || normalizePreferences(getters.getPreferences, 'submit');
 
     const result = await fetch(
       proposedSettings(port),
@@ -309,10 +312,10 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   getPreferences(state: PreferencesState) {
     return state.preferences;
   },
-  isPreferencesDirty(state: PreferencesState, getters) {
+  isPreferencesDirty(state: PreferencesState) {
     const isDirty = !_.isEqual(
-      normalizePreferences(state.initialPreferences),
-      getters.getPreferencesNormalized,
+      normalizePreferences(state.initialPreferences, 'diff'),
+      normalizePreferences(state.preferences, 'diff'),
     );
 
     ipcRenderer.send('preferences-set-dirty', isDirty);
@@ -333,9 +336,6 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   showMuted(state: PreferencesState) {
     return state.preferences.diagnostics.showMuted;
-  },
-  getPreferencesNormalized(state: PreferencesState) {
-    return normalizePreferences(state.preferences);
   },
   isPreferenceLocked: (state: PreferencesState) => (value: string) => {
     return _.get(state.lockedPreferences, value);
