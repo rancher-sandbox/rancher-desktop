@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="first-run-container">
     <h2 data-test="k8s-settings-header">
       Welcome to Rancher Desktop by SUSE
     </h2>
@@ -243,6 +243,12 @@ export default Vue.extend({
 });
 </script>
 
+<style lang="scss">
+  html {
+    height: initial;
+  }
+</style>
+
 <style lang="scss" scoped>
   .button-area {
     align-self: flex-end;
@@ -250,5 +256,9 @@ export default Vue.extend({
 
   .select-k8s-version {
     margin-top: 0.5rem;
+  }
+
+  .first-run-container {
+    width: 26rem;
   }
 </style>
