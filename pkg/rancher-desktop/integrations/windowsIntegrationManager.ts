@@ -426,7 +426,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   protected async updateHostsFile(distro: string) {
-    const entry = '192.168.1.2,gateway.rancher-desktop.internal';
+    const entry = '192.168.1.2 gateway.rancher-desktop.internal';
 
     try {
       console.debug(`Update ${ distro } host file`);

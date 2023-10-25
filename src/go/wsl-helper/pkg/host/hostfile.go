@@ -35,8 +35,8 @@ const (
 // provided in the following format, e.g.:
 //
 //	newEntries := []string{
-//	  "127.0.0.1,example.com",
-//	  "127.0.0.1,another-example.com",
+//	  "127.0.0.1 example.com",
+//	  "127.0.0.1 another-example.com",
 //	}
 func AppendHostsFile(entries []string, hostsFilePath string) error {
 	exist, err := configExist(hostsFilePath)
@@ -60,7 +60,7 @@ func AppendHostsFile(entries []string, hostsFilePath string) error {
 		return err
 	}
 	for _, entry := range entries {
-		_, err := writer.WriteString(strings.ReplaceAll(entry, ",", " ") + "\n")
+		_, err := writer.WriteString(entry + "\n")
 		if err != nil {
 			return fmt.Errorf("error writing to /etc/hosts file: %w", err)
 		}
@@ -130,6 +130,10 @@ func RemoveHostsFileEntry(hostsFilePath string) error {
 	}
 
 	if err := tempFile.Close(); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(tempFile.Name(), 0644); err != nil {
 		return err
 	}
 
