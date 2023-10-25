@@ -390,30 +390,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncDistroDockerPlugin(distro: string, pluginName: string, state: boolean) {
     try {
       const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
-      const destDir = '$HOME/.docker/cli-plugins';
-      const destPath = `${ destDir }/${ pluginName }`;
+      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
 
-      console.debug(`Syncing ${ distro } ${ pluginName }: ${ srcPath } -> ${ destDir }`);
-      if (state) {
-        await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
-        await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
-      } else {
-        try {
-          // This is preferred to doing the readlink and rm in one long /bin/sh
-          // statement because then we rely on the distro's readlink supporting
-          // the -n option. Gnu/linux readlink supports -f, On macOS the -f means
-          // something else (not that we're likely to see macos WSLs).
-          const targetPath = (await this.captureCommand({ distro }, '/bin/sh', '-c', `readlink -f "${ destPath }"`)).trimEnd();
-
-          if (targetPath === srcPath) {
-            await this.execCommand({ distro }, '/bin/sh', '-c', `rm "${ destPath }"`);
-          }
-        } catch (err) {
-          console.log(`Failed to readlink/rm ${ destPath }`, err);
-        }
-      }
+      console.debug(`Syncing docker plugin ${ pluginName } for distribution ${ distro }: ${ state }`);
+      await this.execCommand({ distro }, executable, 'wsl', 'integration', 'docker-plugin', `--plugin=${ srcPath }`, `--state=${ state }`);
     } catch (error) {
-      console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`);
+      console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`.trim());
     }
   }
 
@@ -521,20 +503,18 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
       const mode = state ? 'set' : 'delete';
 
-      await this.execCommand({ distro, root: true }, executable, 'wsl', 'integration-state', `--mode=${ mode }`);
+      await this.execCommand({ distro, root: true }, executable, 'wsl', 'integration', 'state', `--mode=${ mode }`);
     } catch (ex) {
       console.error(`Failed to mark integration for ${ distro }:`, ex);
     }
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
-    const result: Record<string, boolean | string> = {};
+    // Get the results in parallel
+    const distros = await this.nonBlacklistedDistros;
+    const states = distros.map(d => (async() => [d.name, await this.getStateForIntegration(d)] as const)());
 
-    for (const distro of await this.nonBlacklistedDistros) {
-      result[distro.name] = await this.getStateForIntegration(distro);
-    }
-
-    return result;
+    return Object.fromEntries(await Promise.all(states));
   }
 
   /**
@@ -543,7 +523,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    */
   protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
     if (distro.version !== 2) {
-      console.log(`WSL distro "${ distro.name }: is version ${ distro.version }`);
+      console.log(`WSL distro "${ distro.name }": is version ${ distro.version }`);
 
       return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${ distro.version }).`;
     }
@@ -551,7 +531,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const executable = await this.getLinuxToolPath(distro.name, 'wsl-helper');
       const stdout = await this.captureCommand(
         { distro: distro.name },
-        executable, 'wsl', 'integration-state', '--mode=show');
+        executable, 'wsl', 'integration', 'state', '--mode=show');
 
       console.debug(`WSL distro "${ distro.name }": wsl-helper output: "${ stdout.trim() }"`);
       if (['true', 'false'].includes(stdout.trim())) {
