@@ -33,7 +33,7 @@ test.describe.serial('Main App Test', () => {
   test('should land on General page', async() => {
     const navPage = new NavPage(page);
 
-    await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
+    await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop by SUSE');
   });
 
   test('should navigate to Port Forwarding and check elements', async() => {
