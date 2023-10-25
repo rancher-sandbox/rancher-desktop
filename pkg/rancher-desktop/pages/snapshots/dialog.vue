@@ -18,6 +18,9 @@ export default Vue.extend({
       info:              '',
       bodyStyle:         {},
       error:             '',
+      errorTitle:        '',
+      errorDescription:  '',
+      errorButton:       '',
       buttons:           [],
       response:          0,
       cancelId:          0,
@@ -37,8 +40,11 @@ export default Vue.extend({
   },
 
   mounted() {
-    ipcRenderer.on('dialog/error', (_event, error) => {
-      this.error = error;
+    ipcRenderer.on('dialog/error', (_event, args) => {
+      this.error = args.error;
+      this.errorTitle = args.errorTitle;
+      this.errorDescription = args.errorDescription;
+      this.errorButton = args.errorButton;
     });
 
     ipcRenderer.on('dialog/options', (_event, { window, format }) => {
@@ -109,7 +115,12 @@ export default Vue.extend({
         class="header"
       >
         <slot name="header">
-          <h1>{{ header }}</h1>
+          <h1 v-if="errorTitle">
+            {{ errorTitle }}
+          </h1>
+          <h1 v-else>
+            {{ header }}
+          </h1>
         </slot>
       </div>
       <hr class="separator">
@@ -141,7 +152,16 @@ export default Vue.extend({
         </slot>
       </div>
       <div
-        v-if="message"
+        v-if="errorDescription"
+        class="message"
+      >
+        <span
+          class="value"
+          v-html="errorDescription"
+        />
+      </div>
+      <div
+        v-else-if="message"
         class="message"
       >
         <slot name="message">
@@ -193,7 +213,12 @@ export default Vue.extend({
             :class="'role-secondary'"
             @click="close(cancelId)"
           >
-            {{ t('snapshots.dialog.buttons.error') }}
+            <template v-if="errorButton">
+              {{ errorButton }}
+            </template>
+            <template v-else>
+              {{ t('snapshots.dialog.buttons.error') }}
+            </template>
           </button>
         </template>
         <template v-else>

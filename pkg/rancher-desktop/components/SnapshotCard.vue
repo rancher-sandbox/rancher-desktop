@@ -80,7 +80,15 @@ export default Vue.extend<Data, Methods, Computed, Props>({
           const error = await this.$store.dispatch('snapshots/restore', this.snapshot.name);
 
           if (error) {
-            ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
+            ipcRenderer.send(
+              'dialog/error',
+              {
+                dialog:           'SnapshotsDialog',
+                error,
+                errorTitle:       this.t('snapshots.dialog.restore.error.header'),
+                errorDescription: this.t('snapshots.dialog.restore.error.description', { snapshot: this.snapshot.name }, true),
+                errorButton:      this.t('snapshots.dialog.restore.error.buttonText'),
+              });
           } else {
             ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
             ipcRenderer.send('snapshot', {
