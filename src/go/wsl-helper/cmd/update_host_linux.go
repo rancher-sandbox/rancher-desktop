@@ -45,7 +45,7 @@ var updateHostsFileCmd = &cobra.Command{
 func init() {
 	updateHostsFileCmd.Flags().StringSlice(
 		"entries",
-		[]string{fmt.Sprintf("%s,%s", host.GatewayIP, host.GatewayDomain)},
+		[]string{fmt.Sprintf("%s %s", host.GatewayIP, host.GatewayDomain)},
 		"Array of host file entries to append")
 	updateHostsFileCmd.Flags().Bool("remove", false, "Remove RD gateway from hosts file")
 	rootCmd.AddCommand(updateHostsFileCmd)
