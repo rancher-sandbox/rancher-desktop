@@ -22,4 +22,16 @@ export class PreferencesPage {
     this.kubernetes = new KubernetesNav(page);
     this.wsl = new WslNav(page);
   }
+
+  get alert() {
+    return this.page.getByTestId('preferences-alert');
+  }
+
+  apply() {
+    return this.page.getByTestId('preferences-apply').click();
+  }
+
+  cancel() {
+    return this.page.getByTestId('preferences-cancel').click();
+  }
 }
