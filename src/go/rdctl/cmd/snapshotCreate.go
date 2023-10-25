@@ -37,7 +37,7 @@ func createSnapshot(cmd *cobra.Command, args []string) error {
 	if err := manager.ValidateName(args[0]); err != nil {
 		return err
 	}
-	err = wrapSnapshotOperation(cmd, appPaths, false, func() error {
+	err = wrapSnapshotOperation(cmd, appPaths, true, func() error {
 		if _, err := manager.Create(args[0], snapshotDescription); err != nil {
 			return fmt.Errorf("failed to create snapshot: %w", err)
 		}

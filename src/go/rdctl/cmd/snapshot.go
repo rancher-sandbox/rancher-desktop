@@ -10,7 +10,6 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +60,7 @@ func exitWithJsonOrErrorCondition(e error) error {
 // If the main process is running, stops the backend, calls the
 // passed function, and restarts the backend. If it cannot connect
 // to the main process, just calls the passed function.
-func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFailure bool, wrappedFunction func() error) error {
+func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, restartOnFailure bool, wrappedFunction func() error) error {
 	if err := createBackendLock(appPaths.AppHome); err != nil {
 		return err
 	}
@@ -70,8 +69,7 @@ func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, resetOnFail
 		return err
 	}
 	if err := wrappedFunction(); err != nil {
-		if resetOnFailure {
-			factoryreset.DeleteData(appPaths, true)
+		if !restartOnFailure {
 			return err
 		}
 		snapshotErrors = append(snapshotErrors, err)

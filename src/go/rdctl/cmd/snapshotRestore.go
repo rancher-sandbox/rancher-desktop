@@ -33,7 +33,7 @@ func restoreSnapshot(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return wrapSnapshotOperation(cmd, appPaths, true, func() error {
+	return wrapSnapshotOperation(cmd, appPaths, false, func() error {
 		if err := manager.Restore(id); err != nil {
 			return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
 		}
