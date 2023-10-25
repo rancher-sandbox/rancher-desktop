@@ -200,11 +200,6 @@ export default async function generateFileList(rootPath: string): Promise<string
       return null;
     },
 
-    'wix-install-wsl.ps1': () => {
-      // TODO: Remove this file.
-      return null;
-    },
-
     // @ts-ignore
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>
@@ -265,8 +260,6 @@ export default async function generateFileList(rootPath: string): Promise<string
       </Component>;
     },
   };
-
-  rootDir.files.push({ name: 'wix-install-wsl.ps1', id: 'f_install_wsl' });
 
   const jsxElement = (<Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
