@@ -158,11 +158,6 @@ func removeExistingRDConfig(name string, config *kubeConfig) *kubeConfig {
 
 	// Remove contexts with the specified name
 	var filteredContexts []struct {
-		Context struct {
-			Cluster string
-			User    string
-			Extras  map[string]interface{} `yaml:",inline"`
-		} `yaml:"context"`
 		Name   string                 `yaml:"name"`
 		Extras map[string]interface{} `yaml:",inline"`
 	}

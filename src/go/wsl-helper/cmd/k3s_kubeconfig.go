@@ -41,9 +41,6 @@ type kubeConfig struct {
 		Extras map[string]interface{} `yaml:",inline"`
 	} `yaml:"clusters"`
 	Contexts []struct {
-		Context struct {
-			Extras map[string]interface{} `yaml:",inline"`
-		} `yaml:"context"`
 		Name   string                 `yaml:"name"`
 		Extras map[string]interface{} `yaml:",inline"`
 	} `yaml:"contexts"`
