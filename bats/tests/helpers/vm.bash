@@ -178,6 +178,7 @@ start_application() {
 
 launch_the_application() {
     local args=("$@")
+    trace "$*"
 
     if using_dev_mode; then
         # translate args back into the internal API format

@@ -10,6 +10,13 @@ local_setup() {
 }
 
 @test 'start up using containerd' {
+    # TODO TODO TODO
+    # Using the container engine name to check if a snapshot has been
+    # restored is one of the worst possible choices, as the engine choice
+    # is built into so much logic in the helper functions.
+    # Maybe pull an image and verify the image is still there after the
+    # restore.
+    # TODO TODO TODO
     RD_CONTAINER_ENGINE=containerd
     start_kubernetes
     wait_for_container_engine
@@ -35,7 +42,13 @@ local_setup() {
 }
 
 @test 'start back up' {
+    # don't provide a --container-engine.name argument to `rdctl start`
+    RD_CONTAINER_ENGINE=""
+    # don't create settings.json file
+    RD_USE_PROFILE=true
     start_kubernetes
+    # make sure we are not waiting for the docker context to be created
+    RD_CONTAINER_ENGINE="containerd"
     wait_for_container_engine
     wait_for_apiserver
     wait_for_backend
