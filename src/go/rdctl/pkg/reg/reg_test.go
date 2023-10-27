@@ -144,7 +144,7 @@ func TestJsonToRegFormat(t *testing.T) {
     "extensions": {
       "allowed": {
         "enabled": false,
-        "list": ["found", "fully", "bawdy", "tarot"]
+        "list": []
       }
     },
     "pathManagementStrategy": "manual",
@@ -176,7 +176,7 @@ func TestJsonToRegFormat(t *testing.T) {
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]`,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]`,
 			`"enabled"=dword:0`,
-			`"list"=hex(7):66,00,6f,00,75,00,6e,00,64,00,00,00,66,00,75,00,6c,00,6c,00,79,00,00,00,62,00,61,00,77,00,64,00,79,00,00,00,74,00,61,00,72,00,6f,00,74,00,00,00,00,00`,
+			`"list"=hex(7):00,00`,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\updater]`,
 			`"enabled"=dword:0`,
 			`[HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\containerEngine]`,
