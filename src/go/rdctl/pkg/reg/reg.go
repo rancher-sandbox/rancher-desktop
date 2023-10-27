@@ -169,7 +169,7 @@ func stringToMultiStringHexBytes(values []string) string {
 		hexChars[2*i+1] = s[0:2]
 	}
 	if len(hexChars) == 0 {
-		return "00,00,00,00"
+		return "00,00"
 	}
 	return strings.Join(hexChars, ",") + ",00,00,00,00"
 }
