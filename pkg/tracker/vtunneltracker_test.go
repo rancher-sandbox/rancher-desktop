@@ -23,6 +23,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVTunnelTrackerAdd(t *testing.T) {
@@ -41,7 +42,7 @@ func TestVTunnelTrackerAdd(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	portMapping2 := nat.PortMap{
 		"443/tcp": []nat.PortBinding{
@@ -52,7 +53,7 @@ func TestVTunnelTrackerAdd(t *testing.T) {
 		},
 	}
 	err = vtunnelTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.ElementsMatch(t, forwarder.receivedPortMappings,
 		[]types.PortMapping{
@@ -96,7 +97,7 @@ func TestVTunnelTrackerAddOverride(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.ElementsMatch(t, forwarder.receivedPortMappings,
 		[]types.PortMapping{
@@ -126,16 +127,16 @@ func TestVTunnelTrackerAddOverride(t *testing.T) {
 	}
 
 	err = vtunnelTracker.Add(containerID, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	secondCallIndex := 1
-	assert.Equal(t, forwarder.receivedPortMappings[secondCallIndex],
+	assert.Equal(t,
 		types.PortMapping{
 			Remove:       false,
 			Ports:        portMapping2,
 			ConnectAddrs: wslConnectAddr,
 		},
-	)
+		forwarder.receivedPortMappings[secondCallIndex])
 
 	actualPortMapping = vtunnelTracker.Get(containerID)
 	assert.Equal(t, actualPortMapping, portMapping2)
@@ -151,12 +152,12 @@ func TestVTunnelTrackerAddEmptyPortMap(t *testing.T) {
 
 	portMapping := nat.PortMap{}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Len(t, forwarder.receivedPortMappings, 0)
+	assert.Empty(t, forwarder.receivedPortMappings, 0)
 
 	actualPortMapping := vtunnelTracker.Get(containerID)
-	assert.Len(t, actualPortMapping, 0)
+	assert.Empty(t, actualPortMapping, 0)
 }
 
 func TestVTunnelTrackerAddWithError(t *testing.T) {
@@ -176,7 +177,7 @@ func TestVTunnelTrackerAddWithError(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.ErrorIs(t, err, errSend)
+	require.ErrorIs(t, err, errSend)
 
 	assert.ElementsMatch(t, forwarder.receivedPortMappings,
 		[]types.PortMapping{
@@ -188,7 +189,7 @@ func TestVTunnelTrackerAddWithError(t *testing.T) {
 		})
 
 	actualPortMapping := vtunnelTracker.Get(containerID)
-	assert.Len(t, actualPortMapping, 0)
+	assert.Empty(t, actualPortMapping, 0)
 }
 
 func TestVTunnelTrackerRemove(t *testing.T) {
@@ -207,7 +208,7 @@ func TestVTunnelTrackerRemove(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	portMapping2 := nat.PortMap{
 		"443/tcp": []nat.PortBinding{
@@ -218,33 +219,33 @@ func TestVTunnelTrackerRemove(t *testing.T) {
 		},
 	}
 	err = vtunnelTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Len(t, forwarder.receivedPortMappings, 2)
 
 	err = vtunnelTracker.Remove(containerID)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	removeRequestIndex := 2
-	assert.Equal(t, forwarder.receivedPortMappings[removeRequestIndex],
+	assert.Equal(t,
 		types.PortMapping{
 			Remove:       true,
 			Ports:        portMapping,
 			ConnectAddrs: wslConnectAddr,
-		})
+		}, forwarder.receivedPortMappings[removeRequestIndex])
 
 	actualPortMapping := vtunnelTracker.Get(containerID)
 	assert.Nil(t, actualPortMapping)
 
 	actualPortMapping = vtunnelTracker.Get(containerID2)
-	assert.Equal(t, actualPortMapping, nat.PortMap{
+	assert.Equal(t, nat.PortMap{
 		"443/tcp": []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
 			},
 		},
-	})
+	}, actualPortMapping)
 }
 
 func TestVTunnelTrackerRemoveZeroLengthPortMap(t *testing.T) {
@@ -256,10 +257,10 @@ func TestVTunnelTrackerRemoveZeroLengthPortMap(t *testing.T) {
 
 	portMapping := nat.PortMap{}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = vtunnelTracker.Remove(containerID)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestVTunnelTrackerRemoveError(t *testing.T) {
@@ -278,7 +279,7 @@ func TestVTunnelTrackerRemoveError(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	portMapping2 := nat.PortMap{
 		"443/tcp": []nat.PortBinding{
@@ -289,41 +290,41 @@ func TestVTunnelTrackerRemoveError(t *testing.T) {
 		},
 	}
 	err = vtunnelTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Len(t, forwarder.receivedPortMappings, 2)
 
 	forwarder.sendErr = errSend
 	err = vtunnelTracker.Remove(containerID)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	removeRequestIndex := 2
-	assert.Equal(t, forwarder.receivedPortMappings[removeRequestIndex],
+	assert.Equal(t,
 		types.PortMapping{
 			Remove:       true,
 			Ports:        portMapping,
 			ConnectAddrs: wslConnectAddr,
-		})
+		}, forwarder.receivedPortMappings[removeRequestIndex])
 
 	actualPortMapping := vtunnelTracker.Get(containerID)
-	assert.Equal(t, actualPortMapping, nat.PortMap{
+	assert.Equal(t, nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
-	})
+	}, actualPortMapping)
 
 	actualPortMapping = vtunnelTracker.Get(containerID2)
-	assert.Equal(t, actualPortMapping, nat.PortMap{
+	assert.Equal(t, nat.PortMap{
 		"443/tcp": []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
 			},
 		},
-	})
+	}, actualPortMapping)
 }
 
 func TestVTunnelTrackerRemoveAll(t *testing.T) {
@@ -342,7 +343,7 @@ func TestVTunnelTrackerRemoveAll(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	portMapping2 := nat.PortMap{
 		"443/tcp": []nat.PortBinding{
@@ -353,10 +354,10 @@ func TestVTunnelTrackerRemoveAll(t *testing.T) {
 		},
 	}
 	err = vtunnelTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = vtunnelTracker.RemoveAll()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	actualPortMapping := vtunnelTracker.Get(containerID)
 	assert.Nil(t, actualPortMapping)
@@ -404,7 +405,7 @@ func TestVTunnelTrackerRemoveAllError(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	portMapping2 := nat.PortMap{
 		"443/tcp": []nat.PortBinding{
@@ -415,7 +416,7 @@ func TestVTunnelTrackerRemoveAllError(t *testing.T) {
 		},
 	}
 	err = vtunnelTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	forwarder.failCondition = func(pm types.PortMapping) error {
 		if _, ok := pm.Ports["443/tcp"]; ok {
@@ -428,7 +429,7 @@ func TestVTunnelTrackerRemoveAllError(t *testing.T) {
 		return nil
 	}
 	err = vtunnelTracker.RemoveAll()
-	assert.ErrorIs(t, err, tracker.ErrRemoveAll)
+	require.ErrorIs(t, err, tracker.ErrRemoveAll)
 
 	actualPortMapping := vtunnelTracker.Get(containerID)
 	assert.Nil(t, actualPortMapping)
@@ -471,7 +472,7 @@ func TestVTunnelTrackerGet(t *testing.T) {
 		},
 	}
 	err := vtunnelTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	actualPortMap := vtunnelTracker.Get(containerID)
 	assert.Equal(t, portMapping, actualPortMap)
