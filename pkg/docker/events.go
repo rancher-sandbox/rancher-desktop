@@ -160,6 +160,16 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 			if err := e.portTracker.Add(container.ID, portMap); err != nil {
 				log.Errorf("registering already running containers failed: %v", err)
 			}
+
+			for _, netSettings := range container.NetworkSettings.Networks {
+				err = createLoopbackIPtablesRules(
+					netSettings.IPAddress,
+					portMap)
+
+				if err != nil {
+					log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
+				}
+			}
 		}
 	}
 
