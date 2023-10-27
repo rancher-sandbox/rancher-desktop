@@ -24,6 +24,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -46,7 +47,7 @@ func TestBasicAdd(t *testing.T) {
 
 	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&expectedExposeReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	testSrv := httptest.NewServer(mux)
@@ -62,7 +63,7 @@ func TestBasicAdd(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, expectedExposeReq.Local, ipPortBuilder(hostIP, hostPort))
 	assert.Equal(t, expectedExposeReq.Remote, ipPortBuilder(hostSwitchIP, hostPort))
@@ -81,7 +82,7 @@ func TestAddOverride(t *testing.T) {
 	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.ExposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedExposeReq = append(expectedExposeReq, tmpReq)
 	})
 
@@ -104,7 +105,7 @@ func TestAddOverride(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
@@ -139,7 +140,7 @@ func TestAddOverride(t *testing.T) {
 		},
 	}
 	err = apiTracker.Add(containerID, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
@@ -167,7 +168,7 @@ func TestAddWithError(t *testing.T) {
 	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.ExposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if tmpReq.Local == ipPortBuilder(hostIP2, hostPort) {
 			http.Error(w, "Bad API error", http.StatusRequestTimeout)
 
@@ -197,7 +198,7 @@ func TestAddWithError(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	errPortBinding := nat.PortBinding{
 		HostIP:   hostIP2,
@@ -208,7 +209,7 @@ func TestAddWithError(t *testing.T) {
 		fmt.Errorf("exposing %+v failed: %w", errPortBinding, nestedErr),
 	}
 	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrExposeAPI, errs)
-	assert.EqualError(t, err, expectedErr.Error())
+	require.EqualError(t, err, expectedErr.Error())
 
 	assert.Len(t, expectedExposeReq, 2)
 	assert.ElementsMatch(t, expectedExposeReq,
@@ -236,7 +237,7 @@ func TestAddWithError(t *testing.T) {
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	})
-	assert.Equal(t, actualPortMapping["80/tcp"],
+	assert.Equal(t,
 		[]nat.PortBinding{
 			{
 				HostIP:   hostIP,
@@ -246,7 +247,7 @@ func TestAddWithError(t *testing.T) {
 				HostIP:   hostIP3,
 				HostPort: hostPort,
 			},
-		})
+		}, actualPortMapping["80/tcp"])
 }
 
 func TestGet(t *testing.T) {
@@ -276,7 +277,7 @@ func TestGet(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
 	err := apiTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	actualPortMappings := apiTracker.Get(containerID)
 	assert.Len(t, actualPortMappings, len(portMapping))
@@ -296,7 +297,7 @@ func TestRemove(t *testing.T) {
 
 	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&expectedUnexposeReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	testSrv := httptest.NewServer(mux)
@@ -324,12 +325,12 @@ func TestRemove(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = apiTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = apiTracker.Remove(containerID)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, expectedUnexposeReq.Local, ipPortBuilder(hostIP, hostPort))
 
@@ -354,7 +355,7 @@ func TestRemoveWithError(t *testing.T) {
 	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.UnexposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if tmpReq.Local == ipPortBuilder(hostIP2, hostPort) {
 			http.Error(w, "Test API error", http.StatusRequestTimeout)
 
@@ -385,10 +386,10 @@ func TestRemoveWithError(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = apiTracker.Remove(containerID)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	errPortBinding := nat.PortBinding{
 		HostIP:   hostIP2,
@@ -399,7 +400,7 @@ func TestRemoveWithError(t *testing.T) {
 		fmt.Errorf("unexposing %+v failed: %w", errPortBinding, nestedErr),
 	}
 	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrUnexposeAPI, errs)
-	assert.EqualError(t, err, expectedErr.Error())
+	require.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
 		{Local: ipPortBuilder(hostIP, hostPort)},
@@ -449,13 +450,13 @@ func TestRemoveAll(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = apiTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = apiTracker.RemoveAll()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	expectedPortMapping1 := apiTracker.Get(containerID)
 	assert.Nil(t, expectedPortMapping1)
@@ -478,7 +479,7 @@ func TestRemoveAllWithError(t *testing.T) {
 	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.UnexposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		if tmpReq.Local == ipPortBuilder(hostIP2, hostPort2) {
 			http.Error(w, "RemoveAll API error", http.StatusRequestTimeout)
 
@@ -513,13 +514,13 @@ func TestRemoveAllWithError(t *testing.T) {
 		},
 	}
 	err := apiTracker.Add(containerID, portMapping1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = apiTracker.Add(containerID2, portMapping2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = apiTracker.RemoveAll()
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	errPortBinding := nat.PortBinding{
 		HostIP:   hostIP2,
@@ -530,7 +531,7 @@ func TestRemoveAllWithError(t *testing.T) {
 		fmt.Errorf("RemoveAll unexposing %+v failed: %w", errPortBinding, nestedErr),
 	}
 	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrUnexposeAPI, errs)
-	assert.EqualError(t, err, expectedErr.Error())
+	require.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
 		{Local: ipPortBuilder(hostIP, hostPort)},
@@ -554,7 +555,7 @@ func TestNonAdminInstall(t *testing.T) {
 	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.ExposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedExposeReq = append(expectedExposeReq, tmpReq)
 	})
 
@@ -563,7 +564,7 @@ func TestNonAdminInstall(t *testing.T) {
 	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.UnexposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedUnexposeReq = append(expectedUnexposeReq, tmpReq)
 	})
 
@@ -582,7 +583,7 @@ func TestNonAdminInstall(t *testing.T) {
 	}
 
 	err := apiTracker.Add(containerID, portMapping)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
@@ -594,7 +595,7 @@ func TestNonAdminInstall(t *testing.T) {
 	)
 
 	err = apiTracker.Remove(containerID)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedUnexposeReq,
 		[]*types.UnexposeRequest{
