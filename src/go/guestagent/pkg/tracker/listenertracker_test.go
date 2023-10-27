@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListenerTracker(t *testing.T) {
@@ -46,16 +46,16 @@ func TestListenerTracker(t *testing.T) {
 		t.Run(fmt.Sprintf("Should create listener with port: %d", testCase.testPort), func(t *testing.T) {
 			t.Parallel()
 			err := listenerTracker.AddListener(ctx, testIPAddr, testCase.testPort)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			_, err = net.Dial("tcp", ipPortToAddr(testIPAddr, testCase.testPort))
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			err = listenerTracker.RemoveListener(ctx, testIPAddr, testCase.testPort)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			_, err = net.Dial("tcp", ipPortToAddr(testIPAddr, testCase.testPort))
-			assert.ErrorIs(t, err, syscall.ECONNREFUSED)
+			require.ErrorIs(t, err, syscall.ECONNREFUSED)
 		})
 	}
 }
