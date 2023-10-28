@@ -1064,11 +1064,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       return true;
     }
 
-    const allowed = await this.progressTracker.action(
-      'Expecting user permission to continue',
-      10,
-      this.showSudoReason(explanations));
+    const requirePassword = await this.sudoRequiresPassword();
+    let allowed = true;
 
+    if (requirePassword) {
+      allowed = await this.progressTracker.action(
+        'Expecting user permission to continue',
+        10,
+        this.showSudoReason(explanations));
+    }
     if (!allowed) {
       this.#adminAccess = false;
 
@@ -1081,7 +1085,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       throw new Error(`Can't execute commands ${ singleCommand } because there's a single-quote in them.`);
     }
     try {
-      await this.sudoExec(`/bin/sh -xec '${ singleCommand }'`);
+      if (requirePassword) {
+        await this.sudoExec(`/bin/sh -xec '${ singleCommand }'`);
+      } else {
+        await childProcess.spawnFile('sudo', ['--non-interactive', '/bin/sh', '-xec', singleCommand],
+          { stdio: ['ignore', 'pipe', 'pipe'] });
+      }
     } catch (err) {
       if (err instanceof Error && err.message === 'User did not grant permission.') {
         this.#adminAccess = false;
@@ -1377,6 +1386,21 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
 
     return path;
+  }
+
+  protected async sudoRequiresPassword() {
+    try {
+      // Check if we can run /usr/bin/true (or /bin/true) without requiring a password
+      await childProcess.spawnFile('sudo', ['--non-interactive', '--reset-timestamp', 'true'],
+        { stdio: ['ignore', 'pipe', 'pipe'] });
+      console.debug("sudo --non-interactive didn't throw an error, so assume we can do passwordless sudo");
+
+      return false;
+    } catch (err: any) {
+      console.debug(`sudo --non-interactive threw an error, so assume it needs a password: ${ JSON.stringify(err) }`);
+
+      return true;
+    }
   }
 
   /**
