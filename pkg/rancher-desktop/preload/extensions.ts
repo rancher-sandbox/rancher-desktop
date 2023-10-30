@@ -426,7 +426,7 @@ class Client implements v1.DockerDesktopClient {
           HostConfig: details.HostConfig ?? {},
           SizeRootFs: details.SizeRootFs ?? -1,
           SizeRw:     details.SizeRw ?? -1,
-          Ports:      details.NetworkSettings.Ports ?? {},
+          Ports:      details.NetworkSettings?.Ports ?? {},
           ...pick(details.Config, 'Labels'),
           ...pick(details.State, ['Status', 'State']),
           Names:      typeof c.Names === 'string' ? c.Names.split(/\s+/g) : Array.from(c.Names),
