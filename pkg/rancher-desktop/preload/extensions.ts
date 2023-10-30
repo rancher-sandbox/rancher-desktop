@@ -429,7 +429,7 @@ class Client implements v1.DockerDesktopClient {
           Ports:      details.NetworkSettings.Ports ?? {},
           ...pick(details.Config, 'Labels'),
           ...pick(details.State, ['Status', 'State']),
-          Names:      c.Names.split(/\s+/g),
+          Names:      typeof c.Names === 'string' ? c.Names.split(/\s+/g) : Array.from(c.Names),
           Created:    Date.parse(c.CreatedAt).valueOf(),
         };
       });
