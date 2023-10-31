@@ -262,6 +262,7 @@ export default {
         const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           command,
           [...ids],
+          { cwd: '/' },
         );
 
         if (stderr) {
