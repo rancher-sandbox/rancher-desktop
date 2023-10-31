@@ -17,11 +17,11 @@ jobs:
           persist-credentials: false
       # For compatibility with runners without yarn, we need to install node
       # once, install yarn, then install node again to get caching.
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '16.x'
       - run: npm install --global yarn
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '16.x'
           cache: yarn
