@@ -24,8 +24,8 @@ var snapshotErrors []error
 const backendLockName = "backend.lock"
 
 var snapshotCmd = &cobra.Command{
-	Use:    "snapshot",
-	Short:  "Manage Rancher Desktop snapshots",
+	Use:   "snapshot",
+	Short: "Manage Rancher Desktop snapshots",
 }
 
 func init() {
