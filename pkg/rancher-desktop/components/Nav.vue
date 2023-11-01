@@ -17,6 +17,14 @@
             class="nav-badge"
             :label="item.error.toString()"
           />
+          <i
+            v-if="item.experimental"
+            v-tooltip="{
+              content: t('prefs.experimental'),
+              placement: 'right',
+            }"
+            :class="`icon icon-flask`"
+          />
         </NuxtLink>
       </li>
     </ul>
@@ -180,12 +188,14 @@ ul {
         padding: 0;
 
         a {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
             color: var(--body-text);
             text-decoration: none;
             line-height: 24px;
             padding: 7.5px 10px;
             letter-spacing: 1.4px;
-            display: block;
             outline: none;
         }
 
@@ -204,6 +214,7 @@ a {
     background-color: var(--nav-active);
   }
 }
+
 .nav-badge {
   line-height: initial;
   letter-spacing: initial;
