@@ -25,7 +25,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.x'
+        node-version: '18.16.x'
         cache: yarn
     - uses: actions/setup-python@v4
       with:
@@ -89,7 +89,7 @@ jobs:
         persist-credentials: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.x'
+        node-version: '18.16.x'
         cache: yarn
     - run: yarn install --frozen-lockfile
     - name: Download installer (exe)

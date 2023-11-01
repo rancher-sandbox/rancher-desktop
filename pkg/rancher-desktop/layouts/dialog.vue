@@ -68,8 +68,6 @@ export default Vue.extend({
   min-width: 24rem;
   padding: 1.25rem;
   margin: 0 auto;
-  display: flex;
-  flex-flow: column;
 }
 
 .body {

@@ -284,7 +284,7 @@ describeWithCreds('Credentials server', () => {
   });
 
   test('should require authentication', async() => {
-    const url = `http://localhost:${ serverState.port }/list`;
+    const url = `http://127.0.0.1:${ serverState.port }/list`;
     const resp = await fetch(url);
 
     expect(resp.ok).toBeFalsy();
