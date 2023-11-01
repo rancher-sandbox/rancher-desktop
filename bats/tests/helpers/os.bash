@@ -74,3 +74,9 @@ needs_port() {
         fi
     fi
 }
+
+sudo_needs_password() {
+    # Check if we can run /usr/bin/true (or /bin/true) without requiring a password
+    run sudo --non-interactive --reset-timestamp true
+    ((status != 0))
+}
