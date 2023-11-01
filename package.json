@@ -169,6 +169,7 @@
     "jsonpath-plus": "6.0.1",
     "mustache": "4.2.0",
     "nan": "2.17.0",
+    "node-gyp": "10.0.0",
     "octokit": "3.1.1",
     "ps-tree": "1.2.0",
     "raw-loader": "4.0.2",
@@ -182,6 +183,9 @@
     "vue-jest": "3.0.7",
     "vue-template-compiler": "2.7.14",
     "webpack": "5.88.2"
+  },
+  "resolutions": {
+    "string-width": "^4"
   },
   "optionalDependencies": {
     "dmg-license": "1.0.11"
