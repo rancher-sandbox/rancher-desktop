@@ -88,12 +88,18 @@ start_container_engine() {
         --application.updater.enabled=false
         --kubernetes.enabled=false
     )
+    local admin_access=false
+
     if [ -n "$RD_CONTAINER_ENGINE" ]; then
         args+=(--container-engine.name="$RD_CONTAINER_ENGINE")
     fi
+    if using_socket_vmnet; then
+        args+=(--experimental.virtual-machine.socket-vmnet)
+        admin_access=true
+    fi
     if is_unix; then
         args+=(
-            --application.admin-access=false
+            --application.admin-access="$admin_access"
             --application.path-management-strategy rcfiles
             --virtual-machine.memory-in-gb 6
             --experimental.virtual-machine.mount.type="$RD_MOUNT_TYPE"
