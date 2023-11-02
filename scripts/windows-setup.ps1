@@ -49,9 +49,9 @@ if (!$SkipTools) {
         Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
             | Invoke-Expression
         scoop install git go nvm python unzip
-        # Install and use latest node 16* version
-        nvm install 16
-        nvm use $(nvm list | Select-String '[16\.[0-9.]+]' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value })
+        # Install and use latest node 18* version
+        nvm install 18
+        nvm use $(nvm list | Select-String '[18\.[0-9.]+]' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value })
         # Install the yarn package manager
         npm install --global yarn
     }
