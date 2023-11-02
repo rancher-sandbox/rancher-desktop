@@ -137,7 +137,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    * Start Kubernetes.
    * @returns The Kubernetes endpoint
    */
-  async start(config_: BackendSettings, kubernetesVersion: semver.SemVer): Promise<string> {
+  async start(config_: BackendSettings, kubernetesVersion: semver.SemVer, kubeClient?: KubeClient): Promise<string> {
     const config = this.cfg = clone(config_);
     let k3sEndpoint = '';
 
@@ -186,7 +186,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           return k3sConfigString;
         }));
 
-    this.client = new KubeClient();
+    this.client = kubeClient || new KubeClient();
 
     await this.progressTracker.action(
       'Waiting for services',
