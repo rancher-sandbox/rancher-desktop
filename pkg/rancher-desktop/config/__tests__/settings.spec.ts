@@ -424,7 +424,7 @@ describe('settings', () => {
   });
 
   describe('migrations', () => {
-    it('empty settings complains about a missing version field', () => {
+    it("complains about empty settings because there's no version field", () => {
       const s: RecursivePartial<settings.Settings> = {};
 
       expect(() => {
@@ -448,7 +448,7 @@ describe('settings', () => {
       }).toThrowError('updating settings requires specifying an API version, but "-7" is not a positive number');
     });
 
-    it('version-9 no-proxy settings are correctly migrated', () => {
+    it('correctly migrates version-9 no-proxy settings', () => {
       const s: RecursivePartial<settings.Settings> = {
         version:      9 as typeof settings.CURRENT_SETTINGS_VERSION,
         experimental: {
@@ -473,7 +473,7 @@ describe('settings', () => {
       expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
     });
 
-    it('earlier no-proxy settings are correctly migrated', () => {
+    it('correctly migrates earlier no-proxy settings', () => {
       const s: RecursivePartial<settings.Settings> = {
         version:      1 as typeof settings.CURRENT_SETTINGS_VERSION,
         experimental: {
@@ -498,7 +498,7 @@ describe('settings', () => {
       expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
     });
 
-    it('version-8 extension settings are correctly migrated', () => {
+    it('correctly migrates version-8 extension settings ', () => {
       const s: Record<string, any> = {
         version:    8 as typeof settings.CURRENT_SETTINGS_VERSION,
         extensions: { 'hi folks': 'spring', 'goodbye all': 'winter' },
@@ -518,7 +518,7 @@ describe('settings', () => {
       expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
     });
 
-    it('unrecognized settings are left unchanged', () => {
+    it('leaves unrecognized settings unchanged', () => {
       const s: Record<string, any> = {
         version:        1 as typeof settings.CURRENT_SETTINGS_VERSION,
         registeredCows: '2021-05-17T08:57:17 +07:00',
@@ -546,7 +546,7 @@ describe('settings', () => {
       expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
     });
 
-    it('all old settings are updated', () => {
+    it('updates all old settings going back to version 1', () => {
       const s: Record<string, any> = {
         version:    1 as typeof settings.CURRENT_SETTINGS_VERSION,
         kubernetes: {
