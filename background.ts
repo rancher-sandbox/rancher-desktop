@@ -1200,16 +1200,6 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     doFactoryReset(keepSystemImages);
   }
 
-  protected buildSettingsVersionError(newSettings: RecursivePartial<settings.Settings>): string {
-    const firstPart = `updating settings requires specifying version = ${ settings.CURRENT_SETTINGS_VERSION }`;
-
-    if (!('version' in newSettings)) {
-      return `${ firstPart }, but no version was specified`;
-    } else {
-      return `${ firstPart }, but received version ${ newSettings.version }`;
-    }
-  }
-
   /**
    * Execute the preference update for services that don't require a backend restart.
    */
@@ -1238,14 +1228,19 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * - returns an array of two strings:
    *   1. a description of the status of the request, if it was valid
    *   2. a list of any errors in the request body.
-   * @param newSettings: a subset of the Settings object, containing the desired values
+   * @param specifiedNewSettings: a subset of the Settings object, containing the desired values
    * @returns [{string} description of final state if no error, {string} error message]
    */
-  async updateSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
-    const [needToUpdate, errors] = await this.validateSettings(cfg, newSettings);
+  async updateSettings(context: CommandWorkerInterface.CommandContext, specifiedNewSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
+    let errors: string[] = [];
+    let needToUpdate = false;
+    let newSettings: RecursivePartial<settings.Settings> = {};
 
-    if (newSettings.version !== settings.CURRENT_SETTINGS_VERSION) {
-      errors.unshift(this.buildSettingsVersionError(newSettings));
+    try {
+      newSettings = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(specifiedNewSettings);
+      [needToUpdate, errors] = await this.validateSettings(cfg, newSettings);
+    } catch (ex: any) {
+      errors.push(ex.message);
     }
     if (errors.length > 0) {
       return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];

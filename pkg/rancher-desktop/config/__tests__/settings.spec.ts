@@ -9,8 +9,10 @@ import plist from 'plist';
 import * as settings from '../settings';
 import * as settingsImpl from '../settingsImpl';
 
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 class FakeFSError extends Error {
   public message = '';
@@ -418,6 +420,242 @@ describe('settings', () => {
       const calculatedLockedFields = settingsImpl.determineLockedFields(lockedSettings);
 
       expect(calculatedLockedFields).toEqual(expectedLockedFields);
+    });
+  });
+
+  describe('migrations', () => {
+    it('empty settings complains about a missing version field', () => {
+      const s: RecursivePartial<settings.Settings> = {};
+
+      expect(() => {
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+      }).toThrowError('updating settings requires specifying an API version, but no version was specified');
+    });
+
+    it('complains about a non-numeric version field', () => {
+      const s: RecursivePartial<settings.Settings> = { version: 'no way' as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
+
+      expect(() => {
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+      }).toThrowError('updating settings requires specifying an API version, but "no way" is not a proper config version');
+    });
+
+    it('allows a negative version field', () => {
+      const s: RecursivePartial<settings.Settings> = { version: -7 as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
+      const expected: RecursivePartial<settings.Settings> = {
+        version: settings.CURRENT_SETTINGS_VERSION,
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('version-9 no-proxy settings are correctly migrated', () => {
+      const s: RecursivePartial<settings.Settings> = {
+        version:      9 as typeof settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: [' ', '  1.2.3.4   ', '   ', '11.12.13.14  ', '    21.22.23.24'],
+            },
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:      settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
+            },
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('earlier no-proxy settings are correctly migrated', () => {
+      const s: RecursivePartial<settings.Settings> = {
+        version:      1 as typeof settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: [' ', '  1.2.3.4   ', '   ', '11.12.13.14  ', '    21.22.23.24'],
+            },
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:      settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
+            },
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('version-8 extension settings are correctly migrated', () => {
+      const s: Record<string, any> = {
+        version:    8 as typeof settings.CURRENT_SETTINGS_VERSION,
+        extensions: { 'hi folks': 'spring', 'goodbye all': 'winter' },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:     settings.CURRENT_SETTINGS_VERSION,
+        application: {
+          extensions: {
+            installed: {
+              'hi folks':    'spring',
+              'goodbye all': 'winter',
+            },
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('unrecognized settings are left unchanged', () => {
+      const s: Record<string, any> = {
+        version:        1 as typeof settings.CURRENT_SETTINGS_VERSION,
+        registeredCows: '2021-05-17T08:57:17 +07:00',
+        fluentLatitude: -55.753309,
+        grouchyTags:    [
+          'moll',
+          'in',
+          'excitation',
+        ],
+        funnyFriends: [
+          {
+            id:   0,
+            name: 'Terry Serrano',
+          },
+          {
+            id:   1,
+            name: 'Reynolds Rogers',
+          },
+        ],
+        niceGreeting:  'Hello, Bates Middleton! You have 10 unread messages.',
+        favoriteFruit: 'banana',
+      };
+      const expected = _.merge({}, s, { version: settings.CURRENT_SETTINGS_VERSION });
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('all old settings are updated', () => {
+      const s: Record<string, any> = {
+        version:    1 as typeof settings.CURRENT_SETTINGS_VERSION,
+        kubernetes: {
+          rancherMode:     true,
+          suppressSudo:    true,
+          containerEngine: 'moby',
+          hostResolver:    true,
+          memoryInGB:      30,
+          numberCPUs:      200,
+          WSLIntegrations: {
+            Ubuntu:   true,
+            Debian:   false,
+            openSUSE: true,
+          },
+          experimental: {
+            socketVMNet: true,
+          },
+        },
+        debug:                  true,
+        pathManagementStrategy: PathManagementStrategy.Manual,
+        telemetry:              false,
+        updater:                true,
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:     settings.CURRENT_SETTINGS_VERSION,
+        application: {
+          adminAccess:            false,
+          debug:                  true,
+          pathManagementStrategy: PathManagementStrategy.Manual,
+          telemetry:              {
+            enabled: false,
+          },
+          updater: {
+            enabled: true,
+          },
+        },
+        containerEngine: {
+          name: settings.ContainerEngine.MOBY,
+        },
+        experimental:   { virtualMachine: { socketVMNet: true } },
+        kubernetes:     {},
+        virtualMachine: {
+          hostResolver: true,
+          memoryInGB:   30,
+          numberCPUs:   200,
+        },
+        WSL: {
+          integrations: {
+            Ubuntu:   true,
+            Debian:   false,
+            openSUSE: true,
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('sloshes socket vmnet back to where it started', () => {
+      const s: Record<string, any> = {
+        version:      4 as typeof settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            socketVMNet: true,
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:      settings.CURRENT_SETTINGS_VERSION,
+        experimental: { virtualMachine: { socketVMNet: true } },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('reverts socket vmnet back to where it started', () => {
+      const s: Record<string, any> = {
+        version:        5,
+        virtualMachine: {
+          experimental: {
+            socketVMNet: true,
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:        settings.CURRENT_SETTINGS_VERSION,
+        experimental:   { virtualMachine: { socketVMNet: true } },
+        virtualMachine: {},
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+    it('can deal with old socketVMNet', () => {
+      const s: Record<string, any> = {
+        version:    4 as typeof settings.CURRENT_SETTINGS_VERSION,
+        kubernetes: {
+          experimental: {
+            socketVMNet: true,
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:      settings.CURRENT_SETTINGS_VERSION,
+        experimental: { virtualMachine: { socketVMNet: true } },
+        kubernetes:   {},
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
     });
   });
 });
