@@ -118,7 +118,7 @@
     "@nuxtjs/eslint-config-typescript": "8.0.0",
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.1",
-    "@octokit/rest": "19.0.5",
+    "@octokit/rest": "20.0.2",
     "@playwright/test": "1.35.1",
     "@types/cross-spawn": "6.0.2",
     "@types/dompurify": "3.0.0",
