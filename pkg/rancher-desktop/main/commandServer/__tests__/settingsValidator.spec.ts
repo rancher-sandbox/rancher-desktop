@@ -702,7 +702,7 @@ describe(SettingsValidator, () => {
   });
 
   it('should complain about unchangeable fields', () => {
-    const unchangeableFieldsAndValues = { version: -1 };
+    const unchangeableFieldsAndValues = { version: settings.CURRENT_SETTINGS_VERSION + 1 };
 
     // Check that we _don't_ ask for update when we have errors.
     const input = { application: { telemetry: { enabled: !cfg.application.telemetry.enabled } } };

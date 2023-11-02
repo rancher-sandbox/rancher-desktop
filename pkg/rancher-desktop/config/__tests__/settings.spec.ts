@@ -440,13 +440,12 @@ describe('settings', () => {
       }).toThrowError('updating settings requires specifying an API version, but "no way" is not a proper config version');
     });
 
-    it('allows a negative version field', () => {
+    it('complains about a negative version field', () => {
       const s: RecursivePartial<settings.Settings> = { version: -7 as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
-      const expected: RecursivePartial<settings.Settings> = {
-        version: settings.CURRENT_SETTINGS_VERSION,
-      };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+      expect(() => {
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+      }).toThrowError('updating settings requires specifying an API version, but "-7" is not a positive number');
     });
 
     it('version-9 no-proxy settings are correctly migrated', () => {
