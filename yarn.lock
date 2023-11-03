@@ -2641,10 +2641,10 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
-"@types/ffi-napi@4.0.7":
-  version "4.0.7"
-  resolved "https://registry.yarnpkg.com/@types/ffi-napi/-/ffi-napi-4.0.7.tgz#b3a9beeae160c74adca801ca1c9defb1ec0a1a32"
-  integrity sha512-2CvLfgxCUUSj7qVab6/uFLyVpgVd2gEV4H/TQEHHn6kZTV8iTesz9uo0bckhwzsh71atutOv8P3JmvRX2ZvpZg==
+"@types/ffi-napi@4.0.9":
+  version "4.0.9"
+  resolved "https://registry.yarnpkg.com/@types/ffi-napi/-/ffi-napi-4.0.9.tgz#e836679e9b577348f7a9d5a30dfbc37aa5ef0673"
+  integrity sha512-lSmy8q/fjuBYkcVtiXcMaElALm8o99htT2/W41S/JLCRq9DSEd3+84bO+X6FKU0qWoJM1A84CN72JBN+pLmxtQ==
   dependencies:
     "@types/node" "*"
     "@types/ref-napi" "*"
@@ -2865,12 +2865,7 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.39.tgz#07223cd2bc332ad9d92135e3a522eebdee3b060e"
   integrity sha512-K0MsdV42vPwm9L6UwhIxMAOmcvH/1OoVkZyCgEtVu4Wx7sElGloy/W7kMBNe/oJ7V/jW9BVt1F6RahH6e7tPXw==
 
-"@types/node@^18.11.17":
-  version "18.16.19"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.16.19.tgz#cb03fca8910fdeb7595b755126a8a78144714eea"
-  integrity sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==
-
-"@types/node@^18.11.18":
+"@types/node@^18.11.17", "@types/node@^18.11.18":
   version "18.18.1"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.18.1.tgz#80b22f3df719f15c9736207980e95f35d01ec1aa"
   integrity sha512-3G42sxmm0fF2+Vtb9TJQpnjmP+uKlWvFa8KoEGquh4gqRmoUG/N0ufuhikw6HEsdG2G2oIKhog1GCTfz9v5NdQ==

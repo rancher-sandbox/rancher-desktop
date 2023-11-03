@@ -123,7 +123,7 @@
     "@types/cross-spawn": "6.0.2",
     "@types/dompurify": "3.0.0",
     "@types/ejs": "3.1.2",
-    "@types/ffi-napi": "4.0.7",
+    "@types/ffi-napi": "4.0.9",
     "@types/jest": "29.5.2",
     "@types/lodash": "4.14.196",
     "@types/marked": "4.0.8",
