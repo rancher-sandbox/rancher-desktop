@@ -19,8 +19,5 @@ func (w *utf16Writer) Write(p []byte) (int, error) {
 	n, err := w.Writer.Write(
 		unsafe.Slice(unsafe.StringData(output), len(output)),
 	)
-	if err != nil {
-		return n * 2, err
-	}
-	return n * 2, nil
+	return n * 2, err
 }

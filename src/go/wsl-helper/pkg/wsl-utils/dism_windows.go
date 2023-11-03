@@ -16,6 +16,10 @@ limitations under the License.
 
 package wslutils
 
+// This file is a helper for interacting with the Windows Deployment Image
+// Servicing and Management (DISM) APIs.  It lets us install Windows optional
+// features with logging.
+
 import (
 	"context"
 	"fmt"
@@ -76,14 +80,14 @@ func DismDoInstall(ctx context.Context, log *logrus.Entry) error {
 		log.WithError(err).Error("Failed to convert DISM_ONLINE_IMAGE")
 		return err
 	}
-	rv, _, err := dismOpenSession.Call(
+	hr, _, err = dismOpenSession.Call(
 		uintptr(unsafe.Pointer(buf)),
 		uintptr(unsafe.Pointer(nil)),
 		uintptr(unsafe.Pointer(nil)),
 		uintptr(unsafe.Pointer(&session)),
 	)
-	if rv != uintptr(windows.S_OK) {
-		return errorFromWin32("failed to open DISM session", rv&0xFFFF, err)
+	if hr != uintptr(windows.S_OK) {
+		return errorFromWin32("failed to open DISM session", hr&0xFFFF, err)
 	}
 	defer dismCloseSession.Call(uintptr(session))
 

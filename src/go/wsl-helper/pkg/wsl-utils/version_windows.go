@@ -268,10 +268,7 @@ func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, er
 	}
 
 	err = errors.Join(allErrors...)
-	if err != nil {
-		return coreInstalled, kernelInstalled, err
-	}
-	return coreInstalled, kernelInstalled, nil
+	return coreInstalled, kernelInstalled, err
 }
 
 func GetWSLInfo(ctx context.Context, log *logrus.Entry) (*WSLInfo, error) {
