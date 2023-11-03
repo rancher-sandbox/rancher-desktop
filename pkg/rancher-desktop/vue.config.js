@@ -17,7 +17,7 @@ module.exports = {
   outputDir:           path.resolve(rootDir, 'dist', 'app'),
   productionSourceMap: false,
 
-  chainWebpack: (config) => {
+  chainWebpack: (/** @type import('webpack-chain') */ config) => {
     config.target('electron-renderer');
     config.resolve.alias.set('@pkg', path.resolve(rootDir, 'pkg', 'rancher-desktop'));
 
@@ -41,6 +41,7 @@ module.exports = {
         featureExtensions:       true,
       }),
     }]);
+    config.plugins.delete('friendly-errors');
   },
 
   css: {
