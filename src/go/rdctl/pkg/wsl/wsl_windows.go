@@ -40,10 +40,13 @@ func (wsl WSLImpl) ImportDistro(distroName, installLocation, fileName string) er
 	return nil
 }
 
-// When we run a wsl.exe *exec.Cmd, and the command fails, the
-// returned error is not helpful. However, the text it outputs is
-// helpful. wrapWSLError combines the two to provide more helpful
-// error text.
+// wrapWSLError is used to make errors returned from
+// *exec.Cmd.Output() more helpful. It combines the string from the
+// returned error, any data written to stdout, and any data written
+// to stderr into the string of one error.
 func wrapWSLError(output []byte, err error) error {
-	return fmt.Errorf("%w: %s", err, string(output))
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		return fmt.Errorf("%w stdout: %q stderr: %q", err, string(output), exitErr.Stderr)
+	}
+	return fmt.Errorf("%w: stdout: %q", err, string(output))
 }
