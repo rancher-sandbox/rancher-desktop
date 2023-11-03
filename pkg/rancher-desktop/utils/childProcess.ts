@@ -244,7 +244,7 @@ export async function spawnFile(
     ...options,
     stdio:       mungedStdio,
   });
-  const resultMap: Record<number, 'stdout' | 'stderr'> = { 1: 'stdout', 2: 'stderr' };
+  const resultMap = { 1: 'stdout', 2: 'stderr' } as const;
   const result: { stdout?: string, stderr?: string } = {};
 
   if (Array.isArray(mungedStdio)) {

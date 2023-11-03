@@ -2,7 +2,6 @@ import dns from 'dns';
 import http from 'http';
 import https from 'https';
 import os from 'os';
-import tls from 'tls';
 import util from 'util';
 
 import Electron from 'electron';
@@ -11,6 +10,7 @@ import LinuxCA from 'linux-ca';
 import filterCert from './cert-parse';
 import getMacCertificates from './mac-ca';
 import ElectronProxyAgent from './proxy';
+import getWinCertificates from './win-ca';
 
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
@@ -25,8 +25,13 @@ export default async function setupNetworking() {
   if (!Array.isArray(httpsOptions.ca)) {
     httpsOptions.ca = httpsOptions.ca ? [httpsOptions.ca] : [];
   }
-  for await (const cert of getSystemCertificates()) {
-    httpsOptions.ca.push(cert);
+  try {
+    for await (const cert of getSystemCertificates()) {
+      httpsOptions.ca.push(cert);
+    }
+  } catch (ex) {
+    console.error(ex);
+    throw ex;
   }
 
   const httpAgent = new ElectronProxyAgent(httpsOptions, session);
@@ -122,7 +127,7 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
   const platform = os.platform();
 
   if (platform.startsWith('win')) {
-    yield * tls.rootCertificates;
+    yield * getWinCertificates();
   } else if (platform === 'darwin') {
     yield * getMacCertificates();
   } else if (platform === 'linux') {
