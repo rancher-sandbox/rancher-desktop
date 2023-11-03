@@ -10065,10 +10065,10 @@ map-stream@~0.1.0:
   resolved "https://registry.yarnpkg.com/map-stream/-/map-stream-0.1.0.tgz#e56aa94c4c8055a16404a0674b78f215f7c8e194"
   integrity sha512-CkYQrPYZfWnu/DAmVCpTSX/xHpKZ80eKh2lAkyA6AJTef6bW+6JpbQZN5rofum7da+SyN1bi5ctTm+lTfcCW3g==
 
-marked@4.2.4:
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/marked/-/marked-4.2.4.tgz#5a4ce6c7a1ae0c952601fce46376ee4cf1797e1c"
-  integrity sha512-Wcc9ikX7Q5E4BYDPvh1C6QNSxrjC9tBgz+A/vAhp59KXUgachw++uMvMKiSW8oA85nopmPZcEvBoex/YLMsiyA==
+marked@9.1.5:
+  version "9.1.5"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-9.1.5.tgz#fcada4702ea64a5c05a4ff0e0639628aac8a1e5f"
+  integrity sha512-14QG3shv8Kg/xc0Yh6TNkMj90wXH9mmldi5941I2OevfJ/FQAFLEwtwU2/FfgSAOMlWHrEukWSGQf8MiVYNG2A==
 
 matcher@^3.0.0:
   version "3.0.0"
