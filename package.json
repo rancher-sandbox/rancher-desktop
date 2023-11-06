@@ -104,7 +104,7 @@
     "vuex": "3.6.2",
     "which": "3.0.1",
     "xdg-app-paths": "5.5.1",
-    "yaml": "2.3.1"
+    "yaml": "2.3.4"
   },
   "devDependencies": {
     "@babel/eslint-parser": "7.22.9",
