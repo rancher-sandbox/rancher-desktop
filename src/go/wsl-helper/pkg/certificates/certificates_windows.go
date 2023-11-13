@@ -28,7 +28,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// Entry is one enumeration result; it hold either a valid certificate or an
+// Entry is one enumeration result; it holds either a valid certificate or an
 // error.  They are mutually exclusive.
 type Entry struct {
 	Cert *x509.Certificate
