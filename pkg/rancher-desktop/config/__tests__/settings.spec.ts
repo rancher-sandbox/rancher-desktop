@@ -610,7 +610,7 @@ describe('settings', () => {
         1: [
           {
             kubernetes: {
-              rancherMode: 'cattleguard',
+              rancherMode: 'cattle',
             },
           },
           {
