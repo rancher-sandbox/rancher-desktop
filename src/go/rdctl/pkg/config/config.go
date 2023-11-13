@@ -27,7 +27,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
@@ -46,17 +45,19 @@ type ConnectionInfo struct {
 	User     string
 	Password string
 	Host     string
-	Port     string
+	Port     int
 }
 
 var (
 	connectionInfoFlags ConnectionInfo
 
 	configPath string
-	// DefaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
-	DefaultConfigPath string
+	// defaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
+	defaultConfigPath string
 )
 
+// This could have a better name: ErrConfigFileNotFound. It is
+// more descriptive of the situation in which we return it.
 var ErrMainProcessNotRunning = errors.New("main process not running")
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
@@ -75,12 +76,80 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 		}
 		configDir = appPaths.AppHome
 	}
-	DefaultConfigPath = filepath.Join(configDir, "rd-engine.json")
-	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", DefaultConfigPath))
+	defaultConfigPath = filepath.Join(configDir, "rd-engine.json")
+	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", defaultConfigPath))
 	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.User, "user", "", "overrides the user setting in the config file")
 	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.Host, "host", "", "default is 127.0.0.1; most useful for WSL")
-	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.Port, "port", "", "overrides the port setting in the config file")
+	rootCmd.PersistentFlags().IntVar(&connectionInfoFlags.Port, "port", 0, "overrides the port setting in the config file")
 	rootCmd.PersistentFlags().StringVar(&connectionInfoFlags.Password, "password", "", "overrides the password setting in the config file")
+}
+
+func PrototypeGetConnectionInfo() (*ConnectionInfo, error) {
+	if userSpecifiedConnectionInfo() {
+		return getCustomConnectionInfo()
+	}
+	return getDefaultConnectionInfo()
+}
+
+func userSpecifiedConnectionInfo() bool {
+	return configPath != defaultConfigPath ||
+		connectionInfoFlags.Host != "" ||
+		connectionInfoFlags.Port != 0 ||
+		connectionInfoFlags.User != "" ||
+		connectionInfoFlags.Password != ""
+}
+
+func getCustomConnectionInfo() (*ConnectionInfo, error) {
+	connectionInfo := &ConnectionInfo{
+		Host: "127.0.0.1",
+	}
+	if content, err := os.ReadFile(configPath); err != nil {
+		if configPath != defaultConfigPath {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+	} else {
+		if err := json.Unmarshal(content, connectionInfo); err != nil {
+			if configPath != defaultConfigPath {
+				return nil, fmt.Errorf("failed to parse config file: %w", err)
+			}
+		}
+	}
+
+	// Overwrite connectionInfo values with values from CLI flags if present
+	if connectionInfoFlags.Host != "" {
+		connectionInfo.Host = connectionInfoFlags.Host
+	}
+	if connectionInfoFlags.Port != 0 {
+		connectionInfo.Port = connectionInfoFlags.Port
+	}
+	if connectionInfoFlags.User != "" {
+		connectionInfo.User = connectionInfoFlags.User
+	}
+	if connectionInfoFlags.Password != "" {
+		connectionInfo.Password = connectionInfoFlags.Password
+	}
+
+	if err := validateConnectionInfo(connectionInfo); err != nil {
+		return nil, fmt.Errorf("invalid connectionInfo: %w", err)
+	}
+	return connectionInfo, nil
+}
+
+func getDefaultConnectionInfo() (*ConnectionInfo, error) {
+	connectionInfo := &ConnectionInfo{
+		Host: "127.0.0.1",
+	}
+	content, err := os.ReadFile(configPath)
+	if errors.Is(err, os.ErrNotExist) {
+
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%w: read default config file: %w", ErrMainProcessNotRunning, err)
+	}
+	if err := json.Unmarshal(content, connectionInfo); err != nil {
+		return nil, fmt.Errorf("%w: unmarshal default config file: %w", ErrMainProcessNotRunning, err)
+	}
+	return connectionInfo, nil
 }
 
 // GetConnectionInfo gathers config from multiple sources and returns
@@ -103,21 +172,29 @@ func GetConnectionInfo() (*ConnectionInfo, error) {
 
 	// Overwrite connectionInfo values with values from config file, if present.
 	if configPath == "" {
-		configPath = DefaultConfigPath
+		configPath = defaultConfigPath
 	}
 	content, err := os.ReadFile(configPath)
-	if err != nil && configPath != DefaultConfigPath {
-		return nil, fmt.Errorf("failed to read config file %q: %w", configPath, err)
+	if err != nil {
+		if configPath != defaultConfigPath {
+			return nil, fmt.Errorf("failed to read config file %q: %w", configPath, err)
+		}
+	} else {
+		if err := json.Unmarshal(content, connectionInfo); err != nil {
+			if configPath != defaultConfigPath {
+				return nil, fmt.Errorf("failed to unmarshal config file %q: %w", configPath, err)
+			}
+		}
 	}
 	var configFileSettings CLIConfig
 	err = json.Unmarshal(content, &configFileSettings)
 	if err != nil {
-		if configPath != DefaultConfigPath {
+		if configPath != defaultConfigPath {
 			return nil, fmt.Errorf("failed to unmarshal config file %q: %w", configPath, err)
 		}
 	} else {
 		if configFileSettings.Port != 0 {
-			connectionInfo.Port = strconv.Itoa(configFileSettings.Port)
+			connectionInfo.Port = configFileSettings.Port
 		}
 		if configFileSettings.User != "" {
 			connectionInfo.User = configFileSettings.User
@@ -131,7 +208,7 @@ func GetConnectionInfo() (*ConnectionInfo, error) {
 	if connectionInfoFlags.Host != "" {
 		connectionInfo.Host = connectionInfoFlags.Host
 	}
-	if connectionInfoFlags.Port != "" {
+	if connectionInfoFlags.Port != 0 {
 		connectionInfo.Port = connectionInfoFlags.Port
 	}
 	if connectionInfoFlags.User != "" {
@@ -142,7 +219,7 @@ func GetConnectionInfo() (*ConnectionInfo, error) {
 	}
 
 	if err := validateConnectionInfo(connectionInfo); err != nil {
-		if configPath == DefaultConfigPath {
+		if configPath == defaultConfigPath {
 			return nil, ErrMainProcessNotRunning
 		} else {
 			return nil, fmt.Errorf("invalid connection info: %w", err)
@@ -157,7 +234,7 @@ func validateConnectionInfo(connectionInfo *ConnectionInfo) error {
 	if connectionInfo.Host == "" {
 		errs = append(errs, fmt.Errorf("invalid host %q", connectionInfo.Host))
 	}
-	if connectionInfo.Port == "" {
+	if connectionInfo.Port == 0 {
 		errs = append(errs, fmt.Errorf("invalid port %q", connectionInfo.Port))
 	}
 	if connectionInfo.User == "" {
