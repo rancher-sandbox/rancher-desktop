@@ -328,17 +328,50 @@ function parseSaveError(err: any) {
   return friendlierMsg;
 }
 
+// @path {string} points to a possible field in the settings structure (I'm sure there's a typescript
+// notation to describe it, but it's more readable in English than to try to come up with that incantation).
+// `fn` {(string) => void} takes the old value, and knows what to do with it.  If it isn't specified, the
+// function that works with this data will carry out a useful default action.
+//
 interface ReplacementDirective {
   path: string;
   fn?: null|((oldValue: any) => void);
 }
 
 /**
- * This function looks for existing @paths, and either calls the supplied function `fn` with the
+ * This function looks for existing fields in `settings`, and either calls the supplied function `fn` with the
  * existing value, or if no `fn` is specified, assigns the value to `settings[replacement][last-part-of-path]`.
  * See the arrays that are used to define the `replacements` arguments in the calls to this function as a reference.
  * @param settings - the settings object
  * @param replacements - a table used to update the settings object based on existing obsolete fields that need to be moved.
+ *
+ * Let's look at some of the input to this function for a better understanding of what it does:
+ *  4: (settings) => {
+    const replacements: Record<string, ReplacementDirective[]> = {
+      application: [
+        {
+          path: 'kubernetes.suppressSudo',
+          fn:   (oldValue: any) => {
+            settings.application.adminAccess = !oldValue;
+          },
+        },
+        { path: 'debug' },
+        { path: 'pathManagementStrategy' },
+        {
+          path: 'telemetry',
+          fn:   (oldValue: any) => {
+            settings.application.telemetry = { enabled: oldValue };
+          },
+        }, ...
+ * Our first key is `application`. If `settings.kubernetes.suppressSudo` exists, move the
+ * value to `settings.application.adminAccess` and delete `settings.kubernetes.suppressSudo`.
+ * If `settings.debug` exists, move it to `settings.application.debug`.
+ * Same with `settings.pathManagementStrategy`
+ * Because `settings.telemetry` is moved into `applications` and is given new structure, we need a handler...
+ *
+ * The `lastPathPart` business is used to handle cases of moving settings like
+ * `settings.kubernetes.hostResolver` to `settings.virtualMachine.hostResolver`
+ *
  */
 function processReplacements(settings: any, replacements: Record<string, ReplacementDirective[]>) {
   for (const replacement in replacements) {
@@ -521,7 +554,7 @@ export const updateTable: Record<number, (settings: any) => void> = {
   },
 };
 
-function migrateSettingsToCurrentVersion(settings: Settings) {
+function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
@@ -534,7 +567,7 @@ function migrateSettingsToCurrentVersion(settings: Settings) {
   return _.defaultsDeep(settings, defaultSettings);
 }
 
-export function migrateSpecifiedSettingsToCurrentVersion(settings: RecursivePartial<Settings>): RecursivePartial<Settings> {
+export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>): RecursivePartial<Settings> {
   const firstPart = 'updating settings requires specifying an API version';
   let loadedVersion = settings.version;
 

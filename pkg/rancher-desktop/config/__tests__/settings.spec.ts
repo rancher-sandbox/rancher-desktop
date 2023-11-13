@@ -605,56 +605,173 @@ describe('settings', () => {
       expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
     });
 
-    it('sloshes socket vmnet back to where it started', () => {
-      const s: Record<string, any> = {
-        version:      4 as typeof settings.CURRENT_SETTINGS_VERSION,
-        experimental: {
-          virtualMachine: {
-            socketVMNet: true,
+    describe('migrates from step to step', () => {
+      const expectedMigrations: Record<number, [any, any]> = {
+        1: [
+          {
+            kubernetes: {
+              rancherMode: 'cattleguard',
+            },
           },
-        },
-      };
-      const expected: RecursivePartial<settings.Settings> = {
-        version:      settings.CURRENT_SETTINGS_VERSION,
-        experimental: { virtualMachine: { socketVMNet: true } },
-      };
-
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
-    });
-
-    it('reverts socket vmnet back to where it started', () => {
-      const s: Record<string, any> = {
-        version:        5,
-        virtualMachine: {
-          experimental: {
-            socketVMNet: true,
+          {
+            kubernetes: {},
           },
-        },
-      };
-      const expected: RecursivePartial<settings.Settings> = {
-        version:        settings.CURRENT_SETTINGS_VERSION,
-        experimental:   { virtualMachine: { socketVMNet: true } },
-        virtualMachine: {},
-      };
-
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
-    });
-    it('can deal with old socketVMNet', () => {
-      const s: Record<string, any> = {
-        version:    4 as typeof settings.CURRENT_SETTINGS_VERSION,
-        kubernetes: {
-          experimental: {
-            socketVMNet: true,
+        ],
+        2: [{ cows: 4 }, { cows: 4 }],
+        3: [{ fish: 5 }, { fish: 5 }],
+        4: [
+          {
+            kubernetes: {
+              suppressSudo: true,
+              hostResolver: true,
+              memoryInGB:   300,
+              numberCPUs:   45,
+              experimental: {
+                socketVMNet: true,
+              },
+              WSLIntegrations: {
+                ubuntu: true,
+                debian: false,
+              },
+              containerEngine: settings.ContainerEngine.MOBY,
+            },
+            debug:                  true,
+            pathManagementStrategy: 'manual',
+            telemetry:              true,
+            updater:                true,
           },
-        },
-      };
-      const expected: RecursivePartial<settings.Settings> = {
-        version:      settings.CURRENT_SETTINGS_VERSION,
-        experimental: { virtualMachine: { socketVMNet: true } },
-        kubernetes:   {},
+          {
+            kubernetes:  {},
+            application: {
+              adminAccess:            false,
+              debug:                  true,
+              pathManagementStrategy: PathManagementStrategy.Manual,
+              telemetry:              { enabled: true },
+              updater:                { enabled: true },
+            },
+            virtualMachine: {
+              hostResolver: true,
+              memoryInGB:   300,
+              numberCPUs:   45,
+            },
+            experimental: {
+              virtualMachine: {
+                socketVMNet: true,
+              },
+            },
+            WSL: {
+              integrations: {
+                ubuntu: true,
+                debian: false,
+              },
+            },
+            containerEngine: {
+              name: settings.ContainerEngine.MOBY,
+            },
+          },
+        ],
+        5: [
+          {
+            containerEngine: {
+              imageAllowList: {
+                enabled:  true,
+                patterns: ['wolves', 'lower'],
+              },
+            },
+            virtualMachine: {
+              experimental: {
+                socketVMNet: true,
+              },
+            },
+            autoStart:            true,
+            hideNotificationIcon: true,
+            window:               false,
+          },
+          {
+            containerEngine: {
+              allowedImages: {
+                enabled:  true,
+                patterns: ['wolves', 'lower'],
+              },
+            },
+            experimental: {
+              virtualMachine: { socketVMNet: true },
+            },
+            application: {
+              autoStart:            true,
+              hideNotificationIcon: true,
+              window:               false,
+            },
+            virtualMachine: {},
+          },
+        ],
+        6: [
+          {
+            extensions: {
+              'mice:oldest':   true,
+              'cats:youngest': false,
+            },
+          },
+          {
+            extensions: {
+              mice: 'oldest',
+            },
+          },
+        ],
+        7: [
+          { application: { pathManagementStrategy: 'notset' } },
+          {
+            application: {
+              pathManagementStrategy: process.platform === 'win32' ? PathManagementStrategy.Manual : PathManagementStrategy.RcFiles,
+            },
+          },
+        ],
+        8: [
+          {
+            extensions: { mice: 'oldest' },
+          },
+          {
+            application: {
+              extensions: {
+                installed: { mice: 'oldest' },
+              },
+            },
+          },
+        ],
+        9: [
+          {
+            experimental: {
+              virtualMachine: {
+                proxy: {
+                  noproxy: ['    ', '   mangoes', 'yucca   ', '   ', ' guava '],
+                },
+              },
+            },
+          },
+          {
+            experimental: {
+              virtualMachine: {
+                proxy: {
+                  noproxy: ['mangoes', 'yucca', 'guava'],
+                },
+              },
+            },
+          },
+        ],
       };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+      it.each(Object.entries(expectedMigrations))('migrate from %i', (version, beforeAndAfter) => {
+        const [fromSettings, toSettings] = beforeAndAfter;
+        const existingVersion = parseInt(version, 10);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const nextVersion = (existingVersion + 1) as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
+
+        // eslint-disable-next-line no-eval
+        eval('settings["CURRENT_SETTINGS_VERSION"] = nextVersion');
+        fromSettings.version = existingVersion as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
+        toSettings.version = (existingVersion + 1) as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
+        expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings)).toEqual(toSettings);
+      });
     });
   });
 });
