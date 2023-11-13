@@ -345,33 +345,21 @@ interface ReplacementDirective {
  * @param settings - the settings object
  * @param replacements - a table used to update the settings object based on existing obsolete fields that need to be moved.
  *
- * Let's look at some of the input to this function for a better understanding of what it does:
- *  4: (settings) => {
-    const replacements: Record<string, ReplacementDirective[]> = {
-      application: [
-        {
-          path: 'kubernetes.suppressSudo',
-          fn:   (oldValue: any) => {
-            settings.application.adminAccess = !oldValue;
-          },
-        },
-        { path: 'debug' },
-        { path: 'pathManagementStrategy' },
-        {
-          path: 'telemetry',
-          fn:   (oldValue: any) => {
-            settings.application.telemetry = { enabled: oldValue };
-          },
-        }, ...
- * Our first key is `application`. If `settings.kubernetes.suppressSudo` exists, move the
- * value to `settings.application.adminAccess` and delete `settings.kubernetes.suppressSudo`.
- * If `settings.debug` exists, move it to `settings.application.debug`.
- * Same with `settings.pathManagementStrategy`
- * Because `settings.telemetry` is moved into `applications` and is given new structure, we need a handler...
+ * There are three kinds of replacements (actually two, but one is a special case of the other).
+ * In one of the cases, we specify a path and a replacement function -- if the path exists in the
+ * current settings block, the callback is called with the paths' value, and the callback can do
+ * whatever it needs to in order to move the value to a new place in the settings block.
  *
- * The `lastPathPart` business is used to handle cases of moving settings like
- * `settings.kubernetes.hostResolver` to `settings.virtualMachine.hostResolver`
+ * But there are many cases that fit a pattern, and no specific callback is needed. For example,
+ * migration 4=>5 moves `settings.debug` and `settings.pathManagementStrategy` into `settings.application...`.
+ * So the input to this function just specifies a parent entry of `application` for these two paths.
+ * If `settings.debug` exists, it's moved into `settings.application.debug`.
  *
+ * Some of the settings weren't at the top-level, such as `kubernetes.hostResalver`, which is moved into
+ * `settings.virtualMachine`, also in migration 4=>5. This replacement looks a lot like the one for `settings.debug`,
+ * except the new location is determined by the current parent in the migration table (`virtualMachine`), and
+ * we take the last part of the dotted path, namely `hostResolver`. So we map `settings.kubernetes.hostResolver`
+ * to `settings.virtualMachine.hostResolver` without needing a custom function.
  */
 function processReplacements(settings: any, replacements: Record<string, ReplacementDirective[]>) {
   for (const replacement in replacements) {
@@ -383,7 +371,8 @@ function processReplacements(settings: any, replacements: Record<string, Replace
         if (fn) {
           fn(_.get(settings, path));
         } else {
-          const lastPathPart: string = path.split('.').pop() ?? '';
+          // `as string` maps `undefined|string` to `string`
+          const lastPathPart: string = path.split('.').pop() as string;
 
           _.set(settings[replacement], lastPathPart, _.get(settings, path));
         }
