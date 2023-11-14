@@ -65,8 +65,8 @@ func init() {
 
 func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
 	var output []byte
-	connectionInfo, err := config.GetConnectionInfo()
-	if err == nil {
+	connectionInfo, err := config.GetConnectionInfo(true)
+	if err == nil && connectionInfo != nil {
 		rdClient := client.NewRDClient(connectionInfo)
 		request, err := rdClient.DoRequest("PUT", client.VersionCommand("", "shutdown"))
 		output, _ = client.ProcessRequestForUtility(request, err)

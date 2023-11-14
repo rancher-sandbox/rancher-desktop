@@ -81,22 +81,8 @@ func wrapSnapshotOperation(cmd *cobra.Command, appPaths paths.Paths, restartOnFa
 	return ensureBackendStarted()
 }
 
-func getConnectionInfo() (*config.ConnectionInfo, error) {
-	connectionInfo, err := config.GetConnectionInfo()
-	// If we cannot get connection info from config file (and it
-	// is not specified by the user) then assume main process is
-	// not running.
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to get connection info: %w", err)
-	}
-	return connectionInfo, nil
-}
-
 func ensureBackendStarted() error {
-	connectionInfo, err := getConnectionInfo()
+	connectionInfo, err := config.GetConnectionInfo(true)
 	if err != nil || connectionInfo == nil {
 		return err
 	}
@@ -113,7 +99,7 @@ func ensureBackendStarted() error {
 }
 
 func ensureBackendStopped(cmd *cobra.Command) error {
-	connectionInfo, err := getConnectionInfo()
+	connectionInfo, err := config.GetConnectionInfo(true)
 	if err != nil || connectionInfo == nil {
 		return err
 	}
