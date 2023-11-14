@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     ".nuxt",
-    "dist"
+    "dist",
+    "babel.config.js"
   ]
 }
