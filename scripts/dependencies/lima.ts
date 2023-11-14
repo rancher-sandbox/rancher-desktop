@@ -211,11 +211,15 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
       throw new Error(`Failed to parse name "${ matchingAsset.name }"`);
     }
     const alpineVersion = nameMatch[1];
-
-    return {
+    const result = {
       isoVersion: release.tag_name.replace(/^v/, ''),
       alpineVersion,
+      toString() {
+        return release.tag_name;
+      },
     };
+
+    return result;
   }
 
   async getAvailableVersions(): Promise<AlpineLimaISOVersion[]> {
@@ -235,7 +239,7 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
     const isoVersionParts = isoVersion.split('.');
 
     if (!this.isoVersionRegex.test(isoVersion)) {
-      throw new Error(`${ this.name }: version ${ version } is not in expected format ${ this.isoVersionRegex }`);
+      throw new Error(`${ this.name }: version ${ version.isoVersion } is not in expected format ${ this.isoVersionRegex }`);
     }
     const normalVersion = isoVersionParts.slice(0, 3).join('.');
     const prereleaseVersion = isoVersionParts[3].replace('rd', '');
@@ -244,8 +248,39 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
   }
 
   rcompareVersions(version1: AlpineLimaISOVersion, version2: AlpineLimaISOVersion): -1 | 0 | 1 {
-    const semverVersion1 = this.versionToSemver(version1);
-    const semverVersion2 = this.versionToSemver(version2);
+    let semverVersion1 = '0.0.0';
+    let invalidVersion1 = false;
+    let semverVersion2 = '0.0.0';
+    let invalidVersion2 = false;
+
+    try {
+      semverVersion1 = this.versionToSemver(version1);
+    } catch (ex) {
+      invalidVersion1 = true;
+    }
+    try {
+      semverVersion2 = this.versionToSemver(version2);
+    } catch (ex) {
+      invalidVersion2 = true;
+    }
+    if (invalidVersion1 || invalidVersion2) {
+      if (!invalidVersion1) {
+        return -1; // Version 1 is valid, version 2 is not; count 1 as higher.
+      }
+      if (!invalidVersion2) {
+        return 1; // Version 2 is valid, version 1 is not; count 2 as higher.
+      }
+
+      // Neither version is valid, return something consistent.
+      if (version1.isoVersion > version2.isoVersion) {
+        return -1;
+      }
+      if (version2.isoVersion > version1.isoVersion) {
+        return 1;
+      }
+
+      return 0;
+    }
 
     return semver.rcompare(semverVersion1, semverVersion2);
   }

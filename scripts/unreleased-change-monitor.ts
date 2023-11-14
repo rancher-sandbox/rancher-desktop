@@ -66,7 +66,9 @@ export async function hasUnreleasedChanges(dependency: Dependency & GitHubDepend
   });
   const commits = response.data;
 
-  console.log(`Found ${ commits.length - 1 } unreleased commits for repository ${ dependency.githubOwner }/${ dependency.githubRepo }.`);
+  console.log(`Found ${ commits.length - 1 } unreleased commits ` +
+              `for repository ${ dependency.githubOwner }/${ dependency.githubRepo } ` +
+              `since ${ latestVersion } (${ latestTagName }).`);
 
   return {
     latestReleaseTag:     latestTagName,
