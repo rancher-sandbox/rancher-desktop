@@ -328,54 +328,48 @@ function parseSaveError(err: any) {
   return friendlierMsg;
 }
 
-// @path {string} points to a possible field in the settings structure (I'm sure there's a typescript
-// notation to describe it, but it's more readable in English than to try to come up with that incantation).
-// `fn` {(string) => void} takes the old value, and knows what to do with it.  If it isn't specified, the
-// function that works with this data will carry out a useful default action.
-//
+/**
+ * ReplacementDirective describes how a setting can be migrated.
+ */
 interface ReplacementDirective {
+  /**
+   * The path to a possible field in the settings structure
+   */
   path: string;
+  /**
+   * Callback to process the value at the given path.  If it isn't specified,
+   * see the doc comment for `processReplacements`, the only function that uses this type.
+   */
   fn?: null|((oldValue: any) => void);
 }
 
 /**
  * This function looks for existing fields in `settings`, and either calls the supplied function `fn` with the
  * existing value, or if no `fn` is specified, assigns the value to `settings[replacement][last-part-of-path]`.
- * See the arrays that are used to define the `replacements` arguments in the calls to this function as a reference.
+ * Rather than try to explain what's going on in general terms, see the comments marked with "EXPLANATION"
+ * on the inputs to this function.
  * @param settings - the settings object
  * @param replacements - a table used to update the settings object based on existing obsolete fields that need to be moved.
- *
- * There are three kinds of replacements (actually two, but one is a special case of the other).
- * In one of the cases, we specify a path and a replacement function -- if the path exists in the
- * current settings block, the callback is called with the paths' value, and the callback can do
- * whatever it needs to in order to move the value to a new place in the settings block.
- *
- * But there are many cases that fit a pattern, and no specific callback is needed. For example,
- * migration 4=>5 moves `settings.debug` and `settings.pathManagementStrategy` into `settings.application...`.
- * So the input to this function just specifies a parent entry of `application` for these two paths.
- * If `settings.debug` exists, it's moved into `settings.application.debug`.
- *
- * Some of the settings weren't at the top-level, such as `kubernetes.hostResalver`, which is moved into
- * `settings.virtualMachine`, also in migration 4=>5. This replacement looks a lot like the one for `settings.debug`,
- * except the new location is determined by the current parent in the migration table (`virtualMachine`), and
- * we take the last part of the dotted path, namely `hostResolver`. So we map `settings.kubernetes.hostResolver`
- * to `settings.virtualMachine.hostResolver` without needing a custom function.
  */
 function processReplacements(settings: any, replacements: Record<string, ReplacementDirective[]>) {
   for (const replacement in replacements) {
     for (const { path, fn } of replacements[replacement]) {
       if (_.hasIn(settings, path)) {
+        // Get the current value for the old field
+        const currentValue = _.get(settings, path);
+
         if (!_.hasIn(settings, replacement)) {
           _.set(settings, replacement, {});
         }
         if (fn) {
-          fn(_.get(settings, path));
+          fn(currentValue);
         } else {
           // `as string` maps `undefined|string` to `string`
           const lastPathPart: string = path.split('.').pop() as string;
 
-          _.set(settings[replacement], lastPathPart, _.get(settings, path));
+          _.set(settings[replacement], lastPathPart, currentValue);
         }
+        // Delete the old field
         _.unset(settings, path);
       }
     }
@@ -383,17 +377,18 @@ function processReplacements(settings: any, replacements: Record<string, Replace
 }
 
 /**
- * Provide a mapping from settings version to a function used to update the
- * settings object to the next version.
+ * Provide a mapping from settings version X to version X + 1
  *
- * The main use-cases are for renaming property names, correct values that are
- * no longer valid, and removing obsolete entries. The final step merges in
- * current defaults, so we won't need an entry for every version change, as
- * most changes will get picked up from the defaults.
+ * Some migrations need to be done with bespoke code, but most of them
+ * can be expressed in a descriptive table, and the operations are done
+ * by `processReplacements`.  See the doc comments for `processReplacements`
+ * and `ReplacementDirective`, along with a few sample inline comments in this
+ * table, to understand how the migrations work.
  */
 export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
-    // Implement setting change from version 3 to 4
+    // EXPLANATION: We don't call `processReplacements` in this step
+    // because this migration only deletes an existing field.
     if (_.hasIn(settings, 'kubernetes.rancherMode')) {
       delete settings.kubernetes.rancherMode;
     }
@@ -410,14 +405,19 @@ export const updateTable: Record<number, (settings: any) => void> = {
     const replacements: Record<string, ReplacementDirective[]> = {
       application: [
         {
+          // EXPLANATION: Use a callback to move the opposite of `.kubernetes.suppressSudo` to `.application.adminAccess`
           path: 'kubernetes.suppressSudo',
           fn:   (oldValue: any) => {
             settings.application.adminAccess = !oldValue;
           },
         },
+        // EXPLANATION: Default action: move `.debug` to `.application.debug` (because `application` is the
+        // name of this node's parent.
         { path: 'debug' },
         { path: 'pathManagementStrategy' },
         {
+          // EXPLANATION: Use a callback to move `.telemetry` to `.application.telemetry.enabled`
+          // `processReplacements` will init `application.telemetry` to `{}`
           path: 'telemetry',
           fn:   (oldValue: any) => {
             settings.application.telemetry = { enabled: oldValue };
@@ -447,6 +447,9 @@ export const updateTable: Record<number, (settings: any) => void> = {
         },
       ],
       virtualMachine: [
+        // EXPLANATION: Default action: move `.kubernetes.hostResolver` to `.virtualMachine.hostResolver`
+        // This is the general case of the default action, where the new path consists of
+        // (parent-name="virtualMachine") . (tail(path) = "hostResolver")
         { path: 'kubernetes.hostResolver' },
         { path: 'kubernetes.memoryInGB' },
         { path: 'kubernetes.numberCPUs' },
@@ -482,8 +485,7 @@ export const updateTable: Record<number, (settings: any) => void> = {
         {
           path: 'virtualMachine.experimental.socketVMNet',
           fn:   (oldValue: any) => {
-            settings.experimental.virtualMachine ??= {};
-            settings.experimental.virtualMachine.socketVMNet = oldValue;
+            _.set(settings.experimental, 'virtualMachine.socketVMNet', oldValue);
           },
         },
       ],
@@ -548,10 +550,6 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
     return defaultSettings;
   }
   settings = migrateSpecifiedSettingsToCurrentVersion(settings) as Settings;
-  // if (!Object.values(ContainerEngine).map(String).includes(settings.containerEngine.name)) {
-  //   console.warn(`Replacing unrecognized saved container engine pref of '${ settings.containerEngine?.name }' with ${ ContainerEngine.CONTAINERD }`);
-  //   settings.containerEngine.name = ContainerEngine.CONTAINERD;
-  // }
 
   return _.defaultsDeep(settings, defaultSettings);
 }
