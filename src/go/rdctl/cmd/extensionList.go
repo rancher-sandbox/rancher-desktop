@@ -47,7 +47,7 @@ func init() {
 }
 
 func listExtensions() error {
-	connectionInfo, err := config.GetConnectionInfo()
+	connectionInfo, err := config.GetConnectionInfo(false)
 	if err != nil {
 		return fmt.Errorf("failed to get connection info: %w", err)
 	}

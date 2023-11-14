@@ -68,7 +68,7 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 	var err error
 	var errorPacket *client.APIError
 
-	connectionInfo, err := config.GetConnectionInfo()
+	connectionInfo, err := config.GetConnectionInfo(false)
 	if err != nil {
 		return fmt.Errorf("failed to get connection info: %w", err)
 	}

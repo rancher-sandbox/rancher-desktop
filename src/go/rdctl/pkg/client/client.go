@@ -56,11 +56,11 @@ func NewRDClient(connectionInfo *config.ConnectionInfo) *RDClientImpl {
 	}
 }
 
-func (client *RDClientImpl) makeURL(host string, port string, command string) string {
+func (client *RDClientImpl) makeURL(host string, port int, command string) string {
 	if strings.HasPrefix(command, "/") {
-		return fmt.Sprintf("http://%s:%s%s", host, port, command)
+		return fmt.Sprintf("http://%s:%d%s", host, port, command)
 	}
-	return fmt.Sprintf("http://%s:%s/%s", host, port, command)
+	return fmt.Sprintf("http://%s:%d/%s", host, port, command)
 }
 
 func (client *RDClientImpl) DoRequest(method string, command string) (*http.Response, error) {

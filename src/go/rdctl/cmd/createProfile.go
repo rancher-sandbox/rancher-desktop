@@ -101,7 +101,7 @@ func createProfile() (string, error) {
 			// This should have been caught in validateProfileFormatFlags
 			return "", fmt.Errorf(`no input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"`)
 		}
-		connectionInfo, err := config.GetConnectionInfo()
+		connectionInfo, err := config.GetConnectionInfo(false)
 		if err != nil {
 			return "", fmt.Errorf("failed to get connection info: %w", err)
 		}
