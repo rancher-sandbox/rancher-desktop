@@ -53,9 +53,7 @@ export class KuberlrAndKubectl implements Dependency {
 
     if (context.platform === os.platform()) {
       // Download Kubectl into kuberlr's directory of versioned kubectl's
-      // const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
-      // TODO: remove this hardcoded value once the above works again
-      const kubeVersion = 'v1.28.2';
+      const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
       const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.goPlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
       const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
       const homeDir = await this.findHome(context.platform === 'win32');
