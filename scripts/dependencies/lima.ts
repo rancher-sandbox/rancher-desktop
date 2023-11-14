@@ -264,7 +264,22 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
       invalidVersion2 = true;
     }
     if (invalidVersion1 || invalidVersion2) {
-      return !invalidVersion1 ? -1 : invalidVersion2 ? 1 : 0;
+      if (!invalidVersion1) {
+        return -1; // Version 1 is valid, version 2 is not; count 1 as higher.
+      }
+      if (!invalidVersion2) {
+        return 1; // Version 2 is valid, version 1 is not; count 2 as higher.
+      }
+
+      // Neither version is valid, return something consistent.
+      if (version1.isoVersion > version2.isoVersion) {
+        return -1;
+      }
+      if (version2.isoVersion > version1.isoVersion) {
+        return 1;
+      }
+
+      return 0;
     }
 
     return semver.rcompare(semverVersion1, semverVersion2);
