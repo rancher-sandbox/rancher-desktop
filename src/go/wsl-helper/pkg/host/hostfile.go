@@ -133,6 +133,10 @@ func RemoveHostsFileEntry(hostsFilePath string) error {
 		return err
 	}
 
+	if err := hostsFile.Close(); err != nil {
+		return err
+	}
+
 	if err := os.Chmod(tempFile.Name(), 0644); err != nil {
 		return err
 	}
