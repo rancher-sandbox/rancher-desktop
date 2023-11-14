@@ -1,7 +1,7 @@
 import path from 'path';
-import { URL } from 'url';
+import { URL, pathToFileURL } from 'url';
 
-import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
+import { app, protocol, net } from 'electron';
 
 import { isDevBuild } from '@pkg/utils/environment';
 import Latch from '@pkg/utils/latch';
@@ -24,47 +24,6 @@ function redirectedUrl(relPath: string) {
   return path.join(app.getAppPath(), 'dist', 'app', relPath);
 }
 
-function getMimeTypeForPath(filePath: string): string {
-  const mimeTypeMap: Record<string, string> = {
-    css:  'text/css',
-    html: 'text/html',
-    js:   'text/javascript',
-    json: 'application/json',
-    png:  'image/png',
-    svg:  'image/svg+xml',
-  };
-  const mimeType = mimeTypeMap[path.extname(filePath).toLowerCase().replace(/^\./, '')];
-
-  return mimeType || 'text/html';
-}
-
-/**
- * Constructs an appropriate protocol response based on the environment
- * (dev, prod, etc...). Used for the registered protocol.
- * @param request The original Electron ProtocolRequest
- * @param redirectUrl The fully-qualified redirect URL
- * @param relPath The relative path to the requested resource
- * @returns A properly structured result for the registered protocol
- */
-function getProtocolResponse(
-  request: ProtocolRequest,
-  redirectUrl: string,
-  relPath: string,
-): ProtocolResponse {
-  if (isDevBuild) {
-    return {
-      method:   request.method,
-      referrer: request.referrer,
-      url:      redirectUrl,
-    };
-  }
-
-  return {
-    path:     redirectUrl,
-    mimeType: getMimeTypeForPath(relPath),
-  };
-}
-
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
 // done that, when the user attempts to open a second instance of the window.
@@ -77,19 +36,18 @@ export const protocolsRegistered = Latch();
  * production environments.
  */
 function setupAppProtocolHandler() {
-  // TODO: #5659 - Deprecated in Electron 25; replace with protocol.handle
-  // eslint-disable-next-line deprecation/deprecation
-  const registrationProtocol = isDevBuild ? protocol.registerHttpProtocol : protocol.registerFileProtocol;
+  protocol.handle(
+    'app',
+    (request) => {
+      const relPath = new URL(request.url).pathname;
+      const redirectUrl = redirectedUrl(relPath);
 
-  // TODO: #5659 - Deprecated in Electron 25; replace with protocol.handle
-  // eslint-disable-next-line deprecation/deprecation
-  registrationProtocol('app', (request, callback) => {
-    const relPath = decodeURI(new URL(request.url).pathname);
-    const redirectUrl = redirectedUrl(relPath);
-    const result = getProtocolResponse(request, redirectUrl, relPath);
+      if (isDevBuild) {
+        return net.fetch(redirectUrl);
+      }
 
-    callback(result);
-  });
+      return net.fetch(pathToFileURL(redirectUrl).toString());
+    });
 }
 
 /**
@@ -101,19 +59,18 @@ function setupAppProtocolHandler() {
  * issues with slashes).  Base64 was not available in Vue.
  */
 function setupExtensionProtocolHandler() {
-  // TODO: #5659 - Deprecated in Electron 25; replace with protocol.handle
-  // eslint-disable-next-line deprecation/deprecation
-  protocol.registerFileProtocol('x-rd-extension', (request, callback) => {
-    const url = new URL(request.url);
-    // Re-encoding the extension ID here also ensures it doesn't contain any
-    // directory traversal etc. issues.
-    const extensionID = Buffer.from(url.hostname, 'hex').toString('base64url');
-    const resourcePath = path.normalize(url.pathname);
-    const filepath = path.join(paths.extensionRoot, extensionID, resourcePath);
-    const result = { path: filepath, mimeType: getMimeTypeForPath(filepath) };
+  protocol.handle(
+    'x-rd-extension',
+    (request) => {
+      const url = new URL(request.url);
+      // Re-encoding the extension ID here also ensures it doesn't contain any
+      // directory traversal etc. issues.
+      const extensionID = Buffer.from(url.hostname, 'hex').toString('base64url');
+      const resourcePath = path.normalize(url.pathname);
+      const filepath = path.join(paths.extensionRoot, extensionID, resourcePath);
 
-    callback(result);
-  });
+      return net.fetch(pathToFileURL(filepath).toString());
+    });
 }
 
 export function setupProtocolHandlers() {
