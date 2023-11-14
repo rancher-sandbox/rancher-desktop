@@ -150,7 +150,10 @@ export default {
         rules: [
           {
             test: /\.ts$/,
-            use:  { loader: 'ts-loader' },
+            use:  {
+              loader:  'ts-loader',
+              options: { transpileOnly: this.isDevelopment },
+            },
           },
           {
             test: /\.js$/,
