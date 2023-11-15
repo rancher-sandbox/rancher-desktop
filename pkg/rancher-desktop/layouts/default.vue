@@ -13,7 +13,7 @@
     <main class="body">
       <Nuxt />
     </main>
-    <BackendProgress class="progress" />
+    <status-bar class="status-bar"></status-bar>
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
   </div>
@@ -24,9 +24,9 @@
 import { mapGetters, mapState } from 'vuex';
 
 import ActionMenu from '@pkg/components/ActionMenu.vue';
-import BackendProgress from '@pkg/components/BackendProgress.vue';
 import Header from '@pkg/components/Header.vue';
 import Nav from '@pkg/components/Nav.vue';
+import StatusBar from '@pkg/components/StatusBar.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
 import initExtensions from '@pkg/preload/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
@@ -35,8 +35,8 @@ import { mainRoutes } from '@pkg/window/constants';
 export default {
   name:       'App',
   components: {
+    StatusBar,
     ActionMenu,
-    BackendProgress,
     rdNav:    Nav,
     rdHeader: Header,
     TheTitle,
@@ -173,7 +173,7 @@ export default {
     "header   header"
     "nav      title"
     "nav      body"    1fr
-    "progress body"
+    "nav      status-bar"
     / var(--nav-width) 1fr;
   background-color: var(--body-bg);
   width: 100vw;
@@ -189,19 +189,17 @@ export default {
     border-right: var(--nav-border-size) solid var(--nav-border);
   }
 
-  .progress {
-    grid-area: progress;
-    background-color: var(--nav-bg);
-    padding: 10px;
-    border-right: var(--nav-border-size) solid var(--nav-border);
-  }
-
   .body {
     display: grid;
     grid-area: body;
     grid-template-rows: auto 1fr;
     padding: 0 20px 20px 20px;
     overflow: auto;
+  }
+
+  .status-bar {
+    grid-area: status-bar;
+    border-top: var(--nav-border-size) solid var(--nav-border);
   }
 }
 </style>

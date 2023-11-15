@@ -139,6 +139,12 @@ product:
   version: Version
   versionChecking: (checking...)
   networkStatus: Network status
+  kubernetesVersion: Kubernetes
+  containerEngine:
+    fullName: Container Engine
+    abbreviation: CE
+  notFound: not found
+  deactivated: deactivated
 
 suffix:
   percent: "%"
