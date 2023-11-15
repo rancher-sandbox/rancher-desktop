@@ -138,6 +138,7 @@ product:
   mcapps: Multi-cluster Apps
   version: Version
   versionChecking: (checking...)
+  networkStatus: Network status
 
 suffix:
   percent: "%"
