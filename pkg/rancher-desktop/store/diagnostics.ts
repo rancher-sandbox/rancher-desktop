@@ -1,4 +1,6 @@
+import DOMPurify from 'dompurify';
 import _ from 'lodash';
+import { marked } from 'marked';
 import { GetterTree } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
@@ -27,6 +29,37 @@ const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }
  */
 const mapMutedDiagnostics = (checks: DiagnosticsResult[], mutedChecks: Record<string, boolean>) => {
   return checks.map(check => ({ ...check, mute: !!mutedChecks[check.id] }));
+};
+
+/**
+ * Maps over an array of diagnostic results, applying a markdown transformation
+ * to the 'description' property of each object.
+ * @param diagnostics The array of diagnostic results to map over.
+ * @returns A promise that resolves to the array of diagnostic results with the
+ * 'description' property transformed to markdown.
+ */
+const mapMarkdownToDiagnostics = async(diagnostics: DiagnosticsResult[]) => {
+  return await Promise.all(
+    diagnostics.map(async(x) => {
+      return {
+        ...x,
+        description: await markdown(x.description),
+      };
+    }),
+  );
+};
+
+/**
+ * Processes a raw markdown string by first parsing it with `marked.parseInline`
+ * and then sanitizing the result using `DOMPurify`.
+ * @param raw The raw markdown string to be processed.
+ * @returns A promise that resolves to a sanitized HTML string generated
+ * from the provided markdown.
+ */
+const markdown = async(raw: string) => {
+  const markedString = await marked.parseInline(raw);
+
+  return DOMPurify.sanitize(markedString, { USE_PROFILES: { html: true } });
 };
 
 export const state: () => DiagnosticsState = () => (
@@ -79,7 +112,7 @@ export const actions = {
     const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
     const checks = mapMutedDiagnostics(result.checks, mutedChecks);
 
-    commit('SET_DIAGNOSTICS', checks);
+    commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(checks));
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
   async runDiagnostics({ commit, rootState }:DiagActionContext, credentials: Credentials) {
@@ -105,7 +138,7 @@ export const actions = {
     const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
     const checks = mapMutedDiagnostics(result.checks, mutedChecks);
 
-    commit('SET_DIAGNOSTICS', checks);
+    commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(checks));
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
   async updateDiagnostic({
@@ -132,7 +165,7 @@ export const actions = {
       { root: true },
     );
 
-    commit('SET_DIAGNOSTICS', diagnostics);
+    commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(diagnostics));
   },
 };
 
