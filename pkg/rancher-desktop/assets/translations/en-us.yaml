@@ -136,6 +136,8 @@ product:
   clusterManagement: Cluster Management
   monitoring: Monitoring
   mcapps: Multi-cluster Apps
+  version: Version
+  versionChecking: (checking...)
 
 suffix:
   percent: "%"

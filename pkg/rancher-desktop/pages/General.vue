@@ -17,7 +17,6 @@
     <update-status
       :enabled="settings.application.updater.enabled"
       :update-state="updateState"
-      :version="version"
       :is-auto-update-locked="autoUpdateLocked"
       @enabled="onUpdateEnabled"
       @apply="onUpdateApply"
@@ -56,8 +55,6 @@ export default {
       autoUpdateLocked: null,
       /** @type import('@pkg/main/update').UpdateState | null */
       updateState:      null,
-      /** @type string */
-      version:          '(checking...)',
       networkStatus:    true,
     };
   },
@@ -85,10 +82,6 @@ export default {
       this.$data.settings = settings;
     });
     ipcRenderer.send('settings-read');
-    ipcRenderer.on('get-app-version', (event, version) => {
-      this.$data.version = version;
-    });
-    ipcRenderer.send('get-app-version');
     ipcRenderer.on('update-network-status', (event, status) => {
       this.onNetworkStatusUpdate(status);
     });

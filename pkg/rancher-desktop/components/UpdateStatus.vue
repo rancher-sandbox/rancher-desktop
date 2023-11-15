@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="version">
-      <span class="versionInfo"><b>Version:</b> {{ version }}</span>
+      <version />
       <rd-checkbox
         v-if="updatePossible"
         v-model="updatesEnabled"
@@ -89,6 +89,7 @@ import { marked } from 'marked';
 import Vue from 'vue';
 import Component from 'vue-class-component';
 
+import Version from '@pkg/components/Version.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { UpdateState } from '@pkg/main/update';
 
@@ -108,10 +109,6 @@ const UpdateStatusProps = Vue.extend({
       type:    String,
       default: undefined,
     },
-    version: {
-      type:    String,
-      default: '(checking...)',
-    },
     isAutoUpdateLocked: {
       type:    Boolean,
       default: false,
@@ -119,7 +116,11 @@ const UpdateStatusProps = Vue.extend({
   },
 });
 
-@Component({ components: { Card, RdCheckbox } })
+@Component({
+  components: {
+    Version, Card, RdCheckbox,
+  },
+})
 class UpdateStatus extends UpdateStatusProps {
   applying = false;
 
@@ -206,9 +207,6 @@ export default UpdateStatus;
 <style lang="scss" scoped>
   .version {
     display: flex;
-  }
-  .versionInfo {
-    flex: 1;
   }
   .update-notification {
     font-weight: 900;
