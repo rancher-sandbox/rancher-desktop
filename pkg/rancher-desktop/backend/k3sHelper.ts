@@ -823,7 +823,7 @@ export default class K3sHelper extends events.EventEmitter {
               // includes the host we're looking for; when the server starts, it
               // may be using an obsolete certificate from a previous run that
               // doesn't include the current IP address.
-              const names = cert.subjectaltname.split(',').map(s => s.trim());
+              const names = cert.subjectaltname?.split(',')?.map(s => s.trim()) ?? [];
               const acceptable = [`IP Address:${ host }`, `DNS:${ host }`];
 
               if (!names.some(name => acceptable.includes(name))) {
