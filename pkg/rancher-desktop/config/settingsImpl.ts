@@ -333,45 +333,30 @@ function parseSaveError(err: any) {
  */
 interface ReplacementDirective {
   /**
-   * The path to a possible field in the settings structure
+   * The path to the old value
    */
-  path: string;
+  oldPath: string;
   /**
-   * Callback to process the value at the given path.  If it isn't specified,
-   * see the doc comment for `processReplacements`, the only function that uses this type.
+   * The path to the new value
    */
-  fn?: null|((oldValue: any) => void);
+  newPath: string;
 }
 
 /**
- * This function looks for existing fields in `settings`, and either calls the supplied function `fn` with the
- * existing value, or if no `fn` is specified, assigns the value to `settings[replacement][last-part-of-path]`.
- * Rather than try to explain what's going on in general terms, see the comments marked with "EXPLANATION"
- * on the inputs to this function.
+ * This function takes an array of `ReplacementDirectives`, and carries out each one which essentially
+ * moves a value at an old location to a new one, and then deletes the old location.
  * @param settings - the settings object
  * @param replacements - a table used to update the settings object based on existing obsolete fields that need to be moved.
  */
-function processReplacements(settings: any, replacements: Record<string, ReplacementDirective[]>) {
-  for (const replacement in replacements) {
-    for (const { path, fn } of replacements[replacement]) {
-      if (_.hasIn(settings, path)) {
-        // Get the current value for the old field
-        const currentValue = _.get(settings, path);
+function processReplacements(settings: any, replacements: ReplacementDirective[]) {
+  for (const replacement of replacements) {
+    const { oldPath, newPath } = replacement;
 
-        if (!_.hasIn(settings, replacement)) {
-          _.set(settings, replacement, {});
-        }
-        if (fn) {
-          fn(currentValue);
-        } else {
-          // `as string` maps `undefined|string` to `string`
-          const lastPathPart: string = path.split('.').pop() as string;
-
-          _.set(settings[replacement], lastPathPart, currentValue);
-        }
-        // Delete the old field
-        _.unset(settings, path);
-      }
+    if (_.hasIn(settings, oldPath)) {
+      // Transfer the current value for the old field to the new field
+      _.set(settings, newPath, _.get(settings, oldPath));
+      // Delete the old field
+      _.unset(settings, oldPath);
     }
   }
 }
@@ -381,9 +366,8 @@ function processReplacements(settings: any, replacements: Record<string, Replace
  *
  * Some migrations need to be done with bespoke code, but most of them
  * can be expressed in a descriptive table, and the operations are done
- * by `processReplacements`.  See the doc comments for `processReplacements`
- * and `ReplacementDirective`, along with a few sample inline comments in this
- * table, to understand how the migrations work.
+ * by `processReplacements`, which just moves values to new locations,
+ * and deletes the old location.
  */
 export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
@@ -402,100 +386,41 @@ export const updateTable: Record<number, (settings: any) => void> = {
     // With settings v5, all traces of the kim builder are gone now, so no need to update it.
   },
   4: (settings) => {
-    const replacements: Record<string, ReplacementDirective[]> = {
-      application: [
-        {
-          // EXPLANATION: Use a callback to move the opposite of `.kubernetes.suppressSudo` to `.application.adminAccess`
-          path: 'kubernetes.suppressSudo',
-          fn:   (oldValue: any) => {
-            settings.application.adminAccess = !oldValue;
-          },
-        },
-        // EXPLANATION: Default action: move `.debug` to `.application.debug` (because `application` is the
-        // name of this node's parent.
-        { path: 'debug' },
-        { path: 'pathManagementStrategy' },
-        {
-          // EXPLANATION: Use a callback to move `.telemetry` to `.application.telemetry.enabled`
-          // `processReplacements` will init `application.telemetry` to `{}`
-          path: 'telemetry',
-          fn:   (oldValue: any) => {
-            settings.application.telemetry = { enabled: oldValue };
-          },
-        },
-        {
-          path: 'updater',
-          fn:   (oldValue: any) => {
-            settings.application.updater = { enabled: oldValue };
-          },
-        },
-      ],
-      containerEngine: [
-        {
-          path: 'kubernetes.containerEngine',
-          fn:   (oldValue: any) => {
-            settings.containerEngine.name = oldValue;
-          },
-        },
-      ],
-      experimental: [
-        {
-          path: 'kubernetes.experimental.socketVMNet',
-          fn:   (oldValue: any) => {
-            _.set(settings, 'experimental.virtualMachine.socketVMNet', oldValue);
-          },
-        },
-      ],
-      virtualMachine: [
-        // EXPLANATION: Default action: move `.kubernetes.hostResolver` to `.virtualMachine.hostResolver`
-        // This is the general case of the default action, where the new path consists of
-        // (parent-name="virtualMachine") . (tail(path) = "hostResolver")
-        { path: 'kubernetes.hostResolver' },
-        { path: 'kubernetes.memoryInGB' },
-        { path: 'kubernetes.numberCPUs' },
-      ],
-    };
+    if (_.hasIn(settings, 'kubernetes.suppressSudo')) {
+      _.set(settings, 'application.adminAccess', !settings.kubernetes.suppressSudo);
+      delete settings.kubernetes.suppressSudo;
+    }
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'debug', newPath: 'application.debug' },
+      { oldPath: 'pathManagementStrategy', newPath: 'application.pathManagementStrategy' },
+      { oldPath: 'telemetry', newPath: 'application.telemetry.enabled' },
+      { oldPath: 'updater', newPath: 'application.updater.enabled' },
+      { oldPath: 'kubernetes.containerEngine', newPath: 'containerEngine.name' },
+      { oldPath: 'kubernetes.experimental.socketVMNet', newPath: 'experimental.virtualMachine.socketVMNet' },
+      { oldPath: 'kubernetes.hostResolver', newPath: 'virtualMachine.hostResolver' },
+      { oldPath: 'kubernetes.memoryInGB', newPath: 'virtualMachine.memoryInGB' },
+      { oldPath: 'kubernetes.numberCPUs', newPath: 'virtualMachine.numberCPUs' },
+      { oldPath: 'kubernetes.WSLIntegrations', newPath: 'WSL.integrations' },
+    ];
 
     processReplacements(settings, replacements);
-    if (_.hasIn(settings, 'kubernetes.WSLIntegrations')) {
-      settings.WSL ??= {};
-      settings.WSL = { integrations: settings.kubernetes.WSLIntegrations };
-      delete settings.kubernetes.WSLIntegrations;
-    }
     _.unset(settings, 'kubernetes.checkForExistingKimBuilder');
     _.unset(settings, 'kubernetes.experimental');
   },
   5: (settings) => {
-    const replacements: Record<string, ReplacementDirective[]> = {
-      application: [
-        { path: 'autoStart' },
-        { path: 'hideNotificationIcon' },
-        { path: 'startInBackground' },
-        { path: 'window' },
-      ],
-      containerEngine: [
-        {
-          path: 'containerEngine.imageAllowList',
-          fn:   (oldValue: any) => {
-            settings.containerEngine.allowedImages = oldValue;
-          },
-        },
-      ],
-      experimental: [
-        {
-          path: 'virtualMachine.experimental.socketVMNet',
-          fn:   (oldValue: any) => {
-            _.set(settings.experimental, 'virtualMachine.socketVMNet', oldValue);
-          },
-        },
-      ],
-    };
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'autoStart', newPath: 'application.autoStart' },
+      { oldPath: 'hideNotificationIcon', newPath: 'application.hideNotificationIcon' },
+      { oldPath: 'startInBackground', newPath: 'application.startInBackground' },
+      { oldPath: 'window', newPath: 'application.window' },
+      { oldPath: 'containerEngine.imageAllowList', newPath: 'containerEngine.allowedImages' },
+      { oldPath: 'virtualMachine.experimental.socketVMNet', newPath: 'experimental.virtualMachine.socketVMNet' },
+    ];
 
     processReplacements(settings, replacements);
-    if (settings.virtualMachine?.experimental) {
-      if (Object.keys(settings.virtualMachine.experimental).length === 0) {
-        _.unset(settings, 'virtualMachine.experimental');
-      }
+    if (settings.virtualMachine?.experimental &&
+      Object.keys(settings.virtualMachine.experimental).length === 0) {
+      delete settings.virtualMachine.experimental;
     }
   },
   6: (settings) => {
@@ -524,9 +449,7 @@ export const updateTable: Record<number, (settings: any) => void> = {
   8: (settings) => {
     // Rancher Desktop 1.10: move .extensions to .application.extensions.installed
     if (settings.extensions) {
-      settings.application ??= {};
-      settings.application.extensions ??= {};
-      settings.application.extensions.installed = settings.extensions;
+      _.set(settings, 'application.extensions.installed', settings.extensions);
       delete settings.extensions;
     }
   },
