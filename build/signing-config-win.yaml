@@ -1,0 +1,27 @@
+# This file describes the code signing configuration for Windows.
+
+# The key is a directory name, relative to the unpacked zip file.
+# The value is an array of files in that directory to sign, or an explicit
+# negation (prefixed with "!").  Any files not listed is an error.
+.:
+- Rancher Desktop.exe
+resources/resources/win32:
+- wsl-helper.exe
+resources/resources/win32/bin:
+- docker.exe
+- docker-credential-none.exe
+- nerdctl.exe
+- rdctl.exe
+- '!docker-buildx.exe'
+- '!docker-compose.exe'
+- '!docker-credential-ecr-login.exe'
+- '!docker-credential-wincred.exe'
+- '!helm.exe'
+- '!kubectl.exe'
+- '!kuberlr.exe'
+resources/resources/win32/internal:
+- host-resolver.exe
+- host-switch.exe
+- privileged-service.exe
+- steve.exe
+- vtunnel.exe
