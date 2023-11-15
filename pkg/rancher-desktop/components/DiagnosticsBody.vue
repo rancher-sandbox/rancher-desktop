@@ -1,7 +1,5 @@
 <script lang="ts">
 import { ToggleSwitch } from '@rancher/components';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -77,9 +75,6 @@ export default Vue.extend({
     },
   },
   methods: {
-    markdown(raw: string): string {
-      return DOMPurify.sanitize(marked.parseInline(raw), { USE_PROFILES: { html: true } });
-    },
     pluralize(count: number, unit: string): string {
       const units = count === 1 ? unit : `${ unit }s`;
 
@@ -187,7 +182,7 @@ export default Vue.extend({
       </template>
       <template #col:description="{row}">
         <td>
-          <span v-html="markdown(row.description)"></span>
+          <span v-html="row.description"></span>
           <a
             v-if="row.documentation"
             :href="row.documentation"
