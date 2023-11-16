@@ -128,10 +128,10 @@ export default {
 
       return containers.map((container) => {
         container.state = container.State;
-        container.containerName = container.Names[0].replace(
+        container.containerName = this.shortSha(container.Names[0].replace(
           /_[a-z0-9-]{36}_[0-9]+/,
           '',
-        );
+        ));
         container.started =
           container.State === 'running' ? container.Status : '';
         container.imageName = container.Image;
@@ -279,11 +279,16 @@ export default {
       }
     },
     shortSha(sha) {
-      if (!sha.startsWith('sha256:')) {
-        return sha;
+      const prefix = 'sha256:';
+
+      if (sha.includes(prefix)) {
+        const startIndex = sha.indexOf(prefix) + prefix.length;
+        const actualSha = sha.slice(startIndex);
+
+        return `${ sha.slice(0, startIndex) }${ actualSha.slice(0, 3) }..${ actualSha.slice(-3) }`;
       }
 
-      return `${ sha.slice(0, 10) }..${ sha.slice(-5) }`;
+      return sha;
     },
     getTooltipConfig(sha) {
       if (!sha.startsWith('sha256:')) {
