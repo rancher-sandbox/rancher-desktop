@@ -2918,10 +2918,10 @@
   resolved "https://registry.yarnpkg.com/@types/prettier/-/prettier-2.7.3.tgz#3e51a17e291d01d17d3fc61422015a933af7a08f"
   integrity sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==
 
-"@types/ps-tree@1.1.3":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@types/ps-tree/-/ps-tree-1.1.3.tgz#12a05ebbdc253ed2b2a6055560667e60814791d0"
-  integrity sha512-J8IrehehphLtxpABSekURTw9jthrlLcM4llH1I2fZ0zKaxq8jI/O1+Q/tabAJgBY/ffoqDxPRNYBM1lFUXm0lw==
+"@types/ps-tree@1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@types/ps-tree/-/ps-tree-1.1.5.tgz#3a100615a1c96c2cca374dc449ba4866c6613520"
+  integrity sha512-3LU5a3EZYI1/HvvOkQmmVGrdXopwKXpr3K5cxlZ0zRiP0QzW7IH0o1z4UDI7KdnyQnpPfYHXOOqflEXIl23LFw==
 
 "@types/pug@2.0.4":
   version "2.0.4"
