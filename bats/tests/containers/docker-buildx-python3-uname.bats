@@ -11,7 +11,7 @@ local_setup() {
         # so the docker clients can correctly map the bind mounts.
         # We can use host_path() on these paths because they will exist
         # both here and in the rancher-desktop distro.
-        TEMP="$(win32env TEMP)"
+        TEMP="$(wslpath_from_win32_env TEMP)"
     fi
     BUILDX_BUILDER=rd_bats_builder
     WORK_DIR="$TEMP/$BUILDX_BUILDER"

@@ -2,7 +2,7 @@ load '../helpers/load'
 
 local_setup() {
     skip_on_unix 'roaming appdata => local appdata migration is windows-only'
-    ROAMING_HOME="$(win32env APPDATA)/rancher-desktop"
+    ROAMING_HOME="$(wslpath_from_win32_env APPDATA)/rancher-desktop"
 }
 
 @test 'factory reset' {

@@ -10,7 +10,7 @@ local_setup() {
         # Linux one. This may change depending on:
         # https://github.com/rancher-sandbox/rancher-desktop/issues/5523
         # TODO TODO TODO
-        USERPROFILE="$(win32env USERPROFILE)"
+        USERPROFILE="$(wslpath_from_win32_env USERPROFILE)"
     fi
     DOCKER_CONFIG_FILE="$USERPROFILE/.docker/config.json"
 
@@ -20,7 +20,7 @@ local_setup() {
         # so the ctrctl clients can correctly map the bind mounts.
         # We can use host_path() on these paths because they will exist
         # both here and in the rancher-desktop distro.
-        TEMP="$(win32env TEMP)"
+        TEMP="$(wslpath_from_win32_env TEMP)"
     fi
 
     AUTH_DIR="$TEMP/auth"

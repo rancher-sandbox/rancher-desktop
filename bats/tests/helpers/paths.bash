@@ -81,7 +81,7 @@ if is_linux; then
         "resources/resources"
 fi
 
-win32env() {
+wslpath_from_win32_env() {
     # The cmd.exe _sometimes_ returns an empty string when invoked in a subshell
     # wslpath "$(cmd.exe /c "echo %$1%" 2>/dev/null)" | tr -d "\r"
     # Let's see if powershell.exe avoids this issue
@@ -89,8 +89,8 @@ win32env() {
 }
 
 if is_windows; then
-    LOCALAPPDATA="$(win32env LOCALAPPDATA)"
-    PROGRAMFILES="$(win32env ProgramFiles)"
+    LOCALAPPDATA="$(wslpath_from_win32_env LOCALAPPDATA)"
+    PROGRAMFILES="$(wslpath_from_win32_env ProgramFiles)"
 
     PATH_APP_HOME="$LOCALAPPDATA/rancher-desktop"
     PATH_CONFIG="$LOCALAPPDATA/rancher-desktop"
@@ -112,7 +112,7 @@ PATH_CONFIG_FILE="$PATH_CONFIG/settings.json"
 
 USERPROFILE=$HOME
 if using_windows_exe; then
-    USERPROFILE="$(win32env USERPROFILE)"
+    USERPROFILE="$(wslpath_from_win32_env USERPROFILE)"
 fi
 
 host_path() {
