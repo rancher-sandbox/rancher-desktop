@@ -80,3 +80,26 @@ sudo_needs_password() {
     run sudo --non-interactive --reset-timestamp true
     ((status != 0))
 }
+
+supports_vz_emulation() {
+    if is_macos; then
+        version=$(/usr/bin/sw_vers -productVersion)
+        # Make sure the version has at least 2 dots because
+        # sometimes the reported version is just e.g. 12.7 or 14.0.
+        until [[ $version =~ \..+\. ]]; do
+            version="${version}.0"
+        done
+        major_minor_version=${version%.*}
+        major_version=${major_minor_version%.*}
+        minor_version=${major_minor_version#*.}
+        if ((major_version >= 14)); then
+            return 0
+        elif ((major_version == 13)); then
+            # Versions 13.0.x .. 13.2.x work only on x86_64, not aarch64
+            if ((minor_version >= 3)) || [[ $(uname -m) == x86_64 ]]; then
+                return 0
+            fi
+        fi
+    fi
+    return 1
+}
