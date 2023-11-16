@@ -7,6 +7,7 @@ import _ from 'lodash';
 import * as nativeReg from 'native-reg';
 
 import * as settings from '@pkg/config/settings';
+import * as settingsImpl from '@pkg/config/settingsImpl';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -83,6 +84,18 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
       }
     }
     break;
+  }
+  if (defaults) {
+    if (!('version' in defaults)) {
+      throw new DeploymentProfileError(`Invalid deployment file ${ fullDefaultPath }: no version specified. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+    }
+    defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults);
+  }
+  if (locked) {
+    if (!('version' in locked)) {
+      throw new DeploymentProfileError(`Invalid deployment file ${ fullLockedPath }: no version specified. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+    }
+    locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked);
   }
 
   profiles.defaults = validateDeploymentProfile(fullDefaultPath, defaults, settings.defaultSettings, []) ?? {};
@@ -216,7 +229,24 @@ class Win32DeploymentReader {
 
         // If we found something in the HKLM Defaults or Locked registry hive, don't look at the user's
         // Alternatively, if the keys work, we could break, even if both hives are empty.
-        if (Object.keys(defaults).length || Object.keys(locked).length) {
+        if (!_.isEmpty(defaults) || !_.isEmpty(locked)) {
+          if (!_.isEmpty(defaults)) {
+            if (!('version' in defaults)) {
+              const registryPath = [keyName, ...this.registryPathCurrent, DEFAULTS_HIVE_NAME].join('\\');
+
+              throw new DeploymentProfileError(`Invalid default-deployment: no version specified at ${ registryPath }. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+            }
+            defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults);
+          }
+          if (!_.isEmpty(locked)) {
+            if (!('version' in locked)) {
+              const registryPath = [keyName, ...this.registryPathCurrent, LOCKED_HIVE_NAME].join('\\');
+
+              throw new DeploymentProfileError(`Invalid locked-deployment: no version specified at ${ registryPath }. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+            }
+            locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked);
+          }
+
           return { defaults, locked };
         }
       }

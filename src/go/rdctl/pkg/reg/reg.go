@@ -193,6 +193,10 @@ func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) (
 	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &actualSettingsJSON); err != nil {
 		return nil, fmt.Errorf("error in json: %s", err)
 	}
+	_, ok = actualSettingsJSON["version"]
+	if !ok {
+		actualSettingsJSON["version"] = options.CURRENT_SETTINGS_VERSION
+	}
 	headerLines := []string{"Windows Registry Editor Version 5.00"}
 	bodyLines, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop", profileType}, reflect.TypeOf(options.ServerSettingsForJSON{}), reflect.ValueOf(actualSettingsJSON), "", "")
 	if err != nil {

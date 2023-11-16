@@ -47,8 +47,15 @@ func TestJsonToRegFormat(t *testing.T) {
 	t.Run("handles empty bodies", func(t *testing.T) {
 		lines, err := JsonToReg("hkcu", "defaults", "{}")
 		assert.NoError(t, err)
-		assert.Equal(t, 1, len(lines))
+		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
+		assert.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("[%s]", header), lines[3])
+		assert.Equal(t, 5, len(lines))
 		assert.Equal(t, "Windows Registry Editor Version 5.00", lines[0])
+		assert.Equal(t, "[HKEY_CURRENT_USER\\SOFTWARE\\Policies]", lines[1])
+		assert.Equal(t, "[HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop]", lines[2])
+		assert.Equal(t, "[HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults]", lines[3])
+		assert.Equal(t, `"version"=dword:a`, lines[4])
 	})
 	t.Run("converts the registry-type arguments into reg headers", func(t *testing.T) {
 		type testCaseType struct {
@@ -100,15 +107,16 @@ func TestJsonToRegFormat(t *testing.T) {
 		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, 11, len(lines))
+		assert.Equal(t, 12, len(lines))
 		assert.Equal(t, fmt.Sprintf("[%s]", header), lines[3])
-		assert.Equal(t, fmt.Sprintf("[%s\\application]", header), lines[4])
-		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions]", header), lines[5])
-		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions\\allowed]", header), lines[6])
-		assert.Equal(t, `"enabled"=dword:0`, lines[7])
-		assert.Equal(t, `"list"=hex(7):77,00,69,00,6e,00,6b,00,00,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,64,00,72,00,69,00,6e,00,6b,00,00,00,00,00`, lines[8])
-		assert.Equal(t, fmt.Sprintf("[%s\\containerEngine]", header), lines[9])
-		assert.Equal(t, `"name"="beatrice"`, lines[10])
+		assert.Equal(t, `"version"=dword:a`, lines[4])
+		assert.Equal(t, fmt.Sprintf("[%s\\application]", header), lines[5])
+		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions]", header), lines[6])
+		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions\\allowed]", header), lines[7])
+		assert.Equal(t, `"enabled"=dword:0`, lines[8])
+		assert.Equal(t, `"list"=hex(7):77,00,69,00,6e,00,6b,00,00,00,62,00,6c,00,69,00,6e,00,6b,00,00,00,64,00,72,00,69,00,6e,00,6b,00,00,00,00,00`, lines[9])
+		assert.Equal(t, fmt.Sprintf("[%s\\containerEngine]", header), lines[10])
+		assert.Equal(t, `"name"="beatrice"`, lines[11])
 	})
 
 	t.Run("Handles maps", func(t *testing.T) {
@@ -125,13 +133,13 @@ func TestJsonToRegFormat(t *testing.T) {
 		header := "HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults"
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, 10, len(lines))
-		assert.Equal(t, fmt.Sprintf("[%s\\WSL]", header), lines[4])
-		assert.Equal(t, fmt.Sprintf("[%s\\WSL\\integrations]", header), lines[5])
+		assert.Equal(t, 11, len(lines))
+		assert.Equal(t, fmt.Sprintf("[%s\\WSL]", header), lines[5])
+		assert.Equal(t, fmt.Sprintf("[%s\\WSL\\integrations]", header), lines[6])
 
 		// maps aren't processed in json-order, so allow any order
 		expectedMapValues := []string{`"fish"=dword:1`, `"sheep"=dword:0`, `"owls"="stuff"`, `"cows"=dword:11`}
-		receivedMapValues := lines[6:10]
+		receivedMapValues := lines[7:11]
 		sort.Strings(expectedMapValues)
 		sort.Strings(receivedMapValues)
 		assert.Equal(t, expectedMapValues, receivedMapValues)

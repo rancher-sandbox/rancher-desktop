@@ -125,7 +125,7 @@ export async function verifyNoRegistrySubtree(hive: string): Promise<void> {
 
 export async function verifyUserProfile(): Promise<void> {
   await clearUserProfile();
-  await createUserProfile({ containerEngine: { allowedImages: { enabled: true } } }, null);
+  await createUserProfile({ version: 10, containerEngine: { allowedImages: { enabled: true } } }, null);
 }
 
 export async function verifyNoSystemProfile(): Promise<string[]> {
