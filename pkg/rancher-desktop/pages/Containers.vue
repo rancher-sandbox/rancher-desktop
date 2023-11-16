@@ -133,7 +133,7 @@ export default {
           '',
         );
         container.started =
-          container.State === 'running' ? container.Status : '';
+        container.State === 'running' ? container.Status : '';
         container.imageName = container.Image;
 
         container.availableActions = [
@@ -142,7 +142,7 @@ export default {
             action:     'stopContainer',
             enabled:    this.isRunning(container),
             bulkable:   true,
-            bulkAction: 'stopContainers',
+            bulkAction: 'stopContainer',
           },
           {
             label:      'Start',
@@ -156,25 +156,25 @@ export default {
             action:     'deleteContainer',
             enabled:    this.isStopped(container),
             bulkable:   true,
-            bulkAction: 'deleteContainers',
+            bulkAction: 'deleteContainer',
           },
         ];
 
         if (!container.stopContainer) {
-          container.stopContainer = () => {
-            this.stopContainer(container);
+          container.stopContainer = (...args) => {
+            this.stopContainer(...(args?.length > 0 ? args : [container]));
           };
         }
 
         if (!container.startContainer) {
-          container.startContainer = () => {
-            this.startContainer(container);
+          container.startContainer = (...args) => {
+            this.startContainer(...(args?.length > 0 ? args : [container]));
           };
         }
 
         if (!container.deleteContainer) {
-          container.deleteContainer = () => {
-            this.deleteContainer(container);
+          container.deleteContainer = (...args) => {
+            this.deleteContainer(...(args?.length > 0 ? args : [container]));
           };
         }
 
@@ -252,12 +252,11 @@ export default {
     isStopped(container) {
       return container.State === 'created' || container.State === 'exited';
     },
-    async execCommand(command, container) {
+    async execCommand(command, _ids) {
       try {
-        const ids =
-          this.selected.length > 1 ? [...this.selected.map(container => container.Id)] : [container.Id];
+        const ids = _ids?.length ? _ids.map(e => e.Id) : [_ids.Id];
 
-        console.info(`Executing command ${ command } on container(s) ${ ids }`);
+        console.info(`Executing command ${ command } on container ${ ids }`);
 
         const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           command,
@@ -273,7 +272,6 @@ export default {
 
         return stdout;
       } catch (error) {
-        // TODO: Remove ?
         window.alert(error.message);
         console.error(`Error executing command ${ command }`, error.message);
       }
