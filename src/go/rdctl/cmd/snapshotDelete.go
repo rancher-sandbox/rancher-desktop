@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
@@ -24,17 +23,12 @@ func init() {
 	snapshotDeleteCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
 }
 
-func deleteSnapshot(cmd *cobra.Command, args []string) error {
-	appPaths, err := paths.GetPaths()
+func deleteSnapshot(_ *cobra.Command, args []string) error {
+	manager, err := snapshot.NewManager()
 	if err != nil {
-		return fmt.Errorf("failed to get paths: %w", err)
+		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
-	manager := snapshot.NewManager(appPaths)
-	id, err := manager.GetSnapshotId(args[0])
-	if err != nil {
-		return err
-	}
-	if err = manager.Delete(id); err != nil {
+	if err = manager.Delete(args[0]); err != nil {
 		return fmt.Errorf("failed to delete snapshot: %w", err)
 	}
 	return nil

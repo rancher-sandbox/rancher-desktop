@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -24,13 +25,12 @@ normal circumstances.`,
 func init() {
 	snapshotCmd.AddCommand(snapshotUnlockCmd)
 	snapshotUnlockCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
-
 }
 
 func unlockSnapshot() error {
-	paths, err := p.GetPaths()
+	appPaths, err := paths.GetPaths()
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
-	return removeBackendLock(paths.AppHome)
+	return lock.Unlock(appPaths, false)
 }

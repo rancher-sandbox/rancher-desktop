@@ -5,7 +5,6 @@ package snapshot
 import (
 	"errors"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"path/filepath"
 )
@@ -25,53 +24,53 @@ type snapshotFile struct {
 	FileMode os.FileMode
 }
 
-func getSnapshotFiles(paths paths.Paths, id string) []snapshotFile {
-	snapshotDir := filepath.Join(paths.Snapshots, id)
+func (snapshotter SnapshotterImpl) Files(snapshot Snapshot) []snapshotFile {
+	snapshotDir := snapshotter.SnapshotDirectory(snapshot)
 	files := []snapshotFile{
 		{
-			WorkingPath:  filepath.Join(paths.Config, "settings.json"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Config, "settings.json"),
 			SnapshotPath: filepath.Join(snapshotDir, "settings.json"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "_config", "override.yaml"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "_config", "override.yaml"),
 			SnapshotPath: filepath.Join(snapshotDir, "override.yaml"),
 			CopyOnWrite:  false,
 			MissingOk:    true,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "0", "basedisk"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "0", "basedisk"),
 			SnapshotPath: filepath.Join(snapshotDir, "basedisk"),
 			CopyOnWrite:  true,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "0", "diffdisk"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "0", "diffdisk"),
 			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
 			CopyOnWrite:  true,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "_config", "user"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "_config", "user"),
 			SnapshotPath: filepath.Join(snapshotDir, "user"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
 			FileMode:     0o600,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "_config", "user.pub"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "_config", "user.pub"),
 			SnapshotPath: filepath.Join(snapshotDir, "user.pub"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(paths.Lima, "0", "lima.yaml"),
+			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "0", "lima.yaml"),
 			SnapshotPath: filepath.Join(snapshotDir, "lima.yaml"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
@@ -81,25 +80,18 @@ func getSnapshotFiles(paths paths.Paths, id string) []snapshotFile {
 	return files
 }
 
+// SnapshotterImpl also works as a *Manager receiver
 type SnapshotterImpl struct {
-	Paths paths.Paths
+	*Manager
 }
 
-func NewSnapshotterImpl(p paths.Paths) Snapshotter {
-	return SnapshotterImpl{
-		Paths: p,
-	}
+func NewSnapshotterImpl(manager *Manager) Snapshotter {
+	return SnapshotterImpl{Manager: manager}
 }
 
 func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
-	// Create metadata.json file. This happens first because creation
-	// of subsequent files may take a while, and we always need to
-	// have access to snapshot metadata.
-	if err := writeMetadataFile(snapshotter.Paths, snapshot); err != nil {
-		return err
-	}
-
-	files := getSnapshotFiles(snapshotter.Paths, snapshot.ID)
+	snapshotDir := snapshotter.SnapshotDirectory(snapshot)
+	files := snapshotter.Files(snapshot)
 	for _, file := range files {
 		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
 		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
@@ -111,7 +103,7 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 
 	// Create complete.txt file. This is done last because its presence
 	// signifies a complete and valid snapshot.
-	completeFilePath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, completeFileName)
+	completeFilePath := filepath.Join(snapshotDir, completeFileName)
 	if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
 		return fmt.Errorf("failed to write %q: %w", completeFileName, err)
 	}
@@ -122,7 +114,7 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 // Restores the files from their location in a snapshot directory
 // to their working location.
 func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
-	files := getSnapshotFiles(snapshotter.Paths, snapshot.ID)
+	files := snapshotter.Files(snapshot)
 	var err error
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)

@@ -2,7 +2,6 @@ package snapshot
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"io"
 	"os"
@@ -17,15 +16,15 @@ type wslDistro struct {
 	WorkingDirPath string
 }
 
-func getWslDistros(paths paths.Paths) []wslDistro {
+func (snapshotter SnapshotterImpl) WSLDistros() []wslDistro {
 	return []wslDistro{
 		{
 			Name:           "rancher-desktop",
-			WorkingDirPath: paths.WslDistro,
+			WorkingDirPath: snapshotter.Paths.WslDistro,
 		},
 		{
 			Name:           "rancher-desktop-data",
-			WorkingDirPath: paths.WslDistroData,
+			WorkingDirPath: snapshotter.Paths.WslDistroData,
 		},
 	}
 }
@@ -54,44 +53,39 @@ func copyFile(dst, src string) error {
 	return nil
 }
 
+// SnapshotterImpl also works as a *Manager receiver
 type SnapshotterImpl struct {
-	WSL   wsl.WSL
-	Paths paths.Paths
+	*Manager
+	wsl.WSL
 }
 
-func NewSnapshotterImpl(p paths.Paths) SnapshotterImpl {
+func NewSnapshotterImpl(manager *Manager) SnapshotterImpl {
 	return SnapshotterImpl{
-		WSL:   wsl.WSLImpl{},
-		Paths: p,
+		Manager: manager,
+		WSL:     wsl.WSLImpl{},
 	}
 }
 
 func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
-	// Create metadata.json file. This happens first because creation
-	// of subsequent files may take a while, and we always need to
-	// have access to snapshot metadata.
-	if err := writeMetadataFile(snapshotter.Paths, snapshot); err != nil {
-		return err
-	}
-
+	snapshotDir := snapshotter.SnapshotDirectory(snapshot)
 	// export WSL distros to snapshot directory
-	for _, distro := range getWslDistros(snapshotter.Paths) {
-		snapshotDistroPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, distro.Name+".tar")
-		if err := snapshotter.WSL.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
+	for _, distro := range snapshotter.WSLDistros() {
+		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
+		if err := snapshotter.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
 			return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
 		}
 	}
 
 	// copy settings.json to snapshot directory
 	workingSettingsPath := filepath.Join(snapshotter.Paths.Config, "settings.json")
-	snapshotSettingsPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "settings.json")
+	snapshotSettingsPath := filepath.Join(snapshotDir, "settings.json")
 	if err := copyFile(snapshotSettingsPath, workingSettingsPath); err != nil {
 		return fmt.Errorf("failed to copy %q to snapshot directory: %w", workingSettingsPath, err)
 	}
 
 	// Create complete.txt file. This is done last because its presence
 	// signifies a complete and valid snapshot.
-	completeFilePath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, completeFileName)
+	completeFilePath := filepath.Join(snapshotDir, completeFileName)
 	if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
 		return fmt.Errorf("failed to write %q: %w", completeFileName, err)
 	}
@@ -100,19 +94,19 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 }
 
 func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
+	snapshotDir := snapshotter.SnapshotDirectory(snapshot)
 	// restore WSL distros
 	var err error
-	if err = snapshotter.WSL.UnregisterDistros(); err != nil {
+	if err = snapshotter.UnregisterDistros(); err != nil {
 		return fmt.Errorf("failed to unregister WSL distros: %w", err)
 	}
-	snapshotDir := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID)
-	for _, distro := range getWslDistros(snapshotter.Paths) {
+	for _, distro := range snapshotter.WSLDistros() {
 		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
 		if err = os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
 			err = fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
 			break
 		}
-		if err = snapshotter.WSL.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
+		if err = snapshotter.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
 			err = fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
 			break
 		}
@@ -120,7 +114,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 
 	// copy settings.json back to its working location
 	workingSettingsPath := filepath.Join(snapshotter.Paths.Config, "settings.json")
-	snapshotSettingsPath := filepath.Join(snapshotter.Paths.Snapshots, snapshot.ID, "settings.json")
+	snapshotSettingsPath := filepath.Join(snapshotDir, "settings.json")
 	if err == nil {
 		if err = copyFile(workingSettingsPath, snapshotSettingsPath); err != nil {
 			err = fmt.Errorf("failed to restore %q: %w", workingSettingsPath, err)
@@ -128,7 +122,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 	}
 	if err != nil {
 		_ = os.Remove(workingSettingsPath)
-		_ = snapshotter.WSL.UnregisterDistros()
+		_ = snapshotter.UnregisterDistros()
 	}
 	return err
 }
