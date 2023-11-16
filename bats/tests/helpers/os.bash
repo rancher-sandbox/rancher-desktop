@@ -84,6 +84,11 @@ sudo_needs_password() {
 supports_vz_emulation() {
     if is_macos; then
         version=$(/usr/bin/sw_vers -productVersion)
+        # Make sure the version has at least 2 dots because
+        # sometimes the reported version is just e.g. 12.7 or 14.0.
+        until [[ $version =~ \..+\. ]]; do
+            version="${version}.0"
+        done
         major_minor_version="${version%.*}"
         major_version="${major_minor_version%.*}"
         minor_version="${major_minor_version#*.}"
