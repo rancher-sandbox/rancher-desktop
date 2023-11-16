@@ -84,8 +84,8 @@ using_vz_emulation() {
     is_true "$RD_USE_VZ_EMULATION"
 }
 
-if using_vz_emulation && ! is_macos; then
-    fatal "RD_USE_VZ_EMULATION only works on macOS"
+if using_vz_emulation && ! supports_vz_emulation; then
+    fatal "RD_USE_VZ_EMULATION is not supported on this OS or OS version"
 fi
 
 ########################################################################
