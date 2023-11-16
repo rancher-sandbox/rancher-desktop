@@ -181,6 +181,7 @@ export class Tray {
     this.watchForChanges();
 
     mainEvents.on('backend-locked-update', this.backendStateEvent);
+    mainEvents.emit('backend-locked-check');
     mainEvents.on('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.on('settings-update', this.settingsUpdateEvent);
 

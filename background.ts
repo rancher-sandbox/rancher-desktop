@@ -519,6 +519,10 @@ mainEvents.on('backend-locked-update', () => {
   window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
 });
 
+mainEvents.on('backend-locked-check', () => {
+  mainEvents.emit('backend-locked-update', backendIsLocked);
+});
+
 ipcMainProxy.on('backend-state-check', (event) => {
   event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
 });
