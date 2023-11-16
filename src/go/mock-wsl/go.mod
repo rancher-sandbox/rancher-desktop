@@ -5,5 +5,5 @@ go 1.21
 require (
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 	golang.org/x/sys v0.13.0
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 )
