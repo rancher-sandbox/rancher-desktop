@@ -343,7 +343,7 @@ export default {
 
   &-content {
     display: none;
-    position: absolute;
+    position: fixed;
     z-index: 1;
     padding-top: 5px;
     border-start-start-radius: var(--border-radius);
