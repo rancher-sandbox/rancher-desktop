@@ -7,7 +7,7 @@
     <div
       v-for="item of integrationsList"
       :key="item.name"
-      :data-test="`item-${item.name}`"
+      :data-testid="`item-${item.name}`"
     >
       <checkbox
         :value="item.value"

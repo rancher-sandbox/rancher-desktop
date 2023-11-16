@@ -55,6 +55,7 @@ export default Vue.extend({
   <div class="alert">
     <span
       v-if="alert"
+      data-testid="preferences-alert"
       class="alert-text"
     >
       {{ alertText }}

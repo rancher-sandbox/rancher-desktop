@@ -14,9 +14,11 @@ import plist from 'plist';
 import { defaultSettings, LockedSettingsType, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
+import { Log } from '@pkg/utils/logging' ;
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
+const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
 let testInfo: undefined | {
   testPath: string;
   startTime: number;

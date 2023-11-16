@@ -30,7 +30,7 @@ var wslIntegrationStateViper = viper.New()
 
 // wslIntegrationStateCmd represents the `wsl integration-state` command.
 var wslIntegrationStateCmd = &cobra.Command{
-	Use:   "integration-state",
+	Use:   "state",
 	Short: "Manage markers for WSL integration state",
 	Long:  "Manage markers for Rancher Desktop WSL distro integration state",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -57,5 +57,5 @@ func init() {
 	wslIntegrationStateCmd.MarkFlagRequired("mode")
 	wslIntegrationStateViper.AutomaticEnv()
 	wslIntegrationStateViper.BindPFlags(wslIntegrationStateCmd.Flags())
-	wslCmd.AddCommand(wslIntegrationStateCmd)
+	wslIntegrationCmd.AddCommand(wslIntegrationStateCmd)
 }

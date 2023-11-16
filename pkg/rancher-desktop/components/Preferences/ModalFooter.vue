@@ -31,13 +31,14 @@ export default Vue.extend({
     </div>
     <div class="preferences-actions">
       <button
-        data-test="preferences-cancel"
+        data-testid="preferences-cancel"
         class="btn role-secondary"
         @click="cancel"
       >
         Cancel
       </button>
       <button
+        data-testid="preferences-apply"
         class="btn role-primary"
         :disabled="isDisabled"
         @click="apply"
