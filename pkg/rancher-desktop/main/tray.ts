@@ -92,6 +92,7 @@ export class Tray {
     },
     { type: 'separator' },
     {
+      id:    'quit',
       label: 'Quit Rancher Desktop',
       role:  'quit',
       type:  'normal',
@@ -351,11 +352,11 @@ export class Tray {
       networkStatusItem.label = `Network status: ${ this.currentNetworkStatus }`;
     }
 
-    for (const item of this.contextMenuItems) {
-      if (item.id === 'preferences' || item.id === 'dashboard' || item.id === 'contexts') {
+    this.contextMenuItems
+      .filter(item => item.id && ['preferences', 'dashboard', 'contexts', 'quit'].includes(item.id))
+      .forEach((item) => {
         item.enabled = !this.backendIsLocked;
-      }
-    }
+      });
 
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
