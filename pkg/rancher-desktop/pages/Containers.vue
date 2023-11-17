@@ -289,7 +289,7 @@ export default {
       return sha;
     },
     getTooltipConfig(sha) {
-      if (!sha.startsWith('sha256:')) {
+      if (!sha.includes('sha256:')) {
         return { content: undefined };
       }
 
