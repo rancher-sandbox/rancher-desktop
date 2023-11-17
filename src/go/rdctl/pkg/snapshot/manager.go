@@ -44,6 +44,8 @@ func NewManager(p ...paths.Paths) (*Manager, error) {
 	return &manager, nil
 }
 
+// Snapshot returns a Snapshot object for an existing and complete snapshot with the given name.
+// It will return an error if no snapshot is found, or if the snapshot is not complete.
 func (manager *Manager) Snapshot(name string) (Snapshot, error) {
 	snapshots, err := manager.List(false)
 	if err != nil {
@@ -59,10 +61,6 @@ func (manager *Manager) Snapshot(name string) (Snapshot, error) {
 
 func (manager *Manager) SnapshotDirectory(snapshot Snapshot) string {
 	return filepath.Join(manager.Paths.Snapshots, snapshot.ID)
-}
-
-func (manager *Manager) RemoveSnapshotDirectory(snapshot Snapshot) {
-	_ = os.RemoveAll(manager.SnapshotDirectory(snapshot))
 }
 
 // ValidateName - does syntactic validation on the name
@@ -101,9 +99,9 @@ func (manager *Manager) ValidateName(name string) error {
 	return nil
 }
 
-func (manager *Manager) WriteMetadataFile(snapshot Snapshot) (err error) {
+func (manager *Manager) writeMetadataFile(snapshot Snapshot) error {
 	snapshotDir := manager.SnapshotDirectory(snapshot)
-	if err = os.MkdirAll(snapshotDir, 0o755); err != nil {
+	if err := os.MkdirAll(snapshotDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create snapshot directory: %w", err)
 	}
 	metadataPath := filepath.Join(snapshotDir, "metadata.json")
@@ -114,10 +112,10 @@ func (manager *Manager) WriteMetadataFile(snapshot Snapshot) (err error) {
 	defer metadataFile.Close()
 	encoder := json.NewEncoder(metadataFile)
 	encoder.SetIndent("", "  ")
-	if err = encoder.Encode(snapshot); err != nil {
+	if err := encoder.Encode(snapshot); err != nil {
 		return fmt.Errorf("failed to write metadata file: %w", err)
 	}
-	return
+	return nil
 }
 
 // Create a new snapshot.
@@ -141,16 +139,19 @@ func (manager *Manager) Create(name, description string) (snapshot Snapshot, err
 	}
 	defer func() {
 		if err != nil {
-			manager.RemoveSnapshotDirectory(snapshot)
+			os.RemoveAll(manager.SnapshotDirectory(snapshot))
 		}
-		_ = lock.Unlock(manager.Paths, true)
+		unlockErr := lock.Unlock(manager.Paths, true)
+		if err == nil {
+			err = unlockErr
+		}
 	}()
 	// Revalidate the name in case another process created a snapshot with the same name in the gap
 	// between our first validation and creating the lock file.
 	if err = manager.ValidateName(name); err != nil {
 		return
 	}
-	if err = manager.WriteMetadataFile(snapshot); err == nil {
+	if err = manager.writeMetadataFile(snapshot); err == nil {
 		err = manager.CreateFiles(snapshot)
 	}
 	return
@@ -219,7 +220,10 @@ func (manager *Manager) Restore(name string) (err error) {
 	}
 	defer func() {
 		// Don't restart the backend if the restore failed
-		_ = lock.Unlock(manager.Paths, err == nil)
+		unlockErr := lock.Unlock(manager.Paths, err == nil)
+		if err == nil {
+			err = unlockErr
+		}
 	}()
 	if err = manager.RestoreFiles(snapshot); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)

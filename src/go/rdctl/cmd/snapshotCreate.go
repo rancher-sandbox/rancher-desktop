@@ -35,11 +35,11 @@ func createSnapshot(args []string) error {
 	if _, err := manager.Create(args[0], snapshotDescription); err != nil {
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
+
+	// exclude snapshots directory from time machine backups if on macOS
 	if runtime.GOOS != "darwin" {
 		return nil
 	}
-
-	// exclude snapshots directory from time machine backups if on macOS
 	execCmd := exec.Command("tmutil", "addexclusion", manager.Paths.Snapshots)
 	output, err := execCmd.CombinedOutput()
 	if err != nil {

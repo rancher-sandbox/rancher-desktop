@@ -33,7 +33,7 @@ func exitWithJsonOrErrorCondition(e error) error {
 			if err != nil {
 				return fmt.Errorf("error json-converting error messages: %w", err)
 			}
-			_, _ = fmt.Fprintln(os.Stdout, string(jsonBuffer))
+			fmt.Fprintln(os.Stdout, string(jsonBuffer))
 		}
 		os.Exit(exitStatus)
 	}
