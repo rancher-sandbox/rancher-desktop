@@ -121,6 +121,12 @@ interface MainEventNames {
    * writing snapshots is the sole use for this).
    */
   'backend-locked-update'(backendIsLocked: string): void;
+
+  /**
+   * Emitted when a component wants to check the state of the backend lock.
+   * Responds by emitting a backend-locked-update.
+   */
+  'backend-locked-check'(): void;
 }
 
 /**
