@@ -763,11 +763,8 @@ describe('settings', () => {
       it.each(Object.entries(expectedMigrations))('migrate from %i', (version, beforeAndAfter) => {
         const [fromSettings, toSettings] = beforeAndAfter;
         const existingVersion = parseInt(version, 10);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const nextVersion = (existingVersion + 1) as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
 
-        // eslint-disable-next-line no-eval
-        eval('settings["CURRENT_SETTINGS_VERSION"] = nextVersion');
+        (settings as any).CURRENT_SETTINGS_VERSION = existingVersion + 1;
         fromSettings.version = existingVersion as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
         toSettings.version = (existingVersion + 1) as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
         expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings)).toEqual(toSettings);

@@ -349,9 +349,7 @@ interface ReplacementDirective {
  * @param replacements - a table used to update the settings object based on existing obsolete fields that need to be moved.
  */
 function processReplacements(settings: any, replacements: ReplacementDirective[]) {
-  for (const replacement of replacements) {
-    const { oldPath, newPath } = replacement;
-
+  for (const { oldPath, newPath } of replacements) {
     if (_.hasIn(settings, oldPath)) {
       // Transfer the current value for the old field to the new field
       _.set(settings, newPath, _.get(settings, oldPath));
@@ -366,12 +364,15 @@ function processReplacements(settings: any, replacements: ReplacementDirective[]
  *
  * Some migrations need to be done with bespoke code, but most of them
  * can be expressed in a descriptive table, and the operations are done
- * by `processReplacements`, which just moves values to new locations,
+ * by `processReplacements`, which just moves old values to new locations,
  * and deletes the old location.
+ *
+ * The `settings` @param does not have to be a complete settings object.
+ * And its type is `any` because it needs to work on older versions of the settings data.
  */
 export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
-    // EXPLANATION: We don't call `processReplacements` in this step
+    // We don't call `processReplacements` in this step
     // because this migration only deletes an existing field.
     if (_.hasIn(settings, 'kubernetes.rancherMode')) {
       delete settings.kubernetes.rancherMode;
@@ -418,9 +419,8 @@ export const updateTable: Record<number, (settings: any) => void> = {
     ];
 
     processReplacements(settings, replacements);
-    if (settings.virtualMachine?.experimental &&
-      Object.keys(settings.virtualMachine.experimental).length === 0) {
-      delete settings.virtualMachine.experimental;
+    if (_.isEmpty(_.get(settings, 'virtualMachine.experimental'))) {
+      _.unset(settings, 'virtualMachine.experimental');
     }
   },
   6: (settings) => {
@@ -477,6 +477,15 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
   return _.defaultsDeep(settings, defaultSettings);
 }
 
+/**
+ * Used to migrate a settings payload from an earlier version to the current one.
+ * Input payloads are expected to come from either the argument to `rdctl api settings -X PUT ...`
+ * or a deployment profile.
+ *
+ * The contents of settings files go through the unexported function `migrateSettingsToCurrentVersion`
+ * which assigns any missing defaults at the end. This function does not fill in missing values.
+ * @param settings
+ */
 export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>): RecursivePartial<Settings> {
   const firstPart = 'updating settings requires specifying an API version';
   let loadedVersion = settings.version;
