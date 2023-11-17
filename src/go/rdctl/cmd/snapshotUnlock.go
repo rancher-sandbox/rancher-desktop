@@ -32,5 +32,6 @@ func unlockSnapshot() error {
 	if err != nil {
 		return fmt.Errorf("failed to get paths: %w", err)
 	}
-	return lock.Unlock(appPaths, false)
+	backendLock := &lock.BackendLock{}
+	return backendLock.Unlock(appPaths, false)
 }

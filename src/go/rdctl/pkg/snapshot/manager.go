@@ -23,20 +23,20 @@ const nameDisplayCutoffSize = 30
 type Manager struct {
 	Snapshotter
 	paths.Paths
+	lock.BackendLocker
 }
 
-func NewManager(p ...paths.Paths) (*Manager, error) {
-	manager := Manager{Snapshotter: NewSnapshotterImpl()}
-	if len(p) == 0 {
-		var err error
-		manager.Paths, err = paths.GetPaths()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		manager.Paths = p[0]
+func NewManager() (*Manager, error) {
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return nil, err
 	}
-	return &manager, nil
+	manager := &Manager{
+		Paths:         appPaths,
+		Snapshotter:   NewSnapshotterImpl(),
+		BackendLocker: &lock.BackendLock{},
+	}
+	return manager, nil
 }
 
 // Snapshot returns a Snapshot object for an existing and complete snapshot with the given name.
@@ -129,14 +129,14 @@ func (manager *Manager) Create(name, description string) (snapshot Snapshot, err
 		ID:          id.String(),
 		Description: description,
 	}
-	if err = lock.Lock(manager.Paths, "create"); err != nil {
+	if err = manager.Lock(manager.Paths, "create"); err != nil {
 		return
 	}
 	defer func() {
 		if err != nil {
 			os.RemoveAll(manager.SnapshotDirectory(snapshot))
 		}
-		unlockErr := lock.Unlock(manager.Paths, true)
+		unlockErr := manager.Unlock(manager.Paths, true)
 		if err == nil {
 			err = unlockErr
 		}
@@ -210,12 +210,12 @@ func (manager *Manager) Restore(name string) (err error) {
 		return err
 	}
 
-	if err := lock.Lock(manager.Paths, "restore"); err != nil {
+	if err := manager.Lock(manager.Paths, "restore"); err != nil {
 		return err
 	}
 	defer func() {
 		// Don't restart the backend if the restore failed
-		unlockErr := lock.Unlock(manager.Paths, err == nil)
+		unlockErr := manager.Unlock(manager.Paths, err == nil)
 		if err == nil {
 			err = unlockErr
 		}

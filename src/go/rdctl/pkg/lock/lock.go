@@ -13,9 +13,17 @@ import (
 
 const backendLockName = "backend.lock"
 
+type BackendLocker interface {
+	Lock(appPaths paths.Paths, action string) error
+	Unlock(appPaths paths.Paths, restart bool) error
+}
+
+type BackendLock struct {
+}
+
 // Lock the backend by creating the lock file and shutting down the VM.
 // The lock file will be deleted if Lock returns an error (e.g. the backend couldn't be stopped).
-func Lock(appPaths paths.Paths, action string) error {
+func (lock *BackendLock) Lock(appPaths paths.Paths, action string) error {
 	if err := os.MkdirAll(appPaths.AppHome, 0o755); err != nil {
 		return fmt.Errorf("failed to create backend lock parent directory %q: %w", appPaths.AppHome, err)
 	}
@@ -38,7 +46,7 @@ func Lock(appPaths paths.Paths, action string) error {
 }
 
 // Unlock the backend by removing the lock file. Restart the VM if the file was deleted and `restart` is true.
-func Unlock(appPaths paths.Paths, restart bool) error {
+func (lock *BackendLock) Unlock(appPaths paths.Paths, restart bool) error {
 	lockPath := filepath.Join(appPaths.AppHome, backendLockName)
 	err := os.RemoveAll(lockPath)
 	if err == nil && restart {

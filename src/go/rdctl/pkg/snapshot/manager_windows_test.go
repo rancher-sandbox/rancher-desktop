@@ -2,11 +2,12 @@ package snapshot
 
 import (
 	"errors"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 )
 
 func populateFiles(t *testing.T, _ bool) (paths.Paths, map[string]TestFile) {
@@ -36,10 +37,12 @@ func populateFiles(t *testing.T, _ bool) (paths.Paths, map[string]TestFile) {
 }
 
 func newTestManager(appPaths paths.Paths) *Manager {
-	manager, _ := NewManager(appPaths)
-	snapshotter := NewSnapshotterImpl()
-	snapshotter.WSL = wsl.MockWSL{}
-	manager.Snapshotter = snapshotter
+	manager := &Manager{
+		Paths:         appPaths,
+		Snapshotter:   NewSnapshotterImpl(),
+		BackendLocker: &lock.MockBackendLock{},
+	}
+	manager.Snapshotter.WSL = wsl.MockWSL{}
 	return manager
 }
 
