@@ -29,7 +29,7 @@
               class="dropdown"
             >
               <span>
-                {{ t('containers.manage.table.showMore') }}
+                ...
               </span>
 
               <div class="dropdown-content">
@@ -292,23 +292,26 @@ export default {
 
       return { content: sha };
     },
-    getUniquePorts(obj) {
-      const uniquePorts = {};
+    getUniquePorts(ports) {
+      const keys = Object.keys(ports);
 
-      Object.keys(obj).forEach((key) => {
-        const ports = obj[key];
+      const uniquePortMap = keys.map((key) => {
+        const values = ports[key];
+        const hostPorts = values.map(value => value.HostPort);
+        const uniqueHostPorts = [...new Set(hostPorts)];
 
-        if (!ports) {
-          return;
-        }
-
-        const firstPort = ports[0]?.HostPort || '';
-        const secondPort = ports[1]?.HostPort || '';
-
-        uniquePorts[`${ firstPort }:${ secondPort }`] = true;
+        return { [key]: uniqueHostPorts };
       });
 
-      return Object.keys(uniquePorts);
+      const displayMap = uniquePortMap.map((element) => {
+        const key = Object.keys(element)[0];
+        const values = element[key];
+        const port = key.split('/')[0];
+
+        return values.map(value => `${ value }:${ port }`);
+      });
+
+      return [].concat.apply([], displayMap);
     },
     shouldHaveDropdown(ports) {
       if (!ports) {
@@ -341,6 +344,11 @@ export default {
   position: relative;
   display: inline-block;
 
+  span {
+    cursor: pointer;
+    padding: 5px;
+  }
+
   &-content {
     display: none;
     position: fixed;
@@ -349,6 +357,7 @@ export default {
     border-start-start-radius: var(--border-radius);
     background: var(--default);
     padding: 5px;
+    transition: all 0.5s ease-in-out;
 
     a {
       display: block;
@@ -375,6 +384,6 @@ export default {
 
 .port-container {
   display: flex;
-  flex-direction: column;
+  gap: 5px;
 }
 </style>
