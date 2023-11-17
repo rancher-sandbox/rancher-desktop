@@ -5,6 +5,7 @@ package snapshot
 import (
 	"errors"
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"path/filepath"
 )
@@ -24,53 +25,52 @@ type snapshotFile struct {
 	FileMode os.FileMode
 }
 
-func (snapshotter SnapshotterImpl) Files(snapshot Snapshot) []snapshotFile {
-	snapshotDir := snapshotter.SnapshotDirectory(snapshot)
+func (snapshotter SnapshotterImpl) Files(appPaths paths.Paths, snapshotDir string) []snapshotFile {
 	files := []snapshotFile{
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Config, "settings.json"),
+			WorkingPath:  filepath.Join(appPaths.Config, "settings.json"),
 			SnapshotPath: filepath.Join(snapshotDir, "settings.json"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "_config", "override.yaml"),
+			WorkingPath:  filepath.Join(appPaths.Lima, "_config", "override.yaml"),
 			SnapshotPath: filepath.Join(snapshotDir, "override.yaml"),
 			CopyOnWrite:  false,
 			MissingOk:    true,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "0", "basedisk"),
+			WorkingPath:  filepath.Join(appPaths.Lima, "0", "basedisk"),
 			SnapshotPath: filepath.Join(snapshotDir, "basedisk"),
 			CopyOnWrite:  true,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "0", "diffdisk"),
+			WorkingPath:  filepath.Join(appPaths.Lima, "0", "diffdisk"),
 			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
 			CopyOnWrite:  true,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "_config", "user"),
+			WorkingPath:  filepath.Join(appPaths.Lima, "_config", "user"),
 			SnapshotPath: filepath.Join(snapshotDir, "user"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
 			FileMode:     0o600,
 		},
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "_config", "user.pub"),
+			WorkingPath:  filepath.Join(appPaths.Lima, "_config", "user.pub"),
 			SnapshotPath: filepath.Join(snapshotDir, "user.pub"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(snapshotter.Paths.Lima, "0", "lima.yaml"),
+			WorkingPath:  filepath.Join(appPaths.Lima, "0", "lima.yaml"),
 			SnapshotPath: filepath.Join(snapshotDir, "lima.yaml"),
 			CopyOnWrite:  false,
 			MissingOk:    false,
@@ -82,16 +82,14 @@ func (snapshotter SnapshotterImpl) Files(snapshot Snapshot) []snapshotFile {
 
 // SnapshotterImpl also works as a *Manager receiver
 type SnapshotterImpl struct {
-	*Manager
 }
 
-func NewSnapshotterImpl(manager *Manager) Snapshotter {
-	return SnapshotterImpl{Manager: manager}
+func NewSnapshotterImpl() Snapshotter {
+	return SnapshotterImpl{}
 }
 
-func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
-	snapshotDir := snapshotter.SnapshotDirectory(snapshot)
-	files := snapshotter.Files(snapshot)
+func (snapshotter SnapshotterImpl) CreateFiles(appPaths paths.Paths, snapshotDir string) error {
+	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
 		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
 		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
@@ -113,8 +111,8 @@ func (snapshotter SnapshotterImpl) CreateFiles(snapshot Snapshot) error {
 
 // Restores the files from their location in a snapshot directory
 // to their working location.
-func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
-	files := snapshotter.Files(snapshot)
+func (snapshotter SnapshotterImpl) RestoreFiles(appPaths paths.Paths, snapshotDir string) error {
+	files := snapshotter.Files(appPaths, snapshotDir)
 	var err error
 	for _, file := range files {
 		filename := filepath.Base(file.WorkingPath)
@@ -133,7 +131,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(snapshot Snapshot) error {
 		for _, file := range files {
 			_ = os.Remove(file.WorkingPath)
 		}
-		_ = os.RemoveAll(snapshotter.Paths.Lima)
+		_ = os.RemoveAll(appPaths.Lima)
 	}
 	return err
 }

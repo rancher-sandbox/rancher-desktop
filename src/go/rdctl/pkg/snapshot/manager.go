@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 	"unicode"
 
@@ -24,14 +23,10 @@ const nameDisplayCutoffSize = 30
 type Manager struct {
 	Snapshotter
 	paths.Paths
-	// The mutex is only included so that `go vet` will throw an error if this struct is ever copied because
-	// the Snapshotter contains a pointer back to the Manager, which would not get updated by the copy.
-	sync.Mutex
 }
 
 func NewManager(p ...paths.Paths) (*Manager, error) {
-	var manager Manager
-	manager.Snapshotter = NewSnapshotterImpl(&manager)
+	manager := Manager{Snapshotter: NewSnapshotterImpl()}
 	if len(p) == 0 {
 		var err error
 		manager.Paths, err = paths.GetPaths()
@@ -152,7 +147,7 @@ func (manager *Manager) Create(name, description string) (snapshot Snapshot, err
 		return
 	}
 	if err = manager.writeMetadataFile(snapshot); err == nil {
-		err = manager.CreateFiles(snapshot)
+		err = manager.CreateFiles(manager.Paths, manager.SnapshotDirectory(snapshot))
 	}
 	return
 }
@@ -225,7 +220,7 @@ func (manager *Manager) Restore(name string) (err error) {
 			err = unlockErr
 		}
 	}()
-	if err = manager.RestoreFiles(snapshot); err != nil {
+	if err = manager.RestoreFiles(manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 

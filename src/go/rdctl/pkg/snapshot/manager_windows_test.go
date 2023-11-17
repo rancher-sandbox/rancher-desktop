@@ -37,7 +37,7 @@ func populateFiles(t *testing.T, _ bool) (paths.Paths, map[string]TestFile) {
 
 func newTestManager(appPaths paths.Paths) *Manager {
 	manager, _ := NewManager(appPaths)
-	snapshotter := NewSnapshotterImpl(appPaths)
+	snapshotter := NewSnapshotterImpl()
 	snapshotter.WSL = wsl.MockWSL{}
 	manager.Snapshotter = snapshotter
 	return manager
