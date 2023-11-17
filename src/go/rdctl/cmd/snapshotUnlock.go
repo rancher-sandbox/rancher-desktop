@@ -2,8 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
 
@@ -28,10 +27,9 @@ func init() {
 }
 
 func unlockSnapshot() error {
-	appPaths, err := paths.GetPaths()
+	manager, err := snapshot.NewManager()
 	if err != nil {
-		return fmt.Errorf("failed to get paths: %w", err)
+		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
-	backendLock := &lock.BackendLock{}
-	return backendLock.Unlock(appPaths, false)
+	return manager.Unlock(manager.Paths, false)
 }

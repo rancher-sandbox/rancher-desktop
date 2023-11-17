@@ -28,11 +28,17 @@ func init() {
 }
 
 func createSnapshot(args []string) error {
+	name := args[0]
 	manager, err := snapshot.NewManager()
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
-	if _, err := manager.Create(args[0], snapshotDescription); err != nil {
+	// Report on invalid names before locking and shutting down the backend
+	if err := manager.ValidateName(name); err != nil {
+		return nil
+	}
+
+	if _, err := manager.Create(name, snapshotDescription); err != nil {
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
 

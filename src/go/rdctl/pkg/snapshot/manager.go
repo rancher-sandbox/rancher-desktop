@@ -115,10 +115,6 @@ func (manager *Manager) writeMetadataFile(snapshot Snapshot) error {
 
 // Create a new snapshot.
 func (manager *Manager) Create(name, description string) (snapshot Snapshot, err error) {
-	// Report on invalid names before locking and shutting down the backend
-	if err = manager.ValidateName(name); err != nil {
-		return
-	}
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return snapshot, fmt.Errorf("failed to generate ID for snapshot: %w", err)
@@ -141,8 +137,7 @@ func (manager *Manager) Create(name, description string) (snapshot Snapshot, err
 			err = unlockErr
 		}
 	}()
-	// Revalidate the name in case another process created a snapshot with the same name in the gap
-	// between our first validation and creating the lock file.
+	// (Re)validate the name after acquiring the lock in case another process created a snapshot with the same name
 	if err = manager.ValidateName(name); err != nil {
 		return
 	}
