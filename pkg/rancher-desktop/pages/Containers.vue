@@ -11,6 +11,13 @@
       :loading="!containersList"
       @selection="handleSelection"
     >
+      <template #col:containerName="{row}">
+        <td>
+          <span v-tooltip="getTooltipConfig(row.containerName)">
+            {{ shortSha(row.containerName) }}
+          </span>
+        </td>
+      </template>
       <template #col:ports="{ row }">
         <td>
           <div class="port-container">
@@ -56,7 +63,6 @@
           />
         </td>
       </template>
-
       <template #col:imageName="{row}">
         <td>
           <span v-tooltip="getTooltipConfig(row.imageName)">
@@ -128,10 +134,10 @@ export default {
 
       return containers.map((container) => {
         container.state = container.State;
-        container.containerName = this.shortSha(container.Names[0].replace(
+        container.containerName = container.Names[0].replace(
           /_[a-z0-9-]{36}_[0-9]+/,
           '',
-        ));
+        );
         container.started =
         container.State === 'running' ? container.Status : '';
         container.imageName = container.Image;
@@ -289,7 +295,7 @@ export default {
       return sha;
     },
     getTooltipConfig(sha) {
-      if (!sha.startsWith('sha256:')) {
+      if (!sha.includes('sha256:')) {
         return { content: undefined };
       }
 
