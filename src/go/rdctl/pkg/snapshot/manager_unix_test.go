@@ -5,49 +5,50 @@ package snapshot
 import (
 	"errors"
 	"fmt"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"path/filepath"
 	"testing"
-
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
-func populateFiles(t *testing.T, includeOverrideYaml bool) (p.Paths, map[string]TestFile) {
+func populateFiles(t *testing.T, includeOverrideYaml bool) (paths.Paths, map[string]TestFile) {
 	baseDir := t.TempDir()
-	paths := p.Paths{
+	appPaths := paths.Paths{
+		AppHome:   baseDir,
 		Config:    filepath.Join(baseDir, "config"),
 		Lima:      filepath.Join(baseDir, "lima"),
 		Snapshots: filepath.Join(baseDir, "snapshots"),
 	}
 	testFiles := map[string]TestFile{
 		"settings.json": {
-			Path:     filepath.Join(paths.Config, "settings.json"),
+			Path:     filepath.Join(appPaths.Config, "settings.json"),
 			Contents: `{"test": "settings.json"}`,
 		},
 		"basedisk": {
-			Path:     filepath.Join(paths.Lima, "0", "basedisk"),
+			Path:     filepath.Join(appPaths.Lima, "0", "basedisk"),
 			Contents: "basedisk contents",
 		},
 		"diffdisk": {
-			Path:     filepath.Join(paths.Lima, "0", "diffdisk"),
+			Path:     filepath.Join(appPaths.Lima, "0", "diffdisk"),
 			Contents: "diffdisk contents",
 		},
 		"user": {
-			Path:     filepath.Join(paths.Lima, "_config", "user"),
+			Path:     filepath.Join(appPaths.Lima, "_config", "user"),
 			Contents: "user SSH key",
 		},
 		"user.pub": {
-			Path:     filepath.Join(paths.Lima, "_config", "user.pub"),
+			Path:     filepath.Join(appPaths.Lima, "_config", "user.pub"),
 			Contents: "user public SSH key",
 		},
 		"lima.yaml": {
-			Path:     filepath.Join(paths.Lima, "0", "lima.yaml"),
+			Path:     filepath.Join(appPaths.Lima, "0", "lima.yaml"),
 			Contents: "this is yaml",
 		},
 	}
 	if includeOverrideYaml {
 		testFiles["override.yaml"] = TestFile{
-			Path:     filepath.Join(paths.Lima, "_config", "override.yaml"),
+			Path:     filepath.Join(appPaths.Lima, "_config", "override.yaml"),
 			Contents: "test: override.yaml",
 		}
 	}
@@ -60,34 +61,40 @@ func populateFiles(t *testing.T, includeOverrideYaml bool) (p.Paths, map[string]
 			t.Fatalf("failed to create test file %q: %s", file.Path, err)
 		}
 	}
-	return paths, testFiles
+	return appPaths, testFiles
 }
 
-func newTestManager(paths p.Paths) Manager {
-	return NewManager(paths)
+func newTestManager(appPaths paths.Paths) *Manager {
+	manager := &Manager{
+		Paths:         appPaths,
+		Snapshotter:   NewSnapshotterImpl(),
+		BackendLocker: &lock.MockBackendLock{},
+	}
+	return manager
 }
 
 func TestManagerUnix(t *testing.T) {
 	for _, includeOverrideYaml := range []bool{true, false} {
 		t.Run(fmt.Sprintf("Create with includeOverrideYaml %t", includeOverrideYaml), func(t *testing.T) {
-			paths, _ := populateFiles(t, includeOverrideYaml)
+			appPaths, _ := populateFiles(t, includeOverrideYaml)
 
 			// create snapshot
-			testManager := newTestManager(paths)
+			testManager := newTestManager(appPaths)
 			snapshot, err := testManager.Create("test-snapshot", "")
 			if err != nil {
 				t.Fatalf("unexpected error creating snapshot: %s", err)
 			}
 
 			// ensure desired files are present
+			snapshotDir := testManager.SnapshotDirectory(snapshot)
 			snapshotFiles := []string{
-				filepath.Join(paths.Snapshots, snapshot.ID, "settings.json"),
-				filepath.Join(paths.Snapshots, snapshot.ID, "basedisk"),
-				filepath.Join(paths.Snapshots, snapshot.ID, "diffdisk"),
-				filepath.Join(paths.Snapshots, snapshot.ID, "metadata.json"),
+				filepath.Join(snapshotDir, "settings.json"),
+				filepath.Join(snapshotDir, "basedisk"),
+				filepath.Join(snapshotDir, "diffdisk"),
+				filepath.Join(snapshotDir, "metadata.json"),
 			}
 			if includeOverrideYaml {
-				snapshotFiles = append(snapshotFiles, filepath.Join(paths.Snapshots, snapshot.ID, "override.yaml"))
+				snapshotFiles = append(snapshotFiles, filepath.Join(snapshotDir, "override.yaml"))
 			}
 			for _, file := range snapshotFiles {
 				if _, err := os.ReadFile(file); err != nil {
@@ -99,8 +106,8 @@ func TestManagerUnix(t *testing.T) {
 
 	for _, includeOverrideYaml := range []bool{true, false} {
 		t.Run(fmt.Sprintf("Restore with includeOverrideYaml %t", includeOverrideYaml), func(t *testing.T) {
-			paths, testFiles := populateFiles(t, includeOverrideYaml)
-			manager := newTestManager(paths)
+			appPaths, testFiles := populateFiles(t, includeOverrideYaml)
+			manager := newTestManager(appPaths)
 			snapshot, err := manager.Create("test-snapshot", "")
 			if err != nil {
 				t.Fatalf("failed to create snapshot: %s", err)
@@ -110,7 +117,7 @@ func TestManagerUnix(t *testing.T) {
 					t.Fatalf("failed to modify %s: %s", testFileName, err)
 				}
 			}
-			if err := manager.Restore(snapshot.ID); err != nil {
+			if err := manager.Restore(snapshot.Name); err != nil {
 				t.Fatalf("failed to restore snapshot: %s", err)
 			}
 			for testFileName, testFile := range testFiles {
@@ -126,8 +133,8 @@ func TestManagerUnix(t *testing.T) {
 	}
 
 	t.Run("Restore should delete override.yaml if restoring to a snapshot without it", func(t *testing.T) {
-		paths, testFiles := populateFiles(t, true)
-		manager := newTestManager(paths)
+		appPaths, testFiles := populateFiles(t, true)
+		manager := newTestManager(appPaths)
 		if err := os.Remove(testFiles["override.yaml"].Path); err != nil {
 			t.Fatalf("failed to delete override.yaml: %s", err)
 		}
@@ -140,7 +147,7 @@ func TestManagerUnix(t *testing.T) {
 				t.Fatalf("failed to modify %s: %s", testFileName, err)
 			}
 		}
-		if err := manager.Restore(snapshot.ID); err != nil {
+		if err := manager.Restore(snapshot.Name); err != nil {
 			t.Fatalf("failed to restore snapshot: %s", err)
 		}
 		overrideYamlPath := testFiles["override.yaml"].Path
@@ -160,18 +167,18 @@ func TestManagerUnix(t *testing.T) {
 	})
 
 	t.Run("Restore should create any needed parent directories", func(t *testing.T) {
-		paths, _ := populateFiles(t, true)
-		manager := newTestManager(paths)
+		appPaths, _ := populateFiles(t, true)
+		manager := newTestManager(appPaths)
 		snapshot, err := manager.Create("test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
-		for _, dir := range []string{paths.Config, paths.Lima} {
+		for _, dir := range []string{appPaths.Config, appPaths.Lima} {
 			if err := os.RemoveAll(dir); err != nil {
 				t.Fatalf("failed to remove directory: %s", err)
 			}
 		}
-		if err := manager.Restore(snapshot.ID); err != nil {
+		if err := manager.Restore(snapshot.Name); err != nil {
 			t.Fatalf("failed to restore snapshot: %s", err)
 		}
 	})

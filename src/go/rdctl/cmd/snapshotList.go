@@ -9,7 +9,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
@@ -48,11 +47,10 @@ func init() {
 }
 
 func listSnapshot() error {
-	paths, err := p.GetPaths()
+	manager, err := snapshot.NewManager()
 	if err != nil {
-		return fmt.Errorf("failed to get paths: %w", err)
+		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
-	manager := snapshot.NewManager(paths)
 	snapshots, err := manager.List(false)
 	if err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)

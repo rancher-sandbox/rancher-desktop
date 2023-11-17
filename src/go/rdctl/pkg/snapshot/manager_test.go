@@ -1,7 +1,6 @@
 package snapshot
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -112,7 +111,7 @@ func TestManager(t *testing.T) {
 		t.Run(fmt.Sprintf("List with includeIncomplete %t", includeIncomplete), func(t *testing.T) {
 			paths, _ := populateFiles(t, true)
 			manager := newTestManager(paths)
-			lastSnapshot := &Snapshot{}
+			var lastSnapshot Snapshot
 			for i := range []int{1, 2, 3} {
 				snapshotName := fmt.Sprintf("test-snapshot-%d", i)
 				snapshot, err := manager.Create(snapshotName, "")
@@ -121,7 +120,7 @@ func TestManager(t *testing.T) {
 				}
 				lastSnapshot = snapshot
 			}
-			lastSnapshotCompleteFilePath := filepath.Join(manager.Paths.Snapshots, lastSnapshot.ID, completeFileName)
+			lastSnapshotCompleteFilePath := filepath.Join(manager.SnapshotDirectory(lastSnapshot), completeFileName)
 			if err := os.Remove(lastSnapshotCompleteFilePath); err != nil {
 				t.Fatalf("failed to delete %q from snapshot %q: %s", completeFileName, lastSnapshot.ID, err)
 			}
@@ -156,7 +155,7 @@ func TestManager(t *testing.T) {
 		if len(snapshots) != 1 {
 			t.Fatalf("unexpected length of snapshots slice before delete %d", len(snapshots))
 		}
-		if err := manager.Delete(snapshot.ID); err != nil {
+		if err := manager.Delete(snapshot.Name); err != nil {
 			t.Fatalf("failed to delete snapshot: %s", err)
 		}
 		snapshots, err = manager.List(false)
@@ -187,8 +186,8 @@ func TestManager(t *testing.T) {
 		if err := os.Remove(completeFilePath); err != nil {
 			t.Fatalf("failed to remove %q: %s", completeFileName, err)
 		}
-		if err := manager.Restore(snapshot.ID); !errors.Is(err, ErrIncompleteSnapshot) {
-			t.Errorf("did not return expected error; actual error: %s", err)
+		if err := manager.Restore(snapshot.Name); err == nil {
+			t.Errorf("Failed to complain when asked to restore an incomplete snapshot")
 		}
 	})
 }

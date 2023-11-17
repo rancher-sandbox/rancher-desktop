@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
@@ -18,56 +19,47 @@ const completeFileContents = "The presence of this file indicates that this snap
 const maxNameLength = 250
 const nameDisplayCutoffSize = 30
 
-var ErrNameExists = errors.New("name already exists")
-var ErrIncompleteSnapshot = errors.New("snapshot is not complete")
-
-func writeMetadataFile(appPaths paths.Paths, snapshot Snapshot) error {
-	snapshotDir := filepath.Join(appPaths.Snapshots, snapshot.ID)
-	if err := os.MkdirAll(snapshotDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create snapshot directory: %w", err)
-	}
-	metadataPath := filepath.Join(snapshotDir, "metadata.json")
-	metadataFile, err := os.Create(metadataPath)
-	if err != nil {
-		return fmt.Errorf("failed to create metadata file: %w", err)
-	}
-	defer metadataFile.Close()
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(snapshot); err != nil {
-		return fmt.Errorf("failed to write metadata file: %w", err)
-	}
-	return nil
-}
-
 // Manager handles all snapshot-related functionality.
 type Manager struct {
-	Paths       paths.Paths
-	Snapshotter Snapshotter
+	Snapshotter
+	paths.Paths
+	lock.BackendLocker
 }
 
-func NewManager(paths paths.Paths) Manager {
-	return Manager{
-		Paths:       paths,
-		Snapshotter: NewSnapshotterImpl(paths),
+func NewManager() (*Manager, error) {
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return nil, err
 	}
+	manager := &Manager{
+		Paths:         appPaths,
+		Snapshotter:   NewSnapshotterImpl(),
+		BackendLocker: &lock.BackendLock{},
+	}
+	return manager, nil
 }
 
-func (manager Manager) GetSnapshotId(desiredName string) (string, error) {
+// Snapshot returns a Snapshot object for an existing and complete snapshot with the given name.
+// It will return an error if no snapshot is found, or if the snapshot is not complete.
+func (manager *Manager) Snapshot(name string) (Snapshot, error) {
 	snapshots, err := manager.List(false)
 	if err != nil {
-		return "", fmt.Errorf("failed to list snapshots: %w", err)
+		return Snapshot{}, fmt.Errorf("failed to list snapshots: %w", err)
 	}
 	for _, candidate := range snapshots {
-		if desiredName == candidate.Name {
-			return candidate.ID, nil
+		if name == candidate.Name {
+			return candidate, nil
 		}
 	}
-	return "", fmt.Errorf(`can't find snapshot %q`, desiredName)
+	return Snapshot{}, fmt.Errorf(`can't find snapshot %q`, name)
+}
+
+func (manager *Manager) SnapshotDirectory(snapshot Snapshot) string {
+	return filepath.Join(manager.Paths.Snapshots, snapshot.ID)
 }
 
 // ValidateName - does syntactic validation on the name
-func (manager Manager) ValidateName(name string) error {
+func (manager *Manager) ValidateName(name string) error {
 	if len(name) == 0 {
 		return fmt.Errorf("snapshot name must not be the empty string")
 	}
@@ -96,41 +88,69 @@ func (manager Manager) ValidateName(name string) error {
 	}
 	for _, currentSnapshot := range currentSnapshots {
 		if currentSnapshot.Name == name {
-			return fmt.Errorf("invalid name %q: %w", name, ErrNameExists)
+			return fmt.Errorf("name %q already exists", name)
 		}
 	}
 	return nil
 }
 
+func (manager *Manager) writeMetadataFile(snapshot Snapshot) error {
+	snapshotDir := manager.SnapshotDirectory(snapshot)
+	if err := os.MkdirAll(snapshotDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create snapshot directory: %w", err)
+	}
+	metadataPath := filepath.Join(snapshotDir, "metadata.json")
+	metadataFile, err := os.Create(metadataPath)
+	if err != nil {
+		return fmt.Errorf("failed to create metadata file: %w", err)
+	}
+	defer metadataFile.Close()
+	encoder := json.NewEncoder(metadataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(snapshot); err != nil {
+		return fmt.Errorf("failed to write metadata file: %w", err)
+	}
+	return nil
+}
+
 // Create a new snapshot.
-func (manager Manager) Create(name, description string) (*Snapshot, error) {
+func (manager *Manager) Create(name, description string) (snapshot Snapshot, err error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate ID for snapshot: %w", err)
+		return snapshot, fmt.Errorf("failed to generate ID for snapshot: %w", err)
 	}
-	snapshot := Snapshot{
+	snapshot = Snapshot{
 		Created:     time.Now(),
 		Name:        name,
 		ID:          id.String(),
 		Description: description,
 	}
-
-	// do operations that can fail, rolling back if failure is encountered
-	snapshotDir := filepath.Join(manager.Paths.Snapshots, snapshot.ID)
-	if err := manager.Snapshotter.CreateFiles(snapshot); err != nil {
-		if err2 := os.RemoveAll(snapshotDir); err2 != nil {
-			err = errors.Join(err, fmt.Errorf("failed to delete created snapshot directory: %w", err2))
-		}
-		return nil, err
+	if err = manager.Lock(manager.Paths, "create"); err != nil {
+		return
 	}
-
-	return &snapshot, nil
+	defer func() {
+		if err != nil {
+			os.RemoveAll(manager.SnapshotDirectory(snapshot))
+		}
+		unlockErr := manager.Unlock(manager.Paths, true)
+		if err == nil {
+			err = unlockErr
+		}
+	}()
+	// (Re)validate the name after acquiring the lock in case another process created a snapshot with the same name
+	if err = manager.ValidateName(name); err != nil {
+		return
+	}
+	if err = manager.writeMetadataFile(snapshot); err == nil {
+		err = manager.CreateFiles(manager.Paths, manager.SnapshotDirectory(snapshot))
+	}
+	return
 }
 
 // List snapshots that are present on the system. If includeIncomplete is
 // true, includes snapshots that are currently being created, are currently
 // being deleted, or are otherwise incomplete and cannot be restored from.
-func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
+func (manager *Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 	dirEntries, err := os.ReadDir(manager.Paths.Snapshots)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return []Snapshot{}, fmt.Errorf("failed to read snapshots directory: %w", err)
@@ -149,6 +169,7 @@ func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 		if err := json.Unmarshal(contents, &snapshot); err != nil {
 			return []Snapshot{}, fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
 		}
+		// TODO this should be done by the caller
 		snapshot.Created = snapshot.Created.Local()
 
 		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
@@ -165,40 +186,36 @@ func (manager Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 }
 
 // Delete a snapshot.
-func (manager Manager) Delete(id string) error {
-	snapshotDir := filepath.Join(manager.Paths.Snapshots, id)
+func (manager *Manager) Delete(name string) error {
+	snapshot, err := manager.Snapshot(name)
+	if err != nil {
+		return err
+	}
+	snapshotDir := manager.SnapshotDirectory(snapshot)
 	// Remove complete.txt file. This must be done first because restoring
 	// from a partially-deleted snapshot could result in errors.
-	completeFilePath := filepath.Join(snapshotDir, completeFileName)
-	if err := os.RemoveAll(completeFilePath); err != nil {
-		return fmt.Errorf("failed to remove %q: %w", completeFileName, err)
-	}
-	if err := os.RemoveAll(snapshotDir); err != nil {
-		return fmt.Errorf("failed to remove dir %q: %w", snapshotDir, err)
-	}
-	return nil
+	err = os.RemoveAll(filepath.Join(snapshotDir, completeFileName))
+	return errors.Join(err, os.RemoveAll(snapshotDir))
 }
 
 // Restore Rancher Desktop to the state saved in a snapshot.
-func (manager Manager) Restore(id string) error {
-	// Before doing anything, ensure that the snapshot is complete
-	completeFilePath := filepath.Join(manager.Paths.Snapshots, id, completeFileName)
-	if _, err := os.Stat(completeFilePath); err != nil {
-		return fmt.Errorf("snapshot %q: %w", id, ErrIncompleteSnapshot)
-	}
-
-	// Get metadata about snapshot
-	metadataPath := filepath.Join(manager.Paths.Snapshots, id, "metadata.json")
-	contents, err := os.ReadFile(metadataPath)
+func (manager *Manager) Restore(name string) (err error) {
+	snapshot, err := manager.Snapshot(name)
 	if err != nil {
-		return fmt.Errorf("failed to read metadata for snapshot %q: %w", id, err)
-	}
-	snapshot := Snapshot{}
-	if err := json.Unmarshal(contents, &snapshot); err != nil {
-		return fmt.Errorf("failed to unmarshal contents of %q: %w", metadataPath, err)
+		return err
 	}
 
-	if err := manager.Snapshotter.RestoreFiles(snapshot); err != nil {
+	if err := manager.Lock(manager.Paths, "restore"); err != nil {
+		return err
+	}
+	defer func() {
+		// Don't restart the backend if the restore failed
+		unlockErr := manager.Unlock(manager.Paths, err == nil)
+		if err == nil {
+			err = unlockErr
+		}
+	}()
+	if err = manager.RestoreFiles(manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 
@@ -207,7 +224,7 @@ func (manager Manager) Restore(id string) error {
 
 func checkForInvalidCharacter(name string) error {
 	for idx, c := range name {
-		if !unicode.IsPrint(rune(c)) {
+		if !unicode.IsPrint(c) {
 			return fmt.Errorf("invalid character value %d at position %d in name: all characters must be printable or a space", c, idx)
 		}
 	}
