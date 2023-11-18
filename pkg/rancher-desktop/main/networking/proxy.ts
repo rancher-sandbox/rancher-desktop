@@ -7,7 +7,7 @@ import { URL } from 'url';
 
 import { Agent, ClientRequest, RequestOptions, AgentCallbackReturn } from 'agent-base';
 import Electron from 'electron';
-import HttpProxyAgent from 'http-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent, HttpsProxyAgentOptions } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 
@@ -73,7 +73,7 @@ export default class ElectronProxyAgent extends Agent {
         if (opts.secureEndpoint) {
           return new CustomHttpsProxyAgent(proxyURL, this.options);
         } else {
-          return HttpProxyAgent(proxyURL);
+          return new HttpProxyAgent(proxyURL);
         }
       }
       default:
