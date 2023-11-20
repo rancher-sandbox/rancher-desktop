@@ -1,6 +1,7 @@
 <template>
   <div class="containers">
     <SortableTable
+      ref="sortableTableRef"
       :headers="headers"
       key-field="Id"
       :rows="rows"
@@ -27,11 +28,12 @@
             <div
               v-if="shouldHaveDropdown(row.Ports)"
               class="dropdown"
+              @mouseenter="addDropDownPosition"
+              @mouseleave="clearDropDownPosition"
             >
               <span>
                 ...
               </span>
-
               <div class="dropdown-content">
                 <a
                   v-for="port in getUniquePorts(row.Ports).slice(2)"
@@ -216,6 +218,36 @@ export default {
     handleSelection(item) {
       this.selected = [...item];
     },
+    clearDropDownPosition(e) {
+      const target = e.target;
+
+      const dropdownContent = target.querySelector('.dropdown-content');
+
+      if (dropdownContent) {
+        dropdownContent.style.top = '';
+      }
+    },
+    addDropDownPosition(e) {
+      const table = this.$refs.sortableTableRef.$el;
+      const target = e.target;
+
+      const dropdownContent = target.querySelector('.dropdown-content');
+
+      if (dropdownContent) {
+        const dropdownRect = target.getBoundingClientRect();
+        const tableRect = table.getBoundingClientRect();
+        const targetTopPos = dropdownRect.top - tableRect.top;
+        const tableHeight = tableRect.height;
+
+        if (targetTopPos < tableHeight / 2) {
+          // Show dropdownContent below the target
+          dropdownContent.style.top = `${ dropdownRect.bottom }px`;
+        } else {
+          // Show dropdownContent above the target
+          dropdownContent.style.top = `${ dropdownRect.top - dropdownContent.getBoundingClientRect().height }px`;
+        }
+      }
+    },
     async getContainers() {
       const containers = await this.ddClient?.docker.listContainers({ all: true });
 
@@ -353,7 +385,6 @@ export default {
     display: none;
     position: fixed;
     z-index: 1;
-    padding-top: 5px;
     border-start-start-radius: var(--border-radius);
     background: var(--default);
     padding: 5px;
