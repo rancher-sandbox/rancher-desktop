@@ -8,9 +8,24 @@
       :row-actions="true"
       :paging="true"
       :rows-per-page="10"
+      :has-advanced-filtering="true"
       :loading="!containersList"
-      @selection="handleSelection"
     >
+      <template #col:containerState="{row}">
+        <td>
+          <badge-state
+            :color="isRunning(row) ? 'bg-success' : 'bg-darker'"
+            :label="row.State"
+          />
+        </td>
+      </template>
+      <template #col:imageName="{row}">
+        <td>
+          <span v-tooltip="getTooltipConfig(row.imageName)">
+            {{ shortSha(row.imageName) }}
+          </span>
+        </td>
+      </template>
       <template #col:containerName="{row}">
         <td>
           <span v-tooltip="getTooltipConfig(row.containerName)">
@@ -54,22 +69,6 @@
           </div>
         </td>
       </template>
-
-      <template #col:containerState="{row}">
-        <td>
-          <badge-state
-            :color="isRunning(row) ? 'bg-success' : 'bg-darker'"
-            :label="row.State"
-          />
-        </td>
-      </template>
-      <template #col:imageName="{row}">
-        <td>
-          <span v-tooltip="getTooltipConfig(row.imageName)">
-            {{ shortSha(row.imageName) }}
-          </span>
-        </td>
-      </template>
     </SortableTable>
   </div>
 </template>
@@ -91,7 +90,6 @@ export default {
     return {
       ddClient:       null,
       containersList: null,
-      selected:       [],
       showRunning:    false,
       headers:        [
         // INFO: Disable for now since we can only get the running containers.
@@ -184,6 +182,8 @@ export default {
           };
         }
 
+        container.containerState = container.State;
+
         return container;
       });
     },
@@ -219,9 +219,6 @@ export default {
     clearInterval(containerCheckInterval);
   },
   methods: {
-    handleSelection(item) {
-      this.selected = [...item];
-    },
     async getContainers() {
       const containers = await this.ddClient?.docker.listContainers({ all: true });
 
