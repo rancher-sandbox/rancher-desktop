@@ -9,7 +9,7 @@ import _ from 'lodash';
 
 import {
   CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
-  LockedSettingsType, Settings,
+  LockedSettingsType, Settings, SettingsError,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
@@ -32,19 +32,28 @@ let settings: Settings | undefined;
  */
 function loadFromDisk(): Settings {
   // Throw an ENOENT error if the file doesn't exist; the caller should know what to do.
-  const rawdata = fs.readFileSync(join(paths.config, 'settings.json'));
-  const cfg = clone(defaultSettings);
+  const settingsPath = join(paths.config, 'settings.json');
+  const rawdata = fs.readFileSync(settingsPath);
+  const defaultConfig = clone(defaultSettings);
 
   try {
     // If the existing settings file is partial, fill in the missing fields with defaults.
-    merge(cfg, JSON.parse(rawdata.toString()));
+    const currentConfig = JSON.parse(rawdata.toString());
 
-    return migrateSettingsToCurrentVersion(cfg);
+    if (!('version' in currentConfig)) {
+      throw new SettingsError(`No version specified in ${ settingsPath }`);
+    }
+    merge(defaultConfig, currentConfig);
+
+    return migrateSettingsToCurrentVersion(defaultConfig);
   } catch (err: any) {
+    if (err instanceof SettingsError) {
+      throw err;
+    }
     console.error(`Error JSON-parsing existing settings contents ${ rawdata }`, err);
     console.error('The old settings file will be replaced with the default settings.');
 
-    return cfg;
+    return defaultConfig;
   }
 }
 

@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
+import _ from 'lodash';
 
 import {
   clearSettings,
@@ -32,7 +33,8 @@ import {
 } from './utils/ProfileUtils';
 import { createUserProfile, reportAsset } from './utils/TestUtils';
 
-import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
+import { Settings } from '@pkg/config/settings';
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -189,6 +191,31 @@ test.describe.serial('track startup windows based on existing profiles and setti
       expect(windowCount).toEqual(0);
       expect(contents).toContain('Fatal Error:');
       expect(contents).toMatch(errorMatcher);
+    });
+
+    test('missing version', async() => {
+      const filename = `${ __filename }-missing-settings-version`;
+      const logDir = reportAsset(filename, 'log');
+      const logPath = path.join(logDir, 'background.log');
+      const versionLessSettings: RecursivePartial<Settings> = {
+        kubernetes:  { enabled: true },
+        application: {
+          debug:                  true,
+          pathManagementStrategy: PathManagementStrategy.Manual,
+          startInBackground:      false,
+        },
+      };
+      const settingsFullPath = path.join(paths.config, 'settings.json');
+
+      fs.mkdirSync(paths.config, { recursive: true });
+      fs.writeFileSync(settingsFullPath, JSON.stringify(versionLessSettings));
+      const windowCount = await testWaitForLogfile(filename, logPath);
+      const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
+
+      expect(windowCount).toEqual(0);
+      const msg = `No version specified in ${ settingsFullPath }`;
+
+      expect(contents).toMatch(new RegExp(`Fatal Error:.*${ _.escapeRegExp(msg) }`, 's'));
     });
 
     test('wrong datatype in profile', async() => {
