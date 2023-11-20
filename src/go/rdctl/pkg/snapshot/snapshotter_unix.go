@@ -3,11 +3,14 @@
 package snapshot
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"path/filepath"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 // Represents a file that is included in a snapshot.
@@ -88,45 +91,56 @@ func NewSnapshotterImpl() Snapshotter {
 	return SnapshotterImpl{}
 }
 
-func (snapshotter SnapshotterImpl) CreateFiles(appPaths paths.Paths, snapshotDir string) error {
+func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
+	fq := funcqueue.NewFuncQueue(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
-		err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
-		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			continue
-		} else if err != nil {
-			return fmt.Errorf("failed to copy %s: %w", filepath.Base(file.WorkingPath), err)
-		}
+		file := file
+		fq.Add(func() error {
+			err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
+			if errors.Is(err, os.ErrNotExist) && file.MissingOk {
+				return nil
+			} else if err != nil {
+				return fmt.Errorf("failed to copy %s: %w", filepath.Base(file.WorkingPath), err)
+			}
+			return nil
+		})
 	}
 
 	// Create complete.txt file. This is done last because its presence
 	// signifies a complete and valid snapshot.
-	completeFilePath := filepath.Join(snapshotDir, completeFileName)
-	if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
-		return fmt.Errorf("failed to write %q: %w", completeFileName, err)
-	}
+	fq.Add(func() error {
+		completeFilePath := filepath.Join(snapshotDir, completeFileName)
+		if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
+			return fmt.Errorf("failed to write %q: %w", completeFileName, err)
+		}
+		return nil
+	})
 
-	return nil
+	return fq.Wait()
 }
 
 // Restores the files from their location in a snapshot directory
 // to their working location.
-func (snapshotter SnapshotterImpl) RestoreFiles(appPaths paths.Paths, snapshotDir string) error {
+func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
+	fq := funcqueue.NewFuncQueue(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
-	var err error
 	for _, file := range files {
-		filename := filepath.Base(file.WorkingPath)
-		err = copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
-		if errors.Is(err, os.ErrNotExist) && file.MissingOk {
-			if err = os.RemoveAll(file.WorkingPath); err != nil {
-				err = fmt.Errorf("failed to remove %s: %w", filename, err)
-				break
+		file := file
+		fq.Add(func() error {
+			filename := filepath.Base(file.WorkingPath)
+			err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
+			if errors.Is(err, os.ErrNotExist) && file.MissingOk {
+				if err := os.RemoveAll(file.WorkingPath); err != nil {
+					return fmt.Errorf("failed to remove %q: %w", filename, err)
+				}
+			} else if err != nil {
+				return fmt.Errorf("failed to restore %q: %w", filename, err)
 			}
-		} else if err != nil {
-			err = fmt.Errorf("failed to restore %s: %w", filename, err)
-			break
-		}
+			return nil
+		})
 	}
+	err := fq.Wait()
 	if err != nil {
 		for _, file := range files {
 			_ = os.Remove(file.WorkingPath)

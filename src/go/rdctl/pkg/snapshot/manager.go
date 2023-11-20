@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -114,7 +115,7 @@ func (manager *Manager) writeMetadataFile(snapshot Snapshot) error {
 }
 
 // Create a new snapshot.
-func (manager *Manager) Create(name, description string) (snapshot Snapshot, err error) {
+func (manager *Manager) Create(ctx context.Context, name, description string) (snapshot Snapshot, err error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return snapshot, fmt.Errorf("failed to generate ID for snapshot: %w", err)
@@ -142,7 +143,7 @@ func (manager *Manager) Create(name, description string) (snapshot Snapshot, err
 		return
 	}
 	if err = manager.writeMetadataFile(snapshot); err == nil {
-		err = manager.CreateFiles(manager.Paths, manager.SnapshotDirectory(snapshot))
+		err = manager.CreateFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot))
 	}
 	return
 }
@@ -199,7 +200,7 @@ func (manager *Manager) Delete(name string) error {
 }
 
 // Restore Rancher Desktop to the state saved in a snapshot.
-func (manager *Manager) Restore(name string) (err error) {
+func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 	snapshot, err := manager.Snapshot(name)
 	if err != nil {
 		return err
@@ -215,7 +216,7 @@ func (manager *Manager) Restore(name string) (err error) {
 			err = unlockErr
 		}
 	}()
-	if err = manager.RestoreFiles(manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
+	if err = manager.RestoreFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 

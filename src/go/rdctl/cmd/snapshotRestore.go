@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
+	"os/signal"
+	"syscall"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +30,13 @@ func restoreSnapshot(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
-	if err := manager.Restore(args[0]); err != nil {
+
+	// Ideally we would not use the deprecated syscall package,
+	// but it works well with all expected scenarios and allows us
+	// to avoid platform-specific signal handling code.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	defer stop()
+	if err := manager.Restore(ctx, args[0]); err != nil {
 		return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
 	}
 	return nil

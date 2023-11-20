@@ -3,6 +3,7 @@
 package snapshot
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
@@ -80,7 +81,7 @@ func TestManagerUnix(t *testing.T) {
 
 			// create snapshot
 			testManager := newTestManager(appPaths)
-			snapshot, err := testManager.Create("test-snapshot", "")
+			snapshot, err := testManager.Create(context.Background(), "test-snapshot", "")
 			if err != nil {
 				t.Fatalf("unexpected error creating snapshot: %s", err)
 			}
@@ -108,7 +109,7 @@ func TestManagerUnix(t *testing.T) {
 		t.Run(fmt.Sprintf("Restore with includeOverrideYaml %t", includeOverrideYaml), func(t *testing.T) {
 			appPaths, testFiles := populateFiles(t, includeOverrideYaml)
 			manager := newTestManager(appPaths)
-			snapshot, err := manager.Create("test-snapshot", "")
+			snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
 			if err != nil {
 				t.Fatalf("failed to create snapshot: %s", err)
 			}
@@ -117,7 +118,7 @@ func TestManagerUnix(t *testing.T) {
 					t.Fatalf("failed to modify %s: %s", testFileName, err)
 				}
 			}
-			if err := manager.Restore(snapshot.Name); err != nil {
+			if err := manager.Restore(context.Background(), snapshot.Name); err != nil {
 				t.Fatalf("failed to restore snapshot: %s", err)
 			}
 			for testFileName, testFile := range testFiles {
@@ -138,7 +139,7 @@ func TestManagerUnix(t *testing.T) {
 		if err := os.Remove(testFiles["override.yaml"].Path); err != nil {
 			t.Fatalf("failed to delete override.yaml: %s", err)
 		}
-		snapshot, err := manager.Create("test-snapshot", "")
+		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -147,7 +148,7 @@ func TestManagerUnix(t *testing.T) {
 				t.Fatalf("failed to modify %s: %s", testFileName, err)
 			}
 		}
-		if err := manager.Restore(snapshot.Name); err != nil {
+		if err := manager.Restore(context.Background(), snapshot.Name); err != nil {
 			t.Fatalf("failed to restore snapshot: %s", err)
 		}
 		overrideYamlPath := testFiles["override.yaml"].Path
@@ -169,7 +170,7 @@ func TestManagerUnix(t *testing.T) {
 	t.Run("Restore should create any needed parent directories", func(t *testing.T) {
 		appPaths, _ := populateFiles(t, true)
 		manager := newTestManager(appPaths)
-		snapshot, err := manager.Create("test-snapshot", "")
+		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -178,7 +179,7 @@ func TestManagerUnix(t *testing.T) {
 				t.Fatalf("failed to remove directory: %s", err)
 			}
 		}
-		if err := manager.Restore(snapshot.Name); err != nil {
+		if err := manager.Restore(context.Background(), snapshot.Name); err != nil {
 			t.Fatalf("failed to restore snapshot: %s", err)
 		}
 	})
