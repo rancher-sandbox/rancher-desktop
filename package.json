@@ -54,7 +54,7 @@
     "@kubernetes/client-node": "0.18.1",
     "@rancher/components": "0.1.4",
     "agent-base": "6.0.2",
-    "bufferutil": "4.0.7",
+    "bufferutil": "4.0.8",
     "console": "0.7.2",
     "cookie-universal": "2.2.2",
     "core-js": "3.25.3",
