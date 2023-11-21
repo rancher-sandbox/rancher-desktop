@@ -372,11 +372,7 @@ function processReplacements(settings: any, replacements: ReplacementDirective[]
  */
 export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
-    // We don't call `processReplacements` in this step
-    // because this migration only deletes an existing field.
-    if (_.hasIn(settings, 'kubernetes.rancherMode')) {
-      delete settings.kubernetes.rancherMode;
-    }
+    _.unset(settings, 'kubernetes.rancherMode');
   },
   2: (_) => {
     // No need to still check for and delete archaic installations from version 0.3.0
@@ -448,16 +444,17 @@ export const updateTable: Record<number, (settings: any) => void> = {
   },
   8: (settings) => {
     // Rancher Desktop 1.10: move .extensions to .application.extensions.installed
-    if (settings.extensions) {
-      _.set(settings, 'application.extensions.installed', settings.extensions);
-      delete settings.extensions;
-    }
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'extensions', newPath: 'application.extensions.installed' },
+    ];
+
+    processReplacements(settings, replacements);
   },
   9: (settings) => {
     // Rancher Desktop 1.11
     // Use string-list component instead of textarea for noproxy field. Blanks that
     // were accepted by the textarea need to be filtered out.
-    if (_.get(settings, 'experimental.virtualMachine.proxy.noproxy', '').length > 0) {
+    if (!_.isEmpty(_.get(settings, 'experimental.virtualMachine.proxy.noproxy'))) {
       settings.experimental.virtualMachine.proxy.noproxy =
         settings.experimental.virtualMachine.proxy.noproxy.map((entry: string) => {
           return entry.trim();
@@ -472,9 +469,9 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
-  settings = migrateSpecifiedSettingsToCurrentVersion(settings) as Settings;
+  const newSettings = migrateSpecifiedSettingsToCurrentVersion(settings);
 
-  return _.defaultsDeep(settings, defaultSettings);
+  return _.defaultsDeep(newSettings, defaultSettings);
 }
 
 /**
@@ -484,7 +481,7 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
  *
  * The contents of settings files go through the unexported function `migrateSettingsToCurrentVersion`
  * which assigns any missing defaults at the end. This function does not fill in missing values.
- * @param settings
+ * @param settings - a possibly partial settings object.
  */
 export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>): RecursivePartial<Settings> {
   const firstPart = 'updating settings requires specifying an API version';

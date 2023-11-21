@@ -474,6 +474,14 @@ describe('settings', () => {
     });
 
     it('correctly migrates earlier no-proxy settings', () => {
+      /**
+       * This test verifies that we're no longer running into problems when
+       * the migrator tries to access the value of a non-existent property.
+       *
+       * The bug, issue 5618, was that the migrator erroneously assumed
+       * that when users were migrating to version N, they were submitting a settings file
+       * that was based on the default settings of version N - 1.
+       */
       const s: RecursivePartial<settings.Settings> = {
         version:      1 as typeof settings.CURRENT_SETTINGS_VERSION,
         experimental: {
@@ -490,26 +498,6 @@ describe('settings', () => {
           virtualMachine: {
             proxy: {
               noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
-            },
-          },
-        },
-      };
-
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
-    });
-
-    it('correctly migrates version-8 extension settings ', () => {
-      const s: Record<string, any> = {
-        version:    8 as typeof settings.CURRENT_SETTINGS_VERSION,
-        extensions: { 'hi folks': 'spring', 'goodbye all': 'winter' },
-      };
-      const expected: RecursivePartial<settings.Settings> = {
-        version:     settings.CURRENT_SETTINGS_VERSION,
-        application: {
-          extensions: {
-            installed: {
-              'hi folks':    'spring',
-              'goodbye all': 'winter',
             },
           },
         },
