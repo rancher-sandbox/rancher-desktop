@@ -42,7 +42,7 @@ type Config struct {
 
 // Monitor the GitHub repository and spawn new VMs when the number of active
 // runners is less than the configured amount.
-func Monitor(ctx context.Context, c Config) error {
+func Monitor(ctx context.Context, c *Config) error {
 	client := github.NewClient(nil).WithAuthToken(c.AuthToken)
 	wg := &sync.WaitGroup{}
 
@@ -69,7 +69,7 @@ monitorLoop:
 // added to before creating the GitHub-side runner record, and removed once that
 // has been removed.  This is used to ensure we do not end up exiting before we
 // clean up.
-func monitorOnce(ctx context.Context, c Config, client *github.Client, wg *sync.WaitGroup) error {
+func monitorOnce(ctx context.Context, c *Config, client *github.Client, wg *sync.WaitGroup) error {
 	runners, _, err := client.Actions.ListRunners(ctx, c.Owner, c.Repo, nil)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve list of runners: %w", err)
@@ -118,7 +118,7 @@ runnerLoop:
 	removeRunner := func() {
 		runner := config.GetRunner()
 		if runner != nil {
-			// Don't use the given context; that might have been cancelled (and
+			// Don't use the given context; that might have been canceled (and
 			// lead to us removing the runner).  Use a new background context
 			// instead.
 			logrus.Tracef("Unregistering runner %s", name)
@@ -138,7 +138,7 @@ runnerLoop:
 	if configString == "" {
 		return fmt.Errorf("got invalid runner config")
 	}
-	machineDone, err := machines.Run(ctx, machines.Config{
+	machineDone, err := machines.Run(ctx, &machines.Config{
 		Name:      name,
 		Cpus:      fmt.Sprintf("%d", c.Cpus),
 		Memory:    fmt.Sprintf("%dM", c.Memory),

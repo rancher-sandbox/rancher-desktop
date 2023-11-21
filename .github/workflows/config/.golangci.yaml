@@ -56,7 +56,6 @@ linters:
     - dupl
     - errcheck
     - exportloopref
-    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
@@ -88,6 +87,7 @@ linters:
   # - funlen
   # - scopelint
   # - gochecknoglobals
+  # - gochecknoinits
   # - gocognit
   # - godot
   # - godox

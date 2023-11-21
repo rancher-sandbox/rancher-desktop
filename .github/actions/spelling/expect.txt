@@ -270,6 +270,7 @@ Gluster
 gname
 gofmt
 goland
+golangci
 gomod
 googlegke
 googleoauth

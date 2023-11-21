@@ -19,7 +19,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-        sparse-checkout: src/go/github-runner-monitor
+        sparse-checkout: |
+          src/go/github-runner-monitor
+          .github/workflows/config
     - uses: actions/setup-go@v4
       with:
         go-version-file: src/go/github-runner-monitor/go.mod
@@ -36,6 +38,6 @@ jobs:
     - uses: golangci/golangci-lint-action@v3.7.0
       # This is only safe because this workflow does not allow writing
       with:
-        args: --config=.golangci.yaml --verbose --timeout 3m
+        args: --config=${{ github.workspace }}/.github/workflows/config/.golangci.yaml  --verbose --timeout 3m
         working-directory: src/go/github-runner-monitor
         only-new-issues: true

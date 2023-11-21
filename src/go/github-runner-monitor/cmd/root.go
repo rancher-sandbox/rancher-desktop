@@ -32,6 +32,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+var perRunnerMemory = 6 * 1024
 var rootCmd = &cobra.Command{
 	Use:   "github-runner-linux",
 	Short: "Manage ephemeral GitHub runners for Rancher Desktop",
@@ -82,7 +83,7 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
-		if err = monitor.Monitor(ctx, config); err != nil {
+		if err = monitor.Monitor(ctx, &config); err != nil {
 			return fmt.Errorf("failed to monitor: %w", err)
 		}
 
@@ -105,7 +106,7 @@ func init() {
 	flags.StringP("repo", "r", "rancher-desktop", "GitHub repository")
 	flags.StringSliceP("labels", "l", []string{"self-hosted", "Linux", "X64", "ephemeral"}, "Labels to apply to the runners")
 	flags.Int("cpus", 3, "Number of vCPUs per runner")
-	flags.Int("memory", 6*1024, "Memory amount per runner, in megabytes")
+	flags.Int("memory", perRunnerMemory, "Memory amount per runner, in megabytes")
 	flags.String("disk", "", "Disk image to use for the VM")
 	flags.SortFlags = false
 	cobra.OnInitialize(initConfig)
