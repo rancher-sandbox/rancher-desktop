@@ -2,11 +2,14 @@ package snapshot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
 )
 
 type TestFile struct {
@@ -189,6 +192,38 @@ func TestManager(t *testing.T) {
 		}
 		if err := manager.Restore(context.Background(), snapshot.Name); err == nil {
 			t.Errorf("Failed to complain when asked to restore an incomplete snapshot")
+		}
+	})
+
+	t.Run("Restore should return proper error and not run RestoreFiles when context is already cancelled", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := newTestManager(paths)
+		snapshotName := "test-snapshot"
+		_, err := manager.Create(context.Background(), snapshotName, "")
+		if err != nil {
+			t.Fatalf("failed to create snapshot: %s", err)
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		if err := manager.Restore(ctx, snapshotName); !errors.Is(err, funcqueue.ErrContextDone) {
+			t.Errorf("Error is of unexpected type: %q", err)
+		}
+	})
+
+	t.Run("Restore should return data reset error when RestoreFiles encounters an error and resets data", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := newTestManager(paths)
+		snapshotName := "test-snapshot"
+		snapshot, err := manager.Create(context.Background(), snapshotName, "")
+		if err != nil {
+			t.Fatalf("failed to create snapshot: %s", err)
+		}
+		snapshotSettingsPath := filepath.Join(paths.Snapshots, snapshot.ID, "settings.json")
+		if err := os.RemoveAll(snapshotSettingsPath); err != nil {
+			t.Fatalf("failed to remove settings.json: %s", err)
+		}
+		if err := manager.Restore(context.Background(), snapshotName); !errors.Is(err, ErrDataReset) {
+			t.Errorf("Error is of unexpected type: %q", err)
 		}
 	})
 }

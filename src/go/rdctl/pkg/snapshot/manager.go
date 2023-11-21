@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
@@ -211,11 +212,17 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 	}
 	defer func() {
 		// Don't restart the backend if the restore failed
-		unlockErr := manager.Unlock(manager.Paths, err == nil)
+		unlockErr := manager.Unlock(manager.Paths, !errors.Is(err, ErrDataReset))
 		if err == nil {
 			err = unlockErr
 		}
 	}()
+	// If the context is marked done (i.e. the user cancelled the
+	// operation) we can avoid running RestoreFiles() and thus avoid
+	// an unnecessary data reset.
+	if contextIsDone(ctx) {
+		return funcqueue.ErrContextDone
+	}
 	if err = manager.RestoreFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
@@ -230,4 +237,13 @@ func checkForInvalidCharacter(name string) error {
 		}
 	}
 	return nil
+}
+
+func contextIsDone(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
 }

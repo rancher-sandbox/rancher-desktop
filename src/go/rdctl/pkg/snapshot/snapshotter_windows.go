@@ -141,11 +141,10 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths pa
 		}
 		return nil
 	})
-
-	err := fq.Wait()
-	if err != nil {
+	if err := fq.Wait(); err != nil {
 		_ = os.Remove(workingSettingsPath)
 		_ = snapshotter.UnregisterDistros()
+		return fmt.Errorf("%w: %w", ErrDataReset, err)
 	}
-	return err
+	return nil
 }
