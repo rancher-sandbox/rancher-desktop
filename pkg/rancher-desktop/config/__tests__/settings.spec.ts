@@ -476,7 +476,7 @@ describe('settings', () => {
     it('correctly migrates earlier no-proxy settings', () => {
       /**
        * This test verifies that we're no longer running into problems when
-       * the migrator tries to access the value of a non-existent property.
+       * the migrator tries to access the value of a nonexistent property.
        *
        * The bug, issue 5618, was that the migrator erroneously assumed
        * that when users were migrating to version N, they were submitting a settings file
