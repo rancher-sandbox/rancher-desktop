@@ -37,7 +37,7 @@ export class Tray {
   private static instance: Tray;
   private abortController: AbortController | undefined;
   private networkState: boolean | undefined;
-  private networkInterval: NodeJS.Timer;
+  private networkInterval: NodeJS.Timeout;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
