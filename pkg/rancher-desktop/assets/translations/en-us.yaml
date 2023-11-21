@@ -194,13 +194,12 @@ containers:
     noRows: There are no containers to show
   manage:
     table:
-      showMore: more...
       header:
         state: State
         containerName: Name
         image: Image
         ports: Port(s)
-        started: Started
+        started: Uptime
         actions: Actions
 
 images:
