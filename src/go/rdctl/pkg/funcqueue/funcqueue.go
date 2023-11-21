@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-var ErrContextDone error = errors.New("context done")
+var ErrContextDone error = errors.New("context marked done")
 
 // FuncQueue accepts functions and asynchronously calls them in the
 // order they were recieved. Before each function is called, FuncQueue
