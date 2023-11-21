@@ -221,9 +221,6 @@ export default {
     clearInterval(containerCheckInterval);
   },
   methods: {
-    handleSelection(item) {
-      this.selected = [...item];
-    },
     clearDropDownPosition(e) {
       const target = e.target;
 
