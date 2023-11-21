@@ -20,10 +20,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -36,8 +36,8 @@ var kubeconfigViper = viper.New()
 
 const rdCluster = "rancher-desktop"
 
-// kubeconfigCmd represents the kubeconfig command, used to set up a symlink on
-// the Linux side to point at the Windows-side kubeconfig.  Note that we must
+// kubeconfigCmd represents the kubeconfig command, used to set up kubeconfig
+// in WSL distributions (running on the Linux side).  Note that we must
 // pass the kubeconfig path in as an environment variable to take advantage of
 // the path translation capabilities of WSL2 interop.
 var kubeconfigCmd = &cobra.Command{
@@ -47,14 +47,30 @@ var kubeconfigCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		winConfigPath := kubeconfigViper.GetString("kubeconfig")
+		linuxConfigDir := filepath.Join(homedir.HomeDir(), ".kube")
+		linuxConfigPath := filepath.Join(linuxConfigDir, "config")
 		enable := kubeconfigViper.GetBool("enable")
+
+		if winConfigPath == "" {
+			//lint:ignore ST1005 The capitalization is for a proper noun.
+			return errors.New("Windows kubeconfig not supplied")
+		}
+
+		// Backwards compatibility: if the Linux config is a symlink to the Windows
+		// kubeconfig, unlink it.  This avoids issues where we clobber the Windows
+		// kubeconfig by accident.
+		if _, err := os.Readlink(linuxConfigPath); err == nil {
+			linuxInfo, err1 := os.Stat(linuxConfigPath)
+			windowsInfo, err2 := os.Stat(winConfigPath)
+			if err1 == nil && err2 == nil && os.SameFile(linuxInfo, windowsInfo) {
+				if err = os.Remove(linuxConfigPath); err != nil {
+					return fmt.Errorf("failed to remove kubeconfig symlink: %w", err)
+				}
+			}
+		}
 
 		if !enable {
 			return nil
-		}
-
-		if winConfigPath == "" {
-			return errors.New("Windows kubeconfig not supplied")
 		}
 
 		cmd.SilenceUsage = true
@@ -64,8 +80,7 @@ var kubeconfigCmd = &cobra.Command{
 			return err
 		}
 
-		linuxConfigDir := path.Join(homedir.HomeDir(), ".kube")
-		linuxConfig, err := readKubeConfig(filepath.Join(linuxConfigDir, "config"))
+		linuxConfig, err := readKubeConfig(linuxConfigPath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
@@ -73,12 +88,15 @@ var kubeconfigCmd = &cobra.Command{
 		cleanConfig := removeExistingRDConfig(rdCluster, &linuxConfig)
 
 		kubeConfig, err := updateKubeConfig(winConfig, *cleanConfig, rdNetworking)
+		if err != nil {
+			return fmt.Errorf("failed to construct kubeconfig: %w", err)
+		}
 
 		var finalKubeConfigFile *os.File
 		if err := os.MkdirAll(linuxConfigDir, 0o750); err != nil {
 			return err
 		}
-		finalKubeConfigFile, err = os.Create(filepath.Join(linuxConfigDir, "config"))
+		finalKubeConfigFile, err = os.Create(linuxConfigPath)
 		if err != nil {
 			return err
 		}
