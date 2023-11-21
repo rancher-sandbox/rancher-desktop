@@ -36,5 +36,6 @@ jobs:
     - uses: golangci/golangci-lint-action@v3.7.0
       # This is only safe because this workflow does not allow writing
       with:
+        args: --config=.golangci.yaml --verbose --timeout 3m
         working-directory: src/go/github-runner-monitor
         only-new-issues: true
