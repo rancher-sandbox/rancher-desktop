@@ -751,11 +751,11 @@ describe('settings', () => {
       it.each(Object.entries(expectedMigrations))('migrate from %i', (version, beforeAndAfter) => {
         const [fromSettings, toSettings] = beforeAndAfter;
         const existingVersion = parseInt(version, 10);
+        const targetVersion = existingVersion + 1;
 
-        (settings as any).CURRENT_SETTINGS_VERSION = existingVersion + 1;
-        fromSettings.version = existingVersion as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
-        toSettings.version = (existingVersion + 1) as unknown as typeof settings.CURRENT_SETTINGS_VERSION;
-        expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings)).toEqual(toSettings);
+        fromSettings.version = existingVersion;
+        toSettings.version = targetVersion;
+        expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings, targetVersion)).toEqual(toSettings);
       });
     });
   });

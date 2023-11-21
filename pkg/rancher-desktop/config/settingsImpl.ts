@@ -482,8 +482,9 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
  * The contents of settings files go through the unexported function `migrateSettingsToCurrentVersion`
  * which assigns any missing defaults at the end. This function does not fill in missing values.
  * @param settings - a possibly partial settings object.
+ * @param targetVersion - used for unit testing, to run a specific step from version n to n + 1, and not the full migration
  */
-export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>): RecursivePartial<Settings> {
+export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>, targetVersion:number = CURRENT_SETTINGS_VERSION): RecursivePartial<Settings> {
   const firstPart = 'updating settings requires specifying an API version';
   let loadedVersion = settings.version;
 
@@ -494,16 +495,16 @@ export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string
   } else if (loadedVersion <= 0) {
     // Avoid someone specifying a number like -1000000000000 and burning CPU cycles in the loop below
     throw new TypeError(`${ firstPart }, but "${ loadedVersion }" is not a positive number`);
-  } else if (loadedVersion >= CURRENT_SETTINGS_VERSION) {
+  } else if (loadedVersion >= targetVersion) {
     // This will elicit an error message from the validator
     return settings;
   }
-  for (; loadedVersion < CURRENT_SETTINGS_VERSION; loadedVersion++) {
+  for (; loadedVersion < targetVersion; loadedVersion++) {
     if (updateTable[loadedVersion]) {
       updateTable[loadedVersion](settings);
     }
   }
-  settings.version = CURRENT_SETTINGS_VERSION;
+  settings.version = targetVersion;
 
   return settings;
 }
