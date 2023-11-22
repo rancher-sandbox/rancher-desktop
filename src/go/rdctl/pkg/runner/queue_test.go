@@ -1,4 +1,4 @@
-package funcqueue
+package runner
 
 import (
 	"context"
@@ -7,20 +7,20 @@ import (
 	"testing"
 )
 
-func TestFuncQueue(t *testing.T) {
+func TestTaskRunner(t *testing.T) {
 	t.Run("should run all functions if context not cancelled and no errors", func(t *testing.T) {
 		ctx := context.Background()
-		funcQueue := NewFuncQueue(ctx)
+		taskRunner := NewTaskRunner(ctx)
 		ranSlice := []bool{false, false, false}
 		for i := range ranSlice {
 			i := i
-			funcQueue.Add(func() error {
+			taskRunner.Add(func() error {
 				ranSlice[i] = true
 				return nil
 			})
 		}
-		if err := funcQueue.Wait(); err != nil {
-			t.Fatalf("unexpected error waiting on funcQueue: %s", err)
+		if err := taskRunner.Wait(); err != nil {
+			t.Fatalf("unexpected error waiting on taskRunner: %s", err)
 		}
 		for i := range ranSlice {
 			if !ranSlice[i] {
@@ -31,7 +31,7 @@ func TestFuncQueue(t *testing.T) {
 
 	t.Run("should stop execution after current function when context is cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		funcQueue := NewFuncQueue(ctx)
+		taskRunner := NewTaskRunner(ctx)
 
 		// Used to delay until func1 has started running
 		readyForCancelChan := make(chan struct{})
@@ -53,14 +53,14 @@ func TestFuncQueue(t *testing.T) {
 			return nil
 		}
 
-		funcQueue.Add(func1)
-		funcQueue.Add(func2)
+		taskRunner.Add(func1)
+		taskRunner.Add(func2)
 		<-readyForCancelChan
 		cancel()
 		close(func1Chan)
 
-		if err := funcQueue.Wait(); !errors.Is(err, ErrContextDone) {
-			t.Fatalf("unexpected error waiting on funcQueue: %s", err)
+		if err := taskRunner.Wait(); !errors.Is(err, ErrContextDone) {
+			t.Fatalf("unexpected error waiting on taskRunner: %s", err)
 		}
 		if !func1Ran {
 			t.Errorf("func1 unexpectedly did not run")
@@ -72,20 +72,20 @@ func TestFuncQueue(t *testing.T) {
 
 	t.Run("should return error from first function that errors out and not run subsequent functions", func(t *testing.T) {
 		ctx := context.Background()
-		funcQueue := NewFuncQueue(ctx)
+		taskRunner := NewTaskRunner(ctx)
 
 		expectedError := "func1 error"
 		ranSlice := make([]bool, 2)
 		for i := range ranSlice {
 			i := i
-			funcQueue.Add(func() error {
+			taskRunner.Add(func() error {
 				ranSlice[i] = true
 				t.Logf("func%d ran", i+1)
 				return fmt.Errorf("func%d error", i+1)
 			})
 		}
-		if err := funcQueue.Wait(); err.Error() != expectedError {
-			t.Errorf("funcQueue.Wait() returned unexpected error %q (expected %q)", err, expectedError)
+		if err := taskRunner.Wait(); err.Error() != expectedError {
+			t.Errorf("taskRunner.Wait() returned unexpected error %q (expected %q)", err, expectedError)
 		}
 		if !ranSlice[0] {
 			t.Errorf("func1 unexpectedly did not run")

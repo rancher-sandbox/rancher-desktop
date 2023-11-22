@@ -1,4 +1,4 @@
-package funcqueue
+package runner
 
 import (
 	"context"
@@ -7,21 +7,21 @@ import (
 
 var ErrContextDone error = errors.New("context marked done")
 
-// FuncQueue accepts functions and asynchronously calls them in the
-// order they were recieved. Before each function is called, FuncQueue
+// TaskRunner accepts functions and asynchronously calls them in the
+// order they were received. Before each function is called, TaskRunner
 // checks whether its context is marked done; if so, it stops calling
 // functions.
-type FuncQueue struct {
+type TaskRunner struct {
 	context  context.Context
 	funcChan chan func() error
 	errChan  chan error
 }
 
-func NewFuncQueue(ctx context.Context) *FuncQueue {
+func NewTaskRunner(ctx context.Context) *TaskRunner {
 	funcChan := make(chan func() error, 10)
 	errChan := make(chan error)
 	go checkContextBetween(ctx, funcChan, errChan)
-	return &FuncQueue{
+	return &TaskRunner{
 		context:  ctx,
 		funcChan: funcChan,
 		errChan:  errChan,
@@ -29,22 +29,22 @@ func NewFuncQueue(ctx context.Context) *FuncQueue {
 }
 
 // Appends a function to the queue of functions to be called.
-func (funcQueue *FuncQueue) Add(function func() error) {
-	funcQueue.funcChan <- function
+func (tr *TaskRunner) Add(function func() error) {
+	tr.funcChan <- function
 }
 
 // Waits until the last function has completed, returning the first
 // (if any) error returned by a passed function.
-func (funcQueue *FuncQueue) Wait() error {
-	close(funcQueue.funcChan)
-	err, ok := <-funcQueue.errChan
+func (tr *TaskRunner) Wait() error {
+	close(tr.funcChan)
+	err, ok := <-tr.errChan
 	if ok {
 		return err
 	}
 	return nil
 }
 
-// checkContextBetween is the main loop of the FuncQueue type.
+// checkContextBetween is the main loop of the TaskRunner type.
 func checkContextBetween(ctx context.Context, funcChan <-chan func() error, errChan chan<- error) {
 	for function := range funcChan {
 		select {

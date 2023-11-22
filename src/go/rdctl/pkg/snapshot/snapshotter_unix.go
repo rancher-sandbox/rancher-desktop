@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 )
 
 // Represents a file that is included in a snapshot.
@@ -92,11 +92,11 @@ func NewSnapshotterImpl() Snapshotter {
 }
 
 func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
-	fq := funcqueue.NewFuncQueue(ctx)
+	taskRunner := runner.NewTaskRunner(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
 		file := file
-		fq.Add(func() error {
+		taskRunner.Add(func() error {
 			err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
 			if errors.Is(err, os.ErrNotExist) && file.MissingOk {
 				return nil
@@ -109,7 +109,7 @@ func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths pat
 
 	// Create complete.txt file. This is done last because its presence
 	// signifies a complete and valid snapshot.
-	fq.Add(func() error {
+	taskRunner.Add(func() error {
 		completeFilePath := filepath.Join(snapshotDir, completeFileName)
 		if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
 			return fmt.Errorf("failed to write %q: %w", completeFileName, err)
@@ -117,17 +117,17 @@ func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths pat
 		return nil
 	})
 
-	return fq.Wait()
+	return taskRunner.Wait()
 }
 
 // Restores the files from their location in a snapshot directory
 // to their working location.
 func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
-	fq := funcqueue.NewFuncQueue(ctx)
+	taskRunner := runner.NewTaskRunner(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
 		file := file
-		fq.Add(func() error {
+		taskRunner.Add(func() error {
 			filename := filepath.Base(file.WorkingPath)
 			err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
 			if errors.Is(err, os.ErrNotExist) && file.MissingOk {
@@ -140,7 +140,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths pa
 			return nil
 		})
 	}
-	if err := fq.Wait(); err != nil {
+	if err := taskRunner.Wait(); err != nil {
 		for _, file := range files {
 			_ = os.Remove(file.WorkingPath)
 		}

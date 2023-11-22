@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 )
 
 type TestFile struct {
@@ -205,7 +205,7 @@ func TestManager(t *testing.T) {
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		if err := manager.Restore(ctx, snapshotName); !errors.Is(err, funcqueue.ErrContextDone) {
+		if err := manager.Restore(ctx, snapshotName); !errors.Is(err, runner.ErrContextDone) {
 			t.Errorf("Error is of unexpected type: %q", err)
 		}
 	})

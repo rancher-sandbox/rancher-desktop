@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -54,7 +54,7 @@ func createSnapshot(args []string) error {
 		}
 	})
 	_, err = manager.Create(ctx, name, snapshotDescription)
-	if err != nil && !errors.Is(err, funcqueue.ErrContextDone) {
+	if err != nil && !errors.Is(err, runner.ErrContextDone) {
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
 

@@ -11,9 +11,9 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/funcqueue"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 )
 
 const completeFileName = "complete.txt"
@@ -221,7 +221,7 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 	// operation) we can avoid running RestoreFiles() and thus avoid
 	// an unnecessary data reset.
 	if contextIsDone(ctx) {
-		return funcqueue.ErrContextDone
+		return runner.ErrContextDone
 	}
 	if err = manager.RestoreFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
