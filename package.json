@@ -118,7 +118,7 @@
     "@octokit/rest": "20.0.2",
     "@playwright/test": "1.39.0",
     "@types/cross-spawn": "6.0.2",
-    "@types/dompurify": "3.0.4",
+    "@types/dompurify": "3.0.5",
     "@types/ejs": "3.1.2",
     "@types/jest": "29.5.2",
     "@types/lodash": "4.14.196",
