@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 import _ from 'lodash';
 
 import {
-  ContainerEngine, CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
+  CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
   LockedSettingsType, Settings,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -329,20 +329,50 @@ function parseSaveError(err: any) {
 }
 
 /**
- * Provide a mapping from settings version to a function used to update the
- * settings object to the next version.
+ * ReplacementDirective describes how a setting can be migrated.
+ */
+interface ReplacementDirective {
+  /**
+   * The path to the old value
+   */
+  oldPath: string;
+  /**
+   * The path to the new value
+   */
+  newPath: string;
+}
+
+/**
+ * This function takes an array of `ReplacementDirectives`, and carries out each one which essentially
+ * moves a value at an old location to a new one, and then deletes the old location.
+ * @param settings - the settings object
+ * @param replacements - a table used to update the settings object based on existing obsolete fields that need to be moved.
+ */
+function processReplacements(settings: any, replacements: ReplacementDirective[]) {
+  for (const { oldPath, newPath } of replacements) {
+    if (_.hasIn(settings, oldPath)) {
+      // Transfer the current value for the old field to the new field
+      _.set(settings, newPath, _.get(settings, oldPath));
+      // Delete the old field
+      _.unset(settings, oldPath);
+    }
+  }
+}
+
+/**
+ * Provide a mapping from settings version X to version X + 1
  *
- * The main use-cases are for renaming property names, correct values that are
- * no longer valid, and removing obsolete entries. The final step merges in
- * current defaults, so we won't need an entry for every version change, as
- * most changes will get picked up from the defaults.
+ * Some migrations need to be done with bespoke code, but most of them
+ * can be expressed in a descriptive table, and the operations are done
+ * by `processReplacements`, which just moves old values to new locations,
+ * and deletes the old location.
+ *
+ * The `settings` @param does not have to be a complete settings object.
+ * And its type is `any` because it needs to work on older versions of the settings data.
  */
 export const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
-    // Implement setting change from version 3 to 4
-    if ('rancherMode' in settings.kubernetes) {
-      delete settings.kubernetes.rancherMode;
-    }
+    _.unset(settings, 'kubernetes.rancherMode');
   },
   2: (_) => {
     // No need to still check for and delete archaic installations from version 0.3.0
@@ -353,53 +383,40 @@ export const updateTable: Record<number, (settings: any) => void> = {
     // With settings v5, all traces of the kim builder are gone now, so no need to update it.
   },
   4: (settings) => {
-    settings.application = {
-      adminAccess:            !settings.kubernetes.suppressSudo,
-      debug:                  settings.debug,
-      pathManagementStrategy: settings.pathManagementStrategy,
-      telemetry:              { enabled: settings.telemetry },
-      updater:                { enabled: settings.updater },
-    };
-    settings.virtualMachine = {
-      hostResolver: settings.kubernetes.hostResolver,
-      memoryInGB:   settings.kubernetes.memoryInGB,
-      numberCPUs:   settings.kubernetes.numberCPUs,
-    };
-    settings.experimental = { virtualMachine: { socketVMNet: settings.kubernetes.experimental.socketVMNet } };
-    settings.WSL = { integrations: settings.kubernetes.WSLIntegrations };
-    settings.containerEngine.name = settings.kubernetes.containerEngine;
+    if (_.hasIn(settings, 'kubernetes.suppressSudo')) {
+      _.set(settings, 'application.adminAccess', !settings.kubernetes.suppressSudo);
+      delete settings.kubernetes.suppressSudo;
+    }
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'debug', newPath: 'application.debug' },
+      { oldPath: 'pathManagementStrategy', newPath: 'application.pathManagementStrategy' },
+      { oldPath: 'telemetry', newPath: 'application.telemetry.enabled' },
+      { oldPath: 'updater', newPath: 'application.updater.enabled' },
+      { oldPath: 'kubernetes.containerEngine', newPath: 'containerEngine.name' },
+      { oldPath: 'kubernetes.experimental.socketVMNet', newPath: 'experimental.virtualMachine.socketVMNet' },
+      { oldPath: 'kubernetes.hostResolver', newPath: 'virtualMachine.hostResolver' },
+      { oldPath: 'kubernetes.memoryInGB', newPath: 'virtualMachine.memoryInGB' },
+      { oldPath: 'kubernetes.numberCPUs', newPath: 'virtualMachine.numberCPUs' },
+      { oldPath: 'kubernetes.WSLIntegrations', newPath: 'WSL.integrations' },
+    ];
 
-    delete settings.kubernetes.containerEngine;
-    delete settings.kubernetes.experimental;
-    delete settings.kubernetes.hostResolver;
-    delete settings.kubernetes.checkForExistingKimBuilder;
-    delete settings.kubernetes.memoryInGB;
-    delete settings.kubernetes.numberCPUs;
-    delete settings.kubernetes.suppressSudo;
-    delete settings.kubernetes.WSLIntegrations;
-
-    delete settings.debug;
-    delete settings.pathManagementStrategy;
-    delete settings.telemetry;
-    delete settings.updater;
+    processReplacements(settings, replacements);
+    _.unset(settings, 'kubernetes.checkForExistingKimBuilder');
+    _.unset(settings, 'kubernetes.experimental');
   },
   5: (settings) => {
-    if (settings.containerEngine.imageAllowList) {
-      settings.containerEngine.allowedImages = settings.containerEngine.imageAllowList;
-      delete settings.containerEngine.imageAllowList;
-    }
-    if (settings.virtualMachine.experimental) {
-      if ('socketVMNet' in settings.virtualMachine.experimental) {
-        settings.experimental = { virtualMachine: { socketVMNet: settings.virtualMachine.experimental.socketVMNet } };
-        delete settings.virtualMachine.experimental.socketVMNet;
-      }
-      delete settings.virtualMachine.experimental;
-    }
-    for (const field of ['autoStart', 'hideNotificationIcon', 'startInBackground', 'window']) {
-      if (field in settings) {
-        settings.application[field] = settings[field];
-        delete settings[field];
-      }
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'autoStart', newPath: 'application.autoStart' },
+      { oldPath: 'hideNotificationIcon', newPath: 'application.hideNotificationIcon' },
+      { oldPath: 'startInBackground', newPath: 'application.startInBackground' },
+      { oldPath: 'window', newPath: 'application.window' },
+      { oldPath: 'containerEngine.imageAllowList', newPath: 'containerEngine.allowedImages' },
+      { oldPath: 'virtualMachine.experimental.socketVMNet', newPath: 'experimental.virtualMachine.socketVMNet' },
+    ];
+
+    processReplacements(settings, replacements);
+    if (_.isEmpty(_.get(settings, 'virtualMachine.experimental'))) {
+      _.unset(settings, 'virtualMachine.experimental');
     }
   },
   6: (settings) => {
@@ -407,15 +424,17 @@ export const updateTable: Record<number, (settings: any) => void> = {
     // extensions went from Record<string, boolean> to Record<string, string>
     // The key used to be the extension image (including tag); it's now keyed
     // by the image (without tag) with the value being the tag.
-    const withTags = Object.entries(settings.extensions ?? {}).filter(([, v]) => v).map(([k]) => k);
-    const extensions = withTags.map((image) => {
-      return image.split(':', 2).concat('latest').slice(0, 2) as [string, string];
-    });
+    if (_.hasIn(settings, 'extensions')) {
+      const withTags = Object.entries(settings.extensions ?? {}).filter(([, v]) => v).map(([k]) => k);
+      const extensions = withTags.map((image) => {
+        return image.split(':', 2).concat('latest').slice(0, 2) as [string, string];
+      });
 
-    settings.extensions = Object.fromEntries(extensions);
+      settings.extensions = Object.fromEntries(extensions);
+    }
   },
   7: (settings) => {
-    if (settings.application.pathManagementStrategy === 'notset') {
+    if (_.get(settings, 'application.pathManagementStrategy') === 'notset') {
       if (process.platform === 'win32') {
         settings.application.pathManagementStrategy = PathManagementStrategy.Manual;
       } else {
@@ -425,18 +444,17 @@ export const updateTable: Record<number, (settings: any) => void> = {
   },
   8: (settings) => {
     // Rancher Desktop 1.10: move .extensions to .application.extensions.installed
-    if (settings.extensions) {
-      settings.application ??= {};
-      settings.application.extensions ??= {};
-      settings.application.extensions.installed = settings.extensions;
-      delete settings.extensions;
-    }
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'extensions', newPath: 'application.extensions.installed' },
+    ];
+
+    processReplacements(settings, replacements);
   },
   9: (settings) => {
     // Rancher Desktop 1.11
     // Use string-list component instead of textarea for noproxy field. Blanks that
     // were accepted by the textarea need to be filtered out.
-    if (settings.experimental.virtualMachine.proxy.noproxy.length > 0) {
+    if (!_.isEmpty(_.get(settings, 'experimental.virtualMachine.proxy.noproxy'))) {
       settings.experimental.virtualMachine.proxy.noproxy =
         settings.experimental.virtualMachine.proxy.noproxy.map((entry: string) => {
           return entry.trim();
@@ -447,32 +465,48 @@ export const updateTable: Record<number, (settings: any) => void> = {
   },
 };
 
-function migrateSettingsToCurrentVersion(settings: Settings) {
+function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
-  let loadedVersion = settings.version || 0;
+  const newSettings = migrateSpecifiedSettingsToCurrentVersion(settings);
 
-  if (loadedVersion < CURRENT_SETTINGS_VERSION) {
-    for (; loadedVersion < CURRENT_SETTINGS_VERSION; loadedVersion++) {
-      if (updateTable[loadedVersion]) {
-        updateTable[loadedVersion](settings);
-      }
+  return _.defaultsDeep(newSettings, defaultSettings);
+}
+
+/**
+ * Used to migrate a settings payload from an earlier version to the current one.
+ * Input payloads are expected to come from either the argument to `rdctl api settings -X PUT ...`
+ * or a deployment profile.
+ *
+ * The contents of settings files go through the unexported function `migrateSettingsToCurrentVersion`
+ * which assigns any missing defaults at the end. This function does not fill in missing values.
+ * @param settings - a possibly partial settings object.
+ * @param targetVersion - used for unit testing, to run a specific step from version n to n + 1, and not the full migration
+ */
+export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>, targetVersion:number = CURRENT_SETTINGS_VERSION): RecursivePartial<Settings> {
+  const firstPart = 'updating settings requires specifying an API version';
+  let loadedVersion = settings.version;
+
+  if (!('version' in settings)) {
+    throw new TypeError(`${ firstPart }, but no version was specified`);
+  } else if ((typeof (loadedVersion) !== 'number') || isNaN(loadedVersion)) {
+    throw new TypeError(`${ firstPart }, but "${ loadedVersion }" is not a proper config version`);
+  } else if (loadedVersion <= 0) {
+    // Avoid someone specifying a number like -1000000000000 and burning CPU cycles in the loop below
+    throw new TypeError(`${ firstPart }, but "${ loadedVersion }" is not a positive number`);
+  } else if (loadedVersion >= targetVersion) {
+    // This will elicit an error message from the validator
+    return settings;
+  }
+  for (; loadedVersion < targetVersion; loadedVersion++) {
+    if (updateTable[loadedVersion]) {
+      updateTable[loadedVersion](settings);
     }
-  } else if (settings.version && settings.version > CURRENT_SETTINGS_VERSION) {
-    // We've loaded a setting file from the future, so some settings will be ignored.
-    // Try not to step on them.
-    // Note that this file will have an older version field but some fields from the future.
-    console.log(`Running settings version ${ CURRENT_SETTINGS_VERSION } but loaded a settings file for version ${ settings.version }: some settings will be ignored`);
   }
-  settings.version = CURRENT_SETTINGS_VERSION;
+  settings.version = targetVersion;
 
-  if (!Object.values(ContainerEngine).map(String).includes(settings.containerEngine.name)) {
-    console.warn(`Replacing unrecognized saved container engine pref of '${ settings.containerEngine.name }' with ${ ContainerEngine.CONTAINERD }`);
-    settings.containerEngine.name = ContainerEngine.CONTAINERD;
-  }
-
-  return _.defaultsDeep(settings, defaultSettings);
+  return settings;
 }
 
 // Imported from dashboard/config/settings.js

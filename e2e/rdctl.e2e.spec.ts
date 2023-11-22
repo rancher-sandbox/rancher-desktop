@@ -33,14 +33,14 @@ import {
 } from './utils/TestUtils';
 
 import {
-  ContainerEngine,
-  Settings,
-  defaultSettings,
-  CURRENT_SETTINGS_VERSION,
-  MountType,
   CacheMode,
+  ContainerEngine,
+  CURRENT_SETTINGS_VERSION,
+  defaultSettings,
+  MountType,
   ProtocolVersion,
   SecurityModel,
+  Settings,
   VMType,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -326,7 +326,7 @@ test.describe('Command server', () => {
     }
     resp = await doRequest('/v1/settings', JSON.stringify(body), 'PUT');
     expect(resp.ok).toBeFalsy();
-    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but no version was specified`);
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying an API version, but no version was specified`);
   });
 
   test('should complain about an invalid version field', async() => {
@@ -335,16 +335,17 @@ test.describe('Command server', () => {
     expect(resp.ok).toBeTruthy();
 
     const body: RecursivePartial<Settings> = await resp.json();
+    const badVersion = 'not a number';
 
     // Override typescript's checking so we can verify that the server rejects the
     // invalid value for the `version` field.
-    body.version = (body.version ? body.version - 1 : -1) as any;
+    body.version = badVersion as any;
     if (body?.application?.telemetry) {
       body.application.telemetry.enabled = !body.application.telemetry.enabled;
     }
     resp = await doRequest('/v1/settings', JSON.stringify(body), 'PUT');
     expect(resp.ok).toBeFalsy();
-    await expect(resp.text()).resolves.toContain(`updating settings requires specifying version = ${ CURRENT_SETTINGS_VERSION }, but received version ${ CURRENT_SETTINGS_VERSION - 1 }`);
+    await expect(resp.text()).resolves.toContain(`updating settings requires specifying an API version, but "${ badVersion }" is not a proper config version`);
   });
 
   test('should require authentication, transient settings request', async() => {
@@ -945,7 +946,7 @@ test.describe('Command server', () => {
         }
       });
 
-      test.describe('complains when unrecognized option are given', () => {
+      test.describe('complains when unrecognized options are given', () => {
         for (const cmd of ['set', 'list-settings', 'shutdown']) {
           const args = [cmd, '--Awop-bop-a-loo-mop', 'zips', '--alop-bom-bom=cows'];
 

@@ -13,7 +13,7 @@ local_setup() {
     start_container_engine
     wait_for_container_engine
 
-    rdctl api -X PUT /settings --body '{ "version": '"$(get_setting .version)"', "WSL": {"integrations": { "beaker" : true }}}'
+    rdctl api -X PUT /settings --body '{ "version": 9, "WSL": {"integrations": { "beaker" : true }}}'
     rdctl shutdown
     mkdir -p "$ROAMING_HOME"
     mv "$PATH_CONFIG_FILE" "$ROAMING_HOME/settings.json"

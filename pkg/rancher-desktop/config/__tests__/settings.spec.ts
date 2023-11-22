@@ -9,8 +9,10 @@ import plist from 'plist';
 import * as settings from '../settings';
 import * as settingsImpl from '../settingsImpl';
 
+import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import paths from '@pkg/utils/paths';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 class FakeFSError extends Error {
   public message = '';
@@ -418,6 +420,343 @@ describe('settings', () => {
       const calculatedLockedFields = settingsImpl.determineLockedFields(lockedSettings);
 
       expect(calculatedLockedFields).toEqual(expectedLockedFields);
+    });
+  });
+
+  describe('migrations', () => {
+    it("complains about empty settings because there's no version field", () => {
+      const s: RecursivePartial<settings.Settings> = {};
+
+      expect(() => {
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+      }).toThrowError('updating settings requires specifying an API version, but no version was specified');
+    });
+
+    it('complains about a non-numeric version field', () => {
+      const s: RecursivePartial<settings.Settings> = { version: 'no way' as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
+
+      expect(() => {
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+      }).toThrowError('updating settings requires specifying an API version, but "no way" is not a proper config version');
+    });
+
+    it('complains about a negative version field', () => {
+      const s: RecursivePartial<settings.Settings> = { version: -7 as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
+
+      expect(() => {
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+      }).toThrowError('updating settings requires specifying an API version, but "-7" is not a positive number');
+    });
+
+    it('correctly migrates version-9 no-proxy settings', () => {
+      const s: RecursivePartial<settings.Settings> = {
+        version:      9 as typeof settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: [' ', '  1.2.3.4   ', '   ', '11.12.13.14  ', '    21.22.23.24'],
+            },
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:      settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
+            },
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('correctly migrates earlier no-proxy settings', () => {
+      /**
+       * This test verifies that we're no longer running into problems when
+       * the migrator tries to access the value of a nonexistent property.
+       *
+       * The bug, issue 5618, was that the migrator erroneously assumed
+       * that when users were migrating to version N, they were submitting a settings file
+       * that was based on the default settings of version N - 1.
+       */
+      const s: RecursivePartial<settings.Settings> = {
+        version:      1 as typeof settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: [' ', '  1.2.3.4   ', '   ', '11.12.13.14  ', '    21.22.23.24'],
+            },
+          },
+        },
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:      settings.CURRENT_SETTINGS_VERSION,
+        experimental: {
+          virtualMachine: {
+            proxy: {
+              noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
+            },
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('leaves unrecognized settings unchanged', () => {
+      const s: Record<string, any> = {
+        version:        1 as typeof settings.CURRENT_SETTINGS_VERSION,
+        registeredCows: '2021-05-17T08:57:17 +07:00',
+        fluentLatitude: -55.753309,
+        grouchyTags:    [
+          'moll',
+          'in',
+          'excitation',
+        ],
+        funnyFriends: [
+          {
+            id:   0,
+            name: 'Terry Serrano',
+          },
+          {
+            id:   1,
+            name: 'Reynolds Rogers',
+          },
+        ],
+        niceGreeting:  'Hello, Bates Middleton! You have 10 unread messages.',
+        favoriteFruit: 'banana',
+      };
+      const expected = _.merge({}, s, { version: settings.CURRENT_SETTINGS_VERSION });
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    it('updates all old settings going back to version 1', () => {
+      const s: Record<string, any> = {
+        version:    1 as typeof settings.CURRENT_SETTINGS_VERSION,
+        kubernetes: {
+          rancherMode:     true,
+          suppressSudo:    true,
+          containerEngine: 'moby',
+          hostResolver:    true,
+          memoryInGB:      30,
+          numberCPUs:      200,
+          WSLIntegrations: {
+            Ubuntu:   true,
+            Debian:   false,
+            openSUSE: true,
+          },
+          experimental: {
+            socketVMNet: true,
+          },
+        },
+        debug:                  true,
+        pathManagementStrategy: PathManagementStrategy.Manual,
+        telemetry:              false,
+        updater:                true,
+      };
+      const expected: RecursivePartial<settings.Settings> = {
+        version:     settings.CURRENT_SETTINGS_VERSION,
+        application: {
+          adminAccess:            false,
+          debug:                  true,
+          pathManagementStrategy: PathManagementStrategy.Manual,
+          telemetry:              {
+            enabled: false,
+          },
+          updater: {
+            enabled: true,
+          },
+        },
+        containerEngine: {
+          name: settings.ContainerEngine.MOBY,
+        },
+        experimental:   { virtualMachine: { socketVMNet: true } },
+        kubernetes:     {},
+        virtualMachine: {
+          hostResolver: true,
+          memoryInGB:   30,
+          numberCPUs:   200,
+        },
+        WSL: {
+          integrations: {
+            Ubuntu:   true,
+            Debian:   false,
+            openSUSE: true,
+          },
+        },
+      };
+
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+    });
+
+    describe('migrates from step to step', () => {
+      const expectedMigrations: Record<number, [any, any]> = {
+        1: [
+          {
+            kubernetes: {
+              rancherMode: 'cattle',
+            },
+          },
+          {
+            kubernetes: {},
+          },
+        ],
+        2: [{ cows: 4 }, { cows: 4 }],
+        3: [{ fish: 5 }, { fish: 5 }],
+        4: [
+          {
+            kubernetes: {
+              suppressSudo: true,
+              hostResolver: true,
+              memoryInGB:   300,
+              numberCPUs:   45,
+              experimental: {
+                socketVMNet: true,
+              },
+              WSLIntegrations: {
+                ubuntu: true,
+                debian: false,
+              },
+              containerEngine: settings.ContainerEngine.MOBY,
+            },
+            debug:                  true,
+            pathManagementStrategy: 'manual',
+            telemetry:              true,
+            updater:                true,
+          },
+          {
+            kubernetes:  {},
+            application: {
+              adminAccess:            false,
+              debug:                  true,
+              pathManagementStrategy: PathManagementStrategy.Manual,
+              telemetry:              { enabled: true },
+              updater:                { enabled: true },
+            },
+            virtualMachine: {
+              hostResolver: true,
+              memoryInGB:   300,
+              numberCPUs:   45,
+            },
+            experimental: {
+              virtualMachine: {
+                socketVMNet: true,
+              },
+            },
+            WSL: {
+              integrations: {
+                ubuntu: true,
+                debian: false,
+              },
+            },
+            containerEngine: {
+              name: settings.ContainerEngine.MOBY,
+            },
+          },
+        ],
+        5: [
+          {
+            containerEngine: {
+              imageAllowList: {
+                enabled:  true,
+                patterns: ['wolves', 'lower'],
+              },
+            },
+            virtualMachine: {
+              experimental: {
+                socketVMNet: true,
+              },
+            },
+            autoStart:            true,
+            hideNotificationIcon: true,
+            window:               false,
+          },
+          {
+            containerEngine: {
+              allowedImages: {
+                enabled:  true,
+                patterns: ['wolves', 'lower'],
+              },
+            },
+            experimental: {
+              virtualMachine: { socketVMNet: true },
+            },
+            application: {
+              autoStart:            true,
+              hideNotificationIcon: true,
+              window:               false,
+            },
+            virtualMachine: {},
+          },
+        ],
+        6: [
+          {
+            extensions: {
+              'mice:oldest':   true,
+              'cats:youngest': false,
+            },
+          },
+          {
+            extensions: {
+              mice: 'oldest',
+            },
+          },
+        ],
+        7: [
+          { application: { pathManagementStrategy: 'notset' } },
+          {
+            application: {
+              pathManagementStrategy: process.platform === 'win32' ? PathManagementStrategy.Manual : PathManagementStrategy.RcFiles,
+            },
+          },
+        ],
+        8: [
+          {
+            extensions: { mice: 'oldest' },
+          },
+          {
+            application: {
+              extensions: {
+                installed: { mice: 'oldest' },
+              },
+            },
+          },
+        ],
+        9: [
+          {
+            experimental: {
+              virtualMachine: {
+                proxy: {
+                  noproxy: ['    ', '   mangoes', 'yucca   ', '   ', ' guava '],
+                },
+              },
+            },
+          },
+          {
+            experimental: {
+              virtualMachine: {
+                proxy: {
+                  noproxy: ['mangoes', 'yucca', 'guava'],
+                },
+              },
+            },
+          },
+        ],
+      };
+
+      it.each(Object.entries(expectedMigrations))('migrate from %i', (version, beforeAndAfter) => {
+        const [fromSettings, toSettings] = beforeAndAfter;
+        const existingVersion = parseInt(version, 10);
+        const targetVersion = existingVersion + 1;
+
+        fromSettings.version = existingVersion;
+        toSettings.version = targetVersion;
+        expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings, targetVersion)).toEqual(toSettings);
+      });
     });
   });
 });
