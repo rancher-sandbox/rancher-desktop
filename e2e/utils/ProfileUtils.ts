@@ -205,8 +205,6 @@ export async function testForFirstRunWindow(testPath: string) {
       });
       page = openedPage;
       windowCountForMainPage = windowCount;
-
-      return;
     } catch (ex: any) {
       console.log(`Ignoring failed title-test: ${ ex.toString().substring(0, 10000) }`);
     }

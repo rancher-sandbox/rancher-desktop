@@ -184,8 +184,6 @@ export async function spawnFile(
   options: SpawnOptionsWithStdioTuple<StdioNull | StdioPipe, StdioNullLog, StdioNullLog> & SpawnOptionsEncoding,
 ): Promise<Record<string, never>>;
 
-/* eslint-enable no-redeclare */
-
 export async function spawnFile(
   command: string,
   args?: string[] | SpawnOptionsLog & SpawnOptionsEncoding,
