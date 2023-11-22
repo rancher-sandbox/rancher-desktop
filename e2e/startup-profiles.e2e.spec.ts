@@ -207,8 +207,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       };
       const settingsFullPath = path.join(paths.config, 'settings.json');
 
-      fs.mkdirSync(paths.config, { recursive: true });
-      fs.writeFileSync(settingsFullPath, JSON.stringify(versionLessSettings));
+      await fs.promises.mkdir(paths.config, { recursive: true });
+      await fs.promises.writeFile(settingsFullPath, JSON.stringify(versionLessSettings));
       const windowCount = await testWaitForLogfile(filename, logPath);
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 

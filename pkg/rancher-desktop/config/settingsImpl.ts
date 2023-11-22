@@ -34,27 +34,24 @@ function loadFromDisk(): Settings {
   // Throw an ENOENT error if the file doesn't exist; the caller should know what to do.
   const settingsPath = join(paths.config, 'settings.json');
   const rawdata = fs.readFileSync(settingsPath);
-  const defaultConfig = clone(defaultSettings);
+  let originalConfig: Record<string, any>;
 
   try {
-    // If the existing settings file is partial, fill in the missing fields with defaults.
-    const currentConfig = JSON.parse(rawdata.toString());
-
-    if (!('version' in currentConfig)) {
-      throw new SettingsError(`No version specified in ${ settingsPath }`);
-    }
-    merge(defaultConfig, currentConfig);
-
-    return migrateSettingsToCurrentVersion(defaultConfig);
+    originalConfig = JSON.parse(rawdata.toString());
   } catch (err: any) {
-    if (err instanceof SettingsError) {
-      throw err;
-    }
     console.error(`Error JSON-parsing existing settings contents ${ rawdata }`, err);
     console.error('The old settings file will be replaced with the default settings.');
 
-    return defaultConfig;
+    return defaultSettings;
   }
+
+  if (!('version' in originalConfig)) {
+    throw new SettingsError(`No version specified in ${ settingsPath }`);
+  }
+  const updatedConfig = migrateSettingsToCurrentVersion(originalConfig);
+
+  // If the existing settings file is partial, fill in the missing fields with defaults.
+  return _.defaultsDeep(updatedConfig, defaultSettings);
 }
 
 export function save(cfg: Settings) {
