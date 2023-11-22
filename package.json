@@ -152,7 +152,7 @@
     "electron": "26.4.3",
     "electron-builder": "23.6.0",
     "electron-notarize": "1.2.2",
-    "eslint": "8.39.0",
+    "eslint": "8.54.0",
     "eslint-import-resolver-typescript": "3.5.5",
     "eslint-plugin-deprecation": "2.0.0",
     "eslint-plugin-import": "2.29.0",

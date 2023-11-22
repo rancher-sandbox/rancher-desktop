@@ -345,8 +345,6 @@ describeWithCreds('Credentials server', () => {
     return retry(async() => {
       try {
         await spawnFile('wsl.exe', args);
-
-        return;
       } catch (ex: any) {
         const curlExitReason = {
           7:  'Failed to connect to host',
