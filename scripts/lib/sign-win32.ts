@@ -33,7 +33,8 @@ const DEFAULT_WINDOWS_CONFIG = {
 };
 
 interface ElectronBuilderConfiguration {
-  files?: Array<string>,
+  productName: string;
+  files?: Array<string>;
   win?: Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
 }
 
@@ -59,19 +60,13 @@ export async function sign(workDir: string) {
   // We built this docker.exe, so we need to sign it
 
   const unpackedDir = path.join(workDir, 'unpacked');
-  const resourcesRootDir = 'resources/resources/win32';
-  const internalDir = path.join(resourcesRootDir, 'internal');
-  const binDir = path.join(resourcesRootDir, 'bin');
-  const whiteList: Record<string, Array<string>> = {
-    '.':                ['Rancher Desktop.exe'],
-    [resourcesRootDir]: ['wsl-helper.exe'],
-    [internalDir]:      ['host-resolver.exe', 'host-switch.exe', 'privileged-service.exe', 'steve.exe', 'vtunnel.exe'],
-    [binDir]:           ['docker.exe', 'docker-credential-none.exe', 'nerdctl.exe', 'rdctl.exe'],
-  };
-
-  const configText = await fs.promises.readFile(path.join(unpackedDir, 'electron-builder.yml'), 'utf-8');
+  const configPath = path.join(unpackedDir, 'electron-builder.yml');
+  const configText = await fs.promises.readFile(configPath, 'utf-8');
   const config = yaml.parse(configText) as ElectronBuilderConfiguration;
-  const versionedAppName = `Rancher Desktop ${ await getVersion() }`;
+  const signingConfigPath = path.join(unpackedDir, 'build', 'signing-config-win.yaml');
+  const signingConfigText = await fs.promises.readFile(signingConfigPath, 'utf-8');
+  const signingConfig: Record<string, string[]> = yaml.parse(signingConfigText);
+  const versionedAppName = `${ signingConfig.productName } ${ await getVersion() }`;
 
   config.win ??= {};
   defaults(config.win, DEFAULT_WINDOWS_CONFIG);
@@ -94,25 +89,68 @@ export async function sign(workDir: string) {
     toolArgs.push('/p', certPassword);
   }
 
-  for (const subDir in whiteList) {
-    for (const fileName of whiteList[subDir]) {
-      const fullPath = path.join(unpackedDir, subDir, fileName);
+  for await (const fullPath of findFilesToSign(unpackedDir, signingConfig)) {
+    // Fail if a whitelisted file doesn't exist
+    await fs.promises.access(fullPath);
+    console.log(`Signing ${ fullPath }`);
 
-      // Fail if a whitelisted file doesn't exist
-      await fs.promises.access(fullPath);
-      console.log(`Signing ${ fullPath }`);
-
-      await simpleSpawn(toolPath, [...toolArgs, fullPath]);
-    }
+    await simpleSpawn(toolPath, [...toolArgs, fullPath]);
   }
 
   await buildWiX(workDir, unpackedDir, config);
 }
 
+/**
+ * Find all the files that should be signed.
+ * @param unpackedDir The directory holding the unpacked zip file.
+ * @param signingConfig The signing config from electron-builder.yaml
+ */
+async function *findFilesToSign(unpackedDir: string, signingConfig: Record<string, string[]>): AsyncIterable<string> {
+  /** toSign is the set of files that we want to sign. */
+  const toSign = new Set<string>();
+  /** toSkip is the set of files we are explicitly skipping signing. */
+  const toSkip = new Set<string>();
+  /** unexpectedFiles is the set of files we found that are not known. */
+  const unexpectedFiles = new Set<string>();
+
+  for (const [dir, files] of Object.entries(signingConfig)) {
+    for (const file of files) {
+      if (file.startsWith('!')) {
+        toSkip.add(path.normalize(path.join(unpackedDir, dir, file.slice(1))));
+      } else {
+        toSign.add(path.normalize(path.join(unpackedDir, dir, file)));
+      }
+    }
+  }
+
+  for (const child of await fs.promises.readdir(unpackedDir, { recursive: true, withFileTypes: true })) {
+    const childPath = path.normalize(path.join(child.path, child.name));
+
+    if (!/\.exe$/i.test(childPath)) {
+      continue;
+    }
+    if (toSign.has(childPath)) {
+      yield childPath;
+    } else if (!toSkip.has(childPath)) {
+      unexpectedFiles.add(path.relative(unpackedDir, childPath));
+    }
+  }
+
+  if (unexpectedFiles.size > 0) {
+    const message = [
+      'Found unknown executable files:',
+      ...Array.from(unexpectedFiles).map(f => ` - ${ f }`).sort(),
+      'Please edit build/signing-config-win.yaml to add those files.',
+    ];
+
+    throw new Error(message.join('\n'));
+  }
+}
+
 async function buildWiX(workDir: string, unpackedDir: string, config: ElectronBuilderConfiguration) {
   const buildInstaller = (await import('./installer-win32')).default;
   const installerPath = await buildInstaller(workDir, unpackedDir);
-  const versionedAppName = `Rancher Desktop ${ await getVersion() }`;
+  const versionedAppName = `${ config.productName } ${ await getVersion() }`;
 
   if (!config.win?.certificateSha1) {
     throw new Error(`Assertion error: certificate fingerprint not set`);

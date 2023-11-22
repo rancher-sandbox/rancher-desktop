@@ -31,6 +31,7 @@ win:
   extraFiles:
   - build/wix/*
   - build/license.rtf
+  - build/signing-config-win.yaml
   - electron-builder.yml
 linux:
   category: Utility
