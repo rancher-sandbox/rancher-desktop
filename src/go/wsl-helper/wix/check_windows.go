@@ -33,7 +33,6 @@ func IsWSLInstalledImpl(hInstall MSIHANDLE) uint32 {
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
-	defer writer.cleanup()
 	log := logrus.NewEntry(&logrus.Logger{
 		Out:       writer,
 		Formatter: &logrus.TextFormatter{},

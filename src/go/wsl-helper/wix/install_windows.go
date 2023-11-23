@@ -29,7 +29,6 @@ func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
-	defer writer.cleanup()
 	log := logrus.NewEntry(&logrus.Logger{
 		Out:       writer,
 		Formatter: &logrus.TextFormatter{},
@@ -38,6 +37,9 @@ func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
 	})
 
 	log.Infof("Installing Windows feature...")
+	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+		"", "InstalWindowsFeature", "Installing required Windows features...", "<unused>",
+	})
 	if err := wslutils.DismDoInstall(ctx, log); err != nil {
 		log.WithError(err).Error("Failed to install feature")
 		return 1
@@ -53,7 +55,6 @@ func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
-	defer writer.cleanup()
 	log := logrus.NewEntry(&logrus.Logger{
 		Out:       writer,
 		Formatter: &logrus.TextFormatter{},
@@ -62,6 +63,9 @@ func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
 	})
 
 	log.Info("Installing WSL...")
+	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+		"", "InstallWSL", "Installing Windows Subsystem for Linux...", "<unused>",
+	})
 	if err := wslutils.InstallWSL(ctx, log); err != nil {
 		log.WithError(err).Error("Installing WSL failed")
 		return 1

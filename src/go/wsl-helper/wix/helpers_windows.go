@@ -19,63 +19,49 @@ package main
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
 
+type messageType uintptr
 const (
-	INSTALLMESSAGE_INFO = 0x04000000
+	INSTALLMESSAGE_INFO messageType = 0x04000000
+	INSTALLMESSAGE_ACTIONSTART messageType = 0x08000000
 )
+
+func submitMessage(hInstall MSIHANDLE, message messageType, data []string) error {
+	record, _, _ := msiCreateRecord.Call(uintptr(len(data) - 1))
+	if record == 0 {
+		return fmt.Errorf("failed to create record")
+	}
+	defer msiCloseHandle.Call(record)
+	for i, item := range data {
+		buf, err := windows.UTF16PtrFromString(item)
+		if err != nil {
+			return err
+		}
+		_, _, _ = msiRecordSetStringW.Call(record, uintptr(i), uintptr(unsafe.Pointer(buf)))
+	}
+	_, _, _ = msiProcessMessage.Call(uintptr(hInstall), uintptr(message), record)
+	return nil
+}
 
 // msiWriter is an io.Writer that emits to Windows Installer's logging.
 type msiWriter struct {
 	hInstall MSIHANDLE
-	once     sync.Once
-	record   uintptr
 }
 
 func (w *msiWriter) Write(message []byte) (int, error) {
-	var err error
-	w.once.Do(func() {
-		// We always set up a record where *0 is just "[1]" to avoid issues if
-		// the message contains formatting; this is analogous to calling
-		// `Sprintf("%s", ...)``
-		var buf *uint16
-		buf, err = windows.UTF16PtrFromString("[1]")
-		if err != nil {
-			return
-		}
-		w.record, _, _ = msiCreateRecord.Call(1)
-		_, _, _ = msiRecordSetStringW.Call(w.record, 0, uintptr(unsafe.Pointer(buf)))
-	})
+	// We always set up a record where *0 is just "[1]" to avoid issues if
+	// the message contains formatting; this is analogous to calling
+	// `Sprintf("%s", ...)``
+	data := []string{"1", strings.TrimRight(string(message), "\r\n")}
+	err := submitMessage(w.hInstall, INSTALLMESSAGE_INFO, data)
 	if err != nil {
 		return 0, err
 	}
-	buf, err := windows.UTF16PtrFromString(strings.TrimRight(string(message), "\r\n"))
-	if err != nil {
-		return 0, err
-	}
-	_, _, _ = msiRecordSetStringW.Call(
-		w.record,
-		1,
-		uintptr(unsafe.Pointer(buf)),
-	)
-	_, _, _ = msiProcessMessage.Call(
-		uintptr(w.hInstall),
-		uintptr(INSTALLMESSAGE_INFO),
-		w.record,
-	)
-	// As an extra debugging helper, also send it on OutputDebugString
-	_, _, _ = outputDebugStringW.Call(uintptr(unsafe.Pointer(buf)))
 	return len(message), nil
-}
-
-func (w *msiWriter) cleanup() {
-	if w.record != 0 {
-		msiCloseHandle.Call(w.record)
-	}
 }
 
 // setProperty sets a Windows Installer property to the given value.
