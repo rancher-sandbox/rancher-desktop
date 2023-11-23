@@ -109,7 +109,9 @@ func DismDoInstall(ctx context.Context, log *logrus.Entry) error {
 		uintptr(unsafe.Pointer(nil)), // Progress
 		uintptr(unsafe.Pointer(nil)), // UserData
 	)
-	log.WithError(err).WithField("hr", fmt.Sprintf("%08x", hr)).Trace("DismEnableFeature")
+	if hr != uintptr(windows.ERROR_SUCCESS_REBOOT_REQUIRED) {
+		log.WithError(err).WithField("hr", fmt.Sprintf("%08x", hr)).Trace("DismEnableFeature")
+	}
 	err = errorFromHResult(int32(hr), err)
 	if err != nil {
 		return fmt.Errorf("error enabling feature %q: %w", kWindowsFeature, err)
