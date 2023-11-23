@@ -37,12 +37,13 @@ func populateFiles(t *testing.T, _ bool) (paths.Paths, map[string]TestFile) {
 }
 
 func newTestManager(appPaths paths.Paths) *Manager {
+	snapshotter := NewSnapshotterImpl()
+	snapshotter.WSL = wsl.MockWSL{}
 	manager := &Manager{
 		Paths:         appPaths,
-		Snapshotter:   NewSnapshotterImpl(),
+		Snapshotter:   snapshotter,
 		BackendLocker: &lock.MockBackendLock{},
 	}
-	manager.Snapshotter.WSL = wsl.MockWSL{}
 	return manager
 }
 
@@ -81,7 +82,7 @@ func TestManagerWindows(t *testing.T) {
 				t.Fatalf("failed to modify %s: %s", testFileName, err)
 			}
 		}
-		if err := manager.Restore(snapshot.ID); err != nil {
+		if err := manager.Restore(snapshot.Name); err != nil {
 			t.Fatalf("failed to restore snapshot: %s", err)
 		}
 		for testFileName, testFile := range testFiles {
@@ -112,7 +113,7 @@ func TestManagerWindows(t *testing.T) {
 				t.Fatalf("failed to remove test directory %q: %s", testDir, err)
 			}
 		}
-		if err := manager.Restore(snapshot.ID); err != nil {
+		if err := manager.Restore(snapshot.Name); err != nil {
 			t.Fatalf("failed to restore snapshot: %s", err)
 		}
 		for _, testDir := range testDirs {
