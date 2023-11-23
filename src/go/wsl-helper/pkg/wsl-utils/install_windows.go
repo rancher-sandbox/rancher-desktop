@@ -18,8 +18,8 @@ func InstallWSL(ctx context.Context, log *logrus.Entry) error {
 	if f := ctx.Value(&kWSLExeOverride); f != nil {
 		newRunnerFunc = f.(func() WSLRunner)
 	}
+	// WSL install hangs if we set stdout; don't set that here.
 	err := newRunnerFunc().
-		WithStdout(log.WriterLevel(logrus.TraceLevel)).
 		WithStderr(log.WriterLevel(logrus.InfoLevel)).
 		Run(ctx, "--install", "--no-distribution")
 	if err != nil {

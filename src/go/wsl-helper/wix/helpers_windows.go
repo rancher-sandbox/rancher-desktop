@@ -25,8 +25,9 @@ import (
 )
 
 type messageType uintptr
+
 const (
-	INSTALLMESSAGE_INFO messageType = 0x04000000
+	INSTALLMESSAGE_INFO        messageType = 0x04000000
 	INSTALLMESSAGE_ACTIONSTART messageType = 0x08000000
 )
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -30,10 +29,7 @@ type wslRunnerImpl struct {
 }
 
 func NewWSLRunner() WSLRunner {
-	result := &wslRunnerImpl{
-		stdout: os.Stdout,
-		stderr: os.Stderr,
-	}
+	result := &wslRunnerImpl{}
 	result.runFn = result.run
 	return result
 }
@@ -59,8 +55,12 @@ func (r *wslRunnerImpl) run(ctx context.Context, args ...string) error {
 	}
 	wslPath := filepath.Join(systemDir, "wsl.exe")
 	cmd := exec.CommandContext(ctx, wslPath, args...)
-	cmd.Stdout = &utf16Writer{r.stdout}
-	cmd.Stderr = &utf16Writer{r.stderr}
+	if r.stdout != nil {
+		cmd.Stdout = &utf16Writer{r.stdout}
+	}
+	if r.stderr != nil {
+		cmd.Stderr = &utf16Writer{r.stderr}
+	}
 	cmd.SysProcAttr = &windows.SysProcAttr{HideWindow: true}
 	err = cmd.Run()
 	if err != nil {

@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"unsafe"
@@ -222,7 +223,7 @@ func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, er
 		newRunnerFunc = f.(func() WSLRunner)
 	}
 	output := &bytes.Buffer{}
-	err := newRunnerFunc().WithStdout(output).Run(ctx, "--status")
+	err := newRunnerFunc().WithStdout(output).WithStderr(os.Stderr).Run(ctx, "--status")
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) && exitErr.ExitCode() == wslExitNotInstalled {
 		// When WSL is not installed, we seem to get exit code 50
