@@ -218,12 +218,12 @@ Electron.app.whenReady().then(async() => {
       const message = err.message || err.toString();
 
       showErrorDialog(titlePart, message, true);
-      // if (err instanceof settings.SettingsError) {
-      //   // Even though we're passing fatal=true to showErrorDialog,
-      //   // this process still runs after the call to `Electron.app.quit()`,
-      //   // so stop processing this handler.
-      //   return;
-      // }
+      if (err instanceof settings.SettingsError) {
+        // Even though we're passing fatal=true to showErrorDialog,
+        // this process still runs after the call to `Electron.app.quit()`,
+        // so stop processing this handler.
+        return;
+      }
     }
     try {
       // The profile loader did rudimentary type-validation on profiles, but the validator checks for things
