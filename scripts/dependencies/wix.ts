@@ -30,7 +30,7 @@ export class Wix implements Dependency {
 
     await fs.promises.mkdir(wixDir, { recursive: true });
     await download(url, archivePath);
-    await simpleSpawn('unzip', ['-o', archivePath, '-d', wixDir], { cwd: wixDir });
+    await simpleSpawn('unzip', ['-q', '-o', archivePath, '-d', wixDir], { cwd: wixDir });
   }
 
   async getAvailableVersions(): Promise<string[]> {

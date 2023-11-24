@@ -858,7 +858,7 @@ ZSelected
 zst
 zstack
 zstdchunked
-zxvf
+zxf
 zypak
 zypp
 zypper

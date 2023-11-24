@@ -177,7 +177,7 @@ export async function downloadTarGZ(url: string, destPath: string, options: Arch
 
   try {
     const tgzPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
-    const args = ['tar', '-zxvf', tgzPath, '--directory', workDir, fileToExtract];
+    const args = ['tar', '-zxf', tgzPath, '--directory', workDir, fileToExtract];
     const mode =
             (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
 
@@ -236,7 +236,7 @@ export async function downloadZip(url: string, destPath: string, options: Archiv
 
   try {
     const zipPath = path.join(workDir, `${ binaryBasename }.zip`);
-    const args = ['unzip', '-o', zipPath, fileToExtract, '-d', workDir];
+    const args = ['unzip', '-q', '-o', zipPath, fileToExtract, '-d', workDir];
 
     await download(url, zipPath, { ...options, access: fs.constants.W_OK });
     execFileSync(args[0], args.slice(1), { stdio: 'inherit' });
