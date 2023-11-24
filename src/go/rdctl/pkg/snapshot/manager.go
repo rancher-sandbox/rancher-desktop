@@ -211,7 +211,7 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 		return err
 	}
 	defer func() {
-		// Don't restart the backend if the restore failed
+		// Restart the backend only if a data reset occurred
 		unlockErr := manager.Unlock(manager.Paths, !errors.Is(err, ErrDataReset))
 		if err == nil {
 			err = unlockErr

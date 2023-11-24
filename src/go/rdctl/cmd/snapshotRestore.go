@@ -36,7 +36,8 @@ func restoreSnapshot(cmd *cobra.Command, args []string) error {
 	// Ideally we would not use the deprecated syscall package,
 	// but it works well with all expected scenarios and allows us
 	// to avoid platform-specific signal handling code.
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	defer stop()
 	context.AfterFunc(ctx, func() {
 		if !outputJsonFormat {
 			fmt.Println("Cancelling snapshot restoration...")

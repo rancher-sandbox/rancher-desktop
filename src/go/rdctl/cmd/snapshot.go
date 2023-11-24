@@ -11,8 +11,10 @@ import (
 )
 
 type errorPayloadType struct {
-	Error     string `json:"error,omitempty"`
-	DataReset bool   `json:"dataReset,omitempty"`
+	// The error message.
+	Error string `json:"error,omitempty"`
+	// Whether a data reset was done as a result of the error.
+	DataReset bool `json:"dataReset,omitempty"`
 }
 
 var outputJsonFormat bool

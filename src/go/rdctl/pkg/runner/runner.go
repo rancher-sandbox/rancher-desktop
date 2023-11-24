@@ -46,18 +46,17 @@ func (tr *TaskRunner) Wait() error {
 
 // checkContextBetween is the main loop of the TaskRunner type.
 func checkContextBetween(ctx context.Context, funcChan <-chan func() error, errChan chan<- error) {
+	defer close(errChan)
 	for function := range funcChan {
 		select {
 		case <-ctx.Done():
 			errChan <- ErrContextDone
-			goto close
+			return
 		default:
 			if err := function(); err != nil {
 				errChan <- err
-				goto close
+				return
 			}
 		}
 	}
-close:
-	close(errChan)
 }
