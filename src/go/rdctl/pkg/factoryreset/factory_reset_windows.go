@@ -28,7 +28,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"unsafe"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
@@ -50,7 +49,7 @@ var (
 
 func CheckProcessWindows() (bool, error) {
 	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop.exe", "/FO", "CSV")
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)

@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"syscall"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sys/windows"
 	"golang.org/x/text/encoding/unicode"
 )
-
-const CREATE_NO_WINDOW = 0x08000000
 
 type WSL interface {
 	// Deletes all WSL distros pertaining to Rancher Desktop.
@@ -28,7 +26,7 @@ type WSLImpl struct{}
 
 func (wsl WSLImpl) UnregisterDistros() error {
 	cmd := exec.Command("wsl", "--list", "--quiet")
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 	rawBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error getting current WSLs: %w", err)
@@ -49,7 +47,7 @@ func (wsl WSLImpl) UnregisterDistros() error {
 
 	for _, wsl := range wslsToKill {
 		cmd := exec.Command("wsl", "--unregister", wsl)
-		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+		cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 		if err := cmd.Run(); err != nil {
 			logrus.Errorf("Error unregistering WSL %s: %s\n", wsl, err)
 		}
