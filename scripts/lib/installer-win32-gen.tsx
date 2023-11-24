@@ -200,6 +200,12 @@ export default async function generateFileList(rootPath: string): Promise<string
       return null;
     },
 
+    'wix-custom-action.dll': () => {
+      // This file does not need to be installed; it's used as an unnamed
+      // binary instead; see main.wxs.
+      return null;
+    },
+
     // @ts-ignore
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>
