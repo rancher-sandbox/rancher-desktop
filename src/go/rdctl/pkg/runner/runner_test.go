@@ -2,9 +2,10 @@ package runner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTaskRunner(t *testing.T) {
@@ -19,13 +20,9 @@ func TestTaskRunner(t *testing.T) {
 				return nil
 			})
 		}
-		if err := taskRunner.Wait(); err != nil {
-			t.Fatalf("unexpected error waiting on taskRunner: %s", err)
-		}
+		assert.NoError(t, taskRunner.Wait())
 		for i := range ranSlice {
-			if !ranSlice[i] {
-				t.Errorf("function %d appears to not have run", i)
-			}
+			assert.True(t, ranSlice[i])
 		}
 	})
 
@@ -59,15 +56,9 @@ func TestTaskRunner(t *testing.T) {
 		cancel()
 		close(func1Chan)
 
-		if err := taskRunner.Wait(); !errors.Is(err, ErrContextDone) {
-			t.Fatalf("unexpected error waiting on taskRunner: %s", err)
-		}
-		if !func1Ran {
-			t.Errorf("func1 unexpectedly did not run")
-		}
-		if func2Ran {
-			t.Errorf("func2 ran but should not have")
-		}
+		assert.ErrorIs(t, taskRunner.Wait(), ErrContextDone)
+		assert.True(t, func1Ran)
+		assert.False(t, func2Ran)
 	})
 
 	t.Run("should return error from first function that errors out and not run subsequent functions", func(t *testing.T) {
@@ -84,14 +75,10 @@ func TestTaskRunner(t *testing.T) {
 				return fmt.Errorf("func%d error", i+1)
 			})
 		}
-		if err := taskRunner.Wait(); err.Error() != expectedError {
-			t.Errorf("taskRunner.Wait() returned unexpected error %q (expected %q)", err, expectedError)
+		if err := taskRunner.Wait(); err != nil {
+			assert.Equal(t, expectedError, err.Error())
 		}
-		if !ranSlice[0] {
-			t.Errorf("func1 unexpectedly did not run")
-		}
-		if ranSlice[1] {
-			t.Errorf("func2 ran but should not have")
-		}
+		assert.True(t, ranSlice[0])
+		assert.False(t, ranSlice[1])
 	})
 }
