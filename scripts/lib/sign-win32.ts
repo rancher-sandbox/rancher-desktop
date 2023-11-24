@@ -123,9 +123,7 @@ async function *findFilesToSign(unpackedDir: string, signingConfig: Record<strin
     }
   }
 
-  for (const child of await fs.promises.readdir(unpackedDir, { recursive: true, withFileTypes: true })) {
-    const childPath = path.normalize(path.join(child.path, child.name));
-
+  for await (const childPath of findFiles(unpackedDir)) {
     if (!/\.exe$/i.test(childPath)) {
       continue;
     }
@@ -144,6 +142,19 @@ async function *findFilesToSign(unpackedDir: string, signingConfig: Record<strin
     ];
 
     throw new Error(message.join('\n'));
+  }
+}
+
+/**
+ * Recursively yield all plain files in the given directory.
+ */
+async function *findFiles(dir: string): AsyncIterable<string> {
+  for (const child of await fs.promises.readdir(dir, { withFileTypes: true })) {
+    if (child.isDirectory()) {
+      yield * findFiles(path.join(dir, child.name));
+    } else if (child.isFile()) {
+      yield path.normalize(path.join(dir, child.name));
+    }
   }
 }
 
