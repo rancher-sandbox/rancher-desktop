@@ -9,21 +9,19 @@ import (
 )
 
 func TestTaskRunner(t *testing.T) {
-	t.Run("should run all functions if context not cancelled and no errors", func(t *testing.T) {
+	t.Run("should run all functions in order they were added if context not cancelled and no errors", func(t *testing.T) {
 		ctx := context.Background()
 		taskRunner := NewTaskRunner(ctx)
-		ranSlice := []bool{false, false, false}
-		for i := range ranSlice {
+		runOrder := make([]int, 0, 3)
+		for i := 1; i < 4; i++ {
 			i := i
 			taskRunner.Add(func() error {
-				ranSlice[i] = true
+				runOrder = append(runOrder, i)
 				return nil
 			})
 		}
 		assert.NoError(t, taskRunner.Wait())
-		for i := range ranSlice {
-			assert.True(t, ranSlice[i])
-		}
+		assert.Equal(t, []int{1, 2, 3}, runOrder)
 	})
 
 	t.Run("should stop execution after current function when context is cancelled", func(t *testing.T) {
