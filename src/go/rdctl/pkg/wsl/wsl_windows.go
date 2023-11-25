@@ -49,7 +49,7 @@ func (wsl WSLImpl) UnregisterDistros() error {
 		cmd := exec.Command("wsl", "--unregister", wsl)
 		cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 		if err := cmd.Run(); err != nil {
-			logrus.Errorf("Error unregistering WSL %s: %s\n", wsl, err)
+			logrus.Errorf("Error unregistering WSL distribution %s: %s\n", wsl, err)
 		}
 	}
 	return nil

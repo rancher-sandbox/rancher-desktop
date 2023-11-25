@@ -35,8 +35,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-const CREATE_NO_WINDOW = 0x08000000
-
 var (
 	pKernel32      = windows.NewLazySystemDLL("kernel32.dll")
 	pEnumProcesses = pKernel32.NewProc("K32EnumProcesses")
