@@ -14,13 +14,24 @@ entitlements:
     - '' # This is the main application
     entitlements:
     - com.apple.security.cs.allow-jit
+    - com.apple.security.network.server
+    - com.apple.security.network.client
   - paths:
     - Contents/Resources/resources/darwin/lima/bin/limactl
+    entitlements:
+    - com.apple.security.network.server
+    - com.apple.security.network.client
+  - paths:
     - Contents/Resources/resources/darwin/lima/bin/limactl.ventura
+    entitlements:
+    - com.apple.security.virtualization
+    - com.apple.security.network.server
+    - com.apple.security.network.client
+  - paths:
     - Contents/Resources/resources/darwin/lima/bin/qemu-system-aarch64
+    - Contents/Resources/resources/darwin/lima/bin/qemu-system-x86_64
     entitlements:
     - com.apple.security.hypervisor
-    - com.apple.security.virtualization
   - paths:
     - Contents/Frameworks/Rancher Desktop Helper (GPU).app
     - Contents/Frameworks/Rancher Desktop Helper (Renderer).app
