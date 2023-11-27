@@ -79,6 +79,7 @@ describe('settings', () => {
   });
 
   const fullDefaults = {
+    version:     settings.CURRENT_SETTINGS_VERSION,
     debug:       true,
     application: {
       adminAccess:            false,
@@ -138,11 +139,13 @@ describe('settings', () => {
   const jsonProfile = JSON.stringify(fullDefaults);
   const plistProfile = plist.build(fullDefaults);
   const unlockedProfile = {
+    version:         10,
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
     containerEngine: { name: 'moby' },
     kubernetes:      { version: '1.25.9' },
   };
   const lockedProfile = {
+    version:         10,
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
     containerEngine: {
       allowedImages: {
@@ -345,6 +348,7 @@ describe('settings', () => {
             const profiles = await readDeploymentProfiles();
             const expectedDefaults = _.omit(fullDefaults, ['debug', 'ignorableTestSettings', 'diagnostics.locked']);
             const expected = {
+              version:         settings.CURRENT_SETTINGS_VERSION,
               containerEngine: {
                 name: 'moby',
               },

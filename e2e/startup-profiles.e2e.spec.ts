@@ -32,7 +32,7 @@ import {
 } from './utils/ProfileUtils';
 import { createUserProfile, reportAsset } from './utils/TestUtils';
 
-import { Settings } from '@pkg/config/settings';
+import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -49,26 +49,42 @@ async function createInvalidLinuxUserProfile(contents: string) {
   await fs.promises.writeFile(userProfilePath, contents);
 }
 
-async function createNonexistentDataUserRegistryProfile() {
-  const base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults\\fruits';
-
+async function addRegistryEntry(path: string, name: string, valueType: string, value: string) {
   await childProcess.spawnFile('reg',
-    ['add', `${ base }`, '/v', 'oranges', '/f', '/t', 'REG_DWORD', '/d', '5'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
-  await childProcess.spawnFile('reg',
-    ['add', `${ base }`, '/v', 'mangoes', '/f', '/t', 'REG_DWORD', '/d', '1'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
-  await childProcess.spawnFile('reg',
-    ['add', `${ base }`, '/v', 'citrus', '/f', '/t', 'REG_SZ', '/d', 'lemons'],
+    ['add', path, '/v', name, '/f', '/t', valueType, '/d', value],
     { stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
-async function createWrongDataUserRegistryProfile() {
+async function createDefaultUserRegistryProfileWithNonexistentFields() {
+  let base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults';
+
+  await addRegistryEntry(base, 'version', 'REG_DWORD', '10');
+
+  base += '\\fruits';
+  await addRegistryEntry(base, 'oranges', 'REG_DWORD', '5');
+  await addRegistryEntry(base, 'mangoes', 'REG_DWORD', '1');
+  await addRegistryEntry(base, 'citrus', 'REG_SZ', 'lemons');
+}
+
+async function createDefaultUserRegistryProfileWithIncorrectTypes() {
+  let base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults';
+
+  await addRegistryEntry(base, 'version', 'REG_DWORD', '10');
+
+  base += '\\kubernetes';
+  await addRegistryEntry(base, 'version', 'REG_MULTI_SZ', 'strawberries\\0limes');
+}
+
+async function createDefaultUserRegistryProfileWithValidDataButNoVersion() {
   const base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults\\kubernetes';
 
-  await childProcess.spawnFile('reg',
-    ['add', `${ base }`, '/v', 'version', '/f', '/t', 'REG_MULTI_SZ', '/d', 'strawberries\\0limes'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
+  await addRegistryEntry(base, 'version', 'REG_DWORD', '1');
+}
+
+async function createLockedUserRegistryProfileWithValidDataButNoVersion() {
+  const base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Locked\\kubernetes';
+
+  await addRegistryEntry(base, 'version', 'REG_DWORD', '1');
 }
 
 test.describe.serial('track startup windows based on existing profiles and settings', () => {
@@ -119,18 +135,22 @@ test.describe.serial('track startup windows based on existing profiles and setti
       skipReasons = await verifyNoSystemProfile();
     });
 
-    test('nonexistent settings', async() => {
+    test('nonexistent settings act like an empty default profile', async() => {
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
-        await createNonexistentDataUserRegistryProfile();
+        await createDefaultUserRegistryProfileWithNonexistentFields();
       } else {
-        // Circumvent the type-checker by json-parsing a string of non-settings
-        const s = `{ "fruits": {"oranges": 5, "mangoes": true, "citrus": "lemons" } }`;
-        const s1 = JSON.parse(s);
+        const s1 = {
+          version: 10,
+          fruits:  {
+            oranges: 5, mangoes: true, citrus: 'lemons',
+          },
+        } as unknown as RecursivePartial<Settings>;
 
-        await createUserProfile(s1 as RecursivePartial<Settings>, null);
+        await createUserProfile(s1, null);
       }
-      await testForFirstRunWindow(`${ __filename }-nonexistent-settings`);
+      // We have a deployment with only a version field, good enough to bypass the first-run dialog.
+      await testForNoFirstRunWindow(`${ __filename }-nonexistent-settings`);
     });
 
     test('invalid format', async() => {
@@ -178,11 +198,9 @@ test.describe.serial('track startup windows based on existing profiles and setti
 
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
-        await createWrongDataUserRegistryProfile();
+        await createDefaultUserRegistryProfileWithIncorrectTypes();
       } else {
-        // Use JSON.parse to bypass the typescript type-checker
-        const s = `{"kubernetes":{"version":["strawberries","limes"]}}`;
-        const s1 = JSON.parse(s) as RecursivePartial<Settings>;
+        const s1 = { version: 10, kubernetes: { version: ['strawberries', 'limes'] } } as unknown as RecursivePartial<Settings>;
 
         await createUserProfile(s1, null);
       }
@@ -198,6 +216,56 @@ test.describe.serial('track startup windows based on existing profiles and setti
         expect(contents).toMatch(new RegExp(`Error in deployment file.*${ paths.deploymentProfileUser }.*defaults`));
         expect(contents).toContain(`Error for field 'kubernetes.version':`);
         expect(contents).toContain(`expecting value of type string, got an array ["strawberries","limes"]`);
+      }
+    });
+
+    test('missing version in defaults deployment profile', async() => {
+      const filename = `${ __filename }-missing-version-in-defaults-profile`;
+      const logDir = reportAsset(filename, 'log');
+      const logPath = path.join(logDir, 'background.log');
+
+      test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
+      if (process.platform === 'win32') {
+        await createDefaultUserRegistryProfileWithValidDataButNoVersion();
+      } else {
+        await createUserProfile({ kubernetes: { enabled: false } }, null);
+      }
+      const windowCount = await testWaitForLogfile(filename, logPath);
+      const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
+
+      expect(windowCount).toEqual(0);
+      expect(contents).toContain('Fatal Error:');
+      if (process.platform === 'win32') {
+        expect(contents).toContain('Invalid default-deployment: no version specified at HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults.');
+        expect(contents).toContain(`You'll need to add a version field to make it valid (current version is ${ CURRENT_SETTINGS_VERSION }).`);
+      } else {
+        expect(contents).toContain('Failed to load the deployment profile');
+        expect(contents).toMatch(/Invalid deployment file.*defaults.*: no version specified. You'll need to add a version field to make it valid/);
+      }
+    });
+
+    test('missing version in locked deployment profile', async() => {
+      const filename = `${ __filename }-missing-version-in-locked-profile`;
+      const logDir = reportAsset(filename, 'log');
+      const logPath = path.join(logDir, 'background.log');
+
+      test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
+      if (process.platform === 'win32') {
+        await createLockedUserRegistryProfileWithValidDataButNoVersion();
+      } else {
+        await createUserProfile(null, { kubernetes: { enabled: false } });
+      }
+      const windowCount = await testWaitForLogfile(filename, logPath);
+      const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
+
+      expect(windowCount).toEqual(0);
+      expect(contents).toContain('Fatal Error:');
+      if (process.platform === 'win32') {
+        expect(contents).toContain('Invalid locked-deployment: no version specified at HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Locked.');
+        expect(contents).toContain(`You'll need to add a version field to make it valid (current version is ${ CURRENT_SETTINGS_VERSION }).`);
+      } else {
+        expect(contents).toContain('Failed to load the deployment profile');
+        expect(contents).toMatch(/Invalid deployment file.*locked.*: no version specified. You'll need to add a version field to make it valid/);
       }
     });
   });

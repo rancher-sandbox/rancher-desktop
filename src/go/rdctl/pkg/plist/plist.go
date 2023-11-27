@@ -164,6 +164,10 @@ func JsonToPlist(settingsBodyAsJSON string) (string, error) {
 	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &actualSettingsJSON); err != nil {
 		return "", fmt.Errorf("error in json: %s", err)
 	}
+	_, ok := actualSettingsJSON["version"]
+	if !ok {
+		actualSettingsJSON["version"] = options.CURRENT_SETTINGS_VERSION
+	}
 	// We use the type as a schema, mainly to distinguish the absence of an array or map from an empty instance
 	// - see https://github.com/golang/go/issues/27589
 	// And the reason why the type-free parse isn't sufficient is that it doesn't distinguish

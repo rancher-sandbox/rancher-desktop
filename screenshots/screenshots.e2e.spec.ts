@@ -40,7 +40,7 @@ test.describe.serial('Main App Test', () => {
     });
 
     await createUserProfile(
-      { containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
+      { version: 10, containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
       {},
     );
 

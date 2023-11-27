@@ -85,8 +85,12 @@ test.describe('Locked fields', () => {
     createDefaultSettings({ containerEngine: { allowedImages: { enabled: true, patterns: ['a', 'b', 'c', 'e'] } } });
     await saveUserProfile();
     await createUserProfile(
-      { containerEngine: { allowedImages: { enabled: true } } },
-      { containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } }, kubernetes: { version: lockedK8sVersion } },
+      { version: 10, containerEngine: { allowedImages: { enabled: true } } },
+      {
+        version:         10,
+        containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } },
+        kubernetes:      { version: lockedK8sVersion },
+      },
     );
     electronApp = await startRancherDesktop(__filename);
     page = await electronApp.firstWindow();
