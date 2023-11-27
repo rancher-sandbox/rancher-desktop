@@ -3,6 +3,7 @@ package factoryreset
 import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,7 +11,8 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
-	if err := UnregisterWSL(); err != nil {
+	w := wsl.WSLImpl{}
+	if err := w.UnregisterDistros(); err != nil {
 		logrus.Errorf("could not unregister WSL: %s", err)
 		return err
 	}

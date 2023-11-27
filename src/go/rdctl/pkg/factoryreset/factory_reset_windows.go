@@ -28,13 +28,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"unsafe"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
-	"golang.org/x/text/encoding/unicode"
 )
 
 var (
@@ -49,7 +47,7 @@ var (
 
 func CheckProcessWindows() (bool, error) {
 	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop.exe", "/FO", "CSV")
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
+	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
@@ -269,37 +267,4 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 		logrus.Errorf("Could not get AppData (roaming) folder: %s\n", err)
 	}
 	return dirs, nil
-}
-
-const CREATE_NO_WINDOW = 0x08000000
-
-func UnregisterWSL() error {
-	cmd := exec.Command("wsl", "--list", "--quiet")
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
-	rawBytes, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("error getting current WSLs: %w", err)
-	}
-	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
-	actualOutput, err := decoder.String(string(rawBytes))
-	if err != nil {
-		return fmt.Errorf("error getting current WSLs: %w", err)
-	}
-	actualOutput = strings.ReplaceAll(actualOutput, "\r", "")
-	wsls := strings.Split(actualOutput, "\n")
-	wslsToKill := []string{}
-	for _, s := range wsls {
-		if s == "rancher-desktop" || s == "rancher-desktop-data" {
-			wslsToKill = append(wslsToKill, s)
-		}
-	}
-
-	for _, wsl := range wslsToKill {
-		cmd := exec.Command("wsl", "--unregister", wsl)
-		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: CREATE_NO_WINDOW}
-		if err := cmd.Run(); err != nil {
-			logrus.Errorf("Error unregistering WSL %s: %s\n", wsl, err)
-		}
-	}
-	return nil
 }
