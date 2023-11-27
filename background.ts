@@ -944,6 +944,10 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
 
   dialog.webContents.on('ipc-message', (_event, channel, args) => {
     if (channel === 'dialog/mounted') {
+      if (os.platform() !== 'darwin') {
+        mainWindow?.webContents.send('window/blur', true);
+      }
+
       options.format.type = 'operation';
       dialog.webContents.send('dialog/options', options);
       event.sender.sendToFrame(event.frameId, 'dialog/mounted');
@@ -956,6 +960,10 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
   });
 
   dialog.on('close', () => {
+    if (os.platform() !== 'darwin') {
+      mainWindow?.webContents.send('window/blur', false);
+    }
+
     if (os.platform() === 'linux' && mainWindow) {
       mainWindow.off('move', onMainWindowMove);
     }
