@@ -37,6 +37,12 @@ label > button:first-child:not(.btn-sm) {
   outline: 10px dashed red !important;
 }
 
+.btn-icon-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 :root {
   --preferences-content-padding: 0.75rem;
 }
