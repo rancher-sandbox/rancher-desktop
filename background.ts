@@ -272,34 +272,7 @@ Electron.app.whenReady().then(async() => {
       return;
     }
 
-    await doFirstRunDialog();
-
-    if (gone) {
-      console.log('User triggered quit during first-run');
-
-      return;
-    }
-
-    buildApplicationMenu();
-
-    Electron.app.setAboutPanelOptions({
-      // TODO: Update this to 2021-... as dev progresses
-      // also needs to be updated in electron-builder.yml
-      copyright:          'Copyright © 2021-2023 SUSE LLC',
-      applicationName:    `${ Electron.app.name } by SUSE`,
-      applicationVersion: `Version ${ await getVersion() }`,
-      iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
-    });
-
-    if (!cfg.application.hideNotificationIcon) {
-      Tray.getInstance(cfg).show();
-    }
-
-    if (!cfg.application.startInBackground) {
-      window.openMain();
-    } else if (Electron.app.dock) {
-      Electron.app.dock.hide();
-    }
+    await initUI();
 
     try {
       await dockerDirManager.ensureCredHelperConfigured();
@@ -323,6 +296,37 @@ Electron.app.whenReady().then(async() => {
     Electron.app.quit();
   }
 });
+
+async function initUI() {
+  await doFirstRunDialog();
+
+  if (gone) {
+    console.log('User triggered quit during first-run');
+
+    return;
+  }
+
+  buildApplicationMenu();
+
+  Electron.app.setAboutPanelOptions({
+    // TODO: Update this to 2021-... as dev progresses
+    // also needs to be updated in electron-builder.yml
+    copyright:          'Copyright © 2021-2023 SUSE LLC',
+    applicationName:    `${ Electron.app.name } by SUSE`,
+    applicationVersion: `Version ${ await getVersion() }`,
+    iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
+  });
+
+  if (!cfg.application.hideNotificationIcon) {
+    Tray.getInstance(cfg).show();
+  }
+
+  if (!cfg.application.startInBackground) {
+    window.openMain();
+  } else if (Electron.app.dock) {
+    Electron.app.dock.hide();
+  }
+}
 
 async function doFirstRunDialog() {
   if (!noModalDialogs && settingsImpl.firstRunDialogNeeded()) {
