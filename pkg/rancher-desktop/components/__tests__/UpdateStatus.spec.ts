@@ -4,8 +4,20 @@ import UpdateStatus from '../UpdateStatus.vue';
 
 import { UpdateState } from '@pkg/main/update';
 
+jest.mock('@pkg/utils/ipcRenderer', () => {
+  return {
+    ipcRenderer: {
+      on:   jest.fn(),
+      send: jest.fn(),
+    },
+  };
+});
+
 function wrap(props: UpdateStatus['$props']) {
-  return mount(UpdateStatus, { propsData: props });
+  return mount(UpdateStatus, {
+    propsData: props,
+    mocks:     { t: jest.fn() },
+  });
 }
 
 describe('UpdateStatus.vue', () => {
