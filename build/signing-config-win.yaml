@@ -32,3 +32,4 @@ resources/resources/win32/internal:
 - privileged-service.exe
 - steve.exe
 - vtunnel.exe
+- '!dummy.exe'
