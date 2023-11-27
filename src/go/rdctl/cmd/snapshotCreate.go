@@ -1,12 +1,18 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"os/exec"
+	"os/signal"
+	"runtime"
+	"syscall"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os/exec"
-	"runtime"
 )
 
 var snapshotDescription string
@@ -38,7 +44,18 @@ func createSnapshot(args []string) error {
 		return nil
 	}
 
-	if _, err := manager.Create(name, snapshotDescription); err != nil {
+	// Ideally we would not use the deprecated syscall package,
+	// but it works well with all expected scenarios and allows us
+	// to avoid platform-specific signal handling code.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	defer stop()
+	context.AfterFunc(ctx, func() {
+		if !outputJsonFormat {
+			fmt.Println("Cancelling snapshot creation...")
+		}
+	})
+	_, err = manager.Create(ctx, name, snapshotDescription)
+	if err != nil && !errors.Is(err, runner.ErrContextDone) {
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
 

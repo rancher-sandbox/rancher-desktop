@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 )
 
 const completeFileName = "complete.txt"
@@ -114,7 +116,7 @@ func (manager *Manager) writeMetadataFile(snapshot Snapshot) error {
 }
 
 // Create a new snapshot.
-func (manager *Manager) Create(name, description string) (snapshot Snapshot, err error) {
+func (manager *Manager) Create(ctx context.Context, name, description string) (snapshot Snapshot, err error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return snapshot, fmt.Errorf("failed to generate ID for snapshot: %w", err)
@@ -142,7 +144,7 @@ func (manager *Manager) Create(name, description string) (snapshot Snapshot, err
 		return
 	}
 	if err = manager.writeMetadataFile(snapshot); err == nil {
-		err = manager.CreateFiles(manager.Paths, manager.SnapshotDirectory(snapshot))
+		err = manager.CreateFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot))
 	}
 	return
 }
@@ -199,7 +201,7 @@ func (manager *Manager) Delete(name string) error {
 }
 
 // Restore Rancher Desktop to the state saved in a snapshot.
-func (manager *Manager) Restore(name string) (err error) {
+func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 	snapshot, err := manager.Snapshot(name)
 	if err != nil {
 		return err
@@ -209,13 +211,19 @@ func (manager *Manager) Restore(name string) (err error) {
 		return err
 	}
 	defer func() {
-		// Don't restart the backend if the restore failed
-		unlockErr := manager.Unlock(manager.Paths, err == nil)
+		// Restart the backend only if a data reset occurred
+		unlockErr := manager.Unlock(manager.Paths, !errors.Is(err, ErrDataReset))
 		if err == nil {
 			err = unlockErr
 		}
 	}()
-	if err = manager.RestoreFiles(manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
+	// If the context is marked done (i.e. the user cancelled the
+	// operation) we can avoid running RestoreFiles() and thus avoid
+	// an unnecessary data reset.
+	if contextIsDone(ctx) {
+		return runner.ErrContextDone
+	}
+	if err = manager.RestoreFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot)); err != nil {
 		return fmt.Errorf("failed to restore files: %w", err)
 	}
 
@@ -229,4 +237,13 @@ func checkForInvalidCharacter(name string) error {
 		}
 	}
 	return nil
+}
+
+func contextIsDone(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
 }

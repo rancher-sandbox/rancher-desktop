@@ -1,12 +1,15 @@
 package snapshot
 
 import (
+	"context"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 )
 
 type wslDistro struct {
@@ -65,61 +68,83 @@ func NewSnapshotterImpl() SnapshotterImpl {
 	}
 }
 
-func (snapshotter SnapshotterImpl) CreateFiles(appPaths paths.Paths, snapshotDir string) error {
+func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
+	taskRunner := runner.NewTaskRunner(ctx)
+
 	// export WSL distros to snapshot directory
 	for _, distro := range snapshotter.WSLDistros(appPaths) {
-		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
-		if err := snapshotter.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
-			return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
-		}
+		distro := distro
+		taskRunner.Add(func() error {
+			snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
+			if err := snapshotter.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
+				return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
+			}
+			return nil
+		})
 	}
 
 	// copy settings.json to snapshot directory
-	workingSettingsPath := filepath.Join(appPaths.Config, "settings.json")
-	snapshotSettingsPath := filepath.Join(snapshotDir, "settings.json")
-	if err := copyFile(snapshotSettingsPath, workingSettingsPath); err != nil {
-		return fmt.Errorf("failed to copy %q to snapshot directory: %w", workingSettingsPath, err)
-	}
+	taskRunner.Add(func() error {
+		workingSettingsPath := filepath.Join(appPaths.Config, "settings.json")
+		snapshotSettingsPath := filepath.Join(snapshotDir, "settings.json")
+		if err := copyFile(snapshotSettingsPath, workingSettingsPath); err != nil {
+			return fmt.Errorf("failed to copy %q to snapshot directory: %w", workingSettingsPath, err)
+		}
+		return nil
+	})
 
 	// Create complete.txt file. This is done last because its presence
 	// signifies a complete and valid snapshot.
-	completeFilePath := filepath.Join(snapshotDir, completeFileName)
-	if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
-		return fmt.Errorf("failed to write %q: %w", completeFileName, err)
-	}
+	taskRunner.Add(func() error {
+		completeFilePath := filepath.Join(snapshotDir, completeFileName)
+		if err := os.WriteFile(completeFilePath, []byte(completeFileContents), 0o644); err != nil {
+			return fmt.Errorf("failed to write %q: %w", completeFileName, err)
+		}
+		return nil
+	})
 
-	return nil
+	return taskRunner.Wait()
 }
 
-func (snapshotter SnapshotterImpl) RestoreFiles(appPaths paths.Paths, snapshotDir string) error {
+func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
+	tr := runner.NewTaskRunner(ctx)
+
+	// unregister WSL distros
+	tr.Add(func() error {
+		if err := snapshotter.UnregisterDistros(); err != nil {
+			return fmt.Errorf("failed to unregister WSL distros: %w", err)
+		}
+		return nil
+	})
+
 	// restore WSL distros
-	var err error
-	if err = snapshotter.UnregisterDistros(); err != nil {
-		return fmt.Errorf("failed to unregister WSL distros: %w", err)
-	}
 	for _, distro := range snapshotter.WSLDistros(appPaths) {
-		snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
-		if err = os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
-			err = fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
-			break
-		}
-		if err = snapshotter.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
-			err = fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
-			break
-		}
+		distro := distro
+		tr.Add(func() error {
+			snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
+			if err := os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
+				return fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
+			}
+			if err := snapshotter.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
+				return fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
+			}
+			return nil
+		})
 	}
 
 	// copy settings.json back to its working location
 	workingSettingsPath := filepath.Join(appPaths.Config, "settings.json")
 	snapshotSettingsPath := filepath.Join(snapshotDir, "settings.json")
-	if err == nil {
-		if err = copyFile(workingSettingsPath, snapshotSettingsPath); err != nil {
-			err = fmt.Errorf("failed to restore %q: %w", workingSettingsPath, err)
+	tr.Add(func() error {
+		if err := copyFile(workingSettingsPath, snapshotSettingsPath); err != nil {
+			return fmt.Errorf("failed to restore %q: %w", workingSettingsPath, err)
 		}
-	}
-	if err != nil {
+		return nil
+	})
+	if err := tr.Wait(); err != nil {
 		_ = os.Remove(workingSettingsPath)
 		_ = snapshotter.UnregisterDistros()
+		return fmt.Errorf("%w: %w", ErrDataReset, err)
 	}
-	return err
+	return nil
 }

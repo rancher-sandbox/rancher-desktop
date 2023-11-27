@@ -1,11 +1,15 @@
 package snapshot
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
 )
 
 type TestFile struct {
@@ -22,7 +26,7 @@ func TestManager(t *testing.T) {
 		if err := manager.ValidateName(snapshotName); err != nil {
 			t.Fatalf("failed to validate first snapshot: %s", err)
 		}
-		snapshot, err := manager.Create(snapshotName, "")
+		snapshot, err := manager.Create(context.Background(), snapshotName, "")
 		if err != nil {
 			t.Fatalf("failed to create first snapshot: %s", err)
 		}
@@ -114,7 +118,7 @@ func TestManager(t *testing.T) {
 			var lastSnapshot Snapshot
 			for i := range []int{1, 2, 3} {
 				snapshotName := fmt.Sprintf("test-snapshot-%d", i)
-				snapshot, err := manager.Create(snapshotName, "")
+				snapshot, err := manager.Create(context.Background(), snapshotName, "")
 				if err != nil {
 					t.Fatalf("failed to create snapshot %q: %s", snapshotName, err)
 				}
@@ -144,7 +148,7 @@ func TestManager(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create("test-snapshot", "")
+		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -170,7 +174,7 @@ func TestManager(t *testing.T) {
 	t.Run("Restore should return an error if asked to restore a nonexistent snapshot", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		if err := manager.Restore("no-such-snapshot-id"); err == nil {
+		if err := manager.Restore(context.Background(), "no-such-snapshot-id"); err == nil {
 			t.Errorf("Failed to complain when asked to restore a nonexistent snapshot")
 		}
 	})
@@ -178,7 +182,7 @@ func TestManager(t *testing.T) {
 	t.Run("Restore should return the proper error if asked to restore from an incomplete snapshot", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create("test-snapshot", "")
+		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -186,8 +190,40 @@ func TestManager(t *testing.T) {
 		if err := os.Remove(completeFilePath); err != nil {
 			t.Fatalf("failed to remove %q: %s", completeFileName, err)
 		}
-		if err := manager.Restore(snapshot.Name); err == nil {
+		if err := manager.Restore(context.Background(), snapshot.Name); err == nil {
 			t.Errorf("Failed to complain when asked to restore an incomplete snapshot")
+		}
+	})
+
+	t.Run("Restore should return proper error and not run RestoreFiles when context is already cancelled", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := newTestManager(paths)
+		snapshotName := "test-snapshot"
+		_, err := manager.Create(context.Background(), snapshotName, "")
+		if err != nil {
+			t.Fatalf("failed to create snapshot: %s", err)
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		if err := manager.Restore(ctx, snapshotName); !errors.Is(err, runner.ErrContextDone) {
+			t.Errorf("Error is of unexpected type: %q", err)
+		}
+	})
+
+	t.Run("Restore should return data reset error when RestoreFiles encounters an error and resets data", func(t *testing.T) {
+		paths, _ := populateFiles(t, true)
+		manager := newTestManager(paths)
+		snapshotName := "test-snapshot"
+		snapshot, err := manager.Create(context.Background(), snapshotName, "")
+		if err != nil {
+			t.Fatalf("failed to create snapshot: %s", err)
+		}
+		snapshotSettingsPath := filepath.Join(paths.Snapshots, snapshot.ID, "settings.json")
+		if err := os.RemoveAll(snapshotSettingsPath); err != nil {
+			t.Fatalf("failed to remove settings.json: %s", err)
+		}
+		if err := manager.Restore(context.Background(), snapshotName); !errors.Is(err, ErrDataReset) {
+			t.Errorf("Error is of unexpected type: %q", err)
 		}
 	})
 }
