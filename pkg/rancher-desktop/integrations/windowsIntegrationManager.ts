@@ -92,7 +92,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
           console.debug('Spawning Windows docker proxy');
 
           return spawn(
-            path.join(paths.resources, 'win32', 'wsl-helper.exe'),
+            executable('wsl-helper'),
             ['docker-proxy', 'serve', ...this.wslHelperDebugArgs], {
               stdio:       ['ignore', stream, stream],
               windowsHide: true,
@@ -238,15 +238,14 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   /**
    * Return the Linux path to the WSL helper executable.
    */
-  protected async getLinuxToolPath(distro: string, ...tool: string[]): Promise<string> {
+  protected async getLinuxToolPath(distro: string, tool: string): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
 
     const logStream = Logging[`wsl-helper.${ distro }`];
     const { stdout } = await spawnFile(
       await this.wslExe,
-      ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u',
-        path.join(paths.resources, 'linux', ...tool)],
+      ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u', tool],
       { stdio: ['ignore', 'pipe', logStream] },
     );
 
@@ -291,7 +290,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
       console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
       if (shouldRun) {
-        const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+        const linuxExecutable = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
         const logStream = Logging[`wsl-helper.${ distro }`];
 
         this.distroSocketProxyProcesses[distro] ??= new BackgroundProcess(
@@ -299,7 +298,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
           {
             spawn: async() => {
               return spawn(await this.wslExe,
-                ['--distribution', distro, '--user', 'root', '--exec', executable,
+                ['--distribution', distro, '--user', 'root', '--exec', linuxExecutable,
                   'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
                 {
                   stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
@@ -312,7 +311,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
               // Ensure we kill the WSL-side process; sometimes things can get out
               // of sync.
               await this.execCommand({ distro, root: true },
-                executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
+                linuxExecutable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
             },
           });
         this.distroSocketProxyProcesses[distro].start();
@@ -358,7 +357,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       throw new Error("Can't find home directory");
     }
     const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
-    const srcPath = executable(pluginName);
+    const srcPath = executable(pluginName as any); // It's an executable in `bin`
     const cliPath = path.join(cliDir, path.basename(srcPath));
 
     console.debug(`Syncing host ${ pluginName }: ${ srcPath } -> ${ cliPath }`);
@@ -389,7 +388,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    */
   protected async syncDistroDockerPlugin(distro: string, pluginName: string, state: boolean) {
     try {
-      const srcPath = await this.getLinuxToolPath(distro, 'bin', pluginName);
+      const srcPath = await this.getLinuxToolPath(distro,
+        path.join(paths.resources, 'linux', 'bin', pluginName));
       const destDir = '$HOME/.docker/cli-plugins';
       const destPath = `${ destDir }/${ pluginName }`;
 
@@ -433,14 +433,14 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       if (this.settings.experimental?.virtualMachine?.networkingTunnel) {
         await this.execCommand(
           { distro, root: true },
-          await this.getLinuxToolPath(distro, 'wsl-helper'),
+          await this.getLinuxToolPath(distro, executable('wsl-helper-linux')),
           'update-host',
           `--entries=${ entry }`,
         );
       } else {
         await this.execCommand(
           { distro, root: true },
-          await this.getLinuxToolPath(distro, 'wsl-helper'),
+          await this.getLinuxToolPath(distro, executable('wsl-helper-linux')),
           'update-host',
           `--remove`,
         );
@@ -464,7 +464,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
             WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
           },
         },
-        await this.getLinuxToolPath(distro, 'wsl-helper'),
+        await this.getLinuxToolPath(distro, executable('wsl-helper-linux')),
         'kubeconfig',
         `--enable=${ state && this.settings.kubernetes?.enabled }`,
         `--rd-networking=${ rdNetworking }`,
@@ -518,10 +518,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected async markIntegration(distro: string, state: boolean): Promise<void> {
     try {
-      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+      const exe = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
       const mode = state ? 'set' : 'delete';
 
-      await this.execCommand({ distro, root: true }, executable, 'wsl', 'integration-state', `--mode=${ mode }`);
+      await this.execCommand({ distro, root: true }, exe, 'wsl', 'integration-state', `--mode=${ mode }`);
     } catch (ex) {
       console.error(`Failed to mark integration for ${ distro }:`, ex);
     }
@@ -548,10 +548,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${ distro.version }).`;
     }
     try {
-      const executable = await this.getLinuxToolPath(distro.name, 'wsl-helper');
+      const exe = await this.getLinuxToolPath(distro.name, executable('wsl-helper-linux'));
       const stdout = await this.captureCommand(
         { distro: distro.name },
-        executable, 'wsl', 'integration-state', '--mode=show');
+        exe, 'wsl', 'integration-state', '--mode=show');
 
       console.debug(`WSL distro "${ distro.name }": wsl-helper output: "${ stdout.trim() }"`);
       if (['true', 'false'].includes(stdout.trim())) {

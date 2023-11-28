@@ -3,11 +3,9 @@
  * version.
  */
 
-import path from 'path';
-
 import { spawnFile } from '@pkg/utils/childProcess';
 import logging from '@pkg/utils/logging';
-import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
 
 type WSLVersionInfo = {
     installed: boolean;
@@ -28,8 +26,8 @@ const console = logging['wsl-version'];
  * Get information about the currently installed WSL version.
  */
 export default async function getWSLVersion(): Promise<WSLVersionInfo> {
-  const wslHelper = path.join(paths.resources, 'win32', 'wsl-helper.exe');
-  const { stdout } = await spawnFile(wslHelper, ['wsl', 'info'], { stdio: ['ignore', 'pipe', console] });
+  const { stdout } = await spawnFile(executable('wsl-helper'),
+    ['wsl', 'info'], { stdio: ['ignore', 'pipe', console] });
 
   return JSON.parse(stdout);
 }
