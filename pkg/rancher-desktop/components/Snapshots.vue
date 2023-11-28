@@ -13,13 +13,10 @@ interface Data {
   snapshotEvent: SnapshotEvent | null;
   snapshotsPollingInterval: ReturnType<typeof setInterval> | null;
   isEmpty: boolean;
-  cardsStyle: string;
 }
 
 interface Methods {
-  pollingStart: () => void,
-  setCardsHeight: () => void;
-  toggleMainScrollbar: (value: boolean) => void;
+  pollingStart: () => void
 }
 
 interface Computed {
@@ -38,7 +35,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
       snapshotsPollingInterval: null,
       snapshotEvent:            null,
       isEmpty:                  false,
-      cardsStyle:               '',
     };
   },
 
@@ -47,9 +43,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
   watch: {
     snapshots(list) {
       this.isEmpty = list?.length === 0;
-    },
-    snapshotEvent() {
-      this.setCardsHeight();
     },
   },
 
@@ -72,19 +65,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
     };
   },
 
-  mounted() {
-    this.toggleMainScrollbar(false);
-    this.setCardsHeight();
-    addEventListener('resize', this.setCardsHeight);
-  },
-
   beforeDestroy() {
     if (this.snapshotsPollingInterval) {
       clearInterval(this.snapshotsPollingInterval);
     }
     ipcRenderer.removeAllListeners('snapshot');
-    removeEventListener('resize', this.setCardsHeight);
-    this.toggleMainScrollbar(true);
   },
 
   methods: {
@@ -92,19 +77,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
       this.snapshotsPollingInterval = setInterval(() => {
         this.$store.dispatch('snapshots/fetch');
       }, 1500);
-    },
-    setCardsHeight() {
-      /**
-       * height = window height - page header - space reserved for snapshot event
-       */
-      this.cardsStyle = `height: ${ window?.innerHeight - 150 - (this.snapshotEvent ? 75 : 0) }px`;
-    },
-    toggleMainScrollbar(value: boolean) {
-      const main = document.getElementsByTagName('main')?.[0];
-
-      if (main) {
-        main.style.overflowY = value ? 'auto' : 'hidden';
-      }
     },
   },
 });
@@ -117,7 +89,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       class="event"
     >
       <Banner
-        class="banner mb-20"
+        class="banner"
         :color="snapshotEvent.result"
         :closable="true"
         @close="snapshotEvent=null"
@@ -129,8 +101,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
       </Banner>
     </div>
     <div
-      :style="cardsStyle"
       class="cards"
+      :class="{ margin: !snapshotEvent }"
     >
       <div
         v-for="(item) of snapshots"
@@ -166,11 +138,27 @@ export default Vue.extend<Data, Methods, Computed, never>({
     }
 
     .event {
-      margin-top: 0;
+      position: sticky;
+      top: 0;
+      background: white;
+
+      .banner {
+        margin: 0;
+        ::v-deep .banner__content {
+          margin-top: 8px;
+          margin-bottom: 15px;
+
+          .banner__content__closer {
+            height: 50px;
+          }
+        }
+      }
     }
 
     .cards {
-      margin-top: 13px;
+      &.margin {
+        margin-top: 13px;
+      }
       overflow-y: auto;
     }
   }
