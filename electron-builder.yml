@@ -13,8 +13,6 @@ files:
 - dist/app/**/*
 - '!**/node_modules/*/prebuilds/!(${platform}*)/*.node'
 mac:
-  entitlements: "build/entitlements.mac.plist"
-  entitlementsInherit: "build/entitlements.mac.inherit.plist"
   darkModeSupport: true
   hardenedRuntime: true
   gatekeeperAssess: false
@@ -23,7 +21,10 @@ mac:
     NSMicrophoneUsageDescription: ~
   icon: ./resources/icons/mac-icon.png
   target: [ dmg, zip ]
-afterSign: "scripts/notarize.js"
+  identity: ~ # We sign in a separate step
+  extraFiles:
+  - build/signing-config-mac.yaml
+  - electron-builder.yml
 win:
   target: [ zip ]
   signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2

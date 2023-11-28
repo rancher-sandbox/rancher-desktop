@@ -11,6 +11,7 @@ import path from 'path';
 
 import extract from 'extract-zip';
 
+import * as macos from './lib/sign-macos';
 import * as windows from './lib/sign-win32';
 
 async function signArchive(archive: string) {
@@ -30,6 +31,9 @@ async function signArchive(archive: string) {
     for (const file of await fs.promises.readdir(archiveDir)) {
       if (file.endsWith('.exe')) {
         return await windows.sign(workDir);
+      }
+      if (file.endsWith('.app')) {
+        return await macos.sign(workDir);
       }
     }
   } finally {

@@ -1,0 +1,59 @@
+# This file describes the code signing configuration for macOS.
+
+# List of entitlements.
+entitlements:
+  # This contains the default entitlements, for files not otherwise listed.
+  default:
+  - com.apple.security.inherit
+
+  # Entitlement overrides.  This is a list of overrides, each with a "paths"
+  # key describing which paths to override, and an "entitlements" key for the
+  # overriding entitlements.
+  overrides:
+  - paths:
+    - '' # This is the main application
+    entitlements:
+    - com.apple.security.cs.allow-jit
+    - com.apple.security.network.server
+    - com.apple.security.network.client
+  - paths:
+    - Contents/Resources/resources/darwin/lima/bin/limactl
+    entitlements:
+    - com.apple.security.network.server
+    - com.apple.security.network.client
+  - paths:
+    - Contents/Resources/resources/darwin/lima/bin/limactl.ventura
+    entitlements:
+    - com.apple.security.virtualization
+    - com.apple.security.network.server
+    - com.apple.security.network.client
+  - paths:
+    - Contents/Resources/resources/darwin/lima/bin/qemu-system-aarch64
+    - Contents/Resources/resources/darwin/lima/bin/qemu-system-x86_64
+    entitlements:
+    - com.apple.security.hypervisor
+  - paths:
+    - Contents/Frameworks/Rancher Desktop Helper (GPU).app
+    - Contents/Frameworks/Rancher Desktop Helper (Renderer).app
+    entitlements:
+    - com.apple.security.cs.allow-jit
+  - paths:
+    - Contents/Frameworks/Rancher Desktop Helper (Plugin).app
+    entitlements:
+    - com.apple.security.cs.allow-unsigned-executable-memory
+    - com.apple.security.cs.disable-library-validation
+
+# List of launch constraints.
+# This is similar to entitlements, but has no default: it's just a list of
+# paths, plus matching "self", "parent", and "responsible" constraints.
+constraints:
+- paths:
+  - Contents/Resources/resources/darwin/lima/bin/limactl
+  - Contents/Resources/resources/darwin/lima/bin/limactl.ventura
+  self:
+    team-identifier: '${AC_TEAMID}'
+
+# A list of files/directories to remove before signing.
+remove:
+- Contents/build
+- Contents/electron-builder.yml

@@ -16,7 +16,7 @@ In general, the process involves:
 3. Run the signing tool:
 
     ```sh
-    yarn sign -- path/to/archive.zip
+    yarn sign path/to/archive.zip
     ```
 
 4. Look in `dist/` for the signed files (`Rancher Desktop Setup.exe`, etc.).
@@ -64,3 +64,45 @@ must search the output for your signing certificate and locate the
 
 In explorer, right-click on the final `.exe` file, choose `Properties`, `Digital Signatures`,
 and verify that `Suse LLC` is listed in the Signature List.
+
+## macOS
+
+On macOS, a signing certificate from Apple is required (via their developer
+program).  Please refer to [Apple Documentation] for details.  Note that a
+_Mac Development_ certificate is insufficient for notarization; it must be a
+_Developer ID Application_ certificate.  This will be reflected in the Common
+Name of the certificate.
+
+[Apple Documentation]: https://developer.apple.com/help/account/create-certificates/create-developer-id-certificates
+
+### Configuring Access
+
+- Import your signing certificate into your macOS Keychain.
+- Run `security find-identity -v` to locate the fingerprint of the key to use.
+  Export the long hex string as the `CSC_FINGERPRINT` environment variable.
+
+For notarization, the following environment variables are also needed:
+
+- `APPLEID`
+  - This is your Apple ID login; for example, `john.doe@example.com`
+- `AC_PASSWORD`
+  - This is an application-specific password for your Apple ID; to create it:
+    1. Navigate to https://appleid.apple.com/account/manage
+    2. Click on _App-Specific Passwords_ at the bottom.
+    3. Create one (with a label of your choice) and copy the resulting password.
+- `AC_TEAMID`
+  - This is the Apple Team ID.  This is the _Organizational Unit (OU)_ field of
+    the subject of your signing certificate; for Rancher Desktop / SUSE, this is
+    `2Q6FHJR3H3`. <!-- spellcheck-ignore-line -->
+    (This value can be extracted from the published application.)
+
+### Performing signing
+
+If notarization is not required, append `--skip-notarize` to the command:
+
+  ```sh
+  yarn sign --skip-notarize path/to/archive.zip
+  ```
+
+This is necessary to test the signing flow (since there's no way to notarize
+without the production certificate).

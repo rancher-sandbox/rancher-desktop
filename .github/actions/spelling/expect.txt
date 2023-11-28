@@ -570,7 +570,7 @@ pio
 pixbuf
 pki
 pkill
-Plists
+plists
 plusplus
 plutil
 podmetrics
@@ -729,6 +729,7 @@ sysfs
 tarballs
 TARGETDIR
 tcshrc
+TEAMID
 teamocil
 Telekom
 templ
