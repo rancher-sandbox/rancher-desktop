@@ -19,8 +19,7 @@ import { windowMapping } from '@pkg/window';
 const console = Logging.networking;
 
 export default async function setupNetworking() {
-  const session = Electron.session.defaultSession;
-  const httpsOptions: https.AgentOptions = { ...https.globalAgent.options };
+  const httpsOptions = { ...https.globalAgent.options };
 
   if (!Array.isArray(httpsOptions.ca)) {
     httpsOptions.ca = httpsOptions.ca ? [httpsOptions.ca] : [];
@@ -34,15 +33,13 @@ export default async function setupNetworking() {
     throw ex;
   }
 
-  const httpAgent = new ElectronProxyAgent(httpsOptions, session);
+  const proxyAgent = new ElectronProxyAgent({
+    httpAgent:  new http.Agent(httpsOptions),
+    httpsAgent: new https.Agent(httpsOptions),
+  });
 
-  httpAgent.protocol = 'http:';
-  http.globalAgent = httpAgent;
-
-  const httpsAgent = new ElectronProxyAgent(httpsOptions, session);
-
-  httpsAgent.protocol = 'https:';
-  https.globalAgent = httpsAgent;
+  http.globalAgent = proxyAgent;
+  https.globalAgent = proxyAgent;
 
   // Set up certificate handling for system certificates on Windows and macOS
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
