@@ -33,7 +33,7 @@ import {
 } from './utils/ProfileUtils';
 import { createUserProfile, reportAsset } from './utils/TestUtils';
 
-import { Settings } from '@pkg/config/settings';
+import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
