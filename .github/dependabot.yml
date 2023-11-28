@@ -19,13 +19,13 @@ updates:
     ignore:
       - # Needs to be updated along with NodeJS version.
         dependency-name: "@types/node"
-        versions: [ ">16" ]
-      - # Blocked by nuxt; this also blocks vue-template-compiler.
+        versions: [ ">18" ]
+      - # Need to migrate to Vue 3 before moving beyond 2.7.x.
         dependency-name: "vue"
-        versions: [ ">2.6" ]
-      - # Webpack 5 requires Nuxt 3. https://github.com/nuxt/nuxt.js/issues/8252
+        versions: [ ">2.7" ]
+      - # Current Vue config targets webpack 5.
         dependency-name: "webpack"
-        versions: [ ">4" ]
+        versions: [ ">5" ]
       - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
         # support that. See https://github.com/electron/electron/issues/21457
         dependency-name: "node-fetch"
