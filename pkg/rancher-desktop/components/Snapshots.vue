@@ -140,7 +140,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
     .event {
       position: sticky;
       top: 0;
-      background: white;
+      background: var(--body-bg);
 
       .banner {
         margin: 0;
