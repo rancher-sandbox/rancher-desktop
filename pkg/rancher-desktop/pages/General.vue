@@ -66,6 +66,7 @@ export default {
       {
         title:       this.t('general.title'),
         description: this.t('general.description'),
+        icon:        'icon icon-rancher-desktop',
       },
     );
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
