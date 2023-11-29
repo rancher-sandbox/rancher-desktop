@@ -31,7 +31,7 @@ type SigningConfig = {
   remove: string[];
 };
 
-export async function sign(workDir: string) {
+export async function sign(workDir: string): Promise<string> {
   const certFingerprint = process.env.CSC_FINGERPRINT ?? '';
   const appleId = process.env.APPLEID;
   const appleIdPassword = process.env.AC_PASSWORD;
@@ -127,14 +127,26 @@ export async function sign(workDir: string) {
 
   console.log('Building disk image...');
   const arch = process.env.M1 ? Arch.arm64 : Arch.x64;
+  const productFileName = config.productName?.replace(/\s+/g, '.');
+  const productArch = process.env.M1 ? 'aarch64' : 'x86_64';
+  const artifactName = `${ productFileName }-\${version}.${ productArch }.\${ext}`;
 
   // Build the dmg, explicitly _not_ using an identity; we just signed
   // everything as we wanted already.
-  await build({
+  const results = await build({
     targets:     new Map([[Platform.MAC, new Map([[arch, ['dmg']]])]]),
-    config:      _.merge<Configuration, Configuration>(config, { mac: { identity: null } }),
+    config:      _.merge<Configuration, Configuration>(config, { mac: { artifactName, identity: null } }),
     prepackaged: appDir,
   });
+
+  const dmgFile = results.find(v => v.endsWith('.dmg'));
+
+  if (!dmgFile) {
+    throw new Error(`Could not find signed disk image`);
+  }
+  await spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', dmgFile]);
+
+  return dmgFile;
 }
 
 /**

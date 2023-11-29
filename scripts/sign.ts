@@ -6,6 +6,7 @@
  * Currently, only Windows is supported; mac support is planned.
  */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -14,12 +15,13 @@ import extract from 'extract-zip';
 import * as macos from './lib/sign-macos';
 import * as windows from './lib/sign-win32';
 
-async function signArchive(archive: string) {
+async function signArchive(archive: string): Promise<void> {
   const distDir = path.join(process.cwd(), 'dist');
 
   await fs.promises.mkdir(distDir, { recursive: true });
   const workDir = await fs.promises.mkdtemp(path.join(distDir, 'sign-'));
   const archiveDir = path.join(workDir, 'unpacked');
+  let artifact: string | undefined;
 
   try {
     // Extract the archive
@@ -30,15 +32,37 @@ async function signArchive(archive: string) {
     // Detect the archive type
     for (const file of await fs.promises.readdir(archiveDir)) {
       if (file.endsWith('.exe')) {
-        return await windows.sign(workDir);
+        artifact = await windows.sign(workDir);
+        break;
       }
       if (file.endsWith('.app')) {
-        return await macos.sign(workDir);
+        artifact = await macos.sign(workDir);
+        break;
       }
     }
+
+    if (!artifact) {
+      throw new Error(`Could not find any files to sign in ${ archive }`);
+    }
+    await computeChecksum(artifact);
+    console.log(`Signed result: ${ artifact }`);
   } finally {
     await fs.promises.rm(workDir, { recursive: true, maxRetries: 3 });
   }
+}
+
+async function computeChecksum(artifact: string) {
+  const hash = crypto.createHash('sha512');
+  const reader = fs.createReadStream(artifact);
+
+  await new Promise((resolve, reject) => {
+    hash.on('finish', resolve);
+    hash.on('error', reject);
+    reader.pipe(hash);
+  });
+  await fs.promises.writeFile(
+    `${ artifact }.sha512sum`,
+    `${ hash.digest('hex') } *${ path.basename(artifact) }`);
 }
 
 (async() => {
