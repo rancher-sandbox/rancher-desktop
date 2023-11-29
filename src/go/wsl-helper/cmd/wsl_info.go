@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	wslutils "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/wsl-utils"
@@ -34,7 +35,8 @@ var wslInfoCmd = &cobra.Command{
 	Short: "Determine information about the installed WSL",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		info, err := wslutils.GetWSLInfo(cmd.Context())
+		log := logrus.NewEntry(logrus.StandardLogger())
+		info, err := wslutils.GetWSLInfo(cmd.Context(), log)
 		if err != nil {
 			return err
 		}

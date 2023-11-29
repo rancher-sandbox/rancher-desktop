@@ -201,20 +201,6 @@ export default async function generateFileList(rootPath: string): Promise<string
     },
 
     // @ts-ignore
-    'wix-install-wsl.ps1': (d, f) => {
-      return <Component>
-        <Condition>NOT WSLKERNELINSTALLED</Condition>
-        <File
-          Name={f.name}
-          Source="build\\wix-install-wsl.ps1"
-          ReadOnly="yes"
-          KeyPath="yes"
-          Id={f.id}
-        />
-      </Component>;
-    },
-
-    // @ts-ignore
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>
         <Condition>{'MSIINSTALLPERUSER <> 1'}</Condition>
@@ -274,8 +260,6 @@ export default async function generateFileList(rootPath: string): Promise<string
       </Component>;
     },
   };
-
-  rootDir.files.push({ name: 'wix-install-wsl.ps1', id: 'f_install_wsl' });
 
   const jsxElement = (<Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">

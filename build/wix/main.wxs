@@ -38,46 +38,46 @@
 
     <DirectoryRef Id="TARGETDIR" />
 
-    <!-- Install WSL if the kernel is not already installed. -->
-    <Upgrade Id="{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}">
-      <UpgradeVersion OnlyDetect="yes" Property="WSLKERNELINSTALLED" Minimum="5.4.0" />
-    </Upgrade>
-    <!--
-      - If doing a per-user upgrade, we can't detect WSL because Windows
-      - Installer refuses to find per-machine packages for a per-user install.
-      - We need to manually search for a previous version of RD and assume that
-      - it's set.
-      -->
-    <Upgrade Id="{1F717D5A-A55B-5FE2-9103-C0D74F7FBDE3}">
-      <UpgradeVersion OnlyDetect="yes" Property="RD_INSTALLED" Minimum="0.0.0" />
-    </Upgrade>
-    <SetProperty Id="WSLKERNELINSTALLED" Value="1" After="AppSearch">
-      (RD_INSTALLED OR NSISUNINSTALLCOMMAND) AND NOT WSLKERNELINSTALLED
-    </SetProperty>
     <SetProperty Id="ALLUSERS" Sequence="both" After="ValidateProductID" Value="1">
-      NOT WSLKERNELINSTALLED AND NOT Installed
+      NOT WSLINSTALLED AND NOT Installed
     </SetProperty>
     <SetProperty Id="MSIINSTALLPERUSER" Sequence="first" After="ValidateProductID" Value="0">
-      (NOT WSLKERNELINSTALLED OR NOT MSIINSTALLPERUSER) AND NOT Installed
+      (NOT WSLINSTALLED OR NOT MSIINSTALLPERUSER) AND NOT Installed
     </SetProperty>
-    <SetProperty Id="PowerShellExe" Sequence="execute" Before="SetInstallWSL"
-      Value="&quot;[System64Folder]\WindowsPowerShell\v1.0\powershell.exe&quot;" />
-    <Property Id="PowerShellArgs"
-      Value="-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned" />
-    <SetProperty Id="InstallWSL" Sequence="execute" Before="InstallWSL"
-      Value="[PowerShellExe] [PowerShellArgs] -File &quot;[#f_install_wsl]&quot;">
-      NOT WSLKERNELINSTALLED
+
+    <!-- Custom action to detect if WSL is installed -->
+    <Binary Id="CustomActionBinary" SourceFile="dist/wix-custom-action.dll" />
+    <CustomAction Id="DetectWSL" BinaryKey="CustomActionBinary" DllEntry="IsWSLInstalled"
+      Execute="immediate" Return="check" />
+    <!-- Custom action to install Windows features for WSL -->
+    <CustomAction Id="InstallWindowsFeature" BinaryKey="CustomActionBinary"
+      DllEntry="InstallWindowsFeature" Execute="deferred" Return="check" Impersonate="no" />
+    <!-- Custom action to install WSL -->
+    <CustomAction Id="InstallWSL" BinaryKey="CustomActionBinary" DllEntry="InstallWSL"
+      Execute="deferred" Return="check" Impersonate="yes" />
+
+    <!-- Disable the start app prompt if we need a reboot -->
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Sequence="ui" After="DetectWSL" Value="">
+      NOT WSLINSTALLED AND NOT Installed
     </SetProperty>
-    <CustomAction
-      Id="InstallWSL" BinaryKey="WixCA" DllEntry="WixQuietExec64"
-      Execute="deferred" Return="check" Impersonate="no"
-    />
+
+    <InstallUISequence>
+      <Custom Action="DetectWSL" After="AppSearch">
+        NOT WSLINSTALLED <!-- Skip search if user overrides -->
+      </Custom>
+    </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="InstallWSL" After="InstallFiles">
-        NOT WSLKERNELINSTALLED AND NOT Installed
+      <Custom Action="DetectWSL" After="AppSearch">
+        NOT WSLINSTALLED <!-- Skip search if user overrides -->
+      </Custom>
+      <Custom Action="InstallWindowsFeature" After="InstallFiles">
+        NOT WSLINSTALLED AND NOT Installed
+      </Custom>
+      <Custom Action="InstallWSL" After="InstallWindowsFeature">
+        NOT WSLINSTALLED AND NOT Installed
       </Custom>
       <ScheduleReboot After="InstallWSL">
-        NOT WSLKERNELINSTALLED AND NOT Installed
+        NOT WSLINSTALLED AND NOT Installed
       </ScheduleReboot>
     </InstallExecuteSequence>
 

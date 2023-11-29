@@ -24,7 +24,7 @@
               Text="!(loc.InstallScopeDlgPerUser)"
               X="0" Y="72" Width="295" Height="16" />
           </RadioButtonGroup>
-          <Condition Action="show">Privileged AND WSLKERNELINSTALLED</Condition>
+          <Condition Action="show">Privileged AND WSLINSTALLED</Condition>
         </Control>
 
         <Control Id="PerMachineDescription" Type="Text" Hidden="yes"

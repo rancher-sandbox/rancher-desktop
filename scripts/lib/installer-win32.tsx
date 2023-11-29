@@ -14,6 +14,7 @@ import asar from '@electron/asar';
 import Mustache from 'mustache';
 import yaml from 'yaml';
 
+import buildUtils from './build-utils';
 import generateFileList from './installer-win32-gen';
 
 import { simpleSpawn } from 'scripts/simple_process';
@@ -42,6 +43,15 @@ function getAppVersion(appDir: string): string {
   return offset ? `${ semver }.${ offset }` : semver;
 }
 
+async function buildCustomAction(): Promise<void> {
+  const output = path.join(buildUtils.distDir, 'wix-custom-action.dll');
+
+  await buildUtils.spawn('go', 'build', '-o', output, '-buildmode=c-shared', './wix', {
+    cwd: path.join(buildUtils.rootDir, 'src', 'go', 'wsl-helper'),
+    env: { ...process.env, GOOS: 'windows' },
+  });
+}
+
 /**
  * Given an unpacked build, produce a MSI installer.
  * @param workDir Directory in which we can write temporary work files.
@@ -64,6 +74,8 @@ export default async function buildInstaller(workDir: string, appDir: string, de
 
   console.log('Writing out WiX definition...');
   await fs.promises.writeFile(path.join(workDir, 'project.wxs'), output);
+  console.log('Building custom action...');
+  await buildCustomAction();
   console.log('Compiling WiX...');
   const inputs = [
     path.join(workDir, 'project.wxs'),

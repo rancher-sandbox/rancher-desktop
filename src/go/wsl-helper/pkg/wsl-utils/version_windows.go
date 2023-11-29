@@ -17,12 +17,12 @@ limitations under the License.
 package wslutils
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"unsafe"
 
@@ -211,87 +211,80 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 	return nil, fmt.Errorf("no info found for %s", fullName)
 }
 
-// runWSLExe runs WSL.exe and returns the standard output.
-// This can be replaced for testing.
-func runWSLExe(ctx context.Context, args ...string) (string, error) {
-	systemDir, err := windows.GetSystemDirectory()
-	if err != nil {
-		return "", fmt.Errorf("failed to get system directory: %w", err)
-	}
-	wslPath := filepath.Join(systemDir, "wsl.exe")
-	cmd := exec.CommandContext(ctx, wslPath, "--status")
-	cmd.Stderr = os.Stderr
-	stdout, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to get WSL status: %w", err)
-	}
-	output := windows.UTF16PtrToString(
-		(*uint16)(unsafe.Pointer(unsafe.SliceData(append(stdout, 0, 0)))),
-	)
-	return output, nil
-}
-
 // isInboxWSLInstalled checks if the "in-box" version of WSL is installed,
 // returning whether it's installed, and whether the kernel is installed
-func isInboxWSLInstalled(ctx context.Context) (bool, bool, error) {
-	runWSLExeFunc := runWSLExe
-	if f := ctx.Value(&kWSLExeOverride); f != nil {
-		runWSLExeFunc = f.(func(context.Context, ...string) (string, error))
-	}
+func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, error) {
+	var allErrors []error
 
-	output, err := runWSLExeFunc(ctx, "--status")
+	// Check if the core is installed
+	coreInstalled := false
+	newRunnerFunc := NewWSLRunner
+	if f := ctx.Value(&kWSLExeOverride); f != nil {
+		newRunnerFunc = f.(func() WSLRunner)
+	}
+	output := &bytes.Buffer{}
+	err := newRunnerFunc().WithStdout(output).WithStderr(os.Stderr).Run(ctx, "--status")
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) && exitErr.ExitCode() == wslExitNotInstalled {
-		return false, false, nil
+		// When WSL is not installed, we seem to get exit code 50
 	} else if err != nil {
-		logrus.WithError(err).Trace("wsl.exe --status exited")
-		return false, false, err
-	}
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-	if len(lines) < 1 {
-		return false, false, fmt.Errorf("no output from wsl --status")
+		log.WithError(err).Trace("wsl.exe --status exited")
+		allErrors = append(allErrors, err)
+	} else {
+		lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+		if len(lines) > 0 {
+			coreInstalled = true
+		} else {
+			allErrors = append(allErrors, fmt.Errorf("no output from wsl --status"))
+		}
 	}
 
 	// Check if the kernel is installed.
+	kernelInstalled := false
 	upgradeCodeString := kMsiUpgradeCode
 	if v := ctx.Value(&kUpgradeCodeOverride); v != nil {
 		upgradeCodeString = v.(string)
 	}
 	upgradeCode, err := windows.UTF16PtrFromString(upgradeCodeString)
 	if err != nil {
-		return false, false, err
-	}
-	productCode := make([]uint16, 39)
+		allErrors = append(allErrors, err)
+	} else {
+		productCode := make([]uint16, 39)
 
-	rv, _, _ := msiEnumRelatedProducts.Call(
-		uintptr(unsafe.Pointer(upgradeCode)),
-		uintptr(0),
-		uintptr(0),
-		uintptr(unsafe.Pointer(unsafe.SliceData(productCode))),
-	)
-	switch rv {
-	case uintptr(windows.ERROR_SUCCESS):
-		return true, true, nil
-	case uintptr(windows.ERROR_NO_MORE_ITEMS):
-		return true, false, nil
-	default:
-		return false, false, errorFromWin32("error querying Windows Installer database", rv, nil)
+		rv, _, _ := msiEnumRelatedProducts.Call(
+			uintptr(unsafe.Pointer(upgradeCode)),
+			uintptr(0),
+			uintptr(0),
+			uintptr(unsafe.Pointer(unsafe.SliceData(productCode))),
+		)
+		switch rv {
+		case uintptr(windows.ERROR_SUCCESS):
+			kernelInstalled = true
+		case uintptr(windows.ERROR_NO_MORE_ITEMS):
+			// kernel is not installed
+		default:
+			err = errorFromWin32("error querying Windows Installer database", rv, nil)
+			allErrors = append(allErrors, err)
+		}
 	}
+
+	err = errors.Join(allErrors...)
+	return coreInstalled, kernelInstalled, err
 }
 
-func GetWSLInfo(ctx context.Context) (*WSLInfo, error) {
+func GetWSLInfo(ctx context.Context, log *logrus.Entry) (*WSLInfo, error) {
 	names, err := getPackageNames(kPackageFamily)
 	if err != nil {
-		logrus.WithError(err).Trace("Error getting appx packages")
+		log.WithError(err).Trace("Error getting appx packages")
 		return nil, err
 	}
 
-	logrus.Tracef("Got %d appx packages", len(names))
+	log.Tracef("Got %d appx packages", len(names))
 	for _, name := range names {
 		if version, err := getPackageVersion(name); err == nil {
 			// It seems like the store version _always_ has the kernel,
 			// somewhere; it doesn't seem possible to uninstall it.
-			logrus.Tracef("Got appx package %s with version %s", name, version)
+			log.Tracef("Got appx package %s with version %s", name, version)
 			return &WSLInfo{
 				Installed: true,
 				Inbox:     false,
@@ -301,13 +294,13 @@ func GetWSLInfo(ctx context.Context) (*WSLInfo, error) {
 		}
 	}
 
-	logrus.Trace("Failed to get WSL appx package, trying inbox versions...")
-	hasWSL, hasKernel, err := isInboxWSLInstalled(ctx)
+	log.Trace("Failed to get WSL appx package, trying inbox versions...")
+	hasWSL, hasKernel, err := isInboxWSLInstalled(ctx, log)
 	if err != nil {
 		return nil, err
 	}
 	return &WSLInfo{
-		Installed: hasWSL,
+		Installed: hasWSL && hasKernel,
 		Inbox:     hasWSL,
 		HasKernel: hasKernel,
 	}, nil
