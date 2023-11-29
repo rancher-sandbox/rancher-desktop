@@ -15,8 +15,8 @@ const executableMap: Record<string, string[] | undefined> = {
   kubectl:            undefined,
   nerdctl:            undefined,
   rdctl:              undefined,
-  'wsl-helper':       [paths.resources, process.platform, platformBinary('wsl-helper')],
-  'wsl-helper-linux': [paths.resources, 'linux', 'wsl-helper'],
+  'wsl-helper':       [paths.resources, process.platform, platformBinary('wsl-helper-1.11.1')],
+  'wsl-helper-linux': [paths.resources, 'linux', 'wsl-helper-1.11.1'],
 };
 
 function platformBinary(name: string): string {
