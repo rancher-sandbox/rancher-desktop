@@ -240,7 +240,7 @@ Electron.app.whenReady().then(async() => {
           process.exit(2);
         });
 
-        // showErrorDialog doesn't exit immediately; avoid running the rest of the function
+        // Avoid running the rest of the `whenReady` handler after calling this handleFailure -- shutdown is imminent
         return;
       } else if (!noModalDialogs) {
         showErrorDialog('Invalid command-line arguments', err.message, false);
