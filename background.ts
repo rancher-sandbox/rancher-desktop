@@ -222,6 +222,9 @@ Electron.app.whenReady().then(async() => {
         // Even though we're passing fatal=true to showErrorDialog,
         // this process still runs after the call to `Electron.app.quit()`,
         // so stop processing this handler.
+        //
+        // If this handler continues to run, there will be more errors due to trying to work with
+        // a null `cfg` settings object, so best to return immediately.
         return;
       }
     }
@@ -244,10 +247,14 @@ Electron.app.whenReady().then(async() => {
         // attempts to change locked fields on the command-line are both fatal,
         // and should appear in a dialog box (or be written to console if
         // --no-modal-dialogs was specified on the command-line).
+        // Note that `showErrorDialog` calls `Electron.app.quit()`, which triggers a graceful shutodown.
+        // This handler will continue to run, so return after handling the error.
         handleFailure(err).catch((err2: any) => {
           console.log('Internal error trying to show a failure dialog: ', err2);
           process.exit(2);
         });
+
+        return;
       } else if (!noModalDialogs) {
         showErrorDialog('Invalid command-line arguments', err.message, false);
       }
