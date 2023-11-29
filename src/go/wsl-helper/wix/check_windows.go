@@ -30,6 +30,7 @@ const (
 // IsWSLInstalledImpl checks if WSL is installed; it outputs results by setting
 // the `WSLINSTALLED` Windows Installer property.
 func IsWSLInstalledImpl(hInstall MSIHANDLE) uint32 {
+	defer msiCloseHandle.Call(uintptr(hInstall))
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
