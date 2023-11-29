@@ -946,7 +946,6 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
     if (channel === 'dialog/mounted') {
       if (os.platform() !== 'darwin') {
         mainWindow?.webContents.send('window/blur', true);
-        mainWindow?.setResizable(false);
       }
 
       options.format.type = 'operation';
@@ -963,7 +962,6 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
   dialog.on('close', () => {
     if (os.platform() !== 'darwin') {
       mainWindow?.webContents.send('window/blur', false);
-      mainWindow?.setResizable(true);
     }
 
     if (os.platform() === 'linux' && mainWindow) {
