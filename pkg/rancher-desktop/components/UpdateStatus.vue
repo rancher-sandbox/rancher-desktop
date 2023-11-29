@@ -207,6 +207,7 @@ export default UpdateStatus;
 <style lang="scss" scoped>
   .version {
     display: flex;
+    justify-content: space-between
   }
   .update-notification {
     font-weight: 900;
