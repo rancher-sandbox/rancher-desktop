@@ -16,7 +16,7 @@ interface Data {
 }
 
 interface Methods {
-  pollingStart: () => void,
+  pollingStart: () => void
 }
 
 interface Computed {
@@ -84,35 +84,44 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
 <template>
   <div class="snapshots">
-    <Banner
-      v-if="snapshotEvent"
-      class="banner mb-20"
-      :color="snapshotEvent.result"
-      :closable="true"
-      @close="snapshotEvent=null"
-    >
-      <span
-        class="event-message"
-        v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
-      />
-    </Banner>
     <div
-      v-for="(item) of snapshots"
-      :key="item.name"
+      v-if="snapshotEvent"
+      class="event"
     >
-      <SnapshotCard
-        class="mb-20"
-        :value="item"
-      />
-    </div>
-    <div v-if="isEmpty">
-      <empty-state
-        class="mt-10"
-        :icon="t('snapshots.empty.icon')"
-        :heading="t('snapshots.empty.heading')"
-        :body="t('snapshots.empty.body')"
+      <Banner
+        class="banner"
+        :color="snapshotEvent.result"
+        :closable="true"
+        @close="snapshotEvent=null"
       >
-      </empty-state>
+        <span
+          class="event-message"
+          v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
+        />
+      </Banner>
+    </div>
+    <div
+      class="cards"
+      :class="{ margin: !snapshotEvent }"
+    >
+      <div
+        v-for="(item) of snapshots"
+        :key="item.name"
+      >
+        <SnapshotCard
+          class="mb-20"
+          :value="item"
+        />
+      </div>
+      <div v-if="isEmpty">
+        <empty-state
+          class="mt-10"
+          :icon="t('snapshots.empty.icon')"
+          :heading="t('snapshots.empty.heading')"
+          :body="t('snapshots.empty.body')"
+        >
+        </empty-state>
+      </div>
     </div>
   </div>
 </template>
@@ -122,5 +131,35 @@ export default Vue.extend<Data, Methods, Computed, never>({
     word-wrap: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .snapshots {
+    > * {
+      padding: 0 5px 0 5px;
+    }
+
+    .event {
+      position: sticky;
+      top: 0;
+      background: var(--body-bg);
+
+      .banner {
+        margin: 0;
+        ::v-deep .banner__content {
+          margin-top: 8px;
+          margin-bottom: 15px;
+
+          .banner__content__closer {
+            height: 50px;
+          }
+        }
+      }
+    }
+
+    .cards {
+      &.margin {
+        margin-top: 13px;
+      }
+      overflow-y: auto;
+    }
   }
 </style>
