@@ -117,7 +117,7 @@
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.1",
     "@octokit/rest": "20.0.2",
-    "@playwright/test": "1.39.0",
+    "@playwright/test": "1.40.1",
     "@types/cross-spawn": "6.0.2",
     "@types/dompurify": "3.0.5",
     "@types/ejs": "3.1.5",
