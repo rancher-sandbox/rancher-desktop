@@ -218,15 +218,9 @@ Electron.app.whenReady().then(async() => {
       const message = err.message || err.toString();
 
       showErrorDialog(titlePart, message, true);
-      if (err instanceof settings.SettingsError) {
-        // Even though we're passing fatal=true to showErrorDialog,
-        // this process still runs after the call to `Electron.app.quit()`,
-        // so stop processing this handler.
-        //
-        // If this handler continues to run, there will be more errors due to trying to work with
-        // a null `cfg` settings object, so best to return immediately.
-        return;
-      }
+
+      // showErrorDialog doesn't exit immediately; avoid running the rest of the function
+      return;
     }
     try {
       // The profile loader did rudimentary type-validation on profiles, but the validator checks for things
@@ -241,19 +235,12 @@ Electron.app.whenReady().then(async() => {
     } catch (err: any) {
       noModalDialogs = TransientSettings.value.noModalDialogs;
       if (err instanceof LockedFieldError || err instanceof DeploymentProfileError || err instanceof FatalCommandLineOptionError) {
-        // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
-        // and the `fatal` part means we're expecting the app to shut down.
-        // Errors related to either deployment profiles or
-        // attempts to change locked fields on the command-line are both fatal,
-        // and should appear in a dialog box (or be written to console if
-        // --no-modal-dialogs was specified on the command-line).
-        // Note that `showErrorDialog` calls `Electron.app.quit()`, which triggers a graceful shutdown.
-        // This handler will continue to run, so return after handling the error.
         handleFailure(err).catch((err2: any) => {
           console.log('Internal error trying to show a failure dialog: ', err2);
           process.exit(2);
         });
 
+        // showErrorDialog doesn't exit immediately; avoid running the rest of the function
         return;
       } else if (!noModalDialogs) {
         showErrorDialog('Invalid command-line arguments', err.message, false);
