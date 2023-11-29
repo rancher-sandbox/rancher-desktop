@@ -42,7 +42,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  jest.mocked(fetch).mockClear();
+  jest.mocked(fetch).mockReset();
 });
 
 describe(buildVersion, () => {
@@ -253,12 +253,6 @@ describe(K3sHelper, () => {
       new VersionEntry(new semver.SemVer('v1.2.1+k3s2')),
       new VersionEntry(new semver.SemVer('v1.2.0+k3s5')),
     ]);
-    // Drain the fetch-mocker so it doesn't interfere with subsequent tests that need to "fetch" data.
-    try {
-      await fetch('blah');
-    } catch (ex:any) {
-      expect(ex.message).toMatch('Unexpected fetch call to blah');
-    }
   });
 
   test('updateCache with new versions', async() => {
