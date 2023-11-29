@@ -121,7 +121,7 @@ export class VersionEntry implements K8s.VersionEntry {
 
   constructor(version: semver.SemVer, channels: string[] = []) {
     this.version = version;
-    if (channels?.length > 0) {
+    if (channels.length > 0) {
       this.channels = channels;
     }
   }
@@ -154,6 +154,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
+  protected versionFromChannel: Record<string, string> = {};
 
   constructor(arch: Architecture) {
     super();
@@ -204,6 +205,7 @@ export default class K3sHelper extends events.EventEmitter {
         }
         this.versions[version].channels ??= [];
         this.versions[version].channels?.push(channel);
+        this.versionFromChannel[channel] = version;
       }
 
       for (const entry of Object.values(this.versions)) {
@@ -393,10 +395,6 @@ export default class K3sHelper extends events.EventEmitter {
       if (channelResponse.ok) {
         const channels = (await channelResponse.json()) as { data?: { name: string, latest: string }[] };
 
-        // Remove any existing channels (to ensure channels we no longer use are removed)
-        for (const version of Object.values(channelMapping)) {
-          this.versions[version.version]?.channels?.splice(0, Number.POSITIVE_INFINITY);
-        }
         console.debug(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
         for (const channel of channels.data ?? []) {
           const version = semver.parse(channel.latest);
@@ -445,6 +443,16 @@ export default class K3sHelper extends events.EventEmitter {
         const entry = this.versions[version.version];
 
         if (entry) {
+          if (this.versionFromChannel[channel] && this.versionFromChannel[channel] !== version.version) {
+            const otherEntry = this.versions[this.versionFromChannel[channel]];
+
+            if (otherEntry?.channels) {
+              otherEntry.channels = otherEntry.channels.filter(ch => ch !== channel);
+              if (otherEntry.channels.length === 0) {
+                delete otherEntry.channels;
+              }
+            }
+          }
           entry.channels ??= [];
           if (!entry.channels.includes(channel)) {
             entry.channels.push(channel);
@@ -455,7 +463,6 @@ export default class K3sHelper extends events.EventEmitter {
 
       console.log(`Got ${ Object.keys(this.versions).length } versions.`);
       await this.writeCache();
-
       this.emit('versions-updated');
     } catch (e) {
       console.error(e);
@@ -491,13 +498,16 @@ export default class K3sHelper extends events.EventEmitter {
         await this.readCache();
         if (Object.keys(this.versions).length > 0) {
           // Start a cache update asynchronously without waiting for it
-          this.updateCache();
+          this.updateCache().catch((ex: any) => {
+            console.log(`updateCache failed: ${ ex }`);
+          });
 
           return;
         }
         await this.updateCache();
       })();
     }
+    this.versionFromChannel = {};
 
     return this.pendingInitialize;
   }

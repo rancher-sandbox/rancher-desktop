@@ -42,7 +42,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  jest.mocked(fetch).mockClear();
+  jest.mocked(fetch).mockReset();
 });
 
 describe(buildVersion, () => {
@@ -166,7 +166,7 @@ describe(K3sHelper, () => {
 
     // Override cache reading to return a fake existing cache.
     // The first read returns nothing to trigger a synchronous update;
-    // the rest fo the reads return mocked values.
+    // the rest of the reads return mocked values.
     subject['readCache'] = jest.fn()
       .mockResolvedValueOnce(undefined)
       .mockImplementation(function(this: K3sHelper) {
@@ -252,6 +252,114 @@ describe(K3sHelper, () => {
       new VersionEntry(new semver.SemVer('v1.2.3+k3s3'), ['stable']),
       new VersionEntry(new semver.SemVer('v1.2.1+k3s2')),
       new VersionEntry(new semver.SemVer('v1.2.0+k3s5')),
+    ]);
+  });
+
+  test('updateCache with new versions', async() => {
+    const subject = new K3sHelper('x86_64');
+    const validAssets = Object.values(subject['filenames']).map((name) => {
+      if (typeof name === 'string') {
+        return { name, browser_download_url: name };
+      } else {
+        return { name: name[0], browser_download_url: name[0] };
+      }
+    });
+
+    // Override cache reading to return a fake existing cache.
+    // The first read returns nothing to trigger a synchronous update;
+    // the rest of the reads return mocked values.
+    subject['readCache'] = jest.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockImplementation(function(this: K3sHelper) {
+        const result = new ChannelMapping();
+
+        for (const [version, tags] of Object.entries({
+          'v1.26.0+k3s2': [],
+          'v1.26.1+k3s1': [],
+          'v1.26.2+k3s1': [],
+          'v1.26.3+k3s1': ['v1.26', 'stable'],
+          'v1.27.1+k3s1': [],
+          'v1.27.2+k3s1': [],
+          'v1.27.3+k3s1': [],
+          'v1.27.4+k3s1': [],
+          'v1.27.5+k3s1': ['v1.27', 'latest'],
+        })) {
+          const parsedVersion = new semver.SemVer(version);
+
+          this.versions[parsedVersion.version] = new VersionEntry(parsedVersion, tags);
+          for (const tag of tags) {
+            result[tag] = parsedVersion;
+          }
+        }
+
+        subject['versionFromChannel'] = {
+          stable:  '1.26.3',
+          latest:  '1.27.5',
+          'v1.26': '1.26.3',
+          'v1.27': '1.27.5',
+        };
+
+        return Promise.resolve(result);
+      });
+    subject['writeCache'] = jest.fn(() => Promise.resolve());
+
+    // Fake out the results
+    jest.mocked(fetch)
+      .mockImplementationOnce((url) => {
+        expect(url).toEqual(subject['channelApiUrl']);
+
+        return Promise.resolve(new FetchResponse(
+          JSON.stringify({
+            data: [
+              { name: 'v1.26', latest: '1.26.9+k3s1' },
+              { name: 'v1.27', latest: '1.27.7+k3s1' },
+              { name: 'stable', latest: '1.27.7+k3s1' },
+              { name: 'latest', latest: '1.28.3+k3s1' },
+              { name: 'v1.28', latest: '1.28.3+k3s1' },
+            ],
+          }),
+        ));
+      })
+      .mockImplementationOnce((url) => {
+        expect(url).toEqual(subject['releaseApiUrl']);
+
+        return Promise.resolve(new FetchResponse(
+          JSON.stringify([
+            { tag_name: 'v1.28.3+k3s2', assets: validAssets },
+            { tag_name: 'v1.28.2+k3s2', assets: validAssets },
+            { tag_name: 'v1.28.1+k3s2', assets: validAssets },
+            { tag_name: 'v1.27.7+k3s2', assets: validAssets },
+            { tag_name: 'v1.27.6+k3s1', assets: validAssets },
+          ]),
+          { headers: { link: '<url>; rel="first"' } },
+        ));
+      })
+      .mockImplementationOnce((url) => {
+        throw new Error(`Unexpected fetch call to ${ url }`);
+      });
+
+    // Ensure the Latch is set up in K3sHelper
+    subject.networkReady();
+
+    await subject.initialize();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const availableVersions = await subject.availableVersions;
+
+    expect(availableVersions).toEqual([
+      new VersionEntry(new semver.SemVer('v1.28.3+k3s2'), ['latest', 'v1.28']),
+      new VersionEntry(new semver.SemVer('v1.28.2+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.28.1+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.27.7+k3s2'), ['stable', 'v1.27']),
+      new VersionEntry(new semver.SemVer('v1.27.6+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.27.5+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.27.4+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.27.3+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.27.2+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.27.1+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.26.3+k3s1'), ['v1.26']),
+      new VersionEntry(new semver.SemVer('v1.26.2+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.26.1+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.26.0+k3s2')),
     ]);
   });
 
