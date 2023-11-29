@@ -76,21 +76,21 @@ test.describe('WSL Integrations', () => {
           utf16le: true,
         },
         ...['alpha', 'beta', 'gamma'].flatMap(distro => [
-          ...[['bin', 'docker-compose'], ['wsl-helper']].flatMap(tool => ([
+          ...[['bin', 'docker-compose'], ['wsl-helper-1.11.1']].flatMap(tool => ([
             {
               args:   ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u', path.join(process.cwd(), 'resources', 'linux', ...tool)],
               mode:   'repeated',
               stdout: `/${ distro }/${ tool.join('/') }`,
             }])),
-          ...[['bin', 'docker-buildx'], ['wsl-helper']].flatMap(tool => ([
+          ...[['bin', 'docker-buildx'], ['wsl-helper-1.11.1']].flatMap(tool => ([
             {
               args:   ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u', path.join(process.cwd(), 'resources', 'linux', ...tool)],
               mode:   'repeated',
               stdout: `/${ distro }/${ tool.join('/') }`,
             }])),
           ...[
-            [`/${ distro }/wsl-helper`, 'kubeconfig', '--enable=false'],
-            [`/${ distro }/wsl-helper`, 'kubeconfig', '--enable=true'],
+            [`/${ distro }/wsl-helper-1.11.1`, 'kubeconfig', '--enable=false'],
+            [`/${ distro }/wsl-helper-1.11.1`, 'kubeconfig', '--enable=true'],
             ['/bin/sh', '-c', 'mkdir -p "$HOME/.docker/cli-plugins"'],
             ['/bin/sh', '-c',
               `if [ ! -e "$HOME/.docker/cli-plugins/docker-compose" -a ! -L "$HOME/.docker/cli-plugins/docker-compose" ] ; then
@@ -112,28 +112,28 @@ test.describe('WSL Integrations', () => {
             stdout: '/dev/null',
           },
           {
-            args:   ['--distribution', distro, '--user', 'root', '--exec', `/${ distro }/wsl-helper`, 'docker-proxy', 'serve', '--verbose'],
+            args:   ['--distribution', distro, '--user', 'root', '--exec', `/${ distro }/wsl-helper-1.11.1`, 'docker-proxy', 'serve', '--verbose'],
             mode:   'repeated',
             stdout: '/dev/null',
           },
           {
-            args:   ['--distribution', distro, '--user', 'root', '--exec', `/${ distro }/wsl-helper`, 'docker-proxy', 'kill', '--verbose'],
+            args:   ['--distribution', distro, '--user', 'root', '--exec', `/${ distro }/wsl-helper-1.11.1`, 'docker-proxy', 'kill', '--verbose'],
             mode:   'repeated',
             stdout: '/dev/null',
           },
         ]),
         {
-          args:   ['--distribution', 'alpha', '--exec', '/alpha/wsl-helper', 'kubeconfig', '--show'],
+          args:   ['--distribution', 'alpha', '--exec', '/alpha/wsl-helper-1.11.1', 'kubeconfig', '--show'],
           mode:   'repeated',
           stdout: (opts?.alpha ?? false).toString(),
         },
         {
-          args:   ['--distribution', 'beta', '--exec', '/beta/wsl-helper', 'kubeconfig', '--show'],
+          args:   ['--distribution', 'beta', '--exec', '/beta/wsl-helper-1.11.1', 'kubeconfig', '--show'],
           mode:   'repeated',
           stdout: (opts?.beta ?? true).toString(),
         },
         {
-          args:   ['--distribution', 'gamma', '--exec', '/gamma/wsl-helper', 'kubeconfig', '--show'],
+          args:   ['--distribution', 'gamma', '--exec', '/gamma/wsl-helper-1.11.1', 'kubeconfig', '--show'],
           mode:   'repeated',
           stdout: (opts?.gamma ?? 'some error').toString(),
         },
