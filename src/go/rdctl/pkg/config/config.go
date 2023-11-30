@@ -94,22 +94,23 @@ func GetConnectionInfo(mayBeMissing bool) (*ConnectionInfo, error) {
 		return nil, fmt.Errorf("error parsing config file %q: %w", configPath, err)
 	}
 
-	if connectionSettings.Host == "" {
-		connectionSettings.Host = settings.Host
-		if connectionSettings.Host == "" {
-			connectionSettings.Host = "127.0.0.1"
-		}
+	// CLI options override file settings
+	if connectionSettings.Host != "" {
+		settings.Host = connectionSettings.Host
 	}
-	if connectionSettings.User == "" {
-		connectionSettings.User = settings.User
+	if settings.Host == "" {
+		settings.Host = "127.0.0.1"
 	}
-	if connectionSettings.Password == "" {
-		connectionSettings.Password = settings.Password
+	if connectionSettings.User != "" {
+		settings.User = connectionSettings.User
 	}
-	if connectionSettings.Port == 0 {
-		connectionSettings.Port = settings.Port
+	if connectionSettings.Password != "" {
+		settings.Password = connectionSettings.Password
 	}
-	if connectionSettings.Port == 0 || connectionSettings.User == "" || connectionSettings.Password == "" {
+	if connectionSettings.Port != 0 {
+		settings.Port = connectionSettings.Port
+	}
+	if settings.Port == 0 || settings.User == "" || settings.Password == "" {
 		// Missing the default config file may or may not be considered an error
 		if readFileError != nil {
 			if mayBeMissing {
@@ -120,7 +121,7 @@ func GetConnectionInfo(mayBeMissing bool) (*ConnectionInfo, error) {
 		return nil, errors.New("insufficient connection settings (missing one or more of: port, user, and password)")
 	}
 
-	return &connectionSettings, nil
+	return &settings, nil
 }
 
 // determines if we are running in a wsl linux distro
