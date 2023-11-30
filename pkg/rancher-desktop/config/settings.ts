@@ -48,6 +48,14 @@ export enum CacheMode {
   MMAP = 'mmap',
 }
 
+export class SettingsError extends Error {
+  toString() {
+    // This is needed on linux. Without it, we get a randomish replacement
+    // for 'SettingsError' (like 'ys Error')
+    return `SettingsError: ${ this.message }`;
+  }
+}
+
 export const defaultSettings = {
   version:     CURRENT_SETTINGS_VERSION,
   application: {

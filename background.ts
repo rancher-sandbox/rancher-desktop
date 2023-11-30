@@ -218,6 +218,9 @@ Electron.app.whenReady().then(async() => {
       const message = err.message || err.toString();
 
       showErrorDialog(titlePart, message, true);
+
+      // showErrorDialog doesn't exit immediately; avoid running the rest of the function
+      return;
     }
     try {
       // The profile loader did rudimentary type-validation on profiles, but the validator checks for things
@@ -232,16 +235,13 @@ Electron.app.whenReady().then(async() => {
     } catch (err: any) {
       noModalDialogs = TransientSettings.value.noModalDialogs;
       if (err instanceof LockedFieldError || err instanceof DeploymentProfileError || err instanceof FatalCommandLineOptionError) {
-        // This will end up calling `showErrorDialog(<title>, <message>, fatal=true)`
-        // and the `fatal` part means we're expecting the app to shutdown.
-        // Errors related to either deployment profiles or
-        // attempts to change locked fields on the command-line are both fatal,
-        // and should appear in a dialog box (or be written to console if
-        // --no-modal-dialogs was specified on the command-line).
         handleFailure(err).catch((err2: any) => {
           console.log('Internal error trying to show a failure dialog: ', err2);
           process.exit(2);
         });
+
+        // Avoid running the rest of the `whenReady` handler after calling this handleFailure -- shutdown is imminent
+        return;
       } else if (!noModalDialogs) {
         showErrorDialog('Invalid command-line arguments', err.message, false);
       }
