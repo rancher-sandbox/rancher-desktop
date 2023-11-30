@@ -43,7 +43,7 @@ function getAppVersion(appDir: string): string {
   return offset ? `${ semver }.${ offset }` : semver;
 }
 
-async function buildCustomAction(): Promise<void> {
+export async function buildCustomAction(): Promise<void> {
   const output = path.join(buildUtils.distDir, 'wix-custom-action.dll');
 
   await buildUtils.spawn('go', 'build', '-o', output, '-buildmode=c-shared', './wix', {
@@ -74,8 +74,6 @@ export default async function buildInstaller(workDir: string, appDir: string, de
 
   console.log('Writing out WiX definition...');
   await fs.promises.writeFile(path.join(workDir, 'project.wxs'), output);
-  console.log('Building custom action...');
-  await buildCustomAction();
   console.log('Compiling WiX...');
   const inputs = [
     path.join(workDir, 'project.wxs'),
@@ -106,7 +104,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     // do not install system-wide.
     // https://learn.microsoft.com/en-us/windows/win32/msi/ice60
     '-sice:ICE60',
-    // Skip ICE 61, which is incompatible AllowSameVersionUpgrades and with emits:
+    // Skip ICE 61, which is incompatible AllowSameVersionUpgrades and which emits:
     // error LGHT1076 : ICE61: This product should remove only older versions of itself.
     // https://learn.microsoft.com/en-us/windows/win32/msi/ice61
     '-sice:ICE61',
@@ -125,7 +123,7 @@ export default async function buildInstaller(workDir: string, appDir: string, de
     '-reusecab',
     '-loc', path.join(path.join(process.cwd(), 'build', 'wix', 'string-overrides.wxl')),
     ...inputs.map(n => path.join(workDir, `${ path.basename(n, '.wxs') }.wixobj`)),
-  ]);
+  ], { cwd: appDir });
   console.log(`Built Windows installer: ${ outFile }`);
 
   return outFile;

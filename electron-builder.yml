@@ -33,7 +33,8 @@ win:
   - build/wix/*
   - build/license.rtf
   - build/signing-config-win.yaml
-  - electron-builder.yml
+  - { from: dist/wix-custom-action.dll, to: wix-custom-action.dll }
+  - { from: dist/electron-builder.yaml, to: electron-builder.yml }
 linux:
   category: Utility
   executableName: rancher-desktop

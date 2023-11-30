@@ -6,12 +6,17 @@
 'use strict';
 
 import childProcess from 'child_process';
-import * as fs from 'fs/promises';
+import fs from 'fs';
 import * as path from 'path';
 
+import _ from 'lodash';
+import yaml from 'yaml';
+
 import buildUtils from './lib/build-utils';
-import buildInstaller from './lib/installer-win32';
+import buildInstaller, { buildCustomAction } from './lib/installer-win32';
 import { simpleSpawn } from './simple_process';
+
+import type { Configuration } from 'app-builder-lib';
 
 /** Get the argument value (if any) for any of the given argument names */
 function getArgValue(args: string[], ...argNames: string[]): string | undefined {
@@ -38,30 +43,36 @@ function getArgValue(args: string[], ...argNames: string[]): string | undefined 
 class Builder {
   async replaceInFile(srcFile: string, pattern: string | RegExp, replacement: string, dstFile?: string) {
     dstFile = dstFile || srcFile;
-    await fs.stat(srcFile);
-    const data = await fs.readFile(srcFile, 'utf8');
+    await fs.promises.stat(srcFile);
+    const data = await fs.promises.readFile(srcFile, 'utf8');
 
-    await fs.writeFile(dstFile, data.replace(pattern, replacement));
+    await fs.promises.writeFile(dstFile, data.replace(pattern, replacement));
   }
 
   async package() {
     console.log('Packaging...');
+
+    if (process.platform === 'win32') {
+      // On Windows, always build the installer custom action; this ensures we
+      // don't need to build it when building the signed installer.
+      await buildCustomAction();
+    }
+
+    // Build the electron builder configuration to include the version data
+    const config: Configuration = yaml.parse(await fs.promises.readFile('electron-builder.yml', 'utf-8'));
+    const configPath = path.join('dist', 'electron-builder.yaml');
     const args = process.argv.slice(2).filter(x => x !== '--serial');
-    // On Windows, electron-builder will run the installer to generate the
-    // uninstall stub; however, we set the installer to be elevated, in order
-    // to ensure that we can install WSL if necessary.  To make it possible to
-    // build the installer as a non-administrator, we need to set the special
-    // environment variable `__COMPAT_LAYER=RunAsInvoker` to force the installer
-    // to run as the existing user.
-    const env = { ...process.env, __COMPAT_LAYER: 'RunAsInvoker' };
     const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
     const appData = 'packaging/linux/rancher-desktop.appdata.xml';
     const release = `<release version="${ finalBuildVersion }" date="${ new Date().toISOString() }"/>`;
 
     await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
-    args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
-    await simpleSpawn('node', ['node_modules/electron-builder/out/cli/cli.js', ...args], { env });
+    _.set(config, 'extraMetadata.version', finalBuildVersion);
+    await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
+
+    args.push('--config', configPath);
+    await simpleSpawn('node', ['node_modules/electron-builder/out/cli/cli.js', ...args]);
   }
 
   async buildInstaller() {

@@ -46,7 +46,7 @@
     </SetProperty>
 
     <!-- Custom action to detect if WSL is installed -->
-    <Binary Id="CustomActionBinary" SourceFile="dist/wix-custom-action.dll" />
+    <Binary Id="CustomActionBinary" SourceFile="wix-custom-action.dll" />
     <CustomAction Id="DetectWSL" BinaryKey="CustomActionBinary" DllEntry="IsWSLInstalled"
       Execute="immediate" Return="check" />
     <!-- Custom action to install Windows features for WSL -->

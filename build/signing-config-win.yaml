@@ -5,6 +5,13 @@
 # negation (prefixed with "!").  Any files not listed is an error.
 .:
 - Rancher Desktop.exe
+- wix-custom-action.dll
+- '!d3dcompiler_47.dll' # spellcheck-ignore-line
+- '!ffmpeg.dll'
+- '!libEGL.dll'         # spellcheck-ignore-line
+- '!libGLESv2.dll'      # spellcheck-ignore-line
+- '!vk_swiftshader.dll' # spellcheck-ignore-line
+- '!vulkan-1.dll'       # spellcheck-ignore-line
 resources/resources/win32:
 - wsl-helper.exe
 resources/resources/win32/bin:
