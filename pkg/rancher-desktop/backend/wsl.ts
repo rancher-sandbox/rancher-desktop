@@ -54,6 +54,7 @@ import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import { wslHostIPv4Address } from '@pkg/utils/networks';
 import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 
@@ -1745,7 +1746,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
 
-    return this.wslify(path.join(paths.resources, 'linux', 'wsl-helper'), distro);
+    return this.wslify(executable('wsl-helper-linux'), distro);
   }
 
   /**
