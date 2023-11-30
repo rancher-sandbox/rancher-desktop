@@ -24,7 +24,7 @@ mac:
   identity: ~ # We sign in a separate step
   extraFiles:
   - build/signing-config-mac.yaml
-  - electron-builder.yml
+  - { from: dist/electron-builder.yaml, to: electron-builder.yml }
 win:
   target: [ zip ]
   signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
