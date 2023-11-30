@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import path from 'path';
 import tls from 'tls';
 
 import * as childProcess from '@pkg/utils/childProcess';
 import AsyncCallbackIterator from '@pkg/utils/iterator';
 import Logging from '@pkg/utils/logging';
-import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
 
 /**
  * Asynchronously enumerate the certificate authorities that should be used to
@@ -33,9 +32,8 @@ export default async function* getWinCertificates(): AsyncIterable<string> {
   // behaviour, we will enumerate both the Windows store as well as the OpenSSL
   // one built into NodeJS.
 
-  const exePath = path.join(paths.resources, 'win32', 'wsl-helper.exe');
   let buffer = '';
-  const proc = childProcess.spawn(exePath, ['certificates'], {
+  const proc = childProcess.spawn(executable('wsl-helper'), ['certificates'], {
     stdio:       ['ignore', 'pipe', await Logging['networking-ca'].fdStream],
     windowsHide: true,
   });
