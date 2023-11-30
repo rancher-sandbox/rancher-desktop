@@ -29,7 +29,7 @@ func deleteSnapshot(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
 	if err = manager.Delete(args[0]); err != nil {
-		return fmt.Errorf("failed to delete snapshot: %w", err)
+		return fmt.Errorf("failed to delete snapshot %q: %w", args[0], err)
 	}
 	return nil
 }

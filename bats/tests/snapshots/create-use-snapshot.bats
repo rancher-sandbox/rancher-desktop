@@ -76,13 +76,13 @@ local_setup() {
     for action in restore delete; do
         run rdctl snapshot "$action" 'the-nomadic-pond'
         assert_failure
-        assert_output "Error: can't find snapshot \"the-nomadic-pond\""
+        assert_output --partial "Error: failed to $action snapshot \"the-nomadic-pond\": can't find snapshot \"the-nomadic-pond\""
 
         run rdctl snapshot "$action" 'the-nomadic-pond' --json
         assert_failure
         run jq_output '.error'
         assert_success
-        assert_output "can't find snapshot \"the-nomadic-pond\""
+        assert_output "failed to $action snapshot \"the-nomadic-pond\": can't find snapshot \"the-nomadic-pond\""
     done
 }
 
@@ -95,7 +95,7 @@ local_setup() {
     assert_failure
     run jq_output '.error'
     assert_success
-    assert_output "invalid name \"$SNAPSHOT\": name already exists"
+    assert_output "name \"$SNAPSHOT\" already exists"
     assert_exists "$PATH_CONFIG_FILE"
 }
 
