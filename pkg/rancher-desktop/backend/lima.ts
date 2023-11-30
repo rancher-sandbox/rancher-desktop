@@ -620,7 +620,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const extraDirs = [paths.cache, paths.logs, paths.resources];
 
     if (os.platform() === 'darwin') {
-      locations.push('/Volumes', '/var/folders');
+      // /var and /tmp are symlinks to /private/var and /private/tmp
+      locations.push('/Volumes', '/var/folders', '/private/tmp', '/private/var/folders');
     }
     for (const extraDir of extraDirs) {
       const found = locations.some((loc) => {
