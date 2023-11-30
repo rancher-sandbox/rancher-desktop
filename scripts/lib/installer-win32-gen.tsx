@@ -206,6 +206,12 @@ export default async function generateFileList(rootPath: string): Promise<string
       return null;
     },
 
+    'resources\\resources\\win32\\internal\\dummy.exe': () => {
+      // This file is used for shortcut icons in the installer; it does not need
+      // to be installed.
+      return null;
+    },
+
     // @ts-ignore
     'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
       return <Component>

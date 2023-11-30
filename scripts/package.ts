@@ -9,6 +9,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import * as path from 'path';
 
+import { executeAppBuilder } from 'builder-util';
 import _ from 'lodash';
 import yaml from 'yaml';
 
@@ -52,22 +53,23 @@ class Builder {
   async package() {
     console.log('Packaging...');
 
-    if (process.platform === 'win32') {
-      // On Windows, always build the installer custom action; this ensures we
-      // don't need to build it when building the signed installer.
-      await buildCustomAction();
-    }
-
     // Build the electron builder configuration to include the version data
     const config: Configuration = yaml.parse(await fs.promises.readFile('electron-builder.yml', 'utf-8'));
     const configPath = path.join('dist', 'electron-builder.yaml');
-    const args = process.argv.slice(2).filter(x => x !== '--serial');
     const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
-    const appData = 'packaging/linux/rancher-desktop.appdata.xml';
-    const release = `<release version="${ finalBuildVersion }" date="${ new Date().toISOString() }"/>`;
+    const distDir = path.join(process.cwd(), 'dist');
+    const args = process.argv.slice(2).filter(x => x !== '--serial');
 
-    await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
+    switch (process.platform) {
+    case 'linux':
+      await this.createLinuxResources(finalBuildVersion);
+      break;
+    case 'win32':
+      await this.createWindowsResources(distDir);
+      break;
+    }
+
     _.set(config, 'extraMetadata.version', finalBuildVersion);
     await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
 
@@ -84,6 +86,38 @@ class Builder {
       // Only build installer if we're not asked not to.
       await buildInstaller(buildUtils.distDir, appDir);
     }
+  }
+
+  protected async createLinuxResources(finalBuildVersion: string) {
+    const appData = 'packaging/linux/rancher-desktop.appdata.xml';
+    const release = `<release version="${ finalBuildVersion }" date="${ new Date().toISOString() }"/>`;
+
+    await this.replaceInFile(appData, /<release.*\/>/g, release, appData.replace('packaging', 'resources'));
+  }
+
+  protected async createWindowsResources(workDir: string) {
+    // Create stub executable with the correct icon (for the installer)
+    const imageFile = path.join(process.cwd(), 'resources', 'icons', 'logo-square-512.png');
+    const iconArgs = ['icon', '--format', 'ico', '--out', workDir, '--input', imageFile];
+    const iconResult = await this.executeAppBuilderAsJson(iconArgs);
+    const iconFile = iconResult.icons[0].file;
+    const executable = path.join(process.cwd(), 'resources', 'win32', 'internal', 'dummy.exe');
+    const rceditArgs = [executable, '--set-icon', iconFile];
+
+    await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);
+
+    // Create the custom action for the installer
+    await buildCustomAction();
+  }
+
+  protected async executeAppBuilderAsJson(...args: Parameters<typeof executeAppBuilder>) {
+    const result = JSON.parse(await executeAppBuilder(...args));
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return result;
   }
 
   async run() {

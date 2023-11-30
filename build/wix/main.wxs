@@ -27,9 +27,7 @@
     <UIRef Id="WixUI_RD" />
 
     <Property Id="ApplicationFolderName" Value="Rancher Desktop" />
-    <Icon
-      Id="RancherDesktopIcon.exe"
-      SourceFile="$(var.appDir)\Rancher Desktop.exe" />
+    <Icon Id="RancherDesktopIcon.exe" SourceFile="$(var.iconPath)" />
     <Property Id="ARPPRODUCTICON" Value="RancherDesktopIcon.exe" />
     <Property Id="ARPNOMODIFY" Value="1" />
     <Property Id="ARPURLINFOABOUT" Value="https://rancherdesktop.io/" />

@@ -620,6 +620,7 @@ rancherdesktop
 rancherkubernetesengine
 ranchertest
 rawdata
+rcedit
 rcfiles
 rcompare
 rdctl
