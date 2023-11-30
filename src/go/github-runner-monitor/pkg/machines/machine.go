@@ -30,6 +30,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const timeout = 30 * time.Second
+
 // getDefault returns the default value if the first value is empty.
 func getDefault(value, defaultValue string) string {
 	if value != "" {
@@ -40,7 +42,7 @@ func getDefault(value, defaultValue string) string {
 
 // Run a new machine with the given configuration.  When the machine shuts down,
 // the returned channel will be closed.
-func Run(ctx context.Context, c Config) (<-chan struct{}, error) {
+func Run(ctx context.Context, c *Config) (<-chan struct{}, error) {
 	log := logrus.WithField("machine", c.Name)
 
 	// Set up a qemu QMP control channel, so that we can try to terminate the
@@ -152,7 +154,7 @@ func Run(ctx context.Context, c Config) (<-chan struct{}, error) {
 	// Set a custom function that will be called when procCtx is closed.
 	cmd.Cancel = func() error {
 		log.Info("Gracefully shutting down, this may take a while...")
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		if err := qmp.ExecuteSystemPowerdown(timeoutCtx); err != nil {
 			log.WithError(err).Error("Failed to power down")
 		}
@@ -185,7 +187,7 @@ func killProcess(cmd *exec.Cmd, chProcessDone <-chan struct{}, log logrus.FieldL
 	select {
 	case <-chProcessDone:
 		return
-	case <-time.After(30 * time.Second):
+	case <-time.After(timeout):
 		log.Warn("Time out waiting for process exit, force killing")
 		if err := proc.Kill(); err != nil {
 			log.WithError(err).Error("Failed to kill process; orphaning.")
