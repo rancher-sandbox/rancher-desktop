@@ -2,8 +2,8 @@ package process
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -38,7 +38,9 @@ func KillOthers(args ...string) error {
 		procFile, err := os.Readlink(path.Join("/proc", proc.Name(), "exe"))
 		if err != nil {
 			// pid died, or we don't have permissions, or it's not a pid.
-			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read exe")
+			if !errors.Is(err, os.ErrNotExist) {
+				logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read exe")
+			}
 			continue
 		}
 		if selfFile != procFile {
@@ -49,7 +51,7 @@ func KillOthers(args ...string) error {
 			}).Trace("pid has different executable")
 			continue
 		}
-		procCmd, err := ioutil.ReadFile(path.Join("/proc", proc.Name(), "cmdline"))
+		procCmd, err := os.ReadFile(path.Join("/proc", proc.Name(), "cmdline"))
 		if err != nil {
 			// pid died, or we don't have permissions, or it's not a pid.
 			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read command line")
@@ -62,7 +64,7 @@ func KillOthers(args ...string) error {
 		if len(procArgs) < 2 {
 			logrus.WithField("pid", proc.Name()).Trace("pid has no args")
 			continue
-		} else if bytes.Compare(argsBytes, procArgs[1]) != 0 {
+		} else if !bytes.Equal(argsBytes, procArgs[1]) {
 			// pid args are not the expected args
 			logrus.WithFields(logrus.Fields{
 				"pid":           proc.Name(),
