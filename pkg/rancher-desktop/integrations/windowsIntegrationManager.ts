@@ -308,7 +308,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
               );
             },
             destroy: async(child) => {
-              child.kill('SIGTERM');
+              child?.kill('SIGTERM');
               // Ensure we kill the WSL-side process; sometimes things can get out
               // of sync.
               await this.execCommand({ distro, root: true },
