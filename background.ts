@@ -325,8 +325,20 @@ async function checkForBackendLock() {
     return;
   }
 
+  const startTime = Date.now();
+
   // Check every second if a lock file exists
   while (await doesBackendLockExist()) {
+    // Notify when a lock file has existed for more than 5 minutes
+    if (Date.now() - startTime >= 300_000) {
+      mainEvents.emit(
+        'dialog-info',
+        {
+          dialog:  'SnapshotsDialog',
+          infoKey: 'snapshots.info.lock.info',
+        },
+      );
+    }
     await util.promisify(setTimeout)(1_000);
   }
 }
@@ -626,6 +638,10 @@ mainEvents.on('settings-write', writeSettings);
 
 mainEvents.on('extensions/ui/uninstall', (id) => {
   window.send('ok:extensions/uninstall', id);
+});
+
+mainEvents.on('dialog-info', (args) => {
+  window.getWindow(args.dialog)?.webContents.send('dialog/info', args);
 });
 
 ipcMainProxy.on('extensions/open', (_event, id, path) => {

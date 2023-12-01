@@ -127,6 +127,8 @@ interface MainEventNames {
    * Responds by emitting a backend-locked-update.
    */
   'backend-locked-check'(): void;
+
+  'dialog-info'(args: Record<string, string>): void;
 }
 
 /**
