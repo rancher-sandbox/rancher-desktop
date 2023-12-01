@@ -91,15 +91,16 @@ export default {
     ipcRenderer.on('window/blur', (event, blur) => {
       this.blur = blur;
     });
-    ipcRenderer.once('backend-locked', (event) => {
+    ipcRenderer.on('backend-locked', (event) => {
       ipcRenderer.send('preferences-close');
       this.showCreatingSnapshotDialog();
     });
-    ipcRenderer.once('backend-unlocked', () => {
+    ipcRenderer.on('backend-unlocked', () => {
       ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
-      ipcRenderer.removeAllListeners('backend-locked');
     });
+
     ipcRenderer.send('backend-state-check');
+
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
     });

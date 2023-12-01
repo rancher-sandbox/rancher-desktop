@@ -247,17 +247,16 @@ Electron.app.whenReady().then(async() => {
       }
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
+
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
 
+    await initUI();
+    await checkForBackendLock();
+
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
-
-    if (fs.existsSync(path.join(paths.appHome, 'backend.lock'))) {
-      backendIsLocked = SNAPSHOT_OPERATION;
-    }
-    mainEvents.emit('backend-locked-update', backendIsLocked);
 
     mainEvents.emit('settings-update', cfg);
 
@@ -271,8 +270,6 @@ Electron.app.whenReady().then(async() => {
 
       return;
     }
-
-    await initUI();
 
     try {
       await dockerDirManager.ensureCredHelperConfigured();
@@ -296,6 +293,43 @@ Electron.app.whenReady().then(async() => {
     Electron.app.quit();
   }
 });
+
+/**
+ * Checks for the existence of the 'backend.lock' file and updates the
+ * 'backendIsLocked' variable accordingly. Emits the 'backend-locked-update'
+ * event to notify listeners about the current lock status.
+ */
+async function doesBackendLockExist(): Promise<boolean> {
+  try {
+    await fs.promises.access(path.join(paths.appHome, 'backend.lock'));
+    backendIsLocked = SNAPSHOT_OPERATION;
+    mainEvents.emit('backend-locked-update', backendIsLocked);
+  } catch (ex: any) {
+    backendIsLocked = '';
+    if (ex.code === 'ENOENT') {
+      mainEvents.emit('backend-locked-update', backendIsLocked);
+    } else {
+      throw ex;
+    }
+  }
+
+  return !!backendIsLocked;
+}
+
+/**
+ * Blocks execution until the 'backend.lock' file is no longer present.
+ */
+async function checkForBackendLock() {
+  // Perform an initial check for a lock file
+  if (!await doesBackendLockExist()) {
+    return;
+  }
+
+  // Check every second if a lock file exists
+  while (await doesBackendLockExist()) {
+    await util.promisify(setTimeout)(1_000);
+  }
+}
 
 async function initUI() {
   await doFirstRunDialog();
@@ -914,10 +948,16 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
   event,
   options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
 ) => {
+  const dialogId = 'SnapshotsDialog';
+
+  if (window.getWindow(dialogId)) {
+    return;
+  }
+
   const mainWindow = window.getWindow('main');
 
   const dialog = window.openDialog(
-    'SnapshotsDialog',
+    dialogId,
     {
       modal:   true,
       parent:  mainWindow || undefined,
