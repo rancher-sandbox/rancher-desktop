@@ -57,7 +57,7 @@ func (w *msiWriter) Write(message []byte) (int, error) {
 	// We always set up a record where *0 is just "[1]" to avoid issues if
 	// the message contains formatting; this is analogous to calling
 	// `Sprintf("%s", ...)``
-	data := []string{"1", strings.TrimRight(string(message), "\r\n")}
+	data := []string{"[1]", strings.TrimRight(string(message), "\r\n")}
 	err := submitMessage(w.hInstall, INSTALLMESSAGE_INFO, data)
 	if err != nil {
 		return 0, err
