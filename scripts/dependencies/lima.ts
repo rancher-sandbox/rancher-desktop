@@ -211,15 +211,11 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
       throw new Error(`Failed to parse name "${ matchingAsset.name }"`);
     }
     const alpineVersion = nameMatch[1];
-    const result = {
+
+    return {
       isoVersion: release.tag_name.replace(/^v/, ''),
       alpineVersion,
-      toString() {
-        return release.tag_name;
-      },
     };
-
-    return result;
   }
 
   async getAvailableVersions(): Promise<AlpineLimaISOVersion[]> {

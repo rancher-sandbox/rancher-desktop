@@ -159,7 +159,7 @@ async function checkDependencies(): Promise<void> {
     } else if (comparison === 0) {
       console.log(`${ dependency.name } is up to date.`);
     } else {
-      console.log(`Can update ${ dependency.name } from ${ currentVersion } to ${ latestVersion }`);
+      console.log(`Can update ${ dependency.name } from ${ JSON.stringify(currentVersion) } to ${ JSON.stringify(latestVersion) }`);
     }
 
     return comparison > 0;
