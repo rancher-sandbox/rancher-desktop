@@ -18,13 +18,6 @@ provision:
     mkdir -p /bootfs
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
-
-    # Workaround for https://github.com/rancher-sandbox/rancher-desktop/issues/6051
-    # should be removed when the issue is fixed in Lima itself
-    if [ -f /bootfs/etc/network/interfaces ] && ! diff -q /etc/network/interfaces /bootfs/etc/network/interfaces; then
-      cp /bootfs/etc/network/interfaces /etc/network/interfaces
-      rc-service networking restart
-    fi
     if [ -f /bootfs/etc/os-release ] && ! diff -q /etc/os-release /bootfs/etc/os-release; then
       cp /etc/machine-id /bootfs/etc
       cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
