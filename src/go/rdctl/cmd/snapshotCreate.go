@@ -41,7 +41,7 @@ func createSnapshot(args []string) error {
 	}
 	// Report on invalid names before locking and shutting down the backend
 	if err := manager.ValidateName(name); err != nil {
-		return nil
+		return err
 	}
 
 	// Ideally we would not use the deprecated syscall package,
