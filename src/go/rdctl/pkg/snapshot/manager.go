@@ -60,8 +60,8 @@ func (manager *Manager) SnapshotDirectory(snapshot Snapshot) string {
 	return filepath.Join(manager.Paths.Snapshots, snapshot.ID)
 }
 
-// ValidateName checks that the passed name is a valid snapshot name
-// and that it is not used by an existing snapshot.
+// ValidateName checks that name is a valid snapshot name and that
+// it is not used by an existing snapshot.
 func (manager *Manager) ValidateName(name string) error {
 	if len(name) == 0 {
 		return fmt.Errorf("snapshot name must not be the empty string")
@@ -233,10 +233,9 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 }
 
 func checkForInvalidCharacter(name string) error {
-	runeName := []rune(name)
-	for idx, r := range runeName {
-		if !unicode.IsPrint(r) {
-			return fmt.Errorf("invalid character %q at position %d in name: all characters must be printable or a space", r, idx)
+	for idx, c := range name {
+		if !unicode.IsPrint(c) {
+			return fmt.Errorf("invalid character %q at position %d in name: all characters must be printable or a space", c, idx)
 		}
 	}
 	return nil

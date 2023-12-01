@@ -83,7 +83,7 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 	fmt.Fprintf(writer, "NAME\tCREATED\tDESCRIPTION\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		desc := truncate(aSnapshot.Description, 63)
+		desc := truncateAtNewlineOrMaxRunes(aSnapshot.Description, 63)
 		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, prettyCreated, desc)
 	}
 	writer.Flush()
@@ -92,8 +92,8 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 
 // Truncates a string to either the first newline or a maximum number of
 // runes. Also removes leading and trailing whitespace.
-func truncate(input string, maxRunes int) string {
-	var truncated bool
+func truncateAtNewlineOrMaxRunes(input string, maxRunes int) string {
+	truncated := false
 	input = strings.TrimSpace(input)
 	if newlineIndex := strings.Index(input, "\n"); newlineIndex >= 0 {
 		input = input[:newlineIndex]
@@ -101,7 +101,7 @@ func truncate(input string, maxRunes int) string {
 	}
 	runeInput := []rune(input)
 	if len(runeInput) > maxRunes-1 {
-		runeInput = runeInput[0 : maxRunes-1]
+		runeInput = runeInput[:maxRunes-1]
 		truncated = true
 	}
 	if truncated {

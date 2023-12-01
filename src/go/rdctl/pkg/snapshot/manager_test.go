@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -123,22 +124,9 @@ func TestManager(t *testing.T) {
 			// check that we are truncating the name properly in the error message
 			if len(testCase.ExpectedErrMsgName) > 0 {
 				if !strings.Contains(err.Error(), testCase.ExpectedErrMsgName) {
-					t.Errorf("error %q does not contain name %q", err, testCase.ExpectedErrMsgName)
+					t.Errorf("error %q does not contain name %q", err, strconv.Quote(testCase.ExpectedErrMsgName))
 				}
 			}
-
-			// if err := manager.ValidateName(nameWithTab); err == nil {
-			// 	t.Error("name with tab is invalid but no error was returned")
-			// } else if !strings.Contains(err.Error(), "invalid character value 9 at position 16 in name: all characters must be printable or a space") {
-			// 	t.Errorf("failed to report unprintable character in name, got %s", err.Error())
-			// }
-			// longishNameEndingWithSpace := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "
-			// endOfLongishString := longishNameEndingWithSpace[len(longishNameEndingWithSpace)-nameDisplayCutoffSize:]
-			// if err := manager.ValidateName(longishNameEndingWithSpace); err == nil {
-			// 	t.Error(" name ending with space not caught")
-			// } else if !strings.Contains(err.Error(), "…"+endOfLongishString) {
-			// 	t.Errorf("Longish invalid name not truncated as expected")
-			// }
 		})
 	}
 

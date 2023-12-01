@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestTruncate(t *testing.T) {
+func TestTruncateToNewlineOrMaxRunes(t *testing.T) {
 	testCases := []struct {
 		Input     string
 		MaxLength int
@@ -52,7 +52,7 @@ func TestTruncate(t *testing.T) {
 	for _, testCase := range testCases {
 		description := fmt.Sprintf("truncate case %+v", testCase)
 		t.Run(description, func(t *testing.T) {
-			result := truncate(testCase.Input, testCase.MaxLength)
+			result := truncateAtNewlineOrMaxRunes(testCase.Input, testCase.MaxLength)
 			assert.Equal(t, testCase.Expected, result)
 		})
 	}
