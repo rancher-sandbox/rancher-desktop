@@ -57,14 +57,11 @@ func KillOthers(args ...string) error {
 			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read command line")
 			continue
 		}
-		// Drop any --verbose command line flags; the process may have it set if
-		// debug mode is on, which the caller wouldn't expect.
-		procCmd = bytes.ReplaceAll(procCmd, []byte("\x00--verbose\x00"), []byte{0})
 		procArgs := bytes.SplitN(procCmd, []byte{0}, 2)
 		if len(procArgs) < 2 {
 			logrus.WithField("pid", proc.Name()).Trace("pid has no args")
 			continue
-		} else if !bytes.Equal(argsBytes, procArgs[1]) {
+		} else if !bytes.HasPrefix(procArgs[1], argsBytes) {
 			// pid args are not the expected args
 			logrus.WithFields(logrus.Fields{
 				"pid":           proc.Name(),
