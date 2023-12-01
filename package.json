@@ -122,7 +122,7 @@
     "@types/dompurify": "3.0.5",
     "@types/ejs": "3.1.5",
     "@types/jest": "29.5.2",
-    "@types/lodash": "4.14.196",
+    "@types/lodash": "4.14.202",
     "@types/mustache": "4.2.5",
     "@types/node": "18.18.9",
     "@types/node-fetch": "2.6.9",
