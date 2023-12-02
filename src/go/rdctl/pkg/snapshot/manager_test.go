@@ -63,12 +63,12 @@ func TestManager(t *testing.T) {
 		{
 			Name:               " 12345678911234567892123456我喜欢鸡肉",
 			ExpectedError:      "must not start with a white-space character",
-			ExpectedErrMsgName: "12345678911234567892123456我喜…",
+			ExpectedErrMsgName: " 12345678911234567892123456我喜…",
 		},
 		{
 			Name:               `can't end with a "space" `,
 			ExpectedError:      "must not end with a white-space character",
-			ExpectedErrMsgName: `can't end with a \"space\" `,
+			ExpectedErrMsgName: `can't end with a "space" `,
 		},
 		{
 			Name:               `我喜欢鸡肉1234567891123456789212345 `,
@@ -123,7 +123,7 @@ func TestManager(t *testing.T) {
 			}
 			// check that we are truncating the name properly in the error message
 			if len(testCase.ExpectedErrMsgName) > 0 {
-				if !strings.Contains(err.Error(), testCase.ExpectedErrMsgName) {
+				if !strings.Contains(err.Error(), strconv.Quote(testCase.ExpectedErrMsgName)) {
 					t.Errorf("error %q does not contain name %q", err, strconv.Quote(testCase.ExpectedErrMsgName))
 				}
 			}
