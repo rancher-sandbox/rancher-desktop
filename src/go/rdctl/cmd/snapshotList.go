@@ -83,23 +83,29 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 	fmt.Fprintf(writer, "NAME\tCREATED\tDESCRIPTION\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		desc := aSnapshot.Description
-		idx := strings.Index(desc, "\n")
-		if idx >= 0 {
-			// If the description starts with a newline, it will appear empty in this view.
-			// Use the json view to get the full description
-			desc = desc[0:idx]
-		}
-		if len(desc) > 63 {
-			desc = desc[0:60] + "..."
-		} else if idx >= 0 {
-			// The string was truncated because of a newline, so add an ellipsis to show that
-			// Do this even if the newline was the last character - we've still truncated *something*.
-			desc += "..."
-		}
-
+		desc := truncateAtNewlineOrMaxRunes(aSnapshot.Description, 63)
 		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, prettyCreated, desc)
 	}
 	writer.Flush()
 	return nil
+}
+
+// Truncates a string to either the first newline or a maximum number of
+// runes. Also removes leading and trailing whitespace.
+func truncateAtNewlineOrMaxRunes(input string, maxRunes int) string {
+	truncated := false
+	input = strings.TrimSpace(input)
+	if newlineIndex := strings.Index(input, "\n"); newlineIndex >= 0 {
+		input = input[:newlineIndex]
+		truncated = true
+	}
+	runeInput := []rune(input)
+	if len(runeInput) > maxRunes-1 {
+		runeInput = runeInput[:maxRunes-1]
+		truncated = true
+	}
+	if truncated {
+		return string(runeInput) + "…"
+	}
+	return string(runeInput)
 }

@@ -60,29 +60,30 @@ func (manager *Manager) SnapshotDirectory(snapshot Snapshot) string {
 	return filepath.Join(manager.Paths.Snapshots, snapshot.ID)
 }
 
-// ValidateName - does syntactic validation on the name
+// ValidateName checks that name is a valid snapshot name and that
+// it is not used by an existing snapshot.
 func (manager *Manager) ValidateName(name string) error {
 	if len(name) == 0 {
 		return fmt.Errorf("snapshot name must not be the empty string")
 	}
-	reportedName := name
-	if len(reportedName) > nameDisplayCutoffSize {
-		reportedName = reportedName[0:nameDisplayCutoffSize] + "…"
-	}
-	if len(name) > maxNameLength {
-		return fmt.Errorf(`invalid name %q: max length is %d, %d were specified`, reportedName, maxNameLength, len(name))
+	runeName := []rune(name)
+	if len(runeName) > maxNameLength {
+		errMsgName := truncate(name, nameDisplayCutoffSize)
+		return fmt.Errorf(`invalid name %q: max length is %d, %d were specified`, errMsgName, maxNameLength, len(runeName))
 	}
 	if err := checkForInvalidCharacter(name); err != nil {
 		return err
 	}
 	if unicode.IsSpace(rune(name[0])) {
-		return fmt.Errorf(`invalid name %q: must not start with a white-space character`, reportedName)
+		errMsgName := truncate(name, nameDisplayCutoffSize)
+		return fmt.Errorf(`invalid name %q: must not start with a white-space character`, errMsgName)
 	}
-	if unicode.IsSpace(rune(name[len(name)-1])) {
-		if len(name) > nameDisplayCutoffSize {
-			reportedName = "…" + name[len(name)-nameDisplayCutoffSize:]
+	if unicode.IsSpace(runeName[len(runeName)-1]) {
+		errMsgName := name
+		if len(runeName) > nameDisplayCutoffSize {
+			errMsgName = "…" + string(runeName[len(runeName)-nameDisplayCutoffSize:])
 		}
-		return fmt.Errorf(`invalid name %q: must not end with a white-space character`, reportedName)
+		return fmt.Errorf(`invalid name %q: must not end with a white-space character`, errMsgName)
 	}
 	currentSnapshots, err := manager.List(false)
 	if err != nil {
@@ -90,7 +91,8 @@ func (manager *Manager) ValidateName(name string) error {
 	}
 	for _, currentSnapshot := range currentSnapshots {
 		if currentSnapshot.Name == name {
-			return fmt.Errorf("name %q already exists", name)
+			errMsgName := truncate(name, nameDisplayCutoffSize)
+			return fmt.Errorf("name %q already exists", errMsgName)
 		}
 	}
 	return nil
@@ -233,7 +235,7 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 func checkForInvalidCharacter(name string) error {
 	for idx, c := range name {
 		if !unicode.IsPrint(c) {
-			return fmt.Errorf("invalid character value %d at position %d in name: all characters must be printable or a space", c, idx)
+			return fmt.Errorf("invalid character %q at position %d in name: all characters must be printable or a space", c, idx)
 		}
 	}
 	return nil
@@ -246,4 +248,14 @@ func contextIsDone(ctx context.Context) bool {
 	default:
 		return false
 	}
+}
+
+// Does a utf8-aware truncation of input to maximum maxChars
+// unicode code points. Adds an ellipsis if truncation occurred.
+func truncate(input string, maxChars int) string {
+	runeInput := []rune(input)
+	if len(runeInput) > maxChars {
+		return string(runeInput[0:maxChars-1]) + "…"
+	}
+	return input
 }
