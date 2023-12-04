@@ -818,6 +818,11 @@ export default class K3sHelper extends events.EventEmitter {
         host = await getHost();
 
         if (typeof host === 'undefined') {
+          if (new Date().valueOf() > timeout) {
+            console.log(`timed out after ${ Math.round(timeout / 60_000) } minutes trying to get an IP address for the VM`);
+
+            return;
+          }
           await util.promisify(setTimeout)(500);
           continue;
         }
