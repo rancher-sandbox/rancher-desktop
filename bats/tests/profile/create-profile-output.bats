@@ -257,12 +257,14 @@ assert_check_registry_output() {
 @test 'generates registry output from inline json' {
     run rdctl create-profile --output reg --body '{"application": { "window": { "quitOnClose": true }}}'
     assert_success
-    assert_output - <<'EOF'
+    SETTINGS_VERSION=$(get_setting .version)
+    HEX_SETTINGS_VERSION=$(printf "%x" "$SETTINGS_VERSION")
+    assert_output - <<EOF
 Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies]
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop]
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults]
-"version"=dword:a
+"version"=dword:$HEX_SETTINGS_VERSION
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\window]
 "quitOnClose"=dword:1
@@ -286,12 +288,14 @@ EOF
 # Verify that the fields given in `json_maps_and_lists` are resorted alphabetically, ignoring case
 assert_registry_output_for_maps_and_lists() {
     assert_success
-    assert_output - <<'EOF'
+    SETTINGS_VERSION=$(get_setting .version)
+    HEX_SETTINGS_VERSION=$(printf "%x" "$SETTINGS_VERSION")
+    assert_output - <<EOF
 Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\SOFTWARE\Policies]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults]
-"version"=dword:a
+"version"=dword:$HEX_SETTINGS_VERSION
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]
@@ -316,14 +320,15 @@ EOF
 }
 
 assert_moose_head_plist_output() {
+    SETTINGS_VERSION=$(get_setting .version)
     assert_success
-    assert_output - <<'EOF'
+    assert_output - <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>10</integer>
+    <integer>$SETTINGS_VERSION</integer>
     <key>kubernetes</key>
     <dict>
       <key>version</key>
@@ -356,13 +361,14 @@ EOF
 
 assert_complex_plist_output() {
     assert_success
-    assert_output - <<'EOF'
+    SETTINGS_VERSION=$(get_setting .version)
+    assert_output - <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>10</integer>
+    <integer>$SETTINGS_VERSION</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -437,15 +443,16 @@ EOF
 }
 
 @test 'verify converted special-char output' {
+    SETTINGS_VERSION=$(get_setting .version)
     run rdctl create-profile --output plist --body "$(json_with_special_chars)"
     assert_success
-    assert_output - <<'END'
+    assert_output - <<END
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>10</integer>
+    <integer>$SETTINGS_VERSION</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>

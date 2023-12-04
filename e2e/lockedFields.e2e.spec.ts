@@ -31,6 +31,7 @@ import {
 } from './utils/TestUtils';
 
 import type { DeploymentProfileType } from '@pkg/config/settings';
+import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { spawnFile } from '@pkg/utils/childProcess';
 import { reopenLogs } from '@pkg/utils/logging';
@@ -85,7 +86,7 @@ test.describe('Locked fields', () => {
     createDefaultSettings({ containerEngine: { allowedImages: { enabled: true, patterns: ['a', 'b', 'c', 'e'] } } });
     await saveUserProfile();
     await createUserProfile(
-      { version: 10, containerEngine: { allowedImages: { enabled: true } } },
+      { version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true } } },
       {
         version:         10,
         containerEngine: { allowedImages: { enabled: true, patterns: ['c', 'd', 'f'] } },
