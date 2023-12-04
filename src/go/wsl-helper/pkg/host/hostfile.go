@@ -28,6 +28,7 @@ const (
 	BeginConfig         = "# BEGIN Rancher Desktop configuration."
 	EndConfig           = "# END Rancher Desktop configuration."
 	DefaultHostFilePath = "/etc/hosts"
+	hostFilePermission  = 0644
 )
 
 // AppendHostsFile reads the content of a host file
@@ -47,7 +48,7 @@ func AppendHostsFile(entries []string, hostsFilePath string) error {
 		return nil
 	}
 
-	hostFile, err := os.OpenFile(hostsFilePath, os.O_WRONLY|os.O_APPEND, 0644)
+	hostFile, err := os.OpenFile(hostsFilePath, os.O_WRONLY|os.O_APPEND, hostFilePermission)
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func AppendHostsFile(entries []string, hostsFilePath string) error {
 
 	writer := bufio.NewWriter(hostFile)
 
-	_, err = writer.WriteString(fmt.Sprintf("\n%s\n", BeginConfig))
+	_, err = fmt.Fprintf(writer, "\n%s\n", BeginConfig)
 	if err != nil {
 		return err
 	}
@@ -65,7 +66,7 @@ func AppendHostsFile(entries []string, hostsFilePath string) error {
 			return fmt.Errorf("error writing to /etc/hosts file: %w", err)
 		}
 	}
-	_, err = writer.WriteString(fmt.Sprintln(EndConfig))
+	_, err = fmt.Fprintln(writer, EndConfig)
 	if err != nil {
 		return err
 	}
@@ -137,7 +138,7 @@ func RemoveHostsFileEntry(hostsFilePath string) error {
 		return err
 	}
 
-	if err := os.Chmod(tempFile.Name(), 0644); err != nil {
+	if err := os.Chmod(tempFile.Name(), hostFilePermission); err != nil {
 		return err
 	}
 
@@ -150,7 +151,7 @@ func RemoveHostsFileEntry(hostsFilePath string) error {
 }
 
 func configExist(hostsFilePath string) (bool, error) {
-	hostFile, err := os.OpenFile(hostsFilePath, os.O_RDWR, 0644)
+	hostFile, err := os.OpenFile(hostsFilePath, os.O_RDWR, hostFilePermission)
 	if err != nil {
 		return false, err
 	}

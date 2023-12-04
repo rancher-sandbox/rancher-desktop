@@ -25,13 +25,14 @@ import (
 )
 
 const (
-	markerPath     = "/.rancher-desktop-integration"
-	markerContents = "This file is used to mark Rancher Desktop WSL integration.\n"
+	markerPath                = "/.rancher-desktop-integration"
+	markerContents            = "This file is used to mark Rancher Desktop WSL integration.\n"
+	integrationFilePermission = 0o644
 )
 
 // Set the current distribution as being integrated with Rancher Desktop.
 func Set() error {
-	return os.WriteFile(markerPath, []byte(markerContents), 0o644)
+	return os.WriteFile(markerPath, []byte(markerContents), integrationFilePermission)
 }
 
 // Delete any markers claiming the current distribution is integrated with

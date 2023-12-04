@@ -47,5 +47,7 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
-	viper.BindPFlags(rootCmd.Flags())
+	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
+		logrus.Error(err)
+	}
 }
