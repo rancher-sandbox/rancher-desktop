@@ -19,6 +19,7 @@ export default Vue.extend({
         'title',
         'description',
         'action',
+        'icon',
       ]),
   },
   watch: {
@@ -69,7 +70,13 @@ export default Vue.extend({
           key="mainTitle"
           data-test="mainTitle"
           class="fade-group-item"
+          :class="icon ? 'main-title-icon' : ''"
         >
+          <span
+            v-if="icon"
+            key="mainTitleIcon"
+            :class="icon"
+          />
           {{ title }}
         </h1>
       </transition-group>
@@ -144,6 +151,16 @@ export default Vue.extend({
 
   .title-group {
     display: inherit;
+  }
+
+  .main-title-icon {
+    display: flex;
+    gap: 0.5rem;
+
+    span {
+      font-size: 30px;
+      color: var(--primary);
+    }
   }
 
   .actions {
