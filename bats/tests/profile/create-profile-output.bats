@@ -262,6 +262,7 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies]
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop]
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults]
+"version"=dword:a
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application]
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Rancher Desktop\defaults\application\window]
 "quitOnClose"=dword:1
@@ -290,6 +291,7 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\SOFTWARE\Policies]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults]
+"version"=dword:a
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions]
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Rancher Desktop\defaults\application\extensions\allowed]
@@ -320,6 +322,8 @@ assert_moose_head_plist_output() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>version</key>
+    <integer>10</integer>
     <key>kubernetes</key>
     <dict>
       <key>version</key>
@@ -357,6 +361,8 @@ assert_complex_plist_output() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>version</key>
+    <integer>10</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -438,6 +444,8 @@ EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>version</key>
+    <integer>10</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
