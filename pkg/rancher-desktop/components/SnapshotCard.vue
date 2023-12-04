@@ -22,28 +22,7 @@ function formatDate(value: string) {
   };
 }
 
-interface Data {
-  value: Snapshot
-}
-
-interface Methods {
-  restore: () => void,
-  remove: () => void,
-  showConfirmationDialog: (type: 'restore' | 'delete') => Promise<number>,
-  showRestoringSnapshotDialog: () => Promise<void>,
-}
-
-interface Computed {
-  snapshot: Snapshot & { formattedCreateDate: { date: string, time: string } | null },
-  isRestoreDisabled: boolean,
-  getK8sState: EngineStates,
-}
-
-interface Props {
-  value: Snapshot
-}
-
-export default Vue.extend<Data, Methods, Computed, Props>({
+export default Vue.extend({
   name:  'snapshot-card',
   props: {
     value: {
@@ -54,7 +33,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
 
   computed: {
     ...mapGetters('k8sManager', { getK8sState: 'getK8sState' }),
-    snapshot() {
+    snapshot(): Snapshot & { formattedCreateDate: { date: string, time: string } | null } {
       return {
         ...this.value,
         formattedCreateDate: formatDate(this.value.created),

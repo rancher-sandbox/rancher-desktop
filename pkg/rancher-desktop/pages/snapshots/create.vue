@@ -14,24 +14,7 @@ const defaultName = () => {
   return `Snap_${ dateString }`;
 };
 
-interface Data {
-  name: string,
-  description: string,
-  creating: boolean,
-}
-
-interface Methods {
-  goBack: (event: SnapshotEvent | null) => void;
-  submit: () => void;
-  showCreatingSnapshotDialog: () => Promise<void>;
-}
-
-interface Computed {
-  snapshots: Snapshot[];
-  valid: boolean;
-}
-
-export default Vue.extend<Data, Methods, Computed, never>({
+export default Vue.extend({
   components: {
     Banner,
     LabeledInput,
@@ -48,7 +31,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
   computed: {
     ...mapGetters('snapshots', { snapshots: 'list' }),
-    valid() {
+    valid(): boolean {
       return !!this.name && !this.snapshots.find((s: Snapshot) => s.name === this.name);
     },
   },
