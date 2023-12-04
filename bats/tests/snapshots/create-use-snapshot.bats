@@ -99,6 +99,21 @@ local_setup() {
     assert_exists "$PATH_CONFIG_FILE"
 }
 
+@test 'rejects attempts to create a snapshot with different description sources' {
+    run rdctl snapshot create --description abc --description-from-stdin my-happy-snapshot-1
+    assert_failure
+    assert_output --partial "Error: can't specify more than one option from \"--description\", \"--description-from-file\" \"--description-from-stdin\""
+
+    run rdctl snapshot create --description abc --description-from-file my-sad-file my-happy-snapshot-2
+    assert_failure
+    assert_output --partial "Error: can't specify more than one option from \"--description\", \"--description-from-file\" \"--description-from-stdin\""
+
+    run rdctl snapshot create --description-from-stdin --description-from-file my-shredded-file my-happy-snapshot-3
+    assert_failure
+    assert_output --partial "Error: can't specify more than one option from \"--description\", \"--description-from-file\" \"--description-from-stdin\""
+
+}
+
 @test 'can create a snapshot where proposed name is a current ID' {
     run ls -1 "$PATH_SNAPSHOTS"
     assert_success
