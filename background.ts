@@ -247,17 +247,16 @@ Electron.app.whenReady().then(async() => {
       }
       console.log(`Failed to update command from argument ${ commandLineArgs.join(', ') }`, err);
     }
+
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
 
+    await initUI();
+    await checkForBackendLock();
+
     pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
-
-    if (fs.existsSync(path.join(paths.appHome, 'backend.lock'))) {
-      backendIsLocked = SNAPSHOT_OPERATION;
-    }
-    mainEvents.emit('backend-locked-update', backendIsLocked);
 
     mainEvents.emit('settings-update', cfg);
 
@@ -270,35 +269,6 @@ Electron.app.whenReady().then(async() => {
       console.log('Will apply update; skipping startup.');
 
       return;
-    }
-
-    await doFirstRunDialog();
-
-    if (gone) {
-      console.log('User triggered quit during first-run');
-
-      return;
-    }
-
-    buildApplicationMenu();
-
-    Electron.app.setAboutPanelOptions({
-      // TODO: Update this to 2021-... as dev progresses
-      // also needs to be updated in electron-builder.yml
-      copyright:          'Copyright © 2021-2023 SUSE LLC',
-      applicationName:    `${ Electron.app.name } by SUSE`,
-      applicationVersion: `Version ${ await getVersion() }`,
-      iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
-    });
-
-    if (!cfg.application.hideNotificationIcon) {
-      Tray.getInstance(cfg).show();
-    }
-
-    if (!cfg.application.startInBackground) {
-      window.openMain();
-    } else if (Electron.app.dock) {
-      Electron.app.dock.hide();
     }
 
     try {
@@ -323,6 +293,86 @@ Electron.app.whenReady().then(async() => {
     Electron.app.quit();
   }
 });
+
+/**
+ * Checks for the existence of the 'backend.lock' file and updates the
+ * 'backendIsLocked' variable accordingly. Emits the 'backend-locked-update'
+ * event to notify listeners about the current lock status.
+ */
+async function doesBackendLockExist(): Promise<boolean> {
+  try {
+    await fs.promises.access(path.join(paths.appHome, 'backend.lock'));
+    backendIsLocked = SNAPSHOT_OPERATION;
+    mainEvents.emit('backend-locked-update', backendIsLocked);
+  } catch (ex: any) {
+    backendIsLocked = '';
+    if (ex.code === 'ENOENT') {
+      mainEvents.emit('backend-locked-update', backendIsLocked);
+    } else {
+      throw ex;
+    }
+  }
+
+  return !!backendIsLocked;
+}
+
+/**
+ * Blocks execution until the 'backend.lock' file is no longer present.
+ */
+async function checkForBackendLock() {
+  // Perform an initial check for a lock file
+  if (!await doesBackendLockExist()) {
+    return;
+  }
+
+  const startTime = Date.now();
+
+  // Check every second if a lock file exists
+  while (await doesBackendLockExist()) {
+    // Notify when a lock file has existed for more than 5 minutes
+    if (Date.now() - startTime >= 300_000) {
+      mainEvents.emit(
+        'dialog-info',
+        {
+          dialog:  'SnapshotsDialog',
+          infoKey: 'snapshots.info.lock.info',
+        },
+      );
+    }
+    await util.promisify(setTimeout)(1_000);
+  }
+}
+
+async function initUI() {
+  await doFirstRunDialog();
+
+  if (gone) {
+    console.log('User triggered quit during first-run');
+
+    return;
+  }
+
+  buildApplicationMenu();
+
+  Electron.app.setAboutPanelOptions({
+    // TODO: Update this to 2021-... as dev progresses
+    // also needs to be updated in electron-builder.yml
+    copyright:          'Copyright © 2021-2023 SUSE LLC',
+    applicationName:    `${ Electron.app.name } by SUSE`,
+    applicationVersion: `Version ${ await getVersion() }`,
+    iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
+  });
+
+  if (!cfg.application.hideNotificationIcon) {
+    Tray.getInstance(cfg).show();
+  }
+
+  if (!cfg.application.startInBackground) {
+    window.openMain();
+  } else if (Electron.app.dock) {
+    Electron.app.dock.hide();
+  }
+}
 
 async function doFirstRunDialog() {
   if (!noModalDialogs && settingsImpl.firstRunDialogNeeded()) {
@@ -588,6 +638,10 @@ mainEvents.on('settings-write', writeSettings);
 
 mainEvents.on('extensions/ui/uninstall', (id) => {
   window.send('ok:extensions/uninstall', id);
+});
+
+mainEvents.on('dialog-info', (args) => {
+  window.getWindow(args.dialog)?.webContents.send('dialog/info', args);
 });
 
 ipcMainProxy.on('extensions/open', (_event, id, path) => {
@@ -910,10 +964,16 @@ ipcMainProxy.handle('show-snapshots-blocking-dialog', async(
   event,
   options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog },
 ) => {
+  const dialogId = 'SnapshotsDialog';
+
+  if (window.getWindow(dialogId)) {
+    return;
+  }
+
   const mainWindow = window.getWindow('main');
 
   const dialog = window.openDialog(
-    'SnapshotsDialog',
+    dialogId,
     {
       modal:   true,
       parent:  mainWindow || undefined,

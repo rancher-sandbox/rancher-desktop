@@ -4793,6 +4793,8 @@ snapshots:
     delete:
       success: "Deleted '<b>'{snapshot}'</b>'"
       error: 'Delete error: {error}'
+    lock:
+      info: "A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>."
 
 
 ##############################

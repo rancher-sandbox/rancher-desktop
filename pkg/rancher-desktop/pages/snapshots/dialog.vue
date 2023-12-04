@@ -47,6 +47,10 @@ export default Vue.extend({
       this.errorButton = args.errorButton;
     });
 
+    ipcRenderer.on('dialog/info', (_event, args) => {
+      this.info = this.t(args.infoKey, {}, true);
+    });
+
     ipcRenderer.on('dialog/options', (_event, { window, format }) => {
       this.header = format.header;
       this.message = format.message;
@@ -177,7 +181,7 @@ export default Vue.extend({
       >
         <slot name="info">
           <Banner
-            class="banner mb-20"
+            class="banner mb-20 info-banner"
             color="info"
           >
             <span v-html="info" />
@@ -329,5 +333,9 @@ export default Vue.extend({
       justify-content: flex-start;
       flex-direction: row-reverse;
     }
+  }
+
+  .info-banner::v-deep code {
+    padding: 2px;
   }
 </style>
