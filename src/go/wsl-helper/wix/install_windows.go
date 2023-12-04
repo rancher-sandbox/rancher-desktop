@@ -26,7 +26,6 @@ import (
 // InstallWindowsFeatureImpl installs the Windows features necessary for WSL to
 // be installed.  This needs to be run elevated.
 func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
-	defer msiCloseHandle.Call(uintptr(hInstall))
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
@@ -53,7 +52,6 @@ func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
 // This assumes WSL was not previously installed.
 // This needs to be run as the user.
 func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
-	defer msiCloseHandle.Call(uintptr(hInstall))
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
