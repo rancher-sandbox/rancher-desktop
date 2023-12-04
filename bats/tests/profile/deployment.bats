@@ -125,9 +125,11 @@ install_extensions() {
 @test 'create profiles' {
     PROFILE_TYPE=$PROFILE_LOCKED
     create_profile
+    add_profile_int version 10
 
     PROFILE_TYPE=$PROFILE_DEFAULTS
     create_profile
+    add_profile_int version 10
     add_profile_bool application.startInBackground "$DEFAULTS_START_IN_BACKGROUND"
     verify_profiles
 }

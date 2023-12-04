@@ -15,6 +15,7 @@ local_teardown_file() {
 
 @test 'create profile' {
     create_profile
+    add_profile_int version 8
     add_profile_string kubernetes.version NattyBo
 }
 
