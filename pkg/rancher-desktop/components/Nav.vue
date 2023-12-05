@@ -30,7 +30,7 @@
     </ul>
     <template v-if="featureExtensions">
       <hr v-if="extensionsWithUI.length">
-      <div>
+      <div class="nav-extensions">
         <template v-for="extension in extensionsWithUI">
           <nuxt-link
             :key="extension.id"
@@ -47,6 +47,9 @@
         </template>
       </div>
     </template>
+    <div class="preferences-button-nav">
+      <preferences-button @open-preferences="openPreferences" />
+    </div>
   </nav>
 </template>
 
@@ -55,12 +58,13 @@ import os from 'os';
 
 import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
-import { PropType } from 'vue';
+import Vue, { PropType } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavIconExtension from './NavIconExtension.vue';
 import NavItem from './NavItem.vue';
 
+import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
 import { hexEncode } from '@pkg/utils/string-encode';
 
@@ -73,6 +77,7 @@ export default {
     BadgeState,
     NavItem,
     NavIconExtension,
+    PreferencesButton,
   },
   props: {
     items: {
@@ -155,6 +160,9 @@ export default {
 
       return false;
     },
+    openPreferences(): void {
+      this.$emit('open-preferences');
+    },
   },
 };
 </script>
@@ -165,7 +173,7 @@ nav {
     background-color: var(--nav-bg);
     padding: 0;
     margin: 0;
-    padding-top: 20px;
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
 
@@ -173,7 +181,7 @@ nav {
       text-decoration: none;
     }
 
-    div {
+    .nav-extensions {
       overflow: auto;
       flex-grow: 1
     }
@@ -219,6 +227,11 @@ a {
   line-height: initial;
   letter-spacing: initial;
   font-size: 0.75rem;
+}
+
+.preferences-button-nav {
+  display: flex;
+  justify-content: center;
 }
 
 </style>
