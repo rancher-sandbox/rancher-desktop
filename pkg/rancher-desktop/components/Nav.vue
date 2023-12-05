@@ -48,7 +48,10 @@
       </div>
     </template>
     <div class="preferences-button-nav">
-      <preferences-button @open-preferences="openPreferences" />
+      <preferences-button
+        class="preferences-button"
+        @open-preferences="openPreferences"
+      />
     </div>
   </nav>
 </template>
@@ -232,6 +235,12 @@ a {
 .preferences-button-nav {
   display: flex;
   justify-content: center;
+
+  .preferences-button {
+    flex: 1;
+    margin: 0 10px;
+    justify-content: center;
+  }
 }
 
 </style>
