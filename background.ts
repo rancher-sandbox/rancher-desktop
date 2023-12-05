@@ -534,6 +534,13 @@ Electron.app.on('before-quit', async(event) => {
 
   try {
     await k8smanager?.stop();
+    try {
+      await mainEvents.invoke('shutdown-integrations');
+    } catch (ex) {
+      if (!`${ ex }`.includes('No handlers registered')) {
+        throw ex;
+      }
+    }
 
     console.log(`2: Child exited cleanly.`);
   } catch (ex: any) {

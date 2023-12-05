@@ -70,6 +70,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   /** Whether the backend is in a state where the processes should run. */
   protected backendReady = false;
 
+  /** Set when we're about to quit. */
+  protected quitting = false;
+
   /** Extra debugging arguments for wsl-helper. */
   protected wslHelperDebugArgs: string[] = [];
 
@@ -82,6 +85,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     mainEvents.on('k8s-check-state', (mgr) => {
       this.backendReady = [State.STARTED, State.STARTING, State.DISABLED].includes(mgr.state);
       this.sync();
+    });
+    mainEvents.handle('shutdown-integrations', async() => {
+      this.quitting = true;
+      await Promise.all(Object.values(this.distroSocketProxyProcesses).map(p => p.stop()));
     });
     this.windowsSocketProxyProcess = new BackgroundProcess(
       'Win32 socket proxy',
@@ -268,7 +275,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * returns undefined.
    */
   get dockerSocketProxyReason(): string | undefined {
-    if (!this.enforcing) {
+    if (this.quitting) {
+      return 'quitting Rancher Desktop';
+    } else if (!this.enforcing) {
       return 'not enforcing';
     } else if (!this.backendReady) {
       return 'backend not ready';
@@ -307,7 +316,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
               );
             },
             destroy: async(child) => {
-              child.kill('SIGTERM');
+              child?.kill('SIGTERM');
               // Ensure we kill the WSL-side process; sometimes things can get out
               // of sync.
               await this.execCommand({ distro, root: true },

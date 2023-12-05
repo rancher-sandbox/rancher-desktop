@@ -114,12 +114,12 @@ func readKubeConfig(configPath string) (kubeConfig, error) {
 	var config kubeConfig
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		return config, err
+		return config, fmt.Errorf("could not open kubeconfig file %s: %w", configPath, err)
 	}
 	defer configFile.Close()
 	err = yaml.NewDecoder(configFile).Decode(&config)
 	if err != nil {
-		return config, err
+		return config, fmt.Errorf("could not read kubeconfig %s: %w", configPath, err)
 	}
 
 	return config, nil

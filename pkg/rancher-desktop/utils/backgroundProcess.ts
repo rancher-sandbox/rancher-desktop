@@ -10,7 +10,7 @@ type BackgroundProcessConstructorOptions = {
   /** A function to create the underlying child process. */
   spawn: () => Promise<childProcess.ChildProcess>;
   /** Optional function to stop the underlying child process. */
-  destroy?: (child: childProcess.ChildProcess) => Promise<void>;
+  destroy?: (child: childProcess.ChildProcess | null) => Promise<void>;
   /** Additional checks to see if the process should be started. */
   shouldRun?: () => Promise<boolean>;
 };
@@ -136,7 +136,9 @@ export default class BackgroundProcess {
       }
       this.shouldRun().then((result) => {
         if (result) {
-          this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
+          this.timer = timers.setTimeout(() => {
+            this.restart().catch(ex => console.error(ex));
+          }, 1_000);
           console.debug(`Background process ${ this.name } will restart (process ${ process.pid } exited)`);
         }
       }).catch(console.error);
@@ -151,8 +153,6 @@ export default class BackgroundProcess {
     this.started = false;
     timers.clearTimeout(this.timer);
     this.timer = undefined;
-    if (this.process) {
-      await this.destroy(this.process);
-    }
+    await this.destroy(this.process);
   }
 }

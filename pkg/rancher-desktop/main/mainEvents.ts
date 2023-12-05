@@ -107,6 +107,12 @@ interface MainEventNames {
   'extensions/ui/uninstall'(id: string): void;
 
   /**
+   * Emitted on application quit, used to shut down any integrations.  This
+   * requires feedback from the handler to know when all tasks are complete.
+   */
+  'shutdown-integrations'(): Promise<void>;
+
+  /**
    * Emitted on application quit.  Note that at this point we're committed to
    * quitting.
    */
@@ -157,7 +163,7 @@ type HandlerParams<eventName extends keyof MainEventNames> =
  */
 type HandlerReturn<eventName extends keyof MainEventNames> =
   IsHandler<eventName> extends true
-  ? ReturnType<MainEventNames[eventName]>
+  ? Awaited<ReturnType<MainEventNames[eventName]>>
   : never;
 
 /**
