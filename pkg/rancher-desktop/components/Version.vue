@@ -45,7 +45,6 @@ export default Vue.extend({
       :class="icon"
     />
     <span
-      v-if="!isStatusBarItem"
       class="item-label"
     >
       <b>{{ t('product.version') }}:</b>
