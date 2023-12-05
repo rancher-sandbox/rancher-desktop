@@ -14,7 +14,7 @@ import {
   createDefaultSettings, createUserProfile, reportAsset, teardown, tool,
 } from '../e2e/utils/TestUtils';
 
-import { ContainerEngine } from '@pkg/config/settings';
+import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 
 import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
 
@@ -40,7 +40,7 @@ test.describe.serial('Main App Test', () => {
     });
 
     await createUserProfile(
-      { version: 10, containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
+      { version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
       {},
     );
 

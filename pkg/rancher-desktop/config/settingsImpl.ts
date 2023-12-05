@@ -177,7 +177,7 @@ export function getDefaultMemory() {
 export function merge<T = Settings>(cfg: T, changes: RecursivePartial<RecursiveReadonly<T>>): T {
   const customizer = (objValue: any, srcValue: any) => {
     if (Array.isArray(objValue)) {
-      // If the destination is a array of primitives, just return the source
+      // If the destination is an array of primitives, just return the source
       // (i.e. completely overwrite).
       if (objValue.every(i => typeof i !== 'object')) {
         return srcValue;
