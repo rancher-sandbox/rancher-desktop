@@ -129,7 +129,8 @@ func (manager *Manager) Create(ctx context.Context, name, description string) (s
 		ID:          id.String(),
 		Description: description,
 	}
-	if err = manager.Lock(manager.Paths, "create"); err != nil {
+	action := fmt.Sprintf("Creating snapshot %q", name)
+	if err = manager.Lock(manager.Paths, action); err != nil {
 		return
 	}
 	defer func() {
@@ -209,7 +210,8 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 		return err
 	}
 
-	if err := manager.Lock(manager.Paths, "restore"); err != nil {
+	action := fmt.Sprintf("Restoring snapshot %q", name)
+	if err := manager.Lock(manager.Paths, action); err != nil {
 		return err
 	}
 	defer func() {
