@@ -8,6 +8,7 @@ ask around!
 [Feature Tracker](features.md)  
 [GitHub Runner Setup](github-runner-setup.md)  
 [Tips for Working with OBS](obs.md)  
+[Linux Release Process](linux-release-process.md)  
 [Release Checklist](release-checklist.md)  
 [Signing Rancher Desktop Releases](signing.md)  
 [Generating Screenshots for User Documentation](../../screenshots/README.md)  
