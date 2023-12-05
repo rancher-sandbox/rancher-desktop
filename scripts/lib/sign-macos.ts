@@ -98,7 +98,7 @@ export async function sign(workDir: string): Promise<string> {
       }
     }
 
-    await spawnFile('codesign', [...args, filePath]);
+    await spawnFile('codesign', [...args, filePath], { stdio: 'inherit' });
   }
 
   console.log('Verifying application signature...');
@@ -144,7 +144,7 @@ export async function sign(workDir: string): Promise<string> {
   if (!dmgFile) {
     throw new Error(`Could not find signed disk image`);
   }
-  await spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', dmgFile]);
+  await spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', dmgFile], { stdio: 'inherit' });
 
   return dmgFile;
 }

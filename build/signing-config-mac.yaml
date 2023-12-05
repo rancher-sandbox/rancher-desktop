@@ -22,6 +22,7 @@ entitlements:
     - Contents/Resources/resources/darwin/lima/bin/qemu-system-aarch64
     - Contents/Resources/resources/darwin/lima/bin/qemu-system-x86_64
     entitlements:
+    - com.apple.security.cs.allow-jit
     - com.apple.security.hypervisor
   - paths:
     - Contents/Frameworks/Rancher Desktop Helper (GPU).app
