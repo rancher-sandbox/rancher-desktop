@@ -72,7 +72,7 @@ type ExtensionWithUI = ExtensionMetadata & {
   ui: { 'dashboard-tab': { title: string } };
 };
 
-export default {
+export default Vue.extend({
   components: {
     BadgeState,
     NavItem,
@@ -164,7 +164,7 @@ export default {
       this.$emit('open-preferences');
     },
   },
-};
+});
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
