@@ -179,10 +179,9 @@ export default {
 .wrapper {
   display: grid;
   grid-template:
-    "header   header"
-    "nav      title"
-    "nav      body"    1fr
-    "nav      status-bar"
+    "nav        title"
+    "nav        body"    1fr
+    "status-bar status-bar"
     / var(--nav-width) 1fr;
   background-color: var(--body-bg);
   width: 100vw;
