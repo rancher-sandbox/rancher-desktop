@@ -18,35 +18,24 @@ import (
 )
 
 var snapshotDescription string
-var snapshotDescriptionFromFile string
-var snapshotDescriptionFromStdin bool
+var snapshotDescriptionFrom string
 
 var snapshotCreateCmd = &cobra.Command{
 	Use:   "create <name>",
 	Short: "Create a snapshot",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		snapshotValueCount := 0
-		if snapshotDescription != "" {
-			snapshotValueCount += 1
-		}
-		if snapshotDescriptionFromFile != "" {
-			snapshotValueCount += 1
-		}
-		if snapshotDescriptionFromStdin {
-			snapshotValueCount += 1
-		}
-		if snapshotValueCount > 1 {
-			return fmt.Errorf(`can't specify more than one option from "--description", "--description-from-file" "--description-from-stdin"`)
+		if snapshotDescription != "" && snapshotDescriptionFrom != "" {
+			return fmt.Errorf(`can't specify more than one option from "--description" and "--description-from"`)
 		}
 		cmd.SilenceUsage = true
-		if snapshotDescriptionFromStdin || snapshotDescriptionFromFile != "" {
+		if snapshotDescriptionFrom != "" {
 			var bytes []byte
 			var err error
-			if snapshotDescriptionFromStdin || snapshotDescriptionFromFile == "-" {
+			if snapshotDescriptionFrom == "-" {
 				bytes, err = io.ReadAll(os.Stdin)
 			} else {
-				bytes, err = os.ReadFile(snapshotDescriptionFromFile)
+				bytes, err = os.ReadFile(snapshotDescriptionFrom)
 			}
 			if err != nil {
 				return err
@@ -61,8 +50,7 @@ func init() {
 	snapshotCmd.AddCommand(snapshotCreateCmd)
 	snapshotCreateCmd.Flags().BoolVar(&outputJsonFormat, "json", false, "output json format")
 	snapshotCreateCmd.Flags().StringVar(&snapshotDescription, "description", "", "snapshot description")
-	snapshotCreateCmd.Flags().StringVar(&snapshotDescriptionFromFile, "description-from-file", "", "snapshot description from a file (or - for stdin)")
-	snapshotCreateCmd.Flags().BoolVar(&snapshotDescriptionFromStdin, "description-from-stdin", false, "snapshot description from standard input")
+	snapshotCreateCmd.Flags().StringVar(&snapshotDescriptionFrom, "description-from", "", "snapshot description from a file (or - for stdin)")
 }
 
 func createSnapshot(args []string) error {

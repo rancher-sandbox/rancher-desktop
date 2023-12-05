@@ -5,10 +5,10 @@ local_setup() {
     NON_ALNUM_SNAPSHOT_NAME='@#$%'
     MULTI_WORD_SNAPSHOT_NAME='=with '\''single'\'' and "double" quotes, /slashes/, and \backslashes\.'
     EMOJI_SNAPSHOT_NAME="emoji's 😍 are cool"
-    NON_ALNUM_DESC='description for non-alnum-snapshot-name'
-    MULTI_WORD_DESC='description for multi-word-snapshot-name'
-    EMOJI_DESC='description for emoji-snapshot-name'
-    TEMP=/tmp
+    NON_ALNUM_DESCRIPTION='description for non-alnum-snapshot-name'
+    MULTI_WORD_DESCRIPTION='description for multi-word-snapshot-name'
+    EMOJI_DESCRIPTION='description for emoji-snapshot-name'
+    TEMP=$BATS_FILE_TMPDIR
     if is_windows; then
         TEMP="$(wslpath_from_win32_env TEMP)"
     fi
@@ -43,15 +43,15 @@ local_setup() {
     # Sleep 5 seconds after creating each snapshot so later we can verify
     # that the differences in each snapshot's creation time makes sense.
 
-    rdctl snapshot create --description-from-stdin "$NON_ALNUM_SNAPSHOT_NAME" <<<"$NON_ALNUM_DESC"
+    rdctl snapshot create --description-from - "$NON_ALNUM_SNAPSHOT_NAME" <<<"$NON_ALNUM_DESCRIPTION"
     sleep 5
 
-    rdctl snapshot create --description-from-file - "$MULTI_WORD_SNAPSHOT_NAME" <<<"$MULTI_WORD_DESC"
+    rdctl snapshot create --description-from - "$MULTI_WORD_SNAPSHOT_NAME" <<<"$MULTI_WORD_DESCRIPTION"
     sleep 5
 
-    DESC_FILE="$TEMP/emoji-ss-desc.txt"
-    echo "$EMOJI_DESC" >"$DESC_FILE"
-    rdctl snapshot create --description-from-file "$DESC_FILE" "$EMOJI_SNAPSHOT_NAME"
+    DESC_FILE="$TEMP/emoji-snapshot-description.txt"
+    echo "$EMOJI_DESCRIPTION" >"$DESC_FILE"
+    rdctl snapshot create --description-from "$DESC_FILE" "$EMOJI_SNAPSHOT_NAME"
 }
 
 created() {
@@ -77,15 +77,14 @@ created() {
     # so a difference of 4.9999 could show up as 4
     ((TIME2 - TIME1 > 4))
 
-    rdctl snapshot list 1>&3
     run rdctl snapshot list
     assert_success
     assert_output --partial "$NON_ALNUM_SNAPSHOT_NAME"
     assert_output --partial "$MULTI_WORD_SNAPSHOT_NAME"
     assert_output --partial "$EMOJI_SNAPSHOT_NAME"
-    assert_output --partial "$NON_ALNUM_DESC"
-    assert_output --partial "$MULTI_WORD_DESC"
-    assert_output --partial "$EMOJI_DESC"
+    assert_output --partial "$NON_ALNUM_DESCRIPTION"
+    assert_output --partial "$MULTI_WORD_DESCRIPTION"
+    assert_output --partial "$EMOJI_DESCRIPTION"
 }
 
 @test 'verify k8s is off' {
