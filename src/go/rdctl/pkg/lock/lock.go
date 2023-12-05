@@ -1,6 +1,7 @@
 package lock
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
@@ -21,6 +22,10 @@ type BackendLocker interface {
 type BackendLock struct {
 }
 
+type LockData struct {
+	Action string `json:"action"`
+}
+
 // Lock the backend by creating the lock file and shutting down the VM.
 // The lock file will be deleted if Lock returns an error (e.g. the backend couldn't be stopped).
 func (lock *BackendLock) Lock(appPaths paths.Paths, action string) error {
@@ -29,12 +34,24 @@ func (lock *BackendLock) Lock(appPaths paths.Paths, action string) error {
 	}
 	// Create an empty file whose presence signifies that the backend is locked.
 	lockPath := filepath.Join(appPaths.AppHome, backendLockName)
-	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL, 0o644)
+	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0o644)
 	if errors.Is(err, os.ErrExist) {
 		return errors.New("backend lock file already exists; if there is no snapshot operation in progress, you can remove this error with `rdctl snapshot unlock`")
 	} else if err != nil {
 		return fmt.Errorf("unexpected error acquiring backend lock: %w", err)
 	}
+
+	lockData := LockData{
+		Action: action,
+	}
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(lockData); err != nil {
+		_ = file.Close()
+		_ = os.Remove(lockPath)
+		return fmt.Errorf("failed to write metadata file: %w", err)
+	}
+
 	if err := file.Close(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to close backend lock file descriptor: %s", err)
 	}
@@ -89,7 +106,7 @@ func ensureBackendStopped(action string) error {
 		return fmt.Errorf("failed to get backend state: %w", err)
 	}
 	if state.VMState != "STARTED" && state.VMState != "DISABLED" {
-		return fmt.Errorf("Rancher Desktop must be fully running or fully shut down to do a snapshot-%s action, state is currently %v", action, state.VMState)
+		return fmt.Errorf("Rancher Desktop state is %v. It must be fully running or fully shut down to perform the action: %s", state.VMState, action)
 	}
 
 	// Stop and lock the backend
