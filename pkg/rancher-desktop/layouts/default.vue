@@ -5,14 +5,11 @@
       'blur': blur
     }"
   >
-    <rd-header
-      class="header"
-      @open-preferences="openPreferences"
-    />
     <rd-nav
       class="nav"
       :items="routes"
       :extensions="extensions"
+      @open-preferences="openPreferences"
     />
     <the-title ref="rdx-title" />
     <main class="body">
@@ -29,7 +26,6 @@
 import { mapGetters, mapState } from 'vuex';
 
 import ActionMenu from '@pkg/components/ActionMenu.vue';
-import Header from '@pkg/components/Header.vue';
 import Nav from '@pkg/components/Nav.vue';
 import StatusBar from '@pkg/components/StatusBar.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
@@ -42,8 +38,7 @@ export default {
   components: {
     StatusBar,
     ActionMenu,
-    rdNav:    Nav,
-    rdHeader: Header,
+    rdNav: Nav,
     TheTitle,
   },
 
@@ -184,10 +179,9 @@ export default {
 .wrapper {
   display: grid;
   grid-template:
-    "header   header"
-    "nav      title"
-    "nav      body"    1fr
-    "nav      status-bar"
+    "nav        title"
+    "nav        body"    1fr
+    "status-bar status-bar"
     / var(--nav-width) 1fr;
   background-color: var(--body-bg);
   width: 100vw;

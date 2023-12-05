@@ -85,7 +85,7 @@ footer {
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding: 5px 18px 5px 18px;
+  padding: 5px 10px;
   background-color: var(--footer-bg);
   font-size: 12px;
 
