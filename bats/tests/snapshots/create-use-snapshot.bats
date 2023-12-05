@@ -162,7 +162,7 @@ local_setup() {
     assert_success
     # Shouldn't have the whole description, but part of it
     refute_output --partial "$description"
-    assert_output --partial "${part1}..."
+    assert_output --partial "${part1}…"
 }
 
 @test "factory-reset doesn't delete a non-empty snapshots directory" {
