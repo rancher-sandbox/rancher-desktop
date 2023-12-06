@@ -331,25 +331,22 @@ export default {
       return { content: sha };
     },
     getUniquePorts(ports) {
-      const keys = Object.keys(ports);
+      const displayMap = [];
 
-      const uniquePortMap = keys.map((key) => {
-        const values = ports[key];
-        const hostPorts = values.map(value => value.HostPort);
-        const uniqueHostPorts = [...new Set(hostPorts)];
+      for (const [key, values] of Object.entries(ports)) {
+        try {
+          const hostPorts = (values || []).map(value => value.HostPort);
+          const port = key.split('/')[0];
 
-        return { [key]: uniqueHostPorts };
-      });
+          for (const hostPort of new Set(hostPorts)) {
+            displayMap.push(`${ hostPort }:${ port }`);
+          }
+        } catch (ex) {
+          console.log(`Error trying to get the port map for key ${ key }, targets: ${ values }: ${ ex }`);
+        }
+      }
 
-      const displayMap = uniquePortMap.map((element) => {
-        const key = Object.keys(element)[0];
-        const values = element[key];
-        const port = key.split('/')[0];
-
-        return values.map(value => `${ value }:${ port }`);
-      });
-
-      return [].concat.apply([], displayMap);
+      return displayMap;
     },
     shouldHaveDropdown(ports) {
       if (!ports) {
