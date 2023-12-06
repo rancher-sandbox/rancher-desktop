@@ -100,6 +100,7 @@ export class HttpCommandServer {
       post: {
         '/v1/snapshots':        [0, this.createSnapshot],
         '/v1/snapshot/restore': [0, this.restoreSnapshot],
+        '/v1/snapshots/cancel': [0, this.cancelSnapshot],
       },
       delete: { '/v1/snapshots': [0, this.deleteSnapshot] },
     } as const,
@@ -738,6 +739,20 @@ export class HttpCommandServer {
     }
   }
 
+  protected async cancelSnapshot(_request: express.Request, response: express.Response, _context: commandContext): Promise<void> {
+    await this.commandWorker.cancelSnapshot();
+
+    try {
+      response.status(200).type('txt').send('Snapshot operation canceled');
+    } catch (error: any) {
+      if (error.isSnapshotError) {
+        response.status(400).type('txt').send(error.message);
+      } else {
+        throw error;
+      }
+    }
+  }
+
   protected async deleteSnapshot(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const name = request.query.name ?? '';
 
@@ -803,6 +818,7 @@ export interface CommandWorkerInterface {
   createSnapshot: (context: commandContext, snapshot: Snapshot) => Promise<void>;
   deleteSnapshot: (context: commandContext, name: string) => Promise<void>;
   restoreSnapshot: (context: commandContext, name: string) => Promise<void>;
+  cancelSnapshot: () => Promise<void>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

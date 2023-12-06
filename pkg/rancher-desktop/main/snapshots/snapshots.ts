@@ -1,3 +1,5 @@
+import { exec } from 'child_process';
+
 import { Snapshot, SpawnResult } from '@pkg/main/snapshots/types';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
@@ -92,6 +94,26 @@ class SnapshotsImpl {
     if (response.error) {
       throw new SnapshotsError(args, response);
     }
+  }
+
+  cancel() {
+    const command = 'rdctl snapshot';
+
+    exec(`ps aux | grep "${ command }" | grep -v grep`, (error, stdout) => {
+      if (error) {
+        return;
+      }
+
+      const processes = stdout.split('\n');
+
+      processes.forEach((proc) => {
+        const [_user, pid, ..._rest] = proc.split(/\s+/);
+
+        if (Number(pid)) {
+          process.kill(Number(pid), 'SIGTERM');
+        }
+      });
+    });
   }
 }
 

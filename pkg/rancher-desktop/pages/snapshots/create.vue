@@ -89,8 +89,10 @@ export default Vue.extend({
         'show-snapshots-blocking-dialog',
         {
           window: {
-            buttons:  [],
-            cancelId: 1,
+            buttons: [
+              this.t(`snapshots.dialog.creating.actions.cancel`),
+            ],
+            cancelId: 0,
           },
           format: {
             header:          this.t('snapshots.dialog.creating.header', { snapshot: name }),

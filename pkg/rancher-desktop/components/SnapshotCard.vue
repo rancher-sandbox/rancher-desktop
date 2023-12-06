@@ -78,7 +78,7 @@ export default Vue.extend({
           }
         });
 
-        await this.showRestoringSnapshotDialog();
+        await this.showRestoringSnapshotDialog('restore');
         ipcRenderer.removeAllListeners('dialog/mounted');
       }
     },
@@ -124,15 +124,17 @@ export default Vue.extend({
       return confirm.response;
     },
 
-    async showRestoringSnapshotDialog() {
+    async showRestoringSnapshotDialog(type: 'restore' | 'delete') {
       const snapshot = this.snapshot.name.length > 32 ? `${ this.snapshot.name.substring(0, 30) }...` : this.snapshot.name;
 
       await ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
           window: {
-            buttons:  [],
-            cancelId: 1,
+            buttons: [
+              this.t(`snapshots.dialog.${ type }.actions.cancel`),
+            ],
+            cancelId: 0,
           },
           format: {
             header:            this.t('snapshots.dialog.restoring.header', { snapshot }),
