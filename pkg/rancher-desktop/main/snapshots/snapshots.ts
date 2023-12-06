@@ -1,4 +1,7 @@
 import { exec } from 'child_process';
+import util from 'util';
+
+import { ctrlc } from 'ctrlc-windows';
 
 import { Snapshot, SpawnResult } from '@pkg/main/snapshots/types';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -96,24 +99,43 @@ class SnapshotsImpl {
     }
   }
 
-  cancel() {
-    const command = 'rdctl snapshot';
+  async cancel() {
+    const name = 'rdctl';
+    const keyword = 'snapshot';
+    const command = `${ name } ${ keyword }`;
+    const asyncExec = util.promisify(exec);
 
-    exec(`ps aux | grep "${ command }" | grep -v grep`, (error, stdout) => {
-      if (error) {
-        return;
+    try {
+      if (process.platform === 'win32') {
+        const { stdout } = await asyncExec(`tasklist /FI "IMAGENAME eq ${ name }.exe" /FO CSV /NH`);
+        const processes = stdout.split('\r\n');
+
+        processes.forEach((proc) => {
+          const [_imageName, rawPid, ..._rest] = proc.split(',');
+          const pid = Number(rawPid?.trim().replaceAll('"', ''));
+
+          if (pid) {
+            console.log(`Found process ${ command } with PID ${ pid }`);
+            ctrlc(pid);
+          }
+        });
+      } else {
+        const { stdout } = await asyncExec(`ps aux | grep "${ command }" | grep -v grep`);
+        const processes = stdout.split('\n');
+
+        processes.forEach((proc) => {
+          const [_user, rawPid, ..._rest] = proc.split(/\s+/);
+          const pid = Number(rawPid?.trim());
+
+          if (pid) {
+            console.log(`Found process ${ command } with PID ${ pid }`);
+            process.kill(pid, 'SIGTERM');
+          }
+        });
       }
-
-      const processes = stdout.split('\n');
-
-      processes.forEach((proc) => {
-        const [_user, pid, ..._rest] = proc.split(/\s+/);
-
-        if (Number(pid)) {
-          process.kill(Number(pid), 'SIGTERM');
-        }
-      });
-    });
+    } catch (error) {
+      console.error('Error:', error);
+    }
   }
 }
 
