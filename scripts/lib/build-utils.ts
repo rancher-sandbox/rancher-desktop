@@ -272,9 +272,9 @@ export default {
      * @param platform The platform to build for.
      */
     const buildPlatform = async(platform: 'linux' | 'win32') => {
-      const exeRoot = 'wsl-helper-1.11.1';
+      const exeRoot = 'wsl-helper';
       const exeName = `${ exeRoot }${ platform === 'win32' ? '.exe' : '' }`;
-      const outFile = path.join(this.rootDir, 'resources', platform, exeName);
+      const outFile = path.join(this.rootDir, 'resources', platform, 'internal', exeName);
 
       await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
         cwd: path.join(this.rootDir, 'src', 'go', 'wsl-helper'),
