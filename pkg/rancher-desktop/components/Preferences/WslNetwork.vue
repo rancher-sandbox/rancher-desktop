@@ -31,7 +31,6 @@ export default Vue.extend({
     <rd-fieldset
       data-test="networkingTunnel"
       :legend-text="t('virtualMachine.networkingTunnel.legend')"
-      :is-experimental="true"
     >
       <rd-checkbox
         :label="t('virtualMachine.networkingTunnel.label')"
