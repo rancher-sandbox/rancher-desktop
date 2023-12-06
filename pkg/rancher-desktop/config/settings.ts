@@ -108,6 +108,10 @@ export const defaultSettings = {
     showAll:   true,
     namespace: 'k8s.io',
   },
+  containers: {
+    showAll:   true,
+    namespace: 'default',
+  },
   diagnostics: {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,

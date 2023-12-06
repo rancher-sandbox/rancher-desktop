@@ -152,6 +152,10 @@ export default class SettingsValidator {
         showAll:   this.checkBoolean,
         namespace: this.checkString,
       },
+      containers: {
+        showAll:   this.checkBoolean,
+        namespace: this.checkString,
+      },
       diagnostics: {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,

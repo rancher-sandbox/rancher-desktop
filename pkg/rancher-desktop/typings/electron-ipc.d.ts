@@ -7,7 +7,7 @@ import semver from 'semver';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import { SnapshotDialog, SnapshotEvent } from '@pkg/main/snapshots/types';
-import type { RecursivePartial, Direction } from '@pkg/utils/typeUtils';
+import type { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -27,6 +27,8 @@ export interface IpcMainEvents {
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
   'update-network-status': (status: boolean) => void;
+  'containers-namespaces-read': () => void;
+  'containers-namespaces-containers-read': () => void;
 
   // #region main/update
   'update-state': () => void;
@@ -87,10 +89,15 @@ export interface IpcMainEvents {
   'extensions/open-external': (url: string) => void;
   'extensions/spawn/kill': (execId: string) => void;
   /** Execute the given command, streaming results back via events. */
-  'extensions/spawn/streaming': (options: import('@pkg/main/extensions/types').SpawnOptions) => void;
+  'extensions/spawn/streaming': (
+    options: import('@pkg/main/extensions/types').SpawnOptions
+  ) => void;
   /** Show a notification */
-  'extensions/ui/toast': (level: 'success' | 'warning' | 'error', message: string) => void;
-  'ok:extensions/getContentArea': (payload: { x: number, y: number }) => void;
+  'extensions/ui/toast': (
+    level: 'success' | 'warning' | 'error',
+    message: string
+  ) => void;
+  'ok:extensions/getContentArea': (payload: { x: number; y: number }) => void;
   // #endregion
 
   // #region Snapshots
@@ -150,21 +157,39 @@ export interface IpcMainInvokeEvents {
 export interface IpcRendererEvents {
   'backend-locked': () => void;
   'backend-unlocked': () => void;
-  'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
+  'settings-update': (
+    settings: import('@pkg/config/settings').Settings
+  ) => void;
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
   'update-state': (state: import('@pkg/main/update').UpdateState) => void;
   'always-debugging': (status: boolean) => void;
   'is-debugging': (status: boolean) => void;
-  'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
+  'k8s-progress': (
+    progress: Readonly<{
+      current: number;
+      max: number;
+      description?: string;
+      transitionTime?: Date;
+    }>
+  ) => void;
   'k8s-check-state': (state: import('@pkg/backend/k8s').State) => void;
-  'k8s-current-engine': (engine: import('@pkg/config/settings').ContainerEngine) => void;
+  'k8s-current-engine': (
+    engine: import('@pkg/config/settings').ContainerEngine
+  ) => void;
   'k8s-current-port': (port: number) => void;
-  'k8s-versions': (versions: import('@pkg/backend/k8s').VersionEntry[], cachedOnly: boolean) => void;
+  'k8s-versions': (
+    versions: import('@pkg/backend/k8s').VersionEntry[],
+    cachedOnly: boolean
+  ) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'service-changed': (services: ServiceEntry[]) => void;
   'service-error': (service: ServiceEntry, errorMessage: string) => void;
-  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@pkg/backend/k8s').FailureDetails) => void;
+  'kubernetes-errors-details': (
+    titlePart: string,
+    mainMessage: string,
+    failureDetails: import('@pkg/backend/k8s').FailureDetails
+  ) => void;
   'update-network-status': (status: boolean) => void;
 
   // #region Images
@@ -172,15 +197,19 @@ export interface IpcRendererEvents {
   'images-process-ended': (exitCode: number) => void;
   'images-process-output': (data: string, isStdErr: boolean) => void;
   'ok:images-process-output': (data: string) => void;
-  'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
+  'images-changed': (
+    images: { imageName: string; tag: string; imageID: string; size: string }[]
+  ) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
+  'containers-namespaces': (namespaces: string[]) => void;
+  'containers-namespaces-containers': (namespaces: string[]) => void;
   // #endregion
 
   // #region dialog
   'dialog/mounted': () => void;
   'dialog/populate': (...args: any) => void;
-  'dialog/size': (size: {width: number, height: number}) => void;
+  'dialog/size': (size: { width: number; height: number }) => void;
   'dialog/options': (...args: any) => void;
   'dialog/error': (args: any) => void;
   'dialog/info': (args: Record<string, string>) => void;
@@ -188,7 +217,11 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region tab navigation
-  'route': (route: { name?: string, path?: string, direction?: Direction }) => void;
+  route: (route: {
+    name?: string;
+    path?: string;
+    direction?: Direction;
+  }) => void;
   // #endregion
 
   // #region extensions
@@ -199,7 +232,10 @@ export interface IpcRendererEvents {
   'extensions/close': () => void;
   'extensions/spawn/close': (id: string, code: number) => void;
   'extensions/spawn/error': (id: string, error: Error | NodeJS.Signals) => void;
-  'extensions/spawn/output': (id: string, data: { stdout: string } | { stderr: string }) => void;
+  'extensions/spawn/output': (
+    id: string,
+    data: { stdout: string } | { stderr: string }
+  ) => void;
   'ok:extensions/uninstall': (id: string) => void;
   // #endregion
 

@@ -12,6 +12,27 @@
       :has-advanced-filtering="true"
       :loading="!containersList"
     >
+      <template #header-middle>
+        <div class="header-middle">
+          <div v-if="supportsNamespaces">
+            <label>Namespace</label>
+            <select
+              class="select-namespace"
+              :value="selectedNamespace"
+              @change="onChangeNamespace($event)"
+            >
+              <option
+                v-for="item in containersNamespaces"
+                :key="item"
+                :value="item"
+                :selected="item === selectedNamespace"
+              >
+                {{ item }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </template>
       <template #col:containerState="{row}">
         <td>
           <badge-state
@@ -79,7 +100,11 @@
 import SortableTable from '@pkg/components/SortableTable';
 import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
+import _ from 'lodash';
 import { mapGetters } from 'vuex';
+
+import { defaultSettings } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 let ddClientReady = false;
 let containerCheckInterval = null;
@@ -90,10 +115,15 @@ export default {
   components: { SortableTable, BadgeState },
   data() {
     return {
-      ddClient:       null,
-      containersList: null,
-      showRunning:    false,
-      headers:        [
+      settings:             defaultSettings,
+      isNerdCtl:            false,
+      ddClient:             null,
+      containersList:       null,
+      showRunning:          false,
+      selectedNamespace:    defaultSettings.containers.namespace,
+      containersNamespaces: [],
+      supportsNamespaces:   false,
+      headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
           name:  'containerState',
@@ -138,9 +168,14 @@ export default {
           /_[a-z0-9-]{36}_[0-9]+/,
           '',
         );
+        // TODO @scures: Deal with status
         container.started =
-        container.State === 'running' ? container.Status : '';
+        container.State === 'running' || container.Status === 'Up' ? container.Status : '';
         container.imageName = container.Image;
+
+        if (this.isNerdCtl) {
+          container.State = container.Status.toLowerCase();
+        }
 
         container.availableActions = [
           {
@@ -197,30 +232,71 @@ export default {
       description: '',
     });
 
-    // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
-    containerCheckInterval = setInterval(async() => {
-      if (ddClientReady || this.containersList) {
-        return;
-      }
+    // TODO: Do the check before anything else.
+    this.findIfNerdCtl();
 
-      console.debug('Checking for containers...');
+    if (this.isNerdCtl) {
+      // TODO: Remove
+      console.log('containers-namespaces-read', this.settings);
+      ipcRenderer.send('containers-namespaces-read');
 
-      if (window.ddClient && this.isK8sReady) {
-        this.ddClient = window.ddClient;
+      ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
+        this.containersNamespaces = namespaces;
+      });
 
-        try {
-          await this.getContainers();
-        } catch (error) {
-          console.error('There was a problem fetching containers:', { error });
+      // Reads containers in current namespace.
+      ipcRenderer.send('containers-namespaces-containers-read');
+
+      // Gets the containers from the main process.
+      ipcRenderer.on('containers-namespaces-containers', (_event, containers) => {
+        this.containersList = containers;
+        // TODO: Remove
+        console.log('🚀 ~ file: Containers.vue:250 ~ ipcRenderer.on ~ containers:', containers);
+      });
+    } else {
+      // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
+      containerCheckInterval = setInterval(async() => {
+        if (ddClientReady || this.containersList) {
+          return;
         }
-      }
-    }, 1000);
+
+        console.debug('Checking for containers...');
+
+        if (window.ddClient && this.isK8sReady) {
+          this.ddClient = window.ddClient;
+
+          try {
+            await this.getContainers();
+          } catch (error) {
+            console.error('There was a problem fetching containers:', { error });
+          }
+        }
+      }, 1000);
+    }
+
+    ipcRenderer.on('settings-read', (_event, settings) => {
+      this.$data.settings = settings;
+    });
   },
   beforeDestroy() {
     ddClientReady = false;
     clearInterval(containerCheckInterval);
   },
   methods: {
+    findIfNerdCtl() {
+      // TODO: Dynamic
+      this.supportsNamespaces = true;
+      this.isNerdCtl = true;
+    },
+    onChangeNamespace(value) {
+      if (value !== this.settings.containers.namespace) {
+        this.selectedNamespace = value.target.value;
+        ipcRenderer.invoke('settings-write',
+          { containers: { namespace: value.target.value } } );
+
+        ipcRenderer.send('containers-namespaces-containers-read');
+      }
+    },
     clearDropDownPosition(e) {
       const target = e.target;
 
@@ -282,7 +358,7 @@ export default {
       await this.execCommand('rm', container);
     },
     isRunning(container) {
-      return container.State === 'running';
+      return container.State === 'running' || container.Status === 'Up';
     },
     isStopped(container) {
       return container.State === 'created' || container.State === 'exited';
@@ -330,12 +406,43 @@ export default {
 
       return { content: sha };
     },
+    parsePortMappings(input) {
+      if (!input) {
+        return {};
+      }
+
+      const mappings = input.split(', ');
+      const result = {};
+
+      if (!mappings.length) {
+        return result;
+      }
+
+      mappings.forEach((mapping) => {
+        const [source, destination] = mapping.split('->');
+        const sourcePort = source.split(':')[1];
+        const destPort = `${ destination.split('/')[0] }/tcp`;
+
+        if (!result[destPort]) {
+          result[destPort] = [];
+        }
+        result[destPort].push(sourcePort);
+      });
+
+      return result;
+    },
     getUniquePorts(ports) {
-      const keys = Object.keys(ports);
+      const keys = this.isNerdCtl ? Object.keys(this.parsePortMappings(ports)) : Object.keys(ports);
+
+      if (!keys || Object.keys(keys).length === 0) {
+        return [];
+      }
 
       const uniquePortMap = keys.map((key) => {
-        const values = ports[key];
-        const hostPorts = values.map(value => value.HostPort);
+        const values = this.isNerdCtl ? this.parsePortMappings(ports)[key] : ports[key];
+
+        console.log('🚀 ~ file: Containers.vue:448 ~ uniquePortMap ~ values:', values);
+        const hostPorts = values?.map(value => this.isNerdCtl ? value : value.HostPort);
         const uniqueHostPorts = [...new Set(hostPorts)];
 
         return { [key]: uniqueHostPorts };
