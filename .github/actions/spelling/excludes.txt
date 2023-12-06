@@ -95,4 +95,5 @@ ignore$
 ^\Qpkg/rancher-desktop/utils/_demo_metadata.js\E$
 (?:^|/)pkg/rancher-desktop/nuxt/
 ^\Qsrc/disk-images/github-runner-linux/root/etc/sysconfig/network/ifcfg-\E
+^\Qsrc/go/nerdctl-stub/nerdctl_commands_generated.go\E$
 ^\Q.github/workflows/config/.golangci.yaml\E$
