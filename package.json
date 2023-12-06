@@ -176,7 +176,7 @@
     "ts-jest": "29.1.0",
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.2.0",
-    "typescript": "4.5.5",
+    "typescript": "5.3.3",
     "vue-eslint-parser": "9.3.2",
     "vue-jest": "3.0.7",
     "vue-template-compiler": "2.7.14",
