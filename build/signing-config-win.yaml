@@ -12,8 +12,6 @@
 - '!libGLESv2.dll'      # spellcheck-ignore-line
 - '!vk_swiftshader.dll' # spellcheck-ignore-line
 - '!vulkan-1.dll'       # spellcheck-ignore-line
-resources/resources/win32:
-- wsl-helper-1.11.1.exe
 resources/resources/win32/bin:
 - docker.exe
 - docker-credential-none.exe
@@ -32,4 +30,5 @@ resources/resources/win32/internal:
 - privileged-service.exe
 - steve.exe
 - vtunnel.exe
+- wsl-helper.exe
 - '!dummy.exe'
