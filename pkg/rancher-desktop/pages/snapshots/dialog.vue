@@ -4,11 +4,12 @@ import os from 'os';
 import { Banner } from '@rancher/components';
 import Vue from 'vue';
 
+import BackendProgress from '@pkg/components/BackendProgress.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name:       'snapshots-dialog',
-  components: { Banner },
+  components: { Banner, BackendProgress },
   layout:     'dialog',
   data() {
     return {
@@ -206,6 +207,7 @@ export default Vue.extend({
         </slot>
       </div>
     </div>
+    <BackendProgress class="progress" />
     <div
       class="dialog-actions"
       :class="{ 'dialog-actions-reverse': isDarwin() }"
