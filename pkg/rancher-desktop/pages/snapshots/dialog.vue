@@ -106,6 +106,7 @@ export default Vue.extend({
       );
     },
     cancelSnapshot() {
+      ipcRenderer.send('snapshot/cancel');
       fetch(
         `http://localhost:${ this.credentials?.port }/v1/snapshots/cancel`,
         {

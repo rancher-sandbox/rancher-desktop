@@ -790,6 +790,10 @@ ipcMainProxy.on('snapshot', (event, args) => {
   event.reply('snapshot', args);
 });
 
+ipcMainProxy.on('snapshot/cancel', () => {
+  window.send('snapshot/cancel');
+});
+
 ipcMainProxy.on('dialog/error', (event, args) => {
   window.getWindow(args.dialog)?.webContents.send('dialog/error', args);
 });

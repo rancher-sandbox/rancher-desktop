@@ -53,6 +53,20 @@ export default Vue.extend({
       /** Clear old event on Snapshots page */
       ipcRenderer.send('snapshot', null);
 
+      let snapshotCancelled = false;
+
+      ipcRenderer.once('snapshot/cancel', () => {
+        snapshotCancelled = true;
+        ipcRenderer.send(
+          'snapshot',
+          {
+            type:         'restore',
+            result:       'cancel',
+            snapshotName: this.snapshot?.name,
+          },
+        );
+      });
+
       if (ok) {
         ipcRenderer.send('preferences-close');
         ipcRenderer.on('dialog/mounted', async() => {
@@ -70,11 +84,14 @@ export default Vue.extend({
               });
           } else {
             ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
-            ipcRenderer.send('snapshot', {
-              type:         'restore',
-              result:       'success',
-              snapshotName: this.snapshot?.name,
-            });
+            ipcRenderer.send(
+              'snapshot',
+              {
+                type:         'restore',
+                result:       snapshotCancelled ? 'cancel' : 'success',
+                snapshotName: this.snapshot?.name,
+              },
+            );
           }
         });
 

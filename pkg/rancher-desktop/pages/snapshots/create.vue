@@ -60,6 +60,18 @@ export default Vue.extend({
       /** TODO limit description length */
       const { name, description } = this;
 
+      let snapshotCancelled = false;
+
+      ipcRenderer.once('snapshot/cancel', () => {
+        snapshotCancelled = true;
+
+        this.goBack({
+          type:         'create',
+          result:       'cancel',
+          snapshotName: name,
+        });
+      });
+
       ipcRenderer.on('dialog/mounted', async() => {
         const error = await this.$store.dispatch('snapshots/create', { name, description });
 
@@ -70,7 +82,7 @@ export default Vue.extend({
 
           this.goBack({
             type:         'create',
-            result:       'success',
+            result:       snapshotCancelled ? 'cancel' : 'success',
             snapshotName: name,
           });
         }
