@@ -15,7 +15,6 @@ export default class MobyContainerProcessor extends containerProcessor.Container
       }
       this.isK8sReady =
         mgr.state === K8s.State.STARTED || mgr.state === K8s.State.DISABLED;
-      // this.updateWatchStatus();
     });
   }
 
