@@ -37,7 +37,7 @@ export abstract class ContainerProcessor extends EventEmitter {
   }
 
   /** Relay the containers in the current namespace to the frontend */
-  async relayNamespacesContainers() {
+  async relayNamespacedContainers() {
     const namespacedContainers = await this.getNamespacedContainers();
 
     window.send('containers-namespaces-containers', namespacedContainers);

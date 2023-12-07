@@ -625,7 +625,7 @@ ipcMainProxy.on('containers-namespaces-read', (event) => {
 
 ipcMainProxy.on('containers-namespaces-containers-read', (event) => {
   if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
-    return currentContainerProcessor?.relayNamespacesContainers();
+    return currentContainerProcessor?.relayNamespacedContainers();
   }
 });
 
