@@ -116,7 +116,6 @@ export default {
   data() {
     return {
       settings:             defaultSettings,
-      isNerdCtl:            null,
       ddClient:             null,
       containersList:       null,
       showRunning:          false,
@@ -170,8 +169,7 @@ export default {
           /_[a-z0-9-]{36}_[0-9]+/,
           '',
         );
-        container.started =
-        container.State === 'running' ? container.Status : '';
+        container.started = container.State === 'running' ? container.Status : '';
         container.imageName = container.Image;
         container.containerState = container.State ?? container.Status;
 
@@ -232,6 +230,11 @@ export default {
     rowKey() {
       return this.isNerdCtl ? 'ID' : 'Id';
     },
+    isNerdCtl() {
+      const settings = this.settings;
+
+      return settings.containerEngine?.name === 'containerd';
+    },
   },
   watch: {
     isNerdCtl: {
@@ -275,7 +278,6 @@ export default {
     // Info: Not sure if this can be improved, I don't like having to run it inside the `settings-read`event but I couldn't find a better way.
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
-      this.isNerdCtl = settings.containerEngine?.name === 'containerd';
       this.supportsNamespaces = settings.containerEngine?.name === 'containerd';
 
       if (!this.isNerdCtl) {
@@ -316,9 +318,6 @@ export default {
     clearInterval(containerCheckInterval);
   },
   methods: {
-    findIfNerdCtl() {
-      this.settings.containerEngine?.name === 'contained' ? this.isNerdCtl = true : this.isNerdCtl = false;
-    },
     checkSelectedNamespace() {
       if (!this.supportsNamespaces || this.containersNamespaces.length === 0) {
         // Nothing to verify yet
