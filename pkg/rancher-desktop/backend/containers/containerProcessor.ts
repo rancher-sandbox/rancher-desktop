@@ -30,6 +30,13 @@ export abstract class ContainerProcessor extends EventEmitter {
         // });
       }
     });
+
+    this.on('container-process-output', (data: string, isStderr = false) => {
+      if (!this.active) {
+        return;
+      }
+      window.send('container-process-output', data, isStderr);
+    });
   }
 
   /** Relay the containers in the current namespace to the frontend */
@@ -67,4 +74,5 @@ export abstract class ContainerProcessor extends EventEmitter {
 
   abstract getNamespaces(): Promise<Array<string>>;
   abstract getNamespacedContainers(): Promise<Array<string>>;
+  abstract runContainerCommand(args: string[], sendNotifications: boolean): Promise<childResultType>;
 }

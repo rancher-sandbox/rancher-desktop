@@ -1,11 +1,12 @@
 import { VMBackend, VMExecutor } from '@pkg/backend/backend';
-import * as imageProcessor from '@pkg/backend/containers/containerProcessor';
+import * as containerProcessor from '@pkg/backend/containers/containerProcessor';
+import { childResultType } from '@pkg/backend/containers/containerProcessor';
 import * as K8s from '@pkg/backend/k8s';
 import mainEvents from '@pkg/main/mainEvents';
 import * as childProcess from '@pkg/utils/childProcess';
 import { executable } from '@pkg/utils/resources';
 
-export default class NerdctContainerProcessor extends imageProcessor.ContainerProcessor {
+export default class NerdctContainerProcessor extends containerProcessor.ContainerProcessor {
   protected currentNamespace = 'default';
 
   constructor(executor: VMExecutor) {
@@ -25,10 +26,10 @@ export default class NerdctContainerProcessor extends imageProcessor.ContainerPr
     return 'nerdctl';
   }
 
-  protected async runContainerCommand(
+  async runContainerCommand(
     args: string[],
     sendNotifications = true,
-  ): Promise<imageProcessor.childResultType> {
+  ): Promise<childResultType> {
     const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
 
     const { stdout, stderr } = await childProcess.spawnFile(
@@ -40,7 +41,7 @@ export default class NerdctContainerProcessor extends imageProcessor.ContainerPr
     const output = stdout.toString().trim();
 
     if (sendNotifications) {
-      stderr ? this.emit('container-process-output', stderr) : this.emit('container-process-output', output);
+      stderr ? this.emit('container-process-output', stderr, true) : this.emit('container-process-output', output);
     }
 
     return {
@@ -55,6 +56,7 @@ export default class NerdctContainerProcessor extends imageProcessor.ContainerPr
       [
         'container',
         'list',
+        '--all',
         '--namespace',
         this.currentNamespace,
         '--format="{{json .}}"',

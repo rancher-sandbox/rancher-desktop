@@ -27,13 +27,18 @@ export interface IpcMainEvents {
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
   'update-network-status': (status: boolean) => void;
-  'containers-namespaces-read': () => void;
-  'containers-namespaces-containers-read': () => void;
 
   // #region main/update
   'update-state': () => void;
   // Quit and apply the update.
   'update-apply': () => void;
+  // #endregion
+
+  // #region main/imageEvents
+  'containers-namespaces-read': () => void;
+  'containers-namespaces-containers-read': () => void;
+  'do-containers-exec': (command: string, containerId: string[]) => void;
+  'containers-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
 
   // #region main/imageEvents
@@ -204,6 +209,7 @@ export interface IpcRendererEvents {
   'images-namespaces': (namespaces: string[]) => void;
   'containers-namespaces': (namespaces: string[]) => void;
   'containers-namespaces-containers': (namespaces: string[]) => void;
+  'container-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
 
   // #region dialog

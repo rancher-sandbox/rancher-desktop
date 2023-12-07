@@ -23,6 +23,10 @@ export default class MobyContainerProcessor extends containerProcessor.Container
     return 'moby';
   }
 
+  runContainerCommand(args: string[], sendNotifications = true): Promise<containerProcessor.childResultType> {
+    throw new Error("docker doesn't support namespaces");
+  }
+
   relayNamespaces(): Promise<void> {
     window.send('containers-namespaces', []);
 
