@@ -38,11 +38,12 @@ func restoreSnapshot(cmd *cobra.Command, args []string) error {
 	// to avoid platform-specific signal handling code.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
 	defer stop()
-	context.AfterFunc(ctx, func() {
+	stopAfterFunc := context.AfterFunc(ctx, func() {
 		if !outputJsonFormat {
 			fmt.Println("Cancelling snapshot restoration...")
 		}
 	})
+	defer stopAfterFunc()
 	err = manager.Restore(ctx, args[0])
 	if err != nil && !errors.Is(err, runner.ErrContextDone) {
 		return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
