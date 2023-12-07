@@ -148,7 +148,7 @@ export interface IpcMainInvokeEvents {
  * process, i.e. webContents.send() -> ipcRenderer.on().
  */
 export interface IpcRendererEvents {
-  'backend-locked': () => void;
+  'backend-locked': (action?: string) => void;
   'backend-unlocked': () => void;
   'settings-update': (settings: import('@pkg/config/settings').Settings) => void;
   'settings-read': (settings: import('@pkg/config/settings').Settings) => void;

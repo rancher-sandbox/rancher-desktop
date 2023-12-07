@@ -86,7 +86,6 @@ let noModalDialogs = false;
 // Indicates whether the UI should be locked, settings changes should be disallowed
 // and possibly other things should be disallowed. As of the time of writing,
 // set to true when a snapshot is being created or restored.
-let backendIsLocked = '';
 let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
 /**
@@ -300,10 +299,14 @@ Electron.app.whenReady().then(async() => {
  * event to notify listeners about the current lock status.
  */
 async function doesBackendLockExist(): Promise<boolean> {
+  let backendIsLocked = '';
+
   try {
-    await fs.promises.access(path.join(paths.appHome, 'backend.lock'));
+    const fileContents = await fs.promises.readFile(path.join(paths.appHome, 'backend.lock'), 'utf-8');
+    const { action } = JSON.parse(fileContents);
+
     backendIsLocked = SNAPSHOT_OPERATION;
-    mainEvents.emit('backend-locked-update', backendIsLocked);
+    mainEvents.emit('backend-locked-update', backendIsLocked, action);
   } catch (ex: any) {
     backendIsLocked = '';
     if (ex.code === 'ENOENT') {
@@ -572,16 +575,20 @@ Electron.app.on('activate', async() => {
   window.openMain();
 });
 
-mainEvents.on('backend-locked-update', () => {
-  window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
+mainEvents.on('backend-locked-update', (backendIsLocked, action) => {
+  if (backendIsLocked) {
+    window.send('backend-locked', action);
+  } else {
+    window.send('backend-unlocked');
+  }
 });
 
-mainEvents.on('backend-locked-check', () => {
-  mainEvents.emit('backend-locked-update', backendIsLocked);
+mainEvents.on('backend-locked-check', async() => {
+  await doesBackendLockExist();
 });
 
-ipcMainProxy.on('backend-state-check', (event) => {
-  event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
+ipcMainProxy.on('backend-state-check', async() => {
+  await doesBackendLockExist();
 });
 
 ipcMainProxy.on('settings-read', (event) => {
@@ -1470,16 +1477,17 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     }
   }
 
-  getBackendState(): BackendState {
+  async getBackendState(): Promise<BackendState> {
+    const backendIsLocked = await doesBackendLockExist();
+
     return {
       vmState: k8smanager.state,
       locked:  !!backendIsLocked,
     };
   }
 
-  setBackendState(state: BackendState): void {
-    backendIsLocked = state.locked ? SNAPSHOT_OPERATION : '';
-    mainEvents.emit('backend-locked-update', backendIsLocked);
+  async setBackendState(state: BackendState): Promise<void> {
+    await doesBackendLockExist();
     switch (state.vmState) {
     case State.STARTED:
       cfg = settingsImpl.load(deploymentProfiles);
