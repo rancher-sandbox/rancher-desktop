@@ -294,26 +294,49 @@ Electron.app.whenReady().then(async() => {
 });
 
 /**
- * Checks for the existence of the 'backend.lock' file and updates the
- * 'backendIsLocked' variable accordingly. Emits the 'backend-locked-update'
- * event to notify listeners about the current lock status.
+ * Reads the 'backend.lock' file and returns its contents if it exists.
+ * Returns null if the file doesn't exist.
+ */
+async function readBackendLockFile(): Promise<{ action: string } | null> {
+  try {
+    const fileContents = await fs.promises.readFile(
+      path.join(paths.appHome, 'backend.lock'),
+      'utf-8',
+    );
+
+    return JSON.parse(fileContents);
+  } catch (ex: any) {
+    if (ex.code === 'ENOENT') {
+      return null;
+    } else {
+      throw ex;
+    }
+  }
+}
+
+/**
+ * Emits the 'backend-locked-update' event.
+ */
+function updateBackendLockState(backendIsLocked: string, action?: string): void {
+  mainEvents.emit('backend-locked-update', backendIsLocked, action);
+}
+
+/**
+ * Checks for the existence of the 'backend.lock' file and emits the
+ * 'backend-locked-update' event to notify listeners about the current lock
+ * status.
  */
 async function doesBackendLockExist(): Promise<boolean> {
   let backendIsLocked = '';
 
-  try {
-    const fileContents = await fs.promises.readFile(path.join(paths.appHome, 'backend.lock'), 'utf-8');
-    const { action } = JSON.parse(fileContents);
+  const lockFileContents = await readBackendLockFile();
 
+  if (lockFileContents !== null) {
     backendIsLocked = SNAPSHOT_OPERATION;
-    mainEvents.emit('backend-locked-update', backendIsLocked, action);
-  } catch (ex: any) {
+    updateBackendLockState(backendIsLocked, lockFileContents.action);
+  } else {
     backendIsLocked = '';
-    if (ex.code === 'ENOENT') {
-      mainEvents.emit('backend-locked-update', backendIsLocked);
-    } else {
-      throw ex;
-    }
+    updateBackendLockState(backendIsLocked);
   }
 
   return !!backendIsLocked;
@@ -1478,7 +1501,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   async getBackendState(): Promise<BackendState> {
-    const backendIsLocked = await doesBackendLockExist();
+    const backendIsLocked = await readBackendLockFile();
 
     return {
       vmState: k8smanager.state,
