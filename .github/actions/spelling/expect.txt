@@ -137,6 +137,7 @@ connectaddress
 connectport
 constrainttemplate
 CONTAINERENGINE
+copypac
 coredns
 corejs
 coreutils
