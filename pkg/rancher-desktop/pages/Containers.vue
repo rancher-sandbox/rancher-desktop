@@ -163,8 +163,10 @@ export default {
       const containers = structuredClone(this.containersList);
 
       return containers.map((container) => {
+        const name = this.isNerdCtl ? container.Names : container.Names[0];
+
         container.state = container.State;
-        container.containerName = container.Names[0].replace(
+        container.containerName = name.replace(
           /_[a-z0-9-]{36}_[0-9]+/,
           '',
         );
@@ -260,12 +262,6 @@ export default {
         ipcRenderer.on('containers-namespaces-containers', (_event, containers) => {
           this.containersList = containers;
         });
-
-        ipcRenderer.on('settings-update', (_event, settings) => {
-          this.$data.settings = settings;
-          this.container = [];
-          this.checkSelectedNamespace();
-        });
       } else {
       // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
         containerCheckInterval = setInterval(async() => {
@@ -286,6 +282,12 @@ export default {
           }
         }, 1000);
       }
+    });
+
+    ipcRenderer.on('settings-update', (_event, settings) => {
+      this.$data.settings = settings;
+      this.containersList = [];
+      this.checkSelectedNamespace();
     });
   },
   beforeDestroy() {
