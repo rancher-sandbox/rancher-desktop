@@ -69,11 +69,12 @@ func createSnapshot(args []string) error {
 	// to avoid platform-specific signal handling code.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
 	defer stop()
-	context.AfterFunc(ctx, func() {
+	stopAfterFunc := context.AfterFunc(ctx, func() {
 		if !outputJsonFormat {
 			fmt.Println("Cancelling snapshot creation...")
 		}
 	})
+	defer stopAfterFunc()
 	_, err = manager.Create(ctx, name, snapshotDescription)
 	if err != nil && !errors.Is(err, runner.ErrContextDone) {
 		return fmt.Errorf("failed to create snapshot: %w", err)
