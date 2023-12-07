@@ -34,9 +34,9 @@ export interface IpcMainEvents {
   'update-apply': () => void;
   // #endregion
 
-  // #region main/imageEvents
-  'containers-namespaces-read': () => void;
-  'containers-namespaces-containers-read': () => void;
+  // #region main/containerEvents
+  'containers-namespaced-read': () => void;
+  'containers-namespaced-containers-read': () => void;
   'do-containers-exec': (command: string, containerId: string[]) => void;
   'containers-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion

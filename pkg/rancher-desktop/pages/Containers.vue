@@ -254,15 +254,15 @@ export default {
             this.containersList = containers;
           });
 
-          ipcRenderer.send('containers-namespaces-read');
+          ipcRenderer.send('containers-namespaced-read');
           // Reads containers in current namespace.
-          ipcRenderer.send('containers-namespaces-containers-read');
+          ipcRenderer.send('containers-namespaced-containers-read');
 
           containerCheckInterval = setInterval(() => {
-            ipcRenderer.send('containers-namespaces-read');
+            ipcRenderer.send('containers-namespaced-read');
 
             // Reads containers in current namespace.
-            ipcRenderer.send('containers-namespaces-containers-read');
+            ipcRenderer.send('containers-namespaced-containers-read');
           }, 5000);
         } else {
           ipcRenderer.removeAllListeners('containers-namespaces');
@@ -339,7 +339,7 @@ export default {
         ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } } );
 
-        ipcRenderer.send('containers-namespaces-containers-read');
+        ipcRenderer.send('containers-namespaced-containers-read');
       }
     },
     clearDropDownPosition(e) {
@@ -421,7 +421,7 @@ export default {
           ipcRenderer.send('do-containers-exec', command, ids);
 
           ipcRenderer.on('container-process-output', (e, data, isError) => {
-            ipcRenderer.send('containers-namespaces-containers-read');
+            ipcRenderer.send('containers-namespaced-containers-read');
           });
         } else {
           const { stderr, stdout } = await this.ddClient.docker.cli.exec(

@@ -617,13 +617,13 @@ ipcMainProxy.on('images-namespaces-read', (event) => {
   }
 });
 
-ipcMainProxy.on('containers-namespaces-read', (event) => {
+ipcMainProxy.on('containers-namespaced-read', (event) => {
   if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
     return currentContainerProcessor?.relayNamespaces();
   }
 });
 
-ipcMainProxy.on('containers-namespaces-containers-read', (event) => {
+ipcMainProxy.on('containers-namespaced-containers-read', (event) => {
   if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
     return currentContainerProcessor?.relayNamespacedContainers();
   }
