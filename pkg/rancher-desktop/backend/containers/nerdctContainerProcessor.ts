@@ -6,7 +6,7 @@ import mainEvents from '@pkg/main/mainEvents';
 import * as childProcess from '@pkg/utils/childProcess';
 import { executable } from '@pkg/utils/resources';
 
-export default class NerdctContainerProcessor extends containerProcessor.ContainerProcessor {
+export default class NerdctlContainerProcessor extends containerProcessor.ContainerProcessor {
   protected currentNamespace = 'default';
 
   constructor(executor: VMExecutor) {
