@@ -1,8 +1,8 @@
 
 import { VMExecutor } from '@pkg/backend/backend';
 import { ContainerProcessor } from '@pkg/backend/containers/containerProcessor';
-import MobyImageProcessor from '@pkg/backend/containers/mobyContainerProcessor';
-import NerdctlImageProcessor from '@pkg/backend/containers/nerdctlContainerProcessor';
+import MobyContainerProcessor from '@pkg/backend/containers/mobyContainerProcessor';
+import NerdctlContainerProcessor from '@pkg/backend/containers/nerdctlContainerProcessor';
 import { ContainerEngine } from '@pkg/config/settings';
 
 const cachedImageProcessors: Partial<
@@ -16,10 +16,10 @@ export function getContainerProcessor(
   if (!(engineName in cachedImageProcessors)) {
     switch (engineName) {
     case ContainerEngine.MOBY:
-      cachedImageProcessors[engineName] = new MobyImageProcessor(executor);
+      cachedImageProcessors[engineName] = new MobyContainerProcessor(executor);
       break;
     case ContainerEngine.CONTAINERD:
-      cachedImageProcessors[engineName] = new NerdctlImageProcessor(executor);
+      cachedImageProcessors[engineName] = new NerdctlContainerProcessor(executor);
       break;
     default:
       throw new Error(`No image processor called ${ engineName }`);
