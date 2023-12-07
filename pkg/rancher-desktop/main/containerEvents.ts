@@ -9,7 +9,7 @@ import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import Logging from '@pkg/utils/logging';
 
-const console = Logging.images;
+const console = Logging.containers;
 const ipcMainProxy = getIpcMainProxy(console);
 
 // Map containers-related events to the associated containers processor's methods
