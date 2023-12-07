@@ -226,8 +226,6 @@ export default {
           };
         }
 
-        console.log('🚀 ~ file: Containers.vue:228 ~ returncontainers.map ~ containerState:', container);
-
         return container;
       });
     },
