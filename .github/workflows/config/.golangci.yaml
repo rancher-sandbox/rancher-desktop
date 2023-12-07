@@ -71,7 +71,6 @@ linters:
     - misspell
     - nakedret
     - noctx
-    - nolintlint
     - staticcheck
     - structcheck
     - stylecheck
@@ -95,6 +94,7 @@ linters:
   # - interfacer
   # - maligned
   # - nestif
+  # - nolintlint
   # - prealloc
   # - testpackage
   # - revive

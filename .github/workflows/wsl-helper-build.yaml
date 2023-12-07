@@ -1,0 +1,53 @@
+# This workflow builds the WSL Helper
+name: 'GitHub Runner: WSL Helper'
+
+on:
+  push:
+    paths: [ src/go/wsl-helper/** ]
+  pull_request:
+    paths: [ src/go/wsl-helper/** ]
+  workflow_dispatch:
+
+permissions:
+  # This uses external actions, lock things down to read-only.
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18.16.x'
+        cache: yarn
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: src/go/wsl-helper/go.mod
+        cache-dependency-path: src/go/wsl-helper/go.sum
+    - run: yarn install --frozen-lockfile
+    - name: Build Windows
+      run: go build .
+      working-directory: src/go/wsl-helper
+      env:
+        GOOS: windows
+        CGO_ENABLED: '0'
+    - name: Build linux
+      run: go build .
+      working-directory: src/go/wsl-helper
+      env:
+        GOOS: linux
+        CGO_ENABLED: '0'
+    - uses: actions/upload-artifact@v3
+      with:
+        name: wsl-helper-linux
+        path: src/go/wsl-helper/wsl-helper
+        if-no-files-found: error
+    - uses: golangci/golangci-lint-action@v3.7.0
+      # This is only safe because this workflow does not allow writing
+      with:
+        args: --config=${{ github.workspace }}/.github/workflows/config/.golangci.yaml  --verbose --timeout 3m
+        working-directory: src/go/wsl-helper
+        only-new-issues: true

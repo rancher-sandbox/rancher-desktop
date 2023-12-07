@@ -19,15 +19,19 @@ package cmd
 import "fmt"
 
 // enumValue describes an enumeration for use with github.com/spf13/pflag
+//
+//nolint:unused // This struct is used for the linux build and not windows
 type enumValue struct {
 	allowed []string // Allowed values
 	val     string   // Current value
 }
 
+//nolint:unused // This function is used for the linux build and not windows
 func (v *enumValue) String() string {
 	return v.val
 }
 
+//nolint:unused // This function is used for the linux build and not windows
 func (v *enumValue) Set(newVal string) error {
 	for _, candidate := range v.allowed {
 		if candidate == newVal {
@@ -38,6 +42,7 @@ func (v *enumValue) Set(newVal string) error {
 	return fmt.Errorf("value %q is not one of the allowed values: %+v", newVal, v.allowed)
 }
 
+//nolint:unused // This function is used for the linux build and not windows
 func (v *enumValue) Type() string {
 	return "enum"
 }

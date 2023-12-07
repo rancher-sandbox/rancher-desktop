@@ -22,7 +22,7 @@ import (
 
 // Pipe bidirectionally between two streams.
 func Pipe(c1, c2 io.ReadWriteCloser) error {
-	copy := func(reader io.Reader, writer io.Writer) <-chan error {
+	ioCopy := func(reader io.Reader, writer io.Writer) <-chan error {
 		ch := make(chan error)
 		go func() {
 			_, err := io.Copy(writer, reader)
@@ -31,8 +31,8 @@ func Pipe(c1, c2 io.ReadWriteCloser) error {
 		return ch
 	}
 
-	ch1 := copy(c1, c2)
-	ch2 := copy(c2, c1)
+	ch1 := ioCopy(c1, c2)
+	ch2 := ioCopy(c2, c1)
 	select {
 	case err := <-ch1:
 		c1.Close()

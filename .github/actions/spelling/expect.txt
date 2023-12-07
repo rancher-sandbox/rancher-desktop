@@ -164,6 +164,7 @@ dcmonitor
 dcnone
 dcrd
 ddd
+deadcode
 debbuild
 debian
 Debugf
@@ -426,6 +427,7 @@ linuxkit
 Linuxy
 listenaddress
 listenport
+lll
 loadbalancer
 loblaw
 logdir

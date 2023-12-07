@@ -27,6 +27,8 @@ import (
 // readRequestBodyJSON reads the incoming HTTP request body as if it was JSON,
 // unmarshalled into the provided object.  A copy of the data is placed in the
 // request body, so that it can be used by downstream consumers as necessary.
+//
+//nolint:unused,deadcode // This function is used for the linux build and not windows
 func readRequestBodyJSON(req *http.Request, data interface{}) error {
 	buf, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -46,6 +48,8 @@ func readRequestBodyJSON(req *http.Request, data interface{}) error {
 // unmarshalled into the provided object.  A copy of the data is placed in the
 // response body, so that it can be used directly if no modification needed to
 // occur.
+//
+//nolint:unused,deadcode // This function is used for the linux build and not windows
 func readResponseBodyJSON(resp *http.Response, data interface{}) error {
 	buf, err := io.ReadAll(resp.Body)
 	if err != nil {
