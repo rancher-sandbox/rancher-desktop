@@ -235,7 +235,7 @@ export default {
   },
   watch: {
     isNerdCtl: {
-      handler(newVal, oldVal) {
+      handler(newVal) {
         if (newVal) {
           ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
             this.containersNamespaces = namespaces;

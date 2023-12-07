@@ -25,9 +25,6 @@ export abstract class ContainerProcessor extends EventEmitter {
 
       if (this.namespace !== cfg.containers.namespace) {
         this.namespace = cfg.containers.namespace;
-        // this.refreshImages().catch((err: Error) => {
-        //   console.log(`Error refreshing images:`, err);
-        // });
       }
     });
 

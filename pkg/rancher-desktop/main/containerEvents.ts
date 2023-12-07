@@ -33,7 +33,6 @@ export class ContainerEventHandler {
     ipcMainProxy.on('do-containers-exec', async(event, command, imageID) => {
       try {
         await this.containerProcessor.runContainerCommand([command, ...imageID], true);
-        // throw new Error('Not implemented');
       } catch (err) {
         await Electron.dialog.showMessageBox({
           message: `Error trying to delete container (${ imageID }):\n\n ${
