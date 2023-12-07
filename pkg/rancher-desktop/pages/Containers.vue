@@ -173,8 +173,10 @@ export default {
         container.started =
         container.State === 'running' ? container.Status : '';
         container.imageName = container.Image;
+        container.containerState = container.State ?? container.Status;
 
         if (this.isNerdCtl) {
+          container.started = container.containerState;
           if (container.Status.match(/exited/i)) {
             container.State = 'exited';
           } else {
@@ -224,7 +226,7 @@ export default {
           };
         }
 
-        container.containerState = container.State;
+        console.log('🚀 ~ file: Containers.vue:228 ~ returncontainers.map ~ containerState:', container);
 
         return container;
       });
