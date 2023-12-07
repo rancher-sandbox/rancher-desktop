@@ -32,10 +32,10 @@ export class ContainerEventHandler {
   protected initEventHandlers() {
     ipcMainProxy.on('do-containers-exec', async(event, command, containerID) => {
       try {
-        await this.containerProcessor.runContainerCommand([command, ...imageID], true);
+        await this.containerProcessor.runContainerCommand([command, ...containerID], true);
       } catch (err) {
         await Electron.dialog.showMessageBox({
-          message: `Error trying to delete container (${ imageID }):\n\n ${
+          message: `Error trying to delete container (${ containerID }):\n\n ${
             isUnixError(err) ? err.stderr : ''
           } `,
           type: 'error',
