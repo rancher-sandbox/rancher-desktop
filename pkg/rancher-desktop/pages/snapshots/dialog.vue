@@ -80,7 +80,12 @@ export default Vue.extend({
 
         return;
       }
-      ipcRenderer.send('dialog/close', { response: index });
+
+      if (index === this.cancelId) {
+        this.cancelSnapshot();
+      }
+
+      ipcRenderer.send('dialog/close', { response: index, eventType: this.snapshotEventType });
     },
     isDarwin() {
       return os.platform().startsWith('darwin');
@@ -96,6 +101,21 @@ export default Vue.extend({
         `http://localhost:${ this.credentials?.port }/v1/shutdown`,
         {
           method:  'PUT',
+          headers: new Headers({
+            Authorization: `Basic ${ window.btoa(
+              `${ this.credentials?.user }:${ this.credentials?.password }`,
+            ) }`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }),
+        },
+      );
+    },
+    cancelSnapshot() {
+      ipcRenderer.send('snapshot/cancel');
+      fetch(
+        `http://localhost:${ this.credentials?.port }/v1/snapshots/cancel`,
+        {
+          method:  'POST',
           headers: new Headers({
             Authorization: `Basic ${ window.btoa(
               `${ this.credentials?.user }:${ this.credentials?.password }`,

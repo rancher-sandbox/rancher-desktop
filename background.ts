@@ -851,6 +851,10 @@ ipcMainProxy.on('snapshot', (event, args) => {
   event.reply('snapshot', args);
 });
 
+ipcMainProxy.on('snapshot/cancel', () => {
+  window.send('snapshot/cancel');
+});
+
 ipcMainProxy.on('dialog/error', (event, args) => {
   window.getWindow(args.dialog)?.webContents.send('dialog/error', args);
 });
@@ -1507,6 +1511,10 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
   async restoreSnapshot(context: CommandWorkerInterface.CommandContext, name: string) {
     return await Snapshots.restore(name);
+  }
+
+  async cancelSnapshot() {
+    return await Snapshots.cancel();
   }
 
   async deleteSnapshot(context: CommandWorkerInterface.CommandContext, name: string) {

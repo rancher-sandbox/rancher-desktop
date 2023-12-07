@@ -22,28 +22,7 @@ function formatDate(value: string) {
   };
 }
 
-interface Data {
-  value: Snapshot
-}
-
-interface Methods {
-  restore: () => void,
-  remove: () => void,
-  showConfirmationDialog: (type: 'restore' | 'delete') => Promise<number>,
-  showRestoringSnapshotDialog: () => Promise<void>,
-}
-
-interface Computed {
-  snapshot: Snapshot & { formattedCreateDate: { date: string, time: string } | null },
-  isRestoreDisabled: boolean,
-  getK8sState: EngineStates,
-}
-
-interface Props {
-  value: Snapshot
-}
-
-export default Vue.extend<Data, Methods, Computed, Props>({
+export default Vue.extend({
   name:  'snapshot-card',
   props: {
     value: {
@@ -54,7 +33,7 @@ export default Vue.extend<Data, Methods, Computed, Props>({
 
   computed: {
     ...mapGetters('k8sManager', { getK8sState: 'getK8sState' }),
-    snapshot() {
+    snapshot(): Snapshot & { formattedCreateDate: { date: string, time: string } | null } {
       return {
         ...this.value,
         formattedCreateDate: formatDate(this.value.created),
@@ -74,6 +53,20 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       /** Clear old event on Snapshots page */
       ipcRenderer.send('snapshot', null);
 
+      let snapshotCancelled = false;
+
+      ipcRenderer.once('snapshot/cancel', () => {
+        snapshotCancelled = true;
+        ipcRenderer.send(
+          'snapshot',
+          {
+            type:         'restore',
+            result:       'cancel',
+            snapshotName: this.snapshot?.name,
+          },
+        );
+      });
+
       if (ok) {
         ipcRenderer.send('preferences-close');
         ipcRenderer.on('dialog/mounted', async() => {
@@ -91,15 +84,18 @@ export default Vue.extend<Data, Methods, Computed, Props>({
               });
           } else {
             ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
-            ipcRenderer.send('snapshot', {
-              type:         'restore',
-              result:       'success',
-              snapshotName: this.snapshot?.name,
-            });
+            ipcRenderer.send(
+              'snapshot',
+              {
+                type:         'restore',
+                result:       snapshotCancelled ? 'cancel' : 'success',
+                snapshotName: this.snapshot?.name,
+              },
+            );
           }
         });
 
-        await this.showRestoringSnapshotDialog();
+        await this.showRestoringSnapshotDialog('restore');
         ipcRenderer.removeAllListeners('dialog/mounted');
       }
     },
@@ -145,15 +141,17 @@ export default Vue.extend<Data, Methods, Computed, Props>({
       return confirm.response;
     },
 
-    async showRestoringSnapshotDialog() {
+    async showRestoringSnapshotDialog(type: 'restore' | 'delete') {
       const snapshot = this.snapshot.name.length > 32 ? `${ this.snapshot.name.substring(0, 30) }...` : this.snapshot.name;
 
       await ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
           window: {
-            buttons:  [],
-            cancelId: 1,
+            buttons: [
+              this.t(`snapshots.dialog.${ type }.actions.cancel`),
+            ],
+            cancelId: 0,
           },
           format: {
             header:            this.t('snapshots.dialog.restoring.header', { snapshot }),

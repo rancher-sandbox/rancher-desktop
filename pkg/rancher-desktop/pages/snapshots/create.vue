@@ -14,24 +14,7 @@ const defaultName = () => {
   return `Snap_${ dateString }`;
 };
 
-interface Data {
-  name: string,
-  description: string,
-  creating: boolean,
-}
-
-interface Methods {
-  goBack: (event: SnapshotEvent | null) => void;
-  submit: () => void;
-  showCreatingSnapshotDialog: () => Promise<void>;
-}
-
-interface Computed {
-  snapshots: Snapshot[];
-  valid: boolean;
-}
-
-export default Vue.extend<Data, Methods, Computed, never>({
+export default Vue.extend({
   components: {
     Banner,
     LabeledInput,
@@ -48,7 +31,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
   computed: {
     ...mapGetters('snapshots', { snapshots: 'list' }),
-    valid() {
+    valid(): boolean {
       return !!this.name && !this.snapshots.find((s: Snapshot) => s.name === this.name);
     },
   },
@@ -77,6 +60,18 @@ export default Vue.extend<Data, Methods, Computed, never>({
       /** TODO limit description length */
       const { name, description } = this;
 
+      let snapshotCancelled = false;
+
+      ipcRenderer.once('snapshot/cancel', () => {
+        snapshotCancelled = true;
+
+        this.goBack({
+          type:         'create',
+          result:       'cancel',
+          snapshotName: name,
+        });
+      });
+
       ipcRenderer.on('dialog/mounted', async() => {
         const error = await this.$store.dispatch('snapshots/create', { name, description });
 
@@ -87,7 +82,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
           this.goBack({
             type:         'create',
-            result:       'success',
+            result:       snapshotCancelled ? 'cancel' : 'success',
             snapshotName: name,
           });
         }
@@ -106,8 +101,10 @@ export default Vue.extend<Data, Methods, Computed, never>({
         'show-snapshots-blocking-dialog',
         {
           window: {
-            buttons:  [],
-            cancelId: 1,
+            buttons: [
+              this.t(`snapshots.dialog.creating.actions.cancel`),
+            ],
+            cancelId: 0,
           },
           format: {
             header:          this.t('snapshots.dialog.creating.header', { snapshot: name }),
