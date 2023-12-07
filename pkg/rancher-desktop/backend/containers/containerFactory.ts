@@ -2,7 +2,7 @@
 import { VMExecutor } from '@pkg/backend/backend';
 import { ContainerProcessor } from '@pkg/backend/containers/containerProcessor';
 import MobyImageProcessor from '@pkg/backend/containers/mobyContainerProcessor';
-import NerdctlImageProcessor from '@pkg/backend/containers/nerdctContainerProcessor';
+import NerdctlImageProcessor from '@pkg/backend/containers/nerdctlContainerProcessor';
 import { ContainerEngine } from '@pkg/config/settings';
 
 const cachedImageProcessors: Partial<
