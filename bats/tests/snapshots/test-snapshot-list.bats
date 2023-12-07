@@ -5,6 +5,13 @@ local_setup() {
     NON_ALNUM_SNAPSHOT_NAME='@#$%'
     MULTI_WORD_SNAPSHOT_NAME='=with '\''single'\'' and "double" quotes, /slashes/, and \backslashes\.'
     EMOJI_SNAPSHOT_NAME="emoji's 😍 are cool"
+    NON_ALNUM_DESCRIPTION='description for non-alnum-snapshot-name'
+    MULTI_WORD_DESCRIPTION='description for multi-word-snapshot-name'
+    EMOJI_DESCRIPTION='description for emoji-snapshot-name'
+    TEMP=$BATS_FILE_TMPDIR
+    if is_windows; then
+        TEMP="$(wslpath_from_win32_env TEMP)"
+    fi
 }
 
 @test 'factory reset and delete all the snapshots' {
@@ -36,13 +43,15 @@ local_setup() {
     # Sleep 5 seconds after creating each snapshot so later we can verify
     # that the differences in each snapshot's creation time makes sense.
 
-    rdctl snapshot create "$NON_ALNUM_SNAPSHOT_NAME"
+    rdctl snapshot create --description-from - "$NON_ALNUM_SNAPSHOT_NAME" <<<"$NON_ALNUM_DESCRIPTION"
     sleep 5
 
-    rdctl snapshot create "$MULTI_WORD_SNAPSHOT_NAME"
+    rdctl snapshot create --description-from - "$MULTI_WORD_SNAPSHOT_NAME" <<<"$MULTI_WORD_DESCRIPTION"
     sleep 5
 
-    rdctl snapshot create "$EMOJI_SNAPSHOT_NAME"
+    DESC_FILE="$TEMP/emoji-snapshot-description.txt"
+    echo "$EMOJI_DESCRIPTION" >"$DESC_FILE"
+    rdctl snapshot create --description-from "$DESC_FILE" "$EMOJI_SNAPSHOT_NAME"
 }
 
 created() {
@@ -73,6 +82,9 @@ created() {
     assert_output --partial "$NON_ALNUM_SNAPSHOT_NAME"
     assert_output --partial "$MULTI_WORD_SNAPSHOT_NAME"
     assert_output --partial "$EMOJI_SNAPSHOT_NAME"
+    assert_output --partial "$NON_ALNUM_DESCRIPTION"
+    assert_output --partial "$MULTI_WORD_DESCRIPTION"
+    assert_output --partial "$EMOJI_DESCRIPTION"
 }
 
 @test 'verify k8s is off' {

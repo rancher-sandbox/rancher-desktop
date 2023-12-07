@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"os/signal"
 	"runtime"
@@ -16,13 +18,30 @@ import (
 )
 
 var snapshotDescription string
+var snapshotDescriptionFrom string
 
 var snapshotCreateCmd = &cobra.Command{
 	Use:   "create <name>",
 	Short: "Create a snapshot",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if snapshotDescription != "" && snapshotDescriptionFrom != "" {
+			return fmt.Errorf(`can't specify more than one option from "--description" and "--description-from"`)
+		}
 		cmd.SilenceUsage = true
+		if snapshotDescriptionFrom != "" {
+			var bytes []byte
+			var err error
+			if snapshotDescriptionFrom == "-" {
+				bytes, err = io.ReadAll(os.Stdin)
+			} else {
+				bytes, err = os.ReadFile(snapshotDescriptionFrom)
+			}
+			if err != nil {
+				return err
+			}
+			snapshotDescription = string(bytes)
+		}
 		return exitWithJsonOrErrorCondition(createSnapshot(args))
 	},
 }
@@ -31,6 +50,7 @@ func init() {
 	snapshotCmd.AddCommand(snapshotCreateCmd)
 	snapshotCreateCmd.Flags().BoolVar(&outputJsonFormat, "json", false, "output json format")
 	snapshotCreateCmd.Flags().StringVar(&snapshotDescription, "description", "", "snapshot description")
+	snapshotCreateCmd.Flags().StringVar(&snapshotDescriptionFrom, "description-from", "", "snapshot description from a file (or - for stdin)")
 }
 
 func createSnapshot(args []string) error {
