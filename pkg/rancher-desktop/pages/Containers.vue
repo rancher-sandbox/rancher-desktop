@@ -233,6 +233,39 @@ export default {
       return this.isNerdCtl ? 'ID' : 'Id';
     },
   },
+  watch: {
+    isNerdCtl: {
+      handler(newVal, oldVal) {
+        if (newVal) {
+          ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
+            this.containersNamespaces = namespaces;
+            this.supportsNamespaces = namespaces.length > 0;
+            this.checkSelectedNamespace();
+          });
+
+          // Gets the containers from the main process.
+          ipcRenderer.on('containers-namespaces-containers', (_event, containers) => {
+            this.containersList = containers;
+          });
+
+          ipcRenderer.send('containers-namespaces-read');
+          // Reads containers in current namespace.
+          ipcRenderer.send('containers-namespaces-containers-read');
+
+          containerCheckInterval = setInterval(() => {
+            ipcRenderer.send('containers-namespaces-read');
+
+            // Reads containers in current namespace.
+            ipcRenderer.send('containers-namespaces-containers-read');
+          }, 5000);
+        } else {
+          ipcRenderer.removeAllListeners('containers-namespaces');
+          ipcRenderer.removeAllListeners('containers-namespaces-containers');
+        }
+      },
+      immediate: true,
+    },
+  },
   mounted() {
     this.$store.dispatch('page/setHeader', {
       title:       this.t('containers.title'),
@@ -240,30 +273,13 @@ export default {
     });
 
     // Info: Not sure if this can be improved, I don't like having to run it inside the `settings-read`event but I couldn't find a better way.
-    ipcRenderer.send('settings-read');
     ipcRenderer.on('settings-read', (event, settings) => {
-      this.$data.settings = settings;
-      this.$data.isNerdCtl = settings.containerEngine?.name === 'containerd';
-      this.$data.supportsNamespaces = settings.containerEngine?.name === 'containerd';
+      this.settings = settings;
+      this.isNerdCtl = settings.containerEngine?.name === 'containerd';
+      this.supportsNamespaces = settings.containerEngine?.name === 'containerd';
 
-      if (this.$data.isNerdCtl) {
-        ipcRenderer.send('containers-namespaces-read');
-
-        ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
-          this.containersNamespaces = namespaces;
-          this.$data.supportsNamespaces = namespaces.length > 0;
-          this.checkSelectedNamespace();
-        });
-
-        // Reads containers in current namespace.
-        ipcRenderer.send('containers-namespaces-containers-read');
-
-        // Gets the containers from the main process.
-        ipcRenderer.on('containers-namespaces-containers', (_event, containers) => {
-          this.containersList = containers;
-        });
-      } else {
-      // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
+      if (!this.isNerdCtl) {
+        // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
         containerCheckInterval = setInterval(async() => {
           if (ddClientReady || this.containersList) {
             return;
@@ -284,14 +300,19 @@ export default {
       }
     });
 
+    ipcRenderer.send('settings-read');
+
     ipcRenderer.on('settings-update', (_event, settings) => {
-      this.$data.settings = settings;
+      this.settings = settings;
       this.containersList = [];
       this.checkSelectedNamespace();
     });
   },
   beforeDestroy() {
     ddClientReady = false;
+    ipcRenderer.removeAllListeners('settings-update');
+    ipcRenderer.removeAllListeners('containers-namespaces');
+    ipcRenderer.removeAllListeners('containers-namespaces-containers');
     clearInterval(containerCheckInterval);
   },
   methods: {
