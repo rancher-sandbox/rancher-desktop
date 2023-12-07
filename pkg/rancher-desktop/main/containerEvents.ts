@@ -30,7 +30,7 @@ export class ContainerEventHandler {
   }
 
   protected initEventHandlers() {
-    ipcMainProxy.on('do-containers-exec', async(event, command, imageID) => {
+    ipcMainProxy.on('do-containers-exec', async(event, command, containerID) => {
       try {
         await this.containerProcessor.runContainerCommand([command, ...imageID], true);
       } catch (err) {
