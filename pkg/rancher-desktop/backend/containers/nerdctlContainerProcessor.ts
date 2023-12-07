@@ -58,7 +58,8 @@ export default class NerdctlContainerProcessor extends containerProcessor.Contai
         '--all',
         '--namespace',
         this.currentNamespace,
-        '--format="{{json .}}"',
+        '--format=json',
+        '--no-trunc',
       ],
       { stdio: ['inherit', 'pipe', 'pipe'] },
     );
@@ -70,7 +71,7 @@ export default class NerdctlContainerProcessor extends containerProcessor.Contai
     const containers = stdout
       .split('\n')
       .filter(line => line)
-      .map(line => JSON.parse(line.slice(1, -1)));
+      .map(line => JSON.parse(line));
 
     return containers;
   }
