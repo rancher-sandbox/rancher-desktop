@@ -245,7 +245,6 @@ paths:
               schema:
                 type: string
 
-
   /v1/settings:
     get:
       operationId: listSettings
@@ -325,7 +324,7 @@ paths:
       summary: Creates a new snapshot
       responses:
         '200':
-          description: The snapshot was created
+          description: The snapshot was created.
         '400':
           description: The snapshot could not be created.
           content:
@@ -343,6 +342,20 @@ paths:
           description: The snapshot was deleted.
         '404':
           description: The snapshot could not be deleted.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v1/snapshots/cancel:
+    post:
+      operationId: cancelSnapshot
+      summary: Cancels active snapshot operation
+      responses:
+        '200':
+          description: The snapshot operation was canceled.
+        '400':
+          description: The snapshot could not be canceled.
           content:
             text/plain:
               schema:
