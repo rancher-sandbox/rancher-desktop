@@ -35,7 +35,7 @@ export class ContainerEventHandler {
         await this.containerProcessor.runContainerCommand([command, ...containerID], true);
       } catch (err) {
         await Electron.dialog.showMessageBox({
-          message: `Error trying to delete container (${ containerID }):\n\n ${
+          message: `Error trying to run container command (${ containerID }):\n\n ${
             isUnixError(err) ? err.stderr : ''
           } `,
           type: 'error',
