@@ -121,7 +121,6 @@ export default {
       showRunning:          false,
       selectedNamespace:    defaultSettings.containers.namespace,
       containersNamespaces: [],
-      supportsNamespaces:   false,
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
@@ -235,6 +234,11 @@ export default {
 
       return settings.containerEngine?.name === 'containerd';
     },
+    supportsNamespaces() {
+      const settings = this.settings;
+
+      return settings.containerEngine?.name === 'containerd';
+    },
   },
   watch: {
     isNerdCtl: {
@@ -242,7 +246,6 @@ export default {
         if (newVal) {
           ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
             this.containersNamespaces = namespaces;
-            this.supportsNamespaces = namespaces.length > 0;
             this.checkSelectedNamespace();
           });
 
@@ -278,7 +281,6 @@ export default {
     // Info: Not sure if this can be improved, I don't like having to run it inside the `settings-read`event but I couldn't find a better way.
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
-      this.supportsNamespaces = settings.containerEngine?.name === 'containerd';
 
       if (!this.isNerdCtl) {
         // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
