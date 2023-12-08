@@ -37,16 +37,20 @@ const (
 	kWindowsFeature = "VirtualMachinePlatform"
 	// DISM_ONLINE_IMAGE is the DISM "image path" that signifies we're trying
 	// to modify the running Windows installation.
+	//nolint:stylecheck // Constant name follows Win32 API
 	DISM_ONLINE_IMAGE         = "DISM_{53BFAE52-B167-4E2F-A258-0A37B57FF845}"
 	DismLogErrorsWarningsInfo = 2
+	// win32ErrorMask is used to turn a HRESULT_FROM_WIN32(x) back into a Win32
+	// error code.
+	win32ErrorMask = 0xFFFF
 )
 
 var (
-	dllDismApi        = windows.NewLazySystemDLL("dismapi.dll")
-	dismInitialize    = dllDismApi.NewProc("DismInitialize")
-	dismOpenSession   = dllDismApi.NewProc("DismOpenSession")
-	dismCloseSession  = dllDismApi.NewProc("DismCloseSession")
-	dismEnableFeature = dllDismApi.NewProc("DismEnableFeature")
+	dllDismAPI        = windows.NewLazySystemDLL("dismapi.dll")
+	dismInitialize    = dllDismAPI.NewProc("DismInitialize")
+	dismOpenSession   = dllDismAPI.NewProc("DismOpenSession")
+	dismCloseSession  = dllDismAPI.NewProc("DismCloseSession")
+	dismEnableFeature = dllDismAPI.NewProc("DismEnableFeature")
 )
 
 func errorFromHResult(hr int32, err error) error {
@@ -87,8 +91,9 @@ func DismDoInstall(ctx context.Context, log *logrus.Entry) error {
 		uintptr(unsafe.Pointer(&session)),
 	)
 	if hr != uintptr(windows.S_OK) {
-		return errorFromWin32("failed to open DISM session", hr&0xFFFF, err)
+		return errorFromWin32("failed to open DISM session", hr&win32ErrorMask, err)
 	}
+	//nolint:errcheck // We can't do anything about any failures here.
 	defer dismCloseSession.Call(uintptr(session))
 
 	if buf, err = windows.UTF16PtrFromString(kWindowsFeature); err != nil {

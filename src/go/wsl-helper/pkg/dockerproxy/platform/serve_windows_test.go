@@ -41,11 +41,11 @@ func TestParseBindString(t *testing.T) {
 
 	for input, expected := range cases {
 		t.Run(input, func(t *testing.T) {
-			host, container, options, isPath := ParseBindString(input)
-			assert.Equal(t, expected.host, host)
-			assert.Equal(t, expected.container, container)
-			assert.Equal(t, expected.options, options)
-			assert.Equal(t, expected.isPath, isPath)
+			hostConfig := ParseBindString(input)
+			assert.Equal(t, expected.host, hostConfig.Src)
+			assert.Equal(t, expected.container, hostConfig.Dest)
+			assert.Equal(t, expected.options, hostConfig.Options)
+			assert.Equal(t, expected.isPath, hostConfig.IsHostPath)
 		})
 	}
 }

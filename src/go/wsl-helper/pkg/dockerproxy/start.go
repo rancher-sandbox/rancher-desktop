@@ -35,13 +35,21 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
-// defaultProxyEndpoint is the path on which dockerd should listen on, relative
-// to the WSL mount point.
-const defaultProxyEndpoint = "rancher-desktop/run/docker.sock"
+const (
+	// defaultProxyEndpoint is the path on which dockerd should listen on, relative
+	// to the WSL mount point.
+	defaultProxyEndpoint = "rancher-desktop/run/docker.sock"
+
+	// fileExistPollInterval is the time between polling to see if the file exists.
+	fileExistPollInterval = 500 * time.Millisecond
+
+	// dockerSocketTimeout is the time to wait for the docker socket to exist.
+	dockerSocketTimeout = 30 * time.Second
+)
 
 // waitForFileToExist will block until the given path exists.  If the given
 // timeout is reached, an error will be returned.
-func waitForFileToExist(path string, timeout time.Duration) error {
+func waitForFileToExist(filePath string, timeout time.Duration) error {
 	timer := time.After(timeout)
 	ready := make(chan struct{})
 	expired := false
@@ -51,11 +59,11 @@ func waitForFileToExist(path string, timeout time.Duration) error {
 		// We just do polling here, since inotify / fanotify both have fairly
 		// low limits on the concurrent number of watchers.
 		for !expired {
-			_, err := os.Lstat(path)
+			_, err := os.Lstat(filePath)
 			if err == nil {
 				return
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(fileExistPollInterval)
 		}
 	}()
 
@@ -64,7 +72,7 @@ func waitForFileToExist(path string, timeout time.Duration) error {
 		return nil
 	case <-timer:
 		expired = true
-		return fmt.Errorf("timed out waiting for %s to exist", path)
+		return fmt.Errorf("timed out waiting for %s to exist", filePath)
 	}
 }
 
@@ -96,8 +104,11 @@ func Start(port uint32, dockerSocket string, args []string) error {
 		return fmt.Errorf("could not set up docker socket: %w", err)
 	}
 
-	args = append(args, fmt.Sprintf("--host=unix://%s", dockerSocket))
-	args = append(args, "--host=unix:///var/run/docker.sock")
+	args = append(
+		args,
+		fmt.Sprintf("--host=unix://%s", dockerSocket),
+		"--host=unix:///var/run/docker.sock",
+	)
 	cmd := exec.Command(dockerd, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -116,7 +127,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 	}()
 
 	// Wait for the docker socket to exist...
-	err = waitForFileToExist(dockerSocket, 30*time.Second)
+	err = waitForFileToExist(dockerSocket, dockerSocketTimeout)
 	if err != nil {
 		return err
 	}
@@ -127,7 +138,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 	}
 	defer listener.Close()
 
-	sigch := make(chan os.Signal)
+	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, unix.SIGTERM)
 	go func() {
 		<-sigch
@@ -142,8 +153,6 @@ func Start(port uint32, dockerSocket string, args []string) error {
 		}
 		go handleConnection(conn, dockerSocket)
 	}
-
-	return nil
 }
 
 // handleConnection handles piping the connection from the client to the docker

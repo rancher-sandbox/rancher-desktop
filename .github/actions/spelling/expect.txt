@@ -201,6 +201,7 @@ dports
 dri
 DSL
 Duex
+dupl
 dword
 eagerzeroedthick
 eastus
@@ -273,6 +274,8 @@ globalrole
 globalrolebinding
 Gluster
 gname
+gocritic
+gocyclo
 gofmt
 goland
 golangci
@@ -728,6 +731,8 @@ storybookjs
 strem
 stretchr
 stringifying
+structcheck
+stylecheck
 subshells
 subvar
 sumologic

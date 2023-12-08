@@ -60,7 +60,7 @@ func GetSystemCertificates(storeName string) (<-chan Entry, error) {
 	ch := make(chan Entry)
 	go func() {
 		defer close(ch)
-		defer windows.CertCloseStore(store, 0)
+		defer windows.CertCloseStore(store, 0) //nolint:errcheck // We can't do anything about it if this fails
 		var certCtx *windows.CertContext
 		var err error
 		for {
