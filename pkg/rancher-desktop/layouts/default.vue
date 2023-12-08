@@ -86,9 +86,9 @@ export default {
     ipcRenderer.on('window/blur', (event, blur) => {
       this.blur = blur;
     });
-    ipcRenderer.on('backend-locked', (event) => {
+    ipcRenderer.on('backend-locked', (_event, action) => {
       ipcRenderer.send('preferences-close');
-      this.showCreatingSnapshotDialog();
+      this.showCreatingSnapshotDialog(action);
     });
     ipcRenderer.on('backend-unlocked', () => {
       ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
@@ -151,7 +151,7 @@ export default {
         this.$router.push({ path: this.paths[idx] });
       }
     },
-    showCreatingSnapshotDialog() {
+    showCreatingSnapshotDialog(action) {
       ipcRenderer.invoke(
         'show-snapshots-blocking-dialog',
         {
@@ -160,9 +160,8 @@ export default {
             cancelId: 1,
           },
           format: {
-            /** ToDo put here operation type and snapshot name from 'state' */
-            header:          this.t('snapshots.dialog.generic.header', {}, true),
-            /** ToDo put here operation type information from 'state' */
+            header:          action || this.t('snapshots.dialog.generic.header', {}, true),
+            /** TODO: put here operation type information from 'state' */
             message:         this.t('snapshots.dialog.generic.message', {}, true),
             showProgressBar: true,
           },

@@ -126,7 +126,7 @@ interface MainEventNames {
    * actions that could cause problems with snapshot operations (as of the time of
    * writing snapshots is the sole use for this).
    */
-  'backend-locked-update'(backendIsLocked: string): void;
+  'backend-locked-update'(backendIsLocked: string, action?: string): void;
 
   /**
    * Emitted when a component wants to check the state of the backend lock.

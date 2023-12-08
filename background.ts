@@ -91,7 +91,6 @@ let noModalDialogs = false;
 // Indicates whether the UI should be locked, settings changes should be disallowed
 // and possibly other things should be disallowed. As of the time of writing,
 // set to true when a snapshot is being created or restored.
-let backendIsLocked = '';
 let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked: {} };
 
 /**
@@ -300,22 +299,49 @@ Electron.app.whenReady().then(async() => {
 });
 
 /**
- * Checks for the existence of the 'backend.lock' file and updates the
- * 'backendIsLocked' variable accordingly. Emits the 'backend-locked-update'
- * event to notify listeners about the current lock status.
+ * Reads the 'backend.lock' file and returns its contents if it exists.
+ * Returns null if the file doesn't exist.
  */
-async function doesBackendLockExist(): Promise<boolean> {
+async function readBackendLockFile(): Promise<{ action: string } | null> {
   try {
-    await fs.promises.access(path.join(paths.appHome, 'backend.lock'));
-    backendIsLocked = SNAPSHOT_OPERATION;
-    mainEvents.emit('backend-locked-update', backendIsLocked);
+    const fileContents = await fs.promises.readFile(
+      path.join(paths.appHome, 'backend.lock'),
+      'utf-8',
+    );
+
+    return JSON.parse(fileContents);
   } catch (ex: any) {
-    backendIsLocked = '';
     if (ex.code === 'ENOENT') {
-      mainEvents.emit('backend-locked-update', backendIsLocked);
+      return null;
     } else {
       throw ex;
     }
+  }
+}
+
+/**
+ * Emits the 'backend-locked-update' event.
+ */
+function updateBackendLockState(backendIsLocked: string, action?: string): void {
+  mainEvents.emit('backend-locked-update', backendIsLocked, action);
+}
+
+/**
+ * Checks for the existence of the 'backend.lock' file and emits the
+ * 'backend-locked-update' event to notify listeners about the current lock
+ * status.
+ */
+async function doesBackendLockExist(): Promise<boolean> {
+  let backendIsLocked = '';
+
+  const lockFileContents = await readBackendLockFile();
+
+  if (lockFileContents !== null) {
+    backendIsLocked = SNAPSHOT_OPERATION;
+    updateBackendLockState(backendIsLocked, lockFileContents.action);
+  } else {
+    backendIsLocked = '';
+    updateBackendLockState(backendIsLocked);
   }
 
   return !!backendIsLocked;
@@ -588,16 +614,20 @@ Electron.app.on('activate', async() => {
   window.openMain();
 });
 
-mainEvents.on('backend-locked-update', () => {
-  window.send(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
+mainEvents.on('backend-locked-update', (backendIsLocked, action) => {
+  if (backendIsLocked) {
+    window.send('backend-locked', action);
+  } else {
+    window.send('backend-unlocked');
+  }
 });
 
-mainEvents.on('backend-locked-check', () => {
-  mainEvents.emit('backend-locked-update', backendIsLocked);
+mainEvents.on('backend-locked-check', async() => {
+  await doesBackendLockExist();
 });
 
-ipcMainProxy.on('backend-state-check', (event) => {
-  event.reply(backendIsLocked ? 'backend-locked' : 'backend-unlocked');
+ipcMainProxy.on('backend-state-check', async() => {
+  await doesBackendLockExist();
 });
 
 ipcMainProxy.on('settings-read', (event) => {
@@ -1498,16 +1528,17 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     }
   }
 
-  getBackendState(): BackendState {
+  async getBackendState(): Promise<BackendState> {
+    const backendIsLocked = await readBackendLockFile();
+
     return {
       vmState: k8smanager.state,
       locked:  !!backendIsLocked,
     };
   }
 
-  setBackendState(state: BackendState): void {
-    backendIsLocked = state.locked ? SNAPSHOT_OPERATION : '';
-    mainEvents.emit('backend-locked-update', backendIsLocked);
+  async setBackendState(state: BackendState): Promise<void> {
+    await doesBackendLockExist();
     switch (state.vmState) {
     case State.STARTED:
       cfg = settingsImpl.load(deploymentProfiles);

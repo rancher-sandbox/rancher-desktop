@@ -655,8 +655,8 @@ export class HttpCommandServer {
     }
   }
 
-  protected getBackendState(_: express.Request, response: express.Response, context: commandContext): Promise<void> {
-    const backendState = this.commandWorker.getBackendState();
+  protected async getBackendState(_: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const backendState = await this.commandWorker.getBackendState();
 
     console.debug('GET backend_state: succeeded 200');
     response.status(200).json(backendState);
@@ -671,7 +671,7 @@ export class HttpCommandServer {
     const state = JSON.parse(data);
 
     try {
-      this.commandWorker.setBackendState(state);
+      await this.commandWorker.setBackendState(state);
     } catch (ex) {
       console.error(`error in setBackendState:`, ex);
       statusCode = 500;
@@ -800,9 +800,9 @@ export interface CommandWorkerInterface {
   getTransientSettings: (context: commandContext) => string;
   updateTransientSettings: (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
   /** Get the state of the backend */
-  getBackendState: () => BackendState;
+  getBackendState: () => Promise<BackendState>;
   /** Set the desired state of the backend */
-  setBackendState: (state: BackendState) => void;
+  setBackendState: (state: BackendState) => Promise<void>;
 
   // #region extensions
   /** List the installed extensions with their versions */
