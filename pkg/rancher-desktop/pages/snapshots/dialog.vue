@@ -74,7 +74,7 @@ export default Vue.extend({
   },
 
   methods: {
-    close(index: number) {
+    async close(index: number) {
       if (this.error && this.snapshotEventType === 'restore') {
         this.quit();
 
@@ -82,7 +82,7 @@ export default Vue.extend({
       }
 
       if (index === this.cancelId) {
-        this.cancelSnapshot();
+        await this.cancelSnapshot();
       }
 
       ipcRenderer.send('dialog/close', { response: index, eventType: this.snapshotEventType });
@@ -110,9 +110,8 @@ export default Vue.extend({
         },
       );
     },
-    cancelSnapshot() {
-      ipcRenderer.send('snapshot/cancel');
-      fetch(
+    async cancelSnapshot() {
+      await fetch(
         `http://localhost:${ this.credentials?.port }/v1/snapshots/cancel`,
         {
           method:  'POST',
@@ -124,6 +123,7 @@ export default Vue.extend({
           }),
         },
       );
+      ipcRenderer.send('snapshot/cancel');
     },
   },
 });
