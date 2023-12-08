@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 SUSE LLC
+Copyright © 2023 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package process
 
 import (
@@ -22,18 +23,10 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var (
-	kernel32Dll = windows.MustLoadDLL("Kernel32.dll")
-)
-
 // WaitPid waits for the process with the given PID to exit before returning.
 func WaitPid(pid uint32) error {
 	logEntry := logrus.WithField("pid", pid)
 	logEntry.Trace("trying to wait for process")
-	openProcess, err := kernel32Dll.FindProc("OpenProcess")
-	if err != nil {
-		return fmt.Errorf("could not find OpenProcess: %w", err)
-	}
 	hProcRaw, _, err := openProcess.Call(
 		windows.SYNCHRONIZE,
 		0,

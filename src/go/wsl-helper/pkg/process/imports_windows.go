@@ -16,15 +16,12 @@ limitations under the License.
 
 package process
 
-import (
-	"fmt"
-	"os/exec"
-)
+import "golang.org/x/sys/windows"
 
-func Launch(executable string, args ...string) error {
-	err := exec.Command(executable, args...).Start()
-	if err != nil {
-		return fmt.Errorf("failed to start %s: %w", executable, err)
-	}
-	return nil
-}
+var (
+	kernel32Dll           = windows.NewLazySystemDLL("kernel32.dll")
+	openProcess           = kernel32Dll.NewProc("OpenProcess")
+	attachConsole         = kernel32Dll.NewProc("AttachConsole")
+	freeConsole           = kernel32Dll.NewProc("FreeConsole")
+	setConsoleCtrlHandler = kernel32Dll.NewProc("SetConsoleCtrlHandler")
+)

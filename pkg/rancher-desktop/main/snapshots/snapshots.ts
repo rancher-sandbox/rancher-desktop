@@ -1,12 +1,11 @@
 import { exec } from 'child_process';
 import util from 'util';
 
-import { ctrlc } from 'ctrlc-windows';
-
 import { Snapshot, SpawnResult } from '@pkg/main/snapshots/types';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import { getRdctlPath } from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
 
 const console = Logging.snapshots;
 
@@ -110,15 +109,16 @@ class SnapshotsImpl {
         const { stdout } = await asyncExec(`tasklist /FI "IMAGENAME eq ${ name }.exe" /FO CSV /NH`);
         const processes = stdout.split('\r\n');
 
-        processes.forEach((proc) => {
+        for (const proc of processes) {
           const [_imageName, rawPid, ..._rest] = proc.split(',');
           const pid = Number(rawPid?.trim().replaceAll('"', ''));
+          const exe = executable('wsl-helper');
 
           if (pid) {
             console.log(`Found process ${ command } with PID ${ pid }`);
-            ctrlc(pid);
+            await spawnFile(exe, ['kill-process', `--pid=${ pid }`], { stdio: console });
           }
-        });
+        }
       } else {
         const { stdout } = await asyncExec(`ps aux | grep "${ command }" | grep -v grep`);
         const processes = stdout.split('\n');
