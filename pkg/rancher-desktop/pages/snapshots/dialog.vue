@@ -344,6 +344,10 @@ export default Vue.extend({
       }
     }
 
+    .progress {
+      margin: 1.25rem 0;
+    }
+
     .dialog-actions {
       display: flex;
       flex-direction: row;
