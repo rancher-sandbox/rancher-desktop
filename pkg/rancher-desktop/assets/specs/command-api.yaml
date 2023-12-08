@@ -686,6 +686,15 @@ components:
             namespace:
               type: string
               x-rd-usage: select only images from this namespace (containerd only)
+        containers:
+          type: object
+          properties:
+            showAll:
+              type: boolean
+              x-rd-usage: show system containers on Containers page
+            namespace:
+              type: string
+              x-rd-usage: select only namespaces from this namespace (containerd only)
         diagnostics:
           type: object
           properties:

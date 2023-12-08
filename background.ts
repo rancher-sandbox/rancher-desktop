@@ -10,6 +10,8 @@ import semver from 'semver';
 
 import { State } from '@pkg/backend/backend';
 import BackendHelper from '@pkg/backend/backendHelper';
+import { getContainerProcessor } from '@pkg/backend/containers/containerFactory';
+import { ContainerProcessor } from '@pkg/backend/containers/containerProcessor';
 import K8sFactory from '@pkg/backend/factory';
 import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
@@ -23,8 +25,9 @@ import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
 import { PathManager } from '@pkg/integrations/pathManager';
 import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
-import { CommandWorkerInterface, HttpCommandServer, BackendState } from '@pkg/main/commandServer/httpCommandServer';
+import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
+import { ContainerEventHandler } from '@pkg/main/containerEvents';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
@@ -43,10 +46,10 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
-import Logging, { setLogLevel, clearLoggingDirectory } from '@pkg/utils/logging';
+import Logging, { clearLoggingDirectory, setLogLevel } from '@pkg/utils/logging';
 import { fetchMacOsVersion, getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
-import { setupProtocolHandlers, protocolsRegistered } from '@pkg/utils/protocols';
+import { protocolsRegistered, setupProtocolHandlers } from '@pkg/utils/protocols';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
@@ -77,8 +80,10 @@ let cfg: settings.Settings;
 let firstRunDialogComplete = false;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
+let containerEventHandler: ContainerEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
+let currentContainerProcessor: ContainerProcessor | null = null;
 let enabledK8s: boolean;
 let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
@@ -502,14 +507,25 @@ async function startK8sManager() {
 
 function setupImageProcessor() {
   const imageProcessor = getImageProcessor(cfg.containerEngine.name, k8smanager.executor);
+  const containerProcessor = getContainerProcessor(
+    cfg.containerEngine.name,
+    k8smanager.executor,
+  );
 
   currentImageProcessor?.deactivate();
   if (!imageEventHandler) {
     imageEventHandler = new ImageEventHandler(imageProcessor);
   }
+  if (!containerEventHandler) {
+    containerEventHandler = new ContainerEventHandler(containerProcessor);
+  }
+
   imageEventHandler.imageProcessor = imageProcessor;
+  containerEventHandler.containerProcessor = containerProcessor;
   currentImageProcessor = imageProcessor;
-  currentImageProcessor.activate();
+  currentContainerProcessor = containerProcessor;
+  currentImageProcessor?.activate();
+  currentContainerProcessor?.activate();
   currentImageProcessor.namespace = cfg.images.namespace;
   window.send('k8s-current-engine', cfg.containerEngine.name);
 }
@@ -598,6 +614,18 @@ ipcMainProxy.on('settings-read', (event) => {
 ipcMainProxy.on('images-namespaces-read', (event) => {
   if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
     currentImageProcessor?.relayNamespaces();
+  }
+});
+
+ipcMainProxy.on('containers-namespaced-read', (event) => {
+  if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
+    return currentContainerProcessor?.relayNamespaces();
+  }
+});
+
+ipcMainProxy.on('containers-namespaced-containers-read', (event) => {
+  if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
+    return currentContainerProcessor?.relayNamespacedContainers();
   }
 });
 
