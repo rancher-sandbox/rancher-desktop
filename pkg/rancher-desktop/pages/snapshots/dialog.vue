@@ -81,7 +81,7 @@ export default Vue.extend({
         return;
       }
 
-      if (index === this.cancelId) {
+      if (!this.error && this.snapshotEventType !== 'confirm' && index === this.cancelId) {
         await this.cancelSnapshot();
       }
 
