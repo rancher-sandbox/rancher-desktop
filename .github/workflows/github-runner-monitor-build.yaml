@@ -22,7 +22,7 @@ jobs:
         sparse-checkout: |
           src/go/github-runner-monitor
           .github/workflows/config
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version-file: src/go/github-runner-monitor/go.mod
         cache-dependency-path: src/go/github-runner-monitor/go.sum
