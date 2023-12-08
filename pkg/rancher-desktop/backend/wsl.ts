@@ -1480,6 +1480,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 USE_CRI_DOCKERD:        BackendHelper.requiresCRIDockerd(config.containerEngine.name, version).toString(),
               };
 
+              // Make sure the apiserver can be accessed from WSL through the internal gateway
+              k3sConf.ADDITIONAL_ARGS += ' --tls-san gateway.rancher-desktop.internal';
+
               if (!config.kubernetes.options.flannel) {
                 console.log(`Disabling flannel and network policy`);
                 k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
