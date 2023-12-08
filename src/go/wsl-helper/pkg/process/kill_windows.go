@@ -18,9 +18,14 @@ package process
 
 import (
 	"fmt"
+	"math"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
+)
+
+const (
+	ATTACH_PARENT_PROCESS = math.MaxUint32
 )
 
 func Kill(pid int) error {
@@ -31,7 +36,7 @@ func Kill(pid int) error {
 	// Try to re-attach to the default console
 	defer func() {
 		_, _, _ = freeConsole.Call()
-		_, _, _ = attachConsole.Call(0xFFFFFFFF)
+		_, _, _ = attachConsole.Call(ATTACH_PARENT_PROCESS)
 	}()
 
 	// Detach from the current console; if this fails (and we stay attached to the

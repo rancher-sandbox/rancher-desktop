@@ -30,11 +30,7 @@ var killProcessCmd = &cobra.Command{
 	Use:   "kill-process",
 	Short: "Kill a given process",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := process.Kill(killProcessViper.GetInt("pid"))
-		if err != nil {
-			return err
-		}
-		return nil
+		return process.Kill(killProcessViper.GetInt("pid"))
 	},
 }
 
