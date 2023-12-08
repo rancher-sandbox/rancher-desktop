@@ -2,10 +2,10 @@
 name: 'GitHub Runner: WSL Helper'
 
 on:
-  push:
-    paths: [ src/go/wsl-helper/** ]
-  pull_request:
-    paths: [ src/go/wsl-helper/** ]
+  #push:
+  #  paths: [ src/go/wsl-helper/** ]
+  #pull_request:
+  #  paths: [ src/go/wsl-helper/** ]
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
       env:
         GOOS: windows
         CGO_ENABLED: '0'
-    - name: Build linux
+    - name: Build Linux
       run: go build .
       working-directory: src/go/wsl-helper
       env:
