@@ -1,4 +1,6 @@
 import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 import util from 'util';
 
 import { Snapshot, SpawnResult } from '@pkg/main/snapshots/types';
@@ -135,6 +137,12 @@ class SnapshotsImpl {
       }
     } catch (error) {
       console.error('Error:', error);
+    }
+    try {
+      // The above code does not always result in the immediate deletion of the lockfile, so remove it now
+      await asyncExec(`${ command } unlock`);
+    } catch (ex) {
+      console.error(`Unlocking the snapshot should never fail, but got error: ${ ex }`);
     }
   }
 }
