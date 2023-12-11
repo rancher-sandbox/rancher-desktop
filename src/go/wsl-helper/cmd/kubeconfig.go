@@ -102,11 +102,12 @@ var kubeconfigCmd = &cobra.Command{
 			return err
 		}
 		defer finalKubeConfigFile.Close()
-		err = yaml.NewEncoder(finalKubeConfigFile).Encode(kubeConfig)
+		encoder := yaml.NewEncoder(finalKubeConfigFile)
+		err = encoder.Encode(kubeConfig)
 		if err != nil {
 			return err
 		}
-		return nil
+		return encoder.Close()
 	},
 }
 
