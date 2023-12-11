@@ -13,10 +13,8 @@ type utf16Writer struct {
 }
 
 func (w *utf16Writer) Write(p []byte) (int, error) {
-	buf := make([]byte, 0, len(p)+2)
-	copy(buf, p)
 	output := windows.UTF16PtrToString(
-		(*uint16)(unsafe.Pointer(unsafe.SliceData(append(buf, 0, 0)))),
+		(*uint16)(unsafe.Pointer(unsafe.SliceData(append(p, 0, 0)))),
 	)
 	n, err := w.Writer.Write(
 		unsafe.Slice(unsafe.StringData(output), len(output)),

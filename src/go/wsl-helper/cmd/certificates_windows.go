@@ -64,6 +64,6 @@ var certificatesCmd = &cobra.Command{
 func init() {
 	certificatesCmd.Flags().StringSlice("stores", []string{"CA", "ROOT"}, "Certificate stores to enumerate")
 	certificatesViper.AutomaticEnv()
-	_ = certificatesViper.BindPFlags(certificatesCmd.Flags())
+	certificatesViper.BindPFlags(certificatesCmd.Flags())
 	rootCmd.AddCommand(certificatesCmd)
 }

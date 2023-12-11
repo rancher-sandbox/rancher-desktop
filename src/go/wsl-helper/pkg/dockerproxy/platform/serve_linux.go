@@ -106,20 +106,10 @@ func Listen(endpoint string) (net.Listener, error) {
 	return listener, nil
 }
 
-// bindConfig is the result of calling ParseBindString.
-type bindConfig struct {
-	// The source of the bind, either a host path or a volume name.
-	Src string
-	// The destination of the bind.
-	Dest string
-	// Optional extra Options.
-	Options string
-	// Whether the src field is a host path.
-	IsHostPath bool
-}
-
-// ParseBindString parses a HostConfig.Binds entry.
-func ParseBindString(input string) bindConfig {
+// ParseBindString parses a HostConfig.Binds entry, returning the (<host-src> or
+// <volume-name>), <container-dest>, and (optional) <options>.  Additionally, it
+// also returns a boolean indicating if the first argument is a host path.
+func ParseBindString(input string) (string, string, string, bool) {
 	// The volumes here are [<host-src>:]<container-dest>[:options]
 	// For a first pass, let's just assume there are no colons in any of this...
 	// The API spec says that if the first part is a host path, then it _must_
@@ -129,36 +119,18 @@ func ParseBindString(input string) bindConfig {
 	lastIndex := strings.LastIndex(input, ":")
 	if firstIndex < 0 {
 		// just /foo -- map the same path on the host to the container.
-		return bindConfig{
-			Src:        input,
-			Dest:       input,
-			IsHostPath: hostIsPath,
-		}
+		return input, input, "", hostIsPath
 	}
 	start := input[:firstIndex]
 	end := input[lastIndex+1:]
 	if lastIndex > firstIndex {
 		// /foo:/bar:ro
 		middle := input[firstIndex+1 : lastIndex]
-		return bindConfig{
-			Src:        start,
-			Dest:       middle,
-			Options:    end,
-			IsHostPath: hostIsPath,
-		}
+		return start, middle, end, hostIsPath
 	}
 	// either /foo:/bar or /foo:ro
 	if strings.HasPrefix(end, "/") {
-		return bindConfig{
-			Src:        start,
-			Dest:       end,
-			IsHostPath: hostIsPath,
-		}
+		return start, end, "", hostIsPath
 	}
-	return bindConfig{
-		Src:        start,
-		Dest:       start,
-		Options:    end,
-		IsHostPath: hostIsPath,
-	}
+	return start, start, end, hostIsPath
 }

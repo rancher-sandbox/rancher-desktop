@@ -54,7 +54,6 @@ var kubeconfigCmd = &cobra.Command{
 
 		if winConfigPath == "" {
 			//lint:ignore ST1005 The capitalization is for a proper noun.
-			//nolint:stylecheck // The capitalization is for a proper noun.
 			return errors.New("Windows kubeconfig not supplied")
 		}
 
@@ -87,9 +86,9 @@ var kubeconfigCmd = &cobra.Command{
 			return err
 		}
 
-		cleanConfig := removeExistingRDConfig(rdCluster, linuxConfig)
+		cleanConfig := removeExistingRDConfig(rdCluster, &linuxConfig)
 
-		kubeConfig, err := updateKubeConfig(winConfig, cleanConfig, rdNetworking)
+		kubeConfig, err := updateKubeConfig(winConfig, *cleanConfig, rdNetworking)
 		if err != nil {
 			return fmt.Errorf("failed to construct kubeconfig: %w", err)
 		}
@@ -111,32 +110,29 @@ var kubeconfigCmd = &cobra.Command{
 	},
 }
 
-func readKubeConfig(configPath string) (*kubeConfig, error) {
+func readKubeConfig(configPath string) (kubeConfig, error) {
 	var config kubeConfig
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("could not open kubeconfig file %s: %w", configPath, err)
+		return config, fmt.Errorf("could not open kubeconfig file %s: %w", configPath, err)
 	}
 	defer configFile.Close()
 	err = yaml.NewDecoder(configFile).Decode(&config)
 	if err != nil {
-		return nil, fmt.Errorf("could not read kubeconfig %s: %w", configPath, err)
+		return config, fmt.Errorf("could not read kubeconfig %s: %w", configPath, err)
 	}
 
-	return &config, nil
+	return config, nil
 }
 
-// updateKubeConfig updates the Linux-side kubeconfig with the rancher-desktop
-// cluster read from Windows (ignoring all other clusters from the Windows side).
-// While doing so, it ensures that the server address will be correct.
-// It updates the Linux kubeconfig in-place and returns it.
-func updateKubeConfig(winConfig, linuxConfig *kubeConfig, rdNetworking bool) (*kubeConfig, error) {
-	// We act on a copy of the Windows config to avoid mutating it.
-	winConfigCopy := *winConfig
-	winConfigCopy.Clusters = append([]kubeConfigCluster{}, winConfig.Clusters...)
+// updateKubeConfig reads the kube config from windows side it also
+// modifies the cluster's server host to an appropriate address.
+// It then merges the config with an existing configuration on
+// users distro and returns the merged config.
+func updateKubeConfig(winConfig, linuxConfig kubeConfig, rdNetworking bool) (kubeConfig, error) {
 	for clusterIdx, cluster := range winConfig.Clusters {
 		// Ignore any non rancher-desktop clusters
-		if winConfigCopy.Clusters[clusterIdx].Name != rdCluster {
+		if winConfig.Clusters[clusterIdx].Name != rdCluster {
 			continue
 		}
 		server, err := url.Parse(cluster.Cluster.Server)
@@ -148,7 +144,7 @@ func updateKubeConfig(winConfig, linuxConfig *kubeConfig, rdNetworking bool) (*k
 		if !rdNetworking {
 			ip, err := getClusterIP()
 			if err != nil {
-				return nil, err
+				return winConfig, err
 			}
 
 			host = ip.String()
@@ -157,16 +153,21 @@ func updateKubeConfig(winConfig, linuxConfig *kubeConfig, rdNetworking bool) (*k
 			host = net.JoinHostPort(host, server.Port())
 		}
 		server.Host = host
-		winConfigCopy.Clusters[clusterIdx].Cluster.Server = server.String()
+		winConfig.Clusters[clusterIdx].Cluster.Server = server.String()
 	}
-	return mergeKubeConfigs(&winConfigCopy, linuxConfig), nil
+	return mergeKubeConfigs(winConfig, linuxConfig), nil
 }
 
-// removeExistingRDConfig removes the rancher-desktop configuration from the
-// passed in kubeconfig in-place, and returns the modified input.
 func removeExistingRDConfig(name string, config *kubeConfig) *kubeConfig {
 	// Remove clusters with the specified name
-	var filteredClusters []kubeConfigCluster
+	var filteredClusters []struct {
+		Cluster struct {
+			Server string
+			Extras map[string]interface{} `yaml:",inline"`
+		} `yaml:"cluster"`
+		Name   string                 `yaml:"name"`
+		Extras map[string]interface{} `yaml:",inline"`
+	}
 	for _, cluster := range config.Clusters {
 		if cluster.Name != name {
 			filteredClusters = append(filteredClusters, cluster)
@@ -201,10 +202,7 @@ func removeExistingRDConfig(name string, config *kubeConfig) *kubeConfig {
 	return config
 }
 
-// mergeKubeConfig updates the Linux kubeconfig with the Rancher Desktop
-// cluster configuration read from the Windows kubeconfig, returning the
-// Linux kubeconfig that has been updated in-place.
-func mergeKubeConfigs(winConfig, linuxConfig *kubeConfig) *kubeConfig {
+func mergeKubeConfigs(winConfig, linuxConfig kubeConfig) kubeConfig {
 	for _, ctx := range winConfig.Clusters {
 		if ctx.Name == rdCluster {
 			linuxConfig.Clusters = append(linuxConfig.Clusters, ctx)
@@ -230,6 +228,6 @@ func init() {
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
 	kubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	kubeconfigViper.AutomaticEnv()
-	_ = kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())
+	kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())
 	rootCmd.AddCommand(kubeconfigCmd)
 }

@@ -32,7 +32,6 @@ import (
 	"os/signal"
 	"regexp"
 	"sync"
-	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/sirupsen/logrus"
@@ -48,10 +47,8 @@ type RequestContextValue map[interface{}]interface{}
 var requestContext = struct{}{}
 
 type containerInspectResponseBody struct {
-	ID string `json:"Id"`
+	Id string
 }
-
-type dialerFunc func() (net.Conn, error)
 
 const dockerAPIVersion = "v1.41.0"
 
@@ -138,12 +135,7 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 
 	logrus.WithField("endpoint", endpoint).Info("Listening")
 
-	server := &http.Server{
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		Handler:      contextAttacher,
-	}
-	err = server.Serve(listener)
+	err = http.Serve(listener, contextAttacher)
 	if err != nil {
 		logrus.WithError(err).Error("serve exited with error")
 	}
@@ -209,7 +201,7 @@ func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn,
 		if err != nil {
 			logEntry.WithField("id", id).WithError(err).Error("unable to resolve container id")
 		} else {
-			templates["id"] = inspect.ID
+			templates["id"] = inspect.Id
 		}
 	}
 
@@ -250,7 +242,7 @@ func (m *requestMunger) MungeResponse(resp *http.Response, dialer func() (net.Co
 		if err != nil {
 			logEntry.WithField("id", id).WithError(err).Error("unable to resolve container id")
 		} else {
-			templates["id"] = inspect.ID
+			templates["id"] = inspect.Id
 		}
 	}
 
@@ -270,7 +262,7 @@ we use the provided id path template variable to make an upstream request to the
 Fortunately it supports both id or name as the container identifier.
 The Id returned will be the full long container id that is used to lookup in docker-binds.json.
 */
-func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer dialerFunc) (*containerInspectResponseBody, error) {
+func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer func() (net.Conn, error)) (*containerInspectResponseBody, error) {
 	// url for inspecting container
 	inspectURL, err := req.URL.Parse(fmt.Sprintf("/%s/containers/%s/json", dockerAPIVersion, id))
 	if err != nil {
@@ -286,15 +278,10 @@ func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, di
 	}
 
 	// make the inspect request
-	innerRequest, err := http.NewRequestWithContext(req.Context(), http.MethodGet, inspectURL.String(), http.NoBody)
+	inspectResponse, err := client.Get(inspectURL.String())
 	if err != nil {
 		return nil, err
 	}
-	inspectResponse, err := client.Do(innerRequest)
-	if err != nil {
-		return nil, err
-	}
-	defer inspectResponse.Body.Close()
 
 	// parse response as json
 	body := containerInspectResponseBody{}
@@ -346,8 +333,6 @@ type mungerMethodMapping struct {
 
 // getRequestMunger gets the munger to use for this request, as well as the
 // path templating elements (if relevant for the munger).
-//
-//nolint:gocritic // The returns values are unnamed to avoid accidental assignment.
 func (m *mungerMethodMapping) getRequestMunger(apiPath string) (requestMungerFunc, map[string]string) {
 	if munger, ok := m.requests[apiPath]; ok {
 		return munger, nil
@@ -366,7 +351,6 @@ func (m *mungerMethodMapping) getRequestMunger(apiPath string) (requestMungerFun
 	return nil, nil
 }
 
-//nolint:gocritic // The returns values are unnamed to avoid accidental assignment.
 func (m *mungerMethodMapping) getResponseMunger(apiPath string) (responseMungerFunc, map[string]string) {
 	if munger, ok := m.responses[apiPath]; ok {
 		return munger, nil
@@ -410,7 +394,6 @@ func convertPattern(apiPath string) *regexp.Regexp {
 	return regexp.MustCompile(pattern)
 }
 
-//nolint:dupl // This is RegisterResponseMunger but with a different set of mungers.
 func RegisterRequestMunger(method, apiPath string, munger requestMungerFunc) {
 	mungerMapping.Lock()
 	defer mungerMapping.Unlock()
@@ -433,7 +416,6 @@ func RegisterRequestMunger(method, apiPath string, munger requestMungerFunc) {
 	}
 }
 
-//nolint:dupl // This is RegisterRequestMunger but with a different set of mungers.
 func RegisterResponseMunger(method, apiPath string, munger responseMungerFunc) {
 	mungerMapping.Lock()
 	defer mungerMapping.Unlock()

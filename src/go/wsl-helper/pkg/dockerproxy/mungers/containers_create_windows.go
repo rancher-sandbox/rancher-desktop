@@ -48,19 +48,19 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 	modified := false
 	for bindIndex, bind := range body.HostConfig.Binds {
 		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Debug("got bind")
-		bindConfig := platform.ParseBindString(bind)
-		src := bindConfig.Src
-		if bindConfig.IsHostPath {
-			src, err = platform.TranslatePathFromClient(bindConfig.Src)
+		host, container, options, isPath := platform.ParseBindString(bind)
+		if isPath {
+			translated, err := platform.TranslatePathFromClient(host)
 			if err != nil {
-				return fmt.Errorf("could not translate bind path %s: %w", bindConfig.Src, err)
+				return fmt.Errorf("could not translate bind path %s: %w", host, err)
 			}
+			host = translated
 			modified = true
 		}
-		if bindConfig.Options == "" {
-			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s", src, bindConfig.Dest)
+		if options == "" {
+			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s", host, container)
 		} else {
-			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", src, bindConfig.Dest, bindConfig.Options)
+			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
 		}
 	}
 

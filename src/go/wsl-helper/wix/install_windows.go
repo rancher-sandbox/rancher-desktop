@@ -37,7 +37,7 @@ func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
 	})
 
 	log.Infof("Installing Windows feature...")
-	_ = submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
 		"", "InstalWindowsFeature", "Installing required Windows features...", "<unused>",
 	})
 	if err := wslutils.DismDoInstall(ctx, log); err != nil {
@@ -63,7 +63,7 @@ func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
 	})
 
 	log.Info("Installing WSL...")
-	_ = submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
 		"", "InstallWSL", "Installing Windows Subsystem for Linux...", "<unused>",
 	})
 	if err := wslutils.InstallWSL(ctx, log); err != nil {

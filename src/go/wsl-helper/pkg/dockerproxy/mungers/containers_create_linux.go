@@ -82,7 +82,7 @@ type bindManager struct {
 // empty, then the bind is incomplete (the container create failed) and it
 // should not be used.
 type bindManagerEntry struct {
-	ContainerID string `json:"ContainerId"`
+	ContainerId string
 	HostPath    string
 }
 
@@ -169,7 +169,7 @@ func (b *bindManager) makeMount() string {
 }
 
 // prepareMountPath creates target directory or file, as mount point
-func (b *bindManager) prepareMountPath(target, bindKey string) error {
+func (b *bindManager) prepareMountPath(target string, bindKey string) error {
 	mountPath := path.Join(b.mountRoot, bindKey)
 	hostPathStat, err := os.Stat(target)
 	if os.IsNotExist(err) {
@@ -206,11 +206,7 @@ type containersCreateRequestBody struct {
 }
 
 // munge incoming request for POST /containers/create
-func (b *bindManager) mungeContainersCreateRequest(
-	req *http.Request,
-	contextValue *dockerproxy.RequestContextValue,
-	templates map[string]string,
-) error {
+func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	body := containersCreateRequestBody{}
 	err := readRequestBodyJSON(req, &body)
 	if err != nil {
@@ -224,19 +220,19 @@ func (b *bindManager) mungeContainersCreateRequest(
 	modified := false
 	for bindIndex, bind := range body.HostConfig.Binds {
 		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Trace("got bind")
-		bindConfig := platform.ParseBindString(bind)
-		if !bindConfig.IsHostPath {
+		host, container, options, isPath := platform.ParseBindString(bind)
+		if !isPath {
 			continue
 		}
 
 		bindKey := b.makeMount()
-		binds[bindKey] = bindConfig.Src
-		bindConfig.Src = path.Join(b.mountRoot, bindKey)
+		binds[bindKey] = host
+		host = path.Join(b.mountRoot, bindKey)
 		modified = true
-		if bindConfig.Options == "" {
-			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s", bindConfig.Src, bindConfig.Dest)
+		if options == "" {
+			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s", host, container)
 		} else {
-			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", bindConfig.Src, bindConfig.Dest, bindConfig.Options)
+			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
 		}
 	}
 
@@ -286,16 +282,12 @@ func (b *bindManager) mungeContainersCreateRequest(
 
 // containersCreateResponseBody describes the contents of a /containers/create response.
 type containersCreateResponseBody struct {
-	ID       string `json:"Id"`
+	Id       string
 	Warnings []string
 }
 
 // munge outgoing response for POST /containers/create
-func (b *bindManager) mungeContainersCreateResponse(
-	resp *http.Response,
-	contextValue *dockerproxy.RequestContextValue,
-	templates map[string]string,
-) error {
+func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	binds, ok := (*contextValue)[contextKey].(*map[string]string)
 	if !ok {
 		// No binds, meaning either the user didn't specify any, or we didn't need to remap.
@@ -320,9 +312,9 @@ func (b *bindManager) mungeContainersCreateResponse(
 	}
 
 	b.Lock()
-	for mountID, hostPath := range *binds {
-		b.entries[mountID] = bindManagerEntry{
-			ContainerID: body.ID,
+	for mountId, hostPath := range *binds {
+		b.entries[mountId] = bindManagerEntry{
+			ContainerId: body.Id,
 			HostPath:    hostPath,
 		}
 	}
@@ -340,16 +332,12 @@ func (b *bindManager) mungeContainersCreateResponse(
 // munge incoming request to activate the mount, on
 // POST /containers/{id}/start
 // POST /containers/{id}/restart
-func (b *bindManager) mungeContainersStartRequest(
-	req *http.Request,
-	contextValue *dockerproxy.RequestContextValue,
-	templates map[string]string,
-) error {
+func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	// Look up all the mappings this container needs
 	mapping := make(map[string]string)
 	b.RLock()
 	for key, data := range b.entries {
-		if data.ContainerID == templates["id"] {
+		if data.ContainerId == templates["id"] {
 			mapping[key] = data.HostPath
 		}
 	}
@@ -387,11 +375,7 @@ func (b *bindManager) mungeContainersStartRequest(
 // munge outgoing response to deactivate the mount, on
 // POST /containers/{id}/start
 // POST /containers/{id}/restart
-func (b *bindManager) mungeContainersStartResponse(
-	req *http.Response,
-	contextValue *dockerproxy.RequestContextValue,
-	templates map[string]string,
-) error {
+func (b *bindManager) mungeContainersStartResponse(req *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	binds, ok := (*contextValue)[contextKey].(*map[string]string)
 	if !ok {
 		// No binds, meaning we didn't do any mounting; nothing to undo here.
@@ -421,11 +405,7 @@ func (b *bindManager) mungeContainersStartResponse(
 }
 
 // DELETE /containers/{id}
-func (b *bindManager) mungeContainersDeleteResponse(
-	resp *http.Response,
-	contextValue *dockerproxy.RequestContextValue,
-	templates map[string]string,
-) error {
+func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	logEntry := logrus.WithField("templates", templates)
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
 		logEntry.WithField("status-code", resp.StatusCode).Debug("unexpected status code")
@@ -436,14 +416,14 @@ func (b *bindManager) mungeContainersDeleteResponse(
 
 	var toDelete []string
 	for key, data := range b.entries {
-		if data.ContainerID == templates["id"] {
+		if data.ContainerId == templates["id"] {
 			toDelete = append(toDelete, key)
 		}
 	}
 	for _, key := range toDelete {
 		delete(b.entries, key)
 	}
-	_ = b.persist()
+	b.persist()
 	return nil
 }
 
