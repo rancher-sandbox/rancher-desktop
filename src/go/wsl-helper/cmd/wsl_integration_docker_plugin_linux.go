@@ -45,8 +45,8 @@ var wslIntegrationDockerPluginCmd = &cobra.Command{
 func init() {
 	wslIntegrationDockerPluginCmd.Flags().String("plugin", "", "Full path to plugin")
 	wslIntegrationDockerPluginCmd.Flags().Bool("state", false, "Desired state")
-	_ = wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin")
+	wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin")
 	wslIntegrationDockerPluginViper.AutomaticEnv()
-	_ = wslIntegrationDockerPluginViper.BindPFlags(wslIntegrationDockerPluginCmd.Flags())
+	wslIntegrationDockerPluginViper.BindPFlags(wslIntegrationDockerPluginCmd.Flags())
 	wslIntegrationCmd.AddCommand(wslIntegrationDockerPluginCmd)
 }

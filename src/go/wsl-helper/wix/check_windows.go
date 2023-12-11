@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	//nolint:stylecheck // Windows Installer exposed properties by convention use all caps.
 	PROP_WSL_INSTALLED = "WSLINSTALLED"
 )
 

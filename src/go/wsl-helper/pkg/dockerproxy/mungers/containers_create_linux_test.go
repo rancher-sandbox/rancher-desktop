@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -41,7 +42,7 @@ func TestNewBindManager(t *testing.T) {
 	// We're not testing loading the state here; if it happens to fail, we'll
 	// just have to skip the test.
 	if err != nil {
-		t.Skipf("skipping test, got error %s", err)
+		t.Skip(fmt.Sprintf("skipping test, got error %s", err))
 	} else {
 		mountPoint, err := platform.GetWSLMountPoint()
 		assert.NoError(t, err)
@@ -62,7 +63,7 @@ func TestBindManagerPersist(t *testing.T) {
 	assert.NoFileExists(t, original.statePath)
 	original.entries = map[string]bindManagerEntry{
 		"foo": {
-			ContainerID: "hello",
+			ContainerId: "hello",
 			HostPath:    "world",
 		},
 	}
@@ -110,7 +111,7 @@ func TestContainersCreate(t *testing.T) {
 
 		// Handle the response
 		buf, err = json.Marshal(&containersCreateResponseBody{
-			ID: "hello",
+			Id: "hello",
 		})
 		require.NoError(t, err)
 		resp := &http.Response{
@@ -135,14 +136,14 @@ func TestContainersCreate(t *testing.T) {
 
 		// Assert state
 		assert.Len(t, bindManager.entries, 1)
-		var mountID string
+		var mountId string
 		var entry bindManagerEntry
-		for mountID, entry = range bindManager.entries {
+		for mountId, entry = range bindManager.entries {
 		}
-		assert.NotEmpty(t, mountID)
-		assert.Equal(t, "hello", entry.ContainerID)
-		assert.Equal(t, "hello", responseBody.ID)
-		expectedMount := path.Join(bindManager.mountRoot, mountID)
+		assert.NotEmpty(t, mountId)
+		assert.Equal(t, "hello", entry.ContainerId)
+		assert.Equal(t, "hello", responseBody.Id)
+		expectedMount := path.Join(bindManager.mountRoot, mountId)
 		expectedBind := fmt.Sprintf("%s:/foo", expectedMount)
 		assert.Equal(t, expectedBind, requestBody.HostConfig.Binds[0])
 	})
@@ -183,7 +184,7 @@ func TestContainersCreate(t *testing.T) {
 
 		// Handle the response
 		buf, err = json.Marshal(&containersCreateResponseBody{
-			ID: "hello",
+			Id: "hello",
 		})
 		require.NoError(t, err)
 		resp := &http.Response{
@@ -208,21 +209,21 @@ func TestContainersCreate(t *testing.T) {
 
 		// Assert state
 		assert.Len(t, bindManager.entries, 1)
-		var mountID string
+		var mountId string
 		var entry bindManagerEntry
-		for mountID, entry = range bindManager.entries {
+		for mountId, entry = range bindManager.entries {
 		}
-		assert.NotEmpty(t, mountID)
-		assert.Equal(t, "hello", entry.ContainerID)
+		assert.NotEmpty(t, mountId)
+		assert.Equal(t, "hello", entry.ContainerId)
 		assert.ElementsMatch(t, []*models.Mount{
 			{
 				Consistency: "cached",
-				Source:      path.Join(bindManager.mountRoot, mountID),
+				Source:      path.Join(bindManager.mountRoot, mountId),
 				Target:      "/host",
 				Type:        "bind",
 			},
 		}, requestBody.HostConfig.Mounts)
-		assert.Equal(t, "hello", responseBody.ID)
+		assert.Equal(t, "hello", responseBody.Id)
 	})
 }
 
@@ -236,7 +237,7 @@ func TestContainersStart(t *testing.T) {
 		mountRoot: t.TempDir(),
 		entries: map[string]bindManagerEntry{
 			"mount-id": {
-				ContainerID: "container-id",
+				ContainerId: "container-id",
 				HostPath:    hostPath,
 			},
 		},
@@ -265,7 +266,7 @@ func TestContainersStart(t *testing.T) {
 	// getBindMounts returns a map of bind mount directory -> underlying path
 	// Note that this may also return items that are not bind mounts.
 	getBindMounts := func() (map[string]string, error) {
-		mountBuf, err := os.ReadFile("/proc/self/mountinfo")
+		mountBuf, err := ioutil.ReadFile("/proc/self/mountinfo")
 		if err != nil {
 			return nil, fmt.Errorf("could not read /proc/self/mountinfo: %w", err)
 		}
@@ -305,7 +306,7 @@ func TestContainerDelete(t *testing.T) {
 		mountRoot: t.TempDir(),
 		entries: map[string]bindManagerEntry{
 			"mount-id": {
-				ContainerID: "container-id",
+				ContainerId: "container-id",
 				HostPath:    hostPath,
 			},
 		},
