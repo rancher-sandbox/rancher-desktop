@@ -490,6 +490,22 @@ async function checkBackendValid() {
  */
 async function startBackend() {
   await checkBackendValid();
+
+  // A string describing why we're ignoring the request.
+  const ignoreReason = {
+    [K8s.State.STOPPED]:  undefined, // Normal start is accepted.
+    [K8s.State.STARTING]: 'Ignoring duplicate attempt to start backend while starting backend.',
+    [K8s.State.STARTED]:  'Ignoring attempt to start already-started backend.',
+    [K8s.State.STOPPING]: 'Ignoring attempt to start backend while stopping.',
+    [K8s.State.ERROR]:    undefined, // Attempting start from error state is fine.
+    [K8s.State.DISABLED]: 'Ignoring attempt to start already-started backend (Kubernetes disabled).',
+  }[k8smanager.state];
+
+  if (ignoreReason) {
+    console.debug(ignoreReason);
+
+    return;
+  }
   try {
     await startK8sManager();
   } catch (err) {
