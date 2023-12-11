@@ -220,6 +220,13 @@ func mergeKubeConfigs(winConfig, linuxConfig kubeConfig) kubeConfig {
 		}
 	}
 
+	if linuxConfig.CurrentContext == "" {
+		linuxConfig.CurrentContext = rdCluster
+	}
+	if len(linuxConfig.Extras) == 0 {
+		linuxConfig.Extras = winConfig.Extras
+	}
+
 	return linuxConfig
 }
 
