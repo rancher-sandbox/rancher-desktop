@@ -36,6 +36,7 @@ func WaitPid(pid uint32) error {
 		return fmt.Errorf("could not get handle to process %d: %w", pid, err)
 	}
 	hProc := windows.Handle(hProcRaw)
+	//nolint:errcheck // We can't do anything about it if this fails
 	defer windows.CloseHandle(hProc)
 
 	logEntry.Trace("waiting for process")

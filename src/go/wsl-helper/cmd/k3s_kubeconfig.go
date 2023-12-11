@@ -32,15 +32,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type kubeConfig struct {
-	Clusters []struct {
-		Cluster struct {
-			Server string
-			Extras map[string]interface{} `yaml:",inline"`
-		} `yaml:"cluster"`
-		Name   string                 `yaml:"name"`
+type kubeConfigCluster struct {
+	Cluster struct {
+		Server string
 		Extras map[string]interface{} `yaml:",inline"`
-	} `yaml:"clusters"`
+	} `yaml:"cluster"`
+	Name   string                 `yaml:"name"`
+	Extras map[string]interface{} `yaml:",inline"`
+}
+type kubeConfig struct {
+	Clusters []kubeConfigCluster `yaml:"clusters"`
 	Contexts []struct {
 		Name   string                 `yaml:"name"`
 		Extras map[string]interface{} `yaml:",inline"`
@@ -52,6 +53,11 @@ type kubeConfig struct {
 	} `yaml:"users"`
 	Extras map[string]interface{} `yaml:",inline"`
 }
+
+const (
+	// kubeconfigExistTimeout is the time we wait for kubeconfig to appear.
+	kubeconfigExistTimeout = 10 * time.Second
+)
 
 var (
 	k3sKubeconfigViper = viper.New()
@@ -81,11 +87,11 @@ var k3sKubeconfigCmd = &cobra.Command{
 			}
 		}()
 		var err error
-		timeout := time.After(10 * time.Second)
+		timeout := time.After(kubeconfigExistTimeout)
 		var configFile *os.File
 		select {
 		case <-timeout:
-			return fmt.Errorf("Timed out waiting for k3s kubeconfig to exist")
+			return fmt.Errorf("timed out waiting for k3s kubeconfig to exist")
 		case configFile = <-ch:
 			break
 		}
@@ -172,6 +178,6 @@ func init() {
 	k3sKubeconfigCmd.Flags().String("k3sconfig", "/etc/rancher/k3s/k3s.yaml", "Path to k3s kubeconfig")
 	k3sKubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	k3sKubeconfigViper.AutomaticEnv()
-	k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags())
+	_ = k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags())
 	k3sCmd.AddCommand(k3sKubeconfigCmd)
 }

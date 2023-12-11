@@ -49,6 +49,6 @@ func init() {
 	dockerproxyStartCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port to listen on")
 	dockerproxyStartCmd.Flags().String("endpoint", defaultProxyEndpoint, "Dockerd socket endpoint")
 	dockerproxyStartViper.AutomaticEnv()
-	dockerproxyStartViper.BindPFlags(dockerproxyStartCmd.Flags())
+	_ = dockerproxyStartViper.BindPFlags(dockerproxyStartCmd.Flags())
 	dockerproxyCmd.AddCommand(dockerproxyStartCmd)
 }

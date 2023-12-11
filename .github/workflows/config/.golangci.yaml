@@ -1,4 +1,8 @@
 linters-settings:
+  dogsled:
+    # syscall.Syscall() has three return values, and we often don't care about
+    # the results, especially on Windows.
+    max-blank-identifiers: 3
   dupl:
     threshold: 100
   funlen:
@@ -36,6 +40,8 @@ linters-settings:
       - '3'
     ignored-functions:
       - strings.SplitN
+      - os.FileMode # file permissions
+      - os.MkdirAll # file permissions
 
   lll:
     line-length: 140
@@ -51,7 +57,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - dogsled
     - dupl
     - errcheck
@@ -106,6 +111,7 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gosec
+        - dupl # Ignore code duplication in tests
         - errcheck
         - gocritic
+        - gosec

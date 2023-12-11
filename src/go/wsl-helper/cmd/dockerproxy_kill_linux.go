@@ -43,6 +43,6 @@ var dockerproxyKillCmd = &cobra.Command{
 
 func init() {
 	dockerproxyKillViper.AutomaticEnv()
-	dockerproxyKillViper.BindPFlags(dockerproxyKillCmd.Flags())
+	_ = dockerproxyKillViper.BindPFlags(dockerproxyKillCmd.Flags())
 	dockerproxyCmd.AddCommand(dockerproxyKillCmd)
 }

@@ -42,9 +42,11 @@ const (
 	// kPackageFamily is the package family for the WSL app (MSIX).
 	kPackageFamily = "MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe" // spellcheck-ignore-line
 	// kMsiUpgradeCode is the upgrade code for the WSL kernel (for in-box WSL2)
-	kMsiUpgradeCode           = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
+	kMsiUpgradeCode = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
+	//nolint:stylecheck // Constant name follows Win32 API.
 	PACKAGE_INFORMATION_BASIC = 0x00000000
-	PACKAGE_INFORMATION_FULL  = 0x00000100
+	//nolint:stylecheck // Constant name follows Win32 API.
+	PACKAGE_INFORMATION_FULL = 0x00000100
 	// wslExitNotInstalled is the exit code from `wsl --status` when WSL is not
 	// installed.
 	wslExitNotInstalled = 50
@@ -136,20 +138,22 @@ func (v PackageVersion) String() string {
 }
 
 // packageInfo corresponds to the PACKAGE_INFO structure.
+//
+//nolint:structcheck // We need the struct to match the Win32 API, so we can't drop unused fields.
 type packageInfo struct {
 	reserved          uint32
 	flags             uint32
 	path              *uint16
 	packageFullName   *uint16
 	packageFamilyName *uint16
-	packageId         struct {
+	packageID         struct {
 		reserved              uint32
 		processorArchitecture uint32
 		version               PackageVersion
 		name                  *uint16
 		publisher             *uint16
-		resourceId            *uint16
-		publisherId           *uint16
+		resourceID            *uint16
+		publisherID           *uint16
 	}
 }
 
@@ -169,6 +173,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 	if rv != uintptr(windows.ERROR_SUCCESS) {
 		return nil, errorFromWin32("error opening package info", rv, err)
 	}
+	//nolint:errcheck // We can't do anything about any failures here.
 	defer closePackageInfo.Call(packageInfoReference)
 
 	var bufferLength, count uint32
@@ -204,7 +209,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 	for _, info := range infos {
 		// `info` is a pointer to an unsafe slice; make a copy of the version
 		// on the stack and then return that so the GC knows about it.
-		versionCopy := info.packageId.version
+		versionCopy := info.packageID.version
 		return &versionCopy, nil
 	}
 
@@ -213,17 +218,17 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 
 // isInboxWSLInstalled checks if the "in-box" version of WSL is installed,
 // returning whether it's installed, and whether the kernel is installed
-func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, error) {
+func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (isCoreInstalled, isKernelInstalled bool, err error) {
 	var allErrors []error
 
 	// Check if the core is installed
-	coreInstalled := false
+	isCoreInstalled = false
 	newRunnerFunc := NewWSLRunner
 	if f := ctx.Value(&kWSLExeOverride); f != nil {
 		newRunnerFunc = f.(func() WSLRunner)
 	}
 	output := &bytes.Buffer{}
-	err := newRunnerFunc().WithStdout(output).WithStderr(os.Stderr).Run(ctx, "--status")
+	err = newRunnerFunc().WithStdout(output).WithStderr(os.Stderr).Run(ctx, "--status")
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) && exitErr.ExitCode() == wslExitNotInstalled {
 		// When WSL is not installed, we seem to get exit code 50
@@ -233,14 +238,14 @@ func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, er
 	} else {
 		lines := strings.Split(strings.TrimSpace(output.String()), "\n")
 		if len(lines) > 0 {
-			coreInstalled = true
+			isCoreInstalled = true
 		} else {
 			allErrors = append(allErrors, fmt.Errorf("no output from wsl --status"))
 		}
 	}
 
 	// Check if the kernel is installed.
-	kernelInstalled := false
+	isKernelInstalled = false
 	upgradeCodeString := kMsiUpgradeCode
 	if v := ctx.Value(&kUpgradeCodeOverride); v != nil {
 		upgradeCodeString = v.(string)
@@ -249,7 +254,7 @@ func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, er
 	if err != nil {
 		allErrors = append(allErrors, err)
 	} else {
-		productCode := make([]uint16, 39)
+		productCode := make([]uint16, len(kMsiUpgradeCode)+1)
 
 		rv, _, _ := msiEnumRelatedProducts.Call(
 			uintptr(unsafe.Pointer(upgradeCode)),
@@ -259,7 +264,7 @@ func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, er
 		)
 		switch rv {
 		case uintptr(windows.ERROR_SUCCESS):
-			kernelInstalled = true
+			isKernelInstalled = true
 		case uintptr(windows.ERROR_NO_MORE_ITEMS):
 			// kernel is not installed
 		default:
@@ -269,7 +274,7 @@ func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, bool, er
 	}
 
 	err = errors.Join(allErrors...)
-	return coreInstalled, kernelInstalled, err
+	return isCoreInstalled, isKernelInstalled, err
 }
 
 func GetWSLInfo(ctx context.Context, log *logrus.Entry) (*WSLInfo, error) {

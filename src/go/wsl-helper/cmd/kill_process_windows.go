@@ -37,6 +37,6 @@ var killProcessCmd = &cobra.Command{
 func init() {
 	killProcessCmd.Flags().Int("pid", 0, "PID of process to kill")
 	killProcessViper.AutomaticEnv()
-	killProcessViper.BindPFlags(killProcessCmd.Flags())
+	_ = killProcessViper.BindPFlags(killProcessCmd.Flags())
 	rootCmd.AddCommand(killProcessCmd)
 }

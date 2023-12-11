@@ -33,8 +33,7 @@ import (
 
 // Convert a generic unix.Sockaddr to a Addr
 func sockaddrToVsock(sa unix.Sockaddr) *vsock.Addr {
-	switch sa := sa.(type) {
-	case *unix.SockaddrVM:
+	if sa, ok := sa.(*unix.SockaddrVM); ok {
 		return &vsock.Addr{CID: sa.CID, Port: sa.Port}
 	}
 	return nil
@@ -93,8 +92,8 @@ type vsockConn struct {
 }
 
 func newVsockConn(fd uintptr, local, remote *vsock.Addr) *vsockConn {
-	vsock := os.NewFile(fd, fmt.Sprintf("vsock:%d", fd))
-	return &vsockConn{vsock: vsock, fd: fd, local: local, remote: remote}
+	vs := os.NewFile(fd, fmt.Sprintf("vsock:%d", fd))
+	return &vsockConn{vsock: vs, fd: fd, local: local, remote: remote}
 }
 
 // LocalAddr returns the local address of a connection
@@ -134,23 +133,23 @@ func (v *vsockConn) Write(buf []byte) (int, error) {
 
 // SetDeadline sets the read and write deadlines associated with the connection
 func (v *vsockConn) SetDeadline(t time.Time) error {
-	return nil // FIXME
+	return nil // FIXME Not implemented, not needed so far.
 }
 
 // SetReadDeadline sets the deadline for future Read calls.
 func (v *vsockConn) SetReadDeadline(t time.Time) error {
-	return nil // FIXME
+	return nil // FIXME Not implemented, not needed so far.
 }
 
 // SetWriteDeadline sets the deadline for future Write calls
 func (v *vsockConn) SetWriteDeadline(t time.Time) error {
-	return nil // FIXME
+	return nil // FIXME Not implemented, not needed so far.
 }
 
 // File duplicates the underlying socket descriptor and returns it.
 func (v *vsockConn) File() (*os.File, error) {
 	// This is equivalent to dup(2) but creates the new fd with CLOEXEC already set.
-	r0, _, e1 := syscall.Syscall(syscall.SYS_FCNTL, uintptr(v.vsock.Fd()), syscall.F_DUPFD_CLOEXEC, 0)
+	r0, _, e1 := syscall.Syscall(syscall.SYS_FCNTL, v.vsock.Fd(), syscall.F_DUPFD_CLOEXEC, 0)
 	if e1 != 0 {
 		return nil, os.NewSyscallError("fcntl", e1)
 	}

@@ -37,12 +37,12 @@ var ErrListenerClosed = winio.ErrPipeListenerClosed
 
 // MakeDialer computes the dial function.
 func MakeDialer(port uint32) (func() (net.Conn, error), error) {
-	vmGuid, err := probeVMGUID(port)
+	vmGUID, err := probeVMGUID(port)
 	if err != nil {
 		return nil, fmt.Errorf("could not detect WSL2 VM: %w", err)
 	}
 	dial := func() (net.Conn, error) {
-		conn, err := dialHvsock(vmGuid, port)
+		conn, err := dialHvsock(vmGUID, port)
 		if err != nil {
 			return nil, err
 		}
@@ -53,16 +53,16 @@ func MakeDialer(port uint32) (func() (net.Conn, error), error) {
 
 // dialHvsock creates a net.Conn to a Hyper-V VM running Linux with the given
 // GUID, listening on the given vsock port.
-func dialHvsock(vmGuid hvsock.GUID, port uint32) (net.Conn, error) {
+func dialHvsock(vmGUID hvsock.GUID, port uint32) (net.Conn, error) {
 	// go-winio doesn't implement DialHvsock(), but luckily LinuxKit has an
 	// implementation.  We still need go-winio to convert port to GUID.
-	svcGuid, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
+	svcGUID, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
 	if err != nil {
 		return nil, fmt.Errorf("could not parse Hyper-V service GUID: %w", err)
 	}
 	addr := hvsock.Addr{
-		VMID:      vmGuid,
-		ServiceID: svcGuid,
+		VMID:      vmGUID,
+		ServiceID: svcGUID,
 	}
 
 	conn, err := hvsock.Dial(addr)
@@ -89,10 +89,20 @@ func Listen(endpoint string) (net.Listener, error) {
 	return listener, nil
 }
 
-// ParseBindString parses a HostConfig.Binds entry, returning the (<host-src> or
-// <volume-name>), <container-dest>, and (optional) <options>.  Additionally, it
-// also returns a boolean indicating if the first argument is a host path.
-func ParseBindString(input string) (string, string, string, bool) {
+// bindConfig is the result of calling ParseBindString.
+type bindConfig struct {
+	// The source of the bind, either a host path or a volume name.
+	Src string
+	// The destination of the bind.
+	Dest string
+	// Optional extra Options.
+	Options string
+	// Whether the src field is a host path.
+	IsHostPath bool
+}
+
+// ParseBindString parses a HostConfig.Binds entry.
+func ParseBindString(input string) bindConfig {
 	// Windows names can be one of a few things:
 	// C:\foo\bar                   colon is possible after the drive letter
 	// \\?\C:\foo\bar               colon is possible after the drive letter
@@ -109,17 +119,35 @@ func ParseBindString(input string) (string, string, string, bool) {
 		firstIndex := strings.Index(input, ":")
 		lastIndex := strings.LastIndex(input, ":")
 		if firstIndex == lastIndex {
-			return input[:firstIndex], input[firstIndex+1:], "", false
+			return bindConfig{
+				Src:        input[:firstIndex],
+				Dest:       input[firstIndex+1:],
+				IsHostPath: false,
+			}
 		}
-		return input[:firstIndex], input[firstIndex+1 : lastIndex], input[lastIndex+1:], false
+		return bindConfig{
+			Src:        input[:firstIndex],
+			Dest:       input[firstIndex+1 : lastIndex],
+			Options:    input[lastIndex+1:],
+			IsHostPath: false,
+		}
 	} else {
 		// The first part is a path.
 		rest := input[len(match)+1:]
 		index := strings.LastIndex(rest, ":")
 		if index > -1 {
-			return match, rest[:index], rest[index+1:], true
+			return bindConfig{
+				Src:        match,
+				Dest:       rest[:index],
+				Options:    rest[index+1:],
+				IsHostPath: true,
+			}
 		}
-		return match, rest, "", true
+		return bindConfig{
+			Src:        match,
+			Dest:       rest,
+			IsHostPath: true,
+		}
 	}
 }
 

@@ -13,6 +13,8 @@ import (
 )
 
 // KillOthers will kill any other processes with the executable.
+//
+//nolint:gocyclo // TODO: clean up function
 func KillOthers(args ...string) error {
 	selfPid := fmt.Sprintf("%d", os.Getpid())
 	selfFile, err := os.Readlink("/proc/self/exe")
