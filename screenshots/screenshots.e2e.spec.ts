@@ -11,7 +11,7 @@ import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { clearUserProfile } from '../e2e/utils/ProfileUtils';
 import {
-  createDefaultSettings, createUserProfile, reportAsset, teardown, tool, waitForRestartVM,
+  createDefaultSettings, createUserProfile, reportAsset, teardown, tool
 } from '../e2e/utils/TestUtils';
 
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
@@ -20,20 +20,6 @@ import type { ElectronApplication, BrowserContext, Page } from '@playwright/test
 
 const isWin = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
-
-async function switchEngine(page: Page, containerEngine: string) {
-  await tool('rdctl', 'set', `--container-engine.name=${ containerEngine }`);
-
-  // Wait until progress bar show up. It takes roughly ~60s to start in CI
-  const progressBar = page.locator('.progress');
-
-  await waitForRestartVM(progressBar);
-
-  // Since we just applied new settings, we must wait for the backend to restart.
-  while (await progressBar.count() > 0) {
-    await progressBar.waitFor({ state: 'detached', timeout: Math.round(240_000) });
-  }
-}
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
@@ -106,27 +92,48 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('Containers Page', async() => {
-      const containerEngine = JSON.parse(await tool('rdctl', 'list-settings')).containerEngine.name;
+      const prefs = JSON.parse(await tool('rdctl', 'list-settings'));
+      const containerEngine = prefs.containerEngine.name;
+      let expectedRowCount = -1;
+      const currentNamespace = prefs.containers.namespace;
+      let namespace = '';
 
-      if (containerEngine !== 'moby') {
-        await switchEngine(page, 'moby');
+      if (containerEngine === 'containerd') {
+        // Choose which namespace to use before navigating to the page, so it's up to date.
+        for (namespace of ['default', 'k8s.io', 'buildkit', 'rancher-desktop-extensions']) {
+          try {
+            const info = await tool('nerdctl', '-n', namespace, 'images', '--format', '{{json .ID}}');
+            const idValues = info.trim().replace(/"/g, '').split(/\s+/);
+
+            expectedRowCount = new Set(idValues).size + 1;
+            if (expectedRowCount > 1) {
+              if (namespace !== currentNamespace) {
+                await tool('rdctl', 'set', `--containers.namespace=${ namespace }`);
+              }
+              break;
+            }
+          } catch (e) {
+            console.log(`Error running nerdctl images: ${ e }`);
+          }
+        }
       }
       const containersPage = await navPage.navigateTo('Containers');
 
-      await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
-        return containersList;
-      });
-      await containersPage.page.evaluate(() => {
-        // eslint-disable-next-line
-        // @ts-ignore
-        window.ddClient.docker.listContainers = listContainersMock;
-      });
-
-      await expect(containersPage.page.getByRole('row')).toHaveCount(6);
-      await screenshot.take('Containers');
-      if (containerEngine !== 'moby') {
-        await switchEngine(page, containerEngine);
+      if (containerEngine === 'moby') {
+        await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
+          return containersList;
+        });
+        await containersPage.page.evaluate(() => {
+          // eslint-disable-next-line
+          // @ts-ignore
+          window.ddClient.docker.listContainers = listContainersMock;
+        });
+        expectedRowCount = 6;
       }
+      if (expectedRowCount > 1) {
+        await expect(containersPage.page.getByRole('row')).toHaveCount(expectedRowCount);
+      }
+      await screenshot.take('Containers');
     });
 
     test('PortForwarding Page', async({ colorScheme }) => {
