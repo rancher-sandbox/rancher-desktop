@@ -641,7 +641,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       if (result) {
         return result;
       }
-      console.log(`Failed to convert <${ windowsPath } to a wsl path, retrying${ i > 0 ? ` try #${i + 1}` : ' '}`);
+      console.log(`Failed to convert <${ windowsPath } to a wsl path, retrying${ i > 0 ? ` try #${ i + 1 }` : ' ' }`);
       await util.promisify(setTimeout)(100);
     }
 
