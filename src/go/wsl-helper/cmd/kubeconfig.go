@@ -102,11 +102,12 @@ var kubeconfigCmd = &cobra.Command{
 			return err
 		}
 		defer finalKubeConfigFile.Close()
-		err = yaml.NewEncoder(finalKubeConfigFile).Encode(kubeConfig)
+		encoder := yaml.NewEncoder(finalKubeConfigFile)
+		err = encoder.Encode(kubeConfig)
 		if err != nil {
 			return err
 		}
-		return nil
+		return encoder.Close()
 	},
 }
 
@@ -218,6 +219,13 @@ func mergeKubeConfigs(winConfig, linuxConfig kubeConfig) kubeConfig {
 		if user.Name == rdCluster {
 			linuxConfig.Users = append(linuxConfig.Users, user)
 		}
+	}
+
+	if linuxConfig.CurrentContext == "" {
+		linuxConfig.CurrentContext = rdCluster
+	}
+	if len(linuxConfig.Extras) == 0 {
+		linuxConfig.Extras = winConfig.Extras
 	}
 
 	return linuxConfig
