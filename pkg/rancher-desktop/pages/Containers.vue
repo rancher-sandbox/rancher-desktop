@@ -244,6 +244,8 @@ export default {
     isNerdCtl: {
       handler(newVal) {
         if (newVal) {
+          this.selectedNamespace = this.settings.containers.namespace;
+
           ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
             this.containersNamespaces = namespaces;
             this.checkSelectedNamespace();
