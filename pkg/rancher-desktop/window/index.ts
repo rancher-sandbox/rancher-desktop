@@ -222,18 +222,16 @@ const updateView = (window: any, payload: any) => {
   }
 
   const contentSize = window.getContentSize();
-  const titleBarHeight = 0;
-
-  const yZoomFactor = window.webContents.getZoomFactor();
-
-  const x = Math.round(payload.x * window.webContents.getZoomFactor());
-  const y = Math.round((payload.y + titleBarHeight) * yZoomFactor);
+  const zoomFactor = window.webContents.getZoomFactor();
+  const x = Math.round(payload.x * zoomFactor);
+  const y = Math.round(payload.y * zoomFactor);
+  const footerHeight = Math.round(25 * zoomFactor);
 
   view.setBounds({
     x,
     y,
     width:  contentSize[0] - x,
-    height: (contentSize[1] + titleBarHeight) - y,
+    height: (contentSize[1] - footerHeight) - y,
   });
 
   view.setAutoResize({ width: true, height: true });
