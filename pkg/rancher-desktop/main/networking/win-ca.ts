@@ -47,7 +47,7 @@ export default async function* getWinCertificates(): AsyncIterable<string> {
         buffer += chunk;
       }
       while (true) {
-        const [match] = /^.*?-----END CERTIFICATE-----\r?\n?/.exec(buffer) ?? [];
+        const [match] = /^.*?-----END CERTIFICATE-----\r?\n?/s.exec(buffer) ?? [];
 
         if (!match) {
           break;
@@ -59,11 +59,16 @@ export default async function* getWinCertificates(): AsyncIterable<string> {
       await iterator.error(ex);
     }
   });
-  proc.on('exit', (code, signal) => {
+  proc.on('exit', async(code, signal) => {
     if (!(code === 0 || signal === 'SIGTERM')) {
       iterator.error(code || signal);
     } else {
-      iterator.end();
+      try {
+        await iterator.emit(buffer);
+        iterator.end();
+      } catch (ex) {
+        await iterator.error(ex);
+      }
     }
   });
 
