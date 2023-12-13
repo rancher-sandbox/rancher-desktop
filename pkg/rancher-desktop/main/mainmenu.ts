@@ -246,7 +246,6 @@ function setZoomLevel(focusedWindow: Electron.BrowserWindow | undefined, zoomLev
     const desiredZoomLevel = zoomLevelAdjustment === 0 ? zoomLevelAdjustment : currentZoomLevel + zoomLevelAdjustment;
 
     webContents.setZoomLevel(desiredZoomLevel);
-    focusedWindow.getBrowserView()?.webContents.setZoomLevel(desiredZoomLevel);
 
     return;
   }

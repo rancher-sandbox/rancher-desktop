@@ -253,14 +253,15 @@ function extensionNavigate() {
     });
 }
 
-const zoomInKey = os.platform().startsWith('darwin') ? '=' : '+';
+const zoomInKeys = new Set(`+${ process.platform === 'darwin' ? '=' : '' }`);
+const zoomOutKeys = new Set('-');
+const zoomResetKeys = new Set('0');
+const zoomAllKeys = new Set([...zoomInKeys, ...zoomOutKeys, ...zoomResetKeys]);
 
 function isZoomKeyCombo(input: Electron.Input) {
   const modifier = input.control || input.meta;
 
-  return input.type === 'keyDown' &&
-    modifier &&
-    (input.key === '-' || input.key === zoomInKey || input.key === '0');
+  return input.type === 'keyDown' && modifier && zoomAllKeys.has(input.key);
 }
 
 /**
@@ -280,12 +281,13 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
     event.preventDefault();
     const currentZoomLevel = window.webContents.getZoomLevel();
     const newZoomLevel = (() => {
-      switch (input.key) {
-      case '-':
-        return currentZoomLevel - 0.5;
-      case zoomInKey:
+      if (zoomInKeys.has(input.key)) {
         return currentZoomLevel + 0.5;
-      case '0':
+      }
+      if (zoomOutKeys.has(input.key)) {
+        return currentZoomLevel - 0.5;
+      }
+      if (zoomResetKeys.has(input.key)) {
         return 0;
       }
     })();
