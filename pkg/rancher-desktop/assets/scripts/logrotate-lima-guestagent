@@ -1,0 +1,5 @@
+/var/log/lima-guestagent.log {
+  missingok
+  notifempty
+  copytruncate
+}
