@@ -23,7 +23,7 @@ import * as settings from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@pkg/integrations/integrationManager';
-import { PathManager } from '@pkg/integrations/pathManager';
+import { PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
 import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
 import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
@@ -141,9 +141,8 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   k8smanager.debug = runInDebugMode;
 
-  if (pathManager.strategy !== newSettings.application.pathManagementStrategy) {
-    await pathManager.remove();
-    pathManager = getPathManagerFor(newSettings.application.pathManagementStrategy);
+  if (pathManager?.strategy !== newSettings.application.pathManagementStrategy) {
+    await setPathManager(newSettings.application.pathManagementStrategy);
   }
   await pathManager.enforce();
 
@@ -258,8 +257,7 @@ Electron.app.whenReady().then(async() => {
 
     await initUI();
     await checkForBackendLock();
-
-    pathManager = getPathManagerFor(cfg.application.pathManagementStrategy);
+    await setPathManager(cfg.application.pathManagementStrategy);
     await integrationManager.enforce();
 
     mainEvents.emit('settings-update', cfg);
@@ -297,6 +295,13 @@ Electron.app.whenReady().then(async() => {
     Electron.app.quit();
   }
 });
+
+async function setPathManager(newStrategy: PathManagementStrategy) {
+  if (pathManager) {
+    await pathManager.remove();
+  }
+  pathManager = getPathManagerFor(newStrategy);
+}
 
 /**
  * Reads the 'backend.lock' file and returns its contents if it exists.
