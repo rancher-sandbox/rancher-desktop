@@ -261,6 +261,10 @@ export default {
           ipcRenderer.send('containers-namespaced-containers-read');
 
           containerCheckInterval = setInterval(() => {
+            if (this.containersList) {
+              return;
+            }
+
             ipcRenderer.send('containers-namespaced-read');
 
             // Reads containers in current namespace.
