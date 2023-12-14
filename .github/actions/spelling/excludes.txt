@@ -88,6 +88,7 @@
 ^\Qpkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets/push.txt\E$
 ^\QSECURITY.md\E$
 ^pkg/rancher-desktop/assets/scripts/logrotate-k3s$
+^pkg/rancher-desktop/assets/scripts/logrotate-lima-guestagent$
 ignore$
 /translations/(?!en)
 ^\Qpkg/rancher-desktop/router.js\E$

@@ -35,6 +35,7 @@ import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
+import LOGROTATE_LIMA_GUESTAGENT_SCRIPT from '@pkg/assets/scripts/logrotate-lima-guestagent';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
@@ -1578,6 +1579,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
   }
 
+  protected async configureLogrotate(): Promise<void> {
+    await this.writeFile('/etc/logrotate.d/lima-guestagent', LOGROTATE_LIMA_GUESTAGENT_SCRIPT, 0o644);
+  }
+
   async readFile(filePath: string, options?: { encoding?: BufferEncoding }): Promise<string> {
     const encoding = options?.encoding ?? 'utf-8';
     const stdout: Buffer[] = [];
@@ -1910,6 +1915,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
           this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
+          this.progressTracker.action('Configuring logrotate', 50, this.configureLogrotate()),
         ]);
 
         if (config.containerEngine.allowedImages.enabled) {
