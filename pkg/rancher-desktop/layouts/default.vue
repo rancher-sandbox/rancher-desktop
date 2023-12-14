@@ -11,8 +11,8 @@
       :extensions="extensions"
       @open-preferences="openPreferences"
     />
-    <the-title ref="rdx-title" />
-    <main class="body">
+    <the-title ref="title" />
+    <main ref="body" class="body">
       <Nuxt />
     </main>
     <status-bar class="status-bar"></status-bar>
@@ -112,11 +112,15 @@ export default {
     });
 
     ipcRenderer.on('extensions/getContentArea', () => {
-      const rect = this.$refs['rdx-title'].$el.getBoundingClientRect();
-
+      /** @type {DOMRect} */
+      const titleRect = this.$refs.title.$el.getBoundingClientRect();
+      /** @type {DOMRect} */
+      const bodyRect = this.$refs.body.getBoundingClientRect();
       const payload = {
-        x: rect.left,
-        y: rect.top,
+        top:    titleRect.top,
+        right:  titleRect.right,
+        bottom: bodyRect.bottom,
+        left:   titleRect.left,
       };
 
       ipcRenderer.send('ok:extensions/getContentArea', payload);
