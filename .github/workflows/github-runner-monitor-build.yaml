@@ -30,7 +30,7 @@ jobs:
       working-directory: src/go/github-runner-monitor
       env:
         CGO_ENABLED: '0'
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: github-runner-linux
         path: src/go/github-runner-monitor/github-runner-monitor

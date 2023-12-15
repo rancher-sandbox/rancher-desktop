@@ -47,27 +47,27 @@ jobs:
     - run: yarn package --${{ matrix.platform }} --publish=never
     - name: Upload Windows exe installer
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Rancher Desktop Setup.exe
         path: dist/Rancher Desktop*.exe
         if-no-files-found: error
     - name: Upload Windows installer
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Rancher Desktop Setup.msi
         path: dist/Rancher Desktop*.msi
         if-no-files-found: error
     - name: Upload Windows build information
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-info.yml
         path: dist/latest.yml
         if-no-files-found: error
     - name: Upload macOS archive
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
