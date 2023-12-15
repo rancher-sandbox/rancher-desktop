@@ -216,24 +216,18 @@ const createView = () => {
  * @param window The main window
  * @param payload Payload representing coordinates for view position
  */
-const updateView = (window: any, payload: any) => {
+const updateView = (window: Electron.BrowserWindow, payload: { top: number, right: number, bottom: number, left: number }) => {
   if (!view) {
     return;
   }
 
-  const contentSize = window.getContentSize();
-  const titleBarHeight = 0;
-
-  const yZoomFactor = window.webContents.getZoomFactor();
-
-  const x = Math.round(payload.x * window.webContents.getZoomFactor());
-  const y = Math.round((payload.y + titleBarHeight) * yZoomFactor);
+  const zoomFactor = window.webContents.getZoomFactor();
 
   view.setBounds({
-    x,
-    y,
-    width:  contentSize[0] - x,
-    height: (contentSize[1] + titleBarHeight) - y,
+    x:      Math.round(payload.left * zoomFactor),
+    y:      Math.round(payload.top * zoomFactor),
+    width:  Math.round((payload.right - payload.left) * zoomFactor),
+    height: Math.round((payload.bottom - payload.top) * zoomFactor),
   });
 
   view.setAutoResize({ width: true, height: true });
@@ -259,14 +253,15 @@ function extensionNavigate() {
     });
 }
 
-const zoomInKey = os.platform().startsWith('darwin') ? '=' : '+';
+const zoomInKeys = new Set(`+${ process.platform === 'darwin' ? '=' : '' }`);
+const zoomOutKeys = new Set('-');
+const zoomResetKeys = new Set('0');
+const zoomAllKeys = new Set([...zoomInKeys, ...zoomOutKeys, ...zoomResetKeys]);
 
 function isZoomKeyCombo(input: Electron.Input) {
   const modifier = input.control || input.meta;
 
-  return input.type === 'keyDown' &&
-    modifier &&
-    (input.key === '-' || input.key === zoomInKey || input.key === '0');
+  return input.type === 'keyDown' && modifier && zoomAllKeys.has(input.key);
 }
 
 /**
@@ -286,12 +281,13 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
     event.preventDefault();
     const currentZoomLevel = window.webContents.getZoomLevel();
     const newZoomLevel = (() => {
-      switch (input.key) {
-      case '-':
-        return currentZoomLevel - 0.5;
-      case zoomInKey:
+      if (zoomInKeys.has(input.key)) {
         return currentZoomLevel + 0.5;
-      case '0':
+      }
+      if (zoomOutKeys.has(input.key)) {
+        return currentZoomLevel - 0.5;
+      }
+      if (zoomResetKeys.has(input.key)) {
         return 0;
       }
     })();
@@ -304,7 +300,7 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
 
     window.webContents.setZoomLevel(newZoomLevel);
     view?.webContents.setZoomLevel(newZoomLevel);
-    window.webContents.send('extensions/getContentArea');
+    setImmediate(() => window.webContents.send('extensions/getContentArea'));
   }
 };
 
@@ -314,7 +310,7 @@ const extensionZoomListener = (event: Electron.Event, input: Electron.Input) => 
  * @param _event The Electron Ipc Main Event that triggered this listener
  * @param args Arguments associated with the event
  */
-function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, args: any) {
+function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, payload: { top: number, right: number, bottom: number, left: number }) {
   const window = getWindow('main');
 
   if (!window) {
@@ -331,7 +327,7 @@ function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, args: an
     }
   }
 
-  updateView(window, args);
+  updateView(window, payload);
   extensionNavigate();
 }
 

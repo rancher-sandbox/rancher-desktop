@@ -102,7 +102,7 @@ export interface IpcMainEvents {
     level: 'success' | 'warning' | 'error',
     message: string
   ) => void;
-  'ok:extensions/getContentArea': (payload: { x: number; y: number }) => void;
+  'ok:extensions/getContentArea': (payload: { top: number, right: number, bottom: number, left: number }) => void;
   // #endregion
 
   // #region Snapshots
