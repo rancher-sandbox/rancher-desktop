@@ -156,6 +156,7 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
 
   await runRdctlSetup(newSettings);
+  window.send('preferences/changed');
 });
 
 mainEvents.handle('settings-fetch', () => {
