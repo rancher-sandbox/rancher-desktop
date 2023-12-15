@@ -91,7 +91,7 @@ export default {
       this.showCreatingSnapshotDialog(action);
     });
     ipcRenderer.on('backend-unlocked', () => {
-      ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+      ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog', snapshotEventType: 'backend-lock' });
     });
 
     ipcRenderer.send('backend-state-check');
@@ -160,10 +160,11 @@ export default {
             cancelId: 1,
           },
           format: {
-            header:          action || this.t('snapshots.dialog.generic.header', {}, true),
+            header:            action || this.t('snapshots.dialog.generic.header', {}, true),
             /** TODO: put here operation type information from 'state' */
-            message:         this.t('snapshots.dialog.generic.message', {}, true),
-            showProgressBar: true,
+            message:           this.t('snapshots.dialog.generic.message', {}, true),
+            showProgressBar:   true,
+            snapshotEventType: 'backend-lock',
           },
         },
       );
