@@ -133,7 +133,7 @@ export default Vue.extend({
             header:            this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
             snapshot:          this.snapshot,
             message:           type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : '',
-            showProgressBar:   true,
+            showProgressBar:   false,
             snapshotEventType: 'confirm',
           },
         },

@@ -26,6 +26,7 @@ export default Vue.extend({
       response:          0,
       cancelId:          0,
       snapshotEventType: '',
+      showProgressBar:   false,
       credentials:       {
         user:     '',
         password: '',
@@ -58,6 +59,7 @@ export default Vue.extend({
       this.snapshot = format.snapshot;
       this.info = format.info;
       this.snapshotEventType = format.snapshotEventType;
+      this.showProgressBar = format.showProgressBar;
       this.bodyStyle = this.calculateBodyStyle(format.type);
       this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;
@@ -227,7 +229,10 @@ export default Vue.extend({
         </slot>
       </div>
     </div>
-    <BackendProgress class="progress" />
+    <backend-progress
+      v-if="showProgressBar"
+      class="progress"
+    />
     <div
       class="dialog-actions"
       :class="{ 'dialog-actions-reverse': isDarwin() }"
