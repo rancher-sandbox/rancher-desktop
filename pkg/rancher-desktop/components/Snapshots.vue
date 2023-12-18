@@ -95,8 +95,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
         @close="snapshotEvent=null"
       >
         <span
+          v-clean-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
           class="event-message"
-          v-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
         />
       </Banner>
     </div>

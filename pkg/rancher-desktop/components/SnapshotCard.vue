@@ -181,8 +181,8 @@ export default Vue.extend({
         <div class="created">
           <span
             v-if="snapshot.formattedCreateDate"
+            v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
             class="value"
-            v-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
           />
         </div>
       </div>
