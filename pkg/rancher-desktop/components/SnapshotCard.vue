@@ -83,7 +83,7 @@ export default Vue.extend({
                 errorButton:      this.t('snapshots.dialog.restore.error.buttonText'),
               });
           } else {
-            ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+            ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog', snapshotEventType: 'restore' });
             ipcRenderer.send(
               'snapshot',
               {

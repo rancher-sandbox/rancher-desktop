@@ -67,12 +67,25 @@ export default Vue.extend({
       ipcRenderer.send('dialog/ready');
     });
 
+    ipcRenderer.on('dialog/close', (_event, args) => {
+      if (args.snapshotEventType !== this.snapshotEventType) {
+        return;
+      }
+      ipcRenderer.send(
+        'dialog/close',
+        {
+          response:  this.response,
+          eventType: this.snapshotEventType,
+        });
+    });
+
     ipcRenderer.send('dialog/mounted');
   },
 
   beforeDestroy() {
     ipcRenderer.removeAllListeners('dialog/error');
     ipcRenderer.removeAllListeners('dialog/options');
+    ipcRenderer.removeAllListeners('dialog/close');
   },
 
   methods: {

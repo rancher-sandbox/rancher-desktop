@@ -939,8 +939,8 @@ ipcMainProxy.on('dialog/error', (event, args) => {
   window.getWindow(args.dialog)?.webContents.send('dialog/error', args);
 });
 
-ipcMainProxy.on('dialog/close', (event, args) => {
-  window.getWindow(args.dialog)?.close();
+ipcMainProxy.on('dialog/close', (_event, args) => {
+  window.getWindow(args.dialog)?.webContents.send('dialog/close', args);
 });
 
 ipcMainProxy.handle('versions/macOs', () => {
