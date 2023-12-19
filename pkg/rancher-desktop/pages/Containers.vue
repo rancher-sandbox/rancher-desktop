@@ -4,7 +4,7 @@
       ref="sortableTableRef"
       class="containersTable"
       :headers="headers"
-      :key-field="rowKey"
+      key-field="Id"
       :rows="rows"
       no-rows-key="containers.sortableTables.noRows"
       :row-actions="true"
@@ -15,7 +15,7 @@
     >
       <template #header-middle>
         <div class="header-middle">
-          <div v-if="isNerdCtl">
+          <div v-if="supportsNamespaces">
             <label>Namespace</label>
             <select
               class="select-namespace"
@@ -101,15 +101,20 @@
 import SortableTable from '@pkg/components/SortableTable';
 import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
+import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { defaultSettings } from '@pkg/config/settings';
+import { defaultSettings, ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-let ddClientReady = false;
 let containerCheckInterval = null;
 
-export default {
+/**
+ * @typedef Container {Object} The return type of ddClient.docker.listContainers
+ * @property Id {string} The container id
+ */
+
+export default Vue.extend({
   name:       'Containers',
   title:      'Containers',
   components: { SortableTable, BadgeState },
@@ -161,7 +166,8 @@ export default {
       const containers = structuredClone(this.containersList);
 
       return containers.map((container) => {
-        const name = this.isNerdCtl ? container.Names : container.Names[0];
+        const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
+        const name = names[0];
 
         container.state = container.State;
         container.containerName = name.replace(
@@ -226,56 +232,14 @@ export default {
         return container;
       });
     },
-    rowKey() {
-      return this.isNerdCtl ? 'ID' : 'Id';
-    },
     isNerdCtl() {
-      const settings = this.settings;
-
-      return settings.containerEngine?.name === 'containerd';
+      return this.settings.containerEngine?.name === ContainerEngine.CONTAINERD;
     },
     supportsNamespaces() {
-      const settings = this.settings;
-
-      return settings.containerEngine?.name === 'containerd';
+      return this.settings.containerEngine?.name === ContainerEngine.CONTAINERD;
     },
-  },
-  watch: {
-    isNerdCtl: {
-      handler(newVal) {
-        if (newVal) {
-          this.selectedNamespace = this.settings.containers.namespace;
-
-          ipcRenderer.on('containers-namespaces', (_event, namespaces) => {
-            this.containersNamespaces = namespaces;
-            this.checkSelectedNamespace();
-          });
-
-          // Gets the containers from the main process.
-          ipcRenderer.on('containers-namespaces-containers', (_event, containers) => {
-            this.containersList = containers;
-          });
-
-          ipcRenderer.send('containers-namespaced-read');
-          // Reads containers in current namespace.
-          ipcRenderer.send('containers-namespaced-containers-read');
-
-          containerCheckInterval = setInterval(() => {
-            if (this.containersList) {
-              return;
-            }
-
-            ipcRenderer.send('containers-namespaced-read');
-
-            // Reads containers in current namespace.
-            ipcRenderer.send('containers-namespaced-containers-read');
-          }, 5000);
-        } else {
-          ipcRenderer.removeAllListeners('containers-namespaces');
-          ipcRenderer.removeAllListeners('containers-namespaces-containers');
-        }
-      },
-      immediate: true,
+    currentNamespace() {
+      return this.supportsNamespaces ? this.selectedNamespace : undefined;
     },
   },
   mounted() {
@@ -284,30 +248,8 @@ export default {
       description: '',
     });
 
-    // Info: Not sure if this can be improved, I don't like having to run it inside the `settings-read`event but I couldn't find a better way.
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
-
-      if (!this.isNerdCtl) {
-        // INFO: We need to set ddClientReady outside of the component in the global scope so it won't re-render when we get the list.
-        containerCheckInterval = setInterval(async() => {
-          if (ddClientReady || this.containersList) {
-            return;
-          }
-
-          console.debug('Checking for containers...');
-
-          if (window.ddClient && this.isK8sReady) {
-            this.ddClient = window.ddClient;
-
-            try {
-              await this.getContainers();
-            } catch (error) {
-              console.error('There was a problem fetching containers:', { error });
-            }
-          }
-        }, 1000);
-      }
     });
 
     ipcRenderer.send('settings-read');
@@ -317,9 +259,28 @@ export default {
       this.containersList = [];
       this.checkSelectedNamespace();
     });
+
+    containerCheckInterval = setInterval(async() => {
+      if (window.ddClient && this.isK8sReady) {
+        this.ddClient = window.ddClient;
+
+        try {
+          if (this.supportsNamespaces) {
+            await this.getNamespaces();
+          }
+        } catch (error) {
+          console.error('There was a problem fetching namespaces:', { error });
+        }
+        try {
+          await this.getContainers();
+          clearInterval(containerCheckInterval);
+        } catch (error) {
+          console.error('There was a problem fetching containers:', { error });
+        }
+      }
+    }, 1000);
   },
   beforeDestroy() {
-    ddClientReady = false;
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
@@ -344,8 +305,7 @@ export default {
         this.selectedNamespace = value.target.value;
         ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } } );
-
-        ipcRenderer.send('containers-namespaced-containers-read');
+        this.getContainers();
       }
     },
     clearDropDownPosition(e) {
@@ -378,8 +338,12 @@ export default {
         }
       }
     },
+    async getNamespaces() {
+      this.containersNamespaces = await this.ddClient?.docker.listNamespaces();
+      console.log(`got namespaces:`, this.containersNamespaces);
+    },
     async getContainers() {
-      const containers = await this.ddClient?.docker.listContainers({ all: true });
+      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.currentNamespace });
 
       // Sorts by status, showing running first.
       this.containersList = containers.sort((a, b) => {
@@ -394,10 +358,8 @@ export default {
 
       // Filter out images from "kube-system" namespace
       this.containersList = this.containersList.filter((container) => {
-        return !container.Labels['io.kubernetes.pod.namespace'] || container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
       });
-
-      ddClientReady = true;
     },
     async stopContainer(container) {
       await this.execCommand('stop', container);
@@ -414,36 +376,30 @@ export default {
     isStopped(container) {
       return container.State === 'created' || container.State === 'exited' || container.Status.includes('Exited');
     },
-    extendCommandIfNerdCtl(command) {
-      return this.isNerdCtl ? `containers ${ command }` : command;
-    },
+    /**
+     * Execute a command against some containers
+     * @param command {string} The command to run
+     * @param _ids {Container | Container[]} The containers to affect
+     */
     async execCommand(command, _ids) {
       try {
-        const ids = _ids?.length ? _ids.map(e => this.isNerdCtl ? e.ID : e.Id) : [this.isNerdCtl ? _ids.ID : _ids.Id];
+        const ids = Array.isArray(_ids) ? _ids.map(c => c.Id) : [_ids.Id];
 
         console.info(`Executing command ${ command } on container ${ ids }`);
 
-        if (this.isNerdCtl) {
-          ipcRenderer.send('do-containers-exec', command, ids);
+        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
+          command,
+          [...ids],
+          { cwd: '/', namespace: this.currentNamespace },
+        );
 
-          ipcRenderer.on('container-process-output', (e, data, isError) => {
-            ipcRenderer.send('containers-namespaced-containers-read');
-          });
-        } else {
-          const { stderr, stdout } = await this.ddClient.docker.cli.exec(
-            command,
-            [...ids],
-            { cwd: '/' },
-          );
-
-          if (stderr) {
-            throw new Error(stderr);
-          }
-
-          await this.getContainers();
-
-          return stdout;
+        if (stderr) {
+          throw new Error(stderr);
         }
+
+        await this.getContainers();
+
+        return stdout;
       } catch (error) {
         window.alert(error.message);
         console.error(`Error executing command ${ command }`, error.message);
@@ -468,42 +424,17 @@ export default {
 
       return { content: sha };
     },
-    parsePortMappings(input) {
-      if (!input) {
-        return {};
-      }
-
-      const mappings = input.split(', ');
-      const result = {};
-
-      if (!mappings.length) {
-        return result;
-      }
-
-      mappings.forEach((mapping) => {
-        const [source, destination] = mapping.split('->');
-        const sourcePort = source.split(':')[1];
-        const destPort = `${ destination.split('/')[0] }/tcp`;
-
-        if (!result[destPort]) {
-          result[destPort] = [];
-        }
-        result[destPort].push(sourcePort);
-      });
-
-      return result;
-    },
     getUniquePorts(ports) {
-      const keys = this.isNerdCtl ? Object.keys(this.parsePortMappings(ports)) : Object.keys(ports);
+      const keys = Object.keys(ports);
 
       if (!keys || Object.keys(keys).length === 0) {
         return [];
       }
 
       const uniquePortMap = keys.map((key) => {
-        const values = this.isNerdCtl ? this.parsePortMappings(ports)[key] : ports[key];
+        const values = ports[key];
 
-        const hostPorts = values?.map(value => this.isNerdCtl ? value : value.HostPort);
+        const hostPorts = values?.map(value => value.HostPort);
         const uniqueHostPorts = [...new Set(hostPorts)];
 
         return { [key]: uniqueHostPorts };
@@ -536,7 +467,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>
