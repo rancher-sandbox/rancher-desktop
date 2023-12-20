@@ -130,5 +130,8 @@ this is where you can find your built package.
 - The `help-obs` and `discuss-zypp` slack channels are always friendly and helpful.
 - The [OBS documentation][obs_docs] might help resolve any problems you run into.
 - The output of `osc --help` and `osc <command> --help` may be helpful.
+- The [Using the Open Build Service][using_obs] may be helpful for understanding
+  how we build AppImages using OBS.
 
 [obs_docs]: https://openbuildservice.org/help/manuals/obs-user-guide/
+[using_obs]: https://docs.appimage.org/packaging-guide/hosted-services/opensuse-build-service.html
