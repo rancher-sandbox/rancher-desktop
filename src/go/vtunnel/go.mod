@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/Microsoft/go-winio v0.6.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
 	github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220526041742-c1ed19db6a88
 	github.com/sirupsen/logrus v1.9.3
