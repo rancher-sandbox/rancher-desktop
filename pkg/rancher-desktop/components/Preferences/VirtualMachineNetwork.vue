@@ -33,7 +33,6 @@ export default Vue.extend({
     <rd-fieldset
       data-test="socketVmNet"
       :legend-text="t('virtualMachine.socketVmNet.legend')"
-      :is-experimental="true"
     >
       <rd-checkbox
         :label="t('virtualMachine.socketVmNet.label')"
