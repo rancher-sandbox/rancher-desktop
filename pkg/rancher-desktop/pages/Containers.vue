@@ -124,7 +124,6 @@ export default Vue.extend({
       ddClient:             null,
       containersList:       null,
       showRunning:          false,
-      selectedNamespace:    defaultSettings.containers.namespace,
       containersNamespaces: [],
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
@@ -238,8 +237,8 @@ export default Vue.extend({
     supportsNamespaces() {
       return this.settings.containerEngine?.name === ContainerEngine.CONTAINERD;
     },
-    currentNamespace() {
-      return this.supportsNamespaces ? this.selectedNamespace : undefined;
+    selectedNamespace() {
+      return this.supportsNamespaces ? this.settings.containers.namespace : undefined;
     },
   },
   mounted() {
@@ -250,6 +249,7 @@ export default Vue.extend({
 
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
+      this.checkContainers().catch(console.error);
     });
 
     ipcRenderer.send('settings-read');
@@ -260,7 +260,17 @@ export default Vue.extend({
       this.checkSelectedNamespace();
     });
 
-    containerCheckInterval = setInterval(async() => {
+    this.checkContainers().catch(console.error);
+    containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
+  },
+  beforeDestroy() {
+    ipcRenderer.removeAllListeners('settings-update');
+    ipcRenderer.removeAllListeners('containers-namespaces');
+    ipcRenderer.removeAllListeners('containers-namespaces-containers');
+    clearInterval(containerCheckInterval);
+  },
+  methods: {
+    async checkContainers() {
       if (window.ddClient && this.isK8sReady) {
         this.ddClient = window.ddClient;
 
@@ -278,32 +288,23 @@ export default Vue.extend({
           console.error('There was a problem fetching containers:', { error });
         }
       }
-    }, 1000);
-  },
-  beforeDestroy() {
-    ipcRenderer.removeAllListeners('settings-update');
-    ipcRenderer.removeAllListeners('containers-namespaces');
-    ipcRenderer.removeAllListeners('containers-namespaces-containers');
-    clearInterval(containerCheckInterval);
-  },
-  methods: {
+    },
     checkSelectedNamespace() {
       if (!this.supportsNamespaces || this.containersNamespaces.length === 0) {
         // Nothing to verify yet
         return;
       }
-      if (!this.containersNamespaces.includes(this.settings.images.namespace)) {
+      if (!this.containersNamespaces.includes(this.selectedNamespace)) {
         const K8S_NAMESPACE = 'k8s.io';
-        const defaultNamespace = this.containersNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.imageNamespaces[0];
+        const defaultNamespace = this.containersNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.containersNamespaces[0];
 
         ipcRenderer.invoke('settings-write',
           { containers: { namespace: defaultNamespace } } );
       }
     },
-    onChangeNamespace(value) {
-      if (value !== this.settings.containers.namespace) {
-        this.selectedNamespace = value.target.value;
-        ipcRenderer.invoke('settings-write',
+    async onChangeNamespace(value) {
+      if (value !== this.selectedNamespace) {
+        await ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } } );
         this.getContainers();
       }
@@ -340,10 +341,10 @@ export default Vue.extend({
     },
     async getNamespaces() {
       this.containersNamespaces = await this.ddClient?.docker.listNamespaces();
-      console.log(`got namespaces:`, this.containersNamespaces);
+      this.checkSelectedNamespace();
     },
     async getContainers() {
-      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.currentNamespace });
+      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
 
       // Sorts by status, showing running first.
       this.containersList = containers.sort((a, b) => {
@@ -390,7 +391,7 @@ export default Vue.extend({
         const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           command,
           [...ids],
-          { cwd: '/', namespace: this.currentNamespace },
+          { cwd: '/', namespace: this.selectedNamespace },
         );
 
         if (stderr) {

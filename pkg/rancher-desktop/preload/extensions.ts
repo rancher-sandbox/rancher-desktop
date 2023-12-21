@@ -540,7 +540,6 @@ export default function initExtensions(): void {
     break;
   }
   case 'app:': {
-    console.log(process);
     import('os').then(({ arch, hostname }) => {
       Object.defineProperty(window, 'ddClient', {
         value:        new Client({ arch: arch(), hostname: hostname() }),
