@@ -104,7 +104,7 @@ import { shell } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { defaultSettings, ContainerEngine } from '@pkg/config/settings';
+import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 let containerCheckInterval = null;
@@ -120,7 +120,8 @@ export default Vue.extend({
   components: { SortableTable, BadgeState },
   data() {
     return {
-      settings:             defaultSettings,
+      /** @type import('@pkg/config/settings').Settings | undefined */
+      settings:             undefined,
       ddClient:             null,
       containersList:       null,
       showRunning:          false,
@@ -232,13 +233,13 @@ export default Vue.extend({
       });
     },
     isNerdCtl() {
-      return this.settings.containerEngine?.name === ContainerEngine.CONTAINERD;
+      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
     },
     supportsNamespaces() {
-      return this.settings.containerEngine?.name === ContainerEngine.CONTAINERD;
+      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
     },
     selectedNamespace() {
-      return this.supportsNamespaces ? this.settings.containers.namespace : undefined;
+      return this.supportsNamespaces ? this.settings?.containers.namespace : undefined;
     },
   },
   mounted() {
@@ -271,7 +272,7 @@ export default Vue.extend({
   },
   methods: {
     async checkContainers() {
-      if (window.ddClient && this.isK8sReady) {
+      if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
 
         try {
