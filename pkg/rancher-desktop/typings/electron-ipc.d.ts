@@ -35,8 +35,6 @@ export interface IpcMainEvents {
   // #endregion
 
   // #region main/containerEvents
-  'containers-namespaced-read': () => void;
-  'containers-namespaced-containers-read': () => void;
   'do-containers-exec': (command: string, containerId: string[]) => void;
   'containers-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
@@ -207,8 +205,6 @@ export interface IpcRendererEvents {
   ) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
-  'containers-namespaces': (namespaces: string[]) => void;
-  'containers-namespaces-containers': (namespaces: string[]) => void;
   'container-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
 
