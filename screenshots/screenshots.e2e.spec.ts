@@ -11,7 +11,7 @@ import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { clearUserProfile } from '../e2e/utils/ProfileUtils';
 import {
-  createDefaultSettings, createUserProfile, reportAsset, teardown, tool, waitForRestartVM,
+  createDefaultSettings, createUserProfile, reportAsset, teardown, tool,
 } from '../e2e/utils/TestUtils';
 
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
@@ -20,20 +20,6 @@ import type { ElectronApplication, BrowserContext, Page } from '@playwright/test
 
 const isWin = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
-
-async function switchEngine(page: Page, containerEngine: string) {
-  await tool('rdctl', 'set', `--container-engine.name=${ containerEngine }`);
-
-  // Wait until progress bar show up. It takes roughly ~60s to start in CI
-  const progressBar = page.locator('.progress');
-
-  await waitForRestartVM(progressBar);
-
-  // Since we just applied new settings, we must wait for the backend to restart.
-  while (await progressBar.count() > 0) {
-    await progressBar.waitFor({ state: 'detached', timeout: Math.round(240_000) });
-  }
-}
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
@@ -106,11 +92,6 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('Containers Page', async() => {
-      const containerEngine = JSON.parse(await tool('rdctl', 'list-settings')).containerEngine.name;
-
-      if (containerEngine !== 'moby') {
-        await switchEngine(page, 'moby');
-      }
       const containersPage = await navPage.navigateTo('Containers');
 
       await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
@@ -124,9 +105,6 @@ test.describe.serial('Main App Test', () => {
 
       await expect(containersPage.page.getByRole('row')).toHaveCount(6);
       await screenshot.take('Containers');
-      if (containerEngine !== 'moby') {
-        await switchEngine(page, containerEngine);
-      }
     });
 
     test('PortForwarding Page', async({ colorScheme }) => {
