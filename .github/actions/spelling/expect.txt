@@ -777,6 +777,7 @@ ucmonitor
 UEFI
 Unauthed
 UNCONFIGURED
+unfetch
 Uninstalls
 unparsable
 unregistering
