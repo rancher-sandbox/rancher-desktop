@@ -37,6 +37,13 @@ updates:
         # ignore until we arrive a solution that uses it.
         dependency-name: "@rancher/shell"
         versions: [ ">0.1" ]
+      - # unfetch release 5.0.0 dropped necessary files.
+        # See https://github.com/developit/unfetch/issues/ 162, 163, 167, 172, 176
+        # Not the best-maintained library out there.
+        # It's used only by the nuxt pseudo-submodule
+        # Assume the next release will fix it.
+        dependency-name: "unfetch"
+        versions: [ "5.0.0" ]
 
   # Maintain dependencies for Golang
   - package-ecosystem: "gomod"
