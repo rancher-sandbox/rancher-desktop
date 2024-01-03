@@ -182,7 +182,17 @@ class Builder {
     await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);
 
     // Create the custom action for the installer
-    await buildCustomAction();
+    const customActionFile = await buildCustomAction();
+
+    // Wait for the virus scanner to be done with the new DLL file
+    for (let i = 0; i < 30; i++) {
+      try {
+        await fs.promises.readFile(customActionFile);
+        break;
+      } catch {
+        await buildUtils.sleep(5_000);
+      }
+    }
   }
 
   protected async executeAppBuilderAsJson(...args: Parameters<typeof executeAppBuilder>) {
