@@ -425,7 +425,7 @@ describe(K3sHelper, () => {
     test('can handle zero choices', () => {
       const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
 
-      expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrowError(NoCachedK3sVersionsError);
+      expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrow(NoCachedK3sVersionsError);
     });
   });
 });
