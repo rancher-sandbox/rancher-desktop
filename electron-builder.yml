@@ -39,9 +39,6 @@ linux:
   category: Utility
   executableName: rancher-desktop
   artifactName: ${name}-${version}-linux.zip
-  extraResources:
-  - from: packaging/linux/rancher-desktop.desktop
-    to: resources/linux/rancher-desktop.desktop
   target: [ zip ]
 publish:
   provider: custom

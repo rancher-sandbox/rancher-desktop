@@ -10,6 +10,8 @@ import fs from 'fs';
 import * as path from 'path';
 
 import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
+import { LinuxPackager } from 'app-builder-lib/out/linuxPackager';
+import { LinuxTargetHelper } from 'app-builder-lib/out/targets/LinuxTargetHelper';
 import { executeAppBuilder } from 'builder-util';
 import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
@@ -72,8 +74,32 @@ class Builder {
     );
   }
 
+  /**
+   * Manually write out the Linux .desktop application shortcut definition; this
+   * is needed as by default this only happens for snap/fpm/etc., but not zip
+   * files.
+   */
+  protected async writeLinuxDesktopFile(context: AfterPackContext) {
+    const config = context.packager.config.linux;
+
+    if (!(context.packager instanceof LinuxPackager) || !config) {
+      return;
+    }
+
+    const options: LinuxTargetSpecificOptions = {
+      ...context.packager.platformSpecificBuildOptions,
+      compression: undefined,
+    };
+    const helper = new LinuxTargetHelper(context.packager);
+    const leaf = `${ context.packager.executableName }.desktop`;
+    const destination = path.join(context.appOutDir, `resources/resources/linux/${ leaf }`);
+
+    await helper.writeDesktopEntry(options, context.packager.executableName, destination);
+  }
+
   protected async afterPack(context: AfterPackContext) {
     await this.flipFuses(context);
+    await this.writeLinuxDesktopFile(context);
   }
 
   async package(): Promise<CliOptions> {
