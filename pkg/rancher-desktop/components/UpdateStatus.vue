@@ -178,7 +178,7 @@ class UpdateStatus extends UpdateStatusProps {
     if (typeof markdown !== 'string') {
       return undefined;
     }
-    const unsanitized = marked(markdown);
+    const unsanitized = marked(markdown) as string;
 
     return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });
   }
