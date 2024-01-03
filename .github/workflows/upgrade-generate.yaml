@@ -98,31 +98,31 @@ jobs:
     - run: yarn install --frozen-lockfile
     - name: Download installer (exe)
       id: exe
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop Setup.exe
         path: RD_SETUP_EXE
     - name: Download installer (msi)
       id: msi
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop Setup.msi
         path: RD_SETUP_MSI
     - name: Download mac x86_64 archive
       id: mac_x86_64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop-mac.x86_64.zip
         path: MACX86_ZIP
     - name: Download mac aarch64 archive
       id: mac_aarch64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop-mac.aarch64.zip
         path: MACARM_ZIP
     - name: Download build information
       id: info
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build-info.yml
         path: RD_BUILD_INFO

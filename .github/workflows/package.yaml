@@ -166,7 +166,7 @@ jobs:
         cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       if: runner.os == 'Windows'
       with:
         name: Rancher Desktop-win.zip
