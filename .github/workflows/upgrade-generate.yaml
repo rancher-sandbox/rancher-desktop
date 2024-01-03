@@ -44,7 +44,7 @@ jobs:
     - run: pip install setuptools
     - run: yarn install --frozen-lockfile
     - run: yarn build
-    - run: yarn package --${{ matrix.platform }} --publish=never
+    - run: yarn package
     - name: Upload Windows exe installer
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v3
