@@ -106,7 +106,7 @@ class Builder {
     console.log('Packaging...');
 
     // Build the electron builder configuration to include the version data
-    const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('electron-builder.yml', 'utf-8'));
+    const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('packaging/electron-builder.yml', 'utf-8'));
     const configPath = path.join(buildUtils.distDir, 'electron-builder.yaml');
     const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
