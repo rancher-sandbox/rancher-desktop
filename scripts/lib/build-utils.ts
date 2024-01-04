@@ -444,7 +444,8 @@ export default {
       cwd: path.join(this.rootDir, 'src', 'go', name),
       env: {
         ...process.env,
-        GOOS: this.mapPlatformToGoOS(platform),
+        GOOS:   this.mapPlatformToGoOS(platform),
+        GOARCH: this.mapArchToGoArch(this.arch),
       },
     });
   },
