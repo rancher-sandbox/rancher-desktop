@@ -156,8 +156,7 @@ export default {
         return;
       }
       if (!this.imageNamespaces.includes(this.settings.images.namespace)) {
-        const K8S_NAMESPACE = 'k8s.io';
-        const defaultNamespace = this.imageNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.imageNamespaces[0];
+        const defaultNamespace = this.imageNamespaces.includes('default') ? 'default' : this.imageNamespaces[0];
 
         ipcRenderer.invoke('settings-write',
           { images: { namespace: defaultNamespace } } );
