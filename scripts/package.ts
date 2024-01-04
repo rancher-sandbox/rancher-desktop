@@ -65,7 +65,7 @@ class Builder {
         version:                                               FuseVersion.V1,
         resetAdHocDarwinSignature,
         [FuseV1Options.RunAsNode]:                             false,
-        [FuseV1Options.EnableCookieEncryption]:                true,
+        [FuseV1Options.EnableCookieEncryption]:                false,
         [FuseV1Options.EnableNodeOptionsEnvironmentVariable]:  false,
         [FuseV1Options.EnableNodeCliInspectArguments]:         false,
         [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
