@@ -164,7 +164,7 @@
     "js-yaml-loader": "1.2.2",
     "mustache": "4.2.0",
     "nan": "2.18.0",
-    "node-gyp": "10.0.0",
+    "node-gyp": "10.0.1",
     "node-gyp-build": "4.7.1",
     "octokit": "3.1.1",
     "ps-tree": "1.2.0",

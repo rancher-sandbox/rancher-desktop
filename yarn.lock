@@ -10152,10 +10152,10 @@ node-gyp-build@4, node-gyp-build@4.7.1:
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.7.1.tgz#cd7d2eb48e594874053150a9418ac85af83ca8f7"
   integrity sha512-wTSrZ+8lsRRa3I3H8Xr65dLWSgCvY2l4AOnaeKdPA9TB/WYMPaTcrzf3rXvFoVvjKNVnu0CcWSx54qq9GKRUYg==
 
-node-gyp@10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/node-gyp/-/node-gyp-10.0.0.tgz#b802e7177e79f8d7922db5a18b56983e88165f9e"
-  integrity sha512-LkaKUbjyacJGRHiuhUeUblzZNxTF1/XNooyAl6aiaJ6ZpeurR4Mk9sjxncGNSI7pETqyqM+hLAER0788oSxt0A==
+node-gyp@10.0.1:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/node-gyp/-/node-gyp-10.0.1.tgz#205514fc19e5830fa991e4a689f9e81af377a966"
+  integrity sha512-gg3/bHehQfZivQVfqIyy8wTdSymF9yTyP4CJifK73imyNMU8AIGQE2pUa7dNWfmMeG9cDVF2eehiRMv0LC1iAg==
   dependencies:
     env-paths "^2.2.0"
     exponential-backoff "^3.1.1"
@@ -12443,19 +12443,7 @@ tar-stream@3.1.6:
     fast-fifo "^1.2.0"
     streamx "^2.15.0"
 
-tar@^6.1.11:
-  version "6.1.15"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-6.1.15.tgz#c9738b0b98845a3b344d334b8fa3041aaba53a69"
-  integrity sha512-/zKt9UyngnxIT/EAGYuxaMYgOIJiP81ab9ZfkILq4oNLPFX50qyYmu7jRj9qeXoxmJHjGlbH0+cm2uy1WCs10A==
-  dependencies:
-    chownr "^2.0.0"
-    fs-minipass "^2.0.0"
-    minipass "^5.0.0"
-    minizlib "^2.1.1"
-    mkdirp "^1.0.3"
-    yallist "^4.0.0"
-
-tar@^6.1.12, tar@^6.1.2:
+tar@^6.1.11, tar@^6.1.12, tar@^6.1.2:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/tar/-/tar-6.2.0.tgz#b14ce49a79cb1cd23bc9b016302dea5474493f73"
   integrity sha512-/Wo7DcT0u5HUV486xg675HtjNd3BXZ6xDbzsCUZPt5iw8bTQ63bP0Raut3mvro9u+CUyq7YQd8Cx55fsZXxqLQ==
