@@ -8,6 +8,9 @@ import path from 'path';
 
 import { notarize } from '@electron/notarize';
 import { build, Arch, Configuration, Platform } from 'app-builder-lib';
+import MacPackager from 'app-builder-lib/out/macPackager';
+import { AsyncTaskManager, log } from 'builder-util';
+import { Target } from 'electron-builder';
 import _ from 'lodash';
 import plist from 'plist';
 import yaml from 'yaml';
@@ -51,13 +54,14 @@ export async function sign(workDir: string): Promise<string[]> {
   const signingConfig: SigningConfig = yaml.parse(signingConfigText, { merge: true });
   const plistsDir = path.join(workDir, 'plists');
   let wroteDefaultEntitlements = false;
+  let constraintSkipped = false;
 
-  console.log('Removing excess files...');
+  log.info('Removing excess files...');
   await Promise.all(signingConfig.remove.map(async(relpath) => {
     await fs.promises.rm(path.join(appDir, relpath), { recursive: true });
   }));
 
-  console.log('Signing application...');
+  log.info('Signing application...');
   // We're not using @electron/osx-sign because it doesn't allow --launch-constraint-*
   await fs.promises.mkdir(plistsDir, { recursive: true });
   for await (const filePath of findFilesToSign(appDir)) {
@@ -84,31 +88,38 @@ export async function sign(workDir: string): Promise<string[]> {
     args.push('--entitlements', entitlementFile);
 
     // Determine the launch constraints
-    const launchConstraints = signingConfig.constraints.find(c => c.paths.includes(relPath));
-    const constraintTypes = ['self', 'parent', 'responsible'] as const;
+    if (process.argv.includes('--skip-constraints')) {
+      if (!constraintSkipped) {
+        log.warn('Skipping --launch-constraint-...: --skip-constraints given.');
+        constraintSkipped = true;
+      }
+    } else {
+      const launchConstraints = signingConfig.constraints.find(c => c.paths.includes(relPath));
+      const constraintTypes = ['self', 'parent', 'responsible'] as const;
 
-    for (const constraintType of constraintTypes) {
-      const constraint = launchConstraints?.[constraintType];
+      for (const constraintType of constraintTypes) {
+        const constraint = launchConstraints?.[constraintType];
 
-      if (constraint) {
-        const constraintsFile = path.join(plistsDir, `${ fileHash }-constraint-${ constraintType }.plist`);
+        if (constraint) {
+          const constraintsFile = path.join(plistsDir, `${ fileHash }-constraint-${ constraintType }.plist`);
 
-        await fs.promises.writeFile(constraintsFile, plist.build(evaluateConstraints(constraint)));
-        args.push(`--launch-constraint-${ constraintType }`, constraintsFile);
+          await fs.promises.writeFile(constraintsFile, plist.build(evaluateConstraints(constraint)));
+          args.push(`--launch-constraint-${ constraintType }`, constraintsFile);
+        }
       }
     }
 
     await spawnFile('codesign', [...args, filePath], { stdio: 'inherit' });
   }
 
-  console.log('Verifying application signature...');
+  log.info('Verifying application signature...');
   await spawnFile('codesign', ['--verify', '--deep', '--strict', '--verbose=2', appDir], { stdio: 'inherit' });
   await spawnFile('codesign', ['--display', '--entitlements', '-', appDir], { stdio: 'inherit' });
 
   if (process.argv.includes('--skip-notarize')) {
-    console.warn('Skipping notarization: --skip-notarize given.');
+    log.warn('Skipping notarization: --skip-notarize given.');
   } else if (appleId && appleIdPassword && teamId) {
-    console.log('Notarizing application...');
+    log.info('Notarizing application...');
     await notarize({
       appBundleId: config.appId as string,
       appPath:     appDir,
@@ -125,7 +136,7 @@ export async function sign(workDir: string): Promise<string[]> {
     throw new Error(message.join('\n'));
   }
 
-  console.log('Building disk image and update archive...');
+  log.info('Building disk image and update archive...');
   const arch = process.env.M1 ? Arch.arm64 : Arch.x64;
   const productFileName = config.productName?.replace(/\s+/g, '.');
   const productArch = process.env.M1 ? 'aarch64' : 'x86_64';
@@ -135,9 +146,20 @@ export async function sign(workDir: string): Promise<string[]> {
   // Build the dmg, explicitly _not_ using an identity; we just signed
   // everything as we wanted already.
   const results = await build({
-    targets:     new Map([[Platform.MAC, new Map([[arch, formats]])]]),
-    config:      _.merge<Configuration, Configuration>(config, { mac: { artifactName, identity: null } }),
-    prepackaged: appDir,
+    publish: 'never',
+    targets: new Map([[Platform.MAC, new Map([[arch, formats]])]]),
+    config:  _.merge<Configuration, Configuration>(config,
+      {
+        dmg: { writeUpdateInfo: false },
+        mac: { artifactName, identity: null },
+      }),
+    prepackaged:             appDir,
+    // Provide a custom packager factory so that we can override the packager
+    // to skip generating blockmap files.  Generating the blockmap hangs on CI
+    // for some reason.
+    platformPackagerFactory: (info) => {
+      return new CustomPackager(info);
+    },
   });
 
   const filesToSign = results.filter(f => !f.endsWith('.blockmap'));
@@ -204,14 +226,14 @@ async function *findFilesToSign(dir: string): AsyncIterable<string> {
         await file.close();
       }
     } catch {
-      console.debug(`Failed to read file ${ fullPath }, assuming no need to sign.`);
+      log.info({ fullPath }, 'Failed to read file, assuming no need to sign.');
       continue;
     }
 
     // If the file is already signed, don't sign it again.
     try {
       await spawnFile('codesign', ['--verify', '--strict=all', '--test-requirement=anchor apple', fullPath]);
-      console.debug(`Skipping signing of already-signed ${ fullPath }`);
+      log.info({ fullPath }, 'Skipping signing of already-signed directory');
     } catch {
       yield fullPath;
     }
@@ -221,7 +243,7 @@ async function *findFilesToSign(dir: string): AsyncIterable<string> {
     // We need to sign app bundles, if they haven't been signed yet.
     try {
       await spawnFile('codesign', ['--verify', '--strict=all', '--test-requirement=anchor apple', dir]);
-      console.debug(`Skipping signing of already-signed ${ dir }`);
+      log.info({ dir }, 'Skipping signing of already-signed directory');
     } catch {
       yield dir;
     }
@@ -274,4 +296,19 @@ function evaluateConstraints(constraint: Record<string, any>): Record<string, an
       return value;
     }
   });
+}
+
+/**
+ * CustomPackager overrides MacPackager to avoid building blockmap files
+ */
+class CustomPackager extends MacPackager {
+  override pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
+    for (const target of targets) {
+      if ('isWriteUpdateInfo' in target) {
+        (target as any).isWriteUpdateInfo = false;
+      }
+    }
+
+    return super.pack.call(this, outDir, arch, targets, taskManager);
+  }
 }

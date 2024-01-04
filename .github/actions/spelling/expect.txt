@@ -3,6 +3,7 @@ abbrv
 ACTIONSTART
 activedirectory
 addexclusion
+addext
 addgroup
 addlabel
 addrepo
@@ -214,6 +215,7 @@ einfo
 electronjs
 elko
 elog
+endgroup
 endscript
 engineimage
 epinio
@@ -364,6 +366,8 @@ KDM
 keychain
 keycloak
 keycloakoidc
+keyform
+keyout
 Kgm
 kiali
 kib

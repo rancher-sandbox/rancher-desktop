@@ -73,13 +73,36 @@ _Mac Development_ certificate is insufficient for notarization; it must be a
 _Developer ID Application_ certificate.  This will be reflected in the Common
 Name of the certificate.
 
+Launch constraints require macOS Ventura (macOS 13) or newer.  This is therefore
+needed for production signing.
+
 [Apple Documentation]: https://developer.apple.com/help/account/create-certificates/create-developer-id-certificates
+
+### Generate a test certificate
+
+If a real certificate from Apple is unavailable, it is possible to generate a
+self-signed test certificate; however, note that this wouldn't properly exercise
+all of the signing code.
+
+```sh
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
+          -keyform pem -sha256 -days 3650 -nodes -subj \
+          "/C=XX/ST=NA/L=Some Town/O=No Org/OU=No Unit/CN=RD Test Signing Key" \
+          -addext keyUsage=critical,digitalSignature \
+          -addext extendedKeyUsage=critical,codeSigning
+security import key.pem -t priv -A
+security import cert.pem -t cert -A
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s
+security add-trusted-cert -p codeSign cert.pem
+```
 
 ### Configuring Access
 
 - Import your signing certificate into your macOS Keychain.
 - Run `security find-identity -v` to locate the fingerprint of the key to use.
   Export the long hex string as the `CSC_FINGERPRINT` environment variable.
+  - For a test certificate, use `security find-identity` without `-v`; the
+    certificate to use isn't valid.
 
 For notarization, the following environment variables are also needed:
 
@@ -98,6 +121,9 @@ For notarization, the following environment variables are also needed:
 
 ### Performing signing
 
+When signing for M1/aarch64, please set the `M1` environment variable ahead of
+time as usual.
+
 If notarization is not required, append `--skip-notarize` to the command:
 
   ```sh
@@ -105,4 +131,9 @@ If notarization is not required, append `--skip-notarize` to the command:
   ```
 
 This is necessary to test the signing flow (since there's no way to notarize
-without the production certificate).
+without the production certificate).  This is also necessary to use a test
+certificate (since Apple will reject it).
+
+When using an older version of macOS (12/Monterey or older),
+`--skip-constraints` is also needed to skip assigning launch constraints, as
+that requires Ventura or later.  This is inappropriate for the actual release.
