@@ -259,7 +259,7 @@ export default {
     return result;
   },
 
-  get arch(): string {
+  get arch(): NodeJS.Architecture {
     return process.env.M1 ? 'arm64' : process.arch;
   },
 

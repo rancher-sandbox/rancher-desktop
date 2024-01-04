@@ -58,7 +58,7 @@ jobs:
     - # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
       run: yarn install --frozen-lockfile --network-timeout 1000000
     - run: yarn build
-    - run: yarn package --${{ matrix.platform }} --publish=never
+    - run: yarn package
     - name: Build bats.tar.gz
       if: matrix.platform == 'linux'
       run: make -C bats bats.tar.gz

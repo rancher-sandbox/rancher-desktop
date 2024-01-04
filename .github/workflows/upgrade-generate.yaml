@@ -44,7 +44,7 @@ jobs:
     - run: pip install setuptools
     - run: yarn install --frozen-lockfile
     - run: yarn build
-    - run: yarn package --${{ matrix.platform }} --publish=never
+    - run: yarn package
     - name: Upload Windows exe installer
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v3
@@ -96,12 +96,6 @@ jobs:
         go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
     - run: yarn install --frozen-lockfile
-    - name: Download installer (exe)
-      id: exe
-      uses: actions/download-artifact@v3
-      with:
-        name: Rancher Desktop Setup.exe
-        path: RD_SETUP_EXE
     - name: Download installer (msi)
       id: msi
       uses: actions/download-artifact@v3
@@ -128,7 +122,6 @@ jobs:
         path: RD_BUILD_INFO
     - run: node scripts/ts-wrapper.js scripts/populate-update-server.ts
       env:
-        RD_SETUP_EXE: ${{ steps.exe.outputs.download-path }}
         RD_SETUP_MSI: ${{ steps.msi.outputs.download-path }}
         RD_MACX86_ZIP: ${{ steps.mac_x86_64.outputs.download-path }}
         RD_MACARM_ZIP: ${{ steps.mac_aarch64.outputs.download-path }}

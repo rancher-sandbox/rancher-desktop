@@ -18,6 +18,10 @@ export type RecursiveReadonly<T> = {
   T[P];
 };
 
+export type ReadWrite<T> = {
+  -readonly [P in keyof T]: T[P];
+};
+
 /** UpperAlpha is the set of upper-case alphabets. */
 type UpperAlpha =
   'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' |

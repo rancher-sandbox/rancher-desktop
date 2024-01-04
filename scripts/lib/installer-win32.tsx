@@ -43,13 +43,15 @@ function getAppVersion(appDir: string): string {
   return offset ? `${ semver }.${ offset }` : semver;
 }
 
-export async function buildCustomAction(): Promise<void> {
+export async function buildCustomAction(): Promise<string> {
   const output = path.join(buildUtils.distDir, 'wix-custom-action.dll');
 
   await buildUtils.spawn('go', 'build', '-o', output, '-buildmode=c-shared', './wix', {
     cwd: path.join(buildUtils.rootDir, 'src', 'go', 'wsl-helper'),
     env: { ...process.env, GOOS: 'windows' },
   });
+
+  return output;
 }
 
 /**

@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Rancher Desktop
-Exec=rancher-desktop
-Terminal=false
-Type=Application
-Icon=rancher-desktop
-StartupWMClass=Rancher Desktop
-Categories=Development;
