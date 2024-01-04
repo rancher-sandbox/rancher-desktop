@@ -1515,6 +1515,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         case ContainerEngine.CONTAINERD:
           await this.progressTracker.action('Starting buildkit', 0,
             this.startService('buildkitd'));
+          try {
+            await this.execCommand({
+              root:          true,
+              expectFailure: true,
+            },
+            'ctr', '--address', '/run/k3s/containerd/containerd.sock', 'namespaces', 'create', 'default');
+          } catch {
+            // expecting failure because the namespace may already exist
+          }
           this.#containerEngineClient = new NerdctlClient(this);
           break;
         case ContainerEngine.MOBY:
