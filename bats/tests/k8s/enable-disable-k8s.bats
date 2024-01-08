@@ -13,7 +13,7 @@ verify_k8s_is_running() {
 
 @test 'start rancher desktop with kubernetes enabled' {
     start_kubernetes
-    wait_for_apiserver
+    wait_for_kubelet
     verify_k8s_is_running
 }
 
@@ -25,6 +25,6 @@ verify_k8s_is_running() {
 
 @test 're-enable kubernetes' {
     rdctl set --kubernetes-enabled=true
-    wait_for_apiserver
+    wait_for_kubelet
     verify_k8s_is_running
 }

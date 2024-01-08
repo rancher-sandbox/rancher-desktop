@@ -9,7 +9,7 @@ ARCH_FOR_KUBERLR=amd64
 
 @test 'start rancher desktop' {
     start_kubernetes
-    wait_for_apiserver
+    wait_for_kubelet
     # the docker context "rancher-desktop" may not have been written
     # even though the apiserver is already running
     wait_for_container_engine
@@ -83,7 +83,7 @@ verify_kuberlr_for_version() {
 
 @test 'upgrade kubernetes' {
     rdctl set --kubernetes.version "$RD_KUBERNETES_VERSION"
-    wait_for_apiserver "$RD_KUBERNETES_VERSION"
+    wait_for_kubelet "$RD_KUBERNETES_VERSION"
     wait_for_container_engine
 }
 
@@ -130,7 +130,7 @@ verify_nginx_after_change_k8s() {
 
 @test 'downgrade kubernetes' {
     rdctl set --kubernetes-version "$RD_KUBERNETES_PREV_VERSION"
-    wait_for_apiserver
+    wait_for_kubelet
     wait_for_container_engine
 }
 

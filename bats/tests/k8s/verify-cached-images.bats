@@ -9,14 +9,14 @@ load '../helpers/load'
 @test 'start rancher desktop' {
     # Start first so we can use `rdctl set` in all the calls that change the k8s version
     start_kubernetes
-    wait_for_apiserver
+    wait_for_kubelet
 }
 
 test_k8s_version_has_correct_cached_extension() {
     local K8S_VERSION=$1
     local EXTENSION=$2
     rdctl set --kubernetes-version "$K8S_VERSION"
-    wait_for_apiserver "$K8S_VERSION"
+    wait_for_kubelet "$K8S_VERSION"
     run ls "$PATH_CACHE/k3s/v${K8S_VERSION}"*k3s*/k3s-airgap-images-*."${EXTENSION}"
     assert_success
 }

@@ -12,7 +12,7 @@ local_setup() {
 
 @test 'start k8s' {
     start_kubernetes
-    wait_for_apiserver
+    wait_for_kubelet
 }
 
 @test 'add helm repo' {
