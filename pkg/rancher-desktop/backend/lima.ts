@@ -1924,6 +1924,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         switch (config.containerEngine.name) {
         case ContainerEngine.CONTAINERD:
           await this.startService('containerd');
+          try {
+            await this.execCommand({
+              root:          true,
+              expectFailure: true,
+            },
+            'ctr', '--address', '/run/k3s/containerd/containerd.sock', 'namespaces', 'create', 'default');
+          } catch {
+            // expecting failure because the namespace may already exist
+          }
           break;
         case ContainerEngine.MOBY:
           await this.startService('docker');
