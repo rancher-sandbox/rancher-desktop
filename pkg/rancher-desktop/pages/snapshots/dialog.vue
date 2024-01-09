@@ -26,6 +26,7 @@ export default Vue.extend({
       response:          0,
       cancelId:          0,
       snapshotEventType: '',
+      showProgressBar:   false,
       credentials:       {
         user:     '',
         password: '',
@@ -58,11 +59,24 @@ export default Vue.extend({
       this.snapshot = format.snapshot;
       this.info = format.info;
       this.snapshotEventType = format.snapshotEventType;
+      this.showProgressBar = format.showProgressBar;
       this.bodyStyle = this.calculateBodyStyle(format.type);
       this.buttons = window.buttons || [];
       this.cancelId = window.cancelId;
 
       ipcRenderer.send('dialog/ready');
+    });
+
+    ipcRenderer.on('dialog/close', (_event, args) => {
+      if (args.snapshotEventType !== this.snapshotEventType) {
+        return;
+      }
+      ipcRenderer.send(
+        'dialog/close',
+        {
+          response:  this.response,
+          eventType: this.snapshotEventType,
+        });
     });
 
     ipcRenderer.send('dialog/mounted');
@@ -71,6 +85,7 @@ export default Vue.extend({
   beforeDestroy() {
     ipcRenderer.removeAllListeners('dialog/error');
     ipcRenderer.removeAllListeners('dialog/options');
+    ipcRenderer.removeAllListeners('dialog/close');
   },
 
   methods: {
@@ -143,9 +158,10 @@ export default Vue.extend({
           <h1 v-if="errorTitle">
             {{ errorTitle }}
           </h1>
-          <h1 v-else>
-            {{ header }}
-          </h1>
+          <h1
+            v-else
+            v-clean-html="header"
+          />
         </slot>
       </div>
       <hr class="separator">
@@ -162,8 +178,8 @@ export default Vue.extend({
               <div class="created">
                 <span
                   v-if="snapshot.formattedCreateDate"
+                  v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
                   class="value"
-                  v-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
                 />
               </div>
             </div>
@@ -181,8 +197,8 @@ export default Vue.extend({
         class="message"
       >
         <span
+          v-clean-html="errorDescription"
           class="value"
-          v-html="errorDescription"
         />
       </div>
       <div
@@ -191,8 +207,8 @@ export default Vue.extend({
       >
         <slot name="message">
           <span
+            v-clean-html="message"
             class="value"
-            v-html="message"
           />
         </slot>
       </div>
@@ -205,7 +221,7 @@ export default Vue.extend({
             class="banner mb-20 info-banner"
             color="info"
           >
-            <span v-html="info" />
+            <span v-clean-html="info" />
           </Banner>
         </slot>
       </div>
@@ -218,7 +234,7 @@ export default Vue.extend({
             class="banner mb-20"
             color="error"
           >
-            <span v-html="error" />
+            <span v-clean-html="error" />
             <a
               href="#"
               @click.prevent="showLogs"
@@ -227,7 +243,10 @@ export default Vue.extend({
         </slot>
       </div>
     </div>
-    <BackendProgress class="progress" />
+    <backend-progress
+      v-if="showProgressBar"
+      class="progress"
+    />
     <div
       class="dialog-actions"
       :class="{ 'dialog-actions-reverse': isDarwin() }"

@@ -78,7 +78,7 @@ export default Vue.extend({
         if (error) {
           ipcRenderer.send('dialog/error', { dialog: 'SnapshotsDialog', error });
         } else {
-          ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+          ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog', snapshotEventType: 'create' });
 
           this.goBack({
             type:         'create',
@@ -107,9 +107,10 @@ export default Vue.extend({
             cancelId: 0,
           },
           format: {
-            header:          this.t('snapshots.dialog.creating.header', { snapshot: name }),
-            showProgressBar: true,
-            message:         this.t('snapshots.dialog.creating.message', { snapshot: name }, true),
+            header:            this.t('snapshots.dialog.creating.header', { snapshot: name }),
+            showProgressBar:   true,
+            message:           this.t('snapshots.dialog.creating.message', { snapshot: name }, true),
+            snapshotEventType: 'create',
           },
         },
       );

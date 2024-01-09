@@ -92,13 +92,12 @@ footer {
   .left-column {
     display: flex;
     white-space: nowrap;
-    width: 70%;
   }
 
   .right-column {
     display: flex;
     justify-content: flex-end;
-    width: 30%;
+    flex: 1;
   }
 
   .status-bar-item {

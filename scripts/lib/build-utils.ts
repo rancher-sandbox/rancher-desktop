@@ -259,7 +259,7 @@ export default {
     return result;
   },
 
-  get arch(): string {
+  get arch(): NodeJS.Architecture {
     return process.env.M1 ? 'arm64' : process.arch;
   },
 
@@ -444,7 +444,8 @@ export default {
       cwd: path.join(this.rootDir, 'src', 'go', name),
       env: {
         ...process.env,
-        GOOS: this.mapPlatformToGoOS(platform),
+        GOOS:   this.mapPlatformToGoOS(platform),
+        GOARCH: this.mapArchToGoArch(this.arch),
       },
     });
   },

@@ -35,8 +35,6 @@ export interface IpcMainEvents {
   // #endregion
 
   // #region main/containerEvents
-  'containers-namespaced-read': () => void;
-  'containers-namespaced-containers-read': () => void;
   'do-containers-exec': (command: string, containerId: string[]) => void;
   'containers-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
@@ -207,8 +205,6 @@ export interface IpcRendererEvents {
   ) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
-  'containers-namespaces': (namespaces: string[]) => void;
-  'containers-namespaces-containers': (namespaces: string[]) => void;
   'container-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
 
@@ -217,6 +213,7 @@ export interface IpcRendererEvents {
   'dialog/populate': (...args: any) => void;
   'dialog/size': (size: { width: number; height: number }) => void;
   'dialog/options': (...args: any) => void;
+  'dialog/close': (...args: any) => void;
   'dialog/error': (args: any) => void;
   'dialog/info': (args: Record<string, string>) => void;
   'dashboard-open': () => void;

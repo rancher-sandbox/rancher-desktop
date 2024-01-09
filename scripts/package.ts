@@ -9,37 +9,20 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import * as path from 'path';
 
+import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
+import { LinuxPackager } from 'app-builder-lib/out/linuxPackager';
+import { LinuxTargetHelper } from 'app-builder-lib/out/targets/LinuxTargetHelper';
 import { executeAppBuilder } from 'builder-util';
+import {
+  AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
+} from 'electron-builder';
 import _ from 'lodash';
 import yaml from 'yaml';
 
 import buildUtils from './lib/build-utils';
 import buildInstaller, { buildCustomAction } from './lib/installer-win32';
-import { simpleSpawn } from './simple_process';
 
-import type { Configuration } from 'app-builder-lib';
-
-/** Get the argument value (if any) for any of the given argument names */
-function getArgValue(args: string[], ...argNames: string[]): string | undefined {
-  for (const [i, arg] of args.entries()) {
-    const lowerArg = arg.toLowerCase();
-
-    for (const argName of argNames) {
-      if (argName === lowerArg && i < args.length - 1) {
-        return args[i + 1];
-      }
-      if (argName.startsWith('--')) {
-        // long arg, "--variable=foo"
-        if (lowerArg.startsWith(`${ argName }=`)) {
-          return lowerArg.substring(argName.length + 1);
-        }
-      } else if (lowerArg.startsWith(argName)) {
-        // short arg, "-vfoo"
-        return lowerArg.substring(argName.length);
-      }
-    }
-  }
-}
+import { ReadWrite } from '@pkg/utils/typeUtils';
 
 class Builder {
   async replaceInFile(srcFile: string, pattern: string | RegExp, replacement: string, dstFile?: string) {
@@ -50,22 +33,95 @@ class Builder {
     await fs.promises.writeFile(dstFile, data.replace(pattern, replacement));
   }
 
-  async package() {
+  protected get electronBinary() {
+    const platformPath = {
+      darwin: [`mac-${ buildUtils.arch }`, 'Rancher Desktop.app/Contents/MacOS/Rancher Desktop'],
+      win32:  ['win-unpacked', 'Rancher Desktop.exe'],
+    }[process.platform as string];
+
+    if (!platformPath) {
+      throw new Error('Failed to find platform-specific Electron binary');
+    }
+
+    return path.join(buildUtils.distDir, ...platformPath);
+  }
+
+  /**
+   * Flip the Electron fuses so that the app can't be used as a node runtime.
+   * @see https://www.electronjs.org/docs/latest/tutorial/fuses
+   */
+  protected async flipFuses(context: AfterPackContext) {
+    const extension = {
+      darwin: '.app',
+      win32:  '.exe',
+    }[context.electronPlatformName] ?? '';
+    const exeName = `${ context.packager.appInfo.productFilename }${ extension }`;
+    const exePath = path.join(context.appOutDir, exeName);
+    const resetAdHocDarwinSignature = context.arch === Arch.arm64;
+
+    await flipFuses(
+      exePath,
+      {
+        version:                                               FuseVersion.V1,
+        resetAdHocDarwinSignature,
+        [FuseV1Options.RunAsNode]:                             false,
+        [FuseV1Options.EnableCookieEncryption]:                false,
+        [FuseV1Options.EnableNodeOptionsEnvironmentVariable]:  false,
+        [FuseV1Options.EnableNodeCliInspectArguments]:         false,
+        [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
+        [FuseV1Options.OnlyLoadAppFromAsar]:                   true,
+      },
+    );
+  }
+
+  /**
+   * Manually write out the Linux .desktop application shortcut definition; this
+   * is needed as by default this only happens for snap/fpm/etc., but not zip
+   * files.
+   */
+  protected async writeLinuxDesktopFile(context: AfterPackContext) {
+    const config = context.packager.config.linux;
+
+    if (!(context.packager instanceof LinuxPackager) || !config) {
+      return;
+    }
+
+    const options: LinuxTargetSpecificOptions = {
+      ...context.packager.platformSpecificBuildOptions,
+      compression: undefined,
+    };
+    const helper = new LinuxTargetHelper(context.packager);
+    const leaf = `${ context.packager.executableName }.desktop`;
+    const destination = path.join(context.appOutDir, `resources/resources/linux/${ leaf }`);
+
+    await helper.writeDesktopEntry(options, context.packager.executableName, destination);
+  }
+
+  protected async afterPack(context: AfterPackContext) {
+    await this.flipFuses(context);
+    await this.writeLinuxDesktopFile(context);
+  }
+
+  async package(): Promise<CliOptions> {
     console.log('Packaging...');
 
     // Build the electron builder configuration to include the version data
-    const config: Configuration = yaml.parse(await fs.promises.readFile('electron-builder.yml', 'utf-8'));
-    const configPath = path.join('dist', 'electron-builder.yaml');
+    const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('packaging/electron-builder.yml', 'utf-8'));
+    const configPath = path.join(buildUtils.distDir, 'electron-builder.yaml');
     const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
     const distDir = path.join(process.cwd(), 'dist');
-    const args = process.argv.slice(2).filter(x => x !== '--serial');
+    const electronPlatform = ({
+      darwin: 'mac',
+      win32:  'win',
+      linux:  'linux',
+    } as const)[process.platform as string];
 
-    switch (process.platform) {
+    switch (electronPlatform) {
     case 'linux':
       await this.createLinuxResources(finalBuildVersion);
       break;
-    case 'win32':
+    case 'win':
       await this.createWindowsResources(distDir);
       break;
     }
@@ -73,16 +129,35 @@ class Builder {
     _.set(config, 'extraMetadata.version', finalBuildVersion);
     await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
 
-    args.push('--config', configPath);
-    await simpleSpawn('node', ['node_modules/electron-builder/out/cli/cli.js', ...args]);
+    config.afterPack = this.afterPack.bind(this);
+
+    const options: CliOptions = {
+      config,
+      publish: 'never',
+      arm64:   buildUtils.arch === 'arm64',
+      x64:     buildUtils.arch === 'x64',
+    };
+
+    if (electronPlatform) {
+      if (process.argv.includes('--zip')) {
+        options[electronPlatform] = ['zip'];
+      } else {
+        const rawTarget = config[electronPlatform]?.target ?? [];
+        const target = Array.isArray(rawTarget) ? rawTarget : [rawTarget];
+
+        options[electronPlatform] = target.map(t => typeof t === 'string' ? t : t.target);
+      }
+    }
+
+    await build(options);
+
+    return options;
   }
 
-  async buildInstaller() {
+  async buildInstaller(config: CliOptions) {
     const appDir = path.join(buildUtils.distDir, 'win-unpacked');
-    const args = process.argv.slice(2).filter(x => x !== '--serial');
-    const targetList = getArgValue(args, '-w', '--win', '--windows');
 
-    if (targetList !== 'zip') {
+    if (config.win && !process.argv.includes('--zip')) {
       // Only build installer if we're not asked not to.
       await buildInstaller(buildUtils.distDir, appDir);
     }
@@ -107,7 +182,17 @@ class Builder {
     await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);
 
     // Create the custom action for the installer
-    await buildCustomAction();
+    const customActionFile = await buildCustomAction();
+
+    // Wait for the virus scanner to be done with the new DLL file
+    for (let i = 0; i < 30; i++) {
+      try {
+        await fs.promises.readFile(customActionFile);
+        break;
+      } catch {
+        await buildUtils.sleep(5_000);
+      }
+    }
   }
 
   protected async executeAppBuilderAsJson(...args: Parameters<typeof executeAppBuilder>) {
@@ -121,10 +206,9 @@ class Builder {
   }
 
   async run() {
-    await this.package();
-    if (process.platform === 'win32') {
-      await this.buildInstaller();
-    }
+    const options = await this.package();
+
+    await this.buildInstaller(options);
   }
 }
 

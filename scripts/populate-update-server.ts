@@ -15,7 +15,6 @@
  *   GITHUB_REPOSITORY: The GitHub owner/repository (from GitHub Actions).
  *   GITHUB_SHA:        Commit hash (if creating a new release).
  *   GITHUB_ACTOR:      User that triggered this, github.actor
- *   RD_SETUP_EXE:      The installer (exe file) to upload.
  *   RD_SETUP_MSI:      The installer (msi file) to upload.
  *   RD_MACX86_ZIP:     The macOS (x86_64) zip archive to upload.
  *   RD_MACARM_ZIP:     The macOS (aarch64) zip archive to upload.
@@ -126,7 +125,6 @@ async function getOctokit(): Promise<Octokit> {
 
 async function updateRelease(octokit: Octokit, owner: string, repo: string, tag: string) {
   const files = {
-    exe:    await getChecksum('RD_SETUP_EXE', `Rancher.Desktop.Setup.${ tag }.exe`),
     msi:    await getChecksum('RD_SETUP_MSI', `Rancher.Desktop.Setup.${ tag }.msi`),
     macx86: await getChecksum('RD_MACX86_ZIP', `Rancher.Desktop-${ tag }-mac.x86_64.zip`),
     macarm: await getChecksum('RD_MACARM_ZIP', `Rancher.Desktop-${ tag }-mac.aarch64.zip`),

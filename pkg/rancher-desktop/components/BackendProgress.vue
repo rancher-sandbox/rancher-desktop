@@ -127,19 +127,19 @@ export default BackendProgress;
     display: flex;
     flex-direction: row;
     white-space: nowrap;
-    width: 100%;
     align-items: center;
+    flex: 1;
 
     .details {
       text-align: end;
       text-overflow: ellipsis;
       overflow: hidden;
       padding-right: 0.25rem;
-      width: 60%;
+      flex: 1;
     }
 
     .progress-bar {
-      width: 40%;
+      max-width: 12rem;
     }
 
     .duration {

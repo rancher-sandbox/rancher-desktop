@@ -1,5 +1,5 @@
 export type SnapshotEvent = {
-  type?: 'restore' | 'delete' | 'create' | 'confirm',
+  type?: 'restore' | 'delete' | 'create' | 'confirm' | 'backend-lock',
   result?: 'success' | 'cancel' | 'error',
   error?: string,
   snapshotName?: string,

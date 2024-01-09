@@ -83,7 +83,7 @@ export default Vue.extend({
                 errorButton:      this.t('snapshots.dialog.restore.error.buttonText'),
               });
           } else {
-            ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog' });
+            ipcRenderer.send('dialog/close', { dialog: 'SnapshotsDialog', snapshotEventType: 'restore' });
             ipcRenderer.send(
               'snapshot',
               {
@@ -133,7 +133,7 @@ export default Vue.extend({
             header:            this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
             snapshot:          this.snapshot,
             message:           type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : '',
-            showProgressBar:   true,
+            showProgressBar:   false,
             snapshotEventType: 'confirm',
           },
         },
@@ -181,8 +181,8 @@ export default Vue.extend({
         <div class="created">
           <span
             v-if="snapshot.formattedCreateDate"
+            v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
             class="value"
-            v-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
           />
         </div>
       </div>

@@ -50,6 +50,16 @@ interface execProcess {
   [stream]: v1.ExecStreamOptions;
 }
 
+// eslint-disable-next-line import/namespace -- it doesn't understand TypeScript
+interface RDXExecOptions extends v1.ExecOptions {
+  namespace?: string;
+}
+
+// eslint-disable-next-line import/namespace -- it doesn't understand TypeScript
+interface RDXSpawnOptions extends v1.SpawnOptions {
+  namespace?: string;
+}
+
 /**
  * The identifier for the extension (the name of the image).
  */
@@ -89,7 +99,7 @@ function getTypeErrorMessage(name: string, expectedType: string, object: any) {
 /**
  * Given an options object passed to exec(), check if it's a v1.SpawnOptions.
  */
-function isSpawnOptions(options: v1.ExecOptions | v1.SpawnOptions): options is v1.SpawnOptions {
+function isSpawnOptions(options: RDXExecOptions | RDXSpawnOptions): options is RDXSpawnOptions {
   return 'stream' in options;
 }
 
@@ -100,9 +110,9 @@ function isSpawnOptions(options: v1.ExecOptions | v1.SpawnOptions): options is v
 function getExec(scope: SpawnOptions['scope']): v1.Exec {
   let nextId = 0;
 
-  function exec(cmd: string, args: string[], options?: v1.ExecOptions): Promise<v1.ExecResult>;
-  function exec(cmd: string, args: string[], options: v1.SpawnOptions): v1.ExecProcess;
-  function exec(cmd: string, args: string[], options?: v1.ExecOptions | v1.SpawnOptions): Promise<v1.ExecResult> | v1.ExecProcess {
+  function exec(cmd: string, args: string[], options?: RDXExecOptions): Promise<v1.ExecResult>;
+  function exec(cmd: string, args: string[], options: RDXSpawnOptions): v1.ExecProcess;
+  function exec(cmd: string, args: string[], options?: RDXExecOptions | RDXSpawnOptions): Promise<v1.ExecResult> | v1.ExecProcess {
     // Do some minimal parameter validation, since passing these to the backend
     // directly can end up with confusing messages otherwise.
     if (typeof cmd !== 'string') {
@@ -129,10 +139,20 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
         }
       }
     }
+    if ('namespace' in (options ?? {})) {
+      if (!['string', 'undefined'].includes(typeof options?.namespace)) {
+        throw new TypeError(getTypeErrorMessage('options.namespace', 'string', options?.namespace));
+      }
+    }
 
     const execId = `${ pageLoadId }-${ scope }-${ nextId++ }`;
     // Build options to pass to the main process, while not trusting the input
     // too much.
+
+    if (options?.namespace) {
+      args.unshift(`--namespace=${ options.namespace }`);
+    }
+
     const safeOptions: SpawnOptions = {
       command: [`${ cmd }`].concat(Array.from(args).map((arg) => {
         return `${ arg }`.replace(/^(["'])(.*)\1$/, '$2');
@@ -360,6 +380,15 @@ class Client implements v1.DockerDesktopClient {
 
   docker = {
     cli:            { exec: getExec('docker-cli') },
+    listNamespaces: async() => {
+      const results = await this.docker.cli.exec('namespace', ['list', '--quiet']);
+
+      if (results.code || results.signal) {
+        throw new Error(`failed to inspect namespaces: ${ results.stderr }`);
+      }
+
+      return results.lines().map(n => n.trim()).filter(n => n);
+    },
     listContainers: async(options: DockerListContainersOptions = {}) => {
       // Unfortunately, there's no command line option to just make an API call,
       // and `container ls` by itself doesn't provide all the info.
@@ -511,7 +540,6 @@ export default function initExtensions(): void {
     break;
   }
   case 'app:': {
-    console.log(process);
     import('os').then(({ arch, hostname }) => {
       Object.defineProperty(window, 'ddClient', {
         value:        new Client({ arch: arch(), hostname: hostname() }),

@@ -233,7 +233,7 @@ Cross-compilation is currently not supported. To run a build do:
 
 ```
 yarn build
-yarn package --publish=never
+yarn package
 ```
 
 The build output goes to `dist/`.
