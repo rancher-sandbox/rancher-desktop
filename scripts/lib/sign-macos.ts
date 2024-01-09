@@ -31,7 +31,7 @@ type SigningConfig = {
   remove: string[];
 };
 
-export async function sign(workDir: string): Promise<string> {
+export async function sign(workDir: string): Promise<string[]> {
   const certFingerprint = process.env.CSC_FINGERPRINT ?? '';
   const appleId = process.env.APPLEID;
   const appleIdPassword = process.env.AC_PASSWORD;
@@ -125,28 +125,34 @@ export async function sign(workDir: string): Promise<string> {
     throw new Error(message.join('\n'));
   }
 
-  console.log('Building disk image...');
+  console.log('Building disk image and update archive...');
   const arch = process.env.M1 ? Arch.arm64 : Arch.x64;
   const productFileName = config.productName?.replace(/\s+/g, '.');
   const productArch = process.env.M1 ? 'aarch64' : 'x86_64';
   const artifactName = `${ productFileName }-\${version}.${ productArch }.\${ext}`;
+  const formats = ['dmg', 'zip'];
 
   // Build the dmg, explicitly _not_ using an identity; we just signed
   // everything as we wanted already.
   const results = await build({
-    targets:     new Map([[Platform.MAC, new Map([[arch, ['dmg']]])]]),
+    targets:     new Map([[Platform.MAC, new Map([[arch, formats]])]]),
     config:      _.merge<Configuration, Configuration>(config, { mac: { artifactName, identity: null } }),
     prepackaged: appDir,
   });
 
-  const dmgFile = results.find(v => v.endsWith('.dmg'));
+  const filesToSign = results.filter(f => !f.endsWith('.blockmap'));
 
-  if (!dmgFile) {
-    throw new Error(`Could not find signed disk image`);
+  for (const extension of formats) {
+    if (!filesToSign.find(v => v.endsWith(`.${ extension }`))) {
+      throw new Error(`Could not find built ${ extension } file`);
+    }
   }
-  await spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', dmgFile], { stdio: 'inherit' });
 
-  return dmgFile;
+  await Promise.all(Object.values(filesToSign).map((f) => {
+    return spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', f], { stdio: 'inherit' });
+  }));
+
+  return Object.values(filesToSign);
 }
 
 /**
