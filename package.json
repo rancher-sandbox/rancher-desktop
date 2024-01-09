@@ -19,8 +19,8 @@
     "lint": "yarn lint:fix",
     "lint:fix": "yarn lint:typescript:fix && yarn lint:go:fix ",
     "lint:nofix": "yarn lint:typescript:nofix && yarn lint:go:nofix",
-    "lint:typescript:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --fix --report-unused-disable-directives .",
-    "lint:typescript:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --report-unused-disable-directives --max-warnings=0 .",
+    "lint:typescript:fix": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --fix --report-unused-disable-directives .",
+    "lint:typescript:nofix": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --report-unused-disable-directives --max-warnings=0 .",
     "lint:go:fix": "gofmt -w src/go",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
@@ -30,7 +30,7 @@
     "wix": "node scripts/ts-wrapper.js scripts/wix.ts",
     "test": "yarn lint:nofix && yarn test:unit && yarn test:extra",
     "test:unit": "yarn test:unit:jest && yarn test:unit:nerdctl-stub && yarn test:unit:wsl-helper && yarn test:unit:rdctl",
-    "test:unit:jest": "jest",
+    "test:unit:jest": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 jest",
     "test:unit:watch": "yarn test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:unit:rdctl": "cd ./src/go/rdctl/ && go test ./...",
@@ -40,7 +40,7 @@
     "test:e2e": "cross-env NODE_OPTIONS=--max_old_space_size=4096 node scripts/ts-wrapper.js scripts/e2e.ts",
     "test:e2e:screenshots": "node scripts/ts-wrapper.js scripts/e2e.ts --config=screenshots/playwright-config.ts",
     "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
-    "postuninstall": "electron-builder install-app-deps",
+    "postuninstall": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 electron-builder install-app-deps",
     "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts",
     "ucmonitor": "node scripts/ts-wrapper.js scripts/unreleased-change-monitor.ts",
     "dcmonitor": "node scripts/ts-wrapper.js scripts/docker-cli-monitor.ts",
@@ -73,7 +73,7 @@
     "jsonpath": "1.1.1",
     "linux-ca": "2.0.1",
     "lodash": "4.17.21",
-    "marked": "10.0.0",
+    "marked": "11.1.1",
     "native-reg": "1.1.1",
     "node-fetch": "2.7.0",
     "node-forge": "1.3.1",
@@ -153,7 +153,7 @@
     "ejs": "3.1.9",
     "electron": "26.4.3",
     "electron-builder": "24.9.1",
-    "eslint": "8.54.0",
+    "eslint": "8.56.0",
     "eslint-plugin-deprecation": "2.0.0",
     "eslint-plugin-import": "2.29.0",
     "eslint-plugin-node": "11.1.0",
@@ -190,8 +190,7 @@
     "dmg-license": "1.0.11"
   },
   "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
+    "node 18",
+    "electron >= 26"
   ]
 }

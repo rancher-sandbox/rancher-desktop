@@ -27,10 +27,10 @@ jobs:
       with:
         node-version: '18.16.x'
         cache: yarn
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
@@ -47,27 +47,27 @@ jobs:
     - run: yarn package
     - name: Upload Windows exe installer
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Rancher Desktop Setup.exe
         path: dist/Rancher Desktop*.exe
         if-no-files-found: error
     - name: Upload Windows installer
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Rancher Desktop Setup.msi
         path: dist/Rancher Desktop*.msi
         if-no-files-found: error
     - name: Upload Windows build information
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-info.yml
         path: dist/latest.yml
         if-no-files-found: error
     - name: Upload macOS archive
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
@@ -91,32 +91,32 @@ jobs:
       with:
         node-version: '18.16.x'
         cache: yarn
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
     - run: yarn install --frozen-lockfile
     - name: Download installer (msi)
       id: msi
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop Setup.msi
         path: RD_SETUP_MSI
     - name: Download mac x86_64 archive
       id: mac_x86_64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop-mac.x86_64.zip
         path: MACX86_ZIP
     - name: Download mac aarch64 archive
       id: mac_aarch64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Rancher Desktop-mac.aarch64.zip
         path: MACARM_ZIP
     - name: Download build information
       id: info
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build-info.yml
         path: RD_BUILD_INFO

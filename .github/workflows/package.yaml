@@ -40,10 +40,10 @@ jobs:
       with:
         node-version: '18.16.x'
         cache: yarn
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
@@ -63,42 +63,42 @@ jobs:
       if: matrix.platform == 'linux'
       run: make -C bats bats.tar.gz
     - name: Upload bats.tar.gz
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'linux'
       with:
         name: bats.tar.gz
         path: bats/bats.tar.gz
         if-no-files-found: error
     - name: Upload mac disk image
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop.${{ matrix.arch }}.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
     - name: Upload mac zip
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
     - name: Upload Windows installer
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'win'
       with:
         name: Rancher Desktop Setup.msi
         path: dist/Rancher Desktop*.msi
         if-no-files-found: error
     - name: Upload Windows zip
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'win'
       with:
         name: Rancher Desktop-win.zip
         path: dist/Rancher Desktop-*-win.zip
         if-no-files-found: error
     - name: Upload Linux zip
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: matrix.platform == 'linux'
       with:
         name: Rancher Desktop-linux.zip
@@ -156,7 +156,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: powershell
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
@@ -166,7 +166,7 @@ jobs:
         cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       if: runner.os == 'Windows'
       with:
         name: Rancher Desktop-win.zip

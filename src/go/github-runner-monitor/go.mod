@@ -7,7 +7,7 @@ require (
 	github.com/kata-containers/kata-containers/src/runtime v0.0.0-20230914182355-2e8b41f39c66
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/viper v1.18.1
+	github.com/spf13/viper v1.18.2
 	golang.org/x/sys v0.15.0
 )
 

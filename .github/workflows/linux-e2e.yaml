@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: '18.16.x'
           cache: yarn
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '^1.21'
           cache-dependency-path: src/go/**/go.sum
@@ -52,7 +52,7 @@ jobs:
           CI: true
         timeout-minutes: 150
       - name: Upload failure reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: failure-reports.zip
