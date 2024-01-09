@@ -21,7 +21,7 @@ async function signArchive(archive: string): Promise<void> {
   await fs.promises.mkdir(distDir, { recursive: true });
   const workDir = await fs.promises.mkdtemp(path.join(distDir, 'sign-'));
   const archiveDir = path.join(workDir, 'unpacked');
-  let artifact: string | undefined;
+  let artifacts: string[] | undefined;
 
   try {
     // Extract the archive
@@ -32,20 +32,23 @@ async function signArchive(archive: string): Promise<void> {
     // Detect the archive type
     for (const file of await fs.promises.readdir(archiveDir)) {
       if (file.endsWith('.exe')) {
-        artifact = await windows.sign(workDir);
+        artifacts = await windows.sign(workDir);
         break;
       }
       if (file.endsWith('.app')) {
-        artifact = await macos.sign(workDir);
+        artifacts = await macos.sign(workDir);
         break;
       }
     }
 
-    if (!artifact) {
+    if (!artifacts) {
       throw new Error(`Could not find any files to sign in ${ archive }`);
     }
-    await computeChecksum(artifact);
-    console.log(`Signed result: ${ artifact }`);
+    await Promise.all(artifacts.map(f => computeChecksum(f)));
+
+    for (const line of ['Signed results:', ...artifacts.map(f => ` - ${ f }`)]) {
+      console.log(line);
+    }
   } finally {
     await fs.promises.rm(workDir, { recursive: true, maxRetries: 3 });
   }
