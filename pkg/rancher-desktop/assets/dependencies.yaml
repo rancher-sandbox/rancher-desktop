@@ -16,7 +16,7 @@ rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.8.0
 ECRCredentialHelper: 0.7.1
 hostResolver: 0.1.5
-mobyOpenAPISpec: "1.43"
+mobyOpenAPISpec: "1.44"
 wix: wix3112rtm
 hostSwitch: 1.1.4
 moproxy: 0.5.0
