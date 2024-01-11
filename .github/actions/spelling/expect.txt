@@ -66,6 +66,7 @@ bcdfghjklmnpqrstvwxz
 bellingham
 bindir
 binfmt
+BitBlt
 bitnami
 blkio
 blockmap
@@ -164,6 +165,7 @@ dbstr
 dcmonitor
 dcnone
 dcrd
+DCs
 ddd
 deadcode
 debbuild
@@ -203,6 +205,9 @@ dri
 DSL
 Duex
 dword
+Dwm
+dwmapi
+DWMWA
 eagerzeroedthick
 eastus
 ebegin
@@ -317,6 +322,7 @@ httpconfig
 Huawei
 huaweicce
 hvsock
+hwnd
 hyperv
 ial
 iana
