@@ -14,6 +14,7 @@ import { tool } from '../utils/TestUtils';
 import type { Page, Locator } from '@playwright/test';
 
 const pageConstructors = {
+  General:         (page: Page) => page,
   K8s:             (page: Page) => new K8sPage(page),
   WSLIntegrations: (page: Page) => new WSLIntegrationsPage(page),
   Containers:      (page: Page) => new ContainersPage(page),

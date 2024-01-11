@@ -5,7 +5,6 @@ import path from 'path';
 import util from 'util';
 
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
