@@ -74,7 +74,13 @@ func GetSystemCertificates(storeName string) (<-chan Entry, error) {
 				}
 				break
 			}
-			cert, err := x509.ParseCertificate(unsafe.Slice(certCtx.EncodedCert, certCtx.Length))
+			// Make a copy of the encoded cert, because the parsed cert may have
+			// references to the memory (that isn't owned by the GC) and we'll return
+			// it in a channel, so HeapFree() might get called on it before it's used.
+			// See #6295 / #6307.
+			certData := make([]byte, certCtx.Length)
+			copy(certData, unsafe.Slice(certCtx.EncodedCert, certCtx.Length))
+			cert, err := x509.ParseCertificate(certData)
 			if err != nil {
 				// Skip invalid certs
 				logrus.Tracef("Skipping invalid certificate %q in %q: %s", getCertName(certCtx), storeName, err)
