@@ -690,7 +690,6 @@ servicemonitor
 setproxy
 SFC
 sharedscripts
-sharex
 sharkanodo
 shasta
 shazbat
