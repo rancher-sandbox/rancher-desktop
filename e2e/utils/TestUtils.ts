@@ -59,9 +59,7 @@ async function createWindowsUserLegacyProfile(userProfile: RecursivePartial<Sett
   const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-profiles'));
 
   try {
-    for (const packet of [['defaults', userProfile], ['locked', lockedFields]]) {
-      const [registryType, settings] = packet;
-
+    for (const [registryType, settings] of [['defaults', userProfile], ['locked', lockedFields]]) {
       if (settings && Object.keys(settings).length > 0) {
         const genResult = convertToRegistryLegacy(await tool('rdctl', 'create-profile', '--body', JSON.stringify(settings),
           '--output=reg', '--hive=hkcu', `--type=${ registryType }`));
@@ -72,6 +70,14 @@ async function createWindowsUserLegacyProfile(userProfile: RecursivePartial<Sett
           await childProcess.spawnFile('reg.exe', ['IMPORT', regFile], { stdio: 'ignore' });
         } catch (ex: any) {
           throw new Error(`Error trying to create a user registry hive: ${ ex }`);
+        }
+      } else {
+        const keyPath = `HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\${ registryType }`;
+
+        try {
+          await childProcess.spawnFile('reg.exe', ['DELETE', keyPath, '/f']);
+        } catch (ex: any) {
+          throw new Error(`Error trying to delete a user registry hive: ${ ex }`);
         }
       }
     }
