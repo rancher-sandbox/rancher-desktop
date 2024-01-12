@@ -30,7 +30,7 @@ export default async function setupNetworking() {
       httpsOptions.ca.push(cert);
     }
   } catch (ex) {
-    console.error(ex);
+    console.error('Error getting system certificates:', ex);
     throw ex;
   }
 
