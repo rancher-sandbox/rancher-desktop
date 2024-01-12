@@ -11,7 +11,7 @@ import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { clearUserProfile } from '../e2e/utils/ProfileUtils';
 import {
-  createDefaultSettings, createUserProfile, reportAsset, teardown, tool,
+  createDefaultSettings, createUserProfile, reportAsset, retry, teardown, tool,
 } from '../e2e/utils/TestUtils';
 
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
@@ -70,8 +70,12 @@ test.describe.serial('Main App Test', () => {
 
     await page.waitForTimeout(2500);
 
-    await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
-    await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension');
+    await retry(async() => {
+      await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
+    }, { tries: 5 });
+    await retry(async() => {
+      await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension');
+    }, { tries: 5 });
 
     const navExtension = page.locator('[data-test="extension-nav-epinio"]');
 
@@ -88,7 +92,7 @@ test.describe.serial('Main App Test', () => {
 
   test.describe('Main Page', () => {
     test('General Page', async({ colorScheme }) => {
-      await screenshot.take('General');
+      await screenshot.take('General', navPage);
     });
 
     test('Containers Page', async() => {
@@ -99,12 +103,23 @@ test.describe.serial('Main App Test', () => {
       });
       await containersPage.page.evaluate(() => {
         // eslint-disable-next-line
-        // @ts-ignore
+        // @ts-ignore TypeScript doesn't have the correct context.
+        window.ddClient.docker._listContainers = window.ddClient.docker.listContainers;
+        // eslint-disable-next-line
+        // @ts-ignore TypeScript doesn't have the correct context.
         window.ddClient.docker.listContainers = listContainersMock;
       });
 
-      await expect(containersPage.page.getByRole('row')).toHaveCount(6);
-      await screenshot.take('Containers');
+      try {
+        await expect(containersPage.page.getByRole('row')).toHaveCount(6);
+        await screenshot.take('Containers');
+      } finally {
+        await containersPage.page.evaluate(() => {
+          // eslint-disable-next-line
+          // @ts-ignore TypeScript doesn't have the correct context.
+          window.ddClient.docker.listContainers = window.ddClient.docker._listContainers;
+        });
+      }
     });
 
     test('PortForwarding Page', async({ colorScheme }) => {
@@ -170,6 +185,8 @@ test.describe.serial('Main App Test', () => {
 
       await extensionsPage.tabInstalled.click();
 
+      // Should have the heading, Epinio, and Logs Explorer.
+      await expect(extensionsPage.page.getByRole('row')).toHaveCount(3);
       await screenshot.take('Extensions-Installed');
 
       await extensionsPage.tabCatalog.click();
