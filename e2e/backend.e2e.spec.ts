@@ -89,6 +89,17 @@ test.describe.serial('KubernetesBackend', () => {
     test('should detect changes', async() => {
       const currentSettings = (await get('/v1/settings')) as Settings;
 
+      if (!currentSettings.kubernetes.version) {
+        // The Kubernetes version could be empty if it's previously disabled.
+        // Set something.
+        const updatedSettings: RecursivePartial<Settings> = {
+          kubernetes: { version: '1.23.4' },
+          version:    10 as Settings['version'],
+        };
+
+        await expect(put('/v1/settings', updatedSettings)).resolves.toBeDefined();
+      }
+
       const newSettings: RecursivePartial<Settings> = {
         containerEngine: { name: getAlternateSetting(currentSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
         kubernetes:      {
