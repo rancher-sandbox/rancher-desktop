@@ -129,7 +129,7 @@ export async function sign(workDir: string): Promise<string[]> {
   const arch = process.env.M1 ? Arch.arm64 : Arch.x64;
   const productFileName = config.productName?.replace(/\s+/g, '.');
   const productArch = process.env.M1 ? 'aarch64' : 'x86_64';
-  const artifactName = `${ productFileName }-\${version}.${ productArch }.\${ext}`;
+  const artifactName = `${ productFileName }-\${version}-mac.${ productArch }.\${ext}`;
   const formats = ['dmg', 'zip'];
 
   // Build the dmg, explicitly _not_ using an identity; we just signed
@@ -140,19 +140,27 @@ export async function sign(workDir: string): Promise<string[]> {
     prepackaged: appDir,
   });
 
-  const filesToSign = results.filter(f => !f.endsWith('.blockmap'));
+  // The .dmg and the .zip have slightly different file names, so we need to
+  // deal with them separately.
 
-  for (const extension of formats) {
-    if (!filesToSign.find(v => v.endsWith(`.${ extension }`))) {
-      throw new Error(`Could not find built ${ extension } file`);
-    }
+  const dmgFile = results.find(f => f.endsWith('.dmg'));
+  const zipFile = results.find(f => f.endsWith('.zip'));
+
+  if (!dmgFile) {
+    throw new Error(`Could not find build disk image`);
+  }
+  if (!zipFile) {
+    throw new Error(`Could not find build zip file`);
   }
 
-  await Promise.all(Object.values(filesToSign).map((f) => {
+  const dmgRenamedFile = dmgFile.replace('-mac.', '.');
+
+  await fs.promises.rename(dmgFile, dmgRenamedFile);
+  await Promise.all([dmgRenamedFile, zipFile].map((f) => {
     return spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', f], { stdio: 'inherit' });
   }));
 
-  return Object.values(filesToSign);
+  return Object.values([dmgRenamedFile, zipFile]);
 }
 
 /**
