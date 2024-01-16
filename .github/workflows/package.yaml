@@ -242,6 +242,7 @@ jobs:
         security create-keychain -p "" tmp.keychain
         security default-keychain -d user -s tmp.keychain
         security unlock-keychain -p "" tmp.keychain
+        security set-keychain-settings -u tmp.keychain # Disable keychain auto-lock
         security import key.pem -k tmp.keychain -t priv -A
         security import cert.pem -k tmp.keychain -t cert -A
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
