@@ -304,7 +304,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
-    });
+    }, console);
 
     if (!(process.env.RD_TEST ?? '').includes('e2e')) {
       process.on('exit', async() => {

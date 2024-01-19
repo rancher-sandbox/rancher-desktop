@@ -1,5 +1,7 @@
 import { BackendProgress } from './backend';
 
+import { Log } from '@pkg/utils/logging';
+
 const ErrorDescription = Symbol('progressTracker.description');
 
 export function getProgressErrorDescription(e: any) {
@@ -21,8 +23,9 @@ export default class ProgressTracker {
   /**
    * @param notify The callback to invoke on progress change.
    */
-  constructor(notify: (progress: BackendProgress) => void) {
+  constructor(notify: (progress: BackendProgress) => void, log?: Log) {
     this.notify = notify;
+    this.log = log;
   }
 
   /**
@@ -30,6 +33,11 @@ export default class ProgressTracker {
    * state of progress.
    */
   protected notify: (progress: BackendProgress) => void;
+
+  /**
+   * Optional logger to track state changes.   We will only emit debug output.
+   */
+  protected log?: Log;
 
   /**
    * A progress object that is preferred over progress objects that
@@ -89,6 +97,7 @@ export default class ProgressTracker {
       },
     });
     this.update();
+    this.log?.debug(`Progress: started ${ description }`);
 
     const promise = (v instanceof Promise) ? v : v();
 
@@ -96,10 +105,12 @@ export default class ProgressTracker {
       promise.then((val) => {
         this.actionProgress = this.actionProgress.filter(p => p.id !== id);
         this.update();
+        this.log?.debug(`Progress: finished ${ description }`);
         resolve(val);
       }).catch((ex) => {
         this.actionProgress = this.actionProgress.filter(p => p.id !== id);
         this.update();
+        this.log?.debug(`Progress: errored ${ description }: ${ ex?.ErrorDescription ?? ex }`);
         if (!(ErrorDescription in ex)) {
           Object.defineProperty(
             ex,
