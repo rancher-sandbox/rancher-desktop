@@ -163,7 +163,9 @@ Object.assign(module.exports.parserOptions, {
   project:             ['./tsconfig.json', './pkg/rancher-desktop/tsconfig.json'],
   extraFileExtensions: ['.vue', '.mjs'],
 });
-module.exports.plugins = ['@typescript-eslint', 'deprecation'];
+module.exports.plugins = [
+  '@typescript-eslint', 'deprecation', 'node',
+];
 // Insert the TypeScript recommended changes, but do it right after the default
 // ESLint one so that Nuxt things can still override it.
 module.exports.extends.splice(
