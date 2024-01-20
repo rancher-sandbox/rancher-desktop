@@ -1,9 +1,12 @@
 name: e2e tests on Windows
 
 on:
-  schedule:
-    - cron: '13 5 * * 1-5'
-  workflow_dispatch: {}
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+
 defaults:
   run:
     shell: powershell
@@ -20,7 +23,6 @@ jobs:
       - run: wsl --version
       - name: Stop Docker daemon
         run: Stop-Service -Name docker
-        shell: powershell
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
