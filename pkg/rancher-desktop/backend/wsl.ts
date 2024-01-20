@@ -106,7 +106,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
-    });
+    }, console);
 
     this.hostSwitchProcess = new BackgroundProcess('host-switch.exe', {
       spawn: async() => {

@@ -8,18 +8,19 @@ defaults:
   run:
     shell: powershell
 jobs:
-
   e2e-tests:
     timeout-minutes: 90
-    runs-on: [self-hosted, Windows, X64, win11]
+    runs-on: windows-latest
     steps:
-      - run: wsl --unregister rancher-desktop
+      - name: Update any pre-installed WSL
+        run: wsl --update
         continue-on-error: true
-      - run: wsl --unregister rancher-desktop-data
-        continue-on-error: true
-      - run: Remove-Item -Path "$HOME/AppData/Local/rancher-desktop" -Recurse -Force -ErrorAction Ignore
-      - name: Remove golang module cache
-        run: Remove-Item -Path "$HOME/go/pkg/mod" -Recurse -Force -ErrorAction Ignore
+      - name: Install WSL2 from the Store as necessary
+        run: wsl --install --no-distribution
+      - run: wsl --version
+      - name: Stop Docker daemon
+        run: Stop-Service -Name docker
+        shell: powershell
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
