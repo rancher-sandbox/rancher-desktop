@@ -66,7 +66,7 @@
     "fs-extra": "11.2.0",
     "http-proxy-agent": "7.0.0",
     "http-proxy-middleware": "2.0.6",
-    "https-proxy-agent": "7.0.1",
+    "https-proxy-agent": "7.0.2",
     "intl-messageformat": "10.5.8",
     "jquery": "3.7.1",
     "jsonpath": "1.1.1",
