@@ -148,7 +148,7 @@ credhelper
 cri
 crond
 crt
-Csh
+csh
 cshrc
 Ctl
 ctrctl

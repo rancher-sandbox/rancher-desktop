@@ -2,6 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { Mutex } from 'async-mutex';
+
 import manageLinesInFile from '@pkg/integrations/manageLinesInFile';
 import { ManualPathManager, PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
 import mainEvents from '@pkg/main/mainEvents';
@@ -14,6 +16,9 @@ import paths from '@pkg/utils/paths';
  */
 export class RcFilePathManager implements PathManager {
   readonly strategy = PathManagementStrategy.RcFiles;
+  private readonly posixMutex : Mutex;
+  private readonly cshMutex : Mutex;
+  private readonly fishMutex : Mutex;
 
   constructor() {
     const platform = os.platform();
@@ -21,6 +26,9 @@ export class RcFilePathManager implements PathManager {
     if (platform !== 'linux' && platform !== 'darwin') {
       throw new Error(`Platform "${ platform }" is not supported by RcFilePathManager`);
     }
+    this.posixMutex = new Mutex();
+    this.cshMutex = new Mutex();
+    this.fishMutex = new Mutex();
   }
 
   async enforce(): Promise<void> {
@@ -41,79 +49,85 @@ export class RcFilePathManager implements PathManager {
    * non-login shell. We must cover both cases.
    */
   protected async managePosix(desiredPresent: boolean): Promise<void> {
-    const pathLine = `export PATH="${ paths.integration }:$PATH"`;
-    // Note: order is important here. Only the first one that is present is modified.
-    const bashLoginShellFiles = [
-      '.bash_profile',
-      '.bash_login',
-      '.profile',
-    ];
+    await this.posixMutex.runExclusive(async() => {
+      const pathLine = `export PATH="${ paths.integration }:$PATH"`;
+      // Note: order is important here. Only the first one that is present is modified.
+      const bashLoginShellFiles = [
+        '.bash_profile',
+        '.bash_login',
+        '.profile',
+      ];
 
-    // Handle files that pertain to bash login shells
-    if (desiredPresent) {
-      let linesAdded = false;
+      // Handle files that pertain to bash login shells
+      if (desiredPresent) {
+        let linesAdded = false;
 
-      // Write the first file that exists, if any
-      for (const fileName of bashLoginShellFiles) {
-        const filePath = path.join(os.homedir(), fileName);
+        // Write the first file that exists, if any
+        for (const fileName of bashLoginShellFiles) {
+          const filePath = path.join(os.homedir(), fileName);
 
-        try {
-          await fs.promises.stat(filePath);
-        } catch (error: any) {
-          if (error.code === 'ENOENT') {
-            continue;
+          try {
+            await fs.promises.stat(filePath);
+          } catch (error: any) {
+            if (error.code === 'ENOENT') {
+              continue;
+            }
+            throw error;
           }
-          throw error;
+          await manageLinesInFile(filePath, [pathLine], desiredPresent);
+          linesAdded = true;
+          break;
         }
-        await manageLinesInFile(filePath, [pathLine], desiredPresent);
-        linesAdded = true;
-        break;
+
+        // If none of the files exist, write .bash_profile
+        if (!linesAdded) {
+          const filePath = path.join(os.homedir(), bashLoginShellFiles[0]);
+
+          await manageLinesInFile(filePath, [pathLine], desiredPresent);
+        }
+      } else {
+        // Ensure lines are not present in any of the files
+        await Promise.all(bashLoginShellFiles.map((fileName) => {
+          const filePath = path.join(os.homedir(), fileName);
+
+          return manageLinesInFile(filePath, [], desiredPresent);
+        }));
       }
 
-      // If none of the files exist, write .bash_profile
-      if (!linesAdded) {
-        const filePath = path.join(os.homedir(), bashLoginShellFiles[0]);
+      // Handle other shells' rc files and .bashrc
+      await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
+        const rcPath = path.join(os.homedir(), rcName);
 
-        await manageLinesInFile(filePath, [pathLine], desiredPresent);
-      }
-    } else {
-      // Ensure lines are not present in any of the files
-      await Promise.all(bashLoginShellFiles.map((fileName) => {
-        const filePath = path.join(os.homedir(), fileName);
-
-        return manageLinesInFile(filePath, [], desiredPresent);
+        return manageLinesInFile(rcPath, [pathLine], desiredPresent);
       }));
-    }
 
-    // Handle other shells' rc files and .bashrc
-    await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
-      const rcPath = path.join(os.homedir(), rcName);
-
-      return manageLinesInFile(rcPath, [pathLine], desiredPresent);
-    }));
-
-    mainEvents.invoke('diagnostics-trigger', 'RD_BIN_IN_BASH_PATH');
-    mainEvents.invoke('diagnostics-trigger', 'RD_BIN_IN_ZSH_PATH');
+      mainEvents.invoke('diagnostics-trigger', 'RD_BIN_IN_BASH_PATH');
+      mainEvents.invoke('diagnostics-trigger', 'RD_BIN_IN_ZSH_PATH');
+    });
   }
 
   protected async manageCsh(desiredPresent: boolean): Promise<void> {
-    const pathLine = `setenv PATH "${ paths.integration }"\\:"$PATH"`;
+    await this.cshMutex.runExclusive(async() => {
+      const pathLine = `setenv PATH "${ paths.integration }"\\:"$PATH"`;
 
-    await Promise.all(['.cshrc', '.tcshrc'].map((rcName) => {
-      const rcPath = path.join(os.homedir(), rcName);
+      await Promise.all(['.cshrc', '.tcshrc'].map((rcName) => {
+        const rcPath = path.join(os.homedir(), rcName);
 
-      return manageLinesInFile(rcPath, [pathLine], desiredPresent);
-    }));
+        return manageLinesInFile(rcPath, [pathLine], desiredPresent);
+      }));
+    });
   }
 
   protected async manageFish(desiredPresent: boolean): Promise<void> {
-    const pathLine = `set --export --prepend PATH "${ paths.integration }"`;
-    const configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
-    const fishConfigDir = path.join(configHome, 'fish');
-    const fishConfigPath = path.join(fishConfigDir, 'config.fish');
+    await this.fishMutex.runExclusive(async() => {
+      const pathLine = `set --export --prepend PATH "${ paths.integration }"`;
+      const configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+      const fishConfigDir = path.join(configHome, 'fish');
+      const fishConfigPath = path.join(fishConfigDir, 'config.fish');
 
-    await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
-    await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
+      await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
+      await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
+    });
   }
 }
 
