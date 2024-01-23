@@ -85,3 +85,5 @@ sequenceDiagram
 
     vm-switch->>host-switch.exe: forward ethernet
 ```
+## wsl-proxy
+Its primary function comes into play when WSL integration is activated alongside the network tunnel. The purpose is to actively listen on `127.0.0.1:6443` and reroute all incoming requests to the upstream Kubernetes API server residing within the network namespace. The proxy achieves this by directing the incoming traffic through a Virtual Ethernet pair. Specifically, `veth-rd0` serves as the originating end listening in the default network, while `veth-rd1` acts as the terminating end within the network namespace.

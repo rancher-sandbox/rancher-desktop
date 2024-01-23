@@ -1,7 +1,7 @@
 LDFLAGS = -ldflags '-s -w'
 
 .PHONY: build
-build: host-switch vm-switch network-setup
+build: host-switch vm-switch network-setup wsl-proxy
 
 bin/host-switch.exe:
 	GOOS=windows go build $(LDFLAGS) -o $@ ./cmd/host
@@ -20,6 +20,12 @@ bin/network-setup:
 
 .PHONY: network-setup
 network-setup: bin/network-setup
+
+bin/wsl-proxy:
+	GOOS=linux go build $(LDFLAGS) -o $@ ./cmd/proxy
+
+.PHONY: wsl-proxy
+wsl-proxy: bin/wsl-proxy
 
 .PHONY: fmt
 fmt:
