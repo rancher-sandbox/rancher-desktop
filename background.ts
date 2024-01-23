@@ -136,9 +136,7 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   k8smanager.debug = runInDebugMode;
 
-  if (pathManager?.strategy !== newSettings.application.pathManagementStrategy) {
-    await setPathManager(newSettings.application.pathManagementStrategy);
-  }
+  await setPathManager(newSettings.application.pathManagementStrategy);
   await pathManager.enforce();
 
   if (newSettings.application.hideNotificationIcon) {
@@ -294,6 +292,9 @@ Electron.app.whenReady().then(async() => {
 
 async function setPathManager(newStrategy: PathManagementStrategy) {
   if (pathManager) {
+    if (pathManager.strategy === newStrategy) {
+      return;
+    }
     await pathManager.remove();
   }
   pathManager = getPathManagerFor(newStrategy);
