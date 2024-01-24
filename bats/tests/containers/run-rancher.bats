@@ -17,7 +17,11 @@ load '../helpers/load'
 }
 
 @test 'verify rancher' {
-    run try --max 9 --delay 10 curl --insecure --silent --show-error "https://localhost:8443/dashboard/auth/login"
+    local max_tries=9
+    if [[ -n $CI ]]; then
+        max_tries=30
+    fi
+    run try --max $max_tries --delay 10 curl --insecure --silent --show-error "https://localhost:8443/dashboard/auth/login"
     assert_success
     assert_output --partial "Rancher Dashboard"
     run ctrctl logs rancher
