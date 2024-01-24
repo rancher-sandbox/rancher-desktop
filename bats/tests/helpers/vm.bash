@@ -219,6 +219,10 @@ docker_context_exists() {
     run docker_exe context ls -q
     assert_success || return
     assert_line "$RD_DOCKER_CONTEXT"
+    # Ensure that the context actually exists by reading from the file.
+    run docker_exe context inspect "$RD_DOCKER_CONTEXT" --format '{{ .Name }}'
+    assert_success || return
+    assert_output "$RD_DOCKER_CONTEXT"
 }
 
 get_service_pid() {
