@@ -8,7 +8,7 @@ kuberlr: 0.4.5
 helm: 3.14.0
 dockerCLI: 24.0.7
 dockerBuildx: 0.12.1
-dockerCompose: 2.24.2
+dockerCompose: 2.24.3
 trivy: 0.48.3
 steve: 0.1.0-beta9
 guestAgent: 0.3.19
