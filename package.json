@@ -2,7 +2,7 @@
   "name": "rancher-desktop",
   "productName": "Rancher Desktop",
   "license": "Apache-2.0",
-  "version": "1.12.0",
+  "version": "1.12.2",
   "author": {
     "name": "SUSE",
     "email": "containers@suse.com"
@@ -54,6 +54,7 @@
     "@kubernetes/client-node": "0.18.1",
     "@rancher/components": "0.1.4",
     "agent-base": "6.0.2",
+    "async-mutex": "^0.4.1",
     "console": "0.7.2",
     "cookie-universal": "2.2.2",
     "core-js": "3.25.3",

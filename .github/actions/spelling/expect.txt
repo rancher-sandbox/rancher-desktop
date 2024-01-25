@@ -151,7 +151,7 @@ credhelper
 cri
 crond
 crt
-Csh
+csh
 cshrc
 Ctl
 ctrctl
@@ -251,6 +251,7 @@ fav
 fcb
 fdx
 featurename
+FEEEFEEE
 femto
 ffi
 ficlone
