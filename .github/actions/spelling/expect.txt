@@ -27,7 +27,6 @@ andsection
 apify
 apiservice
 apk
-apparmor
 appdata
 APPDIR
 appimage
@@ -67,9 +66,8 @@ bcdfghjklmnpqrstvwxz
 bellingham
 bindir
 binfmt
-BitBlt
+Blt
 bitnami
-blkio
 blockmap
 bootfs
 bosco
@@ -103,13 +101,11 @@ cecinestpasuncategory
 ceph
 certutil
 cgroupfs
-cgroupns
 cgroups
 checkpath
 chirico
 cidata
 cidfile
-cilogs
 Cim
 clonefile
 cloudca
@@ -144,7 +140,6 @@ copypac
 coredns
 corejs
 coreutils
-cpuset
 crds
 credfwd
 credhelper
@@ -162,7 +157,6 @@ dapp
 dasherize
 datadog
 dayjs
-dbstr
 dcmonitor
 dcnone
 dcrd
@@ -205,7 +199,6 @@ dports
 dri
 DSL
 Duex
-dword
 Dwm
 dwmapi
 DWMWA
@@ -256,7 +249,6 @@ ffi
 ficlone
 filekey
 filestat
-FILETIMEs
 fineprint
 flavio
 fleetworkspace
@@ -300,7 +292,6 @@ Gutterless
 gvisor
 hardlinks
 hashicorp
-HCERTSTORE
 HDD
 healthcheck
 healthz
@@ -348,9 +339,6 @@ installable
 INSTALLMESSAGE
 ioctl
 ipaddr
-ipam
-ipfs
-isexcluded
 isthebestmeshuggahalbum
 istio
 istiod
@@ -405,14 +393,12 @@ libexec
 libexpat
 libgbm
 libgcc
-libgconf
 libgdk
 libgio
 libglib
 libgmodule
 libgobject
 libgtk
-libnotify
 libnspr
 libnss
 libpango
@@ -424,8 +410,6 @@ libxext
 libxfixes
 libxkbcommon
 libxrandr
-libxss
-libxtst
 limactl
 limaloc
 linds
@@ -447,7 +431,6 @@ loglines
 logrus
 logz
 lovelace
-lsb
 mabels
 macarm
 machinedeployment
@@ -486,7 +469,6 @@ MSIHANDLE
 MSIINSTALLPERUSER
 MSIX
 msize
-MSRDC
 msvs
 mszip
 multierror
@@ -502,7 +484,6 @@ napanee
 navlink
 nerdctl
 netcat
-netconfpath
 netsh
 networkpolicy
 neu
@@ -515,13 +496,11 @@ nodedriver
 nodemetrics
 nodepool
 nodeport
-nodesource
 nodetemplate
 nofix
 nolint
 nologin
 nologo
-nondistributable
 NONINFRINGEMENT
 noproxy
 norestart
@@ -538,12 +517,10 @@ nss
 nullglob
 nuxt
 nxt
-nydus
 oapi
 objectset
 octicons
 oidc
-onecore
 oneoff
 oom
 openapitools
@@ -563,15 +540,11 @@ oswald
 osx
 osxkeychain
 otccce
-overlaybd
 overlayfs
 pageload
 pagerduty
 parsesection
 pascalize
-PCCERT
-PCERT
-PCRYPT
 pcs
 pdp
 penpot
@@ -620,7 +593,6 @@ PROXYLIST
 PSelected
 PSHOME
 psps
-psz
 ptn
 publicdomain
 pushable
@@ -632,7 +604,6 @@ qword
 rackspace
 rancherdesktop
 rancherkubernetesengine
-ranchertest
 rawdata
 rcedit
 rcfiles
@@ -643,7 +614,6 @@ rdinstall
 RDRUNAFTERINSTALL
 rdshell
 rdsudo
-rdt
 rdtest
 rdx
 readyz
@@ -724,7 +694,6 @@ snakize
 softmmu
 someothername
 somepaththatshouldnevereverexist
-spc
 splatform
 splunk
 ssd
@@ -782,7 +751,6 @@ trivy
 TVar
 tvf
 UAC
-UBR
 ucmonitor
 UEFI
 Unauthed
@@ -806,7 +774,6 @@ vcs
 vde
 ventura
 vertificate
-vfoo
 vhdx
 vinzenz
 virt
@@ -830,7 +797,6 @@ vuex
 vul
 vznat
 Warnf
-webcontents
 whatsnew
 wincred
 winio
@@ -847,14 +813,12 @@ wsl
 wslapi
 wslconfig
 WSLENV
-WSLg
 wslify
 WSLIs
 WSLINSTALLED
 wslutils
 WWID
 wwn
-xauth
 Xcomposite
 Xdamage
 xdev
@@ -881,7 +845,6 @@ zipperhead
 ZSelected
 zst
 zstack
-zstdchunked
 zxf
 zypak
 zypp
