@@ -10,11 +10,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/adrg/xdg"
 	"os"
 	"path/filepath"
 	"regexp"
 	"text/template"
+
+	"github.com/adrg/xdg"
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
 const autostartFileTemplateContents = `[Desktop Entry]
@@ -133,14 +136,33 @@ func findApplicationFilePath() (string, error) {
 // Gathers the info that is needed to fill out the autostart .desktop
 // file template.
 func getAutostartFileData() (autostartFileData, error) {
-	// TODO: update this code once paths tracking is moved into rdctl
-	rancherDesktopSymlinkPath := filepath.Join(xdg.Home, ".rd", "bin", "rancher-desktop")
-	appImagePath, err := filepath.EvalSymlinks(rancherDesktopSymlinkPath)
-	if err != nil {
-		return autostartFileData{}, fmt.Errorf("failed to resolve %q: %w", rancherDesktopSymlinkPath, err)
+	executablePath := ""
+	if _, ok := os.LookupEnv("APPIMAGE"); ok {
+		// If we're running under AppImage, then we need to look up
+		// ~/.rd/bin/rancher-desktop and resolve it to find the executable path.
+		// We only expect to be run from the UI here, so the environment
+		// variable should be set correctly.
+		paths, err := p.GetPaths()
+		if err != nil {
+			return autostartFileData{}, fmt.Errorf("failed to get paths: %w", err)
+		}
+		rancherDesktopSymlinkPath := filepath.Join(paths.Integration, "rancher-desktop")
+		executablePath, err = filepath.EvalSymlinks(rancherDesktopSymlinkPath)
+		if err != nil {
+			return autostartFileData{}, fmt.Errorf("failed to resolve %q: %w", rancherDesktopSymlinkPath, err)
+		}
+	} else {
+		// We're not running under AppImage; we should have a normal install
+		// (either an extracted zip file, or RPM), so resolving the application
+		// executable relative to the current executable path should be fine.
+		var err error
+		executablePath, err = utils.GetRDPath()
+		if err != nil {
+			return autostartFileData{}, fmt.Errorf("failed to get Rancher Desktop executable: %w", err)
+		}
 	}
 
 	return autostartFileData{
-		Exec: appImagePath,
+		Exec: executablePath,
 	}, nil
 }
