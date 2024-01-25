@@ -5,7 +5,6 @@ import path from 'path';
 import util from 'util';
 
 import { expect } from '@playwright/test';
-import dayjs from 'dayjs';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
@@ -19,7 +18,6 @@ interface ScreenshotsOptions {
 
 export class Screenshots {
   private isOsCommand = true;
-  private sleepDuration = Number(process.env.RD_ENV_SCREENSHOT_SLEEP) || 1000;
 
   // used by Mac api
   private appBundleTitle = 'Electron';
@@ -59,7 +57,9 @@ export class Screenshots {
       return `screencapture -o -l $(GetWindowID  "${ this.appBundleTitle }" "${ this.windowTitle }") ${ file }`;
     }
     if (os.platform() === 'win32') {
-      return `${ path.resolve(process.cwd(), 'resources', 'ShareX', 'sharex') } -p -s -ActiveWindow`;
+      const script = path.resolve(__dirname, 'screenshot.ps1');
+
+      return `powershell.exe ${ script } ${ file }`;
     }
 
     return `gnome-screenshot -w -f ${ file }`;
@@ -80,19 +80,7 @@ export class Screenshots {
     const command = this.osCommand(options.path);
 
     try {
-      childProcess.execSync(command);
-
-      if (os.platform() === 'win32') {
-        // sleep to allow ShareX to write screenshot
-        await util.promisify(setTimeout)(this.sleepDuration);
-        const screenshotsPath = path.resolve(process.cwd(), 'resources', 'ShareX', 'ShareX', 'Screenshots', `${ dayjs().format('YYYY-MM') }`);
-        const screenshots = fs.readdirSync(screenshotsPath);
-
-        fs.renameSync(
-          path.resolve(screenshotsPath, screenshots?.[0]),
-          this.buildPath(title),
-        );
-      }
+      await util.promisify(childProcess.exec)(command);
     } catch (e) {
       console.error(`Error, command failed: ${ command }`, { error: e });
       process.exit(1);
@@ -106,14 +94,16 @@ export class MainWindowScreenshots extends Screenshots {
     this.windowTitle = 'Rancher Desktop';
   }
 
-  async take(tabName: string, navPage?: NavPage, timeout = 200) {
+  async take(tabName: Parameters<NavPage['navigateTo']>[0], navPage?: NavPage, timeout?: number): Promise<void>;
+  async take(screenshotName: string): Promise<void>;
+  async take(name: string, navPage?: NavPage, timeout = 200) {
     if (navPage) {
-      await navPage.navigateTo(tabName as any);
+      await navPage.navigateTo(name as Parameters<NavPage['navigateTo']>[0]);
       await this.page.waitForTimeout(timeout);
     }
 
     await this.createScreenshotsDirectory();
-    await this.screenshot(tabName);
+    await this.screenshot(name);
   }
 }
 

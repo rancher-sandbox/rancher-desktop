@@ -24,7 +24,7 @@ jobs:
         sparse-checkout: src/disk-images/github-runner-linux
     - run: ./build-image.sh
       working-directory: src/disk-images/github-runner-linux
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: github-runner-image.qcow2.zip
         path: src/disk-images/github-runner-linux/*.qcow2

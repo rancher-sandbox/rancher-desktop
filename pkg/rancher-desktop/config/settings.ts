@@ -106,7 +106,7 @@ export const defaultSettings = {
   portForwarding: { includeKubernetesServices: false },
   images:         {
     showAll:   true,
-    namespace: 'k8s.io',
+    namespace: 'default',
   },
   containers: {
     showAll:   true,

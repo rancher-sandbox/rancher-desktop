@@ -139,7 +139,7 @@ describe('SystemPreferences.vue', () => {
     });
 
     const checkForError = (func, expectedMessage) => {
-      expect(func).toThrowError(new VueSliderError(expectedMessage));
+      expect(func).toThrow(new VueSliderError(expectedMessage));
     };
 
     it('the sliders detect invalid values', async() => {

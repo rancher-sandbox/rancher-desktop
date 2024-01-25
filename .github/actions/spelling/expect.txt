@@ -3,6 +3,7 @@ abbrv
 ACTIONSTART
 activedirectory
 addexclusion
+addext
 addgroup
 addlabel
 addrepo
@@ -66,8 +67,10 @@ bcdfghjklmnpqrstvwxz
 bellingham
 bindir
 binfmt
+BitBlt
 bitnami
 blkio
+blockmap
 bootfs
 bosco
 bottlesofbeeronthewall
@@ -163,6 +166,7 @@ dbstr
 dcmonitor
 dcnone
 dcrd
+DCs
 ddd
 deadcode
 debbuild
@@ -202,6 +206,9 @@ dri
 DSL
 Duex
 dword
+Dwm
+dwmapi
+DWMWA
 eagerzeroedthick
 eastus
 ebegin
@@ -213,6 +220,7 @@ einfo
 electronjs
 elko
 elog
+endgroup
 endscript
 engineimage
 epinio
@@ -317,6 +325,7 @@ httpconfig
 Huawei
 huaweicce
 hvsock
+hwnd
 hyperv
 ial
 iana
@@ -364,6 +373,8 @@ KDM
 keychain
 keycloak
 keycloakoidc
+keyform
+keyout
 Kgm
 kiali
 kib
@@ -690,7 +701,6 @@ servicemonitor
 setproxy
 SFC
 sharedscripts
-sharex
 sharkanodo
 shasta
 shazbat
@@ -778,6 +788,7 @@ ucmonitor
 UEFI
 Unauthed
 UNCONFIGURED
+unfetch
 Uninstalls
 unparsable
 unregistering

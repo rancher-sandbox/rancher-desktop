@@ -10,7 +10,7 @@ on:
 jobs:
   e2e-tests:
     timeout-minutes: 150
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: '18.16.x'
           cache: yarn
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '^1.21'
           cache-dependency-path: src/go/**/go.sum
@@ -44,15 +44,19 @@ jobs:
               }
             }
           EOF
+      - name: Enable kvm access
+        run: sudo chmod a+rwx /dev/kvm
       - name: Run e2e Tests
         continue-on-error: false
-        run: yarn test:e2e
+        run: >-
+          xvfb-run --auto-servernum --server-args='-screen 0 1280x960x24'
+          yarn test:e2e
         env:
           RD_DEBUG_ENABLED: '1'
           CI: true
         timeout-minutes: 150
       - name: Upload failure reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: failure-reports.zip

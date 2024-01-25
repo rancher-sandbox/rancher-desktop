@@ -1,25 +1,28 @@
 name: e2e tests on Windows
 
 on:
-  schedule:
-    - cron: '13 5 * * 1-5'
-  workflow_dispatch: {}
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+
 defaults:
   run:
     shell: powershell
 jobs:
-
   e2e-tests:
     timeout-minutes: 90
-    runs-on: [self-hosted, Windows, X64, win11]
+    runs-on: windows-latest
     steps:
-      - run: wsl --unregister rancher-desktop
+      - name: Update any pre-installed WSL
+        run: wsl --update
         continue-on-error: true
-      - run: wsl --unregister rancher-desktop-data
-        continue-on-error: true
-      - run: Remove-Item -Path "$HOME/AppData/Local/rancher-desktop" -Recurse -Force -ErrorAction Ignore
-      - name: Remove golang module cache
-        run: Remove-Item -Path "$HOME/go/pkg/mod" -Recurse -Force -ErrorAction Ignore
+      - name: Install WSL2 from the Store as necessary
+        run: wsl --install --no-distribution
+      - run: wsl --version
+      - name: Stop Docker daemon
+        run: Stop-Service -Name docker
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -33,12 +36,12 @@ jobs:
         with:
           node-version: '18.16.x'
           cache: yarn
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '^1.21'
           cache: 'true'
           cache-dependency-path: src/go/**/go.sum
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - run: pip install setuptools
@@ -49,7 +52,7 @@ jobs:
         env:
           RD_DEBUG_ENABLED: '1'
       - name: Upload failure reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2etest-artifacts

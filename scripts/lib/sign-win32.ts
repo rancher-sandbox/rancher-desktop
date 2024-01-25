@@ -44,7 +44,7 @@ interface ElectronBuilderConfiguration {
   }
 }
 
-export async function sign(workDir: string): Promise<string> {
+export async function sign(workDir: string): Promise<string[]> {
   const certFingerprint = process.env.CSC_FINGERPRINT ?? '';
   const certPassword = process.env.CSC_KEY_PASSWORD ?? '';
 
@@ -98,7 +98,7 @@ export async function sign(workDir: string): Promise<string> {
 
   await signFn(...filesToSign);
 
-  return await buildWiX(workDir, unpackedDir, signFn);
+  return [await buildWiX(workDir, unpackedDir, signFn)];
 }
 
 /**

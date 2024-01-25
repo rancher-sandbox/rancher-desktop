@@ -12,7 +12,7 @@ import * as path from 'path';
 import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
 import { LinuxPackager } from 'app-builder-lib/out/linuxPackager';
 import { LinuxTargetHelper } from 'app-builder-lib/out/targets/LinuxTargetHelper';
-import { executeAppBuilder } from 'builder-util';
+import { executeAppBuilder, log } from 'builder-util';
 import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
 } from 'electron-builder';
@@ -103,7 +103,7 @@ class Builder {
   }
 
   async package(): Promise<CliOptions> {
-    console.log('Packaging...');
+    log.info('Packaging...');
 
     // Build the electron builder configuration to include the version data
     const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('packaging/electron-builder.yml', 'utf-8'));

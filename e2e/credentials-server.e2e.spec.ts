@@ -522,6 +522,7 @@ describeWithCreds('Credentials server', () => {
         'https://bobs.fish/clams05': 'none',
       },
     };
+    let existingDockerConfig: Buffer | undefined;
 
     test.beforeAll(async() => {
       const platform = os.platform();
@@ -535,7 +536,22 @@ describeWithCreds('Credentials server', () => {
       } else {
         throw new Error(`Unexpected platform of ${ platform }`);
       }
+      try {
+        existingDockerConfig = await fs.promises.readFile(dockerConfigPath);
+      } catch (ex) {
+        if (Object(ex).code !== 'ENOENT') {
+          throw ex;
+        }
+      }
       await fs.promises.writeFile(dockerConfigPath, JSON.stringify(dockerConfig, undefined, 2));
+    });
+
+    test.afterAll(async() => {
+      if (existingDockerConfig) {
+        await fs.promises.writeFile(dockerConfigPath, existingDockerConfig);
+      } else {
+        await fs.promises.unlink(dockerConfigPath);
+      }
     });
 
     // removeEntries and addEntry return Promise<void>,

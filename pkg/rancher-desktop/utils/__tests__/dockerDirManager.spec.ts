@@ -339,7 +339,7 @@ describe('DockerDirManager', () => {
       await fs.promises.writeFile(metaPath, 'irrelevant');
 
       await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
-      await expect(fs.promises.lstat(path.dirname(metaPath))).rejects.toThrowError('ENOENT');
+      await expect(fs.promises.lstat(path.dirname(metaPath))).rejects.toThrow('ENOENT');
     });
 
     it('should unset docker context as needed', async() => {
@@ -414,7 +414,7 @@ describe('DockerDirManager', () => {
     it('should blacklist docker-credentials-desktop', async() => {
       spawnMock = jest.spyOn(childProcess, 'spawnFile').mockRejectedValue('not called');
       await expect(subj['credHelperWorking']('desktop')).resolves.toBeFalsy();
-      expect(spawnMock).not.toBeCalled();
+      expect(spawnMock).not.toHaveBeenCalled();
     });
 
     it('should test cred helper with resources in path', async() => {

@@ -16,5 +16,7 @@ function main(args) {
 }
 
 if (require.main === module) {
+  // Silence BrowsersList warnings because they're pointless for us
+  process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true'; // spellcheck-ignore-line
   main(process.argv.slice(2));
 }

@@ -433,7 +433,7 @@ describe('settings', () => {
 
       expect(() => {
         settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
-      }).toThrowError('updating settings requires specifying an API version, but no version was specified');
+      }).toThrow('updating settings requires specifying an API version, but no version was specified');
     });
 
     it('complains about a non-numeric version field', () => {
@@ -441,7 +441,7 @@ describe('settings', () => {
 
       expect(() => {
         settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
-      }).toThrowError('updating settings requires specifying an API version, but "no way" is not a proper config version');
+      }).toThrow('updating settings requires specifying an API version, but "no way" is not a proper config version');
     });
 
     it('complains about a negative version field', () => {
@@ -449,7 +449,7 @@ describe('settings', () => {
 
       expect(() => {
         settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
-      }).toThrowError('updating settings requires specifying an API version, but "-7" is not a positive number');
+      }).toThrow('updating settings requires specifying an API version, but "-7" is not a positive number');
     });
 
     it('correctly migrates version-9 no-proxy settings', () => {
