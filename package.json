@@ -60,7 +60,7 @@
     "cross-spawn": "7.0.3",
     "crypto-browserify": "3.12.0",
     "dayjs": "1.11.10",
-    "dompurify": "3.0.6",
+    "dompurify": "3.0.8",
     "electron-updater": "6.1.7",
     "express": "4.18.2",
     "fs-extra": "11.2.0",
