@@ -18,16 +18,18 @@ limitations under the License.
 package cmd
 
 import (
+	"os"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "rdctl",
-	Short: "A CLI for Rancher Desktop",
-	Long:  `The eventual goal of this CLI is to enable any UI-based operation to be done from the command-line as well.`,
+	Use:               "rdctl",
+	Short:             "A CLI for Rancher Desktop",
+	Long:              `The eventual goal of this CLI is to enable any UI-based operation to be done from the command-line as well.`,
+	PersistentPreRunE: config.PersistentPreRunE,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
