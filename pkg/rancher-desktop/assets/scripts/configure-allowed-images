@@ -25,7 +25,7 @@ sed -i "\#-f $ial#d" /etc/init.d/containerd
 sed -i "/^supervise_daemon_args/a $setproxy" /etc/init.d/containerd
 
 # openresty is backgrounding itself (and writes its own pid file)
-sed -i 's/^command_background/#command_background/' /etc/init.d/openresty
+sed -i 's/^command_background/#command_background/' /etc/init.d/rd-openresty
 
 # Make sure openresty log directory exists
 install -d -m755 /var/log/openresty

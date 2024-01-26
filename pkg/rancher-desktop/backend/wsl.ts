@@ -1507,7 +1507,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.progressTracker.action('Starting proxy', 100, this.startService('moproxy'));
         }
         if (config.containerEngine.allowedImages.enabled) {
-          await this.progressTracker.action('Starting image proxy', 100, this.startService('openresty'));
+          await this.progressTracker.action('Starting image proxy', 100, this.startService('rd-openresty'));
         }
         await this.progressTracker.action('Starting container engine', 0, this.startService(config.containerEngine.name === ContainerEngine.MOBY ? 'docker' : 'containerd'));
 
@@ -1668,7 +1668,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.stopService('k3s');
           await this.stopService('docker');
           await this.stopService('containerd');
-          await this.stopService('openresty');
+          await this.stopService('rd-openresty');
           await this.stopService('rancher-desktop-guestagent');
           await this.stopService('buildkitd');
           try {

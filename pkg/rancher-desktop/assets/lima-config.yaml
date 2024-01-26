@@ -133,7 +133,7 @@ provision:
     set -o errexit -o nounset -o xtrace
 
     # openresty is backgrounding itself (and writes its own pid file)
-    sed -i 's/^command_background/#command_background/' /etc/init.d/openresty
+    sed -i 's/^command_background/#command_background/' /etc/init.d/rd-openresty
 
     # configure proxy only when allowed-images exists
     aiListConf=/usr/local/openresty/nginx/conf/allowed-images.conf
