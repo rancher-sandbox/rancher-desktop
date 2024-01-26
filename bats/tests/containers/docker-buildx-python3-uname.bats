@@ -1,7 +1,6 @@
 load '../helpers/load'
 
 local_setup() {
-    skip "Skipping because fix for #5363 has been reverted"
     if ! using_docker; then
         skip "This test only applied to the moby container engine"
     fi
