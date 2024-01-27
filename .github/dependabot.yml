@@ -26,6 +26,12 @@ updates:
       - # Current Vue config targets webpack 5.
         dependency-name: "webpack"
         versions: [ ">5" ]
+      - # Since we no longer pull in Nuxt (i.e. we have "ejected"), newer
+        # versions of this package mis-detect and think we're using Nuxt 3 (with
+        # Vue 3), and uses the wrong set of linters.  This happened in v12, so
+        # we ignore everything higher than 11.
+        dependency-name: "@nuxtjs/eslint-config-typescript"
+        versions: [ ">11" ]
       - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
         # support that. See https://github.com/electron/electron/issues/21457
         dependency-name: "node-fetch"
