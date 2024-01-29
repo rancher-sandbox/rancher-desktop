@@ -382,7 +382,12 @@ export default class K3sHelper extends events.EventEmitter {
       let channelResponse: Response;
 
       try {
-        channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
+        const headers: HeadersInit = { Accept: this.channelApiAccept };
+
+        if (process.env.GITHUB_TOKEN) {
+          headers.Authorization = `Bearer ${ process.env.GITHUB_TOKEN }`;
+        }
+        channelResponse = await fetch(this.channelApiUrl, { headers });
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
         if (!(await checkConnectivity('k3s.io'))) {
@@ -407,7 +412,12 @@ export default class K3sHelper extends events.EventEmitter {
       }
 
       while (wantMoreVersions && url) {
-        const response = await fetch(url, { headers: { Accept: this.releaseApiAccept } });
+        const headers: HeadersInit = { Accept: this.releaseApiAccept };
+
+        if (process.env.GITHUB_TOKEN) {
+          headers.Authorization = `Bearer ${ process.env.GITHUB_TOKEN }`;
+        }
+        const response = await fetch(url, { headers });
 
         console.debug(`Fetching releases from ${ url } -> ${ response.statusText }`);
         if (!response.ok) {
