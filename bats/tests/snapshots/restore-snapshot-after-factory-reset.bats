@@ -20,7 +20,7 @@ local_setup() {
     RD_CONTAINER_ENGINE=containerd
     start_kubernetes
     wait_for_container_engine
-    wait_for_apiserver
+    wait_for_kubelet
     wait_for_backend
 }
 
@@ -50,7 +50,7 @@ local_setup() {
     # make sure we are not waiting for the docker context to be created
     RD_CONTAINER_ENGINE="containerd"
     wait_for_container_engine
-    wait_for_apiserver
+    wait_for_kubelet
     wait_for_backend
 }
 

@@ -72,7 +72,7 @@ assert_traefik_on_localhost() {
 
 @test 'start k8s' {
     start_kubernetes --kubernetes.options.traefik=true
-    wait_for_apiserver
+    wait_for_kubelet
 }
 
 @test 'disable traefik' {
@@ -88,7 +88,7 @@ assert_traefik_on_localhost() {
     # Wait until k3s has restarted
     try --max 30 --delay 5 refute_service_pid k3s "${k3s_pid}"
 
-    wait_for_apiserver
+    wait_for_kubelet
     # Check if the traefik pods go down
     try --max 30 --delay 10 assert_traefik_pods_are_down
 }
@@ -112,7 +112,7 @@ assert_traefik_on_localhost() {
     # Wait until k3s has restarted
     try --max 30 --delay 5 refute_service_pid k3s "${k3s_pid}"
 
-    wait_for_apiserver
+    wait_for_kubelet
     # Check if the traefik pods come up
     try --max 30 --delay 10 assert_traefik_pods_are_up
 }
@@ -132,7 +132,7 @@ assert_traefik_on_localhost() {
         skip "kubernetes.ingress.localhost-only is a Windows-only setting"
     fi
     rdctl set --kubernetes.options.traefik --kubernetes.ingress.localhost-only
-    wait_for_apiserver
+    wait_for_kubelet
     # Check if the traefik pods come up
     try --max 30 --delay 10 assert_traefik_pods_are_up
 }

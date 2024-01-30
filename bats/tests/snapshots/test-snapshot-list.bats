@@ -23,7 +23,7 @@ local_setup() {
 @test 'start up' {
     start_kubernetes
     wait_for_container_engine
-    wait_for_apiserver
+    wait_for_kubelet
 }
 
 @test 'verify empty snapshot-list output' {

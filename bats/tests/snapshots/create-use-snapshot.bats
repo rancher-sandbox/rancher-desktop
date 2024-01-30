@@ -13,7 +13,7 @@ local_setup() {
     RD_CONTAINER_ENGINE=moby
     start_kubernetes
     wait_for_container_engine
-    wait_for_apiserver
+    wait_for_kubelet
     wait_for_backend
 }
 
@@ -39,7 +39,7 @@ local_setup() {
     RD_CONTAINER_ENGINE=containerd
     start_kubernetes
     wait_for_container_engine
-    wait_for_apiserver
+    wait_for_kubelet
     run rdctl api /settings
     assert_success
     run jq_output .containerEngine.name
@@ -62,7 +62,7 @@ local_setup() {
     # Keep this variable in sync with the current setting so the wait_for commands work
     RD_CONTAINER_ENGINE=moby
     wait_for_container_engine
-    wait_for_apiserver
+    wait_for_kubelet
 
     run rdctl api /settings
     assert_success
