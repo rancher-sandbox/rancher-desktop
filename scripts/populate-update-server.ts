@@ -252,7 +252,7 @@ async function main() {
   const packageURL = new URL(JSON.parse(await fs.promises.readFile('package.json', 'utf-8')).repository.url);
   const [packageOwner, packageRepo] = packageURL.pathname.replace(/\.git$/, '').split('/').filter(x => x);
   const buildInfo = yaml.parse(await fs.promises.readFile(buildInfoPath, 'utf-8'));
-  const tag: string = buildInfo.version.replace(/^v?/, 'v');
+  const tag: string = buildInfo.extraMetadata.version.replace(/^v?/, 'v');
 
   console.log(`Publishing ${ tag } from ${ owner }/${ repo } (upstream is ${ packageOwner }/${ packageRepo })...`);
   if (packageOwner === owner && packageRepo === repo) {
