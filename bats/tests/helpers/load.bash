@@ -101,6 +101,7 @@ setup() {
 
 teardown() {
     if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
+        capture_logs
         take_screenshot
     fi
 

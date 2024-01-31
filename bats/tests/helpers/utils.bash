@@ -243,14 +243,22 @@ capture_logs() {
 
 take_screenshot() {
     if taking_screenshots; then
+        local image_path
+        image_path="$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)"
+        mkdir -p "$PATH_BATS_LOGS"
         if is_macos; then
-            local file
-            file=$(unique_filename "${PATH_BATS_LOGS}/${BATS_SUITE_TEST_NUMBER}-${BATS_TEST_DESCRIPTION}" .png)
-            mkdir -p "$PATH_BATS_LOGS"
             # The terminal app must have "Screen Recording" permission;
             # otherwise only the desktop background is captured.
             # -x option means "do not play sound"
-            screencapture -x "$file"
+            screencapture -x "$image_path"
+        elif is_linux; then
+            if import -help </dev/null 2>&1 | grep --quiet -E 'Version:.*Magick'; then
+                # `import` from ImageMagick is available.
+                import -window root "$image_path"
+            elif gm import -help </dev/null 2>&1 | grep --quiet -E 'Version:.*Magick'; then
+                # GraphicsMagick is installed (its command is `gm`).
+                gm import -window root "$image_path"
+            fi
         fi
     fi
 }

@@ -2,9 +2,13 @@ wait_for_shell() {
     if is_windows; then
         try --max 24 --delay 5 rdctl shell true
     else
+        # Be at the root directory to avoid issues with limactl automatic
+        # changing to the current directory, which might not exist.
+        pushd /
         try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
         # wait until sshfs mounts are done
         try --max 12 --delay 5 rdctl shell test -d "$HOME/.rd"
+        popd || :
     fi
 }
 
@@ -219,6 +223,10 @@ docker_context_exists() {
     run docker_exe context ls -q
     assert_success || return
     assert_line "$RD_DOCKER_CONTEXT"
+    # Ensure that the context actually exists by reading from the file.
+    run docker_exe context inspect "$RD_DOCKER_CONTEXT" --format '{{ .Name }}'
+    assert_success || return
+    assert_output "$RD_DOCKER_CONTEXT"
 }
 
 get_service_pid() {
@@ -255,6 +263,9 @@ assert_service_status() {
 wait_for_service_status() {
     local service_name=$1
     local expect=$2
+
+    trace "waiting for VM to be available"
+    wait_for_shell
 
     trace "waiting for ${service_name} to be ${expect}"
     try --max 30 --delay 5 assert_service_status "$service_name" "$expect"

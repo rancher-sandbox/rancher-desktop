@@ -1,6 +1,7 @@
 wait_for_kubelet() {
     local desired_version="${1:-$RD_KUBERNETES_PREV_VERSION}"
     local timeout="$(($(date +%s) + 10 * 60))"
+    trace "waiting for Kubernetes ${desired_version} to be available"
     while true; do
         until kubectl get --raw /readyz &>/dev/null; do
             assert [ "$(date +%s)" -lt "$timeout" ]
