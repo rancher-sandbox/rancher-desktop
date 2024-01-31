@@ -22,12 +22,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 type shutdownSettingsStruct struct {
-	Verbose         bool
 	WaitForShutdown bool
 }
 
@@ -41,9 +39,6 @@ var shutdownCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
-		}
-		if commonShutdownSettings.Verbose {
-			logrus.SetLevel(logrus.TraceLevel)
 		}
 		cmd.SilenceUsage = true
 		result, err := doShutdown(&commonShutdownSettings, shutdown.Shutdown)
@@ -59,7 +54,6 @@ var shutdownCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(shutdownCmd)
-	shutdownCmd.Flags().BoolVar(&commonShutdownSettings.Verbose, "verbose", false, "be verbose")
 	shutdownCmd.Flags().BoolVar(&commonShutdownSettings.WaitForShutdown, "wait", true, "wait for shutdown to be confirmed")
 }
 

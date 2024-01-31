@@ -22,7 +22,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -42,9 +41,6 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
-		if commonShutdownSettings.Verbose {
-			logrus.SetLevel(logrus.TraceLevel)
-		}
 		cmd.SilenceUsage = true
 		commonShutdownSettings.WaitForShutdown = false
 		_, err := doShutdown(&commonShutdownSettings, shutdown.FactoryReset)
@@ -62,5 +58,4 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 func init() {
 	rootCmd.AddCommand(factoryResetCmd)
 	factoryResetCmd.Flags().BoolVar(&removeKubernetesCache, "remove-kubernetes-cache", false, "If specified, also removes the cached Kubernetes images.")
-	factoryResetCmd.Flags().BoolVar(&commonShutdownSettings.Verbose, "verbose", false, "Be verbose")
 }

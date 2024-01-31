@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +44,7 @@ type ConnectionInfo struct {
 
 var (
 	connectionSettings ConnectionInfo
+	verbose            bool
 
 	configPath string
 	// DefaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
@@ -71,6 +73,7 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Host, "host", "", "default is 127.0.0.1; most useful for WSL")
 	rootCmd.PersistentFlags().IntVar(&connectionSettings.Port, "port", 0, "overrides the port setting in the config file")
 	rootCmd.PersistentFlags().StringVar(&connectionSettings.Password, "password", "", "overrides the password setting in the config file")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Be verbose")
 }
 
 // GetConnectionInfo returns the connection details of the application API server.
@@ -161,4 +164,12 @@ func wslifyConfigDir() (string, error) {
 		return "", err
 	}
 	return strings.TrimRight(outBuf.String(), "\r\n"), err
+}
+
+// PersistentPreRunE is meant to be executed as the cobra hook
+func PersistentPreRunE(cmd *cobra.Command, args []string) error {
+	if verbose {
+		logrus.SetLevel(logrus.TraceLevel)
+	}
+	return nil
 }
