@@ -140,6 +140,7 @@ var commands = map[string]commandDefinition{
 		commandPath: "build",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
+			"--allow":         ignoredArgHandler,
 			"--build-arg":     ignoredArgHandler,
 			"--buildkit-host": ignoredArgHandler,
 			"--cache-from":    ignoredArgHandler,
@@ -179,6 +180,7 @@ var commands = map[string]commandDefinition{
 		commandPath: "builder build",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
+			"--allow":         ignoredArgHandler,
 			"--build-arg":     ignoredArgHandler,
 			"--buildkit-host": ignoredArgHandler,
 			"--cache-from":    ignoredArgHandler,
@@ -1229,6 +1231,7 @@ var commands = map[string]commandDefinition{
 		commandPath: "image build",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
+			"--allow":         ignoredArgHandler,
 			"--build-arg":     ignoredArgHandler,
 			"--buildkit-host": ignoredArgHandler,
 			"--cache-from":    ignoredArgHandler,
