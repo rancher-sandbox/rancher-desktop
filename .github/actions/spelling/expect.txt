@@ -68,6 +68,7 @@ bindir
 binfmt
 bitnami
 blkio
+blockmap
 bootfs
 bosco
 bottlesofbeeronthewall

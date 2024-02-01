@@ -31,7 +31,7 @@ type SigningConfig = {
   remove: string[];
 };
 
-export async function sign(workDir: string): Promise<string> {
+export async function sign(workDir: string): Promise<string[]> {
   const certFingerprint = process.env.CSC_FINGERPRINT ?? '';
   const appleId = process.env.APPLEID;
   const appleIdPassword = process.env.AC_PASSWORD;
@@ -125,28 +125,42 @@ export async function sign(workDir: string): Promise<string> {
     throw new Error(message.join('\n'));
   }
 
-  console.log('Building disk image...');
+  console.log('Building disk image and update archive...');
   const arch = process.env.M1 ? Arch.arm64 : Arch.x64;
   const productFileName = config.productName?.replace(/\s+/g, '.');
   const productArch = process.env.M1 ? 'aarch64' : 'x86_64';
-  const artifactName = `${ productFileName }-\${version}.${ productArch }.\${ext}`;
+  const artifactName = `${ productFileName }-\${version}-mac.${ productArch }.\${ext}`;
+  const formats = ['dmg', 'zip'];
 
   // Build the dmg, explicitly _not_ using an identity; we just signed
   // everything as we wanted already.
   const results = await build({
-    targets:     new Map([[Platform.MAC, new Map([[arch, ['dmg']]])]]),
+    targets:     new Map([[Platform.MAC, new Map([[arch, formats]])]]),
     config:      _.merge<Configuration, Configuration>(config, { mac: { artifactName, identity: null } }),
     prepackaged: appDir,
   });
 
-  const dmgFile = results.find(v => v.endsWith('.dmg'));
+  // The .dmg and the .zip have slightly different file names, so we need to
+  // deal with them separately.
+
+  const dmgFile = results.find(f => f.endsWith('.dmg'));
+  const zipFile = results.find(f => f.endsWith('.zip'));
 
   if (!dmgFile) {
-    throw new Error(`Could not find signed disk image`);
+    throw new Error(`Could not find build disk image`);
   }
-  await spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', dmgFile], { stdio: 'inherit' });
+  if (!zipFile) {
+    throw new Error(`Could not find build zip file`);
+  }
 
-  return dmgFile;
+  const dmgRenamedFile = dmgFile.replace('-mac.', '.');
+
+  await fs.promises.rename(dmgFile, dmgRenamedFile);
+  await Promise.all([dmgRenamedFile, zipFile].map((f) => {
+    return spawnFile('codesign', ['--sign', certFingerprint, '--timestamp', f], { stdio: 'inherit' });
+  }));
+
+  return Object.values([dmgRenamedFile, zipFile]);
 }
 
 /**
