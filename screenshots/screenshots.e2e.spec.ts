@@ -11,7 +11,7 @@ import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { clearUserProfile } from '../e2e/utils/ProfileUtils';
 import {
-  createDefaultSettings, createUserProfile, reportAsset, retry, teardown, tool,
+  createDefaultSettings, setUserProfile, reportAsset, retry, teardown, tool,
 } from '../e2e/utils/TestUtils';
 
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
@@ -39,7 +39,7 @@ test.describe.serial('Main App Test', () => {
       diagnostics: { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
 
-    await createUserProfile(
+    await setUserProfile(
       { version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
       {},
     );

@@ -8,7 +8,7 @@ import util from 'util';
 import { expect, Page } from '@playwright/test';
 
 import {
-  createDefaultSettings, createUserProfile, startRancherDesktop, retry, teardown,
+  createDefaultSettings, setUserProfile, startRancherDesktop, retry, teardown,
 } from './TestUtils';
 import { NavPage } from '../pages/nav-page';
 
@@ -126,7 +126,7 @@ export async function verifyNoRegistrySubtree(hive: string): Promise<void> {
 
 export async function verifyUserProfile(): Promise<void> {
   await clearUserProfile();
-  await createUserProfile({ version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true } } }, null);
+  await setUserProfile({ version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true } } }, null);
 }
 
 export async function verifyNoSystemProfile(): Promise<string[]> {

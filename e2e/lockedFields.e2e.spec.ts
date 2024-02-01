@@ -27,7 +27,7 @@ import { expect, test } from '@playwright/test';
 import { NavPage } from './pages/nav-page';
 import { verifyNoSystemProfile } from './utils/ProfileUtils';
 import {
-  createDefaultSettings, createUserProfile, startRancherDesktop, teardown, tool,
+  createDefaultSettings, setUserProfile, startRancherDesktop, teardown, tool,
 } from './utils/TestUtils';
 
 import type { DeploymentProfileType } from '@pkg/config/settings';
@@ -66,7 +66,7 @@ test.describe('Locked fields', () => {
   }
 
   async function restoreUserProfile() {
-    await createUserProfile(deploymentProfile?.defaults ?? null, deploymentProfile?.locked ?? null);
+    await setUserProfile(deploymentProfile?.defaults ?? null, deploymentProfile?.locked ?? null);
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -85,7 +85,7 @@ test.describe('Locked fields', () => {
   test.beforeAll(async() => {
     createDefaultSettings({ containerEngine: { allowedImages: { enabled: true, patterns: ['a', 'b', 'c', 'e'] } } });
     await saveUserProfile();
-    await createUserProfile(
+    await setUserProfile(
       { version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true } } },
       {
         version:         10,
