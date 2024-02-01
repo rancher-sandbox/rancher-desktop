@@ -166,7 +166,7 @@
     "mustache": "4.2.0",
     "nan": "2.18.0",
     "node-gyp": "10.0.1",
-    "node-gyp-build": "4.7.1",
+    "node-gyp-build": "4.8.0",
     "octokit": "3.1.1",
     "ps-tree": "1.2.0",
     "raw-loader": "4.0.2",
