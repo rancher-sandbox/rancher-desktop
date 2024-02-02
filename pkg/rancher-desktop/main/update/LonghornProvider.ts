@@ -393,7 +393,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     const assetFilter: (asset: GitHubReleaseAsset) => boolean = (() => {
       switch (this.platform) {
       case 'darwin': {
-        const isArm64 = Electron.app.runningUnderARM64Translation || os.arch() === 'arm64';
+        const isArm64 = process.arch === 'arm64';
         const suffix = isArm64 ? '-mac.aarch64.zip' : '-mac.x86_64.zip';
 
         return (asset: GitHubReleaseAsset) => asset.name.endsWith(suffix);

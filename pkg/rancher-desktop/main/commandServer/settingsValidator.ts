@@ -1,6 +1,5 @@
 import os from 'os';
 
-import Electron from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
 
@@ -304,7 +303,7 @@ export default class SettingsValidator {
 
         return false;
       }
-      if (!Electron.app.runningUnderARM64Translation && os.arch() !== 'arm64') {
+      if (process.arch !== 'arm64') {
         errors.push(`Setting ${ fqname } can only be enabled on aarch64 systems.`);
         this.isFatal = true;
 
