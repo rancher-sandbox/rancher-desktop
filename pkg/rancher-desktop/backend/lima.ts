@@ -413,34 +413,14 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     })();
   }
 
-  protected async ensureArchitectureMatch() {
+  protected ensureArchitectureMatch() {
     if (os.platform().startsWith('darwin')) {
-      // Normally, `file` command returns "... executable arm64" or "... executable x86_64"
-      // But if there are problems reading the file, `file' follows the POSIX spec, writes its
-      // error message to stdout, and returns exit code 0 (overridable with a `-E` flag on newer
-      // versions of macos). Best to do our own check before invoking `file':
-      try {
-        await fs.promises.access(LimaBackend.limactl, fs.constants.X_OK);
-      } catch (err: any) {
-        switch (err.code) {
-        case 'ENOENT':
-          throw new BackendError('Fatal Error', `File ${ LimaBackend.limactl } doesn't exist.`, true);
-        case 'EACCES':
-          throw new BackendError('Fatal Error', `File ${ LimaBackend.limactl } isn't readable.`, true);
-        default:
-          throw new BackendError('Fatal Error', `Error trying to analyze file ${ LimaBackend.limactl }: ${ err }`, true);
-        }
-      }
-      const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
-      const { stdout } = await childProcess.spawnFile(
-        'file', [LimaBackend.limactl],
-        { stdio: ['inherit', 'pipe', console] });
-
-      if (!stdout.includes(`executable ${ expectedArch }`)) {
-        /* Using 'aarch64' and 'x86_64' in the error because that's what we use for the DMG suffix, e.g. "Rancher Desktop.aarch64.dmg" */
-        const otherArch = { aarch64: 'x86_64', x86_64: 'aarch64' }[this.arch];
-
-        throw new BackendError('Fatal Error', `Rancher Desktop for ${ otherArch } does not work on ${ this.arch }.`, true);
+      // Since we now use native Electron, the only case this might be an issue
+      // is the user is running under Rosetta. Flag that.
+      if (Electron.app.runningUnderARM64Translation) {
+        // Using 'aarch64' and 'x86_64' in the error because that's what we use
+        // for the DMG suffix, e.g. "Rancher Desktop.aarch64.dmg"
+        throw new BackendError('Fatal Error', `Rancher Desktop for x86_64 does not work on aarch64.`, true);
       }
     }
   }
@@ -1844,7 +1824,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     this.#containerEngineClient = undefined;
     await this.progressTracker.action('Starting Backend', 10, async() => {
       try {
-        await this.ensureArchitectureMatch();
+        this.ensureArchitectureMatch();
         await Promise.all([
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
           this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(this.#adminAccess)),

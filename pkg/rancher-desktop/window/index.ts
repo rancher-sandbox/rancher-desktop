@@ -191,7 +191,7 @@ let extPath = '';
  */
 const createView = () => {
   const hostInfo = {
-    arch:     Electron.app.runningUnderARM64Translation ? 'arm64' : process.arch,
+    arch:     process.arch,
     hostname: os.hostname(),
   };
 

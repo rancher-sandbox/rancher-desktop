@@ -922,7 +922,7 @@ ipcMainProxy.handle('versions/macOs', () => {
 });
 
 ipcMainProxy.handle('host/isArm', () => {
-  return Electron.app.runningUnderARM64Translation || process.arch.startsWith('arm');
+  return process.arch === 'arm64';
 });
 
 ipcMainProxy.on('help/preferences/open-url', async() => {
@@ -1191,7 +1191,7 @@ async function getExtensionManager() {
 }
 
 function newK8sManager() {
-  const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
+  const arch = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
 
   mgr.on('state-changed', (state: K8s.State) => {

@@ -1,4 +1,3 @@
-import Electron from 'electron';
 import semver from 'semver';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
@@ -26,7 +25,7 @@ const CheckLimaDarwin: DiagnosticsChecker = {
   category: DiagnosticsCategory.ContainerEngine,
   applicable() {
     const isDarwin = process.platform === 'darwin';
-    const isArm = Electron.app.runningUnderARM64Translation || process.arch.startsWith('arm');
+    const isArm = process.arch === 'arm64';
 
     return Promise.resolve(isDarwin && isArm);
   },
