@@ -1,10 +1,10 @@
 .PHONY: all
 all:
-	bats --show-output-of-passing-tests ./tests/*/
+	./bats-core/bin/bats --show-output-of-passing-tests ./tests/*/
 
 .PHONY: containers
 containers:
-	bats --show-output-of-passing-tests ./tests/containers/
+	./bats-core/bin/bats --show-output-of-passing-tests ./tests/containers/
 
 # https://www.shellcheck.net/wiki/SC1091 -- Not following: xxx was not specified as input (see shellcheck -x)
 # https://www.shellcheck.net/wiki/SC2034 -- xxx appears unused. Verify use (or export if used externally)
