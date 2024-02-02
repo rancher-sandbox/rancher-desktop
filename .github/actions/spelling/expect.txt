@@ -66,9 +66,9 @@ bcdfghjklmnpqrstvwxz
 bellingham
 bindir
 binfmt
-Blt
 bitnami
 blockmap
+Blt
 bootfs
 bosco
 bottlesofbeeronthewall
@@ -299,6 +299,7 @@ healthz
 Hec
 heketi
 helmcharts
+hfs
 hicolor
 hkcu
 hklm
@@ -489,6 +490,7 @@ netsh
 networkpolicy
 neu
 newauth
+newfs
 newpid
 ngx
 ninep
@@ -502,6 +504,7 @@ nofix
 nolint
 nologin
 nologo
+nomount
 NONINFRINGEMENT
 noproxy
 norestart
@@ -603,6 +606,7 @@ qcow
 qmp
 qword
 rackspace
+ramdisk
 rancherdesktop
 rancherkubernetesengine
 rawdata
@@ -815,8 +819,8 @@ wslapi
 wslconfig
 WSLENV
 wslify
-WSLIs
 WSLINSTALLED
+WSLIs
 wslutils
 WWID
 wwn

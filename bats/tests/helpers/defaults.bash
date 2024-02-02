@@ -157,6 +157,18 @@ validate_enum RD_9P_PROTOCOL_VERSION 9p2000 9p2000.u 9p2000.L
 validate_enum RD_9P_SECURITY_MODEL passthrough mapped-xattr mapped-file none
 
 ########################################################################
+# When RD_USE_RAMDISK is true, we will try to set up a temporary ramdisk
+# for the application profile to make things run faster.  This is not
+# supported on all platforms, but is a no-op on unsupported platforms.
+# Some test files may override this due to interactions with factory reset.
+: "${RD_USE_RAMDISK:=false}"
+# Size of the ramdisk, in megabytes.
+: "${RD_RAMDISK_SIZE:=$((5 * 1024))}"
+using_ramdisk() {
+    is_true "${RD_USE_RAMDISK}"
+}
+
+########################################################################
 # Use RD_PROTECTED_DOT in profile settings for WSL distro names
 : "${RD_PROTECTED_DOT:=·}"
 

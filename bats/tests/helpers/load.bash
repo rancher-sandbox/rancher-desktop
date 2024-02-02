@@ -75,7 +75,10 @@ setup_file() {
     # but I don't see a way to check for this.
     echo "# ===== $RD_TEST_FILENAME =====" >&3
 
+    # local_setup_file may override RD_USE_RAMDISK
     call_local_function
+
+    setup_ramdisk
 }
 
 teardown_file() {
@@ -85,6 +88,8 @@ teardown_file() {
     if is_linux || is_windows || [[ $RD_LOCATION == dev ]]; then
         run rdctl shutdown
     fi
+
+    teardown_ramdisk
 
     call_local_function
 }

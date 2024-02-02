@@ -1,6 +1,7 @@
 load '../helpers/load'
 
 @test 'factory reset' {
+    RD_RAMDISK_SIZE=$((12 * 1024)) # We need more disk to run the Rancher image.
     factory_reset
 }
 
@@ -18,7 +19,7 @@ load '../helpers/load'
 
 @test 'verify rancher' {
     local max_tries=9
-    if [[ -n $CI ]]; then
+    if [[ -n ${CI:-} ]]; then
         max_tries=30
     fi
     run try --max $max_tries --delay 10 curl --insecure --silent --show-error "https://localhost:8443/dashboard/auth/login"

@@ -39,7 +39,67 @@ flush_iptables() {
     wsl sudo iptables -X
 }
 
+# Helper to eject all existing ramdisk instances on macOS
+macos_eject_ramdisk() {
+    local mount="$1"
+    run hdiutil info -plist
+    assert_success
+    # shellcheck disable=2154 # $output set by `run`
+    run plutil -convert json -o - - <<<"$output"
+    assert_success
+    # shellcheck disable=2016 # $mount is interpreted by jq, not shell.
+    run jq_output --arg mount "$mount" \
+        '.images[]."system-entities"[] | select(."mount-point" == $mount) | ."dev-entry"'
+    assert_success
+    if [[ -z $output ]]; then
+        return
+    fi
+    # We don't need to worry about splitting here, it's all /dev/disk*
+    # However, we do need to ensure $output isn't clobbered.
+    # shellcheck disable=2206
+    local disks=($output)
+    local disk
+    for disk in "${disks[@]}"; do
+        umount "$disk" 2>&1 | sed 's@^@# @' >&3 || :
+    done
+    for disk in "${disks[@]}"; do
+        hdiutil eject "$disk" 2>&1 | sed 's@^@# @' >&3 || :
+    done
+}
+
+# Set up the use of a ramdisk for application data, to make things faster.
+setup_ramdisk() {
+    if ! using_ramdisk; then
+        return
+    fi
+    if is_macos; then
+        # Try to eject the disk, if it already exists.
+        macos_eject_ramdisk "$LIMA_HOME"
+
+        local sectors=$((RD_RAMDISK_SIZE * 1024 * 1024 / 512)) # Size, in sectors.
+        # hdiutil space-pads the output; strip it.
+        disk="$(hdiutil attach -nomount "ram://$sectors" | xargs echo)"
+        newfs_hfs "$disk"
+        mkdir -p "$LIMA_HOME"
+        mount -t hfs "$disk" "$LIMA_HOME"
+        trace "$(hdiutil info | sed 's@^@# [setup:hdiutil] @')"
+        trace "$(df -h | sed 's@^@# [setup:df] @')"
+    fi
+}
+
+# Remove any ramdisks
+teardown_ramdisk() {
+    # We run this even if ramdisk is not in use, in case a previous run had
+    # used ramdisk.
+    if is_macos; then
+        trace "$(hdiutil info | sed 's@^@# [teardown:hdiutil] @')"
+        trace "$(df -h | sed 's@^@# [teardown:df] @')"
+        macos_eject_ramdisk "$LIMA_HOME"
+    fi
+}
+
 factory_reset() {
+    trace "running factory reset"
     if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
         capture_logs
     fi
@@ -64,6 +124,8 @@ factory_reset() {
         clear_iptables_chain "KUBE"
     fi
     rdctl factory-reset
+    teardown_ramdisk
+    setup_ramdisk
 }
 
 # Turn `rdctl start` arguments into `yarn dev` arguments
@@ -313,5 +375,6 @@ assert_backend_available() {
 }
 
 wait_for_backend() {
+    trace "waiting for backend to be available"
     try --max 60 --delay 10 assert_backend_available
 }

@@ -3,6 +3,7 @@
 load '../helpers/load'
 
 local_setup() {
+    RD_RAMDISK_SIZE=$((15 * 1024)) # We need more disk to run the Rancher image.
     needs_port 443
 }
 

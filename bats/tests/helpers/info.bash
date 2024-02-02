@@ -30,6 +30,7 @@ show_info() { # @test
         if is_macos; then
             printf "$format" "Using socket_vmnet:" "$(bool using_socket_vmnet)"
             printf "$format" "Using VZ emulation:" "$(bool using_vz_emulation)"
+            printf "$format" "Using ramdisk:" "$(bool using_ramdisk)"
         fi
         if is_windows; then
             printf "$format" "Using Windows executables:" "$(bool using_windows_exe)"
@@ -37,6 +38,7 @@ show_info() { # @test
         fi
         echo "#"
         printf "$format" "Capturing logs:" "$(bool capturing_logs)"
+        printf "$format" "Tracing execution:" "$(bool is_true "$RD_TRACE")"
         printf "$format" "Taking screenshots:" "$(bool taking_screenshots)"
         printf "$format" "Using ghcr.io images:" "$(bool using_ghcr_images)"
     ) >&3

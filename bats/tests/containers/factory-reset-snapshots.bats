@@ -1,5 +1,9 @@
 load '../helpers/load'
 
+local_setup_file() {
+    RD_USE_RAMDISK=false # interferes with deleting $PATH_APP_HOME
+}
+
 @test 'factory reset' {
     delete_all_snapshots
     factory_reset
