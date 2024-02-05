@@ -31,7 +31,7 @@ import {
   verifySystemProfile,
   verifyUserProfile,
 } from './utils/ProfileUtils';
-import { createUserProfile, reportAsset } from './utils/TestUtils';
+import { setUserProfile, reportAsset } from './utils/TestUtils';
 
 import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -149,7 +149,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
           },
         } as unknown as RecursivePartial<Settings>;
 
-        await createUserProfile(s1, null);
+        await setUserProfile(s1, null);
       }
       // We have a deployment with only a version field, good enough to bypass the first-run dialog.
       await testForNoFirstRunWindow(`${ __filename }-nonexistent-settings`);
@@ -229,7 +229,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
       } else {
         const s1 = { version: 10, kubernetes: { version: ['strawberries', 'limes'] } } as unknown as RecursivePartial<Settings>;
 
-        await createUserProfile(s1, null);
+        await setUserProfile(s1, null);
       }
       const windowCount = await testWaitForLogfile(filename, logPath);
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
@@ -255,7 +255,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
       if (process.platform === 'win32') {
         await createDefaultUserRegistryProfileWithValidDataButNoVersion();
       } else {
-        await createUserProfile({ kubernetes: { enabled: false } }, null);
+        await setUserProfile({ kubernetes: { enabled: false } }, null);
       }
       const windowCount = await testWaitForLogfile(filename, logPath);
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
@@ -280,7 +280,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
       if (process.platform === 'win32') {
         await createLockedUserRegistryProfileWithValidDataButNoVersion();
       } else {
-        await createUserProfile(null, { kubernetes: { enabled: false } });
+        await setUserProfile(null, { kubernetes: { enabled: false } });
       }
       const windowCount = await testWaitForLogfile(filename, logPath);
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });

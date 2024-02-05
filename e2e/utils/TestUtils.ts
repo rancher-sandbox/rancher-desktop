@@ -22,19 +22,23 @@ let testInfo: undefined | {
   startTime: number;
 };
 
-export async function createUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+/**
+ * Remove any existing user profiles, and set it to the given settings.  If
+ * either is `null`, then it is not re-added.
+ */
+export async function setUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
   if (platform === 'win32') {
-    return await createWindowsUserLegacyProfile(userProfile, lockedFields);
+    return await setWindowsUserLegacyProfile(userProfile, lockedFields);
   } else if (platform === 'linux') {
-    return await createLinuxUserProfile(userProfile, lockedFields);
+    return await setLinuxUserProfile(userProfile, lockedFields);
   } else {
-    return await createDarwinUserProfile(userProfile, lockedFields);
+    return await setDarwinUserProfile(userProfile, lockedFields);
   }
 }
 
-async function createLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function setLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'rancher-desktop.defaults.json');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'rancher-desktop.locked.json');
 
@@ -55,12 +59,22 @@ function convertToRegistryLegacy(s: string) {
     .replace('SOFTWARE\\Policies]', 'SOFTWARE\\Rancher Desktop]');
 }
 
-async function createWindowsUserLegacyProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function setWindowsUserLegacyProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-profiles'));
 
   try {
-    for (const packet of [['defaults', userProfile], ['locked', lockedFields]]) {
-      const [registryType, settings] = packet;
+    for (const [registryType, settings] of [['defaults', userProfile], ['locked', lockedFields]] as const) {
+      // Always remove existing profiles, since we never want to merge any
+      // existing profiles with the new ones.
+      try {
+        const keyPath = `HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\${ registryType }`;
+
+        await childProcess.spawnFile('reg.exe', ['DELETE', keyPath, '/f'], { stdio: 'pipe' });
+      } catch (ex: any) {
+        if (!/unable to find/.test(Object(ex).stderr ?? '')) {
+          throw new Error(`Error trying to delete a user registry hive: ${ ex }`);
+        }
+      }
 
       if (settings && Object.keys(settings).length > 0) {
         const genResult = convertToRegistryLegacy(await tool('rdctl', 'create-profile', '--body', JSON.stringify(settings),
@@ -80,7 +94,7 @@ async function createWindowsUserLegacyProfile(userProfile: RecursivePartial<Sett
   }
 }
 
-async function createDarwinUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function setDarwinUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.defaults.plist');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.locked.plist');
 
