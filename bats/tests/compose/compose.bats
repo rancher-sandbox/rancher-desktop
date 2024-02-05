@@ -2,11 +2,11 @@ load '../helpers/load'
 
 local_setup() {
     if is_windows && using_containerd && using_windows_exe; then
-         # BUG BUG BUG
-         # There is a known issue of nerdctl compose not working as expected in
-         # WSL distros. https://github.com/rancher-sandbox/rancher-desktop/issues/1431
-         skip "Test doesn't work with nerdctl in a WSL distro"
-     fi
+        # BUG BUG BUG
+        # There is a known issue of nerdctl.exe compose not working as expected in
+        # WSL distros. https://github.com/rancher-sandbox/rancher-desktop/issues/1431
+        skip "Test doesn't work with nerdctl in a WSL distro"
+    fi
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/compose/testdata/"
     TESTDATA_DIR_HOST=$(host_path "$TESTDATA_DIR")
 }
