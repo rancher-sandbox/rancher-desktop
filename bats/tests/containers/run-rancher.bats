@@ -1,7 +1,7 @@
 load '../helpers/load'
+RD_FILE_RAMDISK_SIZE=12 # We need more disk to run the Rancher image.
 
 @test 'factory reset' {
-    RD_RAMDISK_SIZE=$((12 * 1024)) # We need more disk to run the Rancher image.
     factory_reset
 }
 

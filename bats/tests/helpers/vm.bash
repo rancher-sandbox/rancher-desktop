@@ -76,7 +76,11 @@ setup_ramdisk() {
         # Try to eject the disk, if it already exists.
         macos_eject_ramdisk "$LIMA_HOME"
 
-        local sectors=$((RD_RAMDISK_SIZE * 1024 * 1024 / 512)) # Size, in sectors.
+        local ramdisk_size="${RD_RAMDISK_SIZE}"
+        if [[ $ramdisk_size == "auto" ]]; then
+            ramdisk_size="${RD_FILE_RAMDISK_SIZE:-5}" # default to 5GB
+        fi
+        local sectors=$((ramdisk_size * 1024 * 1024 * 1024 / 512)) # Size, in sectors.
         # hdiutil space-pads the output; strip it.
         disk="$(hdiutil attach -nomount "ram://$sectors" | xargs echo)"
         newfs_hfs "$disk"

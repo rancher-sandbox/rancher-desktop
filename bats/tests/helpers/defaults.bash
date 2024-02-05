@@ -162,8 +162,8 @@ validate_enum RD_9P_SECURITY_MODEL passthrough mapped-xattr mapped-file none
 # supported on all platforms, but is a no-op on unsupported platforms.
 # Some test files may override this due to interactions with factory reset.
 : "${RD_USE_RAMDISK:=false}"
-# Size of the ramdisk, in megabytes.
-: "${RD_RAMDISK_SIZE:=$((5 * 1024))}"
+# Size of the ramdisk, in gigabytes; "auto" uses a sane default.
+: "${RD_RAMDISK_SIZE:=auto}"
 using_ramdisk() {
     is_true "${RD_USE_RAMDISK}"
 }
