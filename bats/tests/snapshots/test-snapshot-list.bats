@@ -66,8 +66,8 @@ created() {
     DATE1=$(created "$MULTI_WORD_SNAPSHOT_NAME")
     DATE2=$(created "$EMOJI_SNAPSHOT_NAME")
     if is_macos; then
-        TIME1=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE1" +%s 2>/dev/null)
-        TIME2=$(date -jf "%Y-%m-%dT%H:%M:%S" "$DATE2" +%s 2>/dev/null)
+        TIME1=$(/bin/date -jf "%Y-%m-%dT%H:%M:%S" "$DATE1" +%s 2>/dev/null)
+        TIME2=$(/bin/date -jf "%Y-%m-%dT%H:%M:%S" "$DATE2" +%s 2>/dev/null)
     elif is_linux; then
         TIME1=$(date --date="$DATE1" +%s)
         TIME2=$(date --date="$DATE2" +%s)
