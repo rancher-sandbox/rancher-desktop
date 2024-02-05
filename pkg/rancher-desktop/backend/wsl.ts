@@ -1451,9 +1451,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 } else {
                   await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
                 }
-                const obsoleteIALConfFile = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
+                const obsoleteImageAllowListConf = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
 
-                await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
+                await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
               }),
               await this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);

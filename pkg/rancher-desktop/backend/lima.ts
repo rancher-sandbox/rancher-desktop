@@ -1762,9 +1762,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     } else {
       await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
     }
-    const obsoleteIALConfFile = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
+    const obsoleteImageAllowListConf = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
 
-    await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
+    await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
   }
 
   /**
