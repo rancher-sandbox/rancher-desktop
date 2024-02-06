@@ -135,9 +135,10 @@ trace() {
         return
     fi
     local caller="${CALLER:-$(calling_function)}"
-    # We cannot use ${*/^//stuff} here, because we can't catch starts of lines
-    # shellcheck disable=2001
-    echo "$*" | sed "s@^@# (${caller}): @" >&3
+    local line
+    while IFS= read -r line; do
+        printf "# (%s): %s\n" "$caller" "$line" >&3
+    done <<<"$*"
 }
 
 try() {
