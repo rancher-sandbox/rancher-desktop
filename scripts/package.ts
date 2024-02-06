@@ -176,7 +176,7 @@ class Builder {
     const iconArgs = ['icon', '--format', 'ico', '--out', workDir, '--input', imageFile];
     const iconResult = await this.executeAppBuilderAsJson(iconArgs);
     const iconFile = iconResult.icons[0].file;
-    const executable = path.join(process.cwd(), 'resources', 'win32', 'internal', 'dummy.exe');
+    const executable = path.join(process.cwd(), 'resources', 'win32', 'bin', 'rdctl.exe');
     const rceditArgs = [executable, '--set-icon', iconFile];
 
     await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);

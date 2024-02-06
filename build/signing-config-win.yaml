@@ -31,4 +31,3 @@ resources/resources/win32/internal:
 - steve.exe
 - vtunnel.exe
 - wsl-helper.exe
-- '!dummy.exe'
