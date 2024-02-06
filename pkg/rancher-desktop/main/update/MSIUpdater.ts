@@ -93,14 +93,15 @@ export default class MsiUpdater extends NsisUpdater {
       '/lv*', path.join(paths.logs, 'msiexec.log'),
       '/i', options.installerPath,
     ];
+    const elevate = options.isAdminRightsRequired || this.shouldElevate;
 
-    if (options.isSilent) {
+    if (options.isSilent && !elevate) {
       args.push('/quiet');
     } else {
       args.push('/passive');
     }
 
-    args.push(`MSIINSTALLPERUSER=${ options.isAdminRightsRequired || this.shouldElevate ? '0' : '1' }`);
+    args.push(`MSIINSTALLPERUSER=${ elevate ? '0' : '1' }`);
 
     if (options.isForceRunAfter) {
       args.push('RDRUNAFTERINSTALL=1');
