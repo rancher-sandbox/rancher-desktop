@@ -60,10 +60,10 @@ macos_eject_ramdisk() {
     local disks=($output)
     local disk
     for disk in "${disks[@]}"; do
-        CALLER="$(calling_function)" trace "$(umount "$disk" 2>&1 || :)"
+        CALLER="$(calling_function):umount" trace "$(umount "$disk" 2>&1 || :)"
     done
     for disk in "${disks[@]}"; do
-        CALLER="$(calling_function)" trace "$(hdiutil eject "$disk" 2>&1 || :)"
+        CALLER="$(calling_function):hdiutil" trace "$(hdiutil eject "$disk" 2>&1 || :)"
     done
 }
 
@@ -81,12 +81,11 @@ setup_ramdisk() {
 
     local ramdisk_size="${RD_RAMDISK_SIZE}"
     if ((ramdisk_size < ${RD_FILE_RAMDISK_SIZE:-0})); then
-        {
-            printf "RD:   %s requires %dGB of ramdisk; disabling ramdisk for this file\n" \
-                "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE"
-        } >>"$BATS_WARNING_FILE"
-        printf "# WARN: %s requires %dGB of ramdisk; disabling ramdisk for this file\n" \
-            "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE" >&3
+        run printf "%s requires %dGB of ramdisk; disabling ramdisk for this file" \
+            "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE"
+        assert_success
+        printf "RD:   %s\n" "$output" >>"$BATS_WARNING_FILE"
+        printf "# WARN: %s\n" "$output" >&3
         return
     fi
 
