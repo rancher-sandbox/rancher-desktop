@@ -1346,9 +1346,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       const allowListConf = BackendHelper.createAllowedImageListConf(cfg.containerEngine.allowedImages);
 
       await k8smanager.executor.writeFile(allowedImagesConf, allowListConf, 0o644);
-      await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'openresty', 'reload');
+      await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'rd-openresty', 'reload');
     } else {
-      await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'openresty', 'stop');
+      await k8smanager.executor.execCommand({ root: true }, rcService, '--ifstarted', 'rd-openresty', 'stop');
       await k8smanager.executor.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
     }
 

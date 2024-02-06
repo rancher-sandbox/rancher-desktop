@@ -166,7 +166,7 @@ verify_default_credStore() {
     skip_for_insecure_registry
 
     rdsudo rc-service "$CONTAINER_ENGINE_SERVICE" restart
-    rdsudo rc-service --ifstarted openresty restart
+    rdsudo rc-service --ifstarted rd-openresty restart
     wait_for_container_engine
     # when Moby is stopped, the containers are stopped as well
     if using_docker; then

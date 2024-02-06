@@ -281,9 +281,9 @@ wait_for_container_engine() {
     run jq_output .containerEngine.allowedImages.enabled
     assert_success
     if [[ $output == true ]]; then
-        wait_for_service_status openresty started
+        wait_for_service_status rd-openresty started
     else
-        wait_for_service_status openresty stopped
+        wait_for_service_status rd-openresty stopped
     fi
 
     if using_docker; then

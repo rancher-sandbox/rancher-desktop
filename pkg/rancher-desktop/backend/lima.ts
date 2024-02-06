@@ -1742,9 +1742,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     } else {
       await this.execCommand({ root: true }, 'rm', '-f', allowedImagesConf);
     }
-    const obsoleteIALConfFile = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
+    const obsoleteImageAllowListConf = path.join(path.dirname(allowedImagesConf), 'image-allow-list.conf');
 
-    await this.execCommand({ root: true }, 'rm', '-f', obsoleteIALConfFile);
+    await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
   }
 
   /**
@@ -1899,7 +1899,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         ]);
 
         if (config.containerEngine.allowedImages.enabled) {
-          await this.startService('openresty');
+          await this.startService('rd-openresty');
         }
         switch (config.containerEngine.name) {
         case ContainerEngine.CONTAINERD:
@@ -2084,7 +2084,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
-          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'openresty', 'stop');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'rd-openresty', 'stop');
           await this.execCommand({ root: true }, '/sbin/fstrim', '/mnt/data');
 
           // TODO: Remove try/catch once https://github.com/lima-vm/lima/issues/1381 is fixed

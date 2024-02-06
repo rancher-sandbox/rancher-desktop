@@ -2,6 +2,6 @@
 	missingok
 	sharedscripts
 	postrotate
-		/etc/init.d/openresty --quiet --ifstarted reopen
+		/etc/init.d/rd-openresty --quiet --ifstarted reopen
 	endscript
 }
