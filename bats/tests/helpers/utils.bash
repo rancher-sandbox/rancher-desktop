@@ -131,9 +131,14 @@ calling_function() {
 # Write a comment to the TAP stream
 # Set CALLER to print a calling function higher up in the call stack.
 trace() {
-    if is_true "$RD_TRACE"; then
-        echo "# (${CALLER:-$(calling_function)}): $*" >&3
+    if is_false "$RD_TRACE"; then
+        return
     fi
+    local caller="${CALLER:-$(calling_function)}"
+    local line
+    while IFS= read -r line; do
+        printf "# (%s): %s\n" "$caller" "$line" >&3
+    done <<<"$*"
 }
 
 try() {

@@ -39,6 +39,79 @@ flush_iptables() {
     wsl sudo iptables -X
 }
 
+# Helper to eject all existing ramdisk instances on macOS
+macos_eject_ramdisk() {
+    local mount="$1"
+    run hdiutil info -plist
+    assert_success
+    # shellcheck disable=2154 # $output set by `run`
+    run plutil -convert json -o - - <<<"$output"
+    assert_success
+    # shellcheck disable=2016 # $mount is interpreted by jq, not shell.
+    run jq_output --arg mount "$mount" \
+        '.images[]."system-entities"[] | select(."mount-point" == $mount) | ."dev-entry"'
+    assert_success
+    if [[ -z $output ]]; then
+        return
+    fi
+    # We don't need to worry about splitting here, it's all /dev/disk*
+    # However, we do need to ensure $output isn't clobbered.
+    # shellcheck disable=2206
+    local disks=($output)
+    local disk
+    for disk in "${disks[@]}"; do
+        CALLER="$(calling_function):umount" trace "$(umount "$disk" 2>&1 || :)"
+    done
+    for disk in "${disks[@]}"; do
+        CALLER="$(calling_function):hdiutil" trace "$(hdiutil eject "$disk" 2>&1 || :)"
+    done
+}
+
+# Set up the use of a ramdisk for application data, to make things faster.
+setup_ramdisk() {
+    if ! using_ramdisk; then
+        return
+    fi
+
+    # Force eject any existing disks.
+    if is_macos; then
+        # Try to eject the disk, if it already exists.
+        macos_eject_ramdisk "$LIMA_HOME"
+    fi
+
+    local ramdisk_size="${RD_RAMDISK_SIZE}"
+    if ((ramdisk_size < ${RD_FILE_RAMDISK_SIZE:-0})); then
+        run printf "%s requires %dGB of ramdisk; disabling ramdisk for this file" \
+            "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE"
+        assert_success
+        printf "RD:   %s\n" "$output" >>"$BATS_WARNING_FILE"
+        printf "# WARN: %s\n" "$output" >&3
+        return
+    fi
+
+    if is_macos; then
+        local sectors=$((ramdisk_size * 1024 * 1024 * 1024 / 512)) # Size, in sectors.
+        # hdiutil space-pads the output; strip it.
+        disk="$(hdiutil attach -nomount "ram://$sectors" | xargs echo)"
+        newfs_hfs -v 'Rancher Desktop BATS' "$disk"
+        mkdir -p "$LIMA_HOME"
+        mount -t hfs "$disk" "$LIMA_HOME"
+        CALLER="$(this_function):hdiutil" trace "$(hdiutil info)"
+        CALLER="$(this_function):df" trace "$(df -h)"
+    fi
+}
+
+# Remove any ramdisks
+teardown_ramdisk() {
+    # We run this even if ramdisk is not in use, in case a previous run had
+    # used ramdisk.
+    if is_macos; then
+        CALLER="$(this_function):hdiutil" trace "$(hdiutil info)"
+        CALLER="$(this_function):df" trace "$(df -h)"
+        macos_eject_ramdisk "$LIMA_HOME"
+    fi
+}
+
 factory_reset() {
     if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
         capture_logs
@@ -64,6 +137,7 @@ factory_reset() {
         clear_iptables_chain "KUBE"
     fi
     rdctl factory-reset
+    setup_ramdisk
 }
 
 # Turn `rdctl start` arguments into `yarn dev` arguments
@@ -313,5 +387,6 @@ assert_backend_available() {
 }
 
 wait_for_backend() {
+    trace "waiting for backend to be available"
     try --max 60 --delay 10 assert_backend_available
 }

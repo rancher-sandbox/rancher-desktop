@@ -1,6 +1,7 @@
 # Test case 11 & 12
 
 load '../helpers/load'
+RD_FILE_RAMDISK_SIZE=12 # We need more disk to run the Rancher image.
 
 local_setup() {
     needs_port 443
