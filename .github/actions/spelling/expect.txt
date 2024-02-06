@@ -845,6 +845,7 @@ YSW
 Yubi
 zeroedthick
 zerowidthspace
+zipinfo
 zipperhead
 ZSelected
 zst
