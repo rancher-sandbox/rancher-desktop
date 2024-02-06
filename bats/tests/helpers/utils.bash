@@ -131,9 +131,13 @@ calling_function() {
 # Write a comment to the TAP stream
 # Set CALLER to print a calling function higher up in the call stack.
 trace() {
-    if is_true "$RD_TRACE"; then
-        echo "# (${CALLER:-$(calling_function)}): $*" >&3
+    if is_false "$RD_TRACE"; then
+        return
     fi
+    local caller="${CALLER:-$(calling_function)}"
+    # We cannot use ${*/^//stuff} here, because we can't catch starts of lines
+    # shellcheck disable=2001
+    echo "$*" | sed "s@^@# (${caller}): @" >&3
 }
 
 try() {

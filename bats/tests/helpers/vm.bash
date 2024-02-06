@@ -60,10 +60,10 @@ macos_eject_ramdisk() {
     local disks=($output)
     local disk
     for disk in "${disks[@]}"; do
-        umount "$disk" 2>&1 | sed 's@^@# @' >&3 || :
+        CALLER="$(calling_function)" trace "$(umount "$disk" 2>&1 || :)"
     done
     for disk in "${disks[@]}"; do
-        hdiutil eject "$disk" 2>&1 | sed 's@^@# @' >&3 || :
+        CALLER="$(calling_function)" trace "$(hdiutil eject "$disk" 2>&1 || :)"
     done
 }
 
@@ -72,22 +72,33 @@ setup_ramdisk() {
     if ! using_ramdisk; then
         return
     fi
+
+    # Force eject any existing disks.
     if is_macos; then
         # Try to eject the disk, if it already exists.
         macos_eject_ramdisk "$LIMA_HOME"
+    fi
 
-        local ramdisk_size="${RD_RAMDISK_SIZE}"
-        if [[ $ramdisk_size == "auto" ]]; then
-            ramdisk_size="${RD_FILE_RAMDISK_SIZE:-5}" # default to 5GB
-        fi
+    local ramdisk_size="${RD_RAMDISK_SIZE}"
+    if ((ramdisk_size < ${RD_FILE_RAMDISK_SIZE:-0})); then
+        {
+            printf "RD:   %s requires %dGB of ramdisk; disabling ramdisk for this file\n" \
+                "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE"
+        } >>"$BATS_WARNING_FILE"
+        printf "# WARN: %s requires %dGB of ramdisk; disabling ramdisk for this file\n" \
+            "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE" >&3
+        return
+    fi
+
+    if is_macos; then
         local sectors=$((ramdisk_size * 1024 * 1024 * 1024 / 512)) # Size, in sectors.
         # hdiutil space-pads the output; strip it.
         disk="$(hdiutil attach -nomount "ram://$sectors" | xargs echo)"
-        newfs_hfs "$disk"
+        newfs_hfs -v 'Rancher Desktop BATS' "$disk"
         mkdir -p "$LIMA_HOME"
         mount -t hfs "$disk" "$LIMA_HOME"
-        trace "$(hdiutil info | sed 's@^@# [setup:hdiutil] @')"
-        trace "$(df -h | sed 's@^@# [setup:df] @')"
+        CALLER="$(this_function):hdiutil" trace "$(hdiutil info)"
+        CALLER="$(this_function):df" trace "$(df -h)"
     fi
 }
 
@@ -96,14 +107,13 @@ teardown_ramdisk() {
     # We run this even if ramdisk is not in use, in case a previous run had
     # used ramdisk.
     if is_macos; then
-        trace "$(hdiutil info | sed 's@^@# [teardown:hdiutil] @')"
-        trace "$(df -h | sed 's@^@# [teardown:df] @')"
+        CALLER="$(this_function):hdiutil" trace "$(hdiutil info)"
+        CALLER="$(this_function):df" trace "$(df -h)"
         macos_eject_ramdisk "$LIMA_HOME"
     fi
 }
 
 factory_reset() {
-    trace "running factory reset"
     if [ "$BATS_TEST_NUMBER" -gt 1 ]; then
         capture_logs
     fi
@@ -128,7 +138,6 @@ factory_reset() {
         clear_iptables_chain "KUBE"
     fi
     rdctl factory-reset
-    teardown_ramdisk
     setup_ramdisk
 }
 

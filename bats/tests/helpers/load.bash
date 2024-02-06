@@ -84,8 +84,18 @@ setup_file() {
 teardown_file() {
     capture_logs
 
-    # On Linux & Windows if we don't shutdown Rancher Desktop bats tests don't terminate
-    if is_linux || is_windows || [[ $RD_LOCATION == dev ]]; then
+    local shutdown=false
+    if is_linux || is_windows; then
+        # On Linux & Windows if we don't shutdown Rancher Desktop bats tests don't terminate.
+        shutdown=true
+    elif [[ $RD_LOCATION == dev ]]; then
+        # In dev mode, we also need to shut down.
+        shutdown=true
+    elif using_ramdisk; then
+        # When using a ramdisk, we need to shut down to clean up.
+        shutdown=true
+    fi
+    if is_true $shutdown; then
         run rdctl shutdown
     fi
 
