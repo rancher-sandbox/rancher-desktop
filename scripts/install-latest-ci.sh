@@ -22,18 +22,20 @@ if ! [[ $RD_LOCATION =~ ^(system|user)$ ]]; then
     exit 1
 fi
 
+: "${TMPDIR:=/tmp}" # If TMPDIR is unset, set it to something reasonable.
+
 download_artifact() {
     local filename="$1"
-    local leaf
-    leaf="$(basename "$1")"
+    local basename
+    basename=$(basename "$1")
 
     # Get the artifact id for the package
     API="repos/$OWNER/$REPO/actions/runs/$ID/artifacts"
-    FILTER=".artifacts[] | select(.name == \"$leaf\").id"
+    FILTER=".artifacts[] | select(.name == \"$basename\").id"
 
     ARTIFACT_ID=$(gh api "$API" --jq "$FILTER")
     if [ -z "$ARTIFACT_ID" ]; then
-        echo "No download url for '$leaf' from $WORKFLOW run $ID"
+        echo "No download url for '$basename' from $WORKFLOW run $ID"
         exit 1
     fi
 
@@ -56,27 +58,27 @@ install_application() {
         if [ "$(uname -m)" = "arm64" ]; then
             ARCH=aarch64
         fi
-        archive="${TMPDIR:-/tmp}/Rancher Desktop-mac.$ARCH.zip"
+        archive="$TMPDIR/Rancher Desktop-mac.$ARCH.zip"
     elif [[ "$(uname -r)" =~ "WSL2" ]]; then
-        archive="${TMPDIR:-/tmp}/Rancher Desktop-win.zip"
+        archive="$TMPDIR/Rancher Desktop-win.zip"
     else
-        archive="${TMPDIR:-/tmp}/Rancher Desktop-linux.zip"
+        archive="$TMPDIR/Rancher Desktop-linux.zip"
     fi
     download_artifact "$archive"
 
-    # Artifacts are zipped, so extract inner ZIP file from outer wrapper.
-    # The outer ZIP has a predictable name like "Rancher Desktop-mac.x86_64.zip"
+    # Artifacts are zipped, so extract inner zip file from outer wrapper.
+    # The outer zip has a predictable name like "Rancher Desktop-mac.x86_64.zip"
     # but the inner one has a version string: "Rancher Desktop-1.7.0-1061-g91ab3831-mac.zip"
     # Run unzip in "zipinfo" mode, which can print just the file name.
-    local ZIP
-    ZIP="$(unzip -Z -1 "$archive" | head -n1)"
-    if [ -z "$ZIP" ]; then
+    local zip
+    zip="$(unzip -Z -1 "$archive" | head -n1)"
+    if [ -z "$zip" ]; then
         echo "Cannot find inner archive in $(basename "$archive")"
         exit 1
     fi
-    local zip_full="${TMPDIR:-/tmp}/$ZIP"
+    local zip_abspath="$TMPDIR/$zip"
 
-    unzip -o "$archive" "$ZIP" -d "${TMPDIR:-/tmp}"
+    unzip -o "$archive" "$zip" -d "$TMPDIR"
     local DEST
 
     if [[ "$(uname -s)" == "Darwin" ]]; then
@@ -88,7 +90,7 @@ install_application() {
 
         APP="Rancher Desktop.app"
         rm -rf "${DEST:?}/$APP"
-        unzip -o "$zip_full" "$APP/*" -d "$DEST" >/dev/null
+        unzip -o "$zip_abspath" "$APP/*" -d "$DEST" >/dev/null
     elif [[ "$(uname -r)" =~ "WSL2" ]]; then
         LOCALAPPDATA="$(wslpath_from_win32_env LOCALAPPDATA)"
         PROGRAMFILES="$(wslpath_from_win32_env ProgramFiles)"
@@ -98,42 +100,38 @@ install_application() {
         fi
         APP="Rancher Desktop"
         rm -rf "${DEST:?}/$APP"
-        unzip -o "$zip_full" "$APP/*" -d "$DEST" >/dev/null
+        unzip -o "$zip_abspath" "$APP/*" -d "$DEST" >/dev/null
     else
         # Linux doesn't support per-user installs
         DEST="/opt/rancher-desktop"
         sudo rm -rf "${DEST:?}"
-        sudo unzip -o "$zip_full" -d "$DEST" >/dev/null
+        sudo unzip -o "$zip_abspath" -d "$DEST" >/dev/null
     fi
 }
 
 download_bats() {
-    pushd "${TMPDIR:-/tmp}"
-    download_artifact "bats.tar.gz"
+    download_artifact "$TMPDIR/bats.tar.gz"
 
     # GitHub always wraps the artifact in a zip file, so the downloaded file
     # actually has an incorrect name; extract it in place.
-    mv bats.tar.gz bats.tar.gz.zip
-    unzip -o bats.tar.gz.zip bats.tar.gz
+    mv "$TMPDIR/bats.tar.gz" "$TMPDIR/bats.tar.gz.zip"
+    unzip -o "$TMPDIR/bats.tar.gz.zip" -d "$TMPDIR" bats.tar.gz
 
     # Unpack bats into $BATS_DIR
     rm -rf "$BATS_DIR"
     mkdir "$BATS_DIR"
-    tar xfz "bats.tar.gz" -C "$BATS_DIR"
-    popd
+    tar xfz "$TMPDIR/bats.tar.gz" -C "$BATS_DIR"
 }
-
-API_ARGS="exclude_pull_requests=true"
 
 # Get branch name for PR (even if this refers to a fork, the run is still in the
 # target repo with that branch name).
 if [[ -n $PR ]]; then
     BRANCH=$(gh api "repos/$OWNER/$REPO/pulls/$PR" --jq .head.ref)
-    API_ARGS="event=pull_request"
+    API_ARGS="&event=pull_request"
 fi
 
 # Get the latest workflow run that succeeded in this repo.
-API="repos/$OWNER/$REPO/actions/workflows/$WORKFLOW/runs?branch=$BRANCH&status=success&per_page=1&$API_ARGS"
+API="repos/$OWNER/$REPO/actions/workflows/$WORKFLOW/runs?branch=$BRANCH&status=success&per_page=1${API_ARGS:-}"
 FILTER=".workflow_runs[0].id"
 
 ID=$(gh api "$API" --jq "$FILTER")
