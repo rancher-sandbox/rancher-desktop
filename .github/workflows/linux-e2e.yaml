@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches-ignore:
-      - 'dependabot/**'
+    - 'dependabot/**'
   pull_request:
+    paths-ignore:
+    - 'bats/**'
+    - 'docs/**'
+    - '**.md'
 
 jobs:
   e2e-tests:
