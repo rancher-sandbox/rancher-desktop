@@ -1,13 +1,16 @@
 name: Package
 
 on:
-  pull_request: {}
+  pull_request:
+    paths-ignore:
+    - 'docs/**'
+    - '**.md'
   push:
     branches:
-      - main
-      - release-*
+    - main
+    - release-*
     tags:
-      - '*'
+    - '*'
   workflow_dispatch: {}
 
 defaults:
