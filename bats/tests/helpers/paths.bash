@@ -12,7 +12,7 @@ set_path_resources() {
     local dist=$3
     local subdir=$4
 
-    if [ -z "$RD_LOCATION" ]; then
+    if [ -z "${RD_LOCATION:-}" ]; then
         if [ -d "$system" ]; then
             RD_LOCATION=system
         elif [ -d "$user" ]; then
@@ -20,7 +20,7 @@ set_path_resources() {
         elif [ -d "$dist" ]; then
             RD_LOCATION=dist
         elif inside_repo_clone; then
-            RD_LOCATION=npm
+            RD_LOCATION=dev
         else
             (
                 echo "Couldn't locate Rancher Desktop in"

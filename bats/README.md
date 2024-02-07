@@ -63,9 +63,13 @@ To test the Windows-based tools, set `RD_USE_WINDOWS_EXE` to `true` before runni
 
 ### RD_LOCATION
 
-By default bats will use Rancher Desktop installed in a "system" location. If that doesn't exists, it will try a "user" location, followed by the local "dist" directory inside the local git directory. The final option if is to use "npm". On Linux there is no "user" location.
+By default bats will use Rancher Desktop installed in a "system" location. If
+that doesn't exists, it will try a "user" location, followed by the local "dist"
+directory inside the local git directory. The final option if none of the above
+apply is to use "dev", which uses `npm run dev`. On Linux there is no "user"
+location.
 
-You can explicitly request a specific install location by setting `RD_LOCATION` to `system`, `user`, `dist`, or `npm`:
+You can explicitly request a specific install location by setting `RD_LOCATION` to `system`, `user`, `dist`, or `dev`:
 
 ```
 cd bats

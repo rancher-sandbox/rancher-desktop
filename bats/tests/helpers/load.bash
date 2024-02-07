@@ -21,7 +21,12 @@ RD_TEST_FILENAME=${RD_TEST_FILENAME%.bats}
 
 # Use fatal() to abort loading helpers; don't run any tests
 fatal() {
-    echo "   $1" >&3
+    # fd 3 might not be open if we're not fully under bats yet; detect that.
+    if [[ -e /dev/fd/3 ]]; then
+        echo "   $1" >&3
+    else
+        echo "   $1" >&2
+    fi
     exit 1
 }
 
@@ -88,7 +93,7 @@ teardown_file() {
     if is_linux || is_windows; then
         # On Linux & Windows if we don't shutdown Rancher Desktop bats tests don't terminate.
         shutdown=true
-    elif [[ $RD_LOCATION == dev ]]; then
+    elif using_dev_mode; then
         # In dev mode, we also need to shut down.
         shutdown=true
     elif using_ramdisk; then
