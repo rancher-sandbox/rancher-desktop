@@ -58,7 +58,7 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
-    reviewers: [ "ericpromislow" ]
+    reviewers: [ "jandubois" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/extension-proxy"
@@ -101,7 +101,7 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
-    reviewers: [ "ericpromislow" ]
+    reviewers: [ "jandubois" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/vtunnel"
