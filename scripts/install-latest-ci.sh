@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Download the latest CI build and install it
 # NOTE This currently only works for macOS and Linux; for Linux, this always
@@ -14,6 +14,7 @@ set -o xtrace
 : "${WORKFLOW:=package.yaml}" # Name of workflow that must have succeeded
 : "${BATS_DIR:=${TMPDIR:-/tmp}/bats}" # Directory to extract BATS tests to.
 : "${SKIP_INSTALL:=}"         # If set, don't install the application.
+: "${ZIP_NAME:=}"             # If set, output the zip file name to this file.
 
 : "${RD_LOCATION:=user}"
 
@@ -23,6 +24,17 @@ if ! [[ $RD_LOCATION =~ ^(system|user)$ ]]; then
 fi
 
 : "${TMPDIR:=/tmp}" # If TMPDIR is unset, set it to something reasonable.
+
+get_platform() {
+    case "$(uname -s)%%$(uname -r)" in
+    Darwin*)
+        echo darwin;;
+    MINGW*|*-WSL2)
+        echo win32;;
+    *)
+        echo linux;;
+    esac
+}
 
 download_artifact() {
     local filename="$1"
@@ -53,17 +65,21 @@ wslpath_from_win32_env() {
 
 install_application() {
     local archive
-    if [[ "$(uname -s)" == "Darwin" ]]; then
+    case "$(get_platform)" in
+    darwin)
         ARCH=x86_64
         if [ "$(uname -m)" = "arm64" ]; then
             ARCH=aarch64
         fi
         archive="$TMPDIR/Rancher Desktop-mac.$ARCH.zip"
-    elif [[ "$(uname -r)" =~ "WSL2" ]]; then
+        ;;
+    win32)
         archive="$TMPDIR/Rancher Desktop-win.zip"
-    else
+        ;;
+    linux)
         archive="$TMPDIR/Rancher Desktop-linux.zip"
-    fi
+        ;;
+    esac
     download_artifact "$archive"
 
     # Artifacts are zipped, so extract inner zip file from outer wrapper.
@@ -78,35 +94,47 @@ install_application() {
     fi
     local zip_abspath="$TMPDIR/$zip"
 
-    unzip -o "$archive" "$zip" -d "$TMPDIR"
-    local DEST
-
-    if [[ "$(uname -s)" == "Darwin" ]]; then
-        # Extract from inner archive into /Applications
-        DEST="/Applications"
-        if [ "$RD_LOCATION" = "user" ]; then
-            DEST="$HOME/$DEST"
-        fi
-
-        APP="Rancher Desktop.app"
-        rm -rf "${DEST:?}/$APP"
-        unzip -o "$zip_abspath" "$APP/*" -d "$DEST" >/dev/null
-    elif [[ "$(uname -r)" =~ "WSL2" ]]; then
-        LOCALAPPDATA="$(wslpath_from_win32_env LOCALAPPDATA)"
-        PROGRAMFILES="$(wslpath_from_win32_env ProgramFiles)"
-        DEST="$PROGRAMFILES"
-        if [ "$RD_LOCATION" = "user" ]; then
-            DEST="$LOCALAPPDATA/Programs"
-        fi
-        APP="Rancher Desktop"
-        rm -rf "${DEST:?}/$APP"
-        unzip -o "$zip_abspath" "$APP/*" -d "$DEST" >/dev/null
-    else
-        # Linux doesn't support per-user installs
-        DEST="/opt/rancher-desktop"
-        sudo rm -rf "${DEST:?}"
-        sudo unzip -o "$zip_abspath" -d "$DEST" >/dev/null
+    if [[ -n $ZIP_NAME ]]; then
+        echo "$zip" > "$ZIP_NAME"
     fi
+
+    unzip -o "$archive" "$zip" -d "$TMPDIR"
+    local dest
+
+    case "$(get_platform)" in
+    darwin)
+        # Extract from inner archive into /Applications
+        dest="/Applications"
+        if [ "$RD_LOCATION" = "user" ]; then
+            dest="$HOME/$dest"
+        fi
+
+        local app="Rancher Desktop.app"
+        rm -rf "${dest:?}/$app"
+        unzip -o "$zip_abspath" "$app/*" -d "$dest" >/dev/null
+        ;;
+    win32)
+        local localAppData programFiles
+        localAppData="$(wslpath_from_win32_env LOCALAPPDATA)"
+        programFiles="$(wslpath_from_win32_env ProgramFiles)"
+        dest="$programFiles"
+        if [ "$RD_LOCATION" = "user" ]; then
+            dest="$localAppData/Programs"
+        fi
+        local app="Rancher Desktop"
+        rm -rf "${dest:?}/$app"
+        unzip -o "$zip_abspath" "$app/*" -d "$dest" >/dev/null
+        ;;
+    linux)
+        # Linux doesn't support per-user installs
+        if [[ "$RD_LOCATION" != "system" ]]; then
+            printf "Installing to %s is not supported on Linux; will install into /opt instead.\n" "$RD_LOCATION" >&2
+        fi
+        dest="/opt/rancher-desktop"
+        sudo rm -rf "${dest:?}"
+        sudo unzip -o "$zip_abspath" -d "$dest" >/dev/null
+        ;;
+    esac
 }
 
 download_bats() {

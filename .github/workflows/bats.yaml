@@ -1,4 +1,4 @@
-name: BATS on macOS on latest CI build
+name: BATS
 on:
   workflow_dispatch:
     inputs:
@@ -12,36 +12,82 @@ on:
         description: Override branch (e.g. main, or PR#)
         type: string
       tests:
-        description: 'Tests (e.g. tests/containers/*)'
-        default: 'tests/*'
+        description: 'Tests (in the tests/ directory, e.g. "containers")'
+        default: '*'
         type: string
-      results:
-        description: Number of runs to search for Package workflow
-        default: 30
-        type: number
+      platforms:
+        description: Platforms to run
+        default: 'linux mac'
+        type: string
+      engines:
+        description: Container engines to run
+        default: 'containerd moby'
+        type: string
+
+permissions:
+  contents: read
 
 env:
-  SCRIPT:        install-latest-ci.sh
-  RD_LOCATION:   user
   GH_OWNER:      ${{ github.repository_owner }}
   GH_REPOSITORY: ${{ github.repository }}
   GH_REF_NAME:   ${{ github.ref_name }}
 
 jobs:
+  get-tests:
+    name: Calculate tests to run
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fetch install script
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          scripts/install-latest-ci.sh
+          .github/workflows/bats/get-tests.py
+
+    - name: Fetch tests
+      run: |
+        : ${OWNER:=$GH_OWNER}
+        : ${REPO:=${GH_REPOSITORY#$GH_OWNER/}}
+        : ${BRANCH:=$GH_REF_NAME}
+        # If BRANCH is a number, assume it is supposed to be a PR
+        [[ $BRANCH =~ ^[0-9]+$ ]] && PR=$BRANCH
+        "scripts/install-latest-ci.sh"
+      env:
+        GH_TOKEN:     ${{ github.token }}
+        OWNER:        ${{ inputs.owner }}
+        REPO:         ${{ inputs.repo }}
+        BRANCH:       ${{ inputs.branch }}
+        BATS_DIR:     ${{ github.workspace }}/bats
+        SKIP_INSTALL: true
+
+    - name: Calculate tests
+      id: calculate
+      # This script is not inline to make local testing easier
+      run: python3 ${{ github.workspace }}/.github/workflows/bats/get-tests.py
+      env:
+        TESTS: ${{ inputs.tests }}
+        PLATFORMS: ${{ inputs.platforms }}
+        ENGINES: ${{ inputs.engines }}
+      working-directory: bats/tests
+    outputs:
+      tests: ${{ steps.calculate.outputs.tests }}
+
   bats:
-    runs-on: macos-12
+    needs: get-tests
     strategy:
       fail-fast: false
       matrix:
-        engine:
-        - containerd
-        - moby
+        include: ${{ fromJSON(needs.get-tests.outputs.tests )}}
+    runs-on: ${{ matrix.host }}
     steps:
     - name: Fetch install script
-      run: |
-        URL="https://raw.githubusercontent.com/$GH_REPOSITORY/$GH_REF_NAME/scripts/$SCRIPT"
-        curl --output-dir "$TMPDIR" -O "$URL"
-        chmod +x "$TMPDIR/$SCRIPT"
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: scripts/install-latest-ci.sh
 
     - name: Install latest CI build
       run: |
@@ -50,42 +96,167 @@ jobs:
         : ${BRANCH:=$GH_REF_NAME}
         # If BRANCH is a number, assume it is supposed to be a PR
         [[ $BRANCH =~ ^[0-9]+$ ]] && PR=$BRANCH
-        "$TMPDIR/$SCRIPT"
+        scripts/install-latest-ci.sh
       env:
         GH_TOKEN: ${{ github.token }}
         OWNER:    ${{ inputs.owner }}
         REPO:     ${{ inputs.repo }}
         BRANCH:   ${{ inputs.branch }}
-        RESULTS:  ${{ inputs.results }}
+        BATS_DIR: ${{ github.workspace }}/bats
+        ZIP_NAME: ${{ github.workspace }}/version.txt
+
+    - name: "Linux: Disable admin access"
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p $HOME/.config/rancher-desktop
+        cat <<EOF > $HOME/.config/rancher-desktop/settings.json
+        {
+          "version": 5,
+          "application": {
+            "adminAccess": false
+          }
+        }
+
+    - name: "Linux: Enable KVM access"
+      if: runner.os == 'Linux'
+      run: sudo chmod a+rwx /dev/kvm
+
+    - name: "Linux: Initialize pass"
+      if: runner.os == 'Linux'
+      run: |
+        # Configure the agent to allow default passwords
+        HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
+        mkdir -p "${HOMEDIR}"
+        chmod 0700 "${HOMEDIR}"
+        echo "allow-preset-passphrase" >> "${HOMEDIR}/gpg-agent.conf"
+
+        # Create a GPG key
+        gpg --quick-generate-key --yes --batch --passphrase '' \
+          user@rancher-desktop.test default \
+          default never
+
+        # Get info about the newly created key
+        DATA="$(gpg --batch --with-colons --with-keygrip --list-secret-keys)"
+        FINGERPRINT="$(awk -F: '/^fpr:/ { print $10 ; exit }' <<< "${DATA}")" # spellcheck-ignore-line
+        GRIP="$(awk -F: '/^grp:/ { print $10 ; exit }' <<< "${DATA}")"
+
+        # Save the password
+        gpg-connect-agent --verbose "PRESET_PASSPHRASE ${GRIP} -1 00" /bye
+
+        # Initialize pass
+        pass init "${FINGERPRINT}"
+
+    - name: Normalize test name
+      run: |
+        t="${{ matrix.name }}"
+        if [[ ! -r "tests/$t" ]] && [[ -r "tests/${t}.bats" ]]; then
+          t="${t}.bats"
+        fi
+        echo "RD_TEST=$t" >> "$GITHUB_ENV"
+      working-directory: bats
+
+    - name: "macOS: Set startup command"
+      if: runner.os == 'macOS'
+      run: echo "BATS_COMMAND=$BATS_COMMAND" >> "$GITHUB_ENV"
+      env:
+        BATS_COMMAND: exec
+    - name: "Linux: Set startup command"
+      if: runner.os == 'Linux'
+      run: echo "BATS_COMMAND=$BATS_COMMAND" >> "$GITHUB_ENV"
+      env:
+        BATS_COMMAND: >-
+          exec xvfb-run --auto-servernum
+          --server-args='-screen 0 1280x960x24'
 
     - name: Run BATS
-      run: |
-        DEFAULT_DIR=$PWD
-        cd "$TMPDIR/bats"
-        ./bats-core/bin/bats \
-            --gather-test-outputs-in "$DEFAULT_DIR/logs" \
-            --report-formatter tap \
-            ${{ inputs.tests }}
+      run: >-
+        ${{ env.BATS_COMMAND }}
+        ./bats-core/bin/bats
+        --gather-test-outputs-in "${LOGS_DIR}"
+        --formatter tap
+        --report-formatter tap
+        'tests/${{ env.RD_TEST }}'
       env:
         RD_CONTAINER_ENGINE:     ${{ matrix.engine }}
         RD_CAPTURE_LOGS:         "true"
         RD_TAKE_SCREENSHOTS:     "true"
-        RD_USE_IMAGE_ALLOW_LIST: "true"
+        RD_TRACE:                "true"
+        RD_USE_GHCR_IMAGES:      "true"
+        RD_USE_RAMDISK:          "true"
+        LOGS_DIR:                ${{ github.workspace }}/logs
+        GITHUB_TOKEN:            ${{ github.token }}
+        BATS_COMMAND:            ${{ env.BATS_COMMAND }}
+        RD_TEST:                 ${{ env.RD_TEST }}
+      working-directory: bats
+      timeout-minutes: 120
 
     - name: Consolidate logs
       if: ${{ !cancelled() }}
       run: |
         # bats/logs may not exist if the workflow is being tested with e.g. tests/helpers/utils.bats
-        if [ -d "$TMPDIR/bats/logs" ]; then
-            cp -R "$TMPDIR/bats/logs/" logs
+        if [ -d "bats/logs" ]; then
+            cp -R "bats/logs/" logs
         fi
-        cp "$TMPDIR/bats/report.tap" logs
-        "$TMPDIR/bats/scripts/rename-logs.sh" logs
+        cp "bats/report.tap" logs
+        "bats/scripts/rename-logs.sh" logs
+        # Strip any `.bats` suffix if we're running individual test files.
+        echo "\`${NAME}\` (${OS} ${ENGINE})" > logs/test-name.txt
+        mv version.txt logs/
+      env:
+        NAME: ${{ matrix.name }}
+        OS: ${{ matrix.host }}
+        ENGINE: ${{ matrix.engine }}
+
+    - name: Calculate log name
+      id: log_name
+      if: ${{ !cancelled() }}
+      run: |
+        for ch in '"' ':' '/' '<' '>' '|' '\*' '\?'; do
+          name="${name//${ch}/_}"
+        done
+        echo "name=${name//\//_}" >> "$GITHUB_OUTPUT"
+      env:
+        name: ${{ matrix.host }}-${{ matrix.engine }}-${{ matrix.name }}.logs
 
     - name: Upload logs
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.engine }}.logs
+        name: ${{ steps.log_name.outputs.name }}
         path: logs/
         if-no-files-found: error
+
+  summarize:
+    name: Summarize output
+    permissions: {}
+    needs: bats
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: "*.logs"
+    - run: |
+        set -o xtrace
+
+        echo Versions
+        echo ---
+        cat */version.txt | sort --unique
+
+        echo "Result | Passed | Failed | Skipped | Total | Test" >> "$GITHUB_STEP_SUMMARY"
+        echo ":--- | ---: | ---: | ---: | ---: | :---" >> "$GITHUB_STEP_SUMMARY"
+        for i in */*.tap ; do
+          name="$(cat "${i%/*}/test-name.txt")"
+          count="$(grep -E '^1\.\.' "$i" | cut -d. -f3)"
+          ok="$(grep -c -E '^ok' "$i" ||:)"
+          fail="$(grep -c -E '^not ok' "$i" ||:)"
+          skip="$(grep -c -E '^ok.* # skip' "$i" ||:)"
+          if (( ok == count && count > 1 )) ; then
+            summary=":white_check_mark:"
+          else
+            summary=":x:"
+          fi
+          printf '%s | %d | %d | %d | %d | %s\n' \
+            "${summary}" "$((ok - skip))" "${fail}" "${skip}" "${count}" "${name}" \
+            >> "$GITHUB_STEP_SUMMARY"
+        done
