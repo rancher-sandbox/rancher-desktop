@@ -170,8 +170,13 @@ using_ramdisk() {
 }
 
 ########################################################################
-# Use RD_PROTECTED_DOT in profile settings for WSL distro names
+# Use RD_PROTECTED_DOT in profile settings for WSL distro names.
 : "${RD_PROTECTED_DOT:=·}"
+
+########################################################################
+# RD_KUBELET_TIMEOUT specifies the number of minutes wait_for_kubelet()
+# waits before it times out.
+: "${RD_KUBELET_TIMEOUT:=10}"
 
 ########################################################################
 # RD_LOCATION specifies the location where Rancher Desktop is installed
