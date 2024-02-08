@@ -142,6 +142,7 @@ export type LimaConfiguration = {
   }
   portForwards?: Array<Record<string, any>>;
   networks?: Array<Record<string, string | boolean>>;
+  env?: Record<string, string>;
 };
 
 /**
@@ -669,6 +670,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         },
       },
     });
+
+    // k3s supports cgroup v2 starting with 1.20.4
+    config.env ||= {};
+    config.env['RC_CGROUP_MODE'] = 'unified';
+    if (this.cfg?.kubernetes?.enabled && this.cfg.kubernetes.version) {
+      if (semver.lt(this.cfg.kubernetes.version, '1.20.4')) {
+        config.env['RC_CGROUP_MODE'] = 'hybrid';
+      }
+    }
 
     // Alpine can boot via UEFI now
     if (config.firmware) {
