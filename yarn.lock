@@ -6149,10 +6149,10 @@ electron-updater@6.1.7:
     semver "^7.3.8"
     tiny-typed-emitter "^2.1.0"
 
-electron@26.4.3:
-  version "26.4.3"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-26.4.3.tgz#b5ac6919449103dda3be787d44fd221456200d7a"
-  integrity sha512-2U+hYgGQck+/b8+B48JMTcE6UWYDC4BBrLNigmjkpOsPUdVuVJXafXHUN6QKxDxZhbwoc5pbk/xpTFOBP1UCOA==
+electron@28.2.2:
+  version "28.2.2"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-28.2.2.tgz#d5aa4a33c00927d83ca893f8726f7c62aad98c41"
+  integrity sha512-8UcvIGFcjplHdjPFNAHVFg5bS0atDyT3Zx21WwuE4iLfxcAMsyMEOgrQX3im5LibA8srwsUZs7Cx0JAUfcQRpw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^18.11.18"
