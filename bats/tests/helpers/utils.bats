@@ -37,6 +37,18 @@ is_quoted() {
     is "\"$1\""
 }
 
+succeeds() {
+    # shellcheck disable=SC2086 # we want to split on whitespace
+    run ${BATS_TEST_DESCRIPTION}
+    assert_success
+}
+
+fails() {
+    # shellcheck disable=SC2086 # we want to split on whitespace
+    run ${BATS_TEST_DESCRIPTION}
+    assert_failure
+}
+
 ########################################################################
 
 @test 'to_lower Upper and Lower' {
@@ -192,6 +204,154 @@ get_json_test_data() {
         echo "."
     )
     assert_output $'\n.'
+}
+
+########################################################################
+
+@test 'semver a1b2.3c4.5.6d7.8.9.0' {
+    is 4.5.6
+}
+
+@test 'semver a1b2.3c4.5' {
+    is 2.3.0
+}
+
+@test 'semver a1b2c3' {
+    is 1.0.0
+}
+
+@test 'semver 1.2.3.4' {
+    is 1.2.3
+}
+
+@test 'semver 00.00.00' {
+    is 0.0.0
+}
+
+@test 'semver 000000' {
+    is 0.0.0
+}
+
+@test 'semver 0.001' {
+    is 0.1.0
+}
+
+@test 'semver 00100.00200.00300' {
+    is 100.200.300
+}
+
+@test 'semver ignores dates/times' {
+    run semver "1/1/70 12:00:00 version 7.8"
+    assert_success
+    assert_output 7.8.0
+}
+
+@test 'semver looks at all lines of the input' {
+    run semver $'Version1: 1.2\nVersion2: 3.4.5'
+    assert_success
+    assert_output 3.4.5
+}
+
+@test 'semver looks only at the first argument' {
+    run semver 'Version1: 1.2' 'Version2: 3.4.5'
+    assert_success
+    assert_output 1.2.0
+}
+
+@test 'semver fails when input has no number' {
+    run semver "Hello world"
+    assert_failure
+}
+
+########################################################################
+
+@test 'semver_is_valid 1.2.3' {
+    succeeds
+}
+@test 'semver_is_valid 1.2.3-pre' {
+    fails
+}
+@test 'semver_is_valid v1.2.3' {
+    fails
+}
+@test 'semver_is_valid 1.2.' {
+    fails
+}
+@test 'semver_is_valid 1' {
+    fails
+}
+@test 'semver_is_valid 0.0.0' {
+    succeeds
+}
+@test 'semver_is_valid 01.2.3' {
+    fails
+}
+@test 'semver_is_valid 1.02.3' {
+    fails
+}
+@test 'semver_is_valid fails on trailing newline' {
+    run semver_is_valid $'1.2.3\n'
+    assert_failure
+}
+
+########################################################################
+
+@test 'semver_eq 1.2.3 1.2.3' {
+    succeeds
+}
+@test 'semver_eq 1.2.3 4.5.6' {
+    fails
+}
+
+@test 'semver_neq 1.2.3 1.2.3' {
+    fails
+}
+@test 'semver_neq 1.2.3 4.5.6' {
+    succeeds
+}
+
+########################################################################
+
+@test 'semver_lt 1.2.3 1.2.3' {
+    fails
+}
+@test 'semver_lt 1.2.3 4.5.6' {
+    succeeds
+}
+@test 'semver_lt 4.5.6 1.2.3' {
+    fails
+}
+
+@test 'semver_lte 1.2.3 1.2.3' {
+    succeeds
+}
+@test 'semver_lte 1.2.3 4.5.6' {
+    succeeds
+}
+@test 'semver_lte 4.5.6 1.2.3' {
+    fails
+}
+
+########################################################################
+
+@test 'semver_gt 1.2.3 1.2.3' {
+    fails
+}
+@test 'semver_gt 1.2.3 4.5.6' {
+    fails
+}
+@test 'semver_gt 4.5.6 1.2.3' {
+    succeeds
+}
+
+@test 'semver_gte 1.2.3 1.2.3' {
+    succeeds
+}
+@test 'semver_gte 1.2.3 4.5.6' {
+    fails
+}
+@test 'semver_gte 4.5.6 1.2.3' {
+    succeeds
 }
 
 ########################################################################

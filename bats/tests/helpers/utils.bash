@@ -114,6 +114,63 @@ jq_output() {
     return "$status"
 }
 
+# semver returns the first semver version from its first argument (which may be multiple lines).
+# It does not include pre-release markers or build ids.
+# It will match major.minor, or even just major if it can't find major.minor.patch.
+# The returned version will always be a major.minor.patch string.
+# Each part will have leading zeros removed.
+# semver will fail when the input contains no number.
+semver() {
+    local input=$1
+    local semver
+    semver=$(awk 'match($0, /([0-9]+\.[0-9]+\.[0-9]+)/) {print substr($0, RSTART, RLENGTH); exit}' <<<"$input")
+    if [[ -z $semver ]]; then
+        semver=$(awk 'match($0, /([0-9]+\.[0-9]+)/) {print substr($0, RSTART, RLENGTH); exit}' <<<"$input")
+    fi
+    if [[ -z $semver ]]; then
+        semver=$(awk 'match($0, /([0-9]+)/) {print substr($0, RSTART, RLENGTH); exit}' <<<"$input")
+    fi
+    if [[ -z $semver ]]; then
+        return 1
+    fi
+    until [[ $semver =~ \..+\. ]]; do
+        semver="${semver}.0"
+    done
+    sed -E 's/^0*([0-9])/\1/; s/\.0*([0-9])/.\1/g' <<<"$semver"
+}
+
+# Check if the argument is a valid 3-tuple version number with no leading 0s and no newlines
+semver_is_valid() {
+    [[ ! $1 =~ $'\n' ]] && grep -q -E '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' <<<"$1"
+}
+
+# Compare 2 regular major.minor.patch versions as returned by the semver function above
+semver_eq() {
+    [ "$1" == "$2" ]
+}
+
+semver_neq() {
+    ! semver_eq "$@"
+}
+
+semver_lte() {
+    printf "%s\n" "$1" "$2" | sort --check=silent --version-sort
+}
+
+semver_lt() {
+    semver_lte "$@" && semver_neq "$@"
+}
+
+semver_gte() {
+    ! semver_lt "$@"
+}
+
+semver_gt() {
+    ! semver_lte "$@"
+}
+
+########################################################################
+
 get_setting() {
     run rdctl api /settings
     assert_success || return
@@ -137,7 +194,11 @@ trace() {
     local caller="${CALLER:-$(calling_function)}"
     local line
     while IFS= read -r line; do
-        printf "# (%s): %s\n" "$caller" "$line" >&3
+        if [[ -e /dev/fd/3 ]]; then
+            printf "# (%s): %s\n" "$caller" "$line" >&3
+        else
+            printf "# (%s): %s\n" "$caller" "$line" >&2
+        fi
     done <<<"$*"
 }
 

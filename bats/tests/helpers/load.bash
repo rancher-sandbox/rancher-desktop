@@ -21,11 +21,18 @@ RD_TEST_FILENAME=${RD_TEST_FILENAME%.bats}
 
 # Use fatal() to abort loading helpers; don't run any tests
 fatal() {
+    local fd=2
     # fd 3 might not be open if we're not fully under bats yet; detect that.
-    if [[ -e /dev/fd/3 ]]; then
-        echo "   $1" >&3
-    else
-        echo "   $1" >&2
+    [[ -e /dev/fd/3 ]] && fd=3
+    echo "   $1" >&$fd
+
+    # Print (ugly) stack trace if we are outside any @test function
+    if [ -z "${BATS_SUITE_TEST_NUMBER:-}" ]; then
+        echo >&$fd
+        local frame=0
+        while caller $frame >&$fd; do
+            ((frame++))
+        done
     fi
     exit 1
 }

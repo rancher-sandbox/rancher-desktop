@@ -483,6 +483,7 @@ myport
 namearray
 napanee
 navlink
+neq
 nerdctl
 netcat
 netsh
@@ -639,6 +640,7 @@ resyncing
 reusecab
 rioinfo
 rke
+RLENGTH
 rmi
 roadmap
 roboto
@@ -648,6 +650,7 @@ roletemplate
 rootfs
 rosetta
 routable
+RSTART
 rtm
 Runas
 runbook
