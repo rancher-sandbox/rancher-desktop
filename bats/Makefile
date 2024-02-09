@@ -30,7 +30,7 @@ bats.tar.gz: $(DEPS)
 	git submodule update --init --recursive
 	tar cvfz "$@" --exclude-vcs --exclude "*/test/*" --exclude "*/docs/*" -- *
 
-JQ_VERSION ?= 1.6
+JQ_VERSION ?= 1.7.1
 JQ_URL=https://github.com/stedolan/jq/releases/download/jq-$(JQ_VERSION)
 
 bin/darwin/jq:

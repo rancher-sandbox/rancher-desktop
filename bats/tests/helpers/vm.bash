@@ -83,7 +83,7 @@ setup_ramdisk() {
     if ((ramdisk_size < ${RD_FILE_RAMDISK_SIZE:-0})); then
         local fmt='%s requires %dGB of ramdisk; disabling ramdisk for this file'
         # shellcheck disable=SC2059 # The string is set the line above.
-        fmt="$(printf "$fmt" "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE")"
+        printf -v fmt "$fmt" "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE"
         printf "RD:   %s\n" "$fmt" >>"$BATS_WARNING_FILE"
         printf "# WARN: %s\n" "$fmt" >&3
         return

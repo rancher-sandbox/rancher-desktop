@@ -93,7 +93,8 @@ create_profile() {
         ;;
     windows)
         # Make sure any old profile data at this location is removed
-        profile_reg delete "." || :
+        run profile_reg delete "."
+        assert_nothing
         # Create subkey so that profile_exists returns true now
         profile_reg add "."
         ;;
@@ -105,10 +106,12 @@ delete_profile() {
     if deleting_profiles; then
         case $OS in
         darwin | linux)
-            profile_sudo rm -f "$(profile_location)" || :
+            run profile_sudo rm -f "$(profile_location)"
+            assert_nothing
             ;;
         windows)
-            profile_reg delete "." || :
+            run profile_reg delete "."
+            assert_nothing
             ;;
         esac
     fi
@@ -225,7 +228,14 @@ remove_profile_entry() {
         profile_plutil -remove "${setting%.}" || return
         ;;
     linux)
-        profile_jq "del(.${setting%.})" || return
+        # This relies on `null` not being a valid setting value.
+        profile_jq "
+            if (try .${setting%.}) | type == \"null\" then
+                error(\"setting ${setting%.} not found\")
+            else
+                del(.${setting%.})
+            end
+        " || return
         ;;
     windows)
         profile_reg delete "$setting" || return
