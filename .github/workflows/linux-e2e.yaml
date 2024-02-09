@@ -5,15 +5,14 @@ on:
   push:
     branches-ignore:
     - 'dependabot/**'
-  pull_request:
-    paths-ignore:
-    - '.github/actions/spelling/**'
-    - 'bats/**'
-    - 'docs/**'
-    - '**.md'
+  pull_request: {}
 
 jobs:
+  check_paths:
+    uses: ./.github/workflows/paths-ignore.yaml
   e2e-tests:
+    needs: check_paths
+    if: needs.check_paths.outputs.should_run == 'true'
     timeout-minutes: 150
     runs-on: ubuntu-latest
     steps:
