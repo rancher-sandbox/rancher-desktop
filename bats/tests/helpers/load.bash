@@ -108,7 +108,7 @@ teardown_file() {
         shutdown=true
     fi
     if is_true $shutdown; then
-        run rdctl shutdown
+        rdctl shutdown || :
     fi
 
     teardown_ramdisk

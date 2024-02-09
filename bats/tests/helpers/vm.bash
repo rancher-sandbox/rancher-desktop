@@ -48,8 +48,8 @@ macos_eject_ramdisk() {
     run plutil -convert json -o - - <<<"$output"
     assert_success
     # shellcheck disable=2016 # $mount is interpreted by jq, not shell.
-    run jq_output --arg mount "$mount" \
-        '.images[]."system-entities"[] | select(."mount-point" == $mount) | ."dev-entry"'
+    local expr='.images[]."system-entities"[] | select(."mount-point" == $mount) | ."dev-entry"'
+    run jq_output --arg mount "$mount" "$expr"
     assert_success
     if [[ -z $output ]]; then
         return
@@ -81,11 +81,11 @@ setup_ramdisk() {
 
     local ramdisk_size="${RD_RAMDISK_SIZE}"
     if ((ramdisk_size < ${RD_FILE_RAMDISK_SIZE:-0})); then
-        run printf "%s requires %dGB of ramdisk; disabling ramdisk for this file" \
-            "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE"
-        assert_success
-        printf "RD:   %s\n" "$output" >>"$BATS_WARNING_FILE"
-        printf "# WARN: %s\n" "$output" >&3
+        local fmt='%s requires %dGB of ramdisk; disabling ramdisk for this file'
+        # shellcheck disable=SC2059 # The string is set the line above.
+        fmt="$(printf "$fmt" "$BATS_TEST_FILENAME" "$RD_FILE_RAMDISK_SIZE")"
+        printf "RD:   %s\n" "$fmt" >>"$BATS_WARNING_FILE"
+        printf "# WARN: %s\n" "$fmt" >&3
         return
     fi
 
@@ -119,18 +119,18 @@ factory_reset() {
 
     if using_dev_mode; then
         if is_unix; then
-            run rdctl shutdown
-            run pkill_by_path "$PATH_REPO_ROOT/node_modules"
-            run pkill_by_path "$PATH_RESOURCES"
-            run pkill_by_path "$LIMA_HOME"
+            rdctl shutdown || :
+            pkill_by_path "$PATH_REPO_ROOT/node_modules" || :
+            pkill_by_path "$PATH_RESOURCES" || :
+            pkill_by_path "$LIMA_HOME" || :
         else
             # TODO: kill `yarn dev` instance on Windows
             true
         fi
     fi
     if is_windows && wsl true >/dev/null; then
-        run wsl sudo ip link delete docker0
-        run wsl sudo ip link delete nerdctl0
+        wsl sudo ip link delete docker0 || :
+        wsl sudo ip link delete nerdctl0 || :
         # reset iptables to original state
         flush_iptables
         clear_iptables_chain "CNI"

@@ -14,7 +14,8 @@ SC_EXCLUDES ?= SC1091,SC2034,SC2154
 
 .PHONY: lint
 lint:
-	@./scripts/bats-lint.pl $(shell find tests -name '*.bats')
+	find tests -name '*.bash' | xargs ./scripts/bats-lint.pl
+	find tests -name '*.bats' | xargs ./scripts/bats-lint.pl
 	find tests -name '*.bash' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
 	find tests -name '*.bats' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
 	find scripts -name '*.sh' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
