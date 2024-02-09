@@ -19,7 +19,7 @@ proxy_set() {
     local field=$1
     local value=$2
 
-    payload=$(printf '{ "version": 10, "experimental": { "virtualMachine": { "proxy": { "%s": %s }}}}' "$field" "$value")
+    printf -v payload '{ "version": 10, "experimental": { "virtualMachine": { "proxy": { "%s": %s }}}}' "$field" "$value"
     run rdctl api settings -X PUT --body "$payload"
     assert_failure
     assert_output --partial "Changing field \"experimental.virtualMachine.proxy.${field}\" via the API isn't supported"
@@ -48,7 +48,7 @@ proxy_set() {
     assert_success
     run jq_output .experimental.virtualMachine.proxy
     assert_success
-    payload=$(printf '{ "version": 10, "experimental": { "virtualMachine": { "proxy": %s }}}' "$output")
+    printf -v payload '{ "version": 10, "experimental": { "virtualMachine": { "proxy": %s }}}' "$output"
     run rdctl api settings -X PUT --body "$payload"
     assert_success
 }

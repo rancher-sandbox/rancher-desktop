@@ -258,7 +258,7 @@ assert_check_registry_output() {
     run rdctl create-profile --output reg --body '{"application": { "window": { "quitOnClose": true }}}'
     assert_success
     SETTINGS_VERSION=$(get_setting .version)
-    HEX_SETTINGS_VERSION=$(printf "%x" "$SETTINGS_VERSION")
+    printf -v HEX_SETTINGS_VERSION "%x" "$SETTINGS_VERSION"
     assert_output - <<EOF
 Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies]
@@ -289,7 +289,7 @@ EOF
 assert_registry_output_for_maps_and_lists() {
     assert_success
     SETTINGS_VERSION=$(get_setting .version)
-    HEX_SETTINGS_VERSION=$(printf "%x" "$SETTINGS_VERSION")
+    printf -v HEX_SETTINGS_VERSION "%x" "$SETTINGS_VERSION"
     assert_output - <<EOF
 Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\SOFTWARE\Policies]

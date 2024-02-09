@@ -206,6 +206,12 @@ get_json_test_data() {
     assert_output $'\n.'
 }
 
+@test 'jq must be version 1.7.1 or newer' {
+    run semver "$(jq --version)"
+    assert_success
+    semver_gte "$output" 1.7.1
+}
+
 ########################################################################
 
 @test 'semver a1b2.3c4.5.6d7.8.9.0' {

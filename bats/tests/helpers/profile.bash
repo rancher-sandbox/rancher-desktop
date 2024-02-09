@@ -94,6 +94,7 @@ create_profile() {
     windows)
         # Make sure any old profile data at this location is removed
         run profile_reg delete "."
+        assert_nothing
         # Create subkey so that profile_exists returns true now
         profile_reg add "."
         ;;
@@ -106,9 +107,11 @@ delete_profile() {
         case $OS in
         darwin | linux)
             run profile_sudo rm -f "$(profile_location)"
+            assert_nothing
             ;;
         windows)
             run profile_reg delete "."
+            assert_nothing
             ;;
         esac
     fi
@@ -222,13 +225,20 @@ remove_profile_entry() {
 
     case $OS in
     darwin)
-        run profile_plutil -remove "${setting%.}"
+        profile_plutil -remove "${setting%.}" || return
         ;;
     linux)
-        run profile_jq "del(.${setting%.})"
+        # This relies on `null` not being a valid setting value.
+        profile_jq "
+            if (try .${setting%.}) | type == \"null\" then
+                error(\"setting ${setting%.} not found\")
+            else
+                del(.${setting%.})
+            end
+        " || return
         ;;
     windows)
-        run profile_reg delete "$setting"
+        profile_reg delete "$setting" || return
         ;;
     esac
 }
@@ -273,7 +283,7 @@ profile_plutil() {
                 local keypath
                 keypath=$(echo "$setting" | cut -d . -f 1-"$index")
                 # Ignore error if dictionary already exists
-                run profile_sudo plutil -insert "$keypath" -dictionary "$(profile_location)"
+                profile_sudo plutil -insert "$keypath" -dictionary "$(profile_location)" || :
             done
         fi
     fi
