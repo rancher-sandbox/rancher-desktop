@@ -1,0 +1,80 @@
+# This is a reusable workflow to determine if the current change requires an E2E
+# run.  This is required because using [paths-ignored] directly means the whole
+# workflow is skipped, but that means that it doesn't count as having run a
+# required workflow.
+
+# Usage:
+#   jobs:
+#     check_paths:
+#        uses: ./.github/workflows/actions/paths-ignore.yaml
+#     do_thing:
+#        if: jobs.check_paths.outputs.should_run == 'true'
+#        # Unfortunately, a string comparison is required.
+
+name: Check for ignored paths
+
+on:
+  workflow_call:
+    inputs:
+      paths_ignore:
+        description: Paths to ignore.
+        type: string
+        default: |
+          - '.github/actions/spelling/**'
+          - 'bats/**'
+          - 'docs/**'
+          - '**.md'
+    outputs:
+      should_run:
+        description: Whether other steps should run.
+        value: ${{ jobs.check.outputs.should_run }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set baseline result
+      run: echo "SHOULD_RUN=true" >> "$GITHUB_ENV"
+    - name: Determine paths to ignore
+      if: github.event_name == 'pull_request'
+      run: |
+        curl -L -o yq \
+          https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        chmod a+x yq
+        PATHS_IGNORE="PATHS_IGNORE="
+        while read -r line; do
+          PATHS_IGNORE="${PATHS_IGNORE} ':!/${line}'"
+        done <<< "$(./yq '.[]' <<< "$INPUT")"
+        echo "$PATHS_IGNORE"
+        echo "$PATHS_IGNORE" >> "$GITHUB_ENV"
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        INPUT: ${{ inputs.paths_ignore }}
+    - uses: actions/checkout@v4
+      if: github.event_name == 'pull_request'
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Check for differences
+      if: github.event_name == 'pull_request'
+      run: |
+        MERGE_BASE=$(git merge-base $BASE $HEAD)
+        diff="$(git diff --name-only $MERGE_BASE $HEAD -- ${{ env.PATHS_IGNORE }})"
+        if [[ -z "$diff" ]]; then
+          echo "No modified files found.\n"
+          echo "SHOULD_RUN=false" >> "$GITHUB_ENV"
+        else
+          printf "Modified files:\n%s\n" "$diff"
+        fi
+      env:
+        BASE: ${{ github.event.pull_request.base.sha }}
+        HEAD: ${{ github.event.pull_request.head.sha }}
+        PATHS_IGNORE: ${{ env.PATHS_IGNORE }}
+    - name: Set final output
+      id: result
+      run: echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
+    outputs:
+      should_run: ${{ steps.result.outputs.should_run }}

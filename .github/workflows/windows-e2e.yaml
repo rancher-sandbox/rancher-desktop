@@ -5,18 +5,17 @@ on:
   push:
     branches-ignore:
     - 'dependabot/**'
-  pull_request:
-    paths-ignore:
-    - '.github/actions/spelling/**'
-    - 'bats/**'
-    - 'docs/**'
-    - '**.md'
+  pull_request: {}
 
 defaults:
   run:
     shell: powershell
 jobs:
+  check_paths:
+    uses: ./.github/workflows/paths-ignore.yaml
   e2e-tests:
+    needs: check_paths
+    if: needs.check_paths.outputs.should_run == 'true'
     timeout-minutes: 90
     runs-on: windows-latest
     steps:
