@@ -530,3 +530,28 @@ get_json_test_data() {
     assert_success
     assert_output "${COUNTER}_3.png"
 }
+
+########################################################################
+
+@test 'save_var FOO=baz' {
+    FOO=baz
+    save_var FOO
+}
+
+@test 'load_var FOO' {
+    FOO=bar
+    load_var FOO
+    [[ $FOO == baz ]]
+}
+
+@test 'save_var non-existing var' {
+    run save_var DOES_NOT_EXIST
+    assert_failure
+}
+
+@test 'load_var non-existing var' {
+    DOES_NOT_EXIST=false
+    # Can't use `run` because variable would be sourced in a subshell
+    load_var DOES_NOT_EXIST || DOES_NOT_EXIST=true
+    [[ $DOES_NOT_EXIST == true ]]
+}

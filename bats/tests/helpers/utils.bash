@@ -38,6 +38,13 @@ validate_enum() {
     fatal "$var=${!var} is not a valid setting; select from [$*]"
 }
 
+validate_semver() {
+    local var=$1
+    if ! semver_is_valid "${!var}"; then
+        fatal "$var=${!var} is not a valid semver value (major.minor.patch)"
+    fi
+}
+
 assert_nothing() {
     # This is a no-op, used to show that run() has been used to continue the
     # test even when the command failed, but the failure itself is ignored.
@@ -338,5 +345,48 @@ skip_unless_host_ip() {
     fi
     if [[ -z $HOST_IP ]]; then
         skip "Test requires a routable host ip address"
+    fi
+}
+
+########################################################################
+
+# Register a test command for each k3s version in RD_K3S_VERSIONS.
+# Versions can be filtered by RD_K3S_MIN and RD_K3S_MAX.
+foreach_k3s_version() {
+    local k3s_version
+    for k3s_version in $RD_K3S_VERSIONS; do
+        if semver_lte "$RD_K3S_MIN" "$k3s_version" && semver_lte "$k3s_version" "$RD_K3S_MAX"; then
+            bats_test_function --description "$1 $k3s_version" -- _foreach_k3s_version "$k3s_version" "$@"
+        fi
+    done
+}
+
+_foreach_k3s_version() {
+    local RD_KUBERNETES_PREV_VERSION=$1
+    shift
+    "$@"
+}
+
+########################################################################
+
+var_filename() {
+    # Can't use BATS_SUITE_TMPDIR because it is unset outside of @test functions
+    echo "${BATS_RUN_TMPDIR}/var_$1"
+}
+
+save_var() {
+    local var=$1
+    printf "%s=%q\n" "$var" "${!var}" >"$(var_filename "$var")"
+}
+
+load_var() {
+    local var=$1
+    local file
+    file=$(var_filename "$var")
+    if [[ -r $file ]]; then
+        # shellcheck disable=SC1090 # Can't follow non-constant source
+        source "$file"
+    else
+        return 1
     fi
 }

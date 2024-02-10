@@ -22,6 +22,11 @@ while (<>) {
           print "$ARGV:$.: Don't define $1(); define local_$1() instead\n";
           $problems++;
       }
+
+      if (/\b run \b .* \b load_var/x) {
+          print "$ARGV:$.: Running load_var in a subshell (via run) does not work\n";
+          $problems++;
+      }
     }
 
     # The semver comparison functions take arguments that are valid semver;

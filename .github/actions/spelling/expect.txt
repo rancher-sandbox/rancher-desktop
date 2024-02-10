@@ -701,6 +701,7 @@ snakize
 softmmu
 someothername
 somepaththatshouldnevereverexist
+sourced
 splatform
 splunk
 ssd
