@@ -23,7 +23,7 @@ while (<>) {
           $problems++;
       }
 
-      if (/\b run \b .* \b load_var/x) {
+      if (/\b run \b .* \b load_var \b/x) {
           print "$ARGV:$.: Running load_var in a subshell (via run) does not work\n";
           $problems++;
       }

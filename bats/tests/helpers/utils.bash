@@ -38,6 +38,8 @@ validate_enum() {
     fatal "$var=${!var} is not a valid setting; select from [$*]"
 }
 
+# Ensure that the variable contains a valid semver (major.minor.path) version, e.g.
+# `validate_semver RD_K3S_MAX`
 validate_semver() {
     local var=$1
     if ! semver_is_valid "${!var}"; then
@@ -151,29 +153,41 @@ semver_is_valid() {
     [[ ! $1 =~ $'\n' ]] && grep -q -E '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' <<<"$1"
 }
 
-# Compare 2 regular major.minor.patch versions as returned by the semver function above
+# All semver comparison functions will return false when called without any argument
+# and return true when called with just a single argument.
+
+# semver_eq checks that all specified arguments are equal to each other.
+# (semver_eq and semver_neq don't really depend on the arguments being versions).
+# `A = B = C`
 semver_eq() {
-    [ "$1" == "$2" ]
+    [[ $# -gt 0 ]] && [[ $(printf "%s\n" "$@" | sort --unique | wc -l) -eq 1 ]]
 }
 
+# semver_neq checks that all arguments are unique. `semver_neq A B C` is not the same as
+# `A ≠ B ≠ C` because semver_neq will also return a failure if `A = C`.
+# `(A ≠ B) & (A ≠ C) & (B ≠ C)`
 semver_neq() {
-    ! semver_eq "$@"
+    [[ $# -gt 0 ]] && printf "%s\n" "$@" | sort | sort --check=silent --unique
 }
 
+# `A ≤ B ≤ C`
 semver_lte() {
-    printf "%s\n" "$1" "$2" | sort --check=silent --version-sort
+    [[ $# -gt 0 ]] && printf "%s\n" "$@" | sort --check=silent --version-sort
 }
 
+# `A < B < C`
 semver_lt() {
-    semver_lte "$@" && semver_neq "$@"
+    [[ $# -gt 0 ]] && semver_lte "$@" && semver_neq "$@"
 }
 
+# `A ≥ B ≥ C`
 semver_gte() {
-    ! semver_lt "$@"
+    [[ $# -gt 0 ]] && printf "%s\n" "$@" | sort --check=silent --reverse --version-sort
 }
 
+# `A > B > C`
 semver_gt() {
-    ! semver_lte "$@"
+    [[ $# -gt 0 ]] && semver_gte "$@" && semver_neq "$@"
 }
 
 ########################################################################
@@ -350,43 +364,55 @@ skip_unless_host_ip() {
 
 ########################################################################
 
-# Register a test command for each k3s version in RD_K3S_VERSIONS.
+# Register one or more test commands for each k3s version in RD_K3S_VERSIONS.
 # Versions can be filtered by RD_K3S_MIN and RD_K3S_MAX.
 foreach_k3s_version() {
     local k3s_version
     for k3s_version in $RD_K3S_VERSIONS; do
-        if semver_lte "$RD_K3S_MIN" "$k3s_version" && semver_lte "$k3s_version" "$RD_K3S_MAX"; then
-            bats_test_function --description "$1 $k3s_version" -- _foreach_k3s_version "$k3s_version" "$@"
+        if semver_lte "$RD_K3S_MIN" "$k3s_version" "$RD_K3S_MAX"; then
+            local cmd
+            for cmd in "$@"; do
+                bats_test_function --description "$cmd $k3s_version" -- _foreach_k3s_version "$k3s_version" "$cmd"
+            done
         fi
     done
 }
 
 _foreach_k3s_version() {
     local RD_KUBERNETES_PREV_VERSION=$1
-    shift
-    "$@"
+    "$2"
 }
 
 ########################################################################
 
-var_filename() {
+_var_filename() {
     # Can't use BATS_SUITE_TMPDIR because it is unset outside of @test functions
     echo "${BATS_RUN_TMPDIR}/var_$1"
 }
 
+# Save env variables on disk, so they can be reloaded in different tests.
+# This is mostly useful if calculating the setting takes a long time.
+# `save_var VAR1 VAR2`
 save_var() {
-    local var=$1
-    printf "%s=%q\n" "$var" "${!var}" >"$(var_filename "$var")"
+    for var in "$@"; do
+        printf "%s=%q\n" "$var" "${!var}" >"$(_var_filename "$var")"
+    done
 }
 
+# Load env variables saved by `save_var`. Returns an error if any of the variables
+# had not been saved, but will continue to try to load the remaining variables.
+# `load_var VAR1 VAR2`
 load_var() {
-    local var=$1
-    local file
-    file=$(var_filename "$var")
-    if [[ -r $file ]]; then
-        # shellcheck disable=SC1090 # Can't follow non-constant source
-        source "$file"
-    else
-        return 1
-    fi
+    local res=0
+    for var in "$@"; do
+        local file
+        file=$(_var_filename "$var")
+        if [[ -r $file ]]; then
+            # shellcheck disable=SC1090 # Can't follow non-constant source
+            source "$file"
+        else
+            res=1
+        fi
+    done
+    return $res
 }

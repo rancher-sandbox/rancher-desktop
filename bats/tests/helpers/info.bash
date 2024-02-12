@@ -12,6 +12,10 @@ show_info() { # @test
         rm -rf "$PATH_BATS_LOGS"
     fi
 
+    if is_false "$RD_INFO"; then
+        return
+    fi
+
     (
         local format="# %-25s %s\n"
 

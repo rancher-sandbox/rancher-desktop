@@ -21,6 +21,9 @@ using_docker() {
 : "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
 
 ########################################################################
+: "${RD_INFO:=true}"
+
+########################################################################
 : "${RD_CAPTURE_LOGS:=false}"
 
 capturing_logs() {
@@ -213,23 +216,8 @@ validate_semver RD_K3S_MAX
 
 # Cache expansion of RD_K3S_VERSIONS special versions because they are slow to compute
 if ! load_var RD_K3S_VERSIONS; then
-    if [[ $RD_K3S_VERSIONS == "all" ]]; then
-        # filter out duplicates; RD only supports the latest of +k3s1, +k3s2, etc.
-        RD_K3S_VERSIONS=$(
-            gh api /repos/k3s-io/k3s/releases --paginate --jq '.[].tag_name' |
-                grep -E '^v1\.[0-9]+\.[0-9]+\+k3s[0-9]+$' |
-                sed -E 's/v([^+]+)\+.*/\1/' |
-                sort --unique --version-sort
-        )
-    fi
-
-    if [[ $RD_K3S_VERSIONS == "latest" ]]; then
-        RD_K3S_VERSIONS=$(
-            curl --silent --fail https://update.k3s.io/v1-release/channels |
-                jq --raw-output '.data[] | select(.name | test("^v[0-9]+\\.[0-9]+$")).latest' |
-                sed -E 's/v([^+]+)\+.*/\1/'
-        )
-    fi
+    # Fetch "all" or "latest" versions
+    get_k3s_versions
 
     for k3s_version in ${RD_K3S_VERSIONS}; do
         validate_semver k3s_version
