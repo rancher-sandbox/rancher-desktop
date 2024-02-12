@@ -7,16 +7,7 @@ local_setup() {
     needs_port 443
 }
 
-@test 'factory reset' {
-    factory_reset
-}
-
-@test 'start k8s' {
-    start_kubernetes
-    wait_for_kubelet
-}
-
-@test 'add helm repo' {
+add_helm_repo() {
     helm repo add jetstack https://charts.jetstack.io
     helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
     helm repo update
@@ -32,7 +23,7 @@ get_host() {
     fi
 }
 
-@test 'deploy rancher' {
+deploy_rancher() {
     helm upgrade \
         --install cert-manager jetstack/cert-manager \
         --namespace cert-manager \
@@ -49,7 +40,7 @@ get_host() {
         --create-namespace
 }
 
-@test 'verify rancher' {
+verify_rancher() {
     run try --max 9 --delay 10 curl --insecure --silent --show-error "https://$(get_host)/dashboard/auth/login"
     assert_success
     assert_output --partial "Rancher Dashboard"
@@ -58,9 +49,20 @@ get_host() {
     assert_output --partial "bootstrapPassword"
 }
 
-local_teardown_file() {
+uninstall_rancher() {
     run helm uninstall rancher --namespace cattle-system --wait
     assert_nothing
     run helm uninstall cert-manager --namespace cert-manager --wait
     assert_nothing
 }
+
+# Need to dynamically register the test to make sure it is executed first.
+bats_test_function -- add_helm_repo
+
+foreach_k3s_version \
+    factory_reset \
+    start_kubernetes \
+    wait_for_kubelet \
+    deploy_rancher \
+    verify_rancher \
+    uninstall_rancher
