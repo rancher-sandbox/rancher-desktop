@@ -392,11 +392,19 @@ _var_filename() {
 
 # Save env variables on disk, so they can be reloaded in different tests.
 # This is mostly useful if calculating the setting takes a long time.
+# Returns false if any variable was unbound, but will continue saving remaining variables.
 # `save_var VAR1 VAR2`
 save_var() {
+    local res=0
     for var in "$@"; do
-        printf "%s=%q\n" "$var" "${!var}" >"$(_var_filename "$var")"
+        # Using [[ -v $var ]] requires bash 4.2 but macOS only ships with 3.2
+        if [ -n "${!var+exists}" ]; then
+            printf "%s=%q\n" "$var" "${!var}" >"$(_var_filename "$var")"
+        else
+            res=1
+        fi
     done
+    return $res
 }
 
 # Load env variables saved by `save_var`. Returns an error if any of the variables

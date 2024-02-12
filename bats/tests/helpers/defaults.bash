@@ -209,7 +209,7 @@ using_dev_mode() {
 
 : "${RD_K3S_MIN:=1.0.0}"
 : "${RD_K3S_MAX:=1.99.0}"
-: "${RD_K3S_VERSIONS:=RD_KUBERNETES_PREV_VERSION}"
+: "${RD_K3S_VERSIONS:=$RD_KUBERNETES_PREV_VERSION}"
 
 validate_semver RD_K3S_MIN
 validate_semver RD_K3S_MAX

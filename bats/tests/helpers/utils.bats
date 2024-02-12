@@ -621,8 +621,7 @@ get_json_test_data() {
 ########################################################################
 
 @test 'save_var existing variables' {
-    FOO=baz
-    BAR=foo
+    FOO=baz BAR=foo
     save_var FOO BAR
 }
 
@@ -634,9 +633,14 @@ get_json_test_data() {
     [[ $BAR == foo ]]
 }
 
-@test 'save_var of non-existing variable' {
-    run save_var DOES_NOT_EXIST
-    assert_failure
+@test 'save_var mix of existing and non-existing variables' {
+    ONE=one TWO=two
+    FAILED=false
+    # Don't use run because it may mask errexit failures
+    save_var ONE DOES_NOT_EXIST TWO || FAILED=true
+    [[ $FAILED == true ]]
+    [[ $ONE == one ]]
+    [[ $TWO == two ]]
 }
 
 @test 'load_var mix of existing and non-existing variables' {
