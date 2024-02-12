@@ -549,6 +549,7 @@ pageload
 pagerduty
 parsesection
 pascalize
+pathspec
 pcs
 pdp
 penpot

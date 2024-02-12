@@ -19,17 +19,17 @@ defaults:
     shell: bash
 
 jobs:
-  check_paths:
+  check-paths:
     uses: ./.github/workflows/paths-ignore.yaml
     with:
-      paths_ignore: |
-        - '.github/actions/spelling/**'
-        - 'docs/**'
-        - '**.md'
+      paths-ignore-globs: |
+        .github/actions/spelling/**
+        docs/**
+        **.md
 
   package:
-    needs: check_paths
-    if: needs.check_paths.outputs.should_run == 'true'
+    needs: check-paths
+    if: needs.check-paths.outputs.should-run == 'true'
     strategy:
       matrix:
         include:

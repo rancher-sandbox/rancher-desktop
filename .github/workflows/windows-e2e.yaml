@@ -11,11 +11,11 @@ defaults:
   run:
     shell: powershell
 jobs:
-  check_paths:
+  check-paths:
     uses: ./.github/workflows/paths-ignore.yaml
   e2e-tests:
-    needs: check_paths
-    if: needs.check_paths.outputs.should_run == 'true'
+    needs: check-paths
+    if: needs.check-paths.outputs.should-run == 'true'
     timeout-minutes: 90
     runs-on: windows-latest
     steps:

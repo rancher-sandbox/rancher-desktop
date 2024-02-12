@@ -5,10 +5,10 @@
 
 # Usage:
 #   jobs:
-#     check_paths:
+#     check-paths:
 #        uses: ./.github/workflows/actions/paths-ignore.yaml
 #     do_thing:
-#        if: jobs.check_paths.outputs.should_run == 'true'
+#        if: jobs.check-paths.outputs.should-run == 'true'
 #        # Unfortunately, a string comparison is required.
 
 name: Check for ignored paths
@@ -16,18 +16,21 @@ name: Check for ignored paths
 on:
   workflow_call:
     inputs:
-      paths_ignore:
-        description: Paths to ignore.
+      paths-ignore-globs:
+        description: >
+          Paths to ignore.  Should glob patterns (as a git pathspec glob), one
+          per line.  See
+          https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-glob
         type: string
         default: |
-          - '.github/actions/spelling/**'
-          - 'bats/**'
-          - 'docs/**'
-          - '**.md'
+          .github/actions/spelling/**
+          bats/**
+          docs/**
+          **.md
     outputs:
-      should_run:
+      should-run:
         description: Whether other steps should run.
-        value: ${{ jobs.check.outputs.should_run }}
+        value: ${{ jobs.check.outputs.should-run }}
 
 permissions:
   contents: read
@@ -41,18 +44,16 @@ jobs:
     - name: Determine paths to ignore
       if: github.event_name == 'pull_request'
       run: |
-        curl -L -o yq \
-          https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-        chmod a+x yq
         PATHS_IGNORE="PATHS_IGNORE="
         while read -r line; do
-          PATHS_IGNORE="${PATHS_IGNORE} ':!/${line}'"
-        done <<< "$(./yq '.[]' <<< "$INPUT")"
+          if [[ -n $line ]]; then
+            PATHS_IGNORE="${PATHS_IGNORE} :!/${line}"
+          fi
+        done <<< "$INPUT"
         echo "$PATHS_IGNORE"
         echo "$PATHS_IGNORE" >> "$GITHUB_ENV"
       env:
-        DEBIAN_FRONTEND: noninteractive
-        INPUT: ${{ inputs.paths_ignore }}
+        INPUT: ${{ inputs.paths-ignore-globs }}
     - uses: actions/checkout@v4
       if: github.event_name == 'pull_request'
       with:
@@ -62,9 +63,9 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         MERGE_BASE=$(git merge-base $BASE $HEAD)
-        diff="$(git diff --name-only $MERGE_BASE $HEAD -- ${{ env.PATHS_IGNORE }})"
+        diff="$(git diff --name-only $MERGE_BASE $HEAD -- $PATHS_IGNORE)"
         if [[ -z "$diff" ]]; then
-          echo "No modified files found.\n"
+          echo "No modified files found."
           echo "SHOULD_RUN=false" >> "$GITHUB_ENV"
         else
           printf "Modified files:\n%s\n" "$diff"
@@ -72,9 +73,8 @@ jobs:
       env:
         BASE: ${{ github.event.pull_request.base.sha }}
         HEAD: ${{ github.event.pull_request.head.sha }}
-        PATHS_IGNORE: ${{ env.PATHS_IGNORE }}
     - name: Set final output
       id: result
-      run: echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
+      run: echo "should-run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
     outputs:
-      should_run: ${{ steps.result.outputs.should_run }}
+      should-run: ${{ steps.result.outputs.should-run }}
