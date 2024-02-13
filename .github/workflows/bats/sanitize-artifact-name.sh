@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail
 
 # Invalid characters include: Double quote ", Colon :, Less than <,
 # Greater than >, Vertical bar |, Asterisk *, Question mark ?, Carriage
-# return \r, Line feed \n, Backslash \, Forward slash /
+# return \r, Line feed \n
 #
 # The following characters are not allowed in files that are uploaded
 # due to limitations with certain file systems such as NTFS. To maintain
@@ -28,8 +28,6 @@ sanitize() {
     new=${new//\?/%3F}
     new=${new//$'\r'/}
     new=${new//$'\n'/}
-    new=${new//\\/%5C}
-    new=${new//\//%2F}
     echo "$new"
 }
 

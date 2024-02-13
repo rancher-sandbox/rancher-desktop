@@ -215,8 +215,11 @@ jobs:
       id: log_name
       if: ${{ !cancelled() }}
       run: |
-        printf "name=%s\n" >>"$GITHUB_OUTPUT" \
-          "$(.github/workflows/bats/sanitize-artifact-name.sh <<< "$name")"
+        name="$(.github/workflows/bats/sanitize-artifact-name.sh <<< "$name")"
+        # For the artifact name, backslash and forward slash are also invalid.
+        name=${name//\\/%3C}
+        name=${name//\//%2F}
+        echo "name=$name" >>"$GITHUB_OUTPUT" \
       env:
         name: ${{ matrix.host }}-${{ matrix.engine }}-${{ matrix.name }}.logs
 
@@ -240,6 +243,7 @@ jobs:
         pattern: "*.logs"
     - run: |
         set -o xtrace
+        shopt -s nullglob
 
         echo Versions
         echo ---
