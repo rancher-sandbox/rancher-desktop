@@ -8,11 +8,11 @@ on:
   pull_request: {}
 
 jobs:
-  check_paths:
+  check-paths:
     uses: ./.github/workflows/paths-ignore.yaml
   e2e-tests:
-    needs: check_paths
-    if: needs.check_paths.outputs.should_run == 'true'
+    needs: check-paths
+    if: needs.check-paths.outputs.should-run == 'true'
     timeout-minutes: 150
     runs-on: ubuntu-latest
     steps:
