@@ -87,7 +87,9 @@ jobs:
       with:
         persist-credentials: false
         sparse-checkout-cone-mode: false
-        sparse-checkout: scripts/install-latest-ci.sh
+        sparse-checkout: |
+          scripts/install-latest-ci.sh
+          .github/workflows/bats/sanitize-artifact-name.sh
 
     - name: Install latest CI build
       run: |
@@ -147,12 +149,13 @@ jobs:
         pass init "${FINGERPRINT}"
 
     - name: Normalize test name
+      id: normalize
       run: |
         t="${{ matrix.name }}"
         if [[ ! -r "tests/$t" ]] && [[ -r "tests/${t}.bats" ]]; then
           t="${t}.bats"
         fi
-        echo "RD_TEST=$t" >> "$GITHUB_ENV"
+        echo "test=$t" >> "$GITHUB_OUTPUT"
       working-directory: bats
 
     - name: "macOS: Set startup command"
@@ -169,13 +172,16 @@ jobs:
           --server-args='-screen 0 1280x960x24'
 
     - name: Run BATS
+      # We use ${{ env.BATS_COMMAND }} instead of ${BATS_COMMAND} to let the
+      # shell parse the command, instead of doing it via expansion which is then
+      # parsed differently (--server-args isn't kept as one word).
       run: >-
         ${{ env.BATS_COMMAND }}
         ./bats-core/bin/bats
         --gather-test-outputs-in "${LOGS_DIR}"
         --formatter tap
         --report-formatter tap
-        'tests/${{ env.RD_TEST }}'
+        'tests/${{ steps.normalize.outputs.test }}'
       env:
         RD_CONTAINER_ENGINE:     ${{ matrix.engine }}
         RD_CAPTURE_LOGS:         "true"
@@ -186,7 +192,6 @@ jobs:
         LOGS_DIR:                ${{ github.workspace }}/logs
         GITHUB_TOKEN:            ${{ github.token }}
         BATS_COMMAND:            ${{ env.BATS_COMMAND }}
-        RD_TEST:                 ${{ env.RD_TEST }}
       working-directory: bats
       timeout-minutes: 120
 
@@ -198,8 +203,7 @@ jobs:
             cp -R "bats/logs/" logs
         fi
         cp "bats/report.tap" logs
-        "bats/scripts/rename-logs.sh" logs
-        # Strip any `.bats` suffix if we're running individual test files.
+        .github/workflows/bats/sanitize-artifact-name.sh logs
         echo "\`${NAME}\` (${OS} ${ENGINE})" > logs/test-name.txt
         mv version.txt logs/
       env:
@@ -211,10 +215,8 @@ jobs:
       id: log_name
       if: ${{ !cancelled() }}
       run: |
-        for ch in '"' ':' '/' '<' '>' '|' '\*' '\?'; do
-          name="${name//${ch}/_}"
-        done
-        echo "name=${name//\//_}" >> "$GITHUB_OUTPUT"
+        printf "name=%s\n" >>"$GITHUB_OUTPUT" \
+          "$(.github/workflows/bats/sanitize-artifact-name.sh <<< "$name")"
       env:
         name: ${{ matrix.host }}-${{ matrix.engine }}-${{ matrix.name }}.logs
 
