@@ -21,7 +21,8 @@ using_docker() {
 : "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
 
 ########################################################################
-: "${RD_INFO:=true}"
+# Defaults to true, except in the helper unit tests, which default to false
+: "${RD_INFO:=}"
 
 ########################################################################
 : "${RD_CAPTURE_LOGS:=false}"

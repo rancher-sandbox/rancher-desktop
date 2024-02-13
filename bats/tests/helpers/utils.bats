@@ -1,7 +1,6 @@
 load '../helpers/load'
 
-# Don't display the info.bash output if this is the only test running
-RD_INFO=false
+: "${RD_INFO:=false}"
 
 ########################################################################
 

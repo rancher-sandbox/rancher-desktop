@@ -12,7 +12,7 @@ show_info() { # @test
         rm -rf "$PATH_BATS_LOGS"
     fi
 
-    if is_false "$RD_INFO"; then
+    if is_false "${RD_INFO:-true}"; then
         return
     fi
 

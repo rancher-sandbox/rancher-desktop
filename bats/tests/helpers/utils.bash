@@ -396,6 +396,7 @@ _var_filename() {
 # `save_var VAR1 VAR2`
 save_var() {
     local res=0
+    local var
     for var in "$@"; do
         # Using [[ -v $var ]] requires bash 4.2 but macOS only ships with 3.2
         if [ -n "${!var+exists}" ]; then
@@ -412,6 +413,7 @@ save_var() {
 # `load_var VAR1 VAR2`
 load_var() {
     local res=0
+    local var
     for var in "$@"; do
         local file
         file=$(_var_filename "$var")
