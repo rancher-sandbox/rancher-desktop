@@ -45,8 +45,12 @@ source "$PATH_BATS_HELPERS/os.bash"
 source "$PATH_BATS_HELPERS/utils.bash"
 source "$PATH_BATS_HELPERS/snapshots.bash"
 
+# kubernetes.bash has no load-time dependencies
+source "$PATH_BATS_HELPERS/kubernetes.bash"
+
 # defaults.bash uses is_windows() from os.bash and
 # validate_enum() and is_true() from utils.bash.
+# get_k3s_versions from kubernetes.bash.
 source "$PATH_BATS_HELPERS/defaults.bash"
 
 # images.bash uses using_ghcr_images() from defaults.bash
@@ -66,9 +70,6 @@ source "$PATH_BATS_HELPERS/profile.bash"
 # vm.bash uses various PATH_* variables from paths.bash,
 # rdctl from commands.bash, and jq_output from utils.bash
 source "$PATH_BATS_HELPERS/vm.bash"
-
-# kubernetes.bash has no load-time dependencies
-source "$PATH_BATS_HELPERS/kubernetes.bash"
 
 # Use Linux utilities (like jq) on WSL
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"

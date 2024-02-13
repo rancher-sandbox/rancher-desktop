@@ -1,5 +1,7 @@
 load '../helpers/load'
 
+: "${RD_INFO:=false}"
+
 ########################################################################
 
 local_setup() {
@@ -302,22 +304,60 @@ get_json_test_data() {
 
 ########################################################################
 
+@test 'semver_eq' {
+    fails
+}
+@test 'semver_eq 1.2.3' {
+    succeeds
+}
 @test 'semver_eq 1.2.3 1.2.3' {
     succeeds
 }
 @test 'semver_eq 1.2.3 4.5.6' {
     fails
 }
+@test 'semver_eq 1.2.3 1.2.3 1.2.3' {
+    succeeds
+}
+@test 'semver_eq 1.2.3 1.2.3 4.5.6' {
+    fails
+}
 
+########################################################################
+
+@test 'semver_neq' {
+    fails
+}
+@test 'semver_neq 1.2.3' {
+    succeeds
+}
 @test 'semver_neq 1.2.3 1.2.3' {
     fails
 }
 @test 'semver_neq 1.2.3 4.5.6' {
     succeeds
 }
+@test 'semver_neq 4.5.6 1.2.3' {
+    succeeds
+}
+@test 'semver_neq 1.2.3 4.5.6 1.2.3' {
+    fails
+}
+@test 'semver_neq 1.2.3 4.5.6 7.8.9' {
+    succeeds
+}
+@test 'semver_neq 4.5.6 7.8.9 1.2.3' {
+    succeeds
+}
 
 ########################################################################
 
+@test 'semver_lt' {
+    fails
+}
+@test 'semver_lt 1.2.3' {
+    succeeds
+}
 @test 'semver_lt 1.2.3 1.2.3' {
     fails
 }
@@ -327,7 +367,21 @@ get_json_test_data() {
 @test 'semver_lt 4.5.6 1.2.3' {
     fails
 }
+@test 'semver_lt 1.2.3 4.5.6 7.8.9' {
+    succeeds
+}
+@test 'semver_lt 1.2.3 4.5.6 4.5.6' {
+    fails
+}
 
+########################################################################
+
+@test 'semver_lte' {
+    fails
+}
+@test 'semver_lte 1.2.3' {
+    succeeds
+}
 @test 'semver_lte 1.2.3 1.2.3' {
     succeeds
 }
@@ -337,9 +391,21 @@ get_json_test_data() {
 @test 'semver_lte 4.5.6 1.2.3' {
     fails
 }
+@test 'semver_lte 1.2.3 4.5.6 4.5.6' {
+    succeeds
+}
+@test 'semver_lte 1.2.3 4.5.6 1.2.3' {
+    fails
+}
 
 ########################################################################
 
+@test 'semver_gt' {
+    fails
+}
+@test 'semver_gt 1.2.3' {
+    succeeds
+}
 @test 'semver_gt 1.2.3 1.2.3' {
     fails
 }
@@ -349,7 +415,21 @@ get_json_test_data() {
 @test 'semver_gt 4.5.6 1.2.3' {
     succeeds
 }
+@test 'semver_gt 7.8.9 4.5.6 1.2.3' {
+    succeeds
+}
+@test 'semver_gt 7.8.9 4.5.6 4.5.6' {
+    fails
+}
 
+########################################################################
+
+@test 'semver_gte' {
+    fails
+}
+@test 'semver_gte 1.2.3' {
+    succeeds
+}
 @test 'semver_gte 1.2.3 1.2.3' {
     succeeds
 }
@@ -358,6 +438,12 @@ get_json_test_data() {
 }
 @test 'semver_gte 4.5.6 1.2.3' {
     succeeds
+}
+@test 'semver_gte 7.8.9 4.5.6 4.5.6' {
+    succeeds
+}
+@test 'semver_gte 7.8.9 4.5.6 7.8.9' {
+    fails
 }
 
 ########################################################################
@@ -529,4 +615,40 @@ get_json_test_data() {
     run unique_filename "$COUNTER" .png
     assert_success
     assert_output "${COUNTER}_3.png"
+}
+
+########################################################################
+
+@test 'save_var existing variables' {
+    FOO=baz BAR=foo
+    save_var FOO BAR
+}
+
+@test 'load_var existing variables' {
+    # shellcheck disable=SC2030
+    FOO=bar BAR=bar
+    load_var FOO BAR
+    [[ $FOO == baz ]]
+    [[ $BAR == foo ]]
+}
+
+@test 'save_var mix of existing and non-existing variables' {
+    ONE=one TWO=two
+    FAILED=false
+    # Don't use run because it may mask errexit failures
+    save_var ONE DOES_NOT_EXIST TWO || FAILED=true
+    [[ $FAILED == true ]]
+    [[ $ONE == one ]]
+    [[ $TWO == two ]]
+}
+
+@test 'load_var mix of existing and non-existing variables' {
+    DOES_NOT_EXIST=false
+    # Can't use `run` because variable would be sourced in a subshell
+    load_var FOO DOES_NOT_EXIST BAR || DOES_NOT_EXIST=true
+    [[ $DOES_NOT_EXIST == true ]]
+    # shellcheck disable=SC2031
+    [[ $FOO == baz ]]
+    # shellcheck disable=SC2031
+    [[ $BAR == foo ]]
 }

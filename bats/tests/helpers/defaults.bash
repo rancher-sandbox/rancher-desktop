@@ -21,6 +21,10 @@ using_docker() {
 : "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
 
 ########################################################################
+# Defaults to true, except in the helper unit tests, which default to false
+: "${RD_INFO:=}"
+
+########################################################################
 : "${RD_CAPTURE_LOGS:=false}"
 
 capturing_logs() {
@@ -170,8 +174,13 @@ using_ramdisk() {
 }
 
 ########################################################################
-# Use RD_PROTECTED_DOT in profile settings for WSL distro names
+# Use RD_PROTECTED_DOT in profile settings for WSL distro names.
 : "${RD_PROTECTED_DOT:=·}"
+
+########################################################################
+# RD_KUBELET_TIMEOUT specifies the number of minutes wait_for_kubelet()
+# waits before it times out.
+: "${RD_KUBELET_TIMEOUT:=10}"
 
 ########################################################################
 # RD_LOCATION specifies the location where Rancher Desktop is installed
@@ -188,3 +197,32 @@ validate_enum RD_LOCATION system user dist dev ""
 using_dev_mode() {
     [ "$RD_LOCATION" = "dev" ]
 }
+
+########################################################################
+# RD_K3S_VERSIONS specifies a list of k3s versions. foreach_k3s_version()
+# can dynamically register a test to run once for each version in the
+# list. Only versions between RD_K3S_MIN and RD_K3S_MAX (inclusively)
+# will be used.
+#
+# Special values:
+# "all" will fetch the list of all k3s releases from GitHub
+# "latest" will fetch the list of latest versions from the release channel
+
+: "${RD_K3S_MIN:=1.0.0}"
+: "${RD_K3S_MAX:=1.99.0}"
+: "${RD_K3S_VERSIONS:=$RD_KUBERNETES_PREV_VERSION}"
+
+validate_semver RD_K3S_MIN
+validate_semver RD_K3S_MAX
+
+# Cache expansion of RD_K3S_VERSIONS special versions because they are slow to compute
+if ! load_var RD_K3S_VERSIONS; then
+    # Fetch "all" or "latest" versions
+    get_k3s_versions
+
+    for k3s_version in ${RD_K3S_VERSIONS}; do
+        validate_semver k3s_version
+    done
+
+    save_var RD_K3S_VERSIONS
+fi
