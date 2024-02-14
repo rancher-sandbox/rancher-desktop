@@ -165,3 +165,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # on macOS, MacOS is used for the internal folder name within an app...
 (["/])MacOS\g{-1}
+
+# GitHub owner names should not be checked (dependency scripts)
+\bgithubOwner\s*=\s*'.*?'

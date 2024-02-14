@@ -558,3 +558,30 @@ export class ECRCredHelper implements Dependency, GitHubDependency {
     return semver.rcompare(version1, version2);
   }
 }
+
+export class SpinShim implements Dependency, GitHubDependency {
+  name = 'containerd-shim-spin-v2';
+  githubOwner = 'deislabs';
+  githubRepo = 'containerd-wasm-shims';
+
+  async download(context: DownloadContext): Promise<void> {
+    const arch = context.isM1 ? 'aarch64' : 'x86_64';
+    const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.wasmShims }`;
+    const url = `${ base }/containerd-wasm-shims-v2-spin-linux-${ arch }.tar.gz`;
+    const destPath = path.join(context.resourcesDir, 'linux', 'internal', this.name);
+
+    await downloadTarGZ(url, destPath);
+  }
+
+  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}

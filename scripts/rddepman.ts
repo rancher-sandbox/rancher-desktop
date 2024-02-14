@@ -45,6 +45,7 @@ const dependencies: Dependency[] = [
   new MobyOpenAPISpec(),
   new HostSwitch(),
   new Moproxy(),
+  new tools.SpinShim(),
 ];
 
 function git(...args: string[]): number | null {

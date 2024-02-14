@@ -34,7 +34,6 @@ appimagekit
 APPLEID
 APPLICATIONFOLDER
 AProject
-aquasecurity
 ARPNOMODIFY
 ARPPRODUCTICON
 ARPURLINFOABOUT
@@ -48,7 +47,6 @@ autocrlf
 auxww
 Awop
 AWorkspace
-awslabs
 azuread
 azureaks
 azurestorage
@@ -251,7 +249,6 @@ ficlone
 filekey
 filestat
 fineprint
-flavio
 fleetworkspace
 Fluentd
 FOLDERID
@@ -812,7 +809,6 @@ winio
 winthrop
 wix
 wixobj
-wixtoolset
 WIXUI
 wontfix
 wordpress

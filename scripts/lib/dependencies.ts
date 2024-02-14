@@ -51,6 +51,7 @@ export type DependencyVersions = {
   wix: string;
   hostSwitch: string;
   moproxy: string;
+  wasmShims: string;
 };
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {
