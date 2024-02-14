@@ -1,0 +1,339 @@
+// This file creates the summary table at the end of the run.
+//
+// Inputs:
+//   */version.txt   -- The version of Rancher Desktop tested
+//   */name.txt      -- The test suite that was ran
+//   */os.txt        -- The OS the test was run on
+//   */engine.txt    -- The container engine used
+//   */log-name.txt  -- The name of the logs artifact
+//   */report.tap    -- The results
+// Environment:
+//   GITHUB_API_URL, GITHUB_RUN_ID, GITHUB_REPOSITORY, GITHUB_SERVER_URL
+//     See https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+//   GITHUB_TOKEN
+//     GitHub authorization token.
+
+// @ts-check
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * Define interface for emitting one line of output.
+ * @typedef {(line: string) => unknown} OutputMethod
+ */
+
+class Run {
+  /** Contents of version.txt. */
+  versionData = '';
+  /** Contents of name.txt. */
+  name = '';
+  /** Contents of os.txt. */
+  os = '';
+  /** Contents of engine.txt. */
+  engine = '';
+  /** Contents of log-name.txt. */
+  logName = '';
+  /** Total number of tests. */
+  total = 0;
+  /** Number of tests passed (not skipped). */
+  passed = 0;
+  /** Number of tests skipped. */
+  skipped = 0;
+  /** Number of tests failed. */
+  failed = 0;
+  /** Job ID; this may not be set. */
+  id = 0;
+  /** ID for the logs artifact; might be missing. */
+  logId = 0;
+  /** Number of tests passed or skipped. */
+  get ok() { return this.passed + this.skipped };
+  /** Whether this run succeeded. */
+  get succeeded() { return this.ok == this.total };
+  /** Version string for this run. */
+  get version() {
+    let v = this.versionData;
+    for (const prefix of ['Rancher Desktop-', 'rancher-desktop-']) {
+      if (v.startsWith(prefix)) {
+        v = v.substring(prefix.length);
+      }
+    }
+    for (const platform of ['linux', 'arm64-mac', 'mac', 'win']) {
+      const suffix = `-${ platform }.zip`;
+      if (v.endsWith(suffix)) {
+        v = v.substring(0, v.length - suffix.length);
+      }
+    }
+    return v;
+  }
+  /** The column for this run. */
+  get column() { return `${ this.os } ${ this.engine }` }
+
+  /**
+   * Compare two runs for sorting.
+   * @param {Run} left
+   * @param {Run} right
+   * @returns {number} -1, 0, or 1 for left {<|==|>} right.
+   */
+  static compare(left, right) {
+    return left.name.localeCompare(right.name) ||
+      left.os.localeCompare(right.os) ||
+      left.engine.localeCompare(right.engine);
+  }
+}
+
+/**
+ * Read the runs in the current directory.
+ * @returns {Promise<Run[]>}
+ */
+async function readRuns() {
+  /** @type Run[] */
+  const runs = [];
+
+  for (const entry of await fs.promises.readdir('.', { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+    try {
+      /**
+       * Return the contents of a file relative to the entry directory.
+       * @param {string} relPath The name of the file to read.
+       * @returns {Promise<string>} Trimmed contents of the file.
+       */
+      async function readFile(relPath) {
+        const fullPath = path.join(entry.name, relPath);
+        return (await fs.promises.readFile(fullPath, { encoding: 'utf-8' })).trimEnd();
+      }
+      const run = new Run();
+
+      run.versionData = await readFile('version.txt');
+      run.name = await readFile('name.txt');
+      run.os = await readFile('os.txt');
+      run.engine = await readFile('engine.txt');
+      run.logName = await readFile('log-name.txt');
+
+      const report = await fs.promises.open(path.join(entry.name, 'report.tap'));
+
+      for await (const line of report.readLines()) {
+        if (line.startsWith('1..')) {
+          run.total = parseInt(line.substring(3), 10);
+        } else if (line.toLowerCase().includes(' # skip')) {
+          run.skipped++;
+        } else if (line.startsWith('ok ')) {
+          run.passed++;
+        } else if (line.startsWith('no ok ')) {
+          run.failed++;
+        }
+      }
+      runs.push(run);
+    } catch (ex) {
+      // We might be reading `.git`, `.github`, etc; don't abort if we failed to
+      // read anything, but record the error for debugging purposes.
+      console.error(`Failed to read ${ entry.name }:`, ex);
+    }
+  }
+
+  // We don't have job ID and artifact ID from the recorded data (because those
+  // are not available to the jobs as they are run); try to fetch them.
+  await updateRunInfo(runs);
+
+  return runs;
+}
+
+/**
+ * Print the version string table.
+ * @param {Run[]} runs The runs collected.
+ * @param {OutputMethod} output Function to output a line.
+ */
+async function printVersions(runs, output) {
+  /** @type Set<string> */
+  const versions = new Set();
+  for (const run of runs) {
+    versions.add(run.version);
+  }
+  output('Versions\n---');
+  for (const version of Array.from(versions).sort()) {
+    output('`' + version + '`');
+  }
+  output('');
+}
+
+/**
+ * Minimal structure of a /jobs API return.
+ * @typedef {Object} GitHubWorkflowJobList
+ * @property {GitHubWorkflowRunJob[]} jobs
+ */
+/**
+ * @typedef {Object} GitHubWorkflowRunJob
+ * @property {number} id
+ * @property {string} name
+ */
+/**
+ * Minimal structure of a /artifacts API return.
+ * @typedef {Object} GitHubWorkflowArtifactsList
+ * @property {GitHubWorkflowArtifact[]} artifacts
+ */
+/**
+ * @typedef {Object} GitHubWorkflowArtifact
+ * @property {number} id
+ * @property {string} name
+ */
+
+/**
+ * Fetch GitHub metadata about the current run.
+ * @param {'jobs' | 'artifacts'} infoType The information to get.
+ * @returns {Promise<any | undefined>} The data from API, or undefined.
+ */
+async function getRunMetadata(infoType) {
+  const { env } = process;
+  const variables = [
+    'GITHUB_API_URL', 'GITHUB_RUN_ID', 'GITHUB_REPOSITORY',
+  ];
+  for (const variable of variables) {
+    if (!(variable in env)) {
+      console.error(`${ variable } not set, skipping GitHub API calls`);
+      return;
+    }
+  }
+  const url = `${ env.GITHUB_API_URL }/repos/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID }/${ infoType }?per_page=100`;
+  /** @type Record<string, string> */
+  const headers = {};
+
+  if ('GITHUB_TOKEN' in process.env) {
+    headers.Authorization = `Bearer ${ process.env.GITHUB_TOKEN }`;
+  }
+  const response = await fetch(url, { headers })
+
+  if (!response.ok) {
+    throw new Error(`Failed to get GitHub ${ infoType } info:` + await response.text());
+  }
+  return await response.json();
+}
+
+/**
+ * Update runs in place with metadata from GitHub.
+ * @param {Run[]} runs The runs to modify.
+ */
+async function updateRunInfo(runs) {
+  /** @type GitHubWorkflowJobList | undefined */
+  const jobInfo = await getRunMetadata('jobs');
+  if (jobInfo) {
+    // Parse the info to get a list of job matrix values to job ID.
+    // Because there may be more values than the ones we're looking for, we can't
+    // just make it a Map.
+    const jobMap = jobInfo.jobs.map(job => {
+      const name = (/\((.*)\)/.exec(job.name) ?? [])[1];
+      const vals = new Set((name?.split(',') ?? []).map(n => n.trim()));
+      return /** @type {const} */([vals, job.id]);
+    });
+
+    for (const run of runs) {
+      const [, id]= jobMap.find(([vals]) => {
+        return vals.has(run.name) && vals.has(run.os) && vals.has(run.engine);
+      }) ?? [];
+      if (id) {
+        run.id = id;
+      }
+    }
+  }
+
+  /** @type GitHubWorkflowArtifactsList | undefined */
+  const artifactInfo = await getRunMetadata('artifacts');
+  if (artifactInfo) {
+    const artifactMap = Object.fromEntries(artifactInfo.artifacts.map(a => [a.name, a.id]));
+    for (const run of runs) {
+      if (run.logName in artifactMap) {
+        run.logId = artifactMap[run.logName];
+      }
+    }
+  }
+}
+
+/**
+ * Print the result table
+ * @param {Run[]} runs The runs collected
+ * @param {OutputMethod} output Function to output a line
+ */
+async function printResults(runs, output) {
+  const osList = new Set(runs.map(r => r.os));
+  const engineList = new Set(runs.map(r => r.engine));
+  /**
+   * Columns to be printed, excluding the leftmost heading column.
+   * Note that the format must match `Run.prototype.column`.
+   * @type string[]
+   */
+  const columns = [];
+  for (const os of Array.from(osList).sort()) {
+    for (const engine of Array.from(engineList).sort()) {
+      columns.push(`${ os } ${ engine }`);
+    }
+  }
+  // Column 0 is the name, so the map starts with 1.
+  const columnMap = Object.fromEntries(columns.map((k, v) => [k, v + 1]));
+  output(['Name', ...columns].join(' | '));
+  output(['', ...columns].map(() => '---').join(' | '));
+
+  runs.sort(Run.compare);
+  /** @type Run[][] */
+  const initial = [];
+  // Group runs by the name (for each row).
+  const groups = runs.reduce((accumulator, current) => {
+    if (accumulator.length === 0) {
+      accumulator.push([current]);
+    } else {
+      const last = accumulator[accumulator.length - 1];
+      if (current.name === last[0].name) {
+        last.push(current);
+      } else {
+        accumulator.push([current]);
+      }
+    }
+    return accumulator;
+  }, initial);
+  for (const group of groups) {
+    const row = [group[0].name];
+    for (const run of group) {
+      const emoji = run.succeeded ? ':white_check_mark:' : ':x:';
+      const count  = run.succeeded ? '' : `${ run.ok }/${ run.total }`;
+      let tooltip = '';
+      tooltip += run.passed ? `${ run.passed } passed ` : '';
+      tooltip += run.failed ? `${ run.failed } failed ` : '';
+      tooltip += run.skipped ? `${ run.skipped } skipped ` : '';
+      tooltip += `out of ${ run.total }`;
+      const { env } = process;
+      let result = `<a title="${ tooltip }"`;
+      if (run.id) {
+        const url = `${ env.GITHUB_SERVER_URL }/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID }/job/${ run.id }`;
+        result += ` href="${ url }"`;
+      }
+      result += `>${ emoji } ${ count }</a>`;
+      if (run.logId) {
+        const url = `${ env.GITHUB_SERVER_URL }/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID}/artifacts/${ run.logId }`;
+        result += ` <a href="${ url }" title="Download logs">:scroll:</a>`;
+      }
+      // Because we may have missing jobs (where it failed so completely there
+      // was no uploaded logs), we need to use the column map rather than just
+      // append to the row.
+      row[columnMap[run.column]] = result;
+    }
+    output(row.join(' | '));
+  }
+}
+
+(async() => {
+  const runs = await readRuns();
+
+  for (const run of runs) {
+    console.log(run);
+  }
+  /** @type {OutputMethod} */
+  let output = console.log;
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    const file = await fs.promises.open(process.env.GITHUB_STEP_SUMMARY, 'a');
+    output = (line) => file.write(line + '\n');
+  }
+  await printVersions(runs, output);
+  await printResults(runs, output);
+})().catch(ex => {
+  console.error(ex);
+  process.exit(1);
+});
