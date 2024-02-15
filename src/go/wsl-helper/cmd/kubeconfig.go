@@ -24,14 +24,16 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 	"k8s.io/client-go/util/homedir"
 )
 
 var kubeconfigViper = viper.New()
+
+const rdCluster = "rancher-desktop"
 
 // kubeconfigCmd represents the kubeconfig command, used to set up a symlink on
 // the Linux side to point at the Windows-side kubeconfig.  Note that we must
@@ -45,7 +47,6 @@ var kubeconfigCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configPath := kubeconfigViper.GetString("kubeconfig")
 		enable := kubeconfigViper.GetBool("enable")
-		show := kubeconfigViper.GetBool("show")
 
 		if configPath == "" {
 			return errors.New("Windows kubeconfig not supplied")
@@ -59,27 +60,16 @@ var kubeconfigCmd = &cobra.Command{
 
 		configDir := path.Join(homedir.HomeDir(), ".kube")
 		linkPath := path.Join(configDir, "config")
-		if show {
-			// The output is "true", "false", or an error message for UI.
-			// We will only return nil in this path.
-			target, err := os.Readlink(linkPath)
-			if err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					fmt.Println("false")
-				} else if errors.Is(err, syscall.EINVAL) {
-					fmt.Printf("File %s exists and is not a symlink\n", linkPath)
-				} else {
-					fmt.Printf("%s\n", err)
-				}
-			} else if target == configPath {
-				fmt.Println("true")
-			} else {
-				// For a symlink pointing elsewhere, we assume we can overwrite.
-				fmt.Println("false")
-			}
-			return nil
+		unsupportedConfig, symlinkErr := requireManualSymlink(linkPath)
+		if !unsupportedConfig && symlinkErr != nil {
+			return symlinkErr
 		}
+
 		if enable {
+			if unsupportedConfig {
+				// Config contains non-Rancher Desktop configuration
+				return symlinkErr
+			}
 			err = os.Mkdir(configDir, 0o750)
 			if err != nil && !errors.Is(err, os.ErrExist) {
 				// The error already contains the full path, we can't do better.
@@ -103,8 +93,7 @@ var kubeconfigCmd = &cobra.Command{
 				return err
 			}
 			if target == configPath {
-				err = os.Remove(linkPath)
-				if err != nil && !errors.Is(err, os.ErrNotExist) {
+				if err = removeConfig(linkPath); err != nil {
 					return err
 				}
 			}
@@ -113,10 +102,54 @@ var kubeconfigCmd = &cobra.Command{
 	},
 }
 
+// requireManualSymlink checks the config to determine if it contains a single entry for Contexts, Clusters, and Users.
+// If all three are named 'rancher-desktop', we assume that this configuration was written by Rancher Desktop 1.12,
+// and we can remove it and replace it with a symlink. If a user's config contains Rancher Desktop's specific configuration
+// along with user-provided config, or if it only contains user-provided config, we return a true and an error.
+// This indicates through diagnostics to the user that manual action is required.
+func requireManualSymlink(linkPath string) (bool, error) {
+	// Check to see if config is rancher desktop only
+	if existingConfig, err := readKubeConfig(linkPath); err == nil {
+		if len(existingConfig.Contexts) == 1 && existingConfig.Contexts[0].Name == rdCluster &&
+			len(existingConfig.Clusters) == 1 && existingConfig.Clusters[0].Name == rdCluster &&
+			len(existingConfig.Users) == 1 && existingConfig.Users[0].Name == rdCluster {
+			if err := removeConfig(linkPath); err != nil {
+				return false, err
+			}
+		} else {
+			return true, fmt.Errorf("not overwriting kubeconfig file %s with non-Rancher Desktop contents", linkPath)
+		}
+	}
+
+	return false, nil
+}
+
+func removeConfig(path string) error {
+	err := os.Remove(path)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
+func readKubeConfig(configPath string) (kubeConfig, error) {
+	var config kubeConfig
+	configFile, err := os.Open(configPath)
+	if err != nil {
+		return config, fmt.Errorf("could not open kubeconfig file %s: %w", configPath, err)
+	}
+	defer configFile.Close()
+	err = yaml.NewDecoder(configFile).Decode(&config)
+	if err != nil {
+		return config, fmt.Errorf("could not read kubeconfig %s: %w", configPath, err)
+	}
+
+	return config, nil
+}
+
 func init() {
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
-	kubeconfigCmd.PersistentFlags().Bool("show", false, "Get the current state rather than set it")
 	kubeconfigViper.AutomaticEnv()
 	kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())
 	rootCmd.AddCommand(kubeconfigCmd)
