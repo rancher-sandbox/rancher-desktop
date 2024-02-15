@@ -559,8 +559,8 @@ export class ECRCredHelper implements Dependency, GitHubDependency {
   }
 }
 
-export class SpinShim implements Dependency, GitHubDependency {
-  name = 'containerd-shim-spin-v2';
+export class WasmShims implements Dependency, GitHubDependency {
+  name = 'wasmShims';
   githubOwner = 'deislabs';
   githubRepo = 'containerd-wasm-shims';
 
@@ -568,7 +568,7 @@ export class SpinShim implements Dependency, GitHubDependency {
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
     const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.wasmShims }`;
     const url = `${ base }/containerd-wasm-shims-v2-spin-linux-${ arch }.tar.gz`;
-    const destPath = path.join(context.resourcesDir, 'linux', 'internal', this.name);
+    const destPath = path.join(context.resourcesDir, 'linux', 'internal', 'containerd-shim-spin-v2');
 
     await downloadTarGZ(url, destPath);
   }
