@@ -107,18 +107,6 @@ jobs:
         BATS_DIR: ${{ github.workspace }}/bats
         ZIP_NAME: ${{ github.workspace }}/version.txt
 
-    - name: "Linux: Disable admin access"
-      if: runner.os == 'Linux'
-      run: |
-        mkdir -p $HOME/.config/rancher-desktop
-        cat <<EOF > $HOME/.config/rancher-desktop/settings.json
-        {
-          "version": 5,
-          "application": {
-            "adminAccess": false
-          }
-        }
-
     - name: "Linux: Enable KVM access"
       if: runner.os == 'Linux'
       run: sudo chmod a+rwx /dev/kvm
