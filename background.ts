@@ -1156,7 +1156,9 @@ async function handleFailure(payload: any) {
       if (noModalDialogs) {
         console.log(titlePart);
         console.log(secondaryMessage || message);
-        console.log(failureDetails);
+        // Since the log is to a file, we need to pretty-print it; otherwise the
+        // message will just be `[Object object]`.
+        console.log(JSON.stringify(failureDetails, undefined, 2));
         gone = true;
         Electron.app.quit();
       } else {

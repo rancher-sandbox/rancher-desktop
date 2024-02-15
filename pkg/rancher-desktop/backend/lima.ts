@@ -675,8 +675,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     config.env ||= {};
     config.env['RC_CGROUP_MODE'] = 'unified';
     if (this.cfg?.kubernetes?.enabled && this.cfg.kubernetes.version) {
-      if (semver.lt(this.cfg.kubernetes.version, '1.20.4')) {
-        config.env['RC_CGROUP_MODE'] = 'hybrid';
+      try {
+        if (semver.lt(this.cfg.kubernetes.version, '1.20.4')) {
+          config.env['RC_CGROUP_MODE'] = 'hybrid';
+        }
+      } catch {
+        // If we have an invalid version configured, ignore the error; we'll
+        // report the error later when trying to download the version.  In that
+        // case we will fall back to the latest stable version, which should be
+        // new enough to support cgroups v2.
       }
     }
 
