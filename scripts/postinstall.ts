@@ -53,7 +53,7 @@ const wslDependencies = [
 // Dependencies that are specific to WSL and Lima VMs.
 const vmDependencies = [
   new tools.Trivy(),
-  new tools.SpinShim(),
+  new tools.WasmShims(),
 ];
 
 // Dependencies that are specific to hosts.
