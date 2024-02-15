@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
+import dayjs from 'dayjs';
 import isEmpty from 'lodash/isEmpty';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
@@ -16,7 +17,8 @@ interface Data {
 }
 
 interface Methods {
-  pollingStart: () => void
+  pollingStart: () => void,
+  showWhen: () => string,
 }
 
 interface Computed {
@@ -78,6 +80,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
         this.$store.dispatch('snapshots/fetch');
       }, 1500);
     },
+    showWhen() {
+      const date = dayjs(Date.now());
+
+      return date.format('YYYY-MM-DD HH:mm');
+    },
   },
 });
 </script>
@@ -96,6 +103,10 @@ export default Vue.extend<Data, Methods, Computed, never>({
       >
         <span
           v-clean-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
+          class="event-message"
+        />
+        <span
+          v-clean-html="t('snapshots.info.when', { when: showWhen() }, true)"
           class="event-message"
         />
       </Banner>

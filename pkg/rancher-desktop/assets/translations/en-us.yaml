@@ -4784,6 +4784,7 @@ snapshots:
       message: "Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart."
     showLogs: Show logs
   info:
+    when: " at {when}"
     restore:
       success: "Restored '<b>'{snapshot}'</b>'"
       cancel: 'Cancelled restoration of {snapshot}'
