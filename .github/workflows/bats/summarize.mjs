@@ -198,8 +198,8 @@ async function getRunMetadata(infoType) {
   /** @type Record<string, string> */
   const headers = {};
 
-  if ('GITHUB_TOKEN' in process.env) {
-    headers.Authorization = `Bearer ${ process.env.GITHUB_TOKEN }`;
+  if ('GITHUB_TOKEN' in env) {
+    headers.Authorization = `Bearer ${ env.GITHUB_TOKEN }`;
   }
   const response = await fetch(url, { headers })
 
