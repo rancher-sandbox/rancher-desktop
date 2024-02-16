@@ -231,7 +231,7 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
-    - name: Fetch install script
+    - name: Fetch summarizer script
       uses: actions/checkout@v4
       with:
         persist-credentials: false
