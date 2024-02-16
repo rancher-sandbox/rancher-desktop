@@ -104,7 +104,7 @@ if is_windows; then
     PATH_DISTRO="$PATH_APP_HOME/distro"
     PATH_DISTRO_DATA="$PATH_APP_HOME/distro-data"
     PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
-    PATH_SNAPSHOTS="$PATH_APP_HOME/rancher-desktop/snapshots"
+    PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
 
     set_path_resources \
         "$PROGRAMFILES/Rancher Desktop" \
