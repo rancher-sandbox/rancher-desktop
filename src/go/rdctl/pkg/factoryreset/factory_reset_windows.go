@@ -24,7 +24,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -260,9 +259,9 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 	}
 	roamingAppData, err := directories.GetRoamingAppDataDirectory()
 	if err == nil {
-		dirs = append(dirs, path.Join(roamingAppData, appName))
+		dirs = append(dirs, filepath.Join(roamingAppData, appName))
 		// Electron stores some files in AppData\Roaming\Rancher Desktop
-		dirs = append(dirs, path.Join(roamingAppData, "Rancher Desktop"))
+		dirs = append(dirs, filepath.Join(roamingAppData, "Rancher Desktop"))
 	} else {
 		logrus.Errorf("Could not get AppData (roaming) folder: %s\n", err)
 	}

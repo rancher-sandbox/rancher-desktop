@@ -22,6 +22,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -64,6 +65,7 @@ func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shut
 		rdClient := client.NewRDClient(connectionInfo)
 		request, err := rdClient.DoRequest("PUT", client.VersionCommand("", "shutdown"))
 		output, _ = client.ProcessRequestForUtility(request, err)
+		logrus.WithError(err).Trace("Shut down requested")
 	}
 	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
 	return output, err
