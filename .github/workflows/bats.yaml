@@ -17,7 +17,7 @@ on:
         type: string
       platforms:
         description: Platforms to run
-        default: 'linux mac'
+        default: 'linux mac win'
         type: string
       engines:
         description: Container engines to run
@@ -104,6 +104,7 @@ jobs:
         # If BRANCH is a number, assume it is supposed to be a PR
         [[ $BRANCH =~ ^[0-9]+$ ]] && PR=$BRANCH
         scripts/install-latest-ci.sh
+      shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
         OWNER:    ${{ inputs.owner }}
@@ -116,6 +117,32 @@ jobs:
     - name: "Linux: Enable KVM access"
       if: runner.os == 'Linux'
       run: sudo chmod a+rwx /dev/kvm
+
+    - name: "Windows: Stop Docker daemon"
+      if: runner.os == 'Windows'
+      run: Stop-Service -Name docker
+
+    - name: "Windows: Update any pre-installed WSL"
+      if: runner.os == 'Windows'
+      run: wsl --update
+      continue-on-error: true
+
+    - name: "Windows: Install WSL2 Distribution"
+      if: runner.os == 'Windows'
+      run: |
+        # Set the default WSL version (we don't work with WSL1)
+        wsl --set-default-version 2
+        # Install Debian, but do not launch it
+        wsl --install Debian --no-launch
+        # Initialize Debian, without going through any first-time setup
+        debian.exe install --root
+      shell: pwsh
+
+    - name: "Windows: Install prerequisites in WSL"
+      if: runner.os == 'Windows'
+      run: >-
+        wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
+        sh -c 'apt-get update && apt-get install --yes curl jq'
 
     - name: "Linux: Initialize pass"
       if: runner.os == 'Linux'
@@ -142,8 +169,22 @@ jobs:
         # Initialize pass
         pass init "${FINGERPRINT}"
 
+    - name: Set log directory
+      shell: bash
+      run: |
+        echo 'LOGS_DIR=${{ github.workspace }}/logs' >> "$GITHUB_ENV"
+        mkdir logs
+    - name: "Windows: Override log directory"
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: >-
+        wsl.exe -d Debian -- echo 'LOGS_DIR=$(pwd)'
+        | Out-File -Encoding ASCII -Append "$ENV:GITHUB_ENV"
+      working-directory: ${{ github.workspace }}\logs
+
     - name: Normalize test name
       id: normalize
+      shell: bash
       run: |
         t="${{ matrix.name }}"
         if [[ ! -r "tests/$t" ]] && [[ -r "tests/${t}.bats" ]]; then
@@ -164,30 +205,47 @@ jobs:
         BATS_COMMAND: >-
           exec xvfb-run --auto-servernum
           --server-args='-screen 0 1280x960x24'
+    - name: "Windows: Set startup command"
+      if: runner.os == 'Windows'
+      shell: bash
+      run: echo "BATS_COMMAND=$BATS_COMMAND" >> "$GITHUB_ENV"
+      env:
+        BATS_COMMAND: wsl.exe -d Debian --exec
 
     - name: Run BATS
       # We use ${{ env.BATS_COMMAND }} instead of ${BATS_COMMAND} to let the
       # shell parse the command, instead of doing it via expansion which is then
-      # parsed differently (--server-args isn't kept as one word).
+      # parsed differently (--server-args isn't kept as one word).  Also, we
+      # need to use the env.* form because PowerShell uses ${ENV:VAR} instead.
       run: >-
         ${{ env.BATS_COMMAND }}
         ./bats-core/bin/bats
-        --gather-test-outputs-in "${LOGS_DIR}"
+        --gather-test-outputs-in '${{ env.LOGS_DIR }}'
         --print-output-on-failure
         --filter-tags '!ci-skip'
         --formatter cat
-        --report-formatter tap13
+        --report-formatter tap
         'tests/${{ steps.normalize.outputs.test }}'
       env:
-        RD_CONTAINER_ENGINE:     ${{ matrix.engine }}
+        BATS_COMMAND:            ${{ env.BATS_COMMAND }}
+        GITHUB_TOKEN:            ${{ github.token }}
+        LOGS_DIR:                ${{ env.LOGS_DIR }}
         RD_CAPTURE_LOGS:         "true"
+        RD_CONTAINER_ENGINE:     ${{ matrix.engine }}
         RD_TAKE_SCREENSHOTS:     "true"
         RD_TRACE:                "true"
         RD_USE_GHCR_IMAGES:      "true"
         RD_USE_RAMDISK:          "true"
-        LOGS_DIR:                ${{ github.workspace }}/logs
-        GITHUB_TOKEN:            ${{ github.token }}
-        BATS_COMMAND:            ${{ env.BATS_COMMAND }}
+        RD_USE_WINDOWS_EXE:      "${{ runner.os == 'Windows' }}"
+        WSLENV: >-
+          :GITHUB_TOKEN:
+          :RD_CAPTURE_LOGS:
+          :RD_CONTAINER_ENGINE:
+          :RD_TAKE_SCREENSHOTS:
+          :RD_TRACE:
+          :RD_USE_GHCR_IMAGES:
+          :RD_USE_RAMDISK:
+          :RD_USE_WINDOWS_EXE:
       working-directory: bats
       timeout-minutes: 120
 
@@ -200,6 +258,7 @@ jobs:
         name=${name//\\/%3C}
         name=${name//\//%2F}
         echo "name=$name" >>"$GITHUB_OUTPUT"
+      shell: bash
       env:
         name: ${{ matrix.host }}-${{ matrix.engine }}-${{ matrix.name }}.logs
 
@@ -217,6 +276,7 @@ jobs:
         echo "$ENGINE" > logs/engine.txt
         echo "$LOG_NAME" > logs/log-name.txt
         mv version.txt logs/
+      shell: bash
       env:
         NAME: ${{ matrix.name }}
         OS: ${{ matrix.host }}
