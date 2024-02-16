@@ -11,6 +11,11 @@ set_path_resources() {
     local user=$2
     local dist=$3
     local subdir=$4
+    local fd=3
+
+    if [[ ! -e /dev/fd/3 ]]; then
+        fd=2
+    fi
 
     if [ -z "${RD_LOCATION:-}" ]; then
         if [ -d "$system" ]; then
@@ -28,7 +33,7 @@ set_path_resources() {
                 echo "- \"$user\""
                 echo "- \"$dist\""
                 echo "and 'yarn dev' is unavailable outside repo clone"
-            ) >&3
+            ) >&$fd
             exit 1
         fi
     fi
