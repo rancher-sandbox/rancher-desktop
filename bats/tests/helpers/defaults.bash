@@ -139,10 +139,10 @@ if is_unix; then
         fatal "RD_MOUNT_TYPE=virtiofs only works with VZ emulation"
     fi
 else
+    : "${RD_MOUNT_TYPE:=}"
     if [ -n "${RD_MOUNT_TYPE:-}" ]; then
         fatal "RD_MOUNT_TYPE only works on Linux and macOS"
     fi
-    : "${RD_MOUNT_TYPE:=}"
 fi
 
 ########################################################################

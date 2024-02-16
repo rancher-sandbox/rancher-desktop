@@ -142,7 +142,7 @@ jobs:
       if: runner.os == 'Windows'
       run: >-
         wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
-        sh -c 'apt-get update && apt-get install --yes curl jq'
+        sh -c 'apt-get update && apt-get install --yes curl'
 
     - name: "Linux: Initialize pass"
       if: runner.os == 'Linux'
@@ -172,7 +172,7 @@ jobs:
     - name: Set log directory
       shell: bash
       run: |
-        echo 'LOGS_DIR=${{ github.workspace }}/logs' >> "$GITHUB_ENV"
+        echo 'LOGS_DIR=$(pwd)/logs' >> "$GITHUB_ENV"
         mkdir logs
     - name: "Windows: Override log directory"
       if: runner.os == 'Windows'
@@ -180,7 +180,7 @@ jobs:
       run: >-
         wsl.exe -d Debian -- echo 'LOGS_DIR=$(pwd)'
         | Out-File -Encoding ASCII -Append "$ENV:GITHUB_ENV"
-      working-directory: ${{ github.workspace }}\logs
+      working-directory: logs
 
     - name: Normalize test name
       id: normalize
@@ -237,15 +237,16 @@ jobs:
         RD_USE_GHCR_IMAGES:      "true"
         RD_USE_RAMDISK:          "true"
         RD_USE_WINDOWS_EXE:      "${{ runner.os == 'Windows' }}"
-        WSLENV: >-
-          :GITHUB_TOKEN:
-          :RD_CAPTURE_LOGS:
-          :RD_CONTAINER_ENGINE:
-          :RD_TAKE_SCREENSHOTS:
-          :RD_TRACE:
-          :RD_USE_GHCR_IMAGES:
-          :RD_USE_RAMDISK:
-          :RD_USE_WINDOWS_EXE:
+        WSLENV: "\
+          GITHUB_TOKEN:\
+          RD_CAPTURE_LOGS:\
+          RD_CONTAINER_ENGINE:\
+          RD_TAKE_SCREENSHOTS:\
+          RD_TRACE:\
+          RD_USE_GHCR_IMAGES:\
+          RD_USE_RAMDISK:\
+          RD_USE_WINDOWS_EXE:\
+          "
       working-directory: bats
       timeout-minutes: 120
 
