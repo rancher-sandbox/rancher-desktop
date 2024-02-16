@@ -359,6 +359,7 @@ keychain
 keycloak
 keycloakoidc
 keyform
+keygrip
 keyout
 Kgm
 kiali
