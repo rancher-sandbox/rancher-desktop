@@ -207,7 +207,7 @@ jobs:
         # For the artifact name, backslash and forward slash are also invalid.
         name=${name//\\/%3C}
         name=${name//\//%2F}
-        echo "name=$name" >>"$GITHUB_OUTPUT" \
+        echo "name=$name" >>"$GITHUB_OUTPUT"
       env:
         name: ${{ matrix.host }}-${{ matrix.engine }}-${{ matrix.name }}.logs
 
