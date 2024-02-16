@@ -11,6 +11,7 @@ set -o xtrace
 : "${REPO:=rancher-desktop}"  # Repository to fetch from
 : "${BRANCH:=main}"           # Branch to fetch from
 : "${PR:=}"                   # PR number to fetch from (overrides BRANCH)
+: "${ID:=}"                   # If set, use the specific Action run.
 : "${WORKFLOW:=package.yaml}" # Name of workflow that must have succeeded
 : "${BATS_DIR:=${TMPDIR:-/tmp}/bats}" # Directory to extract BATS tests to.
 : "${SKIP_INSTALL:=}"         # If set, don't install the application.
@@ -151,21 +152,23 @@ download_bats() {
     tar xfz "$TMPDIR/bats.tar.gz" -C "$BATS_DIR"
 }
 
-# Get branch name for PR (even if this refers to a fork, the run is still in the
-# target repo with that branch name).
-if [[ -n $PR ]]; then
-    BRANCH=$(gh api "repos/$OWNER/$REPO/pulls/$PR" --jq .head.ref)
-    API_ARGS="&event=pull_request"
-fi
+if [[ -z $ID ]]; then
+    # Get branch name for PR (even if this refers to a fork, the run is still in the
+    # target repo with that branch name).
+    if [[ -n $PR ]]; then
+        BRANCH=$(gh api "repos/$OWNER/$REPO/pulls/$PR" --jq .head.ref)
+        API_ARGS="&event=pull_request"
+    fi
 
-# Get the latest workflow run that succeeded in this repo.
-API="repos/$OWNER/$REPO/actions/workflows/$WORKFLOW/runs?branch=$BRANCH&status=success&per_page=1${API_ARGS:-}"
-FILTER=".workflow_runs[0].id"
+    # Get the latest workflow run that succeeded in this repo.
+    API="repos/$OWNER/$REPO/actions/workflows/$WORKFLOW/runs?branch=$BRANCH&status=success&per_page=1${API_ARGS:-}"
+    FILTER=".workflow_runs[0].id"
 
-ID=$(gh api "$API" --jq "$FILTER")
-if [ -z "$ID" ]; then
-    echo "No successful $WORKFLOW run found for $OWNER/$REPO branch $BRANCH"
-    exit 1
+    ID=$(gh api "$API" --jq "$FILTER")
+    if [ -z "$ID" ]; then
+        echo "No successful $WORKFLOW run found for $OWNER/$REPO branch $BRANCH"
+        exit 1
+    fi
 fi
 
 if [[ -z "$SKIP_INSTALL" ]]; then

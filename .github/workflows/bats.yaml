@@ -23,6 +23,10 @@ on:
         description: Container engines to run
         default: 'containerd moby'
         type: string
+      package-id:
+        description: Package run ID override; leave empty to use latest.
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -59,6 +63,7 @@ jobs:
         OWNER:        ${{ inputs.owner }}
         REPO:         ${{ inputs.repo }}
         BRANCH:       ${{ inputs.branch }}
+        ID:           ${{ inputs.package-id }}
         BATS_DIR:     ${{ github.workspace }}/bats
         SKIP_INSTALL: true
 
@@ -104,6 +109,7 @@ jobs:
         OWNER:    ${{ inputs.owner }}
         REPO:     ${{ inputs.repo }}
         BRANCH:   ${{ inputs.branch }}
+        ID:       ${{ inputs.package-id }}
         BATS_DIR: ${{ github.workspace }}/bats
         ZIP_NAME: ${{ github.workspace }}/version.txt
 
