@@ -18,7 +18,7 @@ interface Data {
 
 interface Methods {
   pollingStart: () => void,
-  showWhen: () => string,
+  currentTime: () => string,
 }
 
 interface Computed {
@@ -80,7 +80,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
         this.$store.dispatch('snapshots/fetch');
       }, 1500);
     },
-    showWhen() {
+    currentTime() {
       const date = dayjs(Date.now());
 
       return date.format('YYYY-MM-DD HH:mm');
@@ -106,7 +106,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
           class="event-message"
         />
         <span
-          v-clean-html="t('snapshots.info.when', { when: showWhen() }, true)"
+          v-clean-html="t('snapshots.info.when', { time: currentTime() })"
           class="event-message"
         />
       </Banner>
