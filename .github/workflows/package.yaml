@@ -12,7 +12,12 @@ on:
     - release-*
     tags:
     - '*'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      sign:
+        type: boolean
+        default: true
+        description: Whether to check signing result
 
 defaults:
   run:
@@ -159,7 +164,7 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release-')) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
-      (github.event_name == 'workflow_dispatch')
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.sign)
     permissions:
       contents: read
     steps:
@@ -224,7 +229,7 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release-')) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
-      (github.event_name == 'workflow_dispatch')
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.sign)
     permissions:
       contents: read
     steps:
