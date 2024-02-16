@@ -300,16 +300,17 @@ async function printResults(runs, output) {
       tooltip += run.skipped ? `${ run.skipped } skipped ` : '';
       tooltip += `out of ${ run.total }`;
       const { env } = process;
-      let result = `<a title="${ tooltip }"`;
+      let result = '';
+      if (run.logId) {
+        const url = `${ env.GITHUB_SERVER_URL }/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID}/artifacts/${ run.logId }`;
+        result += `<a href="${ url }" title="Download logs">:file_folder:</a> `;
+      }
+      result += `<a title="${ tooltip }"`;
       if (run.id) {
         const url = `${ env.GITHUB_SERVER_URL }/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID }/job/${ run.id }`;
         result += ` href="${ url }"`;
       }
       result += `>${ emoji } ${ count }</a>`;
-      if (run.logId) {
-        const url = `${ env.GITHUB_SERVER_URL }/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID}/artifacts/${ run.logId }`;
-        result += ` <a href="${ url }" title="Download logs">:scroll:</a>`;
-      }
       // Because we may have missing jobs (where it failed so completely there
       // was no uploaded logs), we need to use the column map rather than just
       // append to the row.
