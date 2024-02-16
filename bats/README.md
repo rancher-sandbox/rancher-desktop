@@ -159,3 +159,68 @@ After finishing to develop a BATS test suite, you can locally verify the syntax 
      ```sh
      shfmt -w ./bats/tests/containers/factory-reset.bats
      ```
+
+## Running BATS in CI
+
+We also run BATS in CI via [GitHub Actions]; at the time of writing, we do not
+yet run them automatically due to failing tests.  There are many optional fields
+that may be set when triggering a run manually:
+
+[GitHub Actions]: https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/bats.yaml
+
+<!-- This table is done in HTML to allow line wrapping -->
+<table>
+  <thead> <tr> <th>Input <th>Description
+  <tbody>
+  <tr><td><code>owner</code>, <code>repo</code>
+    <td>Forms the GitHub repository to test; defaults to the current repository.
+  <tr><td><code>branch</code>
+    <td>The branch to test; defaults to the current branch.
+  <tr><td><code>tests</code>
+    <td>The list of tests, as a whitespace-separated glob expression relative to the
+    <a href="tests"><code>tests</code></a> directory.  The <code>.bats</code>
+    suffix may be omitted on test files.
+  <tr><td><code>platforms</code>
+    <td>A space-separated list of platforms to test on; defaults to everything,
+    and items may be removed to reduce coverage.
+  <tr><td><code>engines</code>
+    <td>A space-separated list of container engines to test on; defaults to
+    everything, and items may be removed to reduce coverage.
+  <tr><td><code>package-id</code>
+    <td>A specific GitHub run ID for the
+    <a href="https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml">package action</a>
+    to test.  This allows to test code from runs where it failed to build on
+    platforms that don't need to be tested, or in-process runs as long as the
+    relevant platforms have already completed.
+  </tbody>
+</table>
+
+### Debugging BATS in CI
+
+Sometimes we may need to drill down why a test is failing in CI (for example,
+when the same test doesn't fail locally).  Some things might be helpful:
+
+- Logs for failing runs can be downloaded by clicking on the :file_folder: icon
+  in the summary table at the bottom of the run.
+- If changes to the application or BATS tests are required, a new [package
+  action] run will need to be manually triggered.  In that case, setting `sign`
+  to `false` in that run will speed it up by a few minutes, by skipping the
+  check for properly signed installers — that can be dealt with when the actual
+  PR is made.
+- When focusing on a particular failing platform, it may be possible to shave
+  off a few minutes by setting the `package-id` field (see above) when starting
+  the BATS run; this lets you start the run once the platform you're interested
+  in has completed packaging, without waiting for other platforms.  This should
+  be set to the number after `…/actions/runs/` in the URL.
+- When testing, it is a good idea to [fork the repository] and run the tests
+  there; this lets you have your own set of GitHub runner quota (which means not
+  waiting for PRs other people create).  It is not necessary to set `owner` and
+  `repo` fields when running the BATS action (because it defaults to the
+  repository the action is running on).  You will, however, need to run the
+  [package action] at least once in your fork.
+- It is much faster to specify `tests`, `platforms`, and `engines` to limit
+  runs to only the tests you care about; the full run takes somewhere over two
+  hours total, even spread out over multiple parallel jobs.
+
+[package action]: https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml
+[fork the repository]: https://github.com/rancher-sandbox/rancher-desktop/fork
