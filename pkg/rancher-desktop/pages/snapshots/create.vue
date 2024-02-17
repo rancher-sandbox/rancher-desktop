@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import MonacoEditor from '@pkg/components/MonacoEditor.vue';
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -19,6 +20,7 @@ export default Vue.extend({
     Banner,
     LabeledInput,
     TextAreaAutoGrow,
+    MonacoEditor,
   },
 
   data() {
@@ -142,13 +144,7 @@ export default Vue.extend({
       </div>
       <div class="field description-field">
         <label>{{ t('snapshots.create.description.label') }}</label>
-        <TextAreaAutoGrow
-          ref="descriptionInput"
-          v-model="description"
-          data-test="createSnapshotDescInput"
-          class="input"
-          :disabled="creating"
-        />
+        <monaco-editor v-model="description" language="markdown" />
       </div>
       <div class="actions">
         <button
