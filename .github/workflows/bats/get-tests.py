@@ -15,8 +15,8 @@ import os
 import sys
 from typing import Iterator, List, Literal, Protocol, Union
 
-Platforms = Literal["linux", "mac"]
-Hosts = Literal["ubuntu-latest", "macos-12"]
+Platforms = Literal["linux", "mac", "win"]
+Hosts = Literal["ubuntu-latest", "macos-12", "windows-latest"]
 
 @dataclasses.dataclass
 class Result:
@@ -67,6 +67,7 @@ for test in os.environ.get("TESTS", "*").split():
       host: Hosts = {
          "linux": "ubuntu-latest",
          "mac": "macos-12",
+         "win": "windows-latest",
       }[platform]
       for name in resolve_test(test, platform):
           for engine in engines:

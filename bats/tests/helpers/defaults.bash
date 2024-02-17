@@ -130,16 +130,19 @@ if using_socket_vmnet && sudo_needs_password; then
 fi
 
 ########################################################################
-if ! is_unix && [ -n "${RD_MOUNT_TYPE:-}" ]; then
-    fatal "RD_MOUNT_TYPE only works on Linux and macOS"
-fi
+if is_unix; then
+    : "${RD_MOUNT_TYPE:=reverse-sshfs}"
 
-: "${RD_MOUNT_TYPE:=reverse-sshfs}"
+    validate_enum RD_MOUNT_TYPE reverse-sshfs 9p virtiofs
 
-validate_enum RD_MOUNT_TYPE reverse-sshfs 9p virtiofs
-
-if [ "$RD_MOUNT_TYPE" = "virtiofs" ] && ! using_vz_emulation; then
-    fatal "RD_MOUNT_TYPE=virtiofs only works with VZ emulation"
+    if [ "$RD_MOUNT_TYPE" = "virtiofs" ] && ! using_vz_emulation; then
+        fatal "RD_MOUNT_TYPE=virtiofs only works with VZ emulation"
+    fi
+else
+    : "${RD_MOUNT_TYPE:=}"
+    if [ -n "${RD_MOUNT_TYPE:-}" ]; then
+        fatal "RD_MOUNT_TYPE only works on Linux and macOS"
+    fi
 fi
 
 ########################################################################

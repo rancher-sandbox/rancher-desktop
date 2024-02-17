@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# Download the latest CI build and install it
-# NOTE This currently only works for macOS and Linux; for Linux, this always
-# installs to /opt (ignoring RD_LOCATION).
+# Download the latest CI build and install it.
+# NOTE On Linux, this always installs to /opt (ignoring RD_LOCATION).
 
 set -o errexit -o nounset -o pipefail
 set -o xtrace
@@ -57,15 +56,44 @@ download_artifact() {
     gh api "$API" > "$filename"
 }
 
+get_platform() {
+    case "$(uname -s)" in
+    Darwin)
+        echo darwin
+        return;;
+    MINGW*)
+        echo win32
+        return;;
+    esac
+    case "$(uname -r)" in
+    *-WSL2)
+        echo win32;;
+    *)
+        echo linux;;
+    esac
+}
+
 wslpath_from_win32_env() {
-    # The cmd.exe _sometimes_ returns an empty string when invoked in a subshell
-    # wslpath "$(cmd.exe /c "echo %$1%" 2>/dev/null)" | tr -d "\r"
-    # Let's see if powershell.exe avoids this issue
-    wslpath "$(powershell.exe -Command "Write-Output \${Env:$1}")" | tr -d "\r"
+    if [[ "$(uname -s)" =~ MINGW* ]]; then
+        # When running under WSL, the environment variables are set but to
+        # Windows-style paths; however, `cd` works with those.  Also, under
+        # MinGW the relevant variables are upper case.
+        local var="${1^^}"
+        (
+            cd "${!var}"
+            pwd
+        )
+    else
+        # The cmd.exe _sometimes_ returns an empty string when invoked in a subshell
+        # wslpath "$(cmd.exe /c "echo %$1%" 2>/dev/null)" | tr -d "\r"
+        # Let's see if powershell.exe avoids this issue
+        wslpath "$(powershell.exe -Command "Write-Output \${Env:$1}")" | tr -d "\r"
+    fi
 }
 
 install_application() {
     local archive
+
     case "$(get_platform)" in
     darwin)
         ARCH=x86_64
@@ -115,16 +143,22 @@ install_application() {
         unzip -o "$zip_abspath" "$app/*" -d "$dest" >/dev/null
         ;;
     win32)
-        local localAppData programFiles
-        localAppData="$(wslpath_from_win32_env LOCALAPPDATA)"
-        programFiles="$(wslpath_from_win32_env ProgramFiles)"
-        dest="$programFiles"
-        if [ "$RD_LOCATION" = "user" ]; then
-            dest="$localAppData/Programs"
-        fi
-        local app="Rancher Desktop"
+        local app='Rancher Desktop'
+        case "$RD_LOCATION" in
+        system)
+            dest="$(wslpath_from_win32_env ProgramFiles)";;
+        user)
+            dest="$(wslpath_from_win32_env LOCALAPPDATA)/Programs";;
+        *)
+            printf "Installing to %s is not supported on Windows." \
+                "$RD_LOCATION" >&2
+            exit 1;;
+        esac
         rm -rf "${dest:?}/$app"
-        unzip -o "$zip_abspath" "$app/*" -d "$dest" >/dev/null
+        # For some reason, the Windows archive doesn't put everything in a
+        # subdirectory like Linux & macOS do.
+        mkdir -p "$dest/$app"
+        unzip -o "$zip_abspath" -d "$dest/$app" >/dev/null
         ;;
     linux)
         # Linux doesn't support per-user installs
@@ -148,8 +182,13 @@ download_bats() {
 
     # Unpack bats into $BATS_DIR
     rm -rf "$BATS_DIR"
-    mkdir "$BATS_DIR"
-    tar xfz "$TMPDIR/bats.tar.gz" -C "$BATS_DIR"
+    mkdir -p "$BATS_DIR"
+    # Windows tar doesn't like $BATS_DIR when it's a Windows-style path.
+    # So instead of using tar -C, enter that directory first.
+    (
+        cd "$BATS_DIR"
+        tar xfz "$TMPDIR/bats.tar.gz"
+    )
 }
 
 if [[ -z $ID ]]; then
