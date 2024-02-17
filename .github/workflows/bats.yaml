@@ -118,9 +118,12 @@ jobs:
       if: runner.os == 'Linux'
       run: sudo chmod a+rwx /dev/kvm
 
-    - name: "Windows: Stop Docker daemon"
+    - name: "Windows: Stop unwanted services"
       if: runner.os == 'Windows'
-      run: Stop-Service -Name docker
+      run: >-
+        Get-Service -ErrorAction Continue -Name
+        @('W3SVC', 'docker')
+        | Stop-Service
 
     - name: "Windows: Update any pre-installed WSL"
       if: runner.os == 'Windows'
