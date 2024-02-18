@@ -170,8 +170,7 @@ install_extensions() {
 
 api_set() {
     local body version
-    version=$(get_setting .version)
-    body=$(jq ".version=$version" <<<"{$1}")
+    body=$(jq ".version=10" <<<"{$1}")
     rdctl api /v1/settings -X PUT --body "$body"
 }
 

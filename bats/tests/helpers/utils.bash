@@ -278,15 +278,9 @@ update_allowed_patterns() {
     local patterns
     patterns=$(join_map ", " image_without_tag_as_json_string "$@")
 
-    # TODO TODO TODO
-    # Once https://github.com/rancher-sandbox/rancher-desktop/issues/4939 has been
-    # implemented, the `version` field  should be made a constant. Putting in the
-    # current version here doesn't guarantee that the structure conforms to the latest
-    # schema; we should rely on migrations instead.
-    # TODO TODO TODO
     rdctl api settings -X PUT --input - <<EOF
 {
-  "version": $(get_setting .version),
+  "version": 8,
   "containerEngine": {
     "allowedImages": {
       "enabled": $enabled,
