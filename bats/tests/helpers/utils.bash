@@ -213,6 +213,7 @@ trace() {
         return
     fi
     local caller="${CALLER:-$(calling_function)}"
+    caller="$(date -u +"%FT%TZ"): $caller"
     local line
     while IFS= read -r line; do
         if [[ -e /dev/fd/3 ]]; then
