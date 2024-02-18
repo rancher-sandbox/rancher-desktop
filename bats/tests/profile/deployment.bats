@@ -107,9 +107,7 @@ install_extensions() {
 }
 
 @test 'verify all extensions can be installed' {
-    #WORKAROUND `rdctl` tries to install extensions before app is ready.
-    wait_for_container_engine
-    sleep 30
+    wait_for_kubelet
     before install_extensions
 }
 
