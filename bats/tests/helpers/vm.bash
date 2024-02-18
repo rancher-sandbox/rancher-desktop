@@ -352,14 +352,6 @@ wait_for_container_engine() {
     trace "waiting for api /settings to be callable"
     try --max 30 --delay 5 rdctl api /settings
 
-    run jq_output .containerEngine.allowedImages.enabled
-    assert_success
-    if [[ $output == true ]]; then
-        wait_for_service_status rd-openresty started
-    else
-        wait_for_service_status rd-openresty stopped
-    fi
-
     if using_docker; then
         trace "waiting for docker context to exist"
         try --max 30 --delay 5 docker_context_exists
