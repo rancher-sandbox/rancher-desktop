@@ -294,6 +294,10 @@ get_container_engine_info() {
 }
 
 docker_context_exists() {
+    # We don't use docker contexts on Windows
+    if is_windows; then
+        return
+    fi
     run docker_exe context ls -q
     assert_success || return
     assert_line "$RD_DOCKER_CONTEXT"
