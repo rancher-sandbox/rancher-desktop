@@ -327,7 +327,7 @@ assert_service_status() {
     local expect=$2
 
     run rdsudo rc-service "$service_name" status
-    # Some services (e.g. k3s) report non-zero status when not running
+    # rc-service report non-zero status (3) when the service is stopped
     if [[ $expect == started ]]; then
         assert_success || return
     fi

@@ -10,7 +10,6 @@ RD_USE_IMAGE_ALLOW_LIST=true
 
 @test 'update the list of patterns first time' {
     update_allowed_patterns true "$IMAGE_NGINX" "$IMAGE_BUSYBOX" "$IMAGE_PYTHON"
-    wait_for_container_engine
 }
 
 @test 'verify pull nginx succeeds' {
@@ -54,7 +53,6 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 @test 'can run kubectl' {
-    wait_for_kubelet
     kubectl run nginx --image="${IMAGE_NGINX}:latest" --port=8080
 }
 
@@ -70,9 +68,6 @@ verify_no_nginx() {
 
 @test 'set patterns with the allowed list disabled' {
     update_allowed_patterns false "$IMAGE_NGINX" "$IMAGE_BUSYBOX" "$IMAGE_RUBY"
-    # containerEngine.allowedImages.enabled changed, so wait for a restart
-    wait_for_container_engine
-    wait_for_kubelet "$RD_KUBERNETES_PREV_VERSION"
 }
 
 @test 'verify pull python succeeds because allowedImages filter is disabled' {

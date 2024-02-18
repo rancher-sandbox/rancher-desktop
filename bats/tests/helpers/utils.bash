@@ -279,7 +279,14 @@ update_allowed_patterns() {
     local patterns
     patterns=$(join_map ", " image_without_tag_as_json_string "$@")
 
-    rdctl api settings -X PUT --input - <<EOF
+    # If the enabled state changes, then the container engine will be restarted.
+    # Record PID of the current daemon process so we can wait for it to be ready again.
+    local pid
+    if [ "$enabled" != "$(get_setting .containerEngine.allowedImages.enabled)" ]; then
+        pid=$(get_service_pid "$CONTAINER_ENGINE_SERVICE")
+    fi
+
+    rdctl api settings -X PUT --input - <<EOF || return
 {
   "version": 8,
   "containerEngine": {
@@ -290,6 +297,14 @@ update_allowed_patterns() {
   }
 }
 EOF
+    # Wait for container engine (and Kubernetes) to be ready again
+    if [[ -n ${pid:-} ]]; then
+        try --max 15 --delay 5 refute_service_pid "$CONTAINER_ENGINE_SERVICE" "$pid" || return
+        wait_for_container_engine || return
+        if [[ $(get_setting .kubernetes.enabled) == "true" ]]; then
+            wait_for_kubelet || return
+        fi
+    fi
 }
 
 # unique_filename /tmp/image .png
