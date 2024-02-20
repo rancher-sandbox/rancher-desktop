@@ -7,7 +7,7 @@ local_setup() {
     needs_port 443
 }
 
-add_helm_repo() {
+@test 'add helm repo' {
     helm repo add jetstack https://charts.jetstack.io
     helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
     helm repo update
@@ -55,9 +55,6 @@ uninstall_rancher() {
     run helm uninstall cert-manager --namespace cert-manager --wait
     assert_nothing
 }
-
-# Need to dynamically register the test to make sure it is executed first.
-bats_test_function -- add_helm_repo
 
 foreach_k3s_version \
     factory_reset \
