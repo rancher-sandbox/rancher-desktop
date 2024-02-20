@@ -596,6 +596,15 @@ components:
         experimental:
           type: object
           properties:
+            containerEngine:
+              type: object
+              properties:
+                webAssembly:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      x-rd-usage: enable support for containerd-wasm shims
             virtualMachine:
               type: object
               properties:

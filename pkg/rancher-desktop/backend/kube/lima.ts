@@ -383,13 +383,14 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
           return 'restart';
         },
-        'application.adminAccess':               undefined,
-        'containerEngine.allowedImages.enabled': undefined,
-        'containerEngine.name':                  undefined,
-        'kubernetes.port':                       undefined,
-        'kubernetes.enabled':                    undefined,
-        'kubernetes.options.traefik':            undefined,
-        'kubernetes.options.flannel':            undefined,
+        'application.adminAccess':                          undefined,
+        'containerEngine.allowedImages.enabled':            undefined,
+        'containerEngine.name':                             undefined,
+        'experimental.containerEngine.webAssembly.enabled': undefined,
+        'kubernetes.port':                                  undefined,
+        'kubernetes.enabled':                               undefined,
+        'kubernetes.options.traefik':                       undefined,
+        'kubernetes.options.flannel':                       undefined,
       },
       extra,
     );
