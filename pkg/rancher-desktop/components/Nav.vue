@@ -47,13 +47,13 @@
         </template>
       </div>
     </template>
-    <div class="nav-button-container">
+    <div class="nav-button-container" data-test="dashboardButton">
       <dashboard-button
         class="nav-button"
         @open-dashboard="openDashboard"
       />
     </div>
-    <div class="nav-button-container">
+    <div class="nav-button-container" data-test="preferencesButton">
       <preferences-button
         class="nav-button"
         @open-preferences="openPreferences"
