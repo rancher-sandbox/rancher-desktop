@@ -22,10 +22,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"net"
-	"net/url"
 	"os"
-	"path/filepath"
+	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,8 +35,8 @@ var kubeconfigViper = viper.New()
 
 const rdCluster = "rancher-desktop"
 
-// kubeconfigCmd represents the kubeconfig command, used to set up kubeconfig
-// in WSL distributions (running on the Linux side).  Note that we must
+// kubeconfigCmd represents the kubeconfig command, used to set up a symlink on
+// the Linux side to point at the Windows-side kubeconfig.  Note that we must
 // pass the kubeconfig path in as an environment variable to take advantage of
 // the path translation capabilities of WSL2 interop.
 var kubeconfigCmd = &cobra.Command{
@@ -47,68 +45,91 @@ var kubeconfigCmd = &cobra.Command{
 	Long:  `This command configures the Kubernetes configuration inside a WSL2 distribution.`,
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		winConfigPath := kubeconfigViper.GetString("kubeconfig")
-		linuxConfigDir := filepath.Join(homedir.HomeDir(), ".kube")
-		linuxConfigPath := filepath.Join(linuxConfigDir, "config")
+		configPath := kubeconfigViper.GetString("kubeconfig")
 		enable := kubeconfigViper.GetBool("enable")
 
-		if winConfigPath == "" {
-			//lint:ignore ST1005 The capitalization is for a proper noun.
+		if configPath == "" {
 			return errors.New("Windows kubeconfig not supplied")
 		}
 
-		// Backwards compatibility: if the Linux config is a symlink to the Windows
-		// kubeconfig, unlink it.  This avoids issues where we clobber the Windows
-		// kubeconfig by accident.
-		if _, err := os.Readlink(linuxConfigPath); err == nil {
-			linuxInfo, err1 := os.Stat(linuxConfigPath)
-			windowsInfo, err2 := os.Stat(winConfigPath)
-			if err1 == nil && err2 == nil && os.SameFile(linuxInfo, windowsInfo) {
-				if err = os.Remove(linuxConfigPath); err != nil {
-					return fmt.Errorf("failed to remove kubeconfig symlink: %w", err)
+		_, err := os.Stat(configPath)
+		if err != nil {
+			return fmt.Errorf("could not open Windows kubeconfig: %w", err)
+		}
+		cmd.SilenceUsage = true
+
+		configDir := path.Join(homedir.HomeDir(), ".kube")
+		linkPath := path.Join(configDir, "config")
+		unsupportedConfig, symlinkErr := requireManualSymlink(linkPath)
+		if !unsupportedConfig && symlinkErr != nil {
+			return symlinkErr
+		}
+
+		if enable {
+			if unsupportedConfig {
+				// Config contains non-Rancher Desktop configuration
+				return symlinkErr
+			}
+			err = os.Mkdir(configDir, 0o750)
+			if err != nil && !errors.Is(err, os.ErrExist) {
+				// The error already contains the full path, we can't do better.
+				return err
+			}
+			err = os.Symlink(configPath, linkPath)
+			if err != nil {
+				if errors.Is(err, os.ErrExist) {
+					// If it already exists, do nothing; even if it's not a symlink.
+					return nil
+				}
+				return err
+			}
+		} else {
+			// No need to create if we want to remove it
+			target, err := os.Readlink(linkPath)
+			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					return nil
+				}
+				return err
+			}
+			if target == configPath {
+				if err = removeConfig(linkPath); err != nil {
+					return err
 				}
 			}
 		}
-
-		if !enable {
-			return nil
-		}
-
-		cmd.SilenceUsage = true
-
-		winConfig, err := readKubeConfig(winConfigPath)
-		if err != nil {
-			return err
-		}
-
-		linuxConfig, err := readKubeConfig(linuxConfigPath)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-
-		cleanConfig := removeExistingRDConfig(rdCluster, &linuxConfig)
-
-		kubeConfig, err := updateKubeConfig(winConfig, *cleanConfig, rdNetworking)
-		if err != nil {
-			return fmt.Errorf("failed to construct kubeconfig: %w", err)
-		}
-
-		var finalKubeConfigFile *os.File
-		if err := os.MkdirAll(linuxConfigDir, 0o750); err != nil {
-			return err
-		}
-		finalKubeConfigFile, err = os.Create(linuxConfigPath)
-		if err != nil {
-			return err
-		}
-		defer finalKubeConfigFile.Close()
-		encoder := yaml.NewEncoder(finalKubeConfigFile)
-		err = encoder.Encode(kubeConfig)
-		if err != nil {
-			return err
-		}
-		return encoder.Close()
+		return nil
 	},
+}
+
+// requireManualSymlink checks the config to determine if it contains a single entry for Contexts, Clusters, and Users.
+// If all three are named 'rancher-desktop', we assume that this configuration was written by Rancher Desktop 1.12,
+// and we can remove it and replace it with a symlink. If a user's config contains Rancher Desktop's specific configuration
+// along with user-provided config, or if it only contains user-provided config, we return a true and an error.
+// This indicates through diagnostics to the user that manual action is required.
+func requireManualSymlink(linkPath string) (bool, error) {
+	// Check to see if config is rancher desktop only
+	if existingConfig, err := readKubeConfig(linkPath); err == nil {
+		if len(existingConfig.Contexts) == 1 && existingConfig.Contexts[0].Name == rdCluster &&
+			len(existingConfig.Clusters) == 1 && existingConfig.Clusters[0].Name == rdCluster &&
+			len(existingConfig.Users) == 1 && existingConfig.Users[0].Name == rdCluster {
+			if err := removeConfig(linkPath); err != nil {
+				return false, err
+			}
+		} else {
+			return true, fmt.Errorf("not overwriting kubeconfig file %s with non-Rancher Desktop contents", linkPath)
+		}
+	}
+
+	return false, nil
+}
+
+func removeConfig(path string) error {
+	err := os.Remove(path)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
 func readKubeConfig(configPath string) (kubeConfig, error) {
@@ -126,115 +147,9 @@ func readKubeConfig(configPath string) (kubeConfig, error) {
 	return config, nil
 }
 
-// updateKubeConfig reads the kube config from windows side it also
-// modifies the cluster's server host to an appropriate address.
-// It then merges the config with an existing configuration on
-// users distro and returns the merged config.
-func updateKubeConfig(winConfig, linuxConfig kubeConfig, rdNetworking bool) (kubeConfig, error) {
-	for clusterIdx, cluster := range winConfig.Clusters {
-		// Ignore any non rancher-desktop clusters
-		if winConfig.Clusters[clusterIdx].Name != rdCluster {
-			continue
-		}
-		server, err := url.Parse(cluster.Cluster.Server)
-		if err != nil {
-			// Ignore any clusters with invalid servers
-			continue
-		}
-		host := "gateway.rancher-desktop.internal"
-		if !rdNetworking {
-			ip, err := getClusterIP()
-			if err != nil {
-				return winConfig, err
-			}
-
-			host = ip.String()
-		}
-		if server.Port() != "" {
-			host = net.JoinHostPort(host, server.Port())
-		}
-		server.Host = host
-		winConfig.Clusters[clusterIdx].Cluster.Server = server.String()
-	}
-	return mergeKubeConfigs(winConfig, linuxConfig), nil
-}
-
-func removeExistingRDConfig(name string, config *kubeConfig) *kubeConfig {
-	// Remove clusters with the specified name
-	var filteredClusters []struct {
-		Cluster struct {
-			Server string
-			Extras map[string]interface{} `yaml:",inline"`
-		} `yaml:"cluster"`
-		Name   string                 `yaml:"name"`
-		Extras map[string]interface{} `yaml:",inline"`
-	}
-	for _, cluster := range config.Clusters {
-		if cluster.Name != name {
-			filteredClusters = append(filteredClusters, cluster)
-		}
-	}
-	config.Clusters = filteredClusters
-
-	// Remove contexts with the specified name
-	var filteredContexts []struct {
-		Name   string                 `yaml:"name"`
-		Extras map[string]interface{} `yaml:",inline"`
-	}
-	for _, context := range config.Contexts {
-		if context.Name != name {
-			filteredContexts = append(filteredContexts, context)
-		}
-	}
-	config.Contexts = filteredContexts
-
-	// Remove users with the specified name
-	var filteredUsers []struct {
-		Name   string                 `yaml:"name"`
-		Extras map[string]interface{} `yaml:",inline"`
-	}
-	for _, user := range config.Users {
-		if user.Name != name {
-			filteredUsers = append(filteredUsers, user)
-		}
-	}
-	config.Users = filteredUsers
-
-	return config
-}
-
-func mergeKubeConfigs(winConfig, linuxConfig kubeConfig) kubeConfig {
-	for _, ctx := range winConfig.Clusters {
-		if ctx.Name == rdCluster {
-			linuxConfig.Clusters = append(linuxConfig.Clusters, ctx)
-		}
-	}
-	for _, ctx := range winConfig.Contexts {
-		if ctx.Name == rdCluster {
-			linuxConfig.Contexts = append(linuxConfig.Contexts, ctx)
-		}
-	}
-
-	for _, user := range winConfig.Users {
-		if user.Name == rdCluster {
-			linuxConfig.Users = append(linuxConfig.Users, user)
-		}
-	}
-
-	if linuxConfig.CurrentContext == "" {
-		linuxConfig.CurrentContext = rdCluster
-	}
-	if len(linuxConfig.Extras) == 0 {
-		linuxConfig.Extras = winConfig.Extras
-	}
-
-	return linuxConfig
-}
-
 func init() {
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
-	kubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	kubeconfigViper.AutomaticEnv()
 	kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())
 	rootCmd.AddCommand(kubeconfigCmd)
