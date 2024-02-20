@@ -4,6 +4,7 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import EngineSelector from '@pkg/components/EngineSelector.vue';
+import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
@@ -12,8 +13,12 @@ import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-container-engine-general',
-  components: { EngineSelector, RdFieldset },
-  props:      {
+  components: {
+    EngineSelector,
+    RdCheckbox,
+    RdFieldset,
+  },
+  props: {
     preferences: {
       type:     Object as PropType<Settings>,
       required: true,
@@ -50,5 +55,30 @@ export default Vue.extend({
         />
       </template>
     </rd-fieldset>
+    <rd-fieldset
+      data-test="webAssembly"
+      :legend-text="t('webAssembly.label')"
+      :is-experimental="true"
+    >
+      <rd-checkbox
+        data-test="webAssemblyCheckbox"
+        :label="t('webAssembly.enabled')"
+        :description="t('webAssembly.description')"
+        :value="preferences.experimental.containerEngine.webAssembly.enabled"
+        :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
+        @input="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
+      />
+    </rd-fieldset>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.container-engine-general {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.container-engine-general::v-deep .checkbox-outer-container-description {
+  font-size: 11px;
+}
+</style>

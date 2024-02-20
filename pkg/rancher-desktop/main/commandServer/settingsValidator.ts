@@ -108,7 +108,8 @@ export default class SettingsValidator {
         hostResolver: this.checkPlatform('win32', this.checkBoolean),
       },
       experimental: {
-        virtualMachine: {
+        containerEngine: { webAssembly: { enabled: this.checkBoolean } },
+        virtualMachine:  {
           mount: {
             type: this.checkLima(this.checkMulti(
               this.checkEnum(...Object.values(MountType)),

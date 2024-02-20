@@ -14,7 +14,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>10</integer>
+    <integer>11</integer>
   </dict>
 </plist>
 `, s)
@@ -32,7 +32,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>10</integer>
+    <integer>11</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -371,7 +371,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>10</integer>
+    <integer>11</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>

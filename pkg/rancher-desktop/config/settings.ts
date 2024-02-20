@@ -4,7 +4,7 @@
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 10 as const;
+export const CURRENT_SETTINGS_VERSION = 11 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -120,7 +120,8 @@ export const defaultSettings = {
    * Experimental settings - there should not be any UI for these.
    */
   experimental: {
-    virtualMachine: {
+    containerEngine: { webAssembly: { enabled: false } },
+    virtualMachine:  {
       /** can only be set to VMType.VZ on macOS Ventura and later */
       type:        VMType.QEMU,
       /** can only be used when type is VMType.VZ, and only on aarch64 */
