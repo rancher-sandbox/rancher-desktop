@@ -47,9 +47,15 @@
         </template>
       </div>
     </template>
-    <div class="preferences-button-nav">
+    <div class="nav-button-container">
+      <dashboard-button
+        class="nav-button"
+        @open-dashboard="openDashboard"
+      />
+    </div>
+    <div class="nav-button-container">
       <preferences-button
-        class="preferences-button"
+        class="nav-button"
         @open-preferences="openPreferences"
       />
     </div>
@@ -67,6 +73,7 @@ import { RouteRecordPublic } from 'vue-router';
 import NavIconExtension from './NavIconExtension.vue';
 import NavItem from './NavItem.vue';
 
+import DashboardButton from '@pkg/components/DashboardOpen.vue';
 import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
 import { hexEncode } from '@pkg/utils/string-encode';
@@ -80,6 +87,7 @@ export default Vue.extend({
     BadgeState,
     NavItem,
     NavIconExtension,
+    DashboardButton,
     PreferencesButton,
   },
   props: {
@@ -166,6 +174,9 @@ export default Vue.extend({
     openPreferences(): void {
       this.$emit('open-preferences');
     },
+    openDashboard(): void {
+      this.$emit('open-dashboard');
+    },
   },
 });
 </script>
@@ -232,13 +243,13 @@ a {
   font-size: 0.75rem;
 }
 
-.preferences-button-nav {
+.nav-button-container {
   display: flex;
   justify-content: center;
 
-  .preferences-button {
+  .nav-button {
     flex: 1;
-    margin: 0 10px;
+    margin: 5px 10px 0px 10px;
     justify-content: center;
   }
 }

@@ -9,6 +9,7 @@
       class="nav"
       :items="routes"
       :extensions="extensions"
+      @open-dashboard="openDashboard"
       @open-preferences="openPreferences"
     />
     <the-title ref="title" />
@@ -136,6 +137,9 @@ export default {
   },
 
   methods: {
+    openDashboard() {
+      ipcRenderer.send('dashboard-open');
+    },
     openPreferences() {
       ipcRenderer.send('preferences-open');
     },
