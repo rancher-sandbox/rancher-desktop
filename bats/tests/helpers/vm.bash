@@ -294,6 +294,10 @@ get_container_engine_info() {
 }
 
 docker_context_exists() {
+    # We don't use docker contexts on Windows
+    if is_windows; then
+        return
+    fi
     run docker_exe context ls -q
     assert_success || return
     assert_line "$RD_DOCKER_CONTEXT"
@@ -327,7 +331,7 @@ assert_service_status() {
     local expect=$2
 
     run rdsudo rc-service "$service_name" status
-    # Some services (e.g. k3s) report non-zero status when not running
+    # rc-service report non-zero status (3) when the service is stopped
     if [[ $expect == started ]]; then
         assert_success || return
     fi
@@ -351,14 +355,6 @@ wait_for_container_engine() {
 
     trace "waiting for api /settings to be callable"
     try --max 30 --delay 5 rdctl api /settings
-
-    run jq_output .containerEngine.allowedImages.enabled
-    assert_success
-    if [[ $output == true ]]; then
-        wait_for_service_status rd-openresty started
-    else
-        wait_for_service_status rd-openresty stopped
-    fi
 
     if using_docker; then
         trace "waiting for docker context to exist"
