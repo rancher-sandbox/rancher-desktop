@@ -376,7 +376,7 @@ function processReplacements(settings: any, replacements: ReplacementDirective[]
  * The `settings` @param does not have to be a complete settings object.
  * And its type is `any` because it needs to work on older versions of the settings data.
  */
-export const updateTable: Record<number, (settings: any) => void> = {
+export const updateTable: Record<number, (settings: any, locked : boolean) => void> = {
   1: (settings) => {
     _.unset(settings, 'kubernetes.rancherMode');
   },
@@ -469,6 +469,12 @@ export const updateTable: Record<number, (settings: any) => void> = {
         });
     }
   },
+  10: (settings, locked) => {
+    // Migrating from an older locked profile automatically locks newer features (wasm support).
+    if (locked && !_.has(settings, 'experimental.containerEngine.webAssembly.enabled')) {
+      _.set(settings, 'experimental.containerEngine.webAssembly.enabled', false);
+    }
+  },
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {
@@ -488,9 +494,10 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
  * The contents of settings files go through the unexported function `migrateSettingsToCurrentVersion`
  * which assigns any missing defaults at the end. This function does not fill in missing values.
  * @param settings - a possibly partial settings object.
+ * @param locked - perform special migrations for locked profiles.
  * @param targetVersion - used for unit testing, to run a specific step from version n to n + 1, and not the full migration
  */
-export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>, targetVersion:number = CURRENT_SETTINGS_VERSION): RecursivePartial<Settings> {
+export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>, locked = false, targetVersion:number = CURRENT_SETTINGS_VERSION): RecursivePartial<Settings> {
   const firstPart = 'updating settings requires specifying an API version';
   let loadedVersion = settings.version;
 
@@ -507,7 +514,7 @@ export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string
   }
   for (; loadedVersion < targetVersion; loadedVersion++) {
     if (updateTable[loadedVersion]) {
-      updateTable[loadedVersion](settings);
+      updateTable[loadedVersion](settings, locked);
     }
   }
   settings.version = targetVersion;

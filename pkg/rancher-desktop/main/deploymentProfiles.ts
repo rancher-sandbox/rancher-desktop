@@ -95,7 +95,7 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
     if (!('version' in locked)) {
       throw new DeploymentProfileError(`Invalid deployment file ${ fullLockedPath }: no version specified. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
     }
-    locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked);
+    locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked, true);
   }
 
   profiles.defaults = validateDeploymentProfile(fullDefaultPath, defaults, settings.defaultSettings, []) ?? {};
@@ -244,7 +244,7 @@ class Win32DeploymentReader {
 
               throw new DeploymentProfileError(`Invalid locked-deployment: no version specified at ${ registryPath }. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
             }
-            locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked);
+            locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked, true);
           }
 
           return { defaults, locked };
@@ -590,7 +590,7 @@ const userDefinedKeys = [
  *
  * @param pathParts - On Windows, the parts of the registry path below KEY\Software\Rancher Desktop\Profile\{defaults|locked|}
  *                    The first field is always either 'defaults' or 'locked' and can be ignored
- *                    On other platforms its the path-parts up to but not including the root (which is unnamed anyway).
+ *                    On other platforms it is the path-parts up to but not including the root (which is unnamed anyway).
  * @returns boolean
  */
 function haveUserDefinedObject(pathParts: string[]): boolean {

@@ -139,13 +139,13 @@ describe('settings', () => {
   const jsonProfile = JSON.stringify(fullDefaults);
   const plistProfile = plist.build(fullDefaults);
   const unlockedProfile = {
-    version:         10,
+    version:         11,
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
     containerEngine: { name: 'moby' },
     kubernetes:      { version: '1.25.9' },
   };
   const lockedProfile = {
-    version:         10,
+    version:         11,
     ignoreThis:      { soups: ['beautiful', 'vichyssoise'] },
     containerEngine: {
       allowedImages: {
@@ -759,7 +759,7 @@ describe('settings', () => {
 
         fromSettings.version = existingVersion;
         toSettings.version = targetVersion;
-        expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings, targetVersion)).toEqual(toSettings);
+        expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(fromSettings, false, targetVersion)).toEqual(toSettings);
       });
     });
   });
