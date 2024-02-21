@@ -1372,7 +1372,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     let newSettings: RecursivePartial<settings.Settings> = {};
 
     try {
-      newSettings = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(specifiedNewSettings);
+      newSettings = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(specifiedNewSettings, false);
       [needToUpdate, errors] = await this.validateSettings(cfg, newSettings);
     } catch (ex: any) {
       errors.push(ex.message);

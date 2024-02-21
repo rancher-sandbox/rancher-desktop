@@ -432,7 +432,7 @@ describe('settings', () => {
       const s: RecursivePartial<settings.Settings> = {};
 
       expect(() => {
-        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false);
       }).toThrow('updating settings requires specifying an API version, but no version was specified');
     });
 
@@ -440,7 +440,7 @@ describe('settings', () => {
       const s: RecursivePartial<settings.Settings> = { version: 'no way' as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
 
       expect(() => {
-        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false);
       }).toThrow('updating settings requires specifying an API version, but "no way" is not a proper config version');
     });
 
@@ -448,7 +448,7 @@ describe('settings', () => {
       const s: RecursivePartial<settings.Settings> = { version: -7 as unknown as typeof settings.CURRENT_SETTINGS_VERSION };
 
       expect(() => {
-        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s);
+        settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false);
       }).toThrow('updating settings requires specifying an API version, but "-7" is not a positive number');
     });
 
@@ -474,7 +474,7 @@ describe('settings', () => {
         },
       };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
     });
 
     it('correctly migrates earlier no-proxy settings', () => {
@@ -507,7 +507,7 @@ describe('settings', () => {
         },
       };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
     });
 
     it('leaves unrecognized settings unchanged', () => {
@@ -535,7 +535,7 @@ describe('settings', () => {
       };
       const expected = _.merge({}, s, { version: settings.CURRENT_SETTINGS_VERSION });
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
     });
 
     it('updates all old settings going back to version 1', () => {
@@ -594,7 +594,7 @@ describe('settings', () => {
         },
       };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
     });
 
     describe('migrates from step to step', () => {

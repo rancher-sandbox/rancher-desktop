@@ -481,7 +481,7 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
-  const newSettings = migrateSpecifiedSettingsToCurrentVersion(settings);
+  const newSettings = migrateSpecifiedSettingsToCurrentVersion(settings, false);
 
   return _.defaultsDeep(newSettings, defaultSettings);
 }
@@ -497,7 +497,7 @@ function migrateSettingsToCurrentVersion(settings: Record<string, any>): Setting
  * @param locked - perform special migrations for locked profiles.
  * @param targetVersion - used for unit testing, to run a specific step from version n to n + 1, and not the full migration
  */
-export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>, locked = false, targetVersion:number = CURRENT_SETTINGS_VERSION): RecursivePartial<Settings> {
+export function migrateSpecifiedSettingsToCurrentVersion(settings: Record<string, any>, locked: boolean, targetVersion:number = CURRENT_SETTINGS_VERSION): RecursivePartial<Settings> {
   const firstPart = 'updating settings requires specifying an API version';
   let loadedVersion = settings.version;
 

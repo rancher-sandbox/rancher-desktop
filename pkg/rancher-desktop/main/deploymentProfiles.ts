@@ -89,7 +89,7 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
     if (!('version' in defaults)) {
       throw new DeploymentProfileError(`Invalid deployment file ${ fullDefaultPath }: no version specified. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
     }
-    defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults);
+    defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults, false);
   }
   if (locked) {
     if (!('version' in locked)) {
@@ -236,7 +236,7 @@ class Win32DeploymentReader {
 
               throw new DeploymentProfileError(`Invalid default-deployment: no version specified at ${ registryPath }. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
             }
-            defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults);
+            defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults, false);
           }
           if (!_.isEmpty(locked)) {
             if (!('version' in locked)) {
