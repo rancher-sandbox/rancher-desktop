@@ -232,7 +232,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
 
     // Import image for port forwarding
     await this.client.runClient(
-      ['image', 'load', '--input', path.join(paths.resources, 'rdx-proxy.tgz')],
+      ['image', 'load', '--input', path.join(paths.resources, 'rdx-proxy.tar')],
       console, { namespace: ExtensionImpl.extensionNamespace });
 
     // Install / uninstall extensions as needed.

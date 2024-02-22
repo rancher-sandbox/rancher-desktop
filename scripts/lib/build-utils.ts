@@ -9,7 +9,6 @@ import os from 'os';
 import path from 'path';
 import stream from 'stream';
 import util from 'util';
-import zlib from 'zlib';
 
 import spawn from 'cross-spawn';
 import _ from 'lodash';
@@ -326,7 +325,7 @@ export default {
     try {
       const executablePath = path.join(workDir, 'extension-proxy');
       const layerPath = path.join(workDir, 'layer.tar');
-      const imagePath = path.join(this.rootDir, 'resources', 'rdx-proxy.tgz');
+      const imagePath = path.join(this.rootDir, 'resources', 'rdx-proxy.tar');
 
       console.log('Building RDX proxying image...');
 
@@ -373,7 +372,6 @@ export default {
       const imageWritten =
         stream.promises.finished(
           image
-            .pipe(zlib.createGzip())
             .pipe(fs.createWriteStream(imagePath)));
       const addEntry = (name: string, input: Buffer | stream.Readable, size?: number) => {
         if (Buffer.isBuffer(input)) {

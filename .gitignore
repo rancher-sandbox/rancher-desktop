@@ -8,7 +8,7 @@
 /resources/host/
 /resources/rancher-dashboard/*
 /resources/preload.js*
-/resources/rdx-proxy.tgz
+/resources/rdx-proxy.tar
 /coverage/
 /dist/**
 /.idea/
