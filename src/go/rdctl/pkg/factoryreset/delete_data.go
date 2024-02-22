@@ -30,27 +30,43 @@ import (
 
 	dockerconfig "github.com/docker/docker/cli/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 )
 
-func addAppHomeWithoutSnapshots(appHome string) []string {
-	haveSnapshots := false
-	if snapshots, err := os.ReadDir(filepath.Join(appHome, "snapshots")); err == nil {
-		haveSnapshots = len(snapshots) > 0
+// appHomeDirectories() returns the path to the AppHome directory,
+// if it can be deleted. There may be some subdirectories inside it
+// that need to be preserved across a factory reset, so if any of
+// those exist and are non-empty, then a list of all files/directories
+// that don't match the exclusion list will be returned instead.
+func appHomeDirectories(appPaths paths.Paths) []string {
+	// Use lowercase names for comparison in case the user created the subdirectory manually
+	// with the wrong case on a case-preserving filesystem (default on macOS).
+	excludeDir := map[string]bool{
+		strings.ToLower(appPaths.Snapshots):       true,
+		strings.ToLower(appPaths.ContainerdShims): true,
 	}
-	if !haveSnapshots {
-		return []string{appHome}
+	haveExclusions := false
+	for dirname := range excludeDir {
+		files, err := os.ReadDir(dirname)
+		if err == nil && len(files) > 0 {
+			haveExclusions = true
+			break
+		}
 	}
-	appHomeMembers, err := os.ReadDir(appHome)
+	if !haveExclusions {
+		return []string{appPaths.AppHome}
+	}
+	appHomeFiles, err := os.ReadDir(appPaths.AppHome)
 	if err != nil {
-		logrus.Errorf("failed to read contents of dir %s: %s", appHome, err)
-		return []string{appHome}
+		logrus.Errorf("failed to read contents of dir %s: %s", appPaths.AppHome, err)
+		return []string{}
 	}
-	pathList := make([]string, 0, len(appHomeMembers))
-	for _, entry := range appHomeMembers {
-		if filepath.Base(entry.Name()) != "snapshots" {
-			pathList = append(pathList, filepath.Join(appHome, entry.Name()))
+	pathList := make([]string, 0, len(appHomeFiles))
+	for _, file := range appHomeFiles {
+		fullname := strings.ToLower(filepath.Join(appPaths.AppHome, file.Name()))
+		if !excludeDir[fullname] {
+			pathList = append(pathList, fullname)
 		}
 	}
 	return pathList
@@ -60,7 +76,7 @@ func addAppHomeWithoutSnapshots(appHome string) []string {
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
 // or pull the path settings out of the shell profile files.
-func deleteUnixLikeData(paths p.Paths, pathList []string) error {
+func deleteUnixLikeData(appPaths paths.Paths, pathList []string) error {
 	if err := deleteLimaVM(); err != nil {
 		logrus.Errorf("Error trying to delete the Lima VM: %s\n", err)
 	}
@@ -72,7 +88,7 @@ func deleteUnixLikeData(paths p.Paths, pathList []string) error {
 	if err := clearDockerContext(); err != nil {
 		logrus.Errorf("Error trying to clear the docker context %s", err)
 	}
-	if err := removeDockerCliPlugins(paths.AltAppHome); err != nil {
+	if err := removeDockerCliPlugins(appPaths.AltAppHome); err != nil {
 		logrus.Errorf("Error trying to remove docker plugins %s", err)
 	}
 
@@ -100,11 +116,11 @@ func deleteUnixLikeData(paths p.Paths, pathList []string) error {
 }
 
 func deleteLimaVM() error {
-	paths, err := p.GetPaths()
+	appPaths, err := paths.GetPaths()
 	if err != nil {
 		return err
 	}
-	if err := directories.SetupLimaHome(paths.AppHome); err != nil {
+	if err := directories.SetupLimaHome(appPaths.AppHome); err != nil {
 		return err
 	}
 	execPath, err := os.Executable()

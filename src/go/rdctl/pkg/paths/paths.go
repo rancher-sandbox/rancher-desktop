@@ -38,6 +38,8 @@ type Paths struct {
 	ExtensionRoot string `json:"extensionRoot"`
 	// Directory that holds snapshots
 	Snapshots string `json:"snapshots,omitempty"`
+	// Directory containing user-managed containerd-shims
+	ContainerdShims string `json:"containerdShims,omitempty"`
 }
 
 func getResourcesPath() (string, error) {
