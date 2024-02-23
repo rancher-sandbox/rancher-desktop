@@ -26,13 +26,10 @@ export default Vue.extend({
 
 <template>
   <button
+    v-if="kubernetesEnabled && kubernetesStarted"
     class="btn role-secondary btn-icon-text"
-    :disabled="!kubernetesEnabled || !kubernetesStarted"
     @click="openDashboard"
   >
-    <span
-      class="icon icon-dashboard"
-    />
     {{ t('nav.userMenu.clusterDashboard') }}
   </button>
 </template>
