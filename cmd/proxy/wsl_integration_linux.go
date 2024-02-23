@@ -14,10 +14,15 @@ limitations under the License.
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -48,11 +53,25 @@ func main() {
 		logrus.Fatalf("invalid upstream URL: %s", upstreamAddr)
 	}
 
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
+	srv := http.Server{
+		Addr:              listenAddr,
+		Handler:           proxy,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			logrus.Error("Error starting server:", err)
+		}
+	}()
+
 	logrus.Debugf("proxy server is running on %s", listenAddr)
-	err = http.ListenAndServe(listenAddr, proxy) //nolint:gosec // No security concern for not having timeout here.
-	if err != nil {
-		logrus.Error("Error starting server:", err)
+	<-ctx.Done()
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		logrus.Error("Error shutting down server:", err)
 	}
 }
