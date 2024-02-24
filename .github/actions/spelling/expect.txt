@@ -794,6 +794,7 @@ VModal
 VMs
 vmsock
 vmwarevsphere
+vmx
 vnc
 vnd
 vnode

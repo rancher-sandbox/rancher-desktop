@@ -128,6 +128,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     await this.progressTracker.action('Installing k3s', 50, async() => {
       await this.installK3s(desiredVersion);
       await this.writeServiceScript(config, desiredVersion, allowSudo);
+      await BackendHelper.configureRuntimeClasses(this.vm);
     });
 
     this.activeVersion = desiredVersion;

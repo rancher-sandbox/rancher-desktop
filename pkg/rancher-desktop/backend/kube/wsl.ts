@@ -170,6 +170,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   async install(config: BackendSettings, version: semver.SemVer, allowSudo: boolean) {
     await this.vm.runInstallScript(INSTALL_K3S_SCRIPT,
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
+    await BackendHelper.configureRuntimeClasses(this.vm);
   }
 
   async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: KubeClient): Promise<string> {

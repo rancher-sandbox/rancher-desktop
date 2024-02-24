@@ -23,16 +23,17 @@ func TestGetPaths(t *testing.T) {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
 		}
 		expectedPaths := Paths{
-			AppHome:       filepath.Join(homeDir, "AppData", "Local", appName),
-			AltAppHome:    filepath.Join(homeDir, "AppData", "Local", appName),
-			Config:        filepath.Join(homeDir, "AppData", "Local", appName),
-			Logs:          filepath.Join(homeDir, "AppData", "Local", appName, "logs"),
-			Cache:         filepath.Join(homeDir, "AppData", "Local", appName, "cache"),
-			WslDistro:     filepath.Join(homeDir, "AppData", "Local", appName, "distro"),
-			WslDistroData: filepath.Join(homeDir, "AppData", "Local", appName, "distro-data"),
-			Resources:     fakeResourcesPath,
-			ExtensionRoot: filepath.Join(homeDir, "AppData", "Local", appName, "extensions"),
-			Snapshots:     filepath.Join(homeDir, "AppData", "Local", appName, "snapshots"),
+			AppHome:         filepath.Join(homeDir, "AppData", "Local", appName),
+			AltAppHome:      filepath.Join(homeDir, "AppData", "Local", appName),
+			Config:          filepath.Join(homeDir, "AppData", "Local", appName),
+			Logs:            filepath.Join(homeDir, "AppData", "Local", appName, "logs"),
+			Cache:           filepath.Join(homeDir, "AppData", "Local", appName, "cache"),
+			WslDistro:       filepath.Join(homeDir, "AppData", "Local", appName, "distro"),
+			WslDistroData:   filepath.Join(homeDir, "AppData", "Local", appName, "distro-data"),
+			Resources:       fakeResourcesPath,
+			ExtensionRoot:   filepath.Join(homeDir, "AppData", "Local", appName, "extensions"),
+			Snapshots:       filepath.Join(homeDir, "AppData", "Local", appName, "snapshots"),
+			ContainerdShims: filepath.Join(homeDir, "AppData", "Local", appName, "containerd-shims"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -58,16 +59,17 @@ func TestGetPaths(t *testing.T) {
 		}
 
 		expectedPaths := Paths{
-			AppHome:       filepath.Join(environment["LOCALAPPDATA"], appName),
-			AltAppHome:    filepath.Join(environment["LOCALAPPDATA"], appName),
-			Config:        filepath.Join(environment["LOCALAPPDATA"], appName),
-			Logs:          environment["RD_LOGS_DIR"],
-			Cache:         filepath.Join(environment["LOCALAPPDATA"], appName, "cache"),
-			WslDistro:     filepath.Join(environment["LOCALAPPDATA"], appName, "distro"),
-			WslDistroData: filepath.Join(environment["LOCALAPPDATA"], appName, "distro-data"),
-			Resources:     fakeResourcesPath,
-			ExtensionRoot: filepath.Join(environment["LOCALAPPDATA"], appName, "extensions"),
-			Snapshots:     filepath.Join(environment["LOCALAPPDATA"], appName, "snapshots"),
+			AppHome:         filepath.Join(environment["LOCALAPPDATA"], appName),
+			AltAppHome:      filepath.Join(environment["LOCALAPPDATA"], appName),
+			Config:          filepath.Join(environment["LOCALAPPDATA"], appName),
+			Logs:            environment["RD_LOGS_DIR"],
+			Cache:           filepath.Join(environment["LOCALAPPDATA"], appName, "cache"),
+			WslDistro:       filepath.Join(environment["LOCALAPPDATA"], appName, "distro"),
+			WslDistroData:   filepath.Join(environment["LOCALAPPDATA"], appName, "distro-data"),
+			Resources:       fakeResourcesPath,
+			ExtensionRoot:   filepath.Join(environment["LOCALAPPDATA"], appName, "extensions"),
+			Snapshots:       filepath.Join(environment["LOCALAPPDATA"], appName, "snapshots"),
+			ContainerdShims: filepath.Join(environment["LOCALAPPDATA"], appName, "containerd-shims"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {

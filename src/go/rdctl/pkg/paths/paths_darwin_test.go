@@ -26,6 +26,7 @@ func TestGetPaths(t *testing.T) {
 			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
 			ExtensionRoot:           filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
 			Snapshots:               filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
+			ContainerdShims:         filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -56,6 +57,7 @@ func TestGetPaths(t *testing.T) {
 			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
 			ExtensionRoot:           filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
 			Snapshots:               filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
+			ContainerdShims:         filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {

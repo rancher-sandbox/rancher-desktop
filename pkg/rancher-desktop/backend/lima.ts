@@ -34,7 +34,6 @@ import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
-import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_LIMA_GUESTAGENT_SCRIPT from '@pkg/assets/scripts/logrotate-lima-guestagent';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import NERDCTL from '@pkg/assets/scripts/nerdctl';
@@ -1561,14 +1560,16 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
+      const configureWASM = !!this.cfg?.experimental?.containerEngine?.webAssembly?.enabled;
+
       await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
 
       await this.execCommand({ root: true }, 'mkdir', '-p', '/etc/cni/net.d');
-
       if (this.cfg?.kubernetes.options.flannel) {
         await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
       }
-      await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
+
+      await BackendHelper.configureContainerEngine(this, configureWASM);
     } catch (err) {
       console.log(`Error trying to start/update containerd: ${ err }: `, err);
     } finally {
@@ -1911,7 +1912,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await Promise.all([
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
-          this.progressTracker.action('Configuring containerd', 50, this.configureContainerd()),
+          this.progressTracker.action('Configuring container engine', 50, this.configureContainerd()),
           this.progressTracker.action('Configuring logrotate', 50, this.configureLogrotate()),
         ]);
 

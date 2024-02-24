@@ -92,6 +92,11 @@ describe('paths', () => {
       linux:  '%HOME%/.local/share/rancher-desktop/snapshots/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/snapshots/',
     },
+    containerdShims: {
+      win32:  '%LOCALAPPDATA%/rancher-desktop/containerd-shims/',
+      linux:  '%HOME%/.local/share/rancher-desktop/containerd-shims/',
+      darwin: '%HOME%/Library/Application Support/rancher-desktop/containerd-shims/',
+    },
   };
 
   const table = Object.entries(cases).flatMap(

@@ -28,7 +28,6 @@ import CONFIGURE_IMAGE_ALLOW_LIST from '@pkg/assets/scripts/configure-allowed-im
 import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@pkg/assets/scripts/dnsmasq-generate.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers';
-import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
 import SERVICE_SCRIPT_MOPROXY from '@pkg/assets/scripts/moproxy.initd';
@@ -1350,6 +1349,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
+            const configureWASM = !!this.cfg?.experimental?.containerEngine?.webAssembly?.enabled;
 
             await Promise.all([
               this.progressTracker.action('Installing the docker-credential helper', 10, async() => {
@@ -1409,7 +1409,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 }
               }),
               this.progressTracker.action('container engine components', 50, async() => {
-                await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
+                await BackendHelper.configureContainerEngine(this, configureWASM);
                 await this.writeConf('containerd', { log_owner: 'root' });
                 await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
                 await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
