@@ -484,6 +484,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   /**
+   * Runs wsl-proxy process in the default namespace. This is to proxy
+   * other distro's traffic from default namespace into the network namespace.
+   */
+
+  protected async runWslProxy() {
+    const debug = this.debug ? 'true' : 'false';
+
+    try {
+      await this.execCommand('/usr/local/bin/wsl-proxy', '-debug', debug);
+    } catch (err: any) {
+      console.log('Error trying to start wsl-proxy in default namespace:', err);
+    }
+  }
+
+  /**
    * Write out /etc/hosts in the main distribution, copying the bulk of the
    * contents from the data distribution.
    */
@@ -1310,13 +1325,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.writeResolvConf();
         })()];
 
-        if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
-          await this.vtun.start();
-        }
-
         const rdNetworking = !!config?.experimental.virtualMachine.networkingTunnel;
 
         this.privilegedServiceEnabled = rdNetworking ? false : await this.invokePrivilegedService('start');
+
+        if (!rdNetworking) {
+          await this.vtun.start();
+        } else {
+          await this.runWslProxy();
+        }
 
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
