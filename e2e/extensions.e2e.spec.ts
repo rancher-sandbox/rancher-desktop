@@ -294,7 +294,7 @@ test.describe.serial('Extensions', () => {
             Created:     expect.any(Number),
             Size:        expect.any(Number),
             SharedSize:  expect.any(Number),
-            VirtualSize: expect.any(Number),
+            VirtualSize: expect.any(String),
             Labels:      expect.any(Object),
             Containers:  expect.any(Number),
           }),
