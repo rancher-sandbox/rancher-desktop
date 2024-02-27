@@ -4,22 +4,29 @@ import { queryUpgradeResponder, UpgradeResponderRequestPayload } from '../Longho
 
 import { spawnFile } from '@pkg/utils/childProcess';
 import fetch from '@pkg/utils/fetch';
-import getWSLVersion from '@pkg/utils/wslVersion';
+import getWSLVersion, { WSLVersionInfo } from '@pkg/utils/wslVersion';
 
 const itWindows = process.platform === 'win32' ? it : it.skip;
 const itUnix = process.platform !== 'win32' ? it : it.skip;
 const describeWindows = process.platform === 'win32' ? describe : describe.skip;
-const standardMockedVersion = {
-  installed:  true,
-  inbox:      false,
-  has_kernel: true,
-  version:    {
+const standardMockedVersion: WSLVersionInfo = {
+  installed:       true,
+  inbox:           false,
+  has_kernel:      true,
+  outdated_kernel: false,
+  version:         {
     major:    1,
     minor:    2,
     revision: 5,
     build:    0,
   },
-} as const;
+  kernel_version: {
+    major:    5,
+    minor:    0,
+    revision: 13,
+    build:    0,
+  },
+};
 
 jest.mock('@pkg/utils/fetch', () => {
   return {
