@@ -3,6 +3,7 @@ import path from 'path';
 import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
+import yaml from 'yaml';
 
 import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-containerd-shims';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
@@ -232,23 +233,20 @@ export default class BackendHelper {
    * Return a dictionary of all containerd shims installed in /usr/local/bin.
    * Keys are the shim names and values are the filenames.
    */
-  static async containerdShims(vmx : VMExecutor): Promise<Record<string, string>> {
-    const shims : Record<string, string> = {};
+  static async containerdShims(vmx: VMExecutor): Promise<Record<string, string>> {
+    const shims: Record<string, string> = {};
 
     try {
-      const files = await vmx.execCommand({ capture: true }, '/bin/ls', '-1', '/usr/local/bin');
+      const files = await vmx.execCommand({ capture: true }, '/bin/ls', '-1', '-p', '/usr/local/bin');
 
       for (const file of files.split(/\n/)) {
-        const match = file.match(/^containerd-shim-([-a-z]+)-v[1-9]$/);
+        const match = file.match(/^containerd-shim-([-a-z]+)-v\d+$/);
 
         if (match) {
           shims[match[1]] = file;
         }
       }
     } catch (e: any) {
-      if (e.code === 'ENOENT') {
-        return {};
-      }
       console.log('containerdShims: Got exception:', e);
       throw e;
     }
@@ -259,39 +257,40 @@ export default class BackendHelper {
   /**
    * Write a k3s manifest to define a runtime class for each installed containerd shim.
    */
-  static async configureRuntimeClasses(vmx : VMExecutor) {
-    let manifest = '';
+  static async configureRuntimeClasses(vmx: VMExecutor) {
+    const runtimes = [];
 
     for (const shim in await BackendHelper.containerdShims(vmx)) {
-      manifest += `---
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: ${ shim }
-handler: ${ shim }
-`;
+      runtimes.push({
+        apiVersion: 'node.k8s.io/v1',
+        kind:       'RuntimeClass',
+        metaData:   {
+          name:    shim,
+          handler: shim,
+        },
+      });
     }
 
-    if (manifest === '') {
+    if (runtimes.length === 0) {
       // We delete the manifest file, but we don't actually delete old runtime classes in k3s that no longer exist.
       // They won't work though, as the symlinks in /usr/local/bin have been removed.
       await vmx.execCommand({ root: true }, 'rm', '-f', MANIFESTS_RUNTIMES_YAML);
     } else {
+      const manifest = runtimes.map(r => yaml.stringify(r)).join('---\n');
+
       await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(MANIFESTS_RUNTIMES_YAML));
-      // Newer k3s versions define all possible known runtimes; they don't really hurt,
-      // but may be confusing if the corresponding shim is not installed.
-      // Don't use path.join() here; it will use backslashes on Windows.
-      await vmx.execCommand({ root: true }, 'touch', `${ path.dirname(MANIFESTS_RUNTIMES_YAML) }/runtimes.yaml.skip`);
       await vmx.writeFile(MANIFESTS_RUNTIMES_YAML, manifest, 0o644);
+      // Don't let k3s define runtime classes, only use the ones defined by Rancher Desktop.
+      await vmx.execCommand({ root: true }, 'touch', `${ path.dirname(MANIFESTS_RUNTIMES_YAML) }/runtimes.yaml.skip`);
     }
   }
 
   /**
    * Install containerd-wasm shims into /usr/local/containerd-shims (and symlinks into /usr/local/bin).
    */
-  static async installContainerdShims(vmx : VMExecutor, configureWASM : boolean) {
+  static async installContainerdShims(vmx: VMExecutor, configureWASM: boolean) {
     // Calling install-containerd-shims without source dirs will remove the symlinks from /usr/local/bin.
-    const sourceDirs : string[] = [];
+    const sourceDirs: string[] = [];
 
     if (configureWASM) {
       sourceDirs.push(
@@ -309,7 +308,7 @@ handler: ${ shim }
    * Write the containerd config file. If WASM is enabled, include a runtime definition
    * for each installed containerd shim.
    */
-  static async writeContainerdConfig(vmx : VMExecutor, configureWASM : boolean) : Promise<void> {
+  static async writeContainerdConfig(vmx: VMExecutor, configureWASM: boolean): Promise<void> {
     let config = CONTAINERD_CONFIG;
 
     if (configureWASM) {
@@ -328,7 +327,7 @@ handler: ${ shim }
   /**
    * Configure the Moby containerd-snapshotter feature if WASM support is requested.
    */
-  static async writeMobyConfig(vmx : VMExecutor, configureWASM : boolean) {
+  static async writeMobyConfig(vmx: VMExecutor, configureWASM: boolean) {
     let config: Record<string, any>;
 
     try {
@@ -342,7 +341,7 @@ handler: ${ shim }
     await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
   }
 
-  static async configureContainerEngine(vmx : VMExecutor, configureWASM : boolean) {
+  static async configureContainerEngine(vmx: VMExecutor, configureWASM: boolean) {
     await BackendHelper.installContainerdShims(vmx, configureWASM);
     await BackendHelper.writeContainerdConfig(vmx, configureWASM);
     await BackendHelper.writeMobyConfig(vmx, configureWASM);

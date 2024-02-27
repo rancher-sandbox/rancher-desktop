@@ -1556,7 +1556,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return JSON.parse(stdout).SPNetworkDataType;
   }
 
-  protected async configureContainerd(): Promise<void> {
+  protected async configureContainerEngine(): Promise<void> {
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
@@ -1912,7 +1912,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await Promise.all([
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
-          this.progressTracker.action('Configuring container engine', 50, this.configureContainerd()),
+          this.progressTracker.action('Configuring container engine', 50, this.configureContainerEngine()),
           this.progressTracker.action('Configuring logrotate', 50, this.configureLogrotate()),
         ]);
 
