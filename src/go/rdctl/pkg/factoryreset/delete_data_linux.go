@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
+func DeleteData(appPaths paths.Paths, removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
@@ -20,9 +20,9 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	}
 
 	pathList := []string{
-		paths.AltAppHome,
-		paths.Config,
-		paths.Logs,
+		appPaths.AltAppHome,
+		appPaths.Config,
+		appPaths.Logs,
 		filepath.Join(homeDir, ".local", "state", "rancher-desktop"),
 	}
 
@@ -36,11 +36,10 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	}
 
 	if removeKubernetesCache {
-		pathList = append(pathList, paths.Cache)
+		pathList = append(pathList, appPaths.Cache)
 	} else {
-		pathList = append(pathList, filepath.Join(paths.Cache, "updater-longhorn.json"))
+		pathList = append(pathList, filepath.Join(appPaths.Cache, "updater-longhorn.json"))
 	}
-	appHomeDirs := addAppHomeWithoutSnapshots(paths.AppHome)
-	pathList = append(pathList, appHomeDirs...)
-	return deleteUnixLikeData(paths, pathList)
+	pathList = append(pathList, appHomeDirectories(appPaths)...)
+	return deleteUnixLikeData(appPaths, pathList)
 }

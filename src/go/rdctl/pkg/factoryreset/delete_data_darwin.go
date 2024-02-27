@@ -9,19 +9,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
+func DeleteData(appPaths paths.Paths, removeKubernetesCache bool) error {
 	if err := autostart.EnsureAutostart(false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
 
 	pathList := []string{
-		paths.AltAppHome,
-		paths.Config,
-		paths.Logs,
-		paths.ExtensionRoot,
+		appPaths.AltAppHome,
+		appPaths.Config,
+		appPaths.Logs,
+		appPaths.ExtensionRoot,
 	}
-	appHomeDirs := addAppHomeWithoutSnapshots(paths.AppHome)
-	pathList = append(pathList, appHomeDirs...)
+	pathList = append(pathList, appHomeDirectories(appPaths)...)
 
 	// Get path that electron-updater stores cache data in. Technically this
 	// is the wrong directory to use for cache data, but it is set by electron-updater.
@@ -34,9 +33,9 @@ func DeleteData(paths paths.Paths, removeKubernetesCache bool) error {
 	}
 
 	if removeKubernetesCache {
-		pathList = append(pathList, paths.Cache)
+		pathList = append(pathList, appPaths.Cache)
 	} else {
-		pathList = append(pathList, filepath.Join(paths.Cache, "updater-longhorn.json"))
+		pathList = append(pathList, filepath.Join(appPaths.Cache, "updater-longhorn.json"))
 	}
-	return deleteUnixLikeData(paths, pathList)
+	return deleteUnixLikeData(appPaths, pathList)
 }

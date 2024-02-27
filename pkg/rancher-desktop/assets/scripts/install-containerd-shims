@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -o errexit -o nounset -o pipefail
+
+dest=/usr/local/containerd-shims
+
+# Copy all shims into the data volume so they become part of snapshots.
+# TODO Maybe use rsync to avoid copying files repeatedly?
+mkdir -p "$dest"
+for dir in "$@"; do
+  if [[ "$(uname -a)" =~ microsoft ]]; then
+    dir=$(wslpath -a -u "$dir")
+  fi
+  cp "${dir}/containerd-shim-"* "$dest" || :
+done
+
+# Make sure all shims are executable.
+chmod 755 "${dest}/"* || :
+
+# Create symlinks to each shim into /usr/local/bin.
+# In the future this will enable us putting only shims from an allow list on the PATH.
+find /usr/local/bin -type l -name 'containerd-shim-*' -delete
+find "$dest" -type f -exec ln -sf {} /usr/local/bin \;

@@ -37,6 +37,8 @@ export interface Paths {
   wslDistroData: string;
   /** Directory that holds snapshots. */
   snapshots: string;
+  /** Directory that holds user-managed containerd-shims. */
+  containerdShims: string;
 }
 
 export class UnixPaths implements Paths {
@@ -52,6 +54,7 @@ export class UnixPaths implements Paths {
   deploymentProfileUser = '';
   extensionRoot = '';
   snapshots = '';
+  containerdShims = '';
 
   constructor(pathsData: Record<string, unknown>) {
     Object.assign(this, pathsData);
@@ -77,6 +80,7 @@ export class WindowsPaths implements Paths {
   wslDistro = '';
   wslDistroData = '';
   snapshots = '';
+  containerdShims = '';
 
   constructor(pathsData: Record<string, unknown>) {
     Object.assign(this, pathsData);
