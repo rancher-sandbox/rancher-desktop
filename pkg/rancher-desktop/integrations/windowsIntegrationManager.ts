@@ -408,8 +408,6 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string, state: boolean) {
-    const rdNetworking = this.settings.experimental?.virtualMachine?.networkingTunnel === true;
-
     try {
       console.debug(`Syncing ${ distro } kubeconfig`);
       await this.execCommand(
@@ -424,7 +422,6 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         await this.getLinuxToolPath(distro, executable('wsl-helper-linux')),
         'kubeconfig',
         `--enable=${ state && this.settings.kubernetes?.enabled }`,
-        `--rd-networking=${ rdNetworking }`,
       );
     } catch (error: any) {
       if (typeof error?.stdout === 'string') {
