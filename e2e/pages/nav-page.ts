@@ -36,7 +36,8 @@ export class NavPage {
     this.page = page;
     this.mainTitle = page.locator('[data-test="mainTitle"]');
     this.progressBar = page.locator('.progress');
-    this.preferencesButton = page.locator('[data-test="preferencesButton"]');
+    // this.preferencesButton = page.locator('[data-test="preferencesButton"]');
+    this.preferencesButton = page.getByTestId('preferences-button');
   }
 
   protected async getBackendState(): Promise<string> {

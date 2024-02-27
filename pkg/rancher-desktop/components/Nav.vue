@@ -47,14 +47,14 @@
         </template>
       </div>
     </template>
-    <div class="nav-button-container" data-test="dashboardButton">
+    <div class="nav-button-container">
       <dashboard-button
+        data-testid="dashboard-button"
         class="nav-button"
         @open-dashboard="openDashboard"
       />
-    </div>
-    <div class="nav-button-container" data-test="preferencesButton">
       <preferences-button
+        data-testid="preferences-button"
         class="nav-button"
         @open-preferences="openPreferences"
       />
@@ -245,6 +245,7 @@ a {
 
 .nav-button-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
 
   .nav-button {
