@@ -114,6 +114,7 @@ nav:
     setLoginPage: Set as login page
     restoreCards: Restore hidden cards
   userMenu:
+    clusterDashboard: Cluster Dashboard
     preferences: Preferences
     accountAndKeys: Account & API Keys
     logOut: Log Out
