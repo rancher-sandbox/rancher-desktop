@@ -734,6 +734,7 @@ tencenttke
 termch
 testbuild
 testfilethatdoesntexist
+testid
 testreleasedate
 testurl
 tgz
