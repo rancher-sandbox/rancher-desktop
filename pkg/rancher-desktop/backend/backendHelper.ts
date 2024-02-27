@@ -264,7 +264,7 @@ export default class BackendHelper {
       runtimes.push({
         apiVersion: 'node.k8s.io/v1',
         kind:       'RuntimeClass',
-        metaData:   { name: shim },
+        metadata:   { name: shim },
         handler:    shim,
       });
     }
