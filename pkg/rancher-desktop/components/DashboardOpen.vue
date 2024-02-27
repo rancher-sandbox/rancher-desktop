@@ -26,7 +26,8 @@ export default Vue.extend({
 
 <template>
   <button
-    v-if="kubernetesEnabled && kubernetesStarted"
+    v-if="kubernetesEnabled"
+    :disabled="!kubernetesStarted"
     class="btn role-secondary btn-icon-text"
     @click="openDashboard"
   >
