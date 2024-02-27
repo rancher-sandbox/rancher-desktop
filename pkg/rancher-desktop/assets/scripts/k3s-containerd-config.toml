@@ -1,25 +1,35 @@
+version = 2
+
 root = "/var/lib/rancher/k3s/agent/containerd"
 state = "/run/k3s/containerd"
 
 [grpc]
   address = "/run/k3s/containerd/containerd.sock"
 
-[plugins.opt]
+[plugins."io.containerd.internal.v1.opt"]
   path = "/var/lib/rancher/k3s/agent/containerd"
 
-[plugins.cri]
+[plugins."io.containerd.grpc.v1.cri"]
   stream_server_address = "127.0.0.1"
   stream_server_port = "10010"
   enable_selinux = false
+  enable_unprivileged_ports = true
+  enable_unprivileged_icmp = true
   sandbox_image = "rancher/mirrored-pause:3.6"
 
-[plugins.cri.containerd]
+[plugins."io.containerd.grpc.v1.cri".containerd]
   snapshotter = "overlayfs"
   disable_snapshot_annotations = true
 
-[plugins.cri.cni]
+[plugins."io.containerd.grpc.v1.cri".cni]
   bin_dir = "/usr/libexec/cni"
   conf_dir = "/etc/cni/net.d"
 
-[plugins.cri.containerd.runtimes.runc]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
   runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = false
+
+[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/var/lib/rancher/k3s/agent/etc/containerd/certs.d"
