@@ -175,7 +175,7 @@ jobs:
     - name: Set log directory
       shell: bash
       run: |
-        echo 'LOGS_DIR=$(pwd)/logs' >> "$GITHUB_ENV"
+        echo "LOGS_DIR=$(pwd)/logs" >> "$GITHUB_ENV"
         mkdir logs
     - name: "Windows: Override log directory"
       if: runner.os == 'Windows'
