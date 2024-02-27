@@ -168,6 +168,7 @@ decamelize
 dedot
 deepmap
 deepmerge
+deislabs
 destinationrule
 DETECTEXCEPTIONS
 developercertificate
@@ -828,6 +829,7 @@ WSLIs
 wslutils
 WWID
 wwn
+wws
 Xcomposite
 Xdamage
 xdev
