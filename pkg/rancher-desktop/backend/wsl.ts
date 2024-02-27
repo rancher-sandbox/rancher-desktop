@@ -1330,8 +1330,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         if (!rdNetworking) {
           await this.vtun.start();
-        } else {
-          await this.runWslProxy();
         }
 
         if (config.kubernetes.enabled) {
@@ -1477,6 +1475,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
             await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
             await this.runInit();
+            if (rdNetworking) {
+              await this.runWslProxy();
+            }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
