@@ -61,6 +61,12 @@ Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
 
+// Do an early check for debugging enabled via the environment variable so that
+// we can turn on extra logging to troubleshoot startup issues.
+if (settingsImpl.runInDebugMode(false)) {
+  setLogLevel('debug');
+}
+
 if (!Electron.app.requestSingleInstanceLock()) {
   process.exit(201);
 }
