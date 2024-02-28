@@ -269,6 +269,10 @@ export default class BackendHelper {
       });
     }
 
+    await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(MANIFESTS_RUNTIMES_YAML));
+    // Don't let k3s define runtime classes, only use the ones defined by Rancher Desktop.
+    await vmx.execCommand({ root: true }, 'touch', `${ path.dirname(MANIFESTS_RUNTIMES_YAML) }/runtimes.yaml.skip`);
+
     if (runtimes.length === 0) {
       // We delete the manifest file, but we don't actually delete old runtime classes in k3s that no longer exist.
       // They won't work though, as the symlinks in /usr/local/bin have been removed.
@@ -276,10 +280,7 @@ export default class BackendHelper {
     } else {
       const manifest = runtimes.map(r => yaml.stringify(r)).join('---\n');
 
-      await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(MANIFESTS_RUNTIMES_YAML));
       await vmx.writeFile(MANIFESTS_RUNTIMES_YAML, manifest, 0o644);
-      // Don't let k3s define runtime classes, only use the ones defined by Rancher Desktop.
-      await vmx.execCommand({ root: true }, 'touch', `${ path.dirname(MANIFESTS_RUNTIMES_YAML) }/runtimes.yaml.skip`);
     }
   }
 
