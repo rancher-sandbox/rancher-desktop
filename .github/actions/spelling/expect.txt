@@ -782,6 +782,7 @@ vcs
 vde
 ventura
 vertificate
+veth
 vhdx
 vinzenz
 virt
