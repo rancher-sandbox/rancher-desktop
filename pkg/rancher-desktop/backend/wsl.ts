@@ -1476,7 +1476,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
             await this.runInit();
             if (rdNetworking) {
-              this.runWslProxy();
+              // Do not await on this, as we don't want to wait until the proxy exits.
+              this.runWslProxy().catch(console.error);
             }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
