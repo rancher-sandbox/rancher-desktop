@@ -491,7 +491,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const debug = this.debug ? 'true' : 'false';
 
     try {
-      await this.execCommand('/usr/local/bin/wsl-proxy', '-debug', debug);
+      await this.execCommand('/usr/local/bin/wsl-proxy', '-upstream-addr', 'https://192.168.1.2:6443', '-debug', debug);
     } catch (err: any) {
       console.log('Error trying to start wsl-proxy in default namespace:', err);
     }
