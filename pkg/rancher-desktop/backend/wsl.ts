@@ -1501,6 +1501,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               // Make sure the apiserver can be accessed from WSL through the internal gateway
               k3sConf.ADDITIONAL_ARGS += ' --tls-san gateway.rancher-desktop.internal';
 
+              if (rdNetworking) {
+                // Add the `veth-rd1` IP address from inside the namespace
+                k3sConf.ADDITIONAL_ARGS += ' --tls-san 192.168.1.2';
+              }
+
               if (!config.kubernetes.options.flannel) {
                 console.log(`Disabling flannel and network policy`);
                 k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
