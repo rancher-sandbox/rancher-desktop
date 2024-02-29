@@ -8,7 +8,7 @@ local_setup() {
 
 assert_traefik_crd_established() {
     local jsonpath="{.status.conditions[?(@.type=='Established')].status}"
-    run kubectl get crd traefikservices.traefik.containo.us -o jsonpath="$jsonpath"
+    run kubectl get crd traefikservices.traefik.containo.us --output jsonpath="$jsonpath"
     assert_success || return
     assert_output 'True'
 }
@@ -25,7 +25,7 @@ assert_traefik_crd_established() {
 }
 
 @test 'verify no runtimeclasses have been defined' {
-    run kubectl get runtimeclasses -o json
+    run kubectl get runtimeclasses --output json
     assert_success
 
     run jq_output '.items | length'
@@ -43,21 +43,21 @@ assert_traefik_crd_established() {
 }
 
 @test 'verify spin runtime class has been defined (and no others)' {
-    run kubectl get runtimeclasses -o json
+    run kubectl get runtimeclasses --output json
     assert_success
 
     rtc=$output
-    run jq -r '.items | length' <<<"$rtc"
+    run jq --raw-output '.items | length' <<<"$rtc"
     assert_success
     assert_output 1
 
-    run jq -r '.items[0].metadata.name' <<<"$rtc"
+    run jq --raw-output '.items[0].metadata.name' <<<"$rtc"
     assert_success
     assert_output 'spin'
 }
 
 @test 'deploy sample app' {
-    kubectl apply -f - <<EOF
+    kubectl apply --filename - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -83,7 +83,8 @@ EOF
 get_host() {
     if is_windows; then
         local LB_IP
-        LB_IP=$(kubectl get svc traefik --namespace kube-system | awk 'NR==2{print $4}')
+        local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
+        LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
         echo "$LB_IP.sslip.io"
     else
         echo "localhost"
@@ -91,7 +92,7 @@ get_host() {
 }
 
 @test 'deploy ingress' {
-    kubectl apply -f - <<EOF
+    kubectl apply --filename - <<EOF
 apiVersion: v1
 kind: Service
 metadata:
@@ -125,7 +126,7 @@ EOF
 }
 
 @test 'connect to the service' {
-    # TODO Why does it take about 100s before the service is ready?
+    # This can take 100s with old versions of traefik, and 15s with newer ones.
     run try curl --silent --fail "http://$(get_host)/hello"
     assert_success
     assert_output "Hello world from Spin!"

@@ -54,11 +54,12 @@ hello() {
     local internal_port=$5
 
     # The '/' at the very end of the command is required by the container entrypoint.
-    ctrctl run -d \
+    ctrctl run \
+        --detach \
         --name "${shim}-demo-${port}" \
         --runtime "io.containerd.${shim}.${version}" \
         --platform wasi/wasm \
-        -p "${port}:${internal_port}" \
+        --publish "${port}:${internal_port}" \
         "ghcr.io/deislabs/containerd-wasm-shims/examples/${shim}-${lang}-hello:v${MANUAL_VERSION}" /
 }
 
@@ -113,8 +114,8 @@ download_shim() {
     local filename="containerd-wasm-shims-${version}-${shim}-linux-${ARCH}.tar.gz"
 
     mkdir -p "$PATH_CONTAINERD_SHIMS"
-    curl --silent --location --remote-name --output-dir "$PATH_CONTAINERD_SHIMS" "${base_url}/${filename}"
-    tar xfz "${PATH_CONTAINERD_SHIMS}/${filename}" -C "$PATH_CONTAINERD_SHIMS"
+    curl --silent --location --output "${PATH_CONTAINERD_SHIMS}/${filename}" "${base_url}/${filename}"
+    tar xfz "${PATH_CONTAINERD_SHIMS}/${filename}" --directory "$PATH_CONTAINERD_SHIMS"
     rm "${PATH_CONTAINERD_SHIMS}/${filename}"
 }
 
