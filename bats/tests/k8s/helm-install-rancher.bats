@@ -16,7 +16,8 @@ local_setup() {
 get_host() {
     if is_windows; then
         local LB_IP
-        LB_IP=$(kubectl get svc traefik --namespace kube-system | awk 'NR==2{print $4}')
+        local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
+        LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
         echo "$LB_IP.sslip.io"
     else
         echo "localhost"

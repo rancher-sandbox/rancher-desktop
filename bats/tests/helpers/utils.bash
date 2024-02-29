@@ -80,7 +80,7 @@ refute_not_exists() {
 
 # Convert raw string into properly quoted JSON string
 json_string() {
-    echo -n "$1" | jq -Rr @json
+    echo -n "$1" | jq --raw-input --raw-output @json
 }
 
 # Join list elements by separator after converting them via the mapping function
@@ -107,7 +107,7 @@ join_map() {
 
 jq_output() {
     local json=$output
-    run jq -r "$@" <<<"${json}"
+    run jq --raw-output "$@" <<<"${json}"
     if [[ -n $output ]]; then
         echo "$output"
         if [[ $output == null ]]; then
@@ -116,7 +116,7 @@ jq_output() {
     elif ((status == 0)); then
         # The command succeeded, so we should be able to run it again without error
         # If the jq command emitted a newline, then we want to emit a newline too.
-        if [ "$(jq -r "$@" <<<"${json}" | wc -c)" -gt 0 ]; then
+        if [ "$(jq --raw-output "$@" <<<"${json}" | wc -c)" -gt 0 ]; then
             echo ""
         fi
     fi

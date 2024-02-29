@@ -6,6 +6,7 @@ local_setup_file() {
 
 @test 'factory reset' {
     delete_all_snapshots
+    rm -rf "$PATH_CONTAINERD_SHIMS"
     factory_reset
 }
 

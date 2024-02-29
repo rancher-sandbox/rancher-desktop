@@ -112,7 +112,7 @@ skip_for_insecure_registry() {
 verify_default_credStore() {
     local CREDHELPER_NAME
     CREDHELPER_NAME="$(basename "$CRED_HELPER" .exe | sed s/^docker-credential-//)"
-    run jq -r .credsStore "$DOCKER_CONFIG_FILE"
+    run jq --raw-output .credsStore "$DOCKER_CONFIG_FILE"
     assert_success
     assert_output "$CREDHELPER_NAME"
 }

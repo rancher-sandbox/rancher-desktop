@@ -134,11 +134,12 @@ connectaddress
 connectport
 constrainttemplate
 CONTAINERENGINE
+containo
 copypac
 coredns
 corejs
 coreutils
-crds
+crd
 credfwd
 credhelper
 cri
@@ -168,6 +169,7 @@ decamelize
 dedot
 deepmap
 deepmerge
+deislabs
 destinationrule
 DETECTEXCEPTIONS
 developercertificate
@@ -214,6 +216,7 @@ elog
 endgroup
 endscript
 engineimage
+entrypoints
 epinio
 EPONY
 ERRFILE
@@ -656,6 +659,7 @@ runbook
 runc
 rundir
 RUnlock
+runtimeclasses
 runtimes
 rvf
 scaleio
@@ -754,6 +758,7 @@ topmenu
 TQF
 Tracef
 traefik
+traefikservices
 transitioning
 trivy
 TVar
@@ -828,6 +833,7 @@ WSLIs
 wslutils
 WWID
 wwn
+wws
 Xcomposite
 Xdamage
 xdev
