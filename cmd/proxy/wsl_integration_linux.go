@@ -15,11 +15,14 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"flag"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -28,20 +31,35 @@ import (
 )
 
 var (
-	debug        bool
-	upstreamAddr string
-	listenAddr   string
+	debug            bool
+	upstreamAddr     string
+	listenAddr       string
+	keyFile          string
+	certFile         string
+	rootCA           string
+	upstreamKeyFile  string
+	upstreamCertFile string
 )
 
 const (
-	k8sAPI            = "https://192.168.1.2:6443"
-	defaultListenAddr = "127.0.0.1:6443"
+	k8sAPI               = "https://192.168.1.2:6443"
+	defaultListenAddr    = "127.0.0.1:6443"
+	kubeAPIServerKeyFile = "/var/lib/rancher/k3s/server/tls/serving-kube-apiserver.key"
+	kubeAPIServerCrtFile = "/var/lib/rancher/k3s/server/tls/serving-kube-apiserver.crt"
+	rootCACrtFile        = "/var/lib/rancher/k3s/server/tls/server-ca.crt"
+	clientAdminKeyFile   = "/var/lib/rancher/k3s/server/tls/client-admin.key"
+	clientAdminCrtFile   = "/var/lib/rancher/k3s/server/tls/client-admin.crt"
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
 	flag.StringVar(&upstreamAddr, "upstream-addr", k8sAPI, "The upstream server's address.")
 	flag.StringVar(&listenAddr, "listen-addr", defaultListenAddr, "The server's address in an IP:PORT format.")
+	flag.StringVar(&keyFile, "key-file", kubeAPIServerKeyFile, "TLS private key file for downstream connection")
+	flag.StringVar(&certFile, "cert-file", kubeAPIServerCrtFile, "TLS certificate file for downstream connection")
+	flag.StringVar(&rootCA, "root-ca-file", rootCACrtFile, "root ca file for upstream connection")
+	flag.StringVar(&upstreamKeyFile, "upstream-key-file", clientAdminKeyFile, "TLS private key file for upstream connection")
+	flag.StringVar(&upstreamCertFile, "upstream-cert-file", clientAdminCrtFile, "TLS certificate file for upstream connection")
 	flag.Parse()
 
 	if debug {
@@ -56,14 +74,50 @@ func main() {
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
+	certPool, err := x509.SystemCertPool()
+	if err != nil {
+		logrus.Fatalf("failed loading System Cert Pool: %v", err)
+	}
+
+	crtByte, err := os.ReadFile(rootCA)
+	if err != nil {
+		logrus.Fatalf("failed reading upstream CA Cert: %v", err)
+	}
+
+	ok := certPool.AppendCertsFromPEM(crtByte)
+	if !ok {
+		logrus.Fatal("failed to append Root CA PEM")
+	}
+
+	upstreamKeyPair, err := tls.LoadX509KeyPair(upstreamCertFile, upstreamKeyFile)
+	if err != nil {
+		logrus.Fatalf("failed to load upstream certificate/key: %v", err)
+	}
+	proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{ // #nosec G402 the min TLS version is acceptable
+			Certificates: []tls.Certificate{upstreamKeyPair},
+			RootCAs:      certPool,
+		},
+	}
+
 	srv := http.Server{
 		Addr:              listenAddr,
 		Handler:           proxy,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		logrus.Fatalf("failed to load downstream certificate/key: %v", err)
+	}
+
+	srv.TLSConfig = &tls.Config{ // #nosec G402 the min TLS version is acceptable
+		PreferServerCipherSuites: true,
+		Certificates:             []tls.Certificate{cert},
+	}
+
 	go func() {
-		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.ListenAndServeTLS("", ""); !errors.Is(err, http.ErrServerClosed) {
 			logrus.Error("Error starting server:", err)
 		}
 	}()
