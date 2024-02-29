@@ -486,12 +486,20 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * Runs wsl-proxy process in the default namespace. This is to proxy
    * other distro's traffic from default namespace into the network namespace.
    */
-
   protected async runWslProxy() {
     const debug = this.debug ? 'true' : 'false';
+    const k3sCrtPath = '/var/lib/rancher/k3s/server/tls/';
 
     try {
-      await this.execCommand('/usr/local/bin/wsl-proxy', '-upstream-addr', 'https://192.168.1.2:6443', '-debug', debug);
+      await this.execCommand('/usr/local/bin/wsl-proxy',
+        '-upstream-addr', 'https://192.168.1.2:6443',
+        '-key-file', `${ k3sCrtPath }serving-kube-apiserver.key`,
+        '-cert-file', `${ k3sCrtPath }serving-kube-apiserver.crt`,
+        '-root-ca-file', `${ k3sCrtPath }server-ca.crt`,
+        '-upstream-key-file', `${ k3sCrtPath }client-admin.key`,
+        '-upstream-cert-file', `${ k3sCrtPath }client-admin.crt`,
+        '-debug', debug,
+      );
     } catch (err: any) {
       console.log('Error trying to start wsl-proxy in default namespace:', err);
     }
