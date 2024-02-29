@@ -134,11 +134,12 @@ connectaddress
 connectport
 constrainttemplate
 CONTAINERENGINE
+containo
 copypac
 coredns
 corejs
 coreutils
-crds
+crd
 credfwd
 credhelper
 cri
@@ -215,6 +216,7 @@ elog
 endgroup
 endscript
 engineimage
+entrypoints
 epinio
 EPONY
 ERRFILE
@@ -657,6 +659,7 @@ runbook
 runc
 rundir
 RUnlock
+runtimeclasses
 runtimes
 rvf
 scaleio
@@ -755,6 +758,7 @@ topmenu
 TQF
 Tracef
 traefik
+traefikservices
 transitioning
 trivy
 TVar
