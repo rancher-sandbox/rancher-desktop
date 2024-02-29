@@ -34,7 +34,7 @@ var (
 )
 
 const (
-	k8sAPI            = "http://192.168.1.2:6443"
+	k8sAPI            = "https://192.168.1.2:6443"
 	defaultListenAddr = "127.0.0.1:6443"
 )
 
