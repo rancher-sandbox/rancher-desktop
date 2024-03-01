@@ -31,14 +31,14 @@ import (
 )
 
 var (
-	debug            bool
-	upstreamAddr     string
-	listenAddr       string
-	keyFile          string
-	certFile         string
-	rootCA           string
-	upstreamKeyFile  string
-	upstreamCertFile string
+	debug                  bool
+	upstreamAddr           string
+	listenAddr             string
+	keyFile                string
+	certFile               string
+	rootCA                 string
+	upstreamClientKeyFile  string
+	upstreamClientCertFile string
 )
 
 const (
@@ -52,14 +52,19 @@ const (
 )
 
 func main() {
-	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
-	flag.StringVar(&upstreamAddr, "upstream-addr", k8sAPI, "The upstream server's address.")
+	flag.BoolVar(&debug, "debug", false, "enable additional debugging.")
+	flag.StringVar(&upstreamAddr, "upstream-addr", k8sAPI, "The upstream server's address (k3s API sever).")
 	flag.StringVar(&listenAddr, "listen-addr", defaultListenAddr, "The server's address in an IP:PORT format.")
-	flag.StringVar(&keyFile, "key-file", kubeAPIServerKeyFile, "TLS private key file for downstream connection")
-	flag.StringVar(&certFile, "cert-file", kubeAPIServerCrtFile, "TLS certificate file for downstream connection")
-	flag.StringVar(&rootCA, "root-ca-file", rootCACrtFile, "root ca file for upstream connection")
-	flag.StringVar(&upstreamKeyFile, "upstream-key-file", clientAdminKeyFile, "TLS private key file for upstream connection")
-	flag.StringVar(&upstreamCertFile, "upstream-cert-file", clientAdminCrtFile, "TLS certificate file for upstream connection")
+	flag.StringVar(&keyFile, "key-file", kubeAPIServerKeyFile,
+		"TLS private key file for downstream (incoming) connection into proxy from kubectl.")
+	flag.StringVar(&certFile, "cert-file", kubeAPIServerCrtFile,
+		"TLS certificate file for downstream (incoming) connection into proxy from kubectl.")
+	flag.StringVar(&rootCA, "root-ca-file", rootCACrtFile,
+		"root ca file for upstream connection, this is the K3s API server's root CA.")
+	flag.StringVar(&upstreamClientKeyFile, "upstream-key-file", clientAdminKeyFile,
+		"Clinet TLS private key file for upstream (outgoing) connection to K3s API server.")
+	flag.StringVar(&upstreamClientCertFile, "upstream-cert-file", clientAdminCrtFile,
+		"Client TLS certificate file for upstream (outgoing) connection to K3s API server.")
 	flag.Parse()
 
 	if debug {
@@ -89,12 +94,13 @@ func main() {
 		logrus.Fatal("failed to append Root CA PEM")
 	}
 
-	upstreamKeyPair, err := tls.LoadX509KeyPair(upstreamCertFile, upstreamKeyFile)
+	upstreamKeyPair, err := tls.LoadX509KeyPair(upstreamClientCertFile, upstreamClientKeyFile)
 	if err != nil {
 		logrus.Fatalf("failed to load upstream certificate/key: %v", err)
 	}
 	proxy.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{ // #nosec G402 the min TLS version is acceptable
+		TLSClientConfig: &tls.Config{
+			MinVersion:   tls.VersionTLS13, // Match k3s API TLS version
 			Certificates: []tls.Certificate{upstreamKeyPair},
 			RootCAs:      certPool,
 		},
@@ -106,18 +112,13 @@ func main() {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		logrus.Fatalf("failed to load downstream certificate/key: %v", err)
-	}
-
-	srv.TLSConfig = &tls.Config{ // #nosec G402 the min TLS version is acceptable
+	srv.TLSConfig = &tls.Config{
+		MinVersion:               tls.VersionTLS13,
 		PreferServerCipherSuites: true,
-		Certificates:             []tls.Certificate{cert},
 	}
 
 	go func() {
-		if err := srv.ListenAndServeTLS("", ""); !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.ListenAndServeTLS(certFile, keyFile); !errors.Is(err, http.ErrServerClosed) {
 			logrus.Error("Error starting server:", err)
 		}
 	}()
