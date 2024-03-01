@@ -2,6 +2,7 @@
 # shellcheck disable=SC2120
 UNAME=$(uname)
 ARCH=$(uname -m)
+ARCH=${ARCH/arm64/aarch64}
 
 case $UNAME in
 Darwin)
