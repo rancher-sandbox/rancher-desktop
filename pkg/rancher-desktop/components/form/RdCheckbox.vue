@@ -15,6 +15,18 @@ export default Vue.extend({
       type:    String,
       default: null,
     },
+    labelKey: {
+      type:    String,
+      default: null,
+    },
+    label: {
+      type:    String,
+      default: null,
+    },
+    tooltipKey: {
+      type:    String,
+      default: null,
+    },
   },
 });
 </script>
@@ -25,16 +37,37 @@ export default Vue.extend({
       :disabled="$attrs.disabled || isLocked"
       v-bind="$attrs"
       v-on="$listeners"
-    />
-    <slot name="after">
-      <i
-        v-if="isLocked"
-        v-tooltip="{
-          content: tooltip || t('preferences.locked.tooltip'),
-          placement: 'right',
-        }"
-        class="icon icon-lock"
-      />
-    </slot>
+    >
+      <template #label>
+        <t
+          v-if="labelKey"
+          :k="labelKey"
+          :raw="true"
+        />
+        <template v-else-if="label">
+          {{ label }}
+        </template>
+        <i
+          v-if="tooltipKey"
+          v-clean-tooltip="t(tooltipKey)"
+          class="checkbox-info icon icon-info icon-lg"
+        />
+        <i
+          v-else-if="tooltip"
+          v-clean-tooltip="tooltip"
+          class="checkbox-info icon icon-info icon-lg"
+        />
+        <slot name="after">
+          <i
+            v-if="isLocked"
+            v-tooltip="{
+              content: tooltip || t('preferences.locked.tooltip'),
+              placement: 'right',
+            }"
+            class="icon icon-lock"
+          />
+        </slot>
+      </template>
+    </checkbox>
   </div>
 </template>
