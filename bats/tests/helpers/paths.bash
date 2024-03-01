@@ -61,7 +61,7 @@ if is_macos; then
     PATH_CONTAINERD_SHIMS="$PATH_APP_HOME/containerd-shims"
 
     ELECTRON_DIST_ARCH="mac"
-    if is_macos arm64; then
+    if is_macos aarch64; then
         ELECTRON_DIST_ARCH="mac-arm64"
     fi
     set_path_resources \
