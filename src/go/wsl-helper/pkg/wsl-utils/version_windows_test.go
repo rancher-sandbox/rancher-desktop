@@ -270,7 +270,7 @@ func TestGetAppxVersion(t *testing.T) {
 	}
 }
 
-func TestIsInboxWSLInstalled(t *testing.T) {
+func TestGetInboxWSLInfo(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
@@ -287,7 +287,7 @@ func TestIsInboxWSLInstalled(t *testing.T) {
 		})
 		// Use a random GUID here
 		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{60486CC7-CD7A-4514-9E88-7F21E8A81679}")
-		hasWSL, kernelVersion, err := isInboxWSLInstalled(ctx, logrus.NewEntry(logger))
+		hasWSL, kernelVersion, err := getInboxWSLInfo(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.False(t, hasWSL, "WSL should not be installed")
 		if !assert.Nil(t, kernelVersion, "kernel should not be installed") {
@@ -315,7 +315,7 @@ func TestIsInboxWSLInstalled(t *testing.T) {
 		})
 		// Use a random GUID here
 		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{0C32EDDD-2674-4F32-B415-B715AF90BE74}")
-		hasWSL, kernelVersion, err := isInboxWSLInstalled(ctx, logrus.NewEntry(logger))
+		hasWSL, kernelVersion, err := getInboxWSLInfo(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.True(t, hasWSL, "WSL should be installed")
 		if !assert.Nil(t, kernelVersion, "kernel should not be installed") {
@@ -333,7 +333,7 @@ func TestIsInboxWSLInstalled(t *testing.T) {
 		// Use the upgrade code for "Microsoft Update Health Tools", which is
 		// automatically installed from Windows Update.
 		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{2E5106FD-42A1-4BBE-9C29-7E1D34CB79A1}")
-		hasWSL, kernelVersion, err := isInboxWSLInstalled(ctx, logrus.NewEntry(logger))
+		hasWSL, kernelVersion, err := getInboxWSLInfo(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.True(t, hasWSL, "WSL should be installed")
 		if assert.NotNil(t, kernelVersion, "kernel should be installed") {

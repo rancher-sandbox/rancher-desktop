@@ -355,9 +355,9 @@ func getAppxVersion(ctx context.Context, log *logrus.Entry) (*PackageVersion, *P
 	return &wslVersion, &kernelVersion, nil
 }
 
-// isInboxWSLInstalled checks if the "in-box" version of WSL is installed,
-// returning whether it's installed, the version of the kernel installed (if any)
-func isInboxWSLInstalled(ctx context.Context, log *logrus.Entry) (bool, *PackageVersion, error) {
+// getInboxWSLInfo checks if the "in-box" version of WSL is installed, returning
+// whether it's installed, and the version of the kernel installed (if any)
+func getInboxWSLInfo(ctx context.Context, log *logrus.Entry) (bool, *PackageVersion, error) {
 	var allErrors []error
 
 	// Check if the core is installed
@@ -425,31 +425,48 @@ func getMSIVersion(productCode []uint16) (*PackageVersion, error) {
 	if err != nil {
 		return nil, err
 	}
-	bufSize := uint32(64)
-	wideBuf := make([]uint16, bufSize)
-	for {
-		rv, _, _ := msiGetProductInfo.Call(
-			uintptr(unsafe.Pointer(unsafe.SliceData(productCode))),
-			uintptr(unsafe.Pointer(versionStringWide)),
-			uintptr(unsafe.Pointer(unsafe.SliceData(wideBuf))),
-			uintptr(unsafe.Pointer(&bufSize)),
-		)
-		switch rv {
-		case uintptr(windows.ERROR_SUCCESS):
-			versionString := windows.UTF16ToString(wideBuf[:bufSize])
-			if err = version.UnmarshalText([]byte(versionString)); err != nil {
-				return nil, err
-			}
-			return &version, nil
-		case uintptr(windows.ERROR_MORE_DATA):
-			bufSize = uint32(len(wideBuf) * 2)
-			wideBuf = make([]uint16, bufSize)
-		case uintptr(windows.ERROR_BAD_CONFIGURATION):
-			err = errorFromWin32("Windows Installer configuration data is corrupt", rv, nil)
+
+	bufSize := 0
+	var wideBuf []uint16
+	rv, _, _ := msiGetProductInfo.Call(
+		uintptr(unsafe.Pointer(unsafe.SliceData(productCode))),
+		uintptr(unsafe.Pointer(versionStringWide)),
+		uintptr(unsafe.Pointer(nil)),
+		uintptr(unsafe.Pointer(&bufSize)),
+	)
+	switch rv {
+	case uintptr(windows.ERROR_SUCCESS):
+		return nil, fmt.Errorf("succeeded getting product version with no buffer")
+	case uintptr(windows.ERROR_MORE_DATA):
+		wideBuf = make([]uint16, bufSize+1) // Add space for null terminator
+		bufSize = len(wideBuf)
+	case uintptr(windows.ERROR_BAD_CONFIGURATION):
+		err = errorFromWin32("Windows Installer configuration data is corrupt", rv, nil)
+		return nil, err
+	default:
+		return nil, errorFromWin32("failed to get WSL kernel MSI version", rv, nil)
+	}
+
+	rv, _, _ = msiGetProductInfo.Call(
+		uintptr(unsafe.Pointer(unsafe.SliceData(productCode))),
+		uintptr(unsafe.Pointer(versionStringWide)),
+		uintptr(unsafe.Pointer(unsafe.SliceData(wideBuf))),
+		uintptr(unsafe.Pointer(&bufSize)),
+	)
+	switch rv {
+	case uintptr(windows.ERROR_SUCCESS):
+		versionString := windows.UTF16ToString(wideBuf[:bufSize])
+		if err = version.UnmarshalText([]byte(versionString)); err != nil {
 			return nil, err
-		default:
-			return nil, errorFromWin32("failed to get WSL kernel MSI version", rv, nil)
 		}
+		return &version, nil
+	case uintptr(windows.ERROR_MORE_DATA):
+		return nil, errorFromWin32("allocated buffer was too small", rv, nil)
+	case uintptr(windows.ERROR_BAD_CONFIGURATION):
+		err = errorFromWin32("Windows Installer configuration data is corrupt", rv, nil)
+		return nil, err
+	default:
+		return nil, errorFromWin32("failed to get WSL kernel MSI version", rv, nil)
 	}
 }
 
@@ -482,7 +499,7 @@ func GetWSLInfo(ctx context.Context, log *logrus.Entry) (*WSLInfo, error) {
 	}
 
 	log.Trace("Failed to get WSL appx package, trying inbox versions...")
-	hasWSL, kernelVersion, err := isInboxWSLInstalled(ctx, log)
+	hasWSL, kernelVersion, err := getInboxWSLInfo(ctx, log)
 	if err != nil {
 		return nil, err
 	}
