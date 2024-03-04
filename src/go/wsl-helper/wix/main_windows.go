@@ -22,18 +22,20 @@ func main() {
 	// DllMain is not used
 }
 
-// IsWSLInstalled is a wrapper around IsWSLInstalledImpl; this is the stub to
-// be exported in the DLL.  This only exists because code analysis doesn't work
-// as well in cgo files.
+// DetectWSL is a wrapper around DetectWSLImpl; this is the stub to be exported
+// in the DLL.  This only exists to limit cgo to this file so that editing on a
+// machine that requires cross compilation can avoid needing a cross cgo
+// toolchain.
 //
-//export IsWSLInstalled
-func IsWSLInstalled(hInstall C.ulong) C.ulong {
-	return C.ulong(IsWSLInstalledImpl(MSIHANDLE(hInstall)))
+//export DetectWSL
+func DetectWSL(hInstall C.ulong) C.ulong {
+	return C.ulong(DetectWSLImpl(MSIHANDLE(hInstall)))
 }
 
 // InstallWindowsFeature is a wrapper around InstallWindowsFeature; this is the
-// stub to be exported in the DLL.  This only exists because code analysis
-// doesn't work as well in cgo files.
+// stub to be exported in the DLL.  This only exists to limit cgo to this file
+// so that editing on a machine that requires cross compilation can avoid
+// needing a cross cgo toolchain.
 //
 //export InstallWindowsFeature
 func InstallWindowsFeature(hInstall C.ulong) C.ulong {
@@ -41,10 +43,21 @@ func InstallWindowsFeature(hInstall C.ulong) C.ulong {
 }
 
 // InstallWSL is a wrapper around InstallWSLImpl; this is the stub to be
-// exported in the DLL.  This only exists because code analysis doesn't work as
-// well in cgo files.
+// exported in the DLL.  This only exists to limit cgo to this file so that
+// editing on a machine that requires cross compilation can avoid needing a
+// cross cgo toolchain.
 //
 //export InstallWSL
 func InstallWSL(hInstall C.ulong) C.ulong {
 	return C.ulong(InstallWSLImpl(MSIHANDLE(hInstall)))
+}
+
+// UpdateWSL is a wrapper around UpdateWSLImpl; this is the stub to be exported
+// in the DLL.  This only exists to limit cgo to this file so that editing on a
+// machine that requires cross compilation can avoid needing a cross cgo
+// toolchain.
+//
+//export UpdateWSL
+func UpdateWSL(hInstall C.ulong) C.ulong {
+	return C.ulong(UpdateWSLImpl(MSIHANDLE(hInstall)))
 }

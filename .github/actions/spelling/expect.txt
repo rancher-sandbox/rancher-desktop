@@ -338,6 +338,7 @@ Infof
 Infoln
 installable
 INSTALLMESSAGE
+INSTALLPROPERTY
 ioctl
 ipaddr
 isthebestmeshuggahalbum
@@ -470,6 +471,7 @@ msiexec
 MSIHANDLE
 MSIINSTALLPERUSER
 MSIX
+msixbundle
 msize
 msvs
 mszip
@@ -786,6 +788,7 @@ vcpus
 vcs
 vde
 ventura
+VERSIONSTRING
 vertificate
 veth
 vhdx
@@ -827,9 +830,11 @@ wsl
 wslapi
 wslconfig
 WSLENV
+WSLg
 wslify
 WSLINSTALLED
 WSLIs
+WSLKERNELOUTDATED
 wslutils
 WWID
 wwn

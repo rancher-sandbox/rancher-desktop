@@ -74,3 +74,29 @@ func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
 	log.Info("WSL successfully installed.")
 	return 0
 }
+
+// UpdateWSLImpl updates the previously installed WSL.
+// This needs to be run as the user, and may request elevation.
+func UpdateWSLImpl(hInstall MSIHANDLE) uint32 {
+	ctx := context.Background()
+
+	writer := &msiWriter{hInstall: hInstall}
+	log := logrus.NewEntry(&logrus.Logger{
+		Out:       writer,
+		Formatter: &logrus.TextFormatter{},
+		Hooks:     make(logrus.LevelHooks),
+		Level:     logrus.TraceLevel,
+	})
+
+	log.Info("Updating WSL...")
+	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+		"", "UpdateWSL", "Updating Windows Subsystem for Linux...", "<unused>",
+	})
+	if err := wslutils.UpdateWSL(ctx, log); err != nil {
+		log.WithError(err).Error("Updating WSL failed")
+		return 1
+	}
+
+	log.Info("WSL successfully updated.")
+	return 0
+}

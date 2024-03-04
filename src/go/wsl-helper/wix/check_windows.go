@@ -24,12 +24,15 @@ import (
 )
 
 const (
-	PROP_WSL_INSTALLED = "WSLINSTALLED"
+	// Windows Installer property that is set if WSL was detected to be installed.
+	PropWSLInstalled = "WSLINSTALLED"
+	// Windows Installer property that is set if the WSL kernel needs to be upgraded.
+	PropWSLKernelOutdated = "WSLKERNELOUTDATED"
 )
 
-// IsWSLInstalledImpl checks if WSL is installed; it outputs results by setting
-// the `WSLINSTALLED` Windows Installer property.
-func IsWSLInstalledImpl(hInstall MSIHANDLE) uint32 {
+// DetectWSLImpl checks if WSL is installed; it outputs results by setting
+// Windows Installer properties.
+func DetectWSLImpl(hInstall MSIHANDLE) uint32 {
 	ctx := context.Background()
 
 	writer := &msiWriter{hInstall: hInstall}
@@ -43,14 +46,19 @@ func IsWSLInstalledImpl(hInstall MSIHANDLE) uint32 {
 	log.Info("Checking if WSL is installed...")
 	info, err := wslutils.GetWSLInfo(ctx, log)
 	if err != nil {
-		log.Errorf("Failed to get WSL info: %s", err)
+		log.WithError(err).Error("Failed to get WSL info")
 		return 1
 	}
 	log.Infof("WSL install state: %+v", info)
 
 	if info.Installed {
-		if err = setProperty(hInstall, PROP_WSL_INSTALLED, "1"); err != nil {
-			log.WithError(err).Error("failed to set property")
+		if err = setProperty(hInstall, PropWSLInstalled, "1"); err != nil {
+			log.WithError(err).Errorf("failed to set property %s", PropWSLInstalled)
+		}
+		if info.OutdatedKernel {
+			if err = setProperty(hInstall, PropWSLKernelOutdated, "1"); err != nil {
+				log.WithError(err).Errorf("failed to set property %s", PropWSLKernelOutdated)
+			}
 		}
 	}
 	return 0
