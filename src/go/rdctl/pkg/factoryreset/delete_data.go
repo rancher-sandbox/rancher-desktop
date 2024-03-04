@@ -42,12 +42,12 @@ import (
 func appHomeDirectories(appPaths paths.Paths) []string {
 	// Use lowercase names for comparison in case the user created the subdirectory manually
 	// with the wrong case on a case-preserving filesystem (default on macOS).
-	excludeDir := map[string]bool{
-		strings.ToLower(appPaths.Snapshots):       true,
-		strings.ToLower(appPaths.ContainerdShims): true,
+	excludeDir := map[string]string{
+		strings.ToLower(appPaths.Snapshots):       appPaths.Snapshots,
+		strings.ToLower(appPaths.ContainerdShims): appPaths.ContainerdShims,
 	}
 	haveExclusions := false
-	for dirname := range excludeDir {
+	for _, dirname := range excludeDir {
 		files, err := os.ReadDir(dirname)
 		if err == nil && len(files) > 0 {
 			haveExclusions = true
@@ -65,7 +65,7 @@ func appHomeDirectories(appPaths paths.Paths) []string {
 	pathList := make([]string, 0, len(appHomeFiles))
 	for _, file := range appHomeFiles {
 		fullname := strings.ToLower(filepath.Join(appPaths.AppHome, file.Name()))
-		if !excludeDir[fullname] {
+		if _, ok := excludeDir[fullname]; !ok {
 			pathList = append(pathList, fullname)
 		}
 	}
