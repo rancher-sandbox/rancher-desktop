@@ -312,24 +312,25 @@ EOF
 # be written to that file.  Analogous to `cat >$1`.  Will create any parent
 # directories.
 create_file() {
+    local dest=$1
     # On Windows, avoid creating files from within WSL; this leads to issues
     # where the WSL view of the filesystem is desynchronized from the Windows
     # view, so we end up having ghost files that can't be deleted from Windows.
     if ! is_windows; then
-        mkdir -p "$(dirname "$1")"
-        cat >"$1"
+        mkdir -p "$(dirname "$dest")"
+        cat >"$dest"
         return
     fi
 
     local contents # Base64 encoded file contents
     contents="$(base64)" || return
 
-    local dest
-    local parent
-    parent="$(wslpath -w "$(dirname "$1")")" || return
-    dest="$(wslpath -w "$1")" || return
-    PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "New-Item -ItemType Directory -ErrorAction SilentlyContinue '$parent'" || true
-    local command="[IO.File]::WriteAllBytes('$dest', \$([System.Convert]::FromBase64String('$contents')))"
+    local winParent
+    local winDest
+    winParent="$(wslpath -w "$(dirname "$dest")")" || return
+    winDest="$(wslpath -w "$dest")" || return
+    PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "New-Item -ItemType Directory -ErrorAction SilentlyContinue '$winParent'" || true
+    local command="[IO.File]::WriteAllBytes('$winDest', \$([System.Convert]::FromBase64String('$contents')))"
     PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "$command" || return
 }
 
