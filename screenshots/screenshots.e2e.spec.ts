@@ -40,7 +40,7 @@ test.describe.serial('Main App Test', () => {
     });
 
     await setUserProfile(
-      { version: 10 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
+      { version: 11 as typeof CURRENT_SETTINGS_VERSION, containerEngine: { allowedImages: { enabled: true, patterns: [] } } },
       {},
     );
 

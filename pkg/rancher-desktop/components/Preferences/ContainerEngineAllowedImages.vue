@@ -65,16 +65,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
 </script>
 
 <template>
-  <div
-    class="container-engine-allowed-images"
-  >
-    <rd-fieldset
-      data-test="allowedImages"
-      :legend-text="t('allowedImages.label')"
-      :is-experimental="true"
-    >
+  <div class="container-engine-allowed-images">
+    <rd-fieldset data-test="allowedImages" :legend-text="t('allowedImages.label')" :is-experimental="true">
       <rd-checkbox
-        data-test="allowedImagesCheckbox"
+        data-testid="allowedImagesCheckbox"
         :label="t('allowedImages.enable')"
         :value="isAllowedImagesEnabled"
         :is-locked="isPreferenceLocked('containerEngine.allowedImages.enabled')"
