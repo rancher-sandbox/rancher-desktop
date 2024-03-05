@@ -136,7 +136,7 @@ factory_reset() {
         clear_iptables_chain "CNI"
         clear_iptables_chain "KUBE"
     fi
-    rdctl factory-reset
+    rdctl factory-reset "$@"
     setup_ramdisk
 }
 
