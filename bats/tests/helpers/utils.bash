@@ -307,6 +307,33 @@ EOF
     fi
 }
 
+# create_file path/to/file <<< "contents"
+# Create a new file with the provided path; the contents of standard input will
+# be written to that file.  Analogous to `cat >$1`.  Will create any parent
+# directories.
+create_file() {
+    local dest=$1
+    # On Windows, avoid creating files from within WSL; this leads to issues
+    # where the WSL view of the filesystem is desynchronized from the Windows
+    # view, so we end up having ghost files that can't be deleted from Windows.
+    if ! is_windows; then
+        mkdir -p "$(dirname "$dest")"
+        cat >"$dest"
+        return
+    fi
+
+    local contents # Base64 encoded file contents
+    contents="$(base64)" || return
+
+    local winParent
+    local winDest
+    winParent="$(wslpath -w "$(dirname "$dest")")" || return
+    winDest="$(wslpath -w "$dest")" || return
+    PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "New-Item -ItemType Directory -ErrorAction SilentlyContinue '$winParent'" || true
+    local command="[IO.File]::WriteAllBytes('$winDest', \$([System.Convert]::FromBase64String('$contents')))"
+    PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "$command" || return
+}
+
 # unique_filename /tmp/image .png
 # will return /tmp/image.png, or /tmp/image_2.png, etc.
 unique_filename() {

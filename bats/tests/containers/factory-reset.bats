@@ -176,7 +176,7 @@ check_directories() {
     fi
 
     for dir in "${delete_dir[@]}"; do
-        echo "$assert that $dir does not exist" 1>&3
+        echo "# $assert that $dir does not exist" 1>&3
         "${assert}_not_exists" "$dir"
     done
 }

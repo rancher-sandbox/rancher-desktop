@@ -219,12 +219,11 @@ start_container_engine() {
         # add_profile_bool containerEngine.allowedImages.enabled "$image_allow_list"
         # add_profile_list containerEngine.allowedImages.patterns "$registry"
     else
-        wsl_integrations="{}"
+        local wsl_integrations="{}"
         if is_windows; then
             wsl_integrations="{\"$WSL_DISTRO_NAME\":true}"
         fi
-        mkdir -p "$PATH_CONFIG"
-        cat <<EOF >"$PATH_CONFIG_FILE"
+        create_file "$PATH_CONFIG_FILE" <<EOF
 {
   "version": 7,
   "WSL": { "integrations": $wsl_integrations },
