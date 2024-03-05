@@ -234,6 +234,20 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 			} else {
 				deleteLocalRDAppData = false
 			}
+		} else if fileName == "containerd-shims" {
+			// Only delete containerd-shims directory if it is empty
+			shimsDir := filepath.Join(localRDAppData, fileName)
+			shimsDirContents, err := os.ReadDir(shimsDir)
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			} else if err != nil {
+				return nil, fmt.Errorf("failed to read directory %q: %w", shimsDir, err)
+			}
+			if len(shimsDirContents) == 0 {
+				dirs = append(dirs, shimsDir)
+			} else {
+				deleteLocalRDAppData = false
+			}
 		} else if fileName == "cache" && keepSystemImages {
 			// Don't delete cache\k3s & cache\k3s-versions.json if keeping system images
 			cacheDir := filepath.Join(localRDAppData, fileName)
