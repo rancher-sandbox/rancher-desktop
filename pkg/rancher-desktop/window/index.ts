@@ -508,18 +508,18 @@ export async function openDenyRootDialog() {
   }));
 }
 
-export type reqMessageId = 'ok' | 'linux-nested' | 'win32-release' | 'macOS-release';
+export type reqMessageId = 'ok' | 'linux-nested' | 'win32-release' | 'win32-kernel' | 'macOS-release';
 
 /**
  * Open a dialog to show reason Desktop will not start
  * @param reasonId Specifies which message to show in dialog
  */
-export async function openUnmetPrerequisitesDialog(reasonId: reqMessageId) {
+export async function openUnmetPrerequisitesDialog(reasonId: reqMessageId, ...args: any[]) {
   const window = openDialog('UnmetPrerequisites', { frame: true });
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'dialog/load') {
-      window.webContents.send('dialog/populate', reasonId);
+      window.webContents.send('dialog/populate', reasonId, ...args);
     }
   });
   await (new Promise<void>((resolve) => {

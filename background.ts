@@ -51,6 +51,7 @@ import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getVersion } from '@pkg/utils/version';
+import getWSLVersion from '@pkg/utils/wslVersion';
 import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
 import { openPreferences, preferencesSetDirtyFlag } from '@pkg/window/preferences';
@@ -59,6 +60,12 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+
+// Do an early check for debugging enabled via the environment variable so that
+// we can turn on extra logging to troubleshoot startup issues.
+if (settingsImpl.runInDebugMode(false)) {
+  setLogLevel('debug');
+}
 
 if (!Electron.app.requestSingleInstanceLock()) {
   process.exit(201);
@@ -425,6 +432,7 @@ async function checkForRootPrivs() {
 async function checkPrerequisites() {
   const osPlatform = os.platform();
   let messageId: window.reqMessageId = 'ok';
+  let args: any[] = [];
 
   switch (osPlatform) {
   case 'win32': {
@@ -433,6 +441,17 @@ async function checkPrerequisites() {
 
     if (Number(winRel[0]) < 10 || (Number(winRel[0]) === 10 && Number(winRel[2]) < 18363)) {
       messageId = 'win32-release';
+    } else {
+      try {
+        const version = await getWSLVersion();
+
+        if (version.outdated_kernel) {
+          messageId = 'win32-kernel';
+          args = [version];
+        }
+      } catch (ex) {
+        console.error(`Failed to check WSL version, ignoring:`, ex);
+      }
     }
     break;
   }
@@ -465,7 +484,7 @@ async function checkPrerequisites() {
   }
 
   if (messageId !== 'ok') {
-    await window.openUnmetPrerequisitesDialog(messageId);
+    await window.openUnmetPrerequisitesDialog(messageId, ...args);
     gone = true;
     Electron.app.quit();
   }
