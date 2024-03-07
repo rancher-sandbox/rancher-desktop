@@ -370,7 +370,7 @@ virtualMachine:
                 none: none
         virtiofs:
           label: virtiofs
-          description: Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+          description: This option is unavailable in this release.
   proxy:
     legend: WSL Proxy
     label: Enable the proxy used by rancher-desktop
@@ -2673,8 +2673,7 @@ prefs:
   experimental: Experimental
   onlyFromVentura_x64: This setting requires macOS 13.0 (Ventura) or later.
   onlyFromVentura_arm64: This setting requires macOS 13.3 (Ventura) or later.
-  onlyWithVZ_x64: This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
-  onlyWithVZ_arm64: This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
+  virtiofsDisabled: This setting has been temporarily removed to investigate a potential bug that could lead to data loss on the host.
 
 principal:
   loading: Loading&hellip;
