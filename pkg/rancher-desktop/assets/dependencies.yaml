@@ -6,7 +6,7 @@ alpineLimaISO:
 WSLDistro: "0.55"
 kuberlr: 0.4.5
 helm: 3.14.2
-dockerCLI: 25.0.3
+dockerCLI: 25.0.4
 dockerBuildx: 0.13.0
 dockerCompose: 2.24.7
 trivy: 0.49.1
