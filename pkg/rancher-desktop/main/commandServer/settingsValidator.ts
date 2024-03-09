@@ -331,7 +331,16 @@ export default class SettingsValidator {
       if (mergedSettings.experimental.virtualMachine.mount.type === MountType.NINEP) {
         errors.push(
           `Setting ${ fqname } to "${ VMType.VZ }" requires that experimental.virtual-machine.mount.type is ` +
-          `"${ MountType.REVERSE_SSHFS }".`);
+          `"${ MountType.REVERSE_SSHFS }" or "${ MountType.VIRTIOFS }".`);
+
+        return false;
+      }
+    }
+    if (desiredValue === VMType.QEMU) {
+      if (mergedSettings.experimental.virtualMachine.mount.type === MountType.VIRTIOFS && os.platform() === 'darwin') {
+        errors.push(
+          `Setting ${ fqname } to "${ VMType.QEMU }" requires that experimental.virtual-machine.mount.type is ` +
+          `"${ MountType.REVERSE_SSHFS }" or "${ MountType.NINEP }".`);
 
         return false;
       }
@@ -341,8 +350,14 @@ export default class SettingsValidator {
   }
 
   protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
-    if (desiredValue === MountType.VIRTIOFS) {
-      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" is not supported in this version of Rancher Desktop.`);
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ && os.platform() === 'darwin') {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.VZ }".`);
+      this.isFatal = true;
+
+      return false;
+    }
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU && os.platform() === 'linux') {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
       this.isFatal = true;
 
       return false;

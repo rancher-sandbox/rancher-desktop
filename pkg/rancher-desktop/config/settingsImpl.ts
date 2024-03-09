@@ -9,7 +9,7 @@ import _ from 'lodash';
 
 import {
   CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
-  LockedSettingsType, MountType, Settings, SettingsError,
+  LockedSettingsType, Settings, SettingsError,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
@@ -470,12 +470,6 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
     }
   },
   10: (settings, locked) => {
-    // virtiofs is not supported in Rancher Desktop 1.13.0
-    if (!_.isEmpty(_.get(settings, 'experimental.virtualMachine.mount.type'))) {
-      if (settings.experimental.virtualMachine.mount.type === MountType.VIRTIOFS) {
-        settings.experimental.virtualMachine.mount.type = MountType.REVERSE_SSHFS;
-      }
-    }
     // Migrating from an older locked profile automatically locks newer features (wasm support).
     if (locked && !_.has(settings, 'experimental.containerEngine.webAssembly.enabled')) {
       _.set(settings, 'experimental.containerEngine.webAssembly.enabled', false);

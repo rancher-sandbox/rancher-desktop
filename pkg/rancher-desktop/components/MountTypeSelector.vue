@@ -68,8 +68,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return this.preferences.experimental.virtualMachine.mount.type === MountType.NINEP;
     },
     virtIoFsDisabled(): boolean {
-      // virtiofs is unavailable in the 1.13 release of Rancher Desktop
-      return true;
+      // virtiofs should only be disabled on macOS WITHOUT the possibility to select the VM type VZ. VZ doesn't need to
+      // be selected, yet. We're going to show a warning banner in that case.
+      return os.platform() === 'darwin' &&
+        (semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0')));
     },
     arch(): string {
       return this.isArm ? 'arm64' : 'x64';
@@ -108,7 +110,13 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       this.$emit('update', property, value);
     },
     disabledVirtIoFsTooltip(disabled: boolean): { content: string } | Record<string, never> {
-      return { content: this.t('prefs.virtiofsDisabled') };
+      let tooltip = {};
+
+      if (disabled) {
+        tooltip = { content: this.t(`prefs.onlyWithVZ_${ this.arch }`) };
+      }
+
+      return tooltip;
     },
     getCompatiblePrefs(mountType: MountType): CompatiblePrefs | [] {
       const compatiblePrefs: CompatiblePrefs = [];

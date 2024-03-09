@@ -879,7 +879,18 @@ describe(SettingsValidator, () => {
       checkForError(
         needToUpdate, errors,
         'Setting experimental.virtualMachine.type to \"vz\" requires that ' +
-        'experimental.virtual-machine.mount.type is \"reverse-sshfs\".',
+        'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"virtiofs\".',
+      );
+    });
+
+    it('should reject QEMU if mount type is virtiofs on macOS', () => {
+      const [needToUpdate, errors] = subject.validateSettings(
+        _.merge({}, cfg, getMountTypeSetting(MountType.VIRTIOFS)), getVMTypeSetting(VMType.QEMU));
+
+      checkForError(
+        needToUpdate, errors,
+        'Setting experimental.virtualMachine.type to \"qemu\" requires that ' +
+        'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"9p\".',
       );
     });
   });
