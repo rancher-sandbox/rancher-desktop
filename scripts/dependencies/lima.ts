@@ -5,6 +5,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import _ from 'lodash';
 import semver from 'semver';
 
 import { download, getResource } from '../lib/download';
@@ -109,7 +110,58 @@ export class Lima implements Dependency, GitHubDependency {
       throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
     }
 
-    return semver.rcompare(semver1, semver2);
+    if (semver1.raw !== semver2.raw) {
+      return semver.rcompare(semver1, semver2);
+    }
+
+    // If the two versions are equal, we may have different build suffixes
+    // e.g. v0.19.0.rd5 vs v0.19.0.rd6
+    // We examine each dot-separated part in turn; for each part, we split them
+    // into chunks based on if they're runs of digits. For non-digits, we
+    // compare them as strings; for digits, as base ten numbers.
+    for (const [part1, part2] of _.zip(version1.split('.'), version2.split('.'))) {
+      if (part1 === part2) {
+        continue;
+      }
+
+      const matches1 = (part1 ?? '').matchAll(/([^\d]*)(\d*)/g);
+      const matches2 = (part2 ?? '').matchAll(/([^\d]*)(\d*)/g);
+
+      while (true) {
+        const { value: value1, done: done1 } = matches1.next();
+        const { value: value2, done: done2 } = matches2.next();
+
+        if (!value1 || !value2) {
+          // One string has fewer parts
+          return value1 ? 1 : -1;
+        }
+
+        const [others1, digits1] = value1;
+        const [others2, digits2] = value2;
+
+        if (others1 !== others2) {
+          const result = others1.localeCompare(others2, 'en-US');
+
+          return result < 0 ? -1 : result > 0 ? 1 : 0;
+        }
+        const number1 = parseInt(digits1, 10);
+        const number2 = parseInt(digits2, 10);
+
+        if (number1 !== number2) {
+          return number1 < number2 ? -1 : 1;
+        }
+
+        if (done1 || done2) {
+          if (done1 && done2) {
+            break;
+          }
+
+          return done1 ? -1 : 1;
+        }
+      }
+    }
+
+    return 0;
   }
 }
 
