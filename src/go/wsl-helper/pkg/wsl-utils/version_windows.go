@@ -59,7 +59,7 @@ func (i WSLInfo) String() string {
 	if len(parts) == 0 {
 		parts = append(parts, "not-installed")
 	}
-	return fmt.Sprintf("Version=%s (%s)", i.Version, strings.Join(parts, ", "))
+	return fmt.Sprintf("Version=%s kernel=%s (%s)", i.Version, i.KernelVersion, strings.Join(parts, ", "))
 }
 
 const (
@@ -403,7 +403,7 @@ func getInboxWSLInfo(ctx context.Context, log *logrus.Entry) (bool, *PackageVers
 		)
 		switch rv {
 		case uintptr(windows.ERROR_SUCCESS):
-			kernelVersion, err = getMSIVersion(productCode)
+			kernelVersion, err = getMSIVersion(productCode, log)
 			if err != nil {
 				allErrors = append(allErrors, fmt.Errorf("error getting kernel version: %w", err))
 			}
@@ -419,7 +419,7 @@ func getInboxWSLInfo(ctx context.Context, log *logrus.Entry) (bool, *PackageVers
 }
 
 // Get the version of an installed MSI package, given its product code.
-func getMSIVersion(productCode []uint16) (*PackageVersion, error) {
+func getMSIVersion(productCode []uint16, log *logrus.Entry) (*PackageVersion, error) {
 	version := PackageVersion{}
 	versionStringWide, err := windows.UTF16PtrFromString(INSTALLPROPERTY_VERSIONSTRING)
 	if err != nil {
@@ -436,7 +436,8 @@ func getMSIVersion(productCode []uint16) (*PackageVersion, error) {
 	)
 	switch rv {
 	case uintptr(windows.ERROR_SUCCESS):
-		return nil, fmt.Errorf("succeeded getting product version with no buffer")
+		log.WithFields(logrus.Fields{"bufSize": bufSize}).Trace("unexpected success, assuming needs more data")
+		fallthrough
 	case uintptr(windows.ERROR_MORE_DATA):
 		wideBuf = make([]uint16, bufSize+1) // Add space for null terminator
 		bufSize = len(wideBuf)
