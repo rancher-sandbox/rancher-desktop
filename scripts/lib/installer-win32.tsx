@@ -64,7 +64,7 @@ export async function buildCustomAction(): Promise<string> {
 export default async function buildInstaller(workDir: string, appDir: string, development = false): Promise<string> {
   const appVersion = getAppVersion(appDir);
   const compressionLevel = development ? 'mszip' : 'high';
-  const outFile = path.join(process.cwd(), 'dist', `Rancher Desktop Setup ${ appVersion }.msi`);
+  const outFile = path.join(process.cwd(), 'dist', `Rancher.Desktop.Setup.${ appVersion }.msi`);
 
   await writeUpdateConfig(appDir);
   const fileList = await generateFileList(appDir);
