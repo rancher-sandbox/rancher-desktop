@@ -5,7 +5,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import _ from 'lodash';
 import semver from 'semver';
 
 import { download, getResource } from '../lib/download';
@@ -114,54 +113,20 @@ export class Lima implements Dependency, GitHubDependency {
       return semver.rcompare(semver1, semver2);
     }
 
-    // If the two versions are equal, we may have different build suffixes
+    // If the two versions are equal, assume we have different build suffixes
     // e.g. v0.19.0.rd5 vs v0.19.0.rd6
-    // We examine each dot-separated part in turn; for each part, we split them
-    // into chunks based on if they're runs of digits. For non-digits, we
-    // compare them as strings; for digits, as base ten numbers.
-    for (const [part1, part2] of _.zip(version1.split('.'), version2.split('.'))) {
-      if (part1 === part2) {
-        continue;
-      }
+    // If the versions don't look like the above, just bail.
+    const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
+    const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
 
-      const matches1 = (part1 ?? '').matchAll(/([^\d]*)(\d*)/g);
-      const matches2 = (part2 ?? '').matchAll(/([^\d]*)(\d*)/g);
-
-      while (true) {
-        const { value: value1, done: done1 } = matches1.next();
-        const { value: value2, done: done2 } = matches2.next();
-
-        if (!value1 || !value2) {
-          // One string has fewer parts
-          return value1 ? 1 : -1;
-        }
-
-        const [others1, digits1] = value1;
-        const [others2, digits2] = value2;
-
-        if (others1 !== others2) {
-          const result = others1.localeCompare(others2, 'en-US');
-
-          return result < 0 ? -1 : result > 0 ? 1 : 0;
-        }
-        const number1 = parseInt(digits1, 10);
-        const number2 = parseInt(digits2, 10);
-
-        if (number1 !== number2) {
-          return number1 < number2 ? -1 : 1;
-        }
-
-        if (done1 || done2) {
-          if (done1 && done2) {
-            break;
-          }
-
-          return done1 ? -1 : 1;
-        }
-      }
+    if (!match1) {
+      throw new Error(`${ version1 } does not have .rd? suffix`);
+    }
+    if (!match2) {
+      throw new Error(`${ version2 } does not have .rd? suffix`);
     }
 
-    return 0;
+    return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
   }
 }
 

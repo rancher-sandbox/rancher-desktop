@@ -17,6 +17,7 @@ import {
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
+const DEP_VERSIONS_PATH = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
 
 type VersionComparison = {
   dependency: Dependency;
@@ -122,18 +123,9 @@ async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['item
   return response.data.items;
 }
 
-async function checkDependencies(): Promise<void> {
-  // exit if there are unstaged changes
-  git('update-index', '--refresh');
-  if (git('diff-index', '--quiet', 'HEAD', '--')) {
-    console.log('You have unstaged changes. Commit or stash them to manage dependencies.');
-
-    return;
-  }
-
+async function determineUpdatesAvailable(): Promise<VersionComparison[]> {
   // load current versions of dependencies
-  const depVersionsPath = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
-  const currentVersions = await readDependencyVersions(depVersionsPath);
+  const currentVersions = await readDependencyVersions(DEP_VERSIONS_PATH);
 
   // get a list of dependencies' version comparisons
   const versionComparisons: VersionComparison[] = await Promise.all(dependencies.map(async(dependency) => {
@@ -165,6 +157,20 @@ async function checkDependencies(): Promise<void> {
 
     return comparison > 0;
   });
+
+  return updatesAvailable;
+}
+
+async function checkDependencies(): Promise<void> {
+  // exit if there are unstaged changes
+  git('update-index', '--refresh');
+  if (git('diff-index', '--quiet', 'HEAD', '--')) {
+    console.log('You have unstaged changes. Commit or stash them to manage dependencies.');
+
+    return;
+  }
+
+  const updatesAvailable = await determineUpdatesAvailable();
 
   // reconcile dependencies that need an update with state of repo's PRs
   const needToCreatePR: VersionComparison[] = [];
@@ -203,18 +209,20 @@ async function checkDependencies(): Promise<void> {
     const commitMessage = `Bump ${ dependency.name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
-    const depVersions = await readDependencyVersions(depVersionsPath);
+    const depVersions = await readDependencyVersions(DEP_VERSIONS_PATH);
 
     depVersions[dependency.name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
-    await writeDependencyVersions(depVersionsPath, depVersions);
-    git('add', depVersionsPath);
+    await writeDependencyVersions(DEP_VERSIONS_PATH, depVersions);
+    git('add', DEP_VERSIONS_PATH);
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
     await createDependencyBumpPR(dependency.name, currentVersion, latestVersion);
   }
 }
 
-checkDependencies().catch((e) => {
+(async() => {
+  await checkDependencies();
+})().catch((e) => {
   console.error(e);
   process.exit(1);
 });
