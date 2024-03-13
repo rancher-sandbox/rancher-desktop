@@ -109,7 +109,24 @@ export class Lima implements Dependency, GitHubDependency {
       throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
     }
 
-    return semver.rcompare(semver1, semver2);
+    if (semver1.raw !== semver2.raw) {
+      return semver.rcompare(semver1, semver2);
+    }
+
+    // If the two versions are equal, assume we have different build suffixes
+    // e.g. v0.19.0.rd5 vs v0.19.0.rd6
+    // If the versions don't look like the above, just bail.
+    const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
+    const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
+
+    if (!match1) {
+      throw new Error(`${ version1 } does not have .rd? suffix`);
+    }
+    if (!match2) {
+      throw new Error(`${ version2 } does not have .rd? suffix`);
+    }
+
+    return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
   }
 }
 
