@@ -27,6 +27,8 @@ on:
         description: Package run ID override; leave empty to use latest.
         default: ''
         type: string
+  schedule:
+  - cron: '0 8 * * 1-5' # 8AM UTC weekdays as a baseline
 
 permissions:
   contents: read
