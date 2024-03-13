@@ -50,7 +50,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Rancher Desktop Setup.msi
-        path: dist/Rancher Desktop*.msi
+        path: dist/Rancher.Desktop*.msi
         if-no-files-found: error
     - if: runner.os == 'Windows'
       run: cat dist/electron-builder.yaml
