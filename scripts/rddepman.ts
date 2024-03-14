@@ -148,7 +148,7 @@ async function determineUpdatesAvailable(): Promise<VersionComparison[]> {
     const comparison = dependency.rcompareVersions(currentVersion, latestVersion);
 
     if (comparison < 0) {
-      console.warn(`Latest version ${ latestVersion } of ${ dependency.name } is earlier than current version ${ currentVersion }`);
+      console.warn(`Latest version ${ JSON.stringify(latestVersion) } of ${ dependency.name } is earlier than current version ${ JSON.stringify(currentVersion) }`);
     } else if (comparison === 0) {
       console.log(`${ dependency.name } is up to date.`);
     } else {
