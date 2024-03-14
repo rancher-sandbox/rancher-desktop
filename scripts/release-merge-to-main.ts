@@ -5,8 +5,11 @@
 //   GITHUB_REPOSITORY, GITHUB_EVENT_PATH, and others
 //     See https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
 //   GITHUB_TOKEN: GitHub authorization token.
+//     Must have write permissions for `actions`, `contents`, `pull_requests`.
 
 import fs from 'fs';
+
+import { RequestError } from 'octokit';
 
 import { getOctokit } from './lib/dependencies';
 
@@ -48,28 +51,41 @@ function getEnv(variable: EnvironmentVariableName): string {
 }
 
 /**
- * Determine the branch name from the tag.
+ * Ensure that the given branch exists, and points to the given tag.
  * @param owner The repository owner.
- * @param repo The repository name, excluding owner.
- * @param tagName The tag of the release event.
- * @returns The name of the branch to merge into the base branch.
+ * @param repo The repository name (without the owner).
+ * @param branchName The name of the branch.
+ * @param tagName The name of the tag.
  */
-async function getBranch(owner: string, repo: string, tagName: string): Promise<string> {
-  const [, release] = /^v(\d+\.\d+)\.\d+/.exec(tagName) ?? [];
-
-  if (!release) {
-    throw new TypeError(`Failed to guess branch name from tag "${ tagName }"`);
-  }
-  const branch = `release-${ release }`;
-  const { data: ref } = await getOctokit().rest.git.getRef({
-    owner, repo, ref: `heads/${ branch }`,
+async function ensureBranch(owner: string, repo: string, branchName: string, tagName: string): Promise<void> {
+  const ref = `heads/${ branchName }`;
+  const { git } = getOctokit().rest;
+  const { data: tagRef } = await git.getRef({
+    owner, repo, ref: `tags/${ tagName }`,
   });
+  const { sha } = tagRef.object;
 
-  if (!ref.object.sha) {
-    throw new TypeError(`Failed to get commit hash of branch "${ branch }"`);
+  try {
+    const { data: existingBranch } = await git.getRef({
+      owner, repo, ref,
+    });
+
+    if (existingBranch.object.sha !== sha) {
+    // Branch exists, but points at the wrong hash; update it.
+      await git.updateRef({
+        owner, repo, ref, sha,
+      });
+    }
+  } catch (ex) {
+    if (!(ex instanceof RequestError) || ex.status !== 404) {
+      throw ex;
+    }
+    // Branch does not exist; create it.
+    await git.createRef({
+      // Only this API takes a `refs/` prefix; get & update omit it.
+      owner, repo, ref: `refs/${ ref }`, sha,
+    });
   }
-
-  return branch;
 }
 
 /**
@@ -122,6 +138,7 @@ async function findExisting(owner: string, repo: string, branch: string) {
   const rawPayload = await fs.promises.readFile(getEnv('GITHUB_EVENT_PATH'), 'utf-8');
   const payload: GitHubReleasePayload = JSON.parse(rawPayload);
   const tagName = payload.release.tag_name;
+  const branchName = `merge-${ tagName }`;
   const fullRepo = getEnv('GITHUB_REPOSITORY');
   const [, owner, repo] = /([^/]+)\/(.*)/.exec(fullRepo) ?? [];
 
@@ -133,19 +150,25 @@ async function findExisting(owner: string, repo: string, branch: string) {
   }
   console.log(`Processing release event on ${ owner }/${ repo } for tag ${ tagName }...`);
 
-  const branch = await getBranch(owner, repo, tagName);
-  const existing = await findExisting(owner, repo, branch);
+  const existing = await findExisting(owner, repo, branchName);
 
   if (existing) {
     console.log(`Found existing PR ${ existing.number }: ${ existing.html_url }`);
 
+    // Note that the existing PR might not be from the same commit as the tag;
+    // this is fine because somebody might have pushed commits on top to resolve
+    // merge conflicts.  Ideally we'd check that the existing PR is a descendant
+    // of the tag commit, but that would essentially involve doing a breadth-
+    // first crawl from the head commit and any limits could lead to false
+    // negatives.  (Or we clone and do `git merge-base --is-ancestor`...)
     return;
   }
 
-  console.log(`Creating new PR on ${ owner }/${ repo }: ${ base } <- ${ branch }`);
+  console.log(`Creating new PR on ${ owner }/${ repo }: ${ base } <- ${ branchName }`);
+  await ensureBranch(owner, repo, branchName, tagName);
   const title = `Merge release ${ tagName } back into ${ base }`;
   const { data: item } = await getOctokit().rest.pulls.create({
-    owner, repo, title, head: branch, base, maintainer_can_modify: true,
+    owner, repo, title, head: branchName, base, maintainer_can_modify: true,
   });
 
   console.log(`Created PR #${ item.number }: ${ item.html_url }`);
