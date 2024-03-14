@@ -3,7 +3,7 @@ limaAndQemu: 1.31.3
 alpineLimaISO:
   isoVersion: 0.2.35.rd2
   alpineVersion: 3.19.0
-WSLDistro: "0.55"
+WSLDistro: "0.56"
 kuberlr: 0.4.5
 helm: 3.14.3
 dockerCLI: 25.0.4
