@@ -412,9 +412,9 @@ containerEngine:
       description: Namespaces for container images; use with nerdctl.
 
 webAssembly:
-  label: Web Assembly (wasm)
+  label: WebAssembly (Wasm)
   enabled: Enabled
-  description: Please read the documentation before enabling the experimental web assembly feature!
+  description: Please read the documentation before enabling the experimental WebAssembly feature!
 
 allowedImages:
   label: Allowed Image Patterns
