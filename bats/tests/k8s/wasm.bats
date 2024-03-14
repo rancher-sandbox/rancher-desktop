@@ -13,6 +13,20 @@ assert_traefik_crd_established() {
     assert_output 'True'
 }
 
+# Get Kubernetes RuntimeClasses; sets $output to the JSON list.
+get_runtime_classes() {
+    # kubectl may emit warnings here; ensure that we don't fall over.
+    bats_require_minimum_version 1.5.0
+    run --separate-stderr kubectl get RuntimeClasses --output json
+    assert_success || return
+
+    if [[ -n $stderr ]]; then
+        # Check that we got a deprecation warning:
+        # Warning: node.k8s.io/v1beta1 RuntimeClass is deprecated in v1.22+, unavailable in v1.25+
+        output=$stderr assert_output --partial deprecated || return
+    fi
+}
+
 @test 'start k8s without wasm support' {
     factory_reset
     start_kubernetes
@@ -25,9 +39,7 @@ assert_traefik_crd_established() {
 }
 
 @test 'verify no runtimeclasses have been defined' {
-    run kubectl get runtimeclasses --output json
-    assert_success
-
+    get_runtime_classes
     run jq_output '.items | length'
     assert_success
     assert_output 0
@@ -43,9 +55,7 @@ assert_traefik_crd_established() {
 }
 
 @test 'verify spin runtime class has been defined (and no others)' {
-    run kubectl get runtimeclasses --output json
-    assert_success
-
+    get_runtime_classes
     rtc=$output
     run jq --raw-output '.items | length' <<<"$rtc"
     assert_success
