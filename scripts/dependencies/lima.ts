@@ -13,6 +13,40 @@ import {
   DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
 } from 'scripts/lib/dependencies';
 
+/**
+ * rcompareVersions implementation for version strings that look like 0.1.2.rd3????.
+ * Note that anything after the number after "rd" is ignored.
+ * @param version1 The first version to compare.
+ * @param version2 The second version to compare.
+ * @returns Whether version1 is higher (-1), equal to (0), or lower than (1) version2.
+ */
+function rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+  const semver1 = semver.coerce(version1);
+  const semver2 = semver.coerce(version2);
+
+  if (semver1 === null || semver2 === null) {
+    throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+  }
+
+  if (semver1.raw !== semver2.raw) {
+    return semver.rcompare(semver1, semver2);
+  }
+
+  // If the two versions are equal, assume we have different build suffixes
+  // e.g. "0.19.0.rd5" vs "0.19.0.rd6"
+  const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
+  const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
+
+  if (!match1 || !match2) {
+    // One or both are invalid; prefer the valid one.
+    const fallback = Math.sign(version2.localeCompare(version1, 'en')) as -1 | 0 | 1;
+
+    return match1 ? -1 : match2 ? 1 : fallback;
+  }
+
+  return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
+}
+
 export class Lima implements Dependency, GitHubDependency {
   name = 'lima';
   githubOwner = 'rancher-sandbox';
@@ -102,31 +136,7 @@ export class Lima implements Dependency, GitHubDependency {
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semver1 = semver.coerce(version1);
-    const semver2 = semver.coerce(version2);
-
-    if (semver1 === null || semver2 === null) {
-      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
-    }
-
-    if (semver1.raw !== semver2.raw) {
-      return semver.rcompare(semver1, semver2);
-    }
-
-    // If the two versions are equal, assume we have different build suffixes
-    // e.g. v0.19.0.rd5 vs v0.19.0.rd6
-    // If the versions don't look like the above, just bail.
-    const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
-    const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
-
-    if (!match1) {
-      throw new Error(`${ version1 } does not have .rd? suffix`);
-    }
-    if (!match2) {
-      throw new Error(`${ version2 } does not have .rd? suffix`);
-    }
-
-    return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
+    return rcompareVersions(version1, version2);
   }
 }
 
@@ -195,7 +205,6 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
   name = 'alpineLimaISO';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'alpine-lima';
-  isoVersionRegex = /^[0-9]+\.[0-9]+\.[0-9]+\.rd[0-9]+$/;
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
@@ -247,54 +256,7 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
     return `v${ version.isoVersion }`;
   }
 
-  versionToSemver(version: AlpineLimaISOVersion): string {
-    const isoVersion = version.isoVersion;
-    const isoVersionParts = isoVersion.split('.');
-
-    if (!this.isoVersionRegex.test(isoVersion)) {
-      throw new Error(`${ this.name }: version ${ version.isoVersion } is not in expected format ${ this.isoVersionRegex }`);
-    }
-    const normalVersion = isoVersionParts.slice(0, 3).join('.');
-    const prereleaseVersion = isoVersionParts[3].replace('rd', '');
-
-    return `${ normalVersion }-${ prereleaseVersion }`;
-  }
-
   rcompareVersions(version1: AlpineLimaISOVersion, version2: AlpineLimaISOVersion): -1 | 0 | 1 {
-    let semverVersion1 = '0.0.0';
-    let invalidVersion1 = false;
-    let semverVersion2 = '0.0.0';
-    let invalidVersion2 = false;
-
-    try {
-      semverVersion1 = this.versionToSemver(version1);
-    } catch (ex) {
-      invalidVersion1 = true;
-    }
-    try {
-      semverVersion2 = this.versionToSemver(version2);
-    } catch (ex) {
-      invalidVersion2 = true;
-    }
-    if (invalidVersion1 || invalidVersion2) {
-      if (!invalidVersion1) {
-        return -1; // Version 1 is valid, version 2 is not; count 1 as higher.
-      }
-      if (!invalidVersion2) {
-        return 1; // Version 2 is valid, version 1 is not; count 2 as higher.
-      }
-
-      // Neither version is valid, return something consistent.
-      if (version1.isoVersion > version2.isoVersion) {
-        return -1;
-      }
-      if (version2.isoVersion > version1.isoVersion) {
-        return 1;
-      }
-
-      return 0;
-    }
-
-    return semver.rcompare(semverVersion1, semverVersion2);
+    return rcompareVersions(version1.isoVersion, version2.isoVersion);
   }
 }
