@@ -105,6 +105,9 @@ join_map() {
     echo "$result"
 }
 
+# Run jq on the current $output
+# Note that when capturing $output, you may need to use `run --separate-stderr`
+# to avoid also capturing stderr and ending up with invalid JSON.
 jq_output() {
     local json=$output
     run jq --raw-output "$@" <<<"${json}"
