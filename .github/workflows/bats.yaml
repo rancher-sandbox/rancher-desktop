@@ -52,6 +52,10 @@ jobs:
           scripts/install-latest-ci.sh
           .github/workflows/bats/get-tests.py
 
+    - id: repo
+      name: Calculate short repository
+      run: echo "repo=${GITHUB_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
+
     - name: Fetch tests
       run: |
         : ${OWNER:=$GH_OWNER}
@@ -62,9 +66,9 @@ jobs:
         "scripts/install-latest-ci.sh"
       env:
         GH_TOKEN:     ${{ github.token }}
-        OWNER:        ${{ inputs.owner }}
-        REPO:         ${{ inputs.repo }}
-        BRANCH:       ${{ inputs.branch }}
+        OWNER:        ${{ inputs.owner || github.repository_owner }}
+        REPO:         ${{ inputs.repo || steps.repo.outputs.repo }}
+        BRANCH:       ${{ inputs.branch || github.ref_name }}
         ID:           ${{ inputs.package-id }}
         BATS_DIR:     ${{ github.workspace }}/bats
         SKIP_INSTALL: true
@@ -79,6 +83,7 @@ jobs:
         ENGINES: ${{ inputs.engines }}
       working-directory: bats/tests
     outputs:
+      repo: ${{ steps.repo.outputs.repo }}
       tests: ${{ steps.calculate.outputs.tests }}
 
   bats:
@@ -109,9 +114,9 @@ jobs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
-        OWNER:    ${{ inputs.owner }}
-        REPO:     ${{ inputs.repo }}
-        BRANCH:   ${{ inputs.branch }}
+        OWNER:    ${{ inputs.owner || github.repository_owner }}
+        REPO:     ${{ inputs.repo || needs.get-tests.outputs.repo }}
+        BRANCH:   ${{ inputs.branch || github.ref_name }}
         ID:       ${{ inputs.package-id }}
         BATS_DIR: ${{ github.workspace }}/bats
         ZIP_NAME: ${{ github.workspace }}/version.txt

@@ -13,10 +13,11 @@ import json
 from operator import attrgetter
 import os
 import sys
-from typing import Iterator, List, Literal, Protocol, Union
+from typing import Iterator, List, Literal, get_args
 
 Platforms = Literal["linux", "mac", "win"]
 Hosts = Literal["ubuntu-latest", "macos-12", "windows-latest"]
+Engines = Literal["containerd", "moby"]
 
 @dataclasses.dataclass
 class Result:
@@ -26,7 +27,7 @@ class Result:
     # The name of the test; either a directory or a file name (without extension)
     name: str
     host: Hosts
-    engine: Literal["containerd", "moby"]
+    engine: Engines
 
     key = staticmethod(attrgetter("name", "host", "engine"))
 
@@ -60,9 +61,9 @@ def skip_test(test: Result) -> bool:
 results: List[Result] = list()
 errors: bool = False
 
-for test in os.environ.get("TESTS", "*").split():
-    platforms: List[Platforms] = os.environ.get("PLATFORMS", "linux mac").split()
-    engines: List[Literal["containerd", "moby"]] = os.environ.get("ENGINES", "contained moby").split()
+for test in (os.environ.get("TESTS", None) or "*").split():
+    platforms: List[Platforms] = os.environ.get("PLATFORMS", "").split() or get_args(Platforms)
+    engines: List[Engines] = os.environ.get("ENGINES", "").split() or get_args(Engines)
     for platform in platforms:
       host: Hosts = {
          "linux": "ubuntu-latest",
