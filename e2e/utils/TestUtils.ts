@@ -352,10 +352,15 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
 }
 
 export interface startRancherDesktopOptions {
+  /** Whether to use the mock backend; defaults to true. */
   mock?: boolean;
+  /** The environment to use. */
   env?: Record<string, string>;
+  /** Set to false if we want to see the first-run dialog (defaults to true). */
   noModalDialogs?: boolean;
+  /** Maximum time in milliseconds to wait for the app to launch. */
   timeout?: number;
+  /** The name to use for the log; defaults to the test name. */
   logName?: string;
 }
 
@@ -363,11 +368,7 @@ export interface startRancherDesktopOptions {
  * Run Rancher Desktop; return promise that resolves to commonly-used
  * playwright objects when it has started.
  * @param testPath The path to the test file.
- * @param options with sub-options:
- *  options.tracing Whether to start tracing (defaults to true).
- *  options.mock Whether to use the mock backend (defaults to true).
- *  options.env The environment to use
- *  options.noModalDialogs Set to false if we want to see the first-run dialog (defaults to true).
+ * @param options Additional options; see type definition for details.
  */
 export async function startRancherDesktop(testPath: string, options?: startRancherDesktopOptions): Promise<ElectronApplication> {
   testInfo = { testPath, startTime: Date.now() };
@@ -378,7 +379,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
     // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
     '--disable-dev-shm-usage',
   ];
-  const launchOptions: Record<string, any> = {
+  const launchOptions: Parameters<typeof _electron.launch>[0] = {
     args,
     env: {
       ...process.env,
@@ -388,7 +389,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
     },
   };
 
-  if (options?.noModalDialogs ?? false) {
+  if (options?.noModalDialogs ?? true) {
     args.push('--no-modal-dialogs');
   }
   if (options?.timeout) {
@@ -401,7 +402,7 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
   return electronApp;
 }
 
-export async function startSlowerDesktop(filename: string, defaultSettings: RecursivePartial<Settings> = {}): Promise<Array<ElectronApplication | Page>> {
+export async function startSlowerDesktop(filename: string, defaultSettings: RecursivePartial<Settings> = {}): Promise<[ElectronApplication, Page]> {
   const launchOptions: startRancherDesktopOptions = { mock: false };
 
   createDefaultSettings(defaultSettings);
