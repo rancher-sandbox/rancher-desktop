@@ -19,14 +19,14 @@ import { windowMapping } from '@pkg/window';
 const console = Logging.networking;
 
 export default async function setupNetworking() {
-  const httpsOptions = { ...https.globalAgent.options };
+  const agentOptions = { ...https.globalAgent.options };
 
-  if (!Array.isArray(httpsOptions.ca)) {
-    httpsOptions.ca = httpsOptions.ca ? [httpsOptions.ca] : [];
+  if (!Array.isArray(agentOptions.ca)) {
+    agentOptions.ca = agentOptions.ca ? [agentOptions.ca] : [];
   }
   try {
     for await (const cert of getSystemCertificates()) {
-      httpsOptions.ca.push(cert);
+      agentOptions.ca.push(cert);
     }
   } catch (ex) {
     console.error('Error getting system certificates:', ex);
@@ -34,8 +34,8 @@ export default async function setupNetworking() {
   }
 
   const proxyAgent = new ElectronProxyAgent({
-    httpAgent:  new http.Agent(httpsOptions),
-    httpsAgent: new https.Agent(httpsOptions),
+    httpAgent:  new http.Agent(agentOptions),
+    httpsAgent: new https.Agent(agentOptions),
   });
 
   http.globalAgent = proxyAgent;
