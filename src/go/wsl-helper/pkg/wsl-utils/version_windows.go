@@ -76,6 +76,9 @@ const (
 	// wslExitNotInstalled is the exit code from `wsl --status` when WSL is not
 	// installed.
 	wslExitNotInstalled = 50
+	// wslExitNoKernel is the exit code from `wsl --status` when the in-box WSL is
+	// installed, but the kernel is missing.
+	wslExitNoKernel = 0xFFFFFE44
 	// wslExitVersion is the expected exit code from `wsl --version`.
 	wslExitVersion = 128
 )
@@ -371,6 +374,11 @@ func getInboxWSLInfo(ctx context.Context, log *logrus.Entry) (bool, *PackageVers
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) && exitErr.ExitCode() == wslExitNotInstalled {
 		// When WSL is not installed, we seem to get exit code 50
+	} else if errors.As(err, &exitErr) && exitErr.ExitCode() == wslExitNoKernel {
+		// When WSL is installed but the kernel is missing, we seem to get exit code
+		// -444 ("The WSL 2 kernel file is not found...")
+		coreInstalled = true
+		return coreInstalled, nil, errors.Join(allErrors...)
 	} else if err != nil {
 		log.WithError(err).Trace("wsl.exe --status exited")
 		allErrors = append(allErrors, err)
