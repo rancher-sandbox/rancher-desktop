@@ -24,6 +24,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -87,7 +88,7 @@ func main() {
 		go func(conn net.Conn) {
 			defer wg.Done()
 			defer conn.Close()
-			pipe(conn, upstreamAddr)
+			utils.Pipe(conn, upstreamAddr)
 		}(conn)
 	}
 }
