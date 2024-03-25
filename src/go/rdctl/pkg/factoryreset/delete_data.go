@@ -255,7 +255,7 @@ func clearDockerContext() error {
 	dockerConfigContents := make(dockerConfigType)
 	contents, err := os.ReadFile(configFilePath)
 	if err != nil {
-		if errors.Is(err, syscall.ENOENT) {
+		if os.IsNotExist(err) {
 			// Nothing left to do here, since the file doesn't exist
 			return nil
 		}
