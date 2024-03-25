@@ -8,6 +8,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
+	github.com/rancher-sandbox/rancher-desktop-agent v0.3.19
 	github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
@@ -21,6 +22,7 @@ require (
 
 require (
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20220504074936-1ca156eafb9f // indirect
 	github.com/miekg/dns v1.1.55 // indirect
@@ -30,7 +32,7 @@ require (
 	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	inet.af/tcpproxy v0.0.0-20220326234310-be3ee21c9fa0 // indirect
 )
