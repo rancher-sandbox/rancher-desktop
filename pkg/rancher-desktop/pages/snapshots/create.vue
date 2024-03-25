@@ -1,8 +1,12 @@
 <script lang="ts">
 
-import { Banner, LabeledInput, TextAreaAutoGrow } from '@rancher/components';
+import { Banner, LabeledInput } from '@rancher/components';
 import dayjs from 'dayjs';
 import Vue from 'vue';
+import { VAceEditor } from 'vue2.7-ace-editor';
+import 'ace-builds/src-noconflict/mode-markdown';
+import 'ace-builds/src-noconflict/theme-solarized_dark';
+import 'ace-builds/src-noconflict/theme-chrome';
 import { mapGetters } from 'vuex';
 
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
@@ -18,7 +22,7 @@ export default Vue.extend({
   components: {
     Banner,
     LabeledInput,
-    TextAreaAutoGrow,
+    editor: VAceEditor,
   },
 
   data() {
@@ -142,12 +146,11 @@ export default Vue.extend({
       </div>
       <div class="field description-field">
         <label>{{ t('snapshots.create.description.label') }}</label>
-        <TextAreaAutoGrow
-          ref="descriptionInput"
-          v-model="description"
-          data-test="createSnapshotDescInput"
-          class="input"
-          :disabled="creating"
+        <editor
+          :value="description"
+          lang="markdown"
+          theme="solarized_dark"
+          style="height: 300px"
         />
       </div>
       <div class="actions">
