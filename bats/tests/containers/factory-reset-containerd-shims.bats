@@ -20,8 +20,8 @@ local_teardown_file() {
 }
 
 @test 'factory reset will not remove any shims' {
-    mkdir -p "$PATH_CONTAINERD_SHIMS"
-    touch "$BOGUS_SHIM"
+    assert_not_exists "$PATH_CONTAINERD_SHIMS"
+    create_file "$BOGUS_SHIM" <<<''
     factory_reset
     assert_exists "$BOGUS_SHIM"
     assert_exists "$PATH_APP_HOME"
