@@ -756,6 +756,7 @@ tmppath
 tmutil
 togglefullscreen
 tonistiigi
+Toolset
 topmenu
 TQF
 Tracef

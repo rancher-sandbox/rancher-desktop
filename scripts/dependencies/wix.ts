@@ -3,7 +3,7 @@ import path from 'path';
 
 import semver from 'semver';
 
-import { Dependency, DownloadContext, GitHubDependency, getPublishedReleaseTagNames } from '../lib/dependencies';
+import { Dependency, DownloadContext, GitHubDependency, getOctokit } from '../lib/dependencies';
 import { download } from '../lib/download';
 
 import { simpleSpawn } from 'scripts/simple_process';
@@ -24,10 +24,17 @@ export class Wix implements Dependency, GitHubDependency {
     // WiX doesn't appear to believe in checksum files...
 
     const tagName = this.versionToTagName(context.versions.wix);
+    const version = semver.parse(context.versions.wix);
+
+    if (!version) {
+      throw new Error(`Could not parse WiX version ${ context.versions.wix }`);
+    }
+
     const hostDir = path.join(context.resourcesDir, 'host');
     const wixDir = path.join(hostDir, 'wix');
     const archivePath = path.join(hostDir, `${ tagName }.zip`);
-    const archiveName = `wix${ context.versions.wix }-binaries.zip`;
+    // The archive name never includes the patch version.
+    const archiveName = `wix${ version.major }${ version.minor }-binaries.zip`;
     const url = `https://github.com/wixtoolset/wix3/releases/download/${ tagName }/${ archiveName }`;
 
     await fs.promises.mkdir(wixDir, { recursive: true });
@@ -35,36 +42,28 @@ export class Wix implements Dependency, GitHubDependency {
     await simpleSpawn('unzip', ['-q', '-o', archivePath, '-d', wixDir], { cwd: wixDir });
   }
 
-  versionToTagName(version: string): string {
-    return `wix${ version }rtm`;
+  versionToTagName(versionString: string): string {
+    const version = semver.parse(versionString);
+
+    if (!version) {
+      throw new Error(`Could not parse WiX version ${ versionString }`);
+    }
+
+    return `wix${ version.major }${ version.minor }${ version.patch || '' }rtm`;
   }
 
   async getAvailableVersions(): Promise<string[]> {
-    const tags = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+    // WiX tag names are `wix${ major }${ minor }${ patch if not zero }rtm` with
+    // no separation between fields; so we have to dig the version number out
+    // of the release title instead.
+    const { data: releases } = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
+    const publishedReleases = releases.filter(release => release.published_at);
+    const versions = publishedReleases.map(r => (/^WiX Toolset (v\d+\.\d+\.\d+)/.exec(r.name ?? '') ?? [])[1]);
 
-    return tags.map(t => t.replace(/^wix/, '')).map(t => t.replace(/rtm$/, ''));
-  }
-
-  private wixVersionToSemver(version: string): string {
-    let normalized = version;
-
-    if (normalized.length === 3) {
-      normalized = `${ normalized }0`;
-    }
-    if (normalized.length !== 4) {
-      throw new Error(`Wix version "${ version }" is not in a recognized format`);
-    }
-    const major = Number(normalized[0]);
-    const minor = Number(normalized.slice(1, 3));
-    const patch = Number(normalized[3]);
-
-    return `${ major }.${ minor }.${ patch }`;
+    return versions.filter(version => version);
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semverVersion1 = this.wixVersionToSemver(version1);
-    const semverVersion2 = this.wixVersionToSemver(version2);
-
-    return semver.rcompare(semverVersion1, semverVersion2);
+    return semver.rcompare(version1, version2);
   }
 }
