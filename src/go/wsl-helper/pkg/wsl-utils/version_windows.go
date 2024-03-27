@@ -101,7 +101,7 @@ var (
 	kUpgradeCodeOverride = &struct{}{}
 	// MinimumKernelVersion is the minimum WSL kernel version required to not be
 	// considered outdated.
-	MinimumKernelVersion = PackageVersion{Major: 5, Minor: 15}
+	MinimumKernelVersion = PackageVersion{Major: 5, Minor: 0}
 )
 
 // errorFromWin32 wraps a Win32 return value into an error, with a message in
