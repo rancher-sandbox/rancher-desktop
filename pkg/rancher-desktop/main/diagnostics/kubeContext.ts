@@ -22,7 +22,7 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
   async check(): Promise<DiagnosticsCheckerResult> {
     const kubectl = path.join(paths.resources, process.platform, 'bin', 'kubectl');
     const { stdout } = await spawnFile(kubectl, ['config', 'view', '--minify', '--output=json'], {
-      stdio:    ['ignore', 'pipe', 'ignore'],
+      stdio:    ['ignore', 'pipe', 'pipe'],
       encoding: 'utf-8',
     });
     const config = JSON.parse(stdout);

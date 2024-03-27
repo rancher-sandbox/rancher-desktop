@@ -852,6 +852,7 @@ XPOST
 Xrandr
 XVar
 xvfb
+xwininfo
 xzf
 yac
 yarker

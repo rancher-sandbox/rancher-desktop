@@ -11,19 +11,20 @@ import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { clearUserProfile } from '../e2e/utils/ProfileUtils';
 import {
-  createDefaultSettings, setUserProfile, reportAsset, retry, teardown, tool,
+  createDefaultSettings, setUserProfile, retry, teardown, tool, startRancherDesktop, reportAsset,
 } from '../e2e/utils/TestUtils';
 
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
+import { Log } from '@pkg/utils/logging';
 
-import type { ElectronApplication, BrowserContext, Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 const isWin = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
+const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
-  let context: BrowserContext;
   let page: Page;
   let navPage: NavPage;
   let screenshot: MainWindowScreenshots;
@@ -44,25 +45,11 @@ test.describe.serial('Main App Test', () => {
       {},
     );
 
-    electronApp = await _electron.launch({
-      args: [
-        path.join(__dirname, '../'),
-        '--disable-gpu',
-        '--whitelisted-ips=',
-        '--disable-dev-shm-usage',
-        '--no-modal-dialogs',
-      ],
-      env: {
-        ...process.env,
-        RD_LOGS_DIR: reportAsset(__filename, 'log'),
-      },
-    });
-    context = electronApp.context();
+    electronApp = await startRancherDesktop(__filename, { mock: false });
 
-    await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
     navPage = new NavPage(page);
-    screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main` });
+    screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main`, log: console });
 
     await page.emulateMedia({ colorScheme });
 
@@ -204,7 +191,7 @@ test.describe.serial('Main App Test', () => {
       preferencesPage = electronApp.windows()[1];
       await preferencesPage.emulateMedia({ colorScheme });
       e2ePreferences = new PreferencesPage(preferencesPage);
-      prefScreenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+      prefScreenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences`, log: console });
     });
 
     test.afterAll(async({ colorScheme }) => {
@@ -358,7 +345,8 @@ test.describe.serial('Main App Test', () => {
       preferencesPage = electronApp.windows()[1];
       await preferencesPage.emulateMedia({ colorScheme });
       e2ePreferences = new PreferencesPage(preferencesPage);
-      prefScreenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences, { directory: `${ colorScheme }/preferences` });
+      prefScreenshot = new PreferencesScreenshots(preferencesPage, e2ePreferences,
+        { directory: `${ colorScheme }/preferences`, log: console });
     });
 
     test.afterAll(async({ colorScheme }) => {
