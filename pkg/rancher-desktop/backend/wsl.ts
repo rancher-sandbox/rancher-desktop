@@ -119,14 +119,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ gatewayIP }:${ k8sPort }`;
 
           args.push('--port-forward', k8sPortForwarding);
-
-          if (this.cfg?.kubernetes.options.traefik) {
-            const ingressIP = this.cfg?.kubernetes.ingress.localhostOnly ? '127.0.0.1' : '0.0.0.0';
-
-            for (const port of [80, 443]) {
-              args.push('--port-forward', `${ ingressIP }:${ port }=${ gatewayIP }:${ port }`);
-            }
-          }
         }
 
         return childProcess.spawn(exe, args, {
