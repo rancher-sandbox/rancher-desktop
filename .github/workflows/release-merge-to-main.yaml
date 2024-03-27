@@ -1,0 +1,52 @@
+name: "Release: Merge to main"
+
+on:
+  release:
+    types:
+    - created
+    - published
+    - released
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  check-for-token:
+    outputs:
+      has-token: ${{ steps.calc.outputs.HAS_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+    - id: calc
+      run: echo "HAS_SECRET=${HAS_SECRET}" >> "${GITHUB_OUTPUT}"
+      env:
+        HAS_SECRET: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+
+  create-pr:
+    needs: check-for-token
+    if: needs.check-for-token.outputs.has-token == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: package.json
+    - run: corepack enable yarn # spellcheck-ignore-line
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: package.json
+        cache: yarn
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: src/go/rdctl/go.mod
+        cache-dependency-path: src/go/**/go.sum
+
+    - run: yarn install --frozen-lockfile
+
+    - run: node scripts/ts-wrapper.js scripts/release-merge-to-main.ts
+      env:
+        GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
