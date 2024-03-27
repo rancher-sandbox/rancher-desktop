@@ -12,6 +12,7 @@ import { Page } from 'playwright-core';
 import plist from 'plist';
 
 import { defaultSettings, LockedSettingsType, Settings } from '@pkg/config/settings';
+import { getDefaultMemory } from '@pkg/config/settingsImpl';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
@@ -123,6 +124,7 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
       pathManagementStrategy: PathManagementStrategy.Manual,
       startInBackground:      false,
     },
+    virtualMachine: { memoryInGB: getDefaultMemory() },
   };
   const settingsData: Settings = _.merge({}, defaultSettings, defaultOverrides, overrides);
 
