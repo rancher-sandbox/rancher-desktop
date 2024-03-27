@@ -61,13 +61,10 @@ test.describe.serial('Extensions', () => {
   }
 
   test.beforeAll(async() => {
-    const result = await startSlowerDesktop(__filename, {
+    [app, page] = await startSlowerDesktop(__filename, {
       containerEngine: { name: ContainerEngine.MOBY },
       kubernetes:      { enabled: false },
     });
-
-    app = result[0] as ElectronApplication;
-    page = result[1] as Page;
   });
 
   test.afterAll(() => teardown(app, __filename));

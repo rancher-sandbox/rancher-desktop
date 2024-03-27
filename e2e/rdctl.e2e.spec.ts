@@ -116,10 +116,7 @@ test.describe('Command server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
-    const result = await startSlowerDesktop(__filename, { kubernetes: { enabled: true } });
-
-    electronApp = result[0] as ElectronApplication;
-    page = result[1] as Page;
+    [electronApp, page] = await startSlowerDesktop(__filename, { kubernetes: { enabled: true } });
   });
 
   test.afterAll(() => teardown(electronApp, __filename));

@@ -225,10 +225,7 @@ describeWithCreds('Credentials server', () => {
 
   test.beforeAll(async() => {
     await tool('rdctl', 'factory-reset', '--verbose');
-    const result = await startSlowerDesktop(__filename, { kubernetes: { enabled: false } });
-
-    electronApp = result[0] as ElectronApplication;
-    page = result[1] as Page;
+    [electronApp, page] = await startSlowerDesktop(__filename, { kubernetes: { enabled: false } });
   });
 
   test.afterAll(async() => {

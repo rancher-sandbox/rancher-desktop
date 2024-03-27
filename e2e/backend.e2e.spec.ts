@@ -21,10 +21,7 @@ test.describe.serial('KubernetesBackend', () => {
   let page: Page;
 
   test.beforeAll(async() => {
-    const result = await startSlowerDesktop(__filename);
-
-    electronApp = result[0] as ElectronApplication;
-    page = result[1] as Page;
+    [electronApp, page] = await startSlowerDesktop(__filename);
   });
 
   test.afterAll(() => teardown(electronApp, __filename));
