@@ -7,6 +7,8 @@ local_setup() {
 
 @test 'factory reset' {
     factory_reset
+    # WSL sometimes ends up not seeing deletes from Windows; force it here.
+    rm -rf "$PATH_CONFIG" "$ROAMING_HOME"
 }
 
 @test 'start app, create a setting, and move settings to roaming' {
@@ -15,8 +17,8 @@ local_setup() {
 
     rdctl api -X PUT /settings --body '{ "version": 9, "WSL": {"integrations": { "beaker" : true }}}'
     rdctl shutdown
-    mkdir -p "$ROAMING_HOME"
-    mv "$PATH_CONFIG_FILE" "$ROAMING_HOME/settings.json"
+    create_file "$ROAMING_HOME/settings.json" <"$PATH_CONFIG_FILE"
+    rm "$PATH_CONFIG_FILE"
 }
 
 @test 'restart app, verify settings has been migrated' {
