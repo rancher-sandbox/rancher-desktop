@@ -649,7 +649,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * - Figures out what the /mnt/DRIVE-LETTER path should be
    */
   async wslify(windowsPath: string, distro?: string): Promise<string> {
-    return (await this.captureCommand({ distro }, 'wslpath', '-a', '-u', windowsPath)).trimEnd();
+    const result = (await this.captureCommand({ distro }, 'wslpath', '-a', '-u', windowsPath)).trimEnd();
+
+    if (!result) {
+      console.log(`Possible problem in wslify: wslpath ${ windowsPath } => empty string`);
+    }
+
+    return result;
   }
 
   protected async killStaleProcesses() {
@@ -1055,11 +1061,19 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   protected async captureCommand(...command: string[]): Promise<string>;
   protected async captureCommand(options: wslExecOptions, ...command: string[]): Promise<string>;
   protected async captureCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<string> {
-    if (typeof optionsOrArg === 'string') {
-      return await this.execCommand({ capture: true }, optionsOrArg, ...command);
-    }
+    let result: string;
+    let debugArg: string;
 
-    return await this.execCommand({ ...optionsOrArg, capture: true }, ...command);
+    if (typeof optionsOrArg === 'string') {
+      result = await this.execCommand({ capture: true }, optionsOrArg, ...command);
+      debugArg = optionsOrArg;
+    } else {
+      result = await this.execCommand({ ...optionsOrArg, capture: true }, ...command);
+      debugArg = JSON.stringify(optionsOrArg);
+    }
+    console.debug(`captureCommand:\ncommand: (${ debugArg } ${ command.map(s => `'${ s }'`).join(' ') })\noutput: <${ result }>`);
+
+    return result;
   }
 
   /** Get the IPv4 address of the VM, assuming it's already up. */
