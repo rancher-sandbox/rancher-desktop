@@ -6,7 +6,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { findHomeDir, KubeConfig } from '@kubernetes/client-node';
+import { findHomeDir, Cluster, KubeConfig } from '@kubernetes/client-node';
 import {
   ActionOnInvalid,
   ConfigOptions,
@@ -20,13 +20,7 @@ import yaml from 'yaml';
 
 import { executable } from '@pkg/utils/resources';
 
-interface Cluster {
-  readonly name: string;
-  readonly caData?: string;
-  caFile?: string;
-  readonly server: string;
-  readonly skipTLSVerify: boolean;
-  readonly tlsServerName?: string;
+interface ClusterWithProxy extends Cluster {
   readonly proxyUrl?: string;
 }
 
@@ -39,13 +33,13 @@ export function loadFromString(kubeConfig : KubeConfig, config: string, opts?: P
   kubeConfig.currentContext = obj['current-context'];
 }
 
-function newClusters(a: any, opts?: Partial<ConfigOptions>): Cluster[] {
-  const options = Object.assign({ onInvalidEntry: ActionOnInvalid.THROW }, opts || {});
+function newClusters(clusters: any, opts?: Partial<ConfigOptions>): Cluster[] {
+  const onInvalidEntry = opts?.onInvalidEntry ?? ActionOnInvalid.THROW;
 
-  return _.compact(_.map(a, clusterIterator(options.onInvalidEntry)));
+  return _.compact(_.map(clusters, clusterIterator(onInvalidEntry)));
 }
 
-function exportCluster(cluster: Cluster): any {
+function exportCluster(cluster: ClusterWithProxy): any {
   return {
     name:    cluster.name,
     cluster: {
@@ -60,7 +54,7 @@ function exportCluster(cluster: Cluster): any {
 }
 
 function clusterIterator(onInvalidEntry: ActionOnInvalid): _.ListIterator<any, Cluster | null> {
-  return (elt: any, i: number, list: _.List<any>): Cluster | null => {
+  return (elt: any, i: number, list: _.List<any>): ClusterWithProxy | null => {
     try {
       if (!elt.name) {
         throw new Error(`clusters[${ i }].name is missing`);
