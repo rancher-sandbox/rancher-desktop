@@ -117,10 +117,25 @@ async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['item
       if (retries > 2) {
         throw error;
       }
+
+  const results: typeof response.data.items = [];
+
+  for (const item of response.data.items) {
+    if (!item.pull_request) {
+      continue;
     }
+    const { data: pr } = await getOctokit().rest.pulls.get({
+      owner: GITHUB_OWNER, repo: GITHUB_REPO, pull_number: item.number,
+    });
+
+    if (pr.head.repo && pr.head.repo.full_name !== `${ GITHUB_OWNER }/${ GITHUB_REPO }`) {
+      // Ignore cross-repo PRs; they're not automatically generated.
+      continue;
+    }
+    results.push(item);
   }
 
-  return response.data.items;
+  return results;
 }
 
 async function determineUpdatesAvailable(): Promise<VersionComparison[]> {
