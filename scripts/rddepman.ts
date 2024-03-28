@@ -105,18 +105,7 @@ type PRSearchFn = ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>
 
 async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['items']> {
   const queryString = `type:pr repo:${ GITHUB_OWNER }/${ GITHUB_REPO } head:rddepman/${ name } sort:updated`;
-  let response: Awaited<PRSearchFn>;
-  let retries = 0;
-
-  while (true) {
-    try {
-      response = await getOctokit().rest.search.issuesAndPullRequests({ q: queryString });
-      break;
-    } catch (error: any) {
-      retries += 1;
-      if (retries > 2) {
-        throw error;
-      }
+  const response = await getOctokit().rest.search.issuesAndPullRequests({ q: queryString });
 
   const results: typeof response.data.items = [];
 
