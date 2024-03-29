@@ -61,7 +61,7 @@
     "crypto-browserify": "3.12.0",
     "dayjs": "1.11.10",
     "dompurify": "3.0.8",
-    "electron-updater": "6.1.7",
+    "electron-updater": "6.1.8",
     "express": "4.18.2",
     "fs-extra": "11.2.0",
     "http-proxy-agent": "7.0.0",
