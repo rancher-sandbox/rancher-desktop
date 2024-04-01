@@ -45,7 +45,7 @@ load '../helpers/load'
     if is_windows; then
         run powershell.exe -c "reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v RancherDesktop"
         assert_success
-        assert_line --index 2 --partial "\Rancher Desktop\Rancher Desktop.exe"
+        assert_line --index 2 --partial "\Rancher Desktop.exe"
     fi
 }
 
