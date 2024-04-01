@@ -256,14 +256,19 @@ count_setting_segments() {
 
 # Usage: profile_jq $expr
 #
-# Applies $expr against the profile and updates it in-places.
+# Applies $expr against the profile and update it in-place.
 profile_jq() {
     local expr=$1
     local filename
     filename=$(profile_location)
-    # Need to use a temp file to avoid truncating the file before it has been read.
-    jq "$expr" "$filename" | profile_cat "${filename}.tmp"
-    profile_sudo mv "${filename}.tmp" "$filename"
+    if [ -f "$filename" ]; then
+        # Need to use a temp file to avoid truncating the file before it has been read.
+        jq "$expr" "$filename" | profile_cat "${filename}.tmp"
+        profile_sudo mv "${filename}.tmp" "$filename"
+    else
+        # The profile doesn't exist yet; create a new file.
+        echo '{}' | jq "$expr" | profile_cat "$filename"
+    fi
 }
 
 # Usage: profile_plutil $action $options
