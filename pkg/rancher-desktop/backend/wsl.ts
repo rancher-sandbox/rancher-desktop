@@ -1707,7 +1707,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.resolverHostProcess.stop();
           await this.invokePrivilegedService('stop');
         }
-        this.process?.kill('SIGTERM');
+        const initProcess = this.process;
+
+        this.process = null;
+        initProcess?.kill('SIGTERM');
         await this.hostSwitchProcess.stop();
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
@@ -1754,11 +1757,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const proxy = newConfig.experimental.virtualMachine.proxy;
 
     await this.writeProxySettings(proxy);
-    if (proxy.enabled && proxy.address && proxy.port) {
-      await this.execService('moproxy', 'reload', '--ifstarted');
-      await this.startService('moproxy');
-    } else {
-      await this.stopService('moproxy');
+    if (this.currentAction === Action.NONE && this.process) {
+      if (proxy.enabled && proxy.address && proxy.port) {
+        await this.execService('moproxy', 'reload', '--ifstarted');
+        await this.startService('moproxy');
+      } else {
+        await this.stopService('moproxy');
+      }
     }
   }
 
