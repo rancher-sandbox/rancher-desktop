@@ -52,7 +52,7 @@ const (
 )
 
 func main() {
-	flag.BoolVar(&debug, "debug", true, "enable debug flag")
+	flag.BoolVar(&debug, "debug", false, "enable debug flag")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
 	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
 		"MAC address that is associated to the tap interface")
