@@ -30,7 +30,7 @@ local_teardown_file() {
 @test 'restart application with version 11 locked profile' {
     factory_reset
     start_container_engine
-    wait_for_container_engine
+    wait_for_backend
 }
 
 @test 'WASM mode is now unlocked' {

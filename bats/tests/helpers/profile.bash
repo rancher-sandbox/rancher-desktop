@@ -130,7 +130,8 @@ export_profile() {
             cp "$filename" "${export}.${filename##*.}"
             ;;
         windows)
-            profile_reg export "${export}.reg" /y
+            export="$(wslpath -w "${export}.reg")"
+            profile_reg export "${export}" /y
             ;;
         esac
     fi
