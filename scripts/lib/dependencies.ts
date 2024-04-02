@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import { ThrottlingOptions } from '@octokit/plugin-throttling';
 import { Octokit } from 'octokit';
 import semver from 'semver';
 import YAML from 'yaml';
@@ -104,7 +105,37 @@ export function getOctokit() {
     throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
   }
 
-  return new Octokit({ auth: personalAccessToken });
+  function makeLimitHandler(type: string, maxRetries: number): NonNullable<ThrottlingOptions['onSecondaryRateLimit']> {
+    return (retryAfter, options, octokit, retryCount) => {
+      function getOpt(prop: string) {
+        return options && (prop in options) ? (options as any)[prop] : `(unknown ${ prop })`;
+      }
+
+      let message = `Request ${ type } limit exhausted for request`;
+      let retry = false;
+
+      message += ` ${ getOpt('method') } ${ getOpt('url') }`;
+
+      if (retryCount < maxRetries) {
+        retry = true;
+        message += ` (retrying after ${ retryAfter } seconds: ${ retryCount }/${ maxRetries } retries)`;
+      } else {
+        message += ` (not retrying after ${ maxRetries } retries)`;
+      }
+
+      octokit.log.warn(message);
+
+      return retry;
+    };
+  }
+
+  return new Octokit({
+    auth:     personalAccessToken,
+    throttle: {
+      onRateLimit:          makeLimitHandler('primary', 3),
+      onSecondaryRateLimit: makeLimitHandler('secondary', 3),
+    },
+  });
 }
 
 export type IssueOrPullRequest = Awaited<ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>>['data']['items'][0];
