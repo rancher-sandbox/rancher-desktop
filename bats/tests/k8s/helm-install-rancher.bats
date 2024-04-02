@@ -18,6 +18,7 @@ get_host() {
         local LB_IP
         local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
         LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
+        assert [ -n "$LB_IP" ] || return
         echo "$LB_IP.sslip.io"
     else
         echo "localhost"
@@ -31,11 +32,14 @@ deploy_rancher() {
         --set installCRDs=true \
         --set "extraArgs[0]=--enable-certificate-owner-ref=true" \
         --create-namespace
+
+    local host
+    host=$(get_host) || return
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --version "${RD_RANCHER_IMAGE_TAG#v}" \
         --namespace cattle-system \
-        --set hostname="$(get_host)" \
+        --set hostname="$host" \
         --wait \
         --timeout=10m \
         --create-namespace
