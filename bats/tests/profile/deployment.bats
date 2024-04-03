@@ -78,6 +78,9 @@ verify_settings() {
 }
 
 install_extensions() {
+    # Extension install doesn't work until startup is fully complete.
+    wait_for_backend
+
     run rdctl extension install "$FORBIDDEN_EXTENSION"
     "${refute}_success"
 
