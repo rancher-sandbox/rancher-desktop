@@ -1,0 +1,156 @@
+name: Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      mock_version:
+        description: Mock Version
+        type: string
+        required: true
+        default: '1.0.0'
+
+jobs:
+  screenshot:
+    name: Take screenshot
+    concurrency:
+      group: "${{ github.workflow_ref }} (${{ matrix.platform }})"
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - platform: mac
+          runs-on: macos-12
+        - platform: win
+          runs-on: windows-latest
+        - platform: linux
+          runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+
+    - name: "macOS: Install GetWindowID"
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install smokris/getwindowid/getwindowid
+
+    - name: "Linux: Enable KVM access"
+      if: runner.os == 'Linux'
+      run: sudo chmod a+rwx /dev/kvm
+    - name: "Linux: Install Tools"
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install graphicsmagick x11-utils mutter # spellcheck-ignore-line
+    - name: "Linux: Initialize pass"
+      if: runner.os == 'Linux'
+      run: |
+        # Configure the agent to allow default passwords
+        HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
+        mkdir -p "${HOMEDIR}"
+        chmod 0700 "${HOMEDIR}"
+        echo "allow-preset-passphrase" >> "${HOMEDIR}/gpg-agent.conf"
+
+        # Create a GPG key
+        gpg --quick-generate-key --yes --batch --passphrase '' \
+          user@rancher-desktop.test default \
+          default never
+
+        # Get info about the newly created key
+        DATA="$(gpg --batch --with-colons --with-keygrip --list-secret-keys)"
+        FINGERPRINT="$(awk -F: '/^fpr:/ { print $10 ; exit }' <<< "${DATA}")" # spellcheck-ignore-line
+        GRIP="$(awk -F: '/^grp:/ { print $10 ; exit }' <<< "${DATA}")"
+
+        # Save the password
+        gpg-connect-agent --verbose "PRESET_PASSPHRASE ${GRIP} -1 00" /bye
+
+        # Initialize pass
+        pass init "${FINGERPRINT}"
+
+    - name: "Windows: Stop unwanted services"
+      if: runner.os == 'Windows'
+      run: >-
+        Get-Service -ErrorAction Continue -Name
+        @('W3SVC', 'docker')
+        | Stop-Service
+    - name: "Windows: Update any pre-installed WSL"
+      if: runner.os == 'Windows'
+      run: wsl --update
+      continue-on-error: true
+    - name: "Windows: Install WSL2 from the Store as necessary"
+      if: runner.os == 'Windows'
+      run: wsl --install --no-distribution
+    - run: wsl --version
+      if: runner.os == 'Windows'
+
+    - name: "macOS: Set startup command"
+      if: runner.os == 'macOS'
+      run: echo "EXEC_COMMAND=$EXEC_COMMAND" >> "$GITHUB_ENV"
+      env:
+        EXEC_COMMAND: exec
+    - name: "Linux: Set startup command"
+      if: runner.os == 'Linux'
+      run: |
+        # Write a wrapper script to start mutter (so we get window decorations).
+        echo '#!/bin/sh' > /usr/local/bin/exec-command
+        echo 'mutter --replace --sm-disable --x11 &>/dev/null &' >> /usr/local/bin/exec-command
+        echo 'exec "$@"' >> /usr/local/bin/exec-command
+        chmod a+x /usr/local/bin/exec-command
+        echo "EXEC_COMMAND=$EXEC_COMMAND /usr/local/bin/exec-command" >> "$GITHUB_ENV"
+      env:
+        EXEC_COMMAND: >-
+          exec xvfb-run --auto-servernum
+          --server-args='-screen 0 1280x960x24'
+    - name: "Windows: Set startup command"
+      if: runner.os == 'Windows'
+      shell: bash
+      run: echo "EXEC_COMMAND=$EXEC_COMMAND" >> "$GITHUB_ENV"
+      env:
+        EXEC_COMMAND: # On Windows, we don't need any commands.
+
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18.16.x'
+    - run: npm install --global yarn
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18.16.x'
+        cache: yarn
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '^1.21'
+        cache-dependency-path: src/go/**/go.sum
+    - run: pip install setuptools
+    - # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
+      run: yarn install --frozen-lockfile --network-timeout 1000000
+    - name: Override version
+      if: inputs.mock_version
+      run: echo "RD_MOCK_VERSION=${{ inputs.mock_version }}" >> "${GITHUB_ENV}"
+      shell: bash
+
+    - run: ${{ env.EXEC_COMMAND }} yarn screenshots
+      env:
+        EXEC_COMMAND: ${{ env.EXEC_COMMAND }}
+        RD_ENV_SCREENSHOT_SLEEP: 5000
+        RD_LOGS_DIR: logs
+    - name: Upload screenshots
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshots-${{ matrix.platform }}.zip
+        path: screenshots/output/
+        if-no-files-found: error
+    - name: Upload logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: logs-${{ matrix.platform }}.zip
+        path: |
+          logs/
+          e2e/reports/
+          screenshots/output/

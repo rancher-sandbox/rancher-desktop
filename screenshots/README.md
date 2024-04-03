@@ -35,7 +35,7 @@ will be visible.
 
 ### Linux
 
-`gnome-screenshot` is required. See https://github.com/GNOME/gnome-screenshot
+`xwininfo` and `GraphicsMagick` are required.  The former may be in the `x11-utils` package.
 
 ## Running
 

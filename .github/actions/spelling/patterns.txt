@@ -168,3 +168,9 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # GitHub owner names should not be checked (dependency scripts)
 \bgithubOwner\s*=\s*'.*?'
+
+# Win32 constants
+\bGWL_EXSTYLE\b
+\bHWND_NOTOPMOST\b
+\bSWP_NOMOVE\b
+\bSWP_NOSIZE\b

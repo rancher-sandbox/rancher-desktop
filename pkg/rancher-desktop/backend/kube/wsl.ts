@@ -173,7 +173,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     await BackendHelper.configureRuntimeClasses(this.vm);
   }
 
-  async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: KubeClient): Promise<string> {
+  async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<string> {
     if (!config) {
       throw new Error('no config!');
     }
@@ -219,7 +219,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
           async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig', rdNetworking));
       });
 
-    const client = this.client = kubeClient || new KubeClient();
+    const client = this.client = kubeClient?.() || new KubeClient();
 
     await this.progressTracker.action(
       'Waiting for services',
