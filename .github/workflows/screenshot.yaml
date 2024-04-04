@@ -154,3 +154,54 @@ jobs:
           logs/
           e2e/reports/
           screenshots/output/
+  package:
+    name: Package screenshots for docs
+    needs: screenshot
+    concurrency:
+      group: "${{ github.workflow_ref }} (package)"
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: screenshots-*.zip
+        merge-multiple: true
+        path: ${{ github.workspace }}/in
+    - name: Rename images
+      run: |
+        while IFS= read -d $'\0' -r line; do
+          IFS=/ read -r in platform scheme window name <<<"$line"
+          if [[ "$scheme" != "light" ]]; then
+              continue
+          fi
+          case "$platform" in
+              darwin) platform=macOS;;
+              linux) platform=Linux;;
+              win32) platform=Windows;;
+          esac
+          if [[ "$window" == "main" ]]; then
+              window="ui-main"
+          fi
+          if [[ $name =~ ^[0-9]+_ ]]; then
+              name="${name#*_}"
+          fi
+          out="out/${window}/${platform}_${name}"
+          mkdir -p "$(dirname "$out")"
+          cp "$line" "$out"
+          echo "$out"
+        done < <(find in -name '*.png' -print0)
+    - name: Generate introduction image
+      run: |
+        # The intro image consists of the mac image on the left and the Windows
+        # image on the right, each showing Kubernetes settings.
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install graphicsmagick # spellcheck-ignore-line
+        mkdir -p out/getting-started
+        gm composite -gravity center in/darwin/light/preferences/*_kubernetes.png in/darwin/light/main/*_General.png darwin.png
+        gm composite -gravity center in/win32/light/preferences/*_kubernetes.png in/win32/light/main/*_General.png win32.png
+        gm convert darwin.png win32.png +append out/getting-started/introduction_preferences_tabKubernetes.png
+    - uses: actions/upload-artifact@v4
+      with:
+        name: screenshots.zip
+        path: out
+        if-no-files-found: error
+        overwrite: true
