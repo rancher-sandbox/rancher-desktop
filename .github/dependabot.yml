@@ -22,10 +22,10 @@ updates:
         versions: [ ">18" ]
       - # Need to migrate to Vue 3 before moving beyond 2.7.x.
         dependency-name: "vue"
-        versions: [ ">2.7" ]
-      - # Current Vue config targets webpack 5.
-        dependency-name: "webpack"
-        versions: [ ">5" ]
+        versions: [ ">2" ]
+      - # @vue/test-utils v2 is for Vue 3; we're on Vue 2 for now
+        dependency-name: "@vue/test-utils"
+        versions: [ ">1" ]
       - # Since we no longer pull in Nuxt (i.e. we have "ejected"), newer
         # versions of this package mis-detect and think we're using Nuxt 3 (with
         # Vue 3), and uses the wrong set of linters.  This happened in v12, so
