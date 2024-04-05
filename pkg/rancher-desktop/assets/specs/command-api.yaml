@@ -208,6 +208,47 @@ paths:
         '400':
           description: An error occurred
 
+  /v1/port_forwarding:
+    post:
+      operationId: createPortForward
+      summary: Create a new port forwarding
+      requestBody:
+        description: JSON block consisting of the port forwarding details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                service:
+                  type: string
+                k8sPort:
+                  type: string
+                hostPort:
+                  type: integer
+        required: true
+      responses:
+        '200':
+          description: The port forwarding was created.
+        '400':
+          description: The port forwarding could not be created.
+    delete:
+      operationId: deletePortForward
+      summary: Delete a port forwarding
+      parameters:
+      - in: query
+        name: namespace
+      - in: query
+        name: service
+      - in: query
+        name: k8sPort
+      responses:
+        '200':
+          description: The port forwarding was deleted.
+        '400':
+          description: The port forwarding could not be deleted.
+
   /v1/propose_settings:
     put:
       operationId: proposeSettings

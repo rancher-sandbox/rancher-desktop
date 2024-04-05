@@ -104,6 +104,10 @@ export class HttpCommandServer {
       },
       delete: { '/v1/snapshots': [0, this.deleteSnapshot] },
     } as const,
+    {
+      post:   { '/v1/port_forwarding': [1, this.createPortForwarding] },
+      delete: { '/v1/port_forwarding': [1, this.deletePortForwarding] },
+    } as const,
   );
 
   constructor(commandWorker: CommandWorkerInterface) {
@@ -548,6 +552,95 @@ export class HttpCommandServer {
     }
   }
 
+  protected async createPortForwarding(request: express.Request, response: express.Response, _: commandContext): Promise<void> {
+    let values: Record<string, any> = {};
+    const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+    let error = '';
+    let namespace = '';
+    let service = '';
+    let k8sPort: string | number = 0;
+    let hostPort = 0;
+
+    if (!payloadError) {
+      try {
+        console.debug(`Request data: ${ data }`);
+        values = JSON.parse(data);
+        if ('namespace' in values && 'service' in values && 'k8sPort' in values && 'hostPort' in values) {
+          namespace = values.namespace;
+
+          service = values.service;
+
+          if (Number.isNaN(values.k8sPort)) {
+            k8sPort = values.k8sPort;
+          } else {
+            k8sPort = parseInt(values.k8sPort, 10);
+          }
+
+          hostPort = values.hostPort;
+        } else {
+          error = 'missing required parameters';
+        }
+      } catch (err) {
+        // TODO: Revisit this log stmt if sensitive values (e.g. PII, IPs, creds) can be provided via this command
+        console.log(`updateSettings: error processing JSON request block\n${ data }\n`, err);
+        error = 'error processing JSON request block';
+      }
+    } else {
+      error = payloadError;
+    }
+    if (!error) {
+      try {
+        const result = await this.commandWorker.forwardPort(namespace, service, k8sPort, hostPort);
+
+        if (typeof result === 'number') {
+          console.debug('createPortForwarding: succeeded 200');
+          response.status(200).type('txt').send(`${ result }`);
+        } else {
+          console.debug(`createPortForwarding: write back status 400, error forwarding port`);
+          response.status(400).type('txt').send('Could not forward port');
+        }
+      } catch (err) {
+        console.error(`createPortForwarding: error forwarding port:`, err);
+        response.status(400).type('txt').send('Could not forward port');
+      }
+    } else {
+      console.debug(`createPortForwarding: write back status 400, error: ${ error }`);
+      response.status(400).type('txt').send(error);
+    }
+  }
+
+  protected async deletePortForwarding(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    const namespace = request.query.namespace ?? '';
+    const service = request.query.service ?? '';
+    const k8sPort = request.query.k8sPort ?? '';
+
+    if (!namespace) {
+      response.status(400).type('txt').send('Port forwarding namespace is required in query parameters');
+    } else if (!service) {
+      response.status(400).type('txt').send('Port forwarding service is required in query parameters');
+    } else if (!k8sPort) {
+      response.status(400).type('txt').send('Port forwarding k8sPort is required in query parameters');
+    } else if (typeof namespace !== 'string') {
+      response.status(400).type('txt').send(`Invalid port forwarding namespace ${ JSON.stringify(namespace) }: not a string.`);
+    } else if (typeof service !== 'string') {
+      response.status(400).type('txt').send(`Invalid port forwarding service ${ JSON.stringify(service) }: not a string.`);
+    } else if (typeof k8sPort !== 'string') {
+      response.status(400).type('txt').send(`Invalid port forwarding k8sPort ${ JSON.stringify(k8sPort) }: not a string.`);
+    } else {
+      const k8sPortResolved = Number.isNaN(k8sPort) ? k8sPort : parseInt(k8sPort, 10);
+
+      try {
+        await this.commandWorker.cancelForward(namespace, service, k8sPortResolved);
+
+        console.debug('deletePortForwarding: succeeded 200');
+        response.status(200).type('txt').send('Port forwarding successfully deleted');
+      } catch (error: any) {
+        console.error(`deletePortForwarding: error deleting port forwarding:`, error);
+        response.status(400).type('txt').send('Could not delete port forwarding');
+      }
+    }
+  }
+
   wrapShutdown(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     console.debug('shutdown: succeeded 202');
     response.status(202).type('txt').send('Shutting down.');
@@ -819,6 +912,9 @@ export interface CommandWorkerInterface {
   deleteSnapshot: (context: commandContext, name: string) => Promise<void>;
   restoreSnapshot: (context: commandContext, name: string) => Promise<void>;
   cancelSnapshot: () => Promise<void>;
+
+  forwardPort: (namespace: string, service: string, k8sPort: string | number, hostPort: number) => Promise<number | undefined>;
+  cancelForward: (namespace: string, service: string, k8sPort: string | number) => Promise<void>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

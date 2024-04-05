@@ -141,3 +141,21 @@ EOF
     assert_success
     assert_output "Hello world from Spin!"
 }
+
+@test 'fail to connect to the service on localhost without port forwarding' {
+    run try curl --silent --fail "http://localhost:8080/hello"
+    assert_failure
+}
+
+@test 'connect to the service on localhost with port forwarding' {
+    rdctl api -X POST -b '{ "namespace": "default", "service": "hello-spin", "k8sPort": 80, "hostPort": 8080 }' port_forwarding
+    run try curl --silent --fail "http://localhost:8080/hello"
+    assert_success
+    assert_output "Hello world from Spin!"
+}
+
+@test 'fail to connect to the service on localhost after removing port forwarding' {
+    rdctl api -X DELETE "port_forwarding?namespace=default&service=hello-spin&k8sPort=80"
+    run try curl --silent --fail "http://localhost:8080/hello"
+    assert_failure
+}
