@@ -20,13 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"syscall"
 
 	dockerconfig "github.com/docker/docker/cli/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
@@ -139,7 +139,7 @@ func removeDockerCliPlugins(altAppHomePath string) error {
 	cliPluginsDir := path.Join(dockerconfig.Dir(), "cli-plugins")
 	entries, err := os.ReadDir(cliPluginsDir)
 	if err != nil {
-		if errors.Is(err, syscall.ENOENT) {
+		if errors.Is(err, fs.ErrNotExist) {
 			// Nothing left to do here, since there is no cli-plugins dir
 			return nil
 		}
@@ -172,7 +172,7 @@ func removePathManagement(dotFiles []string) error {
 	for _, dotFile := range dotFiles {
 		byteContents, err := os.ReadFile(dotFile)
 		if err != nil {
-			if !errors.Is(err, syscall.ENOENT) {
+			if !errors.Is(err, fs.ErrNotExist) {
 				logrus.Errorf("Error trying to read %s: %s\n", dotFile, err)
 			}
 			continue
@@ -255,7 +255,7 @@ func clearDockerContext() error {
 	dockerConfigContents := make(dockerConfigType)
 	contents, err := os.ReadFile(configFilePath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			// Nothing left to do here, since the file doesn't exist
 			return nil
 		}
