@@ -1,8 +1,8 @@
 load '../helpers/load'
 
 local_setup() {
-    if using_docker; then
-        skip "this test only works on containerd right now"
+    if is_windows; then
+        skip "this test doesn't work on Windows"
     fi
 }
 
@@ -26,7 +26,7 @@ assert_traefik_crd_established() {
 
 @test 'deploy sample app' {
     kubectl apply --filename - <<EOF
-apiVersion v1
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: webapp-configmap
@@ -63,17 +63,6 @@ spec:
 EOF
 }
 
-get_host() {
-    if is_windows; then
-        local LB_IP
-        local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
-        LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
-        echo "$LB_IP.sslip.io"
-    else
-        echo "localhost"
-    fi
-}
-
 @test 'deploy ingress' {
     kubectl apply --filename - <<EOF
 apiVersion: v1
@@ -95,7 +84,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-  - host: $(get_host)
+  - host: localhost
     http:
       paths:
         - path: /
@@ -110,13 +99,13 @@ EOF
 
 @test 'connect to the service' {
     # This can take 100s with old versions of traefik, and 15s with newer ones.
-    run try curl --silent --fail "http://$(get_host)"
+    run try curl --silent --fail "http://localhost"
     assert_success
     assert_output "Hello World!"
 }
 
 @test 'fail to connect to the service on localhost without port forwarding' {
-    run try curl --silent --fail "http://localhost:8080"
+    run try --max 5 curl --silent --fail "http://localhost:8080"
     assert_failure
 }
 
@@ -129,6 +118,6 @@ EOF
 
 @test 'fail to connect to the service on localhost after removing port forwarding' {
     rdctl api -X DELETE "port_forwarding?namespace=default&service=webapp&k8sPort=80"
-    run try curl --silent --fail "http://localhost:8080"
+    run try --max 5 curl --silent --fail "http://localhost:8080"
     assert_failure
 }
