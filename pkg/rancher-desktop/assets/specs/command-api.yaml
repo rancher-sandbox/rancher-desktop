@@ -224,13 +224,19 @@ paths:
                 service:
                   type: string
                 k8sPort:
-                  type: string
+                  type:
+                  - string
+                  - integer
                 hostPort:
                   type: integer
         required: true
       responses:
         '200':
-          description: The port forwarding was created.
+          description: The port forwarding was created or already exists; the response contains the listening host port.
+          content:
+            text/plain:
+              schema:
+                type: integer
         '400':
           description: The port forwarding could not be created.
     delete:
@@ -245,7 +251,7 @@ paths:
         name: k8sPort
       responses:
         '200':
-          description: The port forwarding was deleted.
+          description: The port forwarding was deleted or doesn't exist.
         '400':
           description: The port forwarding could not be deleted.
 

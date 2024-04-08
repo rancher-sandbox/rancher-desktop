@@ -13,21 +13,7 @@ assert_traefik_crd_established() {
     assert_output 'True'
 }
 
-# Get Kubernetes RuntimeClasses; sets $output to the JSON list.
-get_runtime_classes() {
-    # kubectl may emit warnings here; ensure that we don't fall over.
-    bats_require_minimum_version 1.5.0
-    run --separate-stderr kubectl get RuntimeClasses --output json
-    assert_success || return
-
-    if [[ -n $stderr ]]; then
-        # Check that we got a deprecation warning:
-        # Warning: node.k8s.io/v1beta1 RuntimeClass is deprecated in v1.22+, unavailable in v1.25+
-        output=$stderr assert_output --partial deprecated || return
-    fi
-}
-
-@test 'start k8s without wasm support' {
+@test 'start k8s' {
     factory_reset
     start_kubernetes
     wait_for_kubelet
@@ -38,55 +24,42 @@ get_runtime_classes() {
     try assert_traefik_crd_established
 }
 
-@test 'verify no runtimeclasses have been defined' {
-    get_runtime_classes
-    run jq_output '.items | length'
-    assert_success
-    assert_output 0
-}
-
-@test 'start k8s with wasm support' {
-    # TODO We should enable the wasm feature on a running app to make sure the
-    # TODO runtime class is defined even after k3s is initially installed.
-    factory_reset
-    start_kubernetes --experimental.container-engine.web-assembly.enabled
-    wait_for_kubelet
-    try assert_traefik_crd_established
-}
-
-@test 'verify spin runtime class has been defined (and no others)' {
-    get_runtime_classes
-    rtc=$output
-    run jq --raw-output '.items | length' <<<"$rtc"
-    assert_success
-    assert_output 1
-
-    run jq --raw-output '.items[0].metadata.name' <<<"$rtc"
-    assert_success
-    assert_output 'spin'
-}
-
 @test 'deploy sample app' {
     kubectl apply --filename - <<EOF
+apiVersion v1
+kind: ConfigMap
+metadata:
+  name: webapp-configmap
+data:
+  index: "Hello World!"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-spin
+  name: webapp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hello-spin
+      app: webapp
   template:
     metadata:
       labels:
-        app: hello-spin
+        app: webapp
     spec:
-      runtimeClassName: spin
+      volumes:
+      - name: webapp-config-volume
+        configMap:
+          name: webapp-configmap
+          items:
+          - key: index
+            path: index.html
       containers:
-      - name: hello-spin
-        image: ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
-        command: ["/"]
+      - name: webapp
+        image: nginx
+        volumeMounts:
+        - name: webapp-config-volume
+          mountPath: /usr/share/nginx/html
 EOF
 }
 
@@ -106,18 +79,18 @@ get_host() {
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-spin
+  name: webapp
 spec:
   type: ClusterIP
   selector:
-    app: hello-spin
+    app: webapp
   ports:
   - port: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hello-spin
+  name: webapp
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
@@ -129,7 +102,7 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: hello-spin
+              name: webapp
               port:
                 number: 80
 EOF
@@ -137,7 +110,25 @@ EOF
 
 @test 'connect to the service' {
     # This can take 100s with old versions of traefik, and 15s with newer ones.
-    run try curl --silent --fail "http://$(get_host)/hello"
+    run try curl --silent --fail "http://$(get_host)"
     assert_success
-    assert_output "Hello world from Spin!"
+    assert_output "Hello World!"
+}
+
+@test 'fail to connect to the service on localhost without port forwarding' {
+    run try curl --silent --fail "http://localhost:8080"
+    assert_failure
+}
+
+@test 'connect to the service on localhost with port forwarding' {
+    rdctl api -X POST -b '{ "namespace": "default", "service": "webapp", "k8sPort": 80, "hostPort": 8080 }' port_forwarding
+    run try curl --silent --fail "http://localhost:8080"
+    assert_success
+    assert_output "Hello World!"
+}
+
+@test 'fail to connect to the service on localhost after removing port forwarding' {
+    rdctl api -X DELETE "port_forwarding?namespace=default&service=webapp&k8sPort=80"
+    run try curl --silent --fail "http://localhost:8080"
+    assert_failure
 }
