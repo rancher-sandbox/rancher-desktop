@@ -27,12 +27,8 @@ linters:
     - wrapcheck # No need to always wrap errors
     - depguard # Requires configuration and by default only allows stdlib imports
     - dupword # It interferes with duplicate words in comments
+    - wsl
 linters-settings:
   govet:
     disable:
     - lostcancel # Not tracking cancel usage correctly.
-issues:
-  exclude-rules:
-    - linters: [wsl]
-      # This rule conflicts with gofumpt
-      text: only one cuddle assignment allowed before if statement
