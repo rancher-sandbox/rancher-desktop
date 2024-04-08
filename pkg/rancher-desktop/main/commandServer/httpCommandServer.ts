@@ -599,9 +599,9 @@ export class HttpCommandServer {
           console.debug(`createPortForwarding: write back status 400, error forwarding port`);
           response.status(400).type('txt').send('Could not forward port');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(`createPortForwarding: error forwarding port:`, err);
-        response.status(400).type('txt').send('Could not forward port');
+        response.status(400).type('txt').send(`Could not forward port; error code: ${ typeof err.code === 'string' ? err.code : 'unknown, check the logs' }`);
       }
     } else {
       console.debug(`createPortForwarding: write back status 400, error: ${ error }`);
