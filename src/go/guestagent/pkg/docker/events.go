@@ -101,10 +101,8 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 						log.Errorf("adding port mapping to tracker failed: %v", err)
 					}
 
-					err = createLoopbackIPtablesRules(
-						container.NetworkSettings.DefaultNetworkSettings.IPAddress,
+					err = createLoopbackIPtablesRules(container.NetworkSettings.DefaultNetworkSettings.IPAddress,
 						container.NetworkSettings.NetworkSettingsBase.Ports)
-
 					if err != nil {
 						log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
 					}
@@ -162,10 +160,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 			}
 
 			for _, netSettings := range container.NetworkSettings.Networks {
-				err = createLoopbackIPtablesRules(
-					netSettings.IPAddress,
-					portMap)
-
+				err = createLoopbackIPtablesRules(netSettings.IPAddress, portMap)
 				if err != nil {
 					log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
 				}

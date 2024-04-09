@@ -96,7 +96,7 @@ func ipPortToAddr(ip net.IP, port int) string {
 // shutdown quickly when no longer needed.
 func listen(ctx context.Context, addr string) (net.Listener, error) {
 	config := &net.ListenConfig{
-		Control: func(network, address string, c syscall.RawConn) error {
+		Control: func(_, _ string, c syscall.RawConn) error {
 			//nolint:varnamelen // `fd` is the typical name for file descriptor
 			err := c.Control(func(fd uintptr) {
 				// We should never get any traffic, and should
