@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,30 +29,32 @@ import (
 
 var (
 	debug        bool
-	upstreamAddr string
-	listenAddr   string
 	logFile      string
+	socketFile   string
+	upstreamAddr string
 )
 
 const (
-	k8sAPI            = "192.168.1.2:6443"
-	defaultListenAddr = "127.0.0.1:6443"
+	defaultLogPath = "/var/log/wsl-proxy.log"
+	defaultSocket  = "/run/wsl-proxy.sock"
+	bridgeIPAddr   = "192.168.1.2"
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging.")
-	flag.StringVar(&upstreamAddr, "upstream-addr", k8sAPI, "The upstream server's address (k3s API sever).")
-	flag.StringVar(&listenAddr, "listen-addr", defaultListenAddr, "The server's address in an IP:PORT format.")
-	flag.StringVar(&logFile, "logfile", "/var/log/wsl-proxy.log", "path to the logfile for wsl-proxy process")
+	flag.StringVar(&logFile, "logfile", defaultLogPath, "path to the logfile for wsl-proxy process")
+	flag.StringVar(&socketFile, "socketFile", defaultSocket, "path to the .sock file for UNIX socket")
+	flag.StringVar(&upstreamAddr, "upstreamAddress", bridgeIPAddr, "IP address of the upstream server to forward to")
 	flag.Parse()
 
 	setupLogging(logFile)
 
-	proxy, err := portproxy.NewPortProxy("/run/wsl-proxy.sock")
+	socket, err := net.Listen("unix", socketFile)
 	if err != nil {
-		logrus.Errorf("failed to create listener for published ports: %s", err)
+		logrus.Fatalf("failed to create listener for published ports: %s", err)
 		return
 	}
+	proxy := portproxy.NewPortProxy(socket, bridgeIPAddr)
 
 	// Handle graceful shutdown
 	sigCh := make(chan os.Signal, 1)
@@ -60,14 +63,15 @@ func main() {
 	go func() {
 		<-sigCh
 		logrus.Println("Shutting down...")
-		proxy.Close()
-		proxy.Wait()
+		if err := proxy.Close(); err != nil {
+			logrus.Errorf("proxy close error: %s", err)
+		}
 		os.Exit(0)
 	}()
 
-	err = proxy.Listen()
+	err = proxy.Accept()
 	if err != nil {
-		logrus.Errorf("failed to start listening: %s", err)
+		logrus.Errorf("failed to start accepting: %s", err)
 		return
 	}
 }

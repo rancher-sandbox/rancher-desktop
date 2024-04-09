@@ -27,40 +27,37 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const bridgeIPAddr = "192.168.1.2"
-
 type PortProxy struct {
-	address  string
-	listener net.Listener
-	quit     chan struct{}
+	upstreamAddress string
+	listener        net.Listener
+	quit            chan struct{}
 	// map of port number as a key to associated listener
 	activeListeners map[int]net.Listener
 	mutex           sync.Mutex
 	wg              sync.WaitGroup
 }
 
-func NewPortProxy(address string) (*PortProxy, error) {
-	socket, err := net.Listen("unix", address)
-
+func NewPortProxy(listener net.Listener, upstreamAddr string) *PortProxy {
 	portProxy := &PortProxy{
-		address:         address,
-		listener:        socket,
+		upstreamAddress: upstreamAddr,
+		listener:        listener,
 		quit:            make(chan struct{}),
 		activeListeners: make(map[int]net.Listener),
 	}
-	return portProxy, err
+	return portProxy
 }
 
-func (p *PortProxy) Listen() error {
-	logrus.Infof("Proxy server started listening on %s, forwarding to %s", p.address, bridgeIPAddr)
+func (p *PortProxy) Accept() error {
+	logrus.Infof("Proxy server started accepting on %s, forwarding to %s", p.listener.Addr(), p.upstreamAddress)
 	for {
 		conn, err := p.listener.Accept()
 		if err != nil {
 			select {
 			case <-p.quit:
+				logrus.Debug("received a quit signal, exiting out of accept loop")
 				return nil
 			default:
-				return fmt.Errorf("published port server connection accept error: %w", err)
+				return fmt.Errorf("failed to accept connection: %w", err)
 			}
 		} else {
 			go p.handleEvent(conn)
@@ -72,8 +69,7 @@ func (p *PortProxy) handleEvent(conn net.Conn) {
 	defer conn.Close()
 
 	var pm types.PortMapping
-	err := json.NewDecoder(conn).Decode(&pm)
-	if err != nil {
+	if err := json.NewDecoder(conn).Decode(&pm); err != nil {
 		logrus.Errorf("port server decoding received payload error: %s", err)
 		return
 	}
@@ -92,10 +88,13 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 			p.mutex.Lock()
 			if pm.Remove {
 				if listener, exist := p.activeListeners[port]; exist {
+					logrus.Debugf("closing listener for port: %d", port)
 					if err := listener.Close(); err != nil {
 						logrus.Errorf("error closing listener for port [%s]: %s", portBinding.HostPort, err)
 					}
 				}
+				delete(p.activeListeners, port)
+				fmt.Printf("here %+v \n", p.activeListeners)
 				p.mutex.Unlock()
 				continue
 			}
@@ -115,12 +114,15 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 }
 
 func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
-	forwardAddr := net.JoinHostPort(bridgeIPAddr, port)
+	forwardAddr := net.JoinHostPort(p.upstreamAddress, port)
 	for {
 		conn, err := listener.Accept()
+		fmt.Println("accept")
 		if err != nil {
+			fmt.Println("accept err", err)
 			// Check if the error is due to listener being closed
 			if errors.Is(err, net.ErrClosed) {
+				fmt.Println("inside break")
 				break
 			}
 			logrus.Errorf("port proxy listener failed to accept: %s", err)
@@ -137,11 +139,18 @@ func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
 	}
 }
 
-func (p *PortProxy) Wait() {
-	p.wg.Wait()
-}
-
 func (p *PortProxy) Close() error {
+	// Close the listener first to prevent new connections.
+	err := p.listener.Close()
+	if err != nil {
+		return err
+	}
+
+	// Signal the quit channel to stop accepting new connections.
 	close(p.quit)
-	return p.listener.Close()
+
+	// Wait for all pending connections to finish.
+	p.wg.Wait()
+
+	return nil
 }
