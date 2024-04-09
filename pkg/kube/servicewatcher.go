@@ -60,7 +60,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 		},
 	})
 
-	err := sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+	err := sharedInformer.SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
 		log.Debugw("kubernetes: error watching", log.Fields{
 			"error": err,
 		})

@@ -45,7 +45,7 @@ func TestBasicAdd(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(_ http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&expectedExposeReq)
 		require.NoError(t, err)
 	})
@@ -79,7 +79,7 @@ func TestAddOverride(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(_ http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.ExposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
 		require.NoError(t, err)
@@ -268,7 +268,7 @@ func TestGet(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -289,13 +289,13 @@ func TestRemove(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
 	var expectedUnexposeReq *types.UnexposeRequest
 
-	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/unexpose", func(_ http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&expectedUnexposeReq)
 		require.NoError(t, err)
 	})
@@ -346,7 +346,7 @@ func TestRemoveWithError(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -416,11 +416,11 @@ func TestRemoveAll(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -470,7 +470,7 @@ func TestRemoveAllWithError(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -552,7 +552,7 @@ func TestNonAdminInstall(t *testing.T) {
 
 	var expectedExposeReq []*types.ExposeRequest
 
-	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/expose", func(_ http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.ExposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
 		require.NoError(t, err)
@@ -561,7 +561,7 @@ func TestNonAdminInstall(t *testing.T) {
 
 	var expectedUnexposeReq []*types.UnexposeRequest
 
-	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/services/forwarder/unexpose", func(_ http.ResponseWriter, r *http.Request) {
 		var tmpReq *types.UnexposeRequest
 		err := json.NewDecoder(r.Body).Decode(&tmpReq)
 		require.NoError(t, err)
