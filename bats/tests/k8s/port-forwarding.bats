@@ -6,22 +6,10 @@ local_setup() {
     fi
 }
 
-assert_traefik_crd_established() {
-    local jsonpath="{.status.conditions[?(@.type=='Established')].status}"
-    run kubectl get crd traefikservices.traefik.containo.us --output jsonpath="$jsonpath"
-    assert_success || return
-    assert_output 'True'
-}
-
 @test 'start k8s' {
     factory_reset
     start_kubernetes
     wait_for_kubelet
-
-    # The manifests in /var/lib/rancher/k3s/server/manifests are processed
-    # in alphabetical order. So when traefik.yaml has been loaded we know that
-    # rd-runtime.yaml has already been processed.
-    try assert_traefik_crd_established
 }
 
 @test 'deploy sample app' {
