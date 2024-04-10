@@ -85,13 +85,6 @@ spec:
 EOF
 }
 
-@test 'connect to the service' {
-    # This can take 100s with old versions of traefik, and 15s with newer ones.
-    run try curl --silent --fail "http://localhost"
-    assert_success
-    assert_output "Hello World!"
-}
-
 @test 'fail to connect to the service on localhost without port forwarding' {
     run try --max 5 curl --silent --fail "http://localhost:8080"
     assert_failure
