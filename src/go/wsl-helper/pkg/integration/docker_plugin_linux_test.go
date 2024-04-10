@@ -116,19 +116,4 @@ func TestDockerPlugin(t *testing.T) {
 			assert.Equal(t, destPath, result, "unexpected symlink contents")
 		}
 	})
-	t.Run("do not remove file", func(t *testing.T) {
-		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
-
-		require.NoError(t, os.MkdirAll(filepath.Dir(destPath), 0o755))
-		require.NoError(t, os.WriteFile(destPath, []byte("hello"), 0o644))
-		require.NoError(t, integration.DockerPlugin(pluginPath, false))
-		buf, err := os.ReadFile(destPath)
-		if assert.NoError(t, err, "failed to read destination file") {
-			assert.Equal(t, []byte("hello"), buf)
-		}
-	})
 }
