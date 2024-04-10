@@ -842,11 +842,19 @@ ipcMainProxy.handle('service-forward', async(_, service, state) => {
   if (state) {
     const hostPort = service.listenPort ?? 0;
 
-    await k8smanager.kubeBackend.forwardPort(namespace, service.name, service.port, hostPort);
+    await doForwardPort(namespace, service.name, service.port, hostPort);
   } else {
-    await k8smanager.kubeBackend.cancelForward(namespace, service.name, service.port);
+    await doCancelForward(namespace, service.name, service.port);
   }
 });
+
+async function doForwardPort(namespace: string, service: string, k8sPort: string | number, hostPort: number) {
+  return await k8smanager.kubeBackend.forwardPort(namespace, service, k8sPort, hostPort);
+}
+
+async function doCancelForward(namespace: string, service: string, k8sPort: string | number) {
+  return await k8smanager.kubeBackend.cancelForward(namespace, service, k8sPort);
+}
 
 ipcMainProxy.on('k8s-integrations', async() => {
   mainEvents.emit('integration-update', await integrationManager.listIntegrations() ?? {});
@@ -1352,6 +1360,14 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
   factoryReset(keepSystemImages: boolean) {
     doFactoryReset(keepSystemImages);
+  }
+
+  async forwardPort(namespace: string, service: string, k8sPort: string | number, hostPort: number) {
+    return await doForwardPort(namespace, service, k8sPort, hostPort);
+  }
+
+  async cancelForward(namespace: string, service: string, k8sPort: string | number) {
+    return await doCancelForward(namespace, service, k8sPort);
   }
 
   /**
