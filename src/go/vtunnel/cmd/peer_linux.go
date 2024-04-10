@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
@@ -59,6 +60,8 @@ IP and port acting as a peer end of the tunnel.`,
 
 func init() {
 	peerCmd.Flags().String("config-path", "", "Path to the vtunnel's yaml configuration file")
-	peerCmd.MarkFlagRequired("config-path")
+	if err := peerCmd.MarkFlagRequired("config-path"); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	rootCmd.AddCommand(peerCmd)
 }

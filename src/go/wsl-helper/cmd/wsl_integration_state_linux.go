@@ -54,8 +54,12 @@ var wslIntegrationStateCmd = &cobra.Command{
 
 func init() {
 	wslIntegrationStateCmd.Flags().Var(&enumValue{val: "show", allowed: []string{"show", "set", "delete"}}, "mode", "Operation mode")
-	wslIntegrationStateCmd.MarkFlagRequired("mode")
+	if err := wslIntegrationStateCmd.MarkFlagRequired("mode"); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	wslIntegrationStateViper.AutomaticEnv()
-	wslIntegrationStateViper.BindPFlags(wslIntegrationStateCmd.Flags())
+	if err := wslIntegrationStateViper.BindPFlags(wslIntegrationStateCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	wslIntegrationCmd.AddCommand(wslIntegrationStateCmd)
 }

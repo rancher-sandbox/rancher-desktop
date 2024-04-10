@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -172,6 +173,8 @@ func init() {
 	k3sKubeconfigCmd.Flags().String("k3sconfig", "/etc/rancher/k3s/k3s.yaml", "Path to k3s kubeconfig")
 	k3sKubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	k3sKubeconfigViper.AutomaticEnv()
-	k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags())
+	if err := k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	k3sCmd.AddCommand(k3sKubeconfigCmd)
 }

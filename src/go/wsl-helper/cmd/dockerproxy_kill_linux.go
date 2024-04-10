@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -43,6 +44,8 @@ var dockerproxyKillCmd = &cobra.Command{
 
 func init() {
 	dockerproxyKillViper.AutomaticEnv()
-	dockerproxyKillViper.BindPFlags(dockerproxyKillCmd.Flags())
+	if err := dockerproxyKillViper.BindPFlags(dockerproxyKillCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	dockerproxyCmd.AddCommand(dockerproxyKillCmd)
 }
