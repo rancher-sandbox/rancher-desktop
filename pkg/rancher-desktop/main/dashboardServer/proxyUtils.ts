@@ -3,30 +3,27 @@ import { Options } from 'http-proxy-middleware';
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.dashboardServer;
-const logProvider = () => console;
 
-export const proxyOpts = (target: string): Options => {
+export const proxyOpts = (): Omit<Options, 'target'> => {
   return {
-    target,
     followRedirects: true,
     secure:          false,
-    logLevel:        'info',
-    logProvider,
-    onProxyReq,
-    onProxyReqWs,
-    onError,
+    logger:          console,
+    on:              {
+      proxyReq:   onProxyReq,
+      proxyReqWs: onProxyReqWs,
+      error:      onError,
+    },
   };
 };
 
-export const proxyWsOpts = (target: string): Options => {
+export const proxyWsOpts = (): Omit<Options, 'target'> => {
   return {
-    ...proxyOpts(target),
+    ...proxyOpts(),
     ws:           false,
     changeOrigin: true,
   };
 };
-
-export const proxyMetaOpts = (target: string): Options => proxyOpts(target);
 
 const onProxyReq = (proxyReq: any, req: any) => {
   if (!(proxyReq._currentRequest && proxyReq._currentRequest._headerSent)) {
