@@ -1,11 +1,5 @@
 load '../helpers/load'
 
-local_setup() {
-    if is_windows; then
-        skip "this test doesn't work on Windows"
-    fi
-}
-
 @test 'start k8s' {
     factory_reset
     start_kubernetes
