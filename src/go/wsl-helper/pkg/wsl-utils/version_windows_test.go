@@ -29,6 +29,7 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows"
@@ -364,9 +365,10 @@ func TestGetMSIVersion(t *testing.T) {
 	require.NotNil(t, result.Version, "Failed to get product version")
 
 	// Now we have a product code to test again; actually run the function under test.
+	logger, _ := test.NewNullLogger()
 	productCode, err := windows.UTF16FromString(result.IdentifyingNumber)
 	require.NoError(t, err, "Failed to convert product code")
-	actualVersion, err := getMSIVersion(productCode)
+	actualVersion, err := getMSIVersion(productCode, logrus.NewEntry(logger))
 	require.NoError(t, err, "Failed to get product version")
 	assert.Equal(t, result.Version, actualVersion, "Unexpected version")
 }

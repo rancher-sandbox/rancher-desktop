@@ -68,3 +68,10 @@ func TestBuilderCacheProcessor(t *testing.T) {
 		assert.True(t, cleanupDone, "cleanup function did not run")
 	})
 }
+
+func TestMountArgProcessor(t *testing.T) {
+	arg, cleanup, err := mountArgProcessor("--unknown-arg", nil)
+	assert.Equal(t, "--unknown-arg", arg)
+	assert.Empty(t, cleanup)
+	assert.NoError(t, err)
+}

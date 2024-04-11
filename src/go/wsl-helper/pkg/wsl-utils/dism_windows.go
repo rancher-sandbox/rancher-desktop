@@ -23,6 +23,7 @@ package wslutils
 import (
 	"context"
 	"fmt"
+	"math"
 	"unsafe"
 
 	"github.com/sirupsen/logrus"
@@ -37,16 +38,17 @@ const (
 	kWindowsFeature = "VirtualMachinePlatform"
 	// DISM_ONLINE_IMAGE is the DISM "image path" that signifies we're trying
 	// to modify the running Windows installation.
+	//nolint:stylecheck // Win32 constant
 	DISM_ONLINE_IMAGE         = "DISM_{53BFAE52-B167-4E2F-A258-0A37B57FF845}"
 	DismLogErrorsWarningsInfo = 2
 )
 
 var (
-	dllDismApi        = windows.NewLazySystemDLL("dismapi.dll")
-	dismInitialize    = dllDismApi.NewProc("DismInitialize")
-	dismOpenSession   = dllDismApi.NewProc("DismOpenSession")
-	dismCloseSession  = dllDismApi.NewProc("DismCloseSession")
-	dismEnableFeature = dllDismApi.NewProc("DismEnableFeature")
+	dllDismAPI        = windows.NewLazySystemDLL("dismapi.dll")
+	dismInitialize    = dllDismAPI.NewProc("DismInitialize")
+	dismOpenSession   = dllDismAPI.NewProc("DismOpenSession")
+	dismCloseSession  = dllDismAPI.NewProc("DismCloseSession")
+	dismEnableFeature = dllDismAPI.NewProc("DismEnableFeature")
 )
 
 func errorFromHResult(hr int32, err error) error {
@@ -87,9 +89,9 @@ func DismDoInstall(ctx context.Context, log *logrus.Entry) error {
 		uintptr(unsafe.Pointer(&session)),
 	)
 	if hr != uintptr(windows.S_OK) {
-		return errorFromWin32("failed to open DISM session", hr&0xFFFF, err)
+		return errorFromWin32("failed to open DISM session", hr&math.MaxUint16, err)
 	}
-	defer dismCloseSession.Call(uintptr(session))
+	defer func() { _, _, _ = dismCloseSession.Call(uintptr(session)) }()
 
 	if buf, err = windows.UTF16PtrFromString(kWindowsFeature); err != nil {
 		log.WithError(err).Error("Failed to convert kWindowsFeature")

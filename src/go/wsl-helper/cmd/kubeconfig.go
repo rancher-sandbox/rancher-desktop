@@ -125,8 +125,8 @@ func requireManualSymlink(linkPath string) (bool, error) {
 	return false, nil
 }
 
-func removeConfig(path string) error {
-	err := os.Remove(path)
+func removeConfig(configPath string) error {
+	err := os.Remove(configPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}

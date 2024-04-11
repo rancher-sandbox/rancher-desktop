@@ -32,6 +32,7 @@ import (
 	"os/signal"
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/sirupsen/logrus"
@@ -47,7 +48,7 @@ type RequestContextValue map[interface{}]interface{}
 var requestContext = struct{}{}
 
 type containerInspectResponseBody struct {
-	Id string
+	Id string //nolint:stylecheck // Compatibility with docker API
 }
 
 const dockerAPIVersion = "v1.41.0"
@@ -127,15 +128,18 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 		ErrorLog: log.New(logWriter, "", 0),
 	}
 
-	contextAttacher := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), requestContext, &RequestContextValue{})
-		newReq := req.WithContext(ctx)
-		proxy.ServeHTTP(w, newReq)
-	})
+	server := &http.Server{
+		ReadHeaderTimeout: time.Minute,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			ctx := context.WithValue(req.Context(), requestContext, &RequestContextValue{})
+			newReq := req.WithContext(ctx)
+			proxy.ServeHTTP(w, newReq)
+		}),
+	}
 
 	logrus.WithField("endpoint", endpoint).Info("Listening")
 
-	err = http.Serve(listener, contextAttacher)
+	err = server.Serve(listener)
 	if err != nil {
 		logrus.WithError(err).Error("serve exited with error")
 	}
@@ -278,10 +282,15 @@ func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, di
 	}
 
 	// make the inspect request
-	inspectResponse, err := client.Get(inspectURL.String())
+	inspectRequest, err := http.NewRequestWithContext(req.Context(), "GET", inspectURL.String(), http.NoBody)
 	if err != nil {
 		return nil, err
 	}
+	inspectResponse, err := client.Do(inspectRequest)
+	if err != nil {
+		return nil, err
+	}
+	defer inspectResponse.Body.Close()
 
 	// parse response as json
 	body := containerInspectResponseBody{}
@@ -394,10 +403,10 @@ func convertPattern(apiPath string) *regexp.Regexp {
 	return regexp.MustCompile(pattern)
 }
 
-func RegisterRequestMunger(method, apiPath string, munger requestMungerFunc) {
-	mungerMapping.Lock()
-	defer mungerMapping.Unlock()
-
+// Helper method to get a munger method mapping, or created one if it doesn't
+// exist.
+// This should be called with the mungerMapping lock held.
+func getMungerMethodMapping(method string) *mungerMethodMapping {
 	mapping, ok := mungerMapping.mungers[method]
 	if !ok {
 		mapping = &mungerMethodMapping{
@@ -408,8 +417,15 @@ func RegisterRequestMunger(method, apiPath string, munger requestMungerFunc) {
 		}
 		mungerMapping.mungers[method] = mapping
 	}
-	pattern := convertPattern(apiPath)
-	if pattern == nil {
+	return mapping
+}
+
+func RegisterRequestMunger(method, apiPath string, munger requestMungerFunc) {
+	mungerMapping.Lock()
+	defer mungerMapping.Unlock()
+
+	mapping := getMungerMethodMapping(method)
+	if pattern := convertPattern(apiPath); pattern == nil {
 		mapping.requests[apiPath] = munger
 	} else {
 		mapping.requestPatterns[pattern] = munger
@@ -420,18 +436,8 @@ func RegisterResponseMunger(method, apiPath string, munger responseMungerFunc) {
 	mungerMapping.Lock()
 	defer mungerMapping.Unlock()
 
-	mapping, ok := mungerMapping.mungers[method]
-	if !ok {
-		mapping = &mungerMethodMapping{
-			requests:         make(map[string]requestMungerFunc),
-			requestPatterns:  make(map[*regexp.Regexp]requestMungerFunc),
-			responses:        make(map[string]responseMungerFunc),
-			responsePatterns: make(map[*regexp.Regexp]responseMungerFunc),
-		}
-		mungerMapping.mungers[method] = mapping
-	}
-	pattern := convertPattern(apiPath)
-	if pattern == nil {
+	mapping := getMungerMethodMapping(method)
+	if pattern := convertPattern(apiPath); pattern == nil {
 		mapping.responses[apiPath] = munger
 	} else {
 		mapping.responsePatterns[pattern] = munger

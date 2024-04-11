@@ -66,13 +66,9 @@ const (
 	// kPackageFamily is the package family for the WSL app (MSIX).
 	kPackageFamily = "MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe" // spellcheck-ignore-line
 	// kMsiUpgradeCode is the upgrade code for the WSL kernel (for in-box WSL2)
-	kMsiUpgradeCode               = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
-	INSTALLPROPERTY_VERSIONSTRING = "VersionString"
-	PACKAGE_INFORMATION_BASIC     = 0x00000000
-	PACKAGE_INFORMATION_FULL      = 0x00000100
-	PACKAGE_FILTER_STATIC         = 0x00080000
-	PACKAGE_FILTER_DYNAMIC        = 0x00100000
-	PackagePathType_Effective     = 2
+	kMsiUpgradeCode = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
+	// Number of characters in a GUID string, including spaces
+	guidLength = 39
 	// wslExitNotInstalled is the exit code from `wsl --status` when WSL is not
 	// installed.
 	wslExitNotInstalled = 50
@@ -81,6 +77,16 @@ const (
 	wslExitNoKernel = 0xFFFFFE44
 	// wslExitVersion is the expected exit code from `wsl --version`.
 	wslExitVersion = 128
+)
+
+//nolint:stylecheck // Win32 constants
+const (
+	INSTALLPROPERTY_VERSIONSTRING = "VersionString"
+	PACKAGE_INFORMATION_BASIC     = 0x00000000
+	PACKAGE_INFORMATION_FULL      = 0x00000100
+	PACKAGE_FILTER_STATIC         = 0x00080000
+	PACKAGE_FILTER_DYNAMIC        = 0x00100000
+	PackagePathType_Effective     = 2
 )
 
 var (
@@ -173,10 +179,7 @@ func (v PackageVersion) String() string {
 }
 
 func (v *PackageVersion) UnmarshalText(text []byte) error {
-	expr, err := regexp.Compile(`\s*(\d+)[.,](\d+)[.,](\d+)(?:[.,](\d+))?`)
-	if err != nil {
-		return err
-	}
+	expr := regexp.MustCompile(`\s*(\d+)[.,](\d+)[.,](\d+)(?:[.,](\d+))?`)
 	groups := expr.FindStringSubmatch(string(text))
 	if groups == nil {
 		return fmt.Errorf("could not parse version %q", string(text))
@@ -236,14 +239,14 @@ type packageInfo struct {
 	path              *uint16
 	packageFullName   *uint16
 	packageFamilyName *uint16
-	packageId         struct {
+	packageID         struct {
 		reserved              uint32
 		processorArchitecture uint32
 		version               PackageVersion
 		name                  *uint16
 		publisher             *uint16
-		resourceId            *uint16
-		publisherId           *uint16
+		resourceID            *uint16
+		publisherID           *uint16
 	}
 }
 
@@ -263,7 +266,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 	if rv != uintptr(windows.ERROR_SUCCESS) {
 		return nil, errorFromWin32("error opening package info", rv, err)
 	}
-	defer closePackageInfo.Call(packageInfoReference)
+	defer func() { _, _, _ = closePackageInfo.Call(packageInfoReference) }()
 
 	var bufferLength, count uint32
 	rv, _, err = getPackageInfo.Call(
@@ -298,7 +301,7 @@ func getPackageVersion(fullName string) (*PackageVersion, error) {
 	for _, info := range infos {
 		// `info` is a pointer to an unsafe slice; make a copy of the version
 		// on the stack and then return that so the GC knows about it.
-		versionCopy := info.packageId.version
+		versionCopy := info.packageID.version
 		return &versionCopy, nil
 	}
 
@@ -321,10 +324,7 @@ func getAppxVersion(ctx context.Context, log *logrus.Entry) (*PackageVersion, *P
 		return nil, nil, fmt.Errorf("error running wsl --version: %w", err)
 	}
 	log.WithField("raw", output.String()).Trace("wsl --version output")
-	expr, err := regexp.Compile(`\s+\d+[.,]\d+[.,]\d+(?:[.,]\d+)?`)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to compile version regular expression: %w", err)
-	}
+	expr := regexp.MustCompile(`\s+\d+[.,]\d+[.,]\d+(?:[.,]\d+)?`)
 	var errorList []error
 	var version, wslVersion, kernelVersion PackageVersion
 	i := 0
@@ -401,7 +401,7 @@ func getInboxWSLInfo(ctx context.Context, log *logrus.Entry) (bool, *PackageVers
 	if err != nil {
 		allErrors = append(allErrors, err)
 	} else {
-		productCode := make([]uint16, 39)
+		productCode := make([]uint16, guidLength)
 
 		rv, _, _ := msiEnumRelatedProducts.Call(
 			uintptr(unsafe.Pointer(upgradeCode)),
@@ -465,7 +465,7 @@ func getMSIVersion(productCode []uint16, log *logrus.Entry) (*PackageVersion, er
 	switch rv {
 	case uintptr(windows.ERROR_SUCCESS):
 		versionString := windows.UTF16ToString(wideBuf[:bufSize])
-		if err = version.UnmarshalText([]byte(versionString)); err != nil {
+		if err := version.UnmarshalText([]byte(versionString)); err != nil {
 			return nil, err
 		}
 		return &version, nil

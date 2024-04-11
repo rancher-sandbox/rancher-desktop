@@ -21,12 +21,10 @@ import "golang.org/x/sys/windows"
 type MSIHANDLE uint32
 
 var (
-	dllKernel32         = windows.NewLazySystemDLL("kernel32.dll")
 	dllMsi              = windows.NewLazySystemDLL("msi.dll")
 	msiCloseHandle      = dllMsi.NewProc("MsiCloseHandle")
 	msiCreateRecord     = dllMsi.NewProc("MsiCreateRecord")
 	msiRecordSetStringW = dllMsi.NewProc("MsiRecordSetStringW")
 	msiProcessMessage   = dllMsi.NewProc("MsiProcessMessage")
 	msiSetPropertyW     = dllMsi.NewProc("MsiSetPropertyW")
-	outputDebugStringW  = dllKernel32.NewProc("OutputDebugStringW")
 )

@@ -57,7 +57,7 @@ func pathToWSL(arg string) (string, error) {
 	}
 	slashPath := filepath.ToSlash(absPath)
 	vol := filepath.VolumeName(absPath)
-	if len(vol) > 0 && vol[len(vol)-1] == ':' {
+	if vol != "" && vol[len(vol)-1] == ':' {
 		volName := strings.ToLower(vol[:len(vol)-1])
 		return "/mnt/" + volName + slashPath[len(vol):], nil
 	}
@@ -83,13 +83,13 @@ func volumeArgHandler(arg string) (string, []cleanupFunc, error) {
 	// For now, assume the container path doesn't contain colons.
 	colonIndex := strings.LastIndex(cleanArg, ":")
 	if colonIndex < 0 {
-		return "", nil, fmt.Errorf("Invalid volume mount: %s does not contain : separator", arg)
+		return "", nil, fmt.Errorf("invalid volume mount: %s does not contain : separator", arg)
 	}
 	hostPath := cleanArg[:colonIndex]
 	containerPath := cleanArg[colonIndex+1:]
 	wslHostPath, err := pathToWSL(hostPath)
 	if err != nil {
-		return "", nil, fmt.Errorf("Could not get volume host path for %s: %w", arg, err)
+		return "", nil, fmt.Errorf("could not get volume host path for %s: %w", arg, err)
 	}
 	return wslHostPath + ":" + containerPath + readWrite, nil, nil
 }

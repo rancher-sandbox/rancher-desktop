@@ -82,7 +82,7 @@ type bindManager struct {
 // empty, then the bind is incomplete (the container create failed) and it
 // should not be used.
 type bindManagerEntry struct {
-	ContainerId string
+	ContainerId string //nolint:stylecheck // Backwards compatibility
 	HostPath    string
 }
 
@@ -169,7 +169,7 @@ func (b *bindManager) makeMount() string {
 }
 
 // prepareMountPath creates target directory or file, as mount point
-func (b *bindManager) prepareMountPath(target string, bindKey string) error {
+func (b *bindManager) prepareMountPath(target, bindKey string) error {
 	mountPath := path.Join(b.mountRoot, bindKey)
 	hostPathStat, err := os.Stat(target)
 	if os.IsNotExist(err) {
@@ -282,7 +282,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 
 // containersCreateResponseBody describes the contents of a /containers/create response.
 type containersCreateResponseBody struct {
-	Id       string
+	Id       string //nolint:stylecheck // Needs to match API
 	Warnings []string
 }
 
@@ -312,8 +312,8 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 	}
 
 	b.Lock()
-	for mountId, hostPath := range *binds {
-		b.entries[mountId] = bindManagerEntry{
+	for mountID, hostPath := range *binds {
+		b.entries[mountID] = bindManagerEntry{
 			ContainerId: body.Id,
 			HostPath:    hostPath,
 		}
@@ -423,7 +423,10 @@ func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, context
 	for _, key := range toDelete {
 		delete(b.entries, key)
 	}
-	b.persist()
+	if err := b.persist(); err != nil {
+		logrus.WithError(err).Error("error writing state file")
+		return fmt.Errorf("could not write state: %w", err)
+	}
 	return nil
 }
 

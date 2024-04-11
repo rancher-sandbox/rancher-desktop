@@ -4,8 +4,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 func runCleanups(cleanups []cleanupFunc) error {
@@ -22,6 +23,8 @@ func runCleanups(cleanups []cleanupFunc) error {
 
 // mountArgProcessor implements the details for handling the argument for
 // `nerdctl run --mount=...`
+//
+//nolint:unparam // cleanupFunc is always nil, to match other processors.
 func mountArgProcessor(arg string, mounter func(string) (string, error)) (string, []cleanupFunc, error) {
 	var chunks [][]string
 	isBind := false

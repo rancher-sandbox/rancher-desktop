@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -13,6 +12,12 @@ import (
 	"strings"
 
 	"golang.org/x/sys/unix"
+)
+
+const (
+	// mountPointField is the zero-indexed field number inf /proc/self/mountinfo
+	// that contains the mount point.
+	mountPointField = 4
 )
 
 func spawn(opts spawnOptions) error {
@@ -43,7 +48,7 @@ var workdir string
 
 // Get the WSL mount point; typically, this is /mnt/wsl.
 func getWSLMountPoint() (string, error) {
-	buf, err := ioutil.ReadFile("/proc/self/mountinfo")
+	buf, err := os.ReadFile("/proc/self/mountinfo")
 	if err != nil {
 		return "", fmt.Errorf("error reading mounts: %w", err)
 	}
@@ -53,8 +58,8 @@ func getWSLMountPoint() (string, error) {
 			continue
 		}
 		fields := strings.Split(line, " ")
-		if len(fields) >= 5 {
-			return fields[4], nil
+		if len(fields) > mountPointField {
+			return fields[mountPointField], nil
 		}
 	}
 	return "", fmt.Errorf("could not find WSL mount root")
@@ -64,7 +69,7 @@ func getWSLMountPoint() (string, error) {
 // the system for arg parsing.
 func prepareParseArgs() error {
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("Got unexpected euid %v", os.Geteuid())
+		return fmt.Errorf("got unexpected euid %v", os.Geteuid())
 	}
 	mountPoint, err := getWSLMountPoint()
 	if err != nil {

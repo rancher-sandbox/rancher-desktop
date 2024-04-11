@@ -54,6 +54,10 @@ type kubeConfig struct {
 	Extras map[string]interface{} `yaml:",inline"`
 }
 
+const (
+	kubeConfigExistTimeout = 10 * time.Second
+)
+
 var (
 	k3sKubeconfigViper = viper.New()
 	rdNetworking       bool
@@ -82,11 +86,11 @@ var k3sKubeconfigCmd = &cobra.Command{
 			}
 		}()
 		var err error
-		timeout := time.After(10 * time.Second)
+		timeout := time.After(kubeConfigExistTimeout)
 		var configFile *os.File
 		select {
 		case <-timeout:
-			return fmt.Errorf("Timed out waiting for k3s kubeconfig to exist")
+			return fmt.Errorf("timed out waiting for k3s kubeconfig to exist")
 		case configFile = <-ch:
 			break
 		}

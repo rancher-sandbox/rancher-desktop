@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+//nolint:stylecheck // Win32 constant
 const (
 	ATTACH_PARENT_PROCESS = math.MaxUint32
 )
@@ -50,7 +51,7 @@ func Kill(pid int) error {
 	}
 	// Prevent _this_ process from being affected by Ctrl+C (so we exit cleanly).
 	// Ignore any errors if this fails.
-	setConsoleCtrlHandler.Call(uintptr(unsafe.Pointer(nil)), 1)
+	_, _, _ = setConsoleCtrlHandler.Call(uintptr(unsafe.Pointer(nil)), 1)
 
 	err = windows.GenerateConsoleCtrlEvent(windows.CTRL_C_EVENT, 0)
 	if err != nil {

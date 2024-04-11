@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -38,7 +39,7 @@ func writeFile(file *os.File, config *configStruct, errFmt string, v ...any) {
 		errString = fmt.Sprintf(errFmt, v...)
 		config.Errors = append(config.Errors, errString)
 	}
-	if _, err := file.Seek(0, os.SEEK_SET); err != nil {
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		log.Fatalf("Could not seek in config file: %s", err)
 	}
 	// Don't bother truncating: we allow for junk at end of file.

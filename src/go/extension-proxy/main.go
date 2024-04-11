@@ -9,6 +9,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"time"
 )
 
 func main() {
@@ -36,7 +37,12 @@ func main() {
 		},
 	}
 
-	err := http.ListenAndServe(":80", proxy)
+	server := &http.Server{
+		Addr:        ":80",
+		Handler:     proxy,
+		ReadTimeout: time.Minute,
+	}
+	err := server.ListenAndServe()
 	if err != nil {
 		log.Printf("stopped listening: %s", err)
 	}

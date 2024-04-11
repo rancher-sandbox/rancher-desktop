@@ -26,6 +26,7 @@ import (
 
 type messageType uintptr
 
+//nolint:stylecheck // Win32 constants
 const (
 	INSTALLMESSAGE_INFO        messageType = 0x04000000
 	INSTALLMESSAGE_ACTIONSTART messageType = 0x08000000
@@ -36,7 +37,7 @@ func submitMessage(hInstall MSIHANDLE, message messageType, data []string) error
 	if record == 0 {
 		return fmt.Errorf("failed to create record")
 	}
-	defer msiCloseHandle.Call(record)
+	defer func() { _, _, _ = msiCloseHandle.Call(record) }()
 	for i, item := range data {
 		buf, err := windows.UTF16PtrFromString(item)
 		if err != nil {
@@ -75,7 +76,7 @@ func setProperty(hInstall MSIHANDLE, name, value string) error {
 	if err != nil {
 		return fmt.Errorf("failed to encode property value %q: %w", value, err)
 	}
-	msiSetPropertyW.Call(
+	_, _, _ = msiSetPropertyW.Call(
 		uintptr(hInstall),
 		uintptr(unsafe.Pointer(nameBuf)),
 		uintptr(unsafe.Pointer(valueBuf)),
