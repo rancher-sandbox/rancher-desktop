@@ -349,5 +349,5 @@ func init() {
 	aliasCommand("save", "image save")
 	aliasCommand("tag", "image tag")
 
-	// describeCommands()
+	describeCommands()
 }
