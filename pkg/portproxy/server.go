@@ -94,7 +94,6 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 					}
 				}
 				delete(p.activeListeners, port)
-				fmt.Printf("here %+v \n", p.activeListeners)
 				p.mutex.Unlock()
 				continue
 			}
@@ -117,12 +116,9 @@ func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
 	forwardAddr := net.JoinHostPort(p.upstreamAddress, port)
 	for {
 		conn, err := listener.Accept()
-		fmt.Println("accept")
 		if err != nil {
-			fmt.Println("accept err", err)
 			// Check if the error is due to listener being closed
 			if errors.Is(err, net.ErrClosed) {
-				fmt.Println("inside break")
 				break
 			}
 			logrus.Errorf("port proxy listener failed to accept: %s", err)

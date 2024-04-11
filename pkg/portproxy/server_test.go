@@ -15,15 +15,14 @@ limitations under the License.
 package portproxy_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"strconv"
+	"syscall"
 	"testing"
 
 	"github.com/docker/go-connections/nat"
@@ -40,21 +39,22 @@ func TestNewPortProxy(t *testing.T) {
 	expectedResponse := "called the upstream server"
 
 	testServerIP, err := availableIP()
-	require.NoError(t, err, "cannot continue with the test since there are no availabe IP addresses")
+	require.NoError(t, err, "cannot continue with the test since there are no available IP addresses")
 
-	testServerPort, err := getFreePort()
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:", testServerIP))
 	require.NoError(t, err)
+	defer listener.Close()
 
-	testPort := strconv.Itoa(testServerPort)
-	testServerURL := url.URL{
-		Scheme: "http",
-		Host:   fmt.Sprintf("%s:%s", testServerIP, testPort),
+	testServer := http.Server{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprint(w, expectedResponse)
+		}),
 	}
+	defer testServer.Close()
+	testServer.SetKeepAlivesEnabled(false)
+	go testServer.Serve(listener)
 
-	testServer, err := newTestServerWithURL(testServerURL.Host, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, expectedResponse)
-	}))
-
+	_, testPort, err := net.SplitHostPort(listener.Addr().String())
 	require.NoError(t, err)
 
 	localListener, err := nettest.NewLocalListener("unix")
@@ -63,6 +63,14 @@ func TestNewPortProxy(t *testing.T) {
 
 	portProxy := portproxy.NewPortProxy(localListener, testServerIP)
 	go portProxy.Accept()
+
+	getURL := fmt.Sprintf("http://localhost:%s", testPort)
+	resp, err := httpGetRequest(context.Background(), getURL)
+	require.Errorf(t, err, "no listener should be available for port: %s", testPort)
+	require.ErrorIs(t, err, syscall.ECONNREFUSED)
+	if resp != nil {
+		resp.Body.Close()
+	}
 
 	port, err := nat.NewPort("tcp", testPort)
 	require.NoError(t, err)
@@ -81,14 +89,13 @@ func TestNewPortProxy(t *testing.T) {
 	err = marshalAndSend(localListener, portMapping)
 	require.NoError(t, err)
 
-	res, err := http.Get(fmt.Sprintf("http://localhost:%s", testPort))
+	resp, err = httpGetRequest(context.Background(), getURL)
 	require.NoError(t, err)
-	require.Equal(t, res.StatusCode, http.StatusOK)
-	defer res.Body.Close()
-	bodyBytes, err := io.ReadAll(res.Body)
+	require.Equal(t, resp.StatusCode, http.StatusOK)
+	defer resp.Body.Close()
+	bodyBytes, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, string(bodyBytes), expectedResponse)
-
 
 	portMapping = types.PortMapping{
 		Remove: true,
@@ -104,20 +111,28 @@ func TestNewPortProxy(t *testing.T) {
 	err = marshalAndSend(localListener, portMapping)
 	require.NoError(t, err)
 
-
-	res2, err := http.Get(fmt.Sprintf("http://localhost:%s", testPort))
-	require.NoError(t, err)
-	fmt.Println(res2.StatusCode)
-	//require.NotEqual(t, res2.StatusCode, http.StatusOK)
-	defer res2.Body.Close()
-	bodyBytes, err = io.ReadAll(res2.Body)
-	require.NoError(t, err)
-	fmt.Println(string(bodyBytes))
-	require.Equal(t, string(bodyBytes), expectedResponse)
-
+	resp, err = httpGetRequest(context.Background(), getURL)
+	require.Errorf(t, err, "the listener for port: %s should already be closed", testPort)
+	require.ErrorIs(t, err, syscall.ECONNREFUSED)
+	if resp != nil {
+		resp.Body.Close()
+	}
 
 	testServer.Close()
 	portProxy.Close()
+}
+
+func httpGetRequest(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func marshalAndSend(listener net.Listener, portMapping types.PortMapping) error {
@@ -171,30 +186,4 @@ func availableIP() (string, error) {
 		}
 	}
 	return "", errors.New("are you connected to the network?")
-}
-
-func getFreePort() (port int, err error) {
-	var a *net.TCPAddr
-	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
-		var l *net.TCPListener
-		if l, err = net.ListenTCP("tcp", a); err == nil {
-			defer l.Close()
-			return l.Addr().(*net.TCPAddr).Port, nil
-		}
-	}
-	return
-}
-
-func newTestServerWithURL(URL string, handler http.Handler) (*httptest.Server, error) {
-	ts := httptest.NewUnstartedServer(handler)
-	if URL != "" {
-		l, err := net.Listen("tcp", URL)
-		if err != nil {
-			return nil, err
-		}
-		ts.Listener.Close()
-		ts.Listener = l
-	}
-	ts.Start()
-	return ts, nil
 }
