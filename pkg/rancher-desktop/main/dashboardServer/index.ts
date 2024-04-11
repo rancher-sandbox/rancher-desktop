@@ -5,7 +5,7 @@ import path from 'path';
 import express from 'express';
 import { createProxyMiddleware, Options, RequestHandler } from 'http-proxy-middleware';
 
-import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
+import { proxyWsOpts, proxyOpts } from './proxyUtils';
 
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -30,20 +30,21 @@ export class DashboardServer {
 
   private proxies = (() => {
     const proxy: Record<ProxyKeys, Options> = {
-      '/k8s':       proxyWsOpts(this.api), // Straight to a remote cluster (/k8s/clusters/<id>/)
-      '/pp':        proxyWsOpts(this.api), // For (epinio) standalone API
-      '/api':       proxyWsOpts(this.api), // Management k8s API
-      '/apis':      proxyWsOpts(this.api), // Management k8s API
-      '/v1':        proxyWsOpts(this.api), // Management Steve API
-      '/v3':        proxyWsOpts(this.api), // Rancher API
-      '/v3-public': proxyOpts(this.api), // Rancher Unauthed API
-      '/api-ui':    proxyOpts(this.api), // Browser API UI
-      '/meta':      proxyMetaOpts(this.api), // Browser API UI
-      '/v1-*':      proxyOpts(this.api), // SAML, KDM, etc
+      '/k8s':       proxyWsOpts(), // Straight to a remote cluster (/k8s/clusters/<id>/)
+      '/pp':        proxyWsOpts(), // For (epinio) standalone API
+      '/api':       proxyWsOpts(), // Management k8s API
+      '/apis':      proxyWsOpts(), // Management k8s API
+      '/v1':        proxyWsOpts(), // Management Steve API
+      '/v3':        proxyWsOpts(), // Rancher API
+      '/api-ui':    proxyOpts(), // Browser API UI
+      '/v3-public': proxyOpts(), // Rancher Unauthed API
+      '/meta':      proxyOpts(), // Browser API UI
+      '/v1-*':      proxyOpts(), // SAML, KDM, etc
     };
 
-    return Object.fromEntries(Object.entries(proxy)
-      .map(([key, options]) => [key, createProxyMiddleware(options)])) as unknown as Record<ProxyKeys, RequestHandler>;
+    return Object.fromEntries(Object.entries(proxy).map(([key, options]) => {
+      return [key, createProxyMiddleware({ ...options, target: this.api + key })];
+    })) as unknown as Record<ProxyKeys, RequestHandler>;
   })();
 
   /**
