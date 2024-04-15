@@ -47,7 +47,7 @@ func NewPortProxy(listener net.Listener, upstreamAddr string) *PortProxy {
 	return portProxy
 }
 
-func (p *PortProxy) Accept() error {
+func (p *PortProxy) Start() error {
 	logrus.Infof("Proxy server started accepting on %s, forwarding to %s", p.listener.Addr(), p.upstreamAddress)
 	for {
 		conn, err := p.listener.Accept()
@@ -85,8 +85,8 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 				logrus.Errorf("parsing port error: %s", err)
 				continue
 			}
-			p.mutex.Lock()
 			if pm.Remove {
+				p.mutex.Lock()
 				if listener, exist := p.activeListeners[port]; exist {
 					logrus.Debugf("closing listener for port: %d", port)
 					if err := listener.Close(); err != nil {
@@ -97,7 +97,6 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 				p.mutex.Unlock()
 				continue
 			}
-			p.mutex.Unlock()
 			addr := net.JoinHostPort("localhost", portBinding.HostPort)
 			l, err := net.Listen("tcp", addr)
 			if err != nil {

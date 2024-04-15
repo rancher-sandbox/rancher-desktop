@@ -69,7 +69,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	err = proxy.Accept()
+	err = proxy.Start()
 	if err != nil {
 		logrus.Errorf("failed to start accepting: %s", err)
 		return

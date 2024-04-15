@@ -62,12 +62,11 @@ func TestNewPortProxy(t *testing.T) {
 	defer localListener.Close()
 
 	portProxy := portproxy.NewPortProxy(localListener, testServerIP)
-	go portProxy.Accept()
+	go portProxy.Start()
 
 	getURL := fmt.Sprintf("http://localhost:%s", testPort)
 	resp, err := httpGetRequest(context.Background(), getURL)
-	require.Errorf(t, err, "no listener should be available for port: %s", testPort)
-	require.ErrorIs(t, err, syscall.ECONNREFUSED)
+	require.ErrorIsf(t, err, syscall.ECONNREFUSED, "no listener should be available for port: %s", testPort)
 	if resp != nil {
 		resp.Body.Close()
 	}
