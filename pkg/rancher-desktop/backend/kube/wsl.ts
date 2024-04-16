@@ -170,7 +170,15 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   async install(config: BackendSettings, version: semver.SemVer, allowSudo: boolean) {
     await this.vm.runInstallScript(INSTALL_K3S_SCRIPT,
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
-    await BackendHelper.configureRuntimeClasses(this.vm);
+
+    if (config.experimental?.containerEngine?.webAssembly?.enabled) {
+      const promises : Promise<void>[] = [BackendHelper.configureRuntimeClasses(this.vm)];
+
+      if (config.experimental?.kubernetes?.options?.spinkube) {
+        promises.push(BackendHelper.configureSpinOperator(this.vm));
+      }
+      await Promise.all(promises);
+    }
   }
 
   async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<string> {
@@ -295,6 +303,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         'containerEngine.allowedImages.enabled':            undefined,
         'containerEngine.name':                             undefined,
         'experimental.containerEngine.webAssembly.enabled': undefined,
+        'experimental.kubernetes.options.spinkube':         undefined,
         'kubernetes.enabled':                               undefined,
         'kubernetes.ingress.localhostOnly':                 undefined,
         'kubernetes.options.flannel':                       undefined,

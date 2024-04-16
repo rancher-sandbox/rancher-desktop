@@ -109,6 +109,7 @@ export default class SettingsValidator {
       },
       experimental: {
         containerEngine: { webAssembly: { enabled: this.checkBoolean } },
+        kubernetes:      { options: { spinkube: this.checkMulti(this.checkBoolean, this.checkSpinkube) } },
         virtualMachine:  {
           mount: {
             type: this.checkLima(this.checkMulti(
@@ -364,6 +365,18 @@ export default class SettingsValidator {
     }
     if (desiredValue === MountType.NINEP && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU) {
       errors.push(`Setting ${ fqname } to "${ MountType.NINEP }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
+      this.isFatal = true;
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
+  protected checkSpinkube(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
+    // only validate the Spinkube option when Kubernetes is enabled
+    if (desiredValue && mergedSettings.kubernetes.enabled && !mergedSettings.experimental.containerEngine.webAssembly.enabled) {
+      errors.push(`Setting ${ fqname } can only be set when experimental.container-engine.web-assembly.enabled is set as well.`);
       this.isFatal = true;
 
       return false;

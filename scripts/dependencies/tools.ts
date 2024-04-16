@@ -585,3 +585,56 @@ export class WasmShims implements Dependency, GitHubDependency {
     return semver.rcompare(version1, version2);
   }
 }
+
+export class CertManager implements Dependency, GitHubDependency {
+  name = 'certManager';
+  githubOwner = 'cert-manager';
+  githubRepo = 'cert-manager';
+
+  async download(context: DownloadContext): Promise<void> {
+    const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.certManager }`;
+    const filename = 'cert-manager.yaml';
+
+    await download(`${ base }/${ filename }`, path.join(context.resourcesDir, filename));
+  }
+
+  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}
+
+export class SpinOperator implements Dependency, GitHubDependency {
+  name = 'spinOperator';
+  githubOwner = 'spinkube';
+  githubRepo = 'spin-operator';
+
+  async download(context: DownloadContext): Promise<void> {
+    const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.spinOperator }`;
+    let filename = 'spin-operator.crds.yaml';
+
+    await download(`${ base }/${ filename }`, path.join(context.resourcesDir, filename));
+
+    filename = `spin-operator-${ context.versions.spinOperator }.tgz`;
+    await download(`${ base }/${ filename }`, path.join(context.resourcesDir, 'spin-operator.tgz'));
+  }
+
+  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}

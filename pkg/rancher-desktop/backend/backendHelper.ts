@@ -7,6 +7,8 @@ import yaml from 'yaml';
 
 import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-containerd-shims';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
+import SPIN_OPERATOR_HELM_CHART from '@pkg/assets/scripts/spin-operator.helm-chart.yaml';
+import SPIN_OPERATOR_SHIM_EXECUTOR from '@pkg/assets/scripts/spin-operator.shim-executor.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -19,8 +21,18 @@ import { showMessageBox } from '@pkg/window';
 
 const CONTAINERD_CONFIG_TOML = '/etc/containerd/config.toml';
 const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
-// Don't use `runtimes.yaml` because k3s may overwrite it.
-const MANIFESTS_RUNTIMES_YAML = '/var/lib/rancher/k3s/server/manifests/rd-runtimes.yaml';
+
+const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
+// Manifests are applied in sort order, so use a prefix to load them last, in the required sequence.
+// Also: don't use `runtimes.yaml` because k3s may overwrite it.
+const MANIFEST_RUNTIMES_YAML = `${ MANIFEST_DIR }/z100-rd-runtimes.yaml`;
+const MANIFEST_CERT_MANAGER = `${ MANIFEST_DIR }/z110-cert-manager.yaml`;
+const MANIFEST_SPIN_OPERATOR_CRDS = `${ MANIFEST_DIR }/z120-spin-operator.crds.yaml`;
+const MANIFEST_SPIN_OPERATOR_SHIM_EXECUTOR = `${ MANIFEST_DIR }/z121-spin-operator.shim-executor.yaml`;
+const MANIFEST_SPIN_OPERATOR_CHART = `${ MANIFEST_DIR }/z122-spin-operator.chart.yaml`;
+
+const STATIC_DIR = '/var/lib/rancher/k3s/server/static/rancher-desktop';
+const STATIC_SPIN_OPERATOR_CHART = `${ STATIC_DIR }/spin-operator.tgz`;
 
 const console = Logging.kube;
 
@@ -269,19 +281,27 @@ export default class BackendHelper {
       });
     }
 
-    await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(MANIFESTS_RUNTIMES_YAML));
     // Don't let k3s define runtime classes, only use the ones defined by Rancher Desktop.
-    await vmx.execCommand({ root: true }, 'touch', `${ path.dirname(MANIFESTS_RUNTIMES_YAML) }/runtimes.yaml.skip`);
+    await vmx.execCommand({ root: true }, 'touch', `${ MANIFEST_DIR }/runtimes.yaml.skip`);
 
-    if (runtimes.length === 0) {
-      // We delete the manifest file, but we don't actually delete old runtime classes in k3s that no longer exist.
-      // They won't work though, as the symlinks in /usr/local/bin have been removed.
-      await vmx.execCommand({ root: true }, 'rm', '-f', MANIFESTS_RUNTIMES_YAML);
-    } else {
+    if (runtimes.length > 0) {
       const manifest = runtimes.map(r => yaml.stringify(r)).join('---\n');
 
-      await vmx.writeFile(MANIFESTS_RUNTIMES_YAML, manifest, 0o644);
+      await vmx.writeFile(MANIFEST_RUNTIMES_YAML, manifest, 0o644);
     }
+  }
+
+  /**
+   * Write k3s manifests to install cert-manager and spinkube operator
+   */
+  static async configureSpinOperator(vmx: VMExecutor) {
+    await Promise.all([
+      vmx.copyFileIn(path.join(paths.resources, 'cert-manager.yaml'), MANIFEST_CERT_MANAGER),
+      vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), MANIFEST_SPIN_OPERATOR_CRDS),
+      vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART),
+      vmx.writeFile(MANIFEST_SPIN_OPERATOR_SHIM_EXECUTOR, SPIN_OPERATOR_SHIM_EXECUTOR, 0o644),
+      vmx.writeFile(MANIFEST_SPIN_OPERATOR_CHART, SPIN_OPERATOR_HELM_CHART, 0o644),
+    ]);
   }
 
   /**

@@ -652,6 +652,15 @@ components:
                     enabled:
                       type: boolean
                       x-rd-usage: enable support for containerd-wasm shims
+            kubernetes:
+              type: object
+              properties:
+                options:
+                  type: object
+                  properties:
+                    spinkube:
+                      type: boolean
+                      x-rd-usage: install spin operator
             virtualMachine:
               type: object
               properties:
