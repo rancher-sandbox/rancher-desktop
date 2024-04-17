@@ -374,12 +374,19 @@ export default class SettingsValidator {
   }
 
   protected checkSpinkube(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
-    // only validate the Spinkube option when Kubernetes is enabled
-    if (desiredValue && mergedSettings.kubernetes.enabled && !mergedSettings.experimental.containerEngine.webAssembly.enabled) {
-      errors.push(`Setting ${ fqname } can only be set when experimental.container-engine.web-assembly.enabled is set as well.`);
-      this.isFatal = true;
+    if (mergedSettings.kubernetes.enabled && desiredValue) {
+      if (!mergedSettings.experimental.containerEngine.webAssembly.enabled) {
+        errors.push(`Setting ${ fqname } can only be set when experimental.container-engine.web-assembly.enabled is set as well.`);
+        this.isFatal = true;
 
-      return false;
+        return false;
+      }
+      if (mergedSettings.kubernetes.version === '' || semver.gt('1.22.0', mergedSettings.kubernetes.version) ) {
+        errors.push(`Setting ${ fqname } requires Kubernetes 1.22 or later`);
+        this.isFatal = true;
+
+        return false;
+      }
     }
 
     return currentValue !== desiredValue;
