@@ -438,8 +438,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               await fs.promises.mkdir(path.dirname(absPath), { recursive: true });
               await fs.promises.writeFile(absPath, contents);
             }
-            await childProcess.spawnFile('tar.exe',
-              ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)]);
+            // msys comes with its own "tar.exe"; ensure we use the version
+            // shipped with Windows.
+            const tarExe = path.join(process.env.SystemRoot ?? '', 'system32', 'tar.exe');
+
+            await childProcess.spawnFile(tarExe,
+              ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)],
+              { stdio: 'pipe' });
             await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
           } catch (ex) {
