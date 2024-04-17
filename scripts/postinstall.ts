@@ -54,6 +54,8 @@ const wslDependencies = [
 const vmDependencies = [
   new tools.Trivy(),
   new tools.WasmShims(),
+  new tools.CertManager(),
+  new tools.SpinOperator(),
 ];
 
 // Dependencies that are specific to hosts.

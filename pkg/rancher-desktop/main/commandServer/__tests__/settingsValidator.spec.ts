@@ -72,6 +72,7 @@ describe(SettingsValidator, () => {
       ['application', 'pathManagementStrategy'],
       ['containerEngine', 'allowedImages', 'locked'],
       ['containerEngine', 'name'],
+      ['experimental', 'kubernetes', 'options', 'spinkube'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'cacheMode'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'msizeInKib'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],

@@ -2,11 +2,17 @@
 import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 
+import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
+
 export default Vue.extend({
   name:         'rd-checkbox',
-  components:   { Checkbox },
+  components:   { TooltipIcon, Checkbox },
   inheritAttrs: false,
   props:        {
+    isExperimental: {
+      type:    Boolean,
+      default: false,
+    },
     isLocked: {
       type:    Boolean,
       default: false,
@@ -39,25 +45,31 @@ export default Vue.extend({
       v-on="$listeners"
     >
       <template #label>
-        <t
-          v-if="labelKey"
-          :k="labelKey"
-          :raw="true"
-        />
-        <template v-else-if="label">
-          {{ label }}
-        </template>
-        <i
-          v-if="tooltipKey"
-          v-clean-tooltip="t(tooltipKey)"
-          class="checkbox-info icon icon-info icon-lg"
-        />
-        <i
-          v-else-if="tooltip"
-          v-clean-tooltip="tooltip"
-          class="checkbox-info icon icon-info icon-lg"
-        />
+        <slot name="label">
+          <t
+            v-if="labelKey"
+            :k="labelKey"
+            :raw="true"
+          />
+          <template v-else-if="label">
+            {{ label }}
+          </template>
+          <i
+            v-if="tooltipKey"
+            v-clean-tooltip="t(tooltipKey)"
+            class="checkbox-info icon icon-info icon-lg"
+          />
+          <i
+            v-else-if="tooltip"
+            v-clean-tooltip="tooltip"
+            class="checkbox-info icon icon-info icon-lg"
+          />
+        </slot>
         <slot name="after">
+          <tooltip-icon
+            v-if="isExperimental"
+            class="tooltip-icon"
+          />
           <i
             v-if="isLocked"
             v-tooltip="{
@@ -71,3 +83,9 @@ export default Vue.extend({
     </checkbox>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.tooltip-icon {
+  margin-left: 0.25rem;
+}
+</style>

@@ -1163,7 +1163,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       return;
     }
 
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install'));
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install-'));
     const tarPath = path.join(workdir, 'vmnet.tar');
     const commands: string[] = [];
 
@@ -1557,8 +1557,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async configureContainerEngine(): Promise<void> {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
-
     try {
       const configureWASM = !!this.cfg?.experimental?.containerEngine?.webAssembly?.enabled;
 
@@ -1572,8 +1570,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       await BackendHelper.configureContainerEngine(this, configureWASM);
     } catch (err) {
       console.log(`Error trying to start/update containerd: ${ err }: `, err);
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
     }
   }
 
@@ -1643,8 +1639,19 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
   }
 
-  copyFileIn(hostPath: string, vmPath: string): Promise<void> {
-    return this.lima('copy', hostPath, `${ MACHINE_NAME }:${ vmPath }`);
+  async copyFileIn(hostPath: string, vmPath: string): Promise<void> {
+    // TODO This logic is copied from writeFile() above and should be simplified.
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(hostPath) }-`));
+    const tempPath = `/tmp/${ path.basename(workdir) }.${ path.basename(hostPath) }`;
+
+    try {
+      await this.lima('copy', hostPath, `${ MACHINE_NAME }:${ tempPath }`);
+      await this.execCommand('chmod', '644', tempPath);
+      await this.execCommand({ root: true }, 'mv', tempPath, vmPath);
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+      await this.execCommand({ root: true }, 'rm', '-f', tempPath);
+    }
   }
 
   copyFileOut(vmPath: string, hostPath: string): Promise<void> {

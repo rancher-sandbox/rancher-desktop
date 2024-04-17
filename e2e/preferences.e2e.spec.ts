@@ -208,7 +208,7 @@ test.describe.serial('Main App Test', () => {
     await expect(kubernetes.kubernetesToggle).toBeVisible();
     await expect(kubernetes.kubernetesVersion).toBeVisible();
     await expect(kubernetes.kubernetesPort).toBeVisible();
-    await expect(kubernetes.traefikToggle).toBeVisible();
+    await expect(kubernetes.kubernetesOptions).toBeVisible();
   });
 
   test('should navigate to WSL and render network tab', async() => {

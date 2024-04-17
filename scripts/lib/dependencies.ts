@@ -53,6 +53,8 @@ export type DependencyVersions = {
   hostSwitch: string;
   moproxy: string;
   wasmShims: string;
+  certManager: string;
+  spinOperator: string;
 };
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {

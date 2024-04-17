@@ -41,3 +41,14 @@ fi
 ln -s -f "${K3S_DIR}/${K3S}" /usr/local/bin/k3s
 # The file system may be readonly (on macOS)
 chmod a+x "${K3S_DIR}/${K3S}" || true
+
+# Make sure any old manifests are removed before configuring k3s again
+# We need to create the directory before we run `k3s server ...` because
+# we install additional manifests that k3s will install during startup.
+MANIFESTS=/var/lib/rancher/k3s/server/manifests
+rm -rf "$MANIFESTS"
+mkdir -p "$MANIFESTS"
+
+STATIC=/var/lib/rancher/k3s/server/static/rancher-desktop
+rm -rf "$STATIC"
+mkdir -p "$STATIC"

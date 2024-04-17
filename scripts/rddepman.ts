@@ -47,6 +47,8 @@ const dependencies: Dependency[] = [
   new HostSwitch(),
   new Moproxy(),
   new tools.WasmShims(),
+  new tools.CertManager(),
+  new tools.SpinOperator(),
 ];
 
 function git(...args: string[]): number | null {

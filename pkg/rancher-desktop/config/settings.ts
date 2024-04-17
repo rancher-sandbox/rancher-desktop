@@ -117,10 +117,12 @@ export const defaultSettings = {
     mutedChecks: {} as Record<string, boolean>,
   },
   /**
-   * Experimental settings - there should not be any UI for these.
+   * Experimental settings
    */
   experimental: {
     containerEngine: { webAssembly: { enabled: false } },
+    /** can only be enabled if containerEngine.webAssembly.enabled is true */
+    kubernetes:      { options: { spinkube: false } },
     virtualMachine:  {
       /** can only be set to VMType.VZ on macOS Ventura and later */
       type:        VMType.QEMU,

@@ -162,8 +162,8 @@ export default Vue.extend({
       />
     </rd-fieldset>
     <rd-fieldset
-      data-test="traefikToggle"
-      legend-text="Traefik"
+      data-test="kubernetesOptions"
+      legend-text="Options"
     >
       <rd-checkbox
         label="Enable Traefik"
@@ -171,6 +171,15 @@ export default Vue.extend({
         :value="preferences.kubernetes.options.traefik"
         :is-locked="isPreferenceLocked('kubernetes.options.traefik')"
         @input="onChange('kubernetes.options.traefik', $event)"
+      />
+      <!-- Don't disable Spinkube option when Wasm is disabled; let validation deal with it  -->
+      <rd-checkbox
+        label="Install Spin Operator"
+        :disabled="isKubernetesDisabled"
+        :value="preferences.experimental.kubernetes.options.spinkube"
+        :is-locked="isPreferenceLocked('experimental.kubernetes.options.spinkube')"
+        :is-experimental="true"
+        @input="onChange('experimental.kubernetes.options.spinkube', $event)"
       />
     </rd-fieldset>
   </div>
