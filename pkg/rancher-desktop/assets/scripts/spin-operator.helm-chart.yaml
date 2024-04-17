@@ -6,4 +6,6 @@ metadata:
 spec:
   chart: "https://%{KUBERNETES_API}%/static/rancher-desktop/spin-operator.tgz"
   targetNamespace: spin-operator
-  createNamespace: true
+  # Old versions of the helm-controller don't support createNamespace, so we
+  # create the namespace separately via spin-operator.namespace.yaml.
+  createNamespace: false
