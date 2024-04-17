@@ -7,9 +7,7 @@ import yaml from 'yaml';
 
 import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-containerd-shims';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
-import SPIN_OPERATOR_HELM_CHART from '@pkg/assets/scripts/spin-operator.helm-chart.yaml';
-import SPIN_OPERATOR_NAMESPACE from '@pkg/assets/scripts/spin-operator.namespace.yaml';
-import SPIN_OPERATOR_SHIM_EXECUTOR from '@pkg/assets/scripts/spin-operator.shim-executor.yaml';
+import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -29,9 +27,7 @@ const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
 const MANIFEST_RUNTIMES_YAML = `${ MANIFEST_DIR }/z100-runtimes.yaml`;
 const MANIFEST_CERT_MANAGER = `${ MANIFEST_DIR }/z110-cert-manager.yaml`;
 const MANIFEST_SPIN_OPERATOR_CRDS = `${ MANIFEST_DIR }/z120-spin-operator.crds.yaml`;
-const MANIFEST_SPIN_OPERATOR_SHIM_EXECUTOR = `${ MANIFEST_DIR }/z121-spin-operator.shim-executor.yaml`;
-const MANIFEST_SPIN_OPERATOR_NAMESPACE = `${ MANIFEST_DIR }/z122-spin-operator.namespace.yaml`;
-const MANIFEST_SPIN_OPERATOR_CHART = `${ MANIFEST_DIR }/z123-spin-operator.chart.yaml`;
+const MANIFEST_SPIN_OPERATOR = `${ MANIFEST_DIR }/z125-spin-operator.yaml`;
 
 const STATIC_DIR = '/var/lib/rancher/k3s/server/static/rancher-desktop';
 const STATIC_SPIN_OPERATOR_CHART = `${ STATIC_DIR }/spin-operator.tgz`;
@@ -301,9 +297,7 @@ export default class BackendHelper {
       vmx.copyFileIn(path.join(paths.resources, 'cert-manager.yaml'), MANIFEST_CERT_MANAGER),
       vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), MANIFEST_SPIN_OPERATOR_CRDS),
       vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART),
-      vmx.writeFile(MANIFEST_SPIN_OPERATOR_SHIM_EXECUTOR, SPIN_OPERATOR_SHIM_EXECUTOR, 0o644),
-      vmx.writeFile(MANIFEST_SPIN_OPERATOR_NAMESPACE, SPIN_OPERATOR_NAMESPACE, 0o644),
-      vmx.writeFile(MANIFEST_SPIN_OPERATOR_CHART, SPIN_OPERATOR_HELM_CHART, 0o644),
+      vmx.writeFile(MANIFEST_SPIN_OPERATOR, SPIN_OPERATOR, 0o644),
     ]);
   }
 
