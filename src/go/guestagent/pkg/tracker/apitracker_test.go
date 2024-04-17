@@ -53,7 +53,8 @@ func TestBasicAdd(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -89,7 +90,8 @@ func TestAddOverride(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -180,7 +182,8 @@ func TestAddWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -275,7 +278,8 @@ func TestGet(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 	err := apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
@@ -303,7 +307,8 @@ func TestRemove(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -367,7 +372,8 @@ func TestRemoveWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -427,7 +433,8 @@ func TestRemoveAll(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -491,7 +498,8 @@ func TestRemoveAllWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, true)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -571,7 +579,8 @@ func TestNonAdminInstall(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	apiTracker := tracker.NewAPITracker(testSrv.URL, false)
+	forwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, false)
 
 	portMapping := nat.PortMap{
 		"1025/tcp": []nat.PortBinding{
