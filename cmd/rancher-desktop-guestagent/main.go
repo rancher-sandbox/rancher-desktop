@@ -141,7 +141,8 @@ func main() {
 		forwarder := forwarder.NewVTunnelForwarder(*vtunnelAddr)
 		portTracker = tracker.NewVTunnelTracker(forwarder, wslAddr)
 	} else {
-		portTracker = tracker.NewAPITracker(tracker.GatewayBaseURL, *adminInstall)
+		forwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
+		portTracker = tracker.NewAPITracker(forwarder, tracker.GatewayBaseURL, *adminInstall)
 	}
 
 	if *enableContainerd {
