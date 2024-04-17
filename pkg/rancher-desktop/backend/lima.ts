@@ -1163,7 +1163,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       return;
     }
 
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install'));
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install-'));
     const tarPath = path.join(workdir, 'vmnet.tar');
     const commands: string[] = [];
 
@@ -1623,7 +1623,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @param permissions The file permissions.
    */
   async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }`));
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
     const tempPath = `/tmp/${ path.basename(workdir) }.${ path.basename(filePath) }`;
 
     try {
@@ -1641,7 +1641,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   async copyFileIn(hostPath: string, vmPath: string): Promise<void> {
     // TODO This logic is copied from writeFile() above and should be simplified.
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(hostPath) }`));
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(hostPath) }-`));
     const tempPath = `/tmp/${ path.basename(workdir) }.${ path.basename(hostPath) }`;
 
     try {
@@ -1652,8 +1652,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       await fs.promises.rm(workdir, { recursive: true });
       await this.execCommand({ root: true }, 'rm', '-f', tempPath);
     }
-
-    return this.lima('copy', hostPath, `${ MACHINE_NAME }:${ vmPath }`);
   }
 
   copyFileOut(vmPath: string, hostPath: string): Promise<void> {

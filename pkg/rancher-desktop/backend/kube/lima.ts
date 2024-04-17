@@ -129,8 +129,9 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       // installK3s removes old config and makes sure the directories are recreated
       await this.installK3s(desiredVersion);
 
-      const promises : Promise<void>[] = [this.writeServiceScript(config, desiredVersion, allowSudo)];
+      const promises: Promise<void>[] = [];
 
+      promises.push(this.writeServiceScript(config, desiredVersion, allowSudo));
       if (config.experimental?.containerEngine?.webAssembly?.enabled) {
         promises.push(BackendHelper.configureRuntimeClasses(this.vm));
         if (config.experimental?.kubernetes?.options?.spinkube) {

@@ -172,8 +172,9 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
 
     if (config.experimental?.containerEngine?.webAssembly?.enabled) {
-      const promises : Promise<void>[] = [BackendHelper.configureRuntimeClasses(this.vm)];
+      const promises: Promise<void>[] = [];
 
+      promises.push(BackendHelper.configureRuntimeClasses(this.vm));
       if (config.experimental?.kubernetes?.options?.spinkube) {
         promises.push(BackendHelper.configureSpinOperator(this.vm));
       }
