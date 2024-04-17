@@ -1,9 +1,0 @@
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: spin-operator
-  namespace: kube-system
-spec:
-  chart: "https://%{KUBERNETES_API}%/static/rancher-desktop/spin-operator.tgz"
-  targetNamespace: spin-operator
-  createNamespace: true
