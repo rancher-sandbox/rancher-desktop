@@ -4891,7 +4891,8 @@ preferences:
   locked:
     tooltip: Locked due to organization's policy
   incompatibleTypeWarningPre: 'The option requires'
-  incompatibleTypeWarningPost: 'to be selected.'
+  incompatibleTypeWarningPostSelected: 'to be selected.'
+  incompatibleTypeWarningPostDisabled: 'to be unselected.'
   incompatiblePrefWarningOr: 'or'
 ##############################
 ### Integrations Page

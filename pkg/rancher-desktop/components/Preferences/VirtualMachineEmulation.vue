@@ -90,15 +90,23 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       case VMType.QEMU:
         if (this.preferences.experimental.virtualMachine.mount.type === MountType.VIRTIOFS) {
           compatiblePrefs.push(
-            { prefName: MountType.REVERSE_SSHFS, tabName: 'volumes' },
-            { prefName: MountType.NINEP, tabName: 'volumes' } );
+            {
+              title: MountType.REVERSE_SSHFS, navItemName: 'Virtual Machine', tabName: 'volumes',
+            },
+            {
+              title: MountType.NINEP, navItemName: 'Virtual Machine', tabName: 'volumes',
+            } );
         }
         break;
       case VMType.VZ:
         if (this.preferences.experimental.virtualMachine.mount.type === MountType.NINEP) {
           compatiblePrefs.push(
-            { prefName: MountType.REVERSE_SSHFS, tabName: 'volumes' },
-            { prefName: MountType.VIRTIOFS, tabName: 'volumes' } );
+            {
+              title: MountType.REVERSE_SSHFS, navItemName: 'Virtual Machine', tabName: 'volumes',
+            },
+            {
+              title: MountType.VIRTIOFS, navItemName: 'Virtual Machine', tabName: 'volumes',
+            } );
         }
         break;
       }
@@ -150,7 +158,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                     <incompatible-preferences-alert
                       v-if="option.value === preferences.experimental.virtualMachine.type"
                       :compatible-prefs="option.compatiblePrefs"
-                      @update:tab="$emit('update:tab', $event)"
                     />
                   </template>
                 </radio-button>

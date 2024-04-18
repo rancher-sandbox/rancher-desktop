@@ -1,8 +1,18 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
 import Vue, { PropType } from 'vue';
+import { mapState } from 'vuex';
 
-export type CompatiblePrefs = { prefName: string, tabName: string }[];
+import type { NavItemName } from '@pkg/config/transientSettings';
+
+export type CompatiblePrefs = {
+  /** title is the string to display to the user to describe the preference. */
+  title: string,
+  /** navItemName is the nav item (top level navigation) to switch to. */
+  navItemName: NavItemName;
+  /** tabName is the tab to switch to, if any */
+  tabName?: string,
+}[];
 
 export default Vue.extend({
   components: { Banner },
@@ -11,10 +21,34 @@ export default Vue.extend({
       type:     Array as PropType<CompatiblePrefs>,
       required: true,
     },
+    mode: {
+      type:    String as PropType<'selected' | 'disabled'>,
+      default: 'selected',
+    },
+  },
+  computed: {
+    ...mapState('credentials', ['credentials']),
+    messagePost(): string {
+      switch (this.mode) {
+      case 'selected':
+        return this.t('preferences.incompatibleTypeWarningPostSelected');
+      case 'disabled':
+        return this.t('preferences.incompatibleTypeWarningPostDisabled');
+      }
+
+      return this.t('preferences.incompatibleTypeWarningPostSelected');
+    },
   },
   methods: {
-    changeTab(tab: string) {
-      this.$emit('update:tab', tab);
+    navigate(info: CompatiblePrefs[number]) {
+      this.$store.dispatch(
+        'transientSettings/navigatePrefDialog',
+        {
+          ...this.credentials,
+          navItem: info.navItemName,
+          tab:     info.tabName,
+        },
+      );
     },
   },
 });
@@ -32,9 +66,9 @@ export default Vue.extend({
     >
       <a
         href="#"
-        @click.prevent="changeTab(pref.tabName)"
+        @click.prevent="navigate(pref)"
       >
-        {{ pref.prefName }}
+        {{ pref.title }}
       </a>
       <span v-if="compatiblePrefs.length > 2 && index < (compatiblePrefs.length - 2)">
         {{ ',' }}
@@ -43,7 +77,7 @@ export default Vue.extend({
         {{ t('preferences.incompatiblePrefWarningOr') }}
       </span>
     </p>
-    <p>{{ t('preferences.incompatibleTypeWarningPost') }}</p>
+    <p>{{ messagePost }}</p>
   </banner>
 </template>
 

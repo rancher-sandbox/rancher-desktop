@@ -4,6 +4,7 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import EngineSelector from '@pkg/components/EngineSelector.vue';
+import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -15,6 +16,7 @@ export default Vue.extend({
   name:       'preferences-container-engine-general',
   components: {
     EngineSelector,
+    IncompatiblePreferencesAlert,
     RdCheckbox,
     RdFieldset,
   },
@@ -27,8 +29,26 @@ export default Vue.extend({
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
   },
-  computed: { ...mapGetters('preferences', ['isPreferenceLocked']) },
-  methods:  {
+  computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
+    webAssemblyIncompatiblePrefs(): CompatiblePrefs {
+      if (!this.preferences.kubernetes.enabled) {
+        // If Kubernetes is disabled, we don't have to worry about the operator.
+        return [];
+      }
+      if (this.preferences.experimental.kubernetes.options.spinkube) {
+        if (!this.preferences.experimental.containerEngine.webAssembly.enabled) {
+          return [{
+            title:       'Install Spin Operator',
+            navItemName: 'Kubernetes',
+          }];
+        }
+      }
+
+      return [];
+    },
+  },
+  methods: {
     onChangeEngine(desiredEngine: ContainerEngine) {
       this.containerEngine = desiredEngine;
       this.$emit('container-engine-change', desiredEngine);
@@ -67,6 +87,11 @@ export default Vue.extend({
         :value="preferences.experimental.containerEngine.webAssembly.enabled"
         :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
         @input="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
+      />
+      <incompatible-preferences-alert
+        v-if="webAssemblyIncompatiblePrefs.length > 0"
+        mode="disabled"
+        :compatible-prefs="webAssemblyIncompatiblePrefs"
       />
     </rd-fieldset>
   </div>

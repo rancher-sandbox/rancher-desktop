@@ -4,6 +4,7 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import { VersionEntry } from '@pkg/backend/k8s';
+import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
@@ -17,7 +18,11 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
   components: {
-    RdCheckbox, RdFieldset, RdSelect, RdInput,
+    IncompatiblePreferencesAlert,
+    RdCheckbox,
+    RdFieldset,
+    RdSelect,
+    RdInput,
   },
   props: {
     preferences: {
@@ -27,9 +32,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      enableKubernetes:   true,
-      enableTraefik:      true,
-      kubernetesPort:     6443,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
     };
@@ -57,6 +59,26 @@ export default Vue.extend({
     },
     kubernetesVersionLabel(): string {
       return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
+    },
+    spinOperatorIncompatiblePrefs(): CompatiblePrefs {
+      if (this.isKubernetesDisabled) {
+        // If Kubernetes is disabled, the user can't change this so we don't care.
+        return [];
+      }
+
+      if (this.preferences.experimental.containerEngine.webAssembly.enabled) {
+        return [];
+      }
+
+      if (this.preferences.experimental.kubernetes.options.spinkube) {
+        return [{
+          title:       'WebAssembly',
+          navItemName: 'Container Engine',
+          tabName:     'general',
+        }];
+      }
+
+      return [];
     },
   },
   beforeMount() {
@@ -180,6 +202,10 @@ export default Vue.extend({
         :is-locked="isPreferenceLocked('experimental.kubernetes.options.spinkube')"
         :is-experimental="true"
         @input="onChange('experimental.kubernetes.options.spinkube', $event)"
+      />
+      <incompatible-preferences-alert
+        v-if="spinOperatorIncompatiblePrefs.length > 0"
+        :compatible-prefs="spinOperatorIncompatiblePrefs"
       />
     </rd-fieldset>
   </div>

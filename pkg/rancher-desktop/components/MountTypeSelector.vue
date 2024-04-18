@@ -125,12 +125,16 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         switch (mountType) {
         case MountType.NINEP:
           if (this.preferences.experimental.virtualMachine.type === VMType.VZ) {
-            compatiblePrefs.push( { prefName: VMType.QEMU, tabName: 'emulation' } );
+            compatiblePrefs.push( {
+              title: VMType.QEMU, navItemName: 'Virtual Machine', tabName: 'emulation',
+            } );
           }
           break;
         case MountType.VIRTIOFS:
           if (this.preferences.experimental.virtualMachine.type === VMType.QEMU) {
-            compatiblePrefs.push( { prefName: VMType.VZ, tabName: 'emulation' } );
+            compatiblePrefs.push( {
+              title: VMType.VZ, navItemName: 'Virtual Machine', tabName: 'emulation',
+            } );
           }
           break;
         }
@@ -183,7 +187,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                     <incompatible-preferences-alert
                       v-if="option.value === preferences.experimental.virtualMachine.mount.type"
                       :compatible-prefs="option.compatiblePrefs"
-                      @update:tab="$emit('update:tab', $event)"
                     />
                   </template>
                 </radio-button>

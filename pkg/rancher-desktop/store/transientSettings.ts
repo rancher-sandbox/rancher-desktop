@@ -3,7 +3,7 @@ import semver from 'semver';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import { defaultTransientSettings, TransientSettings } from '@pkg/config/transientSettings';
+import { defaultTransientSettings, NavItemName, TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
@@ -13,6 +13,11 @@ type Preferences = typeof defaultTransientSettings.preferences;
 
 interface CommitArgs extends ServerState {
   payload?: RecursivePartial<TransientSettings>;
+}
+
+interface NavigatePrefsDialogArgs extends ServerState {
+  navItem: NavItemName;
+  tab?: string;
 }
 
 type ExtendedTransientSettings = TransientSettings & {
@@ -80,6 +85,13 @@ export const actions = {
       'transientSettings/fetchTransientSettings',
       args,
       { root: true });
+  },
+  async navigatePrefDialog(context: TransientSettingsContext, args: NavigatePrefsDialogArgs) {
+    const commitArgs = _.omit(args, 'navItem', 'tab');
+    const { navItem, tab } = args;
+    const preferences = { navItem: { current: navItem, currentTabs: { [navItem]: tab } } };
+
+    await context.dispatch('commitPreferences', { ...commitArgs, payload: { preferences } });
   },
   setMacOsVersion({ commit }: TransientSettingsContext, macOsVersion: semver.SemVer) {
     commit('SET_MAC_OS_VERSION', macOsVersion);
