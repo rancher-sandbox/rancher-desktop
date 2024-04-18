@@ -26,7 +26,7 @@ jobs:
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
     - name: Find release
-      if : inputs.tag == ''
+      if: inputs.tag == ''
       run: >-
         set -o xtrace;
         printf "RELEASE_TAG=%s\n" >>"$GITHUB_ENV"
