@@ -10278,11 +10278,6 @@ ora@^5.3.0:
     strip-ansi "^6.0.0"
     wcwidth "^1.0.1"
 
-os-paths@^4.0.1:
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/os-paths/-/os-paths-4.4.0.tgz#2908b5bcb60cbfe3afb869292281a2a6b2f77ebe"
-  integrity sha512-wrAwOeXp1RRMFfQY8Sy7VaGVmPocaLwSFOYCGKSyo8qmJ+/yaafCl5BCA1IQZWqFSRBrKDYFeR9d/VyQzfH/jg==
-
 p-cancelable@^2.0.0:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/p-cancelable/-/p-cancelable-2.1.1.tgz#aab7fbd416582fa32a3db49859c122487c5ed2cf"
@@ -13489,21 +13484,6 @@ ws@^8.13.0:
   version "8.14.2"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.14.2.tgz#6c249a806eb2db7a20d26d51e7709eab7b2e6c7f"
   integrity sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==
-
-xdg-app-paths@5.5.1:
-  version "5.5.1"
-  resolved "https://registry.yarnpkg.com/xdg-app-paths/-/xdg-app-paths-5.5.1.tgz#2d5e94218c6fc4e9b742503889dfd29bbd336b8c"
-  integrity sha512-hI3flOB4PLZIy5prbtTpirobtPE2ZtZ52szO+2mM9Efp6ErM398La+C1lIpNWDfNoQk+6Lsi6nMcCwVB7pxeMQ==
-  dependencies:
-    os-paths "^4.0.1"
-    xdg-portable "^7.2.0"
-
-xdg-portable@^7.2.0:
-  version "7.3.0"
-  resolved "https://registry.yarnpkg.com/xdg-portable/-/xdg-portable-7.3.0.tgz#c6b1610de806a2ca1fe65727d5f8402c295d2e96"
-  integrity sha512-sqMMuL1rc0FmMBOzCpd0yuy9trqF2yTTVe+E9ogwCSWQCdDEtQUwrZPT6AxqtsFGRNxycgncbP/xmOOSPw5ZUw==
-  dependencies:
-    os-paths "^4.0.1"
 
 xml-name-validator@^3.0.0:
   version "3.0.0"
