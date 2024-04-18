@@ -15,98 +15,73 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"flag"
-	"io"
 	"net"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
+	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/portproxy"
 )
 
 var (
 	debug        bool
+	logFile      string
+	socketFile   string
 	upstreamAddr string
-	listenAddr   string
 )
 
 const (
-	k8sAPI            = "192.168.1.2:6443"
-	defaultListenAddr = "127.0.0.1:6443"
+	defaultLogPath = "/var/log/wsl-proxy.log"
+	defaultSocket  = "/run/wsl-proxy.sock"
+	bridgeIPAddr   = "192.168.1.2"
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable additional debugging.")
-	flag.StringVar(&upstreamAddr, "upstream-addr", k8sAPI, "The upstream server's address (k3s API sever).")
-	flag.StringVar(&listenAddr, "listen-addr", defaultListenAddr, "The server's address in an IP:PORT format.")
+	flag.StringVar(&logFile, "logfile", defaultLogPath, "path to the logfile for wsl-proxy process")
+	flag.StringVar(&socketFile, "socketFile", defaultSocket, "path to the .sock file for UNIX socket")
+	flag.StringVar(&upstreamAddr, "upstreamAddress", bridgeIPAddr, "IP address of the upstream server to forward to")
 	flag.Parse()
 
-	if debug {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
+	setupLogging(logFile)
 
-	listener, err := net.Listen("tcp", listenAddr)
+	socket, err := net.Listen("unix", socketFile)
 	if err != nil {
-		logrus.Fatalf("Failed to listen on %s: %s", listenAddr, err)
+		logrus.Fatalf("failed to create listener for published ports: %s", err)
+		return
 	}
+	proxy := portproxy.NewPortProxy(socket, bridgeIPAddr)
 
 	// Handle graceful shutdown
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
-	// WaitGroup to wait for all connections to finish before shutting down
-	var wg sync.WaitGroup
-
 	go func() {
 		<-sigCh
 		logrus.Println("Shutting down...")
-		listener.Close()
-		wg.Wait()
+		if err := proxy.Close(); err != nil {
+			logrus.Errorf("proxy close error: %s", err)
+		}
 		os.Exit(0)
 	}()
 
-	logrus.Infof("Proxy server started listening on %s, forwarding to %s", listenAddr, upstreamAddr)
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			// Check if the error is due to listener being closed
-			if errors.Is(err, net.ErrClosed) {
-				break
-			}
-			logrus.Errorf("Failed to accept listener: %s", err)
-			continue
-		}
-		logrus.Debugf("Accepted connection from %s", conn.RemoteAddr())
-
-		wg.Add(1)
-
-		go func(conn net.Conn) {
-			defer wg.Done()
-			defer conn.Close()
-			pipe(conn, upstreamAddr)
-		}(conn)
+	err = proxy.Start()
+	if err != nil {
+		logrus.Errorf("failed to start accepting: %s", err)
+		return
 	}
 }
 
-func pipe(conn net.Conn, upstreamAddr string) {
-	upstream, err := net.Dial("tcp", upstreamAddr)
-	if err != nil {
-		logrus.Errorf("Failed to dial upstream %s: %s", upstreamAddr, err)
-		return
+func setupLogging(logFile string) {
+	if err := log.SetOutputFile(logFile, logrus.StandardLogger()); err != nil {
+		logrus.Fatalf("setting logger's output file failed: %v", err)
 	}
-	defer upstream.Close()
 
-	go func() {
-		if _, err := io.Copy(upstream, conn); err != nil {
-			logrus.Debugf("Error copying to upstream: %s", err)
-		}
-	}()
-
-	if _, err := io.Copy(conn, upstream); err != nil {
-		logrus.Debugf("Error copying from upstream: %s", err)
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 }
