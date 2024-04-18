@@ -45,11 +45,8 @@ export default Vue.extend({
   methods: {
     async tabSelected({ tab }: { tab: Vue.Component }) {
       if (this.activeTab !== tab.name) {
-        await this.navigateTab(tab.name || '');
+        await this.navigate('Virtual Machine', tab.name || '');
       }
-    },
-    async navigateTab(tab: string) {
-      await this.navigate('Virtual Machine', tab);
     },
     async navigate(navItem: string, tab: string) {
       await this.$store.dispatch(

@@ -1,10 +1,10 @@
 <script lang="ts">
 
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import { VersionEntry } from '@pkg/backend/k8s';
-import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
@@ -18,7 +18,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
   components: {
-    IncompatiblePreferencesAlert,
+    Banner,
     RdCheckbox,
     RdFieldset,
     RdSelect,
@@ -60,25 +60,10 @@ export default Vue.extend({
     kubernetesVersionLabel(): string {
       return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
     },
-    spinOperatorIncompatiblePrefs(): CompatiblePrefs {
-      if (this.isKubernetesDisabled) {
-        // If Kubernetes is disabled, the user can't change this so we don't care.
-        return [];
-      }
-
-      if (this.preferences.experimental.containerEngine.webAssembly.enabled) {
-        return [];
-      }
-
-      if (this.preferences.experimental.kubernetes.options.spinkube) {
-        return [{
-          title:       'WebAssembly',
-          navItemName: 'Container Engine',
-          tabName:     'general',
-        }];
-      }
-
-      return [];
+    spinOperatorIncompatible(): boolean {
+      return !this.isKubernetesDisabled &&
+        !this.preferences.experimental.containerEngine.webAssembly.enabled &&
+        this.preferences.experimental.kubernetes.options.spinkube;
     },
   },
   beforeMount() {
@@ -203,10 +188,11 @@ export default Vue.extend({
         :is-experimental="true"
         @input="onChange('experimental.kubernetes.options.spinkube', $event)"
       />
-      <incompatible-preferences-alert
-        v-if="spinOperatorIncompatiblePrefs.length > 0"
-        :compatible-prefs="spinOperatorIncompatiblePrefs"
-      />
+      <banner v-if="spinOperatorIncompatible" color="warning">
+        Spin operator requires
+        <a href="#" @click.prevent="$root.navigate('Container Engine', 'general')">WebAssembly</a>
+        to be enabled.
+      </banner>
     </rd-fieldset>
   </div>
 </template>

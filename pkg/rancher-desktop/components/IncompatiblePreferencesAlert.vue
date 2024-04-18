@@ -1,7 +1,6 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
 import Vue, { PropType } from 'vue';
-import { mapState } from 'vuex';
 
 import type { NavItemName } from '@pkg/config/transientSettings';
 
@@ -27,7 +26,6 @@ export default Vue.extend({
     },
   },
   computed: {
-    ...mapState('credentials', ['credentials']),
     messagePost(): string {
       switch (this.mode) {
       case 'selected':
@@ -41,14 +39,7 @@ export default Vue.extend({
   },
   methods: {
     navigate(info: CompatiblePrefs[number]) {
-      this.$store.dispatch(
-        'transientSettings/navigatePrefDialog',
-        {
-          ...this.credentials,
-          navItem: info.navItemName,
-          tab:     info.tabName,
-        },
-      );
+      (this.$root as any).navigate(info.navItemName, info.tabName);
     },
   },
 });
