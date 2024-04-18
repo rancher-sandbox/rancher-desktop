@@ -573,6 +573,7 @@ export class WasmShims implements Dependency, GitHubDependency {
     await downloadTarGZ(url, destPath);
   }
 
+  // Up to now (0.11.1 release), **all** containerd-wasm-shims releases are marked as pre-release.
   async getAvailableVersions(includePrerelease = true): Promise<string[]> {
     return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
@@ -598,7 +599,7 @@ export class CertManager implements Dependency, GitHubDependency {
     await download(`${ base }/${ filename }`, path.join(context.resourcesDir, filename));
   }
 
-  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
     return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
@@ -626,7 +627,7 @@ export class SpinOperator implements Dependency, GitHubDependency {
     await download(`${ base }/${ filename }`, path.join(context.resourcesDir, 'spin-operator.tgz'));
   }
 
-  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
     return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
