@@ -54,7 +54,6 @@
     "@kubernetes/client-node": "0.18.1",
     "@rancher/components": "0.1.4",
     "async-mutex": "^0.4.1",
-    "console": "0.7.2",
     "cookie-universal": "2.2.2",
     "core-js": "3.25.3",
     "cross-spawn": "7.0.3",
