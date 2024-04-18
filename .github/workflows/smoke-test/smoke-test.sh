@@ -143,16 +143,21 @@ install_win32() {
         /i "$(cygpath --windows "$archiveName")" /passive ALLUSERS=1
     # msiexec returns immediately and runs in the background; wait for that
     # process to exit before continuing.
-    local deadline
+    local deadline completed
     deadline=$(( $(date +%s) + 10 * 60 ))
     while [[ $(date +%s) -lt $deadline ]]; do
         if tasklist.exe /FI "ImageName eq msiexec.exe" | grep msiexec; then
-            printf "Waiting for msiexec: %s/%s\n" "$(date)" "$(date --date="@$deadline")"
+            printf "Waiting for msiexec to finish: %s/%s\n" "$(date)" "$(date --date="@$deadline")"
             sleep 10
         else
+            completed=true
             break
         fi
     done
+    if [[ -z "${completed:-}" ]]; then
+        echo "msiexec took too long to finish, aborting" >&2
+        exit 1
+    fi
     local installDirectory
     installDirectory=$(cygpath --unix 'C:\Program Files\Rancher Desktop')
     local rdctl="$installDirectory/resources/resources/win32/bin/rdctl.exe"
