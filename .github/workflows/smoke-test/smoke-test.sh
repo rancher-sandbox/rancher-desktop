@@ -13,6 +13,8 @@
 
 set -o errexit -o nounset
 
+export MSYS2_ARG_CONV_EXCL='*'
+
 # All commands in the cleanups array will be run on exit.  They must be plain
 # strings that will be passed to eval
 cleanups=()
@@ -83,11 +85,11 @@ install_darwin() {
     mkdir -p "$destApp"
     cleanups+=("rm -rf '$destApp'")
 
-    tar -cC "$srcApp" . | tar -xC "$destApp"
+    cp -a "$srcApp" "$(dirname "$destApp")"
     xattr -d -r -s -v com.apple.quarantine "$destApp"
 
     if [[ "$(uname -m)" =~ arm ]]; then
-        # For macOS, currently only x86_64 supports nested virtualization
+        # For macOS, currently only x86_64 runners support nested virtualization
         # https://github.com/actions/runner-images/issues/9460
         # Abort the script (gracefully) instead of trying to run RD.
         exit 0
@@ -137,18 +139,19 @@ install_win32() {
 
     win32_verify "$archiveName"
     mkdir -p "$(cygpath --unix "${RD_LOGS_DIR}")"
-    MSYS2_ARG_CONV_EXCL='*' msiexec.exe '/lv*x' "${RD_LOGS_DIR}\\install.log" \
+    msiexec.exe '/lv*x' "${RD_LOGS_DIR}\\install.log" \
         /i "$(cygpath --windows "$archiveName")" /passive ALLUSERS=1
     # msiexec returns immediately and runs in the background; wait for that
     # process to exit before continuing.
     local deadline
     deadline=$(( $(date +%s) + 10 * 60 ))
     while [[ $(date +%s) -lt $deadline ]]; do
-        if MSYS2_ARG_CONV_EXCL='*' tasklist.exe /FI "ImageName eq msiexec.exe" | grep msiexec; then
+        if tasklist.exe /FI "ImageName eq msiexec.exe" | grep msiexec; then
+            printf "Waiting for msiexec: %s/%s\n" "$(date)" "$(date --date="@$deadline")"
+            sleep 10
+        else
             break
         fi
-        printf "Waiting for msiexec: %s/%s\n" "$(date)" "$(date --date="@$deadline")"
-        sleep 10
     done
     local installDirectory
     installDirectory=$(cygpath --unix 'C:\Program Files\Rancher Desktop')
@@ -182,7 +185,7 @@ wait_for_backend() {
     deadline=$(( $(date +%s) + 10 * 60 ))
 
     while [[ $(date +%s) -lt $deadline ]]; do
-        state=$(MSYS2_ARG_CONV_EXCL='*' "$RDCTL" api /v1/backend_state || echo '{"vmState": "UNREADY"}')
+        state=$("$RDCTL" api /v1/backend_state || echo '{"vmState": "UNREADY"}')
         state=$(jq --raw-output .vmState <<< "$state")
         case "$state" in
             ERROR)
