@@ -30,7 +30,7 @@ func TestVTunnelTrackerAdd(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -79,7 +79,7 @@ func TestVTunnelTrackerAddOverride(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -146,7 +146,7 @@ func TestVTunnelTrackerAddEmptyPortMap(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	forwarder.sendErr = errSend
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
@@ -164,7 +164,7 @@ func TestVTunnelTrackerAddWithError(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	forwarder.sendErr = errSend
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
@@ -196,7 +196,7 @@ func TestVTunnelTrackerRemove(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -252,7 +252,7 @@ func TestVTunnelTrackerRemoveZeroLengthPortMap(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{}
@@ -267,7 +267,7 @@ func TestVTunnelTrackerRemoveError(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -331,7 +331,7 @@ func TestVTunnelTrackerRemoveAll(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -393,7 +393,7 @@ func TestVTunnelTrackerRemoveAllError(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -460,7 +460,7 @@ func TestVTunnelTrackerGet(t *testing.T) {
 	t.Parallel()
 
 	wslConnectAddr := []types.ConnectAddrs{{Network: "tcp", Addr: "192.168.0.1"}}
-	forwarder := testVTunnelForwarder{}
+	forwarder := testForwarder{}
 	vtunnelTracker := tracker.NewVTunnelTracker(&forwarder, wslConnectAddr)
 
 	portMapping := nat.PortMap{
@@ -480,13 +480,13 @@ func TestVTunnelTrackerGet(t *testing.T) {
 
 var errSend = errors.New("error from Send")
 
-type testVTunnelForwarder struct {
+type testForwarder struct {
 	receivedPortMappings []types.PortMapping
 	sendErr              error
 	failCondition        func(types.PortMapping) error
 }
 
-func (v *testVTunnelForwarder) Send(portMapping types.PortMapping) error {
+func (v *testForwarder) Send(portMapping types.PortMapping) error {
 	if v.failCondition != nil {
 		if err := v.failCondition(portMapping); err != nil {
 			return err
