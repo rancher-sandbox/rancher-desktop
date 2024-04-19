@@ -29,7 +29,6 @@ export default Vue.extend({
   <div class="virtual-machine-volumes">
     <mount-type-selector
       :preferences="preferences"
-      @update:tab="$emit('update:tab', $event)"
       @update="onChange"
     />
   </div>

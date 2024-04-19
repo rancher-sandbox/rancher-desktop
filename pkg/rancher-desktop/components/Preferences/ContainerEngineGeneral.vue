@@ -1,5 +1,6 @@
 <script lang="ts">
 
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -14,6 +15,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-container-engine-general',
   components: {
+    Banner,
     EngineSelector,
     RdCheckbox,
     RdFieldset,
@@ -27,8 +29,15 @@ export default Vue.extend({
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
   },
-  computed: { ...mapGetters('preferences', ['isPreferenceLocked']) },
-  methods:  {
+  computed: {
+    ...mapGetters('preferences', ['isPreferenceLocked']),
+    webAssemblyIncompatible(): boolean {
+      return this.preferences.kubernetes.enabled &&
+        this.preferences.experimental.kubernetes.options.spinkube &&
+        !this.preferences.experimental.containerEngine.webAssembly.enabled;
+    },
+  },
+  methods: {
     onChangeEngine(desiredEngine: ContainerEngine) {
       this.containerEngine = desiredEngine;
       this.$emit('container-engine-change', desiredEngine);
@@ -67,7 +76,15 @@ export default Vue.extend({
         :value="preferences.experimental.containerEngine.webAssembly.enabled"
         :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
         @input="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
-      />
+      >
+        <template v-if="webAssemblyIncompatible" #below>
+          <banner color="warning">
+            WebAssembly must be enabled for the
+            <a href="#" @click.prevent="$root.navigate('Kubernetes')">Spin Operator</a>
+            to be installed.
+          </banner>
+        </template>
+      </rd-checkbox>
     </rd-fieldset>
   </div>
 </template>
@@ -77,8 +94,5 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-.container-engine-general::v-deep .checkbox-outer-container-description {
-  font-size: 11px;
 }
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
 
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -17,7 +18,11 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
   components: {
-    RdCheckbox, RdFieldset, RdSelect, RdInput,
+    Banner,
+    RdCheckbox,
+    RdFieldset,
+    RdSelect,
+    RdInput,
   },
   props: {
     preferences: {
@@ -27,9 +32,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      enableKubernetes:   true,
-      enableTraefik:      true,
-      kubernetesPort:     6443,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
     };
@@ -57,6 +59,11 @@ export default Vue.extend({
     },
     kubernetesVersionLabel(): string {
       return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
+    },
+    spinOperatorIncompatible(): boolean {
+      return !this.isKubernetesDisabled &&
+        !this.preferences.experimental.containerEngine.webAssembly.enabled &&
+        this.preferences.experimental.kubernetes.options.spinkube;
     },
   },
   beforeMount() {
@@ -180,7 +187,15 @@ export default Vue.extend({
         :is-locked="isPreferenceLocked('experimental.kubernetes.options.spinkube')"
         :is-experimental="true"
         @input="onChange('experimental.kubernetes.options.spinkube', $event)"
-      />
+      >
+        <template v-if="spinOperatorIncompatible" #below>
+          <banner color="warning">
+            Spin operator requires
+            <a href="#" @click.prevent="$root.navigate('Container Engine', 'general')">WebAssembly</a>
+            to be enabled.
+          </banner>
+        </template>
+      </rd-checkbox>
     </rd-fieldset>
   </div>
 </template>

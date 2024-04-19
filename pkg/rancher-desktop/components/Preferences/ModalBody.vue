@@ -1,6 +1,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import { mapState } from 'vuex';
 
 import PreferencesBodyApplication from '@pkg/components/Preferences/BodyApplication.vue';
 import PreferencesBodyContainerEngine from '@pkg/components/Preferences/BodyContainerEngine.vue';
@@ -33,11 +34,28 @@ export default Vue.extend({
     },
   },
   computed: {
+    ...mapState('credentials', ['credentials']),
     normalizeNavItem(): string {
       return this.currentNavItem.toLowerCase().replaceAll(' ', '-');
     },
     componentFromNavItem(): string {
       return `preferences-body-${ this.normalizeNavItem }`;
+    },
+  },
+  mounted() {
+    (this.$root as any).navigate = this.navigate;
+  },
+  methods: {
+    navigate(navItem: string, tab: string) {
+      console.log('Navigate!', Array.from(arguments));
+      this.$store.dispatch(
+        'transientSettings/navigatePrefDialog',
+        {
+          ...this.credentials,
+          navItem,
+          tab,
+        },
+      );
     },
   },
 });
