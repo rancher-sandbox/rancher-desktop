@@ -71,7 +71,8 @@ async function ensureBranch(owner: string, repo: string, branchName: string, tag
     });
 
     if (existingBranch.object.sha !== sha) {
-    // Branch exists, but points at the wrong hash; update it.
+      // Branch exists, but points at the wrong hash; update it.
+      console.log(`Updating existing branch ${ owner }/${ repo }/${ ref } to new commit ${ sha }`);
       await git.updateRef({
         owner, repo, ref, sha,
       });
@@ -111,22 +112,22 @@ async function findExisting(owner: string, repo: string, branch: string) {
 
     // PR target must be the expected repository.
     if (pr.base.repo.full_name !== fullRepo) {
-      console.log(`Skipping ${ item.number }: incorrect base repo ${ pr.base.repo.full_name }`);
+      console.log(`Skipping ${ item.number }: incorrect base repo ${ pr.base.repo.full_name } (expected ${ fullRepo })`);
       continue;
     }
     // PR target must merge into the default branch.
     if (pr.base.ref !== base) {
-      console.log(`Skipping ${ item.number }: incorrect base ref ${ pr.base.ref }`);
+      console.log(`Skipping ${ item.number }: incorrect base ref ${ pr.base.ref } (expected ${ base })`);
       continue;
     }
     // Must not be a cross-repository (fork) pull request.
     if (pr.head.repo && pr.head.repo.full_name !== fullRepo) {
-      console.log(`Skipping ${ item.number }: incorrect head repo ${ pr.head.repo.full_name }`);
+      console.log(`Skipping ${ item.number }: incorrect head repo ${ pr.head.repo.full_name } (expected ${ fullRepo })`);
       continue;
     }
     // Must be a pull request from the expected branch.
     if (pr.head.ref !== branch) {
-      console.log(`Skipping ${ item.number }: incorrect head ref ${ pr.head.ref }`);
+      console.log(`Skipping ${ item.number }: incorrect head ref ${ pr.head.ref } (expected ${ branch })`);
       continue;
     }
 
@@ -143,7 +144,7 @@ async function findExisting(owner: string, repo: string, branch: string) {
   const [, owner, repo] = /([^/]+)\/(.*)/.exec(fullRepo) ?? [];
 
   if (!owner || !repo) {
-    throw new TypeError(`Could not determine owner from ${ fullRepo }`);
+    throw new TypeError(`Could not determine owner or repo from ${ fullRepo }`);
   }
   if (!tagName) {
     throw new TypeError(`Could not detect tag from ${ rawPayload }`);
