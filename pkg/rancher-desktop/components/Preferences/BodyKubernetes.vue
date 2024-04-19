@@ -187,12 +187,15 @@ export default Vue.extend({
         :is-locked="isPreferenceLocked('experimental.kubernetes.options.spinkube')"
         :is-experimental="true"
         @input="onChange('experimental.kubernetes.options.spinkube', $event)"
-      />
-      <banner v-if="spinOperatorIncompatible" color="warning">
-        Spin operator requires
-        <a href="#" @click.prevent="$root.navigate('Container Engine', 'general')">WebAssembly</a>
-        to be enabled.
-      </banner>
+      >
+        <template v-if="spinOperatorIncompatible" #below>
+          <banner color="warning">
+            Spin operator requires
+            <a href="#" @click.prevent="$root.navigate('Container Engine', 'general')">WebAssembly</a>
+            to be enabled.
+          </banner>
+        </template>
+      </rd-checkbox>
     </rd-fieldset>
   </div>
 </template>

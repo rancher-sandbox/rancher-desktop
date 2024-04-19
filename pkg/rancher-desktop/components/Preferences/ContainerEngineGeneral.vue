@@ -76,12 +76,15 @@ export default Vue.extend({
         :value="preferences.experimental.containerEngine.webAssembly.enabled"
         :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
         @input="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
-      />
-      <banner v-if="webAssemblyIncompatible" color="warning">
-        WebAssembly must be enabled for the
-        <a href="#" @click.prevent="$root.navigate('Kubernetes')">Spin Operator</a>
-        to be installed.
-      </banner>
+      >
+        <template v-if="webAssemblyIncompatible" #below>
+          <banner color="warning">
+            WebAssembly must be enabled for the
+            <a href="#" @click.prevent="$root.navigate('Kubernetes')">Spin Operator</a>
+            to be installed.
+          </banner>
+        </template>
+      </rd-checkbox>
     </rd-fieldset>
   </div>
 </template>
@@ -91,8 +94,5 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-.container-engine-general::v-deep .checkbox-outer-container-description {
-  font-size: 11px;
 }
 </style>

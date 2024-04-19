@@ -40,6 +40,7 @@ export default Vue.extend({
 <template>
   <div class="rd-checkbox-container">
     <checkbox
+      class="checkbox"
       :disabled="$attrs.disabled || isLocked"
       v-bind="$attrs"
       v-on="$listeners"
@@ -81,11 +82,25 @@ export default Vue.extend({
         </slot>
       </template>
     </checkbox>
+    <div class="checkbox-below">
+      <slot name="below" />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.checkbox::v-deep .checkbox-outer-container-description {
+  font-size: 11px;
+}
 .tooltip-icon {
   margin-left: 0.25rem;
 }
+.checkbox-below {
+  margin-left: 19px;
+  font-size: 11px;
+  &:empty {
+    display: none;
+  }
+}
+
 </style>
