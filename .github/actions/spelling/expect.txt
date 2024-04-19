@@ -150,6 +150,7 @@ cshrc
 Ctl
 ctrctl
 cxt
+cygpath
 DACL
 daemonset
 dapp
@@ -474,6 +475,7 @@ MSIX
 msixbundle
 msize
 msvs
+msys
 mszip
 multierror
 multiport
