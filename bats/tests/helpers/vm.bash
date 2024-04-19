@@ -1,6 +1,6 @@
 wait_for_shell() {
     if is_windows; then
-        try --max 24 --delay 5 rdctl shell true
+        try --max 48 --delay 5 rdctl shell true
     else
         # Be at the root directory to avoid issues with limactl automatic
         # changing to the current directory, which might not exist.
