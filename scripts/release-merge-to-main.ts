@@ -72,7 +72,8 @@ async function ensureBranch(owner: string, repo: string, branchName: string, tag
 
     if (existingBranch.object.sha !== sha) {
       // Branch exists, but points at the wrong hash; update it.
-      console.log(`Updating existing branch ${ owner }/${ repo }/${ ref } to new commit ${ sha }`);
+      console.log(`Updating existing branch ${ owner }/${ repo }/${ ref } ` +
+        `from ${ existingBranch.object.sha } to new commit ${ sha }`);
       await git.updateRef({
         owner, repo, ref, sha,
       });
