@@ -1,0 +1,14 @@
+go 1.21
+
+use (
+	./src/go/docker-credential-none
+	./src/go/extension-proxy
+	./src/go/github-runner-monitor
+	./src/go/mock-wsl
+	./src/go/nerdctl-stub
+	./src/go/nerdctl-stub/generate
+	./src/go/privileged-service
+	./src/go/rdctl
+	./src/go/vtunnel
+	./src/go/wsl-helper
+)
