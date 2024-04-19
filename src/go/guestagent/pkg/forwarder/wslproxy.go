@@ -22,16 +22,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
-/*
-This package provides functionality to forward port mappings to the
-Rancher Desktop WSL Proxy process in the default namespace over a Unix socket.
-
-For more information on Rancher Desktop WSL Proxy, refer to the source code at:
-https://github.com/rancher-sandbox/rancher-desktop-networking/blob/main/cmd/proxy/wsl_integration_linux.go
-*/
-
 // WSLProxyForwarder forwards the PortMappings to Rancher Desktop WSLProxy process in
 // the default namespace over the unix socket.
+// For more information on Rancher Desktop WSL Proxy, refer to the source code at:
+// https://github.com/rancher-sandbox/rancher-desktop-networking/blob/main/cmd/proxy/wsl_integration_linux.go
 type WSLProxyForwarder struct {
 	proxySocket string
 }
