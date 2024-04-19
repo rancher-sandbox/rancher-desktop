@@ -54,9 +54,7 @@ type kubeConfig struct {
 	Extras map[string]interface{} `yaml:",inline"`
 }
 
-const (
-	kubeConfigExistTimeout = 10 * time.Second
-)
+const kubeConfigExistTimeout = 10 * time.Second
 
 var (
 	k3sKubeconfigViper = viper.New()

@@ -82,7 +82,7 @@ type bindManager struct {
 // empty, then the bind is incomplete (the container create failed) and it
 // should not be used.
 type bindManagerEntry struct {
-	ContainerId string //nolint:stylecheck // Backwards compatibility
+	ContainerID string `json:"ContainerId"`
 	HostPath    string
 }
 
@@ -282,7 +282,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 
 // containersCreateResponseBody describes the contents of a /containers/create response.
 type containersCreateResponseBody struct {
-	Id       string //nolint:stylecheck // Needs to match API
+	ID       string `json:"Id"`
 	Warnings []string
 }
 
@@ -314,7 +314,7 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 	b.Lock()
 	for mountID, hostPath := range *binds {
 		b.entries[mountID] = bindManagerEntry{
-			ContainerId: body.Id,
+			ContainerID: body.ID,
 			HostPath:    hostPath,
 		}
 	}
@@ -337,7 +337,7 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 	mapping := make(map[string]string)
 	b.RLock()
 	for key, data := range b.entries {
-		if data.ContainerId == templates["id"] {
+		if data.ContainerID == templates["id"] {
 			mapping[key] = data.HostPath
 		}
 	}
@@ -416,7 +416,7 @@ func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, context
 
 	var toDelete []string
 	for key, data := range b.entries {
-		if data.ContainerId == templates["id"] {
+		if data.ContainerID == templates["id"] {
 			toDelete = append(toDelete, key)
 		}
 	}

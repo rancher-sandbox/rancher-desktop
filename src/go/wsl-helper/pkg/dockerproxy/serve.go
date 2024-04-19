@@ -48,7 +48,7 @@ type RequestContextValue map[interface{}]interface{}
 var requestContext = struct{}{}
 
 type containerInspectResponseBody struct {
-	Id string //nolint:stylecheck // Compatibility with docker API
+	ID string `json:"Id"`
 }
 
 const dockerAPIVersion = "v1.41.0"
@@ -205,7 +205,7 @@ func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn,
 		if err != nil {
 			logEntry.WithField("id", id).WithError(err).Error("unable to resolve container id")
 		} else {
-			templates["id"] = inspect.Id
+			templates["id"] = inspect.ID
 		}
 	}
 
@@ -246,7 +246,7 @@ func (m *requestMunger) MungeResponse(resp *http.Response, dialer func() (net.Co
 		if err != nil {
 			logEntry.WithField("id", id).WithError(err).Error("unable to resolve container id")
 		} else {
-			templates["id"] = inspect.Id
+			templates["id"] = inspect.ID
 		}
 	}
 
