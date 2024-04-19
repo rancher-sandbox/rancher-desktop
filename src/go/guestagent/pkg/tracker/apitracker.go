@@ -27,6 +27,8 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
+	guestagentTypes "github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
 const (
@@ -46,6 +48,7 @@ var (
 	ErrExposeAPI   = fmt.Errorf("error from %s API", exposeAPI)
 	ErrUnexposeAPI = fmt.Errorf("error from %s API", unexposeAPI)
 	ErrInvalidIPv4 = errors.New("not an IPv4 address")
+	ErrWSLProxy    = errors.New("error from Rancher Desktop WSL Proxy")
 )
 
 // APITracker keeps track of the port mappings and calls the
@@ -53,6 +56,7 @@ var (
 // and unexposing the ports on the host. This should only be used when
 // the Rancher Desktop networking is enabled and the privileged service is disabled.
 type APITracker struct {
+	forwarder   forwarder.Forwarder
 	isAdmin     bool
 	baseURL     string
 	httpClient  http.Client
@@ -61,8 +65,9 @@ type APITracker struct {
 }
 
 // NewAPITracker creates a new instace of a API Tracker.
-func NewAPITracker(baseURL string, isAdmin bool) *APITracker {
+func NewAPITracker(forwarder forwarder.Forwarder, baseURL string, isAdmin bool) *APITracker {
 	return &APITracker{
+		forwarder:       forwarder,
 		isAdmin:         isAdmin,
 		baseURL:         baseURL,
 		httpClient:      *http.DefaultClient,
@@ -108,6 +113,16 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 	}
 
 	a.portStorage.add(containerID, successfullyForwarded)
+	portMapping := guestagentTypes.PortMapping{
+		Remove: false,
+		Ports:  successfullyForwarded,
+	}
+	log.Debugf("forwarding to wsl-proxy to add port mapping: %+v", portMapping)
+
+	err := a.forwarder.Send(portMapping)
+	if err != nil {
+		return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+	}
 
 	if len(errs) != 0 {
 		return fmt.Errorf("%w: %+v", ErrExposeAPI, errs)
@@ -152,6 +167,16 @@ func (a *APITracker) Remove(containerID string) error {
 		}
 	}
 
+	portMapping := guestagentTypes.PortMapping{
+		Remove: true,
+		Ports:  portMap,
+	}
+	log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
+	err := a.forwarder.Send(portMapping)
+	if err != nil {
+		return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+	}
+
 	if len(errs) != 0 {
 		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, errs)
 	}
@@ -162,7 +187,7 @@ func (a *APITracker) Remove(containerID string) error {
 // RemoveAll calls the /services/forwarder/unexpose
 // and removes all the port bindings from the tracker.
 func (a *APITracker) RemoveAll() error {
-	var errs []error
+	var apiErrs, wslProxyErrs []error
 
 	for _, portMapping := range a.portStorage.getAll() {
 		for _, portBindings := range portMapping {
@@ -180,19 +205,35 @@ func (a *APITracker) RemoveAll() error {
 						Local: ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 					})
 				if err != nil {
-					errs = append(errs,
+					apiErrs = append(apiErrs,
 						fmt.Errorf("RemoveAll unexposing %+v failed: %w", portBinding, err))
 
 					continue
 				}
 			}
 		}
+
+		portMapping := guestagentTypes.PortMapping{
+			Remove: true,
+			Ports:  portMapping,
+		}
+
+		log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
+		wslProxyError := a.forwarder.Send(portMapping)
+		if wslProxyError != nil {
+			wslProxyErrs = append(wslProxyErrs,
+				fmt.Errorf("sending port mappings to wsl proxy error: %w", wslProxyError))
+		}
 	}
 
 	a.portStorage.removeAll()
 
-	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, errs)
+	if len(apiErrs) != 0 {
+		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, apiErrs)
+	}
+
+	if len(wslProxyErrs) != 0 {
+		return fmt.Errorf("%w: %+v", ErrWSLProxy, wslProxyErrs)
 	}
 
 	return nil
