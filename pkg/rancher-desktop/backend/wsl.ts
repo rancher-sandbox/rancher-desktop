@@ -654,7 +654,17 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * - Figures out what the /mnt/DRIVE-LETTER path should be
    */
   async wslify(windowsPath: string, distro?: string): Promise<string> {
-    return (await this.captureCommand({ distro }, 'wslpath', '-a', '-u', windowsPath)).trimEnd();
+    for (let i = 0; i < 10; i++) {
+      const result: string = (await this.captureCommand({ distro }, 'wslpath', '-a', '-u', windowsPath)).trimEnd();
+
+      if (result) {
+        return result;
+      }
+      console.log(`Failed to convert <${ windowsPath } to a wsl path, retrying${ i > 0 ? ` try #${ i + 1 }` : ' ' }`);
+      await util.promisify(setTimeout)(100);
+    }
+
+    return '';
   }
 
   protected async killStaleProcesses() {
