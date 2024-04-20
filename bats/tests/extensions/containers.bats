@@ -29,6 +29,15 @@ encoded_id() { # variant
     wait_for_container_engine
 }
 
+@test 'build extension testing images' {
+    local extension
+    for extension in vm-image vm-compose; do
+        ctrctl build \
+            --tag rd/extension/$extension \
+            --build-arg variant=$extension "$TESTDATA_DIR_HOST"
+    done
+}
+
 @test 'default to custom docker context' {
     if ! using_docker; then
         skip 'docker context only applies when using docker backend'
@@ -45,15 +54,6 @@ encoded_id() { # variant
     assert_success
     assert_output $'\x7b'$'\x7d' # empty JSON dict, {}
     assert_dir_not_exist "$PATH_EXTENSIONS"
-}
-
-@test 'build extension testing images' {
-    local extension
-    for extension in vm-image vm-compose; do
-        ctrctl build \
-            --tag rd/extension/$extension \
-            --build-arg variant=$extension "$TESTDATA_DIR_HOST"
-    done
 }
 
 @test 'image - install' {
