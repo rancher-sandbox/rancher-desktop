@@ -321,8 +321,15 @@ assert_service_pid() {
     assert_output "$expected_pid"
 }
 
+# Check that the given service does not have the given PID.  It is acceptable
+# for the service to not be running.
 refute_service_pid() {
-    ! assert_service_pid "$@"
+    local service_name=$1
+    local unexpected_pid=$2
+    run get_service_pid "$service_name"
+    if [ "$status" -eq 0 ]; then
+        refute_output "$unexpected_pid"
+    fi
 }
 
 assert_service_status() {
