@@ -70,6 +70,8 @@ const CREDENTIAL_FORWARDER_SETTINGS_PATH = `${ ETC_RANCHER_DESKTOP_DIR }/credfwd
 const DOCKER_CREDENTIAL_PATH = '/usr/local/bin/docker-credential-rancher-desktop';
 const ROOT_DOCKER_CONFIG_DIR = '/root/.docker';
 const ROOT_DOCKER_CONFIG_PATH = `${ ROOT_DOCKER_CONFIG_DIR }/config.json`;
+/** Number of times to retry converting a path between WSL & Windows. */
+const WSL_PATH_CONVERT_RETRIES = 10;
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -654,7 +656,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * - Figures out what the /mnt/DRIVE-LETTER path should be
    */
   async wslify(windowsPath: string, distro?: string): Promise<string> {
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= WSL_PATH_CONVERT_RETRIES; i++) {
       const result: string = (await this.captureCommand({ distro }, 'wslpath', '-a', '-u', windowsPath)).trimEnd();
 
       if (result) {
@@ -705,7 +707,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * @param [options] Optional configuration for reading the file.
    * @param [options.distro=INSTANCE_NAME] The distribution to read from.
    * @param [options.encoding='utf-8'] The encoding to use for the result.
-   * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
    */
   async readFile(filePath: string, options?: Partial<{
     distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
@@ -717,11 +718,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     filePath = (await this.execCommand({ distro, capture: true }, 'busybox', 'readlink', '-f', filePath)).trim();
 
     // Run wslpath here, to ensure that WSL generates any files we need.
-    const windowsPath = (await this.execCommand({
-      distro, encoding, capture: true,
-    }, '/bin/wslpath', '-w', filePath)).trim();
+    for (let i = 1; i <= WSL_PATH_CONVERT_RETRIES; ++i) {
+      const windowsPath = (await this.execCommand({
+        distro, encoding, capture: true,
+      }, '/bin/wslpath', '-w', filePath)).trim();
 
-    return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
+      if (!windowsPath) {
+        // Failed to convert for some reason; try again.
+        await util.promisify(setTimeout)(100);
+        continue;
+      }
+
+      return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
+    }
+
+    throw new Error(`Failed to convert ${ filePath } to a Windows path.`);
   }
 
   /**
