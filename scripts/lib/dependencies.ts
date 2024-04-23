@@ -55,6 +55,7 @@ export type DependencyVersions = {
   spinShim: string;
   certManager: string;
   spinOperator: string;
+  spinCLI: string;
 };
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {

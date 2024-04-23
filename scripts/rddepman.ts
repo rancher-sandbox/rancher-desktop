@@ -49,6 +49,7 @@ const dependencies: Dependency[] = [
   new tools.WasmShims(),
   new tools.CertManager(),
   new tools.SpinOperator(),
+  new tools.SpinCLI(),
 ];
 
 function git(...args: string[]): number | null {
