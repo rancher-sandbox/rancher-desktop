@@ -43,7 +43,7 @@ shim_version() {
 @test 'verify spin shim is not installed on PATH' {
     run shim_version spin v2
     assert_failure
-    assert_output --partial "containerd-shim-spin-v2: not found"
+    assert_output --regexp 'containerd-shim-spin-v2.*(not found|No such file)'
 }
 
 hello() {
@@ -114,7 +114,9 @@ download_shim() {
     local filename="containerd-wasm-shims-${version}-${shim}-linux-${ARCH}.tar.gz"
 
     mkdir -p "$PATH_CONTAINERD_SHIMS"
-    curl --silent --location --output "${PATH_CONTAINERD_SHIMS}/${filename}" "${base_url}/${filename}"
+    # On Windows, use curl from the WSL distro instead of curl.exe to ensure we
+    # have no issues with PATH_CONTAINERD_SHIMS being in Linux format.
+    command curl --location --output "${PATH_CONTAINERD_SHIMS}/${filename}" "${base_url}/${filename}"
     tar xfz "${PATH_CONTAINERD_SHIMS}/${filename}" --directory "$PATH_CONTAINERD_SHIMS"
     rm "${PATH_CONTAINERD_SHIMS}/${filename}"
 }
@@ -124,7 +126,7 @@ download_shim() {
     download_shim wws v1
 
     rdctl shutdown
-    rdctl start
+    launch_the_application
     wait_for_container_engine
 }
 
