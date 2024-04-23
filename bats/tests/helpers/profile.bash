@@ -62,7 +62,7 @@ foreach_profile() {
     local PROFILE_LOCATION PROFILE_TYPE
     for PROFILE_LOCATION in "${locations[@]}"; do
         for PROFILE_TYPE in "$PROFILE_DEFAULTS" "$PROFILE_LOCKED"; do
-            "$@"
+            "$@" || return
         done
     done
 }
@@ -83,20 +83,20 @@ profile_exists() {
 create_profile() {
     case $OS in
     darwin)
-        profile_plutil -create xml1
+        profile_plutil -create xml1 || return
         ;;
     linux)
         local filename
         filename=$(profile_location)
-        profile_sudo mkdir -p "$(dirname "$filename")"
-        echo "{}" | profile_cat "$filename"
+        profile_sudo mkdir -p "$(dirname "$filename")" || return
+        echo "{}" | profile_cat "$filename" || return
         ;;
     windows)
         # Make sure any old profile data at this location is removed
         run profile_reg delete "."
         assert_nothing
         # Create subkey so that profile_exists returns true now
-        profile_reg add "."
+        profile_reg add "." || return
         ;;
     esac
 }
@@ -143,19 +143,19 @@ add_profile_bool() {
     local setting=$1
     local value=$2
 
-    assert profile_exists
+    assert profile_exists || return
     case $OS in
     darwin)
-        profile_plutil -replace "$setting" -bool "$value"
+        profile_plutil -replace "$setting" -bool "$value" || return
         ;;
     linux)
         profile_jq ".${setting} = ${value}" || return
         ;;
     windows)
         if [[ $value == true ]]; then
-            profile_reg add "$setting" /t REG_DWORD /d 1
+            profile_reg add "$setting" /t REG_DWORD /d 1 || return
         else
-            profile_reg add "$setting" /t REG_DWORD /d 0
+            profile_reg add "$setting" /t REG_DWORD /d 0 || return
         fi
         ;;
     esac
@@ -167,16 +167,16 @@ add_profile_int() {
     local setting=$1
     local value=$2
 
-    assert profile_exists
+    assert profile_exists || return
     case $OS in
     darwin)
-        profile_plutil -replace "$setting" -integer "$value"
+        profile_plutil -replace "$setting" -integer "$value" || return
         ;;
     linux)
         profile_jq ".${setting} = ${value}" || return
         ;;
     windows)
-        profile_reg add "$setting" /t REG_DWORD /d "$value"
+        profile_reg add "$setting" /t REG_DWORD /d "$value" || return
         ;;
     esac
 }
@@ -187,16 +187,16 @@ add_profile_string() {
     local setting=$1
     local value=$2
 
-    assert profile_exists
+    assert profile_exists || return
     case $OS in
     darwin)
-        profile_plutil -replace "$setting" -string "$value"
+        profile_plutil -replace "$setting" -string "$value" || return
         ;;
     linux)
         profile_jq ".${setting} = $(json_string "$value")" || return
         ;;
     windows)
-        profile_reg add "$setting" /t REG_SZ /d "$value"
+        profile_reg add "$setting" /t REG_SZ /d "$value" || return
         ;;
     esac
 }
@@ -208,12 +208,12 @@ add_profile_list() {
     local setting=$1
     shift
 
-    assert profile_exists
+    assert profile_exists || return
     case $OS in
     darwin)
-        profile_plutil -replace "$setting" -array
+        profile_plutil -replace "$setting" -array || return
         for elem in "$@"; do
-            profile_plutil -insert "$setting" -string "$elem" -append
+            profile_plutil -insert "$setting" -string "$elem" -append || return
         done
         ;;
     linux)
@@ -224,7 +224,7 @@ add_profile_list() {
         ;;
     windows)
         # TODO: what happens when the values contain whitespace or quote characters?
-        profile_reg add "$setting" /t REG_MULTI_SZ /d "$(join_map '\0' echo "$@")"
+        profile_reg add "$setting" /t REG_MULTI_SZ /d "$(join_map '\0' echo "$@")" || return
         ;;
     esac
 }
@@ -235,7 +235,7 @@ add_profile_list() {
 remove_profile_entry() {
     local setting=$1
 
-    assert profile_exists
+    assert profile_exists || return
     case $OS in
     darwin)
         profile_plutil -remove "${setting%.}" || return
