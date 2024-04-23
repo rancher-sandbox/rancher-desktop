@@ -112,11 +112,13 @@ download_shim() {
 
     local base_url="https://github.com/deislabs/containerd-wasm-shims/releases/download/v${MANUAL_VERSION}"
     local filename="containerd-wasm-shims-${version}-${shim}-linux-${ARCH}.tar.gz"
+    local host_archive
+
+    # Since we end up using curl.exe on Windows, pass the host path to curl.
+    host_archive=$(host_path "${PATH_CONTAINERD_SHIMS}/${filename}")
 
     mkdir -p "$PATH_CONTAINERD_SHIMS"
-    # On Windows, use curl from the WSL distro instead of curl.exe to ensure we
-    # have no issues with PATH_CONTAINERD_SHIMS being in Linux format.
-    command curl --location --output "${PATH_CONTAINERD_SHIMS}/${filename}" "${base_url}/${filename}"
+    curl --location --output "$host_archive" "${base_url}/${filename}"
     tar xfz "${PATH_CONTAINERD_SHIMS}/${filename}" --directory "$PATH_CONTAINERD_SHIMS"
     rm "${PATH_CONTAINERD_SHIMS}/${filename}"
 }
