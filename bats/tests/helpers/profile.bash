@@ -137,17 +137,19 @@ export_profile() {
     fi
 }
 
-# Add boolean setting; value must be "true" or "false"
+# Set a profile setting to a boolean; value must be "true" or "false"
+# The profile must exist before calling this function.
 add_profile_bool() {
     local setting=$1
     local value=$2
 
+    assert profile_exists
     case $OS in
     darwin)
         profile_plutil -replace "$setting" -bool "$value"
         ;;
     linux)
-        profile_jq ".${setting} = ${value}"
+        profile_jq ".${setting} = ${value}" || return
         ;;
     windows)
         if [[ $value == true ]]; then
@@ -159,16 +161,19 @@ add_profile_bool() {
     esac
 }
 
+# Set a profile setting to an integer.
+# The profile must exist before calling this function.
 add_profile_int() {
     local setting=$1
     local value=$2
 
+    assert profile_exists
     case $OS in
     darwin)
         profile_plutil -replace "$setting" -integer "$value"
         ;;
     linux)
-        profile_jq ".${setting} = ${value}"
+        profile_jq ".${setting} = ${value}" || return
         ;;
     windows)
         profile_reg add "$setting" /t REG_DWORD /d "$value"
@@ -176,16 +181,19 @@ add_profile_int() {
     esac
 }
 
+# Set a profile setting to a string.
+# The profile must exist before calling this function.
 add_profile_string() {
     local setting=$1
     local value=$2
 
+    assert profile_exists
     case $OS in
     darwin)
         profile_plutil -replace "$setting" -string "$value"
         ;;
     linux)
-        profile_jq ".${setting} = $(json_string "$value")"
+        profile_jq ".${setting} = $(json_string "$value")" || return
         ;;
     windows)
         profile_reg add "$setting" /t REG_SZ /d "$value"
@@ -193,11 +201,14 @@ add_profile_string() {
     esac
 }
 
+# Set a profile setting to a list of strings, replacing any existing elements.
+# The profile must exist before calling this function.
 add_profile_list() {
+    local elem
     local setting=$1
     shift
 
-    local elem
+    assert profile_exists
     case $OS in
     darwin)
         profile_plutil -replace "$setting" -array
@@ -206,9 +217,9 @@ add_profile_list() {
         done
         ;;
     linux)
-        profile_jq ".${setting} = []"
+        profile_jq ".${setting} = []" || return
         for elem in "$@"; do
-            profile_jq ".${setting} += [$(json_string "$elem")]"
+            profile_jq ".${setting} += [$(json_string "$elem")]" || return
         done
         ;;
     windows)
@@ -224,6 +235,7 @@ add_profile_list() {
 remove_profile_entry() {
     local setting=$1
 
+    assert profile_exists
     case $OS in
     darwin)
         profile_plutil -remove "${setting%.}" || return
@@ -261,14 +273,11 @@ profile_jq() {
     local expr=$1
     local filename
     filename=$(profile_location)
-    if [ -f "$filename" ]; then
-        # Need to use a temp file to avoid truncating the file before it has been read.
-        jq "$expr" "$filename" | profile_cat "${filename}.tmp"
-        profile_sudo mv "${filename}.tmp" "$filename"
-    else
-        # The profile doesn't exist yet; create a new file.
-        echo '{}' | jq "$expr" | profile_cat "$filename"
-    fi
+
+    assert_file_exists "$filename" || return
+    # Need to use a temp file to avoid truncating the file before it has been read.
+    jq "$expr" "$filename" | profile_cat "${filename}.tmp"
+    profile_sudo mv "${filename}.tmp" "$filename"
 }
 
 # Usage: profile_plutil $action $options

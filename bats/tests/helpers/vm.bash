@@ -209,6 +209,9 @@ start_container_engine() {
         registry="ghcr.io"
     fi
     if is_true "${RD_USE_PROFILE:-}"; then
+        if ! profile_exists; then
+            create_profile
+        fi
         add_profile_int "version" 7
         if is_windows; then
             # Translate any dots in the distro name into $RD_PROTECTED_DOT (e.g. "Ubuntu-22.04")

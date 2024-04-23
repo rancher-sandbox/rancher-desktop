@@ -45,7 +45,9 @@ local_setup() {
     # don't provide a --container-engine.name argument to `rdctl start`
     RD_CONTAINER_ENGINE=""
     # don't create settings.json file
-    RD_USE_PROFILE=true start_kubernetes
+    RD_USE_PROFILE=true
+    start_kubernetes
+    unset RD_USE_PROFILE
     # make sure we are not waiting for the docker context to be created
     RD_CONTAINER_ENGINE="containerd"
     wait_for_container_engine
