@@ -82,14 +82,14 @@ assert_traefik_on_localhost() {
     local k3s_pid
     k3s_pid=$(get_service_pid k3s)
 
-    # Disable traefik
+    trace "Disable traefik"
     rdctl set --kubernetes.options.traefik=false
 
-    # Wait until k3s has restarted
+    trace "Wait until k3s has restarted"
     try --max 30 --delay 5 refute_service_pid k3s "${k3s_pid}"
-
     wait_for_kubelet
-    # Check if the traefik pods go down
+
+    trace "Check if the traefik pods go down"
     try --max 30 --delay 10 assert_traefik_pods_are_down
 }
 
@@ -106,14 +106,14 @@ assert_traefik_on_localhost() {
     local k3s_pid
     k3s_pid=$(get_service_pid k3s)
 
-    # Enable traefik
+    trace "Enable traefik"
     rdctl set --kubernetes.options.traefik
 
-    # Wait until k3s has restarted
+    trace "Wait until k3s has restarted"
     try --max 30 --delay 5 refute_service_pid k3s "${k3s_pid}"
-
     wait_for_kubelet
-    # Check if the traefik pods come up
+
+    trace "Check if the traefik pods come up"
     try --max 30 --delay 10 assert_traefik_pods_are_up
 }
 
