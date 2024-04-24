@@ -3,8 +3,6 @@
 # https://www.shellcheck.net/wiki/SC2030 -- Modification of output is local (to subshell caused by @bats test)
 # https://www.shellcheck.net/wiki/SC2031 -- output was modified in a subshell. That change might be lost
 
-# Test case 25 & 26
-
 load '../helpers/load'
 
 local_setup() {
@@ -13,22 +11,34 @@ local_setup() {
         skip "Test does not yet work from inside a WSL distro when using networking tunnel, since it requires WSL integration"
     fi
     needs_port 80
+    bats_require_minimum_version 1.5.0
 }
 
 assert_traefik_pods_are_down() {
-    run kubectl get --all-namespaces pods
+    local traefik_pods pods count
+    run --separate-stderr kubectl get --all-namespaces --output 'jsonpath={.items}' pods
+    assert_success
 
-    if [[ $output != *"connection refused"* ]] &&
-        [[ $output != *"No resources found"* ]] &&
-        [[ $output != *"ContainerCreating"* ]] &&
-        [[ $output != *"Pending"* ]] &&
-        [[ $output != *"Completed"* ]] &&
-        [[ $output != *"Terminating"* ]] &&
-        [[ $output != *"traefik"* ]]; then
-        return 0
-    else
+    # There should be at least one pod (e.g. coredns, metrics server, ...)
+    if [[ "$(jq_output length)" -eq 0 ]]; then
+        trace "No pods found"
         return 1
     fi
+
+    # Filter for traefik related pods
+    traefik_pods=$(jq_output 'map(select(.metadata.name | contains("traefik")))')
+
+    # Exclude pods that are completed (i.e. jobs)
+    pods=$(output=$traefik_pods jq_output 'map(select(.status.conditions | all(.reason != "PodCompleted")))')
+
+    count="$(output=$pods jq_output length)"
+    if [[ $count -gt 0 ]]; then
+        trace "Found $count active traefik pods"
+        return 1
+    fi
+
+    trace "No active traefik pods"
+    return 0
 }
 
 assert_traefik_pods_are_up() {
