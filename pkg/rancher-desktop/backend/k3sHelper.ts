@@ -7,7 +7,9 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import { CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir } from '@kubernetes/client-node';
+import {
+  CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir, HttpError,
+} from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import _ from 'lodash';
 import { Response } from 'node-fetch';
@@ -1049,27 +1051,44 @@ export default class K3sHelper extends events.EventEmitter {
    * This exists to work around https://github.com/k3s-io/k3s/issues/5103
    */
   async uninstallTraefik(client: KubeClient) {
-    try {
-      const customApi = client.k8sClient.makeApiClient(CustomObjectsApi);
-      const { body: response } = await customApi.listNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts');
-      const charts: V1HelmChart[] = (response as any)?.items ?? [];
+    const deadline = Date.now() + 10 * 60 * 1_000;
 
-      await Promise.all(charts.filter((chart) => {
-        const annotations = chart.metadata?.annotations ?? {};
+    // If the Kubernetes server is not ready yet, we need to retry until it is.
+    // However, don't attempt that forever; only loop until we hit a deadline.
+    while (Date.now() < deadline) {
+      try {
+        const customApi = client.k8sClient.makeApiClient(CustomObjectsApi);
+        const { body: response } = await customApi.listNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts');
+        const charts: V1HelmChart[] = (response as any)?.items ?? [];
 
-        return chart.metadata?.name && (annotations['objectset.rio.cattle.io/owner-name'] === 'traefik');
-      }).map((chart) => {
-        const name = chart.metadata?.name;
+        await Promise.all(charts.filter((chart) => {
+          const annotations = chart.metadata?.annotations ?? {};
 
-        if (name) {
-          console.debug(`Will delete helm chart ${ name }`);
+          return chart.metadata?.name && (annotations['objectset.rio.cattle.io/owner-name'] === 'traefik');
+        }).map((chart) => {
+          const name = chart.metadata?.name;
 
-          return customApi.deleteNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts', name);
+          if (name) {
+            console.debug(`Will delete helm chart ${ name }`);
+
+            return customApi.deleteNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts', name);
+          }
+        }));
+
+        return;
+      } catch (ex) {
+        if (ex instanceof HttpError && ex.statusCode === 503) {
+          console.debug(`Got Service Unavailable (${ ex.body.message }), retrying...`);
+          await util.promisify(setTimeout)(1_000);
+          continue;
         }
-      }));
-    } catch (ex) {
-      console.error('Error uninstalling Traefik', ex);
+        console.error('Error uninstalling Traefik', ex);
+
+        return;
+      }
     }
+
+    console.error('Timed out uninstalling Traefik, giving up');
   }
 
   /**
