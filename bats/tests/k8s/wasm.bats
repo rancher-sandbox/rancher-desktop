@@ -95,10 +95,15 @@ get_host() {
         local LB_IP
         local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
         LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
+        assert_not_equal "$LB_IP" "" || return
         echo "$LB_IP.sslip.io"
     else
         echo "localhost"
     fi
+}
+
+@test 'wait for traefik to get IP' {
+    try get_host >/dev/null
 }
 
 @test 'deploy ingress' {
