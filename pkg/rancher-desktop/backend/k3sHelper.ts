@@ -1087,6 +1087,8 @@ export default class K3sHelper extends events.EventEmitter {
         return;
       }
     }
+
+    console.error('Timed out uninstalling Traefik, giving up');
   }
 
   /**
