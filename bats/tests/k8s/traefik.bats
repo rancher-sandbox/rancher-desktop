@@ -1,8 +1,3 @@
-# shellcheck disable=SC2030,SC2031
-# See https://github.com/koalaman/shellcheck/issues/2431
-# https://www.shellcheck.net/wiki/SC2030 -- Modification of output is local (to subshell caused by @bats test)
-# https://www.shellcheck.net/wiki/SC2031 -- output was modified in a subshell. That change might be lost
-
 load '../helpers/load'
 
 local_setup() {
