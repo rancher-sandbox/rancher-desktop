@@ -256,6 +256,7 @@ try() {
     while true; do
         run "$@"
         if ((status == 0 || ++count >= max)); then
+            trace "$count/$max tries: $*"
             break
         fi
         sleep "$delay"
