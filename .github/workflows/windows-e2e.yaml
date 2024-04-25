@@ -19,23 +19,16 @@ jobs:
     timeout-minutes: 90
     runs-on: windows-latest
     steps:
-      - name: Update any pre-installed WSL
-        run: wsl --update
-        continue-on-error: true
-      - name: Install WSL2 from the Store as necessary
-        run: wsl --install --no-distribution
-      - run: wsl --version
-      - name: Stop Docker daemon
-        run: Stop-Service -Name docker
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: ./.github/actions/setup-environment
       # For compatibility with runners without yarn, we need to install node
       # once, install yarn, then install node again to get caching.
       - uses: actions/setup-node@v4
         with:
           node-version: '18.16.x'
-      - run: npm install --global yarn
+      - run: corepack enable yarn
       - uses: actions/setup-node@v4
         with:
           node-version: '18.16.x'

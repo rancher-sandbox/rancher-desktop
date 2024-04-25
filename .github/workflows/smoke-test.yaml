@@ -101,34 +101,8 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: "Linux: Enable KVM access"
-      if: runner.os == 'Linux'
-      run: sudo chmod a+rwx /dev/kvm
-
-    - name: "Linux: Initialize pass"
-      if: runner.os == 'Linux'
-      run: |
-        # Configure the agent to allow default passwords
-        HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
-        mkdir -p "${HOMEDIR}"
-        chmod 0700 "${HOMEDIR}"
-        echo "allow-preset-passphrase" >> "${HOMEDIR}/gpg-agent.conf"
-
-        # Create a GPG key
-        gpg --quick-generate-key --yes --batch --passphrase '' \
-          user@rancher-desktop.test default \
-          default never
-
-        # Get info about the newly created key
-        DATA="$(gpg --batch --with-colons --with-keygrip --list-secret-keys)"
-        FINGERPRINT="$(awk -F: '/^fpr:/ { print $10 ; exit }' <<< "${DATA}")" # spellcheck-ignore-line
-        GRIP="$(awk -F: '/^grp:/ { print $10 ; exit }' <<< "${DATA}")"
-
-        # Save the password
-        gpg-connect-agent --verbose "PRESET_PASSPHRASE ${GRIP} -1 00" /bye
-
-        # Initialize pass
-        pass init "${FINGERPRINT}"
+    - name: Set up environment
+      uses: ./.github/actions/setup-environment
 
     - name: "Linux: Set startup command"
       if: runner.os == 'Linux'
@@ -137,24 +111,6 @@ jobs:
         EXEC_COMMAND: >-
           exec xvfb-run --auto-servernum
           --server-args='-screen 0 1280x960x24'
-
-    - name: "Windows: Stop unwanted services"
-      if: runner.os == 'Windows'
-      run: >-
-        Get-Service -ErrorAction Continue -Name
-        @('W3SVC', 'docker')
-        | Stop-Service
-
-    - name: "Windows: Update any pre-installed WSL"
-      if: runner.os == 'Windows'
-      run: wsl --update
-      continue-on-error: true
-
-    - name: "Windows: Set default WSL version"
-      if: runner.os == 'Windows'
-      run: |
-        wsl --set-default-version 2
-        wsl --version
 
     - name: "Windows: Install yq"
       if: runner.os == 'Windows'

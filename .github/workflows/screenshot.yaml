@@ -34,54 +34,11 @@ jobs:
         brew update
         brew install smokris/getwindowid/getwindowid
 
-    - name: "Linux: Enable KVM access"
-      if: runner.os == 'Linux'
-      run: sudo chmod a+rwx /dev/kvm
     - name: "Linux: Install Tools"
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install graphicsmagick x11-utils mutter # spellcheck-ignore-line
-    - name: "Linux: Initialize pass"
-      if: runner.os == 'Linux'
-      run: |
-        # Configure the agent to allow default passwords
-        HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
-        mkdir -p "${HOMEDIR}"
-        chmod 0700 "${HOMEDIR}"
-        echo "allow-preset-passphrase" >> "${HOMEDIR}/gpg-agent.conf"
-
-        # Create a GPG key
-        gpg --quick-generate-key --yes --batch --passphrase '' \
-          user@rancher-desktop.test default \
-          default never
-
-        # Get info about the newly created key
-        DATA="$(gpg --batch --with-colons --with-keygrip --list-secret-keys)"
-        FINGERPRINT="$(awk -F: '/^fpr:/ { print $10 ; exit }' <<< "${DATA}")" # spellcheck-ignore-line
-        GRIP="$(awk -F: '/^grp:/ { print $10 ; exit }' <<< "${DATA}")"
-
-        # Save the password
-        gpg-connect-agent --verbose "PRESET_PASSPHRASE ${GRIP} -1 00" /bye
-
-        # Initialize pass
-        pass init "${FINGERPRINT}"
-
-    - name: "Windows: Stop unwanted services"
-      if: runner.os == 'Windows'
-      run: >-
-        Get-Service -ErrorAction Continue -Name
-        @('W3SVC', 'docker')
-        | Stop-Service
-    - name: "Windows: Update any pre-installed WSL"
-      if: runner.os == 'Windows'
-      run: wsl --update
-      continue-on-error: true
-    - name: "Windows: Install WSL2 from the Store as necessary"
-      if: runner.os == 'Windows'
-      run: wsl --install --no-distribution
-    - run: wsl --version
-      if: runner.os == 'Windows'
 
     - name: "macOS: Set startup command"
       if: runner.os == 'macOS'
@@ -114,7 +71,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: '18.16.x'
-    - run: npm install --global yarn
+    - run: corepack enable yarn
     - uses: actions/setup-node@v4
       with:
         node-version: '18.16.x'
@@ -126,6 +83,7 @@ jobs:
       with:
         go-version: '^1.21'
         cache-dependency-path: src/go/**/go.sum
+    - uses: ./.github/actions/setup-environment
     - run: pip install setuptools
     - # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
       run: yarn install --frozen-lockfile --network-timeout 1000000

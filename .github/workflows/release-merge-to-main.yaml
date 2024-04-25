@@ -35,7 +35,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version-file: package.json
-    - run: corepack enable yarn # spellcheck-ignore-line
+    - run: corepack enable yarn
     - uses: actions/setup-node@v4
       with:
         node-version-file: package.json
