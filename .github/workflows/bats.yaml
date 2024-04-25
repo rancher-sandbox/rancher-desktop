@@ -124,8 +124,22 @@ jobs:
 
     - name: Set up environment
       uses: ./.github/actions/setup-environment
-      with:
-        install-wsl-distro: true
+
+    - name: "Windows: Install WSL2 Distribution"
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        # Install Debian, but do not launch it
+        wsl --install Debian --no-launch
+        # Initialize Debian, without going through any first-time setup
+        debian.exe install --root
+
+    - name: "Windows: Install prerequisites in WSL"
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: >-
+        wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
+        sh -c 'apt-get update && apt-get install --yes curl'
 
     - name: Set log directory
       shell: bash
