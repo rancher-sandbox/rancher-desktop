@@ -367,8 +367,9 @@ wait_for_container_engine() {
     try --max 30 --delay 5 rdctl api /settings
 
     if using_docker; then
+        wait_for_service_status docker started
         trace "waiting for docker context to exist"
-        try --max 30 --delay 5 docker_context_exists
+        try --max 30 --delay 10 docker_context_exists
     else
         wait_for_service_status buildkitd started
     fi
