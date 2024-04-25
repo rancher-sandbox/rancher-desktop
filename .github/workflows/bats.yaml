@@ -101,6 +101,7 @@ jobs:
         sparse-checkout-cone-mode: false
         sparse-checkout: |
           scripts/install-latest-ci.sh
+          .github/actions/setup-environment/action.yaml
           .github/workflows/bats/sanitize-artifact-name.sh
 
     - name: Install latest CI build
@@ -121,63 +122,8 @@ jobs:
         BATS_DIR: ${{ github.workspace }}/bats
         ZIP_NAME: ${{ github.workspace }}/version.txt
 
-    - name: "Linux: Enable KVM access"
-      if: runner.os == 'Linux'
-      run: sudo chmod a+rwx /dev/kvm
-
-    - name: "Windows: Stop unwanted services"
-      if: runner.os == 'Windows'
-      run: >-
-        Get-Service -ErrorAction Continue -Name
-        @('W3SVC', 'docker')
-        | Stop-Service
-
-    - name: "Windows: Update any pre-installed WSL"
-      if: runner.os == 'Windows'
-      run: wsl --update
-      continue-on-error: true
-
-    - name: "Windows: Install WSL2 Distribution"
-      if: runner.os == 'Windows'
-      run: |
-        # Set the default WSL version (we don't work with WSL1)
-        wsl --set-default-version 2
-        # Install Debian, but do not launch it
-        wsl --install Debian --no-launch
-        # Initialize Debian, without going through any first-time setup
-        debian.exe install --root
-      shell: pwsh
-
-    - name: "Windows: Install prerequisites in WSL"
-      if: runner.os == 'Windows'
-      run: >-
-        wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
-        sh -c 'apt-get update && apt-get install --yes curl'
-
-    - name: "Linux: Initialize pass"
-      if: runner.os == 'Linux'
-      run: |
-        # Configure the agent to allow default passwords
-        HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
-        mkdir -p "${HOMEDIR}"
-        chmod 0700 "${HOMEDIR}"
-        echo "allow-preset-passphrase" >> "${HOMEDIR}/gpg-agent.conf"
-
-        # Create a GPG key
-        gpg --quick-generate-key --yes --batch --passphrase '' \
-          user@rancher-desktop.test default \
-          default never
-
-        # Get info about the newly created key
-        DATA="$(gpg --batch --with-colons --with-keygrip --list-secret-keys)"
-        FINGERPRINT="$(awk -F: '/^fpr:/ { print $10 ; exit }' <<< "${DATA}")" # spellcheck-ignore-line
-        GRIP="$(awk -F: '/^grp:/ { print $10 ; exit }' <<< "${DATA}")"
-
-        # Save the password
-        gpg-connect-agent --verbose "PRESET_PASSPHRASE ${GRIP} -1 00" /bye
-
-        # Initialize pass
-        pass init "${FINGERPRINT}"
+    - name: Set up environment
+      uses: ./.github/actions/setup-environment
 
     - name: Set log directory
       shell: bash
