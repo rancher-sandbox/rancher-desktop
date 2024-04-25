@@ -1523,6 +1523,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           if (kubernetesVersion) {
             const version = kubernetesVersion;
 
+            // We install containerd-shims as part of the container engine installation (see
+            // BackendHelper#installContainerdShims); and we need that to finish first so that when
+            // we install Kubernetes, we can look up the set of shims in order to create
+            // RuntimeClasses for them.  (See BackendHelper#configureRuntimeClasses.)
             await this.progressTracker.action('Installing Kubernetes', 0, Promise.all([
               this.progressTracker.action('Writing K3s configuration', 50, async() => {
                 const k3sConf = {
