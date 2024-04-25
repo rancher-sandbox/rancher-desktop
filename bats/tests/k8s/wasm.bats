@@ -27,6 +27,19 @@ get_runtime_classes() {
     fi
 }
 
+# Get the host name to use to reach Traefik
+get_host() {
+    if is_windows; then
+        local jsonpath='jsonpath={.status.loadBalancer.ingress[0].ip}'
+        run --separate-stderr kubectl get service traefik --namespace kube-system --output "$jsonpath"
+        assert_success || return
+        assert_output || return
+        echo "$output.sslip.io"
+    else
+        echo "localhost"
+    fi
+}
+
 @test 'start k8s without wasm support' {
     factory_reset
     start_kubernetes
@@ -90,15 +103,8 @@ spec:
 EOF
 }
 
-get_host() {
-    if is_windows; then
-        local LB_IP
-        local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
-        LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
-        echo "$LB_IP.sslip.io"
-    else
-        echo "localhost"
-    fi
+@test 'wait for traefik to get IP' {
+    try get_host
 }
 
 @test 'deploy ingress' {
