@@ -138,6 +138,7 @@ containo
 copypac
 coredns
 corejs
+corepack
 coreutils
 crd
 credfwd
