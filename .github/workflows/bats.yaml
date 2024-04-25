@@ -124,6 +124,8 @@ jobs:
 
     - name: Set up environment
       uses: ./.github/actions/setup-environment
+      with:
+        install-wsl-distro: true
 
     - name: Set log directory
       shell: bash
