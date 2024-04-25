@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/integration"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,8 +46,12 @@ var wslIntegrationDockerPluginCmd = &cobra.Command{
 func init() {
 	wslIntegrationDockerPluginCmd.Flags().String("plugin", "", "Full path to plugin")
 	wslIntegrationDockerPluginCmd.Flags().Bool("state", false, "Desired state")
-	wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin")
+	if err := wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin"); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	wslIntegrationDockerPluginViper.AutomaticEnv()
-	wslIntegrationDockerPluginViper.BindPFlags(wslIntegrationDockerPluginCmd.Flags())
+	if err := wslIntegrationDockerPluginViper.BindPFlags(wslIntegrationDockerPluginCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	wslIntegrationCmd.AddCommand(wslIntegrationDockerPluginCmd)
 }

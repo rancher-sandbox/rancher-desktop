@@ -37,12 +37,12 @@ var ErrListenerClosed = winio.ErrPipeListenerClosed
 
 // MakeDialer computes the dial function.
 func MakeDialer(port uint32) (func() (net.Conn, error), error) {
-	vmGuid, err := probeVMGUID(port)
+	vmGUID, err := probeVMGUID(port)
 	if err != nil {
 		return nil, fmt.Errorf("could not detect WSL2 VM: %w", err)
 	}
 	dial := func() (net.Conn, error) {
-		conn, err := dialHvsock(vmGuid, port)
+		conn, err := dialHvsock(vmGUID, port)
 		if err != nil {
 			return nil, err
 		}
@@ -53,16 +53,16 @@ func MakeDialer(port uint32) (func() (net.Conn, error), error) {
 
 // dialHvsock creates a net.Conn to a Hyper-V VM running Linux with the given
 // GUID, listening on the given vsock port.
-func dialHvsock(vmGuid hvsock.GUID, port uint32) (net.Conn, error) {
+func dialHvsock(vmGUID hvsock.GUID, port uint32) (net.Conn, error) {
 	// go-winio doesn't implement DialHvsock(), but luckily LinuxKit has an
 	// implementation.  We still need go-winio to convert port to GUID.
-	svcGuid, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
+	svcGUID, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
 	if err != nil {
 		return nil, fmt.Errorf("could not parse Hyper-V service GUID: %w", err)
 	}
 	addr := hvsock.Addr{
-		VMID:      vmGuid,
-		ServiceID: svcGuid,
+		VMID:      vmGUID,
+		ServiceID: svcGUID,
 	}
 
 	conn, err := hvsock.Dial(addr)

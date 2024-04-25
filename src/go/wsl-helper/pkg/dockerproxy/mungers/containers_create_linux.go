@@ -82,7 +82,7 @@ type bindManager struct {
 // empty, then the bind is incomplete (the container create failed) and it
 // should not be used.
 type bindManagerEntry struct {
-	ContainerId string
+	ContainerID string `json:"ContainerId"`
 	HostPath    string
 }
 
@@ -169,7 +169,7 @@ func (b *bindManager) makeMount() string {
 }
 
 // prepareMountPath creates target directory or file, as mount point
-func (b *bindManager) prepareMountPath(target string, bindKey string) error {
+func (b *bindManager) prepareMountPath(target, bindKey string) error {
 	mountPath := path.Join(b.mountRoot, bindKey)
 	hostPathStat, err := os.Stat(target)
 	if os.IsNotExist(err) {
@@ -282,7 +282,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 
 // containersCreateResponseBody describes the contents of a /containers/create response.
 type containersCreateResponseBody struct {
-	Id       string
+	ID       string `json:"Id"`
 	Warnings []string
 }
 
@@ -312,9 +312,9 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 	}
 
 	b.Lock()
-	for mountId, hostPath := range *binds {
-		b.entries[mountId] = bindManagerEntry{
-			ContainerId: body.Id,
+	for mountID, hostPath := range *binds {
+		b.entries[mountID] = bindManagerEntry{
+			ContainerID: body.ID,
 			HostPath:    hostPath,
 		}
 	}
@@ -337,7 +337,7 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 	mapping := make(map[string]string)
 	b.RLock()
 	for key, data := range b.entries {
-		if data.ContainerId == templates["id"] {
+		if data.ContainerID == templates["id"] {
 			mapping[key] = data.HostPath
 		}
 	}
@@ -416,14 +416,17 @@ func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, context
 
 	var toDelete []string
 	for key, data := range b.entries {
-		if data.ContainerId == templates["id"] {
+		if data.ContainerID == templates["id"] {
 			toDelete = append(toDelete, key)
 		}
 	}
 	for _, key := range toDelete {
 		delete(b.entries, key)
 	}
-	b.persist()
+	if err := b.persist(); err != nil {
+		logrus.WithError(err).Error("error writing state file")
+		return fmt.Errorf("could not write state: %w", err)
+	}
 	return nil
 }
 

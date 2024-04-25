@@ -1,13 +1,11 @@
-//go:build windows
-
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2024 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+// Package options contains the generated options.
+package options
 
-import "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/cmd"
-
-func main() {
-	cmd.Execute()
-}
+// This file exists so that dependabot can find the package; the actual options
+// are generated via `yarn postinstall`.

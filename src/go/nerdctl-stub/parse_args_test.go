@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var expectedError = fmt.Errorf("expected error")
+var errExpected = fmt.Errorf("expected error")
 
 func generateCleanupFunc(output *bool, withError bool) cleanupFunc {
 	return func() error {
@@ -15,7 +15,7 @@ func generateCleanupFunc(output *bool, withError bool) cleanupFunc {
 			*output = true
 		}
 		if withError {
-			return expectedError
+			return errExpected
 		}
 		return nil
 	}
@@ -25,7 +25,7 @@ func generateOptionHandler(output *bool, argError, cleanupError bool) argHandler
 	cleanup := generateCleanupFunc(output, cleanupError)
 	return func(arg string) (string, []cleanupFunc, error) {
 		if argError {
-			return "", []cleanupFunc{cleanup}, expectedError
+			return "", []cleanupFunc{cleanup}, errExpected
 		}
 		return arg, []cleanupFunc{cleanup}, nil
 	}
@@ -120,7 +120,7 @@ func TestParseOptions(t *testing.T) {
 		assert.Error(t, err)
 		if assert.Len(t, cleanups, 1) {
 			result := cleanups[0]()
-			assert.Same(t, expectedError, result)
+			assert.Same(t, errExpected, result)
 		}
 	})
 	t.Run("looks for options in parent commands", func(t *testing.T) {

@@ -48,6 +48,6 @@ func init() {
 func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
-		logrus.Error(err)
+		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
 }

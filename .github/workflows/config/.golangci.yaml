@@ -18,6 +18,7 @@ linters-settings:
       - dupImport # https://github.com/go-critic/go-critic/issues/845
       - ifElseChain
       - octalLiteral
+      - unnamedResult
       - whyNoLint
       - wrapperFunc
   gocyclo:
@@ -35,8 +36,9 @@ linters-settings:
       - '2'
       - '3'
     ignored-functions:
-      - strings.SplitN
-
+      - ^strings\.SplitN$
+      - ^os\.FileMode$
+      - ^os\.Mkdir(?:All)?$
   lll:
     line-length: 140
   misspell:
@@ -51,14 +53,12 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - dogsled
     - dupl
     - errcheck
     - exportloopref
     - goconst
     - gocritic
-    - gocyclo
     - gofmt
     - goimports
     - gomnd
@@ -72,13 +72,11 @@ linters:
     - nakedret
     - noctx
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
 
   # don't enable:
@@ -109,3 +107,18 @@ issues:
         - gosec
         - errcheck
         - gocritic
+    - # Exclude ST1005 when it encounters errors starting with proper noun
+      linters: [ stylecheck ]
+      text: "ST1005:"
+      path: src/go/wsl-helper/cmd/kubeconfig.go
+      source: errors.New\("Windows
+    - # Exclude long function declarations
+      linters: [ lll ]
+      source: ^\s*func\b
+    - # Exclude the FIXME comments from upstream
+      path: src/go/wsl-helper/pkg/dockerproxy/platform/vsock_linux\.go
+      linters: [ gocritic ]
+      text: todoCommentWithoutDetail
+    - # Exclude ignoring errors from syscall
+      linters: [ dogsled ]
+      source: ^\s*_, _, _ = .*\.Call\(

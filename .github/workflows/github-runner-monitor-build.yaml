@@ -30,6 +30,7 @@ jobs:
       working-directory: src/go/github-runner-monitor
       env:
         CGO_ENABLED: '0'
+        GOWORK: off
     - uses: actions/upload-artifact@v4
       with:
         name: github-runner-linux
@@ -41,3 +42,5 @@ jobs:
         args: --config=${{ github.workspace }}/.github/workflows/config/.golangci.yaml  --verbose --timeout 3m
         working-directory: src/go/github-runner-monitor
         only-new-issues: true
+      env:
+        GOWORK: off

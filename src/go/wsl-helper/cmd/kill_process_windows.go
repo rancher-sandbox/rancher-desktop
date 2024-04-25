@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -37,6 +38,8 @@ var killProcessCmd = &cobra.Command{
 func init() {
 	killProcessCmd.Flags().Int("pid", 0, "PID of process to kill")
 	killProcessViper.AutomaticEnv()
-	killProcessViper.BindPFlags(killProcessCmd.Flags())
+	if err := killProcessViper.BindPFlags(killProcessCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	rootCmd.AddCommand(killProcessCmd)
 }

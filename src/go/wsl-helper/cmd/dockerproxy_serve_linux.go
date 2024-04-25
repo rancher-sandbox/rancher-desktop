@@ -64,6 +64,8 @@ func init() {
 	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
 	dockerproxyServeCmd.Flags().String("proxy-endpoint", defaultProxyEndpoint, "Endpoint dockerd is listening on")
 	dockerproxyServeViper.AutomaticEnv()
-	dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags())
+	if err := dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	dockerproxyCmd.AddCommand(dockerproxyServeCmd)
 }

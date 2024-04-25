@@ -2,7 +2,7 @@
 (?:^|/)(?i)COPYRIGHT
 (?:^|/)(?i)LICEN[CS]E
 (?:^|/)3rdparty/
-(?:^|/)go\.sum$
+(?:^|/)go\.(?:work\.)?sum$
 (?:^|/)package(?:-lock|)\.json$
 (?:^|/)Pipfile$
 (?:^|/)pyproject.toml

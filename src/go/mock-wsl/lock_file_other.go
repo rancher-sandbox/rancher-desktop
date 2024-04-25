@@ -1,7 +1,7 @@
-//go:build windows
+//go:build !windows
 
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2024 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ limitations under the License.
 
 package main
 
-import "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/cmd"
+import (
+	"fmt"
+	"os"
+)
 
-func main() {
-	cmd.Execute()
+func lockFile(_ *os.File) error {
+	return fmt.Errorf("not implemented")
 }

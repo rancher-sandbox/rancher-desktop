@@ -18,16 +18,22 @@ package platform
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// mountPointField is the zero-indexed field number inf /proc/self/mountinfo
+	// that contains the mount point.
+	mountPointField = 4
+)
+
 // Get the WSL mount point; typically, this is /mnt/wsl.
 // If we fail to find one, we will use /mnt/wsl instead.
 func GetWSLMountPoint() (string, error) {
-	buf, err := ioutil.ReadFile("/proc/self/mountinfo")
+	buf, err := os.ReadFile("/proc/self/mountinfo")
 	if err != nil {
 		return "", fmt.Errorf("error reading mounts: %w", err)
 	}
@@ -37,9 +43,9 @@ func GetWSLMountPoint() (string, error) {
 			continue
 		}
 		fields := strings.Split(line, " ")
-		if len(fields) >= 5 {
-			if strings.HasSuffix(fields[4], "/wsl") {
-				return fields[4], nil
+		if len(fields) > mountPointField {
+			if strings.HasSuffix(fields[mountPointField], "/wsl") {
+				return fields[mountPointField], nil
 			}
 		}
 	}

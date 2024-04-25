@@ -1,7 +1,5 @@
-//go:build windows
-
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2024 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,10 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Command privileged-service is an implementation for a privileged service on
+// Windows, in order to do operations that a normal user would not have access
+// to do.  This is optional in Rancher Desktop.
 package main
-
-import "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/cmd"
-
-func main() {
-	cmd.Execute()
-}

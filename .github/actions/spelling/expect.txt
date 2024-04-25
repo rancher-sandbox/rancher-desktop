@@ -284,6 +284,7 @@ googleoauth
 gosec
 govet
 govmm
+GOWORK
 gpg
 gpu
 grafana
@@ -724,6 +725,7 @@ storybookjs
 strem
 stretchr
 stringifying
+stylecheck
 subshells
 subvar
 sumologic
@@ -777,6 +779,7 @@ Unauthed
 UNCONFIGURED
 unfetch
 Uninstalls
+unparam
 unparsable
 unregistering
 unversioned

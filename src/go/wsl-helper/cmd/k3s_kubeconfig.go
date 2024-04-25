@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -52,6 +53,8 @@ type kubeConfig struct {
 	} `yaml:"users"`
 	Extras map[string]interface{} `yaml:",inline"`
 }
+
+const kubeConfigExistTimeout = 10 * time.Second
 
 var (
 	k3sKubeconfigViper = viper.New()
@@ -81,11 +84,11 @@ var k3sKubeconfigCmd = &cobra.Command{
 			}
 		}()
 		var err error
-		timeout := time.After(10 * time.Second)
+		timeout := time.After(kubeConfigExistTimeout)
 		var configFile *os.File
 		select {
 		case <-timeout:
-			return fmt.Errorf("Timed out waiting for k3s kubeconfig to exist")
+			return fmt.Errorf("timed out waiting for k3s kubeconfig to exist")
 		case configFile = <-ch:
 			break
 		}
@@ -172,6 +175,8 @@ func init() {
 	k3sKubeconfigCmd.Flags().String("k3sconfig", "/etc/rancher/k3s/k3s.yaml", "Path to k3s kubeconfig")
 	k3sKubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	k3sKubeconfigViper.AutomaticEnv()
-	k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags())
+	if err := k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	k3sCmd.AddCommand(k3sKubeconfigCmd)
 }

@@ -101,9 +101,6 @@ updates:
 
   - package-ecosystem: "gomod"
     directory: "/src/go/rdctl"
-    ignore:
-      # This is generated when running `postinstall` and not available to dependabot.
-      - dependency-name: "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/generated/options"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 1
@@ -120,9 +117,6 @@ updates:
 
   - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
-    ignore:
-    # This is generated when running `postinstall` and not available to dependabot.
-    - dependency-name: "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 1

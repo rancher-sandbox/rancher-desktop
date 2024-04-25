@@ -25,6 +25,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -124,8 +125,8 @@ func requireManualSymlink(linkPath string) (bool, error) {
 	return false, nil
 }
 
-func removeConfig(path string) error {
-	err := os.Remove(path)
+func removeConfig(configPath string) error {
+	err := os.Remove(configPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -151,6 +152,8 @@ func init() {
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
 	kubeconfigViper.AutomaticEnv()
-	kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())
+	if err := kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	rootCmd.AddCommand(kubeconfigCmd)
 }

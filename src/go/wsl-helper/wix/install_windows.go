@@ -23,23 +23,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// InstallWindowsFeatureImpl installs the Windows features necessary for WSL to
-// be installed.  This needs to be run elevated.
-func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
-	ctx := context.Background()
-
-	writer := &msiWriter{hInstall: hInstall}
-	log := logrus.NewEntry(&logrus.Logger{
-		Out:       writer,
+func setupLogger(hInstall MSIHANDLE) *logrus.Entry {
+	return logrus.NewEntry(&logrus.Logger{
+		Out:       &msiWriter{hInstall: hInstall},
 		Formatter: &logrus.TextFormatter{},
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.TraceLevel,
 	})
+}
+
+// InstallWindowsFeatureImpl installs the Windows features necessary for WSL to
+// be installed.  This needs to be run elevated.
+func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
+	ctx := context.Background()
+	log := setupLogger(hInstall)
 
 	log.Infof("Installing Windows feature...")
-	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+	err := submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
 		"", "InstalWindowsFeature", "Installing required Windows features...", "<unused>",
 	})
+	if err != nil {
+		log.WithError(err).Info("Failed to update progress")
+	}
 	if err := wslutils.DismDoInstall(ctx, log); err != nil {
 		log.WithError(err).Error("Failed to install feature")
 		return 1
@@ -53,19 +58,15 @@ func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
 // This needs to be run as the user.
 func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
 	ctx := context.Background()
-
-	writer := &msiWriter{hInstall: hInstall}
-	log := logrus.NewEntry(&logrus.Logger{
-		Out:       writer,
-		Formatter: &logrus.TextFormatter{},
-		Hooks:     make(logrus.LevelHooks),
-		Level:     logrus.TraceLevel,
-	})
+	log := setupLogger(hInstall)
 
 	log.Info("Installing WSL...")
-	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+	err := submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
 		"", "InstallWSL", "Installing Windows Subsystem for Linux...", "<unused>",
 	})
+	if err != nil {
+		log.WithError(err).Info("Failed to update progress")
+	}
 	if err := wslutils.InstallWSL(ctx, log); err != nil {
 		log.WithError(err).Error("Installing WSL failed")
 		return 1
@@ -79,19 +80,15 @@ func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
 // This needs to be run as the user, and may request elevation.
 func UpdateWSLImpl(hInstall MSIHANDLE) uint32 {
 	ctx := context.Background()
-
-	writer := &msiWriter{hInstall: hInstall}
-	log := logrus.NewEntry(&logrus.Logger{
-		Out:       writer,
-		Formatter: &logrus.TextFormatter{},
-		Hooks:     make(logrus.LevelHooks),
-		Level:     logrus.TraceLevel,
-	})
+	log := setupLogger(hInstall)
 
 	log.Info("Updating WSL...")
-	submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
+	err := submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
 		"", "UpdateWSL", "Updating Windows Subsystem for Linux...", "<unused>",
 	})
+	if err != nil {
+		log.WithError(err).Info("Failed to update progress")
+	}
 	if err := wslutils.UpdateWSL(ctx, log); err != nil {
 		log.WithError(err).Error("Updating WSL failed")
 		return 1

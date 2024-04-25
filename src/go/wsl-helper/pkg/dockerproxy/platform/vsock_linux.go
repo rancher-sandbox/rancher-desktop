@@ -33,9 +33,8 @@ import (
 
 // Convert a generic unix.Sockaddr to a Addr
 func sockaddrToVsock(sa unix.Sockaddr) *vsock.Addr {
-	switch sa := sa.(type) {
-	case *unix.SockaddrVM:
-		return &vsock.Addr{CID: sa.CID, Port: sa.Port}
+	if vmAddr, ok := sa.(*unix.SockaddrVM); ok {
+		return &vsock.Addr{CID: vmAddr.CID, Port: vmAddr.Port}
 	}
 	return nil
 }
@@ -93,8 +92,8 @@ type vsockConn struct {
 }
 
 func newVsockConn(fd uintptr, local, remote *vsock.Addr) *vsockConn {
-	vsock := os.NewFile(fd, fmt.Sprintf("vsock:%d", fd))
-	return &vsockConn{vsock: vsock, fd: fd, local: local, remote: remote}
+	socketFile := os.NewFile(fd, fmt.Sprintf("vsock:%d", fd))
+	return &vsockConn{vsock: socketFile, fd: fd, local: local, remote: remote}
 }
 
 // LocalAddr returns the local address of a connection
@@ -150,7 +149,7 @@ func (v *vsockConn) SetWriteDeadline(t time.Time) error {
 // File duplicates the underlying socket descriptor and returns it.
 func (v *vsockConn) File() (*os.File, error) {
 	// This is equivalent to dup(2) but creates the new fd with CLOEXEC already set.
-	r0, _, e1 := syscall.Syscall(syscall.SYS_FCNTL, uintptr(v.vsock.Fd()), syscall.F_DUPFD_CLOEXEC, 0)
+	r0, _, e1 := syscall.Syscall(syscall.SYS_FCNTL, v.vsock.Fd(), syscall.F_DUPFD_CLOEXEC, 0)
 	if e1 != 0 {
 		return nil, os.NewSyscallError("fcntl", e1)
 	}

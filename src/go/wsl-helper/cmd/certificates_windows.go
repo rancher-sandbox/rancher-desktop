@@ -21,6 +21,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -64,6 +65,8 @@ var certificatesCmd = &cobra.Command{
 func init() {
 	certificatesCmd.Flags().StringSlice("stores", []string{"CA", "ROOT"}, "Certificate stores to enumerate")
 	certificatesViper.AutomaticEnv()
-	certificatesViper.BindPFlags(certificatesCmd.Flags())
+	if err := certificatesViper.BindPFlags(certificatesCmd.Flags()); err != nil {
+		logrus.WithError(err).Fatal("Failed to set up flags")
+	}
 	rootCmd.AddCommand(certificatesCmd)
 }
