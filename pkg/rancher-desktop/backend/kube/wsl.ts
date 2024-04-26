@@ -182,7 +182,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
   }
 
-  async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<string> {
+  async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<void> {
     if (!config) {
       throw new Error('no config!');
     }
@@ -200,7 +200,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
 
     if (this.vm.currentAction !== Action.STARTING) {
       // User aborted
-      return '';
+      return;
     }
 
     await this.progressTracker.action(
@@ -270,8 +270,6 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         'Skipping node checks, flannel is disabled',
         100, Promise.resolve({}));
     }
-
-    return '';
   }
 
   async stop() {

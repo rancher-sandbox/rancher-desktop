@@ -103,7 +103,7 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
   /**
    * Start running a pre-installed version of Kubernetes.
    */
-  start(config: BackendSettings, kubernetesVersion: semver.SemVer): Promise<string>;
+  start(config: BackendSettings, kubernetesVersion: semver.SemVer): Promise<void>;
 
   /**
    * Stop the Kubernetes backend.
