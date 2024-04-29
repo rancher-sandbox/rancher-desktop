@@ -84,6 +84,11 @@ call_local_function() {
 }
 
 setup_file() {
+    # We require bash 5; bash 3.2 (as shipped by macOS) seems to have
+    # compatibility issues.
+    if semver_gt 5.0.0 "$(semver "$BASH_VERSION")"; then
+        fail "Bash 5.0.0 is required; you have $BASH_VERSION"
+    fi
     # Ideally this should be printed only when using the tap formatter,
     # but I don't see a way to check for this.
     echo "# ===== $RD_TEST_FILENAME =====" >&3
