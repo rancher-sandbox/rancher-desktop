@@ -6,11 +6,6 @@ description: >-
 runs:
   using: composite
   steps:
-  - name: "Linux: Enable KVM access"
-    if: runner.os == 'Linux'
-    shell: bash
-    run: sudo chmod a+rwx /dev/kvm
-
   - name: "Windows: Stop unwanted services"
     if: runner.os == 'Windows'
     shell: pwsh
@@ -38,6 +33,11 @@ runs:
     if: runner.os == 'Windows'
     shell: pwsh
     run: wsl --set-default-version 2
+
+  - name: "Linux: Enable KVM access"
+    if: runner.os == 'Linux'
+    shell: bash
+    run: sudo chmod a+rwx /dev/kvm
 
   - name: "Linux: Initialize pass"
     if: runner.os == 'Linux'
