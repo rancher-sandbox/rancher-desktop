@@ -125,6 +125,11 @@ jobs:
     - name: Set up environment
       uses: ./.github/actions/setup-environment
 
+    - name: "macOS: Install bash 5"
+      if: runner.os == 'macOS'
+      shell: bash
+      run: brew install --force bash
+
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
       shell: pwsh
