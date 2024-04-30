@@ -27,6 +27,10 @@ on:
         description: Package run ID override; leave empty to use latest.
         default: ''
         type: string
+      rd-use-networking-tunnel:
+        description: Use networking tunnel (on Windows)
+        default: false
+        type: boolean
   schedule:
   - cron: '0 8 * * 1-5' # 8AM UTC weekdays as a baseline
 
@@ -199,16 +203,17 @@ jobs:
         --report-formatter tap
         'tests/${{ steps.normalize.outputs.test }}'
       env:
-        BATS_COMMAND:            ${{ env.BATS_COMMAND }}
-        GITHUB_TOKEN:            ${{ github.token }}
-        LOGS_DIR:                ${{ env.LOGS_DIR }}
-        RD_CAPTURE_LOGS:         "true"
-        RD_CONTAINER_ENGINE:     ${{ matrix.engine }}
-        RD_TAKE_SCREENSHOTS:     "true"
-        RD_TRACE:                "true"
-        RD_USE_GHCR_IMAGES:      "true"
-        RD_USE_RAMDISK:          "true"
-        RD_USE_WINDOWS_EXE:      "${{ runner.os == 'Windows' }}"
+        BATS_COMMAND:             ${{ env.BATS_COMMAND }}
+        GITHUB_TOKEN:             ${{ github.token }}
+        LOGS_DIR:                 ${{ env.LOGS_DIR }}
+        RD_CAPTURE_LOGS:          "true"
+        RD_CONTAINER_ENGINE:      ${{ matrix.engine }}
+        RD_TAKE_SCREENSHOTS:      "true"
+        RD_TRACE:                 "true"
+        RD_USE_GHCR_IMAGES:       "true"
+        RD_USE_RAMDISK:           "true"
+        RD_USE_WINDOWS_EXE:       "${{ runner.os == 'Windows' }}"
+        RD_USE_NETWORKING_TUNNEL: "${{ runner.os == 'Windows' && inputs.rd-use-networking-tunnel == true }}"
         WSLENV: "\
           GITHUB_TOKEN:\
           RD_CAPTURE_LOGS:\
@@ -218,6 +223,7 @@ jobs:
           RD_USE_GHCR_IMAGES:\
           RD_USE_RAMDISK:\
           RD_USE_WINDOWS_EXE:\
+          RD_USE_NETWORKING_TUNNEL:\
           "
       working-directory: bats
       timeout-minutes: 120
