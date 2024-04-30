@@ -63,7 +63,7 @@
     "express": "4.18.2",
     "fs-extra": "11.2.0",
     "http-proxy-middleware": "3.0.0",
-    "intl-messageformat": "10.5.8",
+    "intl-messageformat": "10.5.11",
     "jquery": "3.7.1",
     "jsonpath": "1.1.1",
     "linux-ca": "2.0.1",
