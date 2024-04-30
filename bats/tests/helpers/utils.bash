@@ -363,9 +363,9 @@ capture_logs() {
         # On Linux/macOS, the symlinks to the lima logs might be dangling.
         # Remove any dangling ones before doing the copy.
         find -L "${PATH_LOGS}/" -type l \
-            -exec rm -f '{}' ';' \
-            -exec touch '{}' ';' \
-            -exec echo 'Removed dangling symlink' '{}' ';'
+            -exec rm -f -- '{}' ';' \
+            -exec touch -- '{}' ';' \
+            -exec echo 'Replaced dangling symlink with empty file:' '{}' ';'
         cp -LR "${PATH_LOGS}/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"${logdir}/test_description"
         # Capture settings.json
