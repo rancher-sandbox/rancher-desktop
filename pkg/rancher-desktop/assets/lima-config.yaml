@@ -88,10 +88,10 @@ provision:
     # Create symlink if certs.d doesn't exist (user may have created a regular directory).
     if [ ! -e /etc/docker/certs.d ]; then
       # We don't know if the host is Linux or macOS, so we take a guess based on which mountpoint exists.
-      if [ -d "/Users/${LIMA_CIDATA_USER}" ]; then
-        ln -s "/Users/${LIMA_CIDATA_USER}/.docker/certs.d" /etc/docker
-      elif [ -d "/home/${LIMA_CIDATA_USER}" ]; then
-        ln -s "/home/${LIMA_CIDATA_USER}/.docker/certs.d" /etc/docker
+      if [ -d "/Users/{{.User}}" ]; then
+        ln -s "/Users/{{.User}}/.docker/certs.d" /etc/docker
+      elif [ -d "/home/{{.User}}" ]; then
+        ln -s "/home/{{.User}}/.docker/certs.d" /etc/docker
       fi
     fi
 - # Make sure hostname doesn't change during upgrade from earlier versions
@@ -130,7 +130,7 @@ provision:
   mode: system
   script: |
     set -o errexit -o nounset -o xtrace
-    usermod --append --groups docker "${LIMA_CIDATA_USER}"
+    usermod --append --groups docker "{{.User}}"
 - # Install mkcert and prepare default/fallback cert for localhost
   mode: system
   script: |
