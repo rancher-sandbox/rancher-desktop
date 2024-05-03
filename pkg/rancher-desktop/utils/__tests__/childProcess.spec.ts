@@ -19,6 +19,17 @@ describe(childProcess.spawnFile, () => {
     expect(result).not.toHaveProperty('stderr');
   });
 
+  test('returns output under stress', async() => {
+    const args = ['--version'];
+
+    await Promise.all(Array.from(Array(1000).keys()).map(async() => {
+      const result = await childProcess.spawnFile(process.execPath, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+
+      expect(result.stdout.trim()).toEqual(process.version);
+      expect(result).not.toHaveProperty('stderr');
+    }));
+  }, 180_000);
+
   test('returns error', async() => {
     const args = [makeArg(() => console.error('hello'))];
     const result = await childProcess.spawnFile(process.execPath, args, { stdio: 'pipe' });

@@ -244,6 +244,7 @@ export async function spawnFile(
   });
   const resultMap = { 1: 'stdout', 2: 'stderr' } as const;
   const result: { stdout?: string, stderr?: string } = {};
+  const promises: Promise<void>[] = [];
 
   if (Array.isArray(mungedStdio)) {
     if (stdStreams[0] instanceof stream.Readable && child.stdin) {
@@ -268,12 +269,13 @@ export async function spawnFile(
               result[resultMap[i]] += chunk;
             }
           });
+          promises.push(new Promise<void>(resolve => childStream.on('end', resolve)));
         }
       }
     }
   }
 
-  await new Promise<void>((resolve, reject) => {
+  promises.push(new Promise<void>((resolve, reject) => {
     child.on('exit', (code, signal) => {
       if ((code === 0 && signal === null) || (code === null && signal === 'SIGTERM')) {
         return resolve();
@@ -283,7 +285,8 @@ export async function spawnFile(
       }));
     });
     child.on('error', reject);
-  });
+  }));
+  await Promise.all(promises);
 
   return result;
 }
