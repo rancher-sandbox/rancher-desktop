@@ -698,7 +698,11 @@ export class HttpCommandServer {
   protected async listExtensions(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
     const extensions = await this.commandWorker.listExtensions();
 
-    response.status(200).type('json').send(extensions);
+    if (!extensions) {
+      response.status(503).type('txt').send('Extension manager is not ready yet.');
+    } else {
+      response.status(200).type('json').send(extensions);
+    }
   }
 
   protected async installExtension(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
@@ -898,8 +902,11 @@ export interface CommandWorkerInterface {
   setBackendState: (state: BackendState) => Promise<void>;
 
   // #region extensions
-  /** List the installed extensions with their versions */
-  listExtensions(): Promise<Record<string, {version: string, metadata: ExtensionMetadata, labels: Record<string, string>}>>;
+  /**
+   * List the installed extensions with their versions.
+   * If the extension manager is not ready, returns undefined.
+   */
+  listExtensions(): Promise<Record<string, {version: string, metadata: ExtensionMetadata, labels: Record<string, string>}> | undefined>;
   /**
    * Install or uninstall the given extension, returning an appropriate HTTP status code.
    * @param state Whether to install or uninstall the extension.

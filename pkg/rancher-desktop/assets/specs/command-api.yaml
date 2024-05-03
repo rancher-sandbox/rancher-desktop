@@ -141,6 +141,10 @@ paths:
                       type: object
                       additionalProperties:
                         type: string
+        '503':
+          description: >-
+            The extension manager has not been loaded yet.  The client should
+            retry the request at some future point in time.
 
   /v1/extensions/install:
     post:
