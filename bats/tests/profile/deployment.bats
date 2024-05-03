@@ -81,13 +81,13 @@ install_extensions() {
     # Extension install doesn't work until startup is fully complete.
     wait_for_backend
 
-    run rdctl extension install "$FORBIDDEN_EXTENSION"
+    RD_TIMEOUT=120s run rdctl extension install "$FORBIDDEN_EXTENSION"
     "${refute}_success"
 
-    run rdctl extension install "$ALLOWED_EXTENSION_NAME:$FORBIDDEN_EXTENSION_TAG"
+    RD_TIMEOUT=120s run rdctl extension install "$ALLOWED_EXTENSION_NAME:$FORBIDDEN_EXTENSION_TAG"
     "${refute}_success"
 
-    run rdctl extension install "${LOCKED_EXTENSIONS_ALLOWED_LIST[0]}"
+    RD_TIMEOUT=120s run rdctl extension install "${LOCKED_EXTENSIONS_ALLOWED_LIST[0]}"
     assert_success
 }
 

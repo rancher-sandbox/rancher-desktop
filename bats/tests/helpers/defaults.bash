@@ -82,6 +82,16 @@ using_image_allow_list() {
 : "${RD_USE_PROFILE:=false}"
 
 ########################################################################
+# RD_TIMEOUT is for internal use. It is used to configure timeouts for
+# the `rdctl` command, and should not be set outside of specific
+# commands.
+: "${RD_TIMEOUT:=}"
+
+if [[ -n $RD_TIMEOUT ]]; then
+    fatal "RD_TIMEOUT should not be set"
+fi
+
+########################################################################
 : "${RD_USE_VZ_EMULATION:=false}"
 
 using_vz_emulation() {

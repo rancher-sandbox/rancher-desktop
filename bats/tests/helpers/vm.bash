@@ -312,9 +312,9 @@ docker_context_exists() {
 
 get_service_pid() {
     local service_name=$1
-    run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
+    RD_TIMEOUT=10s run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
     assert_success || return
-    rdshell cat "$output"
+    RD_TIMEOUT=10s rdshell cat "$output"
 }
 
 assert_service_pid() {
@@ -340,7 +340,7 @@ assert_service_status() {
     local service_name=$1
     local expect=$2
 
-    run rdsudo rc-service "$service_name" status
+    RD_TIMEOUT=10s run rdsudo rc-service "$service_name" status
     # rc-service report non-zero status (3) when the service is stopped
     if [[ $expect == started ]]; then
         assert_success || return
@@ -364,7 +364,7 @@ wait_for_container_engine() {
     CALLER=$(this_function)
 
     trace "waiting for api /settings to be callable"
-    try --max 30 --delay 5 rdctl api /settings
+    RD_TIMEOUT=10s try --max 30 --delay 5 rdctl api /settings
 
     if using_docker; then
         wait_for_service_status docker started
@@ -398,7 +398,7 @@ wait_for_extension_manager() {
 # See definition of `State` in
 # pkg/rancher-desktop/backend/backend.ts for an explanation of each state.
 assert_backend_available() {
-    run rdctl api /v1/backend_state
+    RD_TIMEOUT=10s run rdctl api /v1/backend_state
     if ((status == 0)); then
         run jq_output .vmState
         case "$output" in
