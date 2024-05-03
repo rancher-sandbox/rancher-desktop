@@ -33,11 +33,13 @@ import (
 	"io/fs"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
@@ -120,14 +122,21 @@ func WatchForServices(
 
 			eventCh, errorCh, err = watchServices(watchContext, clientset)
 			if err != nil {
-				if isTimeout(err) {
-					// If it's a time out, the server may not be running yet
+				switch {
+				case isTimeout(err):
+					fallthrough
+				case errors.Is(err, unix.ENETUNREACH):
+					fallthrough
+				case errors.Is(err, unix.ECONNREFUSED):
+					fallthrough
+				case isAPINotReady(err):
+					// sleep and continue for all the expected case
 					time.Sleep(time.Second)
 
 					continue
+				default:
+					return err
 				}
-
-				return err
 			}
 
 			log.Debugf("watching kubernetes services")
@@ -256,6 +265,10 @@ func isTimeout(err error) bool {
 	}
 
 	return false
+}
+
+func isAPINotReady(err error) bool {
+	return strings.Contains(err.Error(), "apiserver not ready")
 }
 
 func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (nat.PortMap, error) {
