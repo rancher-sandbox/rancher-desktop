@@ -6,7 +6,6 @@ import timers from 'timers';
 import util from 'util';
 
 import semver from 'semver';
-import yaml from 'yaml';
 
 import { Architecture, BackendSettings, RestartReasons } from '../backend';
 import BackendHelper from '../backendHelper';
@@ -148,9 +147,8 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    * Start Kubernetes.
    * @returns The Kubernetes endpoint
    */
-  async start(config_: BackendSettings, kubernetesVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<string> {
+  async start(config_: BackendSettings, kubernetesVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<void> {
     const config = this.cfg = clone(config_);
-    let k3sEndpoint = '';
 
     // Remove flannel config if necessary, before starting k3s
     if (!config.kubernetes.options.flannel) {
@@ -163,7 +161,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
     });
 
-    await this.progressTracker.action(
+    const aborted = await this.progressTracker.action(
       'Waiting for Kubernetes API',
       100,
       async() => {
@@ -171,7 +169,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         while (true) {
           if (this.vm.currentAction !== Action.STARTING) {
             // User aborted
-            return;
+            return true;
           }
           try {
             await this.vm.execCommand({ expectFailure: true }, 'ls', '/etc/rancher/k3s/k3s.yaml');
@@ -182,20 +180,20 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           }
         }
         console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
+
+        return false;
       },
     );
+
+    if (aborted) {
+      return;
+    }
     await this.progressTracker.action(
       'Updating kubeconfig',
       50,
       this.k3sHelper.updateKubeconfig(
-        async() => {
-          const k3sConfigString = await this.vm.execCommand({ capture: true, root: true }, 'cat', '/etc/rancher/k3s/k3s.yaml');
-          const k3sConfig = yaml.parse(k3sConfigString);
-
-          k3sEndpoint = k3sConfig?.clusters?.[0]?.cluster?.server;
-
-          return k3sConfigString;
-        }));
+        () => this.vm.execCommand({ capture: true, root: true }, 'cat', '/etc/rancher/k3s/k3s.yaml'),
+      ));
 
     this.client = kubeClient?.() || new KubeClient();
 
@@ -245,8 +243,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           await new Promise(resolve => setTimeout(resolve, 5000));
         });
     }
-
-    return k3sEndpoint;
   }
 
   async stop() {

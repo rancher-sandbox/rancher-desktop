@@ -295,9 +295,8 @@ export default class DockerDirManager {
   /**
    * Ensures that the rancher-desktop docker context exists.
    * @param socketPath Path to the rancher-desktop specific docker socket.
-   * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  protected async ensureDockerContextFile(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+  protected async ensureDockerContextFile(socketPath: string): Promise<void> {
     if (os.platform().startsWith('win')) {
       throw new Error('ensureDockerContextFile is not on Windows');
     }
@@ -309,16 +308,8 @@ export default class DockerDirManager {
           Host:          `unix://${ socketPath }`,
           SkipTLSVerify: false,
         },
-      } as Record<string, {Host: string, SkipTLSVerify: boolean, DefaultNamespace?: string}>,
+      },
     };
-
-    if (kubernetesEndpoint) {
-      contextContents.Endpoints.kubernetes = {
-        Host:             kubernetesEndpoint,
-        SkipTLSVerify:    true,
-        DefaultNamespace: 'default',
-      };
-    }
 
     console.debug(`Updating docker context: writing to ${ this.dockerContextPath }`, contextContents);
 
@@ -351,9 +342,8 @@ export default class DockerDirManager {
    * is set in the config file according to our rules.
    * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
    * @param socketPath Path to the rancher-desktop specific docker socket. Darwin/Linux only.
-   * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  async ensureDockerContextConfigured(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
+  async ensureDockerContextConfigured(weOwnDefaultSocket: boolean, socketPath?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
 
@@ -364,7 +354,7 @@ export default class DockerDirManager {
     const platform = os.platform();
 
     if ((platform === 'darwin' || platform === 'linux') && socketPath) {
-      await this.ensureDockerContextFile(socketPath, kubernetesEndpoint);
+      await this.ensureDockerContextFile(socketPath);
     }
     newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
 

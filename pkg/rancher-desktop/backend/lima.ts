@@ -1963,6 +1963,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         switch (config.containerEngine.name) {
         case ContainerEngine.MOBY:
           this.#containerEngineClient = new MobyClient(this, `unix://${ path.join(paths.altAppHome, 'docker.sock') }`);
+          await this.dockerDirManager.ensureDockerContextConfigured(
+            this.#adminAccess,
+            path.join(paths.altAppHome, 'docker.sock'));
           break;
         case ContainerEngine.CONTAINERD:
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
@@ -1972,17 +1975,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         await this.#containerEngineClient.waitForReady();
 
-        /** k3sEndpoint is the Kubernetes endpoint we want to use for the docker config. */
-        let k3sEndpoint: string | undefined;
-
         if (kubernetesVersion) {
-          k3sEndpoint = await this.kubeBackend.start(config, kubernetesVersion);
+          await this.kubeBackend.start(config, kubernetesVersion);
         }
         if (config.containerEngine.name === ContainerEngine.MOBY) {
-          await this.dockerDirManager.ensureDockerContextConfigured(
-            this.#adminAccess,
-            path.join(paths.altAppHome, 'docker.sock'),
-            k3sEndpoint);
         }
 
         await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);

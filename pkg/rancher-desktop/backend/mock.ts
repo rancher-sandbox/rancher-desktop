@@ -221,7 +221,7 @@ class MockKubernetesBackend extends events.EventEmitter implements KubernetesBac
   }
 
   start() {
-    return Promise.resolve('');
+    return Promise.resolve();
   }
 
   stop() {
