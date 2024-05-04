@@ -55,6 +55,7 @@ check_extension_installed() { # refute, name
 }
 
 @test 'when no extension allow list is set up, all extensions can install' {
+    wait_for_extension_manager
     write_allow_list ''
     rdctl extension install rd/extension/basic
     check_extension_installed
