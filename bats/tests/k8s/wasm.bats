@@ -16,7 +16,6 @@ assert_traefik_crd_established() {
 # Get Kubernetes RuntimeClasses; sets $output to the JSON list.
 get_runtime_classes() {
     # kubectl may emit warnings here; ensure that we don't fall over.
-    bats_require_minimum_version 1.5.0
     run --separate-stderr kubectl get RuntimeClasses --output json
     assert_success || return
 

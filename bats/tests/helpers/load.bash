@@ -89,6 +89,10 @@ setup_file() {
     if semver_gt 5.0.0 "$(semver "$BASH_VERSION")"; then
         fail "Bash 5.0.0 is required; you have $BASH_VERSION"
     fi
+    # We currently use a submodule that provides BATS 1.10; we do not test
+    # against any other copy of BATS (and therefore only support the version in
+    # that submodule).
+    bats_require_minimum_version 1.10.0
     # Ideally this should be printed only when using the tap formatter,
     # but I don't see a way to check for this.
     echo "# ===== $RD_TEST_FILENAME =====" >&3

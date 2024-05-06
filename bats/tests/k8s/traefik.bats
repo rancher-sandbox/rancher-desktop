@@ -6,7 +6,6 @@ local_setup() {
         skip "Test does not yet work from inside a WSL distro when using networking tunnel, since it requires WSL integration"
     fi
     needs_port 80
-    bats_require_minimum_version 1.5.0
 }
 
 assert_traefik_pods_are_down() {

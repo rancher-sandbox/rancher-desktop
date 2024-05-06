@@ -1,7 +1,3 @@
-local_setup_file() {
-    bats_require_minimum_version 1.5.0
-}
-
 wait_for_shell() {
     if is_windows; then
         try --max 48 --delay 5 rdctl shell true
