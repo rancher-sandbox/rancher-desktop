@@ -378,6 +378,23 @@ wait_for_container_engine() {
     try --max 12 --delay 10 get_container_engine_info
 }
 
+# Wait fot the extension manager to be initialized.
+wait_for_extension_manager() {
+    trace "waiting for extension manager to be ready"
+    # We want to match specific error strings, so we can't use try() directly.
+    local count=0 max=30 message
+    while true; do
+        run --separate-stderr rdctl api /extensions
+        if ((status == 0 || ++count >= max)); then
+            break
+        fi
+        message=$(jq_output .message)
+        output="$message" assert_output "503 Service Unavailable"
+        sleep 10
+    done
+    trace "$count/$max tries: wait_for_extension_manager"
+}
+
 # See definition of `State` in
 # pkg/rancher-desktop/backend/backend.ts for an explanation of each state.
 assert_backend_available() {

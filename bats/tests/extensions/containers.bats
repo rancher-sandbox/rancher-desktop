@@ -41,6 +41,7 @@ encoded_id() { # variant
 }
 
 @test 'no extensions installed' {
+    wait_for_extension_manager
     run rdctl api /v1/extensions
     assert_success
     assert_output $'\x7b'$'\x7d' # empty JSON dict, {}
