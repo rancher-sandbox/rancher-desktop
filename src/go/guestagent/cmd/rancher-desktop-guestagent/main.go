@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
+	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
@@ -56,6 +57,8 @@ var (
 	k8sServiceListenerAddr  = flag.String("k8sServiceListenerAddr", net.IPv4zero.String(),
 		"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
 	adminInstall = flag.Bool("adminInstall", false, "indicates if Rancher Desktop is installed as admin or not")
+	k8sAPIPort   = flag.String("k8sAPIPort", "6443",
+		"K8sAPI port number to forward to rancher-desktop wsl-proxy as a static portMapping event")
 )
 
 // Flags can only be enabled in the following combination:
@@ -143,6 +146,32 @@ func main() {
 	} else {
 		forwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
 		portTracker = tracker.NewAPITracker(forwarder, tracker.GatewayBaseURL, *adminInstall)
+		// Manually register the port for K8s API, we would
+		// only want to send this manual port mapping if both
+		// of the following conditions are met:
+		// 1) if kubernetes is enabled
+		// 2) when wsl-proxy for wsl-integration is enabled
+		if *enableKubernetes {
+			port, err := nat.NewPort("tcp", *k8sAPIPort)
+			if err != nil {
+				log.Fatalf("failed to parse port for k8s API: %v", err)
+			}
+			k8sAPIportMapping := types.PortMapping{
+				Remove: false,
+				Ports: nat.PortMap{
+					port: []nat.PortBinding{
+						{
+							HostIP:   "127.0.0.1",
+							HostPort: *k8sAPIPort,
+						},
+					},
+				},
+			}
+			if err := forwarder.Send(k8sAPIportMapping); err != nil {
+				log.Fatalf("failed to send a static portMapping envent to wsl-proxy: %v", err)
+			}
+			log.Debugf("successfully forwarded k8s API port [%s] to wsl-proxy", *k8sAPIPort)
+		}
 	}
 
 	if *enableContainerd {
