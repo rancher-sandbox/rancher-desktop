@@ -1,6 +1,7 @@
 const path = require('path');
 
 const _ = require('lodash');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const webpack = require('webpack');
 
 const babelConfig = require('../../babel.config');
@@ -41,6 +42,10 @@ module.exports = {
         featureExtensions:       true,
       }),
     }]);
+
+    config.plugin('monaco-editor').use(MonacoWebpackPlugin, [
+      { languages: ['markdown'] },
+    ]);
   },
 
   css: {
