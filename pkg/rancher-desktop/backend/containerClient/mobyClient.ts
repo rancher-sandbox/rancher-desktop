@@ -170,12 +170,19 @@ export class MobyClient implements ContainerEngineClient {
     const links: Record<string, string> = {};
 
     // Convert a given path to an absolute path, ensuring that it resides
-    // within the destination.
-    const absPath = (rawPath: string): string => {
+    // within the destination.  If the name does not start with the prefix to be
+    // stripped, returns `undefined` and this entry should not be processed.
+    const absPath = (rawPath: string): string | undefined => {
       let mungedPath = rawPath;
 
-      if (mungedPath.startsWith(stripPrefixWithoutSlash)) {
-        mungedPath = mungedPath.substring(stripPrefixWithoutSlash.length);
+      if (stripPrefix) {
+        if (mungedPath.startsWith(stripPrefixWithoutSlash)) {
+          mungedPath = mungedPath.substring(stripPrefixWithoutSlash.length);
+        } else {
+          // A prefix is given, but we found a file that doesn't match; we
+          // should skip this file.
+          return;
+        }
       }
       const normalized = path.normalize(path.join(destination, mungedPath));
 
@@ -205,6 +212,10 @@ export class MobyClient implements ContainerEngineClient {
       case 'directory': {
         const dirName = absPath(entry.header.name);
 
+        if (!dirName) {
+          console.warn(`Skipping unexpected directory ${ entry.header.name }`);
+          continue;
+        }
         await fs.promises.mkdir(dirName, { recursive: true });
         console.debug(`Created directory ${ dirName }`);
 
@@ -213,6 +224,10 @@ export class MobyClient implements ContainerEngineClient {
       case 'file': case 'contiguous-file': {
         const fileName = absPath(entry.header.name);
 
+        if (!fileName) {
+          console.warn(`Skipping unexpected file ${ entry.header.name }`);
+          continue;
+        }
         await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
         await stream.promises.finished(entry.pipe(fs.createWriteStream(fileName)));
         console.debug(`Wrote ${ fileName }`);
@@ -252,6 +267,11 @@ export class MobyClient implements ContainerEngineClient {
         await Promise.all(linkNames.map(async(linkName) => {
           const dirName = absPath(linkName);
 
+          if (!dirName) {
+            console.warn(`Skipping unexpected directory ${ entry.header.name } -> ${ linkName }`);
+
+            return;
+          }
           await fs.promises.mkdir(dirName, { recursive: true });
           delete links[linkName];
           console.debug(`Created directory ${ dirName }`);
@@ -261,6 +281,11 @@ export class MobyClient implements ContainerEngineClient {
         await Promise.all(linkNames.map(async(linkName) => {
           const fileName = absPath(linkName);
 
+          if (!fileName) {
+            console.warn(`Skipping unexpected file ${ entry.header.name } -> ${ linkName }`);
+
+            return;
+          }
           await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
           await stream.promises.finished(entry.pipe(fs.createWriteStream(fileName)));
           delete links[linkName];
