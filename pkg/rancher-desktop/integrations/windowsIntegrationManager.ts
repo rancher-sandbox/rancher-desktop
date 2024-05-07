@@ -13,6 +13,7 @@ import mainEvents from '@pkg/main/mainEvents';
 import BackgroundProcess from '@pkg/utils/backgroundProcess';
 import { spawn, spawnFile } from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
+import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
@@ -46,6 +47,22 @@ export class WSLDistro {
   }
 }
 
+enum SyncStateKey {
+  /** No sync is ongoing. */
+  IDLE,
+  /** A sync is running, but there is no queued sync. */
+  ACTIVE,
+  /** A sync is running, there is also a queued sync that will happen after. */
+  QUEUED,
+}
+
+type SyncState =
+  { state: SyncStateKey.IDLE } |
+  /** The `active` promise will be resolved once the current sync is complete. */
+  { state: SyncStateKey.ACTIVE, active: ReturnType<typeof Latch> } |
+  /** The `queued` promise will be resolved after the current sync +1 is complete. */
+  { state: SyncStateKey.QUEUED, active: ReturnType<typeof Latch>, queued: ReturnType<typeof Latch> };
+
 /**
  * WindowsIntegrationManager manages various integrations on Windows, for both
  * the Win32 host, as well as for each (foreign) WSL distribution.
@@ -66,6 +83,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   /** Whether integrations as a whole are enabled. */
   protected enforcing = false;
+
+  protected syncState: SyncState = { state: SyncStateKey.IDLE };
 
   /** Whether the backend is in a state where the processes should run. */
   protected backendReady = false;
@@ -122,6 +141,30 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   async sync(): Promise<void> {
+    const latch = Latch();
+
+    switch (this.syncState.state) {
+    case SyncStateKey.IDLE:
+      this.syncState = { state: SyncStateKey.ACTIVE, active: latch };
+      break;
+    case SyncStateKey.ACTIVE: {
+      // There is a sync already active; wait for it, then do the re-sync.
+      const { active } = this.syncState;
+
+      this.syncState = {
+        state: SyncStateKey.QUEUED, active, queued: latch,
+      };
+      console.debug('Waiting for previous sync to finish before starting new sync.');
+      await active;
+      // Continue with the rest of the function, in ACTIVE mode.
+      break;
+    }
+    case SyncStateKey.QUEUED:
+      // We already have a queued sync; just wait for that to complete.
+      console.debug('Merging duplicate sync with previous pending sync.');
+
+      return this.syncState.queued;
+    }
     try {
       const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
@@ -134,6 +177,23 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       console.error(`Integration sync: Error: ${ ex }`);
     } finally {
       mainEvents.emit('integration-update', await this.listIntegrations());
+      // TypeScript is being too smart and thinking we can only be ACTIVE here;
+      // but that may be set from concurrent calls to sync().
+      const currentState: SyncState = this.syncState as any;
+
+      switch (currentState.state) {
+      case SyncStateKey.IDLE:
+        // This should never be reached
+        break;
+      case SyncStateKey.ACTIVE:
+        this.syncState = { state: SyncStateKey.IDLE };
+        break;
+      case SyncStateKey.QUEUED:
+        this.syncState = { state: SyncStateKey.ACTIVE, active: currentState.queued };
+        // The sync() that set the state to QUEUED will continue, and eventually
+        // set the state back to IDLE.
+      }
+      latch.resolve();
     }
   }
 
