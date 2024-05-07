@@ -123,20 +123,17 @@ func WatchForServices(
 			eventCh, errorCh, err = watchServices(watchContext, clientset)
 			if err != nil {
 				switch {
-				case isTimeout(err):
-					fallthrough
-				case errors.Is(err, unix.ENETUNREACH):
-					fallthrough
-				case errors.Is(err, unix.ECONNREFUSED):
-					fallthrough
-				case isAPINotReady(err):
-					// sleep and continue for all the expected case
-					time.Sleep(time.Second)
-
-					continue
 				default:
 					return err
+				case isTimeout(err):
+				case errors.Is(err, unix.ENETUNREACH):
+				case errors.Is(err, unix.ECONNREFUSED):
+				case isAPINotReady(err):
 				}
+				// sleep and continue for all the expected case
+				time.Sleep(time.Second)
+
+				continue
 			}
 
 			log.Debugf("watching kubernetes services")
@@ -267,6 +264,10 @@ func isTimeout(err error) bool {
 	return false
 }
 
+// This is a k3s error that is received over
+// the HTTP, Also, it is worth noting that this
+// error is wrapped. This is why we are not testing
+// against the real error object using errors.Is().
 func isAPINotReady(err error) bool {
 	return strings.Contains(err.Error(), "apiserver not ready")
 }
