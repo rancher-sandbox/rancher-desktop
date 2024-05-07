@@ -24,7 +24,7 @@ import (
 	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -50,12 +50,15 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	sharedInformer := serviceInformer.Informer()
 	_, _ = sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
+			log.Debugf("Service Informer: Add func called with: %+v", obj)
 			handleUpdate(nil, obj, eventCh)
 		},
 		DeleteFunc: func(obj interface{}) {
+			log.Debugf("Service Informer: Del func called with: %+v", obj)
 			handleUpdate(obj, nil, eventCh)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
+			log.Debugf("Service Informer: Update func called with old object %+v and new Object: %+v", oldObj, newObj)
 			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
@@ -101,15 +104,16 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	informerFactory.WaitForCacheSync(ctx.Done())
 	informerFactory.Start(ctx.Done())
 
-	services, err := serviceInformer.Lister().List(labels.Everything())
+	services, err := client.CoreV1().Services(corev1.NamespaceAll).List(ctx, v1.ListOptions{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("error listing services: %w", err)
 	}
+	log.Debugf("coreV1 services list :%+v", services.Items)
 
 	// List the initial set of services asynchronously, so that we don't have to
 	// worry about the channel blocking.
 	go func() {
-		for _, svc := range services {
+		for _, svc := range services.Items {
 			handleUpdate(nil, svc, eventCh)
 		}
 	}()

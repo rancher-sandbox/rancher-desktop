@@ -33,11 +33,13 @@ import (
 	"io/fs"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
@@ -120,14 +122,18 @@ func WatchForServices(
 
 			eventCh, errorCh, err = watchServices(watchContext, clientset)
 			if err != nil {
-				if isTimeout(err) {
-					// If it's a time out, the server may not be running yet
-					time.Sleep(time.Second)
-
-					continue
+				switch {
+				default:
+					return err
+				case isTimeout(err):
+				case errors.Is(err, unix.ENETUNREACH):
+				case errors.Is(err, unix.ECONNREFUSED):
+				case isAPINotReady(err):
 				}
+				// sleep and continue for all the expected case
+				time.Sleep(time.Second)
 
-				return err
+				continue
 			}
 
 			log.Debugf("watching kubernetes services")
@@ -256,6 +262,14 @@ func isTimeout(err error) bool {
 	}
 
 	return false
+}
+
+// This is a k3s error that is received over
+// the HTTP, Also, it is worth noting that this
+// error is wrapped. This is why we are not testing
+// against the real error object using errors.Is().
+func isAPINotReady(err error) bool {
+	return strings.Contains(err.Error(), "apiserver not ready")
 }
 
 func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (nat.PortMap, error) {
