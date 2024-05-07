@@ -485,7 +485,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } catch (ex) {
       console.log('Error setting up data distribution:', ex);
     } finally {
-      await fs.promises.rm(workdir, { recursive: true, force: true });
+      await fs.promises.rm(workdir, { recursive: true, maxRetries: 3 });
     }
   }
 
@@ -753,7 +753,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.execCommand({ distro }, 'busybox', 'cp', wslScriptPath, filePath);
       await this.execCommand({ distro }, 'busybox', 'chmod', (options?.permissions ?? 0o644).toString(8), filePath);
     } finally {
-      await fs.promises.rm(workdir, { recursive: true });
+      await fs.promises.rm(workdir, { recursive: true, maxRetries: 3 });
     }
   }
 
@@ -797,7 +797,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.execCommand('chmod', 'a+x', wslScriptPath);
       await this.execCommand(wslScriptPath, ...args);
     } finally {
-      await fs.promises.rm(workdir, { recursive: true });
+      await fs.promises.rm(workdir, { recursive: true, maxRetries: 3 });
     }
   }
 
@@ -903,9 +903,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   protected async handleUpgrade(files: string[]) {
     for (const file of files) {
       try {
-        await fs.promises.rm(file, { force: true });
+        await fs.promises.rm(file, { force: true, maxRetries: 3 });
       } catch {
-        // ignore the err from exception, sice we are
+        // ignore the err from exception, since we are
         // removing renamed files from previous releases
       }
     }
@@ -1650,7 +1650,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           '-C', '/usr/local/share/ca-certificates/');
       }
     } finally {
-      await fs.promises.rm(workdir, { recursive: true, force: true });
+      await fs.promises.rm(workdir, { recursive: true, maxRetries: 3 });
     }
     await this.execCommand('/usr/sbin/update-ca-certificates');
   }

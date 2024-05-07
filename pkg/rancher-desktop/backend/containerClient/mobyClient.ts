@@ -97,7 +97,7 @@ export class MobyClient implements ContainerEngineClient {
 
       return await fs.promises.readFile(tempFile, { encoding });
     } finally {
-      await fs.promises.rm(workDir, { recursive: true });
+      await fs.promises.rm(workDir, { recursive: true, maxRetries: 3 });
     }
   }
 

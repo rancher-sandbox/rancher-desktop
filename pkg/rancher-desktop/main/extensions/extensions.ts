@@ -234,7 +234,7 @@ export class ExtensionImpl implements Extension {
       await this.markInstalled(this.dir);
     } catch (ex) {
       console.error(`Failed to install extension ${ this.id }, cleaning up:`, ex);
-      await fs.promises.rm(this.dir, { recursive: true }).catch((e) => {
+      await fs.promises.rm(this.dir, { recursive: true, maxRetries: 3 }).catch((e) => {
         console.error(`Failed to cleanup extension directory ${ this.dir }`, e);
       });
       throw ex;
@@ -479,7 +479,7 @@ export class ExtensionImpl implements Extension {
     }
 
     try {
-      await fs.promises.rm(this.dir, { recursive: true });
+      await fs.promises.rm(this.dir, { recursive: true, maxRetries: 3 });
     } catch (ex: any) {
       if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw ex;

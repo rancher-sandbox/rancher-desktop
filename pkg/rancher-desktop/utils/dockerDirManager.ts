@@ -322,7 +322,9 @@ export default class DockerDirManager {
    */
   async clearDockerContext(): Promise<void> {
     try {
-      await fs.promises.rm(path.dirname(this.dockerContextPath), { recursive: true, force: true });
+      await fs.promises.rm(path.dirname(this.dockerContextPath), {
+        recursive: true, force: true, maxRetries: 3,
+      });
 
       const config = await this.readDockerConfig();
 
