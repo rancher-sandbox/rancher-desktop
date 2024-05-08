@@ -1567,7 +1567,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
       }
 
-      await BackendHelper.configureContainerEngine(this, configureWASM);
+      const promises: Promise<unknown>[] = [];
+
+      promises.push(BackendHelper.configureContainerEngine(this, configureWASM));
+      if (configureWASM) {
+        promises.push(this.spawnWithCapture(path.join(paths.resources, 'setup-spin'), {}));
+      }
+      await Promise.all(promises);
     } catch (err) {
       console.log(`Error trying to start/update containerd: ${ err }: `, err);
     }
