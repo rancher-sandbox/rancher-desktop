@@ -144,7 +144,7 @@
     "ejs": "3.1.9",
     "electron": "26.6.10",
     "electron-builder": "24.13.3",
-    "eslint": "8.56.0",
+    "eslint": "8.57.0",
     "eslint-plugin-deprecation": "2.0.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-node": "11.1.0",
