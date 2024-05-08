@@ -1,0 +1,64 @@
+# Sync go.work on PRs
+name: Sync go.work
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+    paths:
+    - '**/go.mod'
+    - '**/go.sum'
+    - 'go.work'
+permissions:
+  contents: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  update-sum:
+    if: contains(github.ref, 'refs/pull/')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.head_ref }}
+        fetch-depth: 3
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.work
+        cache-dependency-path: '**/go.sum'
+    - name: Update module files
+      run: |
+        set -o xtrace
+        dirs=$(git ls-files '**/go.mod')
+        go work sync
+        for mod in $dirs; do
+          (
+            cd "$(dirname "$mod")"
+            go mod tidy -v
+          )
+        done
+        go work sync
+    - name: Check for changes
+      id: changed
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo changed=true >> "$GITHUB_OUTPUT"
+        else
+          echo changed= >> "$GITHUB_OUTPUT"
+        fi
+    - name: Commit changes
+      if: steps.changed.outputs.changed
+      run: >-
+        git
+        -c user.name='Rancher Desktop Dependency Manager'
+        -c user.email='donotuse@rancherdesktop.io'
+        commit
+        --message='Update go modules'
+        $(git ls-files '**/go.mod' '**/go.sum')
+        go.work
+    - name: Push changes
+      if: steps.changed.outputs.changed
+      run: |
+        git push origin ${{ github.head_ref }}
+        git show
