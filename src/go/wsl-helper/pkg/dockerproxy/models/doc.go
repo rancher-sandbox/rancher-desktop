@@ -16,3 +16,11 @@ limitations under the License.
 
 // Package models contains the auto-generated OpenAPI models.
 package models
+
+// These imports exist so that dependabot is aware we use them.
+import (
+	_ "github.com/go-openapi/errors"
+	_ "github.com/go-openapi/strfmt" // spellcheck-ignore-line
+	_ "github.com/go-openapi/swag"
+	_ "github.com/go-openapi/validate"
+)
