@@ -12,6 +12,7 @@
 /coverage/
 /dist/**
 /.idea/
+/go.work.sum
 .nuxt/
 /pkg/rancher-desktop/node_modules/
 /src/go/rdctl/pkg/options/generated/*.go
