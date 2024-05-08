@@ -21,13 +21,8 @@ runs:
       # Sometimes this results in a HTTP 403 for some reason; in that case, we
       # need to retry.
       do {
-        try {
-          wsl --update
-          break
-        } catch [Exception] {
-          Write-Host $_.Exception.Message
-        }
-      } while ($true)
+        wsl --update
+      } while ( -not $? )
 
   - name: "Windows: Finish setting up WSL"
     if: runner.os == 'Windows'
