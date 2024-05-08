@@ -68,11 +68,13 @@ limactl() {
 nerdctl() {
     "$PATH_RESOURCES/$PLATFORM/bin/nerdctl$EXE" --namespace "$CONTAINERD_NAMESPACE" "$@" | no_cr
 }
+# Run `rdctl`; if $RD_TIMEOUT is set, the value is used as the first argument to
+# the `timeout` command.
 rdctl() {
     if is_windows; then
-        "$PATH_RESOURCES/win32/bin/rdctl.exe" "$@" | no_cr
+        timeout "${RD_TIMEOUT:-0}" "$PATH_RESOURCES/win32/bin/rdctl.exe" "$@" | no_cr
     else
-        "$PATH_RESOURCES/$PLATFORM/bin/rdctl$EXE" "$@"
+        timeout "${RD_TIMEOUT:-0}" "$PATH_RESOURCES/$PLATFORM/bin/rdctl$EXE" "$@"
     fi
 }
 rdshell() {

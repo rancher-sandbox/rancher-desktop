@@ -129,10 +129,16 @@ jobs:
     - name: Set up environment
       uses: ./.github/actions/setup-environment
 
-    - name: "macOS: Install bash 5"
+    - name: "Linux: Install prerequisites"
+      if: runner.os == 'Linux'
+      run: >-
+        sudo DEBIAN_FRONTEND=noninteractive
+        apt-get install coreutils
+
+    - name: "macOS: Install prerequisites"
       if: runner.os == 'macOS'
       shell: bash
-      run: brew install --force bash
+      run: brew install --force bash coreutils
 
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
@@ -148,7 +154,7 @@ jobs:
       shell: pwsh
       run: >-
         wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
-        sh -c 'apt-get update && apt-get install --yes curl'
+        sh -c 'apt-get update && apt-get install --yes coreutils curl'
 
     - name: Set log directory
       shell: bash
