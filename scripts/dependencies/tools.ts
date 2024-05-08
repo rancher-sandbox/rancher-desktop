@@ -560,14 +560,14 @@ export class ECRCredHelper implements Dependency, GitHubDependency {
 }
 
 export class WasmShims implements Dependency, GitHubDependency {
-  name = 'wasmShims';
-  githubOwner = 'deislabs';
-  githubRepo = 'containerd-wasm-shims';
+  name = 'spinShim';
+  githubOwner = 'spinkube';
+  githubRepo = 'containerd-shim-spin';
 
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
-    const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.wasmShims }`;
-    const url = `${ base }/containerd-wasm-shims-v2-spin-linux-${ arch }.tar.gz`;
+    const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.spinShim }`;
+    const url = `${ base }/containerd-shim-spin-v2-linux-${ arch }.tar.gz`;
     const destPath = path.join(context.resourcesDir, 'linux', 'internal', 'containerd-shim-spin-v2');
 
     await downloadTarGZ(url, destPath);

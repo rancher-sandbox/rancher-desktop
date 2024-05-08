@@ -52,7 +52,7 @@ export type DependencyVersions = {
   wix: string;
   hostSwitch: string;
   moproxy: string;
-  wasmShims: string;
+  spinShim: string;
   certManager: string;
   spinOperator: string;
 };
