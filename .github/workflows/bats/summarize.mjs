@@ -52,13 +52,16 @@ class Run {
   /** Version string for this run. */
   get version() {
     let v = this.versionData;
-    for (const prefix of ['Rancher Desktop-', 'rancher-desktop-']) {
+    for (const prefix of ['Rancher Desktop-', 'rancher-desktop-', 'Rancher.Desktop.Setup.']) {
       if (v.startsWith(prefix)) {
         v = v.substring(prefix.length);
       }
     }
+    const suffixes = ['.msi'];
     for (const platform of ['linux', 'arm64-mac', 'mac', 'win']) {
-      const suffix = `-${ platform }.zip`;
+      suffixes.push(`-${ platform }.zip`);
+    }
+    for (const suffix of suffixes) {
       if (v.endsWith(suffix)) {
         v = v.substring(0, v.length - suffix.length);
       }
