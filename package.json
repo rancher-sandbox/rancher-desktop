@@ -57,7 +57,7 @@
     "cookie-universal": "2.2.2",
     "core-js": "3.25.3",
     "cross-spawn": "7.0.3",
-    "dayjs": "1.11.10",
+    "dayjs": "1.11.11",
     "dompurify": "3.1.2",
     "electron-updater": "6.1.8",
     "express": "4.19.2",
