@@ -1,5 +1,6 @@
 #!/bin/sh
 # This script uses sh instead of bash to be compatible with as many distros as possible.
+set -u
 
 # The script is located in the Rancher Desktop resources/ directory.
 resources_dir=$(dirname "$0")
@@ -22,19 +23,18 @@ if [ ! -x "$spin" ]; then
   exit 1
 fi
 
+assert_dir_is_empty() {
+  # shellcheck disable=SC2012 # Using `ls` is fine
+  if [ -d "$1" ] && [ "$(ls -1 "$1" | wc -l)" -gt 0 ]; then
+    echo "'$1' already exists and is not empty"
+    exit 0
+  fi
+}
+
 spin_dir="${app_data_dir}/spin"
 
-# shellcheck disable=SC2012 # Using `ls` is fine
-if [ -d "${spin_dir}/templates" ] && [ "$(ls -1 "${spin_dir}/templates" | wc -l)" -gt 0 ]; then
-  echo "'${spin_dir}/templates' already exists and is not empty"
-  exit 0
-fi
-
-# shellcheck disable=SC2012 # Using `ls` is fine
-if [ -d "${spin_dir}/plugins" ] && [ "$(ls -1 "${spin_dir}/plugins" | wc -l)" -gt 0 ]; then
-  echo "'${spin_dir}/plugins' already exists and is not empty"
-  exit 0
-fi
+assert_dir_is_empty "${spin_dir}/templates"
+assert_dir_is_empty "${spin_dir}/plugins"
 
 if [ "$WSL_DISTRO_NAME" = "rancher-desktop" ]; then
   echo "Waiting for github.com to become resolvable"

@@ -850,7 +850,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return await this.spawnWithCapture(LimaBackend.limactl, options, ...args);
   }
 
-  async spawnWithCapture(this: Readonly<this>, cmd: string, argOrOptions: string | SpawnOptions, ...args: string[]): Promise<{stdout: string, stderr: string}> {
+  async spawnWithCapture(this: Readonly<this>, cmd: string, argOrOptions: string | SpawnOptions = {}, ...args: string[]): Promise<{stdout: string, stderr: string}> {
     let options: SpawnOptions = {};
 
     if (typeof argOrOptions === 'string') {
@@ -1571,7 +1571,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       promises.push(BackendHelper.configureContainerEngine(this, configureWASM));
       if (configureWASM) {
-        promises.push(this.spawnWithCapture(path.join(paths.resources, 'setup-spin'), {}));
+        promises.push(this.spawnWithCapture(path.join(paths.resources, 'setup-spin')));
       }
       await Promise.all(promises);
     } catch (err) {

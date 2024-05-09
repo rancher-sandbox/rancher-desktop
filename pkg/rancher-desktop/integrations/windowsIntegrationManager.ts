@@ -492,9 +492,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected async syncDistroSpinCLI(distro: string, state: boolean) {
     if (state) {
-      const setupSpin = (await this.captureCommand(
-        { distro }, '/bin/wslpath', '-a', '-u', path.join(paths.resources, 'setup-spin'))
-      ).trim();
+      const setupSpin = await this.getLinuxToolPath(distro, executable('setup-spin'));
 
       await this.execCommand( { distro }, setupSpin);
     }
