@@ -1,4 +1,7 @@
 # Sync go.work on PRs
+# Uses the RUN_WORKFLOW_FROM_WORKFLOW secret if available.  Otherwise it is
+# necessary to reopen a PR to run more workflows.
+
 name: Sync go.work
 on:
   pull_request:
@@ -19,7 +22,24 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    # Because the GitHub-provided token doesn't trigger further actions runs,
+    # try to use a secret if available.
+    - name: Determine checkout token
+      id: has-token
+      run: echo "has-token=$HAS_TOKEN" >> "$GITHUB_OUTPUT"
+      env:
+        HAS_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+    - name: Checkout with token
+      if: steps.has-token.outputs.has-token == 'true'
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+        ref: ${{ github.head_ref }}
+        fetch-depth: 3
+        token: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+    - name: Checkout without token
+      if: steps.has-token.outputs.has-token != 'true'
+      uses: actions/checkout@v4
       with:
         persist-credentials: true
         ref: ${{ github.head_ref }}
