@@ -1,4 +1,3 @@
-
 import { shell } from 'electron';
 
 import { TransientSettings } from '@pkg/config/transientSettings';

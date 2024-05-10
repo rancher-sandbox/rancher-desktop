@@ -1,4 +1,3 @@
-
 import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
 import { getVersion, parseDocsVersion } from '@pkg/utils/version';
