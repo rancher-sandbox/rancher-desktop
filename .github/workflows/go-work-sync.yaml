@@ -14,13 +14,14 @@ concurrency:
   cancel-in-progress: true
 jobs:
   update-sum:
-    if: contains(github.ref, 'refs/pull/')
+    if: >-
+      contains(github.ref, 'refs/pull/') &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
         persist-credentials: true
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.head_ref }}
         fetch-depth: 3
     - uses: actions/setup-go@v5
