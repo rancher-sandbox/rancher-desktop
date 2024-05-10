@@ -24,30 +24,36 @@ jobs:
         persist-credentials: true
         ref: ${{ github.head_ref }}
         fetch-depth: 3
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: package.json
+    - run: corepack enable
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: package.json
+        cache: yarn
     - uses: actions/setup-go@v5
       with:
         go-version-file: go.work
         cache-dependency-path: '**/go.sum'
-    - name: Update module files
-      run: |
-        set -o xtrace
-        dirs=$(git ls-files '**/go.mod')
-        go work sync
-        for mod in $dirs; do
-          (
-            cd "$(dirname "$mod")"
-            go mod tidy -v
-          )
-        done
-        go work sync
+    - name: Determine go.mod files
+      id: go-files
+      run: >-
+        printf "go-files=%s go.work\n"
+        "$(git ls-files '**/go.mod' '**/go.sum' | tr '\r\n' '  ')"
+        >> "$GITHUB_OUTPUT"
+    - run: yarn install --frozen-lockfile
+    - run: yarn lint:go:fix
     - name: Check for changes
       id: changed
       run: |
-        if [ -n "$(git status --porcelain)" ]; then
+        if [ -n "$(git status --porcelain -- $GO_FILES)" ]; then
           echo changed=true >> "$GITHUB_OUTPUT"
         else
           echo changed= >> "$GITHUB_OUTPUT"
         fi
+      env:
+        GO_FILES: ${{ steps.go-files.outputs.go-files }}
     - name: Commit changes
       if: steps.changed.outputs.changed
       run: >-
@@ -62,6 +68,7 @@ jobs:
       env:
         GIT_AUTHOR_NAME: Rancher Desktop Dependency Manager
         GIT_AUTHOR_EMAIL: donotuse@rancherdesktop.io
+        GO_FILES: ${{ steps.go-files.outputs.go-files }}
     - name: Push changes
       if: steps.changed.outputs.changed
       run: |
