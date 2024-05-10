@@ -105,7 +105,7 @@
     "@electron/fuses": "^1.8.0",
     "@electron/notarize": "2.3.0",
     "@nuxt/types": "2.17.3",
-    "@nuxtjs/eslint-config-typescript": "8.0.0",
+    "@nuxtjs/eslint-config-typescript": "11.0.0",
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.2",
     "@octokit/rest": "20.1.0",
