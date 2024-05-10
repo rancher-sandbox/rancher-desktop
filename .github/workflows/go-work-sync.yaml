@@ -51,14 +51,18 @@ jobs:
       if: steps.changed.outputs.changed
       run: >-
         git
-        -c user.name='Rancher Desktop Dependency Manager'
-        -c user.email='donotuse@rancherdesktop.io'
+        -c user.name="$GIT_AUTHOR_NAME"
+        -c user.email="$GIT_AUTHOR_EMAIL"
         commit
         --message='Update go modules'
-        $(git ls-files '**/go.mod' '**/go.sum')
-        go.work
+        --message="Signed-off-by: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>"
+        --
+        $GO_FILES
+      env:
+        GIT_AUTHOR_NAME: Rancher Desktop Dependency Manager
+        GIT_AUTHOR_EMAIL: donotuse@rancherdesktop.io
     - name: Push changes
       if: steps.changed.outputs.changed
       run: |
-        git push origin ${{ github.head_ref }}
         git show
+        git push origin ${{ github.head_ref }}
