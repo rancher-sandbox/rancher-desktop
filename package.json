@@ -141,7 +141,7 @@
     "babel-jest": "27.5.1",
     "cross-env": "7.0.3",
     "css-loader": "7.1.1",
-    "ejs": "3.1.9",
+    "ejs": "3.1.10",
     "electron": "26.6.10",
     "electron-builder": "24.13.3",
     "eslint": "8.57.0",
