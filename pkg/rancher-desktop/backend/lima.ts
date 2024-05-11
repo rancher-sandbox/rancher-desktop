@@ -46,6 +46,7 @@ import clone from '@pkg/utils/clone';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 import { openSudoPrompt } from '@pkg/window';
@@ -1571,7 +1572,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       promises.push(BackendHelper.configureContainerEngine(this, configureWASM));
       if (configureWASM) {
-        promises.push(this.spawnWithCapture(path.join(paths.resources, 'setup-spin')));
+        promises.push(this.spawnWithCapture(executable('setup-spin')));
       }
       await Promise.all(promises);
     } catch (err) {
