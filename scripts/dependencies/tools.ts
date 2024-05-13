@@ -639,3 +639,35 @@ export class SpinOperator implements Dependency, GitHubDependency {
     return semver.rcompare(version1, version2);
   }
 }
+
+export class SpinCLI implements Dependency, GitHubDependency {
+  name = 'spinCLI';
+  githubOwner = 'fermyon';
+  githubRepo = 'spin';
+
+  async download(context: DownloadContext): Promise<void> {
+    const arch = context.isM1 ? 'aarch64' : 'amd64';
+    // maybe use 'static-linux' if we run into GLIBC compat issues with the default Linux build
+    const platform = context.goPlatform === 'darwin' ? 'macos' : context.goPlatform;
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.spinCLI }`;
+    const archiveName = `spin-v${ context.versions.spinCLI }-${ platform }-${ arch }${ context.goPlatform.startsWith('win') ? '.zip' : '.tar.gz' }`;
+    const expectedChecksum = await findChecksum(`${ baseURL }/checksums-v${ context.versions.spinCLI }.txt`, archiveName);
+    const entryName = exeName(context, 'spin');
+    const options: ArchiveDownloadOptions = { expectedChecksum, entryName };
+    const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
+
+    await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, entryName), options);
+  }
+
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}

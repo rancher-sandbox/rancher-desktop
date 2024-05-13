@@ -26,6 +26,7 @@ const userTouchedDependencies = [
   new tools.DockerCompose(),
   new tools.DockerProvidedCredHelpers(),
   new tools.ECRCredHelper(),
+  new tools.SpinCLI(),
 ];
 
 // Dependencies that are specific to unix hosts.

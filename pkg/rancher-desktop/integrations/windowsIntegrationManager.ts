@@ -206,6 +206,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         this.syncDistroSocketProxy(distro, state),
         this.syncDistroDockerPlugins(distro, state),
         this.syncDistroKubeconfig(distro, kubeconfigPath, state),
+        this.syncDistroSpinCLI(distro, state),
       ]);
     } catch (ex) {
       console.error(`Failed to sync integration for ${ distro }: ${ ex }`);
@@ -307,15 +308,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async getLinuxToolPath(distro: string, tool: string): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-
-    const logStream = Logging[`wsl-helper.${ distro }`];
-    const { stdout } = await spawnFile(
-      await this.wslExe,
-      ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u', tool],
-      { stdio: ['ignore', 'pipe', logStream] },
-    );
-
-    return stdout.trim();
+    return (await this.captureCommand( { distro }, '/bin/wslpath', '-a', '-u', tool)).trim();
   }
 
   protected async syncHostSocketProxy(): Promise<void> {
@@ -495,6 +488,14 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  protected async syncDistroSpinCLI(distro: string, state: boolean) {
+    if (state && this.settings.experimental?.containerEngine?.webAssembly) {
+      const setupSpin = await this.getLinuxToolPath(distro, executable('setup-spin'));
+
+      await this.execCommand({ distro }, setupSpin);
+    }
   }
 
   protected get nonBlacklistedDistros(): Promise<WSLDistro[]> {

@@ -9,6 +9,8 @@
 /resources/rancher-dashboard/*
 /resources/preload.js*
 /resources/rdx-proxy.tar
+/resources/cert-manager.yaml
+/resources/spin-operator*
 /coverage/
 /dist/**
 /.idea/

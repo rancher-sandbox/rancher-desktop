@@ -57,7 +57,7 @@ sha\d+:[0-9]*[a-f]{3,}[0-9a-f]*
 
 # hit-count: 6 file-count: 4
 # tar arguments
-\b(?:\\n|)g?tar(?:\.exe|)(?:(?:\s+--[-a-zA-Z]+|\s+-[a-zA-Z]+|\s[ABGJMOPRSUWZacdfh-pr-xz]+\b)(?:=[^ ]*|))+
+\b(?:\\n|)g?tar(?:\.exe|)"?(?:(?:\s+--[-a-zA-Z]+|\s+-[a-zA-Z]+|\s[ABGJMOPRSUWZacdfh-pr-xz]+\b)(?:=[^ ]*|))+
 
 # hit-count: 4 file-count: 3
 # base64 encoded content
