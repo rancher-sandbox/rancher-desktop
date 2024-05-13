@@ -35,6 +35,18 @@ wait_for_kubelet() {
     done
 }
 
+assert_kube_deployment_available() {
+    local jsonpath="jsonpath={.status.conditions[?(@.type=='Available')].status}"
+    run --separate-stderr kubectl get deployment "$@" --output "$jsonpath"
+    assert_success || return
+    assert_output "True"
+}
+
+wait_for_kube_deployment_available() {
+    trace "waiting for deployment $*"
+    try assert_kube_deployment_available "$@"
+}
+
 get_k3s_versions() {
     if [[ $RD_K3S_VERSIONS == "all" ]]; then
         # filter out duplicates; RD only supports the latest of +k3s1, +k3s2, etc.
