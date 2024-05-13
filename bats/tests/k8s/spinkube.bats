@@ -4,6 +4,7 @@ local_setup() {
     if using_docker; then
         skip "this test only works on containerd right now"
     fi
+    needs_port 80
 }
 
 # Get the host name to use to reach Traefik

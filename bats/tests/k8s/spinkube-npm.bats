@@ -11,6 +11,8 @@ local_setup() {
     if ! command -v "npm${EXE}" >/dev/null; then
         skip "this test requires npm${EXE} to be installed and on the PATH"
     fi
+    needs_port 80
+
     MY_APP=my-app
     MY_APP_NAME="${MY_APP}-$(cat "${BATS_FILE_TMPDIR}/random")"
     MY_APP_IMAGE="ttl.sh/${MY_APP_NAME}:15m"

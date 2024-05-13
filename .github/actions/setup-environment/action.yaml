@@ -34,6 +34,11 @@ runs:
     shell: bash
     run: sudo chmod a+rwx /dev/kvm
 
+  - name: "Linux: Set unprivileged port start to 80"
+    if: runner.os == 'Linux'
+    shell: bash
+    run: sudo sysctl -w net.ipv4.ip_unprivileged_port_start=80
+
   - name: "Linux: Initialize pass"
     if: runner.os == 'Linux'
     shell: bash
