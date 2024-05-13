@@ -24,6 +24,7 @@ resources/resources/win32/bin:
 - '!helm.exe'
 - '!kubectl.exe'
 - '!kuberlr.exe'
+- '!spin.exe'
 resources/resources/win32/internal:
 - host-resolver.exe
 - host-switch.exe
