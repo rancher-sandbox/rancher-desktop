@@ -485,6 +485,28 @@ get_json_test_data() {
 
 ########################################################################
 
+@test 'try returns stdout and stderr together' {
+    run try --max 1 sh -c 'echo foo; echo bar >&2; echo baz'
+    trace "output=$output"
+    trace "stderr=${stderr:-}"
+    assert_success
+    # output is currently re-ordered that all stderr follows all stdout
+    # this is subject to change
+    assert_line -n 0 foo
+    assert_line -n 2 bar
+    assert_line -n 1 baz
+    output=${stderr:-} assert_output ''
+}
+
+@test 'try supports --separate-stderr' {
+    run --separate-stderr try --max 1 sh -c 'echo foo; echo bar >&2; echo baz'
+    trace "output=$output"
+    trace "stderr=${stderr:-}"
+    assert_success
+    assert_output $'foo\nbaz'
+    output=$stderr assert_output bar
+}
+
 @test 'try will run command at least once' {
     run try --max 0 --delay 15 inc_counter
     assert_failure

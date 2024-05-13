@@ -227,9 +227,16 @@ trace() {
     done <<<"$*"
 }
 
+# try runs the specified command until it either succeeds, or --max attempts
+# have been made (with a --delay seconds sleep in between).
+#
+# Right now the command is **always** run with --separate-stderr, and stderr
+# is output after all of stdout. This is subject to change, if we can figure
+# out a way to detect if the caller used `run --separate-stderr try …` or not.
 try() {
     local max=24
     local delay=5
+
     while [[ $# -gt 0 ]] && [[ $1 == -* ]]; do
         case "$1" in
         --max)
@@ -254,7 +261,7 @@ try() {
 
     local count=0
     while true; do
-        run "$@"
+        run --separate-stderr "$@"
         if ((status == 0 || ++count >= max)); then
             trace "$count/$max tries: $*"
             break
@@ -262,6 +269,9 @@ try() {
         sleep "$delay"
     done
     echo "$output"
+    if [ -n "${stderr:-}" ]; then
+        echo "$stderr" >&2
+    fi
     return "$status"
 }
 
