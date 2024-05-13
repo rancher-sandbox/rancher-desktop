@@ -6,7 +6,7 @@ set -u
 resources_dir=$(dirname "$0")
 
 # We run setup-spin in the rancher-desktop distro to setup spin on the Win32 host.
-if [ "$WSL_DISTRO_NAME" = "rancher-desktop" ]; then
+if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
   app_data_dir=$(/bin/wslpath "$(powershell.exe -Command "Write-Output \${Env:LOCALAPPDATA}")" | tr -d "\r")
   system_root=$(/bin/wslpath "$(powershell.exe -Command "Write-Output \${Env:SystemRoot}")" | tr -d "\r")
   spin="${resources_dir}/win32/bin/spin.exe"
@@ -36,7 +36,7 @@ spin_dir="${app_data_dir}/spin"
 assert_dir_is_empty "${spin_dir}/templates"
 assert_dir_is_empty "${spin_dir}/plugins"
 
-if [ "$WSL_DISTRO_NAME" = "rancher-desktop" ]; then
+if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
   echo "Waiting for github.com to become resolvable"
   for _ in $(seq 30); do
     curl --head --silent http://github.com >/dev/null
@@ -58,7 +58,7 @@ install_templates() {
 
   url="https://github.com/fermyon/${repo}/archive/refs/heads/${branch}.tar.gz"
 
-  if [ "$WSL_DISTRO_NAME" = "rancher-desktop" ]; then
+  if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
     # Download and extract tarball on Win32 host side to avoid 9p syncing issues
     tmpdir=$(/bin/wslpath -w "$tmpdir")
     tarball=$(/bin/wslpath -w "$tarball")

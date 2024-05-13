@@ -83,6 +83,9 @@ rdshell() {
 rdsudo() {
     rdshell sudo "$@"
 }
+spin() {
+    "$PATH_RESOURCES/$PLATFORM/bin/spin$EXE" "$@" | no_cr
+}
 wsl() {
     wsl.exe -d "$WSL_DISTRO" "$@"
 }
