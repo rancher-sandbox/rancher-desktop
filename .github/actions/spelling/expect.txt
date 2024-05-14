@@ -17,7 +17,7 @@ alibaba
 aliyun
 aliyunecs
 aliyunkubernetescontainerservice
-ALLUSERS
+allusers
 alpl
 alpline
 amazonec

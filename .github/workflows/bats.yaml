@@ -75,7 +75,7 @@ jobs:
         BRANCH:       ${{ inputs.branch || github.ref_name }}
         ID:           ${{ inputs.package-id }}
         BATS_DIR:     ${{ github.workspace }}/bats
-        SKIP_INSTALL: true
+        INSTALL_MODE: skip
 
     - name: Calculate tests
       id: calculate
@@ -118,13 +118,15 @@ jobs:
         scripts/install-latest-ci.sh
       shell: bash
       env:
-        GH_TOKEN: ${{ github.token }}
-        OWNER:    ${{ inputs.owner || github.repository_owner }}
-        REPO:     ${{ inputs.repo || needs.get-tests.outputs.repo }}
-        BRANCH:   ${{ inputs.branch || github.ref_name }}
-        ID:       ${{ inputs.package-id }}
-        BATS_DIR: ${{ github.workspace }}/bats
-        ZIP_NAME: ${{ github.workspace }}/version.txt
+        GH_TOKEN:     ${{ github.token }}
+        OWNER:        ${{ inputs.owner || github.repository_owner }}
+        REPO:         ${{ inputs.repo || needs.get-tests.outputs.repo }}
+        BRANCH:       ${{ inputs.branch || github.ref_name }}
+        ID:           ${{ inputs.package-id }}
+        BATS_DIR:     ${{ github.workspace }}/bats
+        INSTALL_MODE: installer
+        ZIP_NAME:     ${{ github.workspace }}/version.txt
+        RD_LOCATION:  system
 
     - name: Set up environment
       uses: ./.github/actions/setup-environment

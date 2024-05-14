@@ -13,13 +13,20 @@ set -o xtrace
 : "${ID:=}"                   # If set, use the specific Action run.
 : "${WORKFLOW:=package.yaml}" # Name of workflow that must have succeeded
 : "${BATS_DIR:=${TMPDIR:-/tmp}/bats}" # Directory to extract BATS tests to.
-: "${SKIP_INSTALL:=}"         # If set, don't install the application.
+: "${INSTALL_MODE:=zip}"      # One of `skip`, `zip`, or `installer`
 : "${ZIP_NAME:=}"             # If set, output the zip file name to this file.
 
 : "${RD_LOCATION:=user}"
 
 if ! [[ $RD_LOCATION =~ ^(system|user)$ ]]; then
-    echo "RD_LOCATION must be either 'system' or 'user'"
+    echo "RD_LOCATION must be either 'system' or 'user' (got '$RD_LOCATION')" >&2
+    exit 1
+fi
+if ! [[ $INSTALL_MODE =~ ^(skip|zip|installer)$ ]]; then
+    echo "INSTALL_MODE must be one of 'skip', 'zip', or 'installer' (got '$INSTALL_MODE')" >&2
+    echo "  skip:      Do not install at all"
+    echo "  zip:       Install from the zip file (default)"
+    echo "  installer: Install from the installer (or from zip file if not available)"
     exit 1
 fi
 
@@ -56,23 +63,6 @@ download_artifact() {
     gh api "$API" > "$filename"
 }
 
-get_platform() {
-    case "$(uname -s)" in
-    Darwin)
-        echo darwin
-        return;;
-    MINGW*)
-        echo win32
-        return;;
-    esac
-    case "$(uname -r)" in
-    *-WSL2)
-        echo win32;;
-    *)
-        echo linux;;
-    esac
-}
-
 wslpath_from_win32_env() {
     if [[ "$(uname -s)" =~ MINGW* ]]; then
         # When running under WSL, the environment variables are set but to
@@ -103,7 +93,14 @@ install_application() {
         archive="$TMPDIR/Rancher Desktop-mac.$ARCH.zip"
         ;;
     win32)
-        archive="$TMPDIR/Rancher Desktop-win.zip"
+        case $INSTALL_MODE in
+        zip)
+            archive="$TMPDIR/Rancher Desktop-win.zip"
+            ;;
+        installer)
+            archive="$TMPDIR/Rancher Desktop Setup.msi"
+            ;;
+        esac
         ;;
     linux)
         archive="$TMPDIR/Rancher Desktop-linux.zip"
@@ -143,22 +140,61 @@ install_application() {
         unzip -o "$zip_abspath" "$app/*" -d "$dest" >/dev/null
         ;;
     win32)
-        local app='Rancher Desktop'
-        case "$RD_LOCATION" in
-        system)
-            dest="$(wslpath_from_win32_env ProgramFiles)";;
-        user)
-            dest="$(wslpath_from_win32_env LOCALAPPDATA)/Programs";;
-        *)
-            printf "Installing to %s is not supported on Windows." \
-                "$RD_LOCATION" >&2
-            exit 1;;
+        case $INSTALL_MODE in
+        zip)
+            local app='Rancher Desktop'
+            case "$RD_LOCATION" in
+            system)
+                dest="$(wslpath_from_win32_env ProgramFiles)";;
+            user)
+                dest="$(wslpath_from_win32_env LOCALAPPDATA)/Programs";;
+            *)
+                printf "Installing to %s is not supported on Windows.\n" \
+                    "$RD_LOCATION" >&2
+                exit 1;;
+            esac
+            rm -rf "${dest:?}/$app"
+            # For some reason, the Windows archive doesn't put everything in a
+            # subdirectory like Linux & macOS do.
+            mkdir -p "$dest/$app"
+            unzip -o "$zip_abspath" -d "$dest/$app" >/dev/null
+            ;;
+        installer)
+            local allusers=1
+            local installer
+            installer=$(cygpath --windows "$zip_abspath")
+            case "$RD_LOCATION" in
+                system)
+                    ;;
+                user)
+                    allusers=0;;
+                *)
+                    printf "Installing to %s is not supported on Windows.\n" \
+                        "$RD_LOCATION" >&2
+                    exit 1;;
+            esac
+            MSYS2_ARG_CONV_EXCL='*' msiexec.exe \
+                /i "$installer" /passive /norestart \
+                ALLUSERS=$allusers WSLINSTALLED=1
+            # msiexec returns immediately and runs in the background; wait for that
+            # process to exit before continuing.
+            local deadline completed
+            deadline=$(( $(date +%s) + 10 * 60 ))
+            while [[ $(date +%s) -lt $deadline ]]; do
+                if MSYS2_ARG_CONV_EXCL='*' tasklist.exe /FI "ImageName eq msiexec.exe" | grep msiexec; then
+                    printf "Waiting for msiexec to finish: %s/%s\n" "$(date)" "$(date --date="@$deadline")"
+                    sleep 10
+                else
+                    completed=true
+                    break
+                fi
+            done
+            if [[ -z "${completed:-}" ]]; then
+                echo "msiexec took too long to finish, aborting" >&2
+                exit 1
+            fi
+            ;;
         esac
-        rm -rf "${dest:?}/$app"
-        # For some reason, the Windows archive doesn't put everything in a
-        # subdirectory like Linux & macOS do.
-        mkdir -p "$dest/$app"
-        unzip -o "$zip_abspath" -d "$dest/$app" >/dev/null
         ;;
     linux)
         # Linux doesn't support per-user installs
@@ -210,7 +246,7 @@ if [[ -z $ID ]]; then
     fi
 fi
 
-if [[ -z "$SKIP_INSTALL" ]]; then
+if [[ "$INSTALL_MODE" != "skip" ]]; then
     install_application
 fi
 download_bats

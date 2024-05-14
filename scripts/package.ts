@@ -156,10 +156,12 @@ class Builder {
 
   async buildInstaller(config: CliOptions) {
     const appDir = path.join(buildUtils.distDir, 'win-unpacked');
+    const { version } = (config.config as any).extraMetadata;
+    const installerPath = path.join(buildUtils.distDir, `Rancher.Desktop.Setup.${ version }.msi`);
 
     if (config.win && !process.argv.includes('--zip')) {
       // Only build installer if we're not asked not to.
-      await buildInstaller(buildUtils.distDir, appDir);
+      await buildInstaller(buildUtils.distDir, appDir, installerPath);
     }
   }
 
