@@ -123,37 +123,30 @@ jobs:
         name: Rancher Desktop-linux.zip
         path: dist/rancher-desktop-*-linux.zip
         if-no-files-found: error
-    - id: has_s3
-      name: Check if S3 secrets are available
-      continue-on-error: true
-      if: github.ref_type == 'branch' && ( startsWith(github.ref_name, 'main') || startsWith(github.ref_name, 'release-') )
-      run: '[[ -n "${key}" ]]'
-      env:
-        key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    - name: set zip_name env var
-      id: zip_name
-      if: matrix.platform == 'linux' && steps.has_s3.outcome == 'success'
+    - name: Trigger OBS build
+      if: matrix.platform == 'linux' && github.ref_type == 'branch' && ( startsWith(github.ref_name, 'main') || startsWith(github.ref_name, 'release-') )
       run: |
+        if [[ -z $AWS_ACCESS_KEY_ID ]] || [[ -z $OBS_WEBHOOK_TOKEN ]]; then
+          echo "Secrets unavailable, skipping."
+          exit 0
+        fi
         # in pull requests GITHUB_REF_NAME is in the form "<pr_number>/merge";
         # remove slashes since they aren't valid in filenames
         no_slash_ref_name="${GITHUB_REF_NAME//\//-/}"
         zip_name="rancher-desktop-linux-${no_slash_ref_name}.zip"
-        echo "zip_name=${zip_name}" >> "${GITHUB_OUTPUT}"
-    - name: Copy zip file to S3
-      uses: prewk/s3-cp-action@74701625561055a306f92fa5c18e948f9d14a54a
-      if: matrix.platform == 'linux' && steps.has_s3.outcome == 'success'
-      with:
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: dist/rancher-desktop-*-linux.zip
-        dest: s3://rancher-desktop-assets-for-obs/${{ steps.zip_name.outputs.zip_name }}
-    - name: Trigger OBS services for relevant package in dev channel
-      if: matrix.platform == 'linux' && steps.has_s3.outcome == 'success'
-      run: |
+
+        # Copy zip file to S3
+        aws s3 cp \
+          dist/rancher-desktop-*-linux.zip \
+          s3://rancher-desktop-assets-for-obs/$zip_name
+
+        # Trigger OBS services for relevant package in dev channel
         curl -X POST \
           -H "Authorization: Token ${OBS_WEBHOOK_TOKEN}" \
           "https://build.opensuse.org/trigger/runservice?project=isv:Rancher:dev&package=rancher-desktop-${GITHUB_REF_NAME}"
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         OBS_WEBHOOK_TOKEN: ${{ secrets.OBS_WEBHOOK_TOKEN }}
 
   sign-win:
