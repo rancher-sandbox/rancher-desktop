@@ -84,7 +84,8 @@ rdsudo() {
     rdshell sudo "$@"
 }
 spin() {
-    "$PATH_RESOURCES/$PLATFORM/bin/spin$EXE" "$@" | no_cr
+    # spin may call itself recursively, so make sure it calls the correct binary
+    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" "$PATH_RESOURCES/$PLATFORM/bin/spin$EXE" "$@" | no_cr
 }
 wsl() {
     wsl.exe -d "$WSL_DISTRO" "$@"

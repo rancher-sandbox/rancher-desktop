@@ -1,10 +1,21 @@
 load '../helpers/load'
 
+local_setup_file() {
+    echo "$RANDOM" >"${BATS_FILE_TMPDIR}/random"
+}
+
 local_setup() {
     if using_docker; then
         skip "this test only works on containerd right now"
     fi
+    if ! command -v "npm${EXE}" >/dev/null; then
+        skip "this test requires npm${EXE} to be installed and on the PATH"
+    fi
     needs_port 80
+
+    MY_APP=my-app
+    MY_APP_NAME="${MY_APP}-$(cat "${BATS_FILE_TMPDIR}/random")"
+    MY_APP_IMAGE="ttl.sh/${MY_APP_NAME}:15m"
 }
 
 # Get the host name to use to reach Traefik
@@ -28,12 +39,21 @@ get_host() {
     wait_for_kubelet
 }
 
+@test 'create sample application' {
+    cd "$BATS_FILE_TMPDIR"
+    spin new --accept-defaults --template http-js "$MY_APP"
+    cd "$MY_APP"
+    "npm${EXE}" install
+    spin build
+    spin registry push "$MY_APP_IMAGE"
+}
+
 @test 'wait for spinkube operator' {
     wait_for_kube_deployment_available --namespace spin-operator spin-operator-controller-manager
 }
 
 @test 'deploy app to kubernetes' {
-    spin kube deploy --from ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
+    spin kube deploy --from "$MY_APP_IMAGE"
 }
 
 # TODO replace ingress with port-forwarding
@@ -42,7 +62,7 @@ get_host() {
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: spin-rust-hello
+  name: "${MY_APP_NAME}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
@@ -54,14 +74,14 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: spin-rust-hello
+              name: "${MY_APP_NAME}"
               port:
                 number: 80
 EOF
 }
 
 @test 'connect to app on localhost' {
-    run --separate-stderr try curl --connect-timeout 5 --fail "http://$(get_host)/hello"
+    run --separate-stderr try curl --connect-timeout 5 --fail "http://$(get_host)"
     assert_success
-    assert_output "Hello world from Spin!"
+    assert_output "Hello from JS-SDK"
 }
