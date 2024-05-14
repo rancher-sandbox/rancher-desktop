@@ -2274,7 +2274,7 @@
   dependencies:
     "@octokit/types" "^13.5.0"
 
-"@octokit/plugin-paginate-rest@^9.0.0", "@octokit/plugin-paginate-rest@^9.1.5":
+"@octokit/plugin-paginate-rest@^9.0.0":
   version "9.2.1"
   resolved "https://registry.yarnpkg.com/@octokit/plugin-paginate-rest/-/plugin-paginate-rest-9.2.1.tgz#2e2a2f0f52c9a4b1da1a3aa17dabe3c459b9e401"
   integrity sha512-wfGhE/TAkXZRLjksFXuDZdmGnJQHvtU/joFQdweXUgzo1XwvBCD4o4+75NtFfjfLK5IwLf9vHTfSiU3sLRYpRw==
@@ -2292,13 +2292,6 @@
   integrity sha512-EI7kXWidkt3Xlok5uN43suK99VWqc8OaIMktY9d9+RNKl69juoTyxmLoWPIZgJYzi41qj/9zU7G/ljnNOJ5AFA==
   dependencies:
     "@octokit/types" "^13.5.0"
-
-"@octokit/plugin-rest-endpoint-methods@^10.2.0":
-  version "10.4.1"
-  resolved "https://registry.yarnpkg.com/@octokit/plugin-rest-endpoint-methods/-/plugin-rest-endpoint-methods-10.4.1.tgz#41ba478a558b9f554793075b2e20cd2ef973be17"
-  integrity sha512-xV1b+ceKV9KytQe3zCVqjg+8GTGfDYwaT1ATU5isiUyVtlVAO3HNdzpS4sr4GBx4hxQ46s7ITtZrAsxG22+rVg==
-  dependencies:
-    "@octokit/types" "^12.6.0"
 
 "@octokit/plugin-retry@^6.0.0":
   version "6.0.1"
@@ -2347,15 +2340,15 @@
     "@octokit/types" "^13.1.0"
     universal-user-agent "^6.0.0"
 
-"@octokit/rest@20.1.0":
-  version "20.1.0"
-  resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-20.1.0.tgz#78310528f4849a69b44b15ccd27f99c7e737bb7d"
-  integrity sha512-STVO3itHQLrp80lvcYB2UIKoeil5Ctsgd2s1AM+du3HqZIR35ZH7WE9HLwUOLXH0myA0y3AGNPo8gZtcgIbw0g==
+"@octokit/rest@20.1.1":
+  version "20.1.1"
+  resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-20.1.1.tgz#ec775864f53fb42037a954b9a40d4f5275b3dc95"
+  integrity sha512-MB4AYDsM5jhIHro/dq4ix1iWTLGToIGk6cWF5L6vanFaMble5jTX/UBQyiv05HsWnwUtY8JrfHy2LWfKwihqMw==
   dependencies:
     "@octokit/core" "^5.0.2"
-    "@octokit/plugin-paginate-rest" "^9.1.5"
+    "@octokit/plugin-paginate-rest" "11.3.1"
     "@octokit/plugin-request-log" "^4.0.0"
-    "@octokit/plugin-rest-endpoint-methods" "^10.2.0"
+    "@octokit/plugin-rest-endpoint-methods" "13.2.2"
 
 "@octokit/types@^11.0.0":
   version "11.1.0"
