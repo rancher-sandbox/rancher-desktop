@@ -118,7 +118,7 @@ func main() {
 		defaultNSVeth,
 		rancherDesktopNSVeth)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("failed to create veth pair: %v", err)
 	}
 
 	if err := configureVethPair(rancherDesktopNSVeth, "192.168.1.2"); err != nil {
@@ -127,14 +127,14 @@ func main() {
 
 	// switch back to the original namespace to configure veth0
 	if err := netns.Set(originNS); err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("failed to switch back to original namespace: %v", err)
 	}
 	if err := configureVethPair(defaultNSVeth, "192.168.1.1"); err != nil {
 		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", rancherDesktopNSVeth, err)
 	}
 
 	if err := originNS.Close(); err != nil {
-		logrus.Error(err)
+		logrus.Errorf("failed to close original NS, ignoring error: %v", err)
 	}
 
 	if err := vmSwitchCmd.Wait(); err != nil {
@@ -212,7 +212,7 @@ func createVethPair(defaultNsPid, peerNsPid int, defaultNSVeth, rancherDesktopNS
 		PeerNamespace: netlink.NsPid(peerNsPid),
 	}
 	if err := netlink.LinkAdd(veth); err != nil {
-		return err
+		return fmt.Errorf("failed to add veth link %+v: %w", veth, err)
 	}
 	logrus.Infof("created veth pair %s and %s", defaultNSVeth, rancherDesktopNSVeth)
 	return nil
