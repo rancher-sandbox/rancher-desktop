@@ -371,6 +371,7 @@ keyout
 Kgm
 kiali
 kib
+killall
 kiwano
 KNOWNFOLDERID
 kontainer
