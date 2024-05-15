@@ -14,7 +14,7 @@ steve: 0.1.0-beta9
 guestAgent: 0.4.1
 rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.8.1
-ECRCredentialHelper: 0.7.1
+ECRCredentialHelper: 0.8.0
 hostResolver: 0.1.5
 mobyOpenAPISpec: "1.45"
 wix: v3.14.1
