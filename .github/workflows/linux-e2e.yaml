@@ -61,7 +61,7 @@ jobs:
         timeout-minutes: 150
       - name: Upload failure reports
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: failure-reports.zip
           path: ./e2e/reports/*

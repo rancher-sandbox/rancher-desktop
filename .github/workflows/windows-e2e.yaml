@@ -50,7 +50,7 @@ jobs:
           RD_DEBUG_ENABLED: '1'
       - name: Upload failure reports
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: e2etest-artifacts
           path: ./e2e/reports/*
