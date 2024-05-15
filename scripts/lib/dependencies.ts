@@ -180,7 +180,7 @@ export class RancherDesktopRepository {
   }
 }
 
-// For a github repository, get a list of releases that are published
+// For a GitHub repository, get a list of releases that are published
 // and return the tags that they were made off of.
 export async function getPublishedReleaseTagNames(owner: string, repo: string) {
   const response = await getOctokit().rest.repos.listReleases({ owner, repo });
@@ -190,18 +190,19 @@ export async function getPublishedReleaseTagNames(owner: string, repo: string) {
   return publishedReleases.map(publishedRelease => publishedRelease.tag_name);
 }
 
-// Dependency's that adhere to the following criteria may use this function
+// Dependencies that adhere to the following criteria may use this function
 // to get a list of available versions:
-// - The Dependency is hosted at a github repository.
-// - Versions are gathered from the tag that is on each github release.
+// - The dependency is hosted at a GitHub repository.
+// - Versions are gathered from the tag that is on each GitHub release.
 // - Versions are in semver format.
 export async function getPublishedVersions(githubOwner: string, githubRepo: string, includePrerelease: boolean): Promise<string[]> {
   const tagNames = await getPublishedReleaseTagNames(githubOwner, githubRepo);
-  const allVersions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  let versions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
 
+  versions = versions.filter(version => semver.valid(version));
   if (!includePrerelease) {
-    return allVersions.filter(version => semver.prerelease(version) === null);
+    versions = versions.filter(version => !semver.prerelease(version));
   }
 
-  return allVersions;
+  return versions;
 }
