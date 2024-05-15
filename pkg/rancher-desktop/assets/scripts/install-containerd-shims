@@ -15,7 +15,11 @@ for dir in "$@"; do
 done
 
 # Make sure all shims are executable.
-chmod 755 "${dest}/"* || :
+for file in "${dest}/"*; do
+  if [ -e "$file" ]; then
+    chmod 755 "$file"
+  fi
+done
 
 # Create symlinks to each shim into /usr/local/bin.
 # In the future this will enable us putting only shims from an allow list on the PATH.
