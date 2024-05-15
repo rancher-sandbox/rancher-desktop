@@ -1,6 +1,7 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper
 
 go 1.21
+toolchain go1.22.2
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -20,7 +21,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sys v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/client-go v0.25.3
+	k8s.io/client-go v0.30.0
 )
 
 require (
@@ -32,7 +33,6 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/loads v0.21.2 // indirect
 	github.com/go-openapi/spec v0.20.9 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
