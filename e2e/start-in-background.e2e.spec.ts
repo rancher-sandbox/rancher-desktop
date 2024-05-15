@@ -7,23 +7,23 @@ import { createDefaultSettings, startRancherDesktop, teardown, tool } from './ut
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('startInBackground setting', () => {
-  test('window should appear when startInBackground is false', async() => {
+  test('window should appear when startInBackground is false', async({ colorScheme }, testInfo) => {
     createDefaultSettings({ application: { startInBackground: false } });
-    const logName = `${ __filename }-startInBackgroundFalse`;
-    const electronApp = await startRancherDesktop(__filename, { logName });
+    const logVariant = `startInBackgroundFalse`;
+    const electronApp = await startRancherDesktop(testInfo, { logVariant });
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(true);
-    await teardown(electronApp, logName);
+    await teardown(electronApp, testInfo);
   });
 
-  test('window should not appear when startInBackground is true', async() => {
+  test('window should not appear when startInBackground is true', async({ colorScheme }, testInfo) => {
     createDefaultSettings({ application: { startInBackground: true } });
-    const logName = `${ __filename }-startInBackgroundTrue`;
-    const electronApp = await startRancherDesktop(__filename, { logName });
+    const logVariant = `startInBackgroundTrue`;
+    const electronApp = await startRancherDesktop(testInfo, { logVariant });
 
     await expect(checkWindowOpened(electronApp)).resolves.toBe(false);
     await tool('rdctl', 'set', '--application.start-in-background=false');
-    await teardown(electronApp, logName);
+    await teardown(electronApp, testInfo);
   });
 });
 

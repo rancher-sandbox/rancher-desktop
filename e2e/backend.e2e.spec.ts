@@ -20,11 +20,11 @@ test.describe.serial('KubernetesBackend', () => {
   let electronApp: ElectronApplication;
   let page: Page;
 
-  test.beforeAll(async() => {
-    [electronApp, page] = await startSlowerDesktop(__filename);
+  test.beforeAll(async({ colorScheme }, testInfo) => {
+    [electronApp, page] = await startSlowerDesktop(testInfo);
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
 
   test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);

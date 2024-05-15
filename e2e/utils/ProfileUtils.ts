@@ -5,10 +5,10 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import { expect, Page } from '@playwright/test';
+import { expect, Page, TestInfo } from '@playwright/test';
 
 import {
-  createDefaultSettings, setUserProfile, startRancherDesktop, retry, teardown,
+  createDefaultSettings, setUserProfile, startRancherDesktop, retry, teardown, reportAsset, startRancherDesktopOptions,
 } from './TestUtils';
 import { NavPage } from '../pages/nav-page';
 
@@ -170,19 +170,17 @@ export async function verifySystemProfile(): Promise<string[]> {
   return [`Need to create system profile file ${ profilePaths.join(' and/or ') }`];
 }
 
-// And the test runners.
-// There are only three kinds of tests, so each of the main test files can invoke the kind it needs:
-// 1. Verify there's a first-run window
-// 2. Verify the main window is the first window
-// 3. Verify we get a fatal error and it's captured in a log file.
-
-export async function testForFirstRunWindow(testPath: string) {
+/**
+ * Start Rancher Desktop, expecting a first run window to show up; accept it,
+ * then wait for the main window to open.
+ */
+export async function testForFirstRunWindow(testInfo: TestInfo, options: startRancherDesktopOptions) {
   let page: Page|undefined;
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
-  const electronApp = await startRancherDesktop(testPath, {
-    mock: false, noModalDialogs: false, timeout: 60_000,
+  const electronApp = await startRancherDesktop(testInfo, {
+    ...options, mock: false, noModalDialogs: false, timeout: 60_000,
   });
 
   electronApp.on('window', async(openedPage: Page) => {
@@ -230,44 +228,32 @@ export async function testForFirstRunWindow(testPath: string) {
     }
     expect(windowCountForMainPage).toEqual(2);
   } finally {
-    await teardown(electronApp, testPath);
+    await teardown(electronApp, testInfo);
   }
 }
 
-// See comments above testForFirstRunWindow for an explanation of this function.
-
-export async function testForNoFirstRunWindow(testPath: string) {
+/**
+ * Start Rancher Desktop, checking that there was no first run window (and that
+ * the first window to appear is the main window).
+ */
+export async function testForNoFirstRunWindow(testInfo: TestInfo, options: startRancherDesktopOptions) {
   let page: Page|undefined;
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
-  const electronApp = await startRancherDesktop(testPath, {
-    mock: false, noModalDialogs: false, timeout: 60_000,
+  const electronApp = await startRancherDesktop(testInfo, {
+    ...options, mock: false, noModalDialogs: false, timeout: 60_000,
   });
 
   electronApp.on('window', async(openedPage: Page) => {
     windowCount += 1;
     navPage = new NavPage(openedPage);
 
-    try {
-      await retry(async() => {
-        await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop by SUSE');
-      });
-      page = openedPage;
-      windowCountForMainPage = windowCount;
-
-      return;
-    } catch (ex: any) {
-      console.log(`Ignoring failed title-test: ${ ex.toString().substring(0, 2000) }`);
-    }
-    try {
-      const button = openedPage.getByText('OK');
-
-      await button.click( { timeout: 1000 });
-      expect("Didn't expect to see a first-run window").toEqual('saw the first-run window');
-    } catch (e) {
-      console.error(`Expecting to get an error when clicking on a non-button: ${ e }`, e);
-    }
+    await expect(async() => {
+      await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop by SUSE');
+    }).toPass({ timeout: 60_000 });
+    page = openedPage;
+    windowCountForMainPage = windowCount;
   });
   try {
     let iter = 0;
@@ -289,17 +275,20 @@ export async function testForNoFirstRunWindow(testPath: string) {
     }
     expect(windowCountForMainPage).toEqual(1);
   } finally {
-    await teardown(electronApp, testPath);
+    await teardown(electronApp, testInfo);
   }
 }
 
-// See comments above testForFirstRunWindow for an explanation of this function.
-
-export async function testWaitForLogfile(testPath: string, logPath: string) {
+/**
+ * Start Rancher Desktop, and wait for background.log file to be populated; there
+ * should be no windows visible.
+ */
+export async function testWaitForLogfile(testInfo: TestInfo, options: startRancherDesktopOptions) {
   let windowCount = 0;
-  const electronApp = await startRancherDesktop(testPath, {
-    mock: false, noModalDialogs: true, timeout: 60_000,
+  const electronApp = await startRancherDesktop(testInfo, {
+    ...options, mock: false, noModalDialogs: true, timeout: 60_000,
   });
+  const logPath = path.join(reportAsset(testInfo, 'log'), 'background.log');
 
   electronApp.on('window', () => {
     windowCount += 1;
@@ -335,7 +324,7 @@ export async function testWaitForLogfile(testPath: string, logPath: string) {
   } finally {
     try {
       // Race condition: the app might have already shut down due to the fatal profile error.
-      await teardown(electronApp, testPath);
+      await teardown(electronApp, testInfo);
     } catch {
     }
   }

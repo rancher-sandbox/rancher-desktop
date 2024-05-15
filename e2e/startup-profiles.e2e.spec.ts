@@ -89,12 +89,12 @@ async function createLockedUserRegistryProfileWithValidDataButNoVersion() {
   await addRegistryEntry(base, 'version', 'REG_SZ', '1.21.0');
 }
 
-test.describe.serial('track startup windows based on existing profiles and settings', () => {
+test.describe.serial('starting up with profiles', () => {
   test.afterAll(async() => {
     await clearUserProfile();
     await clearSettings();
   });
-  test('verify profile/settings conditions and test skips or passes', async() => {
+  test.describe.serial('profile combinations', () => {
     // First time we want to verify there *is* a first-run window.
     // There should never be a first-run window after that.
     let runFunc = testForFirstRunWindow;
@@ -104,28 +104,27 @@ test.describe.serial('track startup windows based on existing profiles and setti
     for (const settingsFunc of [clearSettings, verifySettings]) {
       for (const userProfileFunc of [clearUserProfile, verifyUserProfile]) {
         for (const systemProfileFunc of [verifyNoSystemProfile, verifySystemProfile]) {
-          const skipReasons = await systemProfileFunc();
-          const parts = [`Standard test ${ i }: settings: ${ settingsFunc === clearSettings ? 'deleted' : 'existing' }, `,
-            `user profile: ${ userProfileFunc === clearUserProfile ? 'deleted' : 'existing' }, `,
-            `system profile: ${ systemProfileFunc === verifyNoSystemProfile ? 'deleted' : 'existing' }`,
-          ];
+          test(`Standard test ${ i }: ${ settingsFunc.name } / ${ userProfileFunc.name } / ${ systemProfileFunc.name }`, async({ colorScheme }, testInfo) => {
+            const skipReasons = await systemProfileFunc();
 
-          console.log(parts.join(''));
-          if (skipReasons.length > 0) {
-            console.log(`Skipping test where ${ systemProfileFunc === verifySystemProfile ? "there's no system profile" : 'there is a system profile' }`);
-            numSkipped += 1;
-          } else {
-            await settingsFunc();
-            await userProfileFunc();
-            await runFunc(`${ __filename }-${ i }`);
-          }
-          i += 1;
-          runFunc = testForNoFirstRunWindow;
+            if (skipReasons.length > 0) {
+              console.log(`Skipping test (${ systemProfileFunc.name })`);
+              numSkipped += 1;
+            } else {
+              await settingsFunc();
+              await userProfileFunc();
+              await runFunc(testInfo, { logVariant: `${ i }` });
+              runFunc = testForNoFirstRunWindow;
+            }
+          });
+          i++;
         }
       }
     }
-    // Half the tests require a system profile, half require no system-profile, so we should always skip half of them.
-    expect(numSkipped).toEqual(4);
+    test('check for correct number of tests', () => {
+      // Half the tests require a system profile, half require no system-profile, so we should always skip half of them.
+      expect(numSkipped).toEqual(4);
+    });
   });
 
   test.describe('problematic user profiles', () => {
@@ -137,7 +136,7 @@ test.describe.serial('track startup windows based on existing profiles and setti
       skipReasons = await verifyNoSystemProfile();
     });
 
-    test('nonexistent settings act like an empty default profile', async() => {
+    test('nonexistent settings act like an empty default profile', async({ colorScheme }, testInfo) => {
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
         await createDefaultUserRegistryProfileWithNonexistentFields();
@@ -152,19 +151,18 @@ test.describe.serial('track startup windows based on existing profiles and setti
         await setUserProfile(s1, null);
       }
       // We have a deployment with only a version field, good enough to bypass the first-run dialog.
-      await testForNoFirstRunWindow(`${ __filename }-nonexistent-settings`);
+      await testForNoFirstRunWindow(testInfo, { logVariant: 'nonexistent-settings' });
     });
 
-    test('invalid format', async() => {
+    test('invalid format', async({ colorScheme }, testInfo) => {
       let errorMatcher: RegExp;
-      const filename = `${ __filename }-invalid-profile-format`;
-      const logDir = reportAsset(filename, 'log');
-      const logPath = path.join(logDir, 'background.log');
+      const logVariant = 'invalid-profile-format';
+      const localSkipReasons = [...skipReasons];
 
       if (process.platform === 'win32') {
-        skipReasons.push(`This test doesn't make sense on Windows`);
+        localSkipReasons.push(`This test doesn't make sense on Windows`);
       }
-      test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
+      test.skip(localSkipReasons.length > 0, `Profile requirements for this test: ${ localSkipReasons.join(', ') }`);
       switch (process.platform) {
       case 'darwin':
         await createInvalidDarwinUserProfile(`<?xml version="1.0" encoding="UTF-8"?>
@@ -185,7 +183,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       default:
         throw new Error(`Not expecting to handle platform ${ process.platform }`);
       }
-      const windowCount = await testWaitForLogfile(filename, logPath);
+      const windowCount = await testWaitForLogfile(testInfo, { logVariant });
+      const logPath = path.join(reportAsset(testInfo, 'log'), 'background.log');
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 
       expect(windowCount).toEqual(0);
@@ -193,10 +192,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       expect(contents).toMatch(errorMatcher);
     });
 
-    test('missing version', async() => {
-      const filename = `${ __filename }-missing-settings-version`;
-      const logDir = reportAsset(filename, 'log');
-      const logPath = path.join(logDir, 'background.log');
+    test('missing version', async({ colorScheme }, testInfo) => {
+      const logVariant = 'missing-settings-version';
       const versionLessSettings: RecursivePartial<Settings> = {
         kubernetes:  { enabled: true },
         application: {
@@ -209,7 +206,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
 
       await fs.promises.mkdir(paths.config, { recursive: true });
       await fs.promises.writeFile(settingsFullPath, JSON.stringify(versionLessSettings));
-      const windowCount = await testWaitForLogfile(filename, logPath);
+      const windowCount = await testWaitForLogfile(testInfo, { logVariant });
+      const logPath = path.join(reportAsset(testInfo, 'log'), 'background.log');
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 
       expect(windowCount).toEqual(0);
@@ -218,10 +216,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       expect(contents).toMatch(new RegExp(`Fatal Error:.*${ _.escapeRegExp(msg) }`, 's'));
     });
 
-    test('wrong datatype in profile', async() => {
-      const filename = `${ __filename }-wrong-datatype-in-profile`;
-      const logDir = reportAsset(filename, 'log');
-      const logPath = path.join(logDir, 'background.log');
+    test('wrong datatype in profile', async({ colorScheme }, testInfo) => {
+      const logVariant = 'wrong-datatype-in-profile';
 
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
@@ -231,7 +227,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
 
         await setUserProfile(s1, null);
       }
-      const windowCount = await testWaitForLogfile(filename, logPath);
+      const windowCount = await testWaitForLogfile(testInfo, { logVariant });
+      const logPath = path.join(reportAsset(testInfo, 'log'), 'background.log');
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 
       expect(windowCount).toEqual(0);
@@ -246,10 +243,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       }
     });
 
-    test('missing version in defaults deployment profile', async() => {
-      const filename = `${ __filename }-missing-version-in-defaults-profile`;
-      const logDir = reportAsset(filename, 'log');
-      const logPath = path.join(logDir, 'background.log');
+    test('missing version in defaults deployment profile', async({ colorScheme }, testInfo) => {
+      const logVariant = `missing-version-in-defaults-profile`;
 
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
@@ -257,7 +252,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       } else {
         await setUserProfile({ kubernetes: { enabled: false } }, null);
       }
-      const windowCount = await testWaitForLogfile(filename, logPath);
+      const windowCount = await testWaitForLogfile(testInfo, { logVariant });
+      const logPath = path.join(reportAsset(testInfo, 'log'), 'background.log');
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 
       expect(windowCount).toEqual(0);
@@ -271,10 +267,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       }
     });
 
-    test('missing version in locked deployment profile', async() => {
-      const filename = `${ __filename }-missing-version-in-locked-profile`;
-      const logDir = reportAsset(filename, 'log');
-      const logPath = path.join(logDir, 'background.log');
+    test('missing version in locked deployment profile', async({ colorScheme }, testInfo) => {
+      const logVariant = 'missing-version-in-locked-profile';
 
       test.skip(skipReasons.length > 0, `Profile requirements for this test: ${ skipReasons.join(', ') }`);
       if (process.platform === 'win32') {
@@ -282,7 +276,8 @@ test.describe.serial('track startup windows based on existing profiles and setti
       } else {
         await setUserProfile(null, { kubernetes: { enabled: false } });
       }
-      const windowCount = await testWaitForLogfile(filename, logPath);
+      const windowCount = await testWaitForLogfile(testInfo, { logVariant });
+      const logPath = path.join(reportAsset(testInfo, 'log'), 'background.log');
       const contents = await fs.promises.readFile(logPath, { encoding: 'utf-8' });
 
       expect(windowCount).toEqual(0);

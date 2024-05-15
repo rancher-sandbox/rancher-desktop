@@ -7,31 +7,27 @@ import { createDefaultSettings, reportAsset, startRancherDesktop, teardown } fro
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('quitOnClose setting', () => {
-  test('should quit when quitOnClose is true and window is closed', async() => {
-    const logName = `${ __filename }-quitOnCloseTrue`;
-
+  test('should quit when quitOnClose is true and window is closed', async({ colorScheme }, testInfo) => {
     createDefaultSettings({ application: { window: { quitOnClose: true } } });
-    const electronApp = await startRancherDesktop(__filename, { logName });
+    const electronApp = await startRancherDesktop(testInfo, { logVariant: 'quitOnCloseTrue' });
 
     await electronApp.firstWindow();
 
     await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(true);
     // Don't call teardown[App] here, because the app already exited.
-    await electronApp.context().tracing.stop({ path: reportAsset(logName, 'trace') });
+    await electronApp.context().tracing.stop({ path: reportAsset(testInfo, 'trace') });
   });
 
-  test('should not quit when quitOnClose is false and window is closed', async() => {
-    const logName = `${ __filename }-quitOnCloseFalse`;
-
+  test('should not quit when quitOnClose is false and window is closed', async({ colorScheme }, testInfo) => {
     createDefaultSettings({ application: { window: { quitOnClose: false } } });
-    const electronApp = await startRancherDesktop(__filename, { logName });
+    const electronApp = await startRancherDesktop(testInfo, { logVariant: 'quitOnCloseFalse' });
 
     try {
       await electronApp.firstWindow();
       await expect(closeWindowsAndCheckQuit(electronApp)).resolves.toBe(false);
     } finally {
       try {
-        await teardown(electronApp, __filename);
+        await teardown(electronApp, testInfo);
       } catch { }
     }
   });
