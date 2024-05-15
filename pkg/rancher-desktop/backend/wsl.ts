@@ -1168,11 +1168,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * This manages {this.process}.
    */
   protected async runInit() {
-    // /sbin/init actually seeks to the start of the file before writing its
-    // logs, so we have to give it a unique file to avoid other logs being
-    // clobbered.
-    const stream = await Logging['wsl-init'].fdStream;
+    const logFile = Logging['wsl-init'];
     const PID_FILE = '/var/run/wsl-init.pid';
+    const streamReaders: Promise<void>[] = [];
 
     // Delete any stale wsl-init PID file
     try {
@@ -1197,10 +1195,19 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
           LOG_DIR:          paths.logs,
         },
-        stdio:       ['ignore', stream, stream],
+        stdio:       ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
       });
+    for (const readable of [this.process.stdout, this.process.stderr]) {
+      if (readable) {
+        readable.on('data', (chunk: Buffer | string) => {
+          logFile.log(chunk.toString().trimEnd());
+        });
+        streamReaders.push(stream.promises.finished(readable));
+      }
+    }
     this.process.on('exit', async(status, signal) => {
+      await Promise.allSettled(streamReaders);
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
         console.log('/sbin/init exited gracefully.');
         await this.stop();
