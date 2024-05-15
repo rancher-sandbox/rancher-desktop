@@ -1,6 +1,7 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper
 
-go 1.21
+go 1.22.0
+
 toolchain go1.22.2
 
 require (
