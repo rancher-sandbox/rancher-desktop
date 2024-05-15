@@ -25,7 +25,7 @@ jobs:
         cache: yarn
     - uses: actions/setup-go@v5
       with:
-        go-version-file: src/go/wsl-helper/go.mod
+        go-version-file: go.work
         cache-dependency-path: src/go/wsl-helper/go.sum
     - run: yarn install --frozen-lockfile
     - name: Build Windows
