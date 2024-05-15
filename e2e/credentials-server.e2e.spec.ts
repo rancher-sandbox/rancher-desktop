@@ -35,6 +35,7 @@ import {
   getFullPathForTool, retry, startSlowerDesktop, teardown, tool,
 } from './utils/TestUtils';
 
+import { defaultSettings } from '@pkg/config/settings';
 import { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { spawnFile } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
@@ -335,6 +336,9 @@ describeWithCreds('Credentials server', () => {
 
   // On Windows, we need to wait for the vtunnel proxy to be established.
   testWin32('ensure vtunnel proxy is ready', () => {
+    const isTunnel = defaultSettings.experimental.virtualMachine.networkingTunnel;
+
+    test.skip(isTunnel, 'vtunnel process is not needed when network tunnel is enabled');
     const args = ['--distribution', 'rancher-desktop', '--exec',
       'curl', '--verbose', '--user', `${ serverState.user }:${ serverState.password }`,
       'http://localhost:3030/'];
