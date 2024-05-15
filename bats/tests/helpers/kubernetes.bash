@@ -16,7 +16,7 @@ wait_for_kubelet() {
         fi
 
         # Make sure the "default" serviceaccount exists
-        if ! kubectl get --namespace default serviceaccount default; then
+        if ! kubectl get --namespace default serviceaccount default &>/dev/null; then
             continue
         fi
 

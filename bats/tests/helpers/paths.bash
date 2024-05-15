@@ -98,6 +98,7 @@ wslpath_from_win32_env() {
 if is_windows; then
     LOCALAPPDATA="$(wslpath_from_win32_env LOCALAPPDATA)"
     PROGRAMFILES="$(wslpath_from_win32_env ProgramFiles)"
+    SYSTEMROOT="$(wslpath_from_win32_env SystemRoot)"
 
     PATH_APP_HOME="$LOCALAPPDATA/rancher-desktop"
     PATH_CONFIG="$LOCALAPPDATA/rancher-desktop"
