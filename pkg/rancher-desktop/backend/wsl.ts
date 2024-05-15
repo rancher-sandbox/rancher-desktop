@@ -1742,7 +1742,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         const initProcess = this.process;
 
         this.process = null;
-        initProcess?.kill('SIGTERM');
+        if (initProcess) {
+          initProcess.kill('SIGTERM');
+          await this.execCommand('/usr/bin/killall', '-q', '/usr/local/bin/network-setup');
+        }
         await this.hostSwitchProcess.stop();
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
