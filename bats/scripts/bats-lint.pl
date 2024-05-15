@@ -52,9 +52,9 @@ while (<>) {
         undef $run;
     }
     # Doesn't match on:
-    # - "empty lines (just whitespace)"
+    # - "empty lines (just whitespace or comment)"
     # - if ...
-    if ($run && !/^\s*(if.*)?$/) {
+    if ($run && !/^\s*(#.*|if.*)?$/) {
         print "$ARGV:$.: Expected assert or refute after\n$run\n";
         undef $run;
         $problems++;
