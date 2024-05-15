@@ -24,7 +24,7 @@ jobs:
           .github/workflows/config
     - uses: actions/setup-go@v5
       with:
-        go-version-file: src/go/github-runner-monitor/go.mod
+        go-version-file: go.work
         cache-dependency-path: src/go/github-runner-monitor/go.sum
     - run: go build .
       working-directory: src/go/github-runner-monitor

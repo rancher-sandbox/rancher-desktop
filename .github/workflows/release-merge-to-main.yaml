@@ -42,7 +42,7 @@ jobs:
         cache: yarn
     - uses: actions/setup-go@v5
       with:
-        go-version-file: src/go/rdctl/go.mod
+        go-version-file: go.work
         cache-dependency-path: src/go/**/go.sum
 
     - run: yarn install --frozen-lockfile

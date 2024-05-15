@@ -32,7 +32,7 @@ jobs:
         python-version: '3.x'
     - uses: actions/setup-go@v5
       with:
-        go-version: '^1.21'
+        go-version-file: go.work
         cache-dependency-path: src/go/**/go.sum
     - name: Install Windows dependencies
       if: runner.os == 'Windows'
@@ -88,7 +88,7 @@ jobs:
         cache: yarn
     - uses: actions/setup-go@v5
       with:
-        go-version: '^1.21'
+        go-version-file: go.work
         cache-dependency-path: src/go/**/go.sum
     - run: yarn install --frozen-lockfile
     - name: Download installer (msi)
