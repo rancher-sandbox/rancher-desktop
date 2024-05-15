@@ -29,7 +29,7 @@ import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
 import {
-  getAlternateSetting, kubectl, retry, startSlowerDesktop, teardown, waitForRestartVM,
+  getAlternateSetting, kubectl, retry, startSlowerDesktop, teardown,
 } from './utils/TestUtils';
 
 import {
@@ -895,18 +895,9 @@ test.describe('Command server', () => {
           const result = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(oldSettings)]);
 
           expect(result.stderr).toEqual('');
-          // Have to do this because we don't have any other way to see the current missing progress bar
-          // and have the next  `progressBecomesReady` test pass prematurely.
+          const navPage = new NavPage(page);
 
-          // Wait until progress bar show up. It takes roughly ~60s to start in CI
-          const progressBar = page.locator('.progress');
-
-          await waitForRestartVM(progressBar);
-
-          // Since we just applied new settings, we must wait for the backend to restart.
-          while (await progressBar.count() > 0) {
-            await progressBar.waitFor({ state: 'detached', timeout: Math.round(240_000) });
-          }
+          await navPage.progressBecomesReady();
         });
       });
 
