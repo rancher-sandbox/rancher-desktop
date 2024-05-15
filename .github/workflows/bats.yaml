@@ -66,7 +66,7 @@ jobs:
         : ${REPO:=${GH_REPOSITORY#$GH_OWNER/}}
         : ${BRANCH:=$GH_REF_NAME}
         # If BRANCH is a number, assume it is supposed to be a PR
-        [[ $BRANCH =~ ^[0-9]+$ ]] && PR=$BRANCH
+        [[ $BRANCH =~ ^[0-9]+$ ]] && export PR=$BRANCH
         "scripts/install-latest-ci.sh"
       env:
         GH_TOKEN:     ${{ github.token }}
