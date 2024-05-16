@@ -289,6 +289,24 @@ launch_the_application() {
     fi
 }
 
+# Write a provisioning script that will be executed during VM startup.
+# Only a single script can be defined, and scripts are deleted by factory-reset.
+# The script must be provided via STDIN and not as a parameter.
+provisioning_script() {
+    if is_windows; then
+        mkdir -p "$PATH_APP_HOME/provisioning"
+        cat >"$PATH_APP_HOME/provisioning/bats.start"
+    else
+        mkdir -p "$LIMA_HOME/_config"
+        cat <<EOF >"$LIMA_HOME/_config/override.yaml"
+provision:
+- mode: system
+  script: |
+$(sed 's/^/    /')
+EOF
+    fi
+}
+
 get_container_engine_info() {
     run ctrctl info
     echo "$output"

@@ -23,7 +23,7 @@ const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
 
 const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
 // Manifests are applied in sort order, so use a prefix to load them last, in the required sequence.
-// Also: don't use `runtimes.yaml` because k3s may overwrite it.
+// Names should start with `z` followed by a digit, so that `install-k3s` cleans them up on restart.
 const MANIFEST_RUNTIMES_YAML = `${ MANIFEST_DIR }/z100-runtimes.yaml`;
 const MANIFEST_CERT_MANAGER = `${ MANIFEST_DIR }/z110-cert-manager.yaml`;
 const MANIFEST_SPIN_OPERATOR_CRDS = `${ MANIFEST_DIR }/z120-spin-operator.crds.yaml`;
