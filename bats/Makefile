@@ -16,12 +16,12 @@ SC_EXCLUDES ?= SC1091,SC2034,SC2154
 lint:
 	find tests -name '*.bash' | xargs ./scripts/bats-lint.pl
 	find tests -name '*.bats' | xargs ./scripts/bats-lint.pl
-	find tests -name '*.bash' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
-	find tests -name '*.bats' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
-	find scripts -name '*.sh' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
-	find tests -name '*.bash' | xargs shfmt -s -d
-	find tests -name '*.bats' | xargs shfmt -s -d
-	find scripts -name '*.sh' | xargs shfmt -s -d
+	find tests -name '*.bash' | xargs shellcheck --shell=bash --exclude=$(SC_EXCLUDES)
+	find tests -name '*.bats' | xargs shellcheck --shell=bash --exclude=$(SC_EXCLUDES)
+	find scripts -name '*.sh' | xargs shellcheck --shell=bash --exclude=$(SC_EXCLUDES)
+	find tests -name '*.bash' | xargs shfmt --simplify --diff --language-dialect bats --indent 4
+	find tests -name '*.bats' | xargs shfmt --simplify --diff --language-dialect bats --indent 4
+	find scripts -name '*.sh' | xargs shfmt --simplify --diff
 
 DEPS = bin/darwin/jq bin/linux/jq
 
