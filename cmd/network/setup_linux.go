@@ -14,6 +14,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -21,12 +22,14 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 
 	"github.com/linuxkit/virtsock/pkg/vsock"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
+	"golang.org/x/sys/unix"
 
 	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
@@ -66,12 +69,15 @@ func main() {
 		logrus.Fatal("path to the vm-switch process must be provided")
 	}
 
+	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGTERM, unix.SIGHUP, unix.SIGQUIT)
+	defer cancel()
+
 	if unshareArg == "" {
 		logrus.Fatal("unshare program arg must be provided")
 	}
 
 	// listenForHandshake blocks until a successful handshake is estabilished.
-	listenForHandshake()
+	listenForHandshake(ctx)
 
 	logrus.Debugf("attempting to connect to the host on CID: %v and Port: %d", vsock.CIDHost, vsockDialPort)
 	vsockConn, err := vsock.Dial(vsock.CIDHost, vsockDialPort)
@@ -91,7 +97,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	if err := unshareCmd(ns, unshareArg); err != nil {
+	if err := unshareCmd(ctx, ns, unshareArg); err != nil {
 		logrus.Fatal(err)
 	}
 
@@ -100,7 +106,9 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	vmSwitchCmd := configureVMSwitch(ns,
+	vmSwitchCmd := configureVMSwitch(
+		ctx,
+		ns,
 		vmSwitchLogFile,
 		vmSwitchPath,
 		tapIface,
@@ -118,8 +126,9 @@ func main() {
 		defaultNSVeth,
 		rancherDesktopNSVeth)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("failed to create veth pair: %v", err)
 	}
+	defer cleanupVethLink(originNS)
 
 	if err := configureVethPair(rancherDesktopNSVeth, "192.168.1.2"); err != nil {
 		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", rancherDesktopNSVeth, err)
@@ -127,14 +136,14 @@ func main() {
 
 	// switch back to the original namespace to configure veth0
 	if err := netns.Set(originNS); err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("failed to switch back to original namespace: %v", err)
 	}
 	if err := configureVethPair(defaultNSVeth, "192.168.1.1"); err != nil {
 		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", rancherDesktopNSVeth, err)
 	}
 
 	if err := originNS.Close(); err != nil {
-		logrus.Error(err)
+		logrus.Errorf("failed to close original NS, ignoring error: %v", err)
 	}
 
 	if err := vmSwitchCmd.Wait(); err != nil {
@@ -167,6 +176,7 @@ func setupLogging(logFile string) {
 }
 
 func configureVMSwitch(
+	ctx context.Context,
 	ns netns.NsHandle,
 	vmSwitchLogFile,
 	vmSwitchPath,
@@ -194,7 +204,7 @@ func configureVMSwitch(
 	if debug {
 		args = append(args, "-debug")
 	}
-	vmSwitchCmd := exec.Command(nsenter, args...)
+	vmSwitchCmd := exec.CommandContext(ctx, nsenter, args...)
 
 	// pass in the vsock connection as a FD to the
 	// vm-switch process in the newely created namespace
@@ -212,10 +222,22 @@ func createVethPair(defaultNsPid, peerNsPid int, defaultNSVeth, rancherDesktopNS
 		PeerNamespace: netlink.NsPid(peerNsPid),
 	}
 	if err := netlink.LinkAdd(veth); err != nil {
-		return err
+		return fmt.Errorf("failed to add veth link %+v: %w", veth, err)
 	}
 	logrus.Infof("created veth pair %s and %s", defaultNSVeth, rancherDesktopNSVeth)
 	return nil
+}
+
+// Tear down the veth in the default namespace if it exists; normally
+// this should happen when the network namespace goes away.
+func cleanupVethLink(originNS netns.NsHandle) {
+	// First, though, switch back to the default namespace if available.
+	// This would fail if we already switched to it (and closed the handle).
+	_ = netns.Set(originNS)
+	if link, err := netlink.LinkByName(defaultNSVeth); err == nil {
+		err = netlink.LinkDel(link)
+		logrus.Infof("tearing down link %s: %v", defaultNSVeth, err)
+	}
 }
 
 func configureVethPair(vethName, ipAddr string) error {
@@ -240,8 +262,9 @@ func configureVethPair(vethName, ipAddr string) error {
 	return nil
 }
 
-func unshareCmd(ns netns.NsHandle, args string) error {
-	unshareCmd := exec.Command( //nolint:gosec // no security concern with the potentially tainted command arguments
+func unshareCmd(ctx context.Context, ns netns.NsHandle, args string) error {
+	unshareCmd := exec.CommandContext( //nolint:gosec // no security concern with the potentially tainted command arguments
+		ctx,
 		nsenter, fmt.Sprintf("-n/proc/%d/fd/%d", os.Getpid(), ns), "-F",
 		unshare, "--pid", "--mount-proc", "--fork", "--propagation", "slave", args)
 	unshareCmd.Stdout = os.Stdout
@@ -269,13 +292,17 @@ func writeWSLInitPid(pid int) error {
 	return nil
 }
 
-func listenForHandshake() {
+func listenForHandshake(ctx context.Context) {
 	logrus.Info("starting handshake process with host-switch")
 	l, err := vsock.Listen(vsock.CIDAny, vsockHandshakePort)
 	if err != nil {
 		logrus.Error(err)
 	}
 	defer l.Close()
+	go func() {
+		<-ctx.Done()
+		l.Close()
+	}()
 	for {
 		conn, err := l.Accept()
 		if err != nil {
