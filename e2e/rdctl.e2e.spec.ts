@@ -115,11 +115,11 @@ test.describe('Command server', () => {
 
   test.describe.configure({ mode: 'serial' });
 
-  test.beforeAll(async() => {
-    [electronApp, page] = await startSlowerDesktop(__filename, { kubernetes: { enabled: true } });
+  test.beforeAll(async({ colorScheme }, testInfo) => {
+    [electronApp, page] = await startSlowerDesktop(testInfo, { kubernetes: { enabled: true } });
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
 
   test('should load Kubernetes API', async() => {
     const navPage = new NavPage(page);

@@ -82,7 +82,7 @@ test.describe('Locked fields', () => {
     await restoreUserProfile();
   });
 
-  test.beforeAll(async() => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     createDefaultSettings({ containerEngine: { allowedImages: { enabled: true, patterns: ['a', 'b', 'c', 'e'] } } });
     await saveUserProfile();
     await setUserProfile(
@@ -93,12 +93,12 @@ test.describe('Locked fields', () => {
         kubernetes:      { version: lockedK8sVersion },
       },
     );
-    electronApp = await startRancherDesktop(__filename);
+    electronApp = await startRancherDesktop(testInfo);
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(async() => {
-    await teardown(electronApp, __filename);
+  test.afterAll(async({ colorScheme }, testInfo) => {
+    await teardown(electronApp, testInfo);
     await tool('rdctl', 'factory-reset', '--verbose');
     reopenLogs();
   });

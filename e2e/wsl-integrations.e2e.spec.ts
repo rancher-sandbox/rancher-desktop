@@ -164,10 +164,10 @@ test.describe('WSL Integrations', () => {
     }
   });
 
-  test.beforeAll(async() => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     createDefaultSettings();
 
-    electronApp = await startRancherDesktop(__filename, {
+    electronApp = await startRancherDesktop(testInfo, {
       env: {
         PATH:             path.join(workdir, 'system32') + path.delimiter + process.env.PATH,
         RD_TEST_WSL_EXE:  path.join(workdir, 'system32', 'wsl.exe'),
@@ -179,7 +179,7 @@ test.describe('WSL Integrations', () => {
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
 
   test('should open preferences modal', async() => {
     expect(preferencesWindow).toBeDefined();

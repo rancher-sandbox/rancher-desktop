@@ -21,7 +21,7 @@ import type { ElectronApplication, Page } from '@playwright/test';
 
 const isWin = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
-const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
+let console: Log;
 
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
@@ -30,7 +30,7 @@ test.describe.serial('Main App Test', () => {
   let screenshot: MainWindowScreenshots;
   const afterCheckedTimeout = 200;
 
-  test.beforeAll(async({ colorScheme }) => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     createDefaultSettings({
       application:     { updater: { enabled: false } },
       containerEngine: {
@@ -45,7 +45,8 @@ test.describe.serial('Main App Test', () => {
       {},
     );
 
-    electronApp = await startRancherDesktop(__filename, { mock: false });
+    electronApp = await startRancherDesktop(testInfo, { mock: false });
+    console = new Log(path.basename(__filename, '.ts'), reportAsset(testInfo, 'log'));
 
     page = await electronApp.firstWindow();
     navPage = new NavPage(page);
@@ -69,12 +70,12 @@ test.describe.serial('Main App Test', () => {
     await expect(navExtension).toBeVisible({ timeout: 30000 });
   });
 
-  test.afterAll(async({ colorScheme }) => {
+  test.afterAll(async({ colorScheme }, testInfo) => {
     await clearUserProfile();
     await tool('rdctl', 'extension', 'uninstall', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
     await tool('rdctl', 'extension', 'uninstall', 'docker/logs-explorer-extension');
 
-    return teardown(electronApp, __filename);
+    return teardown(electronApp, testInfo);
   });
 
   test.describe('Main Page', () => {

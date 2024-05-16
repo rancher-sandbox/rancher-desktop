@@ -30,7 +30,7 @@ const rdctl = getFullPathForTool('rdctl');
 // and we don't have to deal with unintended escape-sequence processing.
 const execPath = process.execPath.replace(/\\/g, '/');
 
-const console = new Log(path.basename(__filename, '.ts'), reportAsset(__filename, 'log'));
+let console: Log;
 const NAMESPACE = 'rancher-desktop-extensions';
 
 test.describe.serial('Extensions', () => {
@@ -60,14 +60,15 @@ test.describe.serial('Extensions', () => {
       });
   }
 
-  test.beforeAll(async() => {
-    [app, page] = await startSlowerDesktop(__filename, {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
+    [app, page] = await startSlowerDesktop(testInfo, {
       containerEngine: { name: ContainerEngine.MOBY },
       kubernetes:      { enabled: false },
     });
+    console = new Log(path.basename(__filename, '.ts'), reportAsset(testInfo, 'log'));
   });
 
-  test.afterAll(() => teardown(app, __filename));
+  test.afterAll(({ colorScheme }, testInfo) => teardown(app, testInfo));
 
   // Set things up so console messages from the UI gets logged too.
   let currentTestInfo: TestInfo;

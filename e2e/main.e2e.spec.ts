@@ -14,14 +14,14 @@ let page: Page;
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
 
-  test.beforeAll(async() => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     createDefaultSettings();
 
-    electronApp = await startRancherDesktop(__filename);
+    electronApp = await startRancherDesktop(testInfo);
     page = await electronApp.firstWindow();
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
 
   test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);

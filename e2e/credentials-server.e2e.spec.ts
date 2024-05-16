@@ -224,9 +224,9 @@ describeWithCreds('Credentials server', () => {
 
   test.describe.configure({ mode: 'serial' });
 
-  test.beforeAll(async() => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     await tool('rdctl', 'factory-reset', '--verbose');
-    [electronApp, page] = await startSlowerDesktop(__filename, { kubernetes: { enabled: false } });
+    [electronApp, page] = await startSlowerDesktop(testInfo, { kubernetes: { enabled: false } });
   });
 
   test.afterAll(async() => {
@@ -246,7 +246,7 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
-  test.afterAll(() => teardown(electronApp, __filename));
+  test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
 
   test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);

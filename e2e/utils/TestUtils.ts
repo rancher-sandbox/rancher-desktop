@@ -6,7 +6,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import { expect, _electron, ElectronApplication } from '@playwright/test';
+import { expect, _electron, ElectronApplication, TestInfo } from '@playwright/test';
 import _, { GetFieldType } from 'lodash';
 import { Page } from 'playwright-core';
 import plist from 'plist';
@@ -18,9 +18,10 @@ import * as childProcess from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
-let testInfo: undefined | {
-  testPath: string;
-  startTime: number;
+let currentTest: undefined | {
+  file: string,
+  startTime: number,
+  options: startRancherDesktopOptions,
 };
 
 /**
@@ -160,16 +161,24 @@ export function getAlternateSetting<K extends keyof RecursiveTypes<Settings>>(cu
 
 /**
  * Calculate the path of an asset that should be attached to a test run.
- * @param testPath The path to the test file.
- * @param type What kind of asset this is.
+ * @param type What kind of asset this is; defaults to `trace`.
  */
-export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
-  const name = {
+export function reportAsset(testInfo: TestInfo, type: 'trace' | 'log' = 'trace') {
+  const testName = testInfo.file;
+  let name = `${ path.basename(testName).replace(/(?:\.e2e)(?:\.spec)(?:\.ts)$/, '') }-`;
+
+  if (currentTest?.options?.logVariant) {
+    name += `${ currentTest.options.logVariant }-`;
+  }
+  if (testInfo.retry) {
+    name += `try-${ testInfo.retry }-`;
+  }
+  name += {
     trace: 'pw-trace.zip',
     log:   'logs',
   }[type];
 
-  return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
+  return path.join(__dirname, '..', 'reports', name);
 }
 
 /**
@@ -225,14 +234,15 @@ export async function teardownApp(app: ElectronApplication) {
   }
 }
 
-export async function teardown(app: ElectronApplication, filename: string) {
+export async function teardown(app: ElectronApplication, testInfo: TestInfo) {
   const context = app.context();
+  const { file: filename } = testInfo;
 
-  await context.tracing.stop({ path: reportAsset(filename) });
+  await context.tracing.stop({ path: reportAsset(testInfo) });
   await teardownApp(app);
 
-  if (testInfo?.testPath === filename) {
-    const delta = (Date.now() - testInfo.startTime) / 1_000;
+  if (currentTest?.file === filename) {
+    const delta = (Date.now() - currentTest.startTime) / 1_000;
     const min = Math.floor(delta / 60);
     const sec = Math.round(delta % 60);
     const string = min ? `${ min } min ${ sec } sec` : `${ sec } seconds`;
@@ -331,8 +341,8 @@ export interface startRancherDesktopOptions {
   noModalDialogs?: boolean;
   /** Maximum time in milliseconds to wait for the app to launch. */
   timeout?: number;
-  /** The name to use for the log; defaults to the test name. */
-  logName?: string;
+  /** A suffix to be added to the log file, for variants. */
+  logVariant?: string;
 }
 
 /**
@@ -341,8 +351,10 @@ export interface startRancherDesktopOptions {
  * @param testPath The path to the test file.
  * @param options Additional options; see type definition for details.
  */
-export async function startRancherDesktop(testPath: string, options?: startRancherDesktopOptions): Promise<ElectronApplication> {
-  testInfo = { testPath, startTime: Date.now() };
+export async function startRancherDesktop(testInfo: TestInfo, options: startRancherDesktopOptions = {}): Promise<ElectronApplication> {
+  currentTest = {
+    file: testInfo.file, options, startTime: Date.now(),
+  };
   const args = [
     path.join(__dirname, '../../'),
     '--disable-gpu',
@@ -350,12 +362,17 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
     // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
     '--disable-dev-shm-usage',
   ];
+  const logsDir = reportAsset(testInfo, 'log');
+
+  await fs.promises.rm(logsDir, {
+    recursive: true, force: true, maxRetries: 3,
+  });
   const launchOptions: Parameters<typeof _electron.launch>[0] = {
     args,
     env: {
       ...process.env,
       ...options?.env ?? {},
-      RD_LOGS_DIR: reportAsset(options?.logName ?? testPath, 'log'),
+      RD_LOGS_DIR: logsDir,
       ...options?.mock ?? true ? { RD_MOCK_BACKEND: '1' } : {},
     },
   };
@@ -373,14 +390,14 @@ export async function startRancherDesktop(testPath: string, options?: startRanch
   return electronApp;
 }
 
-export async function startSlowerDesktop(filename: string, defaultSettings: RecursivePartial<Settings> = {}): Promise<[ElectronApplication, Page]> {
+export async function startSlowerDesktop(testInfo: TestInfo, defaultSettings: RecursivePartial<Settings> = {}): Promise<[ElectronApplication, Page]> {
   const launchOptions: startRancherDesktopOptions = { mock: false };
 
   createDefaultSettings(defaultSettings);
   if (process.env.CI) {
     launchOptions.timeout = 120_000; // default is 30_000 msec but the CI is very slow
   }
-  const electronApp = await startRancherDesktop(filename, launchOptions);
+  const electronApp = await startRancherDesktop(testInfo, launchOptions);
   const page = await electronApp.firstWindow();
 
   return [electronApp, page];

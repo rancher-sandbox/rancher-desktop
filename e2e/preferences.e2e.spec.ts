@@ -20,18 +20,18 @@ test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
   let preferencesWindow: Page;
 
-  test.beforeAll(async() => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     createDefaultSettings();
 
-    electronApp = await startRancherDesktop(__filename);
+    electronApp = await startRancherDesktop(testInfo);
 
     page = await electronApp.firstWindow();
     await new NavPage(page).preferencesButton.click();
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
 
-  test.afterAll(async() => {
-    await teardown(electronApp, __filename);
+  test.afterAll(async({ colorScheme }, testInfo) => {
+    await teardown(electronApp, testInfo);
     await tool('rdctl', 'factory-reset', '--verbose');
     reopenLogs();
   });
