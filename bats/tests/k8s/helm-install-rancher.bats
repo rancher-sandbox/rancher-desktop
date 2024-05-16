@@ -13,18 +13,6 @@ local_setup() {
     helm repo update
 }
 
-get_host() {
-    if is_windows; then
-        local LB_IP
-        local output='jsonpath={.status.loadBalancer.ingress[0].ip}'
-        LB_IP=$(kubectl get service traefik --namespace kube-system --output "$output")
-        assert [ -n "$LB_IP" ] || return
-        echo "$LB_IP.sslip.io"
-    else
-        echo "localhost"
-    fi
-}
-
 deploy_rancher() {
     helm upgrade \
         --install cert-manager jetstack/cert-manager \
@@ -34,7 +22,8 @@ deploy_rancher() {
         --create-namespace
 
     local host
-    host=$(get_host) || return
+    host=$(traefik_hostname) || return
+
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --version "${RD_RANCHER_IMAGE_TAG#v}" \
@@ -46,7 +35,10 @@ deploy_rancher() {
 }
 
 verify_rancher() {
-    run try --max 9 --delay 10 curl --insecure --silent --show-error "https://$(get_host)/dashboard/auth/login"
+    local host
+    host=$(traefik_hostname) || return
+
+    run try --max 9 --delay 10 curl --insecure --silent --show-error "https://${host}/dashboard/auth/login"
     assert_success
     assert_output --partial "Rancher Dashboard"
     run kubectl get secret --namespace cattle-system bootstrap-secret -o json
@@ -65,6 +57,7 @@ foreach_k3s_version \
     factory_reset \
     start_kubernetes \
     wait_for_kubelet \
+    wait_for_traefik \
     deploy_rancher \
     verify_rancher \
     uninstall_rancher

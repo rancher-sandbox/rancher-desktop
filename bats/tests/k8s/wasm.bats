@@ -26,19 +26,6 @@ get_runtime_classes() {
     fi
 }
 
-# Get the host name to use to reach Traefik
-get_host() {
-    if is_windows; then
-        local jsonpath='jsonpath={.status.loadBalancer.ingress[0].ip}'
-        run --separate-stderr kubectl get service traefik --namespace kube-system --output "$jsonpath"
-        assert_success || return
-        assert_output || return
-        echo "$output.sslip.io"
-    else
-        echo "localhost"
-    fi
-}
-
 @test 'start k8s without wasm support' {
     factory_reset
     start_kubernetes
@@ -63,6 +50,8 @@ get_host() {
     factory_reset
     start_kubernetes --experimental.container-engine.web-assembly.enabled
     wait_for_kubelet
+    wait_for_traefik
+
     try assert_traefik_crd_established
 }
 
@@ -102,11 +91,10 @@ spec:
 EOF
 }
 
-@test 'wait for traefik to get IP' {
-    try get_host
-}
-
 @test 'deploy ingress' {
+    local host
+    host=$(traefik_hostname)
+
     kubectl apply --filename - <<EOF
 apiVersion: v1
 kind: Service
@@ -127,7 +115,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-  - host: $(get_host)
+  - host: "$host"
     http:
       paths:
         - path: /
@@ -141,8 +129,11 @@ EOF
 }
 
 @test 'connect to the service' {
+    local host
+    host=$(traefik_hostname)
+
     # This can take 100s with old versions of traefik, and 15s with newer ones.
-    run try curl --silent --fail "http://$(get_host)/hello"
+    run try curl --silent --fail "http://${host}/hello"
     assert_success
     assert_output "Hello world from Spin!"
 }

@@ -47,6 +47,28 @@ wait_for_kube_deployment_available() {
     try assert_kube_deployment_available "$@"
 }
 
+traefik_ip() {
+    local jsonpath='jsonpath={.status.loadBalancer.ingress[0].ip}'
+    run --separate-stderr kubectl get service traefik --namespace kube-system --output "$jsonpath"
+    assert_success || return
+    assert_output || return
+    echo "$output"
+}
+
+traefik_hostname() {
+    if is_windows; then
+        local ip
+        ip=$(traefik_ip) || return
+        echo "${ip}.sslip.io"
+    else
+        echo "localhost"
+    fi
+}
+
+wait_for_traefik() {
+    try traefik_ip
+}
+
 get_k3s_versions() {
     if [[ $RD_K3S_VERSIONS == "all" ]]; then
         # filter out duplicates; RD only supports the latest of +k3s1, +k3s2, etc.
