@@ -91,6 +91,9 @@ func main() {
 		logrus.Errorf("failed getting a handle to the current namespace: %v", err)
 	}
 
+	// Remove any existing veth devices (before we set up network namespaces)
+	cleanupVethLink(originNS)
+
 	// setup network namespace
 	ns, err := configureNamespace()
 	if err != nil {
