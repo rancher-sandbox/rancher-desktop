@@ -1510,8 +1510,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
               await this.runInit();
               if (configureWASM) {
-                // wsl-exec is needed to correctly resolve DNS names
-                await this.execCommand('/usr/local/bin/wsl-exec', await this.wslify(executable('setup-spin')));
+                try {
+                  // wsl-exec is needed to correctly resolve DNS names
+                  await this.execCommand('/usr/local/bin/wsl-exec', await this.wslify(executable('setup-spin')));
+                } catch {
+                  // just ignore any errors; all the script does is installing spin plugins and templates
+                }
               }
               if (rdNetworking) {
                 // Do not await on this, as we don't want to wait until the proxy exits.
