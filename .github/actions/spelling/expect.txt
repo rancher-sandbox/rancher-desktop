@@ -140,7 +140,7 @@ coredns
 corejs
 corepack
 coreutils
-crd
+crds
 credfwd
 credhelper
 cri
@@ -666,6 +666,7 @@ runbook
 runc
 rundir
 RUnlock
+runtimeclass
 runtimeclasses
 runtimes
 rvf

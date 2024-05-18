@@ -6,13 +6,6 @@ local_setup() {
     fi
 }
 
-assert_traefik_crd_established() {
-    local jsonpath="{.status.conditions[?(@.type=='Established')].status}"
-    run kubectl get crd traefikservices.traefik.containo.us --output jsonpath="$jsonpath"
-    assert_success || return
-    assert_output 'True'
-}
-
 # Get Kubernetes RuntimeClasses; sets $output to the JSON list.
 get_runtime_classes() {
     # kubectl may emit warnings here; ensure that we don't fall over.
@@ -24,47 +17,66 @@ get_runtime_classes() {
         # Warning: node.k8s.io/v1beta1 RuntimeClass is deprecated in v1.22+, unavailable in v1.25+
         output=$stderr assert_output --partial deprecated || return
     fi
+
+    local rtc=$output
+    run jq '.items | length' <<<"$rtc"
+    assert_success || return
+    ((output > 0)) || return
+    echo "$rtc"
+}
+
+create_bats_runtimeclass() {
+    provisioning_script <<EOF
+mkdir -p /var/lib/rancher/k3s/server/manifests
+cat <<YAML >/var/lib/rancher/k3s/server/manifests/zzzz-bats.yaml
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: bats
+handler: bats
+YAML
+EOF
 }
 
 @test 'start k8s without wasm support' {
     factory_reset
+    create_bats_runtimeclass
     start_kubernetes
     wait_for_kubelet
-
-    # The manifests in /var/lib/rancher/k3s/server/manifests are processed
-    # in alphabetical order. So when traefik.yaml has been loaded we know that
-    # rd-runtime.yaml has already been processed.
-    try assert_traefik_crd_established
 }
 
 @test 'verify no runtimeclasses have been defined' {
-    get_runtime_classes
-    run jq_output '.items | length'
+    run try get_runtime_classes
     assert_success
-    assert_output 0
+
+    run jq_output --raw-output '.items[0].metadata.name'
+    assert_success
+    assert_output 'bats'
 }
 
 @test 'start k8s with wasm support' {
     # TODO We should enable the wasm feature on a running app to make sure the
     # TODO runtime class is defined even after k3s is initially installed.
     factory_reset
+    create_bats_runtimeclass
     start_kubernetes --experimental.container-engine.web-assembly.enabled
     wait_for_kubelet
     wait_for_traefik
-
-    try assert_traefik_crd_established
 }
 
 @test 'verify spin runtime class has been defined (and no others)' {
-    get_runtime_classes
-    rtc=$output
-    run jq --raw-output '.items | length' <<<"$rtc"
+    run try get_runtime_classes
     assert_success
-    assert_output 1
 
-    run jq --raw-output '.items[0].metadata.name' <<<"$rtc"
+    rtc=$output
+    run jq '.items | length' <<<"$rtc"
     assert_success
-    assert_output 'spin'
+    assert_output 2
+
+    run jq --raw-output '.items[].metadata.name' <<<"$rtc"
+    assert_success
+    assert_line 'bats'
+    assert_line 'spin'
 }
 
 @test 'deploy sample app' {

@@ -43,10 +43,12 @@ ln -s -f "${K3S_DIR}/${K3S}" /usr/local/bin/k3s
 chmod a+x "${K3S_DIR}/${K3S}" || true
 
 # Make sure any old manifests are removed before configuring k3s again.
+# All Rancher Desktop manifest have a name like z123-foo-bar, so only delete
+# those. That way provisioning scripts can still create other manifests.
 # We need to create the directory before we run `k3s server ...` because
 # we install additional manifests that k3s will install during startup.
 MANIFESTS=/var/lib/rancher/k3s/server/manifests
-rm -rf "$MANIFESTS"
+rm -rf "$MANIFESTS/z[0-9]*"
 mkdir -p "$MANIFESTS"
 
 STATIC=/var/lib/rancher/k3s/server/static/rancher-desktop
