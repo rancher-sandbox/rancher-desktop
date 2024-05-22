@@ -135,6 +135,9 @@ func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
 }
 
 func (p *PortProxy) Close() error {
+	// Close all the active listeners
+	p.cleanupListeners()
+
 	// Close the listener first to prevent new connections.
 	err := p.listener.Close()
 	if err != nil {
@@ -148,4 +151,10 @@ func (p *PortProxy) Close() error {
 	p.wg.Wait()
 
 	return nil
+}
+
+func (p *PortProxy) cleanupListeners() {
+	for _, l := range p.activeListeners {
+		_ = l.Close()
+	}
 }
