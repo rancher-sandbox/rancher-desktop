@@ -114,7 +114,7 @@ if using_windows_exe && ! is_windows; then
 fi
 
 ########################################################################
-: "${RD_USE_NETWORKING_TUNNEL:=false}"
+: "${RD_USE_NETWORKING_TUNNEL:=$(bool is_windows)}"
 
 using_networking_tunnel() {
     is_true "$RD_USE_NETWORKING_TUNNEL"
