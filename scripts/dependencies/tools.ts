@@ -594,9 +594,13 @@ export class CertManager implements Dependency, GitHubDependency {
 
   async download(context: DownloadContext): Promise<void> {
     const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.certManager }`;
-    const filename = 'cert-manager.yaml';
+    const filename = 'cert-manager.crds.yaml';
 
     await download(`${ base }/${ filename }`, path.join(context.resourcesDir, filename));
+
+    const url = `https://charts.jetstack.io/charts/cert-manager-v${ context.versions.certManager }.tgz`;
+
+    await download(url, path.join(context.resourcesDir, 'cert-manager.tgz'));
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {

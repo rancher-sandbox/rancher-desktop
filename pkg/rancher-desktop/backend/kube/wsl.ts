@@ -11,7 +11,7 @@ import WSLBackend, { Action } from '../wsl';
 
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import { BackendSettings, RestartReasons } from '@pkg/backend/backend';
-import BackendHelper from '@pkg/backend/backendHelper';
+import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '@pkg/backend/backendHelper';
 import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
@@ -252,7 +252,16 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       await this.progressTracker.action(
         'Removing Traefik',
         50,
-        this.k3sHelper.uninstallTraefik(client));
+        this.k3sHelper.uninstallHelmChart(client, 'traefik'));
+    }
+    if (!this.cfg?.experimental?.kubernetes?.options?.spinkube) {
+      await this.progressTracker.action(
+        'Removing spinkube operator',
+        50,
+        Promise.all([
+          this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_CERT_MANAGER),
+          this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_SPIN_OPERATOR),
+        ]));
     }
 
     await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
