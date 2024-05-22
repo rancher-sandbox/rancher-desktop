@@ -191,8 +191,8 @@ start_container_engine() {
             --experimental.virtual-machine.mount.9p.security-model="$RD_9P_SECURITY_MODEL"
         )
     fi
-    if using_networking_tunnel; then
-        args+=(--experimental.virtual-machine.networking-tunnel)
+    if is_windows; then
+        args+=("--experimental.virtual-machine.networking-tunnel=$(bool using_networking_tunnel)")
     fi
     if using_vz_emulation; then
         args+=(--experimental.virtual-machine.type vz)
