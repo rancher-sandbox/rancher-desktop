@@ -59,3 +59,29 @@ EOF
     assert_success
     assert_output "Hello world from Spin!"
 }
+
+@test 'disable spinkube and traefik' {
+    local k3s_pid
+    k3s_pid=$(get_service_pid k3s)
+
+    trace "Disable spinkube operator and traefik"
+    rdctl set \
+        --experimental.kubernetes.options.spinkube=false \
+        --kubernetes.options.traefik=false
+
+    trace "Wait until k3s has restarted"
+    try --max 30 --delay 5 refute_service_pid k3s "${k3s_pid}"
+    wait_for_kubelet
+}
+
+assert_helm_charts_are_deleted() {
+    run --separate-stderr kubectl get helmcharts --namespace kube-system
+    assert_success || return
+    refute_line traefik || return
+    refute_line spin-operator || return
+    refute_line cert-manager
+}
+
+@test 'verify that spinkube and traefik have been uninstalled' {
+    try assert_helm_charts_are_deleted
+}

@@ -8,7 +8,7 @@ import util from 'util';
 import semver from 'semver';
 
 import { Architecture, BackendSettings, RestartReasons } from '../backend';
-import BackendHelper from '../backendHelper';
+import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '../backendHelper';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action } from '../lima';
 
@@ -222,7 +222,16 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       await this.progressTracker.action(
         'Removing Traefik',
         50,
-        this.k3sHelper.uninstallTraefik(this.client));
+        this.k3sHelper.uninstallHelmChart(this.client, 'traefik'));
+    }
+    if (!this.cfg?.experimental?.kubernetes?.options?.spinkube) {
+      await this.progressTracker.action(
+        'Removing spinkube operator',
+        50,
+        Promise.all([
+          this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_CERT_MANAGER),
+          this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_SPIN_OPERATOR),
+        ]));
     }
 
     await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);

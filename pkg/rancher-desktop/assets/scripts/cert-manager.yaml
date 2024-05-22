@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cert-manager
+  namespace: kube-system
+spec:
+  chart: "https://%{KUBERNETES_API}%/static/rancher-desktop/cert-manager.tgz"
+  targetNamespace: cert-manager
+  # Old versions of the helm-controller don't support createNamespace, so we
+  # created the namespace ourselves.
+  createNamespace: false

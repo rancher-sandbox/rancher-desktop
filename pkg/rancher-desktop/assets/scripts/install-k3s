@@ -48,7 +48,7 @@ chmod a+x "${K3S_DIR}/${K3S}" || true
 # We need to create the directory before we run `k3s server ...` because
 # we install additional manifests that k3s will install during startup.
 MANIFESTS=/var/lib/rancher/k3s/server/manifests
-rm -rf "$MANIFESTS/z[0-9]*"
+rm -rf "${MANIFESTS}/z"[0-9]*
 mkdir -p "$MANIFESTS"
 
 STATIC=/var/lib/rancher/k3s/server/static/rancher-desktop

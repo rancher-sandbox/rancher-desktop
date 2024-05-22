@@ -5,6 +5,7 @@ import merge from 'lodash/merge';
 import semver from 'semver';
 import yaml from 'yaml';
 
+import CERT_MANAGER from '@pkg/assets/scripts/cert-manager.yaml';
 import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-containerd-shims';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
@@ -22,14 +23,17 @@ const CONTAINERD_CONFIG_TOML = '/etc/containerd/config.toml';
 const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
 
 const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
+
 // Manifests are applied in sort order, so use a prefix to load them last, in the required sequence.
 // Names should start with `z` followed by a digit, so that `install-k3s` cleans them up on restart.
-const MANIFEST_RUNTIMES_YAML = `${ MANIFEST_DIR }/z100-runtimes.yaml`;
-const MANIFEST_CERT_MANAGER = `${ MANIFEST_DIR }/z110-cert-manager.yaml`;
-const MANIFEST_SPIN_OPERATOR_CRDS = `${ MANIFEST_DIR }/z120-spin-operator.crds.yaml`;
-const MANIFEST_SPIN_OPERATOR = `${ MANIFEST_DIR }/z125-spin-operator.yaml`;
+export const MANIFEST_RUNTIMES = 'z100-runtimes';
+export const MANIFEST_CERT_MANAGER_CRDS = 'z110-cert-manager.crds';
+export const MANIFEST_CERT_MANAGER = 'z115-cert-manager';
+export const MANIFEST_SPIN_OPERATOR_CRDS = 'z120-spin-operator.crds';
+export const MANIFEST_SPIN_OPERATOR = 'z125-spin-operator';
 
 const STATIC_DIR = '/var/lib/rancher/k3s/server/static/rancher-desktop';
+const STATIC_CERT_MANAGER_CHART = `${ STATIC_DIR }/cert-manager.tgz`;
 const STATIC_SPIN_OPERATOR_CHART = `${ STATIC_DIR }/spin-operator.tgz`;
 
 const console = Logging.kube;
@@ -264,6 +268,10 @@ export default class BackendHelper {
     return shims;
   }
 
+  private static manifestFilename(manifest: string): string {
+    return `${ MANIFEST_DIR }/${ manifest }.yaml`;
+  }
+
   /**
    * Write a k3s manifest to define a runtime class for each installed containerd shim.
    */
@@ -285,7 +293,7 @@ export default class BackendHelper {
     if (runtimes.length > 0) {
       const manifest = runtimes.map(r => yaml.stringify(r)).join('---\n');
 
-      await vmx.writeFile(MANIFEST_RUNTIMES_YAML, manifest, 0o644);
+      await vmx.writeFile(this.manifestFilename(MANIFEST_RUNTIMES), manifest, 0o644);
     }
   }
 
@@ -294,10 +302,13 @@ export default class BackendHelper {
    */
   static async configureSpinOperator(vmx: VMExecutor) {
     await Promise.all([
-      vmx.copyFileIn(path.join(paths.resources, 'cert-manager.yaml'), MANIFEST_CERT_MANAGER),
-      vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), MANIFEST_SPIN_OPERATOR_CRDS),
+      vmx.copyFileIn(path.join(paths.resources, 'cert-manager.crds.yaml'), this.manifestFilename(MANIFEST_CERT_MANAGER_CRDS)),
+      vmx.copyFileIn(path.join(paths.resources, 'cert-manager.tgz'), STATIC_CERT_MANAGER_CHART),
+      vmx.writeFile(this.manifestFilename(MANIFEST_CERT_MANAGER), CERT_MANAGER, 0o644),
+
+      vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), this.manifestFilename(MANIFEST_SPIN_OPERATOR_CRDS)),
       vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART),
-      vmx.writeFile(MANIFEST_SPIN_OPERATOR, SPIN_OPERATOR, 0o644),
+      vmx.writeFile(this.manifestFilename(MANIFEST_SPIN_OPERATOR), SPIN_OPERATOR, 0o644),
     ]);
   }
 

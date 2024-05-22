@@ -1050,7 +1050,7 @@ export default class K3sHelper extends events.EventEmitter {
    * Manually uninstall the K3s-installed copy of Traefik, if it exists.
    * This exists to work around https://github.com/k3s-io/k3s/issues/5103
    */
-  async uninstallTraefik(client: KubeClient) {
+  async uninstallHelmChart(client: KubeClient, ownerName: string) {
     const deadline = Date.now() + 10 * 60 * 1_000;
 
     // If the Kubernetes server is not ready yet, we need to retry until it is.
@@ -1064,7 +1064,7 @@ export default class K3sHelper extends events.EventEmitter {
         await Promise.all(charts.filter((chart) => {
           const annotations = chart.metadata?.annotations ?? {};
 
-          return chart.metadata?.name && (annotations['objectset.rio.cattle.io/owner-name'] === 'traefik');
+          return chart.metadata?.name && (annotations['objectset.rio.cattle.io/owner-name'] === ownerName);
         }).map((chart) => {
           const name = chart.metadata?.name;
 
@@ -1082,7 +1082,7 @@ export default class K3sHelper extends events.EventEmitter {
           await util.promisify(setTimeout)(1_000);
           continue;
         }
-        console.error('Error uninstalling Traefik', ex);
+        console.error(`Error uninstalling ${ ownerName }`, ex);
 
         return;
       }
