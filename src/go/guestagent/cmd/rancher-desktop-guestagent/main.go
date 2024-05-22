@@ -215,13 +215,12 @@ func main() {
 					"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
 			}
 
-			// listenerOnlyMode represents when iptables is enabled and
-			// privileged services is disabled; this can indicate a non-admin
-			// installation of default network which requires listeners only.
-			// In listenerOnlyMode we creates TCP listeners on 127.0.0.1,
-			// so that it can be picked up by the automatic port forwarding mechanisms
-			// found in WSLv2.
-			listenerOnlyMode := *enableIptables && !*enablePrivilegedService
+			// listenerOnlyMode represents when iptables is enabled and privileged services
+			// and admin install are disabled; this typically indicates a non-admin installation
+			// of the legacy network, requiring listeners only. In listenerOnlyMode, we create
+			// TCP listeners on 127.0.0.1 to enable automatic port forwarding mechanisms,
+			// particularly in WSLv2 environments.
+			listenerOnlyMode := *enableIptables && !*enablePrivilegedService && !*adminInstall
 			// Watch for kube
 			err := kube.WatchForServices(ctx,
 				*configPath,
