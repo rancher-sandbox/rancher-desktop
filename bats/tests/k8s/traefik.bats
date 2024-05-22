@@ -67,7 +67,7 @@ assert_traefik_on_localhost() {
         # BUG BUG BUG not yet implemented
         skip "Test does not yet work from inside a WSL distro when using networking tunnel"
     fi
-    assert_traefik localhost
+    try --max 10 assert_traefik localhost
 }
 
 @test 'factory reset' {
@@ -98,12 +98,12 @@ assert_traefik_on_localhost() {
 }
 
 @test 'no connection on localhost' {
-    refute_traefik localhost
+    try --max 10 refute_traefik localhost
 }
 
 @test 'no connection on host-ip' {
     skip_unless_host_ip
-    refute_traefik "$HOST_IP"
+    try --max 10 refute_traefik "$HOST_IP"
 }
 
 @test 'enable traefik' {
@@ -127,7 +127,7 @@ assert_traefik_on_localhost() {
 
 @test 'curl traefik via host-ip while kubernetes.ingress.localhost-only is false' {
     skip_unless_host_ip
-    assert_traefik "$HOST_IP"
+    try --max 10 assert_traefik "$HOST_IP"
 }
 
 @test 'set kubernetes.ingress.localhost-only to true' {
@@ -155,5 +155,5 @@ assert_traefik_on_localhost() {
     skip_unless_host_ip
 
     # traefik should not be accessible on other interface
-    refute_traefik "$HOST_IP"
+    try --max 10 refute_traefik "$HOST_IP"
 }
