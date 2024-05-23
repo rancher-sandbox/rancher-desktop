@@ -409,7 +409,12 @@ take_screenshot() {
 
 skip_unless_host_ip() {
     if using_windows_exe; then
-        HOST_IP=$(netsh.exe interface ip show addresses 'vEthernet (WSL)' | grep -Po 'IP Address:\s+\K[\d.]+')
+        # Make sure the exit code is 0 even when netsh.exe or grep fails, in case errexit is in effect
+        HOST_IP=$(netsh.exe interface ip show addresses 'vEthernet (WSL)' | grep -Po 'IP Address:\s+\K[\d.]+' || :)
+        # The veth interface name changed at some time on Windows 11, so try the new name if the old one doesn't exist
+        if [[ -z $HOST_IP ]]; then
+            HOST_IP=$(netsh.exe interface ip show addresses 'vEthernet (WSL (Hyper-V firewall))' | grep -Po 'IP Address:\s+\K[\d.]+' || :)
+        fi
     else
         # TODO determine if the Lima VM has its own IP address
         HOST_IP=""
