@@ -57,9 +57,18 @@ traefik_ip() {
 
 traefik_hostname() {
     if is_windows; then
-        local ip
-        ip=$(traefik_ip) || return
-        echo "${ip}.sslip.io"
+        # BUG BUG BUG
+        # Currently the service ip address is not routable from the host
+        # https://github.com/rancher-sandbox/rancher-desktop/issues/6934
+        # BUG BUG BUG
+
+        # local ip
+        # ip=$(traefik_ip) || return
+        # echo "${ip}.sslip.io"
+
+        # caller must have called `skip_unless_host_ip`
+        output=$HOST_IP assert_output
+        echo "${HOST_IP}.sslip.io"
     else
         echo "localhost"
     fi
