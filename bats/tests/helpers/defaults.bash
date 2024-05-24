@@ -18,7 +18,24 @@ using_docker() {
 : "${RD_KUBERNETES_PREV_VERSION:=1.22.7}"
 
 ########################################################################
-: "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
+: "${RD_RANCHER_IMAGE_TAG:=}"
+
+# We default to the oldest Rancher version compatible with this k8s version
+if semver_lt "$RD_KUBERNETES_PREV_VERSION" 1.29.0; then
+    RD_RANCHER_IMAGE_TAG=v2.8.3
+fi
+if semver_lt "$RD_KUBERNETES_PREV_VERSION" 1.28.0; then
+    RD_RANCHER_IMAGE_TAG=v2.8.0
+fi
+if semver_lt "$RD_KUBERNETES_PREV_VERSION" 1.27.0; then
+    RD_RANCHER_IMAGE_TAG=v2.7.5
+fi
+if semver_lt "$RD_KUBERNETES_PREV_VERSION" 1.26.0; then
+    RD_RANCHER_IMAGE_TAG=v2.7.2
+fi
+if semver_lt "$RD_KUBERNETES_PREV_VERSION" 1.25.0; then
+    RD_RANCHER_IMAGE_TAG=v2.6.7
+fi
 
 ########################################################################
 # Defaults to true, except in the helper unit tests, which default to false

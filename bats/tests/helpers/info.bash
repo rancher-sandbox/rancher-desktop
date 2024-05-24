@@ -45,5 +45,8 @@ show_info() { # @test
         printf "$format" "Tracing execution:" "$(bool is_true "$RD_TRACE")"
         printf "$format" "Taking screenshots:" "$(bool taking_screenshots)"
         printf "$format" "Using ghcr.io images:" "$(bool using_ghcr_images)"
+        echo "#"
+        printf "$format" "Kubernetes version:" "$RD_KUBERNETES_PREV_VERSION"
+        printf "$format" "Rancher image tag:" "$RD_RANCHER_IMAGE_TAG"
     ) >&3
 }

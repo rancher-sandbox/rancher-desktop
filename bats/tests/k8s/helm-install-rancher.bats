@@ -4,6 +4,9 @@ load '../helpers/load'
 RD_FILE_RAMDISK_SIZE=12 # We need more disk to run the Rancher image.
 
 local_setup() {
+    if [[ -z $RD_RANCHER_IMAGE_TAG ]]; then
+        skip "RD_RANCHER_IMAGE_TAG is not set"
+    fi
     needs_port 443
 }
 
