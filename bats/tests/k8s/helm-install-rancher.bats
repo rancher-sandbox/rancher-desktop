@@ -14,6 +14,11 @@ local_setup() {
 }
 
 deploy_rancher() {
+    # TODO remove `skip_unless_host_ip` once `traefik_hostname` no longer needs it
+    if is_windows; then
+        skip_unless_host_ip
+    fi
+
     helm upgrade \
         --install cert-manager jetstack/cert-manager \
         --namespace cert-manager \
@@ -35,6 +40,11 @@ deploy_rancher() {
 }
 
 verify_rancher() {
+    # TODO remove `skip_unless_host_ip` once `traefik_hostname` no longer needs it
+    if is_windows; then
+        skip_unless_host_ip
+    fi
+
     local host
     host=$(traefik_hostname) || return
 

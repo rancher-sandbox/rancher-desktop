@@ -26,6 +26,11 @@ local_setup() {
 
 # TODO replace ingress with port-forwarding
 @test 'deploy ingress' {
+    # TODO remove `skip_unless_host_ip` once `traefik_hostname` no longer needs it
+    if is_windows; then
+        skip_unless_host_ip
+    fi
+
     local host
     host=$(traefik_hostname)
 
@@ -52,6 +57,11 @@ EOF
 }
 
 @test 'connect to app on localhost' {
+    # TODO remove `skip_unless_host_ip` once `traefik_hostname` no longer needs it
+    if is_windows; then
+        skip_unless_host_ip
+    fi
+
     local host
     host=$(traefik_hostname)
 
