@@ -651,8 +651,11 @@ export class SpinCLI implements Dependency, GitHubDependency {
 
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'aarch64' : 'amd64';
-    // maybe use 'static-linux' if we run into GLIBC compat issues with the default Linux build
-    const platform = context.goPlatform === 'darwin' ? 'macos' : context.goPlatform;
+    const platform = {
+      darwin:  'macos',
+      linux:   'static-linux',
+      windows: 'windows',
+    }[context.goPlatform];
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.spinCLI }`;
     const archiveName = `spin-v${ context.versions.spinCLI }-${ platform }-${ arch }${ context.goPlatform.startsWith('win') ? '.zip' : '.tar.gz' }`;
     const expectedChecksum = await findChecksum(`${ baseURL }/checksums-v${ context.versions.spinCLI }.txt`, archiveName);
