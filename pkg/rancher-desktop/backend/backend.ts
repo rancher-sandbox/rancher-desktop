@@ -221,6 +221,7 @@ export interface VMExecutor {
   /**
    * spawn the given command in the virtual machine, returning the child
    * process itself.
+   * @note On Windows, this will be within the network / pid namespace.
    * @param options Execution options.
    * @param command The command to execute.
    */

@@ -154,6 +154,7 @@ export class ImageEventHandler {
         code = (await this.imageProcessor.scanImage(taggedImageName)).code;
         await this.imageProcessor.refreshImages();
       } catch (err) {
+        console.error(`Failed to scan image ${ imageName }: `, err);
         if (isUnixError(err)) {
           code = err.code;
         }
