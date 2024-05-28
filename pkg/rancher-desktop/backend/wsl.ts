@@ -1052,7 +1052,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   spawn(...command: string[]): childProcess.ChildProcess;
   spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
   spawn(optionsOrCommand: execOptions | string, ...command: string[]): childProcess.ChildProcess {
-    const args = ['--distribution', INSTANCE_NAME, '--exec'];
+    const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/wsl-exec'];
 
     if (typeof optionsOrCommand === 'string') {
       args.push(optionsOrCommand);
