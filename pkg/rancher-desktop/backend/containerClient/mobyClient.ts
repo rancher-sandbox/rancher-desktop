@@ -20,6 +20,7 @@ import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
+import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.moby;
 
@@ -207,6 +208,7 @@ export class MobyClient implements ContainerEngineClient {
         } else {
           links[linkName] = path.posix.join(path.posix.dirname(entry.header.name), realName);
         }
+        await stream.promises.finished(entry.resume());
         break;
       }
       case 'directory': {
@@ -217,6 +219,7 @@ export class MobyClient implements ContainerEngineClient {
           continue;
         }
         await fs.promises.mkdir(dirName, { recursive: true });
+        await stream.promises.finished(entry.resume());
         console.debug(`Created directory ${ dirName }`);
 
         break;
@@ -246,7 +249,7 @@ export class MobyClient implements ContainerEngineClient {
     const reverseLinks: Record<string, string[]> = {};
 
     for (const linkName in links) {
-      while (links[links[linkName]]) {
+      while (links[links[linkName]] && links[linkName] !== linkName) {
         // The link points to another link; flatten it.
         links[linkName] = links[links[linkName]];
       }
@@ -255,11 +258,16 @@ export class MobyClient implements ContainerEngineClient {
       reverseLinks[links[linkName]].push(linkName);
     }
 
+    if (Object.keys(reverseLinks).length === 0) {
+      return;
+    }
+
     for await (const entry of fs.createReadStream(archive).pipe(tar.extract())) {
       const linkNames = reverseLinks[entry.header.name] ?? [];
 
       if (linkNames.length === 0) {
         // This entry isn't a link target
+        await stream.promises.finished(entry.resume());
         continue;
       }
       switch (entry.header.type) {
@@ -278,25 +286,55 @@ export class MobyClient implements ContainerEngineClient {
         }));
         break;
       case 'file': case 'contiguous-file': {
-        await Promise.all(linkNames.map(async(linkName) => {
+        const fileNames = linkNames.map((linkName) => {
           const fileName = absPath(linkName);
 
           if (!fileName) {
             console.warn(`Skipping unexpected file ${ entry.header.name } -> ${ linkName }`);
-
-            return;
           }
-          await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
-          await stream.promises.finished(entry.pipe(fs.createWriteStream(fileName)));
-          delete links[linkName];
-          console.debug(`Wrote ${ fileName } from ${ entry.header.name }`);
+
+          return fileName;
+        }).filter(defined);
+
+        await Promise.all(fileNames.map((fileName) => {
+          return fs.promises.mkdir(path.dirname(fileName), { recursive: true });
         }));
+
+        const writers = fileNames.map(f => fs.createWriteStream(f));
+
+        entry.on('data', async(chunk) => {
+          entry.pause();
+          try {
+            await Promise.all(writers.map(async(writer) => {
+              await new Promise<void>((resolve, reject) => {
+                writer.write(chunk, 'utf-8', (error) => {
+                  if (error) {
+                    reject(error);
+                  } else {
+                    resolve();
+                  }
+                });
+              });
+            }));
+            entry.resume();
+          } catch (ex: any) {
+            entry.destroy(ex);
+          }
+        });
+        entry.on('end', () => {
+          writers.map(writer => writer.end());
+        });
+
+        for (const linkName of linkNames) {
+          delete links[linkName];
+        }
 
         break;
       }
       default:
         console.info(`Ignoring unsupported file type ${ entry.header.name } (${ entry.header.type })`);
       }
+      await stream.promises.finished(entry.resume());
     }
 
     // Handle symlinks that were not found
