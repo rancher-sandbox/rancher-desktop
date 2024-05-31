@@ -333,6 +333,7 @@ ifnotstart
 ifstarted
 iidfile
 iife
+imageinfo
 IMAGENAME
 IMAGEPATH
 inbox
