@@ -4,8 +4,10 @@
 // Environment:
 //   GITHUB_REPOSITORY, GITHUB_EVENT_PATH, and others
 //     See https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
-//   GITHUB_TOKEN: GitHub authorization token.
-//     Must have write permissions for `actions`, `contents`, `pull_requests`.
+//   GITHUB_WRITE_TOKEN: GitHub authorization token for creating a branch.
+//     Must have `contents:write` permissions.
+//   GITHUB_PR_TOKEN: GitHub authorization token.
+//     Must have write permissions for `actions` and `pull_requests`.
 
 import fs from 'fs';
 
@@ -19,7 +21,8 @@ import { getOctokit } from './lib/dependencies';
 type EnvironmentVariableName =
   'GITHUB_REPOSITORY' |
   'GITHUB_EVENT_PATH' |
-  'GITHUB_TOKEN';
+  'GITHUB_WRITE_TOKEN' |
+  'GITHUB_PR_TOKEN';
 
 /**
  * Partial contents of the event payload, for a release event.
@@ -59,7 +62,7 @@ function getEnv(variable: EnvironmentVariableName): string {
  */
 async function ensureBranch(owner: string, repo: string, branchName: string, tagName: string): Promise<void> {
   const ref = `heads/${ branchName }`;
-  const { git } = getOctokit().rest;
+  const { git } = getOctokit(getEnv('GITHUB_WRITE_TOKEN')).rest;
   const { data: tagRef } = await git.getRef({
     owner, repo, ref: `tags/${ tagName }`,
   });
@@ -77,11 +80,15 @@ async function ensureBranch(owner: string, repo: string, branchName: string, tag
       await git.updateRef({
         owner, repo, ref, sha,
       });
+    } else {
+      console.log(`Branch ${ owner }/${ repo }/${ ref } is already up-to-date.`);
     }
   } catch (ex) {
     if (!(ex instanceof RequestError) || ex.status !== 404) {
       throw ex;
     }
+    console.log(`Creating new branch ${ owner }/${ repo }/${ ref }` +
+      `at ${ sha }`);
     // Branch does not exist; create it.
     await git.createRef({
       // Only this API takes a `refs/` prefix; get & update omit it.
@@ -100,14 +107,14 @@ async function ensureBranch(owner: string, repo: string, branchName: string, tag
 async function findExisting(owner: string, repo: string, branch: string) {
   const fullRepo = `${ owner }/${ repo }`;
   const query = `type:pr is:open repo:${ fullRepo } base:${ base } head:${ branch } sort:updated`;
-  const result = await getOctokit().rest.search.issuesAndPullRequests({ q: query });
+  const result = await getOctokit(getEnv('GITHUB_WRITE_TOKEN')).rest.search.issuesAndPullRequests({ q: query });
 
   for (const item of result.data.items) {
     // Must be an open item, and that item must be a pull request.
     if (item.state !== 'open' || !item.pull_request) {
       continue;
     }
-    const { data: pr } = await getOctokit().rest.pulls.get({
+    const { data: pr } = await getOctokit(getEnv('GITHUB_PR_TOKEN')).rest.pulls.get({
       owner, repo, pull_number: item.number,
     });
 
@@ -169,7 +176,7 @@ async function findExisting(owner: string, repo: string, branch: string) {
   console.log(`Creating new PR on ${ owner }/${ repo }: ${ base } <- ${ branchName }`);
   await ensureBranch(owner, repo, branchName, tagName);
   const title = `Merge release ${ tagName } back into ${ base }`;
-  const { data: item } = await getOctokit().rest.pulls.create({
+  const { data: item } = await getOctokit(getEnv('GITHUB_PR_TOKEN')).rest.pulls.create({
     owner, repo, title, head: branchName, base, maintainer_can_modify: true,
   });
 
