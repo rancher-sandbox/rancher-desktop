@@ -87,8 +87,7 @@ async function ensureBranch(owner: string, repo: string, branchName: string, tag
     if (!(ex instanceof RequestError) || ex.status !== 404) {
       throw ex;
     }
-    console.log(`Creating new branch ${ owner }/${ repo }/${ ref }` +
-      `at ${ sha }`);
+    console.log(`Creating new branch ${ owner }/${ repo }/${ ref } at ${ sha }`);
     // Branch does not exist; create it.
     await git.createRef({
       // Only this API takes a `refs/` prefix; get & update omit it.
