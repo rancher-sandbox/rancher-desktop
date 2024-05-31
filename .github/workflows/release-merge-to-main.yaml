@@ -29,7 +29,7 @@ jobs:
     if: needs.check-for-token.outputs.has-token == 'true'
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      contents: write
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -49,4 +49,5 @@ jobs:
 
     - run: node scripts/ts-wrapper.js scripts/release-merge-to-main.ts
       env:
-        GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+        GITHUB_WRITE_TOKEN: ${{ github.token }}
+        GITHUB_PR_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}

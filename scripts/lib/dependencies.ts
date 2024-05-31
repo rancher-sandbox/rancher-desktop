@@ -97,15 +97,22 @@ export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnrelease
 export type GitHubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
 
 let _octokit: Octokit | undefined;
+let _octokitAuthToken: string | undefined;
 
-export function getOctokit() {
-  if (_octokit) {
-    return _octokit;
-  }
-  const personalAccessToken = process.env.GITHUB_TOKEN;
+/**
+ * Get a cached instance of Octokit, or create a new one as needed.  If the given token does not
+ * match the one used to create the cached instance, a new one is created (and cached).
+ * @param personalAccessToken Optional GitHub personal access token; defaults to GITHUB_TOKEN.
+ */
+export function getOctokit(personalAccessToken?: string): Octokit {
+  personalAccessToken ||= process.env.GITHUB_TOKEN;
 
   if (!personalAccessToken) {
     throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+  }
+
+  if (_octokit && _octokitAuthToken === personalAccessToken) {
+    return _octokit;
   }
 
   function makeLimitHandler(type: string, maxRetries: number): NonNullable<ThrottlingOptions['onSecondaryRateLimit']> {
@@ -132,13 +139,16 @@ export function getOctokit() {
     };
   }
 
-  return new Octokit({
+  _octokit = new Octokit({
     auth:     personalAccessToken,
     throttle: {
       onRateLimit:          makeLimitHandler('primary', 3),
       onSecondaryRateLimit: makeLimitHandler('secondary', 3),
     },
   });
+  _octokitAuthToken = personalAccessToken;
+
+  return _octokit;
 }
 
 export type IssueOrPullRequest = Awaited<ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>>['data']['items'][0];
