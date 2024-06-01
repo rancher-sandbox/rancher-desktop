@@ -121,8 +121,7 @@ export async function sign(workDir: string): Promise<string[]> {
   } else if (appleId && appleIdPassword && teamId) {
     log.info('Notarizing application...');
     await notarize({
-      appBundleId: config.appId as string,
-      appPath:     appDir,
+      appPath: appDir,
       appleId,
       appleIdPassword,
       teamId,
