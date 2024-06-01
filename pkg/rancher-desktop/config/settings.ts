@@ -125,12 +125,10 @@ export const defaultSettings = {
     kubernetes:      { options: { spinkube: false } },
     virtualMachine:  {
       /** can only be set to VMType.VZ on macOS Ventura and later */
-      type:        VMType.QEMU,
+      type:       VMType.QEMU,
       /** can only be used when type is VMType.VZ, and only on aarch64 */
-      useRosetta:  false,
-      /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
-      socketVMNet: false,
-      mount:       {
+      useRosetta: false,
+      mount:      {
         type: MountType.REVERSE_SSHFS,
         '9p': {
           securityModel:   SecurityModel.NONE,

@@ -668,10 +668,6 @@ components:
             virtualMachine:
               type: object
               properties:
-                socketVMNet:
-                  type: boolean
-                  x-rd-platforms: [darwin]
-                  x-rd-usage: use socket-vmnet instead of vde-vmnet
                 mount:
                   type: object
                   x-rd-platforms: [darwin, linux]

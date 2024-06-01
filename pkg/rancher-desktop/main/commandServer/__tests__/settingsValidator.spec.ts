@@ -89,7 +89,6 @@ describe(SettingsValidator, () => {
     // Fields that can only be set on specific platforms.
     const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
       'application.adminAccess':                      'linux',
-      'experimental.virtualMachine.socketVMNet':      'darwin',
       'experimental.virtualMachine.networkingTunnel': 'win32',
       'experimental.virtualMachine.proxy.enabled':    'win32',
       'experimental.virtualMachine.proxy.address':    'win32',

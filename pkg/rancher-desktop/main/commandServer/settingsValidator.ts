@@ -123,7 +123,6 @@ export default class SettingsValidator {
               cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
           },
-          socketVMNet:      this.checkPlatform('darwin', this.checkBoolean),
           // networkingTunnel only applies to Win32, but deployment profiles on macOS/Linux may still include
           // the setting. Since we changed the default value, this would now throw a validation error.
           // see https://github.com/rancher-sandbox/rancher-desktop/issues/6953

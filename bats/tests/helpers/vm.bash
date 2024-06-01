@@ -152,7 +152,6 @@ if (/^--/) {
     # fixup acronyms
     s/memoryInGb/memoryInGB/;
     s/numberCpus/numberCPUs/;
-    s/socketVmnet/socketVMNet/;
     s/--wsl/--WSL/;
 }
 print;
@@ -170,10 +169,6 @@ start_container_engine() {
 
     if [ -n "$RD_CONTAINER_ENGINE" ]; then
         args+=(--container-engine.name="$RD_CONTAINER_ENGINE")
-    fi
-    if using_socket_vmnet; then
-        args+=(--experimental.virtual-machine.socket-vmnet)
-        admin_access=true
     fi
     if is_unix; then
         args+=(

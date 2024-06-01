@@ -18,7 +18,6 @@ export class VirtualMachineNav {
   readonly qemu: Locator;
   readonly vz: Locator;
   readonly useRosetta: Locator;
-  readonly socketVmNet: Locator;
   readonly tabHardware: Locator;
   readonly tabVolumes: Locator;
   readonly tabNetwork: Locator;
@@ -42,7 +41,6 @@ export class VirtualMachineNav {
     this.qemu = page.locator('[data-test="QEMU"]');
     this.vz = page.locator('[data-test="VZ"]');
     this.useRosetta = page.locator('[data-test="useRosetta"]');
-    this.socketVmNet = page.locator('[data-test="socketVmNet"]');
     this.tabHardware = page.locator('.tab >> text=Hardware');
     this.tabVolumes = page.locator('.tab >> text=Volumes');
     this.tabNetwork = page.locator('.tab >> text=Network');

@@ -140,7 +140,6 @@ func TestJsonToPlistFormat(t *testing.T) {
     "virtualMachine": {
       "type": "qemu",
       "useRosetta": false,
-      "socketVMNet": false,
       "mount": {
         "type": "reverse-sshfs",
         "9p": {
@@ -264,8 +263,6 @@ func TestJsonToPlistFormat(t *testing.T) {
     <dict>
       <key>virtualMachine</key>
       <dict>
-        <key>socketVMNet</key>
-        <false/>
         <key>mount</key>
         <dict>
           <key>type</key>

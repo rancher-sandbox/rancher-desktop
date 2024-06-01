@@ -399,7 +399,6 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       { oldPath: 'telemetry', newPath: 'application.telemetry.enabled' },
       { oldPath: 'updater', newPath: 'application.updater.enabled' },
       { oldPath: 'kubernetes.containerEngine', newPath: 'containerEngine.name' },
-      { oldPath: 'kubernetes.experimental.socketVMNet', newPath: 'experimental.virtualMachine.socketVMNet' },
       { oldPath: 'kubernetes.hostResolver', newPath: 'virtualMachine.hostResolver' },
       { oldPath: 'kubernetes.memoryInGB', newPath: 'virtualMachine.memoryInGB' },
       { oldPath: 'kubernetes.numberCPUs', newPath: 'virtualMachine.numberCPUs' },
@@ -417,7 +416,6 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       { oldPath: 'startInBackground', newPath: 'application.startInBackground' },
       { oldPath: 'window', newPath: 'application.window' },
       { oldPath: 'containerEngine.imageAllowList', newPath: 'containerEngine.allowedImages' },
-      { oldPath: 'virtualMachine.experimental.socketVMNet', newPath: 'experimental.virtualMachine.socketVMNet' },
     ];
 
     processReplacements(settings, replacements);

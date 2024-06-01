@@ -273,7 +273,6 @@ func TestJsonToRegFormat(t *testing.T) {
     "virtualMachine": {
       "type": "qemu",
       "useRosetta": false,
-      "socketVMNet": false,
       "mount": {
         "type": "reverse-sshfs",
         "9p": {
@@ -297,6 +296,6 @@ func TestJsonToRegFormat(t *testing.T) {
 `
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, 78, len(lines))
+		assert.Equal(t, 77, len(lines))
 	})
 }

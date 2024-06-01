@@ -110,10 +110,7 @@ test.describe.serial('KubernetesBackend', () => {
         },
       };
       /** Platform-specific changes to `newSettings`. */
-      const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
-        win32:  { virtualMachine: { hostResolver: getAlternateSetting(currentSettings, 'virtualMachine.hostResolver', true, false) } },
-        darwin: { experimental: { virtualMachine: { socketVMNet: getAlternateSetting(currentSettings, 'experimental.virtualMachine.socketVMNet', true, false) } } },
-      };
+      const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = { win32: { virtualMachine: { hostResolver: getAlternateSetting(currentSettings, 'virtualMachine.hostResolver', true, false) } } };
 
       _.merge(newSettings, platformSettings[process.platform] ?? {});
       if (['darwin', 'linux'].includes(process.platform)) {
@@ -143,10 +140,7 @@ test.describe.serial('KubernetesBackend', () => {
       };
 
       /** Platform-specific additions to `expectedDefinition`. */
-      const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, ExpectedDefinition>> = {
-        win32:  { 'virtualMachine.hostResolver': false },
-        darwin: { 'experimental.virtualMachine.socketVMNet': false },
-      };
+      const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, ExpectedDefinition>> = { win32: { 'virtualMachine.hostResolver': false } };
 
       _.merge(expectedDefinition, platformExpectedDefinitions[process.platform] ?? {});
 

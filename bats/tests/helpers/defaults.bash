@@ -125,21 +125,6 @@ if using_networking_tunnel && ! is_windows; then
 fi
 
 ########################################################################
-: "${RD_USE_SOCKET_VMNET:=false}"
-
-using_socket_vmnet() {
-    is_true "$RD_USE_SOCKET_VMNET"
-}
-
-if using_socket_vmnet && ! is_macos; then
-    fatal "RD_USE_SOCKET_VMNET only works on macOS"
-fi
-
-if using_socket_vmnet && sudo_needs_password; then
-    fatal "RD_USE_SOCKET_VMNET requires passwordless sudo"
-fi
-
-########################################################################
 if is_unix; then
     : "${RD_MOUNT_TYPE:=reverse-sshfs}"
 
