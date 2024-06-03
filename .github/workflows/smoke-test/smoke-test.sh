@@ -90,10 +90,10 @@ install_darwin() {
 
     # Check that the image is compressed
     local compressionRatio
-    compressionRatio="$(hdiutil imageinfo "$archiveName" \
+    compressionRatio="$(hdiutil imageinfo -plist "$archiveName" \
         | plutil -convert json -o - - \
         | jq '.["Size Information"]["Compressed Ratio"]')"
-    if jq --exit-status '. > 0.9' <<< "$compressionRatio"; then
+    if jq --exit-status '. > 0.9' <<<"$compressionRatio"; then
         printf "Archive %s appears to be uncompressed; compression ratio is %s\n" \
             "$archiveName" "$compressionRatio" >&2
         exit 1
