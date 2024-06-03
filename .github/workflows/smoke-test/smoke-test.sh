@@ -88,6 +88,17 @@ install_darwin() {
     cp -a "$srcApp" "$(dirname "$destApp")"
     xattr -d -r -s -v com.apple.quarantine "$destApp"
 
+    # Check that the image is compressed
+    local compressionRatio
+    compressionRatio="$(hdiutil imageinfo -plist "$archiveName" \
+        | plutil -convert json -o - - \
+        | jq '.["Size Information"]["Compressed Ratio"]')"
+    if jq --exit-status '. > 0.9' <<<"$compressionRatio"; then
+        printf "Archive %s appears to be uncompressed; compression ratio is %s\n" \
+            "$archiveName" "$compressionRatio" >&2
+        exit 1
+    fi
+
     if [[ "$(uname -m)" =~ arm ]]; then
         # For macOS, currently only x86_64 runners support nested virtualization
         # https://github.com/actions/runner-images/issues/9460
