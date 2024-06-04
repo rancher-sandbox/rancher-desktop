@@ -25,7 +25,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -84,7 +84,7 @@ jobs:
         persist-credentials: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
     - uses: actions/setup-go@v5
       with:

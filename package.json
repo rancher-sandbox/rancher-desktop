@@ -8,8 +8,9 @@
     "email": "containers@suse.com"
   },
   "engines": {
-    "node": ">=18.16"
+    "node": "^18.18"
   },
+  "packageManager": "yarn@1.22.21",
   "repository": {
     "type": "git",
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
@@ -145,7 +146,7 @@
     "electron": "26.6.10",
     "electron-builder": "24.13.3",
     "eslint": "8.57.0",
-    "eslint-plugin-deprecation": "2.0.0",
+    "eslint-plugin-deprecation": "3.0.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-nuxt": "4.0.0",

@@ -57,7 +57,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -174,7 +174,7 @@ jobs:
         cache-dependency-path: src/go/**/go.sum
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000
@@ -236,7 +236,7 @@ jobs:
         cache-dependency-path: src/go/**/go.sum
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000
