@@ -862,6 +862,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject VZ if architecture is Intel macOS version < 13.0.0', () => {
+      spyArch.mockReturnValue('x64');
       spyMacOsVersion.mockReturnValue(new SemVer('12.0.0'));
       const [needToUpdate, errors] = subject.validateSettings(
         cfg, getVMTypeSetting(VMType.VZ));
