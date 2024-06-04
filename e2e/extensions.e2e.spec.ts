@@ -19,7 +19,7 @@ import { ContainerEngine, Settings } from '@pkg/config/settings';
 import { spawnFile } from '@pkg/utils/childProcess';
 import { Log } from '@pkg/utils/logging';
 
-import type { BrowserView, BrowserWindow } from 'electron';
+import type { BrowserWindow, WebContentsView } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
 const srcDir = path.dirname(path.dirname(__filename));
@@ -139,7 +139,7 @@ test.describe.serial('Extensions', () => {
   });
 
   test.describe('extension API', () => {
-    let view: JSHandle<BrowserView>;
+    let view: JSHandle<WebContentsView>;
 
     test('extension UI can be loaded', async() => {
       const window: JSHandle<BrowserWindow> = await app.browserWindow(page);
@@ -151,19 +151,24 @@ test.describe.serial('Extensions', () => {
       view = await retry(async() => {
         // Evaluate script remotely to look for the appropriate BrowserView
         const result = await window.evaluateHandle((window: BrowserWindow) => {
-          for (const view of window.getBrowserViews()) {
-            if (view.webContents.mainFrame.url.startsWith('x-rd-extension://')) {
-              return view;
+          for (const view of window.contentView.children) {
+            // Because this runs in the remote window, we don't have access to
+            // imports, and therefore types; hence we can't do an `instanceof`
+            // check here.
+            if ('webContents' in view) {
+              if ((view as any).webContents.mainFrame.url.startsWith('x-rd-extension://')) {
+                return view;
+              }
             }
           }
-        }) as JSHandle<BrowserView|undefined>;
+        }) as JSHandle<WebContentsView|undefined>;
 
         // Check that the result evaluated to the view, and not undefined.
         if (await (result).evaluate(v => typeof v) === 'undefined') {
           throw new Error('Could not find extension view');
         }
 
-        return result as JSHandle<BrowserView>;
+        return result as JSHandle<WebContentsView>;
       });
 
       await view.evaluate((v, { window }) => {

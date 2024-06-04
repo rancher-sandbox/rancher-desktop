@@ -230,6 +230,7 @@ export interface IpcRendererEvents {
   // #region extensions
   // The list of installed extensions may have changed.
   'extensions/changed': () => void;
+  'extensions/getContentArea': () => void;
   'extensions/open': (id: string, path: string) => void;
   'err:extensions/open': () => void;
   'extensions/close': () => void;
