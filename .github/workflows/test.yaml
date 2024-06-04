@@ -16,7 +16,7 @@ jobs:
         python-version: '3.x'
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
     - uses: actions/setup-go@v5
       with:

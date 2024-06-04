@@ -8,8 +8,9 @@
     "email": "containers@suse.com"
   },
   "engines": {
-    "node": ">=18.16"
+    "node": "^18.18"
   },
+  "packageManager": "yarn@1.22.21",
   "repository": {
     "type": "git",
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
