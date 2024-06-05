@@ -29,7 +29,7 @@ on:
         type: string
       rd-use-networking-tunnel:
         description: Use networking tunnel (on Windows)
-        default: false
+        default: true
         type: boolean
   schedule:
   - cron: '0 8 * * 1-5' # 8AM UTC weekdays as a baseline
