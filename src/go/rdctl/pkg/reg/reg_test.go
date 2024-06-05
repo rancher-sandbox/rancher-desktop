@@ -55,7 +55,7 @@ func TestJsonToRegFormat(t *testing.T) {
 		assert.Equal(t, "[HKEY_CURRENT_USER\\SOFTWARE\\Policies]", lines[1])
 		assert.Equal(t, "[HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop]", lines[2])
 		assert.Equal(t, "[HKEY_CURRENT_USER\\SOFTWARE\\Policies\\Rancher Desktop\\defaults]", lines[3])
-		assert.Equal(t, `"version"=dword:b`, lines[4])
+		assert.Equal(t, `"version"=dword:c`, lines[4])
 	})
 	t.Run("converts the registry-type arguments into reg headers", func(t *testing.T) {
 		type testCaseType struct {
@@ -109,7 +109,7 @@ func TestJsonToRegFormat(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 12, len(lines))
 		assert.Equal(t, fmt.Sprintf("[%s]", header), lines[3])
-		assert.Equal(t, `"version"=dword:b`, lines[4])
+		assert.Equal(t, `"version"=dword:c`, lines[4])
 		assert.Equal(t, fmt.Sprintf("[%s\\application]", header), lines[5])
 		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions]", header), lines[6])
 		assert.Equal(t, fmt.Sprintf("[%s\\application\\extensions\\allowed]", header), lines[7])
@@ -273,7 +273,6 @@ func TestJsonToRegFormat(t *testing.T) {
     "virtualMachine": {
       "type": "qemu",
       "useRosetta": false,
-      "socketVMNet": false,
       "mount": {
         "type": "reverse-sshfs",
         "9p": {
@@ -297,6 +296,6 @@ func TestJsonToRegFormat(t *testing.T) {
 `
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, 78, len(lines))
+		assert.Equal(t, 77, len(lines))
 	})
 }

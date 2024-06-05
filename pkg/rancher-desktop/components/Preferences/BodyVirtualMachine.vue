@@ -6,7 +6,6 @@ import { mapGetters, mapState } from 'vuex';
 
 import PreferencesVirtualMachineEmulation from '@pkg/components/Preferences/VirtualMachineEmulation.vue';
 import PreferencesVirtualMachineHardware from '@pkg/components/Preferences/VirtualMachineHardware.vue';
-import PreferencesVirtualMachineNetwork from '@pkg/components/Preferences/VirtualMachineNetwork.vue';
 import PreferencesVirtualMachineVolumes from '@pkg/components/Preferences/VirtualMachineVolumes.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
@@ -22,7 +21,6 @@ export default Vue.extend({
     Tab,
     PreferencesVirtualMachineHardware,
     PreferencesVirtualMachineVolumes,
-    PreferencesVirtualMachineNetwork,
     PreferencesVirtualMachineEmulation,
   },
   props: {

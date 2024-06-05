@@ -32,7 +32,6 @@ show_info() { # @test
         fi
         printf "$format" "Using image allow list:" "$(bool using_image_allow_list)"
         if is_macos; then
-            printf "$format" "Using socket_vmnet:" "$(bool using_socket_vmnet)"
             printf "$format" "Using VZ emulation:" "$(bool using_vz_emulation)"
             printf "$format" "Using ramdisk:" "$(bool using_ramdisk)"
         fi

@@ -14,7 +14,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>11</integer>
+    <integer>12</integer>
   </dict>
 </plist>
 `, s)
@@ -32,7 +32,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>11</integer>
+    <integer>12</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -140,7 +140,6 @@ func TestJsonToPlistFormat(t *testing.T) {
     "virtualMachine": {
       "type": "qemu",
       "useRosetta": false,
-      "socketVMNet": false,
       "mount": {
         "type": "reverse-sshfs",
         "9p": {
@@ -264,8 +263,6 @@ func TestJsonToPlistFormat(t *testing.T) {
     <dict>
       <key>virtualMachine</key>
       <dict>
-        <key>socketVMNet</key>
-        <false/>
         <key>mount</key>
         <dict>
           <key>type</key>
@@ -371,7 +368,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>11</integer>
+    <integer>12</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
