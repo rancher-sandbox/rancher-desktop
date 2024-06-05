@@ -553,6 +553,9 @@ describe('settings', () => {
             Debian:   false,
             openSUSE: true,
           },
+          experimental: {
+            socketVMNet: true,
+          },
         },
         debug:                  true,
         pathManagementStrategy: PathManagementStrategy.Manual,
@@ -575,6 +578,7 @@ describe('settings', () => {
         containerEngine: {
           name: settings.ContainerEngine.MOBY,
         },
+        experimental:   {},
         kubernetes:     {},
         virtualMachine: {
           hostResolver: true,
@@ -610,10 +614,13 @@ describe('settings', () => {
         4: [
           {
             kubernetes: {
-              suppressSudo:    true,
-              hostResolver:    true,
-              memoryInGB:      300,
-              numberCPUs:      45,
+              suppressSudo: true,
+              hostResolver: true,
+              memoryInGB:   300,
+              numberCPUs:   45,
+              experimental: {
+                socketVMNet: true,
+              },
               WSLIntegrations: {
                 ubuntu: true,
                 debian: false,
@@ -639,6 +646,11 @@ describe('settings', () => {
               memoryInGB:   300,
               numberCPUs:   45,
             },
+            experimental: {
+              virtualMachine: {
+                socketVMNet: true,
+              },
+            },
             WSL: {
               integrations: {
                 ubuntu: true,
@@ -658,6 +670,11 @@ describe('settings', () => {
                 patterns: ['wolves', 'lower'],
               },
             },
+            virtualMachine: {
+              experimental: {
+                socketVMNet: true,
+              },
+            },
             autoStart:            true,
             hideNotificationIcon: true,
             window:               false,
@@ -669,11 +686,15 @@ describe('settings', () => {
                 patterns: ['wolves', 'lower'],
               },
             },
+            experimental: {
+              virtualMachine: { socketVMNet: true },
+            },
             application: {
               autoStart:            true,
               hideNotificationIcon: true,
               window:               false,
             },
+            virtualMachine: {},
           },
         ],
         6: [
@@ -727,6 +748,18 @@ describe('settings', () => {
                 },
               },
             },
+          },
+        ],
+        11: [
+          {
+            experimental: {
+              virtualMachine: {
+                socketVMNet: true,
+              },
+            },
+          },
+          {
+            experimental: {},
           },
         ],
       };
