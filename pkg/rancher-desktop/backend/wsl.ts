@@ -1469,7 +1469,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                     LOG_DIR:           logPath,
                   });
                   await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
-                  await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
+                  await this.writeFile(`/etc/conf.d/buildkitd`,
+                    `${ SERVICE_BUILDKITD_CONF }\nlog_file=${ logPath }/buildkitd.log\n`);
                 }),
                 this.progressTracker.action('Proxy Config Setup', 50, async() => {
                   await this.execCommand('mkdir', '-p', '/etc/moproxy');
