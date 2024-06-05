@@ -249,20 +249,20 @@ To enable remote debugging, start Rancher Desktop with the `--remote-debugging-p
 On Linux, start Rancher Desktop with the following command:
 
 ``` bash
-rancher-desktop --remote-debugging-port="8315"
+rancher-desktop --remote-debugging-port="8315" --remote-allow-origins=http://localhost:8315
 ```
 
 On macOS, start Rancher Desktop with the following command:
 
 ```
-/Applications/Rancher\ Desktop.app/Contents/MacOS/Rancher\ Desktop --remote-debugging-port="8315"
+/Applications/Rancher\ Desktop.app/Contents/MacOS/Rancher\ Desktop --remote-debugging-port="8315" --remote-allow-origins=http://localhost:8315
 ```
 
 On Windows, start Rancher Desktop with the following command:
 
 ``` powershell
 cd 'C:\Program Files\Rancher Desktop\'
-& '.\Rancher Desktop.exe' --remote-debugging-port="8315"
+& '.\Rancher Desktop.exe' --remote-debugging-port="8315" --remote-allow-origins=http://localhost:8315
 ```
 
 After Rancher Desktop starts, open Chrome and navigate to `http://localhost:8315/`. Select the available target to start remote debugging Rancher Desktop.
