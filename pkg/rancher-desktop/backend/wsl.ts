@@ -1169,7 +1169,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    */
   protected async runInit() {
     const logFile = Logging['wsl-init'];
-    const PID_FILE = '/var/run/wsl-init.pid';
+    const PID_FILE = '/run/wsl-init.pid';
     const streamReaders: Promise<void>[] = [];
 
     // Delete any stale wsl-init PID file
@@ -1231,7 +1231,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         console.debug(`Error testing for wsl-init.pid: ${ e } (will retry)`);
       }
       if (Date.now() - startTime > maxWaitTime) {
-        throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
+        throw new Error(`Timed out after waiting for /run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
       }
       await util.promisify(setTimeout)(waitTime);
     }
