@@ -1225,7 +1225,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
     while (true) {
       try {
-        await this.execCommand({ expectFailure: true }, 'test', '-s', PID_FILE);
+        const stdout = await this.captureCommand({ expectFailure: true }, 'cat', PID_FILE);
+
+        console.debug(`Read wsl-init.pid: ${ stdout.trim() }`);
         break;
       } catch (e) {
         console.debug(`Error testing for wsl-init.pid: ${ e } (will retry)`);
