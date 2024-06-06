@@ -4,7 +4,7 @@
 
 name: Sync go.work
 on:
-  pull_request:
+  pull_request_target:
     types: [ opened, reopened, synchronize ]
     paths:
     - '**/go.mod'
@@ -17,9 +17,9 @@ concurrency:
   cancel-in-progress: true
 jobs:
   update-sum:
-    if: >-
-      contains(github.ref, 'refs/pull/') &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    # We only run this for pull requests from the same repository.  This is
+    # important for security reasons, as we use pull_request_target.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
     # Because the GitHub-provided token doesn't trigger further actions runs,
