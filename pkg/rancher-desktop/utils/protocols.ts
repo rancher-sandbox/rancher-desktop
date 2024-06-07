@@ -20,8 +20,13 @@ function redirectedUrl(relPath: string) {
   if (isDevBuild) {
     return `http://localhost:8888${ relPath }`;
   }
+  if (app.isPackaged) {
+    return path.join(app.getAppPath(), 'dist', 'app', relPath);
+  }
 
-  return path.join(app.getAppPath(), 'dist', 'app', relPath);
+  // Unpackaged non-dev build; this normally means E2E tests, where
+  // `app.getAppPath()` is `.../dist/app.
+  return path.join(process.cwd(), 'dist', 'app', relPath);
 }
 
 // Latch that is set when the app:// protocol handler has been registered.
