@@ -1169,7 +1169,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    */
   protected async runInit() {
     const logFile = Logging['wsl-init'];
-    const PID_FILE = '/var/run/wsl-init.pid';
+    const PID_FILE = '/run/wsl-init.pid';
     const streamReaders: Promise<void>[] = [];
 
     // Delete any stale wsl-init PID file
@@ -1225,13 +1225,15 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
     while (true) {
       try {
-        await this.execCommand({ expectFailure: true }, 'test', '-s', PID_FILE);
+        const stdout = await this.captureCommand({ expectFailure: true }, 'cat', PID_FILE);
+
+        console.debug(`Read wsl-init.pid: ${ stdout.trim() }`);
         break;
       } catch (e) {
         console.debug(`Error testing for wsl-init.pid: ${ e } (will retry)`);
       }
       if (Date.now() - startTime > maxWaitTime) {
-        throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
+        throw new Error(`Timed out after waiting for /run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
       }
       await util.promisify(setTimeout)(waitTime);
     }
@@ -1467,7 +1469,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                     LOG_DIR:           logPath,
                   });
                   await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
-                  await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
+                  await this.writeFile(`/etc/conf.d/buildkitd`,
+                    `${ SERVICE_BUILDKITD_CONF }\nlog_file=${ logPath }/buildkitd.log\n`);
                 }),
                 this.progressTracker.action('Proxy Config Setup', 50, async() => {
                   await this.execCommand('mkdir', '-p', '/etc/moproxy');
