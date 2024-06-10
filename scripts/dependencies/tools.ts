@@ -196,8 +196,9 @@ export class DockerCLI implements Dependency, GitHubDependency {
     const dockerURL = `${ baseURL }/${ executableName }`;
     const destPath = path.join(context.binDir, exeName(context, 'docker'));
     const expectedChecksum = await findChecksum(`${ baseURL }/sha256sum.txt`, executableName);
+    const codesign = process.platform === 'darwin';
 
-    await download(dockerURL, destPath, { expectedChecksum });
+    await download(dockerURL, destPath, { expectedChecksum, codesign });
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {
