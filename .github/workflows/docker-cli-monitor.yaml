@@ -4,9 +4,6 @@ on:
     - cron: '55 8 * * *'
   workflow_dispatch: {}
 
-permissions:
-  issues: write
-
 jobs:
   check-for-token:
     outputs:
@@ -22,6 +19,8 @@ jobs:
     needs: check-for-token
     if: needs.check-for-token.outputs.has-token == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
 
       - uses: actions/checkout@v4
@@ -41,4 +40,5 @@ jobs:
 
       - run: yarn dcmonitor
         env:
-          GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+          GITHUB_CREATE_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+          GITHUB_TOKEN: ${{ github.token }}

@@ -1,3 +1,12 @@
+// This script creates GitHub issues when new releases of the Docker CLI are
+// found.
+
+// Environment:
+//   GITHUB_CREATE_TOKEN: GitHub authorization token for creating an issue.
+//     Must be a PAT/app token and have `issues:write` permissions.
+//   GITHUB_TOKEN: GitHub authorization token for closing an issue.
+//     Must have `issues:write` permissions.
+
 import path from 'path';
 
 import semver from 'semver';
@@ -62,7 +71,7 @@ async function checkDockerCli(): Promise<void> {
     if (issue.title.endsWith(` ${ latestTagName }`)) {
       issueFound = true;
       if (issue.state === 'closed') {
-        await mainRepo.reopenIssue(issue);
+        await mainRepo.reopenIssue(issue, process.env.GITHUB_CREATE_TOKEN);
       }
     } else if (issue.state === 'open') {
       await mainRepo.closeIssue(issue);
@@ -73,7 +82,7 @@ async function checkDockerCli(): Promise<void> {
     const body = `The Docker CLI monitor has detected a new release of docker/cli. ` +
       `Please make a corresponding release in rancher-desktop-docker-cli to keep it up to date in Rancher Desktop.`;
 
-    await mainRepo.createIssue(title, body);
+    await mainRepo.createIssue(title, body, process.env.GITHUB_CREATE_TOKEN);
   }
 }
 
