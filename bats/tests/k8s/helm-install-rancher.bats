@@ -178,6 +178,7 @@ deploy_rancher() {
         --version "$rancher_chart_version" \
         --namespace cattle-system \
         --set hostname="$host" \
+        --set replicas=1 \
         --create-namespace
     try assert_not_empty_list helm list --all --output json --namespace cattle-system --selector name=rancher
     try assert_not_empty_list helm list --deployed --output json --namespace cattle-system --selector name=rancher
