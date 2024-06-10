@@ -19,6 +19,7 @@ const DOCKER_CLI_OWNER = process.env.DOCKER_CLI_OWNER || 'docker';
 const DOCKER_CLI_REPO = process.env.DOCKER_CLI_REPO || 'cli';
 const TAG_REGEX = /^v[0-9]+\.[0-9]+\.[0-9]+$/;
 const SCRIPT_NAME = 'docker-cli-monitor';
+const TITLE_PREFIX = `${ SCRIPT_NAME }: make rancher-desktop-docker-cli release for version`;
 const mainRepo = new RancherDesktopRepository(GITHUB_OWNER, GITHUB_REPO);
 
 async function getLatestDockerCliVersion(): Promise<string> {
@@ -43,7 +44,7 @@ async function getLatestDockerCliVersion(): Promise<string> {
 }
 
 async function getDockerCliIssues(): Promise<IssueOrPullRequest[]> {
-  const query = `type:issue repo:${ GITHUB_OWNER }/${ GITHUB_REPO } sort:updated in:title ${ SCRIPT_NAME }`;
+  const query = `type:issue repo:${ GITHUB_OWNER }/${ GITHUB_REPO } sort:updated in:title "${ TITLE_PREFIX }"`;
   const result = await getOctokit().rest.search.issuesAndPullRequests({ q: query });
 
   return result.data.items;
@@ -78,7 +79,7 @@ async function checkDockerCli(): Promise<void> {
     }
   }));
   if (!issueFound) {
-    const title = `${ SCRIPT_NAME }: make rancher-desktop-docker-cli release for version ${ latestTagName }`;
+    const title = `${ TITLE_PREFIX } ${ latestTagName }`;
     const body = `The Docker CLI monitor has detected a new release of docker/cli. ` +
       `Please make a corresponding release in rancher-desktop-docker-cli to keep it up to date in Rancher Desktop.`;
 
