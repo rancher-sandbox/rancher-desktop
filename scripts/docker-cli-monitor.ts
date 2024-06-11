@@ -1,3 +1,12 @@
+// This script creates GitHub issues when new releases of the Docker CLI are
+// found.
+
+// Environment:
+//   GITHUB_CREATE_TOKEN: GitHub authorization token for creating an issue.
+//     Must be a PAT/app token and have `issues:write` permissions.
+//   GITHUB_TOKEN: GitHub authorization token for closing an issue.
+//     Must have `issues:write` permissions.
+
 import path from 'path';
 
 import semver from 'semver';
@@ -10,6 +19,7 @@ const DOCKER_CLI_OWNER = process.env.DOCKER_CLI_OWNER || 'docker';
 const DOCKER_CLI_REPO = process.env.DOCKER_CLI_REPO || 'cli';
 const TAG_REGEX = /^v[0-9]+\.[0-9]+\.[0-9]+$/;
 const SCRIPT_NAME = 'docker-cli-monitor';
+const TITLE_PREFIX = `${ SCRIPT_NAME }: make rancher-desktop-docker-cli release for version`;
 const mainRepo = new RancherDesktopRepository(GITHUB_OWNER, GITHUB_REPO);
 
 async function getLatestDockerCliVersion(): Promise<string> {
@@ -34,7 +44,7 @@ async function getLatestDockerCliVersion(): Promise<string> {
 }
 
 async function getDockerCliIssues(): Promise<IssueOrPullRequest[]> {
-  const query = `type:issue repo:${ GITHUB_OWNER }/${ GITHUB_REPO } sort:updated in:title ${ SCRIPT_NAME }`;
+  const query = `type:issue repo:${ GITHUB_OWNER }/${ GITHUB_REPO } sort:updated in:title "${ TITLE_PREFIX }"`;
   const result = await getOctokit().rest.search.issuesAndPullRequests({ q: query });
 
   return result.data.items;
@@ -62,18 +72,18 @@ async function checkDockerCli(): Promise<void> {
     if (issue.title.endsWith(` ${ latestTagName }`)) {
       issueFound = true;
       if (issue.state === 'closed') {
-        await mainRepo.reopenIssue(issue);
+        await mainRepo.reopenIssue(issue, process.env.GITHUB_CREATE_TOKEN);
       }
     } else if (issue.state === 'open') {
       await mainRepo.closeIssue(issue);
     }
   }));
   if (!issueFound) {
-    const title = `${ SCRIPT_NAME }: make rancher-desktop-docker-cli release for version ${ latestTagName }`;
+    const title = `${ TITLE_PREFIX } ${ latestTagName }`;
     const body = `The Docker CLI monitor has detected a new release of docker/cli. ` +
       `Please make a corresponding release in rancher-desktop-docker-cli to keep it up to date in Rancher Desktop.`;
 
-    await mainRepo.createIssue(title, body);
+    await mainRepo.createIssue(title, body, process.env.GITHUB_CREATE_TOKEN);
   }
 }
 
