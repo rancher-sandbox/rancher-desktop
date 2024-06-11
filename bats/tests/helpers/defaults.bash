@@ -18,7 +18,11 @@ using_docker() {
 : "${RD_KUBERNETES_PREV_VERSION:=1.22.7}"
 
 ########################################################################
-: "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
+: "${RD_RANCHER_IMAGE_TAG:=}"
+
+rancher_image_tag() {
+    echo "${RANCHER_IMAGE_TAG:-v2.7.0}"
+}
 
 ########################################################################
 # Defaults to true, except in the helper unit tests, which default to false
