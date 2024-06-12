@@ -1,16 +1,16 @@
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
 import semver from 'semver';
 
 import { download } from '../lib/download';
+import { simpleSpawn } from '../simple_process';
 
 import {
   DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
 
-function extract(resourcesPath: string, file: string, expectedFile: string): void {
+async function extract(resourcesPath: string, file: string, expectedFile: string): Promise<void> {
   const systemRoot = process.env.SystemRoot;
 
   if (!systemRoot) {
@@ -18,14 +18,8 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
   }
   const bsdTar = path.join(systemRoot, 'system32', 'tar.exe');
 
-  spawnSync(
-    bsdTar,
-    ['-xzf', file, expectedFile],
-    {
-      cwd:   resourcesPath,
-      stdio: 'inherit',
-    });
-  fs.rmSync(file, { maxRetries: 10 });
+  await simpleSpawn(bsdTar, ['-xzf', file, expectedFile], { cwd: resourcesPath });
+  await fs.promises.rm(file, { maxRetries: 10 });
 }
 
 export class HostSwitch implements Dependency, GitHubDependency {
@@ -44,7 +38,7 @@ export class HostSwitch implements Dependency, GitHubDependency {
       hostSwitchPath,
       { access: fs.constants.W_OK });
 
-    extract(context.internalDir, hostSwitchPath, 'host-switch.exe');
+    await extract(context.internalDir, hostSwitchPath, 'host-switch.exe');
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {
@@ -76,7 +70,7 @@ export class HostResolverPeer implements Dependency, GitHubDependency {
       resolverVsockPeerPath,
       { access: fs.constants.W_OK });
 
-    extract(context.internalDir, resolverVsockPeerPath, 'host-resolver');
+    await extract(context.internalDir, resolverVsockPeerPath, 'host-resolver');
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {
@@ -108,7 +102,7 @@ export class HostResolverHost implements Dependency, GitHubDependency {
       resolverVsockHostPath,
       { access: fs.constants.W_OK });
 
-    extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
+    await extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {
@@ -126,21 +120,26 @@ export class HostResolverHost implements Dependency, GitHubDependency {
 
 export class Moproxy implements Dependency, GitHubDependency {
   name = 'moproxy';
-  githubOwner = 'rancher-sandbox';
+  githubOwner = 'sorz';
   githubRepo = 'moproxy';
 
   async download(context: DownloadContext): Promise<void> {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    const tarName = `moproxy_${ context.versions.moproxy }_linux_x86_64_musl.bin.tar.gz`;
-    const moproxyURL = `${ baseURL }/v${ context.versions.moproxy }/${ tarName }`;
-    const moproxyPath = path.join(context.internalDir, tarName);
+    const binName = `moproxy_${ context.versions.moproxy }_linux_x86_64_musl.bin`;
+    const archiveName = `${ binName }.xz`;
+    const moproxyURL = `${ baseURL }/v${ context.versions.moproxy }/${ archiveName }`;
+    const archivePath = path.join(context.internalDir, archiveName);
+    const moproxyPath = path.join(context.internalDir, 'moproxy');
 
     await download(
       moproxyURL,
-      moproxyPath,
+      archivePath,
       { access: fs.constants.W_OK });
 
-    extract(context.internalDir, moproxyPath, 'moproxy');
+    // moproxy uses xz with no tar wrapper; just decompress it manually.
+    await simpleSpawn('7z', ['e', archivePath], { cwd: context.internalDir });
+    await fs.promises.rename(path.join(context.internalDir, binName), moproxyPath);
+    await fs.promises.rm(archivePath);
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {
