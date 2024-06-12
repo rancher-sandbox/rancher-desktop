@@ -251,13 +251,6 @@ verify_rancher() {
     assert_output --partial "bootstrapPassword"
 }
 
-uninstall_rancher() {
-    run helm uninstall rancher --namespace cattle-system --wait
-    assert_nothing
-    run helm uninstall cert-manager --namespace cert-manager --wait
-    assert_nothing
-    try kubectl delete namespace cert-manager --grace-period=60 --ignore-not-found --wait
-}
 
 @test 'add helm repo' {
     helm repo add jetstack https://charts.jetstack.io
@@ -273,5 +266,4 @@ foreach_k3s_version \
     wait_for_traefik \
     pull_rancher_image \
     deploy_rancher \
-    verify_rancher \
-    uninstall_rancher
+    verify_rancher
