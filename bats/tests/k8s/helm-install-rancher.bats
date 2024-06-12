@@ -13,83 +13,82 @@ local_setup() {
     helm repo update
 }
 
-# Get the minimum Kubernetes version the given rancher-latest/rancher helm chart
-# does _not_ support; i.e. the chart supports < [output].
-get_chart_unsupported_version() {
+# Check that the rancher-latest/rancher helm chart at the given version is
+# supported on the current Kubernetes version (as determined by
+# $RD_KUBERNETES_PREV_VERSION)
+assert_rancher_chart_compatible() {
     output="" # Hack: tell shellcheck about this variable
     local chart_version=$1
+
     run helm show chart rancher-latest/rancher --version "$chart_version"
     assert_success || return
+
     run awk '/^kubeVersion:/ { $1 = ""; print }' <<<"$output"
     assert_success || return
     # We only support kubeVersion of form "< x.y.z"
     assert_output --regexp '^[[:space:]]*<[[:space:]]*[^[:space:]]+$' || return
-    awk '{ print $2 }' <<<"$output"
+
+    run awk '{ print $2 }' <<<"$output"
+    assert_success || return
+
+    local unsupported_version=$output
+    semver_gt "$unsupported_version" "$RD_KUBERNETES_PREV_VERSION" || return
 }
 
-# Try to determine the best chart version for the current Kubernetes version
-# (as specified in $RD_KUBERNETES_PREV_VERSION).  Saves the resulting version
-# in rancher_chart_version (and should be restored via load_var).
+# Set (and save) $rancher_chart_version to $RD_RANCHER_IMAGE_TAG if it is set
+# (and compatible), or otherwise the oldest chart version that supports
+# $RD_KUBERNETES_PREV_VERSION.
+# If no compatible chart version could be found, calls mark_k3s_version_skipped
+# and fails the test.
 determine_chart_version() {
+    local rancher_chart_version
     if [[ -n $RD_RANCHER_IMAGE_TAG ]]; then
         # If a version is given, check that it's compatible.
-        assert_rancher_chart_compatible "${RD_RANCHER_IMAGE_TAG#v}" || return
         rancher_chart_version=${RD_RANCHER_IMAGE_TAG#v}
+        if ! assert_rancher_chart_compatible "$rancher_chart_version"; then
+            mark_k3s_version_skipped
+            printf "Rancher %s is not compatible with Kubernetes %s" \
+                "$rancher_chart_version" "$RD_KUBERNETES_PREV_VERSION" |
+                fail
+            return
+        fi
         save_var rancher_chart_version
         return
     fi
     local default_version
     default_version=$(rancher_image_tag)
     default_version=${default_version#v}
+
     run --separate-stderr helm search repo --versions rancher-latest/rancher --output json
     assert_success || return
-    local versions_json=$output
+
     run jq_output 'map(.version).[]'
     assert_success || return
+
     run sort --version-sort <<<"$output"
     assert_success || return
     local versions=$output
-    local version
-    for version in $versions; do
-        if ! semver_is_valid "$version"; then
+
+    for rancher_chart_version in $versions; do
+        if ! semver_is_valid "$rancher_chart_version"; then
             continue # Skip invalid / RC versions.
         fi
-        if semver_lt "$version" "$default_version"; then
+        if semver_lt "$rancher_chart_version" "$default_version"; then
             continue # Skip any versions older than the default version
         fi
-        run get_chart_unsupported_version "$version"
-        assert_success || return
-        local unsupported_version=$output
-        if semver_lt "$RD_KUBERNETES_PREV_VERSION" "$unsupported_version"; then
+        if assert_rancher_chart_compatible "$rancher_chart_version"; then
             # Once we find a compatible version, use it (and don't look at the
             # rest of the chart versions).
-            trace "$(printf "Selected rancher chart version %s (wants < %s, have %s)" \
-                "$version" "$unsupported_version" "$RD_KUBERNETES_PREV_VERSION")"
-            rancher_chart_version=$version
+            trace "$(printf "Selected rancher chart version %s for Kubernetes %s" \
+                "$rancher_chart_version" "$RD_KUBERNETES_PREV_VERSION")"
             save_var rancher_chart_version
             return
         fi
     done
-    skip_k3s_version
+    mark_k3s_version_skipped
     printf "Could not find a version of rancher-latest/rancher compatible with Kubernetes %s\n" \
         "$RD_KUBERNETES_PREV_VERSION" |
         fail || return
-}
-
-# Check that the rancher-latest/rancher helm chart at the given version is
-# supported on the current Kubernetes version (as determined by $RD_KUBERNETES_PREV_VERSION)
-assert_rancher_chart_compatible() {
-    local chart_version=$1
-    run get_chart_unsupported_version "$chart_version"
-    assert_success || return
-    local unsupported_version=$output
-    if semver_lte "$unsupported_version" "$RD_KUBERNETES_PREV_VERSION"; then
-        skip_k3s_version
-        printf "Rancher %s wants Kubernetes < %s, have %s" \
-            "$chart_version" "$unsupported_version" "$RD_KUBERNETES_PREV_VERSION" |
-            fail || return
-    fi
-    trace "Chart $chart_version < $unsupported_version good for $RD_KUBERNETES_PREV_VERSION"
 }
 
 deploy_rancher() {
@@ -98,6 +97,7 @@ deploy_rancher() {
         skip_unless_host_ip
     fi
 
+    local rancher_chart_version
     if ! load_var rancher_chart_version; then
         fail "Could not restore Rancher chart version"
     fi
@@ -112,9 +112,10 @@ deploy_rancher() {
     local host
     host=$(traefik_hostname) || return
 
+    trace "Installing rancher $rancher_chart_version"
     helm upgrade \
         --install rancher rancher-latest/rancher \
-        --version "${rancher_chart_version}" \
+        --version "$rancher_chart_version" \
         --namespace cattle-system \
         --set hostname="$host" \
         --wait \

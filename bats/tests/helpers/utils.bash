@@ -443,17 +443,17 @@ foreach_k3s_version() {
 _foreach_k3s_version() {
     local RD_KUBERNETES_PREV_VERSION=$1
     local skip_kubernetes_version
-    skip_kubernetes_version=$(cat "$BATS_FILE_TMPDIR/skip-kubernetes-version" 2>/dev/null || echo none)
+    skip_kubernetes_version=$(cat "${BATS_FILE_TMPDIR}/skip-kubernetes-version" 2>/dev/null || echo none)
     if [[ $skip_kubernetes_version == "$RD_KUBERNETES_PREV_VERSION" ]]; then
         skip "All remaining tests for Kubernetes $RD_KUBERNETES_PREV_VERSION are skipped"
     fi
     "$2"
 }
 
-# Tests can call skip_k3s_version to skip the rest of the tests within
+# Tests can call mark_k3s_version_skipped to skip the rest of the tests within
 # foreach_k3s_version.
-skip_k3s_version() {
-    echo "$RD_KUBERNETES_PREV_VERSION" >"$BATS_FILE_TMPDIR/skip-kubernetes-version"
+mark_k3s_version_skipped() {
+    echo "$RD_KUBERNETES_PREV_VERSION" >"${BATS_FILE_TMPDIR}/skip-kubernetes-version"
 }
 
 ########################################################################
