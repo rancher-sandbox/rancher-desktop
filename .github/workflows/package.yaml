@@ -40,10 +40,10 @@ jobs:
         include:
         - platform: mac
           arch: x86_64
-          runs-on: macos-11
+          runs-on: macos-latest
         - platform: mac
           arch: aarch64
-          runs-on: macos-11
+          runs-on: macos-latest
         - platform: win
           runs-on: windows-2019
         - platform: linux
@@ -218,7 +218,7 @@ jobs:
         include:
         - arch: aarch64
         # skip x86_64, we don't need to duplicate the testing for now.
-    runs-on: macos-12
+    runs-on: macos-latest
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release-')) ||
