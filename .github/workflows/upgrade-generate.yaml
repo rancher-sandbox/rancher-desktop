@@ -10,10 +10,10 @@ jobs:
         include:
         - platform: mac
           arch: x86_64
-          runs-on: macos-11
+          runs-on: macos-13
         - platform: mac
           arch: aarch64
-          runs-on: macos-11
+          runs-on: macos-latest
         - platform: win
           runs-on: windows-latest
     runs-on: ${{ matrix.runs-on }}
