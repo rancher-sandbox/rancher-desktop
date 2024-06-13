@@ -2899,7 +2899,7 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.3.3.tgz#329842940042d2b280897150e023e604d11657d6"
   integrity sha512-wheIYdr4NYML61AjC8MKj/2jrR/kDQri/CIpVoZwldwhnIrD/j9jIU5bJ8yBKuB2VhpFV7Ab6G2XkBjv9r9Zzw==
 
-"@types/node@18.18.9", "@types/node@^18.11.17", "@types/node@^18.11.18":
+"@types/node@18.18.9", "@types/node@^18.11.17":
   version "18.18.9"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.18.9.tgz#5527ea1832db3bba8eb8023ce8497b7d3f299592"
   integrity sha512-0f5klcuImLnG4Qreu9hPj/rEfFq6YRc5n2mAjSsH+ec/mJL+3voBH0+8T7o8RpFjH7ovc+TRsL/c7OYIQsPTfQ==
@@ -2910,6 +2910,13 @@
   version "16.18.65"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.18.65.tgz#b07eb49a14a808777b82879288a7e6f5a296ccfa"
   integrity sha512-5E9WgTy95B7i90oISjui9U5Zu7iExUPfU4ygtv4yXEy6zJFE3oQYHCnh5H1jZRPkjphJt2Ml3oQW6M0qtK534A==
+
+"@types/node@^20.9.0":
+  version "20.14.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.14.0.tgz#49ceec7b34f8621470cff44677fa9d461a477f17"
+  integrity sha512-5cHBxFGJx6L4s56Bubp4fglrEpmyJypsqI6RgzMfBHWUJQGWAAi8cWcgetEbZXHYXo9C2Fa4EEds/uSyS4cxmA==
+  dependencies:
+    undici-types "~5.26.4"
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -5998,13 +6005,13 @@ electron-updater@6.1.8:
     semver "^7.3.8"
     tiny-typed-emitter "^2.1.0"
 
-electron@26.6.10:
-  version "26.6.10"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-26.6.10.tgz#01ca7610bd662033ed3ceb70804cbf940c7e6756"
-  integrity sha512-pV2SD0RXzAiNRb/2yZrsVmVkBOMrf+DVsPulIgRjlL0+My9BL5spFuhHVMQO9yHl9tFpWtuRpQv0ofM/i9P8xg==
+electron@30.0.9:
+  version "30.0.9"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-30.0.9.tgz#b11400e4642a4b635e79244ba365f1d401ee60b5"
+  integrity sha512-ArxgdGHVu3o5uaP+Tqj8cJDvU03R6vrGrOqiMs7JXLnvQHMqXJIIxmFKQAIdJW8VoT3ac3hD21tA7cPO10RLow==
   dependencies:
     "@electron/get" "^2.0.0"
-    "@types/node" "^18.11.18"
+    "@types/node" "^20.9.0"
     extract-zip "^2.0.1"
 
 element-matches@^0.1.2:
