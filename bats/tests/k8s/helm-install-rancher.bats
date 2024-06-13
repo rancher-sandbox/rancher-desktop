@@ -105,7 +105,7 @@ deploy_rancher() {
     local host
     host=$(traefik_hostname) || return
 
-    trace "Installing rancher $rancher_chart_version"
+    comment "Installing rancher $rancher_chart_version"
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --version "$rancher_chart_version" \

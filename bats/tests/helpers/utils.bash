@@ -209,22 +209,30 @@ calling_function() {
     echo "${FUNCNAME[2]}"
 }
 
-# Write a comment to the TAP stream
+# Write a comment to the TAP stream.
 # Set CALLER to print a calling function higher up in the call stack.
-trace() {
-    if is_false "$RD_TRACE"; then
-        return
+comment() {
+    local prefix=""
+    if is_true "$RD_TRACE"; then
+        local caller="${CALLER:-$(calling_function)}"
+        prefix="($(date -u +"%FT%TZ"): ${caller}): "
     fi
-    local caller="${CALLER:-$(calling_function)}"
-    caller="$(date -u +"%FT%TZ"): $caller"
     local line
     while IFS= read -r line; do
         if [[ -e /dev/fd/3 ]]; then
-            printf "# (%s): %s\n" "$caller" "$line" >&3
+            printf "# %s%s\n" "$prefix" "$line" >&3
         else
-            printf "# (%s): %s\n" "$caller" "$line" >&2
+            printf "# %s%s\n" "$prefix" "$line" >&2
         fi
     done <<<"$*"
+}
+
+# Write a comment to the TAP stream if RD_TRACE is set.
+# Set CALLER to print a calling function higher up in the call stack.
+trace() {
+    if is_true "$RD_TRACE"; then
+        CALLER=${CALLER:-$(calling_function)} comment "$@"
+    fi
 }
 
 # try runs the specified command until it either succeeds, or --max attempts
