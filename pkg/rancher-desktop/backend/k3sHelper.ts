@@ -1184,8 +1184,8 @@ export default class K3sHelper extends events.EventEmitter {
      * @param key The identifier to use for the UI.
      */
     function cmp<K extends keyof K8s.RestartReasons>(key: K, checker?: RequiresRestartSeverityChecker<K>) {
-      const current = _.get(currentSettings, key, NotFound);
-      const desired = _.get(desiredSettings, key, NotFound);
+      const current: RecursiveTypes<K8s.BackendSettings>[K] | typeof NotFound = _.get(currentSettings, key, NotFound) as any;
+      const desired: RecursiveTypes<K8s.BackendSettings>[K] | typeof NotFound = _.get(desiredSettings, key, NotFound) as any;
 
       if (current === NotFound) {
         throw new Error(`Invalid restart check: path ${ path } not found on current values`);
