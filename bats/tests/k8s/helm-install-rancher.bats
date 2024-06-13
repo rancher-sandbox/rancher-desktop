@@ -7,17 +7,10 @@ local_setup() {
     needs_port 443
 }
 
-@test 'add helm repo' {
-    helm repo add jetstack https://charts.jetstack.io
-    helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
-    helm repo update
-}
-
 # Check that the rancher-latest/rancher helm chart at the given version is
 # supported on the current Kubernetes version (as determined by
 # $RD_KUBERNETES_PREV_VERSION)
-assert_rancher_chart_compatible() {
-    output="" # Hack: tell shellcheck about this variable
+is_rancher_chart_compatible() {
     local chart_version=$1
 
     run helm show chart rancher-latest/rancher --version "$chart_version"
@@ -45,7 +38,7 @@ determine_chart_version() {
     if [[ -n $RD_RANCHER_IMAGE_TAG ]]; then
         # If a version is given, check that it's compatible.
         rancher_chart_version=${RD_RANCHER_IMAGE_TAG#v}
-        if ! assert_rancher_chart_compatible "$rancher_chart_version"; then
+        if ! is_rancher_chart_compatible "$rancher_chart_version"; then
             mark_k3s_version_skipped
             printf "Rancher %s is not compatible with Kubernetes %s" \
                 "$rancher_chart_version" "$RD_KUBERNETES_PREV_VERSION" |
@@ -76,7 +69,7 @@ determine_chart_version() {
         if semver_lt "$rancher_chart_version" "$default_version"; then
             continue # Skip any versions older than the default version
         fi
-        if assert_rancher_chart_compatible "$rancher_chart_version"; then
+        if is_rancher_chart_compatible "$rancher_chart_version"; then
             # Once we find a compatible version, use it (and don't look at the
             # rest of the chart versions).
             trace "$(printf "Selected rancher chart version %s for Kubernetes %s" \
@@ -147,9 +140,15 @@ uninstall_rancher() {
     assert_nothing
 }
 
+@test 'add helm repo' {
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+    helm repo update
+}
+
 foreach_k3s_version \
-    factory_reset \
     determine_chart_version \
+    factory_reset \
     start_kubernetes \
     wait_for_kubelet \
     wait_for_traefik \

@@ -451,7 +451,7 @@ _foreach_k3s_version() {
 }
 
 # Tests can call mark_k3s_version_skipped to skip the rest of the tests within
-# foreach_k3s_version.
+# this iteration of foreach_k3s_version.
 mark_k3s_version_skipped() {
     echo "$RD_KUBERNETES_PREV_VERSION" >"${BATS_FILE_TMPDIR}/skip-kubernetes-version"
 }
