@@ -25,6 +25,10 @@ entitlements:
     - com.apple.security.cs.allow-jit
     - com.apple.security.hypervisor
   - paths:
+    - Contents/Resources/resources/darwin/bin/spin
+    entitlements:
+    - com.apple.security.cs.allow-unsigned-executable-memory
+  - paths:
     - Contents/Frameworks/Rancher Desktop Helper (GPU).app
     - Contents/Frameworks/Rancher Desktop Helper (Renderer).app
     entitlements:
