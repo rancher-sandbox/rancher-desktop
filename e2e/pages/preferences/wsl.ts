@@ -9,6 +9,9 @@ export class WslNav {
   readonly tabIntegrations: Locator;
   readonly tabNetwork: Locator;
   readonly tabProxy: Locator;
+  readonly alpha: Locator;
+  readonly beta: Locator;
+  readonly gamma: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -19,5 +22,8 @@ export class WslNav {
     this.tabProxy = page.locator('.tab >> text=Proxy');
     this.wslIntegrations = page.locator('[data-test="wslIntegrations"]');
     this.addressTitle = page.locator('[data-test="addressTitle"]');
+    this.alpha = page.locator('[data-test="item-alpha"] input[type="checkbox"]');
+    this.beta = page.locator('[data-test="item-beta"] input[type="checkbox"]');
+    this.gamma = page.locator('[data-test="item-gamma"] input[type="checkbox"]');
   }
 }
