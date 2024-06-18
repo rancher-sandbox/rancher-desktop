@@ -98,7 +98,7 @@ assert_not_empty_list() {
 assert_true() {
     run --separate-stderr "$@"
     assert_success || return
-    is_true "$output" || return
+    assert_output --regexp '^([Tt]rue|1)$' || return
 }
 
 # Given namespace and app name, assert that a log line contains the given string.
@@ -124,20 +124,17 @@ pull_rancher_image() {
     if ! load_var rancher_chart_version; then
         fail "Could not restore Rancher chart version"
     fi
-    if using_docker; then
-        try docker pull --quiet "rancher/rancher:v$rancher_chart_version"
-    else
-        try nerdctl pull --namespace k8s.io --quiet "rancher/rancher:v$rancher_chart_version"
-    fi
+    local CONTAINERD_NAMESPACE=k8s.io
+    try ctrctl pull --quiet "rancher/rancher:v$rancher_chart_version"
 }
 
 wait_for_rancher_pod() {
-    try --max 60 --delay 10 assert_pod_log_line cattle-system rancher Listening on :443
-    try --max 60 --delay 10 assert_pod_log_line cattle-system rancher Starting catalog controller
+    try assert_pod_log_line cattle-system rancher Listening on :443
+    try assert_pod_log_line cattle-system rancher Starting catalog controller
     try --max 60 --delay 10 assert_pod_log_line cattle-system rancher Watching metadata for rke-machine-config.cattle.io/v1
     try --max 60 --delay 10 assert_pod_log_line cattle-system rancher 'Creating clusterRole for roleTemplate Cluster Owner (cluster-owner).'
-    try --max 60 --delay 10 assert_pod_log_line cattle-system rancher Rancher startup complete
-    try --max 120 --delay 10 assert_pod_log_line cattle-system rancher Created machine for node
+    try assert_pod_log_line cattle-system rancher Rancher startup complete
+    try assert_pod_log_line cattle-system rancher Created machine for node
 }
 
 wait_for_webhook_pod() {
@@ -175,7 +172,9 @@ deploy_rancher() {
     host=$(traefik_hostname) || return
 
     comment "Installing rancher $rancher_chart_version"
-    # The helm install can take a long time, especially on CI
+    # The helm install can take a long time, especially on CI.  Therefore we
+    # avoid using --wait / --timeout, and instead check for forward progress
+    # at each step.
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --version "$rancher_chart_version" \
@@ -183,40 +182,43 @@ deploy_rancher() {
         --set hostname="$host" \
         --set replicas=1 \
         --create-namespace
+
     try assert_not_empty_list helm list --all --output json --namespace cattle-system --selector name=rancher
     try assert_not_empty_list helm list --deployed --output json --namespace cattle-system --selector name=rancher
     try kubectl get ingress --namespace cattle-system rancher
     try assert_not_empty_list kubectl get ingress --namespace cattle-system rancher --output jsonpath='{.status.loadBalancer.ingress}'
 
     try --max 60 --delay 10 kubectl get namespace fleet-local
-    try --max 120 --delay 10 kubectl get namespace local
-    try --max 120 --delay 10 kubectl get namespace cattle-global-data
+    try --max 60 --delay 10 kubectl get namespace local
+    try --max 60 --delay 10 kubectl get namespace cattle-global-data
     try --max 60 --delay 10 kubectl get namespace fleet-default
 
     try assert_not_empty_list kubectl get pods --namespace cattle-system --selector app=rancher --output jsonpath='{.items}'
 
-    # Unfortunately, the Rancher pod could get restarted, so we need to put this in a loop :(
+    # Unfortunately, the Rancher pod could get restarted; this may lead to the
+    # wait steps to fail and we need to start again from the top.
     try wait_for_rancher_pod
 
-    try --max 60 --delay 10 assert_true kubectl get APIServices v3.project.cattle.io --output=jsonpath='{.status.conditions[?(@.type=="Available")].status}'
+    try assert_true kubectl get APIServices v3.project.cattle.io --output=jsonpath='{.status.conditions[?(@.type=="Available")].status}'
 
-    try --max 60 --delay 10 kubectl get namespace cattle-fleet-system
-    try --max 60 --delay 10 kubectl get namespace cattle-system
+    try kubectl get namespace cattle-fleet-system
+    try kubectl get namespace cattle-system
 
-    try --max 60 --delay 10 kubectl get deployment --namespace cattle-fleet-system fleet-controller
+    try --max 48 kubectl get deployment --namespace cattle-fleet-system fleet-controller
     try assert_kube_deployment_available --namespace cattle-fleet-system gitjob
     try assert_kube_deployment_available --namespace cattle-fleet-system fleet-controller
 
-    try --max 120 --delay 10 assert_not_empty_list kubectl get pods --namespace cattle-system --selector app=rancher-webhook --output jsonpath='{.items}'
+    try --max 60 --delay 10 assert_not_empty_list kubectl get pods --namespace cattle-system --selector app=rancher-webhook --output jsonpath='{.items}'
 
     # Unfortunately, the webhook pod might restart too :(
     try wait_for_webhook_pod
 
-    try --max 60 --delay 10 assert_kube_deployment_available --namespace cattle-system rancher
-    try --max 60 --delay 10 assert_kube_deployment_available --namespace cattle-fleet-local-system fleet-agent
-    try --max 120 --delay 10 assert_kube_deployment_available --namespace cattle-system rancher-webhook
+    try --max 120 assert_kube_deployment_available --namespace cattle-system rancher
+    try --max 120 assert_kube_deployment_available --namespace cattle-fleet-local-system fleet-agent
+    try --max 60 assert_kube_deployment_available --namespace cattle-system rancher-webhook
 
-    # The rancher pod sometimes falls over on its own; retry in a loop
+    # The rancher pod sometimes falls over on its own; retry in a loop to
+    # detect flapping.
     local i
     for i in {1..10}; do
         sleep 1
@@ -233,11 +235,13 @@ verify_rancher() {
     # Get k3s logs if possible before things fail
     kubectl get deployments --all-namespaces || :
     kubectl get pods --all-namespaces || :
+
     local name
     name="$(kubectl get pod -n cattle-system --selector app=rancher --output=jsonpath='{.items[].metadata.name}' || echo '')"
     if [[ -n $name ]]; then
         kubectl logs -n cattle-system "$name" || :
     fi
+
     name="$(kubectl get pod -n cattle-system --selector app=rancher-webhook --output=jsonpath='{.items[].metadata.name}' || echo '')"
     if [[ -n $name ]]; then
         kubectl logs -n cattle-system "$name" || :
