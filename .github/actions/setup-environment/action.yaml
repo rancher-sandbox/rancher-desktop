@@ -23,11 +23,8 @@ runs:
       do {
         wsl --update
       } while ( -not $? )
-
-  - name: "Windows: Finish setting up WSL"
-    if: runner.os == 'Windows'
-    shell: pwsh
-    run: wsl --set-default-version 2
+      # Setting the default version also lets WSL finish updating.
+      wsl --set-default-version 2
 
   - name: "Linux: Enable KVM access"
     if: runner.os == 'Linux'
