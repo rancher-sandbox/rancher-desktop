@@ -388,7 +388,7 @@ capture_logs() {
         cp -LR "${PATH_LOGS}/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"${logdir}/test_description"
         # Capture settings.json
-        if [[ -f "$PATH_CONFIG_FILE" ]]; then
+        if [[ -f $PATH_CONFIG_FILE ]]; then
             cp "$PATH_CONFIG_FILE" "$logdir"
         fi
         foreach_profile export_profile "$logdir"

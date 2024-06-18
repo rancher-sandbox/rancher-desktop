@@ -204,17 +204,17 @@ deploy_rancher() {
     try --max 60 --delay 10 kubectl get namespace cattle-system
 
     try --max 60 --delay 10 kubectl get deployment --namespace cattle-fleet-system fleet-controller
-    try assert_kube_deployment_available --namespace cattle-fleet-system         gitjob
-    try assert_kube_deployment_available --namespace cattle-fleet-system         fleet-controller
+    try assert_kube_deployment_available --namespace cattle-fleet-system gitjob
+    try assert_kube_deployment_available --namespace cattle-fleet-system fleet-controller
 
     try --max 120 --delay 10 assert_not_empty_list kubectl get pods --namespace cattle-system --selector app=rancher-webhook --output jsonpath='{.items}'
 
     # Unfortunately, the webhook pod might restart too :(
     try wait_for_webhook_pod
 
-    try --max 60 --delay 10 assert_kube_deployment_available --namespace cattle-system               rancher
-    try --max 60 --delay 10 assert_kube_deployment_available --namespace cattle-fleet-local-system   fleet-agent
-    try --max 120 --delay 10 assert_kube_deployment_available --namespace cattle-system               rancher-webhook
+    try --max 60 --delay 10 assert_kube_deployment_available --namespace cattle-system rancher
+    try --max 60 --delay 10 assert_kube_deployment_available --namespace cattle-fleet-local-system fleet-agent
+    try --max 120 --delay 10 assert_kube_deployment_available --namespace cattle-system rancher-webhook
 
     # The rancher pod sometimes falls over on its own; retry in a loop
     local i
@@ -231,16 +231,16 @@ verify_rancher() {
     fi
 
     # Get k3s logs if possible before things fail
-    kubectl get deployments --all-namespaces ||:
-    kubectl get pods --all-namespaces ||:
+    kubectl get deployments --all-namespaces || :
+    kubectl get pods --all-namespaces || :
     local name
     name="$(kubectl get pod -n cattle-system --selector app=rancher --output=jsonpath='{.items[].metadata.name}' || echo '')"
-    if [[ -n "$name" ]]; then
-        kubectl logs -n cattle-system "$name" ||:
+    if [[ -n $name ]]; then
+        kubectl logs -n cattle-system "$name" || :
     fi
     name="$(kubectl get pod -n cattle-system --selector app=rancher-webhook --output=jsonpath='{.items[].metadata.name}' || echo '')"
-    if [[ -n "$name" ]]; then
-        kubectl logs -n cattle-system "$name" ||:
+    if [[ -n $name ]]; then
+        kubectl logs -n cattle-system "$name" || :
     fi
 
     local host
@@ -253,7 +253,6 @@ verify_rancher() {
     assert_success
     assert_output --partial "bootstrapPassword"
 }
-
 
 @test 'add helm repo' {
     helm repo add jetstack https://charts.jetstack.io
