@@ -168,6 +168,7 @@ debbuild
 debian
 Debugf
 decamelize
+decapsulates
 dedot
 deepmap
 deepmerge
@@ -186,6 +187,7 @@ Dlg
 dlgbmp
 dlicense
 dmg
+DNAT
 dnf
 dnsmasq
 dockercfg
@@ -345,6 +347,7 @@ INSTALLMESSAGE
 INSTALLPROPERTY
 ioctl
 ipaddr
+iptable
 isthebestmeshuggahalbum
 istio
 istiod
@@ -495,6 +498,7 @@ navlink
 neq
 nerdctl
 netcat
+netns
 netsh
 networkpolicy
 neu
@@ -587,9 +591,11 @@ poppins
 POptions
 portforward
 portmap
+Portmapping
 portproxy
 postgresql
 postrotate
+POSTROUTING
 Powerdown
 poweroff
 PQgrl
@@ -736,6 +742,7 @@ sumologic
 suse
 SVCNAME
 SYD
+syscalls
 sysdeps
 sysfs
 tarballs
@@ -781,6 +788,7 @@ ucmonitor
 UEFI
 Unauthed
 UNCONFIGURED
+unexpose
 unfetch
 Uninstalls
 unparam
