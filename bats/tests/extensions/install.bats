@@ -159,11 +159,11 @@ encoded_id() { # variant
 @test 'host-binaries - check files' {
     assert_dir_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)"
     if is_windows; then
-        assert_file_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)/bin/dummy.cmd"
+        assert_file_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)/bin/dummy.exe"
         assert_file_not_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)/bin/dummy.sh"
     else
         assert_file_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)/bin/dummy.sh"
-        assert_file_not_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)/bin/dummy.cmd"
+        assert_file_not_exist "$PATH_EXTENSIONS/$(encoded_id host-binaries)/bin/dummy.exe"
     fi
 }
 
