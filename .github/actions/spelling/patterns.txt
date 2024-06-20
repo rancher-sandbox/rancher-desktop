@@ -176,4 +176,4 @@ regexp?\.MustCompile\(`[^`]*`\)
 \bSWP_NOSIZE\b
 
 # allow repetitive words in iptable rules
-\s([A-Z]{3,}|[A-Z][a-z]{2,}|[a-z]{3,})\s\g{-1}\s
+DNAT\s+.*\s+anywhere anywhere

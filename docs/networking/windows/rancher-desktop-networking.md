@@ -53,8 +53,8 @@ The host-switch runs on the Windows host and acts as a receiver for all traffic 
 
 ## Supported Flags:
 
--   **debug**: Enables debug logging.
--   **subnet**: This flag defines a subnet range with a CIDR suffix for a virtual network. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop-networking/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/vm/switch_linux.go#L59) flag in the vm-switch.
+- **debug**: Enables debug logging.
+- **subnet**: This flag defines a subnet range with a CIDR suffix for a virtual network. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop-networking/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/vm/switch_linux.go#L59) flag in the vm-switch.
 - **port-forward**: This is a list of static ports that need to be pre-forwarded to the WSL VM. These ports are not dynamically retrieved from any of the APIs that the Rancher Desktop guest agent interacts with.
 
 ## network-setup:

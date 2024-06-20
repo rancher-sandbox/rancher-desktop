@@ -1,13 +1,11 @@
 # **[Rancher Desktop Guest Agent](https://github.com/rancher-sandbox/rancher-desktop-agent)**
 
-The Rancher Desktop Guest Agent runs in the Rancher Desktop WSL distro, it runs inside the isolated namespace (when network tunnel is enabled). It is currently responsible for interaction between various APIs for container engines such as Moby, containerd, and Kubernetes. It listens for container creation events from those APIs if it detects any ports that require exposing from those containers it forwards the corresponding port mappings to the internal services.
-
 The Rancher Desktop Guest Agent operates within the Rancher Desktop WSL distribution, particularly in an isolated namespace when the network tunnel is enabled. It facilitates interactions between various container engine APIs like Moby, containerd, and Kubernetes. The agent monitors container/service creation events from these APIs and, upon detecting ports needing exposure, forwards the port mappings to internal services accordingly. This ensures efficient and automated port forwarding management within the Rancher Desktop environment.
 
 ```mermaid
 flowchart  LR;
 subgraph Host["HOST"]
-host-switch["host-switch\n/services/forwarder/all\n /services/forwarder/expose\n /services/forwarder/unexpose"]
+host-switch["host-switch"]
 end
  subgraph VM["WSL"]
   subgraph netNs["Isolated Network Namespace"]
@@ -33,7 +31,7 @@ end
 
 -   **debug**: Enables debug logging.
 
--   **docker**: When this flag is enabled, the guest agent monitors Docker API container events via the Docker socket (`/var/run/docker.sock`). On container creation or deletion, if there are exposed ports, the agent creates corresponding port mappings. These mappings are forwarded to the Rancher Desktop Networking's `host-switch`, which hosts an API for exposing ports from the host into the network namespace. If WSL integration is enabled in Rancher Desktop, the port mapping is also forwarded to Rancher Desktop Networking’s `wsl-proxy`, allowing access to the container's ports from other WSL distributions.
+-   **docker**: When this flag is enabled, port mapping via docker API monitoring is enabled. See the port mapping and Docker sections below for details.
 
 -   **kubernetes**: Enables Kubernetes service port forwarding. When enabled, the Rancher Desktop Guest Agent creates a watcher for the Kubernetes API, monitoring NodePort and LoadBalancer services needing port forwarding. For services with exposed ports, the agent creates corresponding port mappings, forwarding them to Rancher Desktop Networking’s `host-switch`, which hosts an API for exposing ports from the host into the network namespace. If WSL integration is enabled, the port mapping is also forwarded to Rancher Desktop Networking’s `wsl-proxy`, allowing access from other WSL distributions.
 
@@ -41,7 +39,7 @@ end
 
 -   **iptables**: This flag enables the scanning of iptables. In newer versions of Kubernetes, kubelet no longer creates listeners for NodePort and LoadBalancer services. To rectify this, we manually create those listeners so the port forwarding functions correctly. The guest agent creates a corresponding port mapping that represents the service’s exposed port. The port mapping is then forwarded to Rancher Desktop Networking’s `host-switch`, which hosts an API for exposing ports from the host into the network namespace. If WSL integration options are enabled within Rancher Desktop, a copy of that port mapping is also forwarded to Rancher Desktop Networking’s `wsl-proxy`. The `wsl-proxy` exposes the service port to enable users to access it from other WSL distros.
 
--   **containerd**: When this flag is enabled, the guest agent monitors container events from the containerd API. It connects to the Containerd API via the containerd socket (/run/k3s/containerd/containerd.sock). Whenever a container is created or deleted, if there are exposed ports associated with that container, the guest agent creates a corresponding port mapping. This port mapping is then forwarded to Rancher Desktop Networking's `host-switch`, which hosts an API for exposing ports from the host into the network namespace. If WSL integration options are enabled within Rancher Desktop, a copy of this port mapping is also forwarded to Rancher Desktop Networking's `wsl-proxy`. The `wsl-proxy` exposes the container's port to enable users to access it from other WSL distros.
+-   **containerd**: When this flag is enabled, the guest agent monitors container events from the containerd API. It connects to the Containerd API via the containerd socket (`/run/k3s/containerd/containerd.sock`). Whenever a container is created or deleted, if there are exposed ports associated with that container, the guest agent creates a corresponding port mapping. This port mapping is then forwarded to Rancher Desktop Networking's `host-switch`, which hosts an API for exposing ports from the host into the network namespace. If WSL integration options are enabled within Rancher Desktop, a copy of this port mapping is also forwarded to Rancher Desktop Networking's `wsl-proxy`. The `wsl-proxy` exposes the container's port to enable users to access it from other WSL distros.
 
 -   **containerdSock**: File path for the containerd socket address. If no argument is provided, it defaults to `/run/k3s/containerd/containerd.sock`.
 
@@ -71,11 +69,20 @@ type PortMapping struct {
 ```
 ## Networking Mode
 
-The Rancher Desktop Guest Agent currently supports two networking modes. In the first mode, if the privileged service flag mentioned above is enabled, it utilizes the vtunnel peer process to forward all port mappings to privileged services running on the host, thereby creating port proxies. However, this mode lacks network namespace isolation and shares iptables with other WSL distros, and it will soon be deprecated.
+Rancher Desktop Guest Agent can operate in one of three networking modes, depending on startup arguments:
 
-Alternatively, the Network Tunnel mode allows the Guest Agent to operate in an isolated network namespace with a dedicated iptables. This mode is enabled through Rancher Desktop Networking.
+**-privilegedService**
 
-It's also important to note that when neither of the networking modes mentioned above are selected, the Rancher Desktop Guest Agent operates in non-admin user mode. In this mode, all port mappings are bound to localhost, and the use of privileged ports is restricted.
+Rancher Desktop utilizes the vtunnel peer process to forward all port mappings to privileged services running on the host, thereby creating port proxies. However, this mode lacks network namespace isolation and shares iptables with other WSL distros, and it will soon be deprecated.
+
+**-adminInstall**
+
+The Network Tunnel mode allows the Guest Agent to operate in an isolated network namespace with a dedicated iptables. This mode is enabled through Rancher Desktop Networking.
+
+Neither  **-privilegedService**  nor  **-adminInstall**
+
+Rancher Desktop Guest Agent operates in non-admin user mode. In this mode, all port mappings are bound to localhost, and the use of privileged ports is restricted.
+
 
 ## Containerd
 
