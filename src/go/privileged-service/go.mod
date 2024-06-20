@@ -7,7 +7,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/rancher-sandbox/rancher-desktop-agent v0.2.1-0.20220914185110-0a48c21fc77b
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	golang.org/x/sys v0.21.0
 )
 
