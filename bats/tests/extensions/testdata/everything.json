@@ -10,7 +10,7 @@
         ],
         "windows": [
           {
-            "path": "/bin/dummy.cmd"
+            "path": "/bin/dummy.exe"
           }
         ],
         "linux": [

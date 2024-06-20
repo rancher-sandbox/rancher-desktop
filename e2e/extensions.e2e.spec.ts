@@ -203,7 +203,7 @@ test.describe.serial('Extensions', () => {
     });
 
     test.describe('ddClient.extension.host.cli.exec', () => {
-      const wrapperName = process.platform === 'win32' ? 'dummy.cmd' : 'dummy.sh';
+      const wrapperName = process.platform === 'win32' ? 'dummy.exe' : 'dummy.sh';
 
       test('capturing output', async() => {
         const script = `
