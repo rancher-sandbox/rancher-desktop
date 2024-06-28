@@ -168,7 +168,7 @@
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",
     "typescript": "5.4.5",
-    "vue-eslint-parser": "9.4.2",
+    "vue-eslint-parser": "9.4.3",
     "vue-jest": "3.0.7",
     "vue-template-compiler": "2.7.16",
     "webpack": "5.92.1"
