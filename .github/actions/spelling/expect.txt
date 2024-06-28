@@ -271,6 +271,7 @@ gcs
 GENERALIZEDTIME
 getwindowid
 ghp
+gitjob
 gitmodules
 gitrepo
 gke
