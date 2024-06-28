@@ -1,0 +1,37 @@
+name: Lint & Test
+
+on:
+  push: {}
+  pull_request: {}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+
+    - uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    - name: Run golangci-lint
+    # Run `go build` to cache things for the linter, so it doesn't time out.
+      run: go build -v ./...
+      env:
+        CGO_ENABLED: '0'
+    - uses: golangci/golangci-lint-action@v3.1.0
+      with:
+        args: --verbose --timeout 3m
+        # Disable pkg & build cache flags; the manual build step fills those in,
+        # so repopulating the cache just shows a pile of errors.
+        skip-pkg-cache: true
+        skip-build-cache: true
+
+    - name: Unit tests
+      run: make test
