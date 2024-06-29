@@ -24,7 +24,7 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 
 	for {
 		// Detect ports for forward
-		newports, err := iptables.GetPorts()
+		newPorts, err := iptables.GetPorts()
 		if err != nil {
 			// iptables exiting with an exit status of 4 means there
 			// is a resource problem. For example, something else is
@@ -41,11 +41,11 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 			return err
 		}
 
-		log.Debugf("found ports %+v", newports)
+		log.Debugf("found ports %+v", newPorts)
 
 		// Diff from existing forwarded ports
-		added, removed := comparePorts(ports, newports)
-		ports = newports
+		added, removed := comparePorts(ports, newPorts)
+		ports = newPorts
 
 		// Remove old forwards
 		for _, p := range removed {
@@ -81,17 +81,17 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 // licensed under the Apache 2.
 //
 //nolint:nonamedreturns
-func comparePorts(old, neww []iptables.Entry) (added, removed []iptables.Entry) {
-	mRaw := make(map[string]iptables.Entry, len(old))
-	mStillExist := make(map[string]bool, len(old))
+func comparePorts(oldPorts, newPorts []iptables.Entry) (added, removed []iptables.Entry) {
+	mRaw := make(map[string]iptables.Entry, len(oldPorts))
+	mStillExist := make(map[string]bool, len(oldPorts))
 
-	for _, f := range old {
+	for _, f := range oldPorts {
 		k := entryToString(f)
 		mRaw[k] = f
 		mStillExist[k] = false
 	}
 
-	for _, f := range neww {
+	for _, f := range newPorts {
 		k := entryToString(f)
 		mStillExist[k] = true
 

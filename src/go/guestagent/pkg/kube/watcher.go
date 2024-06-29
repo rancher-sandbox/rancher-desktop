@@ -57,7 +57,7 @@ const (
 	stateWatching
 )
 
-// WatchServcies watches Kubernetes for NodePort and LoadBalancer services
+// WatchForServices watches Kubernetes for NodePort and LoadBalancer services
 // and create listeners on 0.0.0.0 matching them.
 // Any connection errors are ignored and retried.
 func WatchForServices(
