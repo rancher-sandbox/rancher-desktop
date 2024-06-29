@@ -85,8 +85,8 @@ You can now clone the repository and run `yarn`.
 1. Install [Windows Subsystem for Linux (WSL)] on your machine. Skip this step, if WSL is already installed.
 2. Open a PowerShell prompt (hit Windows Key + `X` and open `Windows PowerShell`).
 3. Install [Scoop] via `iwr -useb get.scoop.sh | iex`.
-4. Install git, go, mingw, nvm, and unzip via `scoop install git go mingw nvm python unzip`.
-   Check node version with `nvm list`. If node v18 is not installed or set as the current version, then install using `nvm install 18.16` and set as current using `nvm use 18.xx.xx`.
+4. Install 7zip, git, go, mingw, nvm, and unzip via `scoop install 7zip git go mingw nvm python unzip`.
+   Check node version with `nvm list`. If node v18 is not installed or set as the current version, then install using `nvm install 18` and set as current using `nvm use 18.xx.xx`.
 5. Install the yarn package manager via `npm install --global yarn`
 6. Install Visual Studio 2017 or higher. As of this writing the latest version is available at [https://visualstudio.microsoft.com/downloads/]; if that's changed, a good search engine should find it.
 7. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
@@ -249,20 +249,20 @@ To enable remote debugging, start Rancher Desktop with the `--remote-debugging-p
 On Linux, start Rancher Desktop with the following command:
 
 ``` bash
-rancher-desktop --remote-debugging-port="8315"
+rancher-desktop --remote-debugging-port="8315" --remote-allow-origins=http://localhost:8315
 ```
 
 On macOS, start Rancher Desktop with the following command:
 
 ```
-/Applications/Rancher\ Desktop.app/Contents/MacOS/Rancher\ Desktop --remote-debugging-port="8315"
+/Applications/Rancher\ Desktop.app/Contents/MacOS/Rancher\ Desktop --remote-debugging-port="8315" --remote-allow-origins=http://localhost:8315
 ```
 
 On Windows, start Rancher Desktop with the following command:
 
 ``` powershell
 cd 'C:\Program Files\Rancher Desktop\'
-& '.\Rancher Desktop.exe' --remote-debugging-port="8315"
+& '.\Rancher Desktop.exe' --remote-debugging-port="8315" --remote-allow-origins=http://localhost:8315
 ```
 
 After Rancher Desktop starts, open Chrome and navigate to `http://localhost:8315/`. Select the available target to start remote debugging Rancher Desktop.

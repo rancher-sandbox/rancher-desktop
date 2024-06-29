@@ -108,10 +108,10 @@ export function getRdctlPath(): string | null {
   let basePath: string;
 
   // If we are running as a script (i.e. yarn postinstall), electron.app is undefined
-  if (electron.app === undefined) {
-    basePath = process.cwd();
+  if (electron.app?.isPackaged) {
+    basePath = process.resourcesPath;
   } else {
-    basePath = electron.app.isPackaged ? process.resourcesPath : electron.app.getAppPath();
+    basePath = process.cwd();
   }
   const osSpecificName = os.platform().startsWith('win') ? `rdctl.exe` : 'rdctl';
   const rdctlPath = path.join(basePath, 'resources', os.platform(), 'bin', osSpecificName);
@@ -140,9 +140,7 @@ function getPaths(): Paths {
   if (!pathsData) {
     const processType = process.type;
 
-    if (!errorMsg) {
-      errorMsg = `Internal error: attempting to load the paths module from a ${ processType } process.`;
-    }
+    errorMsg ||= `Internal error: attempting to load the paths module from a ${ processType } process. (rdctl: ${ rdctlPath })`;
     if (processType === 'renderer') {
       alert(errorMsg);
     }

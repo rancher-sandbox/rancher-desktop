@@ -58,6 +58,7 @@ class Builder {
     const exeName = `${ context.packager.appInfo.productFilename }${ extension }`;
     const exePath = path.join(context.appOutDir, exeName);
     const resetAdHocDarwinSignature = context.arch === Arch.arm64;
+    const integrityEnabled = context.electronPlatformName === 'darwin';
 
     await flipFuses(
       exePath,
@@ -68,7 +69,7 @@ class Builder {
         [FuseV1Options.EnableCookieEncryption]:                false,
         [FuseV1Options.EnableNodeOptionsEnvironmentVariable]:  false,
         [FuseV1Options.EnableNodeCliInspectArguments]:         false,
-        [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
+        [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: integrityEnabled,
         [FuseV1Options.OnlyLoadAppFromAsar]:                   true,
       },
     );

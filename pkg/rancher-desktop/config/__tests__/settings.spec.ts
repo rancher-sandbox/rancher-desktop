@@ -206,7 +206,7 @@ describe('settings', () => {
      * the first half of the predefined text, which causes both json and plist parsers to throw an exception.
      *
      * On Linux, system files are (currently) `/etc/rancher-desktop/{defaults,locked}.json`,
-     * while the user files are  `~/.config/rancher-desktop.defaults,locked}.json`
+     * while the user files are  `~/.config/rancher-desktop.{defaults,locked}.json`
      *
      * macOS plist files:
      * User: `~/Library/Preferences/io.rancherdesktop.profile.{defaults,locked}.plist`
@@ -578,7 +578,7 @@ describe('settings', () => {
         containerEngine: {
           name: settings.ContainerEngine.MOBY,
         },
-        experimental:   { virtualMachine: { socketVMNet: true } },
+        experimental:   {},
         kubernetes:     {},
         virtualMachine: {
           hostResolver: true,
@@ -748,6 +748,18 @@ describe('settings', () => {
                 },
               },
             },
+          },
+        ],
+        11: [
+          {
+            experimental: {
+              virtualMachine: {
+                socketVMNet: true,
+              },
+            },
+          },
+          {
+            experimental: {},
           },
         ],
       };

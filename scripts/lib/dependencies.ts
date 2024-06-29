@@ -166,8 +166,8 @@ export class RancherDesktopRepository {
     this.repo = repo;
   }
 
-  async createIssue(title: string, body: string): Promise<void> {
-    const result = await getOctokit().rest.issues.create({
+  async createIssue(title: string, body: string, githubToken?: string): Promise<void> {
+    const result = await getOctokit(githubToken).rest.issues.create({
       owner: this.owner, repo: this.repo, title, body,
     });
     const issue = result.data;
@@ -175,15 +175,15 @@ export class RancherDesktopRepository {
     console.log(`Created issue #${ issue.number }: "${ issue.title }"`);
   }
 
-  async reopenIssue(issue: IssueOrPullRequest): Promise<void> {
-    await getOctokit().rest.issues.update({
+  async reopenIssue(issue: IssueOrPullRequest, githubToken?: string): Promise<void> {
+    await getOctokit(githubToken).rest.issues.update({
       owner: this.owner, repo: this.repo, issue_number: issue.number, state: 'open',
     });
     console.log(`Reopened issue #${ issue.number }: "${ issue.title }"`);
   }
 
-  async closeIssue(issue: IssueOrPullRequest): Promise<void> {
-    await getOctokit().rest.issues.update({
+  async closeIssue(issue: IssueOrPullRequest, githubToken?: string): Promise<void> {
+    await getOctokit(githubToken).rest.issues.update({
       owner: this.owner, repo: this.repo, issue_number: issue.number, state: 'closed',
     });
     console.log(`Closed issue #${ issue.number }: "${ issue.title }"`);
@@ -192,8 +192,8 @@ export class RancherDesktopRepository {
 
 // For a GitHub repository, get a list of releases that are published
 // and return the tags that they were made off of.
-export async function getPublishedReleaseTagNames(owner: string, repo: string) {
-  const response = await getOctokit().rest.repos.listReleases({ owner, repo });
+export async function getPublishedReleaseTagNames(owner: string, repo: string, githubToken?: string) {
+  const response = await getOctokit(githubToken).rest.repos.listReleases({ owner, repo });
   const releases = response.data;
   const publishedReleases = releases.filter(release => release.published_at !== null);
 
@@ -205,8 +205,8 @@ export async function getPublishedReleaseTagNames(owner: string, repo: string) {
 // - The dependency is hosted at a GitHub repository.
 // - Versions are gathered from the tag that is on each GitHub release.
 // - Versions are in semver format.
-export async function getPublishedVersions(githubOwner: string, githubRepo: string, includePrerelease: boolean): Promise<string[]> {
-  const tagNames = await getPublishedReleaseTagNames(githubOwner, githubRepo);
+export async function getPublishedVersions(githubOwner: string, githubRepo: string, includePrerelease: boolean, githubToken?: string): Promise<string[]> {
+  const tagNames = await getPublishedReleaseTagNames(githubOwner, githubRepo, githubToken);
   let versions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
 
   versions = versions.filter(version => semver.valid(version));

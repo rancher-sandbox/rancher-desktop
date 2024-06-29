@@ -18,7 +18,11 @@ using_docker() {
 : "${RD_KUBERNETES_PREV_VERSION:=1.22.7}"
 
 ########################################################################
-: "${RD_RANCHER_IMAGE_TAG:=v2.7.0}"
+: "${RD_RANCHER_IMAGE_TAG:=}"
+
+rancher_image_tag() {
+    echo "${RANCHER_IMAGE_TAG:-v2.7.0}"
+}
 
 ########################################################################
 # Defaults to true, except in the helper unit tests, which default to false
@@ -122,21 +126,6 @@ using_networking_tunnel() {
 
 if using_networking_tunnel && ! is_windows; then
     fatal "RD_USE_NETWORKING_TUNNEL only works on Windows"
-fi
-
-########################################################################
-: "${RD_USE_SOCKET_VMNET:=false}"
-
-using_socket_vmnet() {
-    is_true "$RD_USE_SOCKET_VMNET"
-}
-
-if using_socket_vmnet && ! is_macos; then
-    fatal "RD_USE_SOCKET_VMNET only works on macOS"
-fi
-
-if using_socket_vmnet && sudo_needs_password; then
-    fatal "RD_USE_SOCKET_VMNET requires passwordless sudo"
 fi
 
 ########################################################################

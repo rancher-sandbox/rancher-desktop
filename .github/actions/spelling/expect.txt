@@ -172,6 +172,7 @@ debian
 Debugf
 Debugw
 decamelize
+decapsulates
 dedot
 deepmap
 deepmerge
@@ -353,6 +354,7 @@ INSTALLMESSAGE
 INSTALLPROPERTY
 ioctl
 ipaddr
+iptable
 isthebestmeshuggahalbum
 istio
 istiod
@@ -502,6 +504,7 @@ navlink
 neq
 nerdctl
 netcat
+netns
 netsh
 networkpolicy
 neu
@@ -600,6 +603,7 @@ portproxy
 portstorage
 postgresql
 postrotate
+POSTROUTING
 Powerdown
 poweroff
 PQgrl
@@ -749,6 +753,7 @@ sumologic
 suse
 SVCNAME
 SYD
+syscalls
 sysdeps
 sysfs
 tarballs

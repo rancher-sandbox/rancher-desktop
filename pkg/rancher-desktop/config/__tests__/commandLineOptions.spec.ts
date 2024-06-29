@@ -125,9 +125,6 @@ describe('commandLineOptions', () => {
           '--virtualMachine.memoryInGB',
           '--virtualMachine.numberCPUs',
         ],
-        darwin: [
-          '--experimental.virtualMachine.socketVMNet',
-        ],
         '*': [
           '--application.debug',
           '--application.telemetry.enabled',

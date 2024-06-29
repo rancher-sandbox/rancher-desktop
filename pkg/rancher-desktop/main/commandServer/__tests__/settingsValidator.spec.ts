@@ -89,7 +89,6 @@ describe(SettingsValidator, () => {
     // Fields that can only be set on specific platforms.
     const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
       'application.adminAccess':                      'linux',
-      'experimental.virtualMachine.socketVMNet':      'darwin',
       'experimental.virtualMachine.networkingTunnel': 'win32',
       'experimental.virtualMachine.proxy.enabled':    'win32',
       'experimental.virtualMachine.proxy.address':    'win32',
@@ -862,6 +861,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject VZ if architecture is Intel macOS version < 13.0.0', () => {
+      spyArch.mockReturnValue('x64');
       spyMacOsVersion.mockReturnValue(new SemVer('12.0.0'));
       const [needToUpdate, errors] = subject.validateSettings(
         cfg, getVMTypeSetting(VMType.VZ));

@@ -355,8 +355,9 @@ export async function startRancherDesktop(testInfo: TestInfo, options: startRanc
   currentTest = {
     file: testInfo.file, options, startTime: Date.now(),
   };
+  const packageMeta = require('../../package.json');
   const args = [
-    path.join(__dirname, '../../'),
+    path.join(__dirname, '../..', packageMeta.main),
     '--disable-gpu',
     '--whitelisted-ips=',
     // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.

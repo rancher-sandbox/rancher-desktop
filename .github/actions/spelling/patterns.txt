@@ -174,3 +174,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 \bHWND_NOTOPMOST\b
 \bSWP_NOMOVE\b
 \bSWP_NOSIZE\b
+
+# allow repetitive words in iptable rules
+DNAT\s+.*\s+anywhere anywhere

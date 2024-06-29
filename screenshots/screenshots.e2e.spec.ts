@@ -269,12 +269,6 @@ test.describe.serial('Main App Test', () => {
       test.describe('Mac only tests', () => {
         test.skip(!isMac, 'Mac only test');
 
-        test('NetworkTab', async() => {
-          await e2ePreferences.virtualMachine.tabNetwork.click();
-          await expect(e2ePreferences.virtualMachine.socketVmNet).toBeVisible();
-          await prefScreenshot.take('virtualMachine', 'tabNetwork');
-        });
-
         test('EmulationTab', async() => {
           await e2ePreferences.virtualMachine.tabEmulation.click();
           await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();

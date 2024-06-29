@@ -2,7 +2,7 @@ import os from 'os';
 import path from 'path';
 
 import Electron, {
-  BrowserWindow, app, shell, BrowserView, ipcMain, nativeTheme, screen,
+  BrowserWindow, app, shell, ipcMain, nativeTheme, screen, WebContentsView,
 } from 'electron';
 
 import * as K8s from '@pkg/backend/k8s';
@@ -182,7 +182,7 @@ export function openMain() {
   app.dock?.show();
 }
 
-let view: Electron.BrowserView | undefined;
+let view: WebContentsView | undefined;
 let extId = '';
 let extPath = '';
 
@@ -190,12 +190,17 @@ let extPath = '';
  * Attaches a browser view to the main window
  */
 const createView = () => {
+  const mainWindow = getWindow('main');
   const hostInfo = {
     arch:     process.arch,
     hostname: os.hostname(),
   };
 
-  view = new BrowserView({
+  if (!mainWindow) {
+    throw new Error('Failed to get main window, cannot create view');
+  }
+
+  view = new WebContentsView({
     webPreferences: {
       nodeIntegration:     false,
       contextIsolation:    true,
@@ -204,7 +209,10 @@ const createView = () => {
       additionalArguments: [JSON.stringify(hostInfo)],
     },
   });
-  getWindow('main')?.setBrowserView(view);
+  mainWindow.contentView.addChildView(view);
+  mainWindow.contentView.addListener('bounds-changed', () => {
+    setImmediate(() => mainWindow.webContents.send('extensions/getContentArea'));
+  });
 
   const backgroundColor = nativeTheme.shouldUseDarkColors ? '#202c33' : '#f4f4f6';
 
@@ -229,8 +237,6 @@ const updateView = (window: Electron.BrowserWindow, payload: { top: number, righ
     width:  Math.round((payload.right - payload.left) * zoomFactor),
     height: Math.round((payload.bottom - payload.top) * zoomFactor),
   });
-
-  view.setAutoResize({ width: true, height: true });
 };
 
 /**
@@ -379,7 +385,7 @@ export function closeExtension() {
 
   const window = getWindow('main');
 
-  window?.removeBrowserView(view);
+  window?.contentView.removeChildView(view);
   window?.webContents.removeListener('before-input-event', extensionZoomListener);
   ipcMain.removeListener('ok:extensions/getContentArea', extensionGetContentAreaListener);
   view = undefined;

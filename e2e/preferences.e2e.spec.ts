@@ -143,15 +143,6 @@ test.describe.serial('Main App Test', () => {
     await expect(virtualMachine.securityModel).toBeVisible();
   });
 
-  test('should render network tab on macOS', async() => {
-    test.skip(os.platform() !== 'darwin', 'Network tab only available on macOS');
-
-    const { virtualMachine } = new PreferencesPage(preferencesWindow);
-
-    await virtualMachine.tabNetwork.click();
-    await expect(virtualMachine.socketVmNet).toBeVisible();
-  });
-
   test('should render emulation tab on macOS', async() => {
     test.skip(os.platform() !== 'darwin', 'Emulation tab only available on macOS');
 

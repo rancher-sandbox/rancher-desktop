@@ -385,9 +385,6 @@ virtualMachine:
       placeholder: Hostname to not redirect to the proxy
       errors:
         duplicate: Error, item is duplicate.
-  socketVmNet:
-    legend: Enable socket-vmnet
-    label: Use socket-vmnet instead of vde-vmnet
   type:
     legend: Virtual Machine Type
     options:

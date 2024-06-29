@@ -16,6 +16,8 @@
     <main ref="body" class="body">
       <Nuxt />
     </main>
+    <!-- The extension area is used for sizing the extension view. -->
+    <div id="extension-spacer" class="extension" />
     <status-bar class="status-bar"></status-bar>
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
@@ -209,12 +211,21 @@ export default {
     border-right: var(--nav-border-size) solid var(--nav-border);
   }
 
+  .title {
+    grid-area: title;
+  }
+
   .body {
     display: grid;
     grid-area: body;
     grid-template-rows: auto 1fr;
     padding: 0 20px 20px 20px;
     overflow: auto;
+  }
+
+  .extension {
+    grid-area: title / title / body / body;
+    z-index: -1000;
   }
 
   .status-bar {

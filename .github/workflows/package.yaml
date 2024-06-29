@@ -40,10 +40,10 @@ jobs:
         include:
         - platform: mac
           arch: x86_64
-          runs-on: macos-11
+          runs-on: macos-13
         - platform: mac
           arch: aarch64
-          runs-on: macos-11
+          runs-on: macos-latest
         - platform: win
           runs-on: windows-2019
         - platform: linux
@@ -57,7 +57,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -174,7 +174,7 @@ jobs:
         cache-dependency-path: src/go/**/go.sum
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000
@@ -218,7 +218,7 @@ jobs:
         include:
         - arch: aarch64
         # skip x86_64, we don't need to duplicate the testing for now.
-    runs-on: macos-12
+    runs-on: macos-latest
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release-')) ||
@@ -236,7 +236,7 @@ jobs:
         cache-dependency-path: src/go/**/go.sum
     - uses: actions/setup-node@v4
       with:
-        node-version: '18.16.x'
+        node-version-file: package.json
         cache: yarn
       # Needs a network timeout for macos & windows. See https://github.com/yarnpkg/yarn/issues/8242 for more info
     - run: yarn install --frozen-lockfile --network-timeout 1000000

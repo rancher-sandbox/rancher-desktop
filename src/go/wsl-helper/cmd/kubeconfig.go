@@ -46,8 +46,21 @@ var kubeconfigCmd = &cobra.Command{
 	Long:  `This command configures the Kubernetes configuration inside a WSL2 distribution.`,
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+
 		configPath := kubeconfigViper.GetString("kubeconfig")
 		enable := kubeconfigViper.GetBool("enable")
+		verify := kubeconfigViper.GetBool("verify")
+
+		configDir := path.Join(homedir.HomeDir(), ".kube")
+		linkPath := path.Join(configDir, "config")
+		unsupportedConfig, symlinkErr := requireManualSymlink(linkPath)
+		if verify {
+			if unsupportedConfig {
+				os.Exit(1)
+			}
+			os.Exit(0)
+		}
 
 		if configPath == "" {
 			return errors.New("Windows kubeconfig not supplied")
@@ -57,11 +70,7 @@ var kubeconfigCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("could not open Windows kubeconfig: %w", err)
 		}
-		cmd.SilenceUsage = true
 
-		configDir := path.Join(homedir.HomeDir(), ".kube")
-		linkPath := path.Join(configDir, "config")
-		unsupportedConfig, symlinkErr := requireManualSymlink(linkPath)
 		if !unsupportedConfig && symlinkErr != nil {
 			return symlinkErr
 		}
@@ -149,6 +158,7 @@ func readKubeConfig(configPath string) (kubeConfig, error) {
 }
 
 func init() {
+	kubeconfigCmd.PersistentFlags().Bool("verify", true, "Checks whether the symlinked config contains non-Rancher Desktop configuration.")
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
 	kubeconfigViper.AutomaticEnv()

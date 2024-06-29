@@ -687,7 +687,6 @@ test.describe('Command server', () => {
           ['experimental.virtual-machine.mount.9p.protocol-version', ProtocolVersion.NINEP2000_L],
           ['experimental.virtual-machine.mount.9p.security-model', SecurityModel.NONE],
           ['experimental.virtual-machine.mount.type', MountType.NINEP],
-          ['experimental.virtual-machine.socket-vmnet', true],
           ['experimental.virtual-machine.use-rosetta', true],
           ['experimental.virtual-machine.type', VMType.VZ],
           ['virtual-machine.memory-in-gb', 10],
@@ -697,7 +696,6 @@ test.describe('Command server', () => {
           ['virtual-machine.host-resolver', true],
         ],
         linux: [
-          ['experimental.virtual-machine.socket-vmnet', true],
           ['experimental.virtual-machine.use-rosetta', true],
           ['experimental.virtual-machine.type', VMType.VZ],
           ['virtual-machine.host-resolver', true],
@@ -826,7 +824,6 @@ test.describe('Command server', () => {
           switch (os.platform()) {
           case 'darwin':
             body.kubernetes.experimental ??= {};
-            body.kubernetes.experimental.socketVMNet = !oldSettings.experimental.virtualMachine.socketVMNet;
             addPathManagementStrategy(oldSettings, body);
             break;
           case 'linux':

@@ -475,6 +475,12 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       _.set(settings, 'experimental.containerEngine.webAssembly.enabled', false);
     }
   },
+  11: (settings) => {
+    _.unset(settings, 'experimental.virtualMachine.socketVMNet');
+    if (_.isEmpty(_.get(settings, 'experimental.virtualMachine'))) {
+      _.unset(settings, 'experimental.virtualMachine');
+    }
+  },
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {

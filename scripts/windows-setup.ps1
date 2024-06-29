@@ -48,7 +48,7 @@ if (!$SkipTools) {
 
         Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
             | Invoke-Expression
-        scoop install git go mingw nvm python unzip
+        scoop install 7zip git go mingw nvm python unzip
         # Install and use latest node 18* version
         nvm install 18
         nvm use $(nvm list | Select-String '[18\.[0-9.]+]' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value })
