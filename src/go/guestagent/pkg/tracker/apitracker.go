@@ -64,7 +64,7 @@ type APITracker struct {
 	*ListenerTracker
 }
 
-// NewAPITracker creates a new instace of a API Tracker.
+// NewAPITracker creates a new instance of a API Tracker.
 func NewAPITracker(forwarder forwarder.Forwarder, baseURL string, isAdmin bool) *APITracker {
 	return &APITracker{
 		forwarder:       forwarder,
@@ -260,7 +260,7 @@ func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
 		return err
 	}
 
-	return verifyResposeBody(res)
+	return verifyResponseBody(res)
 }
 
 func (a *APITracker) unexpose(unexposeReq *types.UnexposeRequest) error {
@@ -284,7 +284,7 @@ func (a *APITracker) unexpose(unexposeReq *types.UnexposeRequest) error {
 		return err
 	}
 
-	return verifyResposeBody(res)
+	return verifyResponseBody(res)
 }
 
 func (a *APITracker) determineHostIP(hostIP string) string {
@@ -306,7 +306,7 @@ func ipPortBuilder(ip, port string) string {
 	return ip + ":" + port
 }
 
-func verifyResposeBody(res *http.Response) error {
+func verifyResponseBody(res *http.Response) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {

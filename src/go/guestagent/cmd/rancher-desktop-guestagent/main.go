@@ -156,7 +156,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("failed to parse port for k8s API: %v", err)
 			}
-			k8sAPIportMapping := types.PortMapping{
+			k8sAPIPortMapping := types.PortMapping{
 				Remove: false,
 				Ports: nat.PortMap{
 					port: []nat.PortBinding{
@@ -167,8 +167,8 @@ func main() {
 					},
 				},
 			}
-			if err := forwarder.Send(k8sAPIportMapping); err != nil {
-				log.Fatalf("failed to send a static portMapping envent to wsl-proxy: %v", err)
+			if err := forwarder.Send(k8sAPIPortMapping); err != nil {
+				log.Fatalf("failed to send a static portMapping event to wsl-proxy: %v", err)
 			}
 			log.Debugf("successfully forwarded k8s API port [%s] to wsl-proxy", *k8sAPIPort)
 		}

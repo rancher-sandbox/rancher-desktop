@@ -20,7 +20,7 @@ import "github.com/docker/go-connections/nat"
 // PortMapping is used to send Port/IP list over
 // the Vtunnel to the RD Privileged Service.
 type PortMapping struct {
-	// Remvoe indicates wherethere to remove or add the entry
+	// Remove indicates whether to remove or add the entry
 	Remove bool `json:"remove"`
 	// Ports are the port mappings for both IPV4 and IPV6
 	Ports nat.PortMap `json:"ports"`

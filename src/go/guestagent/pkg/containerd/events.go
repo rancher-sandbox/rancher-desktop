@@ -78,12 +78,12 @@ func NewEventMonitor(
 // MonitorPorts subscribes to event API
 // for container Create/Update/Delete events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	subcribeFilters := []string{
+	subscribeFilters := []string{
 		`topic=="/tasks/start"`,
 		`topic=="/containers/update"`,
 		`topic=="/tasks/exit"`,
 	}
-	msgCh, errCh := e.containerdClient.Subscribe(ctx, subcribeFilters...)
+	msgCh, errCh := e.containerdClient.Subscribe(ctx, subscribeFilters...)
 
 	for {
 		select {
@@ -100,7 +100,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 				err := proto.Unmarshal(envelope.Event.GetValue(), startTask)
 				if err != nil {
-					log.Errorf("failed unmarshaling container's start task: %v", err)
+					log.Errorf("failed to unmarshal container's start task: %v", err)
 				}
 
 				ports, err := e.createPortMapping(ctx, envelope.Namespace, startTask.ContainerID)
@@ -130,7 +130,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				cuEvent := &events.ContainerUpdate{}
 				err := proto.Unmarshal(envelope.Event.GetValue(), cuEvent)
 				if err != nil {
-					log.Errorf("failed unmarshaling container update event: %v", err)
+					log.Errorf("failed to unmarshal container update event: %v", err)
 				}
 
 				ports, err := e.createPortMapping(ctx, envelope.Namespace, cuEvent.ID)
@@ -172,7 +172,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				exitTask := &events.TaskExit{}
 				err := proto.Unmarshal(envelope.Event.GetValue(), exitTask)
 				if err != nil {
-					log.Errorf("failed unmarshaling container's exit task: %v", err)
+					log.Errorf("failed to unmarshal container's exit task: %v", err)
 				}
 
 				portMapToDelete := e.portTracker.Get(exitTask.ContainerID)
@@ -396,9 +396,7 @@ func extractIPAddress(pid string) (string, error) {
 		return "", err
 	}
 	// Regular expression pattern to match the IP address
-	ipPattern := `\binet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/\d{1,2}`
-
-	rx := regexp.MustCompile(ipPattern)
+	rx := regexp.MustCompile(`\binet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/\d{1,2}`)
 
 	matches := rx.FindStringSubmatch(string(output))
 	segments := 2

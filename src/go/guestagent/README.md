@@ -32,7 +32,7 @@ When using the containerd backend, the behaviour of Rancher Desktop Guest Agent 
 
 ## When Privileged Service is disabled:
 
-When the Rancher Desktop Privileged Service is not enabled on the host Windows machine via a non admin installation of Rancher Desktop, the guest agent watches the iptables for a newely added rules.
+When the Rancher Desktop Privileged Service is not enabled on the host Windows machine via a non admin installation of Rancher Desktop, the guest agent watches the iptables for newly added rules.
 
 ### containerd port forwarding (WSL) when no privileged service is enabled
 
