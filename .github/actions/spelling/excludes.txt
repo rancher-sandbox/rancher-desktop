@@ -98,3 +98,4 @@ ignore$
 ^\Qsrc/disk-images/github-runner-linux/root/etc/sysconfig/network/ifcfg-\E
 ^\Qsrc/go/nerdctl-stub/nerdctl_commands_generated.go\E$
 ^\Q.github/workflows/config/.golangci.yaml\E$
+^\Qsrc/go/guestagent/.golangci.yml\E$
