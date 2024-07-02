@@ -186,7 +186,7 @@ func vsockHandshake(ctx context.Context, handshakePort uint32, signature string)
 	bailout := time.After(time.Second * timeoutSeconds)
 	vmGUID, err := vsock.GetVMGUID(ctx, signature, handshakePort, bailout)
 	if err != nil {
-		return nil, fmt.Errorf("trying to find WSL GUID faild: %w", err)
+		return nil, fmt.Errorf("trying to find WSL GUID failed: %w", err)
 	}
 	logrus.Infof("successful handshake, waiting for a vsock connection from VMGUID: %v on Port: %v", vmGUID.String(), vsockListenPort)
 	ln, err := vmsock.Listen(vmGUID, vsockListenPort)

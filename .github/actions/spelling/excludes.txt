@@ -99,3 +99,4 @@ ignore$
 ^\Qsrc/go/nerdctl-stub/nerdctl_commands_generated.go\E$
 ^\Q.github/workflows/config/.golangci.yaml\E$
 ^\Qsrc/go/guestagent/.golangci.yml\E$
+^\Qsrc/go/networking/.golangci.yml\E$

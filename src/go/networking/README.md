@@ -44,7 +44,7 @@ portForwarding["Port Forwarding"]
 ```
 
 ## host-switch
-`host-switch` runs on the Windows host and acts as a receiver for all traffic originating from the network namespace within the WSL VM. It performs a handshake to find the right VM to talk to over `AF_VSOCK`. Once a correct VM is found, it then listens for the incoming traffic from that VM. In additon to this, it can provide a DNS resolver that runs in the user space network along with an API that allows for dynamic port forwarding.
+`host-switch` runs on the Windows host and acts as a receiver for all traffic originating from the network namespace within the WSL VM. It performs a handshake to find the right VM to talk to over `AF_VSOCK`. Once a correct VM is found, it then listens for the incoming traffic from that VM. In addition to this, it can provide a DNS resolver that runs in the user space network along with an API that allows for dynamic port forwarding.
 
 ## network-setup
 Its main responsibility is to respond to the handshake request from the `host-switch.exe`, create a network namespace and start the `vm-switch` subprocess in the newly created network namespace. In addition, it also calls unshare with provided arguments through `--unshare-args`. Below is a sequence diagram demonstrating the process. The process also establishes a Virtual Ethernet pair consisting of two endpoints: `veth-rd0` and `veth-rd1`. `veth-rd0` resides within the default namespace and is configured to listen on the IP address `192.168.1.1`. Conversely, `veth-rd1` is located within a network namespace and is assigned the IP address `192.168.1.2`.

@@ -181,6 +181,7 @@ destinationrule
 DETECTEXCEPTIONS
 developercertificate
 dfile
+dhclient
 diffdisk
 digitalocean
 dirents
@@ -207,6 +208,7 @@ dport
 dri
 DSL
 Duex
+dustin
 Dwm
 dwmapi
 DWMWA
@@ -265,6 +267,7 @@ fleetworkspace
 Fluentd
 FOLDERID
 fontstack
+Forwardings
 fqname
 freeipa
 frontends
@@ -290,6 +293,7 @@ golangci
 gomod
 googlegke
 googleoauth
+gopacket
 gosec
 govet
 govmm
@@ -355,6 +359,7 @@ INSTALLPROPERTY
 ioctl
 ipaddr
 iptable
+Isf
 isthebestmeshuggahalbum
 istio
 istiod
@@ -490,6 +495,7 @@ msixbundle
 msize
 msvs
 msys
+mtu
 multierror
 multiport
 munged
@@ -504,6 +510,7 @@ navlink
 neq
 nerdctl
 netcat
+netlink
 netns
 netsh
 networkpolicy
@@ -570,6 +577,7 @@ pagerduty
 parsesection
 pascalize
 pathspec
+pcap
 pcs
 pdp
 penpot
@@ -645,6 +653,7 @@ RDRUNAFTERINSTALL
 rdshell
 rdsudo
 rdtest
+rdvsock
 rdx
 readyz
 redhat
@@ -730,6 +739,7 @@ snakize
 softmmu
 someothername
 somepaththatshouldnevereverexist
+songgao
 sourced
 spinkube
 spinoperator
@@ -759,6 +769,7 @@ sysdeps
 sysfs
 tarballs
 TARGETDIR
+tcpip
 tcshrc
 TEAMID
 teamocil
@@ -797,6 +808,7 @@ TVar
 tvf
 UAC
 ucmonitor
+udhcpc
 UEFI
 Unauthed
 UNCONFIGURED
@@ -830,7 +842,9 @@ virt
 virtio
 virtiofs
 virtsock
+virtualnetwork
 virtualservice
+vishvananda
 VMGUID
 vmnet
 VModal

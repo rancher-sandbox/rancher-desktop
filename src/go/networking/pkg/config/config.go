@@ -11,8 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// confg contains all the configuration that is
-// required by host switch.
+// config contains all the configuration that is required by host switch.
 package config
 
 import (

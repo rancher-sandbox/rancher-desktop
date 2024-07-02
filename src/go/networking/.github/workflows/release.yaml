@@ -29,7 +29,7 @@ jobs:
           CGO_ENABLED: "0"
       - name: create tarball
         run: |
-          tar -C ./bin -czf $TAR_FILE .
+          tar czf -C ./bin $TAR_FILE .
           md5sum $TAR_FILE > $TAR_FILE.md5
       - uses: actions/upload-artifact@v3
         with:

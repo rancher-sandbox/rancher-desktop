@@ -76,7 +76,7 @@ func main() {
 		logrus.Fatal("unshare program arg must be provided")
 	}
 
-	// listenForHandshake blocks until a successful handshake is estabilished.
+	// listenForHandshake blocks until a successful handshake is established.
 	listenForHandshake(ctx)
 
 	logrus.Debugf("attempting to connect to the host on CID: %v and Port: %d", vsock.CIDHost, vsockDialPort)
@@ -210,7 +210,7 @@ func configureVMSwitch(
 	vmSwitchCmd := exec.CommandContext(ctx, nsenter, args...)
 
 	// pass in the vsock connection as a FD to the
-	// vm-switch process in the newely created namespace
+	// vm-switch process in the newly created namespace
 	vmSwitchCmd.ExtraFiles = []*os.File{connFile}
 	return vmSwitchCmd
 }
@@ -317,7 +317,7 @@ func listenForHandshake(ctx context.Context) {
 			logrus.Errorf("listenForHandshake writing signature phrase failed: %v", err)
 		}
 
-		// verify that the host-switch is ready for us to estabilish the connection
+		// verify that the host-switch is ready for us to establish the connection
 		buf := make([]byte, len(rdvsock.ReadySignal))
 		if _, err := io.ReadFull(conn, buf); err != nil {
 			logrus.Errorf("listenForHandshake reading signature phrase failed: %v", err)
