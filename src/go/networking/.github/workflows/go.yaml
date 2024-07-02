@@ -1,0 +1,47 @@
+name: Go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    - name: Build
+      run: make build
+
+    - name: Run golangci-lint [linux]
+      uses: golangci/golangci-lint-action@v3.1.0
+      with:
+        args: --verbose --timeout 3m
+        # Disable pkg & build cache flags; the manual build step fills those in,
+        # so repopulating the cache just shows a pile of errors.
+        skip-pkg-cache: true
+        skip-build-cache: true
+      env:
+        GOOS: "linux"
+
+    - name: Run golangci-lint [windows]
+      uses: golangci/golangci-lint-action@v3.1.0
+      with:
+        args: --verbose --timeout 3m
+        # Disable pkg & build cache flags; the manual build step fills those in,
+        # so repopulating the cache just shows a pile of errors.
+        skip-pkg-cache: true
+        skip-build-cache: true
+      env:
+        GOOS: "windows"

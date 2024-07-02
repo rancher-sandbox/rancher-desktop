@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "test-v*"
+
+permissions:
+  contents: read
+
+env:
+  TAR_FILE: rancher-desktop-networking-${{ github.ref_name }}.tar.gz
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+      - name: create build artifacts
+        run: make build
+        env:
+          CGO_ENABLED: "0"
+      - name: create tarball
+        run: |
+          tar czf -C ./bin $TAR_FILE .
+          md5sum $TAR_FILE > $TAR_FILE.md5
+      - uses: actions/upload-artifact@v3
+        with:
+          name: rancher-desktop-networking.tar.gz
+          path: rancher-desktop-networking-${{ github.ref_name }}.tar.gz
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v3
+        with:
+          name: rancher-desktop-networking.tar.gz.md5
+          path: rancher-desktop-networking-${{ github.ref_name }}.tar.gz.md5
+          if-no-files-found: error
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download tar artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: rancher-desktop-networking.tar.gz
+      - name: Download tar MD5 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: rancher-desktop-networking.tar.gz.md5
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release create
+          "${{ github.ref_name }}"
+          $TAR_FILE
+          $TAR_FILE.md5
+          --draft
+          --title "${{ github.ref_name }}"
+          --repo ${{ github.repository }}
