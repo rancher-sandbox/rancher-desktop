@@ -154,3 +154,93 @@ types.PortMapping {
 In [newer versions](https://github.com/rancher-sandbox/rancher-desktop/blob/bb7f71f18828c45b711d6d4982a2dcaf19f8f3fa/pkg/rancher-desktop/backend/k3sHelper.ts#L1152) of Kubernetes, kubelet no longer automatically creates listeners for NodePort and LoadBalancer services. To address this, we manually create these listeners to ensure proper port forwarding functionality. Service ports requiring forwarding are identified in iptables DNAT. When iptables identifies such ports, it creates a port mapping object representing that service. Depending on the selected network mode, the port mapping object is then forwarded to the host. If the privileged service is enabled, it uses the vtunnel peer process to communicate the port mappings with privileged services. Otherwise, if network tunnel mode is enabled, it sends the port mappings to the API provided by the host switch process.
 
 If network tunnel mode is enabled along with the WSL integration option, a copy of the port mapping is also forwarded to the `wsl-proxy` process, allowing access to the exposed port from other distributions.
+
+## Port forwarding
+
+```mermaid
+sequenceDiagram
+  box VM
+    participant dockerd
+    participant containerd
+    participant kubernetes
+    participant iptables
+    participant guest-agent
+    participant wsl-proxy
+  end
+  box Host
+    participant host-switch as host-switch.exe
+    participant privileged-service
+  end
+
+  rect transparent
+    note over dockerd,containerd: adding port
+    alt containerd
+      containerd ->> guest-agent: /tasks/start
+      guest-agent ->> guest-agent: loopback iptables
+    else dockerd
+      dockerd ->> guest-agent: event[start]
+      guest-agent ->> guest-agent: loopback iptables
+    else kubernetes
+      kubernetes ->> guest-agent: event[not deleted]
+    else iptables
+      iptables ->> iptables: poll iptables
+      iptables ->> guest-agent: add new ports
+    end
+    alt privileged-service
+      guest-agent ->> privileged-service: add port (via VTunnel forwarding)
+      privileged-service ->> privileged-service: listen on host 0.0.0.0
+    else
+      guest-agent ->> wsl-proxy: add port
+      wsl-proxy ->> wsl-proxy: listen in default namespace
+      guest-agent ->> host-switch: add port (APITracker)
+      host-switch ->> host-switch: add port via gvisor
+    end
+  end
+
+  rect transparent
+    note over dockerd, containerd: updating port
+    alt containerd
+      containerd ->> guest-agent: /containers/update
+    end
+    alt privileged-service
+      guest-agent ->> privileged-service: remove port (via VTunnel forwarding)
+      privileged-service ->> privileged-service: remove listener on host 0.0.0.0
+      guest-agent ->> privileged-service: add port (via VTunnel forwarding)
+      privileged-service ->> privileged-service: listen on host 0.0.0.0
+    else
+      guest-agent ->> wsl-proxy: remove port
+      wsl-proxy ->> wsl-proxy: remove listener in default namespace
+      guest-agent ->> host-switch: remove port (APITracker)
+      host-switch ->> host-switch: remove port via gvisor
+      guest-agent ->> wsl-proxy: add port
+      wsl-proxy ->> wsl-proxy: listen in default namespace
+      guest-agent ->> host-switch: add port (APITracker)
+      host-switch ->> host-switch: add port via gvisor
+    end
+  end
+
+  rect transparent
+    note over dockerd,containerd: removing port
+    alt containerd
+      containerd ->> guest-agent: /tasks/exit
+    else dockerd
+      dockerd ->> guest-agent: event[stop]
+      dockerd ->> guest-agent: event[die]
+    else kubernetes
+      kubernetes ->> guest-agent: event[deleted]
+    else iptables
+      iptables ->> iptables: poll iptables
+      iptables ->> guest-agent: remove old ports
+    end
+    alt privileged-service
+      guest-agent ->> privileged-service: remove port (via VTunnel forwarding)
+      privileged-service ->> privileged-service: remove listener on host 0.0.0.0
+    else
+      guest-agent ->> wsl-proxy: remove port
+      wsl-proxy ->> wsl-proxy: remove listener in default namespace
+      guest-agent ->> host-switch: remove port (APITracker)
+      host-switch ->> host-switch: remove port via gvisor
+    end
+  end
+
+```
