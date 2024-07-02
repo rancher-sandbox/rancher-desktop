@@ -24,8 +24,10 @@ amazonec
 amazoneks
 ANamespace
 andsection
+apierrors
 apify
 apiservice
+apitracker
 apk
 appdata
 APPDIR
@@ -105,6 +107,8 @@ chirico
 cidata
 cidfile
 Cim
+clientcmd
+clientset
 clonefile
 cloudca
 clusterdomain
@@ -134,7 +138,6 @@ connectaddress
 connectport
 constrainttemplate
 CONTAINERENGINE
-containo
 copypac
 coredns
 corejs
@@ -167,6 +170,7 @@ deadcode
 debbuild
 debian
 Debugf
+Debugw
 decamelize
 decapsulates
 dedot
@@ -187,7 +191,7 @@ Dlg
 dlgbmp
 dlicense
 dmg
-DNAT
+dnat
 dnf
 dnsmasq
 dockercfg
@@ -199,7 +203,7 @@ dompurify
 donotuse
 dotfile
 Dowloading
-dports
+dport
 dri
 DSL
 Duex
@@ -226,6 +230,7 @@ EPONY
 ERRFILE
 errgroup
 Errorln
+Errorw
 estargz
 ESXi
 etcdbackup
@@ -278,6 +283,7 @@ globalrole
 globalrolebinding
 Gluster
 gname
+gochecknoglobals
 gofmt
 goland
 golangci
@@ -311,8 +317,8 @@ hklm
 HMR
 hocs
 horizontalpodautoscaler
-hostfile
 hosthandshake
+HOSTPORT
 hoverable
 howett
 hpa
@@ -338,6 +344,7 @@ iife
 imageinfo
 IMAGENAME
 IMAGEPATH
+INADDR
 inbox
 ine
 Infof
@@ -432,8 +439,8 @@ linting
 linuxkit
 Linuxy
 listenaddress
+listenertracker
 listenport
-lll
 loadbalancer
 loblaw
 logdir
@@ -483,7 +490,6 @@ msixbundle
 msize
 msvs
 msys
-mszip
 multierror
 multiport
 munged
@@ -518,6 +524,7 @@ nolint
 nologin
 nologo
 nomount
+nonamedreturns
 NONINFRINGEMENT
 noproxy
 norestart
@@ -591,8 +598,9 @@ poppins
 POptions
 portforward
 portmap
-Portmapping
+portmapping
 portproxy
+portstorage
 postgresql
 postrotate
 POSTROUTING
@@ -601,7 +609,6 @@ poweroff
 PQgrl
 prakhar
 prebuilds
-prewk
 Privs
 progresskey
 projectroletemplatebinding
@@ -609,6 +616,7 @@ Prometheis
 prometheusrule
 PROMPTROLLBACKCOST
 protip
+protobuf
 PROXYLIST
 PSelected
 PSHOME
@@ -629,6 +637,7 @@ rawdata
 rcedit
 rcfiles
 rcompare
+rdagent
 rdctl
 rddepman
 rdinstall
@@ -651,6 +660,7 @@ requried
 resolv
 resourcequota
 resourceset
+restclient
 restoretip
 resyncing
 reusecab
@@ -692,6 +702,7 @@ serveraddress
 servernum
 serviceaccount
 servicemonitor
+servicewatcher
 setproxy
 SFC
 sharedscripts
@@ -779,8 +790,8 @@ topmenu
 TQF
 Tracef
 traefik
-traefikservices
 transitioning
+trimpath
 trivy
 TVar
 tvf
@@ -790,6 +801,7 @@ UEFI
 Unauthed
 UNCONFIGURED
 unexpose
+unexposing
 unfetch
 Uninstalls
 unparam
@@ -804,10 +816,10 @@ userdb
 usermod
 userpreference
 UTCTIME
+varnamelen
 vcenter
 vcpus
 vcs
-vde
 ventura
 VERSIONSTRING
 vertificate
@@ -832,6 +844,7 @@ vnode
 vsock
 vtun
 vtunnel
+vtunneltracker
 vuex
 vul
 vznat
@@ -856,6 +869,7 @@ wslify
 WSLINSTALLED
 WSLIs
 WSLKERNELOUTDATED
+wslproxy
 wslutils
 WWID
 wwn
