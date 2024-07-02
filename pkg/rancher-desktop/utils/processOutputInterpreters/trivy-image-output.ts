@@ -1,5 +1,6 @@
 const LineSplitter = /\r?\n/;
-const logFormat = /^[-\d]+T[-:.\d]+Z?\s+\033\[\d+m([A-Z]+)\033\[\d+m\s+(.*)$/;
+// eslint-disable-next-line no-control-regex -- Need to catch ANSI control
+const logFormat = /^[-\d]+T[-:.\d]+Z?\s+\x1B\[\d+m([A-Z]+)\x1B\[\d+m\s+(.*)$/;
 
 const CVEKeys = ['Package', 'VulnerabilityID', 'Severity', 'Title', 'InstalledVersion', 'FixedVersion', 'Description', 'PrimaryURL'];
 const severityRatings: Record<string, number> = {
