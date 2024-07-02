@@ -1565,6 +1565,18 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               }),
               this.progressTracker.action('Installing k3s', 100, async() => {
                 await this.kubeBackend.deleteIncompatibleData(version);
+                // On older versions of K3s, we need to enable ip_forward to allow traefik to work.
+                // Otherwise the "svclb" pods exit immediately.  This needs to be done in the
+                // default namespace; it does not seem to inherit from the RD network namespace.
+                const versionsNeedingForward = [
+                  '<1.23.13',
+                  '>=1.24.0 <1.24.7',
+                  '>=1.25.0 <1.25.3',
+                ];
+
+                if (semver.satisfies(version, versionsNeedingForward.join(' || '))) {
+                  await this.execCommand('/sbin/sysctl', '-w', 'net.ipv4.ip_forward=1');
+                }
                 await this.kubeBackend.install(config, version, false);
               })]));
           }

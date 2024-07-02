@@ -740,6 +740,7 @@ subshells
 subvar
 sumologic
 suse
+svclb
 SVCNAME
 SYD
 syscalls
