@@ -54,10 +54,10 @@ export class ExtensionProxyImage implements Dependency {
       // Build the image tarball
       const layerHash = layerHasher.digest().toString('hex');
       const image = tar.pack();
-      const imageWritten =
-        stream.promises.finished(
-          image
-            .pipe(fs.createWriteStream(imagePath)));
+      const imageStream = fs.createWriteStream(imagePath);
+      const imageWritten = stream.promises.finished(imageStream);
+
+      image.pipe(imageStream);
       const addEntry = (name: string, input: Buffer | stream.Readable, size?: number) => {
         if (Buffer.isBuffer(input)) {
           size = input.length;
@@ -118,5 +118,65 @@ export class ExtensionProxyImage implements Dependency {
 
   rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): 0 | 1 | -1 {
     throw new Error('extension-proxy does not have versions.');
+  }
+}
+
+export class WSLDistroImage implements Dependency {
+  name = 'WSLDistroImage';
+  dependencies(context: DownloadContext): string[] {
+    return ['WSLDistro:win32', 'guestagent:linux'];
+  }
+
+  async download(context: DownloadContext): Promise<void> {
+    const tarName = `distro-${ context.versions.WSLDistro }.tar`;
+    const pristinePath = path.join(context.resourcesDir, context.platform, 'staging', tarName);
+    const pristineFile = fs.createReadStream(pristinePath);
+    const extractor = tar.extract();
+    const destPath = path.join(context.resourcesDir, context.platform, tarName);
+    const destFile = fs.createWriteStream(destPath);
+    const packer = tar.pack();
+
+    console.log('Building WSLDistro image...');
+
+    // Copy the pristine tar file to the destination.
+    packer.pipe(destFile);
+    extractor.on('entry', (header, stream, callback) => {
+      stream.pipe(packer.entry(header, callback));
+    });
+    await stream.promises.finished(pristineFile.pipe(extractor));
+
+    async function addFile(fromPath: string, name: string, options: Omit<tar.Headers, 'name' | 'size'> = {}) {
+      const { size } = await fs.promises.stat(fromPath);
+      const inputFile = fs.createReadStream(fromPath);
+
+      console.log(`WSL Distro: Adding ${ fromPath } to ${ name }...`);
+      await stream.promises.finished(inputFile.pipe(packer.entry({
+        name,
+        size,
+        mode:  0o755,
+        type:  'file',
+        mtime: new Date(0),
+        ...options,
+      })));
+    }
+
+    // Add extra files.
+    await addFile(path.join(context.resourcesDir, 'linux', 'staging', 'guestagent'),
+      'usr/local/bin/rancher-desktop-guestagent');
+    await addFile(path.join(context.resourcesDir, 'linux', 'staging', 'trivy'),
+      'usr/local/bin/trivy');
+
+    // Finish the archive.
+    packer.finalize();
+    await stream.promises.finished(packer);
+    console.log('Built WSLDistro image.');
+  }
+
+  getAvailableVersions(includePrerelease?: boolean | undefined): Promise<string[] | AlpineLimaISOVersion[]> {
+    throw new Error('WSLDistroImage does not have versions.');
+  }
+
+  rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): 0 | 1 | -1 {
+    throw new Error('WSLDistroImage does not have versions.');
   }
 }

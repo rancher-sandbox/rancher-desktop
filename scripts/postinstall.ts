@@ -5,7 +5,7 @@ import path from 'path';
 import * as goUtils from 'scripts/dependencies/go-source';
 import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
-import { ExtensionProxyImage } from 'scripts/dependencies/tar-archives';
+import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
 import {
@@ -46,6 +46,7 @@ const unixDependencies = [
 // Dependencies that are specific to windows hosts.
 const windowsDependencies = [
   new WSLDistro(),
+  new WSLDistroImage(),
   new HostResolverHost(),
   new Wix(),
   new HostSwitch(),

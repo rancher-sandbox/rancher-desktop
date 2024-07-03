@@ -947,10 +947,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       };
     }
 
-    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'guestagent');
-
     await Promise.all([
-      this.wslInstall(guestAgentPath, '/usr/local/bin/', 'rancher-desktop-guestagent'),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
       this.writeConf('rancher-desktop-guestagent', guestAgentConfig),
     ]);
