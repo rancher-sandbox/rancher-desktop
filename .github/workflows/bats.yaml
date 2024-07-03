@@ -293,7 +293,7 @@ jobs:
 
   summarize:
     name: Summarize output
-    needs: bats
+    needs: [ get-tests, bats ]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
@@ -312,3 +312,5 @@ jobs:
       with:
         pattern: "*.logs"
     - run: node .github/workflows/bats/summarize.mjs
+      env:
+        EXPECTED_TESTS: ${{ needs.get-tests.outputs.tests }}
