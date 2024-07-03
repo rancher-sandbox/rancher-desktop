@@ -2,10 +2,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import buildUtils from './lib/build-utils';
-
+import * as goUtils from 'scripts/dependencies/go-source';
 import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
+import { ExtensionProxyImage } from 'scripts/dependencies/tar-archives';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
 import {
@@ -32,6 +32,8 @@ const userTouchedDependencies = [
   new tools.DockerProvidedCredHelpers(),
   new tools.ECRCredHelper(),
   new tools.SpinCLI(),
+  new goUtils.RDCtl(),
+  new goUtils.GoDependency('docker-credential-none'),
 ];
 
 // Dependencies that are specific to unix hosts.
@@ -47,12 +49,21 @@ const windowsDependencies = [
   new HostResolverHost(),
   new Wix(),
   new HostSwitch(),
+  new goUtils.GoDependency('vtunnel', 'internal'),
+  new goUtils.GoDependency('privileged-service', 'internal'),
+  new goUtils.WSLHelper(),
+  new goUtils.NerdctlStub(),
 ];
 
 // Dependencies that are specific to WSL.
 const wslDependencies = [
   new HostResolverPeer(),
   new Moproxy(),
+  new goUtils.GoDependency('vtunnel', 'internal'),
+  new goUtils.RDCtl(),
+  new goUtils.GoDependency('guestagent', 'staging'),
+  new goUtils.WSLHelper(),
+  new goUtils.NerdctlStub(),
 ];
 
 // Dependencies that are specific to WSL and Lima VMs.
@@ -61,6 +72,8 @@ const vmDependencies = [
   new tools.WasmShims(),
   new tools.CertManager(),
   new tools.SpinOperator(),
+  new goUtils.ExtensionProxy(),
+  new ExtensionProxyImage(),
 ];
 
 // Dependencies that are specific to hosts.
@@ -202,11 +215,6 @@ const keepScriptAlive = setTimeout(() => { }, 24 * 3600 * 1000);
     await runScripts();
     await simpleSpawn('node',
       ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps']);
-    await simpleSpawn('node', ['scripts/ts-wrapper.js',
-      'scripts/generateCliCode.ts',
-      'pkg/rancher-desktop/assets/specs/command-api.yaml',
-      'src/go/rdctl/pkg/options/generated/options.go']);
-    await buildUtils.buildGoUtilities();
     exitCode = 0;
   } catch (e: any) {
     console.error('POSTINSTALL ERROR: ', e);
