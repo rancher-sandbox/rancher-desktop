@@ -674,11 +674,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /**
    * Copy a file from Windows to the WSL distribution.
    */
-  protected async wslInstall(windowsPath: string, targetDirectory: string): Promise<void> {
+  protected async wslInstall(windowsPath: string, targetDirectory: string, targetBasename: string = ''): Promise<void> {
     const wslSourcePath = await this.wslify(windowsPath);
     const basename = path.basename(windowsPath);
     // Don't use `path.join` or the backslashes will come back.
-    const targetFile = `${ targetDirectory }/${ basename }`;
+    const targetFile = `${ targetDirectory }/${ targetBasename || basename }`;
 
     console.log(`Installing ${ windowsPath } as ${ wslSourcePath } into ${ targetFile } ...`);
     try {
@@ -947,10 +947,10 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       };
     }
 
-    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
+    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'guestagent');
 
     await Promise.all([
-      this.wslInstall(guestAgentPath, '/usr/local/bin/'),
+      this.wslInstall(guestAgentPath, '/usr/local/bin/', 'rancher-desktop-guestagent'),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
       this.writeConf('rancher-desktop-guestagent', guestAgentConfig),
     ]);

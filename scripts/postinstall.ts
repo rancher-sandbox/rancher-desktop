@@ -48,7 +48,6 @@ const windowsDependencies = [
 const wslDependencies = [
   new HostResolverPeer(),
   new Moproxy(),
-  new tools.GuestAgent(),
 ];
 
 // Dependencies that are specific to WSL and Lima VMs.

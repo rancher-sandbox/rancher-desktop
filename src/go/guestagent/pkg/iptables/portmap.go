@@ -10,7 +10,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/lima-vm/lima/pkg/guestagent/iptables"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 )
 
 // ForwardPorts forwards ports found in iptables dnat. In some environments,

@@ -21,7 +21,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/stretchr/testify/require"
 )
 

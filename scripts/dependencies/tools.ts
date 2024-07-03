@@ -356,33 +356,6 @@ export class Steve implements Dependency, GitHubDependency {
   }
 }
 
-export class GuestAgent implements Dependency, GitHubDependency {
-  name = 'guestAgent';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'rancher-desktop-agent';
-
-  async download(context: DownloadContext): Promise<void> {
-    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.guestAgent }`;
-    const executableName = 'rancher-desktop-guestagent';
-    const url = `${ baseUrl }/${ executableName }-v${ context.versions.guestAgent }.tar.gz`;
-    const destPath = path.join(context.internalDir, executableName);
-
-    await downloadTarGZ(url, destPath);
-  }
-
-  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
-    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
-  }
-
-  versionToTagName(version: string): string {
-    return `v${ version }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return semver.rcompare(version1, version2);
-  }
-}
-
 export class RancherDashboard implements Dependency, GitHubDependency {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';

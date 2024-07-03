@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 )
 
 // Forwarder is the interface that wraps the Send method which

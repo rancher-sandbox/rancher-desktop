@@ -32,7 +32,7 @@ import (
 	containerdNamespace "github.com/containerd/containerd/namespaces"
 	"github.com/docker/go-connections/nat"
 	"github.com/gogo/protobuf/proto"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 )
 
 const (
