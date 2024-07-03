@@ -22,7 +22,7 @@ import (
 
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

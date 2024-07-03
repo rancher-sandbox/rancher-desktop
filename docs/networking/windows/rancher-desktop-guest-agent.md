@@ -1,4 +1,4 @@
-# **[Rancher Desktop Guest Agent](https://github.com/rancher-sandbox/rancher-desktop-agent)**
+# **[Rancher Desktop Guest Agent](../../../src/go/guestagent)**
 
 The Rancher Desktop Guest Agent operates within the Rancher Desktop WSL distribution, particularly in an isolated namespace when the network tunnel is enabled. It facilitates interactions between various container engine APIs like Moby, containerd, and Kubernetes. The agent monitors container/service creation events from these APIs and, upon detecting ports needing exposure, forwards the port mappings to internal services accordingly. This ensures efficient and automated port forwarding management within the Rancher Desktop environment.
 

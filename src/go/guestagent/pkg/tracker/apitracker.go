@@ -27,8 +27,8 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
-	guestagentTypes "github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
+	guestagentTypes "github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 )
 
 const (

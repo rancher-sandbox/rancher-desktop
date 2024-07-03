@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop-agent
+module github.com/rancher-sandbox/rancher-desktop/src/go/guestagent
 
 go 1.22.0
 

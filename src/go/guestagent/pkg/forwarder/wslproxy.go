@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 )
 
 // WSLProxyForwarder forwards the PortMappings to Rancher Desktop WSLProxy process in

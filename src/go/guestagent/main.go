@@ -31,13 +31,13 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/containerd"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/docker"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/docker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"golang.org/x/sync/errgroup"
 )
 
