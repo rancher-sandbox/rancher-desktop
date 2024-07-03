@@ -28,7 +28,7 @@ import (
 	"regexp"
 	"strings"
 
-	dockerconfig "github.com/docker/docker/cli/config"
+	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"

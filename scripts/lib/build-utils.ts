@@ -477,6 +477,7 @@ export default {
       tasks.push(() => this.buildUtility('vtunnel', 'win32', 'internal'));
       tasks.push(() => this.buildUtility('rdctl', 'linux', 'bin'));
       tasks.push(() => this.buildUtility('privileged-service', 'win32', 'internal'));
+      tasks.push(() => this.buildUtility('guestagent', 'linux', 'internal'));
     }
     tasks.push(() => this.buildUtility('rdctl', os.platform(), 'bin'));
     tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));

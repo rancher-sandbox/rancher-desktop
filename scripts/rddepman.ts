@@ -33,7 +33,6 @@ const dependencies: Dependency[] = [
   new tools.DockerCompose(),
   new tools.DockerProvidedCredHelpers(),
   new tools.Trivy(),
-  new tools.GuestAgent(),
   new tools.Steve(),
   new tools.RancherDashboard(),
   new tools.ECRCredHelper(),
