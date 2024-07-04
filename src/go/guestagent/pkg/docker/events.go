@@ -61,10 +61,6 @@ func NewEventMonitor(portTracker tracker.Tracker) (*EventMonitor, error) {
 // MonitorPorts scans Docker's event stream API
 // for container start/stop events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	if err := e.initializeRunningContainers(ctx); err != nil {
-		log.Errorf("failed to initialize existing container port mappings: %v", err)
-	}
-
 	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("type", "container"),
@@ -72,6 +68,10 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 			filters.Arg("event", stopEvent),
 			filters.Arg("event", dieEvent)),
 	})
+
+	if err := e.initializeRunningContainers(ctx); err != nil {
+		log.Errorf("failed to initialize existing container port mappings: %v", err)
+	}
 
 	for {
 		select {
