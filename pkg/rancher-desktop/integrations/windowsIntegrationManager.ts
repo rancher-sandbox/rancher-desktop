@@ -460,6 +460,32 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
+  /**
+ * verifyDistrosKubeConfig loops through all the available distros
+ * and calls the wsl-helper kubeconfig --verify per distro.
+ */
+  async verifyDistrosKubeConfig() {
+    await Promise.all([
+      (await (this.supportedDistros)).map(distro => this.verifyKubeConfig(distro.name)),
+    ]);
+  }
+
+  /**
+ * verifyDistroKubeConfig calls the wsl-helper kubeconfig --verify per distro.
+ */
+  protected async verifyKubeConfig(distro: string) {
+    try {
+      const wslHelper = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
+
+      await this.execCommand({ distro }, wslHelper, 'kubeconfig', '--verify');
+    } catch (err: any) {
+      if ('code' in err && err.code !== 0) {
+        return `Error ${ err } verifying kubeConfig in distro ${ distro }`;
+      }
+    }
+    console.debug(`Verified kubeconfig in the following distro ${ distro }`);
+  }
+
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string, state: boolean) {
     try {
       console.debug(`Syncing ${ distro } kubeconfig`);

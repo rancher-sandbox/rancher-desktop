@@ -46,14 +46,15 @@ export class DiagnosticsManager {
   constructor(diagnostics?: DiagnosticsChecker[]) {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
       const imports = (await Promise.all([
-        import('./testCheckers'),
         import('./connectedToInternet'),
         import('./dockerCliSymlinks'),
-        import('./rdBinInShell'),
+        import('./kubeConfigSymlink'),
         import('./kubeContext'),
-        import('./wslFromStore'),
-        import('./mockForScreenshots'),
         import('./limaDarwin'),
+        import('./mockForScreenshots'),
+        import('./rdBinInShell'),
+        import('./testCheckers'),
+        import('./wslFromStore'),
       ])).map(obj => obj.default);
 
       return (await Promise.all(imports)).flat();
