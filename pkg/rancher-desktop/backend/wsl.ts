@@ -903,21 +903,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
   }
 
-  /**
-   * On Windows Trivy is run via WSL as there's no native port.
-   * Ensure that all relevant files are in the wsl mount, not the windows one.
-   */
-  protected async installTrivy() {
-    // download-resources.sh installed trivy into the resources area
-    // This function moves it into /usr/local/bin/ so when trivy is
-    // invoked to run through wsl, it runs faster.
-
-    const trivyExecPath = path.join(paths.resources, 'linux', 'internal', 'trivy');
-
-    await this.execCommand('mkdir', '-p', '/var/local/bin');
-    await this.wslInstall(trivyExecPath, '/usr/local/bin');
-  }
-
   protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
     let guestAgentConfig: Record<string, any>;
     const enableKubernetes = !!kubeVersion;
@@ -1522,7 +1507,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 this.runWslProxy().catch(console.error);
               }
             }),
-            this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
             this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
             this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
           ]));
