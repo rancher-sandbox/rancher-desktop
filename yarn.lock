@@ -2040,10 +2040,10 @@
   dependencies:
     semver "^7.3.5"
 
-"@nuxt/types@2.18.0":
-  version "2.18.0"
-  resolved "https://registry.yarnpkg.com/@nuxt/types/-/types-2.18.0.tgz#ef4540e1198ec9f3129da0928d46a1d1bca9ba1e"
-  integrity sha512-P39k/FRNQjnBSNO6IKMwFXtsyPIlAE6SGidcdO5xDQQgR1+CNgFSMhPdpT17/f/goahyfuRPLxUIkrRXzNiY9w==
+"@nuxt/types@2.18.1":
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/@nuxt/types/-/types-2.18.1.tgz#f577223d9c2882a8f8adb6f85aacb8c17e8c3c7e"
+  integrity sha512-PpReoV9oHCnSpB9WqemTUWmlH1kqFHC3Xe5LH904VvCl/3xLO2nGYcrHeZCMV5hXNWsDUyqDnd/2cQHmeqj5lA==
   dependencies:
     "@types/babel__core" "7.20.5"
     "@types/compression" "1.7.5"

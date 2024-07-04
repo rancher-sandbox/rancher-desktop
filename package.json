@@ -105,7 +105,7 @@
     "@electron/asar": "3.2.10",
     "@electron/fuses": "^1.8.0",
     "@electron/notarize": "2.3.2",
-    "@nuxt/types": "2.18.0",
+    "@nuxt/types": "2.18.1",
     "@nuxtjs/eslint-config-typescript": "11.0.0",
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.2",
