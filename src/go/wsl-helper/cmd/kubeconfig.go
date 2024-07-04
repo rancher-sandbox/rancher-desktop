@@ -57,8 +57,9 @@ var kubeconfigCmd = &cobra.Command{
 		unsupportedConfig, symlinkErr := requireManualSymlink(linkPath)
 		if verify {
 			if unsupportedConfig {
-				os.Exit(1)
+				logrus.Fatalf("kubeConfig: %s contains non-rancher desktop configuration", linkPath)
 			}
+			logrus.Infof("Verified kubeConfig: %s, it only contains Rancher Desktop configuration", linkPath)
 			os.Exit(0)
 		}
 
