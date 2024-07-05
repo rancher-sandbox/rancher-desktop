@@ -4,6 +4,8 @@ on:
   push: {}
   pull_request: {}
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -30,3 +32,28 @@ jobs:
       run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make -C bats lint
     - run: yarn test
+  lint:
+    strategy:
+      matrix:
+        # We run the Linux lint in the `test` flow, no need to repeat it.
+        runs-on: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+    - if: runner.os == 'Windows'
+      name: Configure git to use Unix line endings
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: package.json
+        cache: yarn
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.work
+        cache-dependency-path: src/go/**/go.sum
+    - run: yarn install --frozen-lockfile
+    - run: yarn lint:nofix
