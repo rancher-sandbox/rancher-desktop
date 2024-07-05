@@ -27,12 +27,17 @@ async function format(fix: boolean): Promise<boolean> {
   return true;
 }
 
-async function syncModules(fix: boolean): Promise<boolean> {
-  const listFiles = async(...globs: string[]) => {
-    const { stdout } = await spawnFile('git', ['ls-files', ...globs], { stdio: 'pipe' });
+async function listFiles(...globs: string[]): Promise<string[]> {
+  const { stdout } = await spawnFile('git', ['ls-files', ...globs], { stdio: 'pipe' });
 
-    return stdout.split(/\r?\n/).filter(x => x);
-  };
+  return stdout.split(/\r?\n/).filter(x => x);
+}
+
+async function getModules(): Promise<string[]> {
+  return (await listFiles('**/go.mod')).map(mod => path.dirname(mod));
+}
+
+async function syncModules(fix: boolean): Promise<boolean> {
   const modFiles = await listFiles('**/go.mod');
   const files = ['go.work', ...modFiles, ...await listFiles('**/go.sum')];
   const getChanges = async() => {
@@ -53,7 +58,7 @@ async function syncModules(fix: boolean): Promise<boolean> {
   }
 
   await spawnFile('go', ['work', 'sync']);
-  await Promise.all(modFiles.map(modFile => spawnFile('go', ['mod', 'tidy'], { stdio: 'inherit', cwd: path.dirname(modFile) })));
+  await Promise.all((await getModules()).map(cwd => spawnFile('go', ['mod', 'tidy'], { stdio: 'inherit', cwd })));
   if (!fix) {
     const changes = await getChanges();
 
@@ -71,7 +76,37 @@ async function syncModules(fix: boolean): Promise<boolean> {
   return true;
 }
 
-Promise.all([format(fix), syncModules(fix)]).then((successes) => {
+async function goLangCILint(fix: boolean): Promise<boolean> {
+  const version = '1.59.1';
+
+  const args = [
+    'run', `github.com/golangci/golangci-lint/cmd/golangci-lint@v${ version }`,
+    'run', '--config=.github/workflows/config/.golangci.yaml',
+    '--timeout=10m', '--verbose',
+  ];
+  let success = true;
+
+  if (fix) {
+    args.push('--fix');
+  }
+  if (process.env.GITHUB_ACTIONS) {
+    args.push('--out-format=colored-line-number');
+  }
+  // golangci-lint blocks running in parallel by default (and it's unclear _why_
+  // this is necessary).  To be safe, just pass in all of the modules at once
+  // and let it go at its own pace.
+  const modules = await getModules();
+
+  try {
+    await spawnFile('go', [...args, ...modules.map(m => `${ m }/...`)], { stdio: 'inherit' });
+  } catch (ex) {
+    success = false;
+  }
+
+  return success;
+}
+
+Promise.all([format(fix), syncModules(fix), goLangCILint(fix)]).then((successes) => {
   if (!successes.every(x => x)) {
     process.exit(1);
   }
