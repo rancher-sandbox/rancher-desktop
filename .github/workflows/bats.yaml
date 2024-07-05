@@ -164,7 +164,8 @@ jobs:
       shell: pwsh
       run: >-
         wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
-        sh -c 'apt-get update && apt-get install --yes coreutils curl'
+        sh -c 'apt-get update && apt-get install --yes
+        bsdextrautils coreutils curl' # spellcheck-ignore-line
 
     - name: Set log directory
       shell: bash
@@ -229,6 +230,7 @@ jobs:
         LOGS_DIR:                 ${{ env.LOGS_DIR }}
         RD_CAPTURE_LOGS:          "true"
         RD_CONTAINER_ENGINE:      ${{ matrix.engine }}
+        RD_K3S_VERSIONS:          ${{ matrix.k3sVersion }}
         RD_TAKE_SCREENSHOTS:      "true"
         RD_TRACE:                 "true"
         RD_USE_GHCR_IMAGES:       "true"
@@ -239,6 +241,7 @@ jobs:
           GITHUB_TOKEN:\
           RD_CAPTURE_LOGS:\
           RD_CONTAINER_ENGINE:\
+          RD_K3S_VERSIONS:\
           RD_TAKE_SCREENSHOTS:\
           RD_TRACE:\
           RD_USE_GHCR_IMAGES:\

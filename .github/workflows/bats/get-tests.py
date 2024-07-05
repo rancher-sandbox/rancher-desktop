@@ -28,6 +28,8 @@ class Result:
     name: str
     host: Hosts
     engine: Engines
+    # The version of k3s to test; may be empty.
+    k3sVersion: str
 
     key = staticmethod(attrgetter("name", "host", "engine"))
 
@@ -72,10 +74,13 @@ for test in (os.environ.get("TESTS", None) or "*").split():
       }[platform]
       for name in resolve_test(test, platform):
           for engine in engines:
+            # If using containerd, use the maximum version of k3s that is
+            # supported by the Rancher helm chart; as of 2.8.5, that's 1.28.x.
+            k3sVersion = "1.28.11" if engine == "containerd" else ""
             if os.access(name, os.R_OK):
-              result = Result(name=name, host=host, engine=engine)
+              result = Result(name=name, host=host, engine=engine, k3sVersion=k3sVersion)
             elif os.access(f"{name}.bats", os.R_OK):
-              result = Result(name=name, host=host, engine=engine)
+              result = Result(name=name, host=host, engine=engine, k3sVersion=k3sVersion)
             else:
               errors = True
               print(f"Failed to find test {name}", file=sys.stderr)
