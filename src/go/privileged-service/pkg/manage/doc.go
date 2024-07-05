@@ -1,7 +1,5 @@
-//go:build windows
-
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2024 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,24 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
-
-import (
-	"github.com/spf13/cobra"
-	"golang.org/x/sys/windows/svc"
-
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
-)
-
-// stopCmd represents the stop command
-var stopCmd = &cobra.Command{
-	Use:   "stop",
-	Short: "stops the Rancher Desktop Privileged Service",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return manage.ControlService(svcName, svc.Stop, svc.Stopped)
-	},
-}
+// Package manage is used to install, uninstall, start, and stop the privileged
+// service.
+package manage
 
 func init() {
-	rootCmd.AddCommand(stopCmd)
 }
