@@ -6,12 +6,12 @@ toolchain go1.22.4
 
 require (
 	github.com/Masterminds/log-go v0.4.0
-	github.com/containerd/containerd v1.6.8
-	github.com/containers/gvisor-tap-vsock v0.6.1
+	github.com/containerd/containerd v1.6.15
+	github.com/containers/gvisor-tap-vsock v0.6.2
 	github.com/docker/docker v24.0.1+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/lima-vm/lima v0.8.4-0.20220220162153-7b9afeb62201
+	github.com/lima-vm/lima v0.14.3-0.20230111232138-f26b412f08c3
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.22.0
