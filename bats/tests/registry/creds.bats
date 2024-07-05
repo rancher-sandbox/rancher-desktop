@@ -39,8 +39,13 @@ local_setup() {
         # Essentially localhost, but needs to be a routable IP that also works
         # from inside a container. Will be turned into a DNS name using sslip.io.
         if is_windows; then
-            # In WSL all distros have the same IP address
-            ipaddr="$(ip a show eth0 | awk '/inet / {sub("/.*",""); print $2}')"
+            if using_networking_tunnel; then
+                # When using network tunnel, use a fixed address.
+                ipaddr="192.168.1.2"
+            else
+                # In WSL all distros have the same IP address
+                ipaddr="$(ip a show eth0 | awk '/inet / {sub("/.*",""); print $2}')"
+            fi
         else
             # Lima uses a fixed hard-coded IP address
             ipaddr="192.168.5.15"
