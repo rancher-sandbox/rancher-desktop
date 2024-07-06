@@ -12,12 +12,6 @@ using_docker() {
 }
 
 ########################################################################
-: "${RD_KUBERNETES_VERSION:=1.23.6}"
-
-########################################################################
-: "${RD_KUBERNETES_PREV_VERSION:=1.22.7}"
-
-########################################################################
 : "${RD_RANCHER_IMAGE_TAG:=}"
 
 rancher_image_tag() {
@@ -201,6 +195,14 @@ using_dev_mode() {
 }
 
 ########################################################################
+# Kubernetes versions
+
+# The main Kubernetes version to test.
+: "${RD_KUBERNETES_VERSION:=1.23.6}"
+
+# A secondary Kubernetes version; this is used for testing upgrades.
+: "${RD_KUBERNETES_ALT_VERSION:=1.22.7}"
+
 # RD_K3S_VERSIONS specifies a list of k3s versions. foreach_k3s_version()
 # can dynamically register a test to run once for each version in the
 # list. Only versions between RD_K3S_MIN and RD_K3S_MAX (inclusively)
@@ -212,7 +214,7 @@ using_dev_mode() {
 
 : "${RD_K3S_MIN:=1.21.0}"
 : "${RD_K3S_MAX:=1.99.0}"
-: "${RD_K3S_VERSIONS:=$RD_KUBERNETES_PREV_VERSION}"
+: "${RD_K3S_VERSIONS:=$RD_KUBERNETES_VERSION}"
 
 validate_semver RD_K3S_MIN
 validate_semver RD_K3S_MAX

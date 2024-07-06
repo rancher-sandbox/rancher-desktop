@@ -9,7 +9,7 @@ local_setup() {
 
 # Check that the rancher-latest/rancher helm chart at the given version is
 # supported on the current Kubernetes version (as determined by
-# $RD_KUBERNETES_PREV_VERSION)
+# $RD_KUBERNETES_VERSION)
 is_rancher_chart_compatible() {
     local chart_version=$1
 
@@ -25,12 +25,12 @@ is_rancher_chart_compatible() {
     assert_success || return
 
     local unsupported_version=$output
-    semver_gt "$unsupported_version" "$RD_KUBERNETES_PREV_VERSION" || return
+    semver_gt "$unsupported_version" "$RD_KUBERNETES_VERSION" || return
 }
 
 # Set (and save) $rancher_chart_version to $RD_RANCHER_IMAGE_TAG if it is set
 # (and compatible), or otherwise the oldest chart version that supports
-# $RD_KUBERNETES_PREV_VERSION.
+# $RD_KUBERNETES_VERSION.
 # If no compatible chart version could be found, calls mark_k3s_version_skipped
 # and fails the test.
 determine_chart_version() {
@@ -41,7 +41,7 @@ determine_chart_version() {
         if ! is_rancher_chart_compatible "$rancher_chart_version"; then
             mark_k3s_version_skipped
             printf "Rancher %s is not compatible with Kubernetes %s" \
-                "$rancher_chart_version" "$RD_KUBERNETES_PREV_VERSION" |
+                "$rancher_chart_version" "$RD_KUBERNETES_VERSION" |
                 fail
             return
         fi
@@ -73,14 +73,14 @@ determine_chart_version() {
             # Once we find a compatible version, use it (and don't look at the
             # rest of the chart versions).
             trace "$(printf "Selected rancher chart version %s for Kubernetes %s" \
-                "$rancher_chart_version" "$RD_KUBERNETES_PREV_VERSION")"
+                "$rancher_chart_version" "$RD_KUBERNETES_VERSION")"
             save_var rancher_chart_version
             return
         fi
     done
     mark_k3s_version_skipped
     printf "Could not find a version of rancher-latest/rancher compatible with Kubernetes %s\n" \
-        "$RD_KUBERNETES_PREV_VERSION" |
+        "$RD_KUBERNETES_VERSION" |
         fail || return
 }
 

@@ -23,7 +23,7 @@ show_info() { # @test
         printf "$format" "Resources path:" "$PATH_RESOURCES"
         echo "#"
         printf "$format" "Container engine:" "$RD_CONTAINER_ENGINE"
-        printf "$format" "Kubernetes versions:" "$RD_K3S_VERSIONS"
+        printf "$format" "Kubernetes version:" "$RD_KUBERNETES_VERSION ($RD_K3S_VERSIONS)"
         printf "$format" "Mount type:" "$RD_MOUNT_TYPE"
         if [ "$RD_MOUNT_TYPE" = "9p" ]; then
             printf "$format" "  9p cache mode:" "$RD_9P_CACHE_MODE"
