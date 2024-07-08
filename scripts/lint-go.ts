@@ -5,6 +5,8 @@
  */
 import path from 'path';
 
+import { readDependencyVersions } from './lib/dependencies';
+
 import { spawnFile } from '@pkg/utils/childProcess';
 
 const fix = process.argv.includes('--fix');
@@ -77,10 +79,11 @@ async function syncModules(fix: boolean): Promise<boolean> {
 }
 
 async function goLangCILint(fix: boolean): Promise<boolean> {
-  const version = '1.59.1';
+  const depVersionsPath = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
+  const dependencyVersions = await readDependencyVersions(depVersionsPath);
 
   const args = [
-    'run', `github.com/golangci/golangci-lint/cmd/golangci-lint@v${ version }`,
+    'run', `github.com/golangci/golangci-lint/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
     'run', '--config=.github/workflows/config/.golangci.yaml',
     '--timeout=10m', '--verbose',
   ];

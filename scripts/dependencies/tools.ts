@@ -278,6 +278,30 @@ export class DockerCompose implements Dependency, GitHubDependency {
   }
 }
 
+export class GoLangCILint implements Dependency, GitHubDependency {
+  name = 'golangci-lint';
+  githubOwner = 'golangci';
+  githubRepo = 'golangci-lint';
+
+  download(context: DownloadContext): Promise<void> {
+    // We don't actually download anything; when we invoke the linter, we just
+    // use `go run` with the appropriate package.
+    return Promise.resolve();
+  }
+
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}
+
 export class Trivy implements Dependency, GitHubDependency {
   name = 'trivy';
   githubOwner = 'aquasecurity';
