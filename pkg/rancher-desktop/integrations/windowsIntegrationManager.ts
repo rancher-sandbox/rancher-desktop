@@ -95,6 +95,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   /** Extra debugging arguments for wsl-helper. */
   protected wslHelperDebugArgs: string[] = [];
 
+  /** Singleton instance. */
+  private static instance: WindowsIntegrationManager;
+
   constructor() {
     mainEvents.on('settings-update', (settings) => {
       this.wslHelperDebugArgs = runInDebugMode(settings.application.debug) ? ['--verbose'] : [];
@@ -128,6 +131,15 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
     // Trigger a settings-update.
     mainEvents.emit('settings-write', {});
+  }
+
+  /** Static method to access the singleton instance. */
+  public static getInstance(): WindowsIntegrationManager {
+    if (!WindowsIntegrationManager.instance) {
+      WindowsIntegrationManager.instance = new WindowsIntegrationManager();
+    }
+
+    return WindowsIntegrationManager.instance;
   }
 
   async enforce(): Promise<void> {

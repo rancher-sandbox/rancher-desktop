@@ -4,9 +4,10 @@ import WindowsIntegrationManager from '@pkg/integrations/windowsIntegrationManag
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.diagnostics;
-const integrationManager = new WindowsIntegrationManager();
 
 async function verifyKubeConfigSymlink(): Promise<boolean> {
+  const integrationManager = WindowsIntegrationManager.getInstance();
+
   try {
     await integrationManager.verifyDistrosKubeConfig();
 
