@@ -1,6 +1,3 @@
-//go:build linux
-// +build linux
-
 // package main produces stubs for the nerdctl subcommands (and their
 // options); this is expected to be overridden for options that involve paths.
 // All options generated this will have their values ignored.

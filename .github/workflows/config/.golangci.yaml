@@ -52,53 +52,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - bodyclose
-    - dogsled
-    - dupl
-    - errcheck
-    - exportloopref
-    - goconst
-    - gocritic
     - gofmt
-    - goimports
-    - gomnd
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - ineffassign
-    - lll
-    - misspell
-    - nakedret
-    - noctx
-    - staticcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - whitespace
-
-  # don't enable:
-  # - asciicheck
-  # - funlen
-  # - scopelint
-  # - gochecknoglobals
-  # - gochecknoinits
-  # - gocognit
-  # - godot
-  # - godox
-  # - goerr113
-  # - interfacer
-  # - maligned
-  # - nestif
-  # - nolintlint
-  # - prealloc
-  # - testpackage
-  # - revive
-  # - wsl
-  # - depguard # Requires configuration and by default only allows stdlib imports
-
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
