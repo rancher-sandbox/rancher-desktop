@@ -170,8 +170,35 @@ verify_default_credStore() {
 @test 'restart container engine to refresh certs' {
     skip_for_insecure_registry
 
+    # BUG BUG BUG
+    # When using containerd the guestagent currently doesn't enumerate
+    # running containers when it starts up to find existing open ports
+    # (it does this for moby only). Therefore it misses forwarding
+    # ports that have been opened while the guestagent was down.
+    #
+    # The guestagent would restart automatically when containerd
+    # restart. By explicitly stopping/restarting the guestagent we are
+    # more likely to have the new instance running by the time the
+    # containerd becomes ready.
+    #
+    # This workaround can be removed when the following bug has been fixed:
+    # https://github.com/rancher-sandbox/rancher-desktop/issues/7146
+    # BUG BUG BUG
+    if is_windows && using_containerd; then
+        rdsudo rc-service rancher-desktop-guestagent stop
+    fi
+
     rdsudo rc-service "$CONTAINER_ENGINE_SERVICE" restart
+
+    # BUG BUG BUG
+    # Second part of the workaround
+    # BUG BUG BUG
+    if is_windows && using_containerd; then
+        rdsudo rc-service rancher-desktop-guestagent start
+    fi
+
     rdsudo rc-service --ifstarted rd-openresty restart
+
     wait_for_container_engine
     # when Moby is stopped, the containers are stopped as well
     if using_docker; then
