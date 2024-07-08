@@ -179,6 +179,15 @@ async function checkDependencies(): Promise<void> {
 
   const updatesAvailable = await determineUpdatesAvailable();
 
+  if (!process.env.CI) {
+    // When not running in CI, don't try to make pull requests.
+    if (updatesAvailable.length) {
+      console.log(`Not running in CI, skipping creation of ${ updatesAvailable.length } pull requests.`);
+    }
+
+    return;
+  }
+
   // reconcile dependencies that need an update with state of repo's PRs
   const needToCreatePR: VersionComparison[] = [];
 
