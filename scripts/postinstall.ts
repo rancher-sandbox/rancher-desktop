@@ -73,7 +73,7 @@ const vmDependencies = [
   new tools.WasmShims(),
   new tools.CertManager(),
   new tools.SpinOperator(),
-  new goUtils.ExtensionProxy(),
+  new goUtils.GoDependency('extension-proxy', { outputPath: 'staging', env: { CGO_ENABLED: '0' } }),
   new ExtensionProxyImage(),
 ];
 
