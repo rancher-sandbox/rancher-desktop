@@ -131,11 +131,11 @@ class Builder {
       break;
     }
 
-    // If we have files (resp. extraFiles / extraResources) both at the top
-    // level as well as at the platform-specific level, merge the two and move
-    // it to the top level.  This allows us to have platform-specific exclusions
-    // (as otherwise the two lists are calculated separately _then_ merged
-    // together).
+    // When there are files (e.g., extraFiles or extraResources) specified at both
+    // the top-level and platform-specific levels, we need to combine them
+    // and place the combined list at the top level. This approach enables us to have
+    // platform-specific exclusions, since the two lists are initially processed
+    // separately and then merged together afterward.
     for (const key of ['files', 'extraFiles', 'extraResources'] as const) {
       const section = config[electronPlatform];
       const items = config[key];
