@@ -41,6 +41,7 @@ export type DependencyVersions = {
   dockerCLI: string;
   dockerBuildx: string;
   dockerCompose: string;
+  'golangci-lint': string;
   trivy: string;
   steve: string;
   guestAgent: string;
