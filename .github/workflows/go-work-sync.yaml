@@ -28,7 +28,10 @@ jobs:
       id: has-token
       run: echo "has-token=$HAS_TOKEN" >> "$GITHUB_OUTPUT"
       env:
-        HAS_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+        # Temporarily disable use of token; we don't have a correct token set up
+        # (so we fail to push), so using the GitHub-provided token that doesn't
+        # trigger subsequent checks is better than failing to push.
+        HAS_TOKEN: ${{ false && secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
     - name: Checkout with token
       if: steps.has-token.outputs.has-token == 'true'
       uses: actions/checkout@v4
