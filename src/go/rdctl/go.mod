@@ -3,7 +3,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/rdctl
 go 1.21
 
 require (
-	github.com/adrg/xdg v0.4.0
+	github.com/adrg/xdg v0.5.0
 	github.com/docker/cli v27.0.3+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service v0.0.0-20221207202230-8eef0a706010
