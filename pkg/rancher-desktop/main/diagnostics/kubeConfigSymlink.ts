@@ -9,11 +9,11 @@ async function verifyKubeConfigSymlink(): Promise<boolean> {
   const integrationManager = WindowsIntegrationManager.getInstance();
 
   try {
-    await integrationManager.verifyDistrosKubeConfig();
+    await integrationManager.verifyAllDistrosKubeConfig();
 
     return true;
   } catch (error: any) {
-    console.error(`Error verifying kubeconfig symlinks: ${ error }`);
+    console.error(`Error verifying kubeconfig symlinks: ${ error.message }`);
 
     return false;
   }
