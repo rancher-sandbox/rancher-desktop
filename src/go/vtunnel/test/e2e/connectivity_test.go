@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 /*
 Copyright © 2022 SUSE LLC
