@@ -3130,16 +3130,16 @@
   dependencies:
     "@types/node" "*"
 
-"@typescript-eslint/eslint-plugin@7.15.0", "@typescript-eslint/eslint-plugin@^7.1.1":
-  version "7.15.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-7.15.0.tgz#8eaf396ac2992d2b8f874b68eb3fcd6b179cb7f3"
-  integrity sha512-uiNHpyjZtFrLwLDpHnzaDlP3Tt6sGMqTCiqmxaN4n4RP0EfYZDODJyddiFDF44Hjwxr5xAcaYxVKm9QKQFJFLA==
+"@typescript-eslint/eslint-plugin@7.16.0", "@typescript-eslint/eslint-plugin@^7.1.1":
+  version "7.16.0"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-7.16.0.tgz#b3563927341eca15124a18c6f94215f779f5c02a"
+  integrity sha512-py1miT6iQpJcs1BiJjm54AMzeuMPBSPuKPlnT8HlfudbcS5rYeX5jajpLf3mrdRh9dA/Ec2FVUY0ifeVNDIhZw==
   dependencies:
     "@eslint-community/regexpp" "^4.10.0"
-    "@typescript-eslint/scope-manager" "7.15.0"
-    "@typescript-eslint/type-utils" "7.15.0"
-    "@typescript-eslint/utils" "7.15.0"
-    "@typescript-eslint/visitor-keys" "7.15.0"
+    "@typescript-eslint/scope-manager" "7.16.0"
+    "@typescript-eslint/type-utils" "7.16.0"
+    "@typescript-eslint/utils" "7.16.0"
+    "@typescript-eslint/visitor-keys" "7.16.0"
     graphemer "^1.4.0"
     ignore "^5.3.1"
     natural-compare "^1.4.0"
@@ -3216,13 +3216,13 @@
     debug "^4.3.4"
     tsutils "^3.21.0"
 
-"@typescript-eslint/type-utils@7.15.0":
-  version "7.15.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/type-utils/-/type-utils-7.15.0.tgz#5b83c904c6de91802fb399305a50a56d10472c39"
-  integrity sha512-SkgriaeV6PDvpA6253PDVep0qCqgbO1IOBiycjnXsszNTVQe5flN5wR5jiczoEoDEnAqYFSFFc9al9BSGVltkg==
+"@typescript-eslint/type-utils@7.16.0":
+  version "7.16.0"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/type-utils/-/type-utils-7.16.0.tgz#ec52b1932b8fb44a15a3e20208e0bd49d0b6bd00"
+  integrity sha512-j0fuUswUjDHfqV/UdW6mLtOQQseORqfdmoBNDFOqs9rvNVR2e+cmu6zJu/Ku4SDuqiJko6YnhwcL8x45r8Oqxg==
   dependencies:
-    "@typescript-eslint/typescript-estree" "7.15.0"
-    "@typescript-eslint/utils" "7.15.0"
+    "@typescript-eslint/typescript-estree" "7.16.0"
+    "@typescript-eslint/utils" "7.16.0"
     debug "^4.3.4"
     ts-api-utils "^1.3.0"
 
@@ -3296,15 +3296,15 @@
     eslint-scope "^5.1.1"
     semver "^7.3.7"
 
-"@typescript-eslint/utils@7.15.0", "@typescript-eslint/utils@^7.0.0":
-  version "7.15.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/utils/-/utils-7.15.0.tgz#9e6253c4599b6e7da2fb64ba3f549c73eb8c1960"
-  integrity sha512-hfDMDqaqOqsUVGiEPSMLR/AjTSCsmJwjpKkYQRo1FNbmW4tBwBspYDwO9eh7sKSTwMQgBw9/T4DHudPaqshRWA==
+"@typescript-eslint/utils@7.16.0", "@typescript-eslint/utils@^7.0.0":
+  version "7.16.0"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/utils/-/utils-7.16.0.tgz#b38dc0ce1778e8182e227c98d91d3418449aa17f"
+  integrity sha512-PqP4kP3hb4r7Jav+NiRCntlVzhxBNWq6ZQ+zQwII1y/G/1gdIPeYDCKr2+dH6049yJQsWZiHU6RlwvIFBXXGNA==
   dependencies:
     "@eslint-community/eslint-utils" "^4.4.0"
-    "@typescript-eslint/scope-manager" "7.15.0"
-    "@typescript-eslint/types" "7.15.0"
-    "@typescript-eslint/typescript-estree" "7.15.0"
+    "@typescript-eslint/scope-manager" "7.16.0"
+    "@typescript-eslint/types" "7.16.0"
+    "@typescript-eslint/typescript-estree" "7.16.0"
 
 "@typescript-eslint/visitor-keys@5.62.0":
   version "5.62.0"
