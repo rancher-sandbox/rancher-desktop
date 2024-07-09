@@ -1,5 +1,4 @@
 //go:build !debug
-// +build !debug
 
 /*
 Copyright © 2024 SUSE LLC
