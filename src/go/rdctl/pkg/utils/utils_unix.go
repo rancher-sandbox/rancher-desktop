@@ -5,9 +5,10 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/sys/unix"
 	"io/fs"
 	"os"
+
+	"golang.org/x/sys/unix"
 )
 
 // Verify that the candidatePath is usable as a Rancher Desktop "executable". This means:

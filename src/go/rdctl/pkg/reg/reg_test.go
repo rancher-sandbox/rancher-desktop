@@ -2,9 +2,10 @@ package reg
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJsonToRegFormat(t *testing.T) {

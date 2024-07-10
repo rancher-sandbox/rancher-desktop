@@ -56,6 +56,7 @@ linters:
     - errcheck
     - exportloopref
     - gofmt
+    - goimports
     - goprintffuncname
     - typecheck
     - unconvert

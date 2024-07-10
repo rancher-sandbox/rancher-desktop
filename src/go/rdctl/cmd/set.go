@@ -23,7 +23,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"github.com/spf13/cobra"
 )
 
