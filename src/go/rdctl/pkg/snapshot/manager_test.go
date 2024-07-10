@@ -19,7 +19,6 @@ type TestFile struct {
 }
 
 func TestManager(t *testing.T) {
-
 	t.Run("ValidateName should disallow two snapshots with the same name, but only when the first is complete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)

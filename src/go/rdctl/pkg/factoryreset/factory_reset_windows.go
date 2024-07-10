@@ -70,7 +70,6 @@ func CheckProcessWindows() (bool, error) {
 // KillRancherDesktop terminates all processes where the executable is from the
 // Rancher Desktop application, excluding the current process.
 func KillRancherDesktop() error {
-
 	err := stopPrivilegedService()
 	if err != nil {
 		return fmt.Errorf("failed to stop privileged service: %w", err)
