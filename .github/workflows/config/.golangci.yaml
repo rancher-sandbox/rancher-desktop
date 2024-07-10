@@ -62,6 +62,7 @@ linters:
     - ineffassign
     - typecheck
     - unconvert
+    - unused
     - whitespace
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source

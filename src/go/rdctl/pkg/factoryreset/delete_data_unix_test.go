@@ -1,5 +1,5 @@
 //go:test !windows
-// +test !windows
+//go:build !windows
 
 /*
 Copyright © 2022 SUSE LLC
