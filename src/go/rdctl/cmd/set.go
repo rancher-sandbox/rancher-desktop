@@ -65,8 +65,9 @@ func doSetCommand(cmd *cobra.Command) error {
 		return err
 	}
 
-	response, err := rdClient.DoRequestWithPayload("PUT", client.VersionCommand("", "settings"), bytes.NewBuffer(jsonBuffer))
-	result, err := client.ProcessRequestForUtility(response, err)
+	command := client.VersionCommand("", "settings")
+	buf := bytes.NewBuffer(jsonBuffer)
+	result, err := client.ProcessRequestForUtility(rdClient.DoRequestWithPayload("PUT", command, buf))
 	if err != nil {
 		return err
 	}

@@ -63,8 +63,8 @@ func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shut
 	connectionInfo, err := config.GetConnectionInfo(true)
 	if err == nil && connectionInfo != nil {
 		rdClient := client.NewRDClient(connectionInfo)
-		request, err := rdClient.DoRequest("PUT", client.VersionCommand("", "shutdown"))
-		output, _ = client.ProcessRequestForUtility(request, err)
+		command := client.VersionCommand("", "shutdown")
+		output, _ = client.ProcessRequestForUtility(rdClient.DoRequest("PUT", command))
 		logrus.WithError(err).Trace("Shut down requested")
 	}
 	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)

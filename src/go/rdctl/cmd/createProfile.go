@@ -106,8 +106,8 @@ func createProfile() (string, error) {
 			return "", fmt.Errorf("failed to get connection info: %w", err)
 		}
 		rdClient := client.NewRDClient(connectionInfo)
-		response, err := rdClient.DoRequest("GET", client.VersionCommand("", "settings"))
-		output, err = client.ProcessRequestForUtility(response, err)
+		command := client.VersionCommand("", "settings")
+		output, err = client.ProcessRequestForUtility(rdClient.DoRequest("GET", command))
 	}
 	if err != nil {
 		return "", err

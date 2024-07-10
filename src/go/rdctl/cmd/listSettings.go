@@ -53,6 +53,6 @@ func getListSettings() ([]byte, error) {
 		return []byte{}, fmt.Errorf("failed to get connection info: %w", err)
 	}
 	rdClient := client.NewRDClient(connectionInfo)
-	response, err := rdClient.DoRequest("GET", client.VersionCommand("", "settings"))
-	return client.ProcessRequestForUtility(response, err)
+	command := client.VersionCommand("", "settings")
+	return client.ProcessRequestForUtility(rdClient.DoRequest("GET", command))
 }

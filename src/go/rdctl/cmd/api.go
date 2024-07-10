@@ -101,14 +101,16 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		response, err := rdClient.DoRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBuffer(contents))
-		result, errorPacket, err = client.ProcessRequestForAPI(response, err)
+		method := apiSettings.Method
+		payload := bytes.NewBuffer(contents)
+		result, errorPacket, err = client.ProcessRequestForAPI(rdClient.DoRequestWithPayload(method, endpoint, payload))
 	} else if apiSettings.Body != "" {
 		if apiSettings.Method == "" {
 			apiSettings.Method = "PUT"
 		}
-		response, err := rdClient.DoRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBufferString(apiSettings.Body))
-		result, errorPacket, err = client.ProcessRequestForAPI(response, err)
+		method := apiSettings.Method
+		payload := bytes.NewBufferString(apiSettings.Body)
+		result, errorPacket, err = client.ProcessRequestForAPI(rdClient.DoRequestWithPayload(method, endpoint, payload))
 	} else {
 		if apiSettings.Method == "" {
 			apiSettings.Method = "GET"

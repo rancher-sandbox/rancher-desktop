@@ -52,6 +52,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - bodyclose
     - dogsled
     - errcheck
     - exportloopref
@@ -69,6 +70,11 @@ issues:
         - gosec
         - errcheck
         - gocritic
+    - # Exclude bodyclose when it's passed to client.ProcessRequestForAPI
+      # or client.ProcessRequestForUtility which internally closes the body.
+      path: src/go/rdctl/
+      linters: [ bodyclose ]
+      source: "client.ProcessRequestFor(API|Utility)\\(rdClient.DoRequest(WithPayload)?\\("
     - # Exclude ST1005 when it encounters errors starting with proper noun
       linters: [ stylecheck ]
       text: "ST1005:"
