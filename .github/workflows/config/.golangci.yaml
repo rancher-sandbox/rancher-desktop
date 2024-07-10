@@ -52,6 +52,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - dogsled
     - gofmt
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
@@ -73,6 +74,6 @@ issues:
       path: src/go/wsl-helper/pkg/dockerproxy/platform/vsock_linux\.go
       linters: [ gocritic ]
       text: todoCommentWithoutDetail
-    - # Exclude ignoring errors from syscall
+    - # Ignore errors from syscall
       linters: [ dogsled ]
       source: ^\s*_, _, _ = .*\.Call\(

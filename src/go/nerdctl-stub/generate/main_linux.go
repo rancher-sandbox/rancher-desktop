@@ -65,6 +65,7 @@ func main() {
 		logrus.WithError(err).WithField("path", outputPath).Fatal("error creating output")
 	}
 	defer output.Close()
+	//nolint:dogsled
 	_, filename, _, _ := runtime.Caller(0)
 	data := map[string]interface{}{
 		"package": filename,
