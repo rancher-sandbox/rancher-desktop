@@ -55,7 +55,6 @@ func ProcessRequestForUtility(response *http.Response, err error) ([]byte, error
 		case 400:
 			statusMessage = response.Status
 			// Prefer the error message in the body written by the command-server, not the one from the http server.
-			break
 		case 401:
 			return nil, fmt.Errorf("%s: user/password not accepted", response.Status)
 		case 413:
