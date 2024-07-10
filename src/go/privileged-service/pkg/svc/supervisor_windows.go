@@ -51,7 +51,7 @@ func (s *Supervisor) Execute(args []string, r <-chan svc.ChangeRequest, changes 
 	changes <- svc.Status{State: svc.StartPending}
 	startErr := make(chan error)
 	go func() {
-		s.eventLogger.Info(uint32(windows.NO_ERROR), "port server is starting")
+		_ = s.eventLogger.Info(uint32(windows.NO_ERROR), "port server is starting")
 		startErr <- s.portServer.Start()
 	}()
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
@@ -59,7 +59,7 @@ loop:
 	for {
 		select {
 		case e := <-startErr:
-			s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("supervisor failed to start: %v", e))
+			_ = s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("supervisor failed to start: %v", e))
 			return false, uint32(windows.ERROR_SERVICE_NEVER_STARTED)
 		case c := <-r:
 			switch c.Cmd {
@@ -67,11 +67,11 @@ loop:
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				s.portServer.Stop()
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server is stopping")
+				_ = s.eventLogger.Info(uint32(windows.NO_ERROR), "port server is stopping")
 				changes <- svc.Status{State: svc.Stopped, Accepts: cmdsAccepted}
 				break loop
 			default:
-				s.eventLogger.Error(uint32(windows.ERROR_INVALID_SERVICE_CONTROL), fmt.Sprintf("unexpected control request #%d", c))
+				_ = s.eventLogger.Error(uint32(windows.ERROR_INVALID_SERVICE_CONTROL), fmt.Sprintf("unexpected control request #%d", c))
 			}
 		}
 	}

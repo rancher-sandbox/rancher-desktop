@@ -41,7 +41,7 @@ func StartService(name string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer func() { _ = m.Disconnect() }()
 	s, err := openService(m.Handle, name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %w", err)
@@ -61,7 +61,7 @@ func ControlService(name string, control svc.Cmd, desiredState svc.State) error 
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer func() { _ = m.Disconnect() }()
 	s, err := openService(m.Handle, name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %w", err)

@@ -128,7 +128,7 @@ func KillRancherDesktop() error {
 				logrus.Tracef("failed to open pid %d: %s (skipping)", pid, err)
 				return
 			}
-			defer windows.CloseHandle(hProc)
+			defer func() { _ = windows.CloseHandle(hProc) }()
 
 			var imageName string
 			err = directories.InvokeWin32WithBuffer(func(size int) error {
@@ -175,7 +175,7 @@ func KillRancherDesktop() error {
 				logrus.Infof("failed to open process %d for termination, skipping", pid)
 				return
 			}
-			defer windows.CloseHandle(hProc)
+			defer func() { _ = windows.CloseHandle(hProc) }()
 
 			if err = windows.TerminateProcess(hProc, 0); err != nil {
 				logrus.Infof("failed to terminate process %d: %s", pid, err)

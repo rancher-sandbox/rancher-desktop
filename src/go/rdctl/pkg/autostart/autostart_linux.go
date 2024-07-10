@@ -51,7 +51,10 @@ func init() {
 }
 
 func EnsureAutostart(autostartDesired bool) error {
-	os.MkdirAll(autostartDirPath, 0755)
+	err := os.MkdirAll(autostartDirPath, 0755)
+	if err != nil {
+		return err
+	}
 
 	if autostartDesired {
 		currentContents, err := os.ReadFile(autostartFilePath)

@@ -53,6 +53,7 @@ linters:
   disable-all: true
   enable:
     - dogsled
+    - errcheck
     - gofmt
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
