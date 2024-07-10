@@ -155,7 +155,7 @@ In [newer versions](https://github.com/rancher-sandbox/rancher-desktop/blob/bb7f
 
 If network tunnel mode is enabled along with the WSL integration option, a copy of the port mapping is also forwarded to the `wsl-proxy` process, allowing access to the exposed port from other distributions.
 
-## Port forwarding
+## Port forwarding (Network Tunnel)
 
 ```mermaid
 sequenceDiagram
@@ -169,9 +169,81 @@ sequenceDiagram
   end
   box Host
     participant host-switch as host-switch.exe
-    participant privileged-service
+  end
+  rect transparent
+    note over dockerd,containerd: adding port
+    alt containerd
+      containerd ->> guest-agent: /tasks/start
+      guest-agent ->> guest-agent: loopback iptables
+    else dockerd
+      dockerd ->> guest-agent: event[start]
+      guest-agent ->> guest-agent: loopback iptables
+    else kubernetes
+      kubernetes ->> guest-agent: event[not deleted]
+    else iptables
+      iptables ->> iptables: poll iptables
+      iptables ->> guest-agent: add new ports
+    end
+
+    guest-agent ->> wsl-proxy: add port
+    wsl-proxy ->> wsl-proxy: listen in default namespace
+    guest-agent ->> host-switch: add port (APITracker)
+    host-switch ->> host-switch: add port via gvisor
+
+  end
+  rect transparent
+    note over dockerd, containerd: updating port
+    alt containerd
+      containerd ->> guest-agent: /containers/update
+    end
+
+    guest-agent ->> wsl-proxy: remove port
+    wsl-proxy ->> wsl-proxy: remove listener in default namespace
+    guest-agent ->> host-switch: remove port (APITracker)
+    host-switch ->> host-switch: remove port via gvisor
+    guest-agent ->> wsl-proxy: add port
+    wsl-proxy ->> wsl-proxy: listen in default namespace
+    guest-agent ->> host-switch: add port (APITracker)
+    host-switch ->> host-switch: add port via gvisor
+
+  end
+  rect transparent
+    note over dockerd,containerd: removing port
+    alt containerd
+      containerd ->> guest-agent: /tasks/exit
+    else dockerd
+      dockerd ->> guest-agent: event[stop]
+      dockerd ->> guest-agent: event[die]
+    else kubernetes
+      kubernetes ->> guest-agent: event[deleted]
+    else iptables
+      iptables ->> iptables: poll iptables
+      iptables ->> guest-agent: remove old ports
+    end
+
+    guest-agent ->> wsl-proxy: remove port
+    wsl-proxy ->> wsl-proxy: remove listener in default namespace
+    guest-agent ->> host-switch: remove port (APITracker)
+    host-switch ->> host-switch: remove port via gvisor
+
   end
 
+```
+
+## Port forwarding (Privileged Service)
+
+```mermaid
+sequenceDiagram
+  box VM
+    participant dockerd
+    participant containerd
+    participant kubernetes
+    participant iptables
+    participant guest-agent
+  end
+  box Host
+    participant privileged-service
+  end
   rect transparent
     note over dockerd,containerd: adding port
     alt containerd
@@ -189,14 +261,8 @@ sequenceDiagram
     alt privileged-service
       guest-agent ->> privileged-service: add port (via VTunnel forwarding)
       privileged-service ->> privileged-service: listen on host 0.0.0.0
-    else
-      guest-agent ->> wsl-proxy: add port
-      wsl-proxy ->> wsl-proxy: listen in default namespace
-      guest-agent ->> host-switch: add port (APITracker)
-      host-switch ->> host-switch: add port via gvisor
     end
   end
-
   rect transparent
     note over dockerd, containerd: updating port
     alt containerd
@@ -207,18 +273,8 @@ sequenceDiagram
       privileged-service ->> privileged-service: remove listener on host 0.0.0.0
       guest-agent ->> privileged-service: add port (via VTunnel forwarding)
       privileged-service ->> privileged-service: listen on host 0.0.0.0
-    else
-      guest-agent ->> wsl-proxy: remove port
-      wsl-proxy ->> wsl-proxy: remove listener in default namespace
-      guest-agent ->> host-switch: remove port (APITracker)
-      host-switch ->> host-switch: remove port via gvisor
-      guest-agent ->> wsl-proxy: add port
-      wsl-proxy ->> wsl-proxy: listen in default namespace
-      guest-agent ->> host-switch: add port (APITracker)
-      host-switch ->> host-switch: add port via gvisor
     end
   end
-
   rect transparent
     note over dockerd,containerd: removing port
     alt containerd
@@ -235,11 +291,6 @@ sequenceDiagram
     alt privileged-service
       guest-agent ->> privileged-service: remove port (via VTunnel forwarding)
       privileged-service ->> privileged-service: remove listener on host 0.0.0.0
-    else
-      guest-agent ->> wsl-proxy: remove port
-      wsl-proxy ->> wsl-proxy: remove listener in default namespace
-      guest-agent ->> host-switch: remove port (APITracker)
-      host-switch ->> host-switch: remove port via gvisor
     end
   end
 
