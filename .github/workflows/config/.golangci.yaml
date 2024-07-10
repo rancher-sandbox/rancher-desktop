@@ -54,7 +54,11 @@ linters:
   enable:
     - dogsled
     - errcheck
+    - exportloopref
     - gofmt
+    - goprintffuncname
+    - typecheck
+    - unconvert
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
