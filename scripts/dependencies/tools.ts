@@ -45,9 +45,8 @@ export class KuberlrAndKubectl implements Dependency {
   githubRepo = 'kuberlr';
 
   async download(context: DownloadContext): Promise<void> {
-    // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-    const kuberlrPath = await this.downloadKuberlr(context, context.versions.kuberlr, 'amd64');
     const arch = context.isM1 ? 'arm64' : 'amd64';
+    const kuberlrPath = await this.downloadKuberlr(context, context.versions.kuberlr, arch);
 
     await this.bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
   }
