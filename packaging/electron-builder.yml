@@ -4,11 +4,15 @@ productName: Rancher Desktop
 icon: ./resources/icons/logo-square-512.png
 appId: io.rancherdesktop.app
 asar: true
+electronLanguages: [ en-US ]
 extraResources:
 - resources/
 - '!resources/darwin/lima*.tgz'
 - '!resources/linux/lima*.tgz'
+- '!resources/linux/staging/'
+- '!resources/win32/staging/'
 - '!resources/host/'
+- '!resources/**/*.js.map'
 files:
 - dist/app/**/*
 - '!**/node_modules/*/prebuilds/!(${platform}*)/*.node'

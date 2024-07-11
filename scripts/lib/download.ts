@@ -10,6 +10,8 @@ import path from 'path';
 
 import fetch from 'node-fetch';
 
+import { simpleSpawn } from 'scripts/simple_process';
+
 type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
 
 export type DownloadOptions = {
@@ -193,9 +195,10 @@ export async function downloadTarGZ(url: string, destPath: string, options: Arch
       }
       args[0] = path.join(systemRoot, 'system32', 'tar.exe');
     }
-    execFileSync(args[0], args.slice(1), { stdio: 'inherit' });
-    fs.copyFileSync(path.join(workDir, fileToExtract), destPath);
-    fs.chmodSync(destPath, mode);
+    await simpleSpawn(args[0], args.slice(1));
+    await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
+    await fs.promises.copyFile(path.join(workDir, fileToExtract), destPath);
+    await fs.promises.chmod(destPath, mode);
   } finally {
     fs.rmSync(workDir, { recursive: true, maxRetries: 10 });
   }

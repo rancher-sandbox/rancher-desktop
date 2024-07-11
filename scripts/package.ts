@@ -118,6 +118,10 @@ class Builder {
       linux:  'linux',
     } as const)[process.platform as string];
 
+    if (!electronPlatform) {
+      throw new Error(`Packaging for ${ process.platform } is not supported`);
+    }
+
     switch (electronPlatform) {
     case 'linux':
       await this.createLinuxResources(finalBuildVersion);
@@ -125,6 +129,23 @@ class Builder {
     case 'win':
       await this.createWindowsResources(distDir);
       break;
+    }
+
+    // When there are files (e.g., extraFiles or extraResources) specified at both
+    // the top-level and platform-specific levels, we need to combine them
+    // and place the combined list at the top level. This approach enables us to have
+    // platform-specific exclusions, since the two lists are initially processed
+    // separately and then merged together afterward.
+    for (const key of ['files', 'extraFiles', 'extraResources'] as const) {
+      const section = config[electronPlatform];
+      const items = config[key];
+      const overrideItems = section?.[key];
+
+      if (!section || !Array.isArray(items) || !Array.isArray(overrideItems)) {
+        continue;
+      }
+      config[key] = items.concat(overrideItems);
+      delete section[key];
     }
 
     _.set(config, 'extraMetadata.version', finalBuildVersion);

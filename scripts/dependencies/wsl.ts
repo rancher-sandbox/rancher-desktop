@@ -164,7 +164,7 @@ export class WSLDistro implements Dependency, GitHubDependency {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const tarName = `distro-${ context.versions.WSLDistro }.tar`;
     const url = `${ baseUrl }/v${ context.versions.WSLDistro }/${ tarName }`;
-    const destPath = path.join(context.resourcesDir, context.platform, tarName);
+    const destPath = path.join(context.resourcesDir, context.platform, 'staging', tarName);
 
     await download(url, destPath, { access: fs.constants.W_OK });
   }

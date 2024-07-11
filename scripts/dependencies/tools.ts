@@ -322,7 +322,8 @@ export class Trivy implements Dependency, GitHubDependency {
     const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
     const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ context.versions.trivy }_checksums.txt`;
     const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
-    const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
+    const trivyDir = context.dependencyPlatform === 'wsl' ? 'staging' : 'internal';
+    const trivyPath = path.join(context.resourcesDir, 'linux', trivyDir, 'trivy');
 
     // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
     await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });

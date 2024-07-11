@@ -3,16 +3,12 @@
  */
 
 import childProcess from 'child_process';
-import crypto from 'crypto';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
-import stream from 'stream';
 import util from 'util';
 
 import spawn from 'cross-spawn';
 import _ from 'lodash';
-import tar from 'tar-stream';
 import webpack from 'webpack';
 
 import babelConfig from 'babel.config';
@@ -232,221 +228,8 @@ export default {
     });
   },
 
-  /** Mapping from the platform name to the Go OS value. */
-  mapPlatformToGoOS(platform: NodeJS.Platform) {
-    switch (platform) {
-    case 'darwin':
-      return 'darwin';
-    case 'linux':
-      return 'linux';
-    case 'win32':
-      return 'windows';
-    default:
-      throw new Error(`Invalid platform "${ platform }"`);
-    }
-  },
-
-  mapArchToGoArch(arch: string) {
-    const result = ({
-      x64:   'amd64',
-      arm64: 'arm64',
-    } as const)[arch];
-
-    if (!result) {
-      throw new Error(`Architecture ${ arch } is not supported.`);
-    }
-
-    return result;
-  },
-
   get arch(): NodeJS.Architecture {
     return process.env.M1 ? 'arm64' : process.arch;
-  },
-
-  /**
-   * Build the WSL helper application for Windows.
-   */
-  async buildWSLHelper(): Promise<void> {
-    /**
-     * Build for a single platform
-     * @param platform The platform to build for.
-     */
-    const buildPlatform = async(platform: 'linux' | 'win32') => {
-      const exeRoot = 'wsl-helper';
-      const exeName = `${ exeRoot }${ platform === 'win32' ? '.exe' : '' }`;
-      const outFile = path.join(this.rootDir, 'resources', platform, 'internal', exeName);
-
-      await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-        cwd: path.join(this.rootDir, 'src', 'go', 'wsl-helper'),
-        env: {
-          ...process.env,
-          GOOS:        this.mapPlatformToGoOS(platform),
-          CGO_ENABLED: '0',
-        },
-      });
-    };
-
-    await this.wait(
-      buildPlatform.bind(this, 'linux'),
-      buildPlatform.bind(this, 'win32'),
-    );
-  },
-
-  /**
-   * Build the nerdctl stub.
-   */
-  async buildNerdctlStub(os: 'windows' | 'linux'): Promise<void> {
-    let platDir, parentDir, outFile;
-
-    if (os === 'windows') {
-      platDir = 'win32';
-      parentDir = path.join(this.rootDir, 'resources', platDir, 'bin');
-      outFile = path.join(parentDir, 'nerdctl.exe');
-    } else {
-      platDir = 'linux';
-      parentDir = path.join(this.rootDir, 'resources', platDir, 'bin');
-      // nerdctl-stub is the actual nerdctl binary to be run on linux;
-      // there is also a `nerdctl` wrapper in the same directory to make it
-      // easier to handle permissions for Linux-in-WSL.
-      outFile = path.join(parentDir, 'nerdctl-stub');
-    }
-    // The linux build produces both nerdctl-stub and nerdctl
-    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'src', 'go', 'nerdctl-stub'),
-      env: {
-        ...process.env,
-        GOOS: os,
-      },
-    });
-  },
-
-  async buildExtensionProxyImage(): Promise<void> {
-    const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-build-rdx-pf-'));
-
-    try {
-      const executablePath = path.join(workDir, 'extension-proxy');
-      const layerPath = path.join(workDir, 'layer.tar');
-      const imagePath = path.join(this.rootDir, 'resources', 'rdx-proxy.tar');
-
-      console.log('Building RDX proxying image...');
-
-      // Build the golang executable
-      await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', executablePath, '.', {
-        cwd: path.join(this.rootDir, 'src', 'go', 'extension-proxy'),
-        env: {
-          ...process.env,
-          CGO_ENABLED: '0',
-          GOOS:        'linux',
-          GOARCH:      this.mapArchToGoArch(this.arch),
-        },
-      });
-
-      // Build the layer tarball
-      // tar streams don't implement piping to multiple writers, and stream.Duplex
-      // can't deal with it either; so we need to fully write out the file, then
-      // calculate the hash as a separate step.
-      const layer = tar.pack();
-      const layerOutput = layer.pipe(fs.createWriteStream(layerPath));
-      const executableStats = await fs.promises.stat(executablePath);
-
-      await stream.promises.finished(
-        fs.createReadStream(executablePath)
-          .pipe(layer.entry({
-            name:  path.basename(executablePath),
-            mode:  0o755,
-            type:  'file',
-            mtime: new Date(0),
-            size:  executableStats.size,
-          })));
-      layer.finalize();
-      await stream.promises.finished(layerOutput);
-
-      // calculate the hash
-      const layerReader = fs.createReadStream(layerPath);
-      const layerHasher = layerReader.pipe(crypto.createHash('sha256'));
-
-      await stream.promises.finished(layerReader);
-
-      // Build the image tarball
-      const layerHash = layerHasher.digest().toString('hex');
-      const image = tar.pack();
-      const imageWritten =
-        stream.promises.finished(
-          image
-            .pipe(fs.createWriteStream(imagePath)));
-      const addEntry = (name: string, input: Buffer | stream.Readable, size?: number) => {
-        if (Buffer.isBuffer(input)) {
-          size = input.length;
-          input = stream.Readable.from(input);
-        }
-
-        return stream.promises.finished((input as stream.Readable).pipe(image.entry({
-          name,
-          size,
-          type:  'file',
-          mtime: new Date(0),
-        })));
-      };
-
-      image.entry({ name: layerHash, type: 'directory' });
-      await addEntry(`${ layerHash }/VERSION`, Buffer.from('1.0'));
-      await addEntry(`${ layerHash }/layer.tar`, fs.createReadStream(layerPath), layerOutput.bytesWritten);
-      await addEntry(`${ layerHash }/json`, Buffer.from(JSON.stringify({
-        id:     layerHash,
-        config: {
-          ExposedPorts: { '80/tcp': {} },
-          WorkingDir:   '/',
-          Entrypoint:   [`/${ path.basename(executablePath) }`],
-        },
-      })));
-      await addEntry(`${ layerHash }.json`, Buffer.from(JSON.stringify({
-        architecture: this.mapArchToGoArch(this.arch),
-        config:       {
-          ExposedPorts: { '80/tcp': {} },
-          Entrypoint:   [`/${ path.basename(executablePath) }`],
-          WorkingDir:   '/',
-        },
-        history: [],
-        os:      'linux',
-        rootfs:  {
-          type:     'layers',
-          diff_ids: [`sha256:${ layerHash }`],
-        },
-      })));
-      await addEntry('manifest.json', Buffer.from(JSON.stringify([
-        {
-          Config:   `${ layerHash }.json`,
-          RepoTags: ['ghcr.io/rancher-sandbox/rancher-desktop/rdx-proxy:latest'],
-          Layers:   [`${ layerHash }/layer.tar`],
-        },
-      ])));
-      image.finalize();
-      await imageWritten;
-      console.log('Built RDX port proxy image');
-    } finally {
-      await fs.promises.rm(workDir, { recursive: true });
-    }
-  },
-
-  /**
-   * Build a golang-based utility for the specified platform.
-   * @param name basename of the executable to build
-   * @param platform 'linux', 'windows', or 'darwin'
-   * @param childDir final folder destination either 'internal' or 'bin'
-   */
-  async buildUtility(name: string, platform: NodeJS.Platform, childDir: string): Promise<void> {
-    const target = platform === 'win32' ? `${ name }.exe` : name;
-    const parentDir = path.join(this.rootDir, 'resources', platform, childDir);
-    const outFile = path.join(parentDir, target);
-
-    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'src', 'go', name),
-      env: {
-        ...process.env,
-        GOOS:   this.mapPlatformToGoOS(platform),
-        GOARCH: this.mapArchToGoArch(this.arch),
-      },
-    });
   },
 
   /**
@@ -461,29 +244,6 @@ export default {
    */
   buildMain(): Promise<void> {
     return this.wait(() => this.buildJavaScript(this.webpackConfig));
-  },
-
-  /**
-   * Build the things we build with go
-   */
-  async buildGoUtilities() {
-    const tasks = [];
-
-    if (os.platform().startsWith('win')) {
-      tasks.push(() => this.buildWSLHelper());
-      tasks.push(() => this.buildNerdctlStub('windows'));
-      tasks.push(() => this.buildNerdctlStub('linux'));
-      tasks.push(() => this.buildUtility('vtunnel', 'linux', 'internal'));
-      tasks.push(() => this.buildUtility('vtunnel', 'win32', 'internal'));
-      tasks.push(() => this.buildUtility('rdctl', 'linux', 'bin'));
-      tasks.push(() => this.buildUtility('privileged-service', 'win32', 'internal'));
-      tasks.push(() => this.buildUtility('guestagent', 'linux', 'internal'));
-    }
-    tasks.push(() => this.buildUtility('rdctl', os.platform(), 'bin'));
-    tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
-    tasks.push(() => this.buildExtensionProxyImage());
-
-    return await this.wait(...tasks);
   },
 
 };
