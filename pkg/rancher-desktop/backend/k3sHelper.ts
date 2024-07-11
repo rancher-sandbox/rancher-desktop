@@ -155,7 +155,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
-  protected readonly minimumVersion = new semver.SemVer('1.15.0');
+  protected readonly minimumVersion = new semver.SemVer('1.21.0');
   protected versionFromChannel: Record<string, string> = {};
 
   constructor(arch: Architecture) {
@@ -195,7 +195,7 @@ export default class K3sHelper extends events.EventEmitter {
       for (const versionString of cacheData.versions) {
         const version = semver.parse(versionString);
 
-        if (version) {
+        if (version && version.compare(this.minimumVersion) >= 0) {
           this.versions[version.version] = new VersionEntry(version);
         }
       }
@@ -287,7 +287,7 @@ export default class K3sHelper extends events.EventEmitter {
 
       return true;
     }
-    if (version < this.minimumVersion) {
+    if (version.compare(this.minimumVersion) < 0) {
       console.log(`Version ${ version } is less than the minimum ${ this.minimumVersion }, skipping.`);
 
       // We may have new patch versions for really old releases; fetch more.

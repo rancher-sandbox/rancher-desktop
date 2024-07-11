@@ -172,7 +172,7 @@ export default class BackendHelper {
     const currentConfigVersionString = cfg?.kubernetes?.version;
     let storedVersion: semver.SemVer | null;
     let matchedVersion: semver.SemVer | undefined;
-    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a valid version.`;
+    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a supported version.`;
     const sv = new SettingsValidator();
     const lockedSettings = settingsImpl.getLockedSettings();
     const versionIsLocked = lockedSettings.kubernetes?.version ?? false;

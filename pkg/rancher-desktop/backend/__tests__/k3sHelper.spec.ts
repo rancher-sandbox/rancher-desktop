@@ -47,11 +47,11 @@ beforeEach(() => {
 
 describe(buildVersion, () => {
   test('parses the build number', () => {
-    expect(buildVersion(new semver.SemVer('v1.2.3+k3s4'))).toEqual(4);
+    expect(buildVersion(new semver.SemVer('v1.99.3+k3s4'))).toEqual(4);
   });
 
   test('handles non-conforming versions', () => {
-    expect(buildVersion(new semver.SemVer('v1.2.3'))).toEqual(-1);
+    expect(buildVersion(new semver.SemVer('v1.99.3'))).toEqual(-1);
   });
 });
 
@@ -91,31 +91,31 @@ describe(K3sHelper, () => {
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should skip prereleases', async() => {
-      expect(process('1.2.3-beta1')).toEqual(true);
+      expect(process('1.99.3-beta1')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should skip valid but erroneous versions', async() => {
-      expect(process('1.2.3+rk3s1')).toEqual(true);
+      expect(process('1.99.3+rk3s1')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should ignore old versions', async() => {
-      expect(process('0.2.0')).toEqual(true);
+      expect(process('1.2.0')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should ignore obsolete builds', async() => {
-      expect(process('1.2.3_k3s4', ['1.2.3+k3s5'])).toEqual(true);
+      expect(process('1.99.3+k3s4', ['1.99.3+k3s5'])).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(1);
     });
     it('should ignore existing builds', async() => {
-      expect(process('1.2.3+k3s4', ['1.2.3+k3s4'])).toEqual(false);
+      expect(process('1.99.3+k3s4', ['1.99.3+k3s4'])).toEqual(false);
       expect(await subject.availableVersions).toHaveLength(1);
     });
     it('should ignore versions with missing assets', async() => {
-      expect(process('1.2.3+k3s4')).toEqual(true);
+      expect(process('1.99.3+k3s4')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should add versions', async() => {
-      expect(process('1.2.3+k3s4', [], true)).toEqual(true);
+      expect(process('1.99.3+k3s4', [], true)).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(1);
     });
   });
@@ -124,8 +124,8 @@ describe(K3sHelper, () => {
     const subject = new K3sHelper('x86_64');
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
     const versions: Record<string, VersionEntry> = {
-      '1.2.3': new VersionEntry(semver.parse('1.2.3+k3s1') as semver.SemVer, ['stable']),
-      '2.3.4': new VersionEntry(semver.parse('2.3.4+k3s3') as semver.SemVer),
+      '1.99.3': new VersionEntry(semver.parse('1.99.3+k3s1') as semver.SemVer, ['stable']),
+      '2.3.4':  new VersionEntry(semver.parse('2.3.4+k3s3') as semver.SemVer),
     };
     const versionStrings = Object.values(versions)
       .map(v => v.version)
@@ -143,7 +143,7 @@ describe(K3sHelper, () => {
 
       expect(actual).toHaveProperty('cacheVersion');
       expect(semver.sort(actualStrings)).toEqual(versionStrings);
-      expect(channels).toEqual({ stable: '1.2.3' });
+      expect(channels).toEqual({ stable: '1.99.3' });
 
       // Check that we can load the values back properly
       subject['versions'] = {};
@@ -173,8 +173,8 @@ describe(K3sHelper, () => {
         const result = new ChannelMapping();
 
         for (const [version, tags] of Object.entries({
-          'v1.2.1+k3s1': ['stale-tag'],
-          'v1.2.3+k3s1': ['stable'],
+          'v1.99.1+k3s1': ['stale-tag'],
+          'v1.99.3+k3s1': ['stable'],
         })) {
           const parsedVersion = new semver.SemVer(version);
 
@@ -199,7 +199,7 @@ describe(K3sHelper, () => {
           JSON.stringify({
             data: [{
               name:   'stable',
-              latest: 'v1.2.3+k3s3',
+              latest: 'v1.99.3+k3s3',
             }],
           }),
         ));
@@ -209,12 +209,12 @@ describe(K3sHelper, () => {
 
         return Promise.resolve(new FetchResponse(
           JSON.stringify([
-            { tag_name: 'v1.2.3+k3s2', assets: validAssets },
-            { tag_name: 'v1.2.3+k3s3', assets: validAssets },
+            { tag_name: 'v1.99.3+k3s2', assets: validAssets },
+            { tag_name: 'v1.99.3+k3s3', assets: validAssets },
             // The next one is skipped because there's a newer build
-            { tag_name: 'v1.2.3+k3s1', assets: validAssets },
-            { tag_name: 'v1.2.4+k3s1', assets: [] },
-            { tag_name: 'v1.2.1+k3s2', assets: validAssets },
+            { tag_name: 'v1.99.3+k3s1', assets: validAssets },
+            { tag_name: 'v1.99.4+k3s1', assets: [] },
+            { tag_name: 'v1.99.1+k3s2', assets: validAssets },
           ]),
           { headers: { link: '<url>; rel="next"' } },
         ));
@@ -233,7 +233,7 @@ describe(K3sHelper, () => {
         return Promise.resolve(new FetchResponse(
           JSON.stringify([
             { tag_name: 'Invalid tag name', assets: validAssets },
-            { tag_name: 'v1.2.0+k3s5', assets: validAssets },
+            { tag_name: 'v1.99.0+k3s5', assets: validAssets },
           ]),
           { headers: { link: '<url>; rel="first"' } },
         ));
@@ -249,9 +249,9 @@ describe(K3sHelper, () => {
     expect(fetch).toHaveBeenCalledTimes(4);
     expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);
     expect(await subject.availableVersions).toEqual([
-      new VersionEntry(new semver.SemVer('v1.2.3+k3s3'), ['stable']),
-      new VersionEntry(new semver.SemVer('v1.2.1+k3s2')),
-      new VersionEntry(new semver.SemVer('v1.2.0+k3s5')),
+      new VersionEntry(new semver.SemVer('v1.99.3+k3s3'), ['stable']),
+      new VersionEntry(new semver.SemVer('v1.99.1+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.99.0+k3s5')),
     ]);
   });
 
@@ -274,15 +274,15 @@ describe(K3sHelper, () => {
         const result = new ChannelMapping();
 
         for (const [version, tags] of Object.entries({
-          'v1.26.0+k3s2': [],
-          'v1.26.1+k3s1': [],
-          'v1.26.2+k3s1': [],
-          'v1.26.3+k3s1': ['v1.26', 'stable'],
-          'v1.27.1+k3s1': [],
-          'v1.27.2+k3s1': [],
-          'v1.27.3+k3s1': [],
-          'v1.27.4+k3s1': [],
-          'v1.27.5+k3s1': ['v1.27', 'latest'],
+          'v1.96.0+k3s2': [],
+          'v1.96.1+k3s1': [],
+          'v1.96.2+k3s1': [],
+          'v1.96.3+k3s1': ['v1.96', 'stable'],
+          'v1.97.1+k3s1': [],
+          'v1.97.2+k3s1': [],
+          'v1.97.3+k3s1': [],
+          'v1.97.4+k3s1': [],
+          'v1.97.5+k3s1': ['v1.97', 'latest'],
         })) {
           const parsedVersion = new semver.SemVer(version);
 
@@ -293,10 +293,10 @@ describe(K3sHelper, () => {
         }
 
         subject['versionFromChannel'] = {
-          stable:  '1.26.3',
-          latest:  '1.27.5',
-          'v1.26': '1.26.3',
-          'v1.27': '1.27.5',
+          stable:  '1.96.3',
+          latest:  '1.97.5',
+          'v1.96': '1.96.3',
+          'v1.97': '1.97.5',
         };
 
         return Promise.resolve(result);
@@ -311,11 +311,11 @@ describe(K3sHelper, () => {
         return Promise.resolve(new FetchResponse(
           JSON.stringify({
             data: [
-              { name: 'v1.26', latest: '1.26.9+k3s1' },
-              { name: 'v1.27', latest: '1.27.7+k3s1' },
-              { name: 'stable', latest: '1.27.7+k3s1' },
-              { name: 'latest', latest: '1.28.3+k3s1' },
-              { name: 'v1.28', latest: '1.28.3+k3s1' },
+              { name: 'v1.96', latest: '1.96.9+k3s1' },
+              { name: 'v1.97', latest: '1.97.7+k3s1' },
+              { name: 'stable', latest: '1.97.7+k3s1' },
+              { name: 'latest', latest: '1.98.3+k3s1' },
+              { name: 'v1.98', latest: '1.98.3+k3s1' },
             ],
           }),
         ));
@@ -325,11 +325,11 @@ describe(K3sHelper, () => {
 
         return Promise.resolve(new FetchResponse(
           JSON.stringify([
-            { tag_name: 'v1.28.3+k3s2', assets: validAssets },
-            { tag_name: 'v1.28.2+k3s2', assets: validAssets },
-            { tag_name: 'v1.28.1+k3s2', assets: validAssets },
-            { tag_name: 'v1.27.7+k3s2', assets: validAssets },
-            { tag_name: 'v1.27.6+k3s1', assets: validAssets },
+            { tag_name: 'v1.98.3+k3s2', assets: validAssets },
+            { tag_name: 'v1.98.2+k3s2', assets: validAssets },
+            { tag_name: 'v1.98.1+k3s2', assets: validAssets },
+            { tag_name: 'v1.97.7+k3s2', assets: validAssets },
+            { tag_name: 'v1.97.6+k3s1', assets: validAssets },
           ]),
           { headers: { link: '<url>; rel="first"' } },
         ));
@@ -346,20 +346,20 @@ describe(K3sHelper, () => {
     const availableVersions = await subject.availableVersions;
 
     expect(availableVersions).toEqual([
-      new VersionEntry(new semver.SemVer('v1.28.3+k3s2'), ['latest', 'v1.28']),
-      new VersionEntry(new semver.SemVer('v1.28.2+k3s2')),
-      new VersionEntry(new semver.SemVer('v1.28.1+k3s2')),
-      new VersionEntry(new semver.SemVer('v1.27.7+k3s2'), ['stable', 'v1.27']),
-      new VersionEntry(new semver.SemVer('v1.27.6+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.27.5+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.27.4+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.27.3+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.27.2+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.27.1+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.26.3+k3s1'), ['v1.26']),
-      new VersionEntry(new semver.SemVer('v1.26.2+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.26.1+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.26.0+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.98.3+k3s2'), ['latest', 'v1.98']),
+      new VersionEntry(new semver.SemVer('v1.98.2+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.98.1+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.97.7+k3s2'), ['stable', 'v1.97']),
+      new VersionEntry(new semver.SemVer('v1.97.6+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.97.5+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.97.4+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.97.3+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.97.2+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.97.1+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.96.3+k3s1'), ['v1.96']),
+      new VersionEntry(new semver.SemVer('v1.96.2+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.96.1+k3s1')),
+      new VersionEntry(new semver.SemVer('v1.96.0+k3s2')),
     ]);
   });
 
@@ -367,7 +367,7 @@ describe(K3sHelper, () => {
     it('should finish initialize without network if cache is available', async() => {
       const writer = new K3sHelper('x86_64');
 
-      writer['versions'] = { 'v1.0.0': new VersionEntry(new semver.SemVer('v1.0.0')) };
+      writer['versions'] = { 'v1.99.0': new VersionEntry(new semver.SemVer('v1.99.0')) };
       await writer['writeCache']();
 
       // We want to check that initialize() returns before updateCache() does.
@@ -385,7 +385,7 @@ describe(K3sHelper, () => {
       });
 
       expect(await subject.availableVersions).toContainEqual({
-        version:  semver.parse('v1.0.0'),
+        version:  semver.parse('v1.99.0'),
         channels: undefined,
       });
       await pendingInit;
@@ -423,7 +423,7 @@ describe(K3sHelper, () => {
     });
 
     test('can handle zero choices', () => {
-      const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
+      const desiredSemver = new semver.SemVer('v1.99.3+k3s4');
 
       expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrow(NoCachedK3sVersionsError);
     });
