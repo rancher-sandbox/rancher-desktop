@@ -44,7 +44,7 @@ func InstallService(name, displayName, desc string) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = m.Disconnect() }()
+	defer disconnect(m)
 
 	// We always need uninstall first to unregister,
 	// the event logger recreation service can yield to a registry key error
