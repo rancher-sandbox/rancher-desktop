@@ -17,9 +17,17 @@ module.exports = {
   outputDir:           path.resolve(rootDir, 'dist', 'app'),
   productionSourceMap: false,
 
+  /** @type { (config: import('webpack-chain')) => void } */
   chainWebpack: (config) => {
     config.target('electron-renderer');
     config.resolve.alias.set('@pkg', path.resolve(rootDir, 'pkg', 'rancher-desktop'));
+    config.resolve.extensions.add('.ts');
+
+    config.module.rule('ts')
+      .test(/\.ts$/)
+      .use('ts-loader')
+      .loader('ts-loader')
+      .options({ transpileOnly: process.env.NODE_ENV === 'development' });
 
     config.module.rule('yaml')
       .test(/\.ya?ml(?:\?[a-z0-9=&.]+)?$/)

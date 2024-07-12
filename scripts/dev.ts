@@ -111,7 +111,9 @@ class DevRunner extends events.EventEmitter {
 
       this.#rendererProcess = this.spawn(
         'Renderer process',
-        'node_modules/.bin/vue-cli-service',
+        process.execPath,
+        '--stack-size=16384',
+        'node_modules/@vue/cli-service/bin/vue-cli-service.js',
         'serve',
         '--host',
         'localhost',
