@@ -95,6 +95,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   /** Extra debugging arguments for wsl-helper. */
   protected wslHelperDebugArgs: string[] = [];
 
+  /** Singleton instance. */
+  private static instance: WindowsIntegrationManager;
+
   constructor() {
     mainEvents.on('settings-update', (settings) => {
       this.wslHelperDebugArgs = runInDebugMode(settings.application.debug) ? ['--verbose'] : [];
@@ -128,6 +131,13 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
     // Trigger a settings-update.
     mainEvents.emit('settings-write', {});
+  }
+
+  /** Static method to access the singleton instance. */
+  public static getInstance(): WindowsIntegrationManager {
+    WindowsIntegrationManager.instance ||= new WindowsIntegrationManager();
+
+    return WindowsIntegrationManager.instance;
   }
 
   async enforce(): Promise<void> {
@@ -458,6 +468,42 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } catch (error) {
       console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`.trim());
     }
+  }
+
+  /**
+   * verifyAllDistrosKubeConfig loops through all the available distros
+   * and checks if the kubeconfig can be managed; if any distro fails
+   * the check, an exception is thrown.
+   */
+  async verifyAllDistrosKubeConfig() {
+    const distros = await this.supportedDistros;
+
+    await Promise.all(distros.map(async(distro) => {
+      await this.verifyDistroKubeConfig(distro.name);
+    }));
+  }
+
+  /**
+   * verifyDistroKubeConfig calls the wsl-helper kubeconfig --verify per distro.
+   * It determines the condition of the kubeConfig from the returned error code.
+   */
+  protected async verifyDistroKubeConfig(distro: string) {
+    try {
+      const wslHelper = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
+
+      await this.execCommand({ distro }, wslHelper, 'kubeconfig', '--verify');
+    } catch (err: any) {
+      // Only throw for a specific error code 1, since we control that from the
+      // kubeconfig --verify command. The logic here is to bubble up this error
+      // so that the diagnostic is very specific to this issue. Any other errors
+      // are captured as log messages.
+      if (err && 'code' in err && err.code === 1) {
+        throw new Error(`The kubeConfig contains non-Rancher Desktop configuration in distro ${ distro }`);
+      } else {
+        console.error(`Verifying kubeconfig in distro ${ distro } failed: ${ err }`);
+      }
+    }
+    console.debug(`Verified kubeconfig in the following distro: ${ distro }`);
   }
 
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string, state: boolean) {
