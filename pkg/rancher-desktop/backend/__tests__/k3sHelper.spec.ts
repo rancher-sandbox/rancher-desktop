@@ -9,9 +9,10 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 
 import K3sHelper, {
-  buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry,
+  buildVersion, ChannelMapping, firstStableVersion, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry,
 } from '../k3sHelper';
 
+import * as K8s from '@pkg/backend/k8s';
 import paths from '@pkg/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -426,6 +427,35 @@ describe(K3sHelper, () => {
       const desiredSemver = new semver.SemVer('v1.99.3+k3s4');
 
       expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrow(NoCachedK3sVersionsError);
+    });
+  });
+
+  describe('firstStableVersion', () => {
+    it('should return the first stable version', () => {
+      const versions: K8s.VersionEntry[] = [
+        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v1.1.0'), ['stable']),
+        new VersionEntry(new semver.SemVer('v1.2.0'), ['stable']),
+      ];
+      const result = firstStableVersion(versions)?.version;
+
+      expect(result).toEqual(versions[1].version);
+    });
+
+    it('should return first entry if no stable version is found', () => {
+      const versions: K8s.VersionEntry[] = [
+        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v1.1.0'), ['beta']),
+      ];
+      const result = firstStableVersion(versions)?.version;
+
+      expect(result).toEqual(versions[0].version);
+    });
+
+    it('should return undefined if the list is empty', () => {
+      const result = firstStableVersion([]);
+
+      expect(result).toBeUndefined();
     });
   });
 });

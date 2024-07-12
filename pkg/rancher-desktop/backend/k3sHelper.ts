@@ -137,6 +137,21 @@ export class VersionEntry implements K8s.VersionEntry {
 }
 
 /**
+ * Get the first stable version from a list of K8s.VersionEntry objects.
+ * @param versions The list of K8s.VersionEntry objects.
+ * @returns The first stable version, or first version if no stable version is found.
+ */
+export function firstStableVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
+  let stableVersion = versions.find(v => (v.channels ?? []).includes('stable'));
+
+  if (!stableVersion && versions.length > 0) {
+    stableVersion = versions[0];
+  }
+
+  return stableVersion;
+}
+
+/**
  * Given a version, return the K3s build version.
  *
  * Note that this is only exported for testing.
@@ -629,8 +644,8 @@ export default class K3sHelper extends events.EventEmitter {
    * that is considered closest to the desired version:
    *
    * @precondition the desired version wasn't found
-   * @param desiredVersion: a semver for the version currently specified in the config
-   * @param k3sNames: typically a list of names like 'v1.2.3+k3s4'
+   * @param desiredVersion a semver for the version currently specified in the config
+   * @param k3sNames typically a list of names like 'v1.2.3+k3s4'
    * @returns {semver.SemVer} the oldest version newer than the desired version
    *      If there is more than one such version, favor the one with the highest '+k3s' build version
    *      If there are none, the newest version older than the desired version
