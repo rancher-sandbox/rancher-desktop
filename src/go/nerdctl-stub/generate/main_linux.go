@@ -65,7 +65,8 @@ func main() {
 		logrus.WithError(err).WithField("path", outputPath).Fatal("error creating output")
 	}
 	defer output.Close()
-	//nolint:dogsled
+	//nolint:dogsled // we only require the file name; we can also ignore `ok`, as
+	// on failure we just have no useful file name.
 	_, filename, _, _ := runtime.Caller(0)
 	data := map[string]interface{}{
 		"package": filename,
