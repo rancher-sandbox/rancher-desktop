@@ -74,7 +74,7 @@ verify_settings() {
 
     run get_setting .kubernetes.version
     "${assert}_output" "$LOCKED_KUBERNETES_VERSION"
-    refute_output "$DEFAULTS_KUBERNETES_VERSION"
+    "${refute}_output" "$DEFAULTS_KUBERNETES_VERSION"
 }
 
 install_extensions() {
@@ -96,6 +96,8 @@ install_extensions() {
 }
 
 @test 'start up with NO profiles' {
+    assert_not_equal "$DEFAULTS_KUBERNETES_VERSION" "$LOCKED_KUBERNETES_VERSION"
+    assert_not_equal "$KUBERNETES_RANDOM_VERSION" "$LOCKED_KUBERNETES_VERSION"
     RD_USE_PROFILE=false
     RD_USE_IMAGE_ALLOW_LIST=false
     start_application
