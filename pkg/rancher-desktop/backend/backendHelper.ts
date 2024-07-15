@@ -143,12 +143,30 @@ export default class BackendHelper {
     return patterns;
   }
 
-  /**
-   * k3s versions 1.24.1 to 1.24.3 don't support the --docker option and need to talk to
-   * a cri_dockerd endpoint when using the moby engine.
-   */
   static requiresCRIDockerd(engineName: string, kubeVersion: string | semver.SemVer): boolean {
-    return engineName === ContainerEngine.MOBY && semver.gte(kubeVersion, '1.24.1') && semver.lte(kubeVersion, '1.24.3');
+    if (engineName !== ContainerEngine.MOBY) {
+      return false;
+    }
+    // versions 1.24.1 to 1.24.3 don't support the --docker option
+    if (semver.gte(kubeVersion, '1.24.1') && semver.lte(kubeVersion, '1.24.3')) {
+      return true;
+    }
+    // cri-dockerd bundled with k3s is not compatible with docker 25.x (using API 1.44)
+    // see https://github.com/k3s-io/k3s/issues/9279
+    if (semver.gte(kubeVersion, '1.26.8') && semver.lte(kubeVersion, '1.26.13')) {
+      return true;
+    }
+    if (semver.gte(kubeVersion, '1.27.5') && semver.lte(kubeVersion, '1.27.10')) {
+      return true;
+    }
+    if (semver.gte(kubeVersion, '1.28.0') && semver.lte(kubeVersion, '1.28.6')) {
+      return true;
+    }
+    if (semver.gte(kubeVersion, '1.29.0') && semver.lte(kubeVersion, '1.29.1')) {
+      return true;
+    }
+
+    return false;
   }
 
   static checkForLockedVersion(newVersion: semver.SemVer, cfg: BackendSettings, sv: SettingsValidator): void {

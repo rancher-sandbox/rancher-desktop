@@ -210,7 +210,7 @@ using_dev_mode() {
 # "all" will fetch the list of all k3s releases from GitHub
 # "latest" will fetch the list of latest versions from the release channel
 
-: "${RD_K3S_MIN:=1.0.0}"
+: "${RD_K3S_MIN:=1.21.0}"
 : "${RD_K3S_MAX:=1.99.0}"
 : "${RD_K3S_VERSIONS:=$RD_KUBERNETES_PREV_VERSION}"
 

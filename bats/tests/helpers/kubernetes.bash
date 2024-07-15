@@ -35,6 +35,25 @@ wait_for_kubelet() {
     done
 }
 
+# unwrap_kube_list removes the "List" wrapper from the JSON in $output if .kind is "List".
+# Returns an error if the number of .items in the List isn't exactly 1.
+unwrap_kube_list() {
+    local json=$output
+
+    run jq_output '.kind'
+    assert_success || return
+    if [[ $output == "List" ]]; then
+        run jq --raw-output '.items | length' <<<"$json"
+        assert_success || return
+        assert_output "1" || return
+
+        run jq --raw-output '.items[0]' <<<"$json"
+        assert_success || return
+        json=$output
+    fi
+    echo "$json"
+}
+
 assert_kube_deployment_available() {
     local jsonpath="jsonpath={.status.conditions[?(@.type=='Available')].status}"
     run --separate-stderr kubectl get deployment "$@" --output "$jsonpath"
@@ -45,6 +64,20 @@ assert_kube_deployment_available() {
 wait_for_kube_deployment_available() {
     trace "waiting for deployment $*"
     try assert_kube_deployment_available "$@"
+}
+
+assert_pod_containers_are_running() {
+    run kubectl get pod "$@" --output json
+    assert_success || return
+
+    # Make sure the query returned just a single pod
+    run unwrap_kube_list
+    assert_success || return
+
+    # Confirm that **all** containers of the pod are in "running" state
+    run jq_output '[.status.containerStatuses[].state | keys] | add | unique | .[]'
+    assert_success || return
+    assert_output "running"
 }
 
 traefik_ip() {
