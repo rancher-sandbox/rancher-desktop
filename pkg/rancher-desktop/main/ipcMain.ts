@@ -66,11 +66,13 @@ type Listener = (event: Electron.IpcMainEvent, ...args: any) => void;
 type Handler = (event: Electron.IpcMainInvokeEvent, ...args: any) => Promise<unknown>;
 
 class IpcMainProxyImpl implements IpcMainProxy {
-  constructor(logger: Log) {
+  constructor(logger: Log, ipcMain?: Electron.IpcMain) {
     this.logger = logger;
+    this.ipcMain = ipcMain ?? Electron.ipcMain;
   }
 
   protected logger: Log;
+  protected ipcMain: Electron.IpcMain;
 
   // Bijective weak maps between the user-provided listener and the wrapper that
   // introduces logging.  We do not keep strong references to either; the user-
@@ -89,7 +91,26 @@ class IpcMainProxyImpl implements IpcMainProxy {
 
     this.listenerWrapperToRaw.set(wrapper, new WeakRef(listener));
     this.listenerRawToWrapper.set(listener, new WeakRef(wrapper));
-    Electron.ipcMain.on(channel, wrapper);
+    this.ipcMain.on(channel, wrapper);
+
+    return this;
+  }
+
+  addListener(channel: string, listener: Listener): this {
+    return this.on(channel, listener);
+  }
+
+  prependListener(channel: string, listener: Listener): this {
+    const wrapper: Listener = (event, ...args) => {
+      const printableArgs = makeArgsPrintable(args);
+
+      this.logger.debug(`ipcMain: "${ channel }" triggered with arguments: ${ printableArgs.join(', ') }`);
+      listener(event, ...args);
+    };
+
+    this.listenerWrapperToRaw.set(wrapper, new WeakRef(listener));
+    this.listenerRawToWrapper.set(listener, new WeakRef(wrapper));
+    this.ipcMain.prependListener(channel, wrapper);
 
     return this;
   }
@@ -104,7 +125,22 @@ class IpcMainProxyImpl implements IpcMainProxy {
 
     this.listenerWrapperToRaw.set(wrapper, new WeakRef(listener));
     this.listenerRawToWrapper.set(listener, new WeakRef(wrapper));
-    Electron.ipcMain.once(channel, wrapper);
+    this.ipcMain.once(channel, wrapper);
+
+    return this;
+  }
+
+  prependOnceListener(channel: string, listener: Listener): this {
+    const wrapper: Listener = (event, ...args) => {
+      const printableArgs = makeArgsPrintable(args);
+
+      this.logger.debug(`ipcMain: "${ channel }" triggered with arguments: ${ printableArgs.join(', ') }`);
+      listener(event, ...args);
+    };
+
+    this.listenerWrapperToRaw.set(wrapper, new WeakRef(listener));
+    this.listenerRawToWrapper.set(listener, new WeakRef(wrapper));
+    this.ipcMain.prependOnceListener(channel, wrapper);
 
     return this;
   }
@@ -113,7 +149,7 @@ class IpcMainProxyImpl implements IpcMainProxy {
     const wrapper = this.listenerRawToWrapper.get(listener)?.deref();
 
     if (wrapper) {
-      Electron.ipcMain.removeListener(channel, wrapper);
+      this.ipcMain.removeListener(channel, wrapper);
       this.listenerWrapperToRaw.delete(wrapper);
     }
     this.listenerRawToWrapper.delete(listener);
@@ -121,10 +157,44 @@ class IpcMainProxyImpl implements IpcMainProxy {
     return this;
   }
 
+  off(channel: string, listener: Listener): this {
+    return this.removeListener(channel, listener);
+  }
+
   removeAllListeners(channel?: string): this {
-    Electron.ipcMain.removeAllListeners(channel);
+    this.ipcMain.removeAllListeners(channel);
 
     return this;
+  }
+
+  setMaxListeners(n: number): this {
+    this.ipcMain.setMaxListeners(n);
+
+    return this;
+  }
+
+  getMaxListeners(): number {
+    return this.ipcMain.getMaxListeners();
+  }
+
+  listeners(eventName: string | symbol) {
+    return this.ipcMain.listeners(eventName);
+  }
+
+  rawListeners(eventName: string | symbol) {
+    return this.ipcMain.rawListeners(eventName);
+  }
+
+  listenerCount(eventName: string | symbol, listener?: Listener): number {
+    return this.ipcMain.listenerCount(eventName, listener);
+  }
+
+  emit(eventName: string | symbol, ...args: any[]): boolean {
+    return this.ipcMain.emit(eventName, ...args);
+  }
+
+  eventNames(): (string | symbol)[] {
+    return this.ipcMain.eventNames();
   }
 
   // For dealing with handlers, we don't need to keep track of the wrappers
@@ -139,7 +209,7 @@ class IpcMainProxyImpl implements IpcMainProxy {
       return handler(event, ...args);
     };
 
-    Electron.ipcMain.handle(channel, wrapper);
+    this.ipcMain.handle(channel, wrapper);
   }
 
   handleOnce(channel: string, handler: Handler) {
@@ -151,14 +221,14 @@ class IpcMainProxyImpl implements IpcMainProxy {
       return handler(event, ...args);
     };
 
-    Electron.ipcMain.handleOnce(channel, wrapper);
+    this.ipcMain.handleOnce(channel, wrapper);
   }
 
   removeHandler(channel: string): void {
-    Electron.ipcMain.removeHandler(channel);
+    this.ipcMain.removeHandler(channel);
   }
 }
 
-export function getIpcMainProxy(logger: Log): IpcMainProxy {
-  return new IpcMainProxyImpl(logger);
+export function getIpcMainProxy(logger: Log, ipcMain?: Electron.IpcMain): IpcMainProxy {
+  return new IpcMainProxyImpl(logger, ipcMain);
 }
