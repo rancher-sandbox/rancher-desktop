@@ -27,7 +27,11 @@ module.exports = {
       .test(/\.ts$/)
       .use('ts-loader')
       .loader('ts-loader')
-      .options({ transpileOnly: process.env.NODE_ENV === 'development' });
+      .options({
+        transpileOnly:    process.env.NODE_ENV === 'development',
+        appendTsSuffixTo: ['\\.vue$'],
+        happyPackMode:    true,
+      });
 
     config.module.rule('yaml')
       .test(/\.ya?ml(?:\?[a-z0-9=&.]+)?$/)
@@ -49,6 +53,12 @@ module.exports = {
         featureExtensions:       true,
       }),
     }]);
+
+    config.module.rule('vue').use('vue-loader').tap((options) => {
+      _.set(options, 'loaders.ts', 'ts-loader');
+
+      return options;
+    });
   },
 
   css: {

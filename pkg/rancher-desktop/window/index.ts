@@ -468,11 +468,7 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
     }
   });
 
-  if (Shortcuts.isRegistered(window)) {
-    return window;
-  }
-
-  if (escapeKey) {
+  if (!Shortcuts.isRegistered(window) && escapeKey) {
     Shortcuts.register(
       window,
       { key: 'Escape' },

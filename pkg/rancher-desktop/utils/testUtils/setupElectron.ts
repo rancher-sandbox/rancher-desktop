@@ -6,15 +6,17 @@
 
 import path from 'path';
 
-jest.mock('electron', () => {
-  return {
-    __esModule: true,
-    default:    {
-      app: {
-        isPackaged: false,
-        getAppPath: () => path.resolve('.'),
+if ('jest' in globalThis && 'mock' in jest) {
+  jest.mock('electron', () => {
+    return {
+      __esModule: true,
+      default:    {
+        app: {
+          isPackaged: false,
+          getAppPath: () => path.resolve('.'),
+        },
+        ipcMain: {},
       },
-      ipcMain: {},
-    },
-  };
-});
+    };
+  });
+}
