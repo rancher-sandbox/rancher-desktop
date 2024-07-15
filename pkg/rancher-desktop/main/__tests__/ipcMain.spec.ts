@@ -12,7 +12,7 @@ describe('IpcMainProxy', () => {
   let emitter: E;
   let subject: ReturnType<typeof getIpcMainProxy>;
 
-  class E extends events.EventEmitter {
+  class E extends events.EventEmitter implements Electron.IpcMain {
     protected handlers: Record<string, {once: boolean, handler: Handler}> = {};
 
     handle(channel: string, handler: Handler) {
@@ -66,24 +66,7 @@ describe('IpcMainProxy', () => {
   }
 
   beforeAll(() => {
-    const methods: (keyof ReturnType<typeof getIpcMainProxy>)[] = [
-      'on', 'once', 'removeListener', 'removeAllListeners',
-      'handle', 'handleOnce', 'removeHandler',
-    ];
-
     emitter = new E();
-
-    for (const prop of methods) {
-      (Electron.ipcMain as any)[prop] ??= () => {};
-      expect(typeof emitter[prop]).toEqual('function');
-      jest.spyOn(Electron.ipcMain, prop as keyof typeof Electron.ipcMain).mockImplementation((...args: any) => {
-        //  TODO: Issue #5544 Don't use Function as a type
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        const meth = emitter[prop as keyof typeof emitter] as Function;
-
-        return meth.apply(emitter, args);
-      });
-    }
   });
 
   afterAll(() => {
@@ -95,7 +78,7 @@ describe('IpcMainProxy', () => {
     for (const meth of ['log', 'error', 'info', 'warn', 'debug', 'debugE'] as const) {
       jest.spyOn(log, meth);
     }
-    subject = getIpcMainProxy(log);
+    subject = getIpcMainProxy(log, emitter);
   });
 
   afterEach(() => {

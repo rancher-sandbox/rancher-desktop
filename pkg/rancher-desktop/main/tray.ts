@@ -130,13 +130,15 @@ export class Tray {
    * triggered, close the watcher and restart after a duration (one second).
    */
   private async watchForChanges() {
-    this.abortController = new AbortController();
+    const abortController = new AbortController();
+
+    this.abortController = abortController;
     const paths = await kubeconfig.getKubeConfigPaths();
     const options: fs.WatchOptions = {
       persistent: false,
       recursive:  !this.isLinux(), // Recursive not implemented in Linux
       encoding:   'utf-8',
-      signal:     this.abortController.signal,
+      signal:     abortController.signal,
     };
 
     paths.map(filepath => fs.watch(filepath, options, async(eventType) => {
