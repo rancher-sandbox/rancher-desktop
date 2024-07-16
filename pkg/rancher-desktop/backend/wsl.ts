@@ -904,33 +904,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
-    let guestAgentConfig: Record<string, any>;
     const enableKubernetes = !!kubeVersion;
     const iptables = enableKubernetes && !K3sHelper.requiresPortForwardingFix(kubeVersion);
-    const rdNetworking = !!cfg?.experimental.virtualMachine.networkingTunnel;
+    const isAdminInstall = await this.getIsAdminInstall();
 
-    if (rdNetworking || this.privilegedServiceEnabled) {
-      guestAgentConfig = {
-        LOG_DIR:                       await this.wslify(paths.logs),
-        GUESTAGENT_ADMIN_INSTALL:      await this.getIsAdminInstall(),
-        GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
-        GUESTAGENT_IPTABLES:           iptables.toString(), // only enable IPTABLES for older K8s
-        GUESTAGENT_PRIVILEGED_SERVICE: rdNetworking ? 'false' : 'true',
-        GUESTAGENT_CONTAINERD:         cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
-        GUESTAGENT_DOCKER:             cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
-        GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
-        GUESTAGENT_K8S_SVC_ADDR:       cfg?.kubernetes.ingress.localhostOnly ? '127.0.0.1' : '0.0.0.0',
-      };
-    } else {
-      guestAgentConfig = {
-        LOG_DIR:                       await this.wslify(paths.logs),
-        GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
-        GUESTAGENT_PRIVILEGED_SERVICE: 'false',
-        GUESTAGENT_IPTABLES:           'true',
-        GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
-        GUESTAGENT_K8S_SVC_ADDR:       '127.0.0.1', // always use localhost for non-privileged installation/user
-      };
-    }
+    const guestAgentConfig: Record<string, string> = {
+      LOG_DIR:                       await this.wslify(paths.logs),
+      GUESTAGENT_ADMIN_INSTALL:      isAdminInstall ? 'true' : 'false',
+      GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
+      GUESTAGENT_IPTABLES:           iptables.toString(), // only enable IPTABLES for older K8s
+      GUESTAGENT_PRIVILEGED_SERVICE: this.privilegedServiceEnabled ? 'true' : 'false',
+      GUESTAGENT_CONTAINERD:         cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
+      GUESTAGENT_DOCKER:             cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
+      GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
+      GUESTAGENT_K8S_SVC_ADDR:       isAdminInstall && !cfg?.kubernetes.ingress.localhostOnly ? '0.0.0.0' : '127.0.0.1',
+    };
 
     await Promise.all([
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
