@@ -143,6 +143,12 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
   k8smanager.debug = runInDebugMode;
 
+  if (gone) {
+    console.debug('Suppressing settings-update because app is quitting');
+
+    return;
+  }
+
   await setPathManager(newSettings.application.pathManagementStrategy);
   await pathManager.enforce();
 

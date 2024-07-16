@@ -158,7 +158,7 @@ export class Log {
   }
 
   protected logWithDate(method: consoleKey, message: any, optionalParameters: any[]) {
-    this.console[method](`%s: ${ message }`, new Date(), ...optionalParameters);
+    this.console[method](`%s: ${ message }`, new Date().toISOString(), ...optionalParameters);
   }
 
   async sync() {
