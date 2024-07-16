@@ -661,22 +661,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       },
     });
 
-    // k3s supports cgroup v2 starting with 1.20.4
-    config.env ||= {};
-    config.env['RC_CGROUP_MODE'] = 'unified';
-    if (this.cfg?.kubernetes?.enabled && this.cfg.kubernetes.version) {
-      try {
-        if (semver.lt(this.cfg.kubernetes.version, '1.20.4')) {
-          config.env['RC_CGROUP_MODE'] = 'hybrid';
-        }
-      } catch {
-        // If we have an invalid version configured, ignore the error; we'll
-        // report the error later when trying to download the version.  In that
-        // case we will fall back to the latest stable version, which should be
-        // new enough to support cgroups v2.
-      }
-    }
-
     // Alpine can boot via UEFI now
     if (config.firmware) {
       config.firmware.legacyBIOS = false;

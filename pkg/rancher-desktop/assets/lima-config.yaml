@@ -43,7 +43,7 @@ provision:
   script: |
     #!/bin/sh
     set -o errexit -o nounset -o xtrace
-    [[ "${RC_CGROUP_MODE:-}" =~ "unified|hybrid|legacy" ]] || exit 0
+    RC_CGROUP_MODE=unified
     if ! grep -q -E "^#?rc_cgroup_mode=\"$RC_CGROUP_MODE\"" /etc/rc.conf; then
       sed -i -E "s/^#?rc_cgroup_mode=\".*\"/rc_cgroup_mode=\"$RC_CGROUP_MODE\"/" /etc/rc.conf
       # avoid reboot loop if sed failed for any reason
