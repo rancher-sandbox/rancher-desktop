@@ -142,13 +142,7 @@ export class VersionEntry implements K8s.VersionEntry {
  * @returns The first stable version, or first version if no stable version is found.
  */
 export function firstStableVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
-  let stableVersion = versions.find(v => (v.channels ?? []).includes('stable'));
-
-  if (!stableVersion && versions.length > 0) {
-    stableVersion = versions[0];
-  }
-
-  return stableVersion;
+  return versions.find(v => (v.channels ?? []).includes('stable')) ?? versions[0];
 }
 
 /**
@@ -210,7 +204,7 @@ export default class K3sHelper extends events.EventEmitter {
       for (const versionString of cacheData.versions) {
         const version = semver.parse(versionString);
 
-        if (version && version.compare(this.minimumVersion) >= 0) {
+        if (version && semver.gte(version, this.minimumVersion)) {
           this.versions[version.version] = new VersionEntry(version);
         }
       }

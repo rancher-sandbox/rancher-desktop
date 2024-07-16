@@ -189,13 +189,20 @@ export default class BackendHelper {
       throw new Error('No kubernetes version available.');
     }
 
+    const stableVersion = firstStableVersion(availableVersions);
+
+    if (!stableVersion) {
+      // This should never be reached, as `availableVersions` isn't empty.
+      throw new Error('Failed to find stable version.');
+    }
+
     sv.k8sVersions = availableVersions.map(v => v.version.version);
     if (currentConfigVersionString) {
       storedVersion = semver.parse(currentConfigVersionString);
       if (storedVersion) {
         matchedVersion = availableVersions.find((v) => {
           try {
-            return v.version.compare(storedVersion as semver.SemVer) === 0;
+            return semver.eq(v.version, storedVersion!);
           } catch (err: any) {
             console.error(`Can't compare versions ${ storedVersion } and ${ v }: `, err);
             if (!(err instanceof TypeError)) {
@@ -222,8 +229,7 @@ export default class BackendHelper {
         throw new LockedFieldError(`Locked kubernetes version '${ currentConfigVersionString }' isn't a valid version.`);
       }
       const message = invalidK8sVersionMainMessage;
-      // firstStableVersion is guaranteed to return a version because availableVersions is not empty.
-      const detail = `Falling back to the most recent stable version of ${ firstStableVersion(availableVersions)!.version.version }`;
+      const detail = `Falling back to the most recent stable version of ${ stableVersion.version.version }`;
 
       if (noModalDialogs) {
         console.log(`${ message } ${ detail }`);
@@ -241,11 +247,9 @@ export default class BackendHelper {
     }
     // No (valid) stored version; save the default one.
     // Because no version was specified, there can't be a locked version field, so no need to call checkForLockedVersion.
-    const stableVersion = firstStableVersion(availableVersions)!.version;
+    settingsWriter({ kubernetes: { version: stableVersion.version.version } });
 
-    settingsWriter({ kubernetes: { version: stableVersion.version } });
-
-    return stableVersion;
+    return stableVersion.version;
   }
 
   /**
