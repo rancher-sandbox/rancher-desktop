@@ -22,9 +22,11 @@ import (
 
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
 )
 
 const (
@@ -182,8 +184,8 @@ func TestAddWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	testForwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&testForwarder, testSrv.URL, true)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -207,11 +209,11 @@ func TestAddWithError(t *testing.T) {
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	}
-	nestedErr := fmt.Errorf("%w: Bad API error", tracker.ErrAPI)
+	nestedErr := fmt.Errorf("%w: Bad API error", forwarder.ErrAPI)
 	errs := []error{
 		fmt.Errorf("exposing %+v failed: %w", errPortBinding, nestedErr),
 	}
-	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrExposeAPI, errs)
+	expectedErr := fmt.Errorf("%w: %+v", forwarder.ErrExposeAPI, errs)
 	require.EqualError(t, err, expectedErr.Error())
 
 	assert.Len(t, expectedExposeReq, 2)
@@ -372,8 +374,8 @@ func TestRemoveWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	testForwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&testForwarder, testSrv.URL, true)
 
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -401,11 +403,11 @@ func TestRemoveWithError(t *testing.T) {
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	}
-	nestedErr := fmt.Errorf("%w: Test API error", tracker.ErrAPI)
+	nestedErr := fmt.Errorf("%w: Test API error", forwarder.ErrAPI)
 	errs := []error{
 		fmt.Errorf("unexposing %+v failed: %w", errPortBinding, nestedErr),
 	}
-	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrUnexposeAPI, errs)
+	expectedErr := fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, errs)
 	require.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
@@ -498,8 +500,8 @@ func TestRemoveAllWithError(t *testing.T) {
 	testSrv := httptest.NewServer(mux)
 	defer testSrv.Close()
 
-	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	testForwarder := testForwarder{}
+	apiTracker := tracker.NewAPITracker(&testForwarder, testSrv.URL, true)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -534,11 +536,11 @@ func TestRemoveAllWithError(t *testing.T) {
 		HostIP:   hostIP2,
 		HostPort: hostPort2,
 	}
-	nestedErr := fmt.Errorf("%w: RemoveAll API error", tracker.ErrAPI)
+	nestedErr := fmt.Errorf("%w: RemoveAll API error", forwarder.ErrAPI)
 	errs := []error{
 		fmt.Errorf("RemoveAll unexposing %+v failed: %w", errPortBinding, nestedErr),
 	}
-	expectedErr := fmt.Errorf("%w: %+v", tracker.ErrUnexposeAPI, errs)
+	expectedErr := fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, errs)
 	require.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
