@@ -9,6 +9,9 @@ local_setup_file() {
             "$RD_KUBERNETES_VERSION" "$RD_KUBERNETES_ALT_VERSION" |
             fail
     fi
+    # It is undefined whether RD_KUBERNETES_VERSION is greater or less than
+    # RD_KUBERNETES_ALT_VERSION (and it's expected to flip in CI); actually
+    # compare them so we can expect to wipe data on the downgrade.
     if semver_gt "$RD_KUBERNETES_VERSION" "$RD_KUBERNETES_ALT_VERSION"; then
         export RD_KUBERNETES_VERSION_LOW=$RD_KUBERNETES_ALT_VERSION
         export RD_KUBERNETES_VERSION_HIGH=$RD_KUBERNETES_VERSION

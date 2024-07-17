@@ -5,6 +5,8 @@
 # TESTS The set of tests to run (e.g. "*", "containers k8s")
 # PLATFORMS The set of platforms (e.g. "linux mac")
 # ENGINES The set of engines (e.g. "containerd moby")
+# KUBERNETES_VERSION The default Kubernetes version to use
+# KUBERNETES_ALT_VERSION Alternative Kubernetes version for coverage
 # The working directory must be the "bats/tests/" folder
 
 import dataclasses
@@ -87,10 +89,13 @@ for test in (os.environ.get("TESTS", None) or "*").split():
 
             # To get some coverage of different Kubernetes versions, pick the
             # version depending on the container engine; one gets the old version
-            # we previously tested (1.22.7), the other gets the maximum version
-            # of k3s that is supported by the Rancher helm chart.  As of chart
-            # version 2.8.5, that is Kubernetes 1.28.x.
-            k3sVersion, k3sAltVersion = ("1.22.7", "1.28.11")
+            # we previously tested, the other gets the maximum version
+            # of k3s that is supported by the Rancher helm chart.  These values
+            # come from the environment.
+            k3sVersion = os.environ.get("KUBERNETES_VERSION", "")
+            k3sAltVersion = os.environ.get("KUBERNETES_ALT_VERSION", "")
+            if k3sVersion == "" or k3sAltVersion == "":
+               raise "Either KUBERNETES_VERSION or KUBERNETES_ALT_VERSION is unset"
             if engine == "containerd":
               (k3sAltVersion, k3sVersion) = (k3sVersion, k3sAltVersion)
 
