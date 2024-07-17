@@ -10,6 +10,8 @@ import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-contain
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
+import { firstStableVersion } from '@pkg/backend/k3sHelper';
+import * as K8s from '@pkg/backend/k8s';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
@@ -178,11 +180,11 @@ export default class BackendHelper {
    * If it's valid and available, use it.
    * Otherwise fall back to the first (recommended) available version.
    */
-  static async getDesiredVersion(cfg: BackendSettings, availableVersions: semver.SemVer[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
+  static async getDesiredVersion(cfg: BackendSettings, availableVersions: K8s.VersionEntry[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
     const currentConfigVersionString = cfg?.kubernetes?.version;
     let storedVersion: semver.SemVer | null;
-    let matchedVersion: semver.SemVer | undefined;
-    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a valid version.`;
+    let matchedVersion: K8s.VersionEntry | undefined;
+    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a supported version.`;
     const sv = new SettingsValidator();
     const lockedSettings = settingsImpl.getLockedSettings();
     const versionIsLocked = lockedSettings.kubernetes?.version ?? false;
@@ -197,13 +199,20 @@ export default class BackendHelper {
       throw new Error('No kubernetes version available.');
     }
 
-    sv.k8sVersions = availableVersions.map(v => v.version);
+    const stableVersion = firstStableVersion(availableVersions);
+
+    if (!stableVersion) {
+      // This should never be reached, as `availableVersions` isn't empty.
+      throw new Error('Failed to find stable version.');
+    }
+
+    sv.k8sVersions = availableVersions.map(v => v.version.version);
     if (currentConfigVersionString) {
       storedVersion = semver.parse(currentConfigVersionString);
       if (storedVersion) {
         matchedVersion = availableVersions.find((v) => {
           try {
-            return v.compare(storedVersion as semver.SemVer) === 0;
+            return semver.eq(v.version, storedVersion!);
           } catch (err: any) {
             console.error(`Can't compare versions ${ storedVersion } and ${ v }: `, err);
             if (!(err instanceof TypeError)) {
@@ -216,9 +225,9 @@ export default class BackendHelper {
         });
         if (matchedVersion) {
           // This throws a LockedFieldError if it fails.
-          this.checkForLockedVersion(matchedVersion, cfg, sv);
+          this.checkForLockedVersion(matchedVersion.version, cfg, sv);
 
-          return matchedVersion;
+          return matchedVersion.version;
         } else if (versionIsLocked) {
           // This is a bit subtle. If we're here, the user specified a nonexistent version in the locked manifest.
           // We can't switch to the default version, so throw a fatal error.
@@ -230,7 +239,7 @@ export default class BackendHelper {
         throw new LockedFieldError(`Locked kubernetes version '${ currentConfigVersionString }' isn't a valid version.`);
       }
       const message = invalidK8sVersionMainMessage;
-      const detail = `Falling back to the most recent stable version of ${ availableVersions[0] }`;
+      const detail = `Falling back to the most recent stable version of ${ stableVersion.version.version }`;
 
       if (noModalDialogs) {
         console.log(`${ message } ${ detail }`);
@@ -247,10 +256,10 @@ export default class BackendHelper {
       }
     }
     // No (valid) stored version; save the default one.
-    // Because no version was specified, there can't be a locked version field, so no need to call checkForLockedVersion
-    settingsWriter({ kubernetes: { version: availableVersions[0].version } });
+    // Because no version was specified, there can't be a locked version field, so no need to call checkForLockedVersion.
+    settingsWriter({ kubernetes: { version: stableVersion.version.version } });
 
-    return availableVersions[0];
+    return stableVersion.version;
   }
 
   /**

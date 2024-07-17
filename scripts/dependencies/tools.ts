@@ -45,23 +45,10 @@ export class KuberlrAndKubectl implements Dependency {
   githubRepo = 'kuberlr';
 
   async download(context: DownloadContext): Promise<void> {
-    // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-    const kuberlrPath = await this.downloadKuberlr(context, context.versions.kuberlr, 'amd64');
     const arch = context.isM1 ? 'arm64' : 'amd64';
+    const kuberlrPath = await this.downloadKuberlr(context, context.versions.kuberlr, arch);
 
     await this.bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
-
-    if (context.platform === os.platform()) {
-      // Download Kubectl into kuberlr's directory of versioned kubectl's
-      const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
-      const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.goPlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
-      const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-      const homeDir = await this.findHome(context.platform === 'win32');
-      const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.goPlatform }-${ arch }`);
-      const managedKubectlPath = path.join(kuberlrDir, exeName(context, `kubectl${ kubeVersion.replace(/^v/, '') }`));
-
-      await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
-    }
   }
 
   async downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {

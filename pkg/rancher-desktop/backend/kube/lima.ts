@@ -313,7 +313,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
   protected get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
-      const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
+      const availableVersions = await this.k3sHelper.availableVersions;
 
       return await BackendHelper.getDesiredVersion(this.cfg as BackendSettings, availableVersions, this.vm.noModalDialogs, this.vm.writeSetting.bind(this.vm));
     })();

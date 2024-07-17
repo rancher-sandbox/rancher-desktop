@@ -137,6 +137,15 @@ export class VersionEntry implements K8s.VersionEntry {
 }
 
 /**
+ * Get the first stable version from a list of K8s.VersionEntry objects.
+ * @param versions The list of K8s.VersionEntry objects.
+ * @returns The first stable version, or first version if no stable version is found.
+ */
+export function firstStableVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
+  return versions.find(v => (v.channels ?? []).includes('stable')) ?? versions[0];
+}
+
+/**
  * Given a version, return the K3s build version.
  *
  * Note that this is only exported for testing.
@@ -155,7 +164,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
-  protected readonly minimumVersion = new semver.SemVer('1.15.0');
+  protected readonly minimumVersion = new semver.SemVer('1.21.0');
   protected versionFromChannel: Record<string, string> = {};
 
   constructor(arch: Architecture) {
@@ -195,7 +204,7 @@ export default class K3sHelper extends events.EventEmitter {
       for (const versionString of cacheData.versions) {
         const version = semver.parse(versionString);
 
-        if (version) {
+        if (version && semver.gte(version, this.minimumVersion)) {
           this.versions[version.version] = new VersionEntry(version);
         }
       }
@@ -287,7 +296,7 @@ export default class K3sHelper extends events.EventEmitter {
 
       return true;
     }
-    if (version < this.minimumVersion) {
+    if (version.compare(this.minimumVersion) < 0) {
       console.log(`Version ${ version } is less than the minimum ${ this.minimumVersion }, skipping.`);
 
       // We may have new patch versions for really old releases; fetch more.
@@ -629,8 +638,8 @@ export default class K3sHelper extends events.EventEmitter {
    * that is considered closest to the desired version:
    *
    * @precondition the desired version wasn't found
-   * @param desiredVersion: a semver for the version currently specified in the config
-   * @param k3sNames: typically a list of names like 'v1.2.3+k3s4'
+   * @param desiredVersion a semver for the version currently specified in the config
+   * @param k3sNames typically a list of names like 'v1.2.3+k3s4'
    * @returns {semver.SemVer} the oldest version newer than the desired version
    *      If there is more than one such version, favor the one with the highest '+k3s' build version
    *      If there are none, the newest version older than the desired version
