@@ -141,7 +141,7 @@ func main() {
 		portTracker = tracker.NewVTunnelTracker(forwarder, wslAddr)
 	} else {
 		forwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
-		portTracker = tracker.NewAPITracker(forwarder, tracker.GatewayBaseURL, *adminInstall)
+		portTracker = tracker.NewAPITracker(ctx, forwarder, tracker.GatewayBaseURL, *adminInstall, *enableIptables)
 		// Manually register the port for K8s API, we would
 		// only want to send this manual port mapping if both
 		// of the following conditions are met:
@@ -215,7 +215,6 @@ func main() {
 			err := kube.WatchForServices(ctx,
 				*configPath,
 				k8sServiceListenerIP,
-				*enableIptables,
 				portTracker)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)

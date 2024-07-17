@@ -14,6 +14,7 @@ limitations under the License.
 package tracker_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,8 +26,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 )
 
 const (
@@ -56,7 +57,8 @@ func TestBasicAdd(t *testing.T) {
 	defer testSrv.Close()
 
 	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &forwarder, testSrv.URL, true, false)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -93,7 +95,7 @@ func TestAddOverride(t *testing.T) {
 	defer testSrv.Close()
 
 	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &forwarder, testSrv.URL, true, false)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -185,7 +187,7 @@ func TestAddWithError(t *testing.T) {
 	defer testSrv.Close()
 
 	testForwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&testForwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder, testSrv.URL, true, false)
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -281,7 +283,7 @@ func TestGet(t *testing.T) {
 	defer testSrv.Close()
 
 	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &forwarder, testSrv.URL, true, false)
 	err := apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
@@ -310,7 +312,7 @@ func TestRemove(t *testing.T) {
 	defer testSrv.Close()
 
 	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &forwarder, testSrv.URL, true, false)
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
 			{
@@ -375,7 +377,7 @@ func TestRemoveWithError(t *testing.T) {
 	defer testSrv.Close()
 
 	testForwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&testForwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder, testSrv.URL, true, false)
 
 	portMapping := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -436,7 +438,7 @@ func TestRemoveAll(t *testing.T) {
 	defer testSrv.Close()
 
 	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &forwarder, testSrv.URL, true, false)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -501,7 +503,7 @@ func TestRemoveAllWithError(t *testing.T) {
 	defer testSrv.Close()
 
 	testForwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&testForwarder, testSrv.URL, true)
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder, testSrv.URL, true, false)
 
 	portMapping1 := nat.PortMap{
 		"80/tcp": []nat.PortBinding{
@@ -582,7 +584,7 @@ func TestNonAdminInstall(t *testing.T) {
 	defer testSrv.Close()
 
 	forwarder := testForwarder{}
-	apiTracker := tracker.NewAPITracker(&forwarder, testSrv.URL, false)
+	apiTracker := tracker.NewAPITracker(context.Background(), &forwarder, testSrv.URL, false, false)
 
 	portMapping := nat.PortMap{
 		"1025/tcp": []nat.PortBinding{

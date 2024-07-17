@@ -14,9 +14,11 @@ limitations under the License.
 package tracker
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
@@ -45,8 +47,10 @@ var (
 // and unexposing the ports on the host. This should only be used when
 // the Rancher Desktop networking is enabled and the privileged service is disabled.
 type APITracker struct {
+	context           context.Context
 	wslProxyForwarder forwarder.Forwarder
 	isAdmin           bool
+	enableListeners   bool
 	baseURL           string
 	portStorage       *portStorage
 	apiForwarder      *forwarder.APIForwarder
@@ -54,10 +58,12 @@ type APITracker struct {
 }
 
 // NewAPITracker creates a new instance of a API Tracker.
-func NewAPITracker(wslProxyForwarder forwarder.Forwarder, baseURL string, isAdmin bool) *APITracker {
+func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, baseURL string, isAdmin, enableListeners bool) *APITracker {
 	return &APITracker{
+		context:           ctx,
 		wslProxyForwarder: wslProxyForwarder,
 		isAdmin:           isAdmin,
+		enableListeners:   enableListeners,
 		baseURL:           baseURL,
 		portStorage:       newPortStorage(),
 		apiForwarder:      forwarder.NewAPIForwarder(baseURL),
@@ -80,6 +86,18 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 			ipv4, err := isIPv4(portBinding.HostIP)
 			if !ipv4 || err != nil {
 				continue
+			}
+
+			if a.enableListeners {
+				hostPort, err := strconv.Atoi(portBinding.HostPort)
+				if err != nil {
+					log.Errorf("error converting hostPort: %s", err)
+					continue
+				}
+				if err := a.AddListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil{
+					log.Errorf("creating listener for %s and %s faled: %s", portBinding.HostIP, portBinding.HostPort, err)
+					continue
+				}
 			}
 
 			log.Debugf("calling /services/forwarder/expose API for the following port binding: %+v", portBinding)
@@ -139,6 +157,18 @@ func (a *APITracker) Remove(containerID string) error {
 			ipv4, err := isIPv4(portBinding.HostIP)
 			if !ipv4 || err != nil {
 				continue
+			}
+
+			if a.enableListeners {
+				hostPort, err := strconv.Atoi(portBinding.HostPort)
+				if err != nil {
+					log.Errorf("error converting hostPort: %s", err)
+					continue
+				}
+				if err := a.RemoveListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil{
+					log.Errorf("removing listener for %s and %s failed: %s", portBinding.HostIP, portBinding.HostPort, err)
+					continue
+				}
 			}
 
 			log.Debugf("calling /services/forwarder/expose API for the following port binding: %+v", portBinding)
