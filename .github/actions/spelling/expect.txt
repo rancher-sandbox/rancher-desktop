@@ -213,6 +213,7 @@ dustin
 Dwm
 dwmapi
 DWMWA
+EACCESS
 eagerzeroedthick
 eastus
 ebegin
@@ -278,6 +279,7 @@ gabcdef
 gazornaanplatt
 gcs
 GENERALIZEDTIME
+getfattr
 getwindowid
 ghp
 gitmodules
@@ -713,6 +715,7 @@ servernum
 serviceaccount
 servicemonitor
 servicewatcher
+setfattr
 setproxy
 SFC
 sharedscripts
