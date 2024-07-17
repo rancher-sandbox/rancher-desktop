@@ -52,7 +52,19 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - bodyclose
+    - dogsled
+    - errcheck
+    - exportloopref
+    - goconst
     - gofmt
+    - goimports
+    - goprintffuncname
+    - ineffassign
+    - typecheck
+    - unconvert
+    - unused
+    - whitespace
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
@@ -61,6 +73,11 @@ issues:
         - gosec
         - errcheck
         - gocritic
+    - # Exclude bodyclose when it's passed to client.ProcessRequestForAPI
+      # or client.ProcessRequestForUtility which internally closes the body.
+      path: src/go/rdctl/
+      linters: [ bodyclose ]
+      source: "client.ProcessRequestFor(API|Utility)\\(rdClient.DoRequest(WithPayload)?\\("
     - # Exclude ST1005 when it encounters errors starting with proper noun
       linters: [ stylecheck ]
       text: "ST1005:"
@@ -73,6 +90,6 @@ issues:
       path: src/go/wsl-helper/pkg/dockerproxy/platform/vsock_linux\.go
       linters: [ gocritic ]
       text: todoCommentWithoutDetail
-    - # Exclude ignoring errors from syscall
+    - # Ignore errors from syscall
       linters: [ dogsled ]
       source: ^\s*_, _, _ = .*\.Call\(

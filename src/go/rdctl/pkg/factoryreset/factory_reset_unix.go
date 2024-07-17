@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build unix
 
 /*
 Copyright © 2022 SUSE LLC
@@ -26,12 +26,4 @@ func CheckProcessWindows() (bool, error) {
 
 func KillRancherDesktop() error {
 	return fmt.Errorf("internal error: KillRancherDesktop shouldn't be called")
-}
-
-func deleteWindowsData(_ bool, _ string) error {
-	return fmt.Errorf("internal error: deleteWindowsData shouldn't be called")
-}
-
-func unregisterWSL() error {
-	return fmt.Errorf("internal error: unregisterWSL shouldn't be called")
 }

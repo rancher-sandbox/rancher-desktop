@@ -2,9 +2,10 @@ package paths
 
 import (
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"os"
 	"path/filepath"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
 const appName = "rancher-desktop"

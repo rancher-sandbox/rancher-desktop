@@ -76,7 +76,7 @@ func (s *Server) Start() error {
 		if err != nil {
 			select {
 			case <-s.quit:
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server received a stop signal")
+				_ = s.eventLogger.Info(uint32(windows.NO_ERROR), "port server received a stop signal")
 				return nil
 			default:
 				return fmt.Errorf("port server connection accept error: %w", err)
@@ -93,12 +93,12 @@ func (s *Server) handleEvent(conn net.Conn) {
 	var pm types.PortMapping
 	err := json.NewDecoder(conn).Decode(&pm)
 	if err != nil {
-		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding received payload error: %v", err))
+		_ = s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding received payload error: %v", err))
 		return
 	}
-	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("handleEvent for %+v", pm))
+	_ = s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("handleEvent for %+v", pm))
 	if err = s.proxy.exec(pm); err != nil {
-		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy [%+v] failed: %v", pm, err))
+		_ = s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy [%+v] failed: %v", pm, err))
 	}
 }
 
@@ -106,9 +106,9 @@ func (s *Server) handleEvent(conn net.Conn) {
 func (s *Server) Stop() {
 	close(s.quit)
 	s.listener.Close()
-	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("remove all %+v", s.proxy.portMappings))
+	_ = s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("remove all %+v", s.proxy.portMappings))
 	if err := s.proxy.removeAll(); err != nil {
-		s.eventLogger.Warning(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), err.Error())
+		_ = s.eventLogger.Warning(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), err.Error())
 	}
 	s.stopped = true
 }

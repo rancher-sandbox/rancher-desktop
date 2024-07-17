@@ -121,7 +121,7 @@ func getKnownFolder(folder *windows.KNOWNFOLDERID) (string, error) {
 	)
 	// SHGetKnownFolderPath documentation says we _must_ free the result with
 	// CoTaskMemFree, even if the call failed.
-	defer CoTaskMemFree.Call(result)
+	defer func() { _, _, _ = CoTaskMemFree.Call(result) }()
 	if hr != 0 {
 		return "", windows.Errno(hr)
 	}

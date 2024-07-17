@@ -101,13 +101,13 @@ func createProfile() (string, error) {
 			// This should have been caught in validateProfileFormatFlags
 			return "", fmt.Errorf(`no input format specified: must specify exactly one input format of "--input FILE|-", "--body|-b STRING", or "--from-settings"`)
 		}
-		connectionInfo, err := config.GetConnectionInfo(false)
-		if err != nil {
-			return "", fmt.Errorf("failed to get connection info: %w", err)
+		connectionInfo, err2 := config.GetConnectionInfo(false)
+		if err2 != nil {
+			return "", fmt.Errorf("failed to get connection info: %w", err2)
 		}
 		rdClient := client.NewRDClient(connectionInfo)
-		response, err := rdClient.DoRequest("GET", client.VersionCommand("", "settings"))
-		output, err = client.ProcessRequestForUtility(response, err)
+		command := client.VersionCommand("", "settings")
+		output, err = client.ProcessRequestForUtility(rdClient.DoRequest("GET", command))
 	}
 	if err != nil {
 		return "", err

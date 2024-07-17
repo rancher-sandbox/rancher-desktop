@@ -35,7 +35,7 @@ func RunService(name string, isDebug bool) error {
 		return errors.Wrap(err, "RunService could not initialize event logger")
 	}
 	defer elog.Close()
-	elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%s service starting", name))
+	_ = elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%s service starting", name))
 	run := svc.Run
 	if isDebug {
 		run = debug.Run
@@ -45,10 +45,10 @@ func RunService(name string, isDebug bool) error {
 	supervisor := NewSupervisor(portServer, elog)
 	err = run(name, supervisor)
 	if err != nil {
-		elog.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("%s service failed: %v", name, err))
+		_ = elog.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("%s service failed: %v", name, err))
 		return err
 	}
-	elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%s service stopped", name))
+	_ = elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%s service stopped", name))
 	return nil
 }
 

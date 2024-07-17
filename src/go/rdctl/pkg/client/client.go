@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 )
 
 const (

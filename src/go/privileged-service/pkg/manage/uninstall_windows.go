@@ -32,7 +32,7 @@ func UninstallService(name string) error {
 	if err != nil {
 		return fmt.Errorf("connect to service [%s] failed: %w", name, err)
 	}
-	defer m.Disconnect()
+	defer disconnect(m)
 	s, err := m.OpenService(name)
 	if err != nil {
 		if errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST) {

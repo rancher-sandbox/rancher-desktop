@@ -23,7 +23,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

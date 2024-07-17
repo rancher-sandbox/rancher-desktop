@@ -10,11 +10,12 @@ package reg
 import (
 	"encoding/json"
 	"fmt"
-	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"reflect"
 	"strings"
 	"unicode/utf16"
+
+	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
 const HkcuRegistryHive = "hkcu"

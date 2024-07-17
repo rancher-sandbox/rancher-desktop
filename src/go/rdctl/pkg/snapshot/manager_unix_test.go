@@ -6,11 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lock"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 func populateFiles(t *testing.T, includeOverrideYaml bool) (paths.Paths, map[string]TestFile) {

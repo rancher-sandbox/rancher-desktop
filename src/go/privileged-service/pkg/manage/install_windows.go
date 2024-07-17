@@ -44,12 +44,12 @@ func InstallService(name, displayName, desc string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer disconnect(m)
 
 	// We always need uninstall first to unregister,
 	// the event logger recreation service can yield to a registry key error
 	// e.g RancherDesktopPrivilegedService registry key already exists
-	UninstallService(name)
+	_ = UninstallService(name)
 
 	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: displayName, Description: desc})
 	if err != nil {
@@ -62,7 +62,7 @@ func InstallService(name, displayName, desc string) error {
 
 	err = eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
 	if err != nil {
-		s.Delete()
+		_ = s.Delete()
 		return fmt.Errorf("setup event log for [%s] failed: %w", name, err)
 	}
 	return nil

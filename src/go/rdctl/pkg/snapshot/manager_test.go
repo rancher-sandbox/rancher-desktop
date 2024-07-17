@@ -19,7 +19,6 @@ type TestFile struct {
 }
 
 func TestManager(t *testing.T) {
-
 	t.Run("ValidateName should disallow two snapshots with the same name, but only when the first is complete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
@@ -187,7 +186,7 @@ func TestManager(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
+		snapshot, err := manager.Create(context.Background(), "test-snapshot-delete", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -221,7 +220,7 @@ func TestManager(t *testing.T) {
 	t.Run("Restore should return the proper error if asked to restore from an incomplete snapshot", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
+		snapshot, err := manager.Create(context.Background(), "test-snapshot-restore-incomplete", "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
@@ -237,7 +236,7 @@ func TestManager(t *testing.T) {
 	t.Run("Restore should return proper error and not run RestoreFiles when context is already cancelled", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshotName := "test-snapshot"
+		snapshotName := "test-snapshot-restore-cancelled"
 		_, err := manager.Create(context.Background(), snapshotName, "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
@@ -252,7 +251,7 @@ func TestManager(t *testing.T) {
 	t.Run("Restore should return data reset error when RestoreFiles encounters an error and resets data", func(t *testing.T) {
 		paths, _ := populateFiles(t, true)
 		manager := newTestManager(paths)
-		snapshotName := "test-snapshot"
+		snapshotName := "test-snapshot-error"
 		snapshot, err := manager.Create(context.Background(), snapshotName, "")
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)

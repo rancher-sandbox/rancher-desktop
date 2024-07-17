@@ -41,7 +41,7 @@ func StartService(name string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer disconnect(m)
 	s, err := openService(m.Handle, name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %w", err)
@@ -61,7 +61,7 @@ func ControlService(name string, control svc.Cmd, desiredState svc.State) error 
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer disconnect(m)
 	s, err := openService(m.Handle, name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %w", err)
@@ -97,10 +97,19 @@ func connect() (*mgr.Mgr, error) {
 	return &mgr.Mgr{Handle: h}, nil
 }
 
+// disconnect from the manager, swallowing errors.
+func disconnect(m *mgr.Mgr) {
+	_ = m.Disconnect()
+}
+
 // connect is same as mgr.OpenService with minimal
 // access control
 func openService(svcHandle windows.Handle, name string) (*mgr.Service, error) {
-	h, err := windows.OpenService(svcHandle, syscall.StringToUTF16Ptr(name), SERVICE_MINIMAL_ACCESS)
+	ptr, err := syscall.UTF16PtrFromString(name)
+	if err != nil {
+		return nil, err
+	}
+	h, err := windows.OpenService(svcHandle, ptr, SERVICE_MINIMAL_ACCESS)
 	if err != nil {
 		return nil, err
 	}

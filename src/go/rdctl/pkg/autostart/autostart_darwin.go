@@ -73,7 +73,6 @@ func EnsureAutostart(autostartDesired bool) error {
 				return fmt.Errorf("failed to write LaunchAgent file: %w", err)
 			}
 		}
-
 	} else {
 		err := os.RemoveAll(launchAgentFilePath)
 		if err != nil {

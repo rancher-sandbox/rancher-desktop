@@ -48,6 +48,10 @@ func ProcessRequestForUtility(response *http.Response, err error) ([]byte, error
 	if err := handleConnectionRefused(err); err != nil {
 		return nil, err
 	}
+	if response != nil && response.Body != nil {
+		defer response.Body.Close()
+	}
+
 	statusMessage := ""
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		// Note that response.Status includes response.StatusCode
@@ -55,7 +59,6 @@ func ProcessRequestForUtility(response *http.Response, err error) ([]byte, error
 		case 400:
 			statusMessage = response.Status
 			// Prefer the error message in the body written by the command-server, not the one from the http server.
-			break
 		case 401:
 			return nil, fmt.Errorf("%s: user/password not accepted", response.Status)
 		case 413:
@@ -66,8 +69,6 @@ func ProcessRequestForUtility(response *http.Response, err error) ([]byte, error
 			return nil, fmt.Errorf("%s (unexpected server error)", response.Status)
 		}
 	}
-
-	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
