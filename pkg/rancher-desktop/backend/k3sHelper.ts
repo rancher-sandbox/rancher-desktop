@@ -137,12 +137,37 @@ export class VersionEntry implements K8s.VersionEntry {
 }
 
 /**
- * Get the first stable version from a list of K8s.VersionEntry objects.
+ * Get the highest stable version from a list of K8s.VersionEntry objects.
  * @param versions The list of K8s.VersionEntry objects.
- * @returns The first stable version, or first version if no stable version is found.
+ * @returns The highest stable version, or highest version if no stable version is found.
  */
-export function firstStableVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
-  return versions.find(v => (v.channels ?? []).includes('stable')) ?? versions[0];
+export function highestStableVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
+  const highestFirst = versions.slice().sort((a, b) => b.version.compare(a.version));
+
+  return highestFirst.find(v => (v.channels ?? []).includes('stable')) ?? highestFirst[0];
+}
+
+function sameMajorMinorVersion(version1: semver.SemVer, version2: semver.SemVer): boolean {
+  return version1.major === version2.major && version1.minor === version2.minor;
+}
+
+/**
+ * Get the highest patch release of the lowest available versions
+ * @param versions The list of K8s.VersionEntry objects.
+ * @returns The highest patch version.
+ */
+export function minimumUpgradeVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
+  const lowestFirst = versions.slice().sort((a, b) => a.version.compare(b.version));
+  let upgradeVersion = lowestFirst[0];
+
+  for (const version of lowestFirst) {
+    if (!sameMajorMinorVersion(version.version, lowestFirst[0].version)) {
+      break;
+    }
+    upgradeVersion = version;
+  }
+
+  return upgradeVersion;
 }
 
 /**

@@ -10,7 +10,7 @@ import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-contain
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
-import { firstStableVersion } from '@pkg/backend/k3sHelper';
+import { minimumUpgradeVersion } from '@pkg/backend/k3sHelper';
 import * as K8s from '@pkg/backend/k8s';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -178,7 +178,7 @@ export default class BackendHelper {
   /**
    * Validate the cfg.kubernetes.version string
    * If it's valid and available, use it.
-   * Otherwise fall back to the first (recommended) available version.
+   * Otherwise fall back to the minimum upgrade version (highest patch release of lowest available version).
    */
   static async getDesiredVersion(cfg: BackendSettings, availableVersions: K8s.VersionEntry[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
     const currentConfigVersionString = cfg?.kubernetes?.version;
@@ -199,11 +199,11 @@ export default class BackendHelper {
       throw new Error('No kubernetes version available.');
     }
 
-    const stableVersion = firstStableVersion(availableVersions);
+    const upgradeVersion = minimumUpgradeVersion(availableVersions);
 
-    if (!stableVersion) {
+    if (!upgradeVersion) {
       // This should never be reached, as `availableVersions` isn't empty.
-      throw new Error('Failed to find stable version.');
+      throw new Error('Failed to find upgrade version.');
     }
 
     sv.k8sVersions = availableVersions.map(v => v.version.version);
@@ -239,7 +239,7 @@ export default class BackendHelper {
         throw new LockedFieldError(`Locked kubernetes version '${ currentConfigVersionString }' isn't a valid version.`);
       }
       const message = invalidK8sVersionMainMessage;
-      const detail = `Falling back to the most recent stable version of ${ stableVersion.version.version }`;
+      const detail = `Falling back to recommended minimum upgrade version of ${ upgradeVersion.version.version }`;
 
       if (noModalDialogs) {
         console.log(`${ message } ${ detail }`);
@@ -257,9 +257,9 @@ export default class BackendHelper {
     }
     // No (valid) stored version; save the default one.
     // Because no version was specified, there can't be a locked version field, so no need to call checkForLockedVersion.
-    settingsWriter({ kubernetes: { version: stableVersion.version.version } });
+    settingsWriter({ kubernetes: { version: upgradeVersion.version.version } });
 
-    return stableVersion.version;
+    return upgradeVersion.version;
   }
 
   /**

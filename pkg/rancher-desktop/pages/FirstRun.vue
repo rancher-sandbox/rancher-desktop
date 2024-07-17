@@ -92,7 +92,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { firstStableVersion } from '@pkg/backend/k3sHelper';
+import { highestStableVersion } from '@pkg/backend/k3sHelper';
 import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
@@ -131,7 +131,7 @@ export default Vue.extend({
     ...mapGetters('applicationSettings', { pathManagementStrategy: 'pathManagementStrategy' }),
     /** The version that should be pre-selected as the default value. */
     defaultVersion(): VersionEntry {
-      return firstStableVersion(this.recommendedVersions) ?? this.nonRecommendedVersions[0];
+      return highestStableVersion(this.recommendedVersions) ?? this.nonRecommendedVersions[0];
     },
     // This field is needed because the template-parser doesn't like `defaultVersion?.version.version`
     unwrappedDefaultVersion(): string {

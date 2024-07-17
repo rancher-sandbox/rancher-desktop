@@ -75,7 +75,11 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
 
-      return await BackendHelper.getDesiredVersion(this.cfg as BackendSettings, availableVersions, this.vm.noModalDialogs, this.vm.writeSetting.bind(this.vm));
+      return await BackendHelper.getDesiredVersion(
+        this.cfg as BackendSettings,
+        availableVersions,
+        this.vm.noModalDialogs,
+        this.vm.writeSetting.bind(this.vm));
     })();
   }
 
