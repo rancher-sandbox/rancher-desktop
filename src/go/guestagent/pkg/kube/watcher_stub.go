@@ -27,7 +27,6 @@ func WatchForServices(
 	ctx context.Context,
 	configPath string,
 	k8sServiceListenerIP net.IP,
-	enableListeners bool,
 	portTracker tracker.Tracker,
 ) error {
 	return fmt.Errorf("not implemented for non-linux")

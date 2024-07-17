@@ -12,8 +12,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package forwarder implements a forwarding mechanism to forward
-// port mappings over Vtunnel.
 package forwarder
 
 import (
@@ -49,9 +47,9 @@ type APIForwarder struct {
 }
 
 // NewAPIForwarder returns a new instance of APIForwarder.
-func NewAPIForwarder(baseAPIURL string) *APIForwarder {
+func NewAPIForwarder(baseURL string) *APIForwarder {
 	return &APIForwarder{
-		baseURL:    baseAPIURL,
+		baseURL:    baseURL,
 		httpClient: *http.DefaultClient,
 	}
 }

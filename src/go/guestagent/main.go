@@ -77,12 +77,12 @@ var (
 // versions of k8s are used that do not support the service watcher API.
 
 const (
-	wslInfName             = "eth0"
-	socketInterval         = 5 * time.Second
-	socketRetryTimeout     = 2 * time.Minute
-	dockerSocketFile       = "/var/run/docker.sock"
-	containerdSocketFile   = "/run/k3s/containerd/containerd.sock"
-	vtunnelPeerAddr        = "127.0.0.1:3040"
+	wslInfName           = "eth0"
+	socketInterval       = 5 * time.Second
+	socketRetryTimeout   = 2 * time.Minute
+	dockerSocketFile     = "/var/run/docker.sock"
+	containerdSocketFile = "/run/k3s/containerd/containerd.sock"
+	vtunnelPeerAddr      = "127.0.0.1:3040"
 )
 
 func main() {

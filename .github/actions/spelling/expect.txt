@@ -192,7 +192,7 @@ Dlg
 dlgbmp
 dlicense
 dmg
-dnat
+DNAT
 dnf
 dnsmasq
 dockercfg
@@ -711,6 +711,7 @@ serveraddress
 servernum
 serviceaccount
 servicemonitor
+servicesapi
 servicewatcher
 setproxy
 SFC

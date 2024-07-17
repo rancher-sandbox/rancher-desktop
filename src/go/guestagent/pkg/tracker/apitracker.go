@@ -94,8 +94,8 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 					log.Errorf("error converting hostPort: %s", err)
 					continue
 				}
-				if err := a.AddListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil{
-					log.Errorf("creating listener for %s and %s faled: %s", portBinding.HostIP, portBinding.HostPort, err)
+				if err := a.AddListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil {
+					log.Errorf("creating listener for %s and %s failed: %s", portBinding.HostIP, portBinding.HostPort, err)
 					continue
 				}
 			}
@@ -165,7 +165,7 @@ func (a *APITracker) Remove(containerID string) error {
 					log.Errorf("error converting hostPort: %s", err)
 					continue
 				}
-				if err := a.RemoveListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil{
+				if err := a.RemoveListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil {
 					log.Errorf("removing listener for %s and %s failed: %s", portBinding.HostIP, portBinding.HostPort, err)
 					continue
 				}
