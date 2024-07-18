@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import manageLinesInFile, { START_LINE, END_LINE } from '@pkg/integrations/manageLinesInFile';
-import { spawnFile } from '@pkg/utils/childProcess';
+import * as childProcess from '@pkg/utils/childProcess';
 import { withResource } from '@pkg/utils/testUtils/mockResources';
 
 const describeUnix = process.platform === 'win32' ? describe.skip : describe;
@@ -63,30 +63,55 @@ describe('manageLinesInFile', () => {
   });
 
   describe('Target exists as a plain file', () => {
+    let shouldHaveAttr: string | undefined;
+    const originalSpawnFile = childProcess.spawnFile;
+
+    using spySpawnFile = withResource(jest.spyOn(childProcess, 'spawnFile'));
+
+    beforeAll(() => {
+      spySpawnFile.mockImplementation(async(command, args, options) => {
+        try {
+          return await originalSpawnFile(command, args, options);
+        } catch (ex: any) {
+          if (!['/usr/bin/xattr', '/usr/bin/getfattr'].includes(command)) {
+            throw ex;
+          }
+          if (ex && 'code' in ex && ex.code === 'ENOENT') {
+            return { stdout: shouldHaveAttr ?? '' } as any;
+          }
+          throw ex;
+        }
+      });
+    });
+    beforeEach(() => {
+      shouldHaveAttr = undefined;
+    });
+
     testUnix('Fails if file has extended attributes', async() => {
       const unmanagedContents = 'existing lines\n';
       const attributeKey = 'user.io.rancherdesktop.test';
       const attributeValue = 'sample attribute contents';
 
+      shouldHaveAttr = attributeValue;
       await fs.promises.writeFile(rcFilePath, unmanagedContents);
       if (process.platform === 'darwin') {
-        await spawnFile('xattr', ['-w', attributeKey, attributeValue, rcFilePath]);
-        await expect(spawnFile('xattr', ['-p', attributeKey, rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
+        await childProcess.spawnFile('xattr', ['-w', attributeKey, attributeValue, rcFilePath]);
+        await expect(childProcess.spawnFile('/usr/bin/xattr', ['-p', attributeKey, rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
           .resolves.toHaveProperty('stdout', `${ attributeValue }\n`);
       } else if (process.platform === 'linux') {
-        await spawnFile('setfattr', ['-n', attributeKey, '-v', `"${ attributeValue }"`, rcFilePath]);
-        await expect(spawnFile('getfattr', ['-n', attributeKey, '--only-values', rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
-          .resolves.toHaveProperty('stdout', `${ attributeValue }\n`);
+        await childProcess.spawnFile('setfattr', ['-n', attributeKey, '-v', `"${ attributeValue }"`, rcFilePath]);
+        await expect(childProcess.spawnFile('/usr/bin/getfattr', ['-n', attributeKey, '--only-values', rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
+          .resolves.toHaveProperty('stdout', attributeValue);
       } else {
         throw new Error(`Platform ${ process.platform } is not supported`);
       }
       expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).rejects.toThrow();
       if (process.platform === 'darwin') {
-        await expect(spawnFile('xattr', ['-p', attributeKey, rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
+        await expect(childProcess.spawnFile('/usr/bin/xattr', ['-p', attributeKey, rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
           .resolves.toHaveProperty('stdout', `${ attributeValue }\n`);
       } else if (process.platform === 'linux') {
-        await expect(spawnFile('getfattr', ['-n', attributeKey, '--only-values', rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
-          .resolves.toHaveProperty('stdout', `${ attributeValue }\n`);
+        await expect(childProcess.spawnFile('/usr/bin/getfattr', ['-n', attributeKey, '--only-values', rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
+          .resolves.toHaveProperty('stdout', attributeValue);
       } else {
         throw new Error(`Platform ${ process.platform } is not supported`);
       }
@@ -337,9 +362,9 @@ describe('manageLinesInFile', () => {
     // An incorrect implementation would write into the pipe and block, so
     // set a timeout to ensure we bail in that case.
     test('Abort if target is not a file', async() => {
-      await spawnFile('mknod', [rcFilePath, 'p']);
+      await childProcess.spawnFile('mknod', [rcFilePath, 'p']);
       await expect(manageLinesInFile(rcFilePath, [], true)).rejects.toThrow();
-      await expect(spawnFile('test', ['-p', rcFilePath])).resolves.not.toThrow();
+      await expect(childProcess.spawnFile('test', ['-p', rcFilePath])).resolves.not.toThrow();
     }, 1_000);
   });
 });
