@@ -439,13 +439,14 @@ describe(K3sHelper, () => {
   describe('highestStableVersion', () => {
     it('should return the highest stable version', () => {
       const versions: K8s.VersionEntry[] = [
-        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v2.0.0'), ['unstable']),
         new VersionEntry(new semver.SemVer('v1.1.0'), ['stable']),
+        new VersionEntry(new semver.SemVer('v1.3.0'), ['stable']),
         new VersionEntry(new semver.SemVer('v1.2.0'), ['stable']),
       ];
-      const result = highestStableVersion(versions)?.version;
+      const result = highestStableVersion(versions)?.version.version;
 
-      expect(result).toEqual(versions[2].version);
+      expect(result).toEqual('1.3.0');
     });
 
     it('should return highest version if no stable version is found', () => {
@@ -454,9 +455,9 @@ describe(K3sHelper, () => {
         new VersionEntry(new semver.SemVer('v1.2.0'), ['beta']),
         new VersionEntry(new semver.SemVer('v1.1.0'), ['beta']),
       ];
-      const result = highestStableVersion(versions)?.version;
+      const result = highestStableVersion(versions)?.version.version;
 
-      expect(result).toEqual(versions[1].version);
+      expect(result).toEqual('1.2.0');
     });
 
     it('should return undefined if the list is empty', () => {
@@ -467,7 +468,7 @@ describe(K3sHelper, () => {
   });
 
   describe('minimumUpgradeVersion', () => {
-    it('should return the first stable version', () => {
+    it('should return the highest patch release of the lowest major.minor version', () => {
       const versions: K8s.VersionEntry[] = [
         new VersionEntry(new semver.SemVer('v1.2.1'), ['stable']),
         new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
@@ -475,9 +476,9 @@ describe(K3sHelper, () => {
         new VersionEntry(new semver.SemVer('v1.0.2'), ['stable']),
         new VersionEntry(new semver.SemVer('v1.2.2'), ['stable']),
       ];
-      const result = minimumUpgradeVersion(versions)?.version;
+      const result = minimumUpgradeVersion(versions)?.version.version;
 
-      expect(result).toEqual(versions[2].version);
+      expect(result).toEqual('1.0.3');
     });
 
     it('should return undefined if the list is empty', () => {

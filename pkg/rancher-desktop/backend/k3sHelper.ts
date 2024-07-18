@@ -158,16 +158,8 @@ function sameMajorMinorVersion(version1: semver.SemVer, version2: semver.SemVer)
  */
 export function minimumUpgradeVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
   const lowestFirst = versions.slice().sort((a, b) => a.version.compare(b.version));
-  let upgradeVersion = lowestFirst[0];
 
-  for (const version of lowestFirst) {
-    if (!sameMajorMinorVersion(version.version, lowestFirst[0].version)) {
-      break;
-    }
-    upgradeVersion = version;
-  }
-
-  return upgradeVersion;
+  return lowestFirst.findLast(v => sameMajorMinorVersion(v.version, lowestFirst[0].version));
 }
 
 /**
