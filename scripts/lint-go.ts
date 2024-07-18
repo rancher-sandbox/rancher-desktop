@@ -102,9 +102,11 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
   // this is necessary).  To be safe, just pass in all of the modules at once
   // and let it go at its own pace.
   const modules = await getModules();
+  const commandLine = ['go', ...args, ...modules.map(m => `${ m }/...`)];
 
   try {
-    await spawnFile('go', [...args, ...modules.map(m => `${ m }/...`)], { stdio: 'inherit' });
+    console.log(commandLine.join(' '));
+    await spawnFile(commandLine[0], commandLine.slice(1), { stdio: 'inherit' });
   } catch (ex) {
     success = false;
   }
