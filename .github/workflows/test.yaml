@@ -24,6 +24,9 @@ jobs:
       with:
         go-version-file: go.work
         cache-dependency-path: src/go/**/go.sum
+    - run: >-
+        sudo DEBIAN_FRONTEND=noninteractive
+        apt-get install attr
     - run: pip install setuptools
     - run: yarn install --frozen-lockfile
     - run: yarn build

@@ -141,7 +141,7 @@ jobs:
       if: runner.os == 'Linux'
       run: >-
         sudo DEBIAN_FRONTEND=noninteractive
-        apt-get install coreutils
+        apt-get install attr coreutils
 
     - name: "macOS: Install prerequisites"
       if: runner.os == 'macOS'
