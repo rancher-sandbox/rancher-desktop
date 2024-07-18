@@ -23,6 +23,14 @@ on:
         description: Container engines to run
         default: 'containerd moby'
         type: string
+      kubernetes-version:
+        description: Primary Kubernetes version to test
+        default: '1.22.7'
+        type: string
+      kubernetes-alt-version:
+        description: Secondary Kubernetes version to test (e.g. for upgrades)
+        default: '1.28.11' # Rancher/rancher chart 2.8.5 maximum supported version
+        type: string
       package-id:
         description: Package run ID override; leave empty to use latest.
         default: ''
@@ -82,9 +90,11 @@ jobs:
       # This script is not inline to make local testing easier
       run: python3 ${{ github.workspace }}/.github/workflows/bats/get-tests.py
       env:
-        TESTS: ${{ inputs.tests }}
-        PLATFORMS: ${{ inputs.platforms }}
-        ENGINES: ${{ inputs.engines }}
+        TESTS:                  ${{ inputs.tests }}
+        PLATFORMS:              ${{ inputs.platforms }}
+        ENGINES:                ${{ inputs.engines }}
+        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version }}
+        KUBERNETES_ALT_VERSION: ${{ inputs.kubernetes-alt-version }}
       working-directory: bats/tests
     outputs:
       repo: ${{ steps.repo.outputs.repo }}
@@ -164,7 +174,7 @@ jobs:
       shell: pwsh
       run: >-
         wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
-        sh -c 'apt-get update && apt-get install --yes coreutils curl'
+        sh -c 'apt-get update && apt-get install --yes bsdextrautils coreutils curl'
 
     - name: Set log directory
       shell: bash
@@ -224,21 +234,25 @@ jobs:
         --report-formatter tap
         'tests/${{ steps.normalize.outputs.test }}'
       env:
-        BATS_COMMAND:             ${{ env.BATS_COMMAND }}
-        GITHUB_TOKEN:             ${{ github.token }}
-        LOGS_DIR:                 ${{ env.LOGS_DIR }}
-        RD_CAPTURE_LOGS:          "true"
-        RD_CONTAINER_ENGINE:      ${{ matrix.engine }}
-        RD_TAKE_SCREENSHOTS:      "true"
-        RD_TRACE:                 "true"
-        RD_USE_GHCR_IMAGES:       "true"
-        RD_USE_RAMDISK:           "true"
-        RD_USE_WINDOWS_EXE:       "${{ runner.os == 'Windows' }}"
-        RD_USE_NETWORKING_TUNNEL: "${{ runner.os == 'Windows' && format('{0}', inputs.rd-use-networking-tunnel) != 'false' }}"
+        BATS_COMMAND:              ${{ env.BATS_COMMAND }}
+        GITHUB_TOKEN:              ${{ github.token }}
+        LOGS_DIR:                  ${{ env.LOGS_DIR }}
+        RD_CAPTURE_LOGS:           "true"
+        RD_CONTAINER_ENGINE:       ${{ matrix.engine }}
+        RD_KUBERNETES_VERSION:     ${{ matrix.k3sVersion }}
+        RD_KUBERNETES_ALT_VERSION: ${{ matrix.k3sAltVersion }}
+        RD_TAKE_SCREENSHOTS:       "true"
+        RD_TRACE:                  "true"
+        RD_USE_GHCR_IMAGES:        "true"
+        RD_USE_RAMDISK:            "true"
+        RD_USE_WINDOWS_EXE:        "${{ runner.os == 'Windows' }}"
+        RD_USE_NETWORKING_TUNNEL:  "${{ runner.os == 'Windows' && format('{0}', inputs.rd-use-networking-tunnel) != 'false' }}"
         WSLENV: "\
           GITHUB_TOKEN:\
           RD_CAPTURE_LOGS:\
           RD_CONTAINER_ENGINE:\
+          RD_KUBERNETES_VERSION:\
+          RD_KUBERNETES_ALT_VERSION:\
           RD_TAKE_SCREENSHOTS:\
           RD_TRACE:\
           RD_USE_GHCR_IMAGES:\

@@ -5,6 +5,8 @@
 # TESTS The set of tests to run (e.g. "*", "containers k8s")
 # PLATFORMS The set of platforms (e.g. "linux mac")
 # ENGINES The set of engines (e.g. "containerd moby")
+# KUBERNETES_VERSION The default Kubernetes version to use
+# KUBERNETES_ALT_VERSION Alternative Kubernetes version for coverage
 # The working directory must be the "bats/tests/" folder
 
 import dataclasses
@@ -28,6 +30,10 @@ class Result:
     name: str
     host: Hosts
     engine: Engines
+    # The version of k3s to test
+    k3sVersion: str
+    # A different Kubernetes version, for testing upgrades.
+    k3sAltVersion: str
 
     key = staticmethod(attrgetter("name", "host", "engine"))
 
@@ -73,13 +79,28 @@ for test in (os.environ.get("TESTS", None) or "*").split():
       for name in resolve_test(test, platform):
           for engine in engines:
             if os.access(name, os.R_OK):
-              result = Result(name=name, host=host, engine=engine)
+              pass
             elif os.access(f"{name}.bats", os.R_OK):
-              result = Result(name=name, host=host, engine=engine)
+              name = f"{name}.bats"
             else:
               errors = True
               print(f"Failed to find test {name}", file=sys.stderr)
               continue
+
+            # To get some coverage of different Kubernetes versions, pick the
+            # version depending on the container engine; one gets the old version
+            # we previously tested, the other gets the maximum version
+            # of k3s that is supported by the Rancher helm chart.  These values
+            # come from the environment.
+            k3sVersion = os.environ.get("KUBERNETES_VERSION", "")
+            k3sAltVersion = os.environ.get("KUBERNETES_ALT_VERSION", "")
+            if k3sVersion == "" or k3sAltVersion == "":
+               raise "Either KUBERNETES_VERSION or KUBERNETES_ALT_VERSION is unset"
+            if engine == "containerd":
+              (k3sAltVersion, k3sVersion) = (k3sVersion, k3sAltVersion)
+
+            result = Result(name=name, host=host, engine=engine,
+                            k3sVersion=k3sVersion, k3sAltVersion=k3sAltVersion)
             if not skip_test(result):
                 results.append(result)
 
