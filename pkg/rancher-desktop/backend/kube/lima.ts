@@ -315,7 +315,11 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
 
-      return await BackendHelper.getDesiredVersion(this.cfg as BackendSettings, availableVersions, this.vm.noModalDialogs, this.vm.writeSetting.bind(this.vm));
+      return await BackendHelper.getDesiredVersion(
+        this.cfg as BackendSettings,
+        availableVersions,
+        this.vm.noModalDialogs,
+        this.vm.writeSetting.bind(this.vm));
     })();
   }
 

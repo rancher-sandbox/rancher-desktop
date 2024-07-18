@@ -4,7 +4,7 @@ import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { firstStableVersion } from '@pkg/backend/k3sHelper';
+import { highestStableVersion } from '@pkg/backend/k3sHelper';
 import { VersionEntry } from '@pkg/backend/k8s';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
@@ -40,7 +40,7 @@ export default Vue.extend({
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     defaultVersion(): VersionEntry {
-      return firstStableVersion(this.recommendedVersions) ?? this.nonRecommendedVersions[0];
+      return highestStableVersion(this.recommendedVersions) ?? this.nonRecommendedVersions[0];
     },
     /** Versions that are the tip of a channel */
     recommendedVersions(): VersionEntry[] {

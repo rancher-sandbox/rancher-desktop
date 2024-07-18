@@ -9,7 +9,13 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 
 import K3sHelper, {
-  buildVersion, ChannelMapping, firstStableVersion, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry,
+  buildVersion,
+  ChannelMapping,
+  highestStableVersion,
+  minimumUpgradeVersion,
+  NoCachedK3sVersionsError,
+  ReleaseAPIEntry,
+  VersionEntry,
 } from '../k3sHelper';
 
 import * as K8s from '@pkg/backend/k8s';
@@ -430,30 +436,53 @@ describe(K3sHelper, () => {
     });
   });
 
-  describe('firstStableVersion', () => {
-    it('should return the first stable version', () => {
+  describe('highestStableVersion', () => {
+    it('should return the highest stable version', () => {
       const versions: K8s.VersionEntry[] = [
-        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v2.0.0'), ['unstable']),
         new VersionEntry(new semver.SemVer('v1.1.0'), ['stable']),
+        new VersionEntry(new semver.SemVer('v1.3.0'), ['stable']),
         new VersionEntry(new semver.SemVer('v1.2.0'), ['stable']),
       ];
-      const result = firstStableVersion(versions)?.version;
+      const result = highestStableVersion(versions)?.version.version;
 
-      expect(result).toEqual(versions[1].version);
+      expect(result).toEqual('1.3.0');
     });
 
-    it('should return first entry if no stable version is found', () => {
+    it('should return highest version if no stable version is found', () => {
       const versions: K8s.VersionEntry[] = [
         new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v1.2.0'), ['beta']),
         new VersionEntry(new semver.SemVer('v1.1.0'), ['beta']),
       ];
-      const result = firstStableVersion(versions)?.version;
+      const result = highestStableVersion(versions)?.version.version;
 
-      expect(result).toEqual(versions[0].version);
+      expect(result).toEqual('1.2.0');
     });
 
     it('should return undefined if the list is empty', () => {
-      const result = firstStableVersion([]);
+      const result = highestStableVersion([]);
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('minimumUpgradeVersion', () => {
+    it('should return the highest patch release of the lowest major.minor version', () => {
+      const versions: K8s.VersionEntry[] = [
+        new VersionEntry(new semver.SemVer('v1.2.1'), ['stable']),
+        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v1.0.3'), ['unstable']),
+        new VersionEntry(new semver.SemVer('v1.0.2'), ['stable']),
+        new VersionEntry(new semver.SemVer('v1.2.2'), ['stable']),
+      ];
+      const result = minimumUpgradeVersion(versions)?.version.version;
+
+      expect(result).toEqual('1.0.3');
+    });
+
+    it('should return undefined if the list is empty', () => {
+      const result = minimumUpgradeVersion([]);
 
       expect(result).toBeUndefined();
     });
