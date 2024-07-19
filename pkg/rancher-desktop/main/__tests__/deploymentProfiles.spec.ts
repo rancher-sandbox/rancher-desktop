@@ -34,6 +34,7 @@ describe('deployment profiles', () => {
     // We *could* write a routine that converts json to reg files, but that's not the point of this test.
     // Better to just hard-wire a few regfiles here.
 
+    const versionHex = `00${ settings.CURRENT_SETTINGS_VERSION.toString(16) }`.slice(-2);
     const defaultsUserRegFile = `Windows Registry Editor Version 5.00
 
 [${ NON_PROFILE_PATH }]
@@ -41,6 +42,7 @@ describe('deployment profiles', () => {
 [${ FULL_PROFILE_PATH }]
 
 [${ FULL_DEFAULTS_PATH }]
+"version"=dword:${ versionHex }
 
 [${ FULL_DEFAULTS_PATH }\\application]
 
@@ -91,6 +93,7 @@ describe('deployment profiles', () => {
 [${ FULL_PROFILE_PATH }]
 
 [${ FULL_PROFILE_PATH }\\Locked]
+"version"=dword:${ versionHex }
 
 [${ FULL_PROFILE_PATH }\\Locked\\containerEngine]
 
@@ -118,6 +121,7 @@ describe('deployment profiles', () => {
 [${ FULL_PROFILE_PATH }]
 
 [${ FULL_DEFAULTS_PATH }]
+"version"=dword:${ versionHex }
 
 [${ FULL_DEFAULTS_PATH }\\application]
 
@@ -160,6 +164,7 @@ describe('deployment profiles', () => {
 [${ FULL_PROFILE_PATH }]
 
 [${ FULL_DEFAULTS_PATH }]
+"version"=dword:${ versionHex }
 
 [${ FULL_DEFAULTS_PATH }\\CONTAINERENGINE]
 "name"="moby"
@@ -214,6 +219,7 @@ describe('deployment profiles', () => {
       describe('defaults', () => {
         describe('happy paths', () => {
           const defaultUserProfile: RecursivePartial<settings.Settings> = {
+            version:     settings.CURRENT_SETTINGS_VERSION,
             application: {
               debug:       true,
               adminAccess: false,
@@ -254,7 +260,8 @@ describe('deployment profiles', () => {
               },
             },
           };
-          const lockedUserProfile = {
+          const lockedUserProfile: RecursivePartial<settings.Settings> = {
+            version:         settings.CURRENT_SETTINGS_VERSION,
             containerEngine: {
               allowedImages: {
                 enabled:  false,
@@ -289,7 +296,7 @@ describe('deployment profiles', () => {
             await installInRegistry(arrayFromSingleStringDefaultsUserRegFile);
             const profile = await readDeploymentProfiles(REGISTRY_PROFILE_PATHS);
 
-            expect(profile.defaults).toEqual({
+            expect(profile.defaults).toMatchObject({
               containerEngine: { allowedImages: { patterns: ['hokey smoke!'] }, name: 'moby' },
             });
           });
