@@ -142,7 +142,7 @@ you'll need to `source` that file.
 Currently we build Rancher Desktop with Node 18. To install it, run:
 
 ```
-nvm install 18.16
+nvm install 18.18
 ```
 
 Next, you'll need to install the yarn package manager:
