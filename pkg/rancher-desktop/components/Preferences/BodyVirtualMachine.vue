@@ -77,12 +77,6 @@ export default Vue.extend({
         :weight="1"
       />
       <tab
-        v-if="isPlatformDarwin"
-        label="Network"
-        name="network"
-        :weight="2"
-      />
-      <tab
         label="Volumes"
         name="volumes"
         :weight="3"
