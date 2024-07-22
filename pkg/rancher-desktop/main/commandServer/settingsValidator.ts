@@ -128,8 +128,8 @@ export default class SettingsValidator {
           // see https://github.com/rancher-sandbox/rancher-desktop/issues/6953
           // The setting will be removed once the legacy Windows networking mode is disabled, so until
           // then we will allow changing the setting on all platforms to avoid the profile error.
-          // Changing the setting will have no effect on macOS/Linux anyways.
-          networkingTunnel: this.checkBoolean,
+          // Changing the setting will have no effect on macOS/Linux anyways.1
+          networkingTunnel: this.checkUnchanged,
           useRosetta:       this.checkPlatform('darwin', this.checkRosetta),
           type:             this.checkPlatform('darwin', this.checkMulti(
             this.checkEnum(...Object.values(VMType)),

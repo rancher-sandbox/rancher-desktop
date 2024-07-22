@@ -78,6 +78,7 @@ describe(SettingsValidator, () => {
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'securityModel'],
       ['experimental', 'virtualMachine', 'mount', 'type'],
+      ['experimental', 'virtualMachine', 'networkingTunnel'], // Cannot be set
       ['experimental', 'virtualMachine', 'type'],
       ['experimental', 'virtualMachine', 'useRosetta'],
       ['experimental', 'virtualMachine', 'proxy', 'noproxy'],
@@ -88,17 +89,16 @@ describe(SettingsValidator, () => {
 
     // Fields that can only be set on specific platforms.
     const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
-      'application.adminAccess':                      'linux',
-      'experimental.virtualMachine.networkingTunnel': 'win32',
-      'experimental.virtualMachine.proxy.enabled':    'win32',
-      'experimental.virtualMachine.proxy.address':    'win32',
-      'experimental.virtualMachine.proxy.password':   'win32',
-      'experimental.virtualMachine.proxy.port':       'win32',
-      'experimental.virtualMachine.proxy.username':   'win32',
-      'kubernetes.ingress.localhostOnly':             'win32',
-      'virtualMachine.hostResolver':                  'win32',
-      'virtualMachine.memoryInGB':                    'darwin',
-      'virtualMachine.numberCPUs':                    'linux',
+      'application.adminAccess':                    'linux',
+      'experimental.virtualMachine.proxy.enabled':  'win32',
+      'experimental.virtualMachine.proxy.address':  'win32',
+      'experimental.virtualMachine.proxy.password': 'win32',
+      'experimental.virtualMachine.proxy.port':     'win32',
+      'experimental.virtualMachine.proxy.username': 'win32',
+      'kubernetes.ingress.localhostOnly':           'win32',
+      'virtualMachine.hostResolver':                'win32',
+      'virtualMachine.memoryInGB':                  'darwin',
+      'virtualMachine.numberCPUs':                  'linux',
     };
 
     const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
