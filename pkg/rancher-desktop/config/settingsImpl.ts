@@ -481,6 +481,10 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       _.unset(settings, 'experimental.virtualMachine');
     }
   },
+  12: (settings) => {
+    // This bump is only there to force networking tunnel.
+    _.set(settings, 'experimental.virtualMachine.networkingTunnel', true);
+  },
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {

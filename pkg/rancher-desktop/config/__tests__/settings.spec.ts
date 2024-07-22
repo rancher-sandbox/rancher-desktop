@@ -347,10 +347,15 @@ describe('settings', () => {
               .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
             const profiles = await readDeploymentProfiles();
             const expectedDefaults = _.omit(fullDefaults, ['debug', 'ignorableTestSettings', 'diagnostics.locked']);
-            const expected = {
+            const expected: RecursivePartial<settings.Settings> = {
               version:         settings.CURRENT_SETTINGS_VERSION,
               containerEngine: {
-                name: 'moby',
+                name: settings.ContainerEngine.MOBY,
+              },
+              experimental: {
+                virtualMachine: {
+                  networkingTunnel: true,
+                },
               },
               kubernetes: {
                 version: '1.25.9',
@@ -467,7 +472,8 @@ describe('settings', () => {
         version:      settings.CURRENT_SETTINGS_VERSION,
         experimental: {
           virtualMachine: {
-            proxy: {
+            networkingTunnel: true,
+            proxy:            {
               noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
             },
           },
@@ -500,7 +506,8 @@ describe('settings', () => {
         version:      settings.CURRENT_SETTINGS_VERSION,
         experimental: {
           virtualMachine: {
-            proxy: {
+            networkingTunnel: true,
+            proxy:            {
               noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
             },
           },
@@ -535,7 +542,7 @@ describe('settings', () => {
       };
       const expected = _.merge({}, s, { version: settings.CURRENT_SETTINGS_VERSION });
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toMatchObject(expected);
     });
 
     it('updates all old settings going back to version 1', () => {
@@ -578,7 +585,11 @@ describe('settings', () => {
         containerEngine: {
           name: settings.ContainerEngine.MOBY,
         },
-        experimental:   {},
+        experimental: {
+          virtualMachine: {
+            networkingTunnel: true,
+          },
+        },
         kubernetes:     {},
         virtualMachine: {
           hostResolver: true,
