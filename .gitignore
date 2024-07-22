@@ -1,5 +1,4 @@
 *.exe
-.nuxt/
 /bats/bats.tar.gz
 /bats/bin/
 /bats/logs/
@@ -8,7 +7,6 @@
 /e2e/reports/
 /go.work.sum
 /node_modules/
-/pkg/rancher-desktop/node_modules/
 /pkg/rancher-desktop/nuxt/
 /resources/cert-manager*
 /resources/darwin/
