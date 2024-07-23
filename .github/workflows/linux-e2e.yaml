@@ -35,9 +35,6 @@ jobs:
           cache-dependency-path: src/go/**/go.sum
       # For now, we don't need to `pip install setuptools` because we're not on
       # Python 3.12; we will need that later, however.
-      - run: >-
-          sudo DEBIAN_FRONTEND=noninteractive
-          apt-get install attr
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Disable admin-access before start up

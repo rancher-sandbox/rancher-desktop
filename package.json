@@ -158,6 +158,7 @@
     "nan": "2.20.0",
     "node-gyp": "10.2.0",
     "node-gyp-build": "4.8.1",
+    "node-loader": "^2.0.0",
     "octokit": "3.2.1",
     "ps-tree": "1.2.0",
     "raw-loader": "4.0.2",
@@ -177,7 +178,8 @@
     "string-width": "^4"
   },
   "optionalDependencies": {
-    "dmg-license": "1.0.11"
+    "dmg-license": "1.0.11",
+    "fs-xattr": "0.3.1"
   },
   "browserslist": [
     "node 18",

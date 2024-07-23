@@ -63,58 +63,20 @@ describe('manageLinesInFile', () => {
   });
 
   describe('Target exists as a plain file', () => {
-    let shouldHaveAttr: string | undefined;
-    const originalSpawnFile = childProcess.spawnFile;
-
-    using spySpawnFile = withResource(jest.spyOn(childProcess, 'spawnFile'));
-
-    beforeAll(() => {
-      spySpawnFile.mockImplementation(async(command, args, options) => {
-        try {
-          return await originalSpawnFile(command, args, options);
-        } catch (ex: any) {
-          if (!['/usr/bin/xattr', '/usr/bin/getfattr'].includes(command)) {
-            throw ex;
-          }
-          if (ex && 'code' in ex && ex.code === 'ENOENT') {
-            return { stdout: shouldHaveAttr ?? '' } as any;
-          }
-          throw ex;
-        }
-      });
-    });
-    beforeEach(() => {
-      shouldHaveAttr = undefined;
-    });
-
     testUnix('Fails if file has extended attributes', async() => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
+      // @ts-ignore // fs-xattr is not available on Windows.
+      const { get, list, set } = await import('fs-xattr');
+
       const unmanagedContents = 'existing lines\n';
       const attributeKey = 'user.io.rancherdesktop.test';
       const attributeValue = 'sample attribute contents';
 
-      shouldHaveAttr = attributeValue;
       await fs.promises.writeFile(rcFilePath, unmanagedContents);
-      if (process.platform === 'darwin') {
-        await childProcess.spawnFile('xattr', ['-w', attributeKey, attributeValue, rcFilePath]);
-        await expect(childProcess.spawnFile('/usr/bin/xattr', ['-p', attributeKey, rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
-          .resolves.toHaveProperty('stdout', `${ attributeValue }\n`);
-      } else if (process.platform === 'linux') {
-        await childProcess.spawnFile('setfattr', ['-n', attributeKey, '-v', `"${ attributeValue }"`, rcFilePath]);
-        await expect(childProcess.spawnFile('/usr/bin/getfattr', ['-n', attributeKey, '--only-values', rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
-          .resolves.toHaveProperty('stdout', attributeValue);
-      } else {
-        throw new Error(`Platform ${ process.platform } is not supported`);
-      }
+      await set(rcFilePath, attributeKey, attributeValue);
       expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).rejects.toThrow();
-      if (process.platform === 'darwin') {
-        await expect(childProcess.spawnFile('/usr/bin/xattr', ['-p', attributeKey, rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
-          .resolves.toHaveProperty('stdout', `${ attributeValue }\n`);
-      } else if (process.platform === 'linux') {
-        await expect(childProcess.spawnFile('/usr/bin/getfattr', ['-n', attributeKey, '--only-values', rcFilePath], { stdio: ['ignore', 'pipe', 'pipe'] }))
-          .resolves.toHaveProperty('stdout', attributeValue);
-      } else {
-        throw new Error(`Platform ${ process.platform } is not supported`);
-      }
+      await expect(list(rcFilePath)).resolves.toEqual([attributeKey]);
+      await expect(get(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
     });
 
     test('Delete file when false and it contains only the managed lines', async() => {
@@ -136,6 +98,13 @@ describe('manageLinesInFile', () => {
       await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
 
       await expect(fs.promises.readFile(rcFilePath, 'utf8')).resolves.toEqual(expectedContents);
+      if (process.platform !== 'win32') {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
+        // @ts-ignore // fs-xattr is not available on Windows.
+        const { list } = await import('fs-xattr');
+
+        await expect(list(rcFilePath)).resolves.toHaveLength(0);
+      }
     });
 
     test('Remove lines from file that exists and has content', async() => {

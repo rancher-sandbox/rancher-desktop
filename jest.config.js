@@ -10,6 +10,7 @@ module.exports = {
   moduleFileExtensions: [
     'js',
     'json',
+    'node', // For native modules, e.g. fs-xattr
     'ts',
     'vue',
   ],

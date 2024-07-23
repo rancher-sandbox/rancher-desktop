@@ -1,9 +1,6 @@
 import fs from 'fs';
-import os from 'os';
 
 import isEqual from 'lodash/isEqual.js';
-
-import { spawnFile } from '@pkg/utils/childProcess';
 
 export const START_LINE = '### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)';
 export const END_LINE = '### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)';
@@ -110,19 +107,22 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
  * also preserving extended attributes.
  */
 async function fileHasExtendedAttributes(filePath: string): Promise<boolean> {
-  const commandMap: Record<string, string[]> = {
-    darwin: ['/usr/bin/xattr', '-l', filePath],
-    linux:  ['/usr/bin/getfattr', '--dump', filePath],
-  };
-  const command = commandMap[process.platform];
+  try {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
+    // @ts-ignore // fs-xattr is not available on Windows
+    const { list } = await import('fs-xattr');
 
-  if (!command) {
-    throw new Error(`Cannot check for extended attributes on ${ process.platform }`);
+    return (await list(filePath)).length > 0;
+  } catch {
+    if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
+      // When running unit tests, assume they do not have extended attributes.
+      return false;
+    }
+
+    console.error(`Failed to import fs-xattr, cannot check for extended attributes on ${ filePath }; assuming it exists.`);
+
+    return true;
   }
-
-  const { stdout } = await spawnFile(command[0], command.slice(1), { stdio: 'pipe' });
-
-  return stdout.trim() !== '';
 }
 
 /**
@@ -191,5 +191,5 @@ function computeTargetContents(currentContents: string, desired: string[]): stri
   // Add one trailing empty line to the end.
   lines.push('');
 
-  return lines.join(os.EOL);
+  return lines.join('\n');
 }
