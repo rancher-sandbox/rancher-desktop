@@ -102,12 +102,9 @@ test.describe.serial('Main App Test', () => {
     await expect(virtualMachine.tabVolumes).toHaveText('Volumes');
 
     if (os.platform() === 'darwin') {
-      await expect(virtualMachine.tabNetwork).toBeVisible();
-      await expect(virtualMachine.tabNetwork).toHaveText('Network');
       await expect(virtualMachine.tabEmulation).toBeVisible();
       await expect(virtualMachine.tabEmulation).toHaveText('Emulation');
     } else {
-      await expect(virtualMachine.tabNetwork).not.toBeVisible();
       await expect(virtualMachine.tabEmulation).not.toBeVisible();
     }
 

@@ -20,7 +20,6 @@ export class VirtualMachineNav {
   readonly useRosetta: Locator;
   readonly tabHardware: Locator;
   readonly tabVolumes: Locator;
-  readonly tabNetwork: Locator;
   readonly tabEmulation: Locator;
 
   constructor(page: Page) {
@@ -43,7 +42,6 @@ export class VirtualMachineNav {
     this.useRosetta = page.locator('[data-test="useRosetta"]');
     this.tabHardware = page.locator('.tab >> text=Hardware');
     this.tabVolumes = page.locator('.tab >> text=Volumes');
-    this.tabNetwork = page.locator('.tab >> text=Network');
     this.tabEmulation = page.locator('.tab >> text=Emulation');
   }
 }
