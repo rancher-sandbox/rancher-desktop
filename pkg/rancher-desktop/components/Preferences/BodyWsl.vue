@@ -4,7 +4,6 @@ import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesWslIntegrations from '@pkg/components/Preferences/WslIntegrations.vue';
-import PreferencesWslNetwork from '@pkg/components/Preferences/WslNetwork.vue';
 import PreferencesWslProxy from '@pkg/components/Preferences/WslProxy.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
@@ -18,7 +17,7 @@ import type { PropType } from 'vue';
 export default Vue.extend({
   name:       'preferences-body-wsl',
   components: {
-    RdTabbed, Tab, PreferencesWslIntegrations, PreferencesWslNetwork, PreferencesWslProxy,
+    RdTabbed, Tab, PreferencesWslIntegrations, PreferencesWslProxy,
   },
   props: {
     preferences: {
@@ -61,11 +60,6 @@ export default Vue.extend({
     @changed="tabSelected"
   >
     <template #tabs>
-      <tab
-        label="Network"
-        name="network"
-        :weight="3"
-      />
       <tab
         label="Integrations"
         name="integrations"
