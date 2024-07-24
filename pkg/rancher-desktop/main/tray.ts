@@ -154,14 +154,12 @@ export class Tray {
         }
       }
 
-      if (this.runBuildFromConfigTimer === null) {
-        // This prevents calling buildFromConfig multiple times in quick succession
-        // while making sure that the last file change within the period is processed.
-        this.runBuildFromConfigTimer = setTimeout(() => {
-          this.runBuildFromConfigTimer = null;
-          this.buildFromConfig();
-        }, 1_000);
-      }
+      // This prevents calling buildFromConfig multiple times in quick succession
+      // while making sure that the last file change within the period is processed.
+      this.runBuildFromConfigTimer ||= setTimeout(() => {
+        this.runBuildFromConfigTimer = null;
+        this.buildFromConfig();
+      }, 1_000);
     }));
   }
 
@@ -190,12 +188,10 @@ export class Tray {
     this.buildFromConfig();
     this.watchForChanges();
 
-    /**
-     * We reset the watchers on an interval in the event that `fs.watch` silently
-     * fails to keep watching. This original issue is documented at
-     * https://github.com/rancher-sandbox/rancher-desktop/pull/2038 and further discussed at
-     * https://github.com/rancher-sandbox/rancher-desktop/pull/7238#discussion_r1690128729
-     */
+    // We reset the watchers on an interval in the event that `fs.watch` silently
+    // fails to keep watching. This original issue is documented at
+    // https://github.com/rancher-sandbox/rancher-desktop/pull/2038 and further discussed at
+    // https://github.com/rancher-sandbox/rancher-desktop/pull/7238#discussion_r1690128729
     this.fsWatcherInterval = setInterval(() => this.watchForChanges(), 5 * 60_000);
 
     mainEvents.on('backend-locked-update', this.backendStateEvent);
@@ -203,11 +199,9 @@ export class Tray {
     mainEvents.on('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.on('settings-update', this.settingsUpdateEvent);
 
-    /**
-     * This triggers the CONNECTED_TO_INTERNET diagnostic at a set interval and
-     * updates the network status in the tray if there's a change in the network
-     * state.
-     */
+    // This triggers the CONNECTED_TO_INTERNET diagnostic at a set interval and
+    // updates the network status in the tray if there's a change in the network
+    // state.
     this.networkInterval = setInterval(async() => {
       const networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
 
@@ -264,6 +258,7 @@ export class Tray {
     clearInterval(this.networkInterval);
     if (this.runBuildFromConfigTimer) {
       clearTimeout(this.runBuildFromConfigTimer);
+      this.runBuildFromConfigTimer = null;
     }
     for (const watcher of this.kubeConfigWatchers) {
       watcher.close();
