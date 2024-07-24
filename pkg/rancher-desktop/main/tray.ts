@@ -37,7 +37,9 @@ export class Tray {
   private static instance: Tray;
   private networkState: boolean | undefined;
   private networkInterval: NodeJS.Timeout;
-  private lastConfigBuild = 0;
+  private runBuildFromConfigTimer: NodeJS.Timeout | null = null;
+  private kubeConfigWatchers: fs.FSWatcher[] = [];
+  private fsWatcherInterval: NodeJS.Timeout;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -130,6 +132,11 @@ export class Tray {
    * triggered, close the watcher and restart after a duration (one second).
    */
   private async watchForChanges() {
+    for (const watcher of this.kubeConfigWatchers) {
+      watcher.close();
+    }
+    this.kubeConfigWatchers = [];
+
     const paths = await kubeconfig.getKubeConfigPaths();
     const options: fs.WatchOptions = {
       persistent: false,
@@ -137,7 +144,7 @@ export class Tray {
       encoding:   'utf-8',
     };
 
-    paths.map(filepath => fs.watch(filepath, options, async(eventType) => {
+    this.kubeConfigWatchers = paths.map(filepath => fs.watch(filepath, options, async(eventType) => {
       if (eventType === 'rename') {
         try {
           await fs.promises.access(filepath);
@@ -147,7 +154,14 @@ export class Tray {
         }
       }
 
-      this.buildFromConfig();
+      if (this.runBuildFromConfigTimer === null) {
+        // This prevents calling buildFromConfig multiple times in quick succession
+        // while making sure that the last file change within the period is processed.
+        this.runBuildFromConfigTimer = setTimeout(() => {
+          this.runBuildFromConfigTimer = null;
+          this.buildFromConfig();
+        }, 1_000);
+      }
     }));
   }
 
@@ -175,6 +189,14 @@ export class Tray {
 
     this.buildFromConfig();
     this.watchForChanges();
+
+    /**
+     * We reset the watchers on an interval in the event that `fs.watch` silently
+     * fails to keep watching. This original issue is documented at
+     * https://github.com/rancher-sandbox/rancher-desktop/pull/2038 and further discussed at
+     * https://github.com/rancher-sandbox/rancher-desktop/pull/7238#discussion_r1690128729
+     */
+    this.fsWatcherInterval = setInterval(() => this.watchForChanges(), 5 * 60_000);
 
     mainEvents.on('backend-locked-update', this.backendStateEvent);
     mainEvents.emit('backend-locked-check');
@@ -238,7 +260,15 @@ export class Tray {
     mainEvents.off('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.off('settings-update', this.settingsUpdateEvent);
     ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
+    clearInterval(this.fsWatcherInterval);
     clearInterval(this.networkInterval);
+    if (this.runBuildFromConfigTimer) {
+      clearTimeout(this.runBuildFromConfigTimer);
+    }
+    for (const watcher of this.kubeConfigWatchers) {
+      watcher.close();
+    }
+    this.kubeConfigWatchers = [];
   }
 
   /**
@@ -261,12 +291,6 @@ export class Tray {
   }
 
   protected buildFromConfig() {
-    if (Date.now() - this.lastConfigBuild < 1000) {
-      return;
-    }
-
-    this.lastConfigBuild = Date.now();
-
     try {
       this.updateContexts();
       const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
