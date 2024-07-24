@@ -25,11 +25,11 @@ on:
         type: string
       kubernetes-version:
         description: Primary Kubernetes version to test
-        default: '1.22.7'
+        default: '1.22.7' # Must also change in calculate step
         type: string
       kubernetes-alt-version:
         description: Secondary Kubernetes version to test (e.g. for upgrades)
-        default: '1.28.11' # Rancher/rancher chart 2.8.5 maximum supported version
+        default: '1.28.11' # Must also change in calculate step
         type: string
       package-id:
         description: Package run ID override; leave empty to use latest.
@@ -89,8 +89,9 @@ jobs:
         TESTS:                  ${{ inputs.tests }}
         PLATFORMS:              ${{ inputs.platforms }}
         ENGINES:                ${{ inputs.engines }}
-        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version }}
-        KUBERNETES_ALT_VERSION: ${{ inputs.kubernetes-alt-version }}
+        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version || '1.22.7' }}
+        # rancher/rancher helm chart 2.8.5 supports up to 1.28.*
+        KUBERNETES_ALT_VERSION: ${{ inputs.kubernetes-alt-version || '1.28.11' }}
       working-directory: bats/tests
     outputs:
       repo: ${{ steps.repo.outputs.repo }}
