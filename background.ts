@@ -827,7 +827,10 @@ ipcMainProxy.on('k8s-restart', async() => {
 });
 
 ipcMainProxy.on('k8s-versions', async() => {
-  window.send('k8s-versions', await k8smanager.kubeBackend.availableVersions, await k8smanager.kubeBackend.cachedVersionsOnly());
+  const versions = await k8smanager.kubeBackend.availableVersions;
+  const cachedOnly = await k8smanager.kubeBackend.cachedVersionsOnly();
+
+  window.send('k8s-versions', versions.map(e => ({ version: e.version.version, channels: e.channels })), cachedOnly);
 });
 
 ipcMainProxy.on('k8s-progress', () => {
@@ -1276,7 +1279,10 @@ function newK8sManager() {
   });
 
   mgr.kubeBackend.on('versions-updated', async() => {
-    window.send('k8s-versions', await mgr.kubeBackend.availableVersions, await mgr.kubeBackend.cachedVersionsOnly());
+    const versions = await k8smanager.kubeBackend.availableVersions;
+    const cachedOnly = await k8smanager.kubeBackend.cachedVersionsOnly();
+
+    window.send('k8s-versions', versions.map(e => ({ version: e.version.version, channels: e.channels })), cachedOnly);
   });
 
   return mgr;

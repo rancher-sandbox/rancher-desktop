@@ -137,35 +137,6 @@ export class VersionEntry implements K8s.VersionEntry {
 }
 
 /**
- * Get the highest stable version from a list of K8s.VersionEntry objects.
- * @param versions The list of K8s.VersionEntry objects.
- * @returns The highest stable version, or highest version if no stable version is found.
- */
-export function highestStableVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
-  // The versions object may have been received via IPC from the k8s-versions message, so it may be just a structured clone without any prototypes.
-  // That means versions[].version may not actually be a semver.SemVer object. Therefore, we re-create it from the versions[].version.version property.
-  const highestFirst = versions.slice().sort((a, b) => semver.compare(b.version.version, a.version.version));
-
-  return highestFirst.find(v => (v.channels ?? []).includes('stable')) ?? highestFirst[0];
-}
-
-function sameMajorMinorVersion(version1: semver.SemVer, version2: semver.SemVer): boolean {
-  return version1.major === version2.major && version1.minor === version2.minor;
-}
-
-/**
- * Get the highest patch release of the lowest available versions
- * @param versions The list of K8s.VersionEntry objects.
- * @returns The highest patch version.
- */
-export function minimumUpgradeVersion(versions: K8s.VersionEntry[]): K8s.VersionEntry | undefined {
-  // See comment on highestStableVersion about versions[].version potentially not being a semver.SemVer object.
-  const lowestFirst = versions.slice().sort((a, b) => semver.compare(a.version.version, b.version.version));
-
-  return lowestFirst.findLast(v => sameMajorMinorVersion(v.version, lowestFirst[0].version));
-}
-
-/**
  * Given a version, return the K3s build version.
  *
  * Note that this is only exported for testing.

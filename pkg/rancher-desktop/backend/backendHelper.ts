@@ -10,12 +10,12 @@ import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-contain
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
-import { minimumUpgradeVersion } from '@pkg/backend/k3sHelper';
 import * as K8s from '@pkg/backend/k8s';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
+import { minimumUpgradeVersion } from '@pkg/utils/kubeVersions';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
