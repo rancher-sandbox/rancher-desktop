@@ -125,7 +125,8 @@ export async function getKubeConfigPaths(): Promise<string[]> {
   if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
     const results: string[] = [];
 
-    for (const filePath of process.env.KUBECONFIG.split(path.delimiter)) {
+    const delimiter = os.platform() === 'win32' ? ';' : ':';
+    for (const filePath of process.env.KUBECONFIG.split(delimiter)) {
       if (await hasAccess(filePath)) {
         results.push(filePath);
       }
