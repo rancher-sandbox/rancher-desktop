@@ -9,6 +9,12 @@
       :is-locked="kubernetesLocked"
       @input="handleDisableKubernetesCheckbox"
     />
+    <rd-checkbox
+      label="Enable Traefik"
+      :value="settings.kubernetes.options.traefik"
+      :is-locked="kubernetesLocked"
+      @input="handleDisableTraefikCheckbox"
+    />
     <rd-fieldset
       :legend-text="t('firstRun.kubernetesVersion.legend') + offlineCheck()"
     >
@@ -171,6 +177,7 @@ export default Vue.extend({
     ipcRenderer.on('settings-update', (event, config) => {
       this.settings.containerEngine.name = config.containerEngine.name;
       this.settings.kubernetes.enabled = config.kubernetes.enabled;
+      this.settings.kubernetes.options.traefik = config.kubernetes.options.traefik;
     });
     ipcRenderer.send('k8s-versions');
     if (this.pathManagementRelevant) {
@@ -214,6 +221,16 @@ export default Vue.extend({
         ipcRenderer.invoke(
           'settings-write',
           { kubernetes: { enabled: value } },
+        );
+      } catch (err) {
+        console.log('invoke settings-write failed: ', err);
+      }
+    },
+    handleDisableTraefikCheckbox(value: boolean) {
+      try {
+        ipcRenderer.invoke(
+          'settings-write',
+          { kubernetes: { options: { traefik: value } } },
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
