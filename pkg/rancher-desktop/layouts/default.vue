@@ -85,6 +85,9 @@ export default {
   },
 
   beforeMount() {
+    // The window title isn't set correctly in E2E; as a workaround, force set
+    // it here again.
+    document.title ||= 'Rancher Desktop';
     initExtensions();
     ipcRenderer.on('window/blur', (event, blur) => {
       this.blur = blur;
