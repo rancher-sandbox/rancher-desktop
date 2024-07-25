@@ -28,9 +28,9 @@
         >
           <option
             v-for="item in recommendedVersions"
-            :key="item.version.version"
-            :value="item.version.version"
-            :selected="item.version.version === unwrappedDefaultVersion"
+            :key="item.version"
+            :value="item.version"
+            :selected="item.version === unwrappedDefaultVersion"
           >
             {{ versionName(item) }}
           </option>
@@ -41,11 +41,11 @@
         >
           <option
             v-for="item in nonRecommendedVersions"
-            :key="item.version.version"
-            :value="item.version.version"
-            :selected="item.version.version === unwrappedDefaultVersion"
+            :key="item.version"
+            :value="item.version"
+            :selected="item.version === unwrappedDefaultVersion"
           >
-            v{{ item.version.version }}
+            v{{ item.version }}
           </option>
         </optgroup>
       </rd-select>
@@ -92,8 +92,6 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { highestStableVersion } from '@pkg/backend/k3sHelper';
-import { VersionEntry } from '@pkg/backend/k8s';
 import EngineSelector from '@pkg/components/EngineSelector.vue';
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
@@ -103,6 +101,7 @@ import { defaultSettings } from '@pkg/config/settings';
 import type { ContainerEngine } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { highestStableVersion, VersionEntry } from '@pkg/utils/kubeVersions';
 
 export default Vue.extend({
   components: {
@@ -137,7 +136,7 @@ export default Vue.extend({
     unwrappedDefaultVersion(): string {
       const wrappedSemver = this.defaultVersion;
 
-      return wrappedSemver ? wrappedSemver.version.version : '';
+      return wrappedSemver ? wrappedSemver.version : '';
     },
     /** Versions that are the tip of a channel */
     recommendedVersions(): VersionEntry[] {
@@ -227,10 +226,10 @@ export default Vue.extend({
       const names = (version.channels ?? []).filter(ch => !/^v?\d+/.test(ch));
 
       if (names.length > 0) {
-        return `v${ version.version.version } (${ names.join(', ') })`;
+        return `v${ version.version } (${ names.join(', ') })`;
       }
 
-      return `v${ version.version.version }`;
+      return `v${ version.version }`;
     },
     setPathManagementStrategy(val: PathManagementStrategy) {
       this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);

@@ -4,6 +4,7 @@ import { BackendSettings, RestartReasons } from './backend';
 import K3sHelper, { ExtraRequiresReasons } from './k3sHelper';
 
 import EventEmitter from '@pkg/utils/eventEmitter';
+import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ServiceEntry } from './kube/client';
@@ -13,16 +14,6 @@ export type {
   BackendSettings, FailureDetails, RestartReasons, BackendProgress as KubernetesProgress,
 } from './backend';
 export type { ServiceEntry } from './kube/client';
-
-/**
- * VersionEntry describes a version of K3s.
- */
-export interface VersionEntry {
-  /** The version being described. This includes any build-specific data. */
-  version: semver.SemVer;
-  /** A string describing the channels that include this version, if any. */
-  channels?: string[];
-}
 
 /**
  * KubernetesBackendEvents describes the events that may be emitted by a
@@ -57,7 +48,7 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
    * The versions that are available to install, sorted as would be displayed to
    * the user.
    */
-  availableVersions: Promise<VersionEntry[]>;
+  availableVersions: Promise<SemanticVersionEntry[]>;
 
   /**
    * Used to let the UI know whether it was sent all potentially supported k8s versions.

@@ -182,7 +182,7 @@ export interface IpcRendererEvents {
   ) => void;
   'k8s-current-port': (port: number) => void;
   'k8s-versions': (
-    versions: import('@pkg/backend/k8s').VersionEntry[],
+    versions: import('@pkg/utils/kubeVersions').VersionEntry[],
     cachedOnly: boolean
   ) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;

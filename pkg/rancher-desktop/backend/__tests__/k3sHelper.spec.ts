@@ -11,14 +11,11 @@ import semver from 'semver';
 import K3sHelper, {
   buildVersion,
   ChannelMapping,
-  highestStableVersion,
-  minimumUpgradeVersion,
   NoCachedK3sVersionsError,
   ReleaseAPIEntry,
-  VersionEntry,
 } from '../k3sHelper';
 
-import * as K8s from '@pkg/backend/k8s';
+import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import paths from '@pkg/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -81,7 +78,7 @@ describe(K3sHelper, () => {
       for (const version of existing) {
         const parsed = new semver.SemVer(version);
 
-        subject['versions'][parsed.version] = new VersionEntry(parsed);
+        subject['versions'][parsed.version] = new SemanticVersionEntry(parsed);
       }
 
       return subject['processVersion']({ tag_name: name, assets });
@@ -130,9 +127,9 @@ describe(K3sHelper, () => {
   test('cache read/write', async() => {
     const subject = new K3sHelper('x86_64');
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
-    const versions: Record<string, VersionEntry> = {
-      '1.99.3': new VersionEntry(semver.parse('1.99.3+k3s1') as semver.SemVer, ['stable']),
-      '2.3.4':  new VersionEntry(semver.parse('2.3.4+k3s3') as semver.SemVer),
+    const versions: Record<string, SemanticVersionEntry> = {
+      '1.99.3': new SemanticVersionEntry(semver.parse('1.99.3+k3s1') as semver.SemVer, ['stable']),
+      '2.3.4':  new SemanticVersionEntry(semver.parse('2.3.4+k3s3') as semver.SemVer),
     };
     const versionStrings = Object.values(versions)
       .map(v => v.version)
@@ -185,7 +182,7 @@ describe(K3sHelper, () => {
         })) {
           const parsedVersion = new semver.SemVer(version);
 
-          this.versions[parsedVersion.version] = new VersionEntry(parsedVersion, tags);
+          this.versions[parsedVersion.version] = new SemanticVersionEntry(parsedVersion, tags);
           for (const tag of tags) {
             result[tag] = parsedVersion;
           }
@@ -256,9 +253,9 @@ describe(K3sHelper, () => {
     expect(fetch).toHaveBeenCalledTimes(4);
     expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);
     expect(await subject.availableVersions).toEqual([
-      new VersionEntry(new semver.SemVer('v1.99.3+k3s3'), ['stable']),
-      new VersionEntry(new semver.SemVer('v1.99.1+k3s2')),
-      new VersionEntry(new semver.SemVer('v1.99.0+k3s5')),
+      new SemanticVersionEntry(new semver.SemVer('v1.99.3+k3s3'), ['stable']),
+      new SemanticVersionEntry(new semver.SemVer('v1.99.1+k3s2')),
+      new SemanticVersionEntry(new semver.SemVer('v1.99.0+k3s5')),
     ]);
   });
 
@@ -293,7 +290,7 @@ describe(K3sHelper, () => {
         })) {
           const parsedVersion = new semver.SemVer(version);
 
-          this.versions[parsedVersion.version] = new VersionEntry(parsedVersion, tags);
+          this.versions[parsedVersion.version] = new SemanticVersionEntry(parsedVersion, tags);
           for (const tag of tags) {
             result[tag] = parsedVersion;
           }
@@ -353,20 +350,20 @@ describe(K3sHelper, () => {
     const availableVersions = await subject.availableVersions;
 
     expect(availableVersions).toEqual([
-      new VersionEntry(new semver.SemVer('v1.98.3+k3s2'), ['latest', 'v1.98']),
-      new VersionEntry(new semver.SemVer('v1.98.2+k3s2')),
-      new VersionEntry(new semver.SemVer('v1.98.1+k3s2')),
-      new VersionEntry(new semver.SemVer('v1.97.7+k3s2'), ['stable', 'v1.97']),
-      new VersionEntry(new semver.SemVer('v1.97.6+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.97.5+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.97.4+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.97.3+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.97.2+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.97.1+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.96.3+k3s1'), ['v1.96']),
-      new VersionEntry(new semver.SemVer('v1.96.2+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.96.1+k3s1')),
-      new VersionEntry(new semver.SemVer('v1.96.0+k3s2')),
+      new SemanticVersionEntry(new semver.SemVer('v1.98.3+k3s2'), ['latest', 'v1.98']),
+      new SemanticVersionEntry(new semver.SemVer('v1.98.2+k3s2')),
+      new SemanticVersionEntry(new semver.SemVer('v1.98.1+k3s2')),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.7+k3s2'), ['stable', 'v1.97']),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.6+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.5+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.4+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.3+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.2+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.97.1+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.96.3+k3s1'), ['v1.96']),
+      new SemanticVersionEntry(new semver.SemVer('v1.96.2+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.96.1+k3s1')),
+      new SemanticVersionEntry(new semver.SemVer('v1.96.0+k3s2')),
     ]);
   });
 
@@ -374,7 +371,7 @@ describe(K3sHelper, () => {
     it('should finish initialize without network if cache is available', async() => {
       const writer = new K3sHelper('x86_64');
 
-      writer['versions'] = { 'v1.99.0': new VersionEntry(new semver.SemVer('v1.99.0')) };
+      writer['versions'] = { 'v1.99.0': new SemanticVersionEntry(new semver.SemVer('v1.99.0')) };
       await writer['writeCache']();
 
       // We want to check that initialize() returns before updateCache() does.
@@ -433,58 +430,6 @@ describe(K3sHelper, () => {
       const desiredSemver = new semver.SemVer('v1.99.3+k3s4');
 
       expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrow(NoCachedK3sVersionsError);
-    });
-  });
-
-  describe('highestStableVersion', () => {
-    it('should return the highest stable version', () => {
-      const versions: K8s.VersionEntry[] = [
-        new VersionEntry(new semver.SemVer('v2.0.0'), ['unstable']),
-        new VersionEntry(new semver.SemVer('v1.1.0'), ['stable']),
-        new VersionEntry(new semver.SemVer('v1.3.0'), ['stable']),
-        new VersionEntry(new semver.SemVer('v1.2.0'), ['stable']),
-      ];
-      const result = highestStableVersion(versions)?.version.version;
-
-      expect(result).toEqual('1.3.0');
-    });
-
-    it('should return highest version if no stable version is found', () => {
-      const versions: K8s.VersionEntry[] = [
-        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
-        new VersionEntry(new semver.SemVer('v1.2.0'), ['beta']),
-        new VersionEntry(new semver.SemVer('v1.1.0'), ['beta']),
-      ];
-      const result = highestStableVersion(versions)?.version.version;
-
-      expect(result).toEqual('1.2.0');
-    });
-
-    it('should return undefined if the list is empty', () => {
-      const result = highestStableVersion([]);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('minimumUpgradeVersion', () => {
-    it('should return the highest patch release of the lowest major.minor version', () => {
-      const versions: K8s.VersionEntry[] = [
-        new VersionEntry(new semver.SemVer('v1.2.1'), ['stable']),
-        new VersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
-        new VersionEntry(new semver.SemVer('v1.0.3'), ['unstable']),
-        new VersionEntry(new semver.SemVer('v1.0.2'), ['stable']),
-        new VersionEntry(new semver.SemVer('v1.2.2'), ['stable']),
-      ];
-      const result = minimumUpgradeVersion(versions)?.version.version;
-
-      expect(result).toEqual('1.0.3');
-    });
-
-    it('should return undefined if the list is empty', () => {
-      const result = minimumUpgradeVersion([]);
-
-      expect(result).toBeUndefined();
     });
   });
 });

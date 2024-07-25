@@ -4,14 +4,13 @@ import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { highestStableVersion } from '@pkg/backend/k3sHelper';
-import { VersionEntry } from '@pkg/backend/k8s';
 import RdInput from '@pkg/components/RdInput.vue';
 import RdSelect from '@pkg/components/RdSelect.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { highestStableVersion, VersionEntry } from '@pkg/utils/kubeVersions';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
@@ -82,10 +81,10 @@ export default Vue.extend({
       const names = (version.channels ?? []).filter(ch => !/^v?\d+/.test(ch));
 
       if (names.length > 0) {
-        return `v${ version.version.version } (${ names.join(', ') })`;
+        return `v${ version.version } (${ names.join(', ') })`;
       }
 
-      return `v${ version.version.version }`;
+      return `v${ version.version }`;
     },
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
@@ -132,9 +131,9 @@ export default Vue.extend({
         >
           <option
             v-for="item in recommendedVersions"
-            :key="item.version.version"
-            :value="item.version.version"
-            :selected="item.version.version === defaultVersion.version.version"
+            :key="item.version"
+            :value="item.version"
+            :selected="item.version === defaultVersion.version"
           >
             {{ versionName(item) }}
           </option>
@@ -145,11 +144,11 @@ export default Vue.extend({
         >
           <option
             v-for="item in nonRecommendedVersions"
-            :key="item.version.version"
-            :value="item.version.version"
-            :selected="item.version.version === defaultVersion.version.version"
+            :key="item.version"
+            :value="item.version"
+            :selected="item.version === defaultVersion.version"
           >
-            v{{ item.version.version }}
+            v{{ item.version }}
           </option>
         </optgroup>
       </rd-select>
