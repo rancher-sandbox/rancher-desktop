@@ -1279,8 +1279,8 @@ function newK8sManager() {
   });
 
   mgr.kubeBackend.on('versions-updated', async() => {
-    const versions = await k8smanager.kubeBackend.availableVersions;
-    const cachedOnly = await k8smanager.kubeBackend.cachedVersionsOnly();
+    const versions = await mgr.kubeBackend.availableVersions;
+    const cachedOnly = await mgr.kubeBackend.cachedVersionsOnly();
 
     window.send('k8s-versions', versions.map(e => ({ version: e.version.version, channels: e.channels })), cachedOnly);
   });

@@ -10,12 +10,11 @@ import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-contain
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
-import * as K8s from '@pkg/backend/k8s';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
-import { minimumUpgradeVersion } from '@pkg/utils/kubeVersions';
+import { minimumUpgradeVersion, SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
@@ -180,10 +179,10 @@ export default class BackendHelper {
    * If it's valid and available, use it.
    * Otherwise fall back to the minimum upgrade version (highest patch release of lowest available version).
    */
-  static async getDesiredVersion(cfg: BackendSettings, availableVersions: K8s.VersionEntry[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
+  static async getDesiredVersion(cfg: BackendSettings, availableVersions: SemanticVersionEntry[], noModalDialogs: boolean, settingsWriter: (_: any) => void): Promise<semver.SemVer> {
     const currentConfigVersionString = cfg?.kubernetes?.version;
     let storedVersion: semver.SemVer | null;
-    let matchedVersion: K8s.VersionEntry | undefined;
+    let matchedVersion: SemanticVersionEntry | undefined;
     const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a supported version.`;
     const sv = new SettingsValidator();
     const lockedSettings = settingsImpl.getLockedSettings();

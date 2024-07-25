@@ -299,7 +299,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     return this.activeVersion?.version ?? '';
   }
 
-  get availableVersions(): Promise<K8s.VersionEntry[]> {
+  get availableVersions(): Promise<K8s.SemanticVersionEntry[]> {
     return this.k3sHelper.availableVersions;
   }
 

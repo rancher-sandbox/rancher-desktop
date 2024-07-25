@@ -112,12 +112,12 @@ export class ChannelMapping {
 }
 
 /**
- * VersionEntry implements K8s.VersionEntry.
+ * SemanticVersionEntry implements K8s.SemanticVersionEntry.
  *
  * This only exists to aid in debugging (by implementing util.debug.custom).
  * This is only exported for tests.
  */
-export class VersionEntry implements K8s.VersionEntry {
+export class SemanticVersionEntry implements K8s.SemanticVersionEntry {
   version: semver.SemVer;
   channels?: string[];
 
@@ -168,7 +168,7 @@ export default class K3sHelper extends events.EventEmitter {
    * without any build information (since we only ever take the latest build).
    * Note that the key is in the form `1.0.0` (i.e. without the `v` prefix).
    */
-  protected versions: Record<ShortVersion, VersionEntry> = {};
+  protected versions: Record<ShortVersion, SemanticVersionEntry> = {};
 
   protected pendingNetworkSetup = Latch();
   protected pendingInitialize: Promise<void> | undefined;
@@ -196,7 +196,7 @@ export default class K3sHelper extends events.EventEmitter {
         const version = semver.parse(versionString);
 
         if (version && semver.gte(version, this.minimumVersion)) {
-          this.versions[version.version] = new VersionEntry(version);
+          this.versions[version.version] = new SemanticVersionEntry(version);
         }
       }
 
@@ -329,7 +329,7 @@ export default class K3sHelper extends events.EventEmitter {
       const foundImage = this.filenames.images.find(name => entry.assets.some(v => v.name === name));
 
       if (foundImage) {
-        this.versions[version.version] = new VersionEntry(version);
+        this.versions[version.version] = new SemanticVersionEntry(version);
         console.log(`Adding version ${ version.raw } - ${ foundImage }`);
       } else {
         console.debug(`Skipping version ${ version.raw } due to missing image`);
@@ -562,7 +562,7 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * The versions that are available to install.
    */
-  get availableVersions(): Promise<K8s.VersionEntry[]> {
+  get availableVersions(): Promise<K8s.SemanticVersionEntry[]> {
     return (async() => {
       await this.initialize();
       const upstreamSeemsReachable = await checkConnectivity('k3s.io');
@@ -577,7 +577,7 @@ export default class K3sHelper extends events.EventEmitter {
     return !(await checkConnectivity('k3s.io'));
   }
 
-  static async filterVersionsAgainstCache(fullVersionList: K8s.VersionEntry[]): Promise<K8s.VersionEntry[]> {
+  static async filterVersionsAgainstCache(fullVersionList: K8s.SemanticVersionEntry[]): Promise<K8s.SemanticVersionEntry[]> {
     try {
       const cacheDir = path.join(paths.cache, 'k3s');
       const k3sFilenames = (await fs.promises.readdir(cacheDir))

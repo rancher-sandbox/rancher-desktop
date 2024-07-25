@@ -7,7 +7,10 @@ export interface VersionEntry {
    * versions or build metadata.
    */
   version: string;
-  /** A string describing the channels that include this version, if any. */
+  /**
+   * An array of strings describing the channels that include this version,
+   * if any.
+   */
   channels?: string[];
 }
 

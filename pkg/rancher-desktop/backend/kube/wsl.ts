@@ -63,7 +63,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<K8s.VersionEntry[]> {
+  get availableVersions(): Promise<K8s.SemanticVersionEntry[]> {
     return this.k3sHelper.availableVersions;
   }
 
