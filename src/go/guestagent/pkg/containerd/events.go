@@ -79,14 +79,14 @@ func NewEventMonitor(
 // MonitorPorts subscribes to event API
 // for container Create/Update/Delete events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	go e.initializeRunningContainers(ctx)
-
 	subscribeFilters := []string{
 		`topic=="/tasks/start"`,
 		`topic=="/containers/update"`,
 		`topic=="/tasks/exit"`,
 	}
 	msgCh, errCh := e.containerdClient.Subscribe(ctx, subscribeFilters...)
+
+	go e.initializeRunningContainers(ctx)
 
 	for {
 		select {
@@ -217,23 +217,25 @@ func (e *EventMonitor) IsServing(ctx context.Context) error {
 // startup or due to timing issues, this acts as a backup to capture all
 // previously running containers.
 func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
-	containers, err := e.containerdClient.Containers(ctx, []string{}...)
+	containers, err := e.containerdClient.Containers(ctx)
 	if err != nil {
 		log.Errorf("failed getting containers: %s", err)
+		return
 	}
 	for _, c := range containers {
+		// skip already added containers
 		if len(e.portTracker.Get(c.ID())) != 0 {
 			continue
 		}
 		t, err := c.Task(ctx, nil)
 		if err != nil {
-			log.Errorf("failed getting container task: %s", err)
+			log.Errorf("failed getting container %s task: %s", c.ID(), err)
 			continue
 		}
 
 		status, err := t.Status(ctx)
 		if err != nil {
-			log.Errorf("failed getting container task status: %s", err)
+			log.Errorf("failed getting container %s task status: %s", c.ID(), err)
 			continue
 		}
 		if status.Status != containerd.Running {
@@ -241,19 +243,18 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
 		}
 		labels, err := c.Labels(ctx)
 		if err != nil {
-			log.Errorf("failed getting container labels: %s", err)
+			log.Errorf("failed getting container %s labels: %s", c.ID(), err)
 			continue
 		}
 
 		ports, err := createPortMappingFromString(labels[portsKey])
 		if err != nil {
-			log.Errorf("failed to create port mapping from container's start task: %v", err)
+			log.Errorf("failed to create port mapping for container %s: %v", c.ID(), err)
 		}
 		if len(ports) == 0 {
 			continue
 		}
 
-		// We need to do this again since we tear down the namespace, e.g., after restarting RD.
 		err = execIptablesRules(ports, c.ID(), labels[namespaceKey], strconv.Itoa(int(t.Pid())))
 		if err != nil {
 			log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
