@@ -36,6 +36,7 @@ import (
 )
 
 const (
+	namespaceKey   = "nerdctl/namespace"
 	portsKey       = "nerdctl/ports"
 	maxHashLen     = sha512.Size * 2
 	maxChainLength = 28
@@ -78,6 +79,8 @@ func NewEventMonitor(
 // MonitorPorts subscribes to event API
 // for container Create/Update/Delete events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
+	go e.initializeRunningContainers(ctx)
+
 	subscribeFilters := []string{
 		`topic=="/tasks/start"`,
 		`topic=="/containers/update"`,
@@ -207,6 +210,65 @@ func (e *EventMonitor) IsServing(ctx context.Context) error {
 	}
 
 	return fmt.Errorf("containerd API is not serving: %w", err)
+}
+
+// initializeRunningContainers calls the API to get a list of all existing
+// containers. If the port monitoring misses any /tasks/start events during
+// startup or due to timing issues, this acts as a backup to capture all
+// previously running containers.
+func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
+	containers, err := e.containerdClient.Containers(ctx, []string{}...)
+	if err != nil {
+		log.Errorf("failed getting containers: %s", err)
+	}
+	for _, c := range containers {
+		if len(e.portTracker.Get(c.ID())) != 0 {
+			continue
+		}
+		t, err := c.Task(ctx, nil)
+		if err != nil {
+			log.Errorf("failed getting container task: %s", err)
+			continue
+		}
+
+		status, err := t.Status(ctx)
+		if err != nil {
+			log.Errorf("failed getting container task status: %s", err)
+			continue
+		}
+		if status.Status != containerd.Running {
+			continue
+		}
+		labels, err := c.Labels(ctx)
+		if err != nil {
+			log.Errorf("failed getting container labels: %s", err)
+			continue
+		}
+
+		ports, err := createPortMappingFromString(labels[portsKey])
+		if err != nil {
+			log.Errorf("failed to create port mapping from container's start task: %v", err)
+		}
+		if len(ports) == 0 {
+			continue
+		}
+
+		// We need to do this again since we tear down the namespace, e.g., after restarting RD.
+		err = execIptablesRules(ports, c.ID(), labels[namespaceKey], strconv.Itoa(int(t.Pid())))
+		if err != nil {
+			log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
+		}
+
+		err = e.portTracker.Add(c.ID(), ports)
+		if err != nil {
+			log.Errorf("adding port mapping to tracker failed: %v", err)
+
+			continue
+		}
+
+		e.updateListener(ctx, ports, e.portTracker.AddListener)
+		log.Debugf("initialized container %s task status: %+v with ports: %+v", c.ID(), status, ports)
+	}
 }
 
 // Close closes the client connection to the API server.
