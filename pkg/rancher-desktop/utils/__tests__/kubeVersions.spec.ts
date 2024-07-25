@@ -36,11 +36,11 @@ describe('highestStableVersion', () => {
 describe('minimumUpgradeVersion', () => {
   it('should return the highest patch release of the lowest major.minor version', () => {
     const versions: SemanticVersionEntry[] = [
-      { version: new semver.SemVer('v1.2.1'), channels: ['stable'] },
-      { version: new semver.SemVer('v1.0.0'), channels: ['unstable'] },
-      { version: new semver.SemVer('v1.0.3'), channels: ['unstable'] },
-      { version: new semver.SemVer('v1.0.2'), channels: ['stable'] },
-      { version: new semver.SemVer('v1.2.2'), channels: ['stable'] },
+      new SemanticVersionEntry(new semver.SemVer('v1.2.1'), ['stable']),
+      new SemanticVersionEntry(new semver.SemVer('v1.0.0'), ['unstable']),
+      new SemanticVersionEntry(new semver.SemVer('v1.0.3'), ['unstable']),
+      new SemanticVersionEntry(new semver.SemVer('v1.0.2'), ['stable']),
+      new SemanticVersionEntry(new semver.SemVer('v1.2.2'), ['stable']),
     ];
     const result = minimumUpgradeVersion(versions)?.version.version;
 

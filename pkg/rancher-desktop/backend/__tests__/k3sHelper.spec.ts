@@ -13,9 +13,9 @@ import K3sHelper, {
   ChannelMapping,
   NoCachedK3sVersionsError,
   ReleaseAPIEntry,
-  SemanticVersionEntry,
 } from '../k3sHelper';
 
+import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import paths from '@pkg/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');

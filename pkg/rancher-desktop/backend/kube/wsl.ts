@@ -16,6 +16,7 @@ import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
+import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -63,7 +64,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<K8s.SemanticVersionEntry[]> {
+  get availableVersions(): Promise<SemanticVersionEntry[]> {
     return this.k3sHelper.availableVersions;
   }
 

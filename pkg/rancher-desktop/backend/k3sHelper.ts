@@ -26,6 +26,7 @@ import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
 import * as childProcess from '@pkg/utils/childProcess';
 import fetch from '@pkg/utils/fetch';
+import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -108,31 +109,6 @@ export class ChannelMapping {
     const entries = Object.entries(this).map(([channel, version]) => [channel, version.raw]);
 
     return util.inspect(Object.fromEntries(entries), { ...options, depth });
-  }
-}
-
-/**
- * SemanticVersionEntry implements K8s.SemanticVersionEntry.
- *
- * This only exists to aid in debugging (by implementing util.debug.custom).
- * This is only exported for tests.
- */
-export class SemanticVersionEntry implements K8s.SemanticVersionEntry {
-  version: semver.SemVer;
-  channels?: string[];
-
-  constructor(version: semver.SemVer, channels: string[] = []) {
-    this.version = version;
-    if (channels.length > 0) {
-      this.channels = channels;
-    }
-  }
-
-  [util.inspect.custom](depth: number, options: util.InspectOptionsStylized) {
-    return util.inspect({
-      ...this,
-      version: this.version.raw,
-    }, { ...options, depth });
   }
 }
 
@@ -562,7 +538,7 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * The versions that are available to install.
    */
-  get availableVersions(): Promise<K8s.SemanticVersionEntry[]> {
+  get availableVersions(): Promise<SemanticVersionEntry[]> {
     return (async() => {
       await this.initialize();
       const upstreamSeemsReachable = await checkConnectivity('k3s.io');
@@ -577,7 +553,7 @@ export default class K3sHelper extends events.EventEmitter {
     return !(await checkConnectivity('k3s.io'));
   }
 
-  static async filterVersionsAgainstCache(fullVersionList: K8s.SemanticVersionEntry[]): Promise<K8s.SemanticVersionEntry[]> {
+  static async filterVersionsAgainstCache(fullVersionList: SemanticVersionEntry[]): Promise<SemanticVersionEntry[]> {
     try {
       const cacheDir = path.join(paths.cache, 'k3s');
       const k3sFilenames = (await fs.promises.readdir(cacheDir))

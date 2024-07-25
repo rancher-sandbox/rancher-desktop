@@ -18,11 +18,25 @@ export interface VersionEntry {
  * SemanticVersionEntry is a VersionEntry that contains semver.SemVer objects.
  * This should not be passed over IPC.
  */
-export interface SemanticVersionEntry extends Omit<VersionEntry, 'version'> {
+export class SemanticVersionEntry implements Omit<VersionEntry, 'version'> {
   /**
    * The version being described. This includes any build-specific data.
    */
   version: semver.SemVer;
+
+  channels?: string[];
+
+  constructor(version: semver.SemVer, channels?: string[]) {
+    this.version = version;
+    this.channels = channels && channels.length > 0 ? channels : undefined;
+  }
+
+  get versionEntry(): VersionEntry {
+    return {
+      version:  this.version.version,
+      channels: this.channels,
+    };
+  }
 }
 
 /**
@@ -46,8 +60,7 @@ function sameMajorMinorVersion(version1: semver.SemVer, version2: semver.SemVer)
  * @returns The highest patch version.
  */
 export function minimumUpgradeVersion(versions: SemanticVersionEntry[]): SemanticVersionEntry | undefined {
-  // See comment on highestStableVersion about versions[].version potentially not being a semver.SemVer object.
-  const lowestFirst = versions.slice().sort((a, b) => semver.compare(a.version, b.version));
+  const lowestFirst = versions.slice().sort((a, b) => a.version.compare(b.version));
 
   return lowestFirst.findLast(v => sameMajorMinorVersion(v.version, lowestFirst[0].version));
 }

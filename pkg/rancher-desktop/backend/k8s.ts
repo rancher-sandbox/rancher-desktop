@@ -15,8 +15,6 @@ export type {
 } from './backend';
 export type { ServiceEntry } from './kube/client';
 
-export type { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
-
 /**
  * KubernetesBackendEvents describes the events that may be emitted by a
  * Kubernetes backend (as an EventEmitter).  Each property name is the name of

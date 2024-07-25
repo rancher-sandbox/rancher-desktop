@@ -830,7 +830,7 @@ ipcMainProxy.on('k8s-versions', async() => {
   const versions = await k8smanager.kubeBackend.availableVersions;
   const cachedOnly = await k8smanager.kubeBackend.cachedVersionsOnly();
 
-  window.send('k8s-versions', versions.map(e => ({ version: e.version.version, channels: e.channels })), cachedOnly);
+  window.send('k8s-versions', versions.map(v => v.versionEntry), cachedOnly);
 });
 
 ipcMainProxy.on('k8s-progress', () => {
@@ -1282,7 +1282,7 @@ function newK8sManager() {
     const versions = await mgr.kubeBackend.availableVersions;
     const cachedOnly = await mgr.kubeBackend.cachedVersionsOnly();
 
-    window.send('k8s-versions', versions.map(e => ({ version: e.version.version, channels: e.channels })), cachedOnly);
+    window.send('k8s-versions', versions.map(v => v.versionEntry), cachedOnly);
   });
 
   return mgr;
