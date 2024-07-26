@@ -84,7 +84,7 @@ const hostDependencies = [
   new MobyOpenAPISpec(),
 ];
 
-async function downloadDependencies(items: DependencyWithContext[]): Promise<void[]> {
+async function downloadDependencies(items: DependencyWithContext[]): Promise<void> {
   function specialize(item: DependencyWithContext) {
     return `${ item.dependency.name }:${ item.context.platform }`;
   }
@@ -97,7 +97,7 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
   const all = new Set(Object.keys(dependenciesByName));
   const running = new Set<string>();
   const done = new Set<string>();
-  const promises: Promise<void>[] = [];
+  const promises: Record<string, Promise<void>> = {};
 
   for (const item of items) {
     const dependencies = item.dependency.dependencies?.(item.context) ?? [];
@@ -120,19 +120,28 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
     for (const dependent of reverseDependencies[name]) {
       if (!running.has(dependent)) {
         if (forwardDependencies[dependent].every(d => done.has(d))) {
-          promises.push(process(dependent));
+          promises[dependent] = process(dependent);
         }
       }
     }
   }
 
   for (const item of items.filter(d => (d.dependency.dependencies?.(d.context) ?? []).length === 0)) {
-    promises.push(process(specialize(item)));
+    promises[specialize(item)] = process(specialize(item));
   }
 
-  while (running.size > done.size) {
-    await Promise.all(promises);
+  const abortSignal = AbortSignal.timeout(10 * 60 * 1_000);
+
+  while (!abortSignal.aborted && running.size > done.size) {
+    const timeout = new Promise((resolve) => {
+      setTimeout(resolve, 60_000);
+      abortSignal.onabort = resolve;
+    });
+    const pending = Array.from(running).filter(v => !done.has(v));
+
+    await Promise.any([timeout, ...pending.map(v => promises[v])]);
   }
+  abortSignal.onabort = null;
 
   if (all.size > done.size) {
     const remaining = Array.from(all).filter(d => !done.has(d)).sort();
@@ -140,13 +149,16 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
 
     for (const key of remaining) {
       const deps = forwardDependencies[key].filter(d => !done.has(d));
+      const depsString = deps.length > 0 ? deps.join(', ') : '(nothing)';
+      const started = running.has(key) ? ' (started)' : '';
 
-      message.push(`    ${ key } depends on ${ deps }`);
+      message.push(`    ${ key }${ started } depends on ${ depsString }`);
+    }
+    if (abortSignal.aborted) {
+      message.unshift('Timed out downloading dependencies');
     }
     throw new Error(message.join('\n'));
   }
-
-  return await Promise.all(promises);
 }
 
 async function runScripts(): Promise<void> {
