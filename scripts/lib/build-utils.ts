@@ -133,7 +133,7 @@ export default {
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
         alias:      { '@pkg': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
-        extensions: ['.ts', '.js', '.json'],
+        extensions: ['.ts', '.js', '.json', '.node'],
         modules:    ['node_modules'],
       },
       output: {
@@ -165,6 +165,10 @@ export default {
             test:    /\.ya?ml$/,
             exclude: [/(?:^|[/\\])assets[/\\]scripts[/\\]/, this.distDir],
             use:     { loader: 'js-yaml-loader' },
+          },
+          {
+            test: /\.node$/,
+            use:  { loader: 'node-loader' },
           },
           {
             test: /(?:^|[/\\])assets[/\\]scripts[/\\]/,
