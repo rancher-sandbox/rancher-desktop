@@ -13,7 +13,6 @@ const DEFAULT_FILE_MODE = 0o644;
  * @param desiredPresent Whether the lines should be present.
  */
 export default async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
-  const copyFlags = fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE;
   const desired = getDesiredLines(desiredManagedLines, desiredPresent);
   let fileStats: fs.Stats;
 
@@ -41,10 +40,10 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
 
     const tempName = `${ path }.rd-temp`;
 
-    await fs.promises.copyFile(path, tempName, copyFlags);
+    await fs.promises.copyFile(path, tempName, fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
 
     try {
-      const currentContents = await fs.promises.readFile(path, 'utf-8');
+      const currentContents = await fs.promises.readFile(tempName, 'utf-8');
       const targetContents = computeTargetContents(currentContents, desired);
 
       if (targetContents === undefined) {
@@ -72,9 +71,9 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
   } else if (fileStats.isSymbolicLink()) {
     const backupPath = `${ path }.rd-backup~`;
 
-    await fs.promises.copyFile(path, backupPath, copyFlags);
+    await fs.promises.copyFile(path, backupPath, fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
 
-    const currentContents = await fs.promises.readFile(path, 'utf-8');
+    const currentContents = await fs.promises.readFile(backupPath, 'utf-8');
     const targetContents = computeTargetContents(currentContents, desired);
 
     if (targetContents === undefined) {
@@ -95,7 +94,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
   } else {
     // Target exists, and is neither a normal file nor a symbolic link.
     // Return with an error.
-    throw new Error(`Refusing to manage ${ path } which is not a regular file`);
+    throw new Error(`Refusing to manage ${ path } which is neither a regular file nor a symbolic link`);
   }
 }
 
