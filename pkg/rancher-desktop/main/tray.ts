@@ -203,8 +203,11 @@ export class Tray {
     // updates the network status in the tray if there's a change in the network
     // state.
     this.networkInterval = setInterval(async() => {
-      const networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
+      let networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
 
+      if (Array.isArray(networkDiagnostic)) {
+        networkDiagnostic = networkDiagnostic.shift();
+      }
       if (this.networkState === networkDiagnostic?.passed) {
         return; // network state hasn't changed since last check
       }
