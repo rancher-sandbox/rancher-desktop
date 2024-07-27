@@ -98,7 +98,7 @@ interface MainEventNames {
    * @note This does not update the last run time (since it only runs a single
    * checker).
    */
-  'diagnostics-trigger'(id: string): DiagnosticsCheckerResult | undefined;
+  'diagnostics-trigger'(id: string): DiagnosticsCheckerResult|DiagnosticsCheckerResult[] | undefined;
 
   /**
    * Emitted when an extension is uninstalled via the extension manager.
