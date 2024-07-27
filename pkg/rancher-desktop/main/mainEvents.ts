@@ -101,6 +101,13 @@ interface MainEventNames {
   'diagnostics-trigger'(id: string): DiagnosticsCheckerResult|DiagnosticsCheckerResult[] | undefined;
 
   /**
+   * Generically signify that a diagnostic should be updated.
+   * @param id The diagnostic identifier.
+   * @param state The new state for the diagnostic.
+   */
+  'diagnostics-event'(id: string, state: any): void;
+
+  /**
    * Emitted when an extension is uninstalled via the extension manager.
    * @param id The ID of the extension that was uninstalled.
    */
