@@ -158,7 +158,7 @@ func readKubeConfig(configPath string) (kubeConfig, error) {
 }
 
 func init() {
-	kubeconfigCmd.PersistentFlags().Bool("verify", true, "Checks whether the symlinked config contains non-Rancher Desktop configuration.")
+	kubeconfigCmd.PersistentFlags().Bool("verify", false, "Checks whether the symlinked config contains non-Rancher Desktop configuration.")
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
 	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
 	kubeconfigViper.AutomaticEnv()
