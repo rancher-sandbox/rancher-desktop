@@ -1,5 +1,6 @@
 import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult, DiagnosticsCheckerSingleResult } from './types';
 
+import { ErrorHasExtendedAttributes, ErrorNotRegularFile, ErrorWritingFile } from '@pkg/integrations/manageLinesInFile';
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
 
@@ -31,9 +32,28 @@ mainEvents.on('diagnostics-event', (id, state) => {
   const { fileName, error } = typedState;
 
   cachedResults[fileName] = {
-    passed:      !error,
-    description: error?.toString() ?? 'Passed',
+    description: error?.message ?? error?.toString() ?? `Unknown error managing ${ fileName }`,
+    passed:      false,
     fixes:       [],
+    ...(() => {
+      if (!error) {
+        return { passed: true, description: `\`${ fileName }\` is managed` };
+      }
+
+      if (error instanceof ErrorHasExtendedAttributes) {
+        return { fixes: [{ description: `Remove extended attributes from \`${ fileName }\`` }] };
+      }
+
+      if (error instanceof ErrorNotRegularFile) {
+        return { fixes: [{ description: `Replace \`${ fileName }\` with a regular file` }] };
+      }
+
+      if (error instanceof ErrorWritingFile) {
+        return { fixes: [{ description: `Restore \`${ fileName }\` from backup file \`${ error.backupPath }\`` }] };
+      }
+
+      return {};
+    })(),
   };
 });
 

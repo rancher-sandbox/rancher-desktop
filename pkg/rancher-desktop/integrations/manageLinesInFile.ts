@@ -7,10 +7,59 @@ export const END_LINE = '### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)';
 const DEFAULT_FILE_MODE = 0o644;
 
 /**
+ * `newErrorWithPath` returns a dynamically constructed subclass of `Error` that
+ * has a constructor that constructs a message using the `messageTemplate`
+ * function, and also sets any inputs to the function as properties on the
+ * resulting object.
+ * @param messageTemplate A function used to generate an error message, based on
+ *                        any arguments passed in as properties of an object.
+ * @returns A subclass of Error.
+ */
+function newErrorWithPath<T extends Record<string, any>>(messageTemplate: (input: T) => string) {
+  const result = class extends Error {
+    constructor(input: T, options?: ErrorOptions) {
+      super(messageTemplate(input), options);
+      Object.assign(this, input);
+    }
+  };
+
+  return result as unknown as new(...args: ConstructorParameters<typeof result>) => (InstanceType<typeof result> & T);
+}
+
+/**
+ * `ErrorDeterminingExtendedAttributes` signifies that we failed to determine if
+ * the given path contains extended attributes; to be safe, we are not managing
+ * this file.
+ */
+export const ErrorDeterminingExtendedAttributes =
+  newErrorWithPath(({ path }: {path: string}) => `Failed to determine if \`${ path }\` contains extended attributes`);
+/**
+ * `ErrorHasExtendedAttributes` signifies that we were unable to process a file
+ * because it has extended attributes that would not have been preserved had we
+ * tried to edit it.
+ */
+export const ErrorHasExtendedAttributes =
+  newErrorWithPath(({ path }: {path: string}) => `Refusing to manage \`${ path }\` which has extended attributes`);
+/**
+ * `ErrorNotRegularFile` signifies that we were unable to process a file because
+ * it is not a regular file (e.g. a named pipe or a device).
+ */
+export const ErrorNotRegularFile =
+  newErrorWithPath(({ path }: {path: string}) => `Refusing to manage \`${ path }\` which is neither a regular file nor a symbolic link`);
+/**
+ * `ErrorWritingFile` signifies that we attempted to process a file but writing
+ * to it resulted in unexpected contents.
+ */
+export const ErrorWritingFile =
+  newErrorWithPath(({ path, backupPath }: {path: string, backupPath: string}) => `Error writing to \`${ path }\`: written contents are unexpected; see backup in \`${ backupPath }\``);
+
+/**
  * Inserts/removes fenced lines into/from a file. Idempotent.
  * @param path The path to the file to work on.
  * @param desiredManagedLines The lines to insert into the file.
  * @param desiredPresent Whether the lines should be present.
+ * @throws If the file could not be managed; for example, if it has extended
+ *         attributes, is not a regular file, or a backup exists.
  */
 export default async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
   const desired = getDesiredLines(desiredManagedLines, desiredPresent);
@@ -35,7 +84,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
 
   if (fileStats.isFile()) {
     if (await fileHasExtendedAttributes(path)) {
-      throw new Error(`Refusing to manage ${ path } which has extended attributes`);
+      throw new ErrorHasExtendedAttributes({ path });
     }
 
     const tempName = `${ path }.rd-temp`;
@@ -88,13 +137,13 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
     const actualContents = await fs.promises.readFile(path, 'utf-8');
 
     if (!isEqual(targetContents, actualContents)) {
-      throw new Error(`Error writing to ${ path }: written contents are unexpected; see backup in ${ backupPath }`);
+      throw new ErrorWritingFile({ path, backupPath });
     }
     await fs.promises.unlink(backupPath);
   } else {
     // Target exists, and is neither a normal file nor a symbolic link.
     // Return with an error.
-    throw new Error(`Refusing to manage ${ path } which is neither a regular file nor a symbolic link`);
+    throw new ErrorNotRegularFile({ path });
   }
 }
 
@@ -112,15 +161,15 @@ async function fileHasExtendedAttributes(filePath: string): Promise<boolean> {
     const { list } = await import('fs-xattr');
 
     return (await list(filePath)).length > 0;
-  } catch {
+  } catch (cause) {
     if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
       // When running unit tests, assume they do not have extended attributes.
       return false;
     }
 
-    console.error(`Failed to import fs-xattr, cannot check for extended attributes on ${ filePath }; assuming it exists.`);
+    console.error(`Failed to import fs-xattr, cannot check for extended attributes on ${ filePath }`);
 
-    return true;
+    throw new ErrorDeterminingExtendedAttributes({ path: filePath }, { cause });
   }
 }
 
