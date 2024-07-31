@@ -1,7 +1,6 @@
 # Test cases 8, 13, 19
 
 load '../helpers/load'
-ARCH_FOR_KUBERLR=amd64
 
 local_setup_file() {
     if semver_eq "$RD_KUBERNETES_VERSION" "$RD_KUBERNETES_ALT_VERSION"; then
@@ -19,6 +18,11 @@ local_setup_file() {
         export RD_KUBERNETES_VERSION_LOW=$RD_KUBERNETES_VERSION
         export RD_KUBERNETES_VERSION_HIGH=$RD_KUBERNETES_ALT_VERSION
     fi
+    case "$(uname -m)" in
+    amd64 | x86_64 | i*86) export ARCH_FOR_KUBERLR=amd64 ;;
+    arm*) export ARCH_FOR_KUBERLR=arm64 ;;
+    *) printf "Unsupported architecture %s\n" "$(uname -m)" | fail ;;
+    esac
 }
 
 @test 'factory reset' {
