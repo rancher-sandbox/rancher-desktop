@@ -194,7 +194,7 @@ api_set() {
     assert_failure
     assert_output --partial 'field "application.extensions.allowed.list" is locked'
 
-    run api_set '"kubernetes": {"version": "1.16.15"}'
+    run api_set '"kubernetes": {"version": "'"$KUBERNETES_RANDOM_VERSION"'"}'
     assert_failure
     assert_output --partial 'field "kubernetes.version" is locked'
 }
