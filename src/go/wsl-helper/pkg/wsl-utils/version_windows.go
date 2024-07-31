@@ -63,8 +63,6 @@ func (i WSLInfo) String() string {
 }
 
 const (
-	// kPackageFamily is the package family for the WSL app (MSIX).
-	kPackageFamily = "MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe" // spellcheck-ignore-line
 	// kMsiUpgradeCode is the upgrade code for the WSL kernel (for in-box WSL2)
 	kMsiUpgradeCode = "{1C3DB5B6-65A5-4EBC-A5B9-2F2D6F665F48}"
 	// Number of characters in a GUID string, including spaces
@@ -82,20 +80,9 @@ const (
 //nolint:stylecheck // Win32 constants
 const (
 	INSTALLPROPERTY_VERSIONSTRING = "VersionString"
-	PACKAGE_INFORMATION_BASIC     = 0x00000000
-	PACKAGE_INFORMATION_FULL      = 0x00000100
-	PACKAGE_FILTER_STATIC         = 0x00080000
-	PACKAGE_FILTER_DYNAMIC        = 0x00100000
-	PackagePathType_Effective     = 2
 )
 
 var (
-	dllKernel32                = windows.NewLazySystemDLL("kernel32.dll")
-	getPackagesByPackageFamily = dllKernel32.NewProc("GetPackagesByPackageFamily")
-	openPackageInfoByFullName  = dllKernel32.NewProc("OpenPackageInfoByFullName")
-	closePackageInfo           = dllKernel32.NewProc("ClosePackageInfo")
-	getPackageInfo             = dllKernel32.NewProc("GetPackageInfo")
-
 	dllMsi                 = windows.NewLazySystemDLL("msi.dll")
 	msiEnumRelatedProducts = dllMsi.NewProc("MsiEnumRelatedProductsW")
 	msiGetProductInfo      = dllMsi.NewProc("MsiGetProductInfoW")
@@ -117,53 +104,6 @@ func errorFromWin32(msg string, rv uintptr, err error) error {
 		return fmt.Errorf("%s: %w: %w", msg, windows.Errno(rv), err)
 	}
 	return fmt.Errorf("%s: %w", msg, windows.Errno(rv))
-}
-
-// getPackageNames returns the package names for the given package family.
-func getPackageNames(packageFamily string) ([]string, error) {
-	var count, bufferLength uint32
-	packageFamilyBytes, err := windows.UTF16PtrFromString(packageFamily)
-	if err != nil {
-		return nil, fmt.Errorf("error allocating package family name: %w", err)
-	}
-	rv, _, err := getPackagesByPackageFamily.Call(
-		uintptr(unsafe.Pointer(packageFamilyBytes)),
-		uintptr(unsafe.Pointer(&count)),
-		uintptr(unsafe.Pointer(nil)),
-		uintptr(unsafe.Pointer(&bufferLength)),
-		uintptr(unsafe.Pointer(nil)),
-	)
-	switch rv {
-	case uintptr(windows.ERROR_SUCCESS):
-		break
-	case uintptr(windows.ERROR_INSUFFICIENT_BUFFER):
-		// This is expected: we didn't provide any buffer
-		break
-	default:
-		return nil, errorFromWin32("error getting buffer size", rv, err)
-	}
-
-	packageNames := make([]uintptr, count)
-	packageNameBuffer := make([]uint16, bufferLength)
-
-	rv, _, err = getPackagesByPackageFamily.Call(
-		uintptr(unsafe.Pointer(packageFamilyBytes)),
-		uintptr(unsafe.Pointer(&count)),
-		uintptr(unsafe.Pointer(unsafe.SliceData(packageNames))),
-		uintptr(unsafe.Pointer(&bufferLength)),
-		uintptr(unsafe.Pointer(unsafe.SliceData(packageNameBuffer))),
-	)
-	if rv != uintptr(windows.ERROR_SUCCESS) {
-		return nil, errorFromWin32("error getting package names", rv, err)
-	}
-
-	result := make([]string, count)
-	slice := unsafe.Slice((**uint16)(unsafe.Pointer(unsafe.SliceData(packageNames))), count)
-	for i, ptr := range slice {
-		result[i] = windows.UTF16PtrToString(ptr)
-	}
-
-	return result, nil
 }
 
 // PackageVersion corresponds to the PACKAGE_VERSION structure.
@@ -232,85 +172,9 @@ func (v PackageVersion) Less(other PackageVersion) bool {
 	return false
 }
 
-// packageInfo corresponds to the PACKAGE_INFO structure.
-type packageInfo struct {
-	reserved          uint32
-	flags             uint32
-	path              *uint16
-	packageFullName   *uint16
-	packageFamilyName *uint16
-	packageID         struct {
-		reserved              uint32
-		processorArchitecture uint32
-		version               PackageVersion
-		name                  *uint16
-		publisher             *uint16
-		resourceID            *uint16
-		publisherID           *uint16
-	}
-}
-
-// getPackageVersion gets the package version of the package with the given
-// full name.
-func getPackageVersion(fullName string) (*PackageVersion, error) {
-	nameBuffer, err := windows.UTF16PtrFromString(fullName)
-	if err != nil {
-		return nil, err
-	}
-	var packageInfoReference uintptr
-	rv, _, err := openPackageInfoByFullName.Call(
-		uintptr(unsafe.Pointer(nameBuffer)),
-		0, // reserved
-		uintptr(unsafe.Pointer(&packageInfoReference)),
-	)
-	if rv != uintptr(windows.ERROR_SUCCESS) {
-		return nil, errorFromWin32("error opening package info", rv, err)
-	}
-	defer func() { _, _, _ = closePackageInfo.Call(packageInfoReference) }()
-
-	var bufferLength, count uint32
-	rv, _, err = getPackageInfo.Call(
-		packageInfoReference,
-		uintptr(PACKAGE_INFORMATION_BASIC|PACKAGE_FILTER_STATIC|PACKAGE_FILTER_DYNAMIC),
-		uintptr(unsafe.Pointer(&bufferLength)),
-		uintptr(unsafe.Pointer(nil)),
-		uintptr(unsafe.Pointer(nil)),
-	)
-	switch rv {
-	case uintptr(windows.ERROR_SUCCESS):
-		break
-	case uintptr(windows.ERROR_INSUFFICIENT_BUFFER):
-		// This is expected: we didn't provide any buffer
-		break
-	default:
-		return nil, errorFromWin32("error getting buffer size", rv, err)
-	}
-
-	buf := make([]byte, bufferLength)
-	rv, _, err = getPackageInfo.Call(
-		packageInfoReference,
-		uintptr(PACKAGE_INFORMATION_BASIC|PACKAGE_FILTER_STATIC|PACKAGE_FILTER_DYNAMIC),
-		uintptr(unsafe.Pointer(&bufferLength)),
-		uintptr(unsafe.Pointer(unsafe.SliceData(buf))),
-		uintptr(unsafe.Pointer(&count)),
-	)
-	if rv != uintptr(windows.ERROR_SUCCESS) {
-		return nil, errorFromWin32("error getting package info", rv, err)
-	}
-	infos := unsafe.Slice((*packageInfo)(unsafe.Pointer(unsafe.SliceData(buf))), count)
-	for _, info := range infos {
-		// `info` is a pointer to an unsafe slice; make a copy of the version
-		// on the stack and then return that so the GC knows about it.
-		versionCopy := info.packageID.version
-		return &versionCopy, nil
-	}
-
-	return nil, fmt.Errorf("no info found for %s", fullName)
-}
-
-// Get the component versions for an AppX-based installation.  Returns the WSL
+// Get the component versions by asking the CLI.  Returns the WSL
 // version, followed by the kernel version.
-func getAppxVersion(ctx context.Context, log *logrus.Entry) (*PackageVersion, *PackageVersion, error) {
+func getVersionFromCLI(ctx context.Context, log *logrus.Entry) (*PackageVersion, *PackageVersion, error) {
 	newRunnerFunc := NewWSLRunner
 	if f := ctx.Value(&kWSLExeOverride); f != nil {
 		newRunnerFunc = f.(func() WSLRunner)
@@ -352,9 +216,9 @@ func getAppxVersion(ctx context.Context, log *logrus.Entry) (*PackageVersion, *P
 		}
 	}
 	if len(errorList) > 0 {
-		return nil, nil, fmt.Errorf("error getting AppX version: %w", errors.Join(errorList...))
+		return nil, nil, fmt.Errorf("error getting WSL version from CLI: %w", errors.Join(errorList...))
 	}
-	log.WithFields(logrus.Fields{"wsl": wslVersion, "kernel": kernelVersion}).Trace("got AppX version")
+	log.WithFields(logrus.Fields{"wsl": wslVersion, "kernel": kernelVersion}).Trace("got version from CLI")
 	return &wslVersion, &kernelVersion, nil
 }
 
@@ -480,34 +344,19 @@ func getMSIVersion(productCode []uint16, log *logrus.Entry) (*PackageVersion, er
 }
 
 func GetWSLInfo(ctx context.Context, log *logrus.Entry) (*WSLInfo, error) {
-	names, err := getPackageNames(kPackageFamily)
-	if err != nil {
-		log.WithError(err).Trace("Error getting appx packages")
-		return nil, err
+	wslVersion, kernelVersion, err := getVersionFromCLI(ctx, log)
+	if err == nil {
+		return &WSLInfo{
+			Installed:      true,
+			Inbox:          false,
+			Version:        *wslVersion,
+			KernelVersion:  *kernelVersion,
+			HasKernel:      PackageVersion{}.Less(*kernelVersion),
+			OutdatedKernel: kernelVersion.Less(MinimumKernelVersion),
+		}, nil
 	}
+	log.WithError(err).Trace("Could not get version from `wsl --version`, trying inbox versions...")
 
-	log.Tracef("Got %d appx packages", len(names))
-	for _, name := range names {
-		if version, err := getPackageVersion(name); err == nil {
-			log.Tracef("Got appx package %s with version %s", name, version)
-			wslVersion, kernelVersion, err := getAppxVersion(ctx, log)
-			if err != nil {
-				return nil, err
-			}
-			return &WSLInfo{
-				Installed:      true,
-				Inbox:          false,
-				Version:        *wslVersion,
-				KernelVersion:  *kernelVersion,
-				HasKernel:      PackageVersion{}.Less(*kernelVersion),
-				OutdatedKernel: kernelVersion.Less(MinimumKernelVersion),
-			}, nil
-		} else {
-			log.WithError(err).Trace("Failed to get package version")
-		}
-	}
-
-	log.Trace("Failed to get WSL appx package, trying inbox versions...")
 	hasWSL, kernelVersion, err := getInboxWSLInfo(ctx, log)
 	if err != nil {
 		return nil, err
