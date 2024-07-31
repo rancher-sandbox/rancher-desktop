@@ -17,7 +17,7 @@ load '../helpers/load'
     # No way there's a race-condition here.
     # The version was checked and written to the log file before starting k8s,
     # and we have to wait a few minutes before k8s is ready and we're at the next line.
-    assert_file_contains "$PATH_LOGS/kube.log" "Requested kubernetes version 'moose' is not a valid version. Falling back to the most recent stable version of"
+    assert_file_contains "$PATH_LOGS/kube.log" "Requested kubernetes version 'moose' is not a supported version. Falling back to"
 }
 
 # on macOS it still hangs without this
