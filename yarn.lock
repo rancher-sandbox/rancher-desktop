@@ -3156,15 +3156,15 @@
     semver "^7.3.7"
     tsutils "^3.21.0"
 
-"@typescript-eslint/parser@7.17.0", "@typescript-eslint/parser@^7.1.1":
-  version "7.17.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-7.17.0.tgz#be8e32c159190cd40a305a2121220eadea5a88e7"
-  integrity sha512-puiYfGeg5Ydop8eusb/Hy1k7QmOU6X3nvsqCgzrB2K4qMavK//21+PzNE8qeECgNOIoertJPUC1SpegHDI515A==
+"@typescript-eslint/parser@7.18.0", "@typescript-eslint/parser@^7.1.1":
+  version "7.18.0"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-7.18.0.tgz#83928d0f1b7f4afa974098c64b5ce6f9051f96a0"
+  integrity sha512-4Z+L8I2OqhZV8qA132M4wNL30ypZGYOQVBfMgxDH/K5UX0PNqTu1c6za9ST5r9+tavvHiTWmBnKzpCJ/GlVFtg==
   dependencies:
-    "@typescript-eslint/scope-manager" "7.17.0"
-    "@typescript-eslint/types" "7.17.0"
-    "@typescript-eslint/typescript-estree" "7.17.0"
-    "@typescript-eslint/visitor-keys" "7.17.0"
+    "@typescript-eslint/scope-manager" "7.18.0"
+    "@typescript-eslint/types" "7.18.0"
+    "@typescript-eslint/typescript-estree" "7.18.0"
+    "@typescript-eslint/visitor-keys" "7.18.0"
     debug "^4.3.4"
 
 "@typescript-eslint/parser@^5.36.1":
