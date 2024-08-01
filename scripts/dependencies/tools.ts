@@ -1,4 +1,3 @@
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -12,6 +11,7 @@ import {
 import {
   DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
+import { simpleSpawn } from 'scripts/simple_process';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
@@ -413,15 +413,13 @@ export class RancherDashboard implements Dependency, GitHubDependency {
       args[0] = path.join(systemRoot, 'system32', 'tar.exe');
     }
 
-    spawnSync(
-      args[0],
-      args.slice(1),
-      {
-        cwd:   rancherDashboardDir,
-        stdio: 'inherit',
-      });
+    console.log('Extracting rancher dashboard...');
+    await simpleSpawn(args[0], args.slice(1), {
+      cwd:   rancherDashboardDir,
+      stdio: ['ignore', 'inherit', 'inherit'],
+    });
 
-    fs.rmSync(destPath, { maxRetries: 10 });
+    await fs.promises.rm(destPath, { recursive: true, maxRetries: 10 });
   }
 
   async getAvailableVersions(): Promise<string[]> {
