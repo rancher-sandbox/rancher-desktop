@@ -35,47 +35,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func TestGetPackageNames(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
-	t.Run("valid package family", func(t *testing.T) {
-		// Get a random package family
-		command := `Get-AppxPackage | Select-Object -First 1 -ExpandProperty PackageFamilyName`
-		output, err := runPowerShell(ctx, command)
-		if err != nil {
-			t.Skipf("Failed to get sample family, skipping test: %s", err)
-		}
-		family := strings.TrimSpace(output.String())
-
-		// Get all packages in that family; not that we can't pipe single element
-		// arrays (they get flattened to just the element), so we need to pass the
-		// list as an argument to ConvertTo-JSON
-		command = fmt.Sprintf(strings.NewReplacer("\r", " ", "\n", " ", "\t", " ").Replace(`
-		ConvertTo-JSON -InputObject @(
-			Get-AppxPackage
-			| Where-Object { $_.PackageFamilyName -eq "%s" }
-			| Select-Object -ExpandProperty PackageFullName
-		)
-	`), family)
-		output, err = runPowerShell(ctx, command)
-		if err != nil {
-			t.Skipf("Failed to get packages in family %s, skipping test: %s", family, err)
-		}
-		var expected []string
-		assert.NoErrorf(t, json.Unmarshal(output.Bytes(), &expected), "failed to read package names: %s", output.String())
-
-		names, err := getPackageNames(family)
-		require.NoError(t, err, "Error getting package names")
-		assert.ElementsMatch(t, expected, names, "Failed to get packages")
-	})
-
-	t.Run("invalid package family", func(t *testing.T) {
-		_, err := getPackageNames("invalid package family")
-		assert.Error(t, err, "should not get packages for invalid family")
-	})
-}
-
 func TestPackageVersion(t *testing.T) {
 	t.Run("UnmarshalText", func(t *testing.T) {
 		t.Parallel()
@@ -155,36 +114,6 @@ func TestPackageVersion(t *testing.T) {
 	})
 }
 
-func TestGetPackageVersion(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
-	t.Run("valid package", func(t *testing.T) {
-		// Get a random package and version
-		info := struct {
-			PackageFullName string
-			Version         *PackageVersion
-		}{}
-		command := `Get-AppxPackage | Select-Object -First 1 -Property PackageFullName, Version | ConvertTo-JSON`
-		output, err := runPowerShell(ctx, command)
-		if err != nil {
-			t.Skipf("Failed to get sample package, skipping test: %s", err)
-		}
-		require.NoError(t, json.Unmarshal(output.Bytes(), &info), "failed to get package")
-		require.NotNil(t, info.Version, "failed to get package version")
-
-		version, err := getPackageVersion(info.PackageFullName)
-		require.NoError(t, err)
-		require.NotNil(t, version)
-		assert.Equal(t, info.Version, version, "unexpected version")
-	})
-
-	t.Run("invalid package", func(t *testing.T) {
-		_, err := getPackageVersion("not a valid package name")
-		assert.Error(t, err, "should error with invalid package name")
-	})
-}
-
 // TestWithExitCode is a dummy test function to let us exit with a given exit
 // code.  See TestIsInboxWSLInstalled/not_installed.
 func TestWithExitCode(t *testing.T) {
@@ -220,7 +149,7 @@ func runPowerShell(ctx context.Context, command string) (*bytes.Buffer, error) {
 	return stdout, nil
 }
 
-func TestGetAppxVersion(t *testing.T) {
+func TestGetVersionFromCLI(t *testing.T) {
 	outputs := map[string]struct {
 		lines  []string
 		wsl    string
@@ -261,7 +190,7 @@ func TestGetAppxVersion(t *testing.T) {
 				return nil
 			})
 			var expectedWSL, expectedKernel PackageVersion
-			wsl, kernel, err := getAppxVersion(ctx, logrus.NewEntry(logger))
+			wsl, kernel, err := getVersionFromCLI(ctx, logrus.NewEntry(logger))
 			assert.NoError(t, err)
 			assert.NoError(t, expectedWSL.UnmarshalText([]byte(input.wsl)))
 			assert.NoError(t, expectedKernel.UnmarshalText([]byte(input.kernel)))
