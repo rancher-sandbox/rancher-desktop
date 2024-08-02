@@ -101,7 +101,7 @@ paths:
       summary: >-
         Return a list of the check IDs for the Diagnostics category,
         or 404 if there is no such `category`.
-        Specifying an exiting category with no checks
+        Specifying an existing category with no checks
         will return status code 200 and an empty array.
       parameters:
       - in: query
