@@ -23,4 +23,4 @@ moproxy: 0.5.1
 spinShim: 0.15.1
 spinOperator: 0.2.0
 certManager: 1.15.2
-spinCLI: 2.6.0
+spinCLI: 2.7.0
