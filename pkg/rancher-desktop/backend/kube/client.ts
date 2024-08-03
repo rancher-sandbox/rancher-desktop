@@ -506,7 +506,7 @@ export class KubeClient extends events.EventEmitter {
       });
       server.once('listening', resolveOnce);
       server.once('error', rejectOnce);
-      server.listen({ port: hostPort, host: 'localhost' });
+      server.listen({ port: hostPort, host: '127.0.0.1' });
     });
 
     return server;
