@@ -8,7 +8,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rancher-sandbox/rancher-desktop-agent v0.3.19
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/sys v0.22.0
+	golang.org/x/sys v0.23.0
 )
 
 require (
