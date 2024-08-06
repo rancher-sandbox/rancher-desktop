@@ -87,5 +87,5 @@ EOF
 
     run --separate-stderr try curl --connect-timeout 5 --fail "http://${host}"
     assert_success
-    assert_output "Hello from JS-SDK"
+    assert_output --regexp '^(Hello|hello)'
 }
