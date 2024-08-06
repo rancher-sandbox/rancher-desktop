@@ -13,7 +13,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/lima-vm/lima v0.14.3-0.20230111232138-f26b412f08c3
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.23.0
 	k8s.io/api v0.30.3
 	k8s.io/apimachinery v0.30.3
