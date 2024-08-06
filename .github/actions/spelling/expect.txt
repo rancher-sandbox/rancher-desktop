@@ -840,6 +840,7 @@ ventura
 VERSIONSTRING
 vertificate
 veth
+Vhd
 vhdx
 vinzenz
 virt

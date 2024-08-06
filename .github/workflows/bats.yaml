@@ -35,6 +35,10 @@ on:
         description: Package run ID override; leave empty to use latest.
         default: ''
         type: string
+      experimental:
+        description: Run with experimental settings (WSL)
+        default: false
+        type: boolean
   schedule:
   - cron: '0 8 * * 1-5' # 8AM UTC weekdays as a baseline
 
@@ -172,6 +176,26 @@ jobs:
       run: >-
         wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
         sh -c 'apt-get update && apt-get install --yes bsdextrautils coreutils curl'
+
+    - name: "Windows: Enable experimental WSL settings"
+      if: runner.os == 'Windows' && inputs.experimental
+      shell: pwsh
+      run: |
+        Set-Content -Encoding UTF8NoBOM -Path "${HOME}/.wslconfig" -Value @"
+        ; Note that not all settings here make sense together.
+        [wsl]
+        dnsProxy=false
+        ; networkingMode=mirrored ; https://github.com/rancher-sandbox/rancher-desktop/issues/6665
+        firewall=true
+        dnsTunneling=true
+        autoProxy=true
+        [experimental]
+        autoMemoryReclaim=gradual
+        sparseVhd=true
+        useWindowsDnsCache=true
+        bestEffortDnsParsing=true
+        hostAddressLoopback=true
+        "@
 
     - name: Set log directory
       shell: bash
