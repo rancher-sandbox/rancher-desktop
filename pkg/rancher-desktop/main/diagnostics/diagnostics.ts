@@ -47,12 +47,12 @@ export class DiagnosticsManager {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
       const imports = (await Promise.all([
         import('./connectedToInternet'),
-        import('./pathManagement'),
         import('./dockerCliSymlinks'),
         import('./kubeConfigSymlink'),
         import('./kubeContext'),
         import('./limaDarwin'),
         import('./mockForScreenshots'),
+        import('./pathManagement'),
         import('./rdBinInShell'),
         import('./testCheckers'),
         import('./wslFromStore'),

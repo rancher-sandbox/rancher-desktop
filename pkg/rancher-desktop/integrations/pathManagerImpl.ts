@@ -61,7 +61,7 @@ export class RcFilePathManager implements PathManager {
     try {
       await manageLinesInFile(filePath, lines, desiredPresent);
       mainEvents.emit('diagnostics-event', 'path-management', { fileName, error: undefined });
-    } catch (error) {
+    } catch (error: any) {
       mainEvents.emit('diagnostics-event', 'path-management', { fileName, error });
       throw error;
     }
