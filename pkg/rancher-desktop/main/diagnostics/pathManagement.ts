@@ -2,11 +2,13 @@ import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult, Diag
 
 import { ErrorHasExtendedAttributes, ErrorNotRegularFile, ErrorWritingFile } from '@pkg/integrations/manageLinesInFile';
 import mainEvents from '@pkg/main/mainEvents';
-import Logging from '@pkg/utils/logging';
 
-const console = Logging.diagnostics;
 const cachedResults: Record<string, DiagnosticsCheckerResult> = {};
 
+/**
+ * Check for any errors raised from handling path management (i.e. handling of
+ * ~/.bashrc and related files) and report them to the user.
+ */
 const CheckPathManagement: DiagnosticsChecker = {
   id:       'PATH_MANAGEMENT',
   category: DiagnosticsCategory.Utilities,
@@ -24,7 +26,6 @@ const CheckPathManagement: DiagnosticsChecker = {
 };
 
 mainEvents.on('diagnostics-event', (id, state) => {
-  console.log('diagnostics-event', id, state);
   if (id !== 'path-management') {
     return;
   }

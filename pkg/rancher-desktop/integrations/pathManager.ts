@@ -8,8 +8,8 @@ export interface PathManager {
   /** The PathManagementStrategy that corresponds to the implementation. */
   readonly strategy: PathManagementStrategy
   /**
-   * Makes real any changes to the system. Should be idempotent, and should not
-   * throw any exceptions.
+   * Applies changes to the system. Should be idempotent, and should not throw
+   * any exceptions.
    */
   enforce(): Promise<void>
   /**
