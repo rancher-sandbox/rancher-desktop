@@ -84,10 +84,10 @@ call_local_function() {
 }
 
 setup_file() {
-    # We require bash 5; bash 3.2 (as shipped by macOS) seems to have
+    # We require bash 4; bash 3.2 (as shipped by macOS) seems to have
     # compatibility issues.
-    if semver_gt 5.0.0 "$(semver "$BASH_VERSION")"; then
-        fail "Bash 5.0.0 is required; you have $BASH_VERSION"
+    if semver_gt 4.0.0 "$(semver "$BASH_VERSION")"; then
+        fail "Bash 4.0.0 is required; you have $BASH_VERSION"
     fi
     # We currently use a submodule that provides BATS 1.10; we do not test
     # against any other copy of BATS (and therefore only support the version in
