@@ -7,8 +7,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-
-import fetch from 'node-fetch';
+import stream from 'stream';
 
 import { simpleSpawn } from 'scripts/simple_process';
 
@@ -33,7 +32,7 @@ export type ArchiveDownloadOptions = DownloadOptions & {
 async function fetchWithRetry(url: string) {
   while (true) {
     try {
-      return await fetch(url);
+      return await fetch(url, { redirect: 'follow' });
     } catch (ex: any) {
       if (ex && ex.errno === 'EAI_AGAIN') {
         console.log(`Recoverable error downloading ${ url }, retrying...`);
@@ -76,14 +75,15 @@ export async function download(url: string, destPath: string, options: DownloadO
   if (!response.ok) {
     throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
   }
+  if (!response.body) {
+    throw new Error(`Error downloading ${ url }: did not receive response body`);
+  }
   const tempPath = `${ destPath }.download`;
 
   try {
     const file = fs.createWriteStream(tempPath);
-    const promise = new Promise(resolve => file.on('finish', resolve));
 
-    response.body.pipe(file);
-    await promise;
+    await response.body.pipeTo(stream.Writable.toWeb(file));
 
     if (expectedChecksum) {
       const actualChecksum = await getChecksumForFile(tempPath, checksumAlgorithm);
