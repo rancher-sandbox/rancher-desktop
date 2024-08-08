@@ -76,9 +76,6 @@ export interface IpcMainEvents {
 
   'show-logs': () => void;
 
-  'dashboard-open': () => void;
-  'dashboard-close': () => void;
-
   'diagnostics/run': () => void;
 
   /** Only for the preferences window */
@@ -216,7 +213,6 @@ export interface IpcRendererEvents {
   'dialog/close': (...args: any) => void;
   'dialog/error': (args: any) => void;
   'dialog/info': (args: Record<string, string>) => void;
-  'dashboard-open': () => void;
   // #endregion
 
   // #region tab navigation

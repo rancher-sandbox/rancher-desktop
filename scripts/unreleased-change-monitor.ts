@@ -23,8 +23,6 @@ const dependencies: UnreleasedChangeMonitoringDependency[] = [
   new LimaAndQemu(),
   new WSLDistro(),
   new tools.DockerCLI(),
-  new tools.Steve(),
-  new tools.RancherDashboard(),
   new AlpineLimaISO(),
   new HostResolverHost(), // we only need one of HostResolverHost and HostResolverPeer
   new HostSwitch(),

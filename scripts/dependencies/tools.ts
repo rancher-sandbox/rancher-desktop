@@ -11,7 +11,6 @@ import {
 import {
   DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
@@ -326,131 +325,6 @@ export class Trivy implements Dependency, GitHubDependency {
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
     return semver.rcompare(version1, version2);
-  }
-}
-
-export class Steve implements Dependency, GitHubDependency {
-  name = 'steve';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'rancher-desktop-steve';
-
-  async download(context: DownloadContext): Promise<void> {
-    const steveURLBase = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.steve }`;
-    const arch = context.isM1 ? 'arm64' : 'amd64';
-    const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
-    const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-    const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
-    const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, `${ steveExecutable }.tar.gz`);
-
-    await downloadTarGZ(
-      steveURL,
-      stevePath,
-      {
-        expectedChecksum:  steveSHA,
-        checksumAlgorithm: 'sha512',
-      });
-  }
-
-  // Note that we set includePrerelease to true by default, which is different
-  // from the way other Dependency's work. There is a reason for this:
-  // as of the time of writing, all releases of steve are prerelease versions.
-  // If this changes, the default value of includePrelease should be changed to false.
-  async getAvailableVersions(includePrerelease = true): Promise<string[]> {
-    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
-  }
-
-  versionToTagName(version: string): string {
-    return `v${ version }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return semver.rcompare(version1, version2);
-  }
-}
-
-export class RancherDashboard implements Dependency, GitHubDependency {
-  name = 'rancherDashboard';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'dashboard';
-  versionRegex = /^desktop-v([0-9]+\.[0-9]+\.[0-9]+)\.([0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+)$/;
-
-  async download(context: DownloadContext): Promise<void> {
-    const baseURL = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
-    const executableName = 'rancher-dashboard-desktop-embed';
-    const url = `${ baseURL }/${ executableName }.tar.gz`;
-    const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
-    const expectedChecksum = await findChecksum(`${ url }.sha512sum`, `${ executableName }.tar.gz`);
-    const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
-
-    if (fs.existsSync(rancherDashboardDir)) {
-      console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
-
-      return;
-    }
-
-    await download(
-      url,
-      destPath,
-      {
-        expectedChecksum,
-        checksumAlgorithm: 'sha512',
-        access:            fs.constants.W_OK,
-      });
-
-    await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
-
-    const args = ['tar', '-xf', destPath];
-
-    if (os.platform().startsWith('win')) {
-      // On Windows, force use the bundled bsdtar.
-      // We may find GNU tar on the path, which looks at the Windows-style path
-      // and considers C:\Temp to be a reference to a remote host named `C`.
-      const systemRoot = process.env.SystemRoot;
-
-      if (!systemRoot) {
-        throw new Error('Could not find system root');
-      }
-      args[0] = path.join(systemRoot, 'system32', 'tar.exe');
-    }
-
-    console.log('Extracting rancher dashboard...');
-    await simpleSpawn(args[0], args.slice(1), {
-      cwd:   rancherDashboardDir,
-      stdio: ['ignore', 'inherit', 'inherit'],
-    });
-
-    await fs.promises.rm(destPath, { recursive: true, maxRetries: 10 });
-  }
-
-  async getAvailableVersions(): Promise<string[]> {
-    const versions = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    // Versions that contain .plugins. exist solely for testing during
-    // plugins development. For more info please see
-    // https://github.com/rancher-sandbox/rancher-desktop/issues/3757
-    return versions.filter(version => !version.includes('.plugins.'));
-  }
-
-  versionToTagName(version: string): string {
-    return version;
-  }
-
-  versionToSemver(version: string): string {
-    const match = this.versionRegex.exec(version);
-
-    if (match === null) {
-      throw new Error(`${ this.name }: ${ version } does not match version regex ${ this.versionRegex }`);
-    }
-    const [, mainVersion, prereleaseVersion] = match;
-
-    return `${ mainVersion }-${ prereleaseVersion }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semver1 = this.versionToSemver(version1);
-    const semver2 = this.versionToSemver(version2);
-
-    return semver.rcompare(semver1, semver2);
   }
 }
 

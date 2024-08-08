@@ -29,6 +29,5 @@ resources/resources/win32/internal:
 - host-resolver.exe
 - host-switch.exe
 - privileged-service.exe
-- steve.exe
 - vtunnel.exe
 - wsl-helper.exe

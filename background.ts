@@ -14,7 +14,6 @@ import K8sFactory from '@pkg/backend/factory';
 import { getImageProcessor } from '@pkg/backend/images/imageFactory';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
-import { Steve } from '@pkg/backend/steve';
 import { FatalCommandLineOptionError, LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import { Help } from '@pkg/config/help';
 import * as settings from '@pkg/config/settings';
@@ -26,7 +25,6 @@ import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
 import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
-import { DashboardServer } from '@pkg/main/dashboardServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
@@ -53,7 +51,6 @@ import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
 import { getVersion } from '@pkg/utils/version';
 import getWSLVersion from '@pkg/utils/wslVersion';
 import * as window from '@pkg/window';
-import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
 import { openPreferences, preferencesSetDirtyFlag } from '@pkg/window/preferences';
 
 Electron.app.setPath('cache', paths.cache);
@@ -204,8 +201,6 @@ Electron.app.whenReady().then(async() => {
     }
     // Check for required OS versions and features
     await checkPrerequisites();
-
-    DashboardServer.getInstance().init();
 
     await setupNetworking();
 
@@ -680,14 +675,6 @@ ipcMainProxy.on('images-namespaces-read', (event) => {
   }
 });
 
-ipcMainProxy.on('dashboard-open', () => {
-  openDashboard();
-});
-
-ipcMainProxy.on('dashboard-close', () => {
-  closeDashboard();
-});
-
 ipcMainProxy.on('preferences-open', () => {
   openPreferences();
 });
@@ -711,11 +698,6 @@ function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
   writeSettings(arg);
-
-  // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
-  if (arg?.kubernetes?.enabled === false) {
-    closeDashboard();
-  }
 
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
@@ -1240,15 +1222,8 @@ function newK8sManager() {
         writeSettings({ kubernetes: { version: mgr.kubeBackend.version } });
       }
       currentImageProcessor?.relayNamespaces();
-
-      if (enabledK8s) {
-        Steve.getInstance().start();
-      }
     }
 
-    if (state === K8s.State.STOPPING) {
-      Steve.getInstance().stop();
-    }
     if (pendingRestartContext !== undefined && !backendIsBusy()) {
       // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
       setTimeout(doFullRestart, 2_000, pendingRestartContext);
