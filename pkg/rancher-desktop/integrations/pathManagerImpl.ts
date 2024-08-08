@@ -7,7 +7,10 @@ import { Mutex } from 'async-mutex';
 import manageLinesInFile from '@pkg/integrations/manageLinesInFile';
 import { ManualPathManager, PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
 import mainEvents from '@pkg/main/mainEvents';
+import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+
+const console = Logging['path-management'];
 
 /**
  * RcFilePathManager is for when the user wants Rancher Desktop to
@@ -32,15 +35,36 @@ export class RcFilePathManager implements PathManager {
   }
 
   async enforce(): Promise<void> {
-    await this.managePosix(true);
-    await this.manageCsh(true);
-    await this.manageFish(true);
+    try {
+      await this.managePosix(true);
+      await this.manageCsh(true);
+      await this.manageFish(true);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async remove(): Promise<void> {
-    await this.managePosix(false);
-    await this.manageCsh(false);
-    await this.manageFish(false);
+    try {
+      await this.managePosix(false);
+      await this.manageCsh(false);
+      await this.manageFish(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  /**
+   * Call manageFilesInLine, wrapped in calls to trigger diagnostics updates.
+   */
+  protected async manageLinesInFile(fileName: string, filePath: string, lines: string[], desiredPresent: boolean) {
+    try {
+      await manageLinesInFile(filePath, lines, desiredPresent);
+      mainEvents.emit('diagnostics-event', 'path-management', { fileName, error: undefined });
+    } catch (error: any) {
+      mainEvents.emit('diagnostics-event', 'path-management', { fileName, error });
+      throw error;
+    }
   }
 
   /**
@@ -51,7 +75,8 @@ export class RcFilePathManager implements PathManager {
   protected async managePosix(desiredPresent: boolean): Promise<void> {
     await this.posixMutex.runExclusive(async() => {
       const pathLine = `export PATH="${ paths.integration }:$PATH"`;
-      // Note: order is important here. Only the first one that is present is modified.
+      // Note: order is important here.  Only the first one has the PATH added;
+      // all others have it removed.
       const bashLoginShellFiles = [
         '.bash_profile',
         '.bash_login',
@@ -70,35 +95,38 @@ export class RcFilePathManager implements PathManager {
             await fs.promises.stat(filePath);
           } catch (error: any) {
             if (error.code === 'ENOENT') {
+              // If the file does not exist, it is not an error.
+              mainEvents.emit('diagnostics-event', 'path-management', { fileName, error: undefined });
               continue;
             }
+            mainEvents.emit('diagnostics-event', 'path-management', { fileName, error });
             throw error;
           }
-          await manageLinesInFile(filePath, [pathLine], desiredPresent);
+          await this.manageLinesInFile(fileName, filePath, [pathLine], !linesAdded);
           linesAdded = true;
-          break;
         }
 
         // If none of the files exist, write .bash_profile
         if (!linesAdded) {
-          const filePath = path.join(os.homedir(), bashLoginShellFiles[0]);
+          const fileName = bashLoginShellFiles[0];
+          const filePath = path.join(os.homedir(), fileName);
 
-          await manageLinesInFile(filePath, [pathLine], desiredPresent);
+          await this.manageLinesInFile(fileName, filePath, [pathLine], true);
         }
       } else {
         // Ensure lines are not present in any of the files
-        await Promise.all(bashLoginShellFiles.map((fileName) => {
+        await Promise.all(bashLoginShellFiles.map(async(fileName) => {
           const filePath = path.join(os.homedir(), fileName);
 
-          return manageLinesInFile(filePath, [], desiredPresent);
+          await this.manageLinesInFile(fileName, filePath, [], false);
         }));
       }
 
       // Handle other shells' rc files and .bashrc
-      await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
-        const rcPath = path.join(os.homedir(), rcName);
+      await Promise.all(['.bashrc', '.zshrc'].map((fileName) => {
+        const rcPath = path.join(os.homedir(), fileName);
 
-        return manageLinesInFile(rcPath, [pathLine], desiredPresent);
+        return this.manageLinesInFile(fileName, rcPath, [pathLine], desiredPresent);
       }));
 
       mainEvents.invoke('diagnostics-trigger', 'RD_BIN_IN_BASH_PATH');
@@ -110,10 +138,10 @@ export class RcFilePathManager implements PathManager {
     await this.cshMutex.runExclusive(async() => {
       const pathLine = `setenv PATH "${ paths.integration }"\\:"$PATH"`;
 
-      await Promise.all(['.cshrc', '.tcshrc'].map((rcName) => {
-        const rcPath = path.join(os.homedir(), rcName);
+      await Promise.all(['.cshrc', '.tcshrc'].map((fileName) => {
+        const rcPath = path.join(os.homedir(), fileName);
 
-        return manageLinesInFile(rcPath, [pathLine], desiredPresent);
+        return this.manageLinesInFile(fileName, rcPath, [pathLine], desiredPresent);
       }));
     });
   }
@@ -122,11 +150,12 @@ export class RcFilePathManager implements PathManager {
     await this.fishMutex.runExclusive(async() => {
       const pathLine = `set --export --prepend PATH "${ paths.integration }"`;
       const configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+      const fileName = 'config.fish';
       const fishConfigDir = path.join(configHome, 'fish');
-      const fishConfigPath = path.join(fishConfigDir, 'config.fish');
+      const fishConfigPath = path.join(fishConfigDir, fileName);
 
       await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
-      await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
+      await this.manageLinesInFile(fileName, fishConfigPath, [pathLine], desiredPresent);
     });
   }
 }
