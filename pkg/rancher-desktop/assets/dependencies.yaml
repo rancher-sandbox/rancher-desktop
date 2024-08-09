@@ -18,7 +18,7 @@ ECRCredentialHelper: 0.8.0
 hostResolver: 0.1.5
 mobyOpenAPISpec: "1.46"
 wix: v3.14.1
-hostSwitch: 1.2.6
+hostSwitch: 1.2.7
 moproxy: 0.5.1
 spinShim: 0.15.1
 spinOperator: 0.2.0
