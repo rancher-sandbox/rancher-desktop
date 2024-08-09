@@ -34,7 +34,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
@@ -78,13 +77,12 @@ var (
 // versions of k8s are used that do not support the service watcher API.
 
 const (
-	wslInfName             = "eth0"
-	iptablesUpdateInterval = 3 * time.Second
-	socketInterval         = 5 * time.Second
-	socketRetryTimeout     = 2 * time.Minute
-	dockerSocketFile       = "/var/run/docker.sock"
-	containerdSocketFile   = "/run/k3s/containerd/containerd.sock"
-	vtunnelPeerAddr        = "127.0.0.1:3040"
+	wslInfName           = "eth0"
+	socketInterval       = 5 * time.Second
+	socketRetryTimeout   = 2 * time.Minute
+	dockerSocketFile     = "/var/run/docker.sock"
+	containerdSocketFile = "/run/k3s/containerd/containerd.sock"
+	vtunnelPeerAddr      = "127.0.0.1:3040"
 )
 
 func main() {
@@ -118,15 +116,13 @@ func main() {
 	}()
 
 	if !*enableContainerd &&
-		!*enableDocker &&
-		!*enableIptables {
-		log.Fatal("requires either -docker, -containerd or -iptables enabled.")
+		!*enableDocker {
+		log.Fatal("requires either -docker or -containerd enabled.")
 	}
 
 	if *enableContainerd &&
-		*enableDocker &&
-		*enableIptables {
-		log.Fatal("requires either -docker, -containerd or -iptables, not all.")
+		*enableDocker {
+		log.Fatal("requires either -docker or -containerd but not both.")
 	}
 
 	var portTracker tracker.Tracker
@@ -145,7 +141,7 @@ func main() {
 		portTracker = tracker.NewVTunnelTracker(forwarder, wslAddr)
 	} else {
 		forwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
-		portTracker = tracker.NewAPITracker(forwarder, tracker.GatewayBaseURL, *adminInstall)
+		portTracker = tracker.NewAPITracker(ctx, forwarder, tracker.GatewayBaseURL, *adminInstall, *enableIptables)
 		// Manually register the port for K8s API, we would
 		// only want to send this manual port mapping if both
 		// of the following conditions are met:
@@ -215,31 +211,13 @@ func main() {
 					"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
 			}
 
-			// listenerOnlyMode represents when iptables is enabled and privileged services
-			// and admin install are disabled; this typically indicates a non-admin installation
-			// of the legacy network, requiring listeners only. In listenerOnlyMode, we create
-			// TCP listeners on 127.0.0.1 to enable automatic port forwarding mechanisms,
-			// particularly in WSLv2 environments.
-			listenerOnlyMode := *enableIptables && !*enablePrivilegedService && !*adminInstall
 			// Watch for kube
 			err := kube.WatchForServices(ctx,
 				*configPath,
 				k8sServiceListenerIP,
-				listenerOnlyMode,
 				portTracker)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
-			}
-
-			return nil
-		})
-	}
-
-	if *enableIptables {
-		group.Go(func() error {
-			err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
-			if err != nil {
-				return fmt.Errorf("error mapping ports: %w", err)
 			}
 
 			return nil
