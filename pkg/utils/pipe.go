@@ -27,15 +27,19 @@ func Pipe(conn net.Conn, upstreamAddr string) {
 		logrus.Errorf("Failed to dial upstream %s: %s", upstreamAddr, err)
 		return
 	}
-	defer upstream.Close()
-
 	go func() {
 		if _, err := io.Copy(upstream, conn); err != nil {
 			logrus.Debugf("Error copying to upstream: %s", err)
+		}
+		if err = upstream.Close(); err != nil {
+			logrus.Debugf("error closing connection while writing to upstream: %s", err)
 		}
 	}()
 
 	if _, err := io.Copy(conn, upstream); err != nil {
 		logrus.Debugf("Error copying from upstream: %s", err)
+	}
+	if err = upstream.Close(); err != nil {
+		logrus.Debugf("error closing connection: %s", err)
 	}
 }
