@@ -27,7 +27,7 @@ const CheckKubeConfigSymlink: DiagnosticsChecker = {
   id:       'VERIFY_WSL_INTEGRATION_KUBECONFIG',
   category: DiagnosticsCategory.Kubernetes,
   applicable() {
-    return Promise.resolve(true);
+    return Promise.resolve(process.platform === 'win32');
   },
   async check() {
     return Promise.resolve({

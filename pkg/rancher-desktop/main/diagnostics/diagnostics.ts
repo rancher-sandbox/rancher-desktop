@@ -1,4 +1,4 @@
-import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
+import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult, DiagnosticsCheckerSingleResult } from './types';
 
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
@@ -38,7 +38,7 @@ export class DiagnosticsManager {
   lastUpdate = new Date(0);
 
   /** Last known check results, indexed by the checker id. */
-  results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult> = {};
+  results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult|DiagnosticsCheckerSingleResult[]> = {};
 
   /** Mapping of category name to diagnostic ids */
   readonly checkerIdByCategory: Partial<Record<DiagnosticsCategory, string[]>> = {};
@@ -52,6 +52,7 @@ export class DiagnosticsManager {
         import('./kubeContext'),
         import('./limaDarwin'),
         import('./mockForScreenshots'),
+        import('./pathManagement'),
         import('./rdBinInShell'),
         import('./testCheckers'),
         import('./wslFromStore'),
@@ -92,9 +93,10 @@ export class DiagnosticsManager {
   }
 
   protected async applicableCheckers(categoryName: string | null, id: string | null): Promise<DiagnosticsChecker[]> {
+    const checkerId = id?.split(':', 1)[0];
     const checkers = (await this.checkers)
       .filter(checker => categoryName ? checker.category === categoryName : true)
-      .filter(checker => id ? checker.id === id : true);
+      .filter(checker => checkerId ? checker.id === checkerId : true);
 
     return (await Promise.all(checkers.map(async(checker) => {
       try {
@@ -124,12 +126,25 @@ export class DiagnosticsManager {
     return {
       last_update: this.lastUpdate.toISOString(),
       checks:      checkers
-        .map(checker => ({
-          ...this.results[checker.id],
-          id:       checker.id,
-          category: checker.category,
-          mute:     false,
-        })),
+        .flatMap((checker) => {
+          const result = this.results[checker.id];
+
+          if (Array.isArray(result)) {
+            return result.map(result => ({
+              ...result,
+              id:       `${ checker.id }:${ result.id }`,
+              category: checker.category,
+              mute:     false,
+            }));
+          } else {
+            return {
+              ...result,
+              id:       checker.id,
+              category: checker.category,
+              mute:     false,
+            };
+          }
+        }),
     };
   }
 
@@ -139,8 +154,16 @@ export class DiagnosticsManager {
   protected async runChecker(checker: DiagnosticsChecker) {
     console.debug(`Running check ${ checker.id }`);
     try {
-      this.results[checker.id] = await checker.check();
-      console.debug(`Check ${ checker.id } result: ${ JSON.stringify(this.results[checker.id]) }`);
+      const result = await checker.check();
+
+      this.results[checker.id] = result;
+      if (Array.isArray(result)) {
+        for (const singleResult of result) {
+          console.debug(`Check ${ checker.id }:${ singleResult.id } result: ${ JSON.stringify(singleResult) }`);
+        }
+      } else {
+        console.debug(`Check ${ checker.id } result: ${ JSON.stringify(result) }`);
+      }
     } catch (e) {
       console.error(`ERROR checking ${ checker.id }`, { e });
     }
