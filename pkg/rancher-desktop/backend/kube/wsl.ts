@@ -176,15 +176,14 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     await this.vm.runInstallScript(INSTALL_K3S_SCRIPT,
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
 
+    const promises: Promise<void>[] = [];
+    promises.push(BackendHelper.configureKubeResources(this.vm,
+      config.experimental?.containerEngine?.webAssembly?.enabled &&
+      !!config.experimental?.kubernetes?.options?.spinkube));
     if (config.experimental?.containerEngine?.webAssembly?.enabled) {
-      const promises: Promise<void>[] = [];
-
       promises.push(BackendHelper.configureRuntimeClasses(this.vm));
-      if (config.experimental?.kubernetes?.options?.spinkube) {
-        promises.push(BackendHelper.configureSpinOperator(this.vm));
-      }
-      await Promise.all(promises);
     }
+    await Promise.all(promises);
   }
 
   async start(config: BackendSettings, activeVersion: semver.SemVer, kubeClient?: () => KubeClient): Promise<void> {

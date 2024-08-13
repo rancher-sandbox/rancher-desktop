@@ -9,6 +9,9 @@ import os from 'os';
 import path from 'path';
 import stream from 'stream';
 
+import semver from 'semver';
+import yaml from 'yaml';
+
 import { simpleSpawn } from 'scripts/simple_process';
 
 type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
@@ -250,4 +253,47 @@ export async function downloadZip(url: string, destPath: string, options: Archiv
   }
 
   return destPath;
+}
+
+type HelmChartEntry = {
+  apiVersion: 'v2';
+  digest: string;
+  name: string;
+  urls: string[];
+  version: string;
+}
+
+type HelmChartLocation = Pick<DownloadOptions, 'checksumAlgorithm' | 'expectedChecksum'> & {
+  url: URL
+};
+
+/**
+ * Inspect a helm repository and locate a give helm chart, plus checksums.
+ * @param url The helm repository URL, without "index.yaml".
+ * @returns Options needed to download the helm chart.
+ */
+export async function locateHelmChart(url: string, chart: string, version?: string): Promise<HelmChartLocation> {
+  const indexURL = new URL('index.yaml', url);
+  const indexResponse = await fetch(indexURL);
+  const indexBody = await indexResponse.text();
+  const chartContents = yaml.parse(indexBody);;
+  const entries: HelmChartEntry[] = chartContents.entries[chart];
+  const chartEntries = entries.filter(e => e.name === chart);
+  let entry: HelmChartEntry | undefined;
+  if (version) {
+    entry = chartEntries.find(e => semver.eq(e.version, version));
+    if (!entry) {
+      throw new Error(`Could not find helm chart ${ chart } version ${ version }`);
+    }
+  } else {
+    entry = chartEntries.slice().sort((a, b) => semver.compare(a.version, b.version)).pop();
+    if (!entry) {
+      throw new Error(`Could not find maximum version of helm chart ${ chart }`);
+    }
+  }
+  return {
+    checksumAlgorithm: 'sha256',
+    expectedChecksum: entry.digest,
+    url: new URL(entry.urls[0], indexURL)
+  };
 }

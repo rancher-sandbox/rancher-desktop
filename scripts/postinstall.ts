@@ -85,6 +85,7 @@ const vmDependencies = [
 // Dependencies that are specific to hosts.
 const hostDependencies = [
   new MobyOpenAPISpec(),
+  new tools.RancherManager(),
 ];
 
 async function downloadDependencies(items: DependencyWithContext[]): Promise<void> {

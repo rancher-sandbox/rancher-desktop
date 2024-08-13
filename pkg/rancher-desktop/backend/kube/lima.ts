@@ -132,11 +132,11 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       const promises: Promise<void>[] = [];
 
       promises.push(this.writeServiceScript(config, desiredVersion, allowSudo));
+      promises.push(BackendHelper.configureKubeResources(this.vm,
+        config.experimental?.containerEngine?.webAssembly?.enabled &&
+        !!config.experimental?.kubernetes?.options?.spinkube));
       if (config.experimental?.containerEngine?.webAssembly?.enabled) {
         promises.push(BackendHelper.configureRuntimeClasses(this.vm));
-        if (config.experimental?.kubernetes?.options?.spinkube) {
-          promises.push(BackendHelper.configureSpinOperator(this.vm));
-        }
       }
       await Promise.all(promises);
     });
@@ -253,6 +253,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           await new Promise(resolve => setTimeout(resolve, 5000));
         });
     }
+    await BackendHelper.setupRancherManager(this.client);
   }
 
   async stop() {

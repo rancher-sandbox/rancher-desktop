@@ -38,6 +38,7 @@ import { showMessageBox } from '@pkg/window';
 
 import type Electron from 'electron';
 
+const KubeContextName = 'rancher-desktop';
 const console = Logging.k8s;
 
 /**
@@ -905,7 +906,6 @@ export default class K3sHelper extends events.EventEmitter {
    * @param configReader A function that returns the kubeconfig from the K3s VM.
    */
   async updateKubeconfig(configReader: () => Promise<string>): Promise<void> {
-    const contextName = 'rancher-desktop';
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-kubeconfig-'));
 
     try {
@@ -929,18 +929,18 @@ export default class K3sHelper extends events.EventEmitter {
         const clusterIndex = workConfig.clusters.findIndex(cluster => cluster.name === context.cluster);
 
         if (userIndex >= 0) {
-          workConfig.users[userIndex] = { ...workConfig.users[userIndex], name: contextName };
+          workConfig.users[userIndex] = { ...workConfig.users[userIndex], name: KubeContextName };
         }
         if (clusterIndex >= 0) {
-          workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: contextName };
+          workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: KubeContextName };
         }
         workConfig.contexts[contextIndex] = {
-          ...context, name: contextName, user: contextName, cluster: contextName,
+          ...context, name: KubeContextName, user: KubeContextName, cluster: KubeContextName,
         };
 
-        workConfig.currentContext = contextName;
+        workConfig.currentContext = KubeContextName;
       }
-      const userPath = await K3sHelper.findKubeConfigToUpdate(contextName);
+      const userPath = await K3sHelper.findKubeConfigToUpdate(KubeContextName);
       const userConfig = new KubeConfig();
 
       // @kubernetes/client-node throws when merging things that already exist
@@ -970,7 +970,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
-      userConfig.currentContext ||= contextName;
+      userConfig.currentContext ||= KubeContextName;
       // Use custom exportConfig() that supports the `proxy-url` cluster field.
       const userYAML = this.ensureContentsAreYAML(exportConfig(userConfig));
       const writeStream = fs.createWriteStream(workPath, { mode: 0o600 });

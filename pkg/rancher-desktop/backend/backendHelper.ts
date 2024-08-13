@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import path from 'path';
 
 import Electron from 'electron';
@@ -19,6 +20,8 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { showMessageBox } from '@pkg/window';
+import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
+import { KubeClient } from '@pkg/backend/kube/client';
 
 const CONTAINERD_CONFIG_TOML = '/etc/containerd/config.toml';
 const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
@@ -32,9 +35,11 @@ export const MANIFEST_CERT_MANAGER_CRDS = 'z110-cert-manager.crds';
 export const MANIFEST_CERT_MANAGER = 'z115-cert-manager';
 export const MANIFEST_SPIN_OPERATOR_CRDS = 'z120-spin-operator.crds';
 export const MANIFEST_SPIN_OPERATOR = 'z125-spin-operator';
+export const MANIFEST_RANCHER = 'z130-rancher-manager';
 
 const STATIC_DIR = '/var/lib/rancher/k3s/server/static/rancher-desktop';
 const STATIC_CERT_MANAGER_CHART = `${ STATIC_DIR }/cert-manager.tgz`;
+const STATIC_RANCHER_CHART = `${ STATIC_DIR }/rancher-manager.tgz`
 const STATIC_SPIN_OPERATOR_CHART = `${ STATIC_DIR }/spin-operator.tgz`;
 
 const console = Logging.kube;
@@ -315,19 +320,65 @@ export default class BackendHelper {
     }
   }
 
+  static rancherPassword = crypto.randomBytes(32).toString('hex');
+
   /**
-   * Write k3s manifests to install cert-manager and spinkube operator
+   * Write k3s manifests to install cert-manager, rancher manager, and spinkube
+   * operator.
+   * @param spin Whether to enable spinkube.
    */
-  static async configureSpinOperator(vmx: VMExecutor) {
-    await Promise.all([
+  static async configureKubeResources(vmx: VMExecutor, spin = false) {
+    let promises = [];
+    const rancherManifest = [
+      {
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: { name: 'cattle-system' },
+      },
+      {
+        apiVersion: 'helm.cattle.io/v1',
+        kind: 'HelmChart',
+        metadata: {
+          name: 'rancher-manager',
+          namespace: 'cattle-system',
+        },
+        spec: {
+          chart: "https://%{KUBERNETES_API}%/static/rancher-desktop/rancher-manager.tgz",
+          targetNamespace: 'cattle-system',
+          // Old versions of the helm-controller don't support createNamespace, so we
+          // created the namespace ourselves.
+          createNamespace: false,
+          valuesContent: yaml.stringify({
+            bootstrapPassword: BackendHelper.rancherPassword,
+            replicas: 1,
+            hostname: 'localhost',
+            useBundledSystemChart: true,
+            certmanager: {
+              version: DEPENDENCY_VERSIONS.certManager,
+            },
+            postDelete: {
+              enabled: false,
+            },
+            extraEnv: [
+              { name: 'CATTLE_FEATURES', value: 'multi-cluster-management=false' },
+            ]
+          }),
+        },
+      },
+    ].map(obj => '---\n' + yaml.stringify(obj)).join('');
+    promises.push(
       vmx.copyFileIn(path.join(paths.resources, 'cert-manager.crds.yaml'), this.manifestFilename(MANIFEST_CERT_MANAGER_CRDS)),
       vmx.copyFileIn(path.join(paths.resources, 'cert-manager.tgz'), STATIC_CERT_MANAGER_CHART),
       vmx.writeFile(this.manifestFilename(MANIFEST_CERT_MANAGER), CERT_MANAGER, 0o644),
-
-      vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), this.manifestFilename(MANIFEST_SPIN_OPERATOR_CRDS)),
-      vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART),
-      vmx.writeFile(this.manifestFilename(MANIFEST_SPIN_OPERATOR), SPIN_OPERATOR, 0o644),
-    ]);
+      vmx.copyFileIn(path.join(paths.resources, `rancher-${ DEPENDENCY_VERSIONS.rancher }.tgz`), STATIC_RANCHER_CHART));
+      vmx.writeFile(this.manifestFilename(MANIFEST_RANCHER), rancherManifest, 0o644);
+    if (spin) {
+      promises.push(
+        vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), this.manifestFilename(MANIFEST_SPIN_OPERATOR_CRDS)),
+        vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART),
+        vmx.writeFile(this.manifestFilename(MANIFEST_SPIN_OPERATOR), SPIN_OPERATOR, 0o644));
+    }
+    await Promise.all(promises);
   }
 
   /**
@@ -390,5 +441,14 @@ export default class BackendHelper {
     await BackendHelper.installContainerdShims(vmx, configureWASM);
     await BackendHelper.writeContainerdConfig(vmx, configureWASM);
     await BackendHelper.writeMobyConfig(vmx, configureWASM);
+  }
+
+  static async setupRancherManager(client: KubeClient) {
+    const pod = await client.getActivePod('cattle-system', 'rancher-manager');
+
+    if (!pod) {
+      // We can get here if shutdown was initiated before the pod was ready.
+      return;
+    }
   }
 }

@@ -11,6 +11,7 @@ dockerBuildx: 0.16.2
 dockerCompose: 2.29.1
 golangci-lint: 1.60.1
 trivy: 0.54.1
+rancher: 2.9.0
 dockerProvidedCredentialHelpers: 0.8.2
 ECRCredentialHelper: 0.8.0
 hostResolver: 0.1.5

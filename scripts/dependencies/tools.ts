@@ -6,6 +6,7 @@ import semver from 'semver';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
+  locateHelmChart,
 } from '../lib/download';
 
 import {
@@ -326,6 +327,39 @@ export class Trivy implements Dependency, GitHubDependency {
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
     return semver.rcompare(version1, version2);
   }
+}
+
+export class RancherManager implements Dependency, GitHubDependency {
+  name = 'rancher';
+  githubOwner = 'rancher';
+  githubRepo = 'rancher';
+
+  async download(context: DownloadContext): Promise<void> {
+    await this.downloadChart(context);
+  }
+
+  protected async downloadChart(context: DownloadContext): Promise<void> {
+    const destPath = path.join(context.resourcesDir, `rancher-${ context.versions.rancher }.tgz`);
+    const options = await locateHelmChart(
+      'https://releases.rancher.com/server-charts/latest/',
+      'rancher',
+      context.versions.rancher);
+
+    await download(options.url.toString(), destPath, options);
+  }
+
+  getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+
 }
 
 export class DockerProvidedCredHelpers implements Dependency, GitHubDependency {

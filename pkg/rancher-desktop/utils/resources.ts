@@ -10,7 +10,7 @@ import paths from '@pkg/utils/paths';
  * user-accessible `bin` directory.
  * Otherwise, it's an array containing the path to the executable.
  */
-const executableMap: Record<string, string[] | undefined> = {
+const executableMap = {
   docker:             undefined,
   kubectl:            undefined,
   nerdctl:            undefined,

@@ -15,3 +15,5 @@ spec:
   # Old versions of the helm-controller don't support createNamespace, so we
   # created the namespace ourselves.
   createNamespace: false
+  valuesContent: |-
+    enableCertificateOwnerRef: true
