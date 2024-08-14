@@ -52,6 +52,7 @@ import { getVersion } from '@pkg/utils/version';
 import getWSLVersion from '@pkg/utils/wslVersion';
 import * as window from '@pkg/window';
 import { openPreferences, preferencesSetDirtyFlag } from '@pkg/window/preferences';
+import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
 
 Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
@@ -675,6 +676,14 @@ ipcMainProxy.on('images-namespaces-read', (event) => {
   }
 });
 
+ipcMainProxy.on('dashboard-open', () => {
+  openDashboard();
+});
+
+ipcMainProxy.on('dashboard-close', () => {
+  closeDashboard();
+});
+
 ipcMainProxy.on('preferences-open', () => {
   openPreferences();
 });
@@ -698,6 +707,11 @@ function writeSettings(arg: RecursivePartial<RecursiveReadonly<settings.Settings
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
   writeSettings(arg);
+
+  // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
+  if (arg?.kubernetes?.enabled === false) {
+    closeDashboard();
+  }
 
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });

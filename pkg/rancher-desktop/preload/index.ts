@@ -1,7 +1,9 @@
+import initDashboard from './dashboard';
 import initExtensions from './extensions';
 
 function init() {
   initExtensions();
+  initDashboard();
 }
 
 try {

@@ -76,6 +76,9 @@ export interface IpcMainEvents {
 
   'show-logs': () => void;
 
+  'dashboard-open': () => void;
+  'dashboard-close': () => void;
+
   'diagnostics/run': () => void;
 
   /** Only for the preferences window */
@@ -148,6 +151,10 @@ export interface IpcMainInvokeEvents {
   'show-snapshots-confirm-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
   'show-snapshots-blocking-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
   // #endregion
+
+  // #region dashboard
+  'dashboard/get-csrf-token': () => string | null;
+  // #endregion
 }
 
 /**
@@ -213,6 +220,7 @@ export interface IpcRendererEvents {
   'dialog/close': (...args: any) => void;
   'dialog/error': (args: any) => void;
   'dialog/info': (args: Record<string, string>) => void;
+  'dashboard-open': () => void;
   // #endregion
 
   // #region tab navigation

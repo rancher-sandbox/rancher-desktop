@@ -6,12 +6,12 @@ import util from 'util';
 import semver from 'semver';
 
 import { KubeClient } from './client';
-import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
+import K3sHelper, { ExtraRequiresReasons, MANIFEST_SPIN_OPERATOR, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import WSLBackend, { Action } from '../wsl';
 
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import { BackendSettings, RestartReasons } from '@pkg/backend/backend';
-import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '@pkg/backend/backendHelper';
+import BackendHelper from '@pkg/backend/backendHelper';
 import * as K8s from '@pkg/backend/k8s';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
@@ -263,7 +263,6 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         'Removing spinkube operator',
         50,
         Promise.all([
-          this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_CERT_MANAGER),
           this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_SPIN_OPERATOR),
         ]));
     }

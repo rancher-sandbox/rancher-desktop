@@ -14,7 +14,7 @@ import getWinCertificates from './win-ca';
 
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
-import { windowMapping } from '@pkg/window';
+import { getWindowName, windowMapping } from '@pkg/window';
 
 const console = Logging.networking;
 
@@ -43,20 +43,12 @@ export default async function setupNetworking() {
 
   // Set up certificate handling for system certificates on Windows and macOS
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
-    const tlsPort = 9443;
-    const dashboardUrls = [
-      `https://127.0.0.1:${ tlsPort }`,
-      `wss://127.0.0.1:${ tlsPort }`,
-      'http://127.0.0.1:6120',
-      'ws://127.0.0.1:6120',
-    ];
-
-    const pluginDevUrls = [
-      `https://localhost:8888`,
-      `wss://localhost:8888`,
-    ];
+    const windowName = getWindowName(webContents);
+    const pluginDevUrls = [`https://localhost:8888`, `wss://localhost:8888`];
+    const dashboardUrls = ['https://localhost/', 'wss://localhost/'];
 
     if (
+      windowName === 'main' &&
       process.env.NODE_ENV === 'development' &&
       process.env.RD_ENV_PLUGINS_DEV &&
       pluginDevUrls.some(x => url.startsWith(x))
@@ -68,7 +60,7 @@ export default async function setupNetworking() {
       return;
     }
 
-    if (dashboardUrls.some(x => url.startsWith(x)) && 'dashboard' in windowMapping) {
+    if (windowName === 'dashboard' && dashboardUrls.some(u => url.startsWith(u))) {
       event.preventDefault();
       // eslint-disable-next-line n/no-callback-literal
       callback(true);

@@ -1,28 +1,37 @@
-import { BrowserWindow } from 'electron';
+import path from 'path';
+import { createWindow, getWindow } from '.';
+import paths from '@pkg/utils/paths';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
+import Logging from '@pkg/utils/logging';
 
-import { windowMapping, restoreWindow } from '.';
+const dashboardName = 'dashboard';
+const dashboardURL = 'https://localhost/dashboard/c/local/explorer';
+const console = Logging.dashboard;
+const ipcMain = getIpcMainProxy(console);
 
-const dashboardURL = 'http://127.0.0.1:6120/c/local/explorer';
-
-const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
+ipcMain.removeHandler('dashboard/get-csrf-token');
+ipcMain.handle('dashboard/get-csrf-token', async (event) => {
+  const webContents = event.sender;
+  const cookies = await webContents.session.cookies.get({
+    url: webContents.getURL(),
+    name: 'CSRF',
+  });
+  return cookies?.[0].value ?? null;
+})
 
 export function openDashboard() {
-  let window = getDashboardWindow();
-
-  if (restoreWindow(window)) {
-    return window;
-  }
-
-  window = new BrowserWindow({
-    title:  'Rancher Dashboard',
-    width:  800,
+  const window = createWindow('dashboard', dashboardURL, {
+    title: 'Rancher Dashboard',
+    width: 800,
     height: 600,
-    show:   false,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(paths.resources, 'preload.js'),
+      sandbox: true,
+    },
   });
-
-  window.loadURL(dashboardURL);
-
-  windowMapping['dashboard'] = window.id;
 
   window.once('ready-to-show', () => {
     window?.show();
@@ -30,5 +39,5 @@ export function openDashboard() {
 }
 
 export function closeDashboard() {
-  getDashboardWindow()?.close();
+  getWindow(dashboardName)?.close();
 }

@@ -45,11 +45,13 @@ import type Electron from 'electron';
 
 const KubeContextName = 'rancher-desktop';
 const RancherPassword = 'password';
+// Manifests are applied in sort order, so use a prefix to load them last, in the required sequence.
+// Names should start with `z` followed by a digit, so that `install-k3s` cleans them up on restart.
 const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
 const MANIFEST_CERT_MANAGER_CRDS = 'z110-cert-manager.crds';
 const MANIFEST_CERT_MANAGER = 'z115-cert-manager';
 const MANIFEST_SPIN_OPERATOR_CRDS = 'z120-spin-operator.crds';
-const MANIFEST_SPIN_OPERATOR = 'z125-spin-operator';
+export const MANIFEST_SPIN_OPERATOR = 'z125-spin-operator';
 const MANIFEST_RANCHER_MANAGER = 'z130-rancher-manager';
 const STATIC_DIR = '/var/lib/rancher/k3s/server/static/rancher-desktop';
 const STATIC_CERT_MANAGER_CHART = `${ STATIC_DIR }/cert-manager.tgz`;
@@ -1259,7 +1261,16 @@ export default class K3sHelper extends events.EventEmitter {
               enabled: false,
             },
             extraEnv: [
-              { name: 'CATTLE_FEATURES', value: 'multi-cluster-management=false' },
+              { name: 'CATTLE_FEATURES',
+                value: [
+                  'auth=false',
+                  'multi-cluster-management=false',
+                  'fleet=false',
+                  'harvester=false',
+                  'continuous-delivery=false',
+                  'rke1-ui=false',
+                  'rke2=false',
+                ].join(',') },
             ]
           }),
         },
@@ -1270,13 +1281,13 @@ export default class K3sHelper extends events.EventEmitter {
       vmx.copyFileIn(path.join(paths.resources, 'cert-manager.tgz'), STATIC_CERT_MANAGER_CHART),
       vmx.writeFile(manifestFilename(MANIFEST_CERT_MANAGER), CERT_MANAGER, 0o644),
       vmx.copyFileIn(path.join(paths.resources, `rancher-${ DEPENDENCY_VERSIONS.rancher }.tgz`), STATIC_RANCHER_CHART));
-      vmx.writeFile(manifestFilename(MANIFEST_RANCHER_MANAGER), manifests.map(obj => '---\n' + yaml.stringify(obj)).join(''), 0o644);
+      vmx.writeFile(manifestFilename(MANIFEST_RANCHER_MANAGER), manifests.map(m => yaml.stringify(m)).join('---\n'), 0o644);
     if (spin) {
       promises.push(
         vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), manifestFilename(MANIFEST_SPIN_OPERATOR_CRDS)),
         vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART));
         vmx.writeFile(manifestFilename(MANIFEST_SPIN_OPERATOR), SPIN_OPERATOR, 0o644);
-      }
+    }
     await Promise.all(promises);
   }
 

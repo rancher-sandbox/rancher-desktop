@@ -25,12 +25,7 @@ const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
 
 // Manifests are applied in sort order, so use a prefix to load them last, in the required sequence.
 // Names should start with `z` followed by a digit, so that `install-k3s` cleans them up on restart.
-export const MANIFEST_RUNTIMES = 'z100-runtimes';
-export const MANIFEST_CERT_MANAGER_CRDS = 'z110-cert-manager.crds';
-export const MANIFEST_CERT_MANAGER = 'z115-cert-manager';
-export const MANIFEST_SPIN_OPERATOR_CRDS = 'z120-spin-operator.crds';
-export const MANIFEST_SPIN_OPERATOR = 'z125-spin-operator';
-export const MANIFEST_RANCHER = 'z130-rancher-manager';
+const MANIFEST_RUNTIMES = 'z100-runtimes';
 
 const console = Logging.kube;
 
@@ -281,10 +276,6 @@ export default class BackendHelper {
     return shims;
   }
 
-  private static manifestFilename(manifest: string): string {
-    return `${ MANIFEST_DIR }/${ manifest }.yaml`;
-  }
-
   /**
    * Write a k3s manifest to define a runtime class for each installed containerd shim.
    */
@@ -306,7 +297,9 @@ export default class BackendHelper {
     if (runtimes.length > 0) {
       const manifest = runtimes.map(r => yaml.stringify(r)).join('---\n');
 
-      await vmx.writeFile(this.manifestFilename(MANIFEST_RUNTIMES), manifest, 0o644);
+      await vmx.writeFile(`${ MANIFEST_DIR }/${ MANIFEST_RUNTIMES }.yaml`,
+                          manifest,
+                          0o644);
     }
   }
 

@@ -63,7 +63,16 @@ interface RDXSpawnOptions extends v1.SpawnOptions {
 /**
  * The identifier for the extension (the name of the image).
  */
-const extensionId = location.protocol === 'app:' ? '<app>' : decodeURIComponent(location.hostname.replace(/(..)/g, '%$1'));
+const extensionId = (function(){
+  switch (location.protocol) {
+    case 'app:':
+      return '<app>';
+    case 'x-rd-extension:':
+      return decodeURIComponent(location.hostname.replace(/(..)/g, '%$1'));
+    default:
+      return '<invalid>'
+  }
+})();
 
 /**
  * The processes that are waiting to complete, keyed by the process ID.

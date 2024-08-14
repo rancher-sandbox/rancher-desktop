@@ -52,6 +52,14 @@ export function getWindow(name: string): Electron.BrowserWindow | null {
   return (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 }
 
+export function getWindowName(webContents: Electron.WebContents): string | null {
+  const window = Electron.BrowserWindow.fromWebContents(webContents);
+  const entries = Object.entries(windowMapping);
+  const [name, ] = entries.find(([, id]) => id === window?.id) ?? [null, ];
+
+  return name;
+}
+
 /**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
@@ -65,9 +73,12 @@ export function createWindow(name: string, url: string, options: Electron.Browse
     return window;
   }
 
-  const isInternalURL = (url: string) => {
+  function isInternalURL(url: string) {
+    if (name === 'dashboard') {
+      return url.startsWith('https://localhost/');
+    }
     return url.startsWith(`${ webRoot }/`) || url.startsWith('x-rd-extension://');
-  };
+  }
 
   window = new BrowserWindow(options);
   window.webContents.on('console-message', (event, level, message, line, sourceId) => {
