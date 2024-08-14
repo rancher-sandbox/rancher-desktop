@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74
-	golang.org/x/net v0.25.0
+	golang.org/x/net v0.26.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.24.0
 	gvisor.dev/gvisor v0.0.0-20221216231429-a78e892a26d2
@@ -33,13 +33,13 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20220504074936-1ca156eafb9f // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/miekg/dns v1.1.55 // indirect
-	github.com/onsi/gomega v1.31.0 // indirect
+	github.com/onsi/gomega v1.33.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220712232929-bac01a348036 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/u-root/uio v0.0.0-20210528114334-82958018845c // indirect
-	golang.org/x/crypto v0.23.0 // indirect
+	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
