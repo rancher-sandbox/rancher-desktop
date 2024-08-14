@@ -132,7 +132,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       const promises: Promise<void>[] = [];
 
       promises.push(this.writeServiceScript(config, desiredVersion, allowSudo));
-      promises.push(BackendHelper.configureKubeResources(this.vm,
+      promises.push(K3sHelper.configureKubeResources(this.vm,
         config.experimental?.containerEngine?.webAssembly?.enabled &&
         !!config.experimental?.kubernetes?.options?.spinkube));
       if (config.experimental?.containerEngine?.webAssembly?.enabled) {
@@ -253,7 +253,10 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           await new Promise(resolve => setTimeout(resolve, 5000));
         });
     }
-    await BackendHelper.setupRancherManager(this.client);
+    await this.progressTracker.action('Finishing Kubernetes Startup', 100,
+      this.client?.getActivePod('kube-system', 'kube-dns'));
+    await this.progressTracker.action('Setting up Rancher Dashboard', 100,
+      K3sHelper.setupRancherManager(this.client));
   }
 
   async stop() {
