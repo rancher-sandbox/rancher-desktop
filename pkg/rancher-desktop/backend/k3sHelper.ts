@@ -1263,13 +1263,13 @@ export default class K3sHelper extends events.EventEmitter {
             extraEnv: [
               { name: 'CATTLE_FEATURES',
                 value: [
-                  'auth=false',
-                  'multi-cluster-management=false',
+                  'continuous-delivery=false',
                   'fleet=false',
                   'harvester=false',
-                  'continuous-delivery=false',
+                  'multi-cluster-management=false',
                   'rke1-ui=false',
                   'rke2=false',
+                  'uiextension=false',
                 ].join(',') },
             ]
           }),
