@@ -21,6 +21,11 @@ type DependencyWithContext = {
   context: DownloadContext;
 };
 
+/**
+ * The amount of time we allow the post-install script to run, in milliseconds.
+ */
+const InstallTimeout = 10 * 60 * 1_000; // Ten minutes.
+
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).
 const userTouchedDependencies = [
@@ -130,7 +135,7 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
     promises[specialize(item)] = process(specialize(item));
   }
 
-  const abortSignal = AbortSignal.timeout(10 * 60 * 1_000);
+  const abortSignal = AbortSignal.timeout(InstallTimeout);
 
   while (!abortSignal.aborted && running.size > done.size) {
     const timeout = new Promise((resolve) => {
