@@ -12,7 +12,6 @@ import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionMetadata } from '@pkg/main/extensions/types';
 import mainEvents from '@pkg/main/mainEvents';
-import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
 import * as serverHelper from '@pkg/main/serverHelper';
 import { Snapshot } from '@pkg/main/snapshots/types';
 import Logging from '@pkg/utils/logging';
@@ -47,7 +46,6 @@ const SERVER_FILE_BASENAME = 'rd-engine.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 
 export class HttpCommandServer {
-  protected vtun = getVtunnelInstance();
   protected server = http.createServer();
   protected app = express();
   protected readonly externalState: ServerState = {
@@ -117,19 +115,6 @@ export class HttpCommandServer {
 
   async init() {
     const localHost = '127.0.0.1';
-
-    // The peerPort and upstreamServerAddress port will need to match
-    // this is crucial if we ever pick dynamic ports for upstreamServerAddress
-    if (process.platform === 'win32') {
-      this.vtun.addTunnel({
-        name:                  'CLI Server',
-        handshakePort:         17372,
-        vsockHostPort:         17371,
-        peerAddress:           localHost,
-        peerPort:              SERVER_PORT,
-        upstreamServerAddress: `${ localHost }:${ SERVER_PORT }`,
-      });
-    }
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
     await fs.promises.mkdir(paths.appHome, { recursive: true });
