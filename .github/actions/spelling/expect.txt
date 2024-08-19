@@ -146,7 +146,7 @@ corepack
 coreutils
 crds
 credfwd
-credhelper
+CREDHELPER
 cri
 crond
 crt
@@ -204,7 +204,6 @@ doclink
 dompurify
 donotuse
 dotfile
-Dowloading
 dport
 dri
 DSL
