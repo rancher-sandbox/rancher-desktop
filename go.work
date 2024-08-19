@@ -13,6 +13,5 @@ use (
 	./src/go/networking
 	./src/go/privileged-service
 	./src/go/rdctl
-	./src/go/vtunnel
 	./src/go/wsl-helper
 )
