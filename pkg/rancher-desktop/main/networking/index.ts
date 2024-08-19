@@ -14,9 +14,13 @@ import getWinCertificates from './win-ca';
 
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
-import { getWindowName, windowMapping } from '@pkg/window';
+import { getWindowName } from '@pkg/window';
 
 const console = Logging.networking;
+
+let dashboardPort = 0;
+
+mainEvents.on('dashboard/port-changed', port => dashboardPort = port);
 
 export default async function setupNetworking() {
   const agentOptions = { ...https.globalAgent.options };
@@ -45,7 +49,7 @@ export default async function setupNetworking() {
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
     const windowName = getWindowName(webContents);
     const pluginDevUrls = [`https://localhost:8888`, `wss://localhost:8888`];
-    const dashboardUrls = ['https://localhost/', 'wss://localhost/'];
+    const dashboardUrls = [`https://localhost:${ dashboardPort }/`, `wss://localhost:${ dashboardPort }/`];
 
     if (
       windowName === 'main' &&

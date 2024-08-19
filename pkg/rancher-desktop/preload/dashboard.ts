@@ -1,18 +1,19 @@
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default function initDashboard(): void {
-  if (!document.location.href.startsWith('https://localhost/dashboard/')) {
+export default async function initDashboard(): Promise<void> {
+  const dashboardPort = await ipcRenderer.invoke('dashboard/get-port');
+  if (!document.location.href.startsWith(`https://localhost:${ dashboardPort }/dashboard/`)) {
     return;
   }
   // Navigation API is only available in Chrome-derived browsers like Electron.
   // https://developer.mozilla.org/en-US/docs/Web/API/Navigation
   (window as any).navigation.addEventListener('navigate', async function onNavigate() {
-    const resp = await fetch('https://localhost/v3/users?me=true');
+    const resp = await fetch(`https://localhost:${ dashboardPort }/v3/users?me=true`);
     let loginSuccessful = false;
 
     if (resp.status === 401) {
       const token = await ipcRenderer.invoke('dashboard/get-csrf-token') ?? '';
-      const loginURL = 'https://localhost/v3-public/localProviders/local?action=login';
+      const loginURL = `https://localhost:${ dashboardPort }/v3-public/localProviders/local?action=login`;
       const resp = await fetch(loginURL, {
         headers: {
           'Accept': "application/json",

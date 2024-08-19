@@ -22,6 +22,7 @@ import { Architecture, VMExecutor } from './backend';
 
 import CERT_MANAGER from '@pkg/assets/scripts/cert-manager.yaml';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
+import RANCHER_MANAGER_ENVOY_CONFIG from '@pkg/assets/scripts/rancher-manager-envoy.yaml';
 import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
@@ -42,6 +43,7 @@ import { showMessageBox } from '@pkg/window';
 import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 
 import type Electron from 'electron';
+import mainEvents from '@pkg/main/mainEvents';
 
 const KubeContextName = 'rancher-desktop';
 const RancherPassword = 'password';
@@ -1260,6 +1262,9 @@ export default class K3sHelper extends events.EventEmitter {
             postDelete: {
               enabled: false,
             },
+            ingress: {
+              enabled: false,
+            },
             extraEnv: [
               { name: 'CATTLE_FEATURES',
                 value: [
@@ -1274,6 +1279,47 @@ export default class K3sHelper extends events.EventEmitter {
             ]
           }),
         },
+      },
+      {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        metadata: {
+          name: 'rancher-envoy',
+          namespace: 'cattle-system',
+        },
+        spec: {
+          replicas: 1,
+          selector: {
+            matchLabels: { app: 'rancher-envoy' },
+          },
+          template: {
+            metadata: { labels: { app: 'rancher-envoy' } },
+            spec: {
+              containers: [{
+                name: 'envoy',
+                image: 'envoyproxy/envoy:distroless-v1.31-latest',
+                args: [
+                  '--config-yaml', RANCHER_MANAGER_ENVOY_CONFIG
+                ],
+              }],
+            }
+          },
+        }
+      },
+      {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: {
+          name: 'rancher-envoy',
+          namespace: 'cattle-system',
+        },
+        spec: {
+          selector: { app: 'rancher-envoy' },
+          ports: [{
+            port: 443,
+            targetPort: 9443,
+          }],
+        }
       },
     ]
     promises.push(
@@ -1299,10 +1345,16 @@ export default class K3sHelper extends events.EventEmitter {
       return;
     }
 
+    const hostPort = await client.forwardPort('cattle-system', 'rancher-envoy', 9443, 0);
+    if (!hostPort) {
+      return;
+    }
+    mainEvents.emit('dashboard/port-changed', hostPort);
+
     const timeout = AbortSignal.timeout(10 * 60 * 1_000);
     while (!timeout.aborted) {
       try {
-        const url = `https://localhost/dashboard/?setup=${ RancherPassword }`;
+        const url = `https://localhost:${ hostPort }/dashboard/?setup=${ RancherPassword }`;
         const agent = new https.Agent({ rejectUnauthorized: false });
         const resp = await fetch(url, { agent });
 
@@ -1332,7 +1384,6 @@ export default class K3sHelper extends events.EventEmitter {
     await setSetting('first-login', 'false');
     await setSetting('eula-agreed', (new Date).toISOString());
   }
-
 }
 
 interface V1HelmChart {

@@ -3,7 +3,7 @@ import initExtensions from './extensions';
 
 function init() {
   initExtensions();
-  initDashboard();
+  initDashboard().catch(ex => console.error(ex));
 }
 
 try {

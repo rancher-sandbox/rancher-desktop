@@ -14,6 +14,7 @@ import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
 import { mainRoutes } from '@pkg/window/constants';
 import { openPreferences } from '@pkg/window/preferences';
+import mainEvents from '@pkg/main/mainEvents';
 
 const console = Logging[`window_${ process.type || 'unknown' }`];
 
@@ -60,6 +61,9 @@ export function getWindowName(webContents: Electron.WebContents): string | null 
   return name;
 }
 
+let dashboardPort = 0;
+mainEvents.on('dashboard/port-changed', port => dashboardPort = port);
+
 /**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
@@ -75,7 +79,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
 
   function isInternalURL(url: string) {
     if (name === 'dashboard') {
-      return url.startsWith('https://localhost/');
+      return url.startsWith(`https://localhost:${ dashboardPort }/`);
     }
     return url.startsWith(`${ webRoot }/`) || url.startsWith('x-rd-extension://');
   }

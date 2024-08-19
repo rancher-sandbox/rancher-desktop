@@ -3,11 +3,15 @@ import { createWindow, getWindow } from '.';
 import paths from '@pkg/utils/paths';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import Logging from '@pkg/utils/logging';
+import mainEvents from '@pkg/main/mainEvents';
 
 const dashboardName = 'dashboard';
-const dashboardURL = 'https://localhost/dashboard/c/local/explorer';
 const console = Logging.dashboard;
 const ipcMain = getIpcMainProxy(console);
+
+let dashboardPort = 0;
+
+mainEvents.on('dashboard/port-changed', port => dashboardPort = port);
 
 ipcMain.removeHandler('dashboard/get-csrf-token');
 ipcMain.handle('dashboard/get-csrf-token', async (event) => {
@@ -37,8 +41,11 @@ ipcMain.handle('dashboard/get-csrf-token', async (event) => {
     });
   }
 });
+ipcMain.removeHandler('dashboard/get-port');
+ipcMain.handle('dashboard/get-port', () => dashboardPort);
 
 export function openDashboard() {
+  const dashboardURL = `https://localhost:${ dashboardPort }/dashboard/c/local/explorer`;
   const window = createWindow('dashboard', dashboardURL, {
     title: 'Rancher Dashboard',
     width: 800,

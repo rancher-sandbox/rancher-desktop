@@ -154,6 +154,7 @@ export interface IpcMainInvokeEvents {
 
   // #region dashboard
   'dashboard/get-csrf-token': () => string | null;
+  'dashboard/get-port': () => number;
   // #endregion
 }
 

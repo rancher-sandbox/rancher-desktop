@@ -177,7 +177,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
 
     const promises: Promise<void>[] = [];
-    promises.push(BackendHelper.configureKubeResources(this.vm,
+    promises.push(K3sHelper.configureKubeResources(this.vm,
       config.experimental?.containerEngine?.webAssembly?.enabled &&
       !!config.experimental?.kubernetes?.options?.spinkube));
     if (config.experimental?.containerEngine?.webAssembly?.enabled) {
@@ -282,6 +282,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         'Skipping node checks, flannel is disabled',
         100, Promise.resolve({}));
     }
+    await this.progressTracker.action('Finishing Kubernetes Startup', 100,
+      this.client?.getActivePod('kube-system', 'kube-dns'));
+    await this.progressTracker.action('Setting up Rancher Dashboard', 100,
+      K3sHelper.setupRancherManager(this.client));
   }
 
   async stop() {
