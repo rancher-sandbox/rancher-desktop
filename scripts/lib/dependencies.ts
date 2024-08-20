@@ -43,9 +43,8 @@ export type DependencyVersions = {
   dockerCompose: string;
   'golangci-lint': string;
   trivy: string;
-  steve: string;
   guestAgent: string;
-  rancherDashboard: string;
+  rancher: string;
   dockerProvidedCredentialHelpers: string;
   ECRCredentialHelper: string;
   hostResolver: string;

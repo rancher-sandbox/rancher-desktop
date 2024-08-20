@@ -8,8 +8,8 @@ import util from 'util';
 import semver from 'semver';
 
 import { Architecture, BackendSettings, RestartReasons } from '../backend';
-import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '../backendHelper';
-import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
+import BackendHelper from '../backendHelper';
+import K3sHelper, { ExtraRequiresReasons, MANIFEST_SPIN_OPERATOR, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action } from '../lima';
 
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
@@ -132,11 +132,11 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       const promises: Promise<void>[] = [];
 
       promises.push(this.writeServiceScript(config, desiredVersion, allowSudo));
+      promises.push(K3sHelper.configureKubeResources(this.vm,
+        config.experimental?.containerEngine?.webAssembly?.enabled &&
+        !!config.experimental?.kubernetes?.options?.spinkube));
       if (config.experimental?.containerEngine?.webAssembly?.enabled) {
         promises.push(BackendHelper.configureRuntimeClasses(this.vm));
-        if (config.experimental?.kubernetes?.options?.spinkube) {
-          promises.push(BackendHelper.configureSpinOperator(this.vm));
-        }
       }
       await Promise.all(promises);
     });
@@ -230,7 +230,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         'Removing spinkube operator',
         50,
         Promise.all([
-          this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_CERT_MANAGER),
           this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_SPIN_OPERATOR),
         ]));
     }
@@ -253,6 +252,10 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           await new Promise(resolve => setTimeout(resolve, 5000));
         });
     }
+    await this.progressTracker.action('Finishing Kubernetes Startup', 100,
+      this.client?.getActivePod('kube-system', 'kube-dns'));
+    await this.progressTracker.action('Setting up Rancher Dashboard', 100,
+      K3sHelper.setupRancherManager(this.client));
   }
 
   async stop() {

@@ -34,8 +34,6 @@ const dependencies: Dependency[] = [
   new tools.DockerProvidedCredHelpers(),
   new tools.GoLangCILint(),
   new tools.Trivy(),
-  new tools.Steve(),
-  new tools.RancherDashboard(),
   new tools.ECRCredHelper(),
   new Lima(),
   new LimaAndQemu(),

@@ -1,0 +1,120 @@
+# yaml-language-server: $schema=https://github.com/jcchavezs/envoy-config-schema/releases/download/v1.21.0/v3_Bootstrap.json
+---
+static_resources:
+  listeners:
+  - name: tls-termination
+    address:
+      socket_address:
+        protocol: TCP
+        address: 0.0.0.0
+        port_value: 9443
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: rancher_manager
+          route_config:
+            name: route
+            virtual_hosts:
+            - name: app
+              domains: [ "*" ]
+              routes:
+              - match: { prefix: / }
+                route:
+                  cluster: rancher-manager
+                  host_rewrite_literal: localhost
+                  append_x_forwarded_host: true
+            request_headers_to_add:
+            - header: { key: X-Forwarded-Proto, value: https }
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+            - header: { key: X-Forwarded-Port, value: '443' }
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+            - header: { key: X-Forwarded-For, value: '192.0.2.1' }
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+            # openssl req -x509 -newkey rsa:2048 -keyout key.pem -out crt.pem
+            # -days 36500 -nodes -subj '/CN=rancher-manager-https-termination'
+            # Per CA/B BR 6.1.5 RSA keys are a minimum of 2048 bits; and ECDSA
+            # keys must be ST P‐256, NIST P‐384 or NIST P‐521.
+            - certificate_chain:
+                inline_string: |
+                  -----BEGIN CERTIFICATE-----
+                  MIIDOzCCAiOgAwIBAgIUA4weh/2CMM0zwHuSIhkbaFEvqRMwDQYJKoZIhvcNAQEL
+                  BQAwLDEqMCgGA1UEAwwhcmFuY2hlci1tYW5hZ2VyLWh0dHBzLXRlcm1pbmF0aW9u
+                  MCAXDTI0MDgxNTIzNDI0OFoYDzIxMjQwNzIyMjM0MjQ4WjAsMSowKAYDVQQDDCFy
+                  YW5jaGVyLW1hbmFnZXItaHR0cHMtdGVybWluYXRpb24wggEiMA0GCSqGSIb3DQEB
+                  AQUAA4IBDwAwggEKAoIBAQDbpo3Nvrvi6Ev5MGX1ukYh3Tuu03MHtzimGZs/0U+r
+                  LJoVLBkWd4fUNit1wfvYSOJEdb1WMeU/IS36AzmTs4vkRVpilcow5LLklrmn2XJf
+                  M7uvzUzBCzz6VnP7D0ltcD2u3VDplQv/doqm6p0vKE6CpYiaSjGq5ks6DPXaJZKO
+                  2HAtDjuIYJq8Dg+BwnkHmFHD30vpl7+LmnZ7WTmJlg1cqSCHDLKeNrVbTD9ua6GD
+                  4ImK+kLQQXPsvMM1QZXIg7mWslBLD9ucQosTSzCN9aVFqNnd3Nx2Ir5G0tc6ZwKg
+                  cDawJyc3fYUQocNhKlJPa+eQl5u0quzCRsqRTTNlCV/HAgMBAAGjUzBRMB0GA1Ud
+                  DgQWBBRlRLHhQ1GwgWJHglLSaLiw7gaPyjAfBgNVHSMEGDAWgBRlRLHhQ1GwgWJH
+                  glLSaLiw7gaPyjAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQAr
+                  SPAIOVGSuVa8z+Va9+J6fG+TrCx2pR6HUlayDpWfZ6LZXN4lIQ1Nrfnt2amwxbRA
+                  95gxSnJyAXS2jLaLLuqR1fCKFE/xxH7TyVyShr3mUUyP7rt/iHlig9Io3lST9mbk
+                  /4ovlHJEQcgn+5TEfwzDzq76arvaLqpMKQk7p0V2F/YCoEE0V6d9ZMmgfyTG3ayA
+                  wh1oodQFKrA8vXyhbIUP+kM5KAxm0qxQaYNbZfXTkCw4CEGSVxDv8hY1S606QUdS
+                  /YYG4HHEzdSVqeDsV1F6mD28TMZfnOpP6OFLxLhi2TOwwsWPRwoxwL0H+i7glWUS
+                  682jYqxqLq+/OKsX+6Ul
+                  -----END CERTIFICATE-----
+              private_key:
+                inline_string: |
+                  -----BEGIN PRIVATE KEY-----
+                  MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDbpo3Nvrvi6Ev5
+                  MGX1ukYh3Tuu03MHtzimGZs/0U+rLJoVLBkWd4fUNit1wfvYSOJEdb1WMeU/IS36
+                  AzmTs4vkRVpilcow5LLklrmn2XJfM7uvzUzBCzz6VnP7D0ltcD2u3VDplQv/doqm
+                  6p0vKE6CpYiaSjGq5ks6DPXaJZKO2HAtDjuIYJq8Dg+BwnkHmFHD30vpl7+LmnZ7
+                  WTmJlg1cqSCHDLKeNrVbTD9ua6GD4ImK+kLQQXPsvMM1QZXIg7mWslBLD9ucQosT
+                  SzCN9aVFqNnd3Nx2Ir5G0tc6ZwKgcDawJyc3fYUQocNhKlJPa+eQl5u0quzCRsqR
+                  TTNlCV/HAgMBAAECggEAA038MC5AcWeBTRx3TD0jNPs5HKY9ws304jrcZRdnFXI0
+                  V0E0l2vw9TZjbQAgI97k2JbU5GkXw91h7bMCuMAoyKRqebU7N4UZU+sYm/ffiqMi
+                  ncB++SCMKFAIqqxONIFNzEW0I++EILHN4DkDaGQ42ipXZcrb+HBCjXsIb+HE1LVR
+                  yBXdxpQV3JWqJrYiM1iXch5tuW/03Re68wMq2nfpe854vFcd5UoV1w9kRdsEhlNT
+                  BHi7uO0+LtoB0CY+WSMq2Dpbp5DTL4WfiVtvbT7W1rGAE/lDjcW/3n/ed8TvRrhd
+                  /EkuTQKiIOR2QCrCEtVVmRisl78SW4/1bqrMq841QQKBgQDtzTquacD9OX2oWTO6
+                  p2EVgSYHVnOfQaM+bUlq2NbcVsvoN+8QCWgw9mR6OxxH7CJvDNQG5mELEku2SeJ4
+                  8LYhIkFEAyY7QDa+lIysclqY6wtq1Vw40hMs+idTfm78ZkGgsUgr7luZxj2HYUhx
+                  zsPE3XcgznWN5lVkheXu1v1p9wKBgQDsdbokoYP6zfsuddrW6qe2GsXFY3N/CvrX
+                  zBWN4FIoRLUYbDuxA+91Cbac5JCt4o6AUphsSz+qxqj1gvvNjjFMzGe7S2xJjSqu
+                  H3csLKwpje9HL55cO1llnb559kg9XAbwLdJd5bWdhfRLahIbST+me36Mcfqqggbz
+                  H5hAPl7EsQKBgD8zjmcQgFRM1VLK8m6nUawvePX2SiCHh2VuElctbl19TBBZ3VW7
+                  yk9JDQdXcnrDDZvKIwf6bsxMfobiOCjAgQdpXUNAOwcAWAxq2sByXBXMUmqAblRD
+                  sQkBKzaLod+/Ja4Zr/7NCNdj0rKKboCg3XMTEThM5v1hvExNMgE6bnudAoGAQCh5
+                  RzMj0ktNWf/UTvgAZWLCQpqHXfMmuKLBPmudHxv1XxkO4SrGMCVgjRVfRC7yp1LB
+                  1LBeKAIbGfJeTBnGuqXDh4gha5uH9xLGjQ/Z7rR6NgBvoWrhCLdSVVlDpJJxt31X
+                  VO7c5k7QSB4Rp6GqSYu8fHL4pob9R75M2zGRGSECgYEAjYzGEmXo+f2ezI+GHYHB
+                  F8wWQhREOONC10MJ2ADj4FoPgbMghdfbpkHDTC0FFQqi4gCOLpU7h4H8/PDOl9vL
+                  yXe6fabXFZrFrTa9IYO1ImWa6lkOWY4hO7DcKqWQzHFll93+Cs0STAhdSfEad0Fe
+                  Sibf5N6AjHN4gWm/gCnn2nw=
+                  -----END PRIVATE KEY-----
+  clusters:
+  - name: rancher-manager
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: rancher-manager
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: rancher-manager.cattle-system.svc
+                port_value: 80
+    health_checks:
+    - timeout: 1s
+      interval: 30s
+      unhealthy_threshold: 5
+      healthy_threshold: 1
+      http_health_check:
+        host: localhost
+        path: /healthz

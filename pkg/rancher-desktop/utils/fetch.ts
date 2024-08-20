@@ -108,7 +108,6 @@ export default async function fetch(url: string, options?: RequestInit) {
 
   try {
     return await _fetch(url, {
-      ...options,
       agent: (parsedURL) => {
         // Find the correct agent, given user options and defaults.
         const isSecure = parsedURL.protocol.startsWith('https');
@@ -133,6 +132,7 @@ export default async function fetch(url: string, options?: RequestInit) {
 
         return result.agent;
       },
+      ...options,
     });
   } catch (ex) {
     // result.lastError may be set by createConnection from wrapCreateConnection.

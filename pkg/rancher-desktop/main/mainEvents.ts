@@ -114,6 +114,12 @@ interface MainEventNames {
   'extensions/ui/uninstall'(id: string): void;
 
   /**
+   * Emitted when the dashboard port has changed.
+   * @param port The port that the dashboard is now on.
+   */
+  'dashboard/port-changed'(port: number): void;
+
+  /**
    * Emitted on application quit, used to shut down any integrations.  This
    * requires feedback from the handler to know when all tasks are complete.
    */

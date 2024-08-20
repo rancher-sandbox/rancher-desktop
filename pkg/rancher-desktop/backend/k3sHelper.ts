@@ -1,10 +1,12 @@
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
+import https from 'https';
 import os from 'os';
 import path from 'path';
 import stream from 'stream';
 import tls from 'tls';
+import timers from 'timers/promises';
 import util from 'util';
 
 import {
@@ -18,6 +20,9 @@ import yaml from 'yaml';
 
 import { Architecture, VMExecutor } from './backend';
 
+import CERT_MANAGER from '@pkg/assets/scripts/cert-manager.yaml';
+import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
+import RANCHER_MANAGER_ENVOY_CONFIG from '@pkg/assets/scripts/rancher-manager-envoy.yaml';
 import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
@@ -35,9 +40,25 @@ import safeRename from '@pkg/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { defined, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 import { showMessageBox } from '@pkg/window';
+import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 
 import type Electron from 'electron';
+import mainEvents from '@pkg/main/mainEvents';
 
+const KubeContextName = 'rancher-desktop';
+const RancherPassword = 'password';
+// Manifests are applied in sort order, so use a prefix to load them last, in the required sequence.
+// Names should start with `z` followed by a digit, so that `install-k3s` cleans them up on restart.
+const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
+const MANIFEST_CERT_MANAGER_CRDS = 'z110-cert-manager.crds';
+const MANIFEST_CERT_MANAGER = 'z115-cert-manager';
+const MANIFEST_SPIN_OPERATOR_CRDS = 'z120-spin-operator.crds';
+export const MANIFEST_SPIN_OPERATOR = 'z125-spin-operator';
+const MANIFEST_RANCHER_MANAGER = 'z130-rancher-manager';
+const STATIC_DIR = '/var/lib/rancher/k3s/server/static/rancher-desktop';
+const STATIC_CERT_MANAGER_CHART = `${ STATIC_DIR }/cert-manager.tgz`;
+const STATIC_RANCHER_CHART = `${ STATIC_DIR }/rancher-manager.tgz`
+const STATIC_SPIN_OPERATOR_CHART = `${ STATIC_DIR }/spin-operator.tgz`;
 const console = Logging.k8s;
 
 /**
@@ -131,7 +152,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
-  protected readonly minimumVersion = new semver.SemVer('1.21.0');
+  protected readonly minimumVersion = new semver.SemVer('1.22.0');
   protected versionFromChannel: Record<string, string> = {};
 
   constructor(arch: Architecture) {
@@ -905,7 +926,6 @@ export default class K3sHelper extends events.EventEmitter {
    * @param configReader A function that returns the kubeconfig from the K3s VM.
    */
   async updateKubeconfig(configReader: () => Promise<string>): Promise<void> {
-    const contextName = 'rancher-desktop';
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-kubeconfig-'));
 
     try {
@@ -929,18 +949,18 @@ export default class K3sHelper extends events.EventEmitter {
         const clusterIndex = workConfig.clusters.findIndex(cluster => cluster.name === context.cluster);
 
         if (userIndex >= 0) {
-          workConfig.users[userIndex] = { ...workConfig.users[userIndex], name: contextName };
+          workConfig.users[userIndex] = { ...workConfig.users[userIndex], name: KubeContextName };
         }
         if (clusterIndex >= 0) {
-          workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: contextName };
+          workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: KubeContextName };
         }
         workConfig.contexts[contextIndex] = {
-          ...context, name: contextName, user: contextName, cluster: contextName,
+          ...context, name: KubeContextName, user: KubeContextName, cluster: KubeContextName,
         };
 
-        workConfig.currentContext = contextName;
+        workConfig.currentContext = KubeContextName;
       }
-      const userPath = await K3sHelper.findKubeConfigToUpdate(contextName);
+      const userPath = await K3sHelper.findKubeConfigToUpdate(KubeContextName);
       const userConfig = new KubeConfig();
 
       // @kubernetes/client-node throws when merging things that already exist
@@ -970,7 +990,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
-      userConfig.currentContext ||= contextName;
+      userConfig.currentContext ||= KubeContextName;
       // Use custom exportConfig() that supports the `proxy-url` cluster field.
       const userYAML = this.ensureContentsAreYAML(exportConfig(userConfig));
       const writeStream = fs.createWriteStream(workPath, { mode: 0o600 });
@@ -1200,6 +1220,169 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     return results;
+  }
+
+  /**
+   * Write k3s manifests to install cert-manager, rancher manager, and spinkube
+   * operator.
+   * @param spin Whether to enable spinkube.
+   */
+  static async configureKubeResources(vmx: VMExecutor, spin = false) {
+    function manifestFilename(name: string) {
+      return `${ MANIFEST_DIR }/${ name }.yaml`;
+    }
+    let promises = [];
+    const manifests: Record<string, any>[] = [
+      {
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: { name: 'cattle-system' },
+      },
+      {
+        apiVersion: 'helm.cattle.io/v1',
+        kind: 'HelmChart',
+        metadata: {
+          name: 'rancher-manager',
+          namespace: 'cattle-system',
+        },
+        spec: {
+          chart: "https://%{KUBERNETES_API}%/static/rancher-desktop/rancher-manager.tgz",
+          targetNamespace: 'cattle-system',
+          // Old versions of the helm-controller don't support createNamespace, so we
+          // created the namespace ourselves.
+          createNamespace: false,
+          valuesContent: yaml.stringify({
+            bootstrapPassword: RancherPassword,
+            replicas: 1,
+            hostname: 'localhost',
+            useBundledSystemChart: true,
+            certmanager: {
+              version: DEPENDENCY_VERSIONS.certManager,
+            },
+            postDelete: {
+              enabled: false,
+            },
+            ingress: {
+              enabled: false,
+            },
+            extraEnv: [
+              { name: 'CATTLE_FEATURES',
+                value: [
+                  'continuous-delivery=false',
+                  'fleet=false',
+                  'harvester=false',
+                  'multi-cluster-management=false',
+                  'rke1-ui=false',
+                  'rke2=false',
+                  'uiextension=false',
+                ].join(',') },
+            ]
+          }),
+        },
+      },
+      {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        metadata: {
+          name: 'rancher-envoy',
+          namespace: 'cattle-system',
+        },
+        spec: {
+          replicas: 1,
+          selector: {
+            matchLabels: { app: 'rancher-envoy' },
+          },
+          template: {
+            metadata: { labels: { app: 'rancher-envoy' } },
+            spec: {
+              containers: [{
+                name: 'envoy',
+                image: 'envoyproxy/envoy:distroless-v1.31-latest',
+                args: [
+                  '--config-yaml', RANCHER_MANAGER_ENVOY_CONFIG
+                ],
+              }],
+            }
+          },
+        }
+      },
+      {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: {
+          name: 'rancher-envoy',
+          namespace: 'cattle-system',
+        },
+        spec: {
+          selector: { app: 'rancher-envoy' },
+          ports: [{
+            port: 443,
+            targetPort: 9443,
+          }],
+        }
+      },
+    ]
+    promises.push(
+      vmx.copyFileIn(path.join(paths.resources, 'cert-manager.crds.yaml'), manifestFilename(MANIFEST_CERT_MANAGER_CRDS)),
+      vmx.copyFileIn(path.join(paths.resources, 'cert-manager.tgz'), STATIC_CERT_MANAGER_CHART),
+      vmx.writeFile(manifestFilename(MANIFEST_CERT_MANAGER), CERT_MANAGER, 0o644),
+      vmx.copyFileIn(path.join(paths.resources, `rancher-${ DEPENDENCY_VERSIONS.rancher }.tgz`), STATIC_RANCHER_CHART));
+      vmx.writeFile(manifestFilename(MANIFEST_RANCHER_MANAGER), manifests.map(m => yaml.stringify(m)).join('---\n'), 0o644);
+    if (spin) {
+      promises.push(
+        vmx.copyFileIn(path.join(paths.resources, 'spin-operator.crds.yaml'), manifestFilename(MANIFEST_SPIN_OPERATOR_CRDS)),
+        vmx.copyFileIn(path.join(paths.resources, 'spin-operator.tgz'), STATIC_SPIN_OPERATOR_CHART));
+        vmx.writeFile(manifestFilename(MANIFEST_SPIN_OPERATOR), SPIN_OPERATOR, 0o644);
+    }
+    await Promise.all(promises);
+  }
+
+  static async setupRancherManager(client: KubeClient) {
+    const pod = await client.getActivePod('cattle-system', 'rancher-manager');
+
+    if (!pod) {
+      // We can get here if shutdown was initiated before the pod was ready.
+      return;
+    }
+
+    const hostPort = await client.forwardPort('cattle-system', 'rancher-envoy', 9443, 0);
+    if (!hostPort) {
+      return;
+    }
+    mainEvents.emit('dashboard/port-changed', hostPort);
+
+    const timeout = AbortSignal.timeout(10 * 60 * 1_000);
+    while (!timeout.aborted) {
+      try {
+        const url = `https://localhost:${ hostPort }/dashboard/?setup=${ RancherPassword }`;
+        const agent = new https.Agent({ rejectUnauthorized: false });
+        const resp = await fetch(url, { agent });
+
+        console.log(`${ url } => ${ resp.status }: ${ resp.statusText }`);
+        console.log(await resp.text());
+        if (resp.ok) {
+          break;
+        }
+      } catch (ex) {
+        console.log(ex);
+      }
+      await timers.setTimeout(10_000);
+    }
+
+    const setSetting = async(name: string, value: string) => {
+      const apiClient = client.k8sClient.makeApiClient(CustomObjectsApi);
+      const apiGroup = 'management.cattle.io';
+      const apiVersion = 'v3';
+      const settingsType = 'settings';
+
+      await apiClient.patchClusterCustomObject(apiGroup, apiVersion, settingsType,
+        name, {value}, undefined, undefined, undefined, {
+          headers: { 'Content-Type': 'application/merge-patch+json' },
+        });
+    };
+
+    await setSetting('first-login', 'false');
+    await setSetting('eula-agreed', (new Date).toISOString());
   }
 }
 
