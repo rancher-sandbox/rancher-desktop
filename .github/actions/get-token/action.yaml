@@ -1,0 +1,40 @@
+name: Get Token
+description: >-
+  This action attempts to get a token with the requested permissions; if this is
+  not running from the upstream repository, it attempts to get the token from a
+  secret.  Otherwise, it uses the vault actions.
+  This requires permissions set described in
+  https://github.com/rancher-eio/read-vault-secrets
+inputs:
+  token-secret:
+    description: Secret to fall back to
+    required: false
+outputs:
+  token:
+    description: The GitHub token retrieved
+    value: ${{ github.repository == 'rancher-sandbox/rancher-desktop' && steps.gen-token.outputs.token || steps.get-secret.outputs.token }}
+runs:
+  using: composite
+  steps:
+  - id: vault
+    name: Read vault secrets
+    if: github.repository == 'rancher-sandbox/rancher-desktop'
+    uses: rancher-eio/read-vault-secrets@main
+    with:
+      secrets: |
+        secret/data/github/repo/${{ github.repository }}/github/app-credentials appId | APP_ID ;
+        secret/data/github/repo/${{ github.repository }}/github/app-credentials privateKey | PRIVATE_KEY
+  - id: gen-token
+    name: Generate token
+    if: github.repository == 'rancher-sandbox/rancher-desktop'
+    uses: actions/create-github-app-token@v1
+    with:
+      app-id: ${{ env.APP_ID }}
+      private-key: ${{ env.PRIVATE_KEY }}
+  - id: get-secret
+    name: Fetch secret.
+    if: github.repository != 'rancher-sandbox/rancher-desktop'
+    run: echo "token=$SECRET" >> "$GITHUB_OUTPUT"
+    shell: bash
+    env:
+      SECRET: ${{ inputs.token-secret }}

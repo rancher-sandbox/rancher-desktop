@@ -1,6 +1,6 @@
 # Sync go.work on PRs
-# Uses the RUN_WORKFLOW_FROM_WORKFLOW secret if available.  Otherwise it is
-# necessary to reopen a PR to run more workflows.
+# If not running upstream (where it uses the vault action), requires the
+# RUN_WORKFLOW_FROM_WORKFLOW secret to be set.
 
 name: Sync go.work
 on:
@@ -20,33 +20,25 @@ jobs:
     # We only run this for pull requests from the same repository.  This is
     # important for security reasons, as we use pull_request_target.
     if: github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      id-token: write # Required for ./.github/actions/get-token
     runs-on: ubuntu-latest
     steps:
-    # Because the GitHub-provided token doesn't trigger further actions runs,
-    # try to use a secret if available.
-    - name: Determine checkout token
-      id: has-token
-      run: echo "has-token=$HAS_TOKEN" >> "$GITHUB_OUTPUT"
-      env:
-        # Temporarily disable use of token; we don't have a correct token set up
-        # (so we fail to push), so using the GitHub-provided token that doesn't
-        # trigger subsequent checks is better than failing to push.
-        HAS_TOKEN: ${{ false && secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
-    - name: Checkout with token
-      if: steps.has-token.outputs.has-token == 'true'
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.base_ref }}
+    - id: get-token
+      uses: ./.github/actions/get-token
+      with:
+        token-secret: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+    - name: Checkout
       uses: actions/checkout@v4
       with:
         persist-credentials: true
         ref: ${{ github.head_ref }}
         fetch-depth: 3
-        token: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
-    - name: Checkout without token
-      if: steps.has-token.outputs.has-token != 'true'
-      uses: actions/checkout@v4
-      with:
-        persist-credentials: true
-        ref: ${{ github.head_ref }}
-        fetch-depth: 3
+        token: ${{ steps.get-token.outputs.token }}
     - uses: actions/setup-node@v4
       with:
         node-version-file: package.json
