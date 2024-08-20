@@ -1432,6 +1432,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
                 }),
                 await this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
+                // Remove any residual rc artifacts from previous versions when vtunnel was installed
+                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer'),
               ]);
 
               await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
