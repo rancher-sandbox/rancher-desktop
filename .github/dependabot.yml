@@ -107,14 +107,6 @@ updates:
     reviewers: [ "jandubois" ]
 
   - package-ecosystem: "gomod"
-    directory: "/src/go/vtunnel"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 1
-    labels: ["component/dependencies"]
-    reviewers: [ "Nino-K" ]
-
-  - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
     schedule:
       interval: "daily"

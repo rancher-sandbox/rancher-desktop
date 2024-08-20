@@ -5,7 +5,6 @@ import { URL } from 'url';
 
 import runCredentialHelper from './credentialUtils';
 
-import { getVtunnelInstance } from '@pkg/main/networking/vtunnel';
 import * as serverHelper from '@pkg/main/serverHelper';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -54,7 +53,6 @@ function ensureEndsWithNewline(s: string) {
 }
 
 export class HttpCredentialHelperServer {
-  protected vtun = getVtunnelInstance();
   protected server = http.createServer();
   protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
@@ -67,16 +65,6 @@ export class HttpCredentialHelperServer {
   protected listenAddr = '127.0.0.1';
 
   async init() {
-    if (process.platform === 'win32') {
-      this.vtun.addTunnel({
-        name:                  'Credential Server',
-        handshakePort:         17362,
-        vsockHostPort:         17361,
-        peerAddress:           this.listenAddr,
-        peerPort:              3030,
-        upstreamServerAddress: `${ this.listenAddr }:${ SERVER_PORT }`,
-      });
-    }
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,

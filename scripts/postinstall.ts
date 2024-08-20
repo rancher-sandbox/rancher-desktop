@@ -55,7 +55,6 @@ const windowsDependencies = [
   new HostResolverHost(),
   new Wix(),
   new HostSwitch(),
-  new goUtils.GoDependency('vtunnel', 'internal'),
   new goUtils.GoDependency('privileged-service', 'internal'),
   new goUtils.WSLHelper(),
   new goUtils.NerdctlStub(),
@@ -65,7 +64,6 @@ const windowsDependencies = [
 const wslDependencies = [
   new HostResolverPeer(),
   new Moproxy(),
-  new goUtils.GoDependency('vtunnel', 'internal'),
   new goUtils.RDCtl(),
   new goUtils.GoDependency('guestagent', 'staging'),
   new goUtils.WSLHelper(),
