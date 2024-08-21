@@ -472,7 +472,7 @@ export class KubeClient extends events.EventEmitter {
 
       // check if server is still valid
       if (!this.servers.has(namespace, endpoint, k8sPort)) {
-        new Error('Server is no longer valid');
+        throw new Error('Server is no longer valid');
       }
 
       // forward the port
@@ -525,15 +525,15 @@ export class KubeClient extends events.EventEmitter {
     let server = this.servers.get(namespace, endpoint, k8sPort);
 
     if (server) {
-      console.log(`Found existing server for ${ targetName }.`);
+      console.debug(`Found existing server for ${ targetName }.`);
       const currentHostPort = (server.address() as net.AddressInfo).port;
 
-      if (currentHostPort === hostPort) {
-        console.log(`Server listening on ${ hostPort }, which is what we want.`);
+      if (hostPort === 0 || currentHostPort === hostPort) {
+        console.debug(`Server listening on ${ hostPort }, which is what we want.`);
 
-        return hostPort;
+        return hostPort || currentHostPort;
       } else {
-        console.log(`Server listening on ${ currentHostPort }, but we want ${ hostPort }. Closing it.`);
+        console.debug(`Server listening on ${ currentHostPort }, but we want ${ hostPort }. Closing it.`);
         await this.closeServerAndConns(namespace, endpoint, k8sPort);
       }
     }
