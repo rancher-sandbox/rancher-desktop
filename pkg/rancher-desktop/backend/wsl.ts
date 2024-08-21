@@ -185,9 +185,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return this.#isAdminInstall;
   }
 
-  /** Indicates whether privileged service is enabled in the current installation. */
-  protected privilegedServiceEnabled = false;
-
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
    * children of this one.  Note that this is busybox init, running in a custom
@@ -502,24 +499,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
         lines.join('\n') + extra, 'utf-8');
     });
-  }
-
-  /**
-   * start/stop Privileged Service based on a given command [start|stop],
-   * also, it returns a boolean to indicate if privileged services
-   * is enabled.
-   */
-  protected async invokePrivilegedService(cmd: 'start' | 'stop'): Promise<boolean> {
-    const privilegedServicePath = path.join(paths.resources, 'win32', 'internal', 'privileged-service.exe');
-    let privilegedServiceEnabled = true;
-
-    try {
-      await childProcess.spawnFile(privilegedServicePath, [cmd]);
-    } catch (error) {
-      privilegedServiceEnabled = false;
-    }
-
-    return privilegedServiceEnabled;
   }
 
   /**
@@ -867,15 +846,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const isAdminInstall = await this.getIsAdminInstall();
 
     const guestAgentConfig: Record<string, string> = {
-      LOG_DIR:                       await this.wslify(paths.logs),
-      GUESTAGENT_ADMIN_INSTALL:      isAdminInstall ? 'true' : 'false',
-      GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
-      GUESTAGENT_IPTABLES:           iptables.toString(), // only enable IPTABLES for older K8s
-      GUESTAGENT_PRIVILEGED_SERVICE: this.privilegedServiceEnabled ? 'true' : 'false',
-      GUESTAGENT_CONTAINERD:         cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
-      GUESTAGENT_DOCKER:             cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
-      GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
-      GUESTAGENT_K8S_SVC_ADDR:       isAdminInstall && !cfg?.kubernetes.ingress.localhostOnly ? '0.0.0.0' : '127.0.0.1',
+      LOG_DIR:                  await this.wslify(paths.logs),
+      GUESTAGENT_ADMIN_INSTALL: isAdminInstall ? 'true' : 'false',
+      GUESTAGENT_KUBERNETES:    enableKubernetes ? 'true' : 'false',
+      GUESTAGENT_IPTABLES:      iptables.toString(), // only enable IPTABLES for older K8s
+      GUESTAGENT_CONTAINERD:    cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
+      GUESTAGENT_DOCKER:        cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
+      GUESTAGENT_DEBUG:         this.debug ? 'true' : 'false',
+      GUESTAGENT_K8S_SVC_ADDR:  isAdminInstall && !cfg?.kubernetes.ingress.localhostOnly ? '0.0.0.0' : '127.0.0.1',
     };
 
     await Promise.all([
@@ -1287,10 +1265,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.writeResolvConf();
         })()];
 
-        const rdNetworking = !!config?.experimental.virtualMachine.networkingTunnel;
-
-        this.privilegedServiceEnabled = rdNetworking ? false : await this.invokePrivilegedService('start');
-
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
             [kubernetesVersion] = await this.kubeBackend.download(config);
@@ -1446,10 +1420,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   // just ignore any errors; all the script does is installing spin plugins and templates
                 }
               }
-              if (rdNetworking) {
-                // Do not await on this, as we don't want to wait until the proxy exits.
-                this.runWslProxy().catch(console.error);
-              }
+              // Do not await on this, as we don't want to wait until the proxy exits.
+              this.runWslProxy().catch(console.error);
             }),
             this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
             this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
@@ -1476,10 +1448,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 // Make sure the apiserver can be accessed from WSL through the internal gateway
                 k3sConf.ADDITIONAL_ARGS += ' --tls-san gateway.rancher-desktop.internal';
 
-                if (rdNetworking) {
                 // Add the `veth-rd1` IP address from inside the namespace
-                  k3sConf.ADDITIONAL_ARGS += ' --tls-san 192.168.1.2';
-                }
+                k3sConf.ADDITIONAL_ARGS += ' --tls-san 192.168.1.2';
 
                 if (!config.kubernetes.options.flannel) {
                   console.log(`Disabling flannel and network policy`);
@@ -1688,7 +1658,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         }
         if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
           await this.resolverHostProcess.stop();
-          await this.invokePrivilegedService('stop');
         }
         const initProcess = this.process;
 
