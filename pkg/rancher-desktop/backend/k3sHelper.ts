@@ -1356,7 +1356,7 @@ export default class K3sHelper extends events.EventEmitter {
       try {
         const url = `https://localhost:${ hostPort }/dashboard/?setup=${ RancherPassword }`;
         const agent = new https.Agent({ rejectUnauthorized: false });
-        const resp = await fetch(url, { agent });
+        const resp = await fetch(url, { agent, timeout: 5_000 });
 
         console.log(`${ url } => ${ resp.status }: ${ resp.statusText }`);
         console.log(await resp.text());
@@ -1364,7 +1364,7 @@ export default class K3sHelper extends events.EventEmitter {
           break;
         }
       } catch (ex) {
-        console.log(ex);
+        console.log(`Retrying dashboard setup due to error: ${ ex }`);
       }
       await timers.setTimeout(10_000);
     }
