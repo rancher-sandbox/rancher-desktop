@@ -51,9 +51,8 @@ var (
 // EventMonitor monitors the Containerd API
 // for container events.
 type EventMonitor struct {
-	containerdClient        *containerd.Client
-	portTracker             tracker.Tracker
-	enablePrivilegedService bool
+	containerdClient *containerd.Client
+	portTracker      tracker.Tracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
@@ -62,7 +61,6 @@ type EventMonitor struct {
 func NewEventMonitor(
 	containerdSock string,
 	portTracker tracker.Tracker,
-	enablePrivilegedService bool,
 ) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
 	if err != nil {
@@ -70,9 +68,8 @@ func NewEventMonitor(
 	}
 
 	return &EventMonitor{
-		containerdClient:        client,
-		portTracker:             portTracker,
-		enablePrivilegedService: enablePrivilegedService,
+		containerdClient: client,
+		portTracker:      portTracker,
 	}, nil
 }
 
@@ -294,13 +291,6 @@ func (e *EventMonitor) updateListener(
 	portMappings nat.PortMap,
 	action func(context.Context, net.IP, int) error,
 ) {
-	// Only create listeners for the default network when the PrivilegedService is enabled.
-	// Otherwise, creating listeners can conflict with the proxy listeners that are created
-	// by the namespaced network’s port exposing API.
-	if !e.enablePrivilegedService {
-		return
-	}
-
 	for _, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
 			port, err := strconv.Atoi(portBinding.HostPort)

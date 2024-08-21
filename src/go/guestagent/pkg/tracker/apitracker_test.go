@@ -23,6 +23,7 @@ import (
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	guestagentType "github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -619,4 +620,22 @@ func TestNonAdminInstall(t *testing.T) {
 
 func ipPortBuilder(ip, port string) string {
 	return ip + ":" + port
+}
+
+type testForwarder struct {
+	receivedPortMappings []guestagentType.PortMapping
+	sendErr              error
+	failCondition        func(guestagentType.PortMapping) error
+}
+
+func (v *testForwarder) Send(portMapping guestagentType.PortMapping) error {
+	if v.failCondition != nil {
+		if err := v.failCondition(portMapping); err != nil {
+			return err
+		}
+	}
+
+	v.receivedPortMappings = append(v.receivedPortMappings, portMapping)
+
+	return v.sendErr
 }

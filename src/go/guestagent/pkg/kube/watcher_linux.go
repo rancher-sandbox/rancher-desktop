@@ -13,12 +13,6 @@ limitations under the License.
 
 // Package kube watches Kubernetes for NodePort and LoadBalancer service types.
 // It exposes the services as follows:
-// - [default network - admin install]: It uses vtunnel tracker to forward the
-// port mappings to the host in conjunction with the automatic port forwarding
-// mechanism that is found in WSLv2.
-// - [default network - non-admin install]: It creates TCP listeners on 127.0.0.1,
-// so that it can be picked up by the automatic port forwarding mechanisms found
-// in WSLv2 on the default network with the non-admin install.
 // - [namespaced network - admin install]: It uses API tracker to expose the ports
 // on the host through host-switch.exe
 // - [namespaced network - non-admin install]: It uses API tracker to expose the ports
