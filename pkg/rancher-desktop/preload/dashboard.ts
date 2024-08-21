@@ -53,6 +53,13 @@ export default async function initDashboard(): Promise<void> {
         display: none;
       }
     `);
+    // Hide the download kubeconfig button; the config has the wrong port.
+    stylesheet.insertRule(`
+      .header-buttons button[data-testid="btn-download-kubeconfig"],
+      .header-buttons button[data-testid="btn-copy-kubeconfig"]{
+        display: none;
+      }
+    `);
     document.adoptedStyleSheets.push(stylesheet);
   });
 }
