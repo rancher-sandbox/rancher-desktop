@@ -131,6 +131,9 @@ if is_unix; then
     if [ "$RD_MOUNT_TYPE" = "virtiofs" ] && ! using_vz_emulation; then
         fatal "RD_MOUNT_TYPE=virtiofs only works with VZ emulation"
     fi
+    if [ "$RD_MOUNT_TYPE" = "9p" ] && using_vz_emulation; then
+        fatal "RD_MOUNT_TYPE=9p only works with qemu emulation"
+    fi
 else
     : "${RD_MOUNT_TYPE:=}"
     if [ -n "${RD_MOUNT_TYPE:-}" ]; then
