@@ -172,7 +172,7 @@
     "vue-eslint-parser": "9.4.3",
     "vue-jest": "3.0.7",
     "vue-template-compiler": "2.7.16",
-    "webpack": "5.93.0"
+    "webpack": "5.94.0"
   },
   "resolutions": {
     "string-width": "^4"
