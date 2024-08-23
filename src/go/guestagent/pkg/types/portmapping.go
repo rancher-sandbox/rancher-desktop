@@ -17,22 +17,23 @@ package types
 
 import "github.com/docker/go-connections/nat"
 
-// PortMapping is used to send Port/IP list over
-// the Vtunnel to the RD Privileged Service.
+// PortMapping represents the mapping of ports and addresses to be communicated
+// over the network. It includes a flag (remove) on whether to add or remove port mappings
+// and specifies the backend addresses to connect to.
 type PortMapping struct {
-	// Remove indicates whether to remove or add the entry
+	// Remove indicates whether the port mappings should be removed (true) or added (false)
 	Remove bool `json:"remove"`
-	// Ports are the port mappings for both IPV4 and IPV6
+	// Ports contains the port mappings for both IPv4 and IPv6 addresses
 	Ports nat.PortMap `json:"ports"`
-	// ConnectAddrs are the backend addresses to connect to
+	// ConnectAddrs lists the backend addresses for connections
 	ConnectAddrs []ConnectAddrs `json:"connectAddrs"`
 }
 
-// ConnectAddrs represent the address for WSL interface
-// inside the VM, this address is usually available on eth0.
+// ConnectAddrs defines a network address used for the WSL interface inside
+// the VM. Typically, this address is found on the eth0 interface.
 type ConnectAddrs struct {
-	// Network indicates the available networks for the address (for example, "tcp", "udp")
+	// Network specifies the protocol or network type for the address (e.g., "tcp", "udp")
 	Network string `json:"network"`
-	// Address is either IPV4 or IPV6 (for example, "192.0.2.1:25", "[2001:db8::1]:80")
+	// Addr is the network address, which can be either IPv4 or IPv6 (e.g., "192.0.2.1:25", "[2001:db8::1]:80")
 	Addr string `json:"addr"`
 }
