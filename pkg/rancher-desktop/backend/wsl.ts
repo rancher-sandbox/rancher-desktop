@@ -481,9 +481,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * contents from the data distribution.
    */
   protected async writeHostsFile(config: BackendSettings) {
-    const rdNetworking = config.experimental.virtualMachine.networkingTunnel;
-    const virtualNetworkHostAddr = '192.168.127.254';
-    const hostIPAddr = rdNetworking ? virtualNetworkHostAddr : wslHostIPv4Address();
+    const virtualNetworkStaticAddr = '192.168.127.254';
+    const virtualNetworkGatewayAddr = '192.168.127.1';
 
     await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
       const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`, 'utf-8');
@@ -492,7 +491,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
       const extra = [
         '# BEGIN Rancher Desktop configuration.',
-        `${ hostIPAddr } ${ hosts.join(' ') }`,
+        `${ virtualNetworkStaticAddr } ${ hosts.join(' ') }`,
+        `${ virtualNetworkGatewayAddr } gateway.rancher-desktop.internal`,
         '# END Rancher Desktop configuration.',
       ].map(l => `${ l }\n`).join('');
 
@@ -1447,6 +1447,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                 // Make sure the apiserver can be accessed from WSL through the internal gateway
                 k3sConf.ADDITIONAL_ARGS += ' --tls-san gateway.rancher-desktop.internal';
+
+                // Generate certificates for the statically defined host entries.
+                // This is useful for users connecting to the host via HTTPS.
+                k3sConf.ADDITIONAL_ARGS += ' --tls-san host.rancher-desktop.internal';
+                k3sConf.ADDITIONAL_ARGS += ' --tls-san host.docker.internal';
 
                 // Add the `veth-rd1` IP address from inside the namespace
                 k3sConf.ADDITIONAL_ARGS += ' --tls-san 192.168.1.2';
