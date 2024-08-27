@@ -28,6 +28,5 @@ resources/resources/win32/bin:
 resources/resources/win32/internal:
 - host-resolver.exe
 - host-switch.exe
-- privileged-service.exe
 - steve.exe
 - wsl-helper.exe
