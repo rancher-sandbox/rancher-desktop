@@ -45,8 +45,6 @@ end
 
 -   **vtunnelAddr**: Peer address for the Vtunnel process that forwards port mappings to the Vtunnel Host process over `AF_VSOCK`. This feature will soon be deprecated.
 
--   **privilegedService**: This flag enables privileged service mode. When enabled, the Rancher Desktop guest agent communicates over `AF_VSOCK` to a privileged service process running on the host. This functionality is primarily designed for Windows and will soon be deprecated.
-
 -   **k8sServiceListenerAddr**: Specifies an IP address (`0.0.0.0` or `127.0.0.1`) to bind Kubernetes services on the host.
 
 -   **adminInstall**: This flag indicates whether Rancher Desktop is installed with administrator privileges. It is used to enable Network Tunnel mode, where port mappings are forwarded to Rancher Desktop Networking's `host-switch`. The `host-switch` hosts an API that exposes ports from the host into the network namespace.
@@ -69,17 +67,13 @@ type PortMapping struct {
 ```
 ## Networking Mode
 
-Rancher Desktop Guest Agent can operate in one of three networking modes, depending on startup arguments:
-
-**-privilegedService**
-
-Rancher Desktop utilizes the vtunnel peer process to forward all port mappings to privileged services running on the host, thereby creating port proxies. However, this mode lacks network namespace isolation and shares iptables with other WSL distros, and it will soon be deprecated.
+Rancher Desktop Guest Agent can operate in one of two networking modes, depending on startup arguments:
 
 **-adminInstall**
 
 The Network Tunnel mode allows the Guest Agent to operate in an isolated network namespace with a dedicated iptables. This mode is enabled through Rancher Desktop Networking.
 
-Neither  **-privilegedService**  nor  **-adminInstall**
+None  **-adminInstall**
 
 Rancher Desktop Guest Agent operates in non-admin user mode. In this mode, all port mappings are bound to localhost, and the use of privileged ports is restricted.
 
@@ -226,72 +220,6 @@ sequenceDiagram
     guest-agent ->> host-switch: remove port (APITracker)
     host-switch ->> host-switch: remove port via gvisor
 
-  end
-
-```
-
-## Port forwarding (Privileged Service)
-
-```mermaid
-sequenceDiagram
-  box VM
-    participant dockerd
-    participant containerd
-    participant kubernetes
-    participant iptables
-    participant guest-agent
-  end
-  box Host
-    participant privileged-service
-  end
-  rect transparent
-    note over dockerd,containerd: adding port
-    alt containerd
-      containerd ->> guest-agent: /tasks/start
-      guest-agent ->> guest-agent: loopback iptables
-    else dockerd
-      dockerd ->> guest-agent: event[start]
-      guest-agent ->> guest-agent: loopback iptables
-    else kubernetes
-      kubernetes ->> guest-agent: event[not deleted]
-    else iptables
-      iptables ->> iptables: poll iptables
-      iptables ->> guest-agent: add new ports
-    end
-    alt privileged-service
-      guest-agent ->> privileged-service: add port (via VTunnel forwarding)
-      privileged-service ->> privileged-service: listen on host 0.0.0.0
-    end
-  end
-  rect transparent
-    note over dockerd, containerd: updating port
-    alt containerd
-      containerd ->> guest-agent: /containers/update
-    end
-    alt privileged-service
-      guest-agent ->> privileged-service: remove port (via VTunnel forwarding)
-      privileged-service ->> privileged-service: remove listener on host 0.0.0.0
-      guest-agent ->> privileged-service: add port (via VTunnel forwarding)
-      privileged-service ->> privileged-service: listen on host 0.0.0.0
-    end
-  end
-  rect transparent
-    note over dockerd,containerd: removing port
-    alt containerd
-      containerd ->> guest-agent: /tasks/exit
-    else dockerd
-      dockerd ->> guest-agent: event[stop]
-      dockerd ->> guest-agent: event[die]
-    else kubernetes
-      kubernetes ->> guest-agent: event[deleted]
-    else iptables
-      iptables ->> iptables: poll iptables
-      iptables ->> guest-agent: remove old ports
-    end
-    alt privileged-service
-      guest-agent ->> privileged-service: remove port (via VTunnel forwarding)
-      privileged-service ->> privileged-service: remove listener on host 0.0.0.0
-    end
   end
 
 ```

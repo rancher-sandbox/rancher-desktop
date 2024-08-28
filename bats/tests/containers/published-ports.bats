@@ -33,11 +33,6 @@ verify_container_published_port() {
 
 @test 'container published port binding to 0.0.0.0' {
     skip_unless_host_ip
-    if is_windows && ! using_networking_tunnel; then
-        if ! (powershell.exe -Command 'Get-Service RancherDesktop*' 2>/dev/null | grep --quiet RancherDesktopPrivilegedService); then
-            skip "This test requires Rancher Desktop privileged service on Windows"
-        fi
-    fi
     run_container_with_published_port "8081:80"
     verify_container_published_port "http://${HOST_IP}:8081"
 }

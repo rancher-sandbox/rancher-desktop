@@ -55,7 +55,6 @@ const windowsDependencies = [
   new HostResolverHost(),
   new Wix(),
   new HostSwitch(),
-  new goUtils.GoDependency('privileged-service', 'internal'),
   new goUtils.WSLHelper(),
   new goUtils.NerdctlStub(),
 ];

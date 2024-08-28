@@ -70,15 +70,9 @@ export class Element {
 const Component = 'Component';
 const ComponentGroup = 'ComponentGroup';
 const ComponentGroupRef = 'ComponentGroupRef';
-const Condition = 'Condition';
 const Directory = 'Directory';
 const File = 'File';
 const Fragment = 'Fragment';
-const PermissionEx = 'PermissionEx';
-const RegistryKey = 'RegistryKey';
-const RegistryValue = 'RegistryValue';
-const ServiceControl = 'ServiceControl';
-const ServiceInstall = 'ServiceInstall';
 const Shortcut = 'Shortcut';
 const ShortcutProperty = 'ShortcutProperty';
 
@@ -204,66 +198,6 @@ export default async function generateFileList(rootPath: string): Promise<string
       // This file does not need to be installed; it's used as an unnamed
       // binary instead; see main.wxs.
       return null;
-    },
-
-    // @ts-ignore
-    'resources\\resources\\win32\\internal\\privileged-service.exe': (d, f) => {
-      return <Component>
-        <Condition>{'MSIINSTALLPERUSER <> 1'}</Condition>
-        <File
-          Name={f.name}
-          Source={path.join('$(var.appDir)', d.name, f.name)}
-          ReadOnly="yes"
-          KeyPath="yes"
-          Id={f.id}
-        />
-        <ServiceInstall
-          DisplayName="Rancher Desktop Privileged Service"
-          ErrorControl="ignore"
-          Name="RancherDesktopPrivilegedService"
-          Start="demand"
-          Type="ownProcess"
-        >
-          {/* SDDL explanation
-            * O:SY  // Owner: SDDL_LOCAL_SYSTEM
-            * D:()  // DACL (see ACE strings)
-            * A;    // ACE type: SDDL_ACCESS_ALLOWED
-            * ;     // ACE flags: none
-            * GRGX; // Rights: GENERIC_READ + GENERIC_EXECUTE
-            * ;     // Object GUID: none
-            * ;     // Inherit Object GUID: none
-            * IU    // Account SID: SDDL_INTERACTIVE
-            *       // Resource attribute: none
-            * And for the second ACE, needed for uninstall:
-            * A;    // ACE type: SDDL_ACCESS_ALLOWED
-            * ;     // ACE flags: none
-            * GA;   // Rights: GENERIC_ALL
-            * ;     // Object GUID: none
-            * ;     // Inherit Object GUID: none
-            * SY    // Account SID: LOCAL_SYSTEM
-            *       // Resource attribute: none
-            */}
-          <PermissionEx Sddl="O:SYD:(A;;GRGX;;;IU)(A;;GA;;;SY)" />
-        </ServiceInstall>
-        {/* See https://learn.microsoft.com/en-us/windows/win32/msi/deleteservices-action
-          * We always run StopServices/DeleteServices/InstallFiles&c/InstallServices
-          * in that order; so it makes sense to have Remove="both".
-          */}
-        <ServiceControl
-          Id="RancherDesktopPrivilegedServiceControl"
-          Name="RancherDesktopPrivilegedService"
-          Stop="both"
-          Remove="both"
-          Wait="yes"
-        />
-        <RegistryKey
-          Root="HKLM"
-          Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\RancherDesktopPrivilegedService"
-        >
-          <RegistryValue Name="EventMessageFile" Type="expandable" Value="%SYSTEMROOT%\System32\EventCreate.exe" />
-          <RegistryValue Name="TypesSupported" Type="integer" Value="7" />{/* Error, warning, info */}
-        </RegistryKey>
-      </Component>;
     },
   };
 
