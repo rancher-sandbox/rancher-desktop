@@ -57,10 +57,11 @@ var (
 	adminInstall = flag.Bool("adminInstall", false, "indicates if Rancher Desktop is installed as admin or not")
 	k8sAPIPort   = flag.String("k8sAPIPort", "6443",
 		"K8sAPI port number to forward to rancher-desktop wsl-proxy as a static portMapping event")
+	tapIfaceIP = flag.String("tap-interface-ip", "192.168.127.2",
+		"IP address for the tap interface eth0 in network namespace")
 )
 
 const (
-	wslInfName             = "eth0"
 	iptablesUpdateInterval = 3 * time.Second
 	socketInterval         = 5 * time.Second
 	socketRetryTimeout     = 2 * time.Minute
@@ -113,7 +114,7 @@ func main() {
 	var portTracker tracker.Tracker
 
 	forwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
-	portTracker = tracker.NewAPITracker(forwarder, tracker.GatewayBaseURL, *adminInstall)
+	portTracker = tracker.NewAPITracker(forwarder, tracker.GatewayBaseURL, *tapIfaceIP, *adminInstall)
 	// Manually register the port for K8s API, we would
 	// only want to send this manual port mapping if both
 	// of the following conditions are met:

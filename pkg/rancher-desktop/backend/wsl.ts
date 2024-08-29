@@ -115,8 +115,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         if (this.cfg?.kubernetes.enabled) {
           const k8sPort = 6443;
-          const gatewayIP = '192.168.127.2';
-          const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ gatewayIP }:${ k8sPort }`;
+          const eth0IP = '192.168.127.2';
+          const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ eth0IP }:${ k8sPort }`;
 
           args.push('--port-forward', k8sPortForwarding);
         }
@@ -769,7 +769,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const credsPath = getServerCredentialsPath();
 
     try {
-      const credentialServerAddr = '192.168.127.254:6109';
+      const credentialServerAddr = 'host.rancher-desktop.internal:6109';
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'");
@@ -1294,7 +1294,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         try {
           await this.progressTracker.action('Installing container engine', 0, Promise.all([
             this.progressTracker.action('Starting WSL environment', 100, async() => {
-              const rdNetworkingDNS = '192.168.127.1';
+              const rdNetworkingDNS = 'gateway.rancher-desktop.internal';
               const logPath = await this.wslify(paths.logs);
               const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
                 .replace('/var/log', logPath);

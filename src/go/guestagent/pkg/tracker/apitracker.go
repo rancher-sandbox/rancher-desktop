@@ -32,15 +32,11 @@ import (
 )
 
 const (
-	// The Gateway IP address that is statically reserved
-	// by DHCP and will not change. It is used to initialize
-	// the NewAPITracker.
-	GatewayBaseURL = "http://192.168.127.1:80"
-	// Tap device (eth0) IP which is also allocated to the host-switch
-	// it is statically reserved by DHCP.
-	hostSwitchIP = "192.168.127.2"
-	exposeAPI    = "/services/forwarder/expose"
-	unexposeAPI  = "/services/forwarder/unexpose"
+	// The gateway represents the hostname where the hostSwitch API is hosted.
+	gateway        = "gateway.rancher-desktop.internal"
+	GatewayBaseURL = "http://" + gateway + ":80"
+	exposeAPI      = "/services/forwarder/expose"
+	unexposeAPI    = "/services/forwarder/unexpose"
 )
 
 var (
@@ -56,20 +52,22 @@ var (
 // and unexposing the ports on the host. This should only be used when
 // the Rancher Desktop networking is enabled and the privileged service is disabled.
 type APITracker struct {
-	forwarder   forwarder.Forwarder
-	isAdmin     bool
-	baseURL     string
-	httpClient  http.Client
-	portStorage *portStorage
+	forwarder      forwarder.Forwarder
+	isAdmin        bool
+	baseURL        string
+	tapInterfaceIP string
+	httpClient     http.Client
+	portStorage    *portStorage
 	*ListenerTracker
 }
 
 // NewAPITracker creates a new instance of a API Tracker.
-func NewAPITracker(forwarder forwarder.Forwarder, baseURL string, isAdmin bool) *APITracker {
+func NewAPITracker(forwarder forwarder.Forwarder, baseURL, tapIfaceIP string, isAdmin bool) *APITracker {
 	return &APITracker{
 		forwarder:       forwarder,
 		isAdmin:         isAdmin,
 		baseURL:         baseURL,
+		tapInterfaceIP:  tapIfaceIP,
 		httpClient:      *http.DefaultClient,
 		portStorage:     newPortStorage(),
 		ListenerTracker: NewListenerTracker(),
@@ -90,6 +88,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 			// The expose API only supports IPv4
 			ipv4, err := isIPv4(portBinding.HostIP)
 			if !ipv4 || err != nil {
+				log.Errorf("did not receive IPv4 for HostIP: %s", portBinding.HostIP)
 				continue
 			}
 
@@ -98,7 +97,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 			err = a.expose(
 				&types.ExposeRequest{
 					Local:  ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
-					Remote: ipPortBuilder(hostSwitchIP, portBinding.HostPort),
+					Remote: ipPortBuilder(a.tapInterfaceIP, portBinding.HostPort),
 				})
 			if err != nil {
 				errs = append(errs, fmt.Errorf("exposing %+v failed: %w", portBinding, err))
@@ -149,6 +148,7 @@ func (a *APITracker) Remove(containerID string) error {
 			// The unexpose API only supports IPv4
 			ipv4, err := isIPv4(portBinding.HostIP)
 			if !ipv4 || err != nil {
+				log.Errorf("did not receive IPv4 for HostIP: %s", portBinding.HostIP)
 				continue
 			}
 
