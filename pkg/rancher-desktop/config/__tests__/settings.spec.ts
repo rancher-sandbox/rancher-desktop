@@ -592,9 +592,8 @@ describe('settings', () => {
         },
         kubernetes:     {},
         virtualMachine: {
-          hostResolver: true,
-          memoryInGB:   30,
-          numberCPUs:   200,
+          memoryInGB: 30,
+          numberCPUs: 200,
         },
         WSL: {
           integrations: {
@@ -626,7 +625,6 @@ describe('settings', () => {
           {
             kubernetes: {
               suppressSudo: true,
-              hostResolver: true,
               memoryInGB:   300,
               numberCPUs:   45,
               experimental: {
@@ -653,9 +651,8 @@ describe('settings', () => {
               updater:                { enabled: true },
             },
             virtualMachine: {
-              hostResolver: true,
-              memoryInGB:   300,
-              numberCPUs:   45,
+              memoryInGB: 300,
+              numberCPUs: 45,
             },
             experimental: {
               virtualMachine: {

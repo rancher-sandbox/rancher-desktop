@@ -15,7 +15,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>13</integer>
+    <integer>14</integer>
   </dict>
 </plist>
 `, s)
@@ -33,7 +33,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>13</integer>
+    <integer>14</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -101,8 +101,7 @@ func TestJsonToPlistFormat(t *testing.T) {
   },
   "virtualMachine": {
     "memoryInGB": 4,
-    "numberCPUs": 2,
-    "hostResolver": true
+    "numberCPUs": 2
   },
   "WSL": {
     "integrations": {
@@ -236,8 +235,6 @@ func TestJsonToPlistFormat(t *testing.T) {
       <integer>4</integer>
       <key>numberCPUs</key>
       <integer>2</integer>
-      <key>hostResolver</key>
-      <true/>
     </dict>
     <key>kubernetes</key>
     <dict>
@@ -369,7 +366,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>13</integer>
+    <integer>14</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>

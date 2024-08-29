@@ -26,7 +26,6 @@ resources/resources/win32/bin:
 - '!kuberlr.exe'
 - '!spin.exe'
 resources/resources/win32/internal:
-- host-resolver.exe
 - host-switch.exe
 - steve.exe
 - wsl-helper.exe

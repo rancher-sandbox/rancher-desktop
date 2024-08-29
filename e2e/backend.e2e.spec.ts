@@ -111,7 +111,7 @@ test.describe.serial('KubernetesBackend', () => {
       };
       /** Platform-specific changes to `newSettings`. */
       const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
-        win32:  { virtualMachine: { hostResolver: getAlternateSetting(currentSettings, 'virtualMachine.hostResolver', true, false) } },
+        win32:  { kubernetes: { ingress: { localhostOnly: getAlternateSetting(currentSettings, 'kubernetes.ingress.localhostOnly', true, false) } } },
         darwin: { experimental: { virtualMachine: { useRosetta: getAlternateSetting(currentSettings, 'experimental.virtualMachine.useRosetta', true, false) } } },
       };
 
@@ -144,7 +144,7 @@ test.describe.serial('KubernetesBackend', () => {
 
       /** Platform-specific additions to `expectedDefinition`. */
       const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, ExpectedDefinition>> = {
-        win32:  { 'virtualMachine.hostResolver': false },
+        win32:  { 'kubernetes.ingress.localhostOnly': false },
         darwin: { 'experimental.virtualMachine.useRosetta': false },
       };
 

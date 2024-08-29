@@ -609,10 +609,6 @@ components:
               minimum: 1
               x-rd-platforms: [darwin, linux]
               x-rd-usage: reserved number of CPUs
-            hostResolver:
-              type: boolean
-              x-rd-platforms: [win32]
-              x-rd-usage: resolve DNS queries on the host and not inside the VM
         kubernetes:
           type: object
           properties:

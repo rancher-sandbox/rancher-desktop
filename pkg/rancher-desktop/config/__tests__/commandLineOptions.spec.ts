@@ -117,7 +117,7 @@ describe('commandLineOptions', () => {
     test('changes specified options', () => {
       const optionsByPlatform: Record<string, Array<string | [string, string]>> = {
         win32: [
-          '--virtualMachine.hostResolver',
+          '--experimental.virtualMachine.proxy.enabled',
         ],
         '!win32': [
           '--application.adminAccess',

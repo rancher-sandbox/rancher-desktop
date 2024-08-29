@@ -48,7 +48,6 @@ export type DependencyVersions = {
   rancherDashboard: string;
   dockerProvidedCredentialHelpers: string;
   ECRCredentialHelper: string;
-  hostResolver: string;
   mobyOpenAPISpec: string;
   wix: string;
   hostSwitch: string;
