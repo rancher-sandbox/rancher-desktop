@@ -25,7 +25,9 @@ get_tempdir() {
         local command='
             $name = New-TemporaryFile
             Remove-Item -Path $name
-            Start-Sleep -Seconds 1 # Allow anti-virus to do stuff
+            # In case anti-virus etc. holds files open, wait for a second to let
+            # things settle before we create a new directory with the same name.
+            Start-Sleep -Seconds 1
             New-Item -Type Directory -Path $name | Out-Null
             $name.FullName
         '
@@ -96,55 +98,72 @@ known_failure_on_mount_type() {
 
 @test 'read-only volume mount' {
     # Read a file that was created outside the container.
-    assert_not_exists "$WORK_PATH/foo"
-    create_file "$WORK_PATH/foo" <<<hello
+    file_name=foo
+    file_path=$WORK_PATH/$file_name
+    file_content=hello
+
+    assert_not_exists "$file_path"
+    create_file "$file_path" <<<$file_content
+
     # Use `--separate-stderr` to avoid image pull messages.
     run --separate-stderr \
         ctrctl run --volume "$HOST_WORK_PATH:/mount:ro" \
-        "$IMAGE_BUSYBOX" cat /mount/foo
+        "$IMAGE_BUSYBOX" cat /mount/$file_name
     assert_success
-    assert_output hello
+    assert_output $file_content
 }
 
 @test 'read-write volume mount' {
+    file_name=foo
+    file_path=$WORK_PATH/$file_name
+    file_content=hello
+
     # Create a file from the container.
-    assert_not_exists "$WORK_PATH/foo"
+    assert_not_exists "$file_path"
     ctrctl run --volume "$HOST_WORK_PATH:/mount:rw" \
-        "$IMAGE_BUSYBOX" sh -c 'echo hello > /mount/foo'
+        "$IMAGE_BUSYBOX" sh -c "echo $file_content > /mount/$file_name"
+
     # Check that the file was written to.
-    run cat "$WORK_PATH/foo"
-    assert_success
-    assert_output hello
+    assert_file_contains "$file_path" $file_content
 }
 
 @test 'read-write single file using --mount' {
-    create_file "$WORK_PATH/foo" <<<hello
+    file_name=foo
+    file_content=hello
+
+    create_file "$WORK_PATH/$file_name" <<<$file_content
     run --separate-stderr \
-        ctrctl run --mount "source=$HOST_WORK_PATH/foo,target=/mount,type=bind" \
+        ctrctl run --mount "source=$HOST_WORK_PATH/$file_name,target=/mount,type=bind" \
         "$IMAGE_BUSYBOX" cat /mount
     assert_success
-    assert_output hello
+    assert_output $file_content
 }
 
 @test 'read-write volume mount as user' {
     known_failure_on_mount_type 9p
+
+    file_name=foo
+    file_contents=hello
+    host_file_path=$HOST_WORK_PATH/$file_name
+
     # Create a file from within the container.
     run ctrctl run --volume "$HOST_WORK_PATH:/mount:rw" \
-        --user 1000:1000 "$IMAGE_BUSYBOX" sh -c 'echo hello > /mount/foo'
+        --user 1000:1000 "$IMAGE_BUSYBOX" sh -c "echo $file_contents > /mount/$file_name"
     "${assert}_success"
-    run cat "$WORK_PATH/foo"
+    run cat "$WORK_PATH/$file_name"
     "${assert}_success"
     if is_true "$EXPECT_FAILURE"; then
         skip "Test expected to fail"
     fi
-    assert_output hello
+    assert_output $file_contents
+
     # Try to append to the file.
     ctrctl run --volume "$HOST_WORK_PATH:/mount:rw" \
-        --user 1000:1000 "$IMAGE_BUSYBOX" sh -c 'echo hello | tee -a /mount/foo'
+        --user 1000:1000 "$IMAGE_BUSYBOX" sh -c "echo $file_contents | tee -a /mount/$file_name"
     # Check that the file was modified.
-    run cat "$WORK_PATH/foo"
+    run cat "$WORK_PATH/$file_name"
     assert_success
-    assert_output hello$'\n'hello
+    assert_output $file_contents$'\n'$file_contents
     if is_windows && using_windows_exe; then
         # On Windows, the directory may be owned by a group that the user is in;
         # additionally, there isn't an easy API to get effective access (!?).
@@ -153,7 +172,7 @@ known_failure_on_mount_type() {
             local command='
                 $typeName = "System.Security.Principal.SecurityIdentifier, System.Security.Principal.Windows"
                 $type = [System.Type]::GetType($typeName)
-                $owner = $(Get-Acl '"'$HOST_WORK_PATH/foo'"').GetOwner($type)
+                $owner = $(Get-Acl '"'$host_file_path'"').GetOwner($type)
                 $owner.Value
             '
             run pwsh.exe -Command "$command"
@@ -162,7 +181,7 @@ known_failure_on_mount_type() {
             # shellcheck disable=SC2016 # Don't expand PowerShell expansion
             local command='
                 $type = [System.Type]::GetType("System.Security.Principal.SecurityIdentifier")
-                $owner = $(Get-Acl '"'$HOST_WORK_PATH/foo'"').GetOwner($type)
+                $owner = $(Get-Acl '"'$host_file_path'"').GetOwner($type)
                 $owner.Value
             '
             run powershell.exe -Command "$command"
@@ -188,7 +207,7 @@ known_failure_on_mount_type() {
     else
         # Check that the file is owned by the current user.
         stat_arg=-f # Assume BSD stat
-        if stat --version | grep 'GNU coreutils'; then
+        if { stat --version || true; } | grep 'GNU coreutils'; then
             stat_arg=-c
         fi
         run stat "$stat_arg" '%u:%g' "$WORK_PATH/foo"
@@ -202,36 +221,49 @@ known_failure_on_mount_type() {
         known_failure_on_mount_type reverse-sshfs
         known_failure_on_mount_type 9p
     fi
+
+    file_name=foo
+    dir_name=baz
+    file_contents=hello
+
     # Create a file from the container.
-    assert_not_exists "$WORK_PATH/baz"
-    run ctrctl run --volume "$HOST_WORK_PATH/baz:/mount:rw" \
-        "$IMAGE_BUSYBOX" sh -c 'echo hello > /mount/foo'
+    assert_not_exists "$WORK_PATH/$dir_name"
+    run ctrctl run --volume "$HOST_WORK_PATH/$dir_name:/mount:rw" \
+        "$IMAGE_BUSYBOX" sh -c "echo $file_contents > /mount/$file_name"
     "${assert}_success"
     # Check that the file was written to.
     if is_true "$EXPECT_FAILURE"; then
-        assert_file_not_exists "$WORK_PATH/baz/foo"
+        assert_file_not_exists "$WORK_PATH/$dir_name"
     else
-        assert_file_exists "$WORK_PATH/baz/foo"
-        assert_file_contains "$WORK_PATH/baz/foo" hello
+        assert_file_exists "$WORK_PATH/$dir_name/$file_name"
+        assert_file_contains "$WORK_PATH/$dir_name/$file_name" $file_contents
     fi
 }
 
 @test 'directory contains space' {
-    assert_not_exists "$WORK_PATH/hello world"
-    mkdir "$WORK_PATH/hello world"
-    ctrctl run --volume "$HOST_WORK_PATH/hello world:/mount:rw" \
-        "$IMAGE_BUSYBOX" sh -c 'echo hello > /mount/hello'
-    assert_file_exists "$WORK_PATH/hello world/hello"
-    assert_file_contains "$WORK_PATH/hello world/hello" "hello"
+    dir_name="hello world"
+    file_name=foo
+    file_contents=hello
+
+    assert_not_exists "$WORK_PATH/$dir_name"
+    mkdir "$WORK_PATH/$dir_name"
+    ctrctl run --volume "$HOST_WORK_PATH/$dir_name:/mount:rw" \
+        "$IMAGE_BUSYBOX" sh -c "echo $file_contents > /mount/$file_name"
+    assert_file_exists "$WORK_PATH/$dir_name/$file_name"
+    assert_file_contains "$WORK_PATH/$dir_name/$file_name" $file_contents
 }
 
 @test 'directory contains non-ascii' {
-    assert_not_exists "$WORK_PATH/snow☃︎man"
-    mkdir "$WORK_PATH/snow☃︎man"
-    ctrctl run --volume "$HOST_WORK_PATH/snow☃︎man:/mount:rw" \
-        "$IMAGE_BUSYBOX" sh -c 'echo hello > /mount/hello'
-    assert_file_exists "$WORK_PATH/snow☃︎man/hello"
-    assert_file_contains "$WORK_PATH/snow☃︎man/hello" "hello"
+    dir_name=snow☃︎man
+    file_name=foo
+    file_contents=hello
+
+    assert_not_exists "$WORK_PATH/$dir_name"
+    mkdir "$WORK_PATH/$dir_name"
+    ctrctl run --volume "$HOST_WORK_PATH/$dir_name:/mount:rw" \
+        "$IMAGE_BUSYBOX" sh -c "echo $file_contents > /mount/$file_name"
+    assert_file_exists "$WORK_PATH/$dir_name/$file_name"
+    assert_file_contains "$WORK_PATH/$dir_name/$file_name" "$file_contents"
 }
 
 @test 'directory should be owned by current user' {
@@ -239,33 +271,40 @@ known_failure_on_mount_type() {
     known_failure_on_mount_type 9p
     known_failure_on_mount_type reverse-sshfs
     known_failure_on_mount_type win32
+
+    user_id=3678:2974
+
     run --separate-stderr \
         ctrctl run --volume "$HOST_WORK_PATH:/mount:ro" \
-        --user 3678:2974 "$IMAGE_BUSYBOX" stat -c '%u:%g' /mount
+        --user $user_id "$IMAGE_BUSYBOX" stat -c '%u:%g' /mount
     assert_success
-    "${assert}_output" 3678:2974
+    "${assert}_output" $user_id
 }
 
 @test 'change ownership of mounted file' {
     known_failure_on_mount_type reverse-sshfs
     known_failure_on_mount_type 9p
-    assert_not_exists "$WORK_PATH/quux"
-    mkdir "$WORK_PATH/quux"
-    run ctrctl run --volume "$HOST_WORK_PATH/quux:/mount:rw" \
+
+    file_name=foo
+    file_contents=hello
+
+    run ctrctl run --volume "$HOST_WORK_PATH:/mount:rw" \
         --user 0 "$IMAGE_BUSYBOX" \
-        sh -c 'echo foo > /mount/foo; chown 1234:5678 /mount/foo'
+        sh -c "echo $file_contents > /mount/$file_name; chown 1234:5678 /mount/$file_name"
     "${assert}_success"
-    assert_file_exists "$WORK_PATH/quux/foo"
-    assert_file_contains "$WORK_PATH/quux/foo" "foo"
+    assert_file_exists "$WORK_PATH/$file_name"
+    assert_file_contains "$WORK_PATH/$file_name" "$file_contents"
 }
 
 @test 'change file permissions' {
-    assert_not_exists "$WORK_PATH/foo"
-    local command='
-        touch /mount/foo
-        chmod 0755 /mount/foo
-        stat -c %A /mount/foo
-    '
+    file_name=foo
+
+    assert_not_exists "$WORK_PATH/$file_name"
+    local command="
+        touch /mount/$file_name
+        chmod 0755 /mount/$file_name
+        stat -c %A /mount/$file_name
+    "
     run --separate-stderr \
         ctrctl run --volume "$HOST_WORK_PATH:/mount:rw" \
         "$IMAGE_BUSYBOX" sh -c "$command"
