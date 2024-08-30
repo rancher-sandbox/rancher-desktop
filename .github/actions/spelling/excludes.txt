@@ -89,6 +89,7 @@
 ^\QSECURITY.md\E$
 ^pkg/rancher-desktop/assets/scripts/logrotate-k3s$
 ^pkg/rancher-desktop/assets/scripts/logrotate-lima-guestagent$
+^pkg/rancher-desktop/sudo-prompt/
 ignore$
 /translations/(?!en)
 ^\Qpkg/rancher-desktop/router.js\E$
