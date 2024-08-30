@@ -15,7 +15,6 @@ import merge from 'lodash/merge';
 import omit from 'lodash/omit';
 import zip from 'lodash/zip';
 import semver from 'semver';
-import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
@@ -41,6 +40,7 @@ import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import { ContainerEngine, MountType, VMType } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
+import sudo from '@pkg/sudo-prompt';
 import * as childProcess from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import DockerDirManager from '@pkg/utils/dockerDirManager';

@@ -76,7 +76,6 @@
     "proxy-agent": "^6.4.0",
     "rancher-icons": "rancher/icons#v2.0.21",
     "semver": "7.6.3",
-    "sudo-prompt": "9.2.1",
     "tar-stream": "3.1.7",
     "ufo": "1.5.4",
     "unfetch": "4.2.0",
