@@ -41,7 +41,6 @@ import SERVICE_SCRIPT_DOCKERD from '@pkg/assets/scripts/service-wsl-dockerd.init
 import SCRIPT_DATA_WSL_CONF from '@pkg/assets/scripts/wsl-data.conf';
 import WSL_EXEC from '@pkg/assets/scripts/wsl-exec';
 import WSL_INIT_SCRIPT from '@pkg/assets/scripts/wsl-init';
-import WSL_INIT_RD_NETWORKING_SCRIPT from '@pkg/assets/scripts/wsl-init-rd-networking';
 import { ContainerEngine } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
@@ -1084,11 +1083,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     } catch {
     }
 
-    if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
-      await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_RD_NETWORKING_SCRIPT, 0o755);
-    } else {
-      await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
-    }
+    await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, 0o755);
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
