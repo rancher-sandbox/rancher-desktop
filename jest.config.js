@@ -30,5 +30,9 @@ module.exports = {
   setupFiles: [
     '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupElectron.ts',
   ],
-  testEnvironment: 'jsdom',
+  testEnvironment:        'jsdom',
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/pkg/rancher-desktop/sudo-prompt/',
+  ],
 };
