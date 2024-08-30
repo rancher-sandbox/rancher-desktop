@@ -1,9 +1,8 @@
-const assert = require('assert');
-const fs = require('fs');
+import assert from 'assert';
+import { exec } from 'child_process';
+import { statSync } from 'fs';
 
-const sudo = require('./');
-
-const exec = require('child_process').exec;
+import { exec as sudo } from './';
 
 function kill(end) {
   if (process.platform === 'win32') {
@@ -19,10 +18,11 @@ function icns() {
   const path = '/Applications/Electron.app/Contents/Resources/Electron.icns';
 
   try {
-    fs.statSync(path);
+    statSync(path);
 
     return path;
-  } catch (error) {}
+  } catch (error) {
+  }
 
   return undefined;
 }
@@ -35,13 +35,16 @@ kill(
       name: 'Electron',
     };
 
+    let command;
+    let expected;
+
     if (process.platform === 'win32') {
-      var command = 'echo %SUDO_PROMPT_TEST_ENV%';
-      var expected = 'hello world\r\n';
+      command = 'echo %SUDO_PROMPT_TEST_ENV%';
+      expected = 'hello world\r\n';
     } else {
       // We use double quotes to tell echo to preserve internal space:
-      var command = 'echo "$SUDO_PROMPT_TEST_ENV"';
-      var expected = 'hello world\n';
+      command = 'echo "$SUDO_PROMPT_TEST_ENV"';
+      expected = 'hello world\n';
     }
     console.log(
       `sudo.exec(${
@@ -49,7 +52,7 @@ kill(
         JSON.stringify(options)
       })`,
     );
-    sudo.exec(command, options,
+    sudo(command, options,
       (error, stdout, stderr) => {
         console.log('error:', error);
         console.log(`stdout: ${ JSON.stringify(stdout) }`);

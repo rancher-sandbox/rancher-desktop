@@ -1,6 +1,6 @@
-const sudo = require('./');
+import { exec } from 'child_process';
 
-const exec = require('child_process').exec;
+import { exec as sudo } from './';
 
 function kill(end) {
   if (process.platform === 'win32') {
@@ -8,21 +8,24 @@ function kill(end) {
   }
   exec('sudo -k', end);
 }
+
 kill(
   () => {
     const options = { name: 'Sudo Prompt' };
 
+    let sleep;
+
     if (process.platform === 'win32') {
-      var sleep = 'timeout /t 10\r\necho world';
+      sleep = 'timeout /t 10\r\necho world';
     } else {
-      var sleep = 'sleep 10 && echo world';
+      sleep = 'sleep 10 && echo world';
     }
-    sudo.exec(sleep, options,
+    sudo(sleep, options,
       (error, stdout, stderr) => {
         console.log(error, stdout, stderr);
       },
     );
-    sudo.exec('echo hello', options,
+    sudo('echo hello', options,
       (error, stdout, stderr) => {
         console.log(error, stdout, stderr);
       },
