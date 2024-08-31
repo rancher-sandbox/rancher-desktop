@@ -1,6 +1,6 @@
 import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult, DiagnosticsCheckerSingleResult } from './types';
 
-import { ErrorHasExtendedAttributes, ErrorNotRegularFile, ErrorWritingFile } from '@pkg/integrations/manageLinesInFile';
+import { ErrorDeterminingExtendedAttributes, ErrorHasExtendedAttributes, ErrorNotRegularFile, ErrorWritingFile } from '@pkg/integrations/manageLinesInFile';
 import mainEvents from '@pkg/main/mainEvents';
 
 const cachedResults: Record<string, DiagnosticsCheckerResult> = {};
@@ -51,6 +51,10 @@ mainEvents.on('diagnostics-event', (id, state) => {
 
       if (error instanceof ErrorWritingFile) {
         return { fixes: [{ description: `Restore \`${ fileName }\` from backup file \`${ error.backupPath }\`` }] };
+      }
+
+      if (error instanceof ErrorDeterminingExtendedAttributes && error.cause) {
+        return { description: `${ error }: ${ error.cause }` };
       }
 
       return {};

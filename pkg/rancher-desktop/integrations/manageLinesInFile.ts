@@ -2,6 +2,10 @@ import fs from 'fs';
 
 import isEqual from 'lodash/isEqual.js';
 
+import Logging from '@pkg/utils/logging';
+
+const console = Logging['path-management'];
+
 export const START_LINE = '### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)';
 export const END_LINE = '### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)';
 const DEFAULT_FILE_MODE = 0o644;
@@ -167,7 +171,7 @@ async function fileHasExtendedAttributes(filePath: string): Promise<boolean> {
       return false;
     }
 
-    console.error(`Failed to import fs-xattr, cannot check for extended attributes on ${ filePath }`);
+    console.error(`Failed to import fs-xattr, cannot check for extended attributes on ${ filePath }:`, cause);
 
     throw new ErrorDeterminingExtendedAttributes({ path: filePath }, { cause });
   }
