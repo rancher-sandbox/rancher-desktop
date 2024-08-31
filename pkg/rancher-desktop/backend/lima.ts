@@ -15,7 +15,6 @@ import merge from 'lodash/merge';
 import omit from 'lodash/omit';
 import zip from 'lodash/zip';
 import semver from 'semver';
-import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
@@ -41,6 +40,7 @@ import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import { ContainerEngine, MountType, VMType } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@pkg/main/mainEvents';
+import { exec as sudo } from '@pkg/sudo-prompt';
 import * as childProcess from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import DockerDirManager from '@pkg/utils/dockerDirManager';
@@ -1383,7 +1383,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await new Promise<void>((resolve, reject) => {
       const iconPath = path.join(paths.resources, 'icons', 'logo-square-512.png');
 
-      sudo.exec(command, { name: 'Rancher Desktop', icns: iconPath }, (error, stdout, stderr) => {
+      sudo(command, { name: 'Rancher Desktop', icns: iconPath }, (error, stdout, stderr) => {
         if (stdout) {
           console.log(`Prompt for sudo: stdout: ${ stdout }`);
         }
