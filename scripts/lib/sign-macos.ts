@@ -213,24 +213,13 @@ async function *findFilesToSign(dir: string): AsyncIterable<string> {
       continue;
     }
 
-    // For regular files, read the first four bytes of the file and look
-    // for Mach-O headers.
+    // For regular files, call `file` and check if it thinks it's Mach-O.
+    // We previously read the file header, but that was unreliable.
     try {
-      const file = await fs.promises.open(fullPath);
+      const { stdout } = await spawnFile('/usr/bin/file', ['--brief', fullPath], { stdio: 'pipe' });
 
-      try {
-        const { buffer } = await file.read({ buffer: Buffer.alloc(4), length: 4 });
-        const header = buffer.readUInt32BE();
-        const validHeaders = [
-          0xFEEDFACF, // Mach-O 64 bit, correct endian
-          0xCFFAEDFE, // Mach-O 64 bit, reversed endian
-        ];
-
-        if (!validHeaders.includes(header)) {
-          continue;
-        }
-      } finally {
-        await file.close();
+      if (!stdout.startsWith('Mach-O ')) {
+        continue;
       }
     } catch {
       log.info({ fullPath }, 'Failed to read file, assuming no need to sign.');
