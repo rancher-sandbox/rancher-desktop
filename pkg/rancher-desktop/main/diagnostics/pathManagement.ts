@@ -1,6 +1,6 @@
 import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult, DiagnosticsCheckerSingleResult } from './types';
 
-import { ErrorDeterminingExtendedAttributes, ErrorHasExtendedAttributes, ErrorNotRegularFile, ErrorWritingFile } from '@pkg/integrations/manageLinesInFile';
+import { ErrorDeterminingExtendedAttributes, ErrorCopyingExtendedAttributes, ErrorNotRegularFile, ErrorWritingFile } from '@pkg/integrations/manageLinesInFile';
 import mainEvents from '@pkg/main/mainEvents';
 
 const cachedResults: Record<string, DiagnosticsCheckerResult> = {};
@@ -41,7 +41,7 @@ mainEvents.on('diagnostics-event', (id, state) => {
         return { passed: true, description: `\`${ fileName }\` is managed` };
       }
 
-      if (error instanceof ErrorHasExtendedAttributes) {
+      if (error instanceof ErrorCopyingExtendedAttributes) {
         return { fixes: [{ description: `Remove extended attributes from \`${ fileName }\`` }] };
       }
 

@@ -38,12 +38,11 @@ function newErrorWithPath<T extends Record<string, any>>(messageTemplate: (input
 export const ErrorDeterminingExtendedAttributes =
   newErrorWithPath(({ path }: {path: string}) => `Failed to determine if \`${ path }\` contains extended attributes`);
 /**
- * `ErrorHasExtendedAttributes` signifies that we were unable to process a file
- * because it has extended attributes that would not have been preserved had we
- * tried to edit it.
+ * `ErrorCopyingExtendedAttributes occurs if we failed to copy extended
+ * attributes while managing a file.
  */
-export const ErrorHasExtendedAttributes =
-  newErrorWithPath(({ path }: {path: string}) => `Refusing to manage \`${ path }\` which has extended attributes`);
+export const ErrorCopyingExtendedAttributes =
+  newErrorWithPath(({ path }: {path: string}) => `Failed to copy extended attributes while managing \`${ path }\``);
 /**
  * `ErrorNotRegularFile` signifies that we were unable to process a file because
  * it is not a regular file (e.g. a named pipe or a device).
@@ -87,10 +86,6 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
   }
 
   if (fileStats.isFile()) {
-    if (await fileHasExtendedAttributes(path)) {
-      throw new ErrorHasExtendedAttributes({ path });
-    }
-
     const tempName = `${ path }.rd-temp`;
 
     await fs.promises.copyFile(path, tempName, fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
@@ -111,6 +106,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
         return;
       }
 
+      await copyFileExtendedAttributes(path, tempName);
       await fs.promises.writeFile(tempName, targetContents, 'utf-8');
       await fs.promises.rename(tempName, path);
     } finally {
@@ -152,28 +148,31 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
 }
 
 /**
- * Check if the given file has any extended attributes.
- *
- * We do this check because we are not confident of being able to write the file
- * atomically (that is, either the old content or new content is visible) while
- * also preserving extended attributes.
+ * Copies extended attributes from an existing file to a different file.  Both
+ * files must already exist.
  */
-async function fileHasExtendedAttributes(filePath: string): Promise<boolean> {
+async function copyFileExtendedAttributes(fromPath: string, toPath: string): Promise<void> {
   try {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
     // @ts-ignore // fs-xattr is not available on Windows
-    const { list } = await import('fs-xattr');
+    const { list, get, set } = await import('fs-xattr');
 
-    return (await list(filePath)).length > 0;
+    for (const attr of await list(fromPath)) {
+      const value = await get(fromPath, attr);
+
+      await set(toPath, attr, value);
+    }
   } catch (cause) {
     if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
       // When running unit tests, assume they do not have extended attributes.
-      return false;
     }
 
-    console.error(`Failed to import fs-xattr, cannot check for extended attributes on ${ filePath }:`, cause);
+    if (cause && typeof cause === 'object' && 'code' in cause && cause.code === 'MODULE_NOT_FOUND') {
+      console.error(`Failed to import fs-xattr, cannot copy extended attributes from ${ fromPath }:`, cause);
 
-    throw new ErrorDeterminingExtendedAttributes({ path: filePath }, { cause });
+      throw new ErrorDeterminingExtendedAttributes({ path: fromPath }, { cause });
+    }
+    throw new ErrorCopyingExtendedAttributes({ path: fromPath }, { cause });
   }
 }
 
