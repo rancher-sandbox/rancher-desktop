@@ -76,6 +76,14 @@ refute_not_exists() {
     assert_exists "$@"
 }
 
+refute_file_exists() {
+    assert_file_not_exists "$@"
+}
+
+refute_file_contains() {
+    assert_file_not_contains "$@"
+}
+
 ########################################################################
 
 # Convert raw string into properly quoted JSON string

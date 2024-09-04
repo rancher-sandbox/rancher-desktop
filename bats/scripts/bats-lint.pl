@@ -12,6 +12,7 @@ use warnings;
 
 my $problems = 0;
 my $run;
+my $continue;
 
 while (<>) {
     if ($ARGV =~ /\.bats$/) {
@@ -50,18 +51,26 @@ while (<>) {
     # - if [ $status -eq 0 ]
     if (/(\$\{?)? (assert | refute | \b output \b | \b status \b)/x) {
         undef $run;
+        undef $continue;
     }
     # Doesn't match on:
     # - "empty lines (just whitespace or comment)"
     # - if ...
-    if ($run && !/^\s*(#.*|if.*)?$/) {
-        print "$ARGV:$.: Expected assert or refute after\n$run\n";
-        undef $run;
-        $problems++;
+    if ($run) {
+        if ($continue) {
+            if (!/\\$/) {
+                undef $continue;
+            }
+        } elsif (!/^\s*(#.*|if.*)?$/) {
+            print "$ARGV:$.: Expected assert or refute after\n$run\n";
+            undef $run;
+            $problems++;
+        }
     }
     # Matches any line starting with "run "
     if (/^\s*(run)\s/) {
         $run = $_;
+        $continue = /\\$/;
     }
     # Reset $. line counter for next input file
     close ARGV if eof;

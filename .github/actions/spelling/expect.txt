@@ -249,6 +249,7 @@ EXITDIALOGOPTIONALCHECKBOXTEXT
 exoscale
 externalname
 externalservice
+extglob
 factoryreset
 fakercfile
 fanotify
