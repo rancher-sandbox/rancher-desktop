@@ -25,7 +25,6 @@ import FLANNEL_CONFLIST from '@pkg/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import CONFIGURE_IMAGE_ALLOW_LIST from '@pkg/assets/scripts/configure-allowed-images';
-import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@pkg/assets/scripts/dnsmasq-generate.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
@@ -475,29 +474,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
         lines.join('\n') + extra, 'utf-8');
     });
-  }
-
-  /**
-   * Write configuration for dnsmasq / and /etc/resolv.conf; required before [runInit].
-   */
-  protected async writeResolvConf() {
-    await this.progressTracker.action('Updating DNS configuration', 50,
-      // Tell dnsmasq to use the resolv.conf from the data distro as the
-      // upstream configuration.
-      Promise.all([
-        (async() => {
-          try {
-            const contents = await this.readFile(
-              '/etc/resolv.conf', { distro: DATA_INSTANCE_NAME });
-
-            await this.writeFile('/etc/dnsmasq.d/data-resolv-conf', contents);
-          } catch (ex) {
-            console.error('Failed to copy existing resolv.conf');
-            throw ex;
-          }
-        })(),
-        this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
-      ]));
   }
 
   /**
@@ -1226,7 +1202,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.ensureDistroRegistered();
           await this.upgradeDistroAsNeeded();
           await this.writeHostsFile(config);
-          await this.writeResolvConf();
         })()];
 
         if (config.kubernetes.enabled) {
@@ -1266,27 +1241,19 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
               await Promise.all([
                 this.progressTracker.action('Installing the docker-credential helper', 10, async() => {
-                // This must run after /etc/rancher is mounted
+                  // This must run after /etc/rancher is mounted
                   await this.installCredentialHelper();
                 }),
-                this.progressTracker.action('DNS configuration', 50, async() => {
-                  if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
-                    console.debug(`setting DNS server to ${ rdNetworkingDNS }  for rancher desktop networking`);
+                this.progressTracker.action('DNS configuration', 50, () => {
+                  return new Promise<void>((resolve) => {
+                    console.debug(`setting DNS server to ${ rdNetworkingDNS } for rancher desktop networking`);
                     try {
                       this.hostSwitchProcess.start();
                     } catch (error) {
                       console.error('Failed to run rancher desktop networking host-switch.exe process:', error);
                     }
-                  } else {
-                    await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, 0o755);
-                    // As `rc-update del …` fails if the service is already not in the run level, we add
-                    // `dnsmasq` to `default` and then delete the one we
-                    // don't actually want to ensure that the appropriate one will be active.
-                    await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
-                    await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
-                    // dnsmasq requires /var/lib/misc to exist
-                    await this.execCommand('mkdir', '-p', '/var/lib/misc');
-                  }
+                    resolve();
+                  });
                 }),
                 this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
                   await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, 0o755);
@@ -1355,6 +1322,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 // Remove any residual rc artifacts from previous version
                 await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer'),
                 await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/host-resolver', '/etc/runlevels/default/host-resolver'),
+                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/dnsmasq-generate', '/etc/runlevels/default/dnsmasq-generate'),
+                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/dnsmasq', '/etc/runlevels/default/dnsmasq'),
               ]);
 
               await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
