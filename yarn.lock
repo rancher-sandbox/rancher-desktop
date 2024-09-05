@@ -7737,16 +7737,16 @@ http-proxy-agent@^7.0.0, http-proxy-agent@^7.0.1:
     agent-base "^7.1.0"
     debug "^4.3.4"
 
-http-proxy-middleware@3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-3.0.1.tgz#13f9d5f80daeebfd4bbc88343f3c5f5061b6ed3b"
-  integrity sha512-5TnsBzyqlWRdT525r198AR1kGc5zIIlZNBZdmP7BUILe3yI8gDgNMbxyQpW+tMBPZQln/1T6p6mCVb0oCVKaiw==
+http-proxy-middleware@3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-3.0.2.tgz#c834aad7cac47a229205399ab64a102e9bbed820"
+  integrity sha512-fBLFpmvDzlxdckwZRjM0wWtwDZ4KBtQ8NFqhrFKoEtK4myzuiumBuNTxD+F4cVbXfOZljIbrynmvByofDzT7Ag==
   dependencies:
     "@types/http-proxy" "^1.17.15"
     debug "^4.3.6"
     http-proxy "^1.18.1"
     is-glob "^4.0.3"
-    is-plain-obj "^3.0.0"
+    is-plain-object "^5.0.0"
     micromatch "^4.0.8"
 
 http-proxy-middleware@^2.0.3:
