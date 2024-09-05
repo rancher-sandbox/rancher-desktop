@@ -103,9 +103,8 @@ export default class SettingsValidator {
         name: this.checkEnum('containerd', 'moby', 'docker'),
       },
       virtualMachine: {
-        memoryInGB:   this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
-        numberCPUs:   this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
-        hostResolver: this.checkPlatform('win32', this.checkBoolean),
+        memoryInGB: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
+        numberCPUs: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
       },
       experimental: {
         containerEngine: { webAssembly: { enabled: this.checkBoolean } },

@@ -96,7 +96,6 @@ describe(SettingsValidator, () => {
       'experimental.virtualMachine.proxy.port':     'win32',
       'experimental.virtualMachine.proxy.username': 'win32',
       'kubernetes.ingress.localhostOnly':           'win32',
-      'virtualMachine.hostResolver':                'win32',
       'virtualMachine.memoryInGB':                  'darwin',
       'virtualMachine.numberCPUs':                  'linux',
     };

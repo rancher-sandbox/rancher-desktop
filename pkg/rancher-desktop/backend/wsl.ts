@@ -35,7 +35,6 @@ import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import SERVICE_GUEST_AGENT_INIT from '@pkg/assets/scripts/rancher-desktop-guestagent.initd';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@pkg/assets/scripts/service-cri-dockerd.initd';
-import SERVICE_SCRIPT_HOST_RESOLVER from '@pkg/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_K3S from '@pkg/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@pkg/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@pkg/assets/scripts/wsl-data.conf';
@@ -48,7 +47,6 @@ import BackgroundProcess from '@pkg/utils/backgroundProcess';
 import * as childProcess from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
-import { wslHostIPv4Address } from '@pkg/utils/networks';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
@@ -128,22 +126,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       shouldRun: () => Promise.resolve([State.STARTING, State.STARTED, State.DISABLED].includes(this.state)),
     });
 
-    this.resolverHostProcess = new BackgroundProcess('host-resolver vsock host', {
-      spawn: async() => {
-        const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
-        const stream = await Logging['host-resolver-host'].fdStream;
-        const wslHostAddr = wslHostIPv4Address();
-
-        return childProcess.spawn(exe, ['vsock-host',
-          '--built-in-hosts',
-          `host.rancher-desktop.internal=${ wslHostAddr },host.docker.internal=${ wslHostAddr }`], {
-          stdio:       ['ignore', stream, stream],
-          windowsHide: true,
-        });
-      },
-      shouldRun: () => Promise.resolve([State.STARTING, State.STARTED, State.DISABLED].includes(this.state)),
-    });
-
     this.kubeBackend = kubeFactory(this);
   }
 
@@ -190,11 +172,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * mount & pid namespace.
    */
   protected process: childProcess.ChildProcess | null = null;
-
-  /**
-   * Windows-side process for the host resolver, used to proxy DNS requests via the system APIs.
-   */
-  protected resolverHostProcess: BackgroundProcess;
 
   /**
    * Windows-side process for the Rancher Desktop Networking,
@@ -501,13 +478,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   /**
-   * Return the Linux path to the host-resolver executable.
-   */
-  protected getHostResolverPeerPath(): Promise<string> {
-    return this.wslify(path.join(paths.resources, 'linux', 'internal', 'host-resolver'));
-  }
-
-  /**
    * Write configuration for dnsmasq / and /etc/resolv.conf; required before [runInit].
    */
   protected async writeResolvConf() {
@@ -627,7 +597,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     await Promise.all([
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
-      this.resolverHostProcess.stop(),
       this.hostSwitchProcess.stop(),
     ]);
   }
@@ -1309,32 +1278,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                       console.error('Failed to run rancher desktop networking host-switch.exe process:', error);
                     }
                   } else {
-                    await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, 0o755);
                     await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, 0o755);
                     // As `rc-update del …` fails if the service is already not in the run level, we add
-                    // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
+                    // `dnsmasq` to `default` and then delete the one we
                     // don't actually want to ensure that the appropriate one will be active.
-                    await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
                     await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
                     await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
-                    await this.writeConf('host-resolver', {
-                      RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
-                      LOG_DIR:              logPath,
-                    });
                     // dnsmasq requires /var/lib/misc to exist
                     await this.execCommand('mkdir', '-p', '/var/lib/misc');
-                    if (config.virtualMachine.hostResolver) {
-                      console.debug(`setting DNS to host-resolver`);
-                      try {
-                        this.resolverHostProcess.start();
-                      } catch (error) {
-                        console.error('Failed to run host-resolver vsock-host process:', error);
-                      }
-                      await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
-                      await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
-                    } else {
-                      await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
-                    }
                   }
                 }),
                 this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
@@ -1401,8 +1352,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
                 }),
                 await this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
-                // Remove any residual rc artifacts from previous versions when vtunnel was installed
+                // Remove any residual rc artifacts from previous version
                 await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer'),
+                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/host-resolver', '/etc/runlevels/default/host-resolver'),
               ]);
 
               await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
@@ -1655,9 +1607,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             // Do not allow errors here to prevent us from stopping.
             console.error('Failed to run user provisioning scripts on stopping:', ex);
           }
-        }
-        if (!this.cfg?.experimental.virtualMachine.networkingTunnel) {
-          await this.resolverHostProcess.stop();
         }
         const initProcess = this.process;
 

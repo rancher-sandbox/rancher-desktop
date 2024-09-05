@@ -4,7 +4,7 @@
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 13 as const;
+export const CURRENT_SETTINGS_VERSION = 14 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -86,13 +86,8 @@ export const defaultSettings = {
     name: ContainerEngine.MOBY,
   },
   virtualMachine: {
-    memoryInGB:   2,
-    numberCPUs:   2,
-    /**
-     * when set to true Dnsmasq is disabled and all DNS resolution
-     * is handled by host-resolver on Windows platform only.
-     */
-    hostResolver: true,
+    memoryInGB: 2,
+    numberCPUs: 2,
   },
   WSL:        { integrations: {} as Record<string, boolean> },
   kubernetes: {
@@ -137,7 +132,7 @@ export const defaultSettings = {
           cacheMode:       CacheMode.MMAP,
         },
       },
-      /** windows only: if set, use gvisor based network rather than host-resolver/dnsmasq. */
+      /* windows only: legacy setting, always ignored */
       networkingTunnel: true,
       proxy:            {
         enabled:  false,

@@ -693,12 +693,12 @@ test.describe('Command server', () => {
           ['virtual-machine.number-cpus', 10],
         ],
         darwin: [
-          ['virtual-machine.host-resolver', true],
+          ['experimental.virtual-machine.networkingTunnel', true],
         ],
         linux: [
           ['experimental.virtual-machine.use-rosetta', true],
           ['experimental.virtual-machine.type', VMType.VZ],
-          ['virtual-machine.host-resolver', true],
+          ['experimental.virtual-machine.proxy.enabled', true],
         ],
       };
       const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
@@ -832,7 +832,6 @@ test.describe('Command server', () => {
           case 'win32':
             body.kubernetes.WSLIntegrations ??= {};
             body.kubernetes.WSLIntegrations.bosco = true;
-            body.kubernetes.hostResolver = !oldSettings.virtualMachine.hostResolver;
           }
           const { stdout, stderr, error } = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(body)]);
 
