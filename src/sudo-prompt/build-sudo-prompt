@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# defaults domain must be an absolute path
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)
+
+# The APP name must be "Rancher Desktop.app" because this name is used in the dialog as
+# "Rancher Desktop wants to make changes."
+RESOURCES="${REPO}/resources"
+APP="${RESOURCES}/darwin/internal/Rancher Desktop.app"
+CONTENTS="${APP}/Contents"
+
+rm -rf "$APP"
+mkdir -p "$(dirname "$APP")"
+osacompile -o "$APP" sudo-prompt.applescript
+
+# Don't put the script into ${CONTENTS}/MacOS/ because that breaks signing the applet
+cp sudo-prompt-script "${CONTENTS}/Resources/Scripts/"
+cp "${RESOURCES}/icons/mac-icon.icns" "${CONTENTS}/Resources/applet.icns"
+
+defaults write "${CONTENTS}/Info.plist" CFBundleName "Rancher Desktop Password Prompt"

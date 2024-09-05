@@ -1,3 +1,36 @@
+# Rancher Desktop related changes
+
+This module has been imported from https://github.com/jorangreef/sudo-prompt/tree/v9.2.1 (commit c3cc31a) and modified for Rancher Desktop:
+
+The `applet.app` used to be included as a base64 encoded ZIP file inside `index.js` and extracted at runtime into a temp directory. The extracted app was renamed to match the `name` and `icns` specified by the caller, and the commands were written into `applet.app/Content/MacOS/sudo-prompt-command`.
+
+The bundled applet did not include support for `aarch64` machines, so needed Rosetta2 installed to run. It was also not signed.
+
+## Changes
+
+The applet source code has been moved to `<repo>/src/sudo-prompt` and is build from source using `osacompile`, so `applet` will be an up-to-date universal binary supporting `x86_64` and `aarch64`.
+
+The applet is placed into `<repo>/resources/darwin/internal/Rancher Desktop.app`. The app name is displayed as part of the dialog: "Rancher Desktop wants to make changes".
+
+The `Contents/Info.plist` file has the `CFBundleName` set to "Rancher Desktop Password Prompt".
+
+A `.icns` format icon has been created (the old `.png` file doesn't seem to work with the new applet) and is stored into `Contents/Resources/applet.icns`.
+
+The `sudo-prompt-script` has been moved from `Contents/MacOS` to `Contents/Resources/Scripts` because it cannot be code-signed.
+
+When the `RD_SUDO_PROMPT_OSASCRIPT` environment variable is set then the `Contents/Resources/Scripts/main.scpt` file (the compiled version of `sudo-prompt.applescript`) is executed via `osascript` instead of the applet. This will show an approval prompt that supports the Apple watch, or a touch id keyboard, but will not use the `Rancher Desktop` name or icon in the dialog.
+
+The `sudo-prompt.applescript` has been modified to locate the `sudo-prompt-script` inside the applet because the working directory will no longer be inside the app.
+
+All this means that the app can now be code-signed and notarized and will not be modified at runtime.
+
+The app is being build by `yarn` during the `postinstall` phase with a custom dependency script.
+
+The `index.js` code to modify the app at runtime has been removed and the logic simplified. `name` and `icns` options are ignored in the macOS `sudo` function.
+<hr>
+
+# Original CHANGELOG below
+
 ## [9.2.0] 2020-04-29
 
 ### Fixed
@@ -38,7 +71,7 @@
 [#88](https://github.com/jorangreef/sudo-prompt/issues/88).
 
 - Fix Windows to return `PERMISSION_DENIED` Error even when Windows' error
-messages are internationalized, see 
+messages are internationalized, see
 [#96](https://github.com/jorangreef/sudo-prompt/issues/96).
 
 ## [8.2.5] 2018-12-12

@@ -5,6 +5,7 @@ import path from 'path';
 import * as goUtils from 'scripts/dependencies/go-source';
 import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
+import { SudoPrompt } from 'scripts/dependencies/sudo-prompt';
 import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
@@ -44,6 +45,11 @@ const unixDependencies = [
   new Lima(),
   new LimaAndQemu(),
   new AlpineLimaISO(),
+];
+
+// Dependencies that are specific to macOS hosts.
+const macOSDependencies = [
+  new SudoPrompt(),
 ];
 
 // Dependencies that are specific to windows hosts.
@@ -171,6 +177,13 @@ async function runScripts(): Promise<void> {
 
     for (const dependency of [...userTouchedDependencies, ...unixDependencies, ...hostDependencies]) {
       dependencies.push({ dependency, context: hostDownloadContext });
+    }
+
+    // download things for macOS host
+    if (platform === 'darwin') {
+      for (const dependency of macOSDependencies) {
+        dependencies.push({ dependency, context: hostDownloadContext });
+      }
     }
 
     // download things that go inside Lima VM

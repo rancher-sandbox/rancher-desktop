@@ -1381,9 +1381,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    */
   protected async sudoExec(this: unknown, command: string) {
     await new Promise<void>((resolve, reject) => {
-      const iconPath = path.join(paths.resources, 'icons', 'logo-square-512.png');
-
-      sudo(command, { name: 'Rancher Desktop', icns: iconPath }, (error, stdout, stderr) => {
+      sudo(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
         if (stdout) {
           console.log(`Prompt for sudo: stdout: ${ stdout }`);
         }

@@ -1,0 +1,13 @@
+#!/bin/bash
+# Set sudo timestamp for subsequent sudo calls if tty_tickets are disabled:
+/bin/mkdir -p /var/db/sudo/$USER > /dev/null 2>&1
+/usr/bin/touch /var/db/sudo/$USER > /dev/null 2>&1
+# AppleScript's "do shell script" may alter stdout line-endings.
+# It may also set stdout to stderr if there was a non-zero return code and no stderr.
+# We therefore prefer to redirect output streams and capture return code manually:
+/bin/bash sudo-prompt-command 1>stdout 2>stderr
+/bin/echo $? > code
+# Correct ownership of stdout, stderr and code so that user can delete them:
+/usr/sbin/chown $USER stdout stderr code
+# Always return 0 so that AppleScript does not show error dialog:
+exit 0

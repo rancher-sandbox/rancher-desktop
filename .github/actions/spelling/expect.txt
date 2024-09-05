@@ -34,6 +34,7 @@ APPDIR
 appimage
 appimagekit
 APPLEID
+applescript
 APPLICATIONFOLDER
 AProject
 ARPNOMODIFY
@@ -568,6 +569,7 @@ opentelekomcloudcontainerengine
 opsgenie
 oracleoke
 orsection
+osacompile
 osascript
 osc
 oswald
