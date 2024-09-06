@@ -2,8 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { findHomeDir } from '@kubernetes/client-node';
-
 import K3sHelper from '@pkg/backend/k3sHelper';
 import { State } from '@pkg/backend/k8s';
 import { Settings, ContainerEngine } from '@pkg/config/settings';
@@ -180,7 +178,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
       await Promise.all([
         this.syncHostSocketProxy(),
-        this.syncHostDockerPlugins(),
+        this.syncHostDockerPluginConfig(),
         ...(await this.supportedDistros).map(distro => this.syncDistro(distro.name, kubeconfigPath)),
       ]);
     } catch (ex) {
@@ -397,76 +395,59 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
-  protected async syncHostDockerPlugins() {
-    const pluginNames = await this.getHostDockerCliPluginNames();
+  protected async syncHostDockerPluginConfig() {
+    const configPath = path.join(os.homedir(), '.docker', 'config.json');
+    let config: { cliPluginsExtraDirs?: string[] } = {};
 
-    await Promise.all(pluginNames.map(name => this.syncHostDockerPlugin(name)));
-  }
-
-  protected async getWslDockerCliPluginNames(): Promise<string[]> {
-    const resourcesBinDir = path.join(paths.resources, 'linux', 'bin');
-
-    return (await fs.promises.readdir(resourcesBinDir)).filter((name) => {
-      return name.startsWith('docker-') && !name.startsWith('docker-credential-');
-    });
-  }
-
-  protected async getHostDockerCliPluginNames(): Promise<string[]> {
-    const resourcesBinDir = path.join(paths.resources, os.platform(), 'bin');
-
-    const pluginNamesWithExe = (await fs.promises.readdir(resourcesBinDir)).filter((name) => {
-      return name.startsWith('docker-') && !name.startsWith('docker-credential-');
-    });
-
-    return pluginNamesWithExe.map(pluginName => pluginName.replace(/\.exe$/, ''));
-  }
-
-  protected async syncHostDockerPlugin(pluginName: string) {
-    const homeDir = findHomeDir();
-
-    if (!homeDir) {
-      throw new Error("Can't find home directory");
-    }
-    const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
-    const srcPath = executable(pluginName as any); // It's an executable in `bin`
-    const cliPath = path.join(cliDir, path.basename(srcPath));
-
-    console.debug(`Syncing host ${ pluginName }: ${ srcPath } -> ${ cliPath }`);
-    await fs.promises.mkdir(cliDir, { recursive: true });
     try {
-      await fs.promises.copyFile(
-        srcPath, cliPath,
-        fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
-    } catch (error: any) {
-      if (error?.code !== 'EEXIST') {
-        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, error);
+      config = JSON.parse(await fs.promises.readFile(configPath, 'utf-8'));
+    } catch (ex) {
+      if (ex && typeof ex === 'object' && 'code' in ex && ex.code === 'ENOENT') {
+        // If the file does not exist, create it.
+      } else {
+        console.error(`Could not set up docker plugins:`, ex);
+
+        return;
       }
     }
-  }
 
-  protected async syncDistroDockerPlugins(distro: string, state: boolean): Promise<void> {
-    const names = await this.getWslDockerCliPluginNames();
+    // All of the docker plugins are in the `docker-cli-plugins` directory.
+    const binDir = path.join(paths.resources, process.platform, 'docker-cli-plugins');
 
-    await Promise.all(names.map(name => this.syncDistroDockerPlugin(distro, name, state)));
+    if (config.cliPluginsExtraDirs?.includes(binDir)) {
+      // If it's already configured, no need to do so again.
+      return;
+    }
+
+    config.cliPluginsExtraDirs ??= [];
+    config.cliPluginsExtraDirs.push(binDir);
+
+    await fs.promises.writeFile(configPath, JSON.stringify(config), 'utf-8');
   }
 
   /**
-   * syncDistroDockerPlugin ensures that a plugin is accessible in the given distro.
-   * @param distro The distribution to manage.
-   * @param pluginName The plugin to validate.
-   * @param state Whether the plugin should be exposed.
-   * @note this function must not throw.
+   * syncDistroDockerPlugins sets up docker CLI configuration in WSL distros to
+   * use the plugins shipped with Rancher Desktop.
+   * @param distro The distribution to update.
+   * @param state Whether the plugins should be enabled.
    */
-  protected async syncDistroDockerPlugin(distro: string, pluginName: string, state: boolean) {
+  protected async syncDistroDockerPlugins(distro: string, state: boolean): Promise<void> {
     try {
+      const binDir = await this.getLinuxToolPath(distro,
+        path.join(paths.resources, 'linux', 'bin'));
       const srcPath = await this.getLinuxToolPath(distro,
-        path.join(paths.resources, 'linux', 'bin', pluginName));
+        path.join(paths.resources, 'linux', 'docker-cli-plugins'));
       const wslHelper = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
+      const args = ['wsl', 'integration', 'docker-plugin',
+        `--plugin-dir=${ srcPath }`, `--bin-dir=${ binDir }`, `--state=${ state }`];
 
-      console.debug(`Syncing docker plugin ${ pluginName } for distribution ${ distro }: ${ state }`);
-      await this.execCommand({ distro }, wslHelper, 'wsl', 'integration', 'docker-plugin', `--plugin=${ srcPath }`, `--state=${ state }`);
+      if (this.settings.application?.debug) {
+        args.push('--verbose');
+      }
+
+      await this.execCommand({ distro }, wslHelper, ...args);
     } catch (error) {
-      console.error(`Failed to sync ${ distro } docker plugin ${ pluginName }: ${ error }`.trim());
+      console.error(`Failed to set up ${ distro } docker plugins: ${ error }`.trim());
     }
   }
 
