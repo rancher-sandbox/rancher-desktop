@@ -78,7 +78,6 @@ describe(SettingsValidator, () => {
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'securityModel'],
       ['experimental', 'virtualMachine', 'mount', 'type'],
-      ['experimental', 'virtualMachine', 'networkingTunnel'], // Cannot be set
       ['experimental', 'virtualMachine', 'type'],
       ['experimental', 'virtualMachine', 'useRosetta'],
       ['experimental', 'virtualMachine', 'proxy', 'noproxy'],

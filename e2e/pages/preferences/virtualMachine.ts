@@ -13,7 +13,6 @@ export class VirtualMachineNav {
   readonly msizeInKib: Locator;
   readonly protocolVersion: Locator;
   readonly securityModel: Locator;
-  readonly networkingTunnel: Locator;
   readonly vmType: Locator;
   readonly qemu: Locator;
   readonly vz: Locator;
@@ -35,7 +34,6 @@ export class VirtualMachineNav {
     this.msizeInKib = page.locator('[data-test="msizeInKib"]');
     this.protocolVersion = page.locator('[data-test="protocolVersion"]');
     this.securityModel = page.locator('[data-test="securityModel"]');
-    this.networkingTunnel = page.locator('[data-test="networkingTunnel"]');
     this.vmType = page.locator('[data-test="vmType"]');
     this.qemu = page.locator('[data-test="QEMU"]');
     this.vz = page.locator('[data-test="VZ"]');
