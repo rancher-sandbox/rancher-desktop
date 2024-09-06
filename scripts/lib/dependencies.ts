@@ -22,6 +22,8 @@ export type DownloadContext = {
   binDir: string;
   // internalDir is for binaries that RD will execute behind the scenes
   internalDir: string;
+  // dockerPluginsDir is for docker CLI plugins.
+  dockerPluginsDir: string;
 };
 
 export type AlpineLimaISOVersion = {

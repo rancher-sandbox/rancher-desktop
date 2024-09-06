@@ -212,7 +212,7 @@ export class DockerBuildx implements Dependency, GitHubDependency {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.dockerBuildx }`;
     const executableName = exeName(context, `buildx-v${ context.versions.dockerBuildx }.${ context.goPlatform }-${ arch }`);
     const dockerBuildxURL = `${ baseURL }/${ executableName }`;
-    const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
+    const dockerBuildxPath = path.join(context.dockerPluginsDir, exeName(context, 'docker-buildx'));
     const options: DownloadOptions = {};
 
     // No checksums available on the docker/buildx site for darwin builds
@@ -246,7 +246,7 @@ export class DockerCompose implements Dependency, GitHubDependency {
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
     const executableName = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
     const url = `${ baseUrl }/${ executableName }`;
-    const destPath = path.join(context.binDir, exeName(context, 'docker-compose'));
+    const destPath = path.join(context.dockerPluginsDir, exeName(context, 'docker-compose'));
     const expectedChecksum = await findChecksum(`${ url }.sha256`, executableName);
 
     await download(url, destPath, { expectedChecksum });

@@ -167,26 +167,26 @@ async function runScripts(): Promise<void> {
 
   if (platform === 'linux' || platform === 'darwin') {
     // download things that go on unix host
-    const hostDownloadContext = buildDownloadContextFor(platform, depVersions);
+    const hostDownloadContext = await buildDownloadContextFor(platform, depVersions);
 
     for (const dependency of [...userTouchedDependencies, ...unixDependencies, ...hostDependencies]) {
       dependencies.push({ dependency, context: hostDownloadContext });
     }
 
     // download things that go inside Lima VM
-    const vmDownloadContext = buildDownloadContextFor('linux', depVersions);
+    const vmDownloadContext = await buildDownloadContextFor('linux', depVersions);
 
     dependencies.push(...vmDependencies.map(dependency => ({ dependency, context: vmDownloadContext })));
   } else if (platform === 'win32') {
     // download things for windows
-    const hostDownloadContext = buildDownloadContextFor('win32', depVersions);
+    const hostDownloadContext = await buildDownloadContextFor('win32', depVersions);
 
     for (const dependency of [...userTouchedDependencies, ...windowsDependencies, ...hostDependencies]) {
       dependencies.push({ dependency, context: hostDownloadContext });
     }
 
     // download things that go inside WSL distro
-    const vmDownloadContext = buildDownloadContextFor('wsl', depVersions);
+    const vmDownloadContext = await buildDownloadContextFor('wsl', depVersions);
 
     for (const dependency of [...userTouchedDependencies, ...wslDependencies, ...vmDependencies]) {
       dependencies.push({ dependency, context: vmDownloadContext });
@@ -196,7 +196,7 @@ async function runScripts(): Promise<void> {
   await downloadDependencies(dependencies);
 }
 
-function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): DownloadContext {
+async function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<DownloadContext> {
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   const resourcesDir = path.join(process.cwd(), 'resources');
   const downloadContext: DownloadContext = {
@@ -208,10 +208,12 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
     resourcesDir,
     binDir:             path.join(resourcesDir, platform, 'bin'),
     internalDir:        path.join(resourcesDir, platform, 'internal'),
+    dockerPluginsDir:   path.join(resourcesDir, platform, 'docker-cli-plugins'),
   };
 
-  fs.mkdirSync(downloadContext.binDir, { recursive: true });
-  fs.mkdirSync(downloadContext.internalDir, { recursive: true });
+  const dirsToCreate = ['binDir', 'internalDir', 'dockerPluginsDir'] as const;
+
+  await Promise.all(dirsToCreate.map(d => fs.promises.mkdir(downloadContext[d], { recursive: true })));
 
   return downloadContext;
 }
