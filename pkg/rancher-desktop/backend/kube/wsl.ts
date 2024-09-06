@@ -228,9 +228,8 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
           await util.promisify(timers.setTimeout)(1_000);
         }
 
-        // TODO: remove once --rd-networking removed from k3s_kubeconfig.go
         await this.k3sHelper.updateKubeconfig(
-          async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig', '--rd-networking=true'));
+          async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig'));
       });
 
     const client = this.client = kubeClient?.() || new KubeClient();
