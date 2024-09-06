@@ -20,10 +20,7 @@ package cmd
 
 import (
 	"fmt"
-	"net"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -55,10 +52,7 @@ type kubeConfig struct {
 
 const kubeConfigExistTimeout = 10 * time.Second
 
-var (
-	k3sKubeconfigViper = viper.New()
-	rdNetworking       bool
-)
+var k3sKubeconfigViper = viper.New()
 
 // k3sKubeconfigCmd represents the `k3s kubeconfig` command.
 var k3sKubeconfigCmd = &cobra.Command{
@@ -99,80 +93,15 @@ var k3sKubeconfigCmd = &cobra.Command{
 			return err
 		}
 
-		if rdNetworking {
-			// vm-switch in rdNetworking binds to localhost:Port by default.
-			// Since k3s.yaml comes with servers preset at 127.0.0.1, there
-			// is nothing for us to do here, just write the config and return.
-			return yaml.NewEncoder(os.Stdout).Encode(config)
-		}
-		ip, err := getClusterIP()
-		if err != nil {
-			return err
-		}
-		// Fix up any clusters at 127.0.0.1, using the IP address we found.
-		for clusterIdx, cluster := range config.Clusters {
-			server, err := url.Parse(cluster.Cluster.Server)
-			if err != nil {
-				// Ignore any clusters with invalid servers
-				continue
-			}
-			if server.Hostname() != "127.0.0.1" {
-				continue
-			}
-			if server.Port() != "" {
-				server.Host = net.JoinHostPort(ip.String(), server.Port())
-			} else {
-				server.Host = ip.String()
-			}
-			config.Clusters[clusterIdx].Cluster.Server = server.String()
-		}
-		// Emit the result
-		err = yaml.NewEncoder(os.Stdout).Encode(config)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		// vm-switch in rdNetworking binds to localhost:Port by default.
+		// Since k3s.yaml comes with servers preset at 127.0.0.1, there
+		// is nothing for us to do here, just write the config and return.
+		return yaml.NewEncoder(os.Stdout).Encode(config)
 	},
-}
-
-func getClusterIP() (net.IP, error) {
-	var ip net.IP
-	// Find the IP address of eth0.
-	iface, err := net.InterfaceByName("eth0")
-	if err != nil {
-		// Use a random interface, assuming we're testing on Windows.
-		ifaces, err := net.Interfaces()
-		if err != nil {
-			return nil, err
-		}
-		iface = &ifaces[0]
-		fmt.Fprintf(os.Stderr, "Could not find eth0, using fallback interface %s\n", iface.Name)
-	}
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, err
-	}
-	for _, addr := range addrs {
-		// addr.String() gives "192.2.3.4/16", so we need to chop off the netmask
-		ip = net.ParseIP(strings.SplitN(addr.String(), "/", 2)[0])
-		if ip == nil {
-			continue
-		}
-		ip = ip.To4()
-		if ip != nil {
-			break
-		}
-	}
-	if ip == nil {
-		return nil, fmt.Errorf("could not find IPv4 address on interface %s", iface.Name)
-	}
-	return ip, nil
 }
 
 func init() {
 	k3sKubeconfigCmd.Flags().String("k3sconfig", "/etc/rancher/k3s/k3s.yaml", "Path to k3s kubeconfig")
-	k3sKubeconfigCmd.Flags().BoolVar(&rdNetworking, "rd-networking", false, "Enable the experimental Rancher Desktop Networking")
 	k3sKubeconfigViper.AutomaticEnv()
 	if err := k3sKubeconfigViper.BindPFlags(k3sKubeconfigCmd.Flags()); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")

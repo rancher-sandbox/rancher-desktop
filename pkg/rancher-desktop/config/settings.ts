@@ -132,9 +132,7 @@ export const defaultSettings = {
           cacheMode:       CacheMode.MMAP,
         },
       },
-      /* windows only: legacy setting, always ignored */
-      networkingTunnel: true,
-      proxy:            {
+      proxy: {
         enabled:  false,
         address:  '',
         password: '',

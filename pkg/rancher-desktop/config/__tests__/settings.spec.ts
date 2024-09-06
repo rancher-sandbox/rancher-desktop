@@ -354,7 +354,6 @@ describe('settings', () => {
               },
               experimental: {
                 virtualMachine: {
-                  networkingTunnel: true,
                 },
               },
               kubernetes: {
@@ -472,8 +471,7 @@ describe('settings', () => {
         version:      settings.CURRENT_SETTINGS_VERSION,
         experimental: {
           virtualMachine: {
-            networkingTunnel: true,
-            proxy:            {
+            proxy: {
               noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
             },
           },
@@ -506,8 +504,7 @@ describe('settings', () => {
         version:      settings.CURRENT_SETTINGS_VERSION,
         experimental: {
           virtualMachine: {
-            networkingTunnel: true,
-            proxy:            {
+            proxy: {
               noproxy: ['1.2.3.4', '11.12.13.14', '21.22.23.24'],
             },
           },
@@ -587,7 +584,6 @@ describe('settings', () => {
         },
         experimental: {
           virtualMachine: {
-            networkingTunnel: true,
           },
         },
         kubernetes:     {},

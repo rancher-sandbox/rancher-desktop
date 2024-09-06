@@ -284,7 +284,6 @@ func TestJsonToRegFormat(t *testing.T) {
           "cacheMode": "mmap"
         }
       },
-      "networkingTunnel": false,
       "proxy": {
         "enabled": false,
         "address": "",
@@ -298,6 +297,6 @@ func TestJsonToRegFormat(t *testing.T) {
 `
 		lines, err := JsonToReg("hkcu", "defaults", jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, 76, len(lines))
+		assert.Equal(t, 75, len(lines))
 	})
 }

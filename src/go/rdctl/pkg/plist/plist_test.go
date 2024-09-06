@@ -149,7 +149,6 @@ func TestJsonToPlistFormat(t *testing.T) {
           "cacheMode": "mmap"
         }
       },
-      "networkingTunnel": false,
       "proxy": {
         "enabled": false,
         "address": "",
@@ -277,8 +276,6 @@ func TestJsonToPlistFormat(t *testing.T) {
             <string>mmap</string>
           </dict>
         </dict>
-        <key>networkingTunnel</key>
-        <false/>
         <key>type</key>
         <string>qemu</string>
         <key>useRosetta</key>

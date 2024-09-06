@@ -487,6 +487,7 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
   },
   13: (settings) => {
     _.unset(settings, 'virtualMachine.hostResolver');
+    _.unset(settings, 'experimental.virtualMachine.networkingTunnel');
   },
 };
 

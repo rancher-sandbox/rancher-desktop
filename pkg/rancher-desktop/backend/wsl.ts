@@ -1294,13 +1294,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 }),
                 this.progressTracker.action('Configuring image proxy', 50, async() => {
                   const allowedImagesConf = '/usr/local/openresty/nginx/conf/allowed-images.conf';
-                  let resolver;
-
-                  if (this.cfg?.experimental.virtualMachine.networkingTunnel) {
-                    resolver = `resolver ${ rdNetworkingDNS } ipv6=off;\n`;
-                  } else {
-                    resolver = `resolver ${ await this.ipAddress } ipv6=off;\n`;
-                  }
+                  const resolver = `resolver ${ rdNetworkingDNS } ipv6=off;\n`;
 
                   await this.writeFile(`/usr/local/openresty/nginx/conf/nginx.conf`, NGINX_CONF, 0o644);
                   await this.writeFile(`/usr/local/openresty/nginx/conf/resolver.conf`, resolver, 0o644);
@@ -1650,7 +1644,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
 
     return Promise.resolve(this.kubeBackend.requiresRestartReasons(
-      this.cfg, cfg, { 'experimental.virtualMachine.networkingTunnel': { current: this.cfg.experimental.virtualMachine.networkingTunnel } }));
+      this.cfg, cfg));
   }
 
   /**
