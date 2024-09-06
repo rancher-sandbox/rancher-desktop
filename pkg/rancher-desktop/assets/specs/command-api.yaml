@@ -688,11 +688,6 @@ components:
                         cacheMode:
                           type: string
                           enum: [none, loose, fscache, mmap]
-                networkingTunnel:
-                  type: boolean
-                  x-rd-platforms: [win32]
-                  x-rd-usage: tunnel networking so it originates from the host
-                  x-rd-hidden: true # Only available by editing settings file directly.
                 type:
                   type: string
                   enum: [qemu, vz]
