@@ -20,6 +20,6 @@ wix: v3.14.1
 hostSwitch: 1.2.7
 moproxy: 0.5.1
 spinShim: 0.15.1
-spinOperator: 0.2.0
+spinOperator: 0.3.0
 certManager: 1.15.3
 spinCLI: 2.7.0
