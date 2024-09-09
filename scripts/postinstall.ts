@@ -61,6 +61,9 @@ const wslDependencies = [
   new Moproxy(),
   new goUtils.RDCtl(),
   new goUtils.GoDependency('guestagent', 'staging'),
+  new goUtils.GoDependency('networking/cmd/vm', 'staging/vm-switch'),
+  new goUtils.GoDependency('networking/cmd/network', 'staging/network-setup'),
+  new goUtils.GoDependency('networking/cmd/proxy', 'staging/wsl-proxy'),
   new goUtils.WSLHelper(),
   new goUtils.NerdctlStub(),
 ];
