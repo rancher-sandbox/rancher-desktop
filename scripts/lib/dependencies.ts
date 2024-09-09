@@ -50,7 +50,6 @@ export type DependencyVersions = {
   ECRCredentialHelper: string;
   mobyOpenAPISpec: string;
   wix: string;
-  hostSwitch: string;
   moproxy: string;
   spinShim: string;
   certManager: string;

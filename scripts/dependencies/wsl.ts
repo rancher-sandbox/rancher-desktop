@@ -10,50 +10,6 @@ import {
   DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
 
-async function extract(resourcesPath: string, file: string, expectedFile: string): Promise<void> {
-  const systemRoot = process.env.SystemRoot;
-
-  if (!systemRoot) {
-    throw new Error('Could not find system root');
-  }
-  const bsdTar = path.join(systemRoot, 'system32', 'tar.exe');
-
-  await simpleSpawn(bsdTar, ['-xzf', file, expectedFile], { cwd: resourcesPath });
-  await fs.promises.rm(file, { maxRetries: 10 });
-}
-
-export class HostSwitch implements Dependency, GitHubDependency {
-  name = 'hostSwitch';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'rancher-desktop-networking';
-
-  async download(context: DownloadContext): Promise<void> {
-    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    const tarName = `rancher-desktop-networking-v${ context.versions.hostSwitch }.tar.gz`;
-    const hostSwitchURL = `${ baseURL }/v${ context.versions.hostSwitch }/${ tarName }`;
-    const hostSwitchPath = path.join(context.internalDir, tarName);
-
-    await download(
-      hostSwitchURL,
-      hostSwitchPath,
-      { access: fs.constants.W_OK });
-
-    await extract(context.internalDir, hostSwitchPath, 'host-switch.exe');
-  }
-
-  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
-    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
-  }
-
-  versionToTagName(version: string): string {
-    return `v${ version }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return semver.rcompare(version1, version2);
-  }
-}
-
 export class Moproxy implements Dependency, GitHubDependency {
   name = 'moproxy';
   githubOwner = 'sorz';

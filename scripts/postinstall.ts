@@ -8,7 +8,7 @@ import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, HostSwitch, Moproxy } from 'scripts/dependencies/wsl';
+import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
 import {
   DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
 } from 'scripts/lib/dependencies';
@@ -51,7 +51,7 @@ const windowsDependencies = [
   new WSLDistro(),
   new WSLDistroImage(),
   new Wix(),
-  new HostSwitch(),
+  new goUtils.GoDependency('networking/cmd/host', 'internal/host-switch'),
   new goUtils.WSLHelper(),
   new goUtils.NerdctlStub(),
 ];
