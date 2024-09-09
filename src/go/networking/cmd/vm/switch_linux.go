@@ -34,8 +34,8 @@ import (
 	"github.com/vishvananda/netlink"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/log"
 )
 
 var (

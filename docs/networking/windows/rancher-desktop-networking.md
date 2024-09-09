@@ -1,5 +1,5 @@
 
-# [Rancher Desktop Networking](https://github.com/rancher-sandbox/rancher-desktop-networking)
+# [Rancher Desktop Networking](../../../src/go/networking/)
 
 Rancher Desktop Networking primarily acts as a layer 2 switch between the host (currently Windows only) and the VM (WSL) using the `AF_VSOCK` protocol. It facilitates the transmission of Ethernet frames from the VM to the host. Additionally, it provides `DNS`, `DHCP`, and dynamic port forwarding functionalities. The Rancher Desktop Networking comprises several key services: `host-switch`, `vm-switch`, `network-setup`, and `wsl-proxy`. It utilizes [gvisor's](https://github.com/google/gvisor) network stack and draws inspiration from the [gvisor-tap-vsock](https://github.com/google/gvisor) project.
 
@@ -54,14 +54,14 @@ The host-switch runs on the Windows host and acts as a receiver for all traffic 
 ## Supported Flags:
 
 - **debug**: Enables debug logging.
-- **subnet**: This flag defines a subnet range with a CIDR suffix for a virtual network. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop-networking/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/vm/switch_linux.go#L59) flag in the vm-switch.
+- **subnet**: This flag defines a subnet range with a CIDR suffix for a virtual network. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/vm/switch_linux.go#L59) flag in the vm-switch.
 - **port-forward**: This is a list of static ports that need to be pre-forwarded to the WSL VM. These ports are not dynamically retrieved from any of the APIs that the Rancher Desktop guest agent interacts with.
 
 ## network-setup:
 
 The reason for its creation was that the `AF_VSOCK` connection could not be established between the host and a process residing inside the network namespace within the VM, as such capability is not currently supported by `AF_VSOCK`. As a result, the network setup was created. Its main responsibility is to respond to the handshake request from the `host-switch.exe`. Once the handshake process is successful with the `host-switch`, the `network-setup` process creates a new network namespace and attempts to start its subprocess, `vm-switch`, in the newly created network namespace. It also hands over the `AF_VSOCK` connection to the `vm-switch` as a file descriptor in the new namespace.
 
-Additionally, it calls unshare with provided arguments through [---unshare-args](https://github.com/rancher-sandbox/rancher-desktop-networking/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/network/setup_linux.go#L272). The process also establishes a Virtual Ethernet pair consisting of two endpoints: `veth-rd0` and `veth-rd1`. `veth-rd0` resides within the default namespace and is configured to listen on the IP address `192.168.1.1`. Conversely, `veth-rd1` is located within a network namespace and is assigned the IP address `192.168.1.2`. The virtual Ethernet pair allows accessibility from the default network into the network namespace, which is particularly useful when WSL integration is enabled.
+Additionally, it calls unshare with provided arguments through [---unshare-args](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/network/setup_linux.go#L272). The process also establishes a Virtual Ethernet pair consisting of two endpoints: `veth-rd0` and `veth-rd1`. `veth-rd0` resides within the default namespace and is configured to listen on the IP address `192.168.1.1`. Conversely, `veth-rd1` is located within a network namespace and is assigned the IP address `192.168.1.2`. The virtual Ethernet pair allows accessibility from the default network into the network namespace, which is particularly useful when WSL integration is enabled.
 
 ## Supported Flags:
 
@@ -69,7 +69,7 @@ Additionally, it calls unshare with provided arguments through [---unshare-args]
 
 - **tap-interface**: The name of the tap interface that is created by the vm-switch upon startup, e.g., `eth0`, `eth1`. This value is passed to the `vm-switch` process when the `network-setup` attempts to start it. If no value is provided, the default name of `eth0` is used.
 
-- **subnet**: A subnet range with a CIDR suffix that is associated with the tap interface in the network namespace. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop-networking/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/host/switch_windows.go#L54) flag in the `host-switch`.
+- **subnet**: A subnet range with a CIDR suffix that is associated with the tap interface in the network namespace. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/host/switch_windows.go#L54) flag in the `host-switch`.
 
 - **tap-mac-address**: MAC address associated with the tap interface created by the vm-switch in the network namespace. If no address is provided, the default address of `5a:94:ef:e4:0c:ee`is used.
 
@@ -77,7 +77,7 @@ Additionally, it calls unshare with provided arguments through [---unshare-args]
 
 - **vm-switch-logfile**: The path to the logfile for the vm-switch process.
 
-- **unshare-arg**: The command argument to pass to the unshare program in addition to the following [arguments](https://github.com/rancher-sandbox/rancher-desktop-networking/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/network/setup_linux.go#L272).
+- **unshare-arg**: The command argument to pass to the unshare program in addition to the following [arguments](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/network/setup_linux.go#L272).
 
 - **logfile**: Path to the logfile for the `network-setup` process.
 
