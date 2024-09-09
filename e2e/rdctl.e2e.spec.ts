@@ -693,7 +693,7 @@ test.describe('Command server', () => {
           ['virtual-machine.number-cpus', 10],
         ],
         darwin: [
-          ['experimental.virtual-machine.networkingTunnel', true],
+          ['kubernetes.ingress.localhost-only', true],
         ],
         linux: [
           ['experimental.virtual-machine.use-rosetta', true],
