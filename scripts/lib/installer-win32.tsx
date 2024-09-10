@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import asar from '@electron/asar';
+import { extractFile } from '@electron/asar';
 import Mustache from 'mustache';
 import yaml from 'yaml';
 
@@ -23,7 +23,7 @@ import { simpleSpawn } from 'scripts/simple_process';
  * Return the contents of package.json embedded in the application.
  */
 function getPackageJson(appDir: string): Record<string, any> {
-  const packageBytes = asar.extractFile(path.join(appDir, 'resources', 'app.asar'), 'package.json');
+  const packageBytes = extractFile(path.join(appDir, 'resources', 'app.asar'), 'package.json');
 
   return JSON.parse(packageBytes.toString('utf-8'));
 }
