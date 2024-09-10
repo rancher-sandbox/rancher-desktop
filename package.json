@@ -61,7 +61,7 @@
     "dayjs": "1.11.13",
     "dompurify": "3.1.6",
     "electron-updater": "6.3.4",
-    "express": "4.19.2",
+    "express": "4.20.0",
     "fs-extra": "11.2.0",
     "http-proxy-middleware": "3.0.2",
     "intl-messageformat": "10.5.14",
