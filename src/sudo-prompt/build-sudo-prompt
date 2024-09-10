@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2164 # Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)
+
+# The APP name must be "Rancher Desktop.app" because this name is used in the dialog as
+# "Rancher Desktop wants to make changes."
+RESOURCES="${REPO}/resources"
+APP="${RESOURCES}/darwin/internal/Rancher Desktop.app"
+CONTENTS="${APP}/Contents"
+
+rm -rf "$APP"
+mkdir -p "$(dirname "$APP")"
+osacompile -o "$APP" sudo-prompt.applescript
+
+# Don't put the script into ${CONTENTS}/MacOS/ because that breaks signing the applet
+cp sudo-prompt-script "${CONTENTS}/Resources/Scripts/"
+sips -s format icns "${RESOURCES}/icons/mac-icon.png" --out "${CONTENTS}/Resources/applet.icns"
+
+plutil -replace CFBundleName -string "Rancher Desktop Password Prompt" "${CONTENTS}/Info.plist"

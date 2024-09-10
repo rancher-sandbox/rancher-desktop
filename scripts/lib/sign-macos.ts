@@ -207,7 +207,7 @@ async function *findFilesToSign(dir: string): AsyncIterable<string> {
       continue; // We only sign regular files.
     }
 
-    if (isBundleExecutable(fullPath)) {
+    if (await isBundleExecutable(fullPath)) {
       // For bundles (apps and frameworks), we skip signing the executable
       // itself as it will be signed when signing the bundle.
       continue;
@@ -249,15 +249,29 @@ async function *findFilesToSign(dir: string): AsyncIterable<string> {
 /**
  * Detect if the path of a plain file indicates that it's the bundle executable
  */
-function isBundleExecutable(fullPath: string): boolean {
+async function isBundleExecutable(fullPath: string): Promise<boolean> {
   const parts = fullPath.split(path.sep).reverse();
 
   if (parts.length >= 4) {
-    // Foo.app/Contents/MacOS/Foo - the check style here avoids spell checker.
-    if (fullPath.endsWith(`${ parts[0] }.app/Contents/MacOS/${ parts[0] }`)) {
-      return true;
+    // Anything.app/Contents/MacOS/executable - the check style here avoids spell checker.
+    if (fullPath.endsWith(`.app/Contents/MacOS/${ parts[0] }`)) {
+      // Check Anything.app/Contents/Info.plist for CFBundleExecutable
+      const infoPlist = path.sep + path.join(...parts.slice(2).reverse(), 'Info.plist');
+
+      try {
+        const { stdout } = await spawnFile('/usr/bin/plutil',
+          ['-extract', 'CFBundleExecutable', 'raw', '-expect', 'string', infoPlist],
+          { stdio: 'pipe' });
+
+        return stdout.trimEnd() === parts[0];
+      } catch {
+        log.info({ infoPlist }, 'Failed to read Info.plist, assuming not the bundle executable.');
+
+        return false;
+      }
     }
   }
+
   if (parts.length >= 4) {
     // Foo.framework/Versions/A/Foo
     if (parts[3] === `${ parts[0] }.framework` && parts[2] === 'Versions') {

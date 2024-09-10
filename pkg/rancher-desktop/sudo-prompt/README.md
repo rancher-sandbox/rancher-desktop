@@ -1,3 +1,13 @@
+# Rancher Desktop sudo-prompt
+
+This module has been imported from [jorangreef/sudo-prompt: Run a command using sudo, prompting the user with an OS dialog if necessary.](https://github.com/jorangreef/sudo-prompt).
+
+It is no longer a reusable module, but has been modified specifically for Rancher Desktop usage; see details in the [changelog](CHANGELOG.md).
+
+<hr>
+
+# Original README below
+
 # sudo-prompt
 
 Run a non-graphical terminal command using `sudo`, prompting the user with a graphical OS dialog if necessary. Useful for background Node.js applications or native Electron apps that need `sudo`.
