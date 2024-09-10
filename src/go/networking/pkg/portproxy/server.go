@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
