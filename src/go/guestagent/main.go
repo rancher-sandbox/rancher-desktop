@@ -34,7 +34,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
@@ -62,11 +61,10 @@ var (
 )
 
 const (
-	iptablesUpdateInterval = 3 * time.Second
-	socketInterval         = 5 * time.Second
-	socketRetryTimeout     = 2 * time.Minute
-	dockerSocketFile       = "/var/run/docker.sock"
-	containerdSocketFile   = "/run/k3s/containerd/containerd.sock"
+	socketInterval       = 5 * time.Second
+	socketRetryTimeout   = 2 * time.Minute
+	dockerSocketFile     = "/var/run/docker.sock"
+	containerdSocketFile = "/run/k3s/containerd/containerd.sock"
 )
 
 func main() {
@@ -100,15 +98,13 @@ func main() {
 	}()
 
 	if !*enableContainerd &&
-		!*enableDocker &&
-		!*enableIptables {
-		log.Fatal("requires either -docker, -containerd or -iptables enabled.")
+		!*enableDocker {
+		log.Fatal("requires either -docker or -containerd enabled.")
 	}
 
 	if *enableContainerd &&
-		*enableDocker &&
-		*enableIptables {
-		log.Fatal("requires either -docker, -containerd or -iptables, not all.")
+		*enableDocker {
+		log.Fatal("requires either -docker or -containerd but not both.")
 	}
 
 	var portTracker tracker.Tracker
@@ -183,31 +179,14 @@ func main() {
 					"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
 			}
 
-			// listenerOnlyMode represents when iptables is enabled and privileged services
-			// and admin install are disabled; this typically indicates a non-admin installation
-			// of the legacy network, requiring listeners only. In listenerOnlyMode, we create
-			// TCP listeners on 127.0.0.1 to enable automatic port forwarding mechanisms,
-			// particularly in WSLv2 environments.
-			listenerOnlyMode := *enableIptables && !*adminInstall
 			// Watch for kube
 			err := kube.WatchForServices(ctx,
 				*configPath,
 				k8sServiceListenerIP,
-				listenerOnlyMode,
+				*enableIptables,
 				portTracker)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
-			}
-
-			return nil
-		})
-	}
-
-	if *enableIptables {
-		group.Go(func() error {
-			err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
-			if err != nil {
-				return fmt.Errorf("error mapping ports: %w", err)
 			}
 
 			return nil
