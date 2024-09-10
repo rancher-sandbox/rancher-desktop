@@ -83,6 +83,14 @@ updates:
     reviewers: [ "mook-as" ]
 
   - package-ecosystem: "gomod"
+    directory: "/src/go/guestagent"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
     directory: "/src/go/mock-wsl"
     schedule:
       interval: "daily"
@@ -92,6 +100,22 @@ updates:
 
   - package-ecosystem: "gomod"
     directory: "/src/go/nerdctl-stub"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
+    directory: "/src/go/nerdctl-stub/generate"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
+    directory: "/src/go/networking"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 1

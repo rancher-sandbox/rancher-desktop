@@ -3,7 +3,10 @@
  *
  * If any argument is `--fix`, then changes are automatically applied.
  */
+import fs from 'fs';
 import path from 'path';
+
+import yaml from 'yaml';
 
 import { readDependencyVersions } from './lib/dependencies';
 
@@ -109,7 +112,37 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
   return success;
 }
 
-Promise.all([format(fix), syncModules(fix), goLangCILint(fix)]).then((successes) => {
+type dependabotConfig = {
+  version: 2,
+  updates: {
+    'package-ecosystem': string;
+    directory: string;
+    schedule: { interval: 'daily' };
+    'open-pull-requests-limit': number;
+    labels: string[];
+    ignore?: {'dependency-name': string; 'update-types'?: string[]; version?: string[] }[];
+    reviewers?: string[];
+  }[];
+};
+
+async function checkDependabot(fix: boolean): Promise<boolean> {
+  const configs: dependabotConfig = yaml.parse(await fs.promises.readFile('.github/dependabot.yml', 'utf8'));
+  const modules = (await getModules()).map(module => `/${ module }`);
+  const dependabotDirs = configs.updates.filter(x => x['package-ecosystem'] === 'gomod').map(x => x.directory);
+  const missing = modules.filter(x => !dependabotDirs.includes(x));
+
+  if (missing.length > 0) {
+    const message = ['\x1B[0;1;31m Go modules not listed in dependabot:\x1B[0m'].concat(missing);
+
+    console.error(message.join('\n   '));
+
+    return false;
+  }
+
+  return true;
+}
+
+Promise.all([format, syncModules, goLangCILint, checkDependabot].map(fn => fn(fix))).then((successes) => {
   if (!successes.every(x => x)) {
     process.exit(1);
   }
