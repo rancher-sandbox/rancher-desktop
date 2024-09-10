@@ -124,7 +124,14 @@ export class ExtensionProxyImage implements Dependency {
 export class WSLDistroImage implements Dependency {
   name = 'WSLDistroImage';
   dependencies(context: DownloadContext): string[] {
-    return ['WSLDistro:win32', 'guestagent:linux'];
+    return [
+      'WSLDistro:win32',
+      'guestagent:linux',
+      'vm-switch:linux',
+      'network-setup:linux',
+      'wsl-proxy:linux',
+      'trivy:linux',
+    ];
   }
 
   async download(context: DownloadContext): Promise<void> {
@@ -161,10 +168,17 @@ export class WSLDistroImage implements Dependency {
     }
 
     // Add extra files.
-    await addFile(path.join(context.resourcesDir, 'linux', 'staging', 'guestagent'),
-      'usr/local/bin/rancher-desktop-guestagent');
-    await addFile(path.join(context.resourcesDir, 'linux', 'staging', 'trivy'),
-      'usr/local/bin/trivy');
+    const extraFiles = {
+      'linux/staging/guestagent':    'usr/local/bin/rancher-desktop-guestagent',
+      'linux/staging/vm-switch':     'usr/local/bin/vm-switch',
+      'linux/staging/network-setup': 'usr/local/bin/network-setup',
+      'linux/staging/wsl-proxy':     'usr/local/bin/wsl-proxy',
+      'linux/staging/trivy':         'usr/local/bin/trivy',
+    };
+
+    await Promise.all(Object.entries(extraFiles).map(([src, dest]) => {
+      return addFile(path.join(context.resourcesDir, ...src.split('/')), dest);
+    }));
 
     // Finish the archive.
     packer.finalize();

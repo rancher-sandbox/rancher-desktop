@@ -27,7 +27,7 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/portproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/portproxy"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/nettest"

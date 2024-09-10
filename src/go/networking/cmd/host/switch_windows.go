@@ -33,8 +33,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/rancher-sandbox/rancher-desktop-host-resolver/pkg/vmsock"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/vsock"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/vsock"
 )
 
 var (

@@ -17,7 +17,7 @@ import (
 	"net"
 
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/config"
 )
 
 const (

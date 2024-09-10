@@ -2,7 +2,7 @@ import { Octokit } from 'octokit';
 
 import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import * as tools from 'scripts/dependencies/tools';
-import { WSLDistro, HostSwitch } from 'scripts/dependencies/wsl';
+import { WSLDistro } from 'scripts/dependencies/wsl';
 import {
   Dependency, GitHubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository,
 } from 'scripts/lib/dependencies';
@@ -26,7 +26,6 @@ const dependencies: UnreleasedChangeMonitoringDependency[] = [
   new tools.Steve(),
   new tools.RancherDashboard(),
   new AlpineLimaISO(),
-  new HostSwitch(),
 ];
 
 type Issue = Awaited<ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>>['data']['items'][0];

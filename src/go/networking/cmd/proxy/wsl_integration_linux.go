@@ -23,8 +23,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/portproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/log"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/portproxy"
 )
 
 var (

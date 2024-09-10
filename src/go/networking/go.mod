@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop-networking
+module github.com/rancher-sandbox/rancher-desktop/src/go/networking
 
 go 1.22.0
 

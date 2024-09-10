@@ -14,6 +14,6 @@ limitations under the License.
 package vsock
 
 const (
-	SignaturePhrase = "github.com/rancher-sandbox/rancher-desktop-networking"
+	SignaturePhrase = "github.com/rancher-sandbox/rancher-desktop/src/go/networking"
 	ReadySignal     = "READY"
 )

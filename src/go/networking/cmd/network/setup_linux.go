@@ -31,9 +31,9 @@ import (
 	"github.com/vishvananda/netns"
 	"golang.org/x/sys/unix"
 
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/config"
-	"github.com/rancher-sandbox/rancher-desktop-networking/pkg/log"
-	rdvsock "github.com/rancher-sandbox/rancher-desktop-networking/pkg/vsock"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/log"
+	rdvsock "github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/vsock"
 )
 
 var (

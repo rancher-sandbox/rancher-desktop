@@ -25,7 +25,7 @@ import (
 // WSLProxyForwarder forwards the PortMappings to Rancher Desktop WSLProxy process in
 // the default namespace over the unix socket.
 // For more information on Rancher Desktop WSL Proxy, refer to the source code at:
-// https://github.com/rancher-sandbox/rancher-desktop-networking/blob/main/cmd/proxy/wsl_integration_linux.go
+// https://github.com/rancher-sandbox/rancher-desktop/blob/main/src/go/networking/cmd/proxy/wsl_integration_linux.go
 type WSLProxyForwarder struct {
 	proxySocket string
 }
