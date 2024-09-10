@@ -201,7 +201,9 @@ describe(K3sHelper, () => {
 
         return Promise.resolve(new FetchResponse(
           JSON.stringify({
-            data: [{
+            resourceType: 'channels',
+            data:         [{
+              type:   'channel',
               name:   'stable',
               latest: 'v1.99.3+k3s3',
             }],
@@ -314,12 +316,23 @@ describe(K3sHelper, () => {
 
         return Promise.resolve(new FetchResponse(
           JSON.stringify({
-            data: [
-              { name: 'v1.96', latest: '1.96.9+k3s1' },
-              { name: 'v1.97', latest: '1.97.7+k3s1' },
-              { name: 'stable', latest: '1.97.7+k3s1' },
-              { name: 'latest', latest: '1.98.3+k3s1' },
-              { name: 'v1.98', latest: '1.98.3+k3s1' },
+            resourceType: 'channels',
+            data:         [
+              {
+                type: 'channel', name: 'v1.96', latest: '1.96.9+k3s1',
+              },
+              {
+                type: 'channel', name: 'v1.97', latest: '1.97.7+k3s1',
+              },
+              {
+                type: 'channel', name: 'stable', latest: '1.97.7+k3s1',
+              },
+              {
+                type: 'channel', name: 'latest', latest: '1.98.3+k3s1',
+              },
+              {
+                type: 'channel', name: 'v1.98', latest: '1.98.3+k3s1',
+              },
             ],
           }),
         ));
