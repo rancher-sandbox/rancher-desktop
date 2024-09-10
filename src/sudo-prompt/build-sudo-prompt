@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# defaults domain must be an absolute path
+# shellcheck disable=SC2164 # Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)
 
 # The APP name must be "Rancher Desktop.app" because this name is used in the dialog as
@@ -15,6 +15,6 @@ osacompile -o "$APP" sudo-prompt.applescript
 
 # Don't put the script into ${CONTENTS}/MacOS/ because that breaks signing the applet
 cp sudo-prompt-script "${CONTENTS}/Resources/Scripts/"
-cp "${RESOURCES}/icons/mac-icon.icns" "${CONTENTS}/Resources/applet.icns"
+sips -s format icns "${RESOURCES}/icons/mac-icon.png" --out "${CONTENTS}/Resources/applet.icns"
 
-defaults write "${CONTENTS}/Info.plist" CFBundleName "Rancher Desktop Password Prompt"
+plutil -replace CFBundleName -string "Rancher Desktop Password Prompt" "${CONTENTS}/Info.plist"

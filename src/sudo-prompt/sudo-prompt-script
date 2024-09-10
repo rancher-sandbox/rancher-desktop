@@ -1,4 +1,10 @@
 #!/bin/bash
+# This script is executed by the applet with root permissions.
+# The caller will have created a temporary directory containing just the
+# `sudo-prompt-command` shell script. This script will add the `code`,
+# `stdout` and `stderr` files. The caller will delete this directory
+# again after reading the files.
+
 # Set sudo timestamp for subsequent sudo calls if tty_tickets are disabled:
 /bin/mkdir -p /var/db/sudo/$USER > /dev/null 2>&1
 /usr/bin/touch /var/db/sudo/$USER > /dev/null 2>&1

@@ -8,7 +8,7 @@ The bundled applet did not include support for `aarch64` machines, so needed Ros
 
 ## Changes
 
-The applet source code has been moved to `<repo>/src/sudo-prompt` and is build from source using `osacompile`, so `applet` will be an up-to-date universal binary supporting `x86_64` and `aarch64`.
+The applet source code has been moved to `<repo>/src/sudo-prompt` and is built from source using `osacompile`, so `applet` will be an up-to-date universal binary supporting `x86_64` and `aarch64`.
 
 The applet is placed into `<repo>/resources/darwin/internal/Rancher Desktop.app`. The app name is displayed as part of the dialog: "Rancher Desktop wants to make changes".
 

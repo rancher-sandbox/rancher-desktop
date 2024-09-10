@@ -273,31 +273,37 @@ function Mac(instance, callback) {
         temp,
         instance.uuid,
       );
-      Node.fs.mkdirSync(instance.path);
-      function end(error, stdout, stderr) {
-        Remove(instance.path,
-          (errorRemove) => {
-            if (error) {
-              return callback(error);
-            }
-            if (errorRemove) {
-              return callback(errorRemove);
-            }
-            callback(undefined, stdout, stderr);
-          },
-        );
-      }
-      MacCommand(instance,
+      Node.fs.mkdir(instance.path, 0o700,
         (error) => {
           if (error) {
-            return end(error);
+            return callback(error);
           }
-          MacOpen(instance,
-            (error, stdout, stderr) => {
+          function end(error, stdout, stderr) {
+            Remove(instance.path,
+              (errorRemove) => {
+                if (error) {
+                  return callback(error);
+                }
+                if (errorRemove) {
+                  return callback(errorRemove);
+                }
+                callback(undefined, stdout, stderr);
+              },
+            );
+          }
+          MacCommand(instance,
+            (error) => {
               if (error) {
-                return end(error, stdout, stderr);
+                return end(error);
               }
-              MacResult(instance, end);
+              MacOpen(instance,
+                (error, stdout, stderr) => {
+                  if (error) {
+                    return end(error, stdout, stderr);
+                  }
+                  MacResult(instance, end);
+                },
+              );
             },
           );
         },

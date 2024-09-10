@@ -259,7 +259,9 @@ async function isBundleExecutable(fullPath: string): Promise<boolean> {
       const infoPlist = path.sep + path.join(...parts.slice(2).reverse(), 'Info.plist');
 
       try {
-        const { stdout } = await spawnFile('/usr/bin/defaults', ['read', infoPlist, 'CFBundleExecutable'], { stdio: 'pipe' });
+        const { stdout } = await spawnFile('/usr/bin/plutil',
+          ['-extract', 'CFBundleExecutable', 'raw', '-expect', 'string', infoPlist],
+          { stdio: 'pipe' });
 
         return stdout.trimEnd() === parts[0];
       } catch {
