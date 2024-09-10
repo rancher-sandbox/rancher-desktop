@@ -441,7 +441,7 @@ class Client implements v1.DockerDesktopClient {
           for (const p of prop) {
             const [key, newKey] = Array.isArray(p) ? p : [p, p];
 
-            if (key in object ?? {}) {
+            if (key in (object ?? {})) {
               result[newKey] = object[key];
             }
           }
