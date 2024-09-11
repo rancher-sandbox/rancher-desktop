@@ -56,8 +56,8 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/rancher-sandbox/rancher-desktop-agent v0.3.19 h1:29ODgwJdCPU+nbExqM9AYY7Sa+oectXHFxSKQYKhTtc=
-github.com/rancher-sandbox/rancher-desktop-agent v0.3.19/go.mod h1:Y79V+R/jlTcLemSmk8yuZVIDAQKzpU3SZcLLbZfzEtI=
+github.com/rancher-sandbox/rancher-desktop-agent v0.4.2 h1:nz8vESqtFV61Yvh2VeUeHw7j1S264J9jpWYgl99toLk=
+github.com/rancher-sandbox/rancher-desktop-agent v0.4.2/go.mod h1:xrPGWcWIGQUj53gsPS5YMRELdJcA1rrdvrWwSQnkqIg=
 github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5 h1:F5m5WXPRjm/dNuz/cYZI+DjWwLGFyAVJglxG4ian61I=
 github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5/go.mod h1:J4GpCMQjKJNvZVNtNsSIo6PfqkC8j5woaOcAgWg7NRA=
 github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220712232929-bac01a348036 h1:VyDF9gpc9ILr8LT9fgat8x6KG3bom5hRQlbxecdzDqs=

@@ -11,7 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
-	github.com/rancher-sandbox/rancher-desktop-agent v0.3.19
+	github.com/rancher-sandbox/rancher-desktop-agent v0.4.2
 	github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
