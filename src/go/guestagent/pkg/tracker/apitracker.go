@@ -14,15 +14,10 @@ limitations under the License.
 package tracker
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
-	"strings"
 
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
@@ -35,14 +30,10 @@ const (
 	// The gateway represents the hostname where the hostSwitch API is hosted.
 	gateway        = "gateway.rancher-desktop.internal"
 	GatewayBaseURL = "http://" + gateway + ":80"
-	exposeAPI      = "/services/forwarder/expose"
-	unexposeAPI    = "/services/forwarder/unexpose"
 )
 
 var (
 	ErrAPI         = errors.New("error from API")
-	ErrExposeAPI   = fmt.Errorf("error from %s API", exposeAPI)
-	ErrUnexposeAPI = fmt.Errorf("error from %s API", unexposeAPI)
 	ErrInvalidIPv4 = errors.New("not an IPv4 address")
 	ErrWSLProxy    = errors.New("error from Rancher Desktop WSL Proxy")
 )
@@ -52,25 +43,38 @@ var (
 // and unexposing the ports on the host. This should only be used when
 // the Rancher Desktop networking is enabled and the privileged service is disabled.
 type APITracker struct {
-	forwarder      forwarder.Forwarder
-	isAdmin        bool
-	baseURL        string
-	tapInterfaceIP string
-	httpClient     http.Client
-	portStorage    *portStorage
+	context           context.Context
+	wslProxyForwarder forwarder.Forwarder
+	isAdmin           bool
+	baseURL           string
+	tapInterfaceIP    string
+	portStorage       *portStorage
+	apiForwarder      *forwarder.APIForwarder
 	*ListenerTracker
 }
 
-// NewAPITracker creates a new instance of a API Tracker.
-func NewAPITracker(forwarder forwarder.Forwarder, baseURL, tapIfaceIP string, isAdmin bool) *APITracker {
+// NewAPITracker creates a new instance of APITracker with the specified configuration.
+//   - ctx: The context to manage the lifecycle and cancellation of operations. It allows the APITracker
+//     to be aware of broader request timeouts or cancellation signals.
+//   - wslProxyForwarder: An interface or struct responsible for forwarding API calls to the Rancher Desktop's WSL proxy.
+//     It handles sending port mapping updates and removals from other WSL distros.
+//   - baseURL: The base URL of the API server that the APITracker will communicate with to expose or unexpose
+//     ports. This URL is used by the APIForwarder to construct API requests.
+//   - tapIfaceIP: The IP address of the tap interface that the API calls will use for port forwarding. This address
+//     is used to route traffic from the host to the container.
+//   - isAdmin: Indicates whether the application is running with administrative privileges. This flag determines
+//     whether the APITracker should use the localhost IP address (127.0.0.1) for operations if not running as an
+//     administrator.
+func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, baseURL, tapIfaceIP string, isAdmin bool) *APITracker {
 	return &APITracker{
-		forwarder:       forwarder,
-		isAdmin:         isAdmin,
-		baseURL:         baseURL,
-		tapInterfaceIP:  tapIfaceIP,
-		httpClient:      *http.DefaultClient,
-		portStorage:     newPortStorage(),
-		ListenerTracker: NewListenerTracker(),
+		context:           ctx,
+		wslProxyForwarder: wslProxyForwarder,
+		isAdmin:           isAdmin,
+		baseURL:           baseURL,
+		tapInterfaceIP:    tapIfaceIP,
+		portStorage:       newPortStorage(),
+		apiForwarder:      forwarder.NewAPIForwarder(baseURL),
+		ListenerTracker:   NewListenerTracker(),
 	}
 }
 
@@ -92,9 +96,9 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 				continue
 			}
 
-			log.Debugf("calling %s API for the following port binding: %+v", exposeAPI, portBinding)
+			log.Debugf("exposing the following port binding: %+v", portBinding)
 
-			err = a.expose(
+			err = a.apiForwarder.Expose(
 				&types.ExposeRequest{
 					Local:  ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 					Remote: ipPortBuilder(a.tapInterfaceIP, portBinding.HostPort),
@@ -118,13 +122,13 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 	}
 	log.Debugf("forwarding to wsl-proxy to add port mapping: %+v", portMapping)
 
-	err := a.forwarder.Send(portMapping)
+	err := a.wslProxyForwarder.Send(portMapping)
 	if err != nil {
 		return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrExposeAPI, errs)
+		return fmt.Errorf("%w: %+v", forwarder.ErrExposeAPI, errs)
 	}
 
 	return nil
@@ -152,9 +156,9 @@ func (a *APITracker) Remove(containerID string) error {
 				continue
 			}
 
-			log.Debugf("calling %s API for the following port binding: %+v", unexposeAPI, portBinding)
+			log.Debugf("unexposing the following port binding: %+v", portBinding)
 
-			err = a.unexpose(
+			err = a.apiForwarder.Unexpose(
 				&types.UnexposeRequest{
 					Local: ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 				})
@@ -172,13 +176,13 @@ func (a *APITracker) Remove(containerID string) error {
 		Ports:  portMap,
 	}
 	log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
-	err := a.forwarder.Send(portMapping)
+	err := a.wslProxyForwarder.Send(portMapping)
 	if err != nil {
 		return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, errs)
+		return fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, errs)
 	}
 
 	return nil
@@ -198,9 +202,9 @@ func (a *APITracker) RemoveAll() error {
 					continue
 				}
 
-				log.Debugf("calling %s API for the following port binding: %+v", unexposeAPI, portBinding)
+				log.Debugf("unexposing the following port binding: %+v", portBinding)
 
-				err = a.unexpose(
+				err = a.apiForwarder.Unexpose(
 					&types.UnexposeRequest{
 						Local: ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 					})
@@ -219,7 +223,7 @@ func (a *APITracker) RemoveAll() error {
 		}
 
 		log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
-		wslProxyError := a.forwarder.Send(portMapping)
+		wslProxyError := a.wslProxyForwarder.Send(portMapping)
 		if wslProxyError != nil {
 			wslProxyErrs = append(wslProxyErrs,
 				fmt.Errorf("sending port mappings to wsl proxy error: %w", wslProxyError))
@@ -229,7 +233,7 @@ func (a *APITracker) RemoveAll() error {
 	a.portStorage.removeAll()
 
 	if len(apiErrs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrUnexposeAPI, apiErrs)
+		return fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, apiErrs)
 	}
 
 	if len(wslProxyErrs) != 0 {
@@ -237,54 +241,6 @@ func (a *APITracker) RemoveAll() error {
 	}
 
 	return nil
-}
-
-func (a *APITracker) expose(exposeReq *types.ExposeRequest) error {
-	bin, err := json.Marshal(exposeReq)
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("sending a HTTP POST to %s API with expose request: %v", exposeAPI, exposeReq)
-	req, err := http.NewRequestWithContext(
-		context.Background(),
-		http.MethodPost,
-		a.urlBuilder(exposeAPI),
-		bytes.NewReader(bin))
-	if err != nil {
-		return err
-	}
-
-	res, err := a.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	return verifyResponseBody(res)
-}
-
-func (a *APITracker) unexpose(unexposeReq *types.UnexposeRequest) error {
-	bin, err := json.Marshal(unexposeReq)
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("sending a HTTP POST to %s API with expose request: %v", unexposeAPI, unexposeReq)
-	req, err := http.NewRequestWithContext(
-		context.Background(),
-		http.MethodPost,
-		a.urlBuilder(unexposeAPI),
-		bytes.NewReader(bin))
-	if err != nil {
-		return err
-	}
-
-	res, err := a.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	return verifyResponseBody(res)
 }
 
 func (a *APITracker) determineHostIP(hostIP string) string {
@@ -298,29 +254,8 @@ func (a *APITracker) determineHostIP(hostIP string) string {
 	return hostIP
 }
 
-func (a *APITracker) urlBuilder(api string) string {
-	return a.baseURL + api
-}
-
 func ipPortBuilder(ip, port string) string {
 	return ip + ":" + port
-}
-
-func verifyResponseBody(res *http.Response) error {
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		apiResponse, readErr := io.ReadAll(res.Body)
-		if readErr != nil {
-			return fmt.Errorf("error while reading response body: %w", readErr)
-		}
-
-		errMsg := strings.TrimSpace(string(apiResponse))
-
-		return fmt.Errorf("%w: %s", ErrAPI, errMsg)
-	}
-
-	return nil
 }
 
 func isIPv4(addr string) (bool, error) {

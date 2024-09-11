@@ -13,7 +13,6 @@ command=/usr/local/bin/rancher-desktop-guestagent
 command_args="
   ${GUESTAGENT_ADMIN_INSTALL:+-adminInstall=${GUESTAGENT_ADMIN_INSTALL}}
   ${GUESTAGENT_KUBERNETES:+-kubernetes=${GUESTAGENT_KUBERNETES}}
-  ${GUESTAGENT_IPTABLES:+-iptables=${GUESTAGENT_IPTABLES}}
   ${GUESTAGENT_DOCKER:+-docker=${GUESTAGENT_DOCKER}}
   ${GUESTAGENT_CONTAINERD:+-containerd=${GUESTAGENT_CONTAINERD}}
   ${GUESTAGENT_K8S_SVC_ADDR:+-k8sServiceListenerAddr=${GUESTAGENT_K8S_SVC_ADDR}}

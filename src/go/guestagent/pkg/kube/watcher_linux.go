@@ -58,7 +58,6 @@ func WatchForServices(
 	ctx context.Context,
 	configPath string,
 	k8sServiceListenerIP net.IP,
-	enableListeners bool,
 	portTracker tracker.Tracker,
 ) error {
 	// These variables are shared across the different states
@@ -154,24 +153,6 @@ func WatchForServices(
 				continue
 			case event := <-eventCh:
 				if event.deleted {
-					if enableListeners {
-						for port := range event.portMapping {
-							if err := portTracker.RemoveListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
-								log.Errorw("failed to close listener", log.Fields{
-									"error":     err,
-									"ports":     event.portMapping,
-									"namespace": event.namespace,
-									"name":      event.name,
-								})
-							}
-						}
-
-						log.Debugf("kubernetes service: deleted listener %s/%s:%v",
-							event.namespace, event.name, event.portMapping)
-
-						continue
-					}
-
 					if err := portTracker.Remove(string(event.UID)); err != nil {
 						log.Errorw("failed to delete a port from tracker", log.Fields{
 							"error":     err,
@@ -185,23 +166,6 @@ func WatchForServices(
 							event.namespace, event.name, event.portMapping)
 					}
 				} else {
-					if enableListeners {
-						for port := range event.portMapping {
-							if err := portTracker.AddListener(ctx, k8sServiceListenerIP, int(port)); err != nil {
-								log.Errorw("failed to create listener", log.Fields{
-									"error":     err,
-									"ports":     event.portMapping,
-									"namespace": event.namespace,
-									"name":      event.name,
-								})
-							}
-						}
-
-						log.Debugf("kubernetes service: started listener %s/%s:%v",
-							event.namespace, event.name, event.portMapping)
-
-						continue
-					}
 					portMapping, err := createPortMapping(event.portMapping, k8sServiceListenerIP)
 					if err != nil {
 						log.Errorw("failed to create port mapping", log.Fields{
