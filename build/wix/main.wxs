@@ -132,12 +132,18 @@
         Type="string"
         KeyPath="yes"
       />
-      <Environment Id="PathWindowsUser" Name="PATH"
+      <Environment Id="PathWindowsUserBin" Name="PATH"
         Action="set" Part="last" System="no" Permanent="no"
         Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
-      <Environment Id="PathLinuxUser" Name="PATH"
+      <Environment Id="PathWindowsUserDockerCLIPlugins" Name="PATH"
+        Action="set" Part="last" System="no" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\win32\docker-cli-plugins\" />
+      <Environment Id="PathLinuxUserBin" Name="PATH"
         Action="set" Part="last" System="no" Permanent="no"
         Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
+      <Environment Id="PathLinuxUserDockerCLIPlugins" Name="PATH"
+        Action="set" Part="last" System="no" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\linux\docker-cli-plugins\" />
     </Component>
     <Component Id="PathSystem" Directory="APPLICATIONFOLDER">
       <Condition>
@@ -151,12 +157,18 @@
         Type="string"
         KeyPath="yes"
       />
-      <Environment Id="PathWindowsSystem" Name="PATH"
+      <Environment Id="PathWindowsSystemBin" Name="PATH"
         Action="set" Part="last" System="yes" Permanent="no"
         Value="[APPLICATIONFOLDER]resources\resources\win32\bin\" />
-      <Environment Id="PathLinuxSystem" Name="PATH"
+      <Environment Id="PathWindowsSystemDockerCLIPlugins" Name="PATH"
+        Action="set" Part="last" System="yes" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\win32\docker-cli-plugins\" />
+      <Environment Id="PathLinuxSystemBin" Name="PATH"
         Action="set" Part="last" System="yes" Permanent="no"
         Value="[APPLICATIONFOLDER]resources\resources\linux\bin\" />
+      <Environment Id="PathLinuxSystemDockerCLIPlugins" Name="PATH"
+        Action="set" Part="last" System="yes" Permanent="no"
+        Value="[APPLICATIONFOLDER]resources\resources\linux\docker-cli-plugins\" />
     </Component>
 
 

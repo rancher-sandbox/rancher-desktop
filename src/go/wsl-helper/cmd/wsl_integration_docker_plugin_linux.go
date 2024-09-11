@@ -17,6 +17,9 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/integration"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -33,9 +36,18 @@ var wslIntegrationDockerPluginCmd = &cobra.Command{
 		cmd.SilenceUsage = true
 
 		state := wslIntegrationDockerPluginViper.GetBool("state")
-		pluginPath := wslIntegrationDockerPluginViper.GetString("plugin")
+		pluginDir := wslIntegrationDockerPluginViper.GetString("plugin-dir")
+		binDir := wslIntegrationDockerPluginViper.GetString("bin-dir")
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to locate home directory: %w", err)
+		}
 
-		if err := integration.DockerPlugin(pluginPath, state); err != nil {
+		if err := integration.SetupPluginDirConfig(homeDir, pluginDir, state); err != nil {
+			return err
+		}
+
+		if err := integration.RemoveObsoletePluginSymlinks(homeDir, binDir); err != nil {
 			return err
 		}
 
@@ -44,9 +56,10 @@ var wslIntegrationDockerPluginCmd = &cobra.Command{
 }
 
 func init() {
-	wslIntegrationDockerPluginCmd.Flags().String("plugin", "", "Full path to plugin")
+	wslIntegrationDockerPluginCmd.Flags().String("plugin-dir", "", "Full path to plugin directory")
+	wslIntegrationDockerPluginCmd.Flags().String("bin-dir", "", "Full path to bin directory to clean up deprecated links")
 	wslIntegrationDockerPluginCmd.Flags().Bool("state", false, "Desired state")
-	if err := wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin"); err != nil {
+	if err := wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin-dir"); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
 	wslIntegrationDockerPluginViper.AutomaticEnv()

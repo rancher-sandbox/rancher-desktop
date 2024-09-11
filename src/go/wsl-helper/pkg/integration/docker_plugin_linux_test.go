@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 SUSE LLC
+Copyright © 2024 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ limitations under the License.
 package integration_test
 
 import (
+	"encoding/json"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -27,93 +29,191 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/integration"
 )
 
-func TestDockerPlugin(t *testing.T) {
-	t.Run("create symlink", func(t *testing.T) {
+func TestSetupPluginDirConfig(t *testing.T) {
+	t.Parallel()
+	t.Run("create config file", func(t *testing.T) {
 		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
+		pluginPath := t.TempDir()
 
-		require.NoError(t, integration.DockerPlugin(pluginPath, true))
-		link, err := os.Readlink(destPath)
-		if assert.NoError(t, err, "error reading created symlink") {
-			assert.Equal(t, pluginPath, link)
-		}
+		assert.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+
+		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+		require.NoError(t, err, "error reading docker CLI config")
+		var config map[string]any
+		require.NoError(t, json.Unmarshal(bytes, &config))
+
+		value := config["cliPluginsExtraDirs"]
+		require.Contains(t, config, "cliPluginsExtraDirs")
+		require.Contains(t, value, pluginPath, "did not contain plugin path")
 	})
-	t.Run("remove dangling symlink", func(t *testing.T) {
+	t.Run("update config file", func(t *testing.T) {
 		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
+		pluginPath := t.TempDir()
+		configPath := path.Join(homeDir, ".docker", "config.json")
+		require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0o755))
+		existingContents := []byte(`{"credsStore": "nothing"}`)
+		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-		require.NoError(t, os.MkdirAll(filepath.Dir(destPath), 0o755))
-		require.NoError(t, os.Symlink(filepath.Join(pluginDir, "missing"), destPath))
-		require.NoError(t, integration.DockerPlugin(pluginPath, true))
-		link, err := os.Readlink(destPath)
-		if assert.NoError(t, err, "error reading created symlink") {
-			assert.Equal(t, pluginPath, link)
-		}
+		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+
+		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+		require.NoError(t, err, "error reading docker CLI config")
+		var config map[string]any
+		require.NoError(t, json.Unmarshal(bytes, &config))
+
+		assert.Subset(t, config, map[string]any{"credsStore": "nothing"})
+		assert.Subset(t, config, map[string]any{"cliPluginsExtraDirs": []any{pluginPath}})
 	})
-	t.Run("leave existing symlink", func(t *testing.T) {
-		executable, err := os.Executable()
-		require.NoError(t, err, "failed to locate executable")
+	t.Run("do not add multiple instances", func(t *testing.T) {
 		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
+		pluginPath := t.TempDir()
+		configPath := path.Join(homeDir, ".docker", "config.json")
+		require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0o755))
 
-		require.NoError(t, os.MkdirAll(filepath.Dir(destPath), 0o755))
-		require.NoError(t, os.Symlink(executable, destPath))
-		require.NoError(t, integration.DockerPlugin(pluginPath, true))
-		link, err := os.Readlink(destPath)
-		if assert.NoError(t, err, "error reading created symlink") {
-			assert.Equal(t, executable, link)
-		}
+		expected := []any{"1", pluginPath, "2"}
+		config := map[string]any{"cliPluginsExtraDirs": expected}
+		existingContents, err := json.Marshal(config)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
+		config = make(map[string]any)
+
+		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+
+		bytes, err := os.ReadFile(configPath)
+		require.NoError(t, err, "error reading docker CLI config")
+		require.NoError(t, json.Unmarshal(bytes, &config))
+
+		assert.Subset(t, config, map[string]any{"cliPluginsExtraDirs": expected})
 	})
-	t.Run("leave existing file", func(t *testing.T) {
+	t.Run("remove existing instances", func(t *testing.T) {
 		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
+		pluginPath := t.TempDir()
+		configPath := path.Join(homeDir, ".docker", "config.json")
+		require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0o755))
 
-		require.NoError(t, os.MkdirAll(filepath.Dir(destPath), 0o755))
-		require.NoError(t, os.WriteFile(destPath, []byte("hello"), 0o644))
-		require.NoError(t, integration.DockerPlugin(pluginPath, true))
-		buf, err := os.ReadFile(destPath)
-		if assert.NoError(t, err, "failed to read destination file") {
-			assert.Equal(t, []byte("hello"), buf)
-		}
+		config := map[string]any{"cliPluginsExtraDirs": []any{"1", pluginPath, "2"}}
+		existingContents, err := json.Marshal(config)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
+		config = make(map[string]any)
+
+		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
+
+		bytes, err := os.ReadFile(configPath)
+		require.NoError(t, err, "error reading docker CLI config")
+		require.NoError(t, json.Unmarshal(bytes, &config))
+
+		assert.Subset(t, config, map[string]any{"cliPluginsExtraDirs": []any{"1", "2"}})
 	})
-	t.Run("remove correct symlink", func(t *testing.T) {
-		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
+	t.Run("do not modify invalid file", func(t *testing.T) {
+		t.Parallel()
+		t.Run("file is not JSON", func(t *testing.T) {
+			homeDir := t.TempDir()
+			pluginPath := t.TempDir()
+			configPath := path.Join(homeDir, ".docker", "config.json")
+			require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0o755))
+			existingContents := []byte(`this is not JSON`)
+			require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-		require.NoError(t, os.MkdirAll(filepath.Dir(destPath), 0o755))
-		require.NoError(t, os.Symlink(pluginPath, destPath))
-		require.NoError(t, integration.DockerPlugin(pluginPath, false))
-		_, err := os.Lstat(destPath)
-		assert.ErrorIs(t, err, os.ErrNotExist, "symlink was not removed")
+			assert.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+
+			bytes, err := os.ReadFile(configPath)
+			require.NoError(t, err, "error reading docker CLI config")
+			assert.Equal(t, existingContents, bytes, "docker CLI config was changed")
+		})
+		t.Run("file contains invalid plugin dirs", func(t *testing.T) {
+			homeDir := t.TempDir()
+			pluginPath := t.TempDir()
+			configPath := path.Join(homeDir, ".docker", "config.json")
+			require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0o755))
+
+			config := map[string]any{"cliPluginsExtraDirs": 500}
+			existingContents, err := json.MarshalIndent(config, " \t ", "  \n\r  ")
+			require.NoError(t, err)
+			require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
+
+			require.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
+
+			bytes, err := os.ReadFile(configPath)
+			require.NoError(t, err, "error reading docker CLI config")
+			// Since we should not have modified the file at all, the file should
+			// still be byte-identical.
+			assert.Equal(t, existingContents, bytes, "docker CLI config was modified")
+		})
+		t.Run("file contains non-string plugin dirs items", func(t *testing.T) {})
+		homeDir := t.TempDir()
+		pluginPath := t.TempDir()
+		configPath := path.Join(homeDir, ".docker", "config.json")
+		require.NoError(t, os.MkdirAll(filepath.Dir(configPath), 0o755))
+
+		items := []any{1, true, map[string]any{"hello": "world"}}
+		config := map[string]any{"cliPluginsExtraDirs": items}
+		existingContents, err := json.MarshalIndent(config, " \t ", "  \n\r  ")
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
+
+		require.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
+
+		bytes, err := os.ReadFile(configPath)
+		require.NoError(t, err, "error reading docker CLI config")
+		// Since we should not have modified the file at all, the file should
+		// still be byte-identical.
+		assert.Equal(t, existingContents, bytes, "docker CLI config was modified")
 	})
-	t.Run("do not remove incorrect symlink", func(t *testing.T) {
-		homeDir := t.TempDir()
-		pluginDir := t.TempDir()
-		pluginPath := filepath.Join(pluginDir, "docker-something")
-		destPath := filepath.Join(homeDir, ".docker", "cli-plugins", "docker-something")
-		t.Setenv("HOME", homeDir)
+}
 
-		require.NoError(t, os.MkdirAll(filepath.Dir(destPath), 0o755))
-		require.NoError(t, os.Symlink(destPath, destPath))
-		require.NoError(t, integration.DockerPlugin(pluginPath, false))
-		result, err := os.Readlink(destPath)
-		if assert.NoError(t, err, "error reading symlink") {
-			assert.Equal(t, destPath, result, "unexpected symlink contents")
-		}
+func TestRemoveObsoletePluginSymlinks(t *testing.T) {
+	t.Run("plugin directory does not exist", func(t *testing.T) {
+		homeDir := t.TempDir()
+		binPath := t.TempDir()
+		assert.NoError(t, integration.RemoveObsoletePluginSymlinks(homeDir, binPath))
+	})
+	t.Run("leaves non-symlink plugins", func(t *testing.T) {
+		homeDir := t.TempDir()
+		binPath := t.TempDir()
+		pluginDir := path.Join(homeDir, ".docker", "cli-plugins")
+		assert.NoError(t, os.MkdirAll(pluginDir, 0o755))
+		pluginPath := path.Join(pluginDir, "docker-plugin")
+		assert.NoError(t, os.WriteFile(pluginPath, []byte{}, 0o755))
+		assert.NoError(t, integration.RemoveObsoletePluginSymlinks(homeDir, binPath))
+		contents, err := os.ReadFile(pluginPath)
+		assert.NoError(t, err)
+		assert.Empty(t, contents)
+	})
+	t.Run("leaves foreign symlinks", func(t *testing.T) {
+		homeDir := t.TempDir()
+		binPath := t.TempDir()
+		pluginDir := path.Join(homeDir, ".docker", "cli-plugins")
+		assert.NoError(t, os.MkdirAll(pluginDir, 0o755))
+		pluginPath := path.Join(pluginDir, "docker-plugin")
+		assert.NoError(t, os.Symlink("/usr/bin/true", pluginPath))
+		assert.NoError(t, integration.RemoveObsoletePluginSymlinks(homeDir, binPath))
+		symlinkTarget, err := os.Readlink(pluginPath)
+		assert.NoError(t, err)
+		assert.Equal(t, "/usr/bin/true", symlinkTarget)
+	})
+	t.Run("leaves self-referential symlinks", func(t *testing.T) {
+		homeDir := t.TempDir()
+		binPath := t.TempDir()
+		pluginDir := path.Join(homeDir, ".docker", "cli-plugins")
+		assert.NoError(t, os.MkdirAll(pluginDir, 0o755))
+		pluginPath := path.Join(pluginDir, "docker-plugin")
+		assert.NoError(t, os.Symlink(pluginPath, pluginPath))
+		assert.NoError(t, integration.RemoveObsoletePluginSymlinks(homeDir, binPath))
+		symlinkTarget, err := os.Readlink(pluginPath)
+		assert.NoError(t, err)
+		assert.Equal(t, pluginPath, symlinkTarget)
+	})
+	t.Run("removes symlinks", func(t *testing.T) {
+		homeDir := t.TempDir()
+		binPath := t.TempDir()
+		pluginDir := path.Join(homeDir, ".docker", "cli-plugins")
+		assert.NoError(t, os.MkdirAll(pluginDir, 0o755))
+		pluginPath := path.Join(pluginDir, "docker-plugin")
+		targetPath := path.Join(binPath, "does-not-exist")
+		assert.NoError(t, os.Symlink(targetPath, pluginPath))
+		assert.NoError(t, integration.RemoveObsoletePluginSymlinks(homeDir, binPath))
+		_, err := os.Readlink(pluginPath)
+		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 }

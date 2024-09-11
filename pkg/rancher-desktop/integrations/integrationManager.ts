@@ -42,14 +42,16 @@ export interface IntegrationManager {
 
 export function getIntegrationManager(): IntegrationManager {
   const platform = os.platform();
-  const resourcesBinDir = path.join(paths.resources, platform, 'bin');
-  const dockerCliPluginDir = path.join(os.homedir(), '.docker', 'cli-plugins');
+  const binDir = path.join(paths.resources, platform, 'bin');
+  const dockerCLIPluginSource = path.join(paths.resources, platform, 'docker-cli-plugins');
+  const dockerCLIPluginDest = path.join(os.homedir(), '.docker', 'cli-plugins');
 
   switch (platform) {
   case 'linux':
-    return new UnixIntegrationManager(resourcesBinDir, paths.integration, dockerCliPluginDir);
   case 'darwin':
-    return new UnixIntegrationManager(resourcesBinDir, paths.integration, dockerCliPluginDir);
+    return new UnixIntegrationManager({
+      binDir, integrationDir: paths.integration, dockerCLIPluginSource, dockerCLIPluginDest,
+    });
   case 'win32':
     return WindowsIntegrationManager.getInstance();
   default:

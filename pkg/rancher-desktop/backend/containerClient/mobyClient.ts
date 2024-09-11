@@ -470,8 +470,11 @@ export class MobyClient implements ContainerEngineClient {
   runClient(args: string[], stdio: 'pipe', options?: runClientOptions): Promise<{ stdout: string; stderr: string; }>;
   runClient(args: string[], stdio: 'stream', options?: runClientOptions): ReadableProcess;
   runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: runClientOptions) {
-    const binDir = path.join(paths.resources, process.platform, 'bin');
-    const executable = path.resolve(binDir, options?.executable ?? this.executable);
+    const executableName = options?.executable ?? this.executable;
+    const isCLIPlugin = /^docker-(?!credential-)/.test(executableName);
+    const binType = isCLIPlugin ? 'docker-cli-plugins' : 'bin';
+    const binDir = path.join(paths.resources, process.platform, binType);
+    const executable = path.resolve(binDir, executableName);
     const opts = _.merge({}, options ?? {}, {
       env: {
         DOCKER_HOST: this.endpoint,
