@@ -79,7 +79,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 
 		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
 
-		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
 		require.NoError(t, json.Unmarshal(bytes, &config))
 
@@ -99,7 +99,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 
 		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
 
-		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
 		require.NoError(t, json.Unmarshal(bytes, &config))
 
@@ -117,7 +117,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 
 			assert.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
 
-			bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+			bytes, err := os.ReadFile(configPath)
 			require.NoError(t, err, "error reading docker CLI config")
 			assert.Equal(t, existingContents, bytes, "docker CLI config was changed")
 		})
@@ -134,7 +134,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 
 			require.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
 
-			bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+			bytes, err := os.ReadFile(configPath)
 			require.NoError(t, err, "error reading docker CLI config")
 			// Since we should not have modified the file at all, the file should
 			// still be byte-identical.
@@ -154,7 +154,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 
 		require.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
 
-		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
+		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
 		// Since we should not have modified the file at all, the file should
 		// still be byte-identical.

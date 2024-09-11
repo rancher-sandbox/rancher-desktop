@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	dirsKey = "cliPluginsExtraDirs"
+	pluginDirsKey = "cliPluginsExtraDirs"
 )
 
 // SetupPluginDirConfig configures docker CLI to load plugins from the directory
@@ -54,17 +54,17 @@ func SetupPluginDirConfig(homeDir, pluginPath string, enabled bool) error {
 
 	var dirs []string
 
-	if dirsRaw, ok := config[dirsKey]; ok {
+	if dirsRaw, ok := config[pluginDirsKey]; ok {
 		if dirsAny, ok := dirsRaw.([]any); ok {
 			for _, item := range dirsAny {
 				if dir, ok := item.(string); ok {
 					dirs = append(dirs, dir)
 				} else {
-					return fmt.Errorf("failed to update docker CLI configuration: %q has non-string item %v", dirsKey, item)
+					return fmt.Errorf("failed to update docker CLI configuration: %q has non-string item %v", pluginDirsKey, item)
 				}
 			}
 		} else {
-			return fmt.Errorf("failed to update docker CLI configuration: %q is not a string array", dirsKey)
+			return fmt.Errorf("failed to update docker CLI configuration: %q is not a string array", pluginDirsKey)
 		}
 		index := slices.Index(dirs, pluginPath)
 		if enabled {
@@ -72,7 +72,7 @@ func SetupPluginDirConfig(homeDir, pluginPath string, enabled bool) error {
 				// Config file already contains the plugin path; nothing to do.
 				return nil
 			}
-			dirs = append(dirs, pluginPath)
+			dirs = append([]string{pluginPath}, dirs...)
 		} else {
 			if index < 0 {
 				// Config does not contain the plugin path; nothing to do.
@@ -89,9 +89,9 @@ func SetupPluginDirConfig(homeDir, pluginPath string, enabled bool) error {
 		dirs = []string{pluginPath}
 	}
 	if len(dirs) > 0 {
-		config[dirsKey] = dirs
+		config[pluginDirsKey] = dirs
 	} else {
-		delete(config, dirsKey)
+		delete(config, pluginDirsKey)
 	}
 
 	if configBytes, err = json.Marshal(config); err != nil {

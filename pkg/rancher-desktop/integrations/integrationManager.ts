@@ -48,9 +48,6 @@ export function getIntegrationManager(): IntegrationManager {
 
   switch (platform) {
   case 'linux':
-    return new UnixIntegrationManager({
-      binDir, integrationDir: paths.integration, dockerCLIPluginSource, dockerCLIPluginDest,
-    });
   case 'darwin':
     return new UnixIntegrationManager({
       binDir, integrationDir: paths.integration, dockerCLIPluginSource, dockerCLIPluginDest,

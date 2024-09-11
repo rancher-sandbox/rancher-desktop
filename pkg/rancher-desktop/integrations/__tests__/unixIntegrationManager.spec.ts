@@ -15,9 +15,9 @@ let testDir: string;
 // Creates integration directory and docker CLI plugin directory with
 // relevant symlinks in them. Useful for testing removal parts
 // of UnixIntegrationManager.
-async function createTestSymlinks(integrationDirectory: string, dockerCliPluginDirectory: string): Promise<void> {
+async function createTestSymlinks(integrationDirectory: string, dockerCLIPluginDest: string): Promise<void> {
   await fs.promises.mkdir(integrationDirectory, { recursive: true, mode: 0o755 });
-  await fs.promises.mkdir(dockerCliPluginDirectory, { recursive: true, mode: 0o755 });
+  await fs.promises.mkdir(dockerCLIPluginDest, { recursive: true, mode: 0o755 });
 
   const kubectlSrcPath = path.join(binDir, 'kubectl');
   const kubectlDstPath = path.join(integrationDirectory, 'kubectl');
@@ -25,7 +25,7 @@ async function createTestSymlinks(integrationDirectory: string, dockerCliPluginD
   await fs.promises.symlink(kubectlSrcPath, kubectlDstPath);
 
   const composeSrcPath = path.join(dockerCLIPluginSource, 'docker-compose');
-  const composeDstPath = path.join(dockerCliPluginDirectory, 'docker-compose');
+  const composeDstPath = path.join(dockerCLIPluginDest, 'docker-compose');
 
   await fs.promises.symlink(composeSrcPath, composeDstPath);
 }

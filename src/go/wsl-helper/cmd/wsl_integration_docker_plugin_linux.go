@@ -36,14 +36,14 @@ var wslIntegrationDockerPluginCmd = &cobra.Command{
 		cmd.SilenceUsage = true
 
 		state := wslIntegrationDockerPluginViper.GetBool("state")
-		pluginPath := wslIntegrationDockerPluginViper.GetString("plugin-dir")
+		pluginDir := wslIntegrationDockerPluginViper.GetString("plugin-dir")
 		binDir := wslIntegrationDockerPluginViper.GetString("bin-dir")
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return fmt.Errorf("failed to locate home directory: %w", err)
 		}
 
-		if err := integration.SetupPluginDirConfig(homeDir, pluginPath, state); err != nil {
+		if err := integration.SetupPluginDirConfig(homeDir, pluginDir, state); err != nil {
 			return err
 		}
 
