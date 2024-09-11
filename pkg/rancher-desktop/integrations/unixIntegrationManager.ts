@@ -134,7 +134,9 @@ export default class UnixIntegrationManager implements IntegrationManager {
 
     // create or remove the plugin links
     for (const name of pluginNames) {
-      const sourcePath = path.join(this.dockerCLIPluginSource, name);
+      // We create symlinks to the integration directory instead of the file
+      // directly, to avoid factory reset having to deal with it.
+      const sourcePath = path.join(this.integrationDir, name);
       const destPath = path.join(this.dockerCLIPluginDest, name);
 
       if (!await this.weOwnDockerCliFile(destPath)) {
