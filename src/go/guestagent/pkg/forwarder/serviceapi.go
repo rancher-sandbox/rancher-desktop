@@ -43,14 +43,14 @@ var (
 // or /services/forwarder/unexpose that is host in the host-switch.
 type APIForwarder struct {
 	baseURL    string
-	httpClient http.Client
+	httpClient *http.Client
 }
 
 // NewAPIForwarder returns a new instance of APIForwarder.
 func NewAPIForwarder(baseURL string) *APIForwarder {
 	return &APIForwarder{
 		baseURL:    baseURL,
-		httpClient: *http.DefaultClient,
+		httpClient: http.DefaultClient,
 	}
 }
 

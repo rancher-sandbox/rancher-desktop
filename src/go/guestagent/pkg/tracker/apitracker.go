@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
@@ -47,7 +46,6 @@ type APITracker struct {
 	context           context.Context
 	wslProxyForwarder forwarder.Forwarder
 	isAdmin           bool
-	enableListeners   bool
 	baseURL           string
 	tapInterfaceIP    string
 	portStorage       *portStorage
@@ -55,13 +53,23 @@ type APITracker struct {
 	*ListenerTracker
 }
 
-// NewAPITracker creates a new instance of a API Tracker.
-func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, baseURL, tapIfaceIP string, isAdmin, enableListeners bool) *APITracker {
+// NewAPITracker creates a new instance of APITracker with the specified configuration.
+//   - ctx: The context to manage the lifecycle and cancellation of operations. It allows the APITracker
+//     to be aware of broader request timeouts or cancellation signals.
+//   - wslProxyForwarder: An interface or struct responsible for forwarding API calls to the Rancher Desktop's WSL proxy.
+//     It handles sending port mapping updates and removals from other WSL distros.
+//   - baseURL: The base URL of the API server that the APITracker will communicate with to expose or unexpose
+//     ports. This URL is used by the APIForwarder to construct API requests.
+//   - tapIfaceIP: The IP address of the tap interface that the API calls will use for port forwarding. This address
+//     is used to route traffic from the host to the container.
+//   - isAdmin: Indicates whether the application is running with administrative privileges. This flag determines
+//     whether the APITracker should use the localhost IP address (127.0.0.1) for operations if not running as an
+//     administrator.
+func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, baseURL, tapIfaceIP string, isAdmin bool) *APITracker {
 	return &APITracker{
 		context:           ctx,
 		wslProxyForwarder: wslProxyForwarder,
 		isAdmin:           isAdmin,
-		enableListeners:   enableListeners,
 		baseURL:           baseURL,
 		tapInterfaceIP:    tapIfaceIP,
 		portStorage:       newPortStorage(),
@@ -88,19 +96,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 				continue
 			}
 
-			if a.enableListeners {
-				hostPort, err := strconv.Atoi(portBinding.HostPort)
-				if err != nil {
-					log.Errorf("error converting hostPort: %s", err)
-					continue
-				}
-				if err := a.AddListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil {
-					log.Errorf("creating listener for %s and %s failed: %s", portBinding.HostIP, portBinding.HostPort, err)
-					continue
-				}
-			}
-
-			log.Debugf("calling /services/forwarder/expose API for the following port binding: %+v", portBinding)
+			log.Debugf("exposing the following port binding: %+v", portBinding)
 
 			err = a.apiForwarder.Expose(
 				&types.ExposeRequest{
@@ -160,19 +156,7 @@ func (a *APITracker) Remove(containerID string) error {
 				continue
 			}
 
-			if a.enableListeners {
-				hostPort, err := strconv.Atoi(portBinding.HostPort)
-				if err != nil {
-					log.Errorf("error converting hostPort: %s", err)
-					continue
-				}
-				if err := a.RemoveListener(a.context, net.IP(portBinding.HostIP), hostPort); err != nil {
-					log.Errorf("removing listener for %s and %s failed: %s", portBinding.HostIP, portBinding.HostPort, err)
-					continue
-				}
-			}
-
-			log.Debugf("calling /services/forwarder/expose API for the following port binding: %+v", portBinding)
+			log.Debugf("unexposing the following port binding: %+v", portBinding)
 
 			err = a.apiForwarder.Unexpose(
 				&types.UnexposeRequest{
@@ -218,7 +202,7 @@ func (a *APITracker) RemoveAll() error {
 					continue
 				}
 
-				log.Debugf("calling /services/forwarder/unexpose API for the following port binding: %+v", portBinding)
+				log.Debugf("unexposing the following port binding: %+v", portBinding)
 
 				err = a.apiForwarder.Unexpose(
 					&types.UnexposeRequest{
