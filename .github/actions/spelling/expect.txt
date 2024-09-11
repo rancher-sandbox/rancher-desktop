@@ -717,6 +717,7 @@ serveraddress
 servernum
 serviceaccount
 servicemonitor
+serviceapi
 servicewatcher
 setfattr
 setproxy
