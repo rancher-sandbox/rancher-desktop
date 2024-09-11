@@ -17,7 +17,6 @@ import {
 } from './backend';
 import BackendHelper from './backendHelper';
 import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
-import K3sHelper from './k3sHelper';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
@@ -786,14 +785,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
     const enableKubernetes = !!kubeVersion;
-    const iptables = enableKubernetes && !K3sHelper.requiresPortForwardingFix(kubeVersion);
     const isAdminInstall = await this.getIsAdminInstall();
 
     const guestAgentConfig: Record<string, string> = {
       LOG_DIR:                  await this.wslify(paths.logs),
       GUESTAGENT_ADMIN_INSTALL: isAdminInstall ? 'true' : 'false',
       GUESTAGENT_KUBERNETES:    enableKubernetes ? 'true' : 'false',
-      GUESTAGENT_IPTABLES:      iptables.toString(), // only enable IPTABLES for older K8s
       GUESTAGENT_CONTAINERD:    cfg?.containerEngine.name === ContainerEngine.CONTAINERD ? 'true' : 'false',
       GUESTAGENT_DOCKER:        cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
       GUESTAGENT_DEBUG:         this.debug ? 'true' : 'false',

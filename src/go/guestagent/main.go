@@ -44,7 +44,6 @@ import (
 var (
 	debug            = flag.Bool("debug", false, "display debug output")
 	configPath       = flag.String("kubeconfig", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
-	enableIptables   = flag.Bool("iptables", true, "enable iptables scanning")
 	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
 	enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
 	enableContainerd = flag.Bool("containerd", false, "enable Containerd event monitoring")
