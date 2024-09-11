@@ -67,7 +67,7 @@ describeUnix('UnixIntegrationManager', () => {
         const pluginPath = path.join(dockerCLIPluginDest, name);
         const expectedValue = path.join(dockerCLIPluginSource, name);
 
-        await expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.toEqual(expectedValue);
+        await expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.toEqual(binPath);
         await expect(fs.promises.readlink(binPath, 'utf8')).resolves.toEqual(expectedValue);
       }
     });
@@ -90,7 +90,7 @@ describeUnix('UnixIntegrationManager', () => {
     test('should update an existing docker CLI plugin that is a dangling symlink', async() => {
       const existingPluginPath = path.join(dockerCLIPluginDest, 'docker-compose');
       const nonExistentPath = '/somepaththatshouldnevereverexist';
-      const expectedTarget = path.join(dockerCLIPluginSource, 'docker-compose');
+      const expectedTarget = path.join(integrationDir, 'docker-compose');
 
       await fs.promises.mkdir(dockerCLIPluginDest, { mode: 0o755 });
       await fs.promises.symlink(nonExistentPath, existingPluginPath);
@@ -102,13 +102,13 @@ describeUnix('UnixIntegrationManager', () => {
       expect(newTarget).toEqual(expectedTarget);
     });
 
-    test('should update an existing docker CLI plugin whose target is integrations directory', async() => {
+    test('should update an existing docker CLI plugin whose target is resources directory', async() => {
       const existingPluginPath = path.join(dockerCLIPluginDest, 'docker-compose');
-      const integrationsPath = path.join(integrationDir, 'docker-compose');
-      const expectedTarget = path.join(dockerCLIPluginSource, 'docker-compose');
+      const sourceDir = path.join(dockerCLIPluginSource, 'docker-compose');
+      const expectedTarget = path.join(integrationDir, 'docker-compose');
 
       await fs.promises.mkdir(dockerCLIPluginDest, { mode: 0o755 });
-      await fs.promises.symlink(integrationsPath, existingPluginPath);
+      await fs.promises.symlink(sourceDir, existingPluginPath);
 
       await integrationManager.enforce();
 
