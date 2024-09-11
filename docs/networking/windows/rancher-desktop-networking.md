@@ -20,24 +20,24 @@ end
 subgraph  netNs["Isolated Network Namespace"]
 vsockVM{"VM Switch"}
 tapDevice("eth0")
-veth-rd1("veth-rd1")
+veth-rd-ns("veth-rd-ns")
 containers["containers"]
 services["services"]
 end
 subgraph  WSL["WSL"]
 netNs
 other-distro(("Other Distros"))
-veth-rd0("veth-rd0")
+veth-rd-wsl("veth-rd-wsl")
 wsl-proxy{"wsl-proxy"}
 end
 vsockHost  <---->  eth  &  dns
 eth  <---->  syscall
 vsockHost  ---->  portForwarding
 tapDevice  -- ethernet frames -->  vsockVM
-veth-rd1  -- ethernet frames -->  vsockVM
-veth-rd0  <---->  veth-rd1
+veth-rd-ns  -- ethernet frames -->  vsockVM
+veth-rd-wsl  <---->  veth-rd-ns
 other-distro  <---->  wsl-proxy
-wsl-proxy  <---->  veth-rd0
+wsl-proxy  <---->  veth-rd-wsl
 containers  <---->  tapDevice
 services  <---->  tapDevice
 vsockVM <-- AF_VSOCK ---> vsockHost
@@ -61,7 +61,7 @@ The host-switch runs on the Windows host and acts as a receiver for all traffic 
 
 The reason for its creation was that the `AF_VSOCK` connection could not be established between the host and a process residing inside the network namespace within the VM, as such capability is not currently supported by `AF_VSOCK`. As a result, the network setup was created. Its main responsibility is to respond to the handshake request from the `host-switch.exe`. Once the handshake process is successful with the `host-switch`, the `network-setup` process creates a new network namespace and attempts to start its subprocess, `vm-switch`, in the newly created network namespace. It also hands over the `AF_VSOCK` connection to the `vm-switch` as a file descriptor in the new namespace.
 
-Additionally, it calls unshare with provided arguments through [---unshare-args](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/network/setup_linux.go#L272). The process also establishes a Virtual Ethernet pair consisting of two endpoints: `veth-rd0` and `veth-rd1`. `veth-rd0` resides within the default namespace and is configured to listen on the IP address `192.168.1.1`. Conversely, `veth-rd1` is located within a network namespace and is assigned the IP address `192.168.1.2`. The virtual Ethernet pair allows accessibility from the default network into the network namespace, which is particularly useful when WSL integration is enabled.
+Additionally, it calls unshare with provided arguments through [---unshare-args](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/network/setup_linux.go#L272). The process also establishes a Virtual Ethernet pair consisting of two endpoints: `veth-rd-ns` and `veth-rd-wsl`. `veth-rd-wsl` resides within the default namespace and is configured to listen on the IP address `192.168.143.2`. Conversely, `veth-rd-ns` is located within a network namespace and is assigned the IP address `192.168.143.1`. The virtual Ethernet pair allows accessibility from the default network into the network namespace, which is particularly useful when WSL integration is enabled.
 
 ## Supported Flags:
 
@@ -83,7 +83,7 @@ Additionally, it calls unshare with provided arguments through [---unshare-args]
 
 ## vm-switch:
 
-Once the network-setup starts the `vm-switch` process in the new namespace, the `vm-switch` creates a tap device (`eth0`) and a loopback device (`lo`). When the `eth0` tap device is successfully created, it uses the `DHCP` client to acquire an IP address within the defined range from the `DHCP` server. Once the `eth0` tap device is up and running, the kernel forwards all raw Ethernet frames originating from the network namespace to the tap device. In addition to the traffic from the network namespace, the kernel also forwards all the traffic that arrives at `veth-rd1` from its pair, `veth-rd0`, in the default namespace.
+Once the network-setup starts the `vm-switch` process in the new namespace, the `vm-switch` creates a tap device (`eth0`) and a loopback device (`lo`). When the `eth0` tap device is successfully created, it uses the `DHCP` client to acquire an IP address within the defined range from the `DHCP` server. Once the `eth0` tap device is up and running, the kernel forwards all raw Ethernet frames originating from the network namespace to the tap device. In addition to the traffic from the network namespace, the kernel also forwards all the traffic that arrives at `veth-rd-ns` from its pair, `veth-rd-wsl`, in the default namespace.
 
 The tap device forwards the Ethernet frames over [vsock](https://wiki.qemu.org/Features/VirtioVsock) to the host. The process on the host (`host-switch.exe`) decapsulates the frames. Since host-switch maintains both internal (`vm-switch` to `host-switch.exe`) and external (`host-switch.exe` to the internet) connections, it connects to the external endpoints via syscalls.
 
@@ -111,7 +111,7 @@ Its primary function comes into play when WSL integration is activated alongside
 
 - **socketFile**: This is the path to the `.sock` file for the UNIX socket connection established between the Rancher Desktop guest agent and the `wsl-proxy`. If not provided, the default value of `/run/wsl-proxy.sock` is used.
 
-- **upstreamAddress**: This is the IP address associated with the upstream server to use. It corresponds to the address of the veth pair connecting the default namespace to the network namespace, specifically `veth-rd1`. The default value is `192.168.1.2`.
+- **upstreamAddress**: This is the IP address associated with the upstream server to use. It corresponds to the address of the veth pair connecting the default namespace to the network namespace, specifically `veth-rd-ns`. The default value is `192.168.143.1`.
 
 
 ## Process Timelines:
