@@ -40,6 +40,8 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize().catch((err) => {
       console.log('k3sHelper.initialize failed: ', err);
+      // If we fail to initialize, we still need to continue (with no versions).
+      this.emit('versions-updated');
     });
     mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
   }
@@ -71,6 +73,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     try {
       const persistedVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
       const desiredVersion = await this.desiredVersion;
+
+      if (desiredVersion === undefined) {
+        // If we could not determine the desired version (e.g. we have no cached
+        // versions and the machine is offline), bail out.
+        return [undefined, false];
+      }
+
       const isDowngrade = (version: semver.SemVer | string) => {
         return !!persistedVersion && semver.gt(persistedVersion, version);
       };
@@ -312,9 +321,17 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     return this.cfg?.kubernetes?.port ?? 6443;
   }
 
-  protected get desiredVersion(): Promise<semver.SemVer> {
+  protected get desiredVersion(): Promise<semver.SemVer | undefined> {
     return (async() => {
-      const availableVersions = await this.k3sHelper.availableVersions;
+      let availableVersions: SemanticVersionEntry[];
+
+      try {
+        availableVersions = await this.k3sHelper.availableVersions;
+      } catch (ex) {
+        console.error(`Could not get desired version: ${ ex }`);
+
+        return undefined;
+      }
 
       return await BackendHelper.getDesiredVersion(
         this.cfg as BackendSettings,

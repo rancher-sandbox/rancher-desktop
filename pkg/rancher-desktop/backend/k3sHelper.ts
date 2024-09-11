@@ -41,8 +41,8 @@ import type Electron from 'electron';
 const console = Logging.k8s;
 
 /**
- * ShortVersion is the version string without any k3s suffixes; this is the
- * version we present to the user.
+ * ShortVersion is the version string without any k3s suffixes, nor a "v"
+ * prefix; this is the version we present to the user.
  */
 export type ShortVersion = string;
 
@@ -65,7 +65,7 @@ type cacheData = {
   /** List of available versions; includes build information. */
   versions: string[];
   /** Mapping of channel labels to current version (excluding build information). */
-  channels: Record<string, string>;
+  channels: Record<string, ShortVersion>;
 };
 
 /**
@@ -132,7 +132,11 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   protected readonly minimumVersion = new semver.SemVer('1.21.0');
-  protected versionFromChannel: Record<string, string> = {};
+  /**
+   * versionFromChannel is a mapping from the channel name to the latest (short)
+   * version in that channel.
+   */
+  protected versionFromChannel: Record<string, ShortVersion> = {};
 
   constructor(arch: Architecture) {
     super();
@@ -348,6 +352,10 @@ export default class K3sHelper extends events.EventEmitter {
     return a.localeCompare(b);
   }
 
+  /**
+   * Fetch the list of available Kubernetes versions.
+   * @throws If there were issues fetching the list of versions.
+   */
   protected async updateCache(): Promise<void> {
     try {
       let wantMoreVersions = true;
@@ -373,10 +381,12 @@ export default class K3sHelper extends events.EventEmitter {
 
       if (channelResponse.ok) {
         const ResourceTypeChannels = 'channels';
+        const DataTypeChannel = 'channel';
 
         type ChannelResponse = {
-          resourceType?: string;
+          resourceType: typeof ResourceTypeChannels;
           data?: {
+            type: typeof DataTypeChannel;
             name: string;
             latest: string;
           }[];
@@ -389,6 +399,11 @@ export default class K3sHelper extends events.EventEmitter {
         }
 
         for (const channel of channels.data ?? []) {
+          if (channel.type !== DataTypeChannel) {
+            // The channel entry is invalid; ignore it.
+            continue;
+          }
+
           const version = semver.parse(channel.latest);
 
           if (version) {

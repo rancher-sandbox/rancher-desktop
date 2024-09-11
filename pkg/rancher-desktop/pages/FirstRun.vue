@@ -5,8 +5,9 @@
     </h2>
     <rd-checkbox
       label="Enable Kubernetes"
-      :value="settings.kubernetes.enabled"
+      :value="hasVersions && settings.kubernetes.enabled"
       :is-locked="kubernetesLocked"
+      :disabled="!hasVersions"
       @input="handleDisableKubernetesCheckbox"
     />
     <rd-fieldset
@@ -98,10 +99,11 @@ import RdSelect from '@pkg/components/RdSelect.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { defaultSettings } from '@pkg/config/settings';
-import type { ContainerEngine } from '@pkg/config/settings';
+import type { ContainerEngine, Settings } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { highestStableVersion, VersionEntry } from '@pkg/utils/kubeVersions';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 export default Vue.extend({
   components: {
@@ -138,6 +140,9 @@ export default Vue.extend({
 
       return wrappedSemver ? wrappedSemver.version : '';
     },
+    hasVersions(): boolean {
+      return this.versions.length > 0;
+    },
     /** Versions that are the tip of a channel */
     recommendedVersions(): VersionEntry[] {
       return this.versions.filter(v => !!v.channels);
@@ -163,6 +168,9 @@ export default Vue.extend({
       this.versions = versions;
       this.cachedVersionsOnly = cachedVersionsOnly;
       this.settings.kubernetes.version = this.unwrappedDefaultVersion;
+      if (!this.hasVersions) {
+        ipcRenderer.invoke('settings-write', { kubernetes: { enabled: false } });
+      }
       // Manually send the ready event here, as we do not use the normal
       // "dialog/populate" event.
       ipcRenderer.send('dialog/ready');
@@ -186,37 +194,31 @@ export default Vue.extend({
     window.removeEventListener('beforeunload', this.close);
   },
   methods: {
+    async commitChanges(settings: RecursivePartial<Settings>) {
+      try {
+        return await ipcRenderer.invoke('settings-write', settings);
+      } catch (ex) {
+        console.log(`invoke settings-write failed: `, ex);
+      }
+    },
     onChange() {
-      ipcRenderer.invoke(
-        'settings-write',
-        {
-          kubernetes:  { version: this.settings.kubernetes.version },
-          application: { pathManagementStrategy: this.pathManagementStrategy },
-        });
+      return this.commitChanges({
+        application: { pathManagementStrategy: this.pathManagementStrategy },
+        kubernetes:  {
+          version: this.settings.kubernetes.version,
+          enabled: this.settings.kubernetes.enabled && this.hasVersions,
+        },
+      });
     },
     close() {
       this.onChange();
       window.close();
     },
     onChangeEngine(desiredEngine: ContainerEngine) {
-      try {
-        ipcRenderer.invoke(
-          'settings-write',
-          { containerEngine: { name: desiredEngine } },
-        );
-      } catch (err) {
-        console.log('invoke settings-write failed: ', err);
-      }
+      return this.commitChanges({ containerEngine: { name: desiredEngine } });
     },
     handleDisableKubernetesCheckbox(value: boolean) {
-      try {
-        ipcRenderer.invoke(
-          'settings-write',
-          { kubernetes: { enabled: value } },
-        );
-      } catch (err) {
-        console.log('invoke settings-write failed: ', err);
-      }
+      return this.commitChanges({ kubernetes: { enabled: value } });
     },
     /**
      * Get the display name of a given version.

@@ -827,10 +827,15 @@ ipcMainProxy.on('k8s-restart', async() => {
 });
 
 ipcMainProxy.on('k8s-versions', async() => {
-  const versions = await k8smanager.kubeBackend.availableVersions;
-  const cachedOnly = await k8smanager.kubeBackend.cachedVersionsOnly();
+  try {
+    const versions = await k8smanager.kubeBackend.availableVersions;
+    const cachedOnly = await k8smanager.kubeBackend.cachedVersionsOnly();
 
-  window.send('k8s-versions', versions.map(v => v.versionEntry), cachedOnly);
+    window.send('k8s-versions', versions.map(v => v.versionEntry), cachedOnly);
+  } catch (ex) {
+    console.error(`Error handling k8s-versions: ${ ex }`);
+    window.send('k8s-versions', [], true);
+  }
 });
 
 ipcMainProxy.on('k8s-progress', () => {
