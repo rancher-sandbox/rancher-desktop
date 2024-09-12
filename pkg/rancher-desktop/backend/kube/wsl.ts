@@ -32,6 +32,8 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize().catch((err) => {
       console.log('k3sHelper.initialize failed: ', err);
+      // If we fail to initialize, we still need to continue (with no versions).
+      this.emit('versions-updated');
     });
     mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
   }
@@ -72,9 +74,17 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     return await K3sHelper.cachedVersionsOnly();
   }
 
-  protected get desiredVersion(): Promise<semver.SemVer> {
+  protected get desiredVersion(): Promise<semver.SemVer | undefined> {
     return (async() => {
-      const availableVersions = await this.k3sHelper.availableVersions;
+      let availableVersions: SemanticVersionEntry[];
+
+      try {
+        availableVersions = await this.k3sHelper.availableVersions;
+      } catch (ex) {
+        console.error(`Could not get desired version: ${ ex }`);
+
+        return undefined;
+      }
 
       return await BackendHelper.getDesiredVersion(
         this.cfg as BackendSettings,
@@ -105,8 +115,8 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
 
   /**
    * Download K3s images.  This will also calculate the version to download.
-   * @returns The version of K3s images downloaded.  If startup should not
-   * continue, INVALID_VERSION is returned instead.
+   * @returns The version of K3s images downloaded, and whether this is a
+   * downgrade.
    */
   async download(cfg: BackendSettings): Promise<[semver.SemVer | undefined, boolean]> {
     this.cfg = cfg;
@@ -128,6 +138,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
 
     try {
       const desiredVersion = await this.desiredVersion;
+
+      if (desiredVersion === undefined) {
+        return [undefined, false];
+      }
 
       try {
         await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
