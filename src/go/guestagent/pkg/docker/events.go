@@ -22,6 +22,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
@@ -139,7 +140,7 @@ func (e *EventMonitor) Info(ctx context.Context) error {
 }
 
 func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
-	containers, err := e.dockerClient.ContainerList(ctx, types.ContainerListOptions{
+	containers, err := e.dockerClient.ContainerList(ctx, container.ListOptions{
 		Filters: filters.NewArgs(filters.Arg("status", "running")),
 	})
 	if err != nil {
