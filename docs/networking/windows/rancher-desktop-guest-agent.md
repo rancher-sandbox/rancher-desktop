@@ -53,7 +53,7 @@ end
 
 ## PortMapping
 
-Is a struct object that represents an exposed container or a service. [Portmapping](https://github.com/rancher-sandbox/rancher-desktop-agent/blob/8348a5e10578f8662532eddfac73b243cfd419f4/pkg/types/portmapping.go#L22) objects consist of the following fields:
+Is a struct object that represents an exposed container or a service. [Portmapping](../../../src/go/guestagent/pkg/types/portmapping.go#L23) objects consist of the following fields:
 
 ```
 type PortMapping struct {
