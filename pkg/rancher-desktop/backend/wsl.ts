@@ -1360,8 +1360,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 k3sConf.ADDITIONAL_ARGS += ' --tls-san host.rancher-desktop.internal';
                 k3sConf.ADDITIONAL_ARGS += ' --tls-san host.docker.internal';
 
-                // Add the `veth-rd1` IP address from inside the namespace
-                k3sConf.ADDITIONAL_ARGS += ' --tls-san 192.168.1.2';
+                // Add the `veth-rd-ns` IP address from inside the namespace
+                k3sConf.ADDITIONAL_ARGS += ' --tls-san 192.168.143.1';
 
                 if (!config.kubernetes.options.flannel) {
                   console.log(`Disabling flannel and network policy`);

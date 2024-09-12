@@ -48,16 +48,18 @@ var (
 )
 
 const (
-	nsenter              = "/usr/bin/nsenter"
-	unshare              = "/usr/bin/unshare"
-	vsockHandshakePort   = 6669
-	vsockDialPort        = 6656
-	defaultTapDevice     = "eth0"
-	defaultNSVeth        = "veth-rd0"
-	rancherDesktopNSVeth = "veth-rd1"
-	defaultNamespacePID  = 1
-	cidrOnes             = 24
-	cidrBits             = 32
+	nsenter             = "/usr/bin/nsenter"
+	unshare             = "/usr/bin/unshare"
+	vsockHandshakePort  = 6669
+	vsockDialPort       = 6656
+	defaultTapDevice    = "eth0"
+	WSLVeth             = "veth-rd-wsl"
+	WSLVethIP           = "192.168.143.2"
+	namespaceVeth       = "veth-rd-ns"
+	namespaceVethIP     = "192.168.143.1"
+	defaultNamespacePID = 1
+	cidrOnes            = 24
+	cidrBits            = 32
 )
 
 func main() {
@@ -126,23 +128,23 @@ func main() {
 
 	err = createVethPair(defaultNamespacePID,
 		vmSwitchCmd.Process.Pid,
-		defaultNSVeth,
-		rancherDesktopNSVeth)
+		WSLVeth,
+		namespaceVeth)
 	if err != nil {
 		logrus.Fatalf("failed to create veth pair: %v", err)
 	}
 	defer cleanupVethLink(originNS)
 
-	if err := configureVethPair(rancherDesktopNSVeth, "192.168.1.2"); err != nil {
-		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", rancherDesktopNSVeth, err)
+	if err := configureVethPair(namespaceVeth, namespaceVethIP); err != nil {
+		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", namespaceVeth, err)
 	}
 
 	// switch back to the original namespace to configure veth0
 	if err := netns.Set(originNS); err != nil {
 		logrus.Fatalf("failed to switch back to original namespace: %v", err)
 	}
-	if err := configureVethPair(defaultNSVeth, "192.168.1.1"); err != nil {
-		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", rancherDesktopNSVeth, err)
+	if err := configureVethPair(WSLVeth, WSLVethIP); err != nil {
+		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", WSLVeth, err)
 	}
 
 	if err := originNS.Close(); err != nil {
@@ -237,9 +239,9 @@ func cleanupVethLink(originNS netns.NsHandle) {
 	// First, though, switch back to the default namespace if available.
 	// This would fail if we already switched to it (and closed the handle).
 	_ = netns.Set(originNS)
-	if link, err := netlink.LinkByName(defaultNSVeth); err == nil {
+	if link, err := netlink.LinkByName(WSLVeth); err == nil {
 		err = netlink.LinkDel(link)
-		logrus.Infof("tearing down link %s: %v", defaultNSVeth, err)
+		logrus.Infof("tearing down link %s: %v", WSLVeth, err)
 	}
 }
 
