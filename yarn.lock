@@ -2872,7 +2872,7 @@
   dependencies:
     undici-types "~5.26.4"
 
-"@types/node@18.19.50":
+"@types/node@18.19.50", "@types/node@^18.11.17":
   version "18.19.50"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.19.50.tgz#8652b34ee7c0e7e2004b3f08192281808d41bf5a"
   integrity sha512-xonK+NRrMBRtkL1hVCc3G+uXtjh1Al4opBLjqVmipe5ZAaBYWW6cNAiBVZ1BvmkBhep698rP3UM3aRAdSALuhg==
@@ -2883,13 +2883,6 @@
   version "16.18.65"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.18.65.tgz#b07eb49a14a808777b82879288a7e6f5a296ccfa"
   integrity sha512-5E9WgTy95B7i90oISjui9U5Zu7iExUPfU4ygtv4yXEy6zJFE3oQYHCnh5H1jZRPkjphJt2Ml3oQW6M0qtK534A==
-
-"@types/node@^18.11.17":
-  version "18.18.9"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.18.9.tgz#5527ea1832db3bba8eb8023ce8497b7d3f299592"
-  integrity sha512-0f5klcuImLnG4Qreu9hPj/rEfFq6YRc5n2mAjSsH+ec/mJL+3voBH0+8T7o8RpFjH7ovc+TRsL/c7OYIQsPTfQ==
-  dependencies:
-    undici-types "~5.26.4"
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -6072,10 +6065,10 @@ electron-updater@6.3.4:
     semver "^7.6.3"
     tiny-typed-emitter "^2.1.0"
 
-electron@30.5.0:
-  version "30.5.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-30.5.0.tgz#917a5dd1adbd6983ff8a96609035c3bff9821841"
-  integrity sha512-20c774PEsCFRzIgpZIaY6t/wTYxam0MfxQt5t+wG8aStHsl81FchUyLbDo4a59goqE7mHjLOdBDlxmZk88IgRw==
+electron@30.5.1:
+  version "30.5.1"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-30.5.1.tgz#9f6060ce5b869c3803cbf8064305e9c3056c0744"
+  integrity sha512-AhL7+mZ8Lg14iaNfoYTkXQ2qee8mmsQyllKdqxlpv/zrKgfxz6jNVtcRRbQtLxtF8yzcImWdfTQROpYiPumdbw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^20.9.0"
