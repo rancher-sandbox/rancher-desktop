@@ -10,7 +10,7 @@ require (
 	github.com/containerd/containerd/api v1.7.19
 	github.com/containers/gvisor-tap-vsock v0.7.5
 	github.com/docker/docker v27.2.1+incompatible
-	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-connections v0.5.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.8.0
