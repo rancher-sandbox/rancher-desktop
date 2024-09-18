@@ -63,7 +63,7 @@ describe('manageLinesInFile', () => {
   });
 
   describe('Target exists as a plain file', () => {
-    testUnix('Fails if file has extended attributes', async() => {
+    testUnix('Preserves extended attributes', async() => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
       // @ts-ignore // fs-xattr is not available on Windows.
       const { get, list, set } = await import('fs-xattr');
@@ -74,7 +74,7 @@ describe('manageLinesInFile', () => {
 
       await fs.promises.writeFile(rcFilePath, unmanagedContents);
       await set(rcFilePath, attributeKey, attributeValue);
-      expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).rejects.toThrow();
+      await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).resolves.not.toThrow();
       await expect(list(rcFilePath)).resolves.toEqual([attributeKey]);
       await expect(get(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
     });
