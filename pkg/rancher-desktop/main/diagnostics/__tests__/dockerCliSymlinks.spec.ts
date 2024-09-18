@@ -26,7 +26,7 @@ import paths from '@pkg/utils/paths';
 
 // Mock fs.promises.readdir() for the default export.
 jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
-  expect(dir).toEqual(path.join(appDir, 'resources', os.platform(), 'bin'));
+  expect(dir).toEqual(path.join(appDir, 'resources', os.platform(), 'docker-cli-plugins'));
   expect(encoding).toEqual('utf-8');
 
   return Promise.resolve([]);
@@ -49,7 +49,7 @@ describeUnix(CheckerDockerCLISymlink, () => {
     const resourcesDir = path.join(appDir, 'resources');
 
     await fs.promises.mkdir(resourcesDir);
-    appDirExecutable = path.join(resourcesDir, os.platform(), 'bin', executable);
+    appDirExecutable = path.join(resourcesDir, os.platform(), 'docker-cli-plugins', executable);
     replacedPathsResources = jest.replaceProperty(paths, 'resources', resourcesDir);
   });
   afterAll(async() => {
