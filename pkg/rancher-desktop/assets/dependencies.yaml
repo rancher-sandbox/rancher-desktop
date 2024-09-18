@@ -14,7 +14,7 @@ trivy: 0.55.2
 steve: 0.1.0-beta9
 rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.8.2
-ECRCredentialHelper: 0.8.0
+ECRCredentialHelper: 0.9.0
 mobyOpenAPISpec: "1.47"
 wix: v3.14.1
 hostSwitch: 1.2.7
