@@ -284,6 +284,7 @@ export class Tray {
     } else {
       this.currentNetworkStatus = await checkConnectivity('k3s.io') ? networkStatus.CONNECTED : networkStatus.OFFLINE;
     }
+    mainEvents.emit('update-network-status', this.currentNetworkStatus === networkStatus.CONNECTED);
     send('update-network-status', this.currentNetworkStatus === networkStatus.CONNECTED);
     this.updateMenu();
   }

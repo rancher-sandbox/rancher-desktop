@@ -75,6 +75,12 @@ interface MainEventNames {
   'network-ready'(): void;
 
   /**
+   * Emitted when the network comes online or goes offline.
+   * @param connected The new network state.
+   */
+  'update-network-status'(connected: boolean): void;
+
+  /**
    * Emitted when the integration state has changed.
    *
    * @param state A mapping of WSL distributions to the current state, or a
