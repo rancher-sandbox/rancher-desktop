@@ -45,7 +45,7 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
     const displayableStartingPath = replaceHome(startingPath);
     const rdBinPath = path.join(paths.integration, this.name);
     const displayableRDBinPath = replaceHome(rdBinPath);
-    const finalTarget = path.join(paths.resources, os.platform(), 'bin', this.name);
+    const finalTarget = path.join(paths.resources, os.platform(), 'docker-cli-plugins', this.name);
     const displayableFinalTarget = replaceHome(finalTarget);
     let state;
     let description = `The file \`${ displayableStartingPath }\``;
@@ -124,9 +124,8 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
 }
 
 const dockerCliSymlinkCheckers: Promise<DiagnosticsChecker[]> = (async() => {
-  const resourcesDir = path.join(paths.resources, os.platform(), 'bin');
-  const allNames = await fs.promises.readdir(resourcesDir, 'utf-8');
-  const names = allNames.filter(name => name.startsWith('docker-') && !name.startsWith('docker-credential-'));
+  const resourcesDir = path.join(paths.resources, os.platform(), 'docker-cli-plugins');
+  const names = await fs.promises.readdir(resourcesDir, 'utf-8');
 
   return names.map((name) => {
     return new CheckerDockerCLISymlink(name);
