@@ -25,12 +25,11 @@ const CheckPathManagement: DiagnosticsChecker = {
   },
 };
 
-mainEvents.on('diagnostics-event', (id, state) => {
-  if (id !== 'path-management') {
+mainEvents.on('diagnostics-event', (payload) => {
+  if (payload.id !== 'path-management') {
     return;
   }
-  const typedState: { fileName: string, error: Error | undefined } = state;
-  const { fileName, error } = typedState;
+  const { fileName, error } = payload;
 
   cachedResults[fileName] = {
     description: error?.message ?? error?.toString() ?? `Unknown error managing ${ fileName }`,
