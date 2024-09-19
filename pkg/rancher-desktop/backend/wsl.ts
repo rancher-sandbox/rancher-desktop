@@ -1189,6 +1189,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const config = this.cfg = _.defaultsDeep(clone(config_),
       { containerEngine: { name: ContainerEngine.NONE } });
     let kubernetesVersion: semver.SemVer | undefined;
+    let isDowngrade = false;
 
     await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
@@ -1203,16 +1204,25 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         if (config.kubernetes.enabled) {
           prepActions.push((async() => {
-            [kubernetesVersion] = await this.kubeBackend.download(config);
+            [kubernetesVersion, isDowngrade] = await this.kubeBackend.download(config);
           })());
         }
 
-        await this.progressTracker.action('Preparing to start', 0, Promise.all(prepActions));
-        if (config.kubernetes.enabled && typeof (kubernetesVersion) === 'undefined') {
-          // The desired version was unavailable, and the user declined a downgrade.
-          this.setState(State.ERROR);
+        // Clear the diagnostic about not having Kubernetes versions
+        mainEvents.emit('diagnostics-event', { id: 'kube-versions-available', available: true });
 
-          return;
+        await this.progressTracker.action('Preparing to start', 0, Promise.all(prepActions));
+        if (config.kubernetes.enabled && kubernetesVersion === undefined) {
+          if (isDowngrade) {
+            // The desired version was unavailable, and the user declined a downgrade.
+            this.setState(State.ERROR);
+
+            return;
+          }
+          // The desired version was unavailable, and we couldn't find a fallback.
+          // Notify the user, and turn off Kubernetes.
+          mainEvents.emit('diagnostics-event', { id: 'kube-versions-available', available: false });
+          this.writeSetting({ kubernetes: { enabled: false } });
         }
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished

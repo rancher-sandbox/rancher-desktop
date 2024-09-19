@@ -516,7 +516,12 @@ export default class K3sHelper extends events.EventEmitter {
 
           return;
         }
-        await this.updateCache();
+        try {
+          await this.updateCache();
+        } catch (ex) {
+          console.log(`Ignoring failure to get initial versions list: ${ ex }`);
+          // At this point this.versions is still empty.
+        }
       })();
     }
     this.versionFromChannel = {};
@@ -561,6 +566,8 @@ export default class K3sHelper extends events.EventEmitter {
 
   /**
    * The versions that are available to install.
+   * @note The list will be empty if the machine is offline and we have no
+   * cached versions.
    */
   get availableVersions(): Promise<SemanticVersionEntry[]> {
     return (async() => {

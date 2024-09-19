@@ -112,7 +112,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
             const result = await showMessageBox(options, true);
 
             if (result.response !== 0) {
-              return [undefined, false];
+              return [undefined, true];
             }
           }
           console.log(`Going with alternative version ${ newVersion.raw }`);
@@ -324,20 +324,24 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   protected get desiredVersion(): Promise<semver.SemVer | undefined> {
     return (async() => {
       let availableVersions: SemanticVersionEntry[];
+      let available = true;
 
       try {
         availableVersions = await this.k3sHelper.availableVersions;
+
+        return await BackendHelper.getDesiredVersion(
+          this.cfg as BackendSettings,
+          availableVersions,
+          this.vm.noModalDialogs,
+          this.vm.writeSetting.bind(this.vm));
       } catch (ex) {
         console.error(`Could not get desired version: ${ ex }`);
+        available = false;
 
         return undefined;
+      } finally {
+        mainEvents.emit('diagnostics-event', { id: 'kube-versions-available', available });
       }
-
-      return await BackendHelper.getDesiredVersion(
-        this.cfg as BackendSettings,
-        availableVersions,
-        this.vm.noModalDialogs,
-        this.vm.writeSetting.bind(this.vm));
     })();
   }
 

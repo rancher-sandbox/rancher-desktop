@@ -1813,14 +1813,23 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         // Start the VM; if it's already running, this does nothing.
         await this.startVM();
 
+        // Clear the diagnostic about not having Kubernetes versions
+        mainEvents.emit('diagnostics-event', { id: 'kube-versions-available', available: true });
+
         if (config.kubernetes.enabled) {
           [kubernetesVersion, isDowngrade] = await this.kubeBackend.download(config);
 
-          if (typeof (kubernetesVersion) === 'undefined') {
-            // The desired version was unavailable, and the user declined a downgrade.
-            await this.setState(State.ERROR);
+          if (kubernetesVersion === undefined) {
+            if (isDowngrade) {
+              // The desired version was unavailable, and the user declined a downgrade.
+              await this.setState(State.ERROR);
 
-            return;
+              return;
+            }
+            // The desired version was unavailable, and we couldn't find a fallback.
+            // Notify the user, and turn off Kubernetes.
+            mainEvents.emit('diagnostics-event', { id: 'kube-versions-available', available: false });
+            this.writeSetting({ kubernetes: { enabled: false } });
           }
         }
 

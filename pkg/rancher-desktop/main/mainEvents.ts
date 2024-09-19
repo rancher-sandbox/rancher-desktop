@@ -149,6 +149,7 @@ interface MainEventNames {
  * 'diagnostics-event' event.
  */
 type DiagnosticsEventPayload =
+  { id: 'kube-versions-available', available: boolean } |
   { id: 'path-management', fileName: string; error: Error | undefined };
 
 /**
