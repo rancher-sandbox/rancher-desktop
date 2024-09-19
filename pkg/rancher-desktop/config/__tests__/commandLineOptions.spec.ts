@@ -311,7 +311,7 @@ describe('commandLineOptions', () => {
 
       expect(() => {
         updateFromCommandLine(prefs, lockedSettings, [`${ arg }=${ value }`]);
-      }).toThrow(`Can't evaluate ${ arg }=${ value } as number: SyntaxError: Unexpected token a in JSON at position 0`);
+      }).toThrow(`Can't evaluate ${ arg }=${ value } as number: SyntaxError: Unexpected token 'a', \"angeles\" is not valid JSON`);
     });
 
     test('should complain about type mismatches', () => {

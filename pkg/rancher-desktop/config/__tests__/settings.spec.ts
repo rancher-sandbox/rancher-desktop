@@ -267,7 +267,7 @@ describe('settings', () => {
           return new RegExp(`Error loading plist file .*/io.rancherdesktop.profile.${ basename }.plist`);
         }
 
-        return new RegExp(`Error parsing deployment profile from .*/\\.config/rancher-desktop.${ basename }.json: SyntaxError: Unexpected end of JSON input`);
+        return new RegExp(`Error parsing deployment profile from .*/\\.config/rancher-desktop.${ basename }.json: SyntaxError: Unterminated string in JSON at position`);
       }
       test('complains about invalid default values', async() => {
         mock = jest.spyOn(fs, 'readFileSync')
