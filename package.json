@@ -155,6 +155,7 @@
     "js-yaml-loader": "1.2.2",
     "mustache": "4.2.0",
     "nan": "2.20.0",
+    "node-addon-api": "4",
     "node-gyp": "10.2.0",
     "node-gyp-build": "4.8.2",
     "node-loader": "^2.0.0",
