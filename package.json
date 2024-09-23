@@ -136,7 +136,7 @@
     "@vue/vue2-jest": "29.2.6",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "10.1.0",
-    "babel-jest": "27.5.1",
+    "babel-jest": "29.7.0",
     "cross-env": "7.0.3",
     "css-loader": "7.1.2",
     "ejs": "3.1.10",
