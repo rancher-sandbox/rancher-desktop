@@ -111,7 +111,7 @@ interface MainEventNames {
    * @param id The diagnostic identifier.
    * @param state The new state for the diagnostic.
    */
-  'diagnostics-event'<K extends keyof DiagnosticsEventPayload>(id: K, state: DiagnosticsEventPayload[K]): void;
+  'diagnostics-event'(payload: DiagnosticsEventPayload): void;
 
   /**
    * Emitted when an extension is uninstalled via the extension manager.
@@ -154,9 +154,9 @@ interface MainEventNames {
  * DiagnosticsEventPayload defines the data that will be passed on a
  * 'diagnostics-event' event.
  */
-type DiagnosticsEventPayload = {
-  'path-management': { fileName: string; error: Error | undefined };
-};
+type DiagnosticsEventPayload =
+  { id: 'kube-versions-available', available: boolean } |
+  { id: 'path-management', fileName: string; error: Error | undefined };
 
 /**
  * Helper type definition to check if the given event name is a handler (i.e.

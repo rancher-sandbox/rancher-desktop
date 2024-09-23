@@ -50,6 +50,7 @@ export class DiagnosticsManager {
         import('./dockerCliSymlinks'),
         import('./kubeConfigSymlink'),
         import('./kubeContext'),
+        import('./kubeVersionsAvailable'),
         import('./limaDarwin'),
         import('./mockForScreenshots'),
         import('./pathManagement'),

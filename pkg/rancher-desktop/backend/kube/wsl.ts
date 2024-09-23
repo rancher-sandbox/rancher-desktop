@@ -77,20 +77,24 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   protected get desiredVersion(): Promise<semver.SemVer | undefined> {
     return (async() => {
       let availableVersions: SemanticVersionEntry[];
+      let available = true;
 
       try {
         availableVersions = await this.k3sHelper.availableVersions;
+
+        return await BackendHelper.getDesiredVersion(
+          this.cfg as BackendSettings,
+          availableVersions,
+          this.vm.noModalDialogs,
+          this.vm.writeSetting.bind(this.vm));
       } catch (ex) {
         console.error(`Could not get desired version: ${ ex }`);
+        available = false;
 
         return undefined;
+      } finally {
+        mainEvents.emit('diagnostics-event', { id: 'kube-versions-available', available });
       }
-
-      return await BackendHelper.getDesiredVersion(
-        this.cfg as BackendSettings,
-        availableVersions,
-        this.vm.noModalDialogs,
-        this.vm.writeSetting.bind(this.vm));
     })();
   }
 
