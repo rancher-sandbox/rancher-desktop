@@ -21,7 +21,7 @@ import { Architecture, VMExecutor } from './backend';
 import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
-import { checkConnectivity } from '@pkg/main/networking';
+import mainEvents from '@pkg/main/mainEvents';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
 import * as childProcess from '@pkg/utils/childProcess';
@@ -45,6 +45,12 @@ const console = Logging.k8s;
  * prefix; this is the version we present to the user.
  */
 export type ShortVersion = string;
+
+let isOnline = true;
+
+mainEvents.on('update-network-status', (connected) => {
+  isOnline = connected;
+});
 
 export interface ReleaseAPIEntry {
   tag_name: string;
@@ -372,7 +378,7 @@ export default class K3sHelper extends events.EventEmitter {
           { headers: { Accept: this.channelApiAccept } });
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
-        if (!(await checkConnectivity('k3s.io'))) {
+        if (!isOnline) {
           return;
         }
 
@@ -565,16 +571,15 @@ export default class K3sHelper extends events.EventEmitter {
   get availableVersions(): Promise<SemanticVersionEntry[]> {
     return (async() => {
       await this.initialize();
-      const upstreamSeemsReachable = await checkConnectivity('k3s.io');
       const wrappedVersions = Object.values(this.versions);
-      const finalOptions = upstreamSeemsReachable ? wrappedVersions : await K3sHelper.filterVersionsAgainstCache(wrappedVersions);
+      const finalOptions = isOnline ? wrappedVersions : await K3sHelper.filterVersionsAgainstCache(wrappedVersions);
 
       return finalOptions.sort((a, b) => b.version.compare(a.version));
     })();
   }
 
-  static async cachedVersionsOnly(): Promise<boolean> {
-    return !(await checkConnectivity('k3s.io'));
+  static cachedVersionsOnly(): Promise<boolean> {
+    return Promise.resolve(!isOnline);
   }
 
   static async filterVersionsAgainstCache(fullVersionList: SemanticVersionEntry[]): Promise<SemanticVersionEntry[]> {
