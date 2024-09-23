@@ -2,7 +2,7 @@ module.exports = {
   transform: {
     '^.+\\.js$':  'babel-jest',
     '^.+\\.ts$':  'ts-jest',
-    '^.+\\.vue$': 'vue-jest',
+    '^.+\\.vue$': '@vue/vue2-jest',
   },
   transformIgnorePatterns: [
     '/node_modules/(?!(yaml|jsonpath-plus|@kubernetes/client-node)/)',
