@@ -162,7 +162,7 @@
     "ps-tree": "1.2.0",
     "raw-loader": "4.0.2",
     "sass": "1.79.2",
-    "sass-loader": "16.0.1",
+    "sass-loader": "16.0.2",
     "ts-jest": "29.2.5",
     "ts-loader": "^9.5.1",
     "ts-node": "10.9.2",
