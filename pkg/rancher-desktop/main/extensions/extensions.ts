@@ -12,6 +12,7 @@ import {
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import mainEvents from '@pkg/main/mainEvents';
+import { spawnFile } from '@pkg/utils/childProcess';
 import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -218,6 +219,33 @@ export class ExtensionImpl implements Extension {
     throw new ExtensionErrorImpl(code, `${ prefix } Image is not allowed`);
   }
 
+  /**
+   * Determine the post-install or pre-uninstall script to run, if any.
+   * Returns the script executable plus arguments; the executable path is always
+   * absolute.
+   */
+  protected getScriptArgs(metadata: ExtensionMetadata, key: 'x-rd-install' | 'x-rd-uninstall'): string[] | undefined {
+    const scriptData = metadata.host?.[key]?.[this.platform];
+
+    if (!scriptData) {
+      return;
+    }
+
+    const [scriptName, ...scriptArgs] = Array.isArray(scriptData) ? scriptData : [scriptData];
+    const description = {
+      'x-rd-install':   'Post-install',
+      'x-rd-uninstall': 'Pre-uninstall',
+    }[key];
+    const binDir = path.join(this.dir, 'bin');
+    const scriptPath = path.normalize(path.resolve(binDir, scriptName));
+
+    if (/^\.+[/\\]/.test(path.relative(binDir, scriptPath))) {
+      throw new Error(`${ description } script for ${ this.id } (${ scriptName }) not inside binaries directory`);
+    }
+
+    return [scriptPath, ...scriptArgs];
+  }
+
   async install(allowedImages: readonly string[] | undefined): Promise<boolean> {
     const metadata = await this.metadata;
 
@@ -241,6 +269,17 @@ export class ExtensionImpl implements Extension {
     }
 
     mainEvents.emit('settings-write', { application: { extensions: { installed: { [this.id]: this.version } } } });
+
+    try {
+      const [scriptPath, ...scriptArgs] = this.getScriptArgs(metadata, 'x-rd-install') ?? [];
+
+      if (scriptPath) {
+        console.log(`Running ${ this.id } post-install script: ${ scriptPath } ${ scriptArgs.join(' ') }...`);
+        await spawnFile(scriptPath, scriptArgs, { stdio: console, cwd: path.dirname(scriptPath) });
+      }
+    } catch (ex) {
+      console.error(`Ignoring error running ${ this.id } post-install script: ${ ex }`);
+    }
 
     console.debug(`Install ${ this.id }: install complete.`);
 
@@ -303,23 +342,24 @@ export class ExtensionImpl implements Extension {
     }));
   }
 
+  protected get platform() {
+    switch (process.platform) {
+    case 'win32':
+      return 'windows';
+    case 'linux':
+    case 'darwin':
+      return process.platform;
+    default:
+      throw new Error(`Platform ${ process.platform } is not supported`);
+    }
+  }
+
   protected async installHostExecutables(workDir: string, metadata: ExtensionMetadata): Promise<void> {
-    const plat = (() => {
-      switch (process.platform) {
-      case 'win32':
-        return 'windows';
-      case 'linux':
-      case 'darwin':
-        return process.platform;
-      default:
-        throw new Error(`Platform ${ process.platform } is not supported`);
-      }
-    })();
     const binDir = path.join(workDir, 'bin');
 
     await fs.promises.mkdir(binDir, { recursive: true });
     const binaries = metadata.host?.binaries ?? [];
-    const paths = binaries.flatMap(p => p[plat]).map(b => b?.path).filter(defined);
+    const paths = binaries.flatMap(p => p[this.platform]).map(b => b?.path).filter(defined);
 
     await Promise.all(paths.map(async(p) => {
       try {
@@ -470,6 +510,17 @@ export class ExtensionImpl implements Extension {
       console.debug(`Extension ${ this.id }:${ installedVersion } is installed, skipping uninstall of ${ this.image }.`);
 
       return false;
+    }
+
+    try {
+      const [scriptPath, ...scriptArgs] = this.getScriptArgs(await this.metadata, 'x-rd-uninstall') ?? [];
+
+      if (scriptPath) {
+        console.log(`Running ${ this.id } pre-uninstall script: ${ scriptPath } ${ scriptArgs.join(' ') }...`);
+        await spawnFile(scriptPath, scriptArgs, { stdio: console, cwd: path.dirname(scriptPath) });
+      }
+    } catch (ex) {
+      console.error(`Ignoring error running ${ this.id } pre-uninstall script: ${ ex }`);
     }
 
     try {
