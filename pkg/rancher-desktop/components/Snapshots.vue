@@ -9,6 +9,7 @@ import EmptyState from '@pkg/components/EmptyState.vue';
 import SnapshotCard from '@pkg/components/SnapshotCard.vue';
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { escapeHtml } from '@pkg/utils/string';
 
 interface Data {
   snapshotEvent: SnapshotEvent | null;
@@ -19,6 +20,7 @@ interface Data {
 interface Methods {
   pollingStart: () => void,
   currentTime: () => string,
+  escapeHtml: (name: string|undefined) => string,
 }
 
 interface Computed {
@@ -85,6 +87,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
       return date.format('YYYY-MM-DD HH:mm');
     },
+    escapeHtml,
   },
 });
 </script>
@@ -102,7 +105,8 @@ export default Vue.extend<Data, Methods, Computed, never>({
         @close="snapshotEvent=null"
       >
         <span
-          v-clean-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`, { snapshot: snapshotEvent.snapshotName, error: snapshotEvent.error }, true)"
+          v-clean-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`,
+                          { snapshot: escapeHtml(snapshotEvent.snapshotName), error: snapshotEvent.error }, true)"
           class="event-message"
         />
         <span
