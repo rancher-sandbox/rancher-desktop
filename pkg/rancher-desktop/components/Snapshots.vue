@@ -5,12 +5,11 @@ import isEmpty from 'lodash/isEmpty';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { escapeHtml } from '../utils/string';
-
 import EmptyState from '@pkg/components/EmptyState.vue';
 import SnapshotCard from '@pkg/components/SnapshotCard.vue';
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { escapeHtml } from '@pkg/utils/string';
 
 interface Data {
   snapshotEvent: SnapshotEvent | null;
@@ -21,7 +20,7 @@ interface Data {
 interface Methods {
   pollingStart: () => void,
   currentTime: () => string,
-  escapeSnapshotName: (name: string|undefined) => string,
+  escapeHtml: (name: string|undefined) => string,
 }
 
 interface Computed {
@@ -88,9 +87,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
       return date.format('YYYY-MM-DD HH:mm');
     },
-    escapeSnapshotName(value: string|undefined) {
-      return escapeHtml(value);
-    },
+    escapeHtml,
   },
 });
 </script>
@@ -109,7 +106,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
       >
         <span
           v-clean-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`,
-                          { snapshot: escapeSnapshotName(snapshotEvent.snapshotName), error: snapshotEvent.error }, true)"
+                          { snapshot: escapeHtml(snapshotEvent.snapshotName), error: snapshotEvent.error }, true)"
           class="event-message"
         />
         <span
