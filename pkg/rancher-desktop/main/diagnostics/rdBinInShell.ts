@@ -1,4 +1,3 @@
-import os from 'os';
 import path from 'path';
 
 import which from 'which';
@@ -22,18 +21,16 @@ mainEvents.on('settings-update', (cfg) => {
 export class RDBinInShellPath implements DiagnosticsChecker {
   constructor(id: string, executable: string, ...args: string[]) {
     this.id = id;
-    if (['darwin', 'linux'].includes(os.platform())) {
-      this.executable = which.sync(executable, { nothrow: true }) ?? '';
-    }
+    this.executable = executable;
     this.args = args.concat(`printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
   }
 
   id: string;
-  executable = '';
+  executable: string;
   args: string[];
   category = DiagnosticsCategory.Utilities;
   applicable(): Promise<boolean> {
-    return Promise.resolve(!!this.executable);
+    return Promise.resolve(['darwin', 'linux'].includes(process.platform));
   }
 
   async check(): Promise<DiagnosticsCheckerResult> {
@@ -42,19 +39,33 @@ export class RDBinInShellPath implements DiagnosticsChecker {
     let description: string;
 
     try {
-      const { stdout } = await spawnFile(this.executable, this.args, { stdio: ['ignore', 'pipe', 'pipe'] });
+      const executable = await which(this.executable, { nothrow: true });
+
+      if (!executable) {
+        return {
+          passed:      true, // No need to throw a diagnostic in this case.
+          description: `Failed to find ${ this.executable } executable`,
+          fixes:       [{ description: `Install ${ this.executable }` }],
+        };
+      }
+
+      const integrationPath = RDBinInShellPath.removeTrailingSlash(paths.integration);
+      const currentPaths = process.env.PATH?.split(path.delimiter) ?? ['/usr/local/bin', '/usr/bin', '/bin'];
+      const fixedPath = currentPaths.map(RDBinInShellPath.removeTrailingSlash).filter(p => p !== integrationPath).join(path.delimiter);
+      const { stdout } = await spawnFile(
+        this.executable,
+        this.args,
+        { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PATH: fixedPath } });
       const dirs = stdout.split('\n')
         .filter(line => line.startsWith(pathOutputDelimiter))
-        .pop()?.split(':')
+        .pop()?.split(path.delimiter)
         .map(RDBinInShellPath.removeTrailingSlash) ?? [];
-      const integrationPath = RDBinInShellPath.removeTrailingSlash(paths.integration);
       const desiredDirs = dirs.filter(p => p === integrationPath);
-      const exe = path.basename(this.executable);
 
       passed = desiredDirs.length > 0;
-      description = `The \`~/.rd/bin\` directory has not been added to the \`PATH\`, so command-line utilities are not configured in your **${ exe }** shell.`;
+      description = `The \`~/.rd/bin\` directory has not been added to the \`PATH\`, so command-line utilities are not configured in your **${ this.executable }** shell.`;
       if (passed) {
-        description = `The \`~/.rd/bin\` directory is found in your \`PATH\` as seen from **${ exe }**.`;
+        description = `The \`~/.rd/bin\` directory is found in your \`PATH\` as seen from **${ this.executable }**.`;
       } else if (pathStrategy !== PathManagementStrategy.RcFiles) {
         const description = `You have selected manual \`PATH\` configuration;
             consider letting Rancher Desktop automatically configure it.`;
