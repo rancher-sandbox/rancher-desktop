@@ -5,10 +5,9 @@ import dayjs from 'dayjs';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import { escapeHtml } from '../../utils/string';
-
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { escapeHtml } from '@pkg/utils/string';
 
 const defaultName = () => {
   const dateString = dayjs().format('YYYY-MM-DD_HH_mm_ss');
