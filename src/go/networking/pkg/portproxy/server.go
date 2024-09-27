@@ -97,7 +97,7 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 				p.mutex.Unlock()
 				continue
 			}
-			addr := net.JoinHostPort("localhost", portBinding.HostPort)
+			addr := net.JoinHostPort(portBinding.HostIP, portBinding.HostPort)
 			l, err := net.Listen("tcp", addr)
 			if err != nil {
 				logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
@@ -106,6 +106,7 @@ func (p *PortProxy) execListener(pm types.PortMapping) {
 			p.mutex.Lock()
 			p.activeListeners[port] = l
 			p.mutex.Unlock()
+			logrus.Debugf("created listener for: %s", addr)
 			go p.acceptTraffic(l, portBinding.HostPort)
 		}
 	}
