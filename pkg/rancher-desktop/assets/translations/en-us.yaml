@@ -4772,12 +4772,12 @@ snapshots:
         cancel: 'Cancel'
     restoring:
       header: 'Restoring {snapshot}'
-      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active."
+      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active."
       actions:
         cancel: 'Cancel'
     creating:
       header: 'Creating {snapshot}'
-      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart."
+      message: "Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart."
       actions:
         cancel: 'Cancel'
     buttons:

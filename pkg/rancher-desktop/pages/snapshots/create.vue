@@ -6,6 +6,7 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
+import { currentTime } from '@pkg/utils/dateUtils';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { escapeHtml } from '@pkg/utils/string';
 
@@ -70,6 +71,7 @@ export default Vue.extend({
           type:         'create',
           result:       'cancel',
           snapshotName: name,
+          creationTime: currentTime(),
         });
       });
 
@@ -85,6 +87,7 @@ export default Vue.extend({
             type:         'create',
             result:       snapshotCancelled ? 'cancel' : 'success',
             snapshotName: name,
+            creationTime: currentTime(),
           });
         }
       });

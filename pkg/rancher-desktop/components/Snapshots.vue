@@ -1,6 +1,5 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
-import dayjs from 'dayjs';
 import isEmpty from 'lodash/isEmpty';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
@@ -19,7 +18,6 @@ interface Data {
 
 interface Methods {
   pollingStart: () => void,
-  currentTime: () => string,
   escapeHtml: (name: string|undefined) => string,
 }
 
@@ -62,10 +60,12 @@ export default Vue.extend<Data, Methods, Computed, never>({
       return;
     }
 
-    const { type, result, snapshotName } = this.$route.params as SnapshotEvent;
+    const {
+      type, result, snapshotName, creationTime,
+    } = this.$route.params as SnapshotEvent;
 
     this.snapshotEvent = {
-      type, result, snapshotName,
+      type, result, snapshotName, creationTime,
     };
   },
 
@@ -81,11 +81,6 @@ export default Vue.extend<Data, Methods, Computed, never>({
       this.snapshotsPollingInterval = setInterval(() => {
         this.$store.dispatch('snapshots/fetch');
       }, 1500);
-    },
-    currentTime() {
-      const date = dayjs(Date.now());
-
-      return date.format('YYYY-MM-DD HH:mm');
     },
     escapeHtml,
   },
@@ -110,7 +105,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
           class="event-message"
         />
         <span
-          v-clean-html="t('snapshots.info.when', { time: currentTime() })"
+          v-clean-html="t('snapshots.info.when', { time: snapshotEvent.creationTime })"
           class="event-message"
         />
       </Banner>

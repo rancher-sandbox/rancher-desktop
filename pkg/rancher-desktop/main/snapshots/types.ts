@@ -3,6 +3,7 @@ export type SnapshotEvent = {
   result?: 'success' | 'cancel' | 'error',
   error?: string,
   snapshotName?: string,
+  creationTime?: string,
 };
 
 export type SpawnResult = {
