@@ -23,9 +23,12 @@ import "github.com/docker/go-connections/nat"
 type PortMapping struct {
 	// Remove indicates whether the port mappings should be removed (true) or added (false)
 	Remove bool `json:"remove"`
-	// Ports contains the port mappings for both IPv4 and IPv6 addresses
+	// Ports contains the port mappings for both IPv4 and IPv6 addresses.  The host address
+	// listed refers to the machine running the VM, i.e. the Windows machine.
 	Ports nat.PortMap `json:"ports"`
-	// ConnectAddrs lists the backend addresses for connections
+	// ConnectAddrs lists the backend addresses for connections; the addresses are recorded
+	// in terms of the network namespace the container engine is running in (i.e. the
+	// "Rancher Desktop" network namespace).
 	ConnectAddrs []ConnectAddrs `json:"connectAddrs"`
 }
 
