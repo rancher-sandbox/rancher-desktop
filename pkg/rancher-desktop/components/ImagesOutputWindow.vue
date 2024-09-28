@@ -30,6 +30,10 @@ export default {
       type:    Boolean,
       default: true,
     },
+    imageToPull: {
+      type:    String,
+      default: '',
+    }
   },
 
   data() {
