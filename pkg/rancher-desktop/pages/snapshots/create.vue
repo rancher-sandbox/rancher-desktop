@@ -71,7 +71,7 @@ export default Vue.extend({
           type:         'create',
           result:       'cancel',
           snapshotName: name,
-          creationTime: currentTime(),
+          eventTime:    currentTime(),
         });
       });
 
@@ -87,7 +87,7 @@ export default Vue.extend({
             type:         'create',
             result:       snapshotCancelled ? 'cancel' : 'success',
             snapshotName: name,
-            creationTime: currentTime(),
+            eventTime:    currentTime(),
           });
         }
       });

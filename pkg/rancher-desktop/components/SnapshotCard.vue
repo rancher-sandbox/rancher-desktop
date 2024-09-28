@@ -64,7 +64,7 @@ export default Vue.extend({
             type:         'restore',
             result:       'cancel',
             snapshotName: this.snapshot?.name,
-            creationTime: currentTime(),
+            eventTime:    currentTime(),
           },
         );
       });
@@ -92,7 +92,7 @@ export default Vue.extend({
                 type:         'restore',
                 result:       snapshotCancelled ? 'cancel' : 'success',
                 snapshotName: this.snapshot?.name,
-                creationTime: currentTime(),
+                eventTime:    currentTime(),
               },
             );
           }
@@ -117,7 +117,7 @@ export default Vue.extend({
           result:       error ? 'error' : 'success',
           error,
           snapshotName: this.snapshot.name,
-          creationTime: currentTime(),
+          eventTime:    currentTime(),
         });
       }
     },

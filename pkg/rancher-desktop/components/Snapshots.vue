@@ -61,11 +61,11 @@ export default Vue.extend<Data, Methods, Computed, never>({
     }
 
     const {
-      type, result, snapshotName, creationTime,
+      type, result, snapshotName, eventTime,
     } = this.$route.params as SnapshotEvent;
 
     this.snapshotEvent = {
-      type, result, snapshotName, creationTime,
+      type, result, snapshotName, eventTime,
     };
   },
 
@@ -105,7 +105,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
           class="event-message"
         />
         <span
-          v-clean-html="t('snapshots.info.when', { time: snapshotEvent.creationTime })"
+          v-clean-html="t('snapshots.info.when', { time: snapshotEvent.eventTime })"
           class="event-message"
         />
       </Banner>
