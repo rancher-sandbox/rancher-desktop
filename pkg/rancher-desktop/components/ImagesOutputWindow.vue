@@ -32,7 +32,7 @@ export default {
     },
     imageToPull: {
       type:    String,
-      default: '',
+      default: null,
     }
   },
 
