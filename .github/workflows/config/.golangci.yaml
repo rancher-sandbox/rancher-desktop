@@ -51,9 +51,9 @@ linters:
   disable-all: true
   enable:
     - bodyclose
+    - copyloopvar
     - dogsled
     - errcheck
-    - exportloopref
     - goconst
     - gofmt
     - goimports
