@@ -5,6 +5,7 @@ import { mapGetters } from 'vuex';
 
 import { State as EngineStates } from '@pkg/backend/k8s';
 import { Snapshot } from '@pkg/main/snapshots/types';
+import { currentTime } from '@pkg/utils/dateUtils';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 import type { PropType } from 'vue';
@@ -63,6 +64,7 @@ export default Vue.extend({
             type:         'restore',
             result:       'cancel',
             snapshotName: this.snapshot?.name,
+            eventTime:    currentTime(),
           },
         );
       });
@@ -90,6 +92,7 @@ export default Vue.extend({
                 type:         'restore',
                 result:       snapshotCancelled ? 'cancel' : 'success',
                 snapshotName: this.snapshot?.name,
+                eventTime:    currentTime(),
               },
             );
           }
@@ -114,6 +117,7 @@ export default Vue.extend({
           result:       error ? 'error' : 'success',
           error,
           snapshotName: this.snapshot.name,
+          eventTime:    currentTime(),
         });
       }
     },
