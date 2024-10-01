@@ -71,6 +71,7 @@
             :current-command="currentCommand"
             :image-output-culler="imageOutputCuller"
             :show-status="false"
+            :image-to-pull="imageToPull"
             @ok:process-end="resetCurrentCommand"
             @ok:show="toggleOutput"
           />
@@ -168,6 +169,7 @@ export default {
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
       selected:                         [],
+      imageToPull:                      null,
     };
   },
   computed: {

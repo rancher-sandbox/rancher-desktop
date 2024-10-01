@@ -23,6 +23,7 @@
         :current-command="currentCommand"
         :action="activeTab"
         :image-output-culler="imageOutputCuller"
+        :image-to-pull="imageToPull"
         @ok:process-end="resetCurrentCommand"
         @ok:show="toggleOutput"
       />
@@ -89,7 +90,7 @@ export default {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
     doImageAction({ action, image }) {
-      this.imageToPull = image;
+      this.imageToPull = image.trim();
       if (action === 'pull') {
         this.doPullAnImage();
       }
@@ -99,7 +100,7 @@ export default {
       }
     },
     doPullAnImage() {
-      const imageName = this.imageToPull.trim();
+      const imageName = this.imageToPull;
 
       this.currentCommand = `pull ${ imageName }`;
       this.startRunningCommand('pull');
@@ -107,7 +108,7 @@ export default {
       this.showOutput = true;
     },
     doBuildAnImage() {
-      const imageName = this.imageToPull.trim();
+      const imageName = this.imageToPull;
 
       this.currentCommand = `build ${ imageName }`;
       this.startRunningCommand('build');

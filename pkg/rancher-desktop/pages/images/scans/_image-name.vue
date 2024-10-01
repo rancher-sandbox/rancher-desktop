@@ -4,6 +4,7 @@
       v-if="showOutput"
       :current-command="currentCommand"
       :image-output-culler="imageOutputCuller"
+      :image-to-pull="image"
       @ok:process-end="onProcessEnd"
     >
       <template #loading="{ isLoading }">
