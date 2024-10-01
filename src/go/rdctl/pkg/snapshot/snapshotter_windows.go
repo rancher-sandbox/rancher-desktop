@@ -73,7 +73,6 @@ func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths pat
 
 	// export WSL distros to snapshot directory
 	for _, distro := range snapshotter.WSLDistros(appPaths) {
-		distro := distro
 		taskRunner.Add(func() error {
 			snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
 			if err := snapshotter.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
@@ -119,7 +118,6 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths pa
 
 	// restore WSL distros
 	for _, distro := range snapshotter.WSLDistros(appPaths) {
-		distro := distro
 		tr.Add(func() error {
 			snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
 			if err := os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {

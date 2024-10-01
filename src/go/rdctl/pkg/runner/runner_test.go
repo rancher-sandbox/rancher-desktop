@@ -14,7 +14,6 @@ func TestTaskRunner(t *testing.T) {
 		taskRunner := NewTaskRunner(ctx)
 		runOrder := make([]int, 0, 3)
 		for i := 1; i < 4; i++ {
-			i := i
 			taskRunner.Add(func() error {
 				runOrder = append(runOrder, i)
 				return nil
@@ -66,7 +65,6 @@ func TestTaskRunner(t *testing.T) {
 		expectedError := "func1 error"
 		ranSlice := make([]bool, 2)
 		for i := range ranSlice {
-			i := i
 			taskRunner.Add(func() error {
 				ranSlice[i] = true
 				t.Logf("func%d ran", i+1)
