@@ -40,11 +40,14 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
+// requestContextKeyType is a type defined for the context key to be unique.
+type requestContextKeyType struct{}
+
 // RequestContextValue contains things we attach to incoming requests
 type RequestContextValue map[interface{}]interface{}
 
 // requestContext is the context key for requestContextValue
-var requestContext = struct{}{}
+var requestContext = requestContextKeyType{}
 
 type containerInspectResponseBody struct {
 	ID string `json:"Id"`

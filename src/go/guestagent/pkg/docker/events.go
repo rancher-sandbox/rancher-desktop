@@ -175,7 +175,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 	return nil
 }
 
-func createPortMapping(ports []types.Port) (nat.PortMap, error) {
+func createPortMapping(ports []container.Port) (nat.PortMap, error) {
 	portMap := make(nat.PortMap)
 
 	for _, port := range ports {
@@ -268,7 +268,7 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 	return nil
 }
 
-func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container types.ContainerJSON) {
+func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container container.InspectResponse) {
 	// If the container's NetworkSettings.Networks map is not empty, it indicates that the container
 	// is connected to a Docker Compose network. In this case, we should inspect the map and
 	// configure the loopback address for each container's assigned IP address.

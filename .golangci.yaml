@@ -61,6 +61,7 @@ linters:
     - govet
     - ineffassign
     - misspell
+    - staticcheck
     - typecheck
     - unconvert
     - unused
