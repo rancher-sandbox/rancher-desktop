@@ -52,6 +52,7 @@ linters:
     - bodyclose
     - copyloopvar
     - dogsled
+    - dupl
     - errcheck
     - goconst
     - gofmt
@@ -116,3 +117,6 @@ issues:
       linters: [ stylecheck ]
       text: "ST1003:"
       source: ^\s*[A-Z0-9_]+\s+=
+    - # Don't de-duplicate different commands.
+      path: src/go/rdctl/cmd/extension(Install|Uninstall)\.go$
+      linters: [ dupl ]
