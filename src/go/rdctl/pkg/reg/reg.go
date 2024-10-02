@@ -64,7 +64,8 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		sortedStructFields := utils.SortStructFields(structType)
 		scalarReturnedLines := make([]string, 0, numTypedFields)
 		nestedReturnedLines := make([]string, 0)
-		for _, compoundStructField := range sortedStructFields {
+		for i := range sortedStructFields {
+			compoundStructField := &sortedStructFields[i]
 			fieldName := compoundStructField.FieldName
 			valueElement := value.MapIndex(reflect.ValueOf(fieldName))
 			if valueElement.IsValid() {
@@ -180,7 +181,7 @@ func stringToMultiStringHexBytes(values []string) string {
 // @param profileType: "defaults" or "locked"
 // @param settingsBodyAsJSON - options marshaled as JSON
 // @returns: array of strings, intended for writing to a reg file
-func JSONToReg(hiveType string, profileType string, settingsBodyAsJSON string) ([]string, error) {
+func JSONToReg(hiveType, profileType, settingsBodyAsJSON string) ([]string, error) {
 	var actualSettingsJSON map[string]interface{}
 
 	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]
@@ -204,8 +205,10 @@ func JSONToReg(hiveType string, profileType string, settingsBodyAsJSON string) (
 		return nil, err
 	}
 	if len(bodyLines) > 0 {
-		headerLines = append(headerLines, fmt.Sprintf("[%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies"))
-		headerLines = append(headerLines, fmt.Sprintf("[%s\\%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop"))
+		headerLines = append(
+			headerLines,
+			fmt.Sprintf("[%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies"),
+			fmt.Sprintf("[%s\\%s\\%s\\%s]", fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop"))
 	}
 	return append(headerLines, bodyLines...), nil
 }

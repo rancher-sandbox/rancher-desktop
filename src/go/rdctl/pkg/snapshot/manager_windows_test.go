@@ -12,7 +12,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 )
 
-func populateFiles(t *testing.T, _ bool) (paths.Paths, map[string]TestFile) {
+func populateFiles(t *testing.T, _ bool) (*paths.Paths, map[string]TestFile) {
 	baseDir := t.TempDir()
 	appPaths := paths.Paths{
 		Config:        filepath.Join(baseDir, "config"),
@@ -35,10 +35,10 @@ func populateFiles(t *testing.T, _ bool) (paths.Paths, map[string]TestFile) {
 			t.Fatalf("failed to create test file %q: %s", file.Path, err)
 		}
 	}
-	return appPaths, testFiles
+	return &appPaths, testFiles
 }
 
-func newTestManager(appPaths paths.Paths) *Manager {
+func newTestManager(appPaths *paths.Paths) *Manager {
 	snapshotter := NewSnapshotterImpl()
 	snapshotter.WSL = wsl.MockWSL{}
 	manager := &Manager{

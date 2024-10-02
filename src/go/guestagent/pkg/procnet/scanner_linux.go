@@ -23,7 +23,6 @@ package procnet
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -221,13 +220,13 @@ func enableLocalnetRouting() error {
 	return writeSysctl(routeLocalnet, enable)
 }
 
-func writeSysctl(path string, value string) error {
+func writeSysctl(path, value string) error {
 	f, err := os.OpenFile(path, os.O_WRONLY, 0)
 	if err != nil {
 		return fmt.Errorf("could not open the sysctl file %s: %w", path, err)
 	}
 	defer f.Close()
-	if _, err := io.WriteString(f, value); err != nil {
+	if _, err := f.WriteString(value); err != nil {
 		return fmt.Errorf("could not write to the sysctl file %s: %w", path, err)
 	}
 	log.Infof("/proc/net scanner enabled %s", routeLocalnet)

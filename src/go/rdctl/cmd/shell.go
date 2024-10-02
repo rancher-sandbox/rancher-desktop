@@ -78,7 +78,7 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		if err = directories.SetupLimaHome(paths.AppHome); err != nil {
+		if err := directories.SetupLimaHome(paths.AppHome); err != nil {
 			return err
 		}
 		commandName, err = directories.GetLimactlPath()
@@ -124,7 +124,7 @@ func checkLimaIsRunning(commandName string) bool {
 	errorMsg := stderr.String()
 	if strings.Contains(errorMsg, "No instance matching 0 found.") {
 		logrus.Errorf("The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
-	} else if len(errorMsg) > 0 {
+	} else if errorMsg != "" {
 		fmt.Fprintln(os.Stderr, errorMsg)
 	} else {
 		fmt.Fprintln(os.Stderr, "Underlying limactl check failed with no output.")

@@ -24,7 +24,7 @@ const nameDisplayCutoffSize = 30
 // Manager handles all snapshot-related functionality.
 type Manager struct {
 	Snapshotter
-	paths.Paths
+	*paths.Paths
 	lock.BackendLocker
 }
 
@@ -63,7 +63,7 @@ func (manager *Manager) SnapshotDirectory(snapshot Snapshot) string {
 // ValidateName checks that name is a valid snapshot name and that
 // it is not used by an existing snapshot.
 func (manager *Manager) ValidateName(name string) error {
-	if len(name) == 0 {
+	if name == "" {
 		return fmt.Errorf("snapshot name must not be the empty string")
 	}
 	runeName := []rune(name)

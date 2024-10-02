@@ -25,9 +25,7 @@ func (snapshots SortableSnapshots) Less(i, j int) bool {
 }
 
 func (snapshots SortableSnapshots) Swap(i, j int) {
-	temp := snapshots[i]
-	snapshots[i] = snapshots[j]
-	snapshots[j] = temp
+	snapshots[i], snapshots[j] = snapshots[j], snapshots[i]
 }
 
 var snapshotListCmd = &cobra.Command{

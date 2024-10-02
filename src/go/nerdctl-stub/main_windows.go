@@ -159,7 +159,7 @@ func buildContextArgHandler(arg string) (string, []cleanupFunc, error) {
 	}
 	var result bytes.Buffer
 	writer := csv.NewWriter(&result)
-	if err = writer.Write(resultParts); err != nil {
+	if err := writer.Write(resultParts); err != nil {
 		return "", nil, err
 	}
 	writer.Flush()

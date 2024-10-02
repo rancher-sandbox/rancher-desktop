@@ -151,7 +151,8 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 		return err
 	}
 
-	for _, container := range containers {
+	for i := range containers {
+		container := &containers[i]
 		if len(container.Ports) != 0 {
 			portMap, err := createPortMapping(container.Ports)
 			if err != nil {
@@ -235,29 +236,30 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 
 	for portProto, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
-			if portBinding.HostIP == "127.0.0.1" {
-				//nolint:gosec // no security concern with the potentially tainted command arguments
-				iptableCmd := exec.CommandContext(ctx,
-					"iptables",
-					"--table", "nat",
-					"--append", "DOCKER",
-					"--protocol", portProto.Proto(),
-					"--destination", "0.0.0.0/0",
-					"--jump", "DNAT",
-					"--dport", portBinding.HostPort,
-					"--to-destination", fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
-				var stderr bytes.Buffer
-				iptableCmd.Stderr = &stderr
-				if err := iptableCmd.Run(); err != nil {
-					errs = append(errs, fmt.Errorf("creating loopback rule in DOCKER chain failed: %w [%s]", err, stderr.String()))
-					log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableCmd.String(), errs)
-				}
-				e.iptablesRulesToDelete[containerID] = iptablesDeleteLoopbackRuleCmd(
-					ctx,
-					portProto.Proto(),
-					portBinding.HostPort,
-					fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
+			if portBinding.HostIP != "127.0.0.1" {
+				continue
 			}
+			//nolint:gosec // no security concern with the potentially tainted command arguments
+			iptableCmd := exec.CommandContext(ctx,
+				"iptables",
+				"--table", "nat",
+				"--append", "DOCKER",
+				"--protocol", portProto.Proto(),
+				"--destination", "0.0.0.0/0",
+				"--jump", "DNAT",
+				"--dport", portBinding.HostPort,
+				"--to-destination", fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
+			var stderr bytes.Buffer
+			iptableCmd.Stderr = &stderr
+			if err := iptableCmd.Run(); err != nil {
+				errs = append(errs, fmt.Errorf("creating loopback rule in DOCKER chain failed: %w [%s]", err, stderr.String()))
+				log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableCmd.String(), errs)
+			}
+			e.iptablesRulesToDelete[containerID] = iptablesDeleteLoopbackRuleCmd(
+				ctx,
+				portProto.Proto(),
+				portBinding.HostPort,
+				fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
 		}
 	}
 

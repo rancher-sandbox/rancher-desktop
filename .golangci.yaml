@@ -17,6 +17,7 @@ linters-settings:
     disabled-checks:
       - dupImport # https://github.com/go-critic/go-critic/issues/845
       - ifElseChain
+      - importShadow # "forwarder", "tracker", etc. -- to be resolved later.
       - octalLiteral
       - unnamedResult
       - whyNoLint
@@ -55,6 +56,7 @@ linters:
     - dupl
     - errcheck
     - goconst
+    - gocritic
     - gofmt
     - goimports
     - goprintffuncname
@@ -120,3 +122,7 @@ issues:
     - # Don't de-duplicate different commands.
       path: src/go/rdctl/cmd/extension(Install|Uninstall)\.go$
       linters: [ dupl ]
+    - # Don't use %q for registry files to avoid escaping backslashes
+      path: src/go/rdctl/pkg/reg/reg.go
+      linters: [ gocritic ]
+      text: "sprintfQuotedString:"

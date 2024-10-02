@@ -50,9 +50,7 @@ Two ways of specifying a body:
 The API is currently at version 1, but is still considered internal and experimental, and
 is subject to change without any advance notice.
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return doAPICommand(cmd, args)
-	},
+	RunE: doAPICommand,
 }
 
 func init() {
@@ -74,7 +72,7 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 
-	if len(args) == 0 || len(args[0]) == 0 {
+	if len(args) == 0 || args[0] == "" {
 		return fmt.Errorf("api command: no endpoint specified")
 	}
 	if len(args) > 1 {

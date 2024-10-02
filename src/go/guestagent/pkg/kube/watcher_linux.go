@@ -72,11 +72,8 @@ func WatchForServices(
 
 	watchContext, watchCancel := context.WithCancel(ctx)
 
-	// Always cancel if we failed; however, we may clobber watchCancel, so we
-	// need a wrapper function to capture the variable reference.
-	defer func() {
-		watchCancel()
-	}()
+	// Always cancel if we failed.
+	defer watchCancel()
 
 	for {
 		switch state {

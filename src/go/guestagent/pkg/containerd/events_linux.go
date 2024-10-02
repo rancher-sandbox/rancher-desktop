@@ -386,7 +386,7 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 
 	portMap := make(nat.PortMap)
 
-	if len(portMapping) == 0 {
+	if portMapping == "" {
 		return portMap, nil
 	}
 

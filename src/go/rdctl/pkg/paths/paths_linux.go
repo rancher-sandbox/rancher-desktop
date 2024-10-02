@@ -11,20 +11,20 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
-func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
+func GetPaths(getResourcesPathFuncs ...func() (string, error)) (*Paths, error) {
 	var getResourcesPathFunc func() (string, error)
 	switch len(getResourcesPathFuncs) {
 	case 0:
-		getResourcesPathFunc = func() (string, error) { return GetResourcesPath() }
+		getResourcesPathFunc = GetResourcesPath
 	case 1:
 		getResourcesPathFunc = getResourcesPathFuncs[0]
 	default:
-		return Paths{}, errors.New("you can only pass one function in getResourcesPathFuncs arg")
+		return nil, errors.New("you can only pass one function in getResourcesPathFuncs arg")
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return Paths{}, fmt.Errorf("failed to get user home directory: %w", err)
+		return nil, fmt.Errorf("failed to get user home directory: %w", err)
 	}
 	dataHome := os.Getenv("XDG_DATA_HOME")
 	if dataHome == "" {
@@ -40,12 +40,13 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	}
 	altAppHome := filepath.Join(homeDir, ".rd")
 	paths := Paths{
-		AppHome:                 filepath.Join(dataHome, appName),
-		AltAppHome:              altAppHome,
-		Config:                  filepath.Join(configHome, appName),
-		Cache:                   filepath.Join(cacheHome, appName),
-		Lima:                    filepath.Join(dataHome, appName, "lima"),
-		Integration:             filepath.Join(altAppHome, "bin"),
+		AppHome:     filepath.Join(dataHome, appName),
+		AltAppHome:  altAppHome,
+		Config:      filepath.Join(configHome, appName),
+		Cache:       filepath.Join(cacheHome, appName),
+		Lima:        filepath.Join(dataHome, appName, "lima"),
+		Integration: filepath.Join(altAppHome, "bin"),
+		//nolint:gocritic // filepathJoin doesn't like absolute paths
 		DeploymentProfileSystem: filepath.Join("/etc", appName),
 		DeploymentProfileUser:   configHome,
 		ExtensionRoot:           filepath.Join(dataHome, appName, "extensions"),
@@ -59,10 +60,10 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	}
 	paths.Resources, err = getResourcesPathFunc()
 	if err != nil {
-		return Paths{}, fmt.Errorf("failed to find resources directory: %w", err)
+		return nil, fmt.Errorf("failed to find resources directory: %w", err)
 	}
 
-	return paths, nil
+	return &paths, nil
 }
 
 // Return the path used to launch Rancher Desktop.

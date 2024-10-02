@@ -74,8 +74,8 @@ can be imported into the Windows registry using the "eg import FILE" command.`,
 func init() {
 	rootCmd.AddCommand(createProfileCmd)
 	createProfileCmd.Flags().StringVar(&outputSettingsFlags.Format, "output", "", fmt.Sprintf("output format: %s|%s", plistFormat, regFormat))
-	createProfileCmd.Flags().StringVar(&outputSettingsFlags.RegistryHive, "hive", "", fmt.Sprintf(`registry hive: %s|%s (default "%s")`, reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
-	createProfileCmd.Flags().StringVar(&outputSettingsFlags.RegistryProfileType, "type", "", fmt.Sprintf(`registry section: %s|%s (default "%s")`, defaultsType, lockedType, defaultsType))
+	createProfileCmd.Flags().StringVar(&outputSettingsFlags.RegistryHive, "hive", "", fmt.Sprintf(`registry hive: %s|%s (default %q)`, reg.HklmRegistryHive, reg.HkcuRegistryHive, reg.HklmRegistryHive))
+	createProfileCmd.Flags().StringVar(&outputSettingsFlags.RegistryProfileType, "type", "", fmt.Sprintf(`registry section: %s|%s (default %q)`, defaultsType, lockedType, defaultsType))
 	createProfileCmd.Flags().StringVar(&InputFile, "input", "", "File containing a JSON document (- for standard input)")
 	createProfileCmd.Flags().StringVarP(&JSONBody, "body", "b", "", "Command-line option containing a JSON document")
 	createProfileCmd.Flags().BoolVar(&UseCurrentSettings, "from-settings", false, "Use current settings")

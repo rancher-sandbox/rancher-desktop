@@ -115,8 +115,8 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	// List the initial set of services asynchronously, so that we don't have to
 	// worry about the channel blocking.
 	go func() {
-		for _, svc := range services.Items {
-			handleUpdate(nil, svc, eventCh)
+		for i := range services.Items {
+			handleUpdate(nil, &services.Items[i], eventCh)
 		}
 	}()
 
