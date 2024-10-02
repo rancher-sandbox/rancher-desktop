@@ -32,26 +32,7 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: package.json
-    - run: corepack enable yarn
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: package.json
-        cache: yarn
-    - uses: actions/setup-go@v5
-      with:
-        go-version-file: go.work
-        cache-dependency-path: src/go/**/go.sum
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-        cache: pip
-    - run: pip install setuptools
-
-    - run: yarn install --frozen-lockfile
-
+    - uses: ./.github/actions/yarn-install
     - run: node scripts/ts-wrapper.js scripts/release-merge-to-main.ts
       env:
         GITHUB_WRITE_TOKEN: ${{ github.token }}

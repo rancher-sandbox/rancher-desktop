@@ -17,35 +17,7 @@ jobs:
         with:
           persist-credentials: false
           ref: main
-      # For compatibility with runners without yarn, we need to install node
-      # once, install yarn, then install node again to get caching.
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: package.json
-      - run: npm install --global yarn
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: package.json
-          cache: yarn
-      - uses: actions/setup-go@v5
-        with:
-          go-version: go.work
-          cache-dependency-path: src/go/**/go.sum
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-          cache: pip
-      - run: pip install setuptools
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-        #The next steps is a workaround for an unexpected failure in launching electron before running e2e tests
-        #Such failure is addressed in issue #2915
-      - name: add tools to PATH
-        run: |
-          rm -fr $HOME/.rd/bin
-          mkdir -p $HOME/.rd/bin
-          cp -rf $HOME/actions-runner/_work/rancher-desktop/rancher-desktop/resources/darwin/bin/ $HOME/.rd/bin/
-          export PATH="$HOME/.rd/bin:$PATH"
+      - uses: ./.github/actions/yarn-install
       - name: Disable admin-access before start up
         run: |
           mkdir -p $HOME/Library/Preferences/rancher-desktop
