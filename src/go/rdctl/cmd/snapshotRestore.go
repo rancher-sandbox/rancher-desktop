@@ -18,7 +18,7 @@ var snapshotRestoreCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return exitWithJSONOrErrorCondition(restoreSnapshot(cmd, args))
+		return exitWithJSONOrErrorCondition(restoreSnapshot(args[0]))
 	},
 }
 
@@ -27,7 +27,7 @@ func init() {
 	snapshotRestoreCmd.Flags().BoolVarP(&outputJSONFormat, "json", "", false, "output json format")
 }
 
-func restoreSnapshot(cmd *cobra.Command, args []string) error {
+func restoreSnapshot(name string) error {
 	manager, err := snapshot.NewManager()
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot manager: %w", err)
@@ -44,9 +44,9 @@ func restoreSnapshot(cmd *cobra.Command, args []string) error {
 		}
 	})
 	defer stopAfterFunc()
-	err = manager.Restore(ctx, args[0])
+	err = manager.Restore(ctx, name)
 	if err != nil && !errors.Is(err, runner.ErrContextDone) {
-		return fmt.Errorf("failed to restore snapshot %q: %w", args[0], err)
+		return fmt.Errorf("failed to restore snapshot %q: %w", name, err)
 	}
 	return nil
 }
