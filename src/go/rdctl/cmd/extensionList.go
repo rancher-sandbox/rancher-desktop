@@ -52,7 +52,7 @@ func listExtensions() error {
 		return fmt.Errorf("failed to get connection info: %w", err)
 	}
 	rdClient := client.NewRDClient(connectionInfo)
-	endpoint := fmt.Sprintf("/%s/extensions", client.ApiVersion)
+	endpoint := fmt.Sprintf("/%s/extensions", client.APIVersion)
 	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("GET", endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult([]byte{}, errorPacket, err)

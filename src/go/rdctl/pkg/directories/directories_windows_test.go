@@ -39,8 +39,8 @@ func TestGetKnownFolder(t *testing.T) {
 		}
 	})
 	t.Run("invalid folder", func(t *testing.T) {
-		zeroGuid := windows.KNOWNFOLDERID{}
-		_, err := getKnownFolder(&zeroGuid)
+		zeroGUID := windows.KNOWNFOLDERID{}
+		_, err := getKnownFolder(&zeroGUID)
 		if assert.Error(t, err) {
 			notFound := 0x80070002 // HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
 			assert.Equal(t, windows.Errno(notFound), err)

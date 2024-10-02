@@ -82,7 +82,7 @@ func doAPICommand(cmd *cobra.Command, args []string) error {
 	}
 	endpoint := args[0]
 	if endpoint != "/" && regexp.MustCompile(`^/v\d+(?:/|$)`).FindString(endpoint) == "" {
-		endpoint = fmt.Sprintf("/%s", client.VersionCommand(client.ApiVersion, endpoint))
+		endpoint = fmt.Sprintf("/%s", client.VersionCommand(client.APIVersion, endpoint))
 	}
 	if apiSettings.InputFile != "" && apiSettings.Body != "" {
 		return fmt.Errorf("api command: --body and --input options cannot both be specified")

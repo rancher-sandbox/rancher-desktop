@@ -17,7 +17,7 @@ type errorPayloadType struct {
 	DataReset bool `json:"dataReset,omitempty"`
 }
 
-var outputJsonFormat bool
+var outputJSONFormat bool
 
 var snapshotCmd = &cobra.Command{
 	Use:   "snapshot",
@@ -28,8 +28,8 @@ func init() {
 	rootCmd.AddCommand(snapshotCmd)
 }
 
-func exitWithJsonOrErrorCondition(e error) error {
-	if outputJsonFormat {
+func exitWithJSONOrErrorCondition(e error) error {
+	if outputJSONFormat {
 		exitStatus := 0
 		if e != nil {
 			exitStatus = 1

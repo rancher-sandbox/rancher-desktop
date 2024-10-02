@@ -37,13 +37,13 @@ var snapshotListCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return exitWithJsonOrErrorCondition(listSnapshot())
+		return exitWithJSONOrErrorCondition(listSnapshot())
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotListCmd)
-	snapshotListCmd.Flags().BoolVar(&outputJsonFormat, "json", false, "output json format")
+	snapshotListCmd.Flags().BoolVar(&outputJSONFormat, "json", false, "output json format")
 }
 
 func listSnapshot() error {
@@ -56,7 +56,7 @@ func listSnapshot() error {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
 	sort.Sort(SortableSnapshots(snapshots))
-	if outputJsonFormat {
+	if outputJSONFormat {
 		return jsonOutput(snapshots)
 	}
 	return tabularOutput(snapshots)

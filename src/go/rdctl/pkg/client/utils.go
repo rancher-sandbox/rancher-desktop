@@ -9,7 +9,7 @@ import (
 
 func VersionCommand(version string, command string) string {
 	if version == "" {
-		version = ApiVersion
+		version = APIVersion
 	}
 	if strings.HasPrefix(command, "/") {
 		return fmt.Sprintf("%s%s", version, command)

@@ -247,8 +247,8 @@ func (proxy *ReverseProxy) sendError(w http.ResponseWriter, msg string, statusCo
 	http.Error(w, msg, statusCode)
 }
 
-func (p *ReverseProxy) logf(format string, args ...any) {
-	logger := p.ErrorLog
+func (proxy *ReverseProxy) logf(format string, args ...any) {
+	logger := proxy.ErrorLog
 	if logger == nil {
 		logger = log.Default()
 	}

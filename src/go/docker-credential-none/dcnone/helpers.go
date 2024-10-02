@@ -58,11 +58,11 @@ func getRecordForServerURL(config *dockerConfigType, urlArg string) (string, str
 		return "", "", credentials.NewErrCredentialsNotFound()
 	}
 	auths := authsInterface.(map[string]interface{})
-	authDataForUrl, ok := auths[urlArg]
+	authDataForURL, ok := auths[urlArg]
 	if !ok {
 		return "", "", credentials.NewErrCredentialsNotFound()
 	}
-	authData, ok := authDataForUrl.(map[string]interface{})["auth"]
+	authData, ok := authDataForURL.(map[string]interface{})["auth"]
 	if !ok {
 		return "", "", credentials.NewErrCredentialsNotFound()
 	}
