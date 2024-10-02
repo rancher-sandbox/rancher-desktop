@@ -8,7 +8,7 @@ import path from 'path';
 
 import { notarize } from '@electron/notarize';
 import { build, Arch, Configuration, Platform } from 'app-builder-lib';
-import MacPackager from 'app-builder-lib/out/macPackager';
+import { MacPackager } from 'app-builder-lib/out/macPackager';
 import { AsyncTaskManager, log } from 'builder-util';
 import { Target } from 'electron-builder';
 import _ from 'lodash';

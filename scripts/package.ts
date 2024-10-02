@@ -10,8 +10,6 @@ import fs from 'fs';
 import * as path from 'path';
 
 import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
-import { LinuxPackager } from 'app-builder-lib/out/linuxPackager';
-import { LinuxTargetHelper } from 'app-builder-lib/out/targets/LinuxTargetHelper';
 import { executeAppBuilder, log } from 'builder-util';
 import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
@@ -81,6 +79,8 @@ class Builder {
    * files.
    */
   protected async writeLinuxDesktopFile(context: AfterPackContext) {
+    const { LinuxPackager } = await import('app-builder-lib/out/linuxPackager');
+    const { LinuxTargetHelper } = await import('app-builder-lib/out/targets/LinuxTargetHelper');
     const config = context.packager.config.linux;
 
     if (!(context.packager instanceof LinuxPackager) || !config) {
