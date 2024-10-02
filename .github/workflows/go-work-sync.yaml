@@ -51,6 +51,11 @@ jobs:
       with:
         go-version-file: go.work
         cache-dependency-path: '**/go.sum'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        cache: pip
+    - run: pip install setuptools
     - name: Determine go.mod files
       id: go-files
       run: >-
