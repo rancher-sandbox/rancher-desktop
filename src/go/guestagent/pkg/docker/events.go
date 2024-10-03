@@ -186,7 +186,7 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   port.IP,
+			HostIP:   containerd.NormalizeHostIP(port.IP),
 			HostPort: strconv.Itoa(int(port.PublicPort)),
 		}
 
