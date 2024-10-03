@@ -152,7 +152,7 @@ verify_nginx_after_change_k8s() {
 }
 
 @test 'downgrade kubernetes' {
-    rdctl set --kubernetes-version "$RD_KUBERNETES_VERSION_LOW"
+    rdctl set --kubernetes.version "$RD_KUBERNETES_VERSION_LOW"
     wait_for_kubelet "$RD_KUBERNETES_VERSION_LOW"
     wait_for_container_engine
 }
