@@ -59,7 +59,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    updateProgressBarVisiblity(isOpen: boolean) {
+    updateProgressBarVisibility(isOpen: boolean) {
       this.isProgressBarVisible = isOpen;
     },
   },
@@ -84,7 +84,7 @@ export default Vue.extend({
       </template>
     </div>
     <div class="right-column">
-      <BackendProgress id="right" class="progress" @progressBarisOpen="updateProgressBarVisiblity" />
+      <BackendProgress id="right" class="progress" @progressBarisOpen="updateProgressBarVisibility" />
     </div>
   </footer>
 </template>
