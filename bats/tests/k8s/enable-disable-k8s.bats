@@ -18,13 +18,13 @@ verify_k8s_is_running() {
 }
 
 @test 'disable kubernetes' {
-    rdctl set --kubernetes-enabled=false
+    rdctl set --kubernetes.enabled=false
     wait_for_container_engine
     wait_for_service_status k3s stopped
 }
 
 @test 're-enable kubernetes' {
-    rdctl set --kubernetes-enabled=true
+    rdctl set --kubernetes.enabled=true
     wait_for_kubelet
     verify_k8s_is_running
 }
