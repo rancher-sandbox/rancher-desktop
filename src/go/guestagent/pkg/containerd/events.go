@@ -428,7 +428,7 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   port.HostIP,
+			HostIP:   NormalizeHostIP(port.HostIP),
 			HostPort: strconv.Itoa(port.HostPort),
 		}
 		if pb, ok := portMap[portMapKey]; ok {
@@ -473,6 +473,16 @@ func mustFormatHashWithPrefix(length int, prefix string, toHash string) string {
 	output := sha512.Sum512([]byte(toHash))
 
 	return fmt.Sprintf("%s%x", prefix, output)[:length]
+}
+
+// NormalizeHostIP checks if the provided IP address is valid.
+// The valid options are "127.0.0.1" and "0.0.0.0". If the input is "127.0.0.1",
+// it returns "127.0.0.1". Any other address will be mapped to "0.0.0.0".
+func NormalizeHostIP(ip string) string {
+	if ip == "127.0.0.1" || ip == "localhost" {
+		return ip
+	}
+	return "0.0.0.0"
 }
 
 // Port is representing nerdctl/ports entry in the
