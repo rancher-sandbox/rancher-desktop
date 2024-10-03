@@ -15,7 +15,7 @@ export default Vue.extend({
       default: false,
     },
     isProgressBarVisible: {
-      type: Boolean,
+      type:    Boolean,
       default: false,
     },
   },

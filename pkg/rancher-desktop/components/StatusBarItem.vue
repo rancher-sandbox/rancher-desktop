@@ -27,7 +27,7 @@ export default Vue.extend({
       required: true,
     },
     isProgressBarVisible: {
-      type: Boolean,
+      type:    Boolean,
       default: false,
     },
   },
@@ -72,7 +72,7 @@ export default Vue.extend({
         v-else
         class="item-icon"
         :class="{'make-icon-inline': isProgressBarVisible, icon: true}"
-        />
+      />
       <span
         class="item-label"
         :class="{'make-label-invisible': isProgressBarVisible}"
@@ -91,7 +91,7 @@ export default Vue.extend({
       v-if="subComponent"
       :icon="icon"
       :is-status-bar-item="true"
-      :isProgressBarVisible="isProgressBarVisible"
+      :is-progress-bar-visible="isProgressBarVisible"
     ></component>
   </div>
 </template>
