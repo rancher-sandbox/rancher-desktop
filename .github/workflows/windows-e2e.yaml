@@ -23,28 +23,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-environment
-      # For compatibility with runners without yarn, we need to install node
-      # once, install yarn, then install node again to get caching.
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: package.json
-      - run: corepack enable yarn
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: package.json
-          cache: yarn
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.work
-          cache: 'true'
-          cache-dependency-path: src/go/**/go.sum
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-          cache: pip
-      - run: pip install setuptools
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - uses: ./.github/actions/yarn-install
       - name: Run e2e Tests
         run: yarn test:e2e
         env:

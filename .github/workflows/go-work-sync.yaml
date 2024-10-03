@@ -39,30 +39,13 @@ jobs:
         ref: ${{ github.head_ref }}
         fetch-depth: 3
         token: ${{ steps.get-token.outputs.token }}
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: package.json
-    - run: corepack enable
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: package.json
-        cache: yarn
-    - uses: actions/setup-go@v5
-      with:
-        go-version-file: go.work
-        cache-dependency-path: '**/go.sum'
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-        cache: pip
-    - run: pip install setuptools
+    - uses: ./.github/actions/yarn-install
     - name: Determine go.mod files
       id: go-files
       run: >-
         printf "go-files=%s go.work\n"
         "$(git ls-files '**/go.mod' '**/go.sum' | tr '\r\n' '  ')"
         >> "$GITHUB_OUTPUT"
-    - run: yarn install --frozen-lockfile
     - run: yarn lint:go:fix
     - name: Check for changes
       id: changed

@@ -1,0 +1,43 @@
+name: Yarn Install
+description: >-
+  This is a composite action that does everything needed to do `yarn install`.
+
+runs:
+  using: composite
+  steps:
+  # In case we're running on a self-hosted runner without `yarn` installed,
+  # set up NodeJS, enable `yarn`, and then handle the caching.
+  - uses: actions/setup-node@v4
+    with:
+      node-version-file: package.json
+  - run: corepack enable yarn
+    shell: bash
+  - uses: actions/setup-node@v4
+    with:
+      node-version-file: package.json
+      cache: yarn
+
+  - uses: actions/setup-go@v5
+    with:
+      go-version-file: go.work
+      cache-dependency-path: src/go/**/go.sum
+
+  - uses: actions/setup-python@v5
+    with:
+      python-version: '3.x'
+      cache: pip
+  - run: pip install setuptools
+    shell: bash
+
+  - name: Install Windows dependencies
+    if: runner.os == 'Windows'
+    shell: powershell
+    run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
+
+  - name: Flag build for M1
+    if: runner.os == 'macOS' && runner.arch == 'ARM64'
+    run: echo "M1=1" >> "${GITHUB_ENV}"
+    shell: bash
+
+  - run: yarn install --frozen-lockfile
+    shell: bash
