@@ -95,7 +95,6 @@ func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths pat
 	taskRunner := runner.NewTaskRunner(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
-		file := file
 		taskRunner.Add(func() error {
 			err := copyFile(file.SnapshotPath, file.WorkingPath, file.CopyOnWrite, file.FileMode)
 			if errors.Is(err, os.ErrNotExist) && file.MissingOk {
@@ -126,7 +125,6 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths pa
 	taskRunner := runner.NewTaskRunner(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
-		file := file
 		taskRunner.Add(func() error {
 			filename := filepath.Base(file.WorkingPath)
 			err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)

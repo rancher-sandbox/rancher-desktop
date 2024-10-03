@@ -103,7 +103,6 @@ func TestPackageVersion(t *testing.T) {
 			{L: "1.0.0", R: "0.0.1", expect: false},
 		}
 		for _, input := range cases {
-			input := input
 			t.Run(fmt.Sprintf("%s<%s=%v", input.L, input.R, input.expect), func(t *testing.T) {
 				var left, right PackageVersion
 				assert.NoError(t, left.UnmarshalText([]byte(input.L)))
@@ -175,8 +174,6 @@ func TestGetVersionFromCLI(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for name, input := range outputs {
-		name := name
-		input := input
 		t.Run(name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)

@@ -1,6 +1,6 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/github-runner-monitor
 
-go 1.21
+go 1.22
 
 require (
 	github.com/google/go-github/v55 v55.0.0
