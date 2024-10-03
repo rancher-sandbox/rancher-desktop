@@ -55,6 +55,16 @@ export default Vue.extend({
       ];
     },
   },
+  data() {
+    return {
+      isProgressBarVisible: false,
+    };
+  },
+  methods:{
+    updateProgressBarVisiblity(isOpen: boolean) {
+      this.isProgressBarVisible = isOpen;
+    }
+  },
 });
 </script>
 
@@ -69,13 +79,14 @@ export default Vue.extend({
           :sub-component="item.component"
           :data="item.data"
           :icon="item.icon"
+          :isProgressBarVisible="isProgressBarVisible"
           class="status-bar-item"
         >
         </status-bar-item>
       </template>
     </div>
     <div class="right-column">
-      <BackendProgress class="progress" />
+      <BackendProgress id="right" class="progress" @progressBarisOpen="updateProgressBarVisiblity"/>
     </div>
   </footer>
 </template>
@@ -98,6 +109,7 @@ footer {
     display: flex;
     justify-content: flex-end;
     flex: 1;
+    background-color: purple;
   }
 
   .status-bar-item {
