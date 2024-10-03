@@ -38,7 +38,9 @@ beforeEach(async() => {
 afterEach(async() => {
   // It is best to be careful around rm's; we don't want to remove important things.
   if (testDir) {
-    await fs.promises.rm(testDir, { recursive: true, force: true });
+    await fs.promises.rm(testDir, {
+      recursive: true, force: true, maxRetries: 5,
+    });
   }
 });
 

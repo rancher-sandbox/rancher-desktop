@@ -165,6 +165,7 @@ async function copyFileExtendedAttributes(fromPath: string, toPath: string): Pro
   } catch (cause) {
     if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
       // When running unit tests, assume they do not have extended attributes.
+      return;
     }
 
     if (cause && typeof cause === 'object' && 'code' in cause && cause.code === 'MODULE_NOT_FOUND') {
