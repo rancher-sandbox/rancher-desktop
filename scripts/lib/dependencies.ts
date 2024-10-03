@@ -5,6 +5,8 @@ import { Octokit } from 'octokit';
 import semver from 'semver';
 import YAML from 'yaml';
 
+import { getResource } from './download';
+
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
 export type GoPlatform = 'linux' | 'darwin' | 'windows';
@@ -36,6 +38,7 @@ export type AlpineLimaISOVersion = {
 export type DependencyVersions = {
   lima: string;
   limaAndQemu: string;
+  socketVMNet: string;
   alpineLimaISO: AlpineLimaISOVersion;
   WSLDistro: string;
   kuberlr: string;
@@ -58,6 +61,26 @@ export type DependencyVersions = {
   spinOperator: string;
   spinCLI: string;
 };
+
+/**
+ * Download the given checksum file (which contains multiple checksums) and find
+ * the correct checksum for the given executable name.
+ * @param checksumURL The URL to download the checksum from.
+ * @param executableName The name of the executable expected.
+ * @returns The checksum.
+ */
+export async function findChecksum(checksumURL: string, executableName: string): Promise<string> {
+  const allChecksums = await getResource(checksumURL);
+  const desiredChecksums = allChecksums.split(/\r?\n/).filter(line => line.endsWith(executableName));
+
+  if (desiredChecksums.length < 1) {
+    throw new Error(`Couldn't find a matching SHA for [${ executableName }] in [${ allChecksums }]`);
+  }
+  if (desiredChecksums.length === 1) {
+    return desiredChecksums[0].split(/\s+/, 1)[0];
+  }
+  throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
+}
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {
   const rawContents = await fs.promises.readFile(path, 'utf-8');

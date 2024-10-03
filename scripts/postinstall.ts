@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import * as goUtils from 'scripts/dependencies/go-source';
-import { Lima, LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
+import { Lima, LimaAndQemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import { SudoPrompt } from 'scripts/dependencies/sudo-prompt';
 import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
@@ -49,6 +49,7 @@ const unixDependencies = [
 
 // Dependencies that are specific to macOS hosts.
 const macOSDependencies = [
+  new SocketVMNet(),
   new SudoPrompt(),
 ];
 
