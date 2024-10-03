@@ -14,7 +14,10 @@ type BarItem = {
 
 export default Vue.extend({
   components: { BackendProgress, StatusBarItem },
-  computed:   {
+  data() {
+    return { isProgressBarVisible: false };
+  },
+  computed: {
     ...mapGetters('preferences', ['getPreferences']),
     kubernetesVersion(): string {
       return this.getPreferences.kubernetes.version;
@@ -55,15 +58,10 @@ export default Vue.extend({
       ];
     },
   },
-  data() {
-    return {
-      isProgressBarVisible: false,
-    };
-  },
-  methods:{
+  methods: {
     updateProgressBarVisiblity(isOpen: boolean) {
       this.isProgressBarVisible = isOpen;
-    }
+    },
   },
 });
 </script>
@@ -79,14 +77,14 @@ export default Vue.extend({
           :sub-component="item.component"
           :data="item.data"
           :icon="item.icon"
-          :isProgressBarVisible="isProgressBarVisible"
+          :is-progress-bar-visible="isProgressBarVisible"
           class="status-bar-item"
         >
         </status-bar-item>
       </template>
     </div>
     <div class="right-column">
-      <BackendProgress id="right" class="progress" @progressBarisOpen="updateProgressBarVisiblity"/>
+      <BackendProgress id="right" class="progress" @progressBarisOpen="updateProgressBarVisiblity" />
     </div>
   </footer>
 </template>
@@ -109,7 +107,6 @@ footer {
     display: flex;
     justify-content: flex-end;
     flex: 1;
-    background-color: purple;
   }
 
   .status-bar-item {

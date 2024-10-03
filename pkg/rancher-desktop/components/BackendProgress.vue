@@ -58,8 +58,10 @@ class BackendProgress extends Vue {
   }
 
   get progressBusy(): boolean {
-    const busy= this.progressIndeterminate || this.progress.current < this.progress.max;
+    const busy = this.progressIndeterminate || this.progress.current < this.progress.max;
+
     this.$emit('progressBarisOpen', busy);
+
     return busy;
   }
 
@@ -131,7 +133,6 @@ export default BackendProgress;
     white-space: nowrap;
     align-items: center;
     flex: 1;
-    background-color: aqua;
 
     .details {
       text-align: end;
