@@ -67,46 +67,6 @@ export class KuberlrAndKubectl implements Dependency {
   }
 
   /**
-   * Find the home directory, in a way that is compatible with kuberlr.
-   *
-   * @param onWindows Whether we're running on Windows.
-   */
-  async findHome(onWindows: boolean): Promise<string> {
-    const tryAccess = async(path: string) => {
-      try {
-        await fs.promises.access(path);
-
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
-    const osHomeDir = os.homedir();
-
-    if (osHomeDir && await tryAccess(osHomeDir)) {
-      return osHomeDir;
-    }
-    if (process.env.HOME && await tryAccess(process.env.HOME)) {
-      return process.env.HOME;
-    }
-    if (onWindows) {
-      if (process.env.USERPROFILE && await tryAccess(process.env.USERPROFILE)) {
-        return process.env.USERPROFILE;
-      }
-      if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
-        const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
-
-        if (await tryAccess(homePath)) {
-          return homePath;
-        }
-      }
-    }
-
-    throw new Error('Failed to find home directory');
-  }
-
-  /**
    * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
    *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
    */
