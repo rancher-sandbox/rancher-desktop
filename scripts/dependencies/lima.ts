@@ -7,10 +7,10 @@ import path from 'path';
 
 import semver from 'semver';
 
-import { download, getResource } from '../lib/download';
+import { download, downloadTarGZ, getResource } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, AlpineLimaISOVersion, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
+  DownloadContext, Dependency, AlpineLimaISOVersion, findChecksum, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
 } from 'scripts/lib/dependencies';
 
 /**
@@ -165,7 +165,8 @@ export class LimaAndQemu implements Dependency, GitHubDependency {
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
 
-    const child = childProcess.spawn('/usr/bin/tar', ['-xf', tarPath, '--exclude', 'lima*'],
+    const child = childProcess.spawn('/usr/bin/tar',
+      ['-xf', tarPath, '--exclude', 'lima*', '--exclude', 'vde/bin', '--exclude', 'vde/lib', '--exclude', 'socket_vmnet'],
       { cwd: limaDir, stdio: 'inherit' });
 
     await new Promise<void>((resolve, reject) => {
@@ -177,6 +178,44 @@ export class LimaAndQemu implements Dependency, GitHubDependency {
         }
       });
     });
+  }
+
+  async getAvailableVersions(): Promise<string[]> {
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+
+    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    const semver1 = semver.coerce(version1);
+    const semver2 = semver.coerce(version2);
+
+    if (semver1 === null || semver2 === null) {
+      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+    }
+
+    return semver.rcompare(semver1, semver2);
+  }
+}
+
+export class SocketVMNet implements Dependency, GitHubDependency {
+  name = 'socketVMNet';
+  githubOwner = 'lima-vm';
+  githubRepo = 'socket_vmnet';
+
+  async download(context: DownloadContext): Promise<void> {
+    const arch = context.isM1 ? 'arm64' : 'x86_64';
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.socketVMNet }`;
+    const archiveName = `socket_vmnet-${ context.versions.socketVMNet }-${ arch }.tar.gz`;
+    const expectedChecksum = await findChecksum(`${ baseURL }/SHA256SUMS`, archiveName);
+
+    await downloadTarGZ(`${ baseURL }/${ archiveName }`,
+      path.join(context.resourcesDir, context.platform, 'lima', 'socket_vmnet', 'bin', 'socket_vmnet'),
+      { expectedChecksum, entryName: './opt/socket_vmnet/bin/socket_vmnet' });
   }
 
   async getAvailableVersions(): Promise<string[]> {

@@ -840,6 +840,7 @@ varnamelen
 vcenter
 vcpus
 vcs
+vde
 ventura
 VERSIONSTRING
 vertificate

@@ -9,7 +9,7 @@ import {
 } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
+  DownloadContext, Dependency, GitHubDependency, findChecksum, getPublishedReleaseTagNames, getPublishedVersions,
 } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
@@ -17,26 +17,6 @@ function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
 
   return `${ name }${ onWindows ? '.exe' : '' }`;
-}
-
-/**
- * Download the given checksum file (which contains multiple checksums) and find
- * the correct checksum for the given executable name.
- * @param checksumURL The URL to download the checksum from.
- * @param executableName The name of the executable expected.
- * @returns The checksum.
- */
-async function findChecksum(checksumURL: string, executableName: string): Promise<string> {
-  const allChecksums = await getResource(checksumURL);
-  const desiredChecksums = allChecksums.split(/\r?\n/).filter(line => line.endsWith(executableName));
-
-  if (desiredChecksums.length < 1) {
-    throw new Error(`Couldn't find a matching SHA for [${ executableName }] in [${ allChecksums }]`);
-  }
-  if (desiredChecksums.length === 1) {
-    return desiredChecksums[0].split(/\s+/, 1)[0];
-  }
-  throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
 }
 
 export class KuberlrAndKubectl implements Dependency {
