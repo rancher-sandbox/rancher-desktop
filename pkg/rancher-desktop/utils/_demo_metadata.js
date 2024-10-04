@@ -1661,4 +1661,43 @@ export default {
       },
     ],
   },
+  'ghcr.io/rancher-sandbox/rd-open-webui-docker-ext': {
+    CreatedTime: '2024-10-02T21:08:38.117591549Z',
+    Categories:  [
+      'genai',
+      'llm'
+    ],
+    LatestVersion: {
+      Tag:                'latest',
+      ManifestListDigest: 'sha256:cad83a840ba30fb1c151a0bb8d24220cd2fddcea13a1d7f13219ab01f63caf30',
+      Platforms:          [
+        {
+          OS:      'linux',
+          Arch:    'amd64',
+          Size:    29413493,
+          Created: '2024-10-02T21:08:38.117591549Z',
+        },
+        {
+          OS:      'linux',
+          Arch:    'arm64',
+          Size:    29562162,
+          Created: '2024-10-02T21:19:16.860949264Z',
+        },
+      ],
+      Labels: {
+        "com.docker.desktop.extension.api.version": "0.3.4",
+        "com.docker.desktop.extension.icon": "",
+        "com.docker.extension.additional-urls": "",
+        "com.docker.extension.categories": "",
+        "com.docker.extension.changelog": "",
+        "com.docker.extension.detailed-description": "",
+        "com.docker.extension.publisher-url": "",
+        "com.docker.extension.screenshots": "",
+        "org.opencontainers.image.description": "Open WebUI on Rancher Desktop",
+        "org.opencontainers.image.title": "Open WebUI",
+        "org.opencontainers.image.vendor": "SUSE LLC"
+      },
+    },
+    PreviousVersions: [],
+  }
 };

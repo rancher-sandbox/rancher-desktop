@@ -2,6 +2,32 @@ export const demoMarketplace = {
   summaries: [
     {
       id:                    '',
+      name:                  'Open WebUI Extension',
+      containerd_compatible: true,
+      slug:                  'ghcr.io/rancher-sandbox/rd-open-webui-docker-ext',
+      type:                  'extension',
+      publisher:             { name: 'Rancher by SUSE' },
+      created_at:            '2024-10-03T15:43:34Z',
+      updated_at:            '2024-10-03T15:43:34.144218728Z',
+      short_description:     'Open WebUI and Ollama packaged into a docker extension for local GenAI development',
+      source:                'community',
+      extension_reviewed:    true,
+      popularity:            0,
+      categories:            null,
+      operating_systems:     [],
+      architectures:         [],
+      logo_url:              {
+        large:
+          'https://raw.githubusercontent.com/rancher-sandbox/rd-open-webui-docker-ext/main/open-webui.svg',
+        small:
+          'https://raw.githubusercontent.com/rancher-sandbox/rd-open-webui-docker-ext/main/open-webui.svg',
+      },
+      certification_status: '',
+      star_count:           0,
+      filter_type:          'community',
+    },
+    {
+      id:                    '',
       name:                  'Epinio',
       containerd_compatible: true,
       slug:                  'ghcr.io/rancher-sandbox/epinio-desktop-extension',
@@ -290,5 +316,8 @@ export const demoMarketplace = {
       star_count:           0,
       filter_type:          'community',
     },
+
+
+
   ],
 };
