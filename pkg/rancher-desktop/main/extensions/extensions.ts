@@ -1,4 +1,4 @@
-import { ChildProcessByStdio } from 'child_process';
+import { ChildProcessByStdio, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
@@ -44,6 +44,11 @@ type ComposeFile = {
     })[];
   }>;
   volumes?: Record<string, any>;
+};
+
+// ScriptType is any key in ExtensionMetadata.host that starts with `x-rd-`.
+type ScriptType = keyof {
+  [K in keyof Required<ExtensionMetadata>['host'] as K extends `x-rd-${ infer _U }` ? K : never]: 1;
 };
 
 const console = Logging.extensions;
@@ -224,7 +229,7 @@ export class ExtensionImpl implements Extension {
    * Returns the script executable plus arguments; the executable path is always
    * absolute.
    */
-  protected getScriptArgs(metadata: ExtensionMetadata, key: 'x-rd-install' | 'x-rd-uninstall'): string[] | undefined {
+  protected getScriptArgs(metadata: ExtensionMetadata, key: ScriptType): string[] | undefined {
     const scriptData = metadata.host?.[key]?.[this.platform];
 
     if (!scriptData) {
@@ -235,6 +240,7 @@ export class ExtensionImpl implements Extension {
     const description = {
       'x-rd-install':   'Post-install',
       'x-rd-uninstall': 'Pre-uninstall',
+      'x-rd-shutdown':  'Shutdown',
     }[key];
     const binDir = path.join(this.dir, 'bin');
     const scriptPath = path.normalize(path.resolve(binDir, scriptName));
@@ -631,5 +637,30 @@ export class ExtensionImpl implements Extension {
 
   async readFile(sourcePath: string): Promise<string> {
     return await this.client.readFile(this.image, sourcePath, { namespace: this.extensionNamespace });
+  }
+
+  async shutdown() {
+    // Don't trigger downloading the extension if it hasn't been installed.
+    const metadata = await this._metadata;
+
+    if (!metadata) {
+      return;
+    }
+    try {
+      const [scriptPath, ...scriptArgs] = this.getScriptArgs(metadata, 'x-rd-shutdown') ?? [];
+
+      if (scriptPath) {
+        console.log(`Running ${ this.id } shutdown script: ${ scriptPath } ${ scriptArgs.join(' ') }...`);
+        // No need to wait for the script to finish here.
+        const stream = await console.fdStream;
+        const process = spawn(scriptPath, scriptArgs, {
+          detached: true, stdio: ['ignore', stream, stream], cwd: path.dirname(scriptPath), windowsHide: true,
+        });
+
+        process.unref();
+      }
+    } catch (ex) {
+      console.error(`Ignoring error running ${ this.id } post-install script: ${ ex }`);
+    }
   }
 }

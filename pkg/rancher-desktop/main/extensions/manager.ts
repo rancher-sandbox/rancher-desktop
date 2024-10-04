@@ -267,6 +267,9 @@ export class ExtensionManagerImpl implements ExtensionManager {
       })(repo, tag));
     }
     await Promise.all(tasks);
+
+    // Register a listener to shut down extensions on quit
+    mainEvents.on('quit', this.triggerExtensionShutdown);
   }
 
   /**
@@ -573,7 +576,15 @@ export class ExtensionManagerImpl implements ExtensionManager {
     await Promise.allSettled(Object.values(this.processes).map((proc) => {
       proc.deref()?.kill();
     }));
+
+    mainEvents.off('quit', this.triggerExtensionShutdown);
   }
+
+  triggerExtensionShutdown = async() => {
+    await Promise.all((await this.getInstalledExtensions()).map((extension) => {
+      return extension.shutdown();
+    }));
+  };
 }
 
 function getExtensionManager(): Promise<ExtensionManager | undefined> {

@@ -50,6 +50,13 @@ export type ExtensionMetadata = {
      * `binaries`.  Errors will be ignored.
      */
     'x-rd-uninstall'?: PlatformSpecific<string|string[]>,
+    /**
+     * Rancher Desktop extension: this will be executed when the application
+     * quits.  The application may exit before the process completes.  It is not
+     * defined what the container engine / Kubernetes cluster may be doing at
+     * the time this is called.
+     */
+    'x-rd-shutdown'?: PlatformSpecific<string|string[]>,
  };
 };
 
