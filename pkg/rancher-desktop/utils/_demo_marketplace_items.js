@@ -18,9 +18,9 @@ export const demoMarketplace = {
       architectures:         [],
       logo_url:              {
         large:
-          'https://raw.githubusercontent.com/rancher-sandbox/rd-open-webui-docker-ext/main/open-webui.svg',
+          'https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/main/open-webui.svg',
         small:
-          'https://raw.githubusercontent.com/rancher-sandbox/rd-open-webui-docker-ext/main/open-webui.svg',
+          'https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/main/open-webui.svg',
       },
       certification_status: '',
       star_count:           0,
