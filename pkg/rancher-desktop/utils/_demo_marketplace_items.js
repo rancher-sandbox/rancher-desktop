@@ -316,8 +316,5 @@ export const demoMarketplace = {
       star_count:           0,
       filter_type:          'community',
     },
-
-
-
   ],
 };
