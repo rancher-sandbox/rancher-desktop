@@ -1661,7 +1661,7 @@ export default {
       },
     ],
   },
-  'ghcr.io/rancher-sandbox/rd-open-webui-docker-ext': {
+  'ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui': {
     CreatedTime: '2024-10-02T21:08:38.117591549Z',
     Categories:  [
       'genai',

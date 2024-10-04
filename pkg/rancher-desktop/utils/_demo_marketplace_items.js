@@ -4,7 +4,7 @@ export const demoMarketplace = {
       id:                    '',
       name:                  'Open WebUI Extension',
       containerd_compatible: true,
-      slug:                  'ghcr.io/rancher-sandbox/rd-open-webui-docker-ext',
+      slug:                  'ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui',
       type:                  'extension',
       publisher:             { name: 'SUSE LLC' },
       created_at:            '2024-10-03T15:43:34Z',
