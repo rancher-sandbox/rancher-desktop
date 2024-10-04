@@ -889,6 +889,7 @@ wslconfig
 WSLENV
 WSLg
 wslify
+wslinfo
 WSLINSTALLED
 WSLIs
 WSLKERNELOUTDATED

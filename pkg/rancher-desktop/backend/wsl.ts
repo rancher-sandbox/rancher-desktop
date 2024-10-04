@@ -938,6 +938,18 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /** Get the IPv4 address of the VM, assuming it's already up. */
   get ipAddress(): Promise<string | undefined> {
     return (async() => {
+      // When using mirrored-mode networking, 127.0.0.1 works just fine
+      // ...also, there may not even be an `eth0` to find the IP of!
+      try {
+        const networkModeString = await this.captureCommand('wslinfo', '-n', '--networking-mode');
+
+        if (networkModeString === 'mirrored') {
+          return '127.0.0.1';
+        }
+      } catch {
+        // wslinfo is missing (wsl < 2.0.4) - fall back to old behavior
+      }
+
       // We need to locate the _local_ route (netmask) for eth0, and then
       // look it up in /proc/net/fib_trie to find the local address.
       const routesString = await this.captureCommand('cat', '/proc/net/route');
