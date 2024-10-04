@@ -1665,7 +1665,7 @@ export default {
     CreatedTime: '2024-10-02T21:08:38.117591549Z',
     Categories:  [
       'genai',
-      'llm'
+      'llm',
     ],
     LatestVersion: {
       Tag:                'latest',
@@ -1685,19 +1685,19 @@ export default {
         },
       ],
       Labels: {
-        "com.docker.desktop.extension.api.version": "0.3.4",
-        "com.docker.desktop.extension.icon": "",
-        "com.docker.extension.additional-urls": "",
-        "com.docker.extension.categories": "",
-        "com.docker.extension.changelog": "",
-        "com.docker.extension.detailed-description": "",
-        "com.docker.extension.publisher-url": "",
-        "com.docker.extension.screenshots": "",
-        "org.opencontainers.image.description": "Open WebUI on Rancher Desktop",
-        "org.opencontainers.image.title": "Open WebUI",
-        "org.opencontainers.image.vendor": "SUSE LLC"
+        'com.docker.desktop.extension.api.version':  '0.3.4',
+        'com.docker.desktop.extension.icon':         '',
+        'com.docker.extension.additional-urls':      '',
+        'com.docker.extension.categories':           '',
+        'com.docker.extension.changelog':            '',
+        'com.docker.extension.detailed-description': '',
+        'com.docker.extension.publisher-url':        '',
+        'com.docker.extension.screenshots':          '',
+        'org.opencontainers.image.description':      'Open WebUI on Rancher Desktop',
+        'org.opencontainers.image.title':            'Open WebUI',
+        'org.opencontainers.image.vendor':           'SUSE LLC',
       },
     },
     PreviousVersions: [],
-  }
+  },
 };
