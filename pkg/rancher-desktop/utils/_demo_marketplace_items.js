@@ -6,7 +6,7 @@ export const demoMarketplace = {
       containerd_compatible: true,
       slug:                  'ghcr.io/rancher-sandbox/rd-open-webui-docker-ext',
       type:                  'extension',
-      publisher:             { name: 'Rancher by SUSE' },
+      publisher:             { name: 'SUSE LLC' },
       created_at:            '2024-10-03T15:43:34Z',
       updated_at:            '2024-10-03T15:43:34.144218728Z',
       short_description:     'Open WebUI and Ollama packaged into a docker extension for local GenAI development',
