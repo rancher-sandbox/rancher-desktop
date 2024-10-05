@@ -32,7 +32,7 @@ export const demoMarketplace = {
       containerd_compatible: true,
       slug:                  'ghcr.io/rancher-sandbox/epinio-desktop-extension',
       type:                  'extension',
-      publisher:             { name: 'Rancher by SUSE' },
+      publisher:             { name: 'SUSE LLC' },
       created_at:            '2022-05-06T00:44:00Z',
       updated_at:            '2023-02-24T10:40:43.666252815Z',
       short_description:     'Push from source to Kubernetes in one step',
