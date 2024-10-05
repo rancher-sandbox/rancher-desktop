@@ -11,7 +11,7 @@ export const demoMarketplace = {
       updated_at:            '2024-10-03T15:43:34.144218728Z',
       short_description:     'Open WebUI and Ollama packaged into an extension for local GenAI development',
       source:                'community',
-      extension_reviewed:    true,
+      extension_reviewed:    false,
       popularity:            0,
       categories:            null,
       operating_systems:     [],
