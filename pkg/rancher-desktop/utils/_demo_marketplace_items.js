@@ -9,7 +9,7 @@ export const demoMarketplace = {
       publisher:             { name: 'SUSE LLC' },
       created_at:            '2024-10-03T15:43:34Z',
       updated_at:            '2024-10-03T15:43:34.144218728Z',
-      short_description:     'Open WebUI and Ollama packaged into a docker extension for local GenAI development',
+      short_description:     'Open WebUI and Ollama packaged into an extension for local GenAI development',
       source:                'community',
       extension_reviewed:    true,
       popularity:            0,
