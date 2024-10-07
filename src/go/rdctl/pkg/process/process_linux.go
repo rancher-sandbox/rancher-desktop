@@ -17,7 +17,6 @@ limitations under the License.
 package process
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -30,8 +29,9 @@ import (
 )
 
 // TerminateProcessInDirectory terminates all processes where the executable
-// resides within the given directory, as gracefully as possible.
-func TerminateProcessInDirectory(ctx context.Context, directory string) error {
+// resides within the given directory, as gracefully as possible.  If `force` is
+// set, SIGKILL is used instead.
+func TerminateProcessInDirectory(directory string, force bool) error {
 	// Check /proc/<pid>/exe to see if they're the correct file.
 	pidfds, err := os.ReadDir("/proc")
 	if err != nil {
@@ -43,6 +43,10 @@ func TerminateProcessInDirectory(ctx context.Context, directory string) error {
 		}
 		pid, err := strconv.Atoi(pidfd.Name())
 		if err != nil {
+			continue
+		}
+		// Don't kill the current process
+		if pid == os.Getpid() {
 			continue
 		}
 		procPath, err := os.Readlink(filepath.Join("/proc", pidfd.Name(), "exe"))
@@ -57,7 +61,11 @@ func TerminateProcessInDirectory(ctx context.Context, directory string) error {
 		if err != nil {
 			continue
 		}
-		err = proc.Signal(unix.SIGTERM)
+		if force {
+			err = proc.Signal(unix.SIGKILL)
+		} else {
+			err = proc.Signal(unix.SIGTERM)
+		}
 		if err == nil {
 			logrus.Infof("Terminated process %d (%s)", pid, procPath)
 		} else if !errors.Is(err, unix.EINVAL) {

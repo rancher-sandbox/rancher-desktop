@@ -17,23 +17,26 @@ limitations under the License.
 package process
 
 import (
-	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"unsafe"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
 )
 
 // TerminateProcessInDirectory terminates all processes where the executable
-// resides within the given directory, as gracefully as possible.
-func TerminateProcessInDirectory(ctx context.Context, directory string) error {
-	pids := make([]uint32, 4096)
+// resides within the given directory, as gracefully as possible.  If `force` is
+// set, SIGKILL is used instead.
+func TerminateProcessInDirectory(directory string, force bool) error {
+	var pids []uint32
 	// Try EnumProcesses until the number of pids returned is less than the
 	// buffer size.
-	for {
+	err := directories.InvokeWin32WithBuffer(func(size int) error {
+		pids = make([]uint32, size)
 		var bytesReturned uint32
 		err := windows.EnumProcesses(pids, &bytesReturned)
 		if err != nil || len(pids) < 1 {
@@ -43,54 +46,70 @@ func TerminateProcessInDirectory(ctx context.Context, directory string) error {
 		if pidsReturned < uintptr(len(pids)) {
 			// Remember to truncate the pids to only the valid set.
 			pids = pids[:pidsReturned]
-			break
+			return nil
 		}
-		pids = make([]uint32, len(pids)*2)
+		return windows.ERROR_INSUFFICIENT_BUFFER
+	})
+	if err != nil {
+		return fmt.Errorf("could not get process list: %w", err)
 	}
 
 	for _, pid := range pids {
+		// Don't kill the current process
+		if pid == uint32(os.Getpid()) {
+			continue
+		}
 		// Do each iteration in a function so defer statements run faster.
-		err := (func() error {
+		(func() {
 			hProc, err := windows.OpenProcess(
 				windows.PROCESS_QUERY_LIMITED_INFORMATION|windows.PROCESS_TERMINATE,
 				false,
 				pid)
 			if err != nil {
 				logrus.Infof("Ignoring error opening process %d: %s", pid, err)
-				return nil
+				return
 			}
 			defer func() {
 				_ = windows.CloseHandle(hProc)
 			}()
 
-			nameBuf := make([]uint16, 1024)
-			for {
-				bufSize := uint32(len(nameBuf))
-				err = windows.QueryFullProcessImageName(hProc, 0, &nameBuf[0], &bufSize)
+			var executablePath string
+			err = directories.InvokeWin32WithBuffer(func(size int) error {
+				nameBuf := make([]uint16, size)
+				charsWritten := uint32(size)
+				err := windows.QueryFullProcessImageName(hProc, 0, &nameBuf[0], &charsWritten)
 				if err != nil {
-					return fmt.Errorf("error getting process %d executable: %w", pid, err)
+					logrus.Tracef("failed to get image name for pid %d: %s", pid, err)
+					return err
 				}
-				if int(bufSize) < len(nameBuf) {
-					break
+				if charsWritten >= uint32(size)-1 {
+					return windows.ERROR_INSUFFICIENT_BUFFER
 				}
-				nameBuf = make([]uint16, len(nameBuf)*2)
+				executablePath = windows.UTF16ToString(nameBuf)
+				return nil
+			})
+			if err != nil {
+				logrus.Debugf("failed to get process name of pid %d: %s (skipping)", pid, err)
+				return
 			}
-			executablePath := windows.UTF16ToString(nameBuf)
 
 			relPath, err := filepath.Rel(directory, executablePath)
-			if err != nil || strings.HasPrefix(relPath, "../") {
-				return nil
+			if err != nil {
+				// This may be because they're on different drives, network shares, etc.
+				logrus.Tracef("failed to make pid %d image %s relative to %s: %s", pid, executablePath, directory, err)
+				return
+			}
+			if strings.HasPrefix(relPath, "..") {
+				// Relative path includes "../" prefix, not a child of given directory.
+				logrus.Tracef("skipping pid %d (%s), not in %s", pid, executablePath, directory)
+				return
 			}
 
+			logrus.Tracef("will terminate pid %d image %s", pid, executablePath)
 			if err = windows.TerminateProcess(hProc, 0); err != nil {
-				return fmt.Errorf("failed to terminate pid %d (%s): %w", pid, executablePath, err)
+				logrus.Errorf("failed to terminate pid %d (%s): %s", pid, executablePath, err)
 			}
-
-			return nil
 		})()
-		if err != nil {
-			logrus.Errorf("%s", err)
-		}
 	}
 
 	return nil

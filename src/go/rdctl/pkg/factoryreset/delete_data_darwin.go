@@ -16,7 +16,7 @@ func DeleteData(ctx context.Context, appPaths paths.Paths, removeKubernetesCache
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
 
-	if err := process.TerminateProcessInDirectory(ctx, appPaths.ExtensionRoot); err != nil {
+	if err := process.TerminateProcessInDirectory(appPaths.ExtensionRoot, false); err != nil {
 		logrus.Errorf("Failed to stop extension processes, ignoring: %s", err)
 	}
 
