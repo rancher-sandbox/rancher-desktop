@@ -21,7 +21,7 @@ require (
 	github.com/vishvananda/netns v0.0.4
 	golang.org/x/net v0.29.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.25.0
+	golang.org/x/sys v0.26.0
 	gvisor.dev/gvisor v0.0.0-20231023213702-2691a8f9b1cf
 )
 
