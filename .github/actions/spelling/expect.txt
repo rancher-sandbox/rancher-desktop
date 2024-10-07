@@ -392,6 +392,7 @@ Kgm
 kiali
 kib
 killall
+Kinfo
 kiwano
 KNOWNFOLDERID
 kontainer
@@ -592,6 +593,7 @@ PFlags
 PGID
 pgrep
 pidfile
+pidfd
 pids
 PII
 pikachu
@@ -623,6 +625,7 @@ PQgrl
 prakhar
 prebuilds
 Privs
+PROCARGS
 progresskey
 projectroletemplatebinding
 Prometheis
