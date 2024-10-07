@@ -51,7 +51,7 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 		if err != nil {
 			return fmt.Errorf("failed to get paths: %w", err)
 		}
-		return factoryreset.DeleteData(paths, removeKubernetesCache)
+		return factoryreset.DeleteData(cmd.Context(), paths, removeKubernetesCache)
 	},
 }
 

@@ -1,0 +1,77 @@
+/*
+Copyright © 2024 SUSE LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package process
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sys/unix"
+)
+
+const (
+	CTL_KERN      = "kern"
+	KERN_PROCARGS = 38
+)
+
+// TerminateProcessInDirectory terminates all processes where the executable
+// resides within the given directory, as gracefully as possible.
+func TerminateProcessInDirectory(ctx context.Context, directory string) error {
+	procs, err := unix.SysctlKinfoProcSlice("kern.proc.all")
+	if err != nil {
+		return fmt.Errorf("failed to list processes: %w", err)
+	}
+	for _, proc := range procs {
+		pid := int(proc.Proc.P_pid)
+		buf, err := unix.SysctlRaw(CTL_KERN, KERN_PROCARGS, pid)
+		if err != nil {
+			if !errors.Is(err, unix.EINVAL) {
+				logrus.Infof("Failed to get command line of pid %d: %s", pid, err)
+			}
+			continue
+		}
+		// The buffer starts with a null-terminated executable path, plus
+		// command line arguments and things.
+		index := slices.Index(buf, 0)
+		if index < 0 {
+			// If we have unexpected data, don't fall over.
+			continue
+		}
+		procPath := string(buf[:index])
+		relPath, err := filepath.Rel(directory, procPath)
+		if err != nil || strings.HasPrefix(relPath, "../") {
+			continue
+		}
+		process, err := os.FindProcess(pid)
+		if err != nil {
+			continue
+		}
+		err = process.Signal(unix.SIGTERM)
+		if err == nil {
+			logrus.Infof("Terminated process %d (%s)", pid, procPath)
+		} else if !errors.Is(err, unix.EINVAL) {
+			logrus.Infof("Ignoring failure to terminate pid %d (%s): %s", pid, procPath, err)
+		}
+	}
+	return nil
+}
