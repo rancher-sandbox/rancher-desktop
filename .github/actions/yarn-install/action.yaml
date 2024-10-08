@@ -39,7 +39,7 @@ runs:
     run: echo "M1=1" >> "${GITHUB_ENV}"
     shell: bash
 
-  - run: yarn install --frozen-lockfile
+  - run: yarn install --immutable
     shell: bash
 
   - name: Fix electron sandbox
