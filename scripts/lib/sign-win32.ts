@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsCodeSign';
+import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsSignToolManager';
 import defaults from 'lodash/defaultsDeep';
 import yaml from 'yaml';
 
