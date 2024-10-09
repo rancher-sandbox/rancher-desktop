@@ -608,9 +608,9 @@ Electron.app.on('before-quit', async(event) => {
   httpCredentialHelperServer.closeServer();
 
   try {
+    await mainEvents.tryInvoke('extensions/shutdown');
     await k8smanager?.stop();
     await mainEvents.tryInvoke('shutdown-integrations');
-    await mainEvents.tryInvoke('extensions/shutdown');
 
     console.log(`2: Child exited cleanly.`);
   } catch (ex: any) {
