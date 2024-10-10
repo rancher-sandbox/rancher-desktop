@@ -5,7 +5,7 @@ import path from 'path';
 
 import { Octokit } from 'octokit';
 
-import { Lima, LimaAndQemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
+import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
@@ -38,7 +38,7 @@ const dependencies: Dependency[] = [
   new tools.RancherDashboard(),
   new tools.ECRCredHelper(),
   new Lima(),
-  new LimaAndQemu(),
+  new Qemu(),
   new SocketVMNet(),
   new AlpineLimaISO(),
   new WSLDistro(),

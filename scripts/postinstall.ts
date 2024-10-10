@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import * as goUtils from 'scripts/dependencies/go-source';
-import { Lima, LimaAndQemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
+import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import { SudoPrompt } from 'scripts/dependencies/sudo-prompt';
 import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
@@ -43,7 +43,7 @@ const userTouchedDependencies = [
 // Dependencies that are specific to unix hosts.
 const unixDependencies = [
   new Lima(),
-  new LimaAndQemu(),
+  new Qemu(),
   new AlpineLimaISO(),
 ];
 
@@ -147,7 +147,7 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
     });
     const pending = Array.from(running).filter(v => !done.has(v));
 
-    await Promise.any([timeout, ...pending.map(v => promises[v])]);
+    await Promise.race([timeout, ...pending.map(v => promises[v])]);
   }
   abortSignal.onabort = null;
 
