@@ -28,6 +28,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/sirupsen/logrus"
 )
 
@@ -92,11 +93,15 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 	if err != nil {
 		logrus.Errorf("Ignoring error trying to kill qemu: %s", err)
 	}
+	appDir, err := directories.GetApplicationDirectory()
+	if err != nil {
+		return fmt.Errorf("failed to find application directory: %w", err)
+	}
 	switch runtime.GOOS {
 	case "darwin":
-		return s.waitForAppToDieOrKillIt(checkProcessDarwin, pkillDarwin, 5, 1, "the app")
+		return s.waitForAppToDieOrKillIt(checkProcessDarwin, killFunc(appDir), 5, 1, "the app")
 	case "linux":
-		return s.waitForAppToDieOrKillIt(checkProcessLinux, pkillLinux, 5, 1, "the app")
+		return s.waitForAppToDieOrKillIt(checkProcessLinux, killFunc(appDir), 5, 1, "the app")
 	default:
 		return fmt.Errorf("unhandled runtime: %q", runtime.GOOS)
 	}
@@ -208,18 +213,8 @@ func deleteLima() error {
 	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "delete", "--force", "0"))
 }
 
-func pkillDarwin() error {
-	err := pkill("-9", "-a", "-l", "-f", "Contents/MacOS/Rancher Desktop")
-	if err != nil {
-		return fmt.Errorf("failed to kill Rancher Desktop: %w", err)
+func killFunc(directory string) func() error {
+	return func() error {
+		return process.TerminateProcessInDirectory(directory, true)
 	}
-	return nil
-}
-
-func pkillLinux() error {
-	err := pkill("-9", "rancher-desktop")
-	if err != nil {
-		return fmt.Errorf("failed to kill Rancher Desktop: %w", err)
-	}
-	return nil
 }
