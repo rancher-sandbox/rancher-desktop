@@ -2,11 +2,37 @@ export const demoMarketplace = {
   summaries: [
     {
       id:                    '',
+      name:                  'Open WebUI Extension',
+      containerd_compatible: true,
+      slug:                  'ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui',
+      type:                  'extension',
+      publisher:             { name: 'SUSE LLC' },
+      created_at:            '2024-10-03T15:43:34Z',
+      updated_at:            '2024-10-03T15:43:34.144218728Z',
+      short_description:     'Open WebUI and Ollama packaged into an extension for local GenAI development',
+      source:                'community',
+      extension_reviewed:    false,
+      popularity:            0,
+      categories:            null,
+      operating_systems:     [],
+      architectures:         [],
+      logo_url:              {
+        large:
+          'https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/main/open-webui.svg',
+        small:
+          'https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/main/open-webui.svg',
+      },
+      certification_status: '',
+      star_count:           0,
+      filter_type:          'community',
+    },
+    {
+      id:                    '',
       name:                  'Epinio',
       containerd_compatible: true,
       slug:                  'ghcr.io/rancher-sandbox/epinio-desktop-extension',
       type:                  'extension',
-      publisher:             { name: 'Rancher by SUSE' },
+      publisher:             { name: 'SUSE LLC' },
       created_at:            '2022-05-06T00:44:00Z',
       updated_at:            '2023-02-24T10:40:43.666252815Z',
       short_description:     'Push from source to Kubernetes in one step',
