@@ -61,7 +61,10 @@ func TestNewPortProxy(t *testing.T) {
 	require.NoError(t, err)
 	defer localListener.Close()
 
-	portProxy := portproxy.NewPortProxy(localListener, testServerIP)
+	proxyConfig := &portproxy.ProxyConfig{
+		UpstreamAddress: testServerIP,
+	}
+	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
 	go portProxy.Start()
 
 	getURL := fmt.Sprintf("http://localhost:%s", testPort)
