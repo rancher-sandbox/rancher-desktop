@@ -22,5 +22,5 @@ hostSwitch: 1.2.7
 moproxy: 0.5.1
 spinShim: 0.16.0
 spinOperator: 0.3.0
-certManager: 1.16.0
+certManager: 1.16.1
 spinCLI: 2.7.0
