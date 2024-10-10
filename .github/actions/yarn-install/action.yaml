@@ -41,3 +41,10 @@ runs:
 
   - run: yarn install --frozen-lockfile
     shell: bash
+
+  - name: Fix electron sandbox
+    if: runner.os == 'Linux'
+    shell: bash
+    run: |
+      sudo chown root node_modules/electron/dist/chrome-sandbox
+      sudo chmod 04755 node_modules/electron/dist/chrome-sandbox
