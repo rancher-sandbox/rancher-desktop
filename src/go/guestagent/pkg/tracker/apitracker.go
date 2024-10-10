@@ -88,6 +88,8 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 	for portProto, portBindings := range portMap {
 		var tmpPortBinding []nat.PortBinding
 
+		log.Debugf("called add with portProto: %+v, portBindings: %+v\n", portProto, portBindings)
+
 		for _, portBinding := range portBindings {
 			// The expose API only supports IPv4
 			ipv4, err := isIPv4(portBinding.HostIP)
@@ -100,8 +102,9 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 
 			err = a.apiForwarder.Expose(
 				&types.ExposeRequest{
-					Local:  ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
-					Remote: ipPortBuilder(a.tapInterfaceIP, portBinding.HostPort),
+					Local:    ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
+					Remote:   ipPortBuilder(a.tapInterfaceIP, portBinding.HostPort),
+					Protocol: types.TransportProtocol(portProto.Proto()),
 				})
 			if err != nil {
 				errs = append(errs, fmt.Errorf("exposing %+v failed: %w", portBinding, err))
@@ -147,7 +150,7 @@ func (a *APITracker) Remove(containerID string) error {
 
 	var errs []error
 
-	for _, portBindings := range portMap {
+	for portProto, portBindings := range portMap {
 		for _, portBinding := range portBindings {
 			// The unexpose API only supports IPv4
 			ipv4, err := isIPv4(portBinding.HostIP)
@@ -160,7 +163,8 @@ func (a *APITracker) Remove(containerID string) error {
 
 			err = a.apiForwarder.Unexpose(
 				&types.UnexposeRequest{
-					Local: ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
+					Local:    ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
+					Protocol: types.TransportProtocol(portProto.Proto()),
 				})
 			if err != nil {
 				errs = append(errs,
