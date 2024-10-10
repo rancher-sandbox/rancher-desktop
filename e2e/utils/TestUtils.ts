@@ -234,7 +234,12 @@ export async function teardownApp(app: ElectronApplication) {
   }
 }
 
-export async function teardown(app: ElectronApplication, testInfo: TestInfo) {
+export async function teardown(app: ElectronApplication | undefined, testInfo: TestInfo) {
+  if (!app) {
+    // This can happen if we failed to start up.
+    return;
+  }
+
   const context = app.context();
   const { file: filename } = testInfo;
 
@@ -384,11 +389,17 @@ export async function startRancherDesktop(testInfo: TestInfo, options: startRanc
   if (options?.timeout) {
     launchOptions.timeout = options?.timeout;
   }
-  const electronApp = await _electron.launch(launchOptions);
 
-  await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
+  try {
+    const electronApp = await _electron.launch(launchOptions);
 
-  return electronApp;
+    await electronApp.context().tracing.start({ screenshots: true, snapshots: true });
+
+    return electronApp;
+  } catch (ex) {
+    await takeScreenShot(path.join(reportAsset(testInfo, 'log'), 'startup-failure.png'));
+    throw ex;
+  }
 }
 
 export async function startSlowerDesktop(testInfo: TestInfo, defaultSettings: RecursivePartial<Settings> = {}): Promise<[ElectronApplication, Page]> {
@@ -402,4 +413,26 @@ export async function startSlowerDesktop(testInfo: TestInfo, defaultSettings: Re
   const page = await electronApp.firstWindow();
 
   return [electronApp, page];
+}
+
+async function takeScreenShot(outPath: string) {
+  try {
+    switch (process.platform) {
+    case 'darwin':
+      await childProcess.spawnFile('screencapture', ['-m', outPath]);
+      break;
+    case 'win32': {
+      const script = path.resolve(__dirname, '..', '..', 'screenshots', 'screenshot.ps1');
+
+      await childProcess.spawnFile('powershell.exe', [script, '-FilePath', outPath]);
+      break;
+    }
+    default:
+      await childProcess.spawnFile('import', [outPath]);
+      break;
+    }
+    console.error(`Took screenshot ${ outPath }`);
+  } catch (ex) {
+    console.error(`Error taking screenshot: ${ ex }`);
+  }
 }
