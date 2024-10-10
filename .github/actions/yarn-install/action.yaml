@@ -5,17 +5,11 @@ description: >-
 runs:
   using: composite
   steps:
-  # In case we're running on a self-hosted runner without `yarn` installed,
-  # set up NodeJS, enable `yarn`, and then handle the caching.
   - uses: actions/setup-node@v4
     with:
       node-version-file: package.json
   - run: corepack enable yarn
     shell: bash
-  - uses: actions/setup-node@v4
-    with:
-      node-version-file: package.json
-      cache: yarn
 
   - uses: actions/setup-go@v5
     with:
