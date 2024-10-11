@@ -21,34 +21,44 @@ import (
 	"net"
 	"sync"
 
+	gvisorTypes "github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
 
-type PortProxy struct {
-	upstreamAddress string
-	listener        net.Listener
-	quit            chan struct{}
-	// map of port number as a key to associated listener
-	activeListeners map[int]net.Listener
-	mutex           sync.Mutex
-	wg              sync.WaitGroup
+type ProxyConfig struct {
+	UpstreamAddress string
+	UDPBufferSize   int
 }
 
-func NewPortProxy(listener net.Listener, upstreamAddr string) *PortProxy {
+type PortProxy struct {
+	config   *ProxyConfig
+	listener net.Listener
+	quit     chan struct{}
+	// map of TCP port number as a key to associated listener
+	activeListeners map[int]net.Listener
+	listenerMutex   sync.Mutex
+	// map of UDP port number as a key to associated UDPConn
+	activeUDPConns map[int]*net.UDPConn
+	udpConnMutex   sync.Mutex
+	wg             sync.WaitGroup
+}
+
+func NewPortProxy(listener net.Listener, cfg *ProxyConfig) *PortProxy {
 	portProxy := &PortProxy{
-		upstreamAddress: upstreamAddr,
+		config:          cfg,
 		listener:        listener,
 		quit:            make(chan struct{}),
 		activeListeners: make(map[int]net.Listener),
+		activeUDPConns:  make(map[int]*net.UDPConn),
 	}
 	return portProxy
 }
 
 func (p *PortProxy) Start() error {
-	logrus.Infof("Proxy server started accepting on %s, forwarding to %s", p.listener.Addr(), p.upstreamAddress)
+	logrus.Infof("Proxy server started accepting on %s, forwarding to %s", p.listener.Addr(), p.config.UpstreamAddress)
 	for {
 		conn, err := p.listener.Accept()
 		if err != nil {
@@ -65,6 +75,12 @@ func (p *PortProxy) Start() error {
 	}
 }
 
+func (p *PortProxy) UDPPortMappings() map[int]*net.UDPConn {
+	p.udpConnMutex.Lock()
+	defer p.udpConnMutex.Unlock()
+	return p.activeUDPConns
+}
+
 func (p *PortProxy) handleEvent(conn net.Conn) {
 	defer conn.Close()
 
@@ -73,47 +89,144 @@ func (p *PortProxy) handleEvent(conn net.Conn) {
 		logrus.Errorf("port server decoding received payload error: %s", err)
 		return
 	}
-	p.execListener(pm)
+	p.exec(pm)
 }
 
-func (p *PortProxy) execListener(pm types.PortMapping) {
-	for _, portBindings := range pm.Ports {
-		for _, portBinding := range portBindings {
-			logrus.Debugf("received the following port: [%s] from portMapping: %+v", portBinding.HostPort, pm)
-			port, err := nat.ParsePort(portBinding.HostPort)
-			if err != nil {
-				logrus.Errorf("parsing port error: %s", err)
-				continue
-			}
-			if pm.Remove {
-				p.mutex.Lock()
-				if listener, exist := p.activeListeners[port]; exist {
-					logrus.Debugf("closing listener for port: %d", port)
-					if err := listener.Close(); err != nil {
-						logrus.Errorf("error closing listener for port [%s]: %s", portBinding.HostPort, err)
-					}
-				}
-				delete(p.activeListeners, port)
-				p.mutex.Unlock()
-				continue
-			}
-			addr := net.JoinHostPort(portBinding.HostIP, portBinding.HostPort)
-			l, err := net.Listen("tcp", addr)
-			if err != nil {
-				logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
-				continue
-			}
-			p.mutex.Lock()
-			p.activeListeners[port] = l
-			p.mutex.Unlock()
-			logrus.Debugf("created listener for: %s", addr)
-			go p.acceptTraffic(l, portBinding.HostPort)
+func (p *PortProxy) exec(pm types.PortMapping) {
+	for portProto, portBindings := range pm.Ports {
+		logrus.Debugf("received the following port: [%s] and protocol: [%s] from portMapping: %+v", portProto.Port(), portProto.Proto(), pm)
+
+		switch gvisorTypes.TransportProtocol(portProto.Proto()) {
+		case gvisorTypes.TCP:
+			p.handleTCP(portBindings, pm.Remove)
+		case gvisorTypes.UDP:
+			p.handleUDP(portBindings, pm.Remove)
+		default:
+			logrus.Warnf("unsupported protocol: [%s]", portProto.Proto())
 		}
 	}
 }
 
+func (p *PortProxy) handleUDP(portBindings []nat.PortBinding, remove bool) {
+	for _, portBinding := range portBindings {
+		port, err := nat.ParsePort(portBinding.HostPort)
+		if err != nil {
+			logrus.Errorf("parsing port error: %s", err)
+			continue
+		}
+		if remove {
+			p.udpConnMutex.Lock()
+			if udpConn, exist := p.activeUDPConns[port]; exist {
+				if err := udpConn.Close(); err != nil {
+					logrus.Errorf("error closing UDPConn for port [%s]: %s", portBinding.HostPort, err)
+				}
+			}
+			delete(p.activeUDPConns, port)
+			p.udpConnMutex.Unlock()
+			logrus.Debugf("closing UDPConn for port: %d", port)
+			continue
+		}
+
+		// the localAddress IP section can either be 0.0.0.0 or 127.0.0.1
+		localAddress := net.JoinHostPort(portBinding.HostIP, portBinding.HostPort)
+		sourceAddr, err := net.ResolveUDPAddr("udp", localAddress)
+		if err != nil {
+			logrus.Errorf("failed to resolve UDP source address [%s]: %s", sourceAddr, err)
+			continue
+		}
+
+		c, err := net.ListenUDP("udp", sourceAddr)
+		if err != nil {
+			logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
+			continue
+		}
+
+		forwardAddr := net.JoinHostPort(p.config.UpstreamAddress, portBinding.HostPort)
+		targetAddr, err := net.ResolveUDPAddr("udp", forwardAddr)
+		if err != nil {
+			c.Close()
+			logrus.Errorf("failed to resolve UDP target address [%s]: %s", targetAddr, err)
+			continue
+		}
+
+		p.udpConnMutex.Lock()
+		p.activeUDPConns[port] = c
+		p.udpConnMutex.Unlock()
+		logrus.Debugf("created UDPConn for: %v", sourceAddr)
+
+		go p.acceptUDPConn(c, targetAddr)
+	}
+}
+
+func (p *PortProxy) acceptUDPConn(sourceConn *net.UDPConn, targetAddr *net.UDPAddr) {
+	targetConn, err := net.DialUDP("udp", nil, targetAddr)
+	if err != nil {
+		logrus.Errorf("failed to connect to target address: %s : %s", targetAddr, err)
+		return
+	}
+	defer targetConn.Close()
+	p.wg.Add(1)
+	for {
+		b := make([]byte, p.config.UDPBufferSize)
+		n, addr, err := sourceConn.ReadFromUDP(b)
+		if err != nil && n == 0 {
+			logrus.Errorf("error reading UDP packet from source: %s : %s", addr, err)
+			if errors.Is(err, net.ErrClosed) {
+				p.wg.Done()
+				break
+			}
+			continue
+		}
+		logrus.Debugf("received %d data from %s", n, addr)
+
+		n, err = targetConn.Write(b[:n])
+		if err != nil {
+			logrus.Errorf("error forwarding UDP packet to target: %s : %s", targetAddr, err)
+			if errors.Is(err, net.ErrClosed) {
+				p.wg.Done()
+				break
+			}
+			continue
+		}
+		logrus.Debugf("sent %d data to %s", n, targetAddr)
+	}
+}
+
+func (p *PortProxy) handleTCP(portBindings []nat.PortBinding, remove bool) {
+	for _, portBinding := range portBindings {
+		port, err := nat.ParsePort(portBinding.HostPort)
+		if err != nil {
+			logrus.Errorf("parsing port error: %s", err)
+			continue
+		}
+		if remove {
+			p.listenerMutex.Lock()
+			if listener, exist := p.activeListeners[port]; exist {
+				logrus.Debugf("closing listener for port: %d", port)
+				if err := listener.Close(); err != nil {
+					logrus.Errorf("error closing listener for port [%s]: %s", portBinding.HostPort, err)
+				}
+			}
+			delete(p.activeListeners, port)
+			p.listenerMutex.Unlock()
+			continue
+		}
+		addr := net.JoinHostPort(portBinding.HostIP, portBinding.HostPort)
+		l, err := net.Listen("tcp", addr)
+		if err != nil {
+			logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
+			continue
+		}
+		p.listenerMutex.Lock()
+		p.activeListeners[port] = l
+		p.listenerMutex.Unlock()
+		logrus.Debugf("created listener for: %s", addr)
+		go p.acceptTraffic(l, portBinding.HostPort)
+	}
+}
+
 func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
-	forwardAddr := net.JoinHostPort(p.upstreamAddress, port)
+	forwardAddr := net.JoinHostPort(p.config.UpstreamAddress, port)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -124,7 +237,7 @@ func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
 			logrus.Errorf("port proxy listener failed to accept: %s", err)
 			continue
 		}
-		logrus.Debugf("port proxy accepted connection from %s", conn.RemoteAddr())
+		logrus.Debugf("port proxy accepted TCP connection from %s", conn.RemoteAddr())
 		p.wg.Add(1)
 
 		go func(conn net.Conn) {
@@ -138,6 +251,9 @@ func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
 func (p *PortProxy) Close() error {
 	// Close all the active listeners
 	p.cleanupListeners()
+
+	// Close all active UDP connections
+	p.cleanupUDPConns()
 
 	// Close the listener first to prevent new connections.
 	err := p.listener.Close()
@@ -155,7 +271,17 @@ func (p *PortProxy) Close() error {
 }
 
 func (p *PortProxy) cleanupListeners() {
+	p.listenerMutex.Lock()
+	defer p.listenerMutex.Unlock()
 	for _, l := range p.activeListeners {
 		_ = l.Close()
+	}
+}
+
+func (p *PortProxy) cleanupUDPConns() {
+	p.udpConnMutex.Lock()
+	defer p.udpConnMutex.Unlock()
+	for _, c := range p.activeUDPConns {
+		_ = c.Close()
 	}
 }

@@ -32,12 +32,15 @@ var (
 	logFile      string
 	socketFile   string
 	upstreamAddr string
+	udpBuffer    int
 )
 
 const (
 	defaultLogPath = "/var/log/wsl-proxy.log"
 	defaultSocket  = "/run/wsl-proxy.sock"
 	bridgeIPAddr   = "192.168.143.1"
+	// Set UDP buffer size to 8 MB
+	defaultUDPBufferSize = 8 * 1024 * 1024 // 8 MB in bytes
 )
 
 func main() {
@@ -45,6 +48,7 @@ func main() {
 	flag.StringVar(&logFile, "logfile", defaultLogPath, "path to the logfile for wsl-proxy process")
 	flag.StringVar(&socketFile, "socketFile", defaultSocket, "path to the .sock file for UNIX socket")
 	flag.StringVar(&upstreamAddr, "upstreamAddress", bridgeIPAddr, "IP address of the upstream server to forward to")
+	flag.IntVar(&udpBuffer, "udpBuffer", defaultUDPBufferSize, "max buffer size in bytes for UDP socket I/O")
 	flag.Parse()
 
 	setupLogging(logFile)
@@ -54,7 +58,11 @@ func main() {
 		logrus.Fatalf("failed to create listener for published ports: %s", err)
 		return
 	}
-	proxy := portproxy.NewPortProxy(socket, bridgeIPAddr)
+	proxyConfig := &portproxy.ProxyConfig{
+		UpstreamAddress: upstreamAddr,
+		UDPBufferSize:   udpBuffer,
+	}
+	proxy := portproxy.NewPortProxy(socket, proxyConfig)
 
 	// Handle graceful shutdown
 	sigCh := make(chan os.Signal, 1)
