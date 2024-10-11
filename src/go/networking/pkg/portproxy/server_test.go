@@ -82,7 +82,7 @@ func TestNewPortProxy(t *testing.T) {
 		Ports: nat.PortMap{
 			port: []nat.PortBinding{
 				{
-					HostIP:   testServerIP,
+					HostIP:   "127.0.0.1",
 					HostPort: testPort,
 				},
 			},
@@ -104,7 +104,7 @@ func TestNewPortProxy(t *testing.T) {
 		Ports: nat.PortMap{
 			port: []nat.PortBinding{
 				{
-					HostIP:   testServerIP,
+					HostIP:   "127.0.0.1",
 					HostPort: testPort,
 				},
 			},
