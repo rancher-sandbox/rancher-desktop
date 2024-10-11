@@ -75,6 +75,12 @@ func (p *PortProxy) Start() error {
 	}
 }
 
+func (p *PortProxy) UDPPortMappings() map[int]*net.UDPConn {
+	p.udpConnMutex.Lock()
+	defer p.udpConnMutex.Unlock()
+	return p.activeUDPConns
+}
+
 func (p *PortProxy) handleEvent(conn net.Conn) {
 	defer conn.Close()
 

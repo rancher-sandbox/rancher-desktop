@@ -24,18 +24,91 @@ import (
 	"net/http"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/portproxy"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/nettest"
 )
 
-func TestNewPortProxy(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
+func TestNewPortProxyUDP(t *testing.T) {
+	testServerIP, err := availableIP()
+	require.NoError(t, err, "cannot continue with the test since there are no available IP addresses")
 
+	remoteAddr := net.JoinHostPort(testServerIP, "0")
+	targetAddr, err := net.ResolveUDPAddr("udp", remoteAddr)
+	require.NoError(t, err)
+	targetConn, err := net.ListenUDP("udp", targetAddr)
+	require.NoError(t, err)
+
+	t.Logf("created the following UDP target listener: %s", targetConn.LocalAddr().String())
+
+	localListener, err := nettest.NewLocalListener("unix")
+	require.NoError(t, err)
+	defer localListener.Close()
+
+	proxyConfig := &portproxy.ProxyConfig{
+		UpstreamAddress: testServerIP,
+		UDPBufferSize:   1024,
+	}
+	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	go portProxy.Start()
+
+	_, testPort, err := net.SplitHostPort(targetConn.LocalAddr().String())
+	require.NoError(t, err)
+
+	port, err := nat.NewPort("udp", testPort)
+	require.NoError(t, err)
+
+	portMapping := types.PortMapping{
+		Remove: false,
+		Ports: nat.PortMap{
+			port: []nat.PortBinding{
+				{
+					HostIP:   "127.0.0.1",
+					HostPort: testPort,
+				},
+			},
+		},
+	}
+	t.Logf("sending the following portMapping to portProxy: %+v", portMapping)
+	err = marshalAndSend(localListener, portMapping)
+	require.NoError(t, err)
+
+	// indicate when UDP mappings are ready
+	for len(portProxy.UDPPortMappings()) == 0 {
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	t.Log("UDP port mappings are set up")
+
+	localAddr := net.JoinHostPort("127.0.0.1", testPort)
+	sourceAddr, err := net.ResolveUDPAddr("udp", localAddr)
+	require.NoError(t, err)
+	sourceConn, err := net.DialUDP("udp", nil, sourceAddr)
+	require.NoError(t, err)
+	t.Logf("dialing in to the following UDP connection: %s", localAddr)
+
+	expectedString := "this is what we expect"
+	_, err = sourceConn.Write([]byte(expectedString))
+	require.NoError(t, err)
+
+	targetConn.SetDeadline(time.Now().Add(time.Second * 5))
+
+	b := make([]byte, len(expectedString))
+	n, _, err := targetConn.ReadFromUDP(b)
+	require.NoError(t, err)
+	require.Equal(t, n, len(expectedString))
+	require.Equal(t, string(b), expectedString)
+
+	targetConn.Close()
+	sourceConn.Close()
+	portProxy.Close()
+}
+
+func TestNewPortProxyTCP(t *testing.T) {
 	expectedResponse := "called the upstream server"
 
 	testServerIP, err := availableIP()
@@ -88,6 +161,7 @@ func TestNewPortProxy(t *testing.T) {
 			},
 		},
 	}
+	t.Logf("sending the following portMapping to portProxy: %+v", portMapping)
 	err = marshalAndSend(localListener, portMapping)
 	require.NoError(t, err)
 
