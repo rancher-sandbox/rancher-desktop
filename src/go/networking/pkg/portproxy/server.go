@@ -271,12 +271,16 @@ func (p *PortProxy) Close() error {
 }
 
 func (p *PortProxy) cleanupListeners() {
+	p.listenerMutex.Lock()
+	defer p.listenerMutex.Unlock()
 	for _, l := range p.activeListeners {
 		_ = l.Close()
 	}
 }
 
 func (p *PortProxy) cleanupUDPConns() {
+	p.udpConnMutex.Lock()
+	defer p.udpConnMutex.Unlock()
 	for _, c := range p.activeUDPConns {
 		_ = c.Close()
 	}
