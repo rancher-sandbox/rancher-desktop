@@ -52,7 +52,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
 
     - name: Upload macOS aarch-64 artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: application-macos-aarch64.zip
         if-no-files-found: error
@@ -60,7 +60,7 @@ jobs:
           *.aarch64.dmg
           *.aarch64.dmg.sha512sum
     - name: Upload macOS x86_64 artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: application-macos-x86_64.zip
         if-no-files-found: error
@@ -68,7 +68,7 @@ jobs:
           *.x86_64.dmg
           *.x86_64.dmg.sha512sum
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: application-win32.zip
         if-no-files-found: error
@@ -76,7 +76,7 @@ jobs:
           *.msi
           *.msi.sha512sum
     - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: application-linux.zip
         if-no-files-found: error
@@ -97,7 +97,7 @@ jobs:
         - { platform: linux, runs-on: ubuntu-latest }
     runs-on: ${{ matrix.runs-on }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       with:
         persist-credentials: false
 
@@ -136,13 +136,13 @@ jobs:
         >> "$GITHUB_ENV"
 
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
       with:
         name: application-${{ matrix.platform }}.zip
     - run: ${{ env.EXEC_COMMAND }} .github/workflows/smoke-test/smoke-test.sh
       shell: bash
     - name: Upload logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
