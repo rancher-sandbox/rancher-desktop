@@ -130,6 +130,7 @@ clusterscanreport
 clustertemplates
 cmds
 cni
+codeql
 commandline
 commitish
 composefile
@@ -572,6 +573,7 @@ orsection
 osacompile
 osascript
 osc
+ossf
 oswald
 osx
 osxkeychain
