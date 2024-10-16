@@ -32,7 +32,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/rancher-sandbox/rancher-desktop-host-resolver/pkg/vmsock"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/vsock"
 )
@@ -189,7 +188,7 @@ func vsockHandshake(ctx context.Context, handshakePort uint32, signature string)
 		return nil, fmt.Errorf("trying to find WSL GUID failed: %w", err)
 	}
 	logrus.Infof("successful handshake, waiting for a vsock connection from VMGUID: %v on Port: %v", vmGUID.String(), vsockListenPort)
-	ln, err := vmsock.Listen(vmGUID, vsockListenPort)
+	ln, err := vsock.Listen(vmGUID, vsockListenPort)
 	if err != nil {
 		return nil, fmt.Errorf("creating vsock listener for host-switch failed: %w", err)
 	}

@@ -11,7 +11,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
-	github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5
 	github.com/rancher-sandbox/rancher-desktop/src/go/guestagent v0.0.0-20240911164922-5443d1a11011
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
@@ -37,7 +36,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220712232929-bac01a348036 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
