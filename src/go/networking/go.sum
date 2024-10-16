@@ -56,12 +56,8 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5 h1:F5m5WXPRjm/dNuz/cYZI+DjWwLGFyAVJglxG4ian61I=
-github.com/rancher-sandbox/rancher-desktop-host-resolver v0.1.5/go.mod h1:J4GpCMQjKJNvZVNtNsSIo6PfqkC8j5woaOcAgWg7NRA=
 github.com/rancher-sandbox/rancher-desktop/src/go/guestagent v0.0.0-20240911164922-5443d1a11011 h1:X8nBYGrEv9MLQWSnigWUBKHc0z6ztVZ1f8NKo1ixt3Q=
 github.com/rancher-sandbox/rancher-desktop/src/go/guestagent v0.0.0-20240911164922-5443d1a11011/go.mod h1:b1WHkY6WX8vcR97BCWkMRXXdjaQvmJvtc42mJZrx61I=
-github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220712232929-bac01a348036 h1:VyDF9gpc9ILr8LT9fgat8x6KG3bom5hRQlbxecdzDqs=
-github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper v0.0.0-20220712232929-bac01a348036/go.mod h1:ARlcfTpJPOEcGXWwYoi5f/k7zb8g35ib3MiFtIlKaUc=
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
 github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=
 github.com/rogpeppe/go-internal v1.12.0/go.mod h1:E+RYuTGaKKdloAfM02xzb0FW3Paa99yedzYV+kq4uf4=
