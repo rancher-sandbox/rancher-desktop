@@ -67,7 +67,7 @@ type vsockListener struct {
 func (v *vsockListener) Accept() (net.Conn, error) {
 	fd, sa, err := unix.Accept4(v.fd, unix.SOCK_NONBLOCK)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error accept()ing connection: %w", err)
 	}
 	return newVsockConn(uintptr(fd), &v.local, sockaddrToVsock(sa)), nil
 }

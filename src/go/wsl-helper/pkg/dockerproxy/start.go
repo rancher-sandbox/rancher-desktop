@@ -19,6 +19,7 @@ limitations under the License.
 package dockerproxy
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -28,6 +29,7 @@ import (
 	"time"
 
 	"github.com/linuxkit/virtsock/pkg/vsock"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
@@ -127,11 +129,23 @@ func Start(port uint32, dockerSocket string, args []string) error {
 		return err
 	}
 
+	for {
+		err := listenOnVsock(port, dockerSocket)
+		if err != nil {
+			logrus.Fatalf("docker-proxy: error listening on vsock: %s", err)
+			break
+		}
+	}
+	return nil
+}
+
+func listenOnVsock(port uint32, dockerSocket string) error {
 	listener, err := platform.ListenVsockNonBlocking(vsock.CIDAny, port)
 	if err != nil {
 		return fmt.Errorf("could not listen on vsock port %08x: %w", port, err)
 	}
 	defer listener.Close()
+	logrus.Infof("docker-proxy: listening on vsock port %08x", port)
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, unix.SIGTERM)
@@ -143,7 +157,11 @@ func Start(port uint32, dockerSocket string, args []string) error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("error accepting client connection: %s\n", err)
+			logrus.Errorf("docker-proxy: error accepting client connection: %s", err)
+			if errors.Is(err, unix.EINVAL) {
+				// This does not recover; return and re-listen
+				return nil
+			}
 			continue
 		}
 		go handleConnection(conn, dockerSocket)
@@ -155,13 +173,13 @@ func Start(port uint32, dockerSocket string, args []string) error {
 func handleConnection(conn net.Conn, dockerPath string) {
 	dockerConn, err := net.Dial("unix", dockerPath)
 	if err != nil {
-		fmt.Printf("could not connect to docker: %s\n", err)
+		logrus.Errorf("could not connect to docker: %s", err)
 		return
 	}
 	defer dockerConn.Close()
 	err = util.Pipe(conn, dockerConn)
 	if err != nil {
-		fmt.Printf("error forwarding docker connection: %s\n", err)
+		logrus.Errorf("error forwarding docker connection: %s", err)
 		return
 	}
 }
