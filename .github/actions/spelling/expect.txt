@@ -46,6 +46,7 @@ authdata
 Authenticode
 authprovider
 auths
+autobuild
 autocrlf
 auxww
 Awop
@@ -398,6 +399,7 @@ KNOWNFOLDERID
 kontainer
 kontainerdriver
 KONTANIER
+kotlin
 ksh
 Kubectx
 kuberlr
