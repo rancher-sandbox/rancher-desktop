@@ -10352,9 +10352,9 @@ node-abi@^3.45.0:
     semver "^7.3.5"
 
 node-addon-api@8:
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-8.2.0.tgz#ad92cacecc86834304053fd0089f718b72ff4e65"
-  integrity sha512-qnyuI2ROiCkye42n9Tj5aX1ns7rzj6n7zW1XReSnLSL9v/vbLeR6fJq6PU27YU/ICfYw6W7Ouk/N7cysWu/hlw==
+  version "8.2.1"
+  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-8.2.1.tgz#43a993f110b88e22ba48bcd65e16b92165a6b002"
+  integrity sha512-vmEOvxwiH8tlOcv4SyE8RH34rI5/nWVaigUeAUPawC6f0+HoDthwI0vkMu4tbtsZrXq6QXFfrkhjofzKEs5tpA==
 
 node-addon-api@^1.6.3:
   version "1.7.2"
