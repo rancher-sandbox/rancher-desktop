@@ -1,6 +1,6 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/rdctl
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/adrg/xdg v0.5.0
