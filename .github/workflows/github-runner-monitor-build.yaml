@@ -16,13 +16,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       with:
         persist-credentials: false
         sparse-checkout: |
           src/go/github-runner-monitor
           .github/workflows/config
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
       with:
         go-version-file: go.work
         cache-dependency-path: src/go/github-runner-monitor/go.sum
@@ -31,12 +31,12 @@ jobs:
       env:
         CGO_ENABLED: '0'
         GOWORK: off
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: github-runner-linux
         path: src/go/github-runner-monitor/github-runner-monitor
         if-no-files-found: error
-    - uses: golangci/golangci-lint-action@v6.1.1
+    - uses: golangci/golangci-lint-action@971e284b6050e8a5849b72094c50ab08da042db8 # v6.1.1
       # This is only safe because this workflow does not allow writing
       with:
         args: --config=${{ github.workspace }}/.github/workflows/config/.golangci.yaml  --verbose --timeout 3m
