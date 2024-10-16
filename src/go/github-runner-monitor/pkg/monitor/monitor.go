@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v55/github"
+	"github.com/google/go-github/v66/github"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/github-runner-monitor/pkg/machines"
 	"github.com/sirupsen/logrus"
 )
