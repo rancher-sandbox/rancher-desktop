@@ -19,7 +19,6 @@ package directories
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -42,43 +41,6 @@ func InvokeWin32WithBuffer(cb func(size int) error) error {
 		}
 		size *= 2
 	}
-}
-
-// GetApplicationDirectory returns the installation directory of the application.
-func GetApplicationDirectory() (string, error) {
-	var exePath string
-	err := InvokeWin32WithBuffer(func(bufSize int) error {
-		buf := make([]uint16, bufSize)
-		n, err := windows.GetModuleFileName(windows.Handle(0), &buf[0], uint32(bufSize))
-		if err != nil {
-			return err
-		}
-		if n == uint32(bufSize) {
-			// If the buffer is too small, GetModuleFileName returns the buffer size,
-			// and the result includes the null character. If the buffer is large
-			// enough, GetModuleFileName returns the string length, _excluding_ the
-			// null character.
-			if buf[bufSize-1] == 0 {
-				// The buffer contains a null character
-				return windows.ERROR_INSUFFICIENT_BUFFER
-			}
-		}
-		exePath = windows.UTF16ToString(buf[:n])
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	// Given the path to the exe, find its directory, and drop the
-	// "resources\win32\bin" suffix (possibly with another "resources" in front).
-	resultDir := filepath.Dir(exePath)
-	for _, part := range []string{"bin", "win32", "resources"} {
-		for filepath.Base(resultDir) == part {
-			resultDir = filepath.Dir(resultDir)
-		}
-	}
-	return resultDir, nil
 }
 
 func GetLocalAppDataDirectory() (string, error) {
