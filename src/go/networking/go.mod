@@ -46,3 +46,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
 )
+
+replace inet.af/tcpproxy => github.com/inetaf/tcpproxy v0.0.0-20221017015627-91f861402626
