@@ -48,10 +48,7 @@ module.exports = {
       'process.client':       JSON.stringify(true),
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
 
-      'nuxt.publicRuntimeConfig': JSON.stringify({
-        featureDiagnosticsFixes: process.env.RD_ENV_DIAGNOSTICS_FIXES === '1',
-        featureExtensions:       true,
-      }),
+      'nuxt.publicRuntimeConfig': JSON.stringify({ featureDiagnosticsFixes: process.env.RD_ENV_DIAGNOSTICS_FIXES === '1' }),
     }]);
 
     config.module.rule('vue').use('vue-loader').tap((options) => {
