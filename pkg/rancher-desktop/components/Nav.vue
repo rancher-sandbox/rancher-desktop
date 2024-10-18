@@ -28,25 +28,23 @@
         </NuxtLink>
       </li>
     </ul>
-    <template v-if="featureExtensions">
-      <hr v-if="extensionsWithUI.length">
-      <div class="nav-extensions">
-        <template v-for="extension in extensionsWithUI">
-          <nuxt-link
-            :key="extension.id"
-            :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
-            :to="extensionRoute(extension)"
-          >
-            <nav-item :id="`extension:${extension.id}`">
-              <template #before>
-                <nav-icon-extension :extension-id="extension.id" />
-              </template>
-              {{ extension.metadata.ui['dashboard-tab'].title }}
-            </nav-item>
-          </nuxt-link>
-        </template>
-      </div>
-    </template>
+    <hr v-if="extensionsWithUI.length">
+    <div class="nav-extensions">
+      <template v-for="extension in extensionsWithUI">
+        <nuxt-link
+          :key="extension.id"
+          :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
+          :to="extensionRoute(extension)"
+        >
+          <nav-item :id="`extension:${extension.id}`">
+            <template #before>
+              <nav-icon-extension :extension-id="extension.id" />
+            </template>
+            {{ extension.metadata.ui['dashboard-tab'].title }}
+          </nav-item>
+        </nuxt-link>
+      </template>
+    </div>
     <div class="nav-button-container">
       <dashboard-button
         data-testid="dashboard-button"
@@ -135,11 +133,6 @@ export default Vue.extend({
     };
   },
   computed: {
-    featureExtensions(): boolean {
-      const nuxt: NuxtApp = (this as any).$nuxt;
-
-      return !!nuxt.$config.featureExtensions;
-    },
     extensionsWithUI(): { id: string, metadata: ExtensionWithUI }[] {
       const allExtensions: { id: string, metadata: ExtensionMetadata }[] = (this as any).extensions;
 
