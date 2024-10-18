@@ -403,7 +403,7 @@ containerEngine:
   options:
     moby:
       label: dockerd (moby)
-      description: Docker API; use with Docker CLI and k3d.
+      description: Docker API; use with Docker CLI.
     containerd:
       label: containerd
       description: Namespaces for container images; use with nerdctl.
