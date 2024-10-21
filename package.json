@@ -162,7 +162,7 @@
     "octokit": "3.2.1",
     "ps-tree": "1.2.0",
     "raw-loader": "4.0.2",
-    "sass": "1.80.2",
+    "sass": "1.80.3",
     "sass-loader": "16.0.2",
     "ts-jest": "29.2.5",
     "ts-loader": "^9.5.1",
