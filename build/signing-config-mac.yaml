@@ -15,7 +15,7 @@ entitlements:
     entitlements:
     - com.apple.security.cs.allow-jit
   - paths:
-    - Contents/Resources/resources/darwin/lima/bin/limactl.ventura
+    - Contents/Resources/resources/darwin/lima/bin/limactl
     entitlements:
     - com.apple.security.virtualization
   - paths:
@@ -45,7 +45,6 @@ entitlements:
 constraints:
 - paths:
   - Contents/Resources/resources/darwin/lima/bin/limactl
-  - Contents/Resources/resources/darwin/lima/bin/limactl.ventura
   self:
     team-identifier: '${AC_TEAMID}'
 
