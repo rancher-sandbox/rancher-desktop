@@ -56,17 +56,8 @@ export class Lima implements Dependency, GitHubDependency {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     let platform: string = context.platform;
 
-    // If the name of the forward compatible limactl binary changes or the
-    // binary is built with a newer version of xcode please update, the
-    // fwdCompatLimactlBin or fwdCompatLimactlDarwinVer
-    // constants in backend/lima.ts.
-    const fwdCompatLimactlBin = 'limactl.ventura';
-
     if (platform === 'darwin') {
-      platform = 'macos-11.amd64';
-      if (process.env.M1) {
-        platform = `macos-11.arm64`;
-      }
+      platform = `macos-13.${ process.env.M1 ? 'arm64' : 'amd64' }`;
     } else {
       platform = 'linux.amd64';
     }
@@ -95,34 +86,6 @@ export class Lima implements Dependency, GitHubDependency {
         }
       });
     });
-
-    // Download and install forward compatible limactl binary built for the newest Darwin versions
-    if (context.platform === 'darwin') {
-      platform = platform.replace('macos-11', 'macos-12');
-      const url = `${ baseUrl }/v${ context.versions.lima }/lima.${ platform }.tar.gz`;
-      const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
-      const tarPath = path.join(context.resourcesDir, context.platform, `lima.${ platform }.v${ context.versions.lima }.tgz`);
-
-      await download(url, tarPath, {
-        expectedChecksum,
-        checksumAlgorithm: 'sha512',
-        access:            fs.constants.W_OK,
-      });
-
-      const limactlChild = childProcess.spawn('/usr/bin/tar',
-        ['-xf', tarPath, '-s', `/limactl/${ fwdCompatLimactlBin }/`, '--exclude', 'lima-guestagent*'],
-        { cwd: limaDir, stdio: 'inherit' });
-
-      await new Promise<void>((resolve, reject) => {
-        limactlChild.on('exit', (code, signal) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(new Error(`Limactl extract failed with ${ code || signal }`));
-          }
-        });
-      });
-    }
   }
 
   async getAvailableVersions(): Promise<string[]> {
@@ -286,9 +249,8 @@ export class AlpineLimaISO implements Dependency, GitHubDependency {
   async getAvailableVersions(): Promise<AlpineLimaISOVersion[]> {
     const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const releases = response.data;
-    const versions = await Promise.all(releases.map(this.assembleAlpineLimaISOVersionFromGitHubRelease));
 
-    return versions;
+    return await Promise.all(releases.map(this.assembleAlpineLimaISOVersionFromGitHubRelease));
   }
 
   versionToTagName(version: AlpineLimaISOVersion): string {
