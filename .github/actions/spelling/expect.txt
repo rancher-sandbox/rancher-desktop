@@ -130,6 +130,7 @@ clusterscanprofile
 clusterscanreport
 clustertemplates
 cmds
+CNCF
 cni
 codeql
 commandline
@@ -237,6 +238,7 @@ ERRFILE
 errgroup
 Errorln
 Errorw
+errwrap
 estargz
 ESXi
 etcdbackup
@@ -301,6 +303,7 @@ googlegke
 googleoauth
 gopacket
 gosec
+GOTOOLCHAIN
 govet
 govmm
 GOWORK
@@ -471,6 +474,7 @@ magog
 mailcatch
 mariadb
 marshel
+maxdepth
 mcapps
 mcnulty
 messageformat
@@ -479,6 +483,7 @@ metricsection
 Mgmt
 mikey
 milli
+mindepth
 Minidriver
 minimizable
 missingok
@@ -620,6 +625,7 @@ portmap
 portmapping
 portproxy
 portstorage
+Postgre
 postgresql
 postrotate
 POSTROUTING
