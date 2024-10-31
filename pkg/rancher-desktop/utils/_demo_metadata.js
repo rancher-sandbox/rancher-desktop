@@ -1,25 +1,25 @@
 export default {
   'ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui': {
-    CreatedTime: '2024-10-02T21:08:38.117591549Z',
+    CreatedTime: '2024-10-31T21:57:40.06488917Z',
     Categories:  [
       'genai',
       'llm',
     ],
     LatestVersion: {
-      Tag:                'latest',
-      ManifestListDigest: 'sha256:cad83a840ba30fb1c151a0bb8d24220cd2fddcea13a1d7f13219ab01f63caf30',
+      Tag:                'v0.0.1-hackweek-preview',
+      ManifestListDigest: 'sha256:7fafe29e975bbad30a233f27cb8252da6e4ebc89158f82b80ac556bfd12fb1f0',
       Platforms:          [
         {
           OS:      'linux',
           Arch:    'amd64',
-          Size:    29413493,
-          Created: '2024-10-02T21:08:38.117591549Z',
+          Size:    23991283,
+          Created: '2024-10-31T21:57:40.06488917Z',
         },
         {
           OS:      'linux',
           Arch:    'arm64',
-          Size:    29562162,
-          Created: '2024-10-02T21:19:16.860949264Z',
+          Size:    24382144,
+          Created: '2024-10-31T22:02:55.339097457Z',
         },
       ],
       Labels: {
