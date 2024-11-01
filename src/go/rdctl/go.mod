@@ -3,7 +3,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/rdctl
 go 1.22.0
 
 require (
-	github.com/adrg/xdg v0.5.2
+	github.com/adrg/xdg v0.5.3
 	github.com/docker/cli v27.3.1+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
