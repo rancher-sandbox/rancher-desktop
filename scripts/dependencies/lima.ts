@@ -106,14 +106,14 @@ export class Lima implements Dependency, GitHubDependency {
 
 export class Qemu implements Dependency, GitHubDependency {
   name = 'qemu';
-  githubOwner = 'mook-as';
-  githubRepo = 'qemu-packaging';
+  githubOwner = 'rancher-sandbox';
+  githubRepo = 'rancher-desktop-qemu';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
 
-    const url = `${ baseUrl }/v${ context.versions.qemu }/qemu-${ context.platform }-${ arch }.tar.gz`;
+    const url = `${ baseUrl }/v${ context.versions.qemu }/qemu-${ context.versions.qemu }-${ context.platform }-${ arch }.tar.gz`;
     const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
     const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
     const tarPath = path.join(context.resourcesDir, context.platform, `qemu.v${ context.versions.qemu }.tgz`);
