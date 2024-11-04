@@ -7,7 +7,7 @@ toolchain go1.22.4
 require (
 	github.com/Masterminds/log-go v1.0.0
 	github.com/containerd/containerd v1.7.23
-	github.com/containerd/containerd/api v1.7.19
+	github.com/containerd/containerd/api v1.8.0
 	github.com/containers/gvisor-tap-vsock v0.8.0
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
