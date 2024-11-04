@@ -92,7 +92,7 @@ jobs:
     steps:
     - name: check-spelling
       id: spelling
-      uses: check-spelling/check-spelling@2c9e4a85102fa9b6df3cb8bb5a8dc8bdc2fb2fea # v0.0.23
+      uses: check-spelling/check-spelling@67debf50669c7fc76fc8f5d7f996384535a72b77 # v0.0.24
       with:
         suppress_push_for_open_pull_request: 1
         checkout: true
@@ -147,7 +147,7 @@ jobs:
       cancel-in-progress: false
     steps:
     - name: apply spelling updates
-      uses: check-spelling/check-spelling@2c9e4a85102fa9b6df3cb8bb5a8dc8bdc2fb2fea # v0.0.23
+      uses: check-spelling/check-spelling@67debf50669c7fc76fc8f5d7f996384535a72b77 # v0.0.24
       with:
         experimental_apply_changes_via_bot: 1
         checkout: true
