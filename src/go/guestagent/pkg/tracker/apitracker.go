@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
@@ -104,7 +105,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 				&types.ExposeRequest{
 					Local:    ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
 					Remote:   ipPortBuilder(a.tapInterfaceIP, portBinding.HostPort),
-					Protocol: types.TransportProtocol(portProto.Proto()),
+					Protocol: types.TransportProtocol(strings.ToLower(portProto.Proto())),
 				})
 			if err != nil {
 				errs = append(errs, fmt.Errorf("exposing %+v failed: %w", portBinding, err))
@@ -164,7 +165,7 @@ func (a *APITracker) Remove(containerID string) error {
 			err = a.apiForwarder.Unexpose(
 				&types.UnexposeRequest{
 					Local:    ipPortBuilder(a.determineHostIP(portBinding.HostIP), portBinding.HostPort),
-					Protocol: types.TransportProtocol(portProto.Proto()),
+					Protocol: types.TransportProtocol(strings.ToLower(portProto.Proto())),
 				})
 			if err != nil {
 				errs = append(errs,
