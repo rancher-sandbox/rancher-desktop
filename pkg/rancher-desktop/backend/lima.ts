@@ -749,13 +749,21 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   protected static get limaEnv() {
     const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
+    const libDir = path.join(paths.resources, os.platform(), 'lima', 'lib');
     const VMNETDir = path.join(VMNET_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
     const newPath = [binDir, VMNETDir].concat(...pathList).filter(x => x);
 
+    // LD_LIBRARY_PATH is set for running from an extracted Linux zip file, that includes QEMU,
+    // to make sure QEMU dependencies are loaded from the bundled lib directory,
+    // LD_LIBRARY_PATH is ignored on macOS.
     return {
-      ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter),
+      ...process.env, LIMA_HOME: paths.lima, LD_LIBRARY_PATH: libDir, PATH: newPath.join(path.delimiter),
     };
+  }
+
+  protected static get qemuImgEnv() {
+    return { ...process.env, LD_LIBRARY_PATH: path.join(paths.resources, os.platform(), 'lima', 'lib') };
   }
 
   /**
@@ -925,7 +933,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   protected async imageInfo(fileName: string): Promise<QEMUImageInfo> {
     try {
-      const { stdout } = await this.spawnWithCapture(LimaBackend.qemuImg, 'info', '--output=json', '--force-share', fileName);
+      const { stdout } = await this.spawnWithCapture(LimaBackend.qemuImg, { env: LimaBackend.qemuImgEnv },
+        'info', '--output=json', '--force-share', fileName);
 
       return JSON.parse(stdout) as QEMUImageInfo;
     } catch {
@@ -936,7 +945,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   protected async convertToRaw(fileName: string): Promise<void> {
     const rawFileName = `${ fileName }.raw`;
 
-    await this.spawnWithCapture(LimaBackend.qemuImg, 'convert', fileName, rawFileName);
+    await this.spawnWithCapture(LimaBackend.qemuImg, { env: LimaBackend.qemuImgEnv },
+      'convert', fileName, rawFileName);
     await fs.promises.unlink(fileName);
     await fs.promises.rename(rawFileName, fileName);
   }
