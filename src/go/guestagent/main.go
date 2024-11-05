@@ -34,6 +34,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
@@ -60,10 +61,11 @@ var (
 )
 
 const (
-	socketInterval       = 5 * time.Second
-	socketRetryTimeout   = 2 * time.Minute
-	dockerSocketFile     = "/var/run/docker.sock"
-	containerdSocketFile = "/run/k3s/containerd/containerd.sock"
+	iptablesUpdateInterval = 3 * time.Second
+	socketInterval         = 5 * time.Second
+	socketRetryTimeout     = 2 * time.Minute
+	dockerSocketFile       = "/var/run/docker.sock"
+	containerdSocketFile   = "/run/k3s/containerd/containerd.sock"
 )
 
 func main() {
@@ -184,12 +186,20 @@ func main() {
 				k8sServiceListenerIP,
 				portTracker)
 			if err != nil {
-				return fmt.Errorf("error watching services: %w", err)
+				return fmt.Errorf("kubernetes service watcher failed: %w", err)
 			}
 
 			return nil
 		})
 	}
+
+	group.Go(func() error {
+		err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
+		if err != nil {
+			return fmt.Errorf("iptables port forwarding failed: %w", err)
+		}
+		return nil
+	})
 
 	if err := group.Wait(); err != nil {
 		log.Fatal(err)
