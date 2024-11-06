@@ -1326,10 +1326,10 @@
   resolved "https://registry.yarnpkg.com/@docker/extension-api-client-types/-/extension-api-client-types-0.3.4.tgz#0393c98ecad937f95ea805615a917060358aa384"
   integrity sha512-cDdD+dNSE0XCvQiw0R4j9aHpK+p6E7vi+z7RbKXfxwuQpfEMoeNCKFlp4W7K3XT78iWmoPz3DxQtZEAe4VJ1oQ==
 
-"@electron/asar@3.2.15", "@electron/asar@^3.2.7":
-  version "3.2.15"
-  resolved "https://registry.yarnpkg.com/@electron/asar/-/asar-3.2.15.tgz#b75ee015db4de446d498f83e05c22640ac62ea18"
-  integrity sha512-AerUbRZpkDVRs58WP32t4U2bx85sfwRkQI8RMIEi6s2NBE++sgjsgAAMtXvnfTISKUkXo386pxFW7sa7WtMCrw==
+"@electron/asar@3.2.16", "@electron/asar@^3.2.7":
+  version "3.2.16"
+  resolved "https://registry.yarnpkg.com/@electron/asar/-/asar-3.2.16.tgz#7bc6c33f915a8e4d900389d9aa17f0cead67a76a"
+  integrity sha512-5M6EyPGmU35bYdXGOvjlzLE5bAVPN2nbcNtHPMt407KR8wNoHj+36AhUTwGUSZ03u2LleAp4qz9ga9lfNxak8g==
   dependencies:
     commander "^5.0.0"
     glob "^7.1.6"
