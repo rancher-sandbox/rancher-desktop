@@ -1,5 +1,5 @@
 ---
-apiVersion: core.spinoperator.dev/v1alpha1
+apiVersion: core.spinkube.dev/v1alpha1
 kind: SpinAppExecutor
 metadata:
   name: containerd-shim-spin
