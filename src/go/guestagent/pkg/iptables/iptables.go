@@ -114,24 +114,24 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 //
 //nolint:nonamedreturns
 func comparePorts(oldPorts, newPorts []iptables.Entry) (added, removed []iptables.Entry) {
-	mRaw := make(map[string]iptables.Entry, len(oldPorts))
-	mStillExist := make(map[string]bool, len(oldPorts))
-	for _, f := range oldPorts {
-		k := entryToString(f)
-		mRaw[k] = f
-		mStillExist[k] = false
+	oldPortMap := make(map[string]iptables.Entry, len(oldPorts))
+	portExistMap := make(map[string]bool, len(oldPorts))
+	for _, oldPort := range oldPorts {
+		key := entryToString(oldPort)
+		oldPortMap[key] = oldPort
+		portExistMap[key] = false
 	}
-	for _, f := range newPorts {
-		k := entryToString(f)
-		mStillExist[k] = true
-		if _, ok := mRaw[k]; !ok {
-			added = append(added, f)
+	for _, newPort := range newPorts {
+		key := entryToString(newPort)
+		portExistMap[key] = true
+		if _, ok := oldPortMap[key]; !ok {
+			added = append(added, newPort)
 		}
 	}
-	for k, stillExist := range mStillExist {
+	for k, stillExist := range portExistMap {
 		if !stillExist {
-			if x, ok := mRaw[k]; ok {
-				removed = append(removed, x)
+			if entry, ok := oldPortMap[k]; ok {
+				removed = append(removed, entry)
 			}
 		}
 	}
