@@ -36,6 +36,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/procnet"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"golang.org/x/sync/errgroup"
@@ -62,6 +63,7 @@ var (
 
 const (
 	iptablesUpdateInterval = 3 * time.Second
+	procNetScanInterval    = 3 * time.Second
 	socketInterval         = 5 * time.Second
 	socketRetryTimeout     = 2 * time.Minute
 	dockerSocketFile       = "/var/run/docker.sock"
@@ -197,6 +199,14 @@ func main() {
 		err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
 		if err != nil {
 			return fmt.Errorf("iptables port forwarding failed: %w", err)
+		}
+		return nil
+	})
+
+	group.Go(func() error {
+		err := procnet.ForwardPorts(ctx, portTracker, procNetScanInterval)
+		if err != nil {
+			return fmt.Errorf("scanning /proc/net/{tcp, udp} failed: %w", err)
 		}
 		return nil
 	})
