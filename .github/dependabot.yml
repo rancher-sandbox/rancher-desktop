@@ -6,7 +6,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
 
   # Maintain dependencies for npm
@@ -14,7 +14,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     ignore:
       - # Needs to be updated along with NodeJS version.
@@ -62,7 +62,7 @@ updates:
     directory: "/src/go/docker-credential-none"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "jandubois" ]
 
@@ -70,7 +70,7 @@ updates:
     directory: "/src/go/extension-proxy"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
@@ -78,7 +78,7 @@ updates:
     directory: "/src/go/github-runner-monitor"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "mook-as" ]
 
@@ -86,7 +86,7 @@ updates:
     directory: "/src/go/guestagent"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
@@ -94,7 +94,7 @@ updates:
     directory: "/src/go/mock-wsl"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
@@ -102,7 +102,7 @@ updates:
     directory: "/src/go/nerdctl-stub"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
@@ -110,7 +110,7 @@ updates:
     directory: "/src/go/nerdctl-stub/generate"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
@@ -118,7 +118,7 @@ updates:
     directory: "/src/go/networking"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
 
@@ -126,7 +126,7 @@ updates:
     directory: "/src/go/rdctl"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "jandubois" ]
 
@@ -134,6 +134,6 @@ updates:
     directory: "/src/go/wsl-helper"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 12
     labels: ["component/dependencies"]
     reviewers: [ "Nino-K" ]
