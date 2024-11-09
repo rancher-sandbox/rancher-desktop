@@ -98,7 +98,7 @@ spec:
       runtimeClassName: spin
       containers:
       - name: hello-spin
-        image: ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
+        image: ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello:v0.13.0
         command: ["/"]
 EOF
 }

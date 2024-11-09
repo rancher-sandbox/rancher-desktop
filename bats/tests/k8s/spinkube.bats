@@ -21,7 +21,7 @@ local_setup() {
 }
 
 @test 'deploy app to kubernetes' {
-    spin kube deploy --from ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
+    spin kube deploy --from ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello:v0.13.0
 }
 
 # TODO replace ingress with port-forwarding
