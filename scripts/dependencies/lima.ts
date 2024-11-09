@@ -12,6 +12,7 @@ import { download, downloadTarGZ, getResource } from '../lib/download';
 import {
   DownloadContext, Dependency, AlpineLimaISOVersion, findChecksum, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
 } from 'scripts/lib/dependencies';
+import { simpleSpawn } from 'scripts/simple_process';
 
 /**
  * rcompareVersions implementation for version strings that look like 0.1.2.rd3????.
@@ -103,44 +104,26 @@ export class Lima implements Dependency, GitHubDependency {
   }
 }
 
-export class LimaAndQemu implements Dependency, GitHubDependency {
-  name = 'limaAndQemu';
+export class Qemu implements Dependency, GitHubDependency {
+  name = 'qemu';
   githubOwner = 'rancher-sandbox';
-  githubRepo = 'lima-and-qemu';
+  githubRepo = 'rancher-desktop-qemu';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    let platform: string = context.platform;
+    const arch = context.isM1 ? 'aarch64' : 'x86_64';
 
-    if (platform === 'darwin') {
-      platform = 'macos';
-      if (process.env.M1) {
-        platform = `macos-aarch64`;
-      }
-    }
-    const url = `${ baseUrl }/v${ context.versions.limaAndQemu }/lima-and-qemu.${ platform }.tar.gz`;
+    const url = `${ baseUrl }/v${ context.versions.qemu }/qemu-${ context.versions.qemu }-${ context.platform }-${ arch }.tar.gz`;
     const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
     const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
-    const tarPath = path.join(context.resourcesDir, context.platform, `lima-and-qemu.v${ context.versions.limaAndQemu }.tgz`);
+    const tarPath = path.join(context.resourcesDir, context.platform, `qemu.v${ context.versions.qemu }.tgz`);
 
     await download(url, tarPath, {
       expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
 
-    const child = childProcess.spawn('/usr/bin/tar',
-      ['-xf', tarPath, '--exclude', 'lima*', '--exclude', 'vde/bin', '--exclude', 'vde/lib', '--exclude', 'socket_vmnet'],
-      { cwd: limaDir, stdio: 'inherit' });
-
-    await new Promise<void>((resolve, reject) => {
-      child.on('exit', (code, signal) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Lima-and-QEMU extract failed with ${ code || signal }`));
-        }
-      });
-    });
+    await simpleSpawn('/usr/bin/tar', ['-xf', tarPath], { cwd: limaDir });
   }
 
   async getAvailableVersions(): Promise<string[]> {
