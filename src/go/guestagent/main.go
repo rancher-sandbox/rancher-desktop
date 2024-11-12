@@ -204,11 +204,11 @@ func main() {
 	})
 
 	group.Go(func() error {
-		err := procnet.ForwardPorts(ctx, portTracker, procNetScanInterval)
+		procScanner, err := procnet.NewProcNetScanner(ctx, portTracker, procNetScanInterval)
 		if err != nil {
 			return fmt.Errorf("scanning /proc/net/{tcp, udp} failed: %w", err)
 		}
-		return nil
+		return procScanner.ForwardPorts()
 	})
 
 	if err := group.Wait(); err != nil {
