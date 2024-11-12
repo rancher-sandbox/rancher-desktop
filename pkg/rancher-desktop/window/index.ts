@@ -189,8 +189,10 @@ export function openMain() {
 }
 
 let view: WebContentsView | undefined;
-let extId = '';
-let extPath = '';
+/** The extension that has been navigated to (but might not be loaded yet). */
+let currentExtension: { id: string, relPath: string } | undefined;
+/** The extension that has been loaded. */
+let lastOpenExtension: { id: string, relPath: string } | undefined;
 
 /**
  * Attaches a browser view to the main window
@@ -249,14 +251,18 @@ const updateView = (window: Electron.BrowserWindow, payload: { top: number, righ
  * Navigates to the current desired extension
  */
 function extensionNavigate() {
-  if (!extId || !extPath) {
+  if (!currentExtension) {
     return;
   }
+  const { id, relPath } = currentExtension;
 
-  const url = `x-rd-extension://${ extId }/ui/dashboard-tab/${ extPath }`;
+  const url = `x-rd-extension://${ id }/ui/dashboard-tab/${ relPath }`;
 
   view?.webContents
     .loadURL(url)
+    .then(() => {
+      lastOpenExtension = currentExtension;
+    })
     .then(() => {
       view?.webContents.setZoomLevel(getWindow('main')?.webContents.getZoomLevel() ?? 0);
     })
@@ -340,7 +346,9 @@ function extensionGetContentAreaListener(_event: Electron.IpcMainEvent, payload:
   }
 
   updateView(window, payload);
-  extensionNavigate();
+  if (currentExtension && (currentExtension.id !== lastOpenExtension?.id || currentExtension.relPath !== lastOpenExtension?.relPath)) {
+    extensionNavigate();
+  }
 }
 
 /**
@@ -357,8 +365,7 @@ export function openExtension(id: string, relPath: string) {
     return;
   }
 
-  extId = id;
-  extPath = relPath;
+  currentExtension = { id, relPath };
 
   if (!ipcMain.eventNames().includes('ok:extensions/getContentArea')) {
     ipcMain.on('ok:extensions/getContentArea', extensionGetContentAreaListener);
@@ -383,6 +390,8 @@ export function openExtension(id: string, relPath: string) {
  * Removes the extension's browser view from the main window
  */
 export function closeExtension() {
+  currentExtension = undefined;
+  lastOpenExtension = undefined;
   if (!view) {
     return;
   }
