@@ -459,6 +459,7 @@ listenertracker
 listenport
 loadbalancer
 loblaw
+localnet
 logdir
 logdna
 loglines
@@ -620,6 +621,7 @@ podmonitor
 podsecuritypolicytemplate
 poppins
 POptions
+portbinding
 portforward
 portmap
 portmapping
@@ -636,6 +638,8 @@ prakhar
 prebuilds
 Privs
 PROCARGS
+procnet
+procnettcp
 progresskey
 projectroletemplatebinding
 Prometheis
@@ -786,6 +790,7 @@ svclb
 SVCNAME
 SYD
 syscalls
+sysctl
 sysdeps
 sysfs
 tarballs

@@ -38,7 +38,7 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, scanInterval tim
 	for {
 		select {
 		case <-ctx.Done():
-			log.Errorf("Procnet scanner context cancelled: %s", ctx.Err())
+			log.Errorf("procnet scanner context cancelled: %s", ctx.Err())
 			return nil
 		case <-ticker.C:
 			entries, err := procnettcp.ParseFiles()
@@ -62,7 +62,7 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, scanInterval tim
 						port: bindings,
 					})
 					if err != nil {
-						log.Errorf("procnet scanner faild to add port: %s", err)
+						log.Errorf("procnet scanner failed to add port: %s", err)
 					}
 				}
 			}
@@ -73,7 +73,7 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, scanInterval tim
 					log.Infof("procnet scanner removed port: %s -> %+v", port, previousBindings)
 					err := tracker.Remove(generateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())))
 					if err != nil {
-						log.Errorf("procnet scanner faild to remove port: %s", err)
+						log.Errorf("procnet scanner failed to remove port: %s", err)
 					}
 				}
 			}
