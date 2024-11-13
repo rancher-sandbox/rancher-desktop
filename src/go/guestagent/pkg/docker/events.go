@@ -158,6 +158,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 
 			if err := e.portTracker.Add(container.ID, portMap); err != nil {
 				log.Errorf("registering already running containers failed: %v", err)
+				continue
 			}
 
 			for _, netSettings := range container.NetworkSettings.Networks {
