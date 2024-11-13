@@ -99,9 +99,9 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 				}
 				name := entryToString(p)
 				if err := tracker.Add(generateID(name), portMap); err != nil {
-					log.Errorf("failed to listen %q: %w", name, err)
+					log.Errorf("failed to listen %s: %s", name, err)
 				} else {
-					log.Infof("opened listener for %q", name)
+					log.Infof("opened listener for %s", name)
 				}
 			}
 		}

@@ -154,13 +154,12 @@ func WatchForServices(
 			case event := <-eventCh:
 				if event.deleted {
 					if err := portTracker.Remove(string(event.UID)); err != nil {
-						log.Errorw("failed to delete a port from tracker", log.Fields{
-							"error":     err,
-							"UID":       event.UID,
-							"ports":     event.portMapping,
-							"namespace": event.namespace,
-							"name":      event.name,
-						})
+						log.Errorf("failed to delete port mapping: %v from tracker UID: %v namespace: %s name: %s failed: %s",
+							event.portMapping,
+							event.UID,
+							event.namespace,
+							event.name,
+							err)
 					} else {
 						log.Debugf("kubernetes service: port mapping deleted %s/%s:%v",
 							event.namespace, event.name, event.portMapping)
@@ -168,22 +167,22 @@ func WatchForServices(
 				} else {
 					portMapping, err := createPortMapping(event.portMapping, k8sServiceListenerIP)
 					if err != nil {
-						log.Errorw("failed to create port mapping", log.Fields{
-							"error":     err,
-							"ports":     event.portMapping,
-							"namespace": event.namespace,
-							"name":      event.name,
-						})
+						log.Errorf("failed to create port mapping: %v from tracker UID: %v namespace: %s name: %s failed: %s",
+							event.portMapping,
+							event.UID,
+							event.namespace,
+							event.name,
+							err)
 
 						continue
 					}
 					if err := portTracker.Add(string(event.UID), portMapping); err != nil {
-						log.Errorw("failed to add port mapping", log.Fields{
-							"error":     err,
-							"ports":     event.portMapping,
-							"namespace": event.namespace,
-							"name":      event.name,
-						})
+						log.Errorf("failed to add port mapping: %v from tracker UID: %v namespace: %s name: %s failed: %s",
+							event.portMapping,
+							event.UID,
+							event.namespace,
+							event.name,
+							err)
 					} else {
 						log.Debugf("kubernetes service: port mapping added %s/%s:%v",
 							event.namespace, event.name, event.portMapping)
