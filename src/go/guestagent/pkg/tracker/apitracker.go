@@ -116,19 +116,22 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 			tmpPortBinding = append(tmpPortBinding, portBinding)
 		}
 
-		successfullyForwarded[portProto] = tmpPortBinding
+		if len(tmpPortBinding) != 0 {
+			successfullyForwarded[portProto] = tmpPortBinding
+		}
 	}
 
-	a.portStorage.add(containerID, successfullyForwarded)
-	portMapping := guestagentTypes.PortMapping{
-		Remove: false,
-		Ports:  successfullyForwarded,
-	}
-	log.Debugf("forwarding to wsl-proxy to add port mapping: %+v", portMapping)
-
-	err := a.wslProxyForwarder.Send(portMapping)
-	if err != nil {
-		return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+	if len(successfullyForwarded) != 0 {
+		a.portStorage.add(containerID, successfullyForwarded)
+		portMapping := guestagentTypes.PortMapping{
+			Remove: false,
+			Ports:  successfullyForwarded,
+		}
+		log.Debugf("forwarding to wsl-proxy to add port mapping: %+v", portMapping)
+		err := a.wslProxyForwarder.Send(portMapping)
+		if err != nil {
+			return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+		}
 	}
 
 	if len(errs) != 0 {
@@ -176,14 +179,16 @@ func (a *APITracker) Remove(containerID string) error {
 		}
 	}
 
-	portMapping := guestagentTypes.PortMapping{
-		Remove: true,
-		Ports:  portMap,
-	}
-	log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
-	err := a.wslProxyForwarder.Send(portMapping)
-	if err != nil {
-		return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+	if len(portMap) != 0 {
+		portMapping := guestagentTypes.PortMapping{
+			Remove: true,
+			Ports:  portMap,
+		}
+		log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
+		err := a.wslProxyForwarder.Send(portMapping)
+		if err != nil {
+			return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+		}
 	}
 
 	if len(errs) != 0 {
