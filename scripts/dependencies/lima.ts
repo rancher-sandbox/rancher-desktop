@@ -137,14 +137,7 @@ export class Qemu implements Dependency, GitHubDependency {
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semver1 = semver.coerce(version1);
-    const semver2 = semver.coerce(version2);
-
-    if (semver1 === null || semver2 === null) {
-      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
-    }
-
-    return semver.rcompare(semver1, semver2);
+    return rcompareVersions(version1, version2);
   }
 }
 
