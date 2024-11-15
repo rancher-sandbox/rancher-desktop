@@ -15,22 +15,7 @@ limitations under the License.
 // of the ports during various container event types e.g start, stop
 package tracker
 
-import (
-	"context"
-	"net"
-
-	"github.com/docker/go-connections/nat"
-)
-
-// NetTracker is the interface that wraps the methods
-// that are used to manage Add/Remove tcp listeners.
-type NetTracker interface {
-	// AddListener creates a TCP listener for a given IP and Port.
-	AddListener(ctx context.Context, ip net.IP, port int) error
-
-	// RemoveListener removes a TCP listener for a given IP and Port.
-	RemoveListener(ctx context.Context, ip net.IP, port int) error
-}
+import "github.com/docker/go-connections/nat"
 
 // Tracker is the interface that includes all the functions that
 // are used to keep track of the port mappings plus NetTracker methods
@@ -49,6 +34,4 @@ type Tracker interface {
 
 	// RemoveAll removes all the available portMappings in the storage.
 	RemoveAll() error
-
-	NetTracker
 }
