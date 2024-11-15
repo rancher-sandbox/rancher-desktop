@@ -51,7 +51,6 @@ type APITracker struct {
 	tapInterfaceIP    string
 	portStorage       *portStorage
 	apiForwarder      *forwarder.APIForwarder
-	*ListenerTracker
 }
 
 // NewAPITracker creates a new instance of APITracker with the specified configuration.
@@ -75,7 +74,6 @@ func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, b
 		tapInterfaceIP:    tapIfaceIP,
 		portStorage:       newPortStorage(),
 		apiForwarder:      forwarder.NewAPIForwarder(baseURL),
-		ListenerTracker:   NewListenerTracker(),
 	}
 }
 

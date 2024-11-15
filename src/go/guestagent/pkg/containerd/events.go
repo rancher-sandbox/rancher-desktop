@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
 	"os/exec"
 	"reflect"
 	"regexp"
@@ -124,8 +123,6 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 
-				e.updateListener(ctx, ports, e.portTracker.AddListener)
-
 			case "/containers/update":
 				cuEvent := &events.ContainerUpdate{}
 				err := proto.Unmarshal(envelope.Event.GetValue(), cuEvent)
@@ -150,15 +147,12 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						e.updateListener(ctx, ports, e.portTracker.RemoveListener)
 						err = e.portTracker.Add(cuEvent.ID, ports)
 						if err != nil {
 							log.Errorf("failed to add port mapping from container update event: %v", err)
 
 							continue
 						}
-
-						e.updateListener(ctx, ports, e.portTracker.AddListener)
 					}
 
 					continue
@@ -182,8 +176,6 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 						log.Errorf("removing port mapping from tracker failed: %v", err)
 					}
 				}
-
-				e.updateListener(ctx, portMapToDelete, e.portTracker.RemoveListener)
 			}
 
 		case err := <-errCh:
@@ -264,7 +256,6 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
 			continue
 		}
 
-		e.updateListener(ctx, ports, e.portTracker.AddListener)
 		log.Debugf("initialized container %s task status: %+v with ports: %+v", c.ID(), status, ports)
 	}
 }
@@ -284,34 +275,6 @@ func (e *EventMonitor) Close() error {
 	}
 
 	return finalErr
-}
-
-func (e *EventMonitor) updateListener(
-	ctx context.Context,
-	portMappings nat.PortMap,
-	action func(context.Context, net.IP, int) error,
-) {
-	for _, portBindings := range portMappings {
-		for _, portBinding := range portBindings {
-			port, err := strconv.Atoi(portBinding.HostPort)
-			if err != nil {
-				log.Errorf("port conversion for [%+v] error: %v", portBinding, err)
-
-				continue
-			}
-
-			// We always need to use INADDR_ANY here since any other addresses used here
-			// can cause a wrong entry in iptables and will not be routable.
-			if err := action(ctx, net.IPv4zero, port); err != nil {
-				log.Errorf("updating listener for IP: [%s] and Port: [%s] failed: %v",
-					net.IPv4zero,
-					portBinding.HostPort,
-					err)
-
-				continue
-			}
-		}
-	}
 }
 
 // execIptablesRules creates an additional DNAT rule to allow service exposure on
