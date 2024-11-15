@@ -1,5 +1,5 @@
 lima: 1.0.0.rd3
-qemu: 9.1.0.rd3
+qemu: 9.1.0.rd4
 socketVMNet: 1.1.7
 alpineLimaISO:
   isoVersion: 0.2.41.rd1
