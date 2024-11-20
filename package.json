@@ -157,7 +157,7 @@
     "nan": "2.22.0",
     "node-addon-api": "8",
     "node-gyp": "10.2.0",
-    "node-gyp-build": "4.8.3",
+    "node-gyp-build": "4.8.4",
     "node-loader": "^2.1.0",
     "octokit": "3.2.1",
     "ps-tree": "1.2.0",
