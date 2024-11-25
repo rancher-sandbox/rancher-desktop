@@ -322,9 +322,15 @@ docker_context_exists() {
 
 get_service_pid() {
     local service_name=$1
-    RD_TIMEOUT=10s run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
-    assert_success || return
-    RD_TIMEOUT=10s rdshell cat "$output"
+    if [[ ${RD_OS:-} == opensuse ]]; then
+        RD_TIMEOUT=10s run rdshell systemctl show --property MainPID --value "$service_name.service"
+        assert_success || return
+        echo "$output"
+    else
+        RD_TIMEOUT=10s run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
+        assert_success || return
+        RD_TIMEOUT=10s rdshell cat "$output"
+    fi
 }
 
 assert_service_pid() {
@@ -350,12 +356,27 @@ assert_service_status() {
     local service_name=$1
     local expect=$2
 
-    RD_TIMEOUT=10s run rdsudo rc-service "$service_name" status
-    # rc-service report non-zero status (3) when the service is stopped
-    if [[ $expect == started ]]; then
-        assert_success || return
+    if [[ ${RD_OS:-} == opensuse ]]; then
+        local mapped_status
+        case $expect in
+        started) mapped_status=active ;;
+        stopped) mapped_status=inactive ;;
+        *) fail "Status $expect is unsupported" ;;
+        esac
+        RD_TIMEOUT=10s run rdsudo systemctl is-active "$service_name"
+        # `systemctl is-active` returns 0 on active, and non-0 on non-active.
+        if [[ $expect == started ]]; then
+            assert_success || return
+        fi
+        assert_line "$mapped_status"
+    else
+        RD_TIMEOUT=10s run rdsudo rc-service "$service_name" status
+        # rc-service report non-zero status (3) when the service is stopped
+        if [[ $expect == started ]]; then
+            assert_success || return
+        fi
+        assert_output --partial "status: ${expect}"
     fi
-    assert_output --partial "status: ${expect}"
 }
 
 wait_for_service_status() {
