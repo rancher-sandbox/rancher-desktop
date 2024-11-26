@@ -10,7 +10,7 @@ helm: 3.16.3
 dockerCLI: 27.3.1
 dockerBuildx: 0.18.0
 dockerCompose: 2.30.3
-golangci-lint: 1.62.0
+golangci-lint: 1.62.2
 trivy: 0.57.1
 steve: 0.1.0-beta9
 rancherDashboard: desktop-v2.7.0.beta.1
