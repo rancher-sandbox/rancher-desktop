@@ -102,10 +102,23 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 						log.Errorf("adding port mapping to tracker failed: %v", err)
 					}
 
-					err = createLoopbackIPtablesRules(container.NetworkSettings.DefaultNetworkSettings.IPAddress,
-						container.NetworkSettings.NetworkSettingsBase.Ports)
-					if err != nil {
-						log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
+					// If the container's NetworkSettings.Networks map is not empty, it indicates that the container
+					// is connected to a Docker Compose network. In this case, we should inspect the map and
+					// configure the loopback address for each container's assigned IP address.
+					if len(container.NetworkSettings.Networks) != 0 {
+						for networkName, network := range container.NetworkSettings.Networks {
+							err = createLoopbackIPtablesRules(ctx, true, network.IPAddress,
+								container.NetworkSettings.NetworkSettingsBase.Ports)
+							if err != nil {
+								log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain for docker compose network: %s failed: %v", networkName, err)
+							}
+						}
+					} else {
+						err = createLoopbackIPtablesRules(ctx, false, container.NetworkSettings.DefaultNetworkSettings.IPAddress,
+							container.NetworkSettings.NetworkSettingsBase.Ports)
+						if err != nil {
+							log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
+						}
 					}
 				}
 			case stopEvent, dieEvent:
@@ -160,11 +173,10 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 				log.Errorf("registering already running containers failed: %v", err)
 				continue
 			}
-
 			for _, netSettings := range container.NetworkSettings.Networks {
-				err = createLoopbackIPtablesRules(netSettings.IPAddress, portMap)
+				err = createLoopbackIPtablesRules(ctx, false, netSettings.IPAddress, portMap)
 				if err != nil {
-					log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
+					log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain during container initialization failed: %v", err)
 				}
 			}
 		}
@@ -223,17 +235,47 @@ func validatePortMapping(portMap nat.PortMap) {
 // DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
 // We enter the following rule after the existing rule:
 // DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
-func createLoopbackIPtablesRules(containerIP string, portMappings nat.PortMap) error {
+func createLoopbackIPtablesRules(ctx context.Context, isComposeNetowrk bool, containerIP string, portMappings nat.PortMap) error {
 	var errs []error
 
 	for portProto, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
 			if portBinding.HostIP == "127.0.0.1" {
+				// Docker Compose, by default, creates the following rules in the DOCKER chain:
+				//   DNAT       tcp  --  anywhere             localhost            tcp dpt:80 to:172.18.0.2:80
+				//   DNAT       tcp  --  anywhere             anywhere             tcp dpt:80 to::80
+				//
+				// The second rule can be problematic because it uses a wildcard IPv6 address (`::`), which can match
+				// any incoming TCP traffic destined for port 80. Since there may be no service listening on IPv6,
+				// this can lead to a TCP RST (reset) response sent back to the client.
+				//
+				// To prevent this issue, we must delete the IPv6 rule before adding our following custom rule:
+				//   DNAT       tcp  --  anywhere             anywhere             tcp dpt:80 to:172.18.0.2:80
+				//
+				// Note: Even if the `enable_ipv6` property is set to `false` in Docker's compose configuration,
+				// Docker still creates the wildcard IPv6 rule in iptables. Therefore, we need to manually
+				// remove it to avoid this issue.
+				if isComposeNetowrk {
+					iptableComposeDeleteCmd := exec.CommandContext(ctx,
+						"iptables",
+						"--table", "nat",
+						"--delete", "DOCKER",
+						"--protocol", portProto.Proto(),
+						"--jump", "DNAT",
+						"--dport", portBinding.HostPort,
+						"--to-destination", fmt.Sprintf(":%s", portProto.Port()))
+					if err := iptableComposeDeleteCmd.Run(); err != nil {
+						errs = append(errs, err)
+					}
+
+				}
+
 				//nolint:gosec // no security concern with the potentially tainted command arguments
-				iptableCmd := exec.Command("iptables",
+				iptableCmd := exec.CommandContext(ctx,
+					"iptables",
 					"--table", "nat",
 					"--append", "DOCKER",
-					"--protocol", "tcp",
+					"--protocol", portProto.Proto(),
 					"--destination", "0.0.0.0/0",
 					"--jump", "DNAT",
 					"--dport", portBinding.HostPort,
