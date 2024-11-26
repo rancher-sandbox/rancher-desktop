@@ -24,19 +24,12 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-)
-
-const (
-	// Docker API events
-	startEvent = "start"
-	stopEvent  = "stop"
-	// die event is a confirmation of kill event.
-	dieEvent = "die"
 )
 
 // EventMonitor monitors the Docker engine's Event API
@@ -58,8 +51,8 @@ func NewEventMonitor(portTracker tracker.Tracker) (*EventMonitor, error) {
 	}
 
 	return &EventMonitor{
-		dockerClient: cli,
-		portTracker:  portTracker,
+		dockerClient:          cli,
+		portTracker:           portTracker,
 		iptablesRulesToDelete: make(map[string]*exec.Cmd),
 	}, nil
 }
@@ -67,12 +60,12 @@ func NewEventMonitor(portTracker tracker.Tracker) (*EventMonitor, error) {
 // MonitorPorts scans Docker's event stream API
 // for container start/stop events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{
+	msgCh, errCh := e.dockerClient.Events(ctx, events.ListOptions{
 		Filters: filters.NewArgs(
-			filters.Arg("type", "container"),
-			filters.Arg("event", startEvent),
-			filters.Arg("event", stopEvent),
-			filters.Arg("event", dieEvent)),
+			filters.Arg("type", string(types.ContainerObject)),
+			filters.Arg("event", string(events.ActionStart)),
+			filters.Arg("event", string(events.ActionStop)),
+			filters.Arg("event", string(events.ActionDie))),
 	})
 
 	if err := e.initializeRunningContainers(ctx); err != nil {
@@ -99,7 +92,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				container.NetworkSettings.NetworkSettingsBase.Ports)
 
 			switch event.Action {
-			case startEvent:
+			case events.ActionStart:
 				if len(container.NetworkSettings.NetworkSettingsBase.Ports) != 0 {
 					validatePortMapping(container.NetworkSettings.NetworkSettingsBase.Ports)
 					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
@@ -109,7 +102,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 					e.createIptablesRuleForContainer(ctx, container)
 				}
-			case stopEvent, dieEvent:
+			case events.ActionStop, events.ActionDie:
 				err := e.portTracker.Remove(container.ID)
 				if err != nil {
 					log.Errorf("remove port mapping from tracker failed: %s", err)
@@ -121,7 +114,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					if err := deleteIptablesCmd.Run(); err != nil {
 						log.Errorf("deleting loopback iptables rule failed: %s [%s]", err, stderr.String())
 					}
-					delete(e.iptablesRulesToDelete,container.ID)
+					delete(e.iptablesRulesToDelete, container.ID)
 				}
 			}
 		case err := <-errCh:
