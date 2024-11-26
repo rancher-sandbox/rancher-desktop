@@ -15,8 +15,8 @@ limitations under the License.
 package containerd
 
 import (
+	"bytes"
 	"context"
-	"crypto/sha512"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,17 +29,15 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
 	containerdNamespace "github.com/containerd/containerd/namespaces"
+	"github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"google.golang.org/protobuf/proto"
 )
 
 const (
-	namespaceKey   = "nerdctl/namespace"
-	portsKey       = "nerdctl/ports"
-	maxHashLen     = sha512.Size * 2
-	maxChainLength = 28
-	chainPrefix    = "CNI-"
+	namespaceKey = "nerdctl/namespace"
+	portsKey     = "nerdctl/ports"
 )
 
 var (
@@ -333,13 +331,8 @@ func createLoopbackIPtablesRules(containerID, namespace, pid, port, destinationP
 	}
 
 	log.Debugf("found the ip address: %s for containerID: %s", eth0IP, containerID)
-
-	// create the corresponding chain name, e.g CNI-DN-xxxxxx
-	// (where xxxxxx is a function of the ContainerID and network name)
-	// https://www.cni.dev/plugins/current/meta/portmap/#dnat
-	// https://github.com/containernetworking/plugins/blob/2b097c5a62dacfd2f9ea4268faa4fc04bd5343f5/pkg/utils/utils.go#L39
 	cID := fmt.Sprintf("%s-%s", namespace, containerID)
-	chainName := mustFormatHashWithPrefix(maxChainLength, chainPrefix+"DN-", networkConfig.Name+cID)
+	chainName := utils.MustFormatChainNameWithPrefix(networkConfig.Name, cID, "DN-")
 
 	log.Debugf("determined iptables chain name: %s for containerID: %s", chainName, containerID)
 
@@ -354,8 +347,12 @@ func createLoopbackIPtablesRules(containerID, namespace, pid, port, destinationP
 		"--jump", "DNAT",
 		"--dport", destinationPort,
 		"--to-destination", fmt.Sprintf("%s:%s", eth0IP, port))
-
-	return iptableCmd.Run()
+	var stderr bytes.Buffer
+	iptableCmd.Stderr = &stderr
+	if err := iptableCmd.Run(); err != nil {
+		return fmt.Errorf("%w [%s]", err, stderr.String())
+	}
+	return nil
 }
 
 func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {
@@ -421,21 +418,6 @@ func extractIPAddress(pid string) (string, error) {
 	}
 
 	return matches[1], nil
-}
-
-// ported from:
-// https://github.com/containernetworking/plugins/blob/2b097c5a62dacfd2f9ea4268faa4fc04bd5343f5/pkg/utils/utils.go#L39
-// however module requires Go 1.20
-// mustFormatHashWithPrefix returns a string of given length that begins with the
-// given prefix. It is filled with entropy based on the given string toHash.
-func mustFormatHashWithPrefix(length int, prefix string, toHash string) string {
-	if len(prefix) >= length || length > maxHashLen {
-		panic("invalid length")
-	}
-
-	output := sha512.Sum512([]byte(toHash))
-
-	return fmt.Sprintf("%s%x", prefix, output)[:length]
 }
 
 // NormalizeHostIP checks if the provided IP address is valid.
