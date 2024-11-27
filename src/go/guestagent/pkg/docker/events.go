@@ -28,8 +28,8 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
 // EventMonitor monitors the Docker engine's Event API
@@ -188,7 +188,7 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   containerd.NormalizeHostIP(port.IP),
+			HostIP:   utils.NormalizeHostIP(port.IP),
 			HostPort: strconv.Itoa(int(port.PublicPort)),
 		}
 
@@ -256,7 +256,7 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", containerd.ErrExecIptablesRule, errs)
+		return fmt.Errorf("%w: %+v", utils.ErrExecIptablesRule, errs)
 	}
 
 	return nil
@@ -346,7 +346,7 @@ func deleteComposeNetworkIPv6Rule(ctx context.Context, portMappings nat.PortMap)
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", containerd.ErrExecIptablesRule, errs)
+		return fmt.Errorf("%w: %+v", utils.ErrExecIptablesRule, errs)
 	}
 
 	return nil

@@ -32,6 +32,7 @@ import (
 	"github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	rdUtils "github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -39,11 +40,6 @@ const (
 	namespaceKey = "nerdctl/namespace"
 	portsKey     = "nerdctl/ports"
 	networkKey   = "nerdctl/networks"
-)
-
-var (
-	ErrExecIptablesRule  = errors.New("failed updating iptables rules")
-	ErrIPAddressNotFound = errors.New("IP address not found in line")
 )
 
 // EventMonitor monitors the Containerd API
@@ -314,7 +310,7 @@ func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerI
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrExecIptablesRule, errs)
+		return fmt.Errorf("%w: %+v", rdUtils.ErrExecIptablesRule, errs)
 	}
 
 	return nil
@@ -399,7 +395,7 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   NormalizeHostIP(port.HostIP),
+			HostIP:   rdUtils.NormalizeHostIP(port.HostIP),
 			HostPort: strconv.Itoa(port.HostPort),
 		}
 		if pb, ok := portMap[portMapKey]; ok {
@@ -425,20 +421,10 @@ func extractIPAddress(pid string) (string, error) {
 	matches := rx.FindStringSubmatch(string(output))
 	segments := 2
 	if len(matches) < segments {
-		return "", ErrIPAddressNotFound
+		return "", rdUtils.ErrIPAddressNotFound
 	}
 
 	return matches[1], nil
-}
-
-// NormalizeHostIP checks if the provided IP address is valid.
-// The valid options are "127.0.0.1" and "0.0.0.0". If the input is "127.0.0.1",
-// it returns "127.0.0.1". Any other address will be mapped to "0.0.0.0".
-func NormalizeHostIP(ip string) string {
-	if ip == "127.0.0.1" || ip == "localhost" {
-		return ip
-	}
-	return "0.0.0.0"
 }
 
 // Port is representing nerdctl/ports entry in the

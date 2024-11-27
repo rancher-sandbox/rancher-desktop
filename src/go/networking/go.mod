@@ -30,11 +30,12 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/insomniacslk/dhcp v0.0.0-20240710054256-ddd8a41251c9 // indirect
+	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/miekg/dns v1.1.62 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/qdm12/dns/v2 v2.0.0-rc6 // indirect
