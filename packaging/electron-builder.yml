@@ -10,7 +10,9 @@ electronLanguages: [ en-US ]
 extraResources:
 - resources/
 - '!resources/darwin/lima*.tgz'
+- '!resources/darwin/qemu*.tgz'
 - '!resources/linux/lima*.tgz'
+- '!resources/linux/qemu*.tgz'
 - '!resources/linux/staging/'
 - '!resources/win32/staging/'
 - '!resources/host/'
