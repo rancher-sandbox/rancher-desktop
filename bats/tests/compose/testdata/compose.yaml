@@ -1,5 +1,10 @@
 services:
-  web: 
+  nginx:
+    container_name: nginx
+    image: nginx
+    ports:
+    - '127.0.0.1:8080:80'
+  web:
     build:
       context: app
     # flask requires SIGINT to stop gracefully
