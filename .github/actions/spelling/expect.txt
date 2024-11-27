@@ -378,6 +378,7 @@ iwr
 jan
 jetstack
 jitconfig
+JOBOBJECT
 joycelin
 jpe
 jsmith
@@ -770,6 +771,7 @@ ssd
 sshfs
 sslip
 Ssr
+STARTUPINFO
 statefulset
 stoinks
 storageclass

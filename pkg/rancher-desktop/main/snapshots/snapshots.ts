@@ -116,7 +116,7 @@ class SnapshotsImpl {
 
           if (pid) {
             console.log(`Found process ${ command } with PID ${ pid }`);
-            await spawnFile(exe, ['kill-process', `--pid=${ pid }`], { stdio: console });
+            await spawnFile(exe, ['process', 'kill', `--pid=${ pid }`], { stdio: console });
           }
         }
       } else {
