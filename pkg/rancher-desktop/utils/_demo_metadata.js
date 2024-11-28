@@ -6,20 +6,20 @@ export default {
       'llm',
     ],
     LatestVersion: {
-      Tag:                'v0.0.1-hackweek-preview',
-      ManifestListDigest: 'sha256:7fafe29e975bbad30a233f27cb8252da6e4ebc89158f82b80ac556bfd12fb1f0',
+      Tag:                'v0.0.1',
+      ManifestListDigest: 'sha256:b51023520230fb21f5b10773bdd2dc936d320754d353c932b4f342c3b32c9394',
       Platforms:          [
         {
           OS:      'linux',
           Arch:    'amd64',
-          Size:    23991283,
-          Created: '2024-10-31T21:57:40.06488917Z',
+          Size:    24043507,
+          Created: '2024-11-28T19:17:26.91232165Z',
         },
         {
           OS:      'linux',
           Arch:    'arm64',
-          Size:    24382144,
-          Created: '2024-10-31T22:02:55.339097457Z',
+          Size:    24433856,
+          Created: '2024-11-28T19:22:42.255849506Z',
         },
       ],
       Labels: {
