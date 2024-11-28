@@ -61,7 +61,6 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 			}
 			return err
 		}
-		log.Debugf("iptable found ports %+v", newPorts)
 
 		// Diff from existing forwarded ports
 		added, removed := comparePorts(ports, newPorts)
@@ -71,8 +70,10 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 		for _, p := range removed {
 			name := entryToString(p)
 			if err := tracker.Remove(generateID(name)); err != nil {
-				log.Warnf("failed to close listener %q: %w", name, err)
+				log.Warnf("iptables scanner failed to remove portmap for %s: %w", name, err)
+				continue
 			}
+			log.Infof("iptables scanner removed portmap for %s", name)
 		}
 
 		portMap := make(nat.PortMap)
@@ -99,10 +100,9 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 				}
 				name := entryToString(p)
 				if err := tracker.Add(generateID(name), portMap); err != nil {
-					log.Errorf("failed to listen %s: %s", name, err)
-				} else {
-					log.Infof("opened listener for %s", name)
+					log.Errorf("iptables scanner failed to forward portmap for %s: %s", name, err)
 				}
+				log.Infof("iptables scanner forwarded portmap for %s", name)
 			}
 		}
 	}
