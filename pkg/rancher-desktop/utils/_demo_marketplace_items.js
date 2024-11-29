@@ -2,13 +2,13 @@ export const demoMarketplace = {
   summaries: [
     {
       id:                    '',
-      name:                  'Open WebUI Extension',
+      name:                  'Open WebUI',
       containerd_compatible: true,
       slug:                  'ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui',
       type:                  'extension',
       publisher:             { name: 'SUSE LLC' },
       created_at:            '2024-10-03T15:43:34Z',
-      updated_at:            '2024-10-31T21:57:40.06488917Z',
+      updated_at:            '2024-11-28T19:17:26.91232165Z',
       short_description:     'Open WebUI and Ollama packaged into an extension for local GenAI development',
       source:                'community',
       extension_reviewed:    false,
