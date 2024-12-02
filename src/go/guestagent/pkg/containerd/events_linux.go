@@ -99,7 +99,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 				container, err := e.containerdClient.ContainerService().Get(ctx, startTask.ContainerID)
 				if err != nil {
-					log.Errorf("failed to get the container %s from namespace: %s failed: %s", startTask.ContainerID, envelope.Namespace, err)
+					log.Errorf("failed to get the container %s from namespace %s: %s", startTask.ContainerID, envelope.Namespace, err)
 				}
 				ports, err := createPortMappingFromString(container.Labels[portsKey])
 				if err != nil {
@@ -130,7 +130,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 				container, err := e.containerdClient.ContainerService().Get(ctx, cuEvent.ID)
 				if err != nil {
-					log.Errorf("failed to get the container %s from namespace: %s failed: %s", cuEvent.ID, envelope.Namespace, err)
+					log.Errorf("failed to get the container %s from namespace %s: %s", cuEvent.ID, envelope.Namespace, err)
 				}
 
 				ports, err := createPortMappingFromString(container.Labels[portsKey])
@@ -316,17 +316,21 @@ func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerI
 	return nil
 }
 
-// When the port binding is bound to 127.0.0.1, we add an additional DNAT rule in the main
-// CNI DNAT chain (CNI-HOSTPORT-DNAT) after the existing rule (using --append).
-// This is necessary because the initial CNI rule created by containerd only allows the traffic
-// to be routed to localhost. Therefore, we add an additional rule to allow traffic to any
-// destination IP address which allows the service to be discoverable through namespaced network's
-// subnet, which essentially causes the service to listen on eth0 instead; this is required as the
-// traffic is routed via vm-switch over the tap network.
-// The existing DNAT rule are as follows:
-// DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
-// We enter the following rule after the existing rule:
-// DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
+// When the port binding is set to 127.0.0.1, an additional DNAT rule is added to the main
+// CNI DNAT chain (CNI-HOSTPORT-DNAT) after the existing rule (using --append). This is necessary
+// because the initial CNI rule created by containerd only allows traffic to be routed to localhost.
+// To make the service discoverable via the namespaced network's subnet, an additional rule is added
+// to allow traffic to any destination IP address. This effectively causes the service to listen on
+// the eth0 interface instead of localhost, which is required since the traffic is routed through the
+// vm-switch over the tap network.
+//
+// The existing DNAT rule is as follows:
+//
+//	DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
+//
+// After the existing rule, the following new rule is added:
+//
+//	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
 func createLoopbackIPtablesRules(ctx context.Context, networks []string, containerID, namespace, pid, port, destinationPort string) error {
 	eth0IP, err := extractIPAddress(pid)
 	if err != nil {
@@ -342,15 +346,17 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 	for _, network := range networks {
 		chainName := utils.MustFormatChainNameWithPrefix(network, cID, "DN-")
 
-		// Instead of modifying the existing rule, we add a new rule that overrides the previous one.
-		// The new rule is appended below the existing rule in the chain, ensuring that traffic is correctly
-		// routed to the specified destination. An example of the rule looks like:
+		// Instead of modifying the existing rule, a new rule is added that overrides the previous one.
+		// The original rule only allows traffic from anywhere to localhost, but the new rule permits traffic
+		// from anywhere to anywhere. The new rule is appended below the existing one in the chain, ensuring
+		// that traffic is correctly routed to the specified destination.
+		//
+		// Example of the new rule:
 		//   iptables -t nat -A CNI-DN-xxxxxx -p tcp -d 0.0.0.0/0 -j DNAT --dport 9119 --to-destination 10.4.0.10:80
 		//
-		// IMPORTANT: Unlike the Docker events API, we never attempt to delete the rules we create.
-		// This is because the containerd API manages the CNI chains differently. Specifically,
-		// containerd deletes the entire CNI chain (e.g., CNI-DN-xxxxxx) when a container is exited or deleted,
-		// which results in the deletion of any rules that were appended during container startup.
+		// IMPORTANT: Unlike the Docker events API, we do not attempt to delete the rules we create. This is due
+		// to how containerd manages CNI chains. Specifically, containerd deletes the entire CNI chain (e.g., CNI-DN-xxxxxx)
+		// when a container exits or is deleted, which automatically removes any rules appended during container startup.
 		iptableCmd := exec.CommandContext(ctx,
 			"iptables",
 			"--table", "nat",

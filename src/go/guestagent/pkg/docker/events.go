@@ -213,17 +213,22 @@ func validatePortMapping(portMap nat.PortMap) {
 	}
 }
 
-// When the port binding is bound to 127.0.0.1, we add an additional DNAT rule in the main
-// DOCKER chain after the existing rule (using --append).
-// This is necessary because the initial DOCKER DNAT rule that is created by docker only allows
-// the traffic to be routed to localhost from localhost. Therefore, we add an additional rule to
-// allow traffic to any destination IP address which allows the service to be discoverable through
-// namespaced network's subnet.
-// This is required as the traffic is routed via vm-switch over the tap network.
-// The existing DNAT rule are as follows:
-// DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
-// We enter the following rule after the existing rule:
-// DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
+// When the port binding is bound to 127.0.0.1, an additional DNAT rule is added to the
+// main DOCKER chain after the existing rule (using --append). This is necessary because
+// the initial DOCKER DNAT rule created by Docker only allows traffic to be routed to
+// localhost from localhost. To make the service discoverable through the namespaced
+// network's subnet, an additional rule is added to allow traffic to any destination IP
+// address.
+//
+// This is required because traffic is routed via the vm-switch over the tap network.
+//
+// The existing DNAT rule is as follows:
+//
+//	DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
+//
+// The following rule is entered after the existing rule:
+//
+//	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
 func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containerID, containerIP string, portMappings nat.PortMap) error {
 	var errs []error
 
@@ -244,8 +249,8 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 				iptableCmd.Stderr = &stderr
 				if err := iptableCmd.Run(); err != nil {
 					errs = append(errs, fmt.Errorf("creating loopback rule in DOCKER chain failed: %w [%s]", err, stderr.String()))
+					log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableCmd.String(), errs)
 				}
-				log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableCmd.String(), errs)
 				e.iptablesRulesToDelete[containerID] = iptablesDeleteLoopbackRuleCmd(
 					ctx,
 					portProto.Proto(),
@@ -339,8 +344,8 @@ func deleteComposeNetworkIPv6Rule(ctx context.Context, portMappings nat.PortMap)
 				iptableComposeDeleteCmd.Stderr = &stderr
 				if err := iptableComposeDeleteCmd.Run(); err != nil {
 					errs = append(errs, fmt.Errorf("%w [%s]", err, stderr.String()))
+					log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableComposeDeleteCmd.String(), errs)
 				}
-				log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableComposeDeleteCmd.String(), errs)
 			}
 		}
 	}
