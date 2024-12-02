@@ -6,7 +6,7 @@ toolchain go1.22.2
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
-	github.com/containers/gvisor-tap-vsock v0.8.0
+	github.com/containers/gvisor-tap-vsock v0.8.1
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
@@ -28,7 +28,7 @@ require (
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/areYouLazy/libhosty v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20240710054256-ddd8a41251c9 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
