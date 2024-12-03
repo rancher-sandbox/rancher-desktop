@@ -142,7 +142,7 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
 
   while (!abortSignal.aborted && running.size > done.size) {
     const timeout = new Promise((resolve) => {
-      setTimeout(resolve, 60_000);
+      setTimeout(resolve, 5_000);
       abortSignal.onabort = resolve;
     });
     const pending = Array.from(running).filter(v => !done.has(v));
