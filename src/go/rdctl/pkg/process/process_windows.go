@@ -297,7 +297,7 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 				false,
 				pid)
 			if err != nil {
-				logrus.Infof("Ignoring error opening process %d: %s", pid, err)
+				logrus.Debugf("Ignoring error opening process %d: %s", pid, err)
 				return
 			}
 			defer func() {
