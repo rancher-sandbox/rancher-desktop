@@ -11,7 +11,7 @@ require (
 	github.com/containers/gvisor-tap-vsock v0.8.1
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/lima-vm/lima v1.0.1
+	github.com/lima-vm/lima v1.0.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.9.0
 	golang.org/x/sys v0.27.0
@@ -27,7 +27,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Microsoft/hcsshim v0.11.7 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
-	github.com/containerd/continuity v0.4.4 // indirect
+	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
