@@ -21,6 +21,7 @@ import { parseImageReference } from '@pkg/utils/dockerUtils';
 import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { executable } from '@pkg/utils/resources';
 import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 
 const console = Logging.extensions;
@@ -41,6 +42,14 @@ type ReadableChildProcess = ChildProcessByStdio<null, Readable, Readable>;
  * real extension, but instead is our main application.
  */
 const EXTENSION_APP = '<app>';
+
+/**
+ * Flag to indicate that we've already spawned the process to wait for the main
+ * process to shut down; this is global because we may need to restart the
+ * extension manager on settings change, but we should not spawn a new copy of
+ * the process watcher in that case.
+ */
+let mainProcessWatcherInitialized = false;
 
 export class ExtensionManagerImpl implements ExtensionManager {
   /**
@@ -118,6 +127,21 @@ export class ExtensionManagerImpl implements ExtensionManager {
   protected processes: Record<string, WeakRef<ReadableChildProcess>> = {};
 
   async init(config: RecursiveReadonly<Settings>) {
+    if (process.platform !== 'win32' && !mainProcessWatcherInitialized) {
+      // If we're not running on Windows, spawn a process that waits for this
+      // process to exit and then kill all processes in this process group.
+      // We don't do this on Windows as we have a different (job-based)
+      // implementation there that will trigger automatically when we exit,
+      // based on `wsl-helper process spawn`.
+      const proc = spawn(
+        executable('rdctl'),
+        ['internal', 'process', 'wait-kill', `--pid=${ process.pid }`],
+        { stdio: ['ignore', await console.fdStream, await console.fdStream], detached: true });
+
+      proc.unref();
+      mainProcessWatcherInitialized = true;
+    }
+
     // Handle events from the renderer process.
     this.setMainListener('extensions/open-external', (...[, url]) => {
       Electron.shell.openExternal(url);

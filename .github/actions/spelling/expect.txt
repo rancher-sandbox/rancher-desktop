@@ -265,6 +265,7 @@ fdx
 featurename
 FEEEFEEE
 femto
+Fflags
 ffi
 ficlone
 filekey
@@ -599,7 +600,7 @@ penpot
 persistentvolume
 persistentvolumeclaim
 PFlags
-PGID
+pgid
 pgrep
 pidfile
 pidfd
@@ -615,6 +616,7 @@ pkill
 plists
 plusplus
 plutil
+POLLIN
 podmetrics
 podmonitor
 podsecuritypolicytemplate

@@ -83,3 +83,27 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 	}
 	return nil
 }
+
+// Block and wait for the given process to exit.
+func WaitForProcess(pid int) error {
+	queue, err := unix.Kqueue()
+	if err != nil {
+		return fmt.Errorf("failed to initialize process monitoring: %w", err)
+	}
+	defer func() {
+		_ = unix.Close(queue)
+	}()
+	change := unix.Kevent_t{
+		Ident:  uint64(pid),
+		Filter: unix.EVFILT_PROC,
+		Flags:  unix.EV_ADD | unix.EV_ENABLE | unix.EV_ONESHOT,
+		Fflags: unix.NOTE_EXIT,
+	}
+	events := make([]unix.Kevent_t, 1)
+	n, err := unix.Kevent(queue, []unix.Kevent_t{change}, events, nil)
+	if err != nil {
+		return fmt.Errorf("failed to wait for process %d to exit: %w", pid, err)
+	}
+	logrus.Tracef("got %d kqueue events: %+v", n, events[:n])
+	return nil
+}
