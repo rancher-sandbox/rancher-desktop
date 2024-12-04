@@ -61,6 +61,7 @@ const windowsDependencies = [
   new goUtils.GoDependency('networking/cmd/host', 'internal/host-switch'),
   new goUtils.WSLHelper(),
   new goUtils.NerdctlStub(),
+  new goUtils.SpinStub(),
 ];
 
 // Dependencies that are specific to WSL.

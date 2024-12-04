@@ -1,0 +1,13 @@
+#!/bin/bash
+set -eu -o pipefail
+
+scriptname="${BASH_SOURCE[0]}"
+while [ -L "${scriptname}" ]; do
+    scriptname=$(readlink "${scriptname}")
+done
+scriptdir=$(cd "$(dirname "${scriptname}")" && pwd)
+internal=$(cd "${scriptdir}/../internal" && pwd)
+
+export SPIN_DATA_DIR="$HOME/Library/Application Support/rancher-desktop/spin"
+mkdir -p "$SPIN_DATA_DIR"
+exec "${internal}/spin" "$@"

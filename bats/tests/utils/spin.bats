@@ -3,20 +3,7 @@ load '../helpers/load'
 # Verify that enabling Wasm support will install spin plugins and templates
 
 local_setup() {
-    if is_windows; then
-        if using_windows_exe; then
-            SPIN_DATA_DIR=$LOCALAPPDATA
-        else
-            SPIN_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
-        fi
-    elif is_macos; then
-        SPIN_DATA_DIR="${HOME}/Library/Application Support"
-    elif is_linux; then
-        SPIN_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
-    else
-        skip "Unknown OS: $OS"
-    fi
-    SPIN_DATA_DIR="${SPIN_DATA_DIR}/spin"
+    SPIN_DATA_DIR="${PATH_APP_HOME}/spin"
 }
 
 cmd_exe() {

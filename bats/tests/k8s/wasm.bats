@@ -98,6 +98,8 @@ spec:
       runtimeClassName: spin
       containers:
       - name: hello-spin
+        # Newer versions of the sample app have moved from "deislabs" to "spinkube":
+        # ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello:v0.13.0
         image: ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
         command: ["/"]
 EOF

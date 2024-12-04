@@ -1,0 +1,13 @@
+#!/bin/bash
+set -eu -o pipefail
+
+scriptname="${BASH_SOURCE[0]}"
+while [ -L "${scriptname}" ]; do
+    scriptname=$(readlink "${scriptname}")
+done
+scriptdir=$(cd "$(dirname "${scriptname}")" && pwd)
+internal=$(cd "${scriptdir}/../internal" && pwd)
+
+export SPIN_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/rancher-desktop/spin"
+mkdir -p "$SPIN_DATA_DIR"
+exec "${internal}/spin" "$@"
