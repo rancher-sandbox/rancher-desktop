@@ -1,12 +1,6 @@
 load '../helpers/load'
 
 local_setup() {
-    if is_windows && using_containerd && using_windows_exe; then
-        # BUG BUG BUG
-        # There is a known issue of nerdctl.exe compose not working as expected in
-        # WSL distros. https://github.com/rancher-sandbox/rancher-desktop/issues/1431
-        skip "Test doesn't work with nerdctl in a WSL distro"
-    fi
     TESTDATA_DIR="${PATH_BATS_ROOT}/tests/compose/testdata/"
     TESTDATA_DIR_HOST=$(host_path "$TESTDATA_DIR")
 }
@@ -25,10 +19,29 @@ local_setup() {
     assert_success
 }
 
-@test 'verify app' {
-    try --max 9 --delay 10 curl --silent --show-error "http://localhost:8000"
+verify_running_container() {
+    try --max 9 --delay 10 curl --silent --show-error "$1"
     assert_success
-    assert_output "Hello World!"
+    assert_output --partial "$2"
+}
+
+@test 'verify app bound to localhost' {
+    verify_running_container "http://localhost:8080" "Welcome to nginx!"
+    if is_windows && ! using_containerd; then
+        # BUG BUG BUG
+        # When binding to localhost in containerd it also binds to wildcard IP
+        # https://github.com/rancher-sandbox/rancher-desktop/issues/7825
+        skip_unless_host_ip
+        run curl --verbose --head "http://${HOST_IP}:8080"
+        assert_output --partial "curl: (7) Failed to connect"
+    fi
+}
+
+@test 'verify app bound to wildcard IP' {
+    local expected_output="Hello World!"
+    verify_running_container "http://localhost:8000" "$expected_output"
+    skip_unless_host_ip
+    verify_running_container "http://${HOST_IP}:8000" "$expected_output"
 }
 
 @test 'compose down' {

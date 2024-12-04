@@ -143,6 +143,7 @@ connectaddress
 connectport
 constrainttemplate
 CONTAINERENGINE
+containernetworking
 copypac
 coredns
 corejs
@@ -837,6 +838,7 @@ unexpose
 unexposing
 unfetch
 Uninstalls
+unmarshaling
 unparam
 unparsable
 unregistering

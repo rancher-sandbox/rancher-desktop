@@ -15,6 +15,7 @@ limitations under the License.
 package docker
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -23,18 +24,12 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-)
-
-const (
-	startEvent = "start"
-	stopEvent  = "stop"
-	// die event is a confirmation of kill event.
-	dieEvent = "die"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
 // EventMonitor monitors the Docker engine's Event API
@@ -42,6 +37,8 @@ const (
 type EventMonitor struct {
 	dockerClient *client.Client
 	portTracker  tracker.Tracker
+	// map of containerID to iptables rule entry to remove from DOCKER chain
+	iptablesRulesToDelete map[string]*exec.Cmd
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
@@ -54,36 +51,37 @@ func NewEventMonitor(portTracker tracker.Tracker) (*EventMonitor, error) {
 	}
 
 	return &EventMonitor{
-		dockerClient: cli,
-		portTracker:  portTracker,
+		dockerClient:          cli,
+		portTracker:           portTracker,
+		iptablesRulesToDelete: make(map[string]*exec.Cmd),
 	}, nil
 }
 
 // MonitorPorts scans Docker's event stream API
 // for container start/stop events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{
+	msgCh, errCh := e.dockerClient.Events(ctx, events.ListOptions{
 		Filters: filters.NewArgs(
-			filters.Arg("type", "container"),
-			filters.Arg("event", startEvent),
-			filters.Arg("event", stopEvent),
-			filters.Arg("event", dieEvent)),
+			filters.Arg("type", string(types.ContainerObject)),
+			filters.Arg("event", string(events.ActionStart)),
+			filters.Arg("event", string(events.ActionStop)),
+			filters.Arg("event", string(events.ActionDie))),
 	})
 
 	if err := e.initializeRunningContainers(ctx); err != nil {
-		log.Errorf("failed to initialize existing container port mappings: %v", err)
+		log.Errorf("failed to initialize existing container port mappings: %s", err)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Errorf("context cancellation: %v", ctx.Err())
+			log.Errorf("context cancellation: %s", ctx.Err())
 
 			return
 		case event := <-msgCh:
 			container, err := e.dockerClient.ContainerInspect(ctx, event.ID)
 			if err != nil {
-				log.Errorf("inspecting container [%v] failed: %v", event.ID, err)
+				log.Errorf("inspecting container [%v] failed: %s", event.ID, err)
 
 				continue
 			}
@@ -94,28 +92,33 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				container.NetworkSettings.NetworkSettingsBase.Ports)
 
 			switch event.Action {
-			case startEvent:
+			case events.ActionStart:
 				if len(container.NetworkSettings.NetworkSettingsBase.Ports) != 0 {
 					validatePortMapping(container.NetworkSettings.NetworkSettingsBase.Ports)
 					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
 					if err != nil {
-						log.Errorf("adding port mapping to tracker failed: %v", err)
+						log.Errorf("adding port mapping to tracker failed: %s", err)
 					}
 
-					err = createLoopbackIPtablesRules(container.NetworkSettings.DefaultNetworkSettings.IPAddress,
-						container.NetworkSettings.NetworkSettingsBase.Ports)
-					if err != nil {
-						log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
-					}
+					e.createIptablesRuleForContainer(ctx, container)
 				}
-			case stopEvent, dieEvent:
+			case events.ActionStop, events.ActionDie:
 				err := e.portTracker.Remove(container.ID)
 				if err != nil {
-					log.Errorf("remove port mapping from tracker failed: %w", err)
+					log.Errorf("remove port mapping from tracker failed: %s", err)
+				}
+				if deleteIptablesCmd, ok := e.iptablesRulesToDelete[container.ID]; ok {
+					log.Debugf("removing the following rules from iptables: %s", deleteIptablesCmd.String())
+					var stderr bytes.Buffer
+					deleteIptablesCmd.Stderr = &stderr
+					if err := deleteIptablesCmd.Run(); err != nil {
+						log.Errorf("deleting loopback iptables rule failed: %s [%s]", err, stderr.String())
+					}
+					delete(e.iptablesRulesToDelete, container.ID)
 				}
 			}
 		case err := <-errCh:
-			log.Errorf("receiving container event failed: %v", err)
+			log.Errorf("receiving container event failed: %s", err)
 
 			return
 		}
@@ -155,16 +158,14 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 
 				continue
 			}
-
 			if err := e.portTracker.Add(container.ID, portMap); err != nil {
 				log.Errorf("registering already running containers failed: %v", err)
 				continue
 			}
-
 			for _, netSettings := range container.NetworkSettings.Networks {
-				err = createLoopbackIPtablesRules(netSettings.IPAddress, portMap)
+				err = e.createLoopbackIPtablesRules(ctx, container.ID, netSettings.IPAddress, portMap)
 				if err != nil {
-					log.Errorf("failed running iptable rules to update DNAT rule in DOCKER chain: %v", err)
+					log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain during container initialization failed: %v", err)
 				}
 			}
 		}
@@ -187,7 +188,7 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   containerd.NormalizeHostIP(port.IP),
+			HostIP:   utils.NormalizeHostIP(port.IP),
 			HostPort: strconv.Itoa(int(port.PublicPort)),
 		}
 
@@ -212,41 +213,145 @@ func validatePortMapping(portMap nat.PortMap) {
 	}
 }
 
-// When the port binding is bound to 127.0.0.1, we add an additional DNAT rule in the main
-// DOCKER chain after the existing rule (using --append).
-// This is necessary because the initial DOCKER DNAT rule that is created by docker only allows
-// the traffic to be routed to localhost from localhost. Therefore, we add an additional rule to
-// allow traffic to any destination IP address which allows the service to be discoverable through
-// namespaced network's subnet.
-// This is required as the traffic is routed via vm-switch over the tap network.
-// The existing DNAT rule are as follows:
-// DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
-// We enter the following rule after the existing rule:
-// DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
-func createLoopbackIPtablesRules(containerIP string, portMappings nat.PortMap) error {
+// When the port binding is bound to 127.0.0.1, an additional DNAT rule is added to the
+// main DOCKER chain after the existing rule (using --append). This is necessary because
+// the initial DOCKER DNAT rule created by Docker only allows traffic to be routed to
+// localhost from localhost. To make the service discoverable through the namespaced
+// network's subnet, an additional rule is added to allow traffic to any destination IP
+// address.
+//
+// This is required because traffic is routed via the vm-switch over the tap network.
+//
+// The existing DNAT rule is as follows:
+//
+//	DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
+//
+// The following rule is entered after the existing rule:
+//
+//	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
+func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containerID, containerIP string, portMappings nat.PortMap) error {
 	var errs []error
 
 	for portProto, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
 			if portBinding.HostIP == "127.0.0.1" {
 				//nolint:gosec // no security concern with the potentially tainted command arguments
-				iptableCmd := exec.Command("iptables",
+				iptableCmd := exec.CommandContext(ctx,
+					"iptables",
 					"--table", "nat",
 					"--append", "DOCKER",
-					"--protocol", "tcp",
+					"--protocol", portProto.Proto(),
 					"--destination", "0.0.0.0/0",
 					"--jump", "DNAT",
 					"--dport", portBinding.HostPort,
 					"--to-destination", fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
+				var stderr bytes.Buffer
+				iptableCmd.Stderr = &stderr
 				if err := iptableCmd.Run(); err != nil {
-					errs = append(errs, err)
+					errs = append(errs, fmt.Errorf("creating loopback rule in DOCKER chain failed: %w [%s]", err, stderr.String()))
+					log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableCmd.String(), errs)
+				}
+				e.iptablesRulesToDelete[containerID] = iptablesDeleteLoopbackRuleCmd(
+					ctx,
+					portProto.Proto(),
+					portBinding.HostPort,
+					fmt.Sprintf("%s:%s", containerIP, portProto.Port()))
+			}
+		}
+	}
+
+	if len(errs) != 0 {
+		return fmt.Errorf("%w: %+v", utils.ErrExecIptablesRule, errs)
+	}
+
+	return nil
+}
+
+func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container types.ContainerJSON) {
+	// If the container's NetworkSettings.Networks map is not empty, it indicates that the container
+	// is connected to a Docker Compose network. In this case, we should inspect the map and
+	// configure the loopback address for each container's assigned IP address.
+	if len(container.NetworkSettings.Networks) != 0 {
+		// delete the IPv6 rule first
+		if err := deleteComposeNetworkIPv6Rule(ctx, container.NetworkSettings.NetworkSettingsBase.Ports); err != nil {
+			log.Errorf("removing docker compose IPv6 rule from DOCKER chain failed: %v", err)
+		}
+		for networkName, network := range container.NetworkSettings.Networks {
+			err := e.createLoopbackIPtablesRules(
+				ctx,
+				container.ID,
+				network.IPAddress,
+				container.NetworkSettings.NetworkSettingsBase.Ports)
+			if err != nil {
+				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain for docker compose network: %s failed: %v", networkName, err)
+			}
+		}
+	} else {
+		err := e.createLoopbackIPtablesRules(
+			ctx,
+			container.ID,
+			container.NetworkSettings.DefaultNetworkSettings.IPAddress,
+			container.NetworkSettings.NetworkSettingsBase.Ports)
+		if err != nil {
+			log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
+		}
+	}
+}
+
+func iptablesDeleteLoopbackRuleCmd(ctx context.Context, protocol, dport, toDestination string) *exec.Cmd {
+	return exec.CommandContext(ctx,
+		"iptables",
+		"--table", "nat",
+		"--delete", "DOCKER",
+		"--protocol", protocol,
+		"--destination", "0.0.0.0/0",
+		"--jump", "DNAT",
+		"--dport", dport,
+		"--to-destination", toDestination)
+}
+
+// Docker Compose, by default, creates the following rules in the DOCKER chain:
+//
+//	DNAT       tcp  --  anywhere             localhost            tcp dpt:80 to:172.18.0.2:80
+//	DNAT       tcp  --  anywhere             anywhere             tcp dpt:80 to::80
+//
+// The second rule can be problematic because it uses a wildcard IPv6 address (`::`), which can match
+// any incoming TCP traffic destined for port 80. Since there may be no service listening on IPv6,
+// this can lead to a TCP RST (reset) response sent back to the client.
+//
+// To prevent this issue, we must delete the IPv6 rule before adding our following custom rule:
+//
+//	DNAT       tcp  --  anywhere             anywhere             tcp dpt:80 to:172.18.0.2:80
+//
+// Note: Even if the `enable_ipv6` property is set to `false` in Docker's compose configuration,
+// Docker still creates the wildcard IPv6 rule in iptables. Therefore, we need to manually
+// remove it to avoid this issue.
+func deleteComposeNetworkIPv6Rule(ctx context.Context, portMappings nat.PortMap) error {
+	var errs []error
+
+	for portProto, portBindings := range portMappings {
+		for _, portBinding := range portBindings {
+			if portBinding.HostIP == "127.0.0.1" {
+				iptableComposeDeleteCmd := exec.CommandContext(ctx,
+					"iptables",
+					"--table", "nat",
+					"--delete", "DOCKER",
+					"--protocol", portProto.Proto(),
+					"--jump", "DNAT",
+					"--dport", portBinding.HostPort,
+					"--to-destination", fmt.Sprintf(":%s", portProto.Port()))
+				var stderr bytes.Buffer
+				iptableComposeDeleteCmd.Stderr = &stderr
+				if err := iptableComposeDeleteCmd.Run(); err != nil {
+					errs = append(errs, fmt.Errorf("%w [%s]", err, stderr.String()))
+					log.Debugf("running the following iptables rule [%s] with the error(s):[%v]", iptableComposeDeleteCmd.String(), errs)
 				}
 			}
 		}
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", containerd.ErrExecIptablesRule, errs)
+		return fmt.Errorf("%w: %+v", utils.ErrExecIptablesRule, errs)
 	}
 
 	return nil
