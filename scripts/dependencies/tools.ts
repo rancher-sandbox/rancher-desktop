@@ -587,7 +587,7 @@ export class SpinCLI implements Dependency, GitHubDependency {
     const options: ArchiveDownloadOptions = { expectedChecksum, entryName };
     const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
 
-    await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, entryName), options);
+    await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.internalDir, entryName), options);
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {

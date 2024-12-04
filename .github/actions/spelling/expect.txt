@@ -902,7 +902,7 @@ Wrapf
 wsl
 wslapi
 wslconfig
-WSLENV
+wslenv
 WSLg
 wslify
 wslinfo

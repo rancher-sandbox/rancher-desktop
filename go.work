@@ -12,5 +12,6 @@ use (
 	./src/go/nerdctl-stub/generate
 	./src/go/networking
 	./src/go/rdctl
+	./src/go/spin-stub
 	./src/go/wsl-helper
 )

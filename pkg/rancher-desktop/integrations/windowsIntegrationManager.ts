@@ -2,6 +2,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import semver from 'semver';
+
+import DEPENDENCY_VERSIONS from '@pkg/assets/dependencies.yaml';
 import K3sHelper from '@pkg/backend/k3sHelper';
 import { State } from '@pkg/backend/k8s';
 import { Settings, ContainerEngine } from '@pkg/config/settings';
@@ -519,9 +522,21 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected async syncDistroSpinCLI(distro: string, state: boolean) {
     if (state && this.settings.experimental?.containerEngine?.webAssembly) {
-      const setupSpin = await this.getLinuxToolPath(distro, executable('setup-spin'));
+      const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
+      const env = {
+        KUBE_PLUGIN_VERSION:    DEPENDENCY_VERSIONS.spinKubePlugin,
+        JS2WASM_PLUGIN_VERSION: DEPENDENCY_VERSIONS.js2wasmPlugin,
+        SPIN_TEMPLATE_BRANCH:   (version ? `v${ version.major }.${ version.minor }` : 'main'),
+      };
+      const wslenv = Object.keys(env).join(':');
 
-      await this.execCommand({ distro }, setupSpin);
+      // wsl-exec is needed to correctly resolve DNS names
+      await this.execCommand({
+        distro,
+        env: {
+          ...process.env, ...env, WSLENV: wslenv,
+        },
+      }, await this.getLinuxToolPath(distro, executable('setup-spin')));
     }
   }
 
