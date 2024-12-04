@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -80,7 +80,7 @@ func doStartCommand(cmd *cobra.Command) error {
 		return err
 	}
 	if !cmd.Flags().Changed("path") {
-		applicationPath, err = utils.GetRDPath()
+		applicationPath, err = paths.GetRDLaunchPath()
 		if err != nil {
 			return fmt.Errorf("failed to locate main Rancher Desktop executable: %w\nplease retry with the --path option", err)
 		}

@@ -1,6 +1,6 @@
 //go:build linux || darwin
 
-package utils
+package paths
 
 import (
 	"errors"
@@ -10,6 +10,20 @@ import (
 
 	"golang.org/x/sys/unix"
 )
+
+// Given a list of paths, return the first one that is a valid executable.
+func FindFirstExecutable(candidates ...string) (string, error) {
+	for _, candidate := range candidates {
+		usable, err := checkUsableApplication(candidate, true)
+		if err != nil {
+			return "", fmt.Errorf("failed to check usability of %q: %w", candidate, err)
+		}
+		if usable {
+			return candidate, nil
+		}
+	}
+	return "", errors.New("search locations exhausted")
+}
 
 // Verify that the candidatePath is usable as a Rancher Desktop "executable". This means:
 //   - check that candidatePath exists

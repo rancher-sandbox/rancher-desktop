@@ -43,7 +43,7 @@ type Paths struct {
 	ContainerdShims string `json:"containerdShims,omitempty"`
 }
 
-func getResourcesPath() (string, error) {
+func GetResourcesPath() (string, error) {
 	rdctlSymlinkPath, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("failed to get path to rdctl: %w", err)
