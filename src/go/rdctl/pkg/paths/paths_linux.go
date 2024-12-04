@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
 func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	var getResourcesPathFunc func() (string, error)
 	switch len(getResourcesPathFuncs) {
 	case 0:
-		getResourcesPathFunc = getResourcesPath
+		getResourcesPathFunc = GetResourcesPath
 	case 1:
 		getResourcesPathFunc = getResourcesPathFuncs[0]
 	default:
@@ -58,4 +60,39 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	}
 
 	return paths, nil
+}
+
+// Return the path used to launch Rancher Desktop.
+func GetRDLaunchPath() (string, error) {
+	appDir, err := directories.GetApplicationDirectory()
+	if err != nil {
+		return "", fmt.Errorf("failed to get application directory: %w", err)
+	}
+	candidatePaths := []string{
+		filepath.Join(appDir, "rancher-desktop"),
+		"/opt/rancher-desktop/rancher-desktop",
+	}
+	for _, candidatePath := range candidatePaths {
+		usable, err := checkUsableApplication(candidatePath, true)
+		if err != nil {
+			return "", fmt.Errorf("failed to check usability of %q: %w", candidatePath, err)
+		}
+		if usable {
+			return candidatePath, nil
+		}
+	}
+	return "", errors.New("search locations exhausted")
+}
+
+// Return the path to the main Rancher Desktop executable.
+// In the case of `yarn dev`, this would be the electron executable.
+func GetMainExecutable() (string, error) {
+	appDir, err := directories.GetApplicationDirectory()
+	if err != nil {
+		return "", fmt.Errorf("failed to get application directory: %w", err)
+	}
+	return FindFirstExecutable(
+		filepath.Join(appDir, "rancher-desktop"),
+		filepath.Join(appDir, "node_modules", "electron", "dist", "electron"),
+	)
 }

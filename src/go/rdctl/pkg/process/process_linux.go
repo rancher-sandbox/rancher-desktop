@@ -17,22 +17,18 @@ limitations under the License.
 package process
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 
-// TerminateProcessInDirectory terminates all processes where the executable
-// resides within the given directory, as gracefully as possible.  If `force` is
-// set, SIGKILL is used instead.
-func TerminateProcessInDirectory(directory string, force bool) error {
-	// Check /proc/<pid>/exe to see if they're the correct file.
+// Iterate over all processes, calling a callback function for each process
+// found with the pid and the path to the executable.  If the callback function
+// returns an error, iteration is immediately stopped.
+func iterProcesses(callback func(pid int, executable string) error) error {
 	pidfds, err := os.ReadDir("/proc")
 	if err != nil {
 		return fmt.Errorf("error listing processes: %w", err)
@@ -45,34 +41,14 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 		if err != nil {
 			continue
 		}
-		// Don't kill the current process
-		if pid == os.Getpid() {
-			continue
-		}
 		procPath, err := os.Readlink(filepath.Join("/proc", pidfd.Name(), "exe"))
 		if err != nil {
 			continue
 		}
-		relPath, err := filepath.Rel(directory, procPath)
-		if err != nil || strings.HasPrefix(relPath, "../") {
-			continue
-		}
-		proc, err := os.FindProcess(pid)
-		if err != nil {
-			continue
-		}
-		if force {
-			err = proc.Signal(unix.SIGKILL)
-		} else {
-			err = proc.Signal(unix.SIGTERM)
-		}
-		if err == nil {
-			logrus.Infof("Terminated process %d (%s)", pid, procPath)
-		} else if !errors.Is(err, unix.EINVAL) {
-			logrus.Infof("Ignoring failure to terminate pid %d (%s): %s", pid, procPath, err)
+		if err = callback(pid, procPath); err != nil {
+			return err
 		}
 	}
-
 	return nil
 }
 

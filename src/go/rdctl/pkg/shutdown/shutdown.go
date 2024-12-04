@@ -17,18 +17,23 @@ limitations under the License.
 package shutdown
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -89,7 +94,16 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 			}
 		}
 	}
-	err = s.waitForAppToDieOrKillIt(checkProcessQemu, pkillQemu, 15, 2, "qemu")
+	qemuExecutable, err := getQemuExecutable()
+	if err != nil {
+		return fmt.Errorf("failed to find qemu executable: %w", err)
+	}
+	err = s.waitForAppToDieOrKillIt(
+		isExecutableRunningFunc(qemuExecutable),
+		terminateExecutableFunc(qemuExecutable),
+		15,
+		2,
+		"qemu")
 	if err != nil {
 		logrus.Errorf("Ignoring error trying to kill qemu: %s", err)
 	}
@@ -97,14 +111,16 @@ func FinishShutdown(waitForShutdown bool, initiatingCommand InitiatingCommand) e
 	if err != nil {
 		return fmt.Errorf("failed to find application directory: %w", err)
 	}
-	switch runtime.GOOS {
-	case "darwin":
-		return s.waitForAppToDieOrKillIt(checkProcessDarwin, killFunc(appDir), 5, 1, "the app")
-	case "linux":
-		return s.waitForAppToDieOrKillIt(checkProcessLinux, killFunc(appDir), 5, 1, "the app")
-	default:
-		return fmt.Errorf("unhandled runtime: %q", runtime.GOOS)
+	mainExecutablePath, err := p.GetMainExecutable()
+	if err != nil {
+		return fmt.Errorf("failed to get Rancher Desktop executable: %w", err)
 	}
+	return s.waitForAppToDieOrKillIt(
+		isExecutableRunningFunc(mainExecutablePath),
+		terminateRancherDesktopFunc(appDir),
+		5,
+		1,
+		"the app")
 }
 
 func (s *shutdownData) waitForAppToDieOrKillIt(checkFunc func() (bool, error), killFunc func() error, retryCount int, retryWait int, operation string) error {
@@ -126,62 +142,65 @@ func (s *shutdownData) waitForAppToDieOrKillIt(checkFunc func() (bool, error), k
 	return killFunc()
 }
 
-/**
- * checkProcessX function returns [true, nil] if it detects the app is still running, [false, X] otherwise
- * The Linux/macOS functions never return a non-nil error and that field can be ignored.
- * If the Windows function returns a non-nil error, we can't conclude whether the specified process is running
- */
-
-func checkProcessDarwin() (bool, error) {
-	return checkProcessLinuxLike("-f", "Contents/MacOS/Rancher Desktop"), nil
-}
-
-func checkProcessLinux() (bool, error) {
-	return checkProcessLinuxLike("rancher-desktop"), nil
-}
-
-func checkProcessLinuxLike(commandPattern ...string) bool {
-	result, err := exec.Command("pgrep", commandPattern...).CombinedOutput()
-	if err != nil {
-		return false
+func getQemuExecutable() (string, error) {
+	if runtime.GOOS == "windows" {
+		return "", fmt.Errorf("qemu not installed on Windows")
 	}
-	return regexp.MustCompile(`\A[0-9\s]+\z`).Match(result)
-}
-
-// RancherDesktopQemuCommand - be specific to avoid killing other VM-based processes running qemu
-const RancherDesktopQemuCommand = "lima/bin/qemu-system.*rancher-desktop/lima/[0-9]/diffdisk"
-
-func checkProcessQemu() (bool, error) {
-	return checkProcessLinuxLike("-f", RancherDesktopQemuCommand), nil
-}
-
-func pkill(args ...string) error {
-	pkillBinary := "pkill"
-	if runtime.GOOS == "darwin" {
-		pkillBinary = "/usr/bin/pkill"
-	}
-	cmd := exec.Command(pkillBinary, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	resourcesDir, err := paths.GetResourcesPath()
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			// don't throw an error if the process we are killing has already exited
-			if exitCode := exitError.ExitCode(); exitCode == 0 || exitCode == 1 {
-				return nil
-			}
+		return "", fmt.Errorf("failed to get resources directory: %w", err)
+	}
+	var arch string
+	switch runtime.GOARCH {
+	case "amd64":
+		arch = "x86_64"
+	case "arm64":
+		arch = "aarch64"
+	default:
+		arch = runtime.GOARCH
+	}
+	qemuName := fmt.Sprintf("qemu-system-%s", arch)
+	candidates := []string{
+		filepath.Join(resourcesDir, runtime.GOOS, "lima", "bin", qemuName),
+	}
+	if runtime.GOOS == "linux" {
+		// On Linux, we may be running in AppImage; in that case, we need to check
+		// the bundled qemu.
+		candidates = append(
+			candidates,
+			filepath.Join(utils.GetParentDir(resourcesDir, 4), "usr", "bin", qemuName),
+		)
+	}
+	return paths.FindFirstExecutable(candidates...)
+}
+
+func isExecutableRunningFunc(executablePath string) func() (bool, error) {
+	return func() (bool, error) {
+		pid, err := process.FindPidOfProcess(executablePath)
+		if err != nil {
+			return false, err
 		}
-		return fmt.Errorf("error running pkill: %w", err)
+		return pid != 0, nil
 	}
-	return nil
 }
 
-func pkillQemu() error {
-	err := pkill("-9", "-f", RancherDesktopQemuCommand)
-	if err != nil {
-		return fmt.Errorf("failed to kill qemu: %w", err)
+func terminateExecutableFunc(executablePath string) func() error {
+	return func() error {
+		pid, err := process.FindPidOfProcess(executablePath)
+		if err != nil || pid == 0 {
+			return err
+		}
+		proc, err := os.FindProcess(pid)
+		if err != nil {
+			return fmt.Errorf("failed to find process for pid %d: %w", pid, err)
+		}
+		// The pid might not exist even if we did not receive an error.
+		err = proc.Signal(syscall.SIGTERM)
+		if err != nil && !errors.Is(err, os.ErrProcessDone) {
+			return fmt.Errorf("failed to terminate process %d: %w", pid, err)
+		}
+		return nil
 	}
-	return nil
 }
 
 func checkLima() (bool, error) {
@@ -213,8 +232,24 @@ func deleteLima() error {
 	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "delete", "--force", "0"))
 }
 
-func killFunc(directory string) func() error {
+func terminateRancherDesktopFunc(appDir string) func() error {
 	return func() error {
-		return process.TerminateProcessInDirectory(directory, true)
+		var errors *multierror.Error
+
+		errors = multierror.Append(errors, (func() error {
+			mainExe, err := paths.GetMainExecutable()
+			if err != nil {
+				return err
+			}
+			pid, err := process.FindPidOfProcess(mainExe)
+			if err != nil {
+				return err
+			}
+			return process.WaitForProcessAndKillGroup(pid)
+		})())
+
+		errors = multierror.Append(errors, process.TerminateProcessInDirectory(appDir, true))
+
+		return errors.ErrorOrNil()
 	}
 }

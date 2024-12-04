@@ -17,7 +17,6 @@ import (
 
 	"github.com/adrg/xdg"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
 const autostartFileTemplateContents = `[Desktop Entry]
@@ -159,7 +158,7 @@ func getAutostartFileData() (autostartFileData, error) {
 		// (either an extracted zip file, or RPM), so resolving the application
 		// executable relative to the current executable path should be fine.
 		var err error
-		executablePath, err = utils.GetRDPath()
+		executablePath, err = p.GetRDLaunchPath()
 		if err != nil {
 			return autostartFileData{}, fmt.Errorf("failed to get Rancher Desktop executable: %w", err)
 		}

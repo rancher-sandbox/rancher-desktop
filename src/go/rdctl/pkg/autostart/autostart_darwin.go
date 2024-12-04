@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 const launchAgentFileTemplateContents = `<?xml version="1.0" encoding="UTF-8"?>
@@ -83,7 +83,7 @@ func EnsureAutostart(autostartDesired bool) error {
 }
 
 func getDesiredLaunchAgentFileContents() ([]byte, error) {
-	rancherDesktopPath, err := utils.GetRDPath()
+	rancherDesktopPath, err := paths.GetRDLaunchPath()
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get path to main Rancher Desktop executable: %w", err)
 	}
