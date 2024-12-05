@@ -50,15 +50,15 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	sharedInformer := serviceInformer.Informer()
 	_, _ = sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			log.Debugf("Service Informer: Add func called with: %+v", obj)
+			log.Tracef("Service Informer: Add func called with: %+v", obj)
 			handleUpdate(nil, obj, eventCh)
 		},
 		DeleteFunc: func(obj interface{}) {
-			log.Debugf("Service Informer: Del func called with: %+v", obj)
+			log.Tracef("Service Informer: Del func called with: %+v", obj)
 			handleUpdate(obj, nil, eventCh)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			log.Debugf("Service Informer: Update func called with old object %+v and new Object: %+v", oldObj, newObj)
+			log.Tracef("Service Informer: Update func called with old object %+v and new Object: %+v", oldObj, newObj)
 			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
