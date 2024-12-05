@@ -360,6 +360,7 @@ IMAGENAME
 IMAGEPATH
 INADDR
 inbox
+indentless
 ine
 Infof
 Infoln
@@ -935,6 +936,7 @@ xvfb
 xwininfo
 xzf
 yac
+yamlfmt
 yarker
 Yehuda
 YPUy
