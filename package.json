@@ -163,7 +163,7 @@
     "ps-tree": "1.2.0",
     "raw-loader": "4.0.2",
     "sass": "1.82.0",
-    "sass-loader": "16.0.3",
+    "sass-loader": "16.0.4",
     "ts-jest": "29.2.5",
     "ts-loader": "^9.5.1",
     "ts-node": "10.9.2",
