@@ -101,6 +101,7 @@ func ForwardPorts(ctx context.Context, tracker tracker.Tracker, updateInterval t
 				name := entryToString(p)
 				if err := tracker.Add(generateID(name), portMap); err != nil {
 					log.Errorf("iptables scanner failed to forward portmap for %s: %s", name, err)
+					continue
 				}
 				log.Infof("iptables scanner forwarded portmap for %s", name)
 			}
