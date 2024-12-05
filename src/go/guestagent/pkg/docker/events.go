@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/docker/api/types"
@@ -182,7 +183,7 @@ func createPortMapping(ports []types.Port) (nat.PortMap, error) {
 			continue
 		}
 
-		portMapKey, err := nat.NewPort(port.Type, strconv.Itoa(int(port.PrivatePort)))
+		portMapKey, err := nat.NewPort(strings.ToLower(port.Type), strconv.Itoa(int(port.PrivatePort)))
 		if err != nil {
 			return nil, err
 		}
