@@ -1,0 +1,3 @@
+formatter:
+  indentless_arrays: true
+  retain_line_breaks: true
