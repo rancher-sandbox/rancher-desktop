@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 
 	gvisorTypes "github.com/containers/gvisor-tap-vsock/pkg/types"
@@ -94,15 +95,16 @@ func (p *PortProxy) handleEvent(conn net.Conn) {
 
 func (p *PortProxy) exec(pm types.PortMapping) {
 	for portProto, portBindings := range pm.Ports {
-		logrus.Debugf("received the following port: [%s] and protocol: [%s] from portMapping: %+v", portProto.Port(), portProto.Proto(), pm)
+		proto := strings.ToLower(portProto.Proto())
+		logrus.Debugf("received the following port: [%s] and protocol: [%s] from portMapping: %+v", portProto.Port(), proto, pm)
 
-		switch gvisorTypes.TransportProtocol(portProto.Proto()) {
+		switch gvisorTypes.TransportProtocol(proto) {
 		case gvisorTypes.TCP:
 			p.handleTCP(portBindings, pm.Remove)
 		case gvisorTypes.UDP:
 			p.handleUDP(portBindings, pm.Remove)
 		default:
-			logrus.Warnf("unsupported protocol: [%s]", portProto.Proto())
+			logrus.Warnf("unsupported protocol: [%s]", proto)
 		}
 	}
 }

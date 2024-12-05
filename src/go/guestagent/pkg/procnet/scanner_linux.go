@@ -30,6 +30,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/log-go"
@@ -186,7 +187,7 @@ func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) er
 
 func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 	port := strconv.Itoa(int(entry.Port))
-	portMapKey, err := nat.NewPort(entry.Kind, port)
+	portMapKey, err := nat.NewPort(strings.ToLower(entry.Kind), port)
 	if err != nil {
 		return fmt.Errorf("generating portMapKey protocol: %s, port: %d failed: %w",
 			entry.Kind,

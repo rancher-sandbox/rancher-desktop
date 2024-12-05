@@ -233,8 +233,9 @@ func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net
 	portMap := make(nat.PortMap)
 
 	for port, proto := range ports {
-		log.Debugf("create port mapping for port %d, protocol %s", port, proto)
-		portMapKey, err := nat.NewPort(string(proto), strconv.Itoa(int(port)))
+		protocol := strings.ToLower(string(proto))
+		log.Debugf("create port mapping for port %d, protocol %s", port, protocol)
+		portMapKey, err := nat.NewPort(protocol, strconv.Itoa(int(port)))
 		if err != nil {
 			return nil, err
 		}

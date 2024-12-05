@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/Masterminds/log-go"
 	"github.com/containerd/containerd"
@@ -395,7 +396,7 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 	}
 
 	for _, port := range ports {
-		portMapKey, err := nat.NewPort(port.Protocol, strconv.Itoa(port.ContainerPort))
+		portMapKey, err := nat.NewPort(strings.ToLower(port.Protocol), strconv.Itoa(port.ContainerPort))
 		if err != nil {
 			return nil, err
 		}
