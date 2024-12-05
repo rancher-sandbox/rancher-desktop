@@ -1,6 +1,6 @@
-lima: 1.0.0.rd3
+lima: 1.0.2.rd1
 qemu: 9.1.2.rd1
-socketVMNet: 1.1.7
+socketVMNet: 1.2.0
 alpineLimaISO:
   isoVersion: 0.2.41.rd2
   alpineVersion: 3.20.3
@@ -11,7 +11,7 @@ dockerCLI: 27.3.1
 dockerBuildx: 0.19.1
 dockerCompose: 2.31.0
 golangci-lint: 1.62.2
-trivy: 0.57.1
+trivy: 0.58.0
 steve: 0.1.0-beta9
 rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.8.2
@@ -24,3 +24,5 @@ spinShim: 0.17.0
 spinOperator: 0.4.0
 certManager: 1.16.2
 spinCLI: 3.0.0
+spinKubePlugin: 0.3.1
+js2wasmPlugin: 0.6.1

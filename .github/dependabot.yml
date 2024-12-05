@@ -131,6 +131,14 @@ updates:
     reviewers: [ "jandubois" ]
 
   - package-ecosystem: "gomod"
+    directory: "/src/go/spin-stub"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 12
+    labels: ["component/dependencies"]
+    reviewers: [ "jandubois" ]
+
+  - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
     schedule:
       interval: "daily"

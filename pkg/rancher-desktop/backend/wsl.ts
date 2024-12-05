@@ -1343,8 +1343,20 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               await this.runInit();
               if (configureWASM) {
                 try {
+                  const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
+                  const env = {
+                    KUBE_PLUGIN_VERSION:    DEPENDENCY_VERSIONS.spinKubePlugin,
+                    JS2WASM_PLUGIN_VERSION: DEPENDENCY_VERSIONS.js2wasmPlugin,
+                    SPIN_TEMPLATE_BRANCH:   (version ? `v${ version.major }.${ version.minor }` : 'main'),
+                  };
+                  const wslenv = Object.keys(env).join(':');
+
                   // wsl-exec is needed to correctly resolve DNS names
-                  await this.execCommand('/usr/local/bin/wsl-exec', await this.wslify(executable('setup-spin')));
+                  await this.execCommand({
+                    env: {
+                      ...process.env, ...env, WSLENV: wslenv,
+                    },
+                  }, '/usr/local/bin/wsl-exec', await this.wslify(executable('setup-spin')));
                 } catch {
                   // just ignore any errors; all the script does is installing spin plugins and templates
                 }

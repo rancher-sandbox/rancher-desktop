@@ -17,12 +17,12 @@ resources/resources/win32/bin:
 - docker-credential-none.exe
 - nerdctl.exe
 - rdctl.exe
+- spin.exe
 - '!docker-credential-ecr-login.exe'
 - '!docker-credential-wincred.exe'
 - '!helm.exe'
 - '!kubectl.exe'
 - '!kuberlr.exe'
-- '!spin.exe'
 resources/resources/win32/docker-cli-plugins:
 - '!docker-buildx.exe'
 - '!docker-compose.exe'
@@ -30,3 +30,4 @@ resources/resources/win32/internal:
 - host-switch.exe
 - steve.exe
 - wsl-helper.exe
+- '!spin.exe'

@@ -23,18 +23,9 @@ if [ ! -x "$spin" ]; then
   exit 1
 fi
 
-assert_dir_is_empty() {
-  # shellcheck disable=SC2012 # Using `ls` is fine
-  if [ -d "$1" ] && [ "$(ls -1 "$1" | wc -l)" -gt 0 ]; then
-    echo "'$1' already exists and is not empty"
-    exit 0
-  fi
-}
-
-spin_dir="${app_data_dir}/spin"
-
-assert_dir_is_empty "${spin_dir}/templates"
-assert_dir_is_empty "${spin_dir}/plugins"
+# This is the WSL path, not the Win32 path, so we can't use it to set SPIN_DATA_DIR.
+# We rely on the spin/spin.exe wrapper to setup SPIN_DATA_DIR and use spin_dir only for temp files.
+spin_dir="${app_data_dir}/rancher-desktop/spin"
 
 if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
   echo "Waiting for github.com to become resolvable"
@@ -52,7 +43,7 @@ fi
 # We do need either curl or wget to be on the PATH though.
 install_templates() {
   repo=$1
-  branch=main
+  branch=$2
   tmpdir="${spin_dir}/rancher-desktop.$$"
   tarball="${tmpdir}/${repo}.tar.gz"
 
@@ -71,12 +62,11 @@ install_templates() {
 
     if [ $rc -eq 0 ]; then
       echo "Unpacking '${tarball}'"
-      "${system_root}/system32/tar.exe" xfz "$tarball" -C "$tmpdir"
+      "${system_root}/system32/tar.exe" xfz "$tarball" -C "$tmpdir" --strip-components 1
       rc=$?; test $rc -ne 0 && echo "tar.exe exit status is $rc"
 
-      dir="${tmpdir}\\${repo}-${branch}"
-      echo "Installing templates from '${dir}'"
-      "$spin" templates install --update --dir "$dir"
+      echo "Installing templates from '${tmpdir}'"
+      "$spin" templates install --update --dir "$tmpdir"
       rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
     else
       echo "Could not download '${url}'"
@@ -97,12 +87,11 @@ install_templates() {
   fi
   if [ -f "$tarball" ]; then
     echo "Unpacking '${tarball}'"
-    tar xfz "$tarball" -C "$tmpdir"
+    tar xfz "$tarball" -C "$tmpdir" --strip-components 1
     rc=$?; test $rc -ne 0 && echo "tar exit status is $rc"
 
-    dir="${tmpdir}/${repo}-${branch}"
-    echo "Installing templates from '${dir}'"
-    "$spin" templates install --update --dir "$dir"
+    echo "Installing templates from '${tmpdir}'"
+    "$spin" templates install --update --dir "$tmpdir"
     rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
   else
     echo "Could not download '${url}' (maybe no curl/wget)"
@@ -112,17 +101,18 @@ install_templates() {
 
 install_plugin() {
   plugin=$1
-  url="https://raw.githubusercontent.com/fermyon/spin-plugins/main/manifests/${plugin}/${plugin}.json"
-  echo "Installing plugin from '${url}'"
-  "$spin" plugins install --yes --url "$url"
+  version=$2
+  echo "Installing plugin ${plugin} version ${version}"
+  "$spin" plugins uninstall "$plugin" || true
+  "$spin" plugins install --yes --version "${version}" "$plugin"
   rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
 }
 
-install_templates spin
-install_templates spin-python-sdk
-install_templates spin-js-sdk
+install_templates spin "${SPIN_TEMPLATE_BRANCH:-main}"
+install_templates spin-python-sdk main
+install_templates spin-js-sdk main
 
-install_plugin js2wasm
-install_plugin kube
+install_plugin js2wasm "${JS2WASM_PLUGIN_VERSION:-0.6.1}"
+install_plugin kube "${KUBE_PLUGIN_VERSION:-0.3.1}"
 
 echo "'${spin}' setup complete"

@@ -18,9 +18,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/vishvananda/netlink v1.3.0
 	github.com/vishvananda/netns v0.0.5
-	golang.org/x/net v0.31.0
-	golang.org/x/sync v0.9.0
-	golang.org/x/sys v0.27.0
+	golang.org/x/net v0.32.0
+	golang.org/x/sync v0.10.0
+	golang.org/x/sys v0.28.0
 	gvisor.dev/gvisor v0.0.0-20240916094835-a174eb65023f
 )
 
@@ -30,22 +30,23 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/insomniacslk/dhcp v0.0.0-20240710054256-ddd8a41251c9 // indirect
+	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/miekg/dns v1.1.62 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/qdm12/dns/v2 v2.0.0-rc6 // indirect
 	github.com/qdm12/gosettings v0.4.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
+	golang.org/x/crypto v0.30.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.20.0 // indirect
+	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.24.0 // indirect
+	golang.org/x/tools v0.26.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -21,6 +21,8 @@ local_setup() {
 }
 
 @test 'deploy app to kubernetes' {
+    # Newer versions of the sample app have moved from "deislabs" to "spinkube":
+    # ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello:v0.13.0
     spin kube deploy --from ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
 }
 

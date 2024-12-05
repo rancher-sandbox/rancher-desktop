@@ -135,3 +135,14 @@ export class NerdctlStub extends GoDependency {
     return path.join(context.resourcesDir, context.platform, 'bin', leafName);
   }
 }
+
+export class SpinStub extends GoDependency {
+  constructor() {
+    super('spin-stub');
+  }
+
+  override outFile(context: DownloadContext) {
+    // spin-stub is only used on Windows
+    return path.join(context.resourcesDir, context.platform, 'bin', 'spin.exe');
+  }
+}

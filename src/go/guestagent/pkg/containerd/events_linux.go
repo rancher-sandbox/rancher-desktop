@@ -15,8 +15,8 @@ limitations under the License.
 package containerd
 
 import (
+	"bytes"
 	"context"
-	"crypto/sha512"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,22 +29,17 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
 	containerdNamespace "github.com/containerd/containerd/namespaces"
+	"github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	rdUtils "github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 	"google.golang.org/protobuf/proto"
 )
 
 const (
-	namespaceKey   = "nerdctl/namespace"
-	portsKey       = "nerdctl/ports"
-	maxHashLen     = sha512.Size * 2
-	maxChainLength = 28
-	chainPrefix    = "CNI-"
-)
-
-var (
-	ErrExecIptablesRule  = errors.New("failed updating iptables rules")
-	ErrIPAddressNotFound = errors.New("IP address not found in line")
+	namespaceKey = "nerdctl/namespace"
+	portsKey     = "nerdctl/ports"
+	networkKey   = "nerdctl/networks"
 )
 
 // EventMonitor monitors the Containerd API
@@ -102,7 +97,11 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed to unmarshal container's start task: %v", err)
 				}
 
-				ports, err := e.createPortMapping(ctx, envelope.Namespace, startTask.ContainerID)
+				container, err := e.containerdClient.ContainerService().Get(ctx, startTask.ContainerID)
+				if err != nil {
+					log.Errorf("failed to get the container %s from namespace %s: %s", startTask.ContainerID, envelope.Namespace, err)
+				}
+				ports, err := createPortMappingFromString(container.Labels[portsKey])
 				if err != nil {
 					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
@@ -110,8 +109,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				if len(ports) == 0 {
 					continue
 				}
-
-				err = execIptablesRules(ports, startTask.ContainerID, envelope.Namespace, strconv.Itoa(int(startTask.Pid)))
+				err = execIptablesRules(ctx, ports, startTask.ContainerID, container.Labels[networkKey], envelope.Namespace, strconv.Itoa(int(startTask.Pid)))
 				if err != nil {
 					log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 				}
@@ -130,9 +128,14 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed to unmarshal container update event: %v", err)
 				}
 
-				ports, err := e.createPortMapping(ctx, envelope.Namespace, cuEvent.ID)
+				container, err := e.containerdClient.ContainerService().Get(ctx, cuEvent.ID)
 				if err != nil {
-					log.Errorf("failed to create port mapping from container update event: %v", err)
+					log.Errorf("failed to get the container %s from namespace %s: %s", cuEvent.ID, envelope.Namespace, err)
+				}
+
+				ports, err := createPortMappingFromString(container.Labels[portsKey])
+				if err != nil {
+					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
 
 				if len(ports) == 0 {
@@ -244,7 +247,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
 			continue
 		}
 
-		err = execIptablesRules(ports, c.ID(), labels[namespaceKey], strconv.Itoa(int(t.Pid())))
+		err = execIptablesRules(ctx, ports, c.ID(), labels[networkKey], labels[namespaceKey], strconv.Itoa(int(t.Pid())))
 		if err != nil {
 			log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 		}
@@ -279,13 +282,26 @@ func (e *EventMonitor) Close() error {
 
 // execIptablesRules creates an additional DNAT rule to allow service exposure on
 // other network addresses if port binding is bound to 127.0.0.1.
-func execIptablesRules(portMappings nat.PortMap, containerID, namespace, pid string) error {
+func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerID, networks, namespace, pid string) error {
 	var errs []error
 
+	var containerNetworks []string
+	err := json.Unmarshal([]byte(networks), &containerNetworks)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("unmarshaling container networks: %w", err))
+		return errors.Join(errs...)
+	}
 	for portProto, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
 			if portBinding.HostIP == "127.0.0.1" {
-				err := createLoopbackIPtablesRules(containerID, namespace, pid, portProto.Port(), portBinding.HostPort)
+				err := createLoopbackIPtablesRules(
+					ctx,
+					containerNetworks,
+					containerID,
+					namespace,
+					pid,
+					portProto.Port(),
+					portBinding.HostPort)
 				if err != nil {
 					errs = append(errs, err)
 				}
@@ -294,80 +310,74 @@ func execIptablesRules(portMappings nat.PortMap, containerID, namespace, pid str
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrExecIptablesRule, errs)
+		return fmt.Errorf("%w: %+v", rdUtils.ErrExecIptablesRule, errs)
 	}
 
 	return nil
 }
 
-// When the port binding is bound to 127.0.0.1, we add an additional DNAT rule in the main
-// CNI DNAT chain (CNI-HOSTPORT-DNAT) after the existing rule (using --append).
-// This is necessary because the initial CNI rule created by containerd only allows the traffic
-// to be routed to localhost. Therefore, we add an additional rule to allow traffic to any
-// destination IP address which allows the service to be discoverable through namespaced network's
-// subnet, which essentially causes the service to listen on eth0 instead; this is required as the
-// traffic is routed via vm-switch over the tap network.
-// The existing DNAT rule are as follows:
-// DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
-// We enter the following rule after the existing rule:
-// DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
-func createLoopbackIPtablesRules(containerID, namespace, pid, port, destinationPort string) error {
-	// read the container's cni config to extract the network name
-	nsenterNetworkConfCmd := exec.Command("nsenter", "-t", pid, "-n", "cat", "/etc/cni/net.d/nerdctl-bridge.conflist")
-	output, err := nsenterNetworkConfCmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("read the following network conflist for containerID: %s config: %s", containerID, string(output))
-
-	var networkConfig cniNetworkConfig
-	err = json.Unmarshal(output, &networkConfig)
-	if err != nil {
-		return err
-	}
-
+// When the port binding is set to 127.0.0.1, an additional DNAT rule is added to the main
+// CNI DNAT chain (CNI-HOSTPORT-DNAT) after the existing rule (using --append). This is necessary
+// because the initial CNI rule created by containerd only allows traffic to be routed to localhost.
+// To make the service discoverable via the namespaced network's subnet, an additional rule is added
+// to allow traffic to any destination IP address. This effectively causes the service to listen on
+// the eth0 interface instead of localhost, which is required since the traffic is routed through the
+// vm-switch over the tap network.
+//
+// The existing DNAT rule is as follows:
+//
+//	DNAT       tcp  --  anywhere             localhost            tcp dpt:9119 to:10.4.0.22:80.
+//
+// After the existing rule, the following new rule is added:
+//
+//	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
+func createLoopbackIPtablesRules(ctx context.Context, networks []string, containerID, namespace, pid, port, destinationPort string) error {
 	eth0IP, err := extractIPAddress(pid)
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("found the ip address: %s for containerID: %s", eth0IP, containerID)
-
-	// create the corresponding chain name, e.g CNI-DN-xxxxxx
-	// (where xxxxxx is a function of the ContainerID and network name)
-	// https://www.cni.dev/plugins/current/meta/portmap/#dnat
-	// https://github.com/containernetworking/plugins/blob/2b097c5a62dacfd2f9ea4268faa4fc04bd5343f5/pkg/utils/utils.go#L39
 	cID := fmt.Sprintf("%s-%s", namespace, containerID)
-	chainName := mustFormatHashWithPrefix(maxChainLength, chainPrefix+"DN-", networkConfig.Name+cID)
 
-	log.Debugf("determined iptables chain name: %s for containerID: %s", chainName, containerID)
+	var allErrs []error
 
-	// Instead of updating the existing rule we insert the overriding rule below the previous one
-	// e.g rule can be:
-	// iptables -t nat -A CNI-DN-xxxxxx -p tcp -d 0.0.0.0/0 -j DNAT --dport 9119 --to-destination 10.4.0.10:80
-	iptableCmd := exec.Command("iptables",
-		"--table", "nat",
-		"--append", chainName,
-		"--protocol", "tcp",
-		"--destination", "0.0.0.0/0",
-		"--jump", "DNAT",
-		"--dport", destinationPort,
-		"--to-destination", fmt.Sprintf("%s:%s", eth0IP, port))
+	// Run the rule per network
+	for _, network := range networks {
+		chainName := utils.MustFormatChainNameWithPrefix(network, cID, "DN-")
 
-	return iptableCmd.Run()
-}
-
-func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {
-	container, err := e.containerdClient.ContainerService().Get(
-		containerdNamespace.WithNamespace(ctx, namespace), containerID)
-	if err != nil {
-		return nil, err
+		// Instead of modifying the existing rule, a new rule is added that overrides the previous one.
+		// The original rule only allows traffic from anywhere to localhost, but the new rule permits traffic
+		// from anywhere to anywhere. The new rule is appended below the existing one in the chain, ensuring
+		// that traffic is correctly routed to the specified destination.
+		//
+		// Example of the new rule:
+		//   iptables -t nat -A CNI-DN-xxxxxx -p tcp -d 0.0.0.0/0 -j DNAT --dport 9119 --to-destination 10.4.0.10:80
+		//
+		// IMPORTANT: Unlike the Docker events API, we do not attempt to delete the rules we create. This is due
+		// to how containerd manages CNI chains. Specifically, containerd deletes the entire CNI chain (e.g., CNI-DN-xxxxxx)
+		// when a container exits or is deleted, which automatically removes any rules appended during container startup.
+		iptableCmd := exec.CommandContext(ctx,
+			"iptables",
+			"--table", "nat",
+			"--append", chainName,
+			"--protocol", "tcp",
+			"--destination", "0.0.0.0/0",
+			"--jump", "DNAT",
+			"--dport", destinationPort,
+			"--to-destination", fmt.Sprintf("%s:%s", eth0IP, port))
+		var stderr bytes.Buffer
+		iptableCmd.Stderr = &stderr
+		if err := iptableCmd.Run(); err != nil {
+			allErrs = append(allErrs, fmt.Errorf("running iptables rule [%s] failed: %w - %s", iptableCmd.String(), err, stderr.String()))
+		}
+		log.Debugf("running the following loopback rule [%s] in chain: %s for containerID: %s", iptableCmd.String(), chainName, containerID)
 	}
 
-	log.Debugf("got a container [%s] from namespace [%s]", container.ID, namespace)
-
-	return createPortMappingFromString(container.Labels[portsKey])
+	if len(allErrs) != 0 {
+		return errors.Join(allErrs...)
+	}
+	return nil
 }
 
 func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
@@ -391,7 +401,7 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   NormalizeHostIP(port.HostIP),
+			HostIP:   rdUtils.NormalizeHostIP(port.HostIP),
 			HostPort: strconv.Itoa(port.HostPort),
 		}
 		if pb, ok := portMap[portMapKey]; ok {
@@ -417,35 +427,10 @@ func extractIPAddress(pid string) (string, error) {
 	matches := rx.FindStringSubmatch(string(output))
 	segments := 2
 	if len(matches) < segments {
-		return "", ErrIPAddressNotFound
+		return "", rdUtils.ErrIPAddressNotFound
 	}
 
 	return matches[1], nil
-}
-
-// ported from:
-// https://github.com/containernetworking/plugins/blob/2b097c5a62dacfd2f9ea4268faa4fc04bd5343f5/pkg/utils/utils.go#L39
-// however module requires Go 1.20
-// mustFormatHashWithPrefix returns a string of given length that begins with the
-// given prefix. It is filled with entropy based on the given string toHash.
-func mustFormatHashWithPrefix(length int, prefix string, toHash string) string {
-	if len(prefix) >= length || length > maxHashLen {
-		panic("invalid length")
-	}
-
-	output := sha512.Sum512([]byte(toHash))
-
-	return fmt.Sprintf("%s%x", prefix, output)[:length]
-}
-
-// NormalizeHostIP checks if the provided IP address is valid.
-// The valid options are "127.0.0.1" and "0.0.0.0". If the input is "127.0.0.1",
-// it returns "127.0.0.1". Any other address will be mapped to "0.0.0.0".
-func NormalizeHostIP(ip string) string {
-	if ip == "127.0.0.1" || ip == "localhost" {
-		return ip
-	}
-	return "0.0.0.0"
 }
 
 // Port is representing nerdctl/ports entry in the
@@ -455,11 +440,4 @@ type Port struct {
 	ContainerPort int
 	Protocol      string
 	HostIP        string
-}
-
-type cniNetworkConfig struct {
-	CNIVersion    string            `json:"cniVersion"`
-	Name          string            `json:"name"`
-	NerdctlID     string            `json:"nerdctlId"`
-	NerdctlLabels map[string]string `json:"nerdctlLabels"`
 }

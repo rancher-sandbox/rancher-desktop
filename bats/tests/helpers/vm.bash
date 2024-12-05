@@ -259,6 +259,12 @@ launch_the_application() {
     local args=("$@")
     trace "$*"
 
+    # TODO workaround for https://github.com/rancher-sandbox/rancher-desktop/issues/7853
+    local k3s_versions="k3s-versions.json"
+    if [ -f "$PATH_BATS_ROOT/$k3s_versions" ]; then
+        create_file "$PATH_CACHE/$k3s_versions" <"$PATH_BATS_ROOT/$k3s_versions"
+    fi
+
     if using_dev_mode; then
         # translate args back into the internal API format
         local api_args=()
