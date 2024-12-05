@@ -65,6 +65,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["jandubois"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/extension-proxy"
@@ -73,6 +78,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/github-runner-monitor"
@@ -81,6 +91,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["mook-as"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/guestagent"
@@ -89,6 +104,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/mock-wsl"
@@ -97,6 +117,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/nerdctl-stub"
@@ -105,6 +130,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/nerdctl-stub/generate"
@@ -113,6 +143,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/networking"
@@ -121,6 +156,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/rdctl"
@@ -129,6 +169,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["jandubois"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/spin-stub"
@@ -137,6 +182,11 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["jandubois"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
 
 - package-ecosystem: "gomod"
   directory: "/src/go/wsl-helper"
@@ -145,3 +195,8 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
