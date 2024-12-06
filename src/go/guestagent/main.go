@@ -173,15 +173,15 @@ func main() {
 	}
 
 	if *enableKubernetes {
+		k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
+
+		if k8sServiceListenerIP == nil || !(k8sServiceListenerIP.Equal(net.IPv4zero) ||
+			k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) {
+			log.Fatalf("empty or none valid input for Kubernetes service listener IP address %s. "+
+				"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
+		}
+
 		group.Go(func() error {
-			k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
-
-			if k8sServiceListenerIP == nil || !(k8sServiceListenerIP.Equal(net.IPv4zero) ||
-				k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) {
-				log.Fatalf("empty or none valid input for Kubernetes service listener IP address %s. "+
-					"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
-			}
-
 			// Watch for kube
 			err := kube.WatchForServices(ctx,
 				*configPath,
@@ -190,18 +190,18 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("kubernetes service watcher failed: %w", err)
 			}
+			return nil
+		})
 
+		group.Go(func() error {
+			iptablesScanner := iptables.New(ctx, portTracker, k8sServiceListenerIP, iptablesUpdateInterval)
+			err := iptablesScanner.ForwardPorts()
+			if err != nil {
+				return fmt.Errorf("iptables port forwarding failed: %w", err)
+			}
 			return nil
 		})
 	}
-
-	group.Go(func() error {
-		err := iptables.ForwardPorts(ctx, portTracker, iptablesUpdateInterval)
-		if err != nil {
-			return fmt.Errorf("iptables port forwarding failed: %w", err)
-		}
-		return nil
-	})
 
 	group.Go(func() error {
 		procScanner, err := procnet.NewProcNetScanner(ctx, portTracker, procNetScanInterval)
