@@ -194,8 +194,9 @@ func main() {
 		})
 
 		group.Go(func() error {
-			iptablesScanner := iptables.New(ctx, portTracker, k8sServiceListenerIP, iptablesUpdateInterval)
-			err := iptablesScanner.ForwardPorts()
+			iptablesScanner := iptables.NewIptablesScanner()
+			iptablesHandler := iptables.New(ctx, portTracker, iptablesScanner, k8sServiceListenerIP, iptablesUpdateInterval)
+			err := iptablesHandler.ForwardPorts()
 			if err != nil {
 				return fmt.Errorf("iptables port forwarding failed: %w", err)
 			}
