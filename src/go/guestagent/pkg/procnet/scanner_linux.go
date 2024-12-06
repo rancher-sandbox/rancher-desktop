@@ -22,8 +22,6 @@ package procnet
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
@@ -37,6 +35,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/lima-vm/lima/pkg/guestagent/procnettcp"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
 type action string
@@ -91,7 +90,7 @@ func (p *ProcNetScanner) ForwardPorts() error {
 			for port, bindings := range newPortMap {
 				if _, exists := previousPortMap[port]; !exists {
 					log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
-					err := p.tracker.Add(generateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())), nat.PortMap{
+					err := p.tracker.Add(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())), nat.PortMap{
 						port: bindings,
 					})
 					if err != nil {
@@ -108,7 +107,7 @@ func (p *ProcNetScanner) ForwardPorts() error {
 			for port, previousBindings := range previousPortMap {
 				if _, exists := newPortMap[port]; !exists {
 					log.Infof("/proc/net scanner removed port: %s -> %+v", port, previousBindings)
-					err := p.tracker.Remove(generateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())))
+					err := p.tracker.Remove(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())))
 					if err != nil {
 						log.Errorf("/proc/net scanner failed to remove port: %s", err)
 						continue
@@ -233,10 +232,4 @@ func writeSysctl(path string, value string) error {
 	}
 	log.Infof("/proc/net scanner enabled %s", routeLocalnet)
 	return nil
-}
-
-func generateID(entry string) string {
-	hasher := sha256.New()
-	hasher.Write([]byte(entry))
-	return hex.EncodeToString(hasher.Sum(nil))
 }

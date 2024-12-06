@@ -13,7 +13,11 @@ limitations under the License.
 
 package utils
 
-import "errors"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+)
 
 var (
 	ErrExecIptablesRule  = errors.New("failed updating iptables rules")
@@ -28,4 +32,10 @@ func NormalizeHostIP(ip string) string {
 		return ip
 	}
 	return "0.0.0.0"
+}
+
+func GenerateID(entry string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(entry))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
