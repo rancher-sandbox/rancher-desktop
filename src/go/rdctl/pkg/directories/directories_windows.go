@@ -26,8 +26,8 @@ import (
 
 // InvokeWin32WithBuffer calls the given function with increasing buffer sizes
 // until it does not return ERROR_INSUFFICIENT_BUFFER.
-func InvokeWin32WithBuffer(cb func(size int) error) error {
-	size := 256
+func InvokeWin32WithBuffer(initialSize int, cb func(size int) error) error {
+	size := initialSize
 	for {
 		err := cb(size)
 		if err == nil {
