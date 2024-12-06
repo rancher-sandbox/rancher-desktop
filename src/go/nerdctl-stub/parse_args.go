@@ -293,6 +293,7 @@ func init() {
 	registerArgHandler("builder build", "--cache-from", argHandlers.builderCacheArgHandler)
 	registerArgHandler("builder build", "--cache-to", argHandlers.builderCacheArgHandler)
 	registerArgHandler("builder build", "--file", argHandlers.filePathArgHandler)
+	registerArgHandler("builder build", "-f", argHandlers.filePathArgHandler)
 	registerArgHandler("builder build", "--iidfile", argHandlers.outputPathArgHandler)
 	registerArgHandler("builder debug", "--file", argHandlers.filePathArgHandler)
 	registerArgHandler("builder debug", "-f", argHandlers.filePathArgHandler)
@@ -323,7 +324,7 @@ func init() {
 	registerArgHandler("image save", "--output", argHandlers.outputPathArgHandler)
 
 	// Set up command handlers
-	registerCommandHandler("image build", imageBuildHandler)
+	registerCommandHandler("builder build", builderBuildHandler)
 	registerCommandHandler("container cp", containerCopyHandler)
 
 	// Set up aliases
@@ -343,7 +344,7 @@ func init() {
 	aliasCommand("stop", "container stop")
 	aliasCommand("unpause", "container unpause")
 	aliasCommand("wait", "container wait")
-	aliasCommand("build", "image build")
+	aliasCommand("build", "builder build")
 	aliasCommand("load", "image load")
 	aliasCommand("pull", "image pull")
 	aliasCommand("push", "image push")
