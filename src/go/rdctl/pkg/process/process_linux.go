@@ -75,3 +75,24 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 
 	return nil
 }
+
+// Block and wait for the given process to exit.
+func WaitForProcess(pid int) error {
+	pidfd, err := unix.PidfdOpen(pid, 0)
+	if err != nil {
+		return fmt.Errorf("failed to open process %d: %w", pid, err)
+	}
+	defer func() {
+		_ = os.NewFile(uintptr(pidfd), fmt.Sprintf("/proc/%d", pid)).Close()
+	}()
+
+	pollFd := unix.PollFd{
+		Fd:     int32(pidfd),
+		Events: unix.POLLIN,
+	}
+	_, err = unix.Poll([]unix.PollFd{pollFd}, -1)
+	if err != nil {
+		return fmt.Errorf("failed to wait for process %d: %w", pid, err)
+	}
+	return nil
+}
