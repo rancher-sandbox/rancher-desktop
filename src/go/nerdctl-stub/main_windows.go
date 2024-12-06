@@ -158,7 +158,12 @@ func buildContextArgHandler(arg string) (string, []cleanupFunc, error) {
 		resultParts = append(resultParts, fmt.Sprintf("%s=%s", k, v))
 	}
 	var result bytes.Buffer
-	if err = csv.NewWriter(&result).Write(resultParts); err != nil {
+	writer := csv.NewWriter(&result)
+	if err = writer.Write(resultParts); err != nil {
+		return "", nil, err
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
 		return "", nil, err
 	}
 	return result.String(), nil, nil
