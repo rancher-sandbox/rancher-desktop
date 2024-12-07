@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestImageBuildHandler(t *testing.T) {
+func TestBuilderBuildHandler(t *testing.T) {
 	t.Run("munges the image directory", func(t *testing.T) {
 		handlers := argHandlersType{
 			filePathArgHandler: func(s string) (string, []cleanupFunc, error) {
 				return "<<path>>", nil, nil
 			},
 		}
-		parsed, err := imageBuildHandler(nil, []string{"path"}, handlers)
+		parsed, err := builderBuildHandler(nil, []string{"path"}, handlers)
 		assert.NoError(t, err)
 		assert.EqualValues(t, []string{"<<path>>"}, parsed.args)
 		assert.Nil(t, parsed.cleanup)
@@ -28,7 +28,7 @@ func TestImageBuildHandler(t *testing.T) {
 				return "", []cleanupFunc{func() error { return cleanupError }}, handlerError
 			},
 		}
-		_, err := imageBuildHandler(nil, []string{"path"}, handlers)
+		_, err := builderBuildHandler(nil, []string{"path"}, handlers)
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, handlerError.Error())
 		assert.ErrorContains(t, err, cleanupError.Error())

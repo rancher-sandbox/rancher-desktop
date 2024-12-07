@@ -27,6 +27,7 @@ type argHandlersType struct {
 	outputPathArgHandler   argHandler
 	mountArgHandler        argHandler
 	builderCacheArgHandler argHandler
+	buildContextArgHandler argHandler
 }
 
 // commandHandlerType is the type of commandDefinition.handler, which is used
@@ -288,9 +289,11 @@ func aliasCommand(alias, target string) {
 
 func init() {
 	// Set up the argument handlers
+	registerArgHandler("builder build", "--build-context", argHandlers.buildContextArgHandler)
 	registerArgHandler("builder build", "--cache-from", argHandlers.builderCacheArgHandler)
 	registerArgHandler("builder build", "--cache-to", argHandlers.builderCacheArgHandler)
 	registerArgHandler("builder build", "--file", argHandlers.filePathArgHandler)
+	registerArgHandler("builder build", "-f", argHandlers.filePathArgHandler)
 	registerArgHandler("builder build", "--iidfile", argHandlers.outputPathArgHandler)
 	registerArgHandler("builder debug", "--file", argHandlers.filePathArgHandler)
 	registerArgHandler("builder debug", "-f", argHandlers.filePathArgHandler)
@@ -316,14 +319,12 @@ func init() {
 	registerArgHandler("container run", "--pidfile", argHandlers.outputPathArgHandler)
 	registerArgHandler("container run", "--volume", argHandlers.volumeArgHandler)
 	registerArgHandler("container run", "-v", argHandlers.volumeArgHandler)
-	registerArgHandler("image build", "--file", argHandlers.filePathArgHandler)
-	registerArgHandler("image build", "-f", argHandlers.filePathArgHandler)
 	registerArgHandler("image convert", "--estargz-record-in", argHandlers.filePathArgHandler)
 	registerArgHandler("image load", "--input", argHandlers.filePathArgHandler)
 	registerArgHandler("image save", "--output", argHandlers.outputPathArgHandler)
 
 	// Set up command handlers
-	registerCommandHandler("image build", imageBuildHandler)
+	registerCommandHandler("builder build", builderBuildHandler)
 	registerCommandHandler("container cp", containerCopyHandler)
 
 	// Set up aliases
@@ -332,6 +333,7 @@ func init() {
 	aliasCommand("create", "container create")
 	aliasCommand("exec", "container exec")
 	aliasCommand("kill", "container kill")
+	aliasCommand("image build", "builder build")
 	aliasCommand("logs", "container logs")
 	aliasCommand("pause", "container pause")
 	aliasCommand("port", "container port")
@@ -342,7 +344,7 @@ func init() {
 	aliasCommand("stop", "container stop")
 	aliasCommand("unpause", "container unpause")
 	aliasCommand("wait", "container wait")
-	aliasCommand("build", "image build")
+	aliasCommand("build", "builder build")
 	aliasCommand("load", "image load")
 	aliasCommand("pull", "image pull")
 	aliasCommand("push", "image push")

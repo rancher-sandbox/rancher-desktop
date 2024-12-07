@@ -10,8 +10,8 @@ import (
 
 // This file contains handlers for specific commands.
 
-// imageBuildHandler handles `nerdctl image build`
-func imageBuildHandler(c *commandDefinition, args []string, argHandlers argHandlersType) (*parsedArgs, error) {
+// builderBuildHandler handles `nerdctl image build`
+func builderBuildHandler(c *commandDefinition, args []string, argHandlers argHandlersType) (*parsedArgs, error) {
 	// The first argument is the directory to build; the rest are ignored.
 	if len(args) < 1 {
 		// This will return an error
