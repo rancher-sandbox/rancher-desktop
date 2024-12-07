@@ -13,7 +13,7 @@ import (
 )
 
 func spawn(opts spawnOptions) error {
-	args := []string{"--distribution", opts.distro, "--exec", opts.nerdctl, "--address", opts.containerdSocket}
+	args := []string{"--distribution", opts.distro, "--exec", "/usr/local/bin/wsl-exec", opts.nerdctl, "--address", opts.containerdSocket}
 	args = append(args, opts.args.args...)
 	cmd := exec.Command("wsl.exe", args...)
 	cmd.Stdin = os.Stdin
