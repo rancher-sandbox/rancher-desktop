@@ -19,6 +19,7 @@ limitations under the License.
 package dockerproxy
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -38,6 +39,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
 // RequestContextValue contains things we attach to incoming requests
@@ -55,6 +57,9 @@ const dockerAPIVersion = "v1.41.0"
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
 func Serve(endpoint string, dialer func() (net.Conn, error)) error {
+	// create inmemory listener
+	inmem := util.NewInmemSocket("inmem", 10)
+
 	listener, err := platform.Listen(endpoint)
 	if err != nil {
 		return err
@@ -65,9 +70,43 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 	go func() {
 		<-termch
 		signal.Stop(termch)
+
 		err := listener.Close()
 		if err != nil {
 			logrus.WithError(err).Error("Error closing listener on interrupt")
+		}
+
+		err = inmem.Close()
+		if err != nil {
+			logrus.WithError(err).Error("Error closing inmem on interrupt")
+		}
+	}()
+
+	// start tcp proxy
+	go func() {
+		connID := 0
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				fmt.Printf("Failed to accept connection '%s'\n", err)
+				break
+			}
+
+			p := NewTCPProxy(conn, dialer, inmem)
+
+			// p.Matcher = matcher
+			// p.Replacer = replacer
+			connID++
+
+			p.OutputHex = false
+			p.Log = ColorLogger{
+				Verbose:     true,
+				VeryVerbose: true,
+				Prefix:      fmt.Sprintf("Connection #%v: ", connID),
+				// Color:       *colors,
+			}
+
+			go p.Start()
 		}
 	}()
 
@@ -88,7 +127,17 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 			originalReq := *req
 			originalURL := *req.URL
 			originalReq.URL = &originalURL
-			err := munger.MungeRequest(req, dialer)
+
+			if req.Body != nil {
+				body, err := io.ReadAll(req.Body)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println(string(body))
+				req.Body = io.NopCloser(bytes.NewBuffer(body))
+			}
+
+			err = munger.MungeRequest(req, dialer)
 			if err != nil {
 				logrus.WithError(err).
 					WithField("original request", originalReq).
@@ -138,7 +187,7 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 
 	logrus.WithField("endpoint", endpoint).Info("Listening")
 
-	err = server.Serve(listener)
+	err = server.Serve(inmem)
 	if err != nil {
 		logrus.WithError(err).Error("serve exited with error")
 	}

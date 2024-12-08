@@ -17,13 +17,14 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/process"
 
 	// Pull in to register the mungers
 	_ "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/mungers"
@@ -40,10 +41,13 @@ var dockerproxyServeCmd = &cobra.Command{
 		cmd.SilenceErrors = true
 		endpoint := dockerproxyServeViper.GetString("endpoint")
 		proxyEndpoint := dockerproxyServeViper.GetString("proxy-endpoint")
-		err := process.KillOthers("docker-proxy", "serve")
-		if err != nil {
-			return err
-		}
+		fmt.Println("proxyEndpoint", proxyEndpoint)
+		fmt.Println("endpoint", endpoint)
+
+		// err := process.KillOthers("docker-proxy", "serve")
+		// if err != nil {
+		// 	return err
+		// }
 		dialer, err := platform.MakeDialer(proxyEndpoint)
 		if err != nil {
 			return err
