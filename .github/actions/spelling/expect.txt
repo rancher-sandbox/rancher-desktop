@@ -288,6 +288,7 @@ GENERALIZEDTIME
 getfattr
 getwindowid
 ghp
+gitjob
 gitmodules
 gitrepo
 gke
