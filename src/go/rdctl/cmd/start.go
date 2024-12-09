@@ -80,7 +80,7 @@ func doStartCommand(cmd *cobra.Command) error {
 		return err
 	}
 	if !cmd.Flags().Changed("path") {
-		applicationPath, err = paths.GetRDLaunchPath()
+		applicationPath, err = paths.GetRDLaunchPath(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("failed to locate main Rancher Desktop executable: %w\nplease retry with the --path option", err)
 		}
