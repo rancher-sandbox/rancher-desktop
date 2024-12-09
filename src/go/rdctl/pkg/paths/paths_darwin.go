@@ -1,6 +1,7 @@
 package paths
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,7 +14,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	var getResourcesPathFunc func() (string, error)
 	switch len(getResourcesPathFuncs) {
 	case 0:
-		getResourcesPathFunc = GetResourcesPath
+		getResourcesPathFunc = func() (string, error) { return GetResourcesPath() }
 	case 1:
 		getResourcesPathFunc = getResourcesPathFuncs[0]
 	default:
@@ -52,8 +53,8 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 }
 
 // Return the path used to launch Rancher Desktop.
-func GetRDLaunchPath() (string, error) {
-	appDir, err := directories.GetApplicationDirectory()
+func GetRDLaunchPath(ctx context.Context) (string, error) {
+	appDir, err := directories.GetApplicationDirectory(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get application directory: %w", err)
 	}
@@ -74,8 +75,8 @@ func GetRDLaunchPath() (string, error) {
 
 // Return the path to the main Rancher Desktop executable.
 // In the case of `yarn dev`, this would be the electron executable.
-func GetMainExecutable() (string, error) {
-	appDir, err := directories.GetApplicationDirectory()
+func GetMainExecutable(ctx context.Context) (string, error) {
+	appDir, err := directories.GetApplicationDirectory(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get application directory: %w", err)
 	}

@@ -1,6 +1,7 @@
 package autostart
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -17,7 +18,7 @@ func init() {
 	absoluteKey = fmt.Sprintf(`%s\%s`, "HKCU", relativeKey)
 }
 
-func EnsureAutostart(autostartDesired bool) error {
+func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
 	autostartKey, err := registry.OpenKey(registry.CURRENT_USER, relativeKey, registry.SET_VALUE)
 	if err != nil {
 		return fmt.Errorf("failed to open registry key: %w", err)
@@ -25,7 +26,7 @@ func EnsureAutostart(autostartDesired bool) error {
 	defer autostartKey.Close()
 
 	if autostartDesired {
-		rancherDesktopPath, err := paths.GetRDLaunchPath()
+		rancherDesktopPath, err := paths.GetRDLaunchPath(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get path to Rancher Desktop.exe: %w", err)
 		}

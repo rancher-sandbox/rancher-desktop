@@ -18,12 +18,15 @@ limitations under the License.
 
 package factoryreset
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 func CheckProcessWindows() (bool, error) {
 	return false, fmt.Errorf("internal error: CheckProcessWindows shouldn't be called")
 }
 
-func KillRancherDesktop() error {
+func KillRancherDesktop(ctx context.Context) error {
 	return fmt.Errorf("internal error: KillRancherDesktop shouldn't be called")
 }

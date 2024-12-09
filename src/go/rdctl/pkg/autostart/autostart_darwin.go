@@ -2,6 +2,7 @@ package autostart
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -38,7 +39,7 @@ type launchAgentFileData struct {
 	RancherDesktopPath string
 }
 
-func EnsureAutostart(autostartDesired bool) error {
+func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
 	// get path to LaunchAgent file
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -61,7 +62,7 @@ func EnsureAutostart(autostartDesired bool) error {
 		}
 
 		// get desired contents of LaunchAgent file
-		desiredContents, err := getDesiredLaunchAgentFileContents()
+		desiredContents, err := getDesiredLaunchAgentFileContents(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get desired LaunchAgent file contents: %w", err)
 		}
@@ -82,8 +83,8 @@ func EnsureAutostart(autostartDesired bool) error {
 	return nil
 }
 
-func getDesiredLaunchAgentFileContents() ([]byte, error) {
-	rancherDesktopPath, err := paths.GetRDLaunchPath()
+func getDesiredLaunchAgentFileContents(ctx context.Context) ([]byte, error) {
+	rancherDesktopPath, err := paths.GetRDLaunchPath(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get path to main Rancher Desktop executable: %w", err)
 	}

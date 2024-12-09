@@ -43,14 +43,22 @@ type Paths struct {
 	ContainerdShims string `json:"containerdShims,omitempty"`
 }
 
-func GetResourcesPath() (string, error) {
-	rdctlSymlinkPath, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("failed to get path to rdctl: %w", err)
-	}
-	rdctlPath, err := filepath.EvalSymlinks(rdctlSymlinkPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
+// Get the path to the resources directory (the parent directory of the
+// platform-specific directory); this is used to fill in [Paths.Resources].
+// The argument is used for testing; do not provide it in non-test code.
+func GetResourcesPath(rdctlPathOverride ...string) (string, error) {
+	var rdctlPath string
+	if len(rdctlPathOverride) > 0 {
+		rdctlPath = rdctlPathOverride[0]
+	} else {
+		rdctlSymlinkPath, err := os.Executable()
+		if err != nil {
+			return "", fmt.Errorf("failed to get path to rdctl: %w", err)
+		}
+		rdctlPath, err = filepath.EvalSymlinks(rdctlSymlinkPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve %q: %w", rdctlSymlinkPath, err)
+		}
 	}
 	return utils.GetParentDir(rdctlPath, 3), nil
 }

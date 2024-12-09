@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
@@ -42,7 +43,7 @@ var shutdownCmd = &cobra.Command{
 			return err
 		}
 		cmd.SilenceUsage = true
-		result, err := doShutdown(&commonShutdownSettings, shutdown.Shutdown)
+		result, err := doShutdown(cmd.Context(), &commonShutdownSettings, shutdown.Shutdown)
 		if err != nil {
 			return err
 		}
@@ -58,7 +59,7 @@ func init() {
 	shutdownCmd.Flags().BoolVar(&commonShutdownSettings.WaitForShutdown, "wait", true, "wait for shutdown to be confirmed")
 }
 
-func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
+func doShutdown(ctx context.Context, shutdownSettings *shutdownSettingsStruct, initiatingCommand shutdown.InitiatingCommand) ([]byte, error) {
 	var output []byte
 	connectionInfo, err := config.GetConnectionInfo(true)
 	if err == nil && connectionInfo != nil {
@@ -67,6 +68,6 @@ func doShutdown(shutdownSettings *shutdownSettingsStruct, initiatingCommand shut
 		output, _ = client.ProcessRequestForUtility(rdClient.DoRequest("PUT", command))
 		logrus.WithError(err).Trace("Shut down requested")
 	}
-	err = shutdown.FinishShutdown(shutdownSettings.WaitForShutdown, initiatingCommand)
+	err = shutdown.FinishShutdown(ctx, shutdownSettings.WaitForShutdown, initiatingCommand)
 	return output, err
 }
