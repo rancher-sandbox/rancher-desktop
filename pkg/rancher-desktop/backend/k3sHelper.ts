@@ -386,11 +386,11 @@ export default class K3sHelper extends events.EventEmitter {
       }
 
       if (channelResponse.ok) {
-        const ResourceTypeChannels = 'channels';
+        const ValidResourceTypes = ['channel', 'channels'];
         const DataTypeChannel = 'channel';
 
         type ChannelResponse = {
-          resourceType: typeof ResourceTypeChannels;
+          resourceType: string;
           data?: {
             type: typeof DataTypeChannel;
             name: string;
@@ -400,7 +400,7 @@ export default class K3sHelper extends events.EventEmitter {
         const channels: ChannelResponse = await channelResponse.json();
 
         console.debug(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
-        if (channels.resourceType !== ResourceTypeChannels) {
+        if (!ValidResourceTypes.includes(channels.resourceType)) {
           throw new Error(`Channel response does not have correct resource type: ${ channels.resourceType }`);
         }
 
