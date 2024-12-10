@@ -31,14 +31,17 @@ import (
 )
 
 const (
-	hostSwitchIP = "192.168.127.2"
-	containerID  = "containerID_1"
-	containerID2 = "containerID_2"
-	hostIP       = "127.0.0.1"
-	hostIP2      = "127.0.0.2"
-	hostIP3      = "127.0.0.3"
-	hostPort     = "80"
-	hostPort2    = "443"
+	hostSwitchIP   = "192.168.127.2"
+	containerID    = "containerID_1"
+	containerID2   = "containerID_2"
+	hostIP         = "127.0.0.1"
+	hostIP2        = "127.0.0.2"
+	hostIP3        = "127.0.0.3"
+	hostPort       = "80"
+	hostPort2      = "443"
+	additionalPort = "8080"
+	protocolTCP    = "tcp"
+	protocolUDP    = "udp"
 )
 
 func TestBasicAdd(t *testing.T) {
@@ -57,15 +60,19 @@ func TestBasicAdd(t *testing.T) {
 	defer testSrv.Close()
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
 	portMapping := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping)
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedExposeReq.Local, ipPortBuilder(hostIP, hostPort))
@@ -93,32 +100,41 @@ func TestAddOverride(t *testing.T) {
 	defer testSrv.Close()
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	protoPort2, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
 	portMapping := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
-		"443/tcp": []nat.PortBinding{
+		protoPort2: []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping)
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
 			{
-				Local:  ipPortBuilder(hostIP, hostPort),
-				Remote: ipPortBuilder(hostSwitchIP, hostPort),
+				Local:    ipPortBuilder(hostIP, hostPort),
+				Remote:   ipPortBuilder(hostSwitchIP, hostPort),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 			{
-				Local:  ipPortBuilder(hostIP2, hostPort2),
-				Remote: ipPortBuilder(hostSwitchIP, hostPort2),
+				Local:    ipPortBuilder(hostIP2, hostPort2),
+				Remote:   ipPortBuilder(hostSwitchIP, hostPort2),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 		})
 
@@ -128,17 +144,20 @@ func TestAddOverride(t *testing.T) {
 	// reset the exposeReq slice
 	expectedExposeReq = nil
 
+	protoPort3, err := nat.NewPort(protocolUDP, additionalPort)
+	require.NoError(t, err)
+
 	portMapping2 := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
-		"8080/tcp": []nat.PortBinding{
+		protoPort3: []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
-				HostPort: "8080",
+				HostPort: additionalPort,
 			},
 		},
 	}
@@ -148,12 +167,14 @@ func TestAddOverride(t *testing.T) {
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
 			{
-				Local:  ipPortBuilder(hostIP, hostPort),
-				Remote: ipPortBuilder(hostSwitchIP, hostPort),
+				Local:    ipPortBuilder(hostIP, hostPort),
+				Remote:   ipPortBuilder(hostSwitchIP, hostPort),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 			{
-				Local:  ipPortBuilder(hostIP2, "8080"),
-				Remote: ipPortBuilder(hostSwitchIP, "8080"),
+				Local:    ipPortBuilder(hostIP2, additionalPort),
+				Remote:   ipPortBuilder(hostSwitchIP, additionalPort),
+				Protocol: types.TransportProtocol(protocolUDP),
 			},
 		})
 
@@ -184,8 +205,12 @@ func TestAddWithError(t *testing.T) {
 	defer testSrv.Close()
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
 	portMapping := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -200,7 +225,8 @@ func TestAddWithError(t *testing.T) {
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping)
+
+	err = apiTracker.Add(containerID, portMapping)
 	require.Error(t, err)
 
 	errPortBinding := nat.PortBinding{
@@ -218,12 +244,14 @@ func TestAddWithError(t *testing.T) {
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
 			{
-				Local:  ipPortBuilder(hostIP, hostPort),
-				Remote: ipPortBuilder(hostSwitchIP, hostPort),
+				Local:    ipPortBuilder(hostIP, hostPort),
+				Remote:   ipPortBuilder(hostSwitchIP, hostPort),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 			{
-				Local:  ipPortBuilder(hostIP3, hostPort),
-				Remote: ipPortBuilder(hostSwitchIP, hostPort),
+				Local:    ipPortBuilder(hostIP3, hostPort),
+				Remote:   ipPortBuilder(hostSwitchIP, hostPort),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 		},
 	)
@@ -235,8 +263,8 @@ func TestAddWithError(t *testing.T) {
 	)
 
 	actualPortMapping := apiTracker.Get(containerID)
-	assert.Len(t, actualPortMapping["80/tcp"], 2)
-	assert.NotContains(t, actualPortMapping["80/tcp"], nat.PortBinding{
+	assert.Len(t, actualPortMapping[protoPort], 2)
+	assert.NotContains(t, actualPortMapping[protoPort], nat.PortBinding{
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	})
@@ -250,14 +278,17 @@ func TestAddWithError(t *testing.T) {
 				HostIP:   hostIP3,
 				HostPort: hostPort,
 			},
-		}, actualPortMapping["80/tcp"])
+		}, actualPortMapping[protoPort])
 }
 
 func TestGet(t *testing.T) {
 	t.Parallel()
 
+	protoPort, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
 	portMapping := nat.PortMap{
-		"443/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort2,
@@ -279,7 +310,7 @@ func TestGet(t *testing.T) {
 	defer testSrv.Close()
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
-	err := apiTracker.Add(containerID, portMapping)
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	actualPortMappings := apiTracker.Get(containerID)
@@ -307,8 +338,15 @@ func TestRemove(t *testing.T) {
 	defer testSrv.Close()
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
-	portMapping1 := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	protoPort2, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -316,7 +354,7 @@ func TestRemove(t *testing.T) {
 		},
 	}
 	portMapping2 := nat.PortMap{
-		"443/tcp": []nat.PortBinding{
+		protoPort2: []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -327,8 +365,10 @@ func TestRemove(t *testing.T) {
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping1)
+
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
+
 	err = apiTracker.Add(containerID2, portMapping2)
 	require.NoError(t, err)
 
@@ -372,8 +412,11 @@ func TestRemoveWithError(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
 	portMapping := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -388,7 +431,8 @@ func TestRemoveWithError(t *testing.T) {
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping)
+
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	err = apiTracker.Remove(containerID)
@@ -406,8 +450,14 @@ func TestRemoveWithError(t *testing.T) {
 	require.EqualError(t, err, expectedErr.Error())
 
 	assert.ElementsMatch(t, expectedUnexposeReq, []*types.UnexposeRequest{
-		{Local: ipPortBuilder(hostIP, hostPort)},
-		{Local: ipPortBuilder(hostIP3, hostPort)},
+		{
+			Local:    ipPortBuilder(hostIP, hostPort),
+			Protocol: types.TransportProtocol(protocolTCP),
+		},
+		{
+			Local:    ipPortBuilder(hostIP3, hostPort),
+			Protocol: types.TransportProtocol(protocolTCP),
+		},
 	})
 
 	actualPortMapping := apiTracker.Get(containerID)
@@ -432,8 +482,14 @@ func TestRemoveAll(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	portMapping1 := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	protoPort2, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -441,7 +497,7 @@ func TestRemoveAll(t *testing.T) {
 		},
 	}
 	portMapping2 := nat.PortMap{
-		"443/tcp": []nat.PortBinding{
+		protoPort2: []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -452,7 +508,8 @@ func TestRemoveAll(t *testing.T) {
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping1)
+
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	err = apiTracker.Add(containerID2, portMapping2)
@@ -496,8 +553,14 @@ func TestRemoveAllWithError(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	portMapping1 := nat.PortMap{
-		"80/tcp": []nat.PortBinding{
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	protoPort2, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -505,7 +568,7 @@ func TestRemoveAllWithError(t *testing.T) {
 		},
 	}
 	portMapping2 := nat.PortMap{
-		"443/tcp": []nat.PortBinding{
+		protoPort2: []nat.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -516,7 +579,8 @@ func TestRemoveAllWithError(t *testing.T) {
 			},
 		},
 	}
-	err := apiTracker.Add(containerID, portMapping1)
+
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	err = apiTracker.Add(containerID2, portMapping2)
@@ -576,23 +640,28 @@ func TestNonAdminInstall(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, false)
 
+	publishedPort := "1025"
+	protoPort, err := nat.NewPort(protocolTCP, publishedPort)
+	require.NoError(t, err)
+
 	portMapping := nat.PortMap{
-		"1025/tcp": []nat.PortBinding{
+		protoPort: []nat.PortBinding{
 			{
 				HostIP:   "192.168.0.124",
-				HostPort: "1025",
+				HostPort: publishedPort,
 			},
 		},
 	}
 
-	err := apiTracker.Add(containerID, portMapping)
+	err = apiTracker.Add(containerID, portMapping)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedExposeReq,
 		[]*types.ExposeRequest{
 			{
-				Local:  ipPortBuilder("127.0.0.1", "1025"),
-				Remote: ipPortBuilder(hostSwitchIP, "1025"),
+				Local:    ipPortBuilder("127.0.0.1", publishedPort),
+				Remote:   ipPortBuilder(hostSwitchIP, publishedPort),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 		},
 	)
@@ -601,9 +670,11 @@ func TestNonAdminInstall(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, expectedUnexposeReq,
+
 		[]*types.UnexposeRequest{
 			{
-				Local: ipPortBuilder("127.0.0.1", "1025"),
+				Local:    ipPortBuilder("127.0.0.1", publishedPort),
+				Protocol: types.TransportProtocol(protocolTCP),
 			},
 		})
 
