@@ -136,6 +136,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly channelApiAccept = 'application/json';
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
+  protected readonly resourcesPath = path.join(paths.resources, 'k3s-versions.json');
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   protected readonly minimumVersion = new semver.SemVer('1.21.0');
   /**
@@ -168,8 +169,17 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected async readCache() {
     try {
-      const cacheData: cacheData =
-        JSON.parse(await fs.promises.readFile(this.cachePath, 'utf-8'));
+      let cacheData: cacheData;
+
+      try {
+        cacheData = JSON.parse(await fs.promises.readFile(this.cachePath, 'utf-8'));
+        if (cacheData.cacheVersion !== CURRENT_CACHE_VERSION) {
+          throw new Error(`Invalid cache version ${ cacheData.cacheVersion }`);
+        }
+      } catch (ex) {
+        console.debug('Failed to read cached k3s versions; falling back to bundled versions list:', ex);
+        cacheData = JSON.parse(await fs.promises.readFile(this.resourcesPath, 'utf-8'));
+      }
 
       if (cacheData.cacheVersion !== CURRENT_CACHE_VERSION) {
         // If the cache format version is different, ignore the cache.
