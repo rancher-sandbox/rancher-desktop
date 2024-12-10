@@ -11,7 +11,6 @@ script:
   - unzip $BUILD_SOURCE_DIR/rancher-desktop.zip -d $BUILD_APPDIR/opt/rancher-desktop
   - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/rancher-desktop.desktop $BUILD_APPDIR
   - convert -resize 512x512 $BUILD_APPDIR/opt/rancher-desktop/resources/resources/icons/logo-square-512.png $BUILD_APPDIR/rancher-desktop.png
-  - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/rancher-desktop.appdata.xml $BUILD_APPDIR/usr/share/metainfo
   - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/lima/bin/qemu-* $BUILD_APPDIR/usr/bin
   - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/lima/share/qemu $BUILD_APPDIR/usr/share
   - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/lima/lib $BUILD_APPDIR/usr
