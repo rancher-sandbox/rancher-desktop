@@ -166,7 +166,7 @@ func buildContextArgHandler(arg string) (string, []cleanupFunc, error) {
 	if err := writer.Error(); err != nil {
 		return "", nil, err
 	}
-	return result.String(), nil, nil
+	return strings.TrimSpace(result.String()), nil, nil
 }
 
 // argHandlers is the table of argument handlers.
