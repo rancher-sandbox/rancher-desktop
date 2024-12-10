@@ -43,7 +43,7 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kuberne
 		}
 		cmd.SilenceUsage = true
 		commonShutdownSettings.WaitForShutdown = false
-		_, err := doShutdown(&commonShutdownSettings, shutdown.FactoryReset)
+		_, err := doShutdown(cmd.Context(), &commonShutdownSettings, shutdown.FactoryReset)
 		if err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ import (
 )
 
 func DeleteData(ctx context.Context, appPaths paths.Paths, removeKubernetesCache bool) error {
-	if err := autostart.EnsureAutostart(false); err != nil {
+	if err := autostart.EnsureAutostart(ctx, false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
 

@@ -17,7 +17,7 @@ var setupCmd = &cobra.Command{
 	Short:  "Configure the system without modifying settings",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if cmd.Flags().Changed("auto-start") {
-			return autostart.EnsureAutostart(setupSettings.AutoStart)
+			return autostart.EnsureAutostart(cmd.Context(), setupSettings.AutoStart)
 		}
 		return errors.New("no changes were specified")
 	},

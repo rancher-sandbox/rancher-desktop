@@ -8,6 +8,7 @@ package autostart
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/adrg/xdg"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
 const autostartFileTemplateContents = `[Desktop Entry]
@@ -50,7 +50,7 @@ func init() {
 	autostartFileTemplate = template.Must(template.New("autostartDesktopFile").Parse(autostartFileTemplateContents))
 }
 
-func EnsureAutostart(autostartDesired bool) error {
+func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
 	err := os.MkdirAll(autostartDirPath, 0755)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func EnsureAutostart(autostartDesired bool) error {
 		if err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("failed to read current autostart .desktop file: %w", err)
 		}
-		desiredContents, err := getDesiredAutostartFileContents()
+		desiredContents, err := getDesiredAutostartFileContents(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get desired contents of autostart .desktop file: %w", err)
 		}
@@ -80,7 +80,7 @@ func EnsureAutostart(autostartDesired bool) error {
 	return nil
 }
 
-func getDesiredAutostartFileContents() ([]byte, error) {
+func getDesiredAutostartFileContents(ctx context.Context) ([]byte, error) {
 	// Look for existing application .desktop files in expected locations.
 	// This part applies to rpm, deb and AppImageLauncher installs.
 	// We use existing application .desktop files so that there is no
@@ -100,7 +100,7 @@ func getDesiredAutostartFileContents() ([]byte, error) {
 	// This should be needed only when Rancher Desktop is installed
 	// via AppImage, but the user has not used AppImageLauncher to
 	// integrate it with the system.
-	autostartData, err := getAutostartFileData()
+	autostartData, err := getAutostartFileData(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get autostart file data: %w", err)
 	}
@@ -138,7 +138,7 @@ func findApplicationFilePath() (string, error) {
 
 // Gathers the info that is needed to fill out the autostart .desktop
 // file template.
-func getAutostartFileData() (autostartFileData, error) {
+func getAutostartFileData(ctx context.Context) (autostartFileData, error) {
 	executablePath := ""
 	if _, ok := os.LookupEnv("APPIMAGE"); ok {
 		// If we're running under AppImage, then we need to look up
@@ -159,7 +159,7 @@ func getAutostartFileData() (autostartFileData, error) {
 		// (either an extracted zip file, or RPM), so resolving the application
 		// executable relative to the current executable path should be fine.
 		var err error
-		executablePath, err = utils.GetRDPath()
+		executablePath, err = p.GetRDLaunchPath(ctx)
 		if err != nil {
 			return autostartFileData{}, fmt.Errorf("failed to get Rancher Desktop executable: %w", err)
 		}
