@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -237,6 +240,53 @@ func builderCacheArgHandler(arg string) (string, []cleanupFunc, error) {
 	return builderCacheProcessor(arg, filePathArgHandler, outputPathArgHandler)
 }
 
+// buildContextArgHandler handles arguments for
+// `nerdctl builder build --build-context=`.
+func buildContextArgHandler(arg string) (string, []cleanupFunc, error) {
+	// The arg must be parsed as CSV (!?), and then split on `=` for key-value
+	// pairs; for each value, it is either a URN with a prefix of one of
+	// `urnPrefixes`, or it's a filesystem path.
+
+	var cleanups []cleanupFunc
+	urnPrefixes := []string{"https://", "http://", "docker-image://", "target:", "oci-layout://"}
+	parts, err := csv.NewReader(strings.NewReader(arg)).Read()
+	if err != nil {
+		return "", nil, err
+	}
+	var resultParts []string
+	for _, part := range parts {
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) != 2 {
+			return "", nil, fmt.Errorf("failed to parse context value %q (expected key=value)", part)
+		}
+		k, v := kv[0], kv[1]
+		matchesPrefix := func(prefix string) bool {
+			return strings.HasPrefix(v, prefix)
+		}
+		if !slices.ContainsFunc(urnPrefixes, matchesPrefix) {
+			mount, newCleanups, err := filePathArgHandler(v)
+			if err != nil {
+				_ = runCleanups(cleanups)
+				return "", nil, err
+			}
+			v = mount
+			cleanups = append(cleanups, newCleanups...)
+		}
+		resultParts = append(resultParts, fmt.Sprintf("%s=%s", k, v))
+	}
+	var result bytes.Buffer
+	writer := csv.NewWriter(&result)
+	if err := writer.Write(resultParts); err != nil {
+		_ = runCleanups(cleanups)
+		return "", nil, err
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return "", nil, err
+	}
+	return strings.TrimSpace(result.String()), cleanups, nil
+}
+
 // argHandlers is the table of argument handlers.
 var argHandlers = argHandlersType{
 	volumeArgHandler:       volumeArgHandler,
@@ -244,4 +294,5 @@ var argHandlers = argHandlersType{
 	outputPathArgHandler:   outputPathArgHandler,
 	mountArgHandler:        mountArgHandler,
 	builderCacheArgHandler: builderCacheArgHandler,
+	buildContextArgHandler: buildContextArgHandler,
 }
