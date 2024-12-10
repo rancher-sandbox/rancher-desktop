@@ -33,8 +33,8 @@ import (
 var internalProcessWaitKillCmd = &cobra.Command{
 	Use:   "wait-kill",
 	Short: "Wait for a process and then kill of the processes in its group.",
-	Long: `rdctl internal process wait-kill waits for the given process to exit,
-then kills all processes in the same process group.`,
+	Long: `The 'rdctl internal process wait-kill' command waits for the specified process to
+exit, and once it does, terminates all processes within the same process group.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		pid, err := cmd.Flags().GetInt("pid")

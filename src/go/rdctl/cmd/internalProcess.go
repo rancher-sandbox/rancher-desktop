@@ -31,7 +31,7 @@ var internalProcessCmd = &cobra.Command{
 	Long:  `rdctl internal process contains subcommands dealing with processes.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return fmt.Errorf("%q expects subcommands.", cmd.CommandPath())
+		return fmt.Errorf("%q expects subcommands", cmd.CommandPath())
 	},
 }
 

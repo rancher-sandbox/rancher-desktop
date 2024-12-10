@@ -91,7 +91,9 @@ func WaitForProcess(pid int) error {
 		return fmt.Errorf("failed to initialize process monitoring: %w", err)
 	}
 	defer func() {
-		_ = unix.Close(queue)
+		if err := unix.Close(queue); err != nil {
+			logrus.Warnf("Ignoring failure to close kqueue: %s", err)
+		}
 	}()
 	change := unix.Kevent_t{
 		Ident:  uint64(pid),

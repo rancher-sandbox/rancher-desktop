@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// internalCmd represents the `rdctl internal` command, for cases when we need
+// internalCmd represents the `rdctl internal` command, which is used for
 // native code.
 var internalCmd = &cobra.Command{
 	Use:    "internal",
@@ -32,7 +32,7 @@ var internalCmd = &cobra.Command{
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return fmt.Errorf("%q expects subcommands.", cmd.CommandPath())
+		return fmt.Errorf("%q expects subcommands", cmd.CommandPath())
 	},
 }
 
