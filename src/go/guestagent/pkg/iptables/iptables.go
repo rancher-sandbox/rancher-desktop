@@ -23,7 +23,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
-	"github.com/lima-vm/lima/pkg/guestagent/iptables"
+	limaiptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
@@ -34,21 +34,21 @@ import (
 // the k8sServiceListenerAddr setting for the hostIP property to create a port mapping and
 // forwards them to both the API tracker and the WSL Proxy for proper routing and handling.
 type Iptables struct {
-	context         context.Context
-	apiTracker      tracker.Tracker
-	IptablesScanner Scanner
-	listenerIP      net.IP
+	context    context.Context
+	apiTracker tracker.Tracker
+	scanner    Scanner
+	listenerIP net.IP
 	// time, in seconds, to wait between updating.
 	updateInterval time.Duration
 }
 
 func New(ctx context.Context, tracker tracker.Tracker, iptablesScanner Scanner, listenerIP net.IP, updateInterval time.Duration) *Iptables {
 	return &Iptables{
-		context:         ctx,
-		apiTracker:      tracker,
-		IptablesScanner: iptablesScanner,
-		listenerIP:      listenerIP,
-		updateInterval:  updateInterval,
+		context:        ctx,
+		apiTracker:     tracker,
+		scanner:        iptablesScanner,
+		listenerIP:     listenerIP,
+		updateInterval: updateInterval,
 	}
 }
 
@@ -58,7 +58,7 @@ func New(ctx context.Context, tracker tracker.Tracker, iptablesScanner Scanner, 
 // as part of the normal forwarding system. This function detects those ports
 // and binds them to k8sServiceListenerAddr so that they are picked up.
 func (i *Iptables) ForwardPorts() error {
-	var ports []iptables.Entry
+	var ports []limaiptables.Entry
 
 	ticker := time.NewTicker(i.updateInterval)
 	defer ticker.Stop()
@@ -70,7 +70,7 @@ func (i *Iptables) ForwardPorts() error {
 		case <-ticker.C:
 		}
 		// Detect ports for forward
-		newPorts, err := i.IptablesScanner.GetPorts()
+		newPorts, err := i.scanner.GetPorts()
 		if err != nil {
 			// iptables exiting with an exit status of 4 means there
 			// is a resource problem. For example, something else is
@@ -113,11 +113,7 @@ func (i *Iptables) ForwardPorts() error {
 					HostIP:   i.listenerIP.String(),
 					HostPort: port,
 				}
-				if pb, ok := portMap[portMapKey]; ok {
-					if !portExist(port, pb) {
-						portMap[portMapKey] = append(pb, portBinding)
-					}
-				} else {
+				if _, ok := portMap[portMapKey]; !ok {
 					portMap[portMapKey] = []nat.PortBinding{portBinding}
 				}
 				name := entryToString(p)
@@ -131,26 +127,13 @@ func (i *Iptables) ForwardPorts() error {
 	}
 }
 
-// portExist checks if the given port is already present in the list of port bindings.
-// Since we always use the k8sServiceListenerAddr for the HostIP, the actual IP
-// returned by GetPorts is irrelevant, and we only care about whether the HostPort is
-// already mapped. This avoids adding duplicate entries to the nat.PortMap.
-func portExist(port string, portBindings []nat.PortBinding) bool {
-	for _, p := range portBindings {
-		if port == p.HostPort {
-			return true
-		}
-	}
-	return false
-}
-
 // comparePorts compares the old and new ports to find those added or removed.
 // This function is mostly lifted from lima (github.com/lima-vm/lima) which is
 // licensed under the Apache 2.
 //
 //nolint:nonamedreturns
-func comparePorts(oldPorts, newPorts []iptables.Entry) (added, removed []iptables.Entry) {
-	oldPortMap := make(map[string]iptables.Entry, len(oldPorts))
+func comparePorts(oldPorts, newPorts []limaiptables.Entry) (added, removed []limaiptables.Entry) {
+	oldPortMap := make(map[string]limaiptables.Entry, len(oldPorts))
 	portExistMap := make(map[string]bool, len(oldPorts))
 	for _, oldPort := range oldPorts {
 		key := entryToString(oldPort)
@@ -174,6 +157,6 @@ func comparePorts(oldPorts, newPorts []iptables.Entry) (added, removed []iptable
 	return
 }
 
-func entryToString(ip iptables.Entry) string {
+func entryToString(ip limaiptables.Entry) string {
 	return net.JoinHostPort(ip.IP.String(), strconv.Itoa(ip.Port))
 }

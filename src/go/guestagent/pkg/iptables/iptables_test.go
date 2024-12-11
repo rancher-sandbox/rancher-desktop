@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	limaIptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
+	limaiptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 	"github.com/stretchr/testify/require"
@@ -29,17 +29,18 @@ import (
 
 func TestForwardPorts(t *testing.T) {
 	tests := []struct {
-		name                       string
-		remove                     bool
-		listenerIP                 net.IP
-		expectedEntries            []limaIptables.Entry
-		expectedEntriesAfterRemove []limaIptables.Entry
-		expectedAddFuncErr         error
+		name               string
+		remove             bool
+		listenerIP         net.IP
+		expectedEntries    []limaiptables.Entry
+		removedEntries     []limaiptables.Entry
+		updateEntries      []limaiptables.Entry
+		expectedAddFuncErr error
 	}{
 		{
 			name:       "With localhost listener and valid port mappings",
 			listenerIP: net.IPv4(127, 0, 0, 1),
-			expectedEntries: []limaIptables.Entry{
+			expectedEntries: []limaiptables.Entry{
 				{TCP: true, IP: net.IPv4(192, 168, 20, 10), Port: 1080},
 				{TCP: true, IP: net.IPv4(192, 168, 20, 11), Port: 1081},
 				{TCP: true, IP: net.IPv4(192, 168, 20, 12), Port: 1082},
@@ -48,7 +49,7 @@ func TestForwardPorts(t *testing.T) {
 		{
 			name:       "With wildcard listener and valid port mappings",
 			listenerIP: net.IPv4(0, 0, 0, 0),
-			expectedEntries: []limaIptables.Entry{
+			expectedEntries: []limaiptables.Entry{
 				{TCP: true, IP: net.IPv4(192, 168, 21, 10), Port: 1080},
 				{TCP: true, IP: net.IPv4(192, 168, 21, 11), Port: 1081},
 				{TCP: true, IP: net.IPv4(192, 168, 21, 12), Port: 1082},
@@ -58,12 +59,22 @@ func TestForwardPorts(t *testing.T) {
 			name:       "With entries removed",
 			remove:     true,
 			listenerIP: net.IPv4(0, 0, 0, 0),
-			expectedEntries: []limaIptables.Entry{
+			expectedEntries: []limaiptables.Entry{
 				{TCP: true, IP: net.IPv4(192, 168, 22, 10), Port: 1080},
 				{TCP: true, IP: net.IPv4(192, 168, 22, 11), Port: 1081},
 				{TCP: true, IP: net.IPv4(192, 168, 22, 12), Port: 1082},
 				{TCP: true, IP: net.IPv4(192, 168, 22, 13), Port: 1083},
 				{TCP: true, IP: net.IPv4(192, 168, 22, 14), Port: 1084},
+			},
+			removedEntries: []limaiptables.Entry{
+				{TCP: true, IP: net.IPv4(192, 168, 22, 11), Port: 1081},
+				{TCP: true, IP: net.IPv4(192, 168, 22, 12), Port: 1082},
+			},
+			updateEntries: []limaiptables.Entry{
+				{TCP: true, IP: net.IPv4(192, 168, 22, 10), Port: 1080},
+				{TCP: true, IP: net.IPv4(192, 168, 22, 13), Port: 1083},
+				{TCP: true, IP: net.IPv4(192, 168, 22, 14), Port: 1084},
+				{TCP: true, IP: net.IPv4(192, 168, 22, 15), Port: 1085},
 			},
 		},
 	}
@@ -109,26 +120,23 @@ func TestForwardPorts(t *testing.T) {
 			}
 
 			if tt.remove {
-				removedEntries := []limaIptables.Entry{
-					{TCP: true, IP: net.IPv4(192, 168, 22, 11), Port: 1081},
-					{TCP: true, IP: net.IPv4(192, 168, 22, 12), Port: 1082},
-				}
-				// update the entries
-				updatedEntries := []limaIptables.Entry{
-					{TCP: true, IP: net.IPv4(192, 168, 22, 10), Port: 1080},
-					{TCP: true, IP: net.IPv4(192, 168, 22, 13), Port: 1083},
-					{TCP: true, IP: net.IPv4(192, 168, 22, 14), Port: 1084},
-					{TCP: true, IP: net.IPv4(192, 168, 22, 15), Port: 1085},
-				}
-				iptablesScanner.expectedEntries = updatedEntries
+				iptablesScanner.expectedEntries = tt.updateEntries
 
-				for i := 0; i < len(removedEntries); i++ {
-					id := <-testTracker.receivedRemoveID
-					expectedID := utils.GenerateID(entryToString(removedEntries[i]))
-					require.Equal(t, expectedID, id)
+				// Collect all removed IDs.
+				var actualRemovedIDs []string
+				for i := 0; i < len(tt.removedEntries); i++ {
+					select {
+					case id := <-testTracker.receivedRemoveID:
+						actualRemovedIDs = append(actualRemovedIDs, id)
+					case <-time.After(5 * time.Second):
+						t.Fatalf("Timeout waiting for remove ID for entry %v", tt.removedEntries[i])
+					}
 				}
 
-				addedElement := updatedEntries[len(updatedEntries)-1]
+				for _, removedEntry := range tt.removedEntries {
+					require.Contains(t, actualRemovedIDs, utils.GenerateID(entryToString(removedEntry)))
+				}
+				addedElement := tt.updateEntries[len(tt.updateEntries)-1]
 				id := <-testTracker.receivedID
 				expectedID := utils.GenerateID(entryToString(addedElement))
 				require.Equal(t, expectedID, id)
@@ -156,13 +164,13 @@ func TestForwardPortsSamePortDifferentIP(t *testing.T) {
 	tests := []struct {
 		name               string
 		listenerIP         net.IP
-		expectedEntries    []limaIptables.Entry
+		expectedEntries    []limaiptables.Entry
 		expectedAddFuncErr error
 	}{
 		{
 			name:       "Same Port with different IP",
 			listenerIP: net.IPv4(0, 0, 0, 0),
-			expectedEntries: []limaIptables.Entry{
+			expectedEntries: []limaiptables.Entry{
 				{TCP: true, IP: net.IPv4(192, 168, 22, 10), Port: 1080},
 				{TCP: true, IP: net.IPv4(192, 168, 22, 11), Port: 1081},
 				{TCP: true, IP: net.IPv4(192, 168, 22, 12), Port: 1082},
@@ -253,15 +261,15 @@ func (f *fakeTracker) RemoveAll() error {
 
 // Fake Scanner to simulate iptables entries
 type fakeScanner struct {
-	expectedEntries []limaIptables.Entry
+	expectedEntries []limaiptables.Entry
 	expectedErr     error
 }
 
-func (f *fakeScanner) GetPorts() ([]limaIptables.Entry, error) {
+func (f *fakeScanner) GetPorts() ([]limaiptables.Entry, error) {
 	return f.expectedEntries, f.expectedErr
 }
 
 // Utility function to convert iptables entry to string
-func entryToString(ip limaIptables.Entry) string {
+func entryToString(ip limaiptables.Entry) string {
 	return net.JoinHostPort(ip.IP.String(), strconv.Itoa(ip.Port))
 }
