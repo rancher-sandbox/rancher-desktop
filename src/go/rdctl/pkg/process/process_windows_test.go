@@ -18,6 +18,9 @@ func TestBuildCommandLine(t *testing.T) {
 		{"arg0", "a\\\"b", "c", "d"},
 		{"arg0", "a\\\\b c", "d", "e"},
 		{"arg0", "ab\" c d"},
+		{"C:/Path\\with/mixed slashes"},
+		{"arg0", " leading", " and ", "trailing ", "space"},
+		{"special characters", "&", "|", ">", "<", "*", "\"", " "},
 	}
 	for _, testcase := range cases {
 		t.Run(strings.Join(testcase, " "), func(t *testing.T) {
