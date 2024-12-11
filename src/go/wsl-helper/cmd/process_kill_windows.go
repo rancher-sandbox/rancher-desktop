@@ -24,22 +24,22 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/process"
 )
 
-var killProcessViper = viper.New()
+var processKillViper = viper.New()
 
-// killProcessCmd is the `wsl-helper kill-process` command.
-var killProcessCmd = &cobra.Command{
-	Use:   "kill-process",
+// processKillCmd is the `wsl-helper process kill` command.
+var processKillCmd = &cobra.Command{
+	Use:   "kill",
 	Short: "Kill a given process",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return process.Kill(killProcessViper.GetInt("pid"))
+		return process.Kill(processKillViper.GetInt("pid"))
 	},
 }
 
 func init() {
-	killProcessCmd.Flags().Int("pid", 0, "PID of process to kill")
-	killProcessViper.AutomaticEnv()
-	if err := killProcessViper.BindPFlags(killProcessCmd.Flags()); err != nil {
+	processKillCmd.Flags().Int("pid", 0, "PID of process to kill")
+	processKillViper.AutomaticEnv()
+	if err := processKillViper.BindPFlags(processKillCmd.Flags()); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
-	rootCmd.AddCommand(killProcessCmd)
+	processCmd.AddCommand(processKillCmd)
 }

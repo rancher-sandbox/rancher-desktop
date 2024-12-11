@@ -446,9 +446,17 @@ export class ExtensionManagerImpl implements ExtensionManager {
       throw new Error(`Could not find calling extension ${ extensionId }`);
     }
 
+    const command = [...options.command];
+
+    command[0] = path.join(extension.dir, 'bin', command[0]);
+    if (process.platform === 'win32') {
+      // Use wsl-helper to launch the executable
+      command.unshift(executable('wsl-helper'), 'process', 'spawn', `--parent=${ process.pid }`, '--');
+    }
+
     return spawn(
-      path.join(extension.dir, 'bin', options.command[0]),
-      options.command.slice(1),
+      command[0],
+      command.slice(1),
       {
         stdio: ['ignore', 'pipe', 'pipe'],
         ..._.pick(options, ['cwd', 'env']),
