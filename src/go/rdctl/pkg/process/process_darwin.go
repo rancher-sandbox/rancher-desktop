@@ -19,10 +19,7 @@ package process
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
@@ -33,24 +30,20 @@ const (
 	KERN_PROCARGS = 38
 )
 
-// TerminateProcessInDirectory terminates all processes where the executable
-// resides within the given directory, as gracefully as possible.  If `force` is
-// set, SIGKILL is used instead.
-func TerminateProcessInDirectory(directory string, force bool) error {
+// Iterate over all processes, calling a callback function for each process
+// found with the pid and the path to the executable.  If the callback function
+// returns an error, iteration is immediately stopped.
+func iterProcesses(callback func(pid int, executable string) error) error {
 	procs, err := unix.SysctlKinfoProcSlice("kern.proc.all")
 	if err != nil {
 		return fmt.Errorf("failed to list processes: %w", err)
 	}
 	for _, proc := range procs {
 		pid := int(proc.Proc.P_pid)
-		// Don't kill the current process
-		if pid == os.Getpid() {
-			continue
-		}
 		buf, err := unix.SysctlRaw(CTL_KERN, KERN_PROCARGS, pid)
 		if err != nil {
 			if !errors.Is(err, unix.EINVAL) {
-				logrus.Infof("Failed to get command line of pid %d: %s", pid, err)
+				logrus.Debugf("Failed to get command line of pid %d: %s", pid, err)
 			}
 			continue
 		}
@@ -61,24 +54,8 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 			// If we have unexpected data, don't fall over.
 			continue
 		}
-		procPath := string(buf[:index])
-		relPath, err := filepath.Rel(directory, procPath)
-		if err != nil || strings.HasPrefix(relPath, "../") {
-			continue
-		}
-		process, err := os.FindProcess(pid)
-		if err != nil {
-			continue
-		}
-		if force {
-			err = process.Signal(unix.SIGKILL)
-		} else {
-			err = process.Signal(unix.SIGTERM)
-		}
-		if err == nil {
-			logrus.Infof("Terminated process %d (%s)", pid, procPath)
-		} else if !errors.Is(err, unix.EINVAL) {
-			logrus.Infof("Ignoring failure to terminate pid %d (%s): %s", pid, procPath, err)
+		if err = callback(pid, string(buf[:index])); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -20,12 +20,10 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 )
 
 // internalCmd represents the `rdctl internal process` command, which contains
@@ -41,19 +39,7 @@ exit, and once it does, terminates all processes within the same process group.`
 		if err != nil {
 			return fmt.Errorf("failed to get process ID: %w", err)
 		}
-		pgid, err := unix.Getpgid(pid)
-		if err != nil {
-			return fmt.Errorf("failed to get process group id for %d: %w", pid, err)
-		}
-		if err = process.WaitForProcess(pid); err != nil {
-			return fmt.Errorf("failed to wait for process: %w", err)
-		}
-		err = unix.Kill(-pgid, unix.SIGTERM)
-		if err != nil && !errors.Is(err, unix.ESRCH) {
-			return fmt.Errorf("failed to send SIGTERM: %w", err)
-		}
-
-		return nil
+		return process.WaitForProcessAndKillGroup(pid)
 	},
 }
 
