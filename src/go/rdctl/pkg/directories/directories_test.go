@@ -53,6 +53,19 @@ func TestGetApplicationDirectory(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, dir, actual)
 	})
+	t.Run("invalid executable path", func(t *testing.T) {
+		ctx := directories.OverrideRdctlPath(context.Background(), "")
+		_, err := directories.GetApplicationDirectory(ctx)
+		assert.Error(t, err)
+	})
+	t.Run("nonexistent executable file", func(t *testing.T) {
+		dir, err := filepath.EvalSymlinks(t.TempDir())
+		require.NoError(t, err)
+		exePath := filepath.Join(dir, "does-not-exist")
+		ctx := directories.OverrideRdctlPath(context.Background(), exePath)
+		_, err = directories.GetApplicationDirectory(ctx)
+		assert.Error(t, err)
+	})
 	t.Run("should resolve symbolic links", func(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			t.Skip("Test is not supported on Windows")
@@ -73,5 +86,17 @@ func TestGetApplicationDirectory(t *testing.T) {
 		actual, err := directories.GetApplicationDirectory(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, dir, actual)
+	})
+	t.Run("symbolic link loop", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Test is not supported on Windows")
+		}
+		dir, err := filepath.EvalSymlinks(t.TempDir())
+		require.NoError(t, err)
+		exePath := filepath.Join(dir, "executable")
+		require.NoError(t, os.Symlink(exePath, exePath))
+		ctx := directories.OverrideRdctlPath(context.Background(), exePath)
+		_, err = directories.GetApplicationDirectory(ctx)
+		assert.Error(t, err)
 	})
 }

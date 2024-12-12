@@ -18,6 +18,7 @@ package directories
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -53,6 +54,12 @@ func GetApplicationDirectory(ctx context.Context) (string, error) {
 	exePath, err := filepath.EvalSymlinks(exePathWithSymlinks)
 	if err != nil {
 		return "", err
+	}
+
+	if info, err := os.Stat(exePathWithSymlinks); err != nil {
+		return "", fmt.Errorf("rdctl executable does not exist: %w", err)
+	} else if info.IsDir() {
+		return "", fmt.Errorf("rdctl executable is a directory")
 	}
 
 	platform := runtime.GOOS

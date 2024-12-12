@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
@@ -54,6 +55,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 
 // Return the path used to launch Rancher Desktop.
 func GetRDLaunchPath(ctx context.Context) (string, error) {
+	errs := multierror.Append(nil, errors.New("search location exhausted"))
 	appDir, err := directories.GetApplicationDirectory(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get application directory: %w", err)
@@ -69,8 +71,9 @@ func GetRDLaunchPath(ctx context.Context) (string, error) {
 		if ok {
 			return dir, nil
 		}
+		errs = multierror.Append(errs, fmt.Errorf("%s is not suitable", dir))
 	}
-	return "", errors.New("search locations exhausted")
+	return "", errs.ErrorOrNil()
 }
 
 // Return the path to the main Rancher Desktop executable.

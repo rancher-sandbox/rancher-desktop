@@ -16,8 +16,8 @@ func mockGetResourcesPath() (string, error) {
 
 func TestGetResourcesPath(t *testing.T) {
 	dir := t.TempDir()
-	fileName := filepath.Join(dir, "resources", runtime.GOOS, "bin", "rdctl")
-	actual, err := GetResourcesPath(fileName)
+	rdctlPathOverride = filepath.Join(dir, "resources", runtime.GOOS, "bin", "rdctl")
+	actual, err := GetResourcesPath()
 	if assert.NoError(t, err) {
 		assert.Equal(t, filepath.Join(dir, "resources"), actual)
 	}

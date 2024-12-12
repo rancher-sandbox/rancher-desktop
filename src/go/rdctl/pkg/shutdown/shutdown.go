@@ -222,15 +222,15 @@ func runCommandIgnoreOutput(cmd *exec.Cmd) error {
 }
 
 func stopLima(ctx context.Context) error {
-	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "stop", "0"))
+	return runCommandIgnoreOutput(exec.CommandContext(ctx, limaCtlPath, "stop", "0"))
 }
 
 func stopLimaWithForce(ctx context.Context) error {
-	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "stop", "--force", "0"))
+	return runCommandIgnoreOutput(exec.CommandContext(ctx, limaCtlPath, "stop", "--force", "0"))
 }
 
 func deleteLima(ctx context.Context) error {
-	return runCommandIgnoreOutput(exec.Command(limaCtlPath, "delete", "--force", "0"))
+	return runCommandIgnoreOutput(exec.CommandContext(ctx, limaCtlPath, "delete", "--force", "0"))
 }
 
 func terminateRancherDesktopFunc(appDir string) func(context.Context) error {

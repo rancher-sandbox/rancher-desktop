@@ -8,11 +8,13 @@ import (
 	"io/fs"
 	"os"
 
+	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sys/unix"
 )
 
 // Given a list of paths, return the first one that is a valid executable.
 func FindFirstExecutable(candidates ...string) (string, error) {
+	errs := multierror.Append(nil, errors.New("search location exhausted"))
 	for _, candidate := range candidates {
 		usable, err := checkUsableApplication(candidate, true)
 		if err != nil {
@@ -21,8 +23,9 @@ func FindFirstExecutable(candidates ...string) (string, error) {
 		if usable {
 			return candidate, nil
 		}
+		errs = multierror.Append(errs, fmt.Errorf("%s is not suitable", candidate))
 	}
-	return "", errors.New("search locations exhausted")
+	return "", errs.ErrorOrNil()
 }
 
 // Verify that the candidatePath is usable as a Rancher Desktop "executable". This means:

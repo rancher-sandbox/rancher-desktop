@@ -43,13 +43,14 @@ type Paths struct {
 	ContainerdShims string `json:"containerdShims,omitempty"`
 }
 
+var rdctlPathOverride string
+
 // Get the path to the resources directory (the parent directory of the
 // platform-specific directory); this is used to fill in [Paths.Resources].
-// The argument is used for testing; do not provide it in non-test code.
-func GetResourcesPath(rdctlPathOverride ...string) (string, error) {
+func GetResourcesPath() (string, error) {
 	var rdctlPath string
-	if len(rdctlPathOverride) > 0 {
-		rdctlPath = rdctlPathOverride[0]
+	if rdctlPathOverride != "" {
+		rdctlPath = rdctlPathOverride
 	} else {
 		rdctlSymlinkPath, err := os.Executable()
 		if err != nil {

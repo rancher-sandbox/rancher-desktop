@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
@@ -56,6 +57,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 
 // Given a list of paths, return the first one that is a valid executable.
 func FindFirstExecutable(candidates ...string) (string, error) {
+	errs := multierror.Append(nil, errors.New("search location exhausted"))
 	for _, candidate := range candidates {
 		_, err := os.Stat(candidate)
 		if err == nil {
@@ -64,8 +66,9 @@ func FindFirstExecutable(candidates ...string) (string, error) {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("failed to check existence of %q: %w", candidate, err)
 		}
+		errs = multierror.Append(errs, fmt.Errorf("%s is not suitable", candidate))
 	}
-	return "", errors.New("search locations exhausted")
+	return "", errs.ErrorOrNil()
 }
 
 // Return the path used to launch Rancher Desktop.
