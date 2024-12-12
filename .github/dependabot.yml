@@ -200,3 +200,16 @@ updates:
       patterns: ["golang.org/x/*"]
     k8s:
       patterns: ["k8s.io/*"]
+
+- package-ecosystem: "gomod"
+  directory: "/scripts"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 12
+  labels: ["component/dependencies"]
+  reviewers: ["jandubois"]
+  groups:
+    golang-x:
+      patterns: ["golang.org/x/*"]
+    k8s:
+      patterns: ["k8s.io/*"]
