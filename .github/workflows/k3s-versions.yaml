@@ -1,0 +1,38 @@
+name: Update k3s-versions.json
+on:
+  schedule:
+  - cron: '43 8 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-for-token:
+    outputs:
+      has-token: ${{ steps.calc.outputs.HAS_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+    - id: calc
+      run: echo "HAS_SECRET=${HAS_SECRET}" >> "${GITHUB_OUTPUT}"
+      env:
+        HAS_SECRET: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+
+  check-update-versions:
+    needs: check-for-token
+    if: needs.check-for-token.outputs.has-token == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    # Setup go to be able to run `go run ./scripts/k3s-version.go`
+    - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+      with:
+        go-version-file: go.work
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        fetch-depth: 0
+    - run: ./scripts/k3s-versions.sh
+      env:
+        GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+        # MINIMUM_VERSION **MUST** start with a 'v'
+        MINIMUM_VERSION: v1.21
