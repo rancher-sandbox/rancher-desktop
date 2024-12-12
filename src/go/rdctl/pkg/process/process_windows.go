@@ -305,10 +305,10 @@ func SpawnProcessInRDJob(pid uint32, command []string) (*os.ProcessState, error)
 	return state, nil
 }
 
-// TerminateProcessInDirectory terminates all processes where the executable
-// resides within the given directory, as gracefully as possible.  If force is
-// set, SIGKILL is used instead.
-func TerminateProcessInDirectory(directory string, force bool) error {
+// Iterate over all processes, calling a callback function for each process
+// found with the process handle and the path to the executable.  If the
+// callback function returns an error, iteration is immediately stopped.
+func iterProcesses(callback func(proc windows.Handle, executable string) error) error {
 	var pids []uint32
 	// Try EnumProcesses until the number of pids returned is less than the
 	// buffer size.
@@ -332,19 +332,15 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 	}
 
 	for _, pid := range pids {
-		// Don't kill the current process
-		if pid == uint32(os.Getpid()) {
-			continue
-		}
 		// Do each iteration in a function so defer statements run faster.
-		(func() {
+		err = (func() error {
 			hProc, err := windows.OpenProcess(
 				windows.PROCESS_QUERY_LIMITED_INFORMATION|windows.PROCESS_TERMINATE,
 				false,
 				pid)
 			if err != nil {
 				logrus.Debugf("Ignoring error opening process %d: %s", pid, err)
-				return
+				return nil
 			}
 			defer func() {
 				_ = windows.CloseHandle(hProc)
@@ -367,27 +363,87 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 			})
 			if err != nil {
 				logrus.Debugf("failed to get process name of pid %d: %s (skipping)", pid, err)
-				return
+				return nil
 			}
 
-			relPath, err := filepath.Rel(directory, executablePath)
-			if err != nil {
-				// This may be because they're on different drives, network shares, etc.
-				logrus.Tracef("failed to make pid %d image %s relative to %s: %s", pid, executablePath, directory, err)
-				return
+			if err = callback(hProc, executablePath); err != nil {
+				return err
 			}
-			if strings.HasPrefix(relPath, "..") {
-				// Relative path includes "../" prefix, not a child of given directory.
-				logrus.Tracef("skipping pid %d (%s), not in %s", pid, executablePath, directory)
-				return
-			}
-
-			logrus.Tracef("will terminate pid %d image %s", pid, executablePath)
-			if err = windows.TerminateProcess(hProc, 0); err != nil {
-				logrus.Errorf("failed to terminate pid %d (%s): %s", pid, executablePath, err)
-			}
+			return nil
 		})()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+// Find some pid running the given executable.  If not found, return 0.
+func FindPidOfProcess(executable string) (int, error) {
+	targetInfo, err := os.Stat(executable)
+	if err != nil {
+		return 0, fmt.Errorf("failed to determine %s info: %w", executable, err)
+	}
+
+	var mainPid int
+	// errFound is a sentinel error so we can break out of the loop early.
+	errFound := fmt.Errorf("found Rancher Desktop process")
+	err = iterProcesses(func(proc windows.Handle, executable string) error {
+		pid, err := windows.GetProcessId(proc)
+		if err != nil {
+			return fmt.Errorf("failed to get pid of process %s", executable)
+		}
+		info, err := os.Stat(executable)
+		if err != nil {
+			// Maybe the executable has been deleted since.
+			logrus.Debugf("failed to look up executable for pid %d: %s", pid, err)
+			return nil
+		}
+		if os.SameFile(targetInfo, info) {
+			mainPid = int(pid)
+			return errFound
+		}
+		return nil
+	})
+	if err != nil && !errors.Is(err, errFound) {
+		return 0, err
+	}
+	return mainPid, nil
+}
+
+// Wait for the process identified by the given pid to exit, then kill all
+// processes in the same process group.  This blocks until the given process
+// exits.
+func WaitForProcessAndKillGroup(pid int) error {
+	return errors.New("WaitForProcessAndKillGroup is not implemented on Windows")
+}
+
+// TerminateProcessInDirectory terminates all processes where the executable
+// resides within the given directory, as gracefully as possible.  The force
+// parameter is unused on Windows.
+func TerminateProcessInDirectory(directory string, force bool) error {
+	return iterProcesses(func(proc windows.Handle, executablePath string) error {
+		pid, err := windows.GetProcessId(proc)
+		if err != nil {
+			pid = 0
+		}
+		relPath, err := filepath.Rel(directory, executablePath)
+		if err != nil {
+			// This may be because they're on different drives, network shares, etc.
+			logrus.Tracef("failed to make pid %d image %s relative to %s: %s", pid, executablePath, directory, err)
+			return nil
+		}
+		if strings.HasPrefix(relPath, "..") {
+			// Relative path includes "../" prefix, not a child of given directory.
+			logrus.Tracef("skipping pid %d (%s), not in %s", pid, executablePath, directory)
+			return nil
+		}
+
+		logrus.Tracef("will terminate pid %d image %s", pid, executablePath)
+		if err = windows.TerminateProcess(proc, 0); err != nil {
+			logrus.Errorf("failed to terminate pid %d (%s): %s", pid, executablePath, err)
+		}
+		return nil
+	})
 }

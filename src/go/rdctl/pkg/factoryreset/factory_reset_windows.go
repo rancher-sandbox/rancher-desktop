@@ -18,6 +18,7 @@ package factoryreset
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -62,8 +63,8 @@ func CheckProcessWindows() (bool, error) {
 
 // KillRancherDesktop terminates all processes where the executable is from the
 // Rancher Desktop application, excluding the current process.
-func KillRancherDesktop() error {
-	appDir, err := directories.GetApplicationDirectory()
+func KillRancherDesktop(ctx context.Context) error {
+	appDir, err := directories.GetApplicationDirectory(ctx)
 	if err != nil {
 		return fmt.Errorf("could not find application directory: %w", err)
 	}

@@ -74,7 +74,7 @@ func getKnownFolder(folder *windows.KNOWNFOLDERID) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not find CoTaskMemFree: %w", err)
 	}
-	var result uintptr
+	var result *uint16
 	hr, _, _ := SHGetKnownFolderPath.Call(
 		uintptr(unsafe.Pointer(folder)),
 		0,
@@ -83,12 +83,12 @@ func getKnownFolder(folder *windows.KNOWNFOLDERID) (string, error) {
 	)
 	// SHGetKnownFolderPath documentation says we _must_ free the result with
 	// CoTaskMemFree, even if the call failed.
-	defer func() { _, _, _ = CoTaskMemFree.Call(result) }()
+	// https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath
+	defer func() { _, _, _ = CoTaskMemFree.Call(uintptr(unsafe.Pointer(result))) }()
 	if hr != 0 {
 		return "", windows.Errno(hr)
 	}
 
 	// result at this point contains the path, as a PWSTR
-	// Note that `go vet` has a false positive here on "misuse of Pointer".
-	return windows.UTF16PtrToString((*uint16)(unsafe.Pointer(result))), nil
+	return windows.UTF16PtrToString(result), nil
 }

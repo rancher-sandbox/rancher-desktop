@@ -17,21 +17,49 @@ limitations under the License.
 package directories
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"testing"
 )
 
+type rdctlOverrideKeyType struct{}
+
+var rdctlOverrideKey = rdctlOverrideKeyType{}
+
+// OverrideRdctlPath produces a context that will override the path of the rdctl
+// executable.  This should only be used in tests.
+func OverrideRdctlPath(ctx context.Context, rdctlPath string) context.Context {
+	if !testing.Testing() {
+		panic("WithOverride can only be used for testing")
+	}
+	return context.WithValue(ctx, rdctlOverrideKey, rdctlPath)
+}
+
 // GetApplicationDirectory returns the installation directory of the application.
-func GetApplicationDirectory() (string, error) {
-	exePathWithSymlinks, err := os.Executable()
-	if err != nil {
-		return "", err
+func GetApplicationDirectory(ctx context.Context) (string, error) {
+	var exePathWithSymlinks string
+	var err error
+	override, ok := ctx.Value(rdctlOverrideKey).(string)
+	if ok {
+		exePathWithSymlinks = override
+	} else {
+		if exePathWithSymlinks, err = os.Executable(); err != nil {
+			return "", err
+		}
 	}
 
 	exePath, err := filepath.EvalSymlinks(exePathWithSymlinks)
 	if err != nil {
 		return "", err
+	}
+
+	if info, err := os.Stat(exePathWithSymlinks); err != nil {
+		return "", fmt.Errorf("rdctl executable does not exist: %w", err)
+	} else if info.IsDir() {
+		return "", fmt.Errorf("rdctl executable is a directory")
 	}
 
 	platform := runtime.GOOS

@@ -1,6 +1,6 @@
 //go:build linux || darwin
 
-package utils
+package paths
 
 import (
 	"errors"
@@ -8,8 +8,25 @@ import (
 	"io/fs"
 	"os"
 
+	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sys/unix"
 )
+
+// Given a list of paths, return the first one that is a valid executable.
+func FindFirstExecutable(candidates ...string) (string, error) {
+	errs := multierror.Append(nil, errors.New("search location exhausted"))
+	for _, candidate := range candidates {
+		usable, err := checkUsableApplication(candidate, true)
+		if err != nil {
+			return "", fmt.Errorf("failed to check usability of %q: %w", candidate, err)
+		}
+		if usable {
+			return candidate, nil
+		}
+		errs = multierror.Append(errs, fmt.Errorf("%s is not suitable", candidate))
+	}
+	return "", errs.ErrorOrNil()
+}
 
 // Verify that the candidatePath is usable as a Rancher Desktop "executable". This means:
 //   - check that candidatePath exists

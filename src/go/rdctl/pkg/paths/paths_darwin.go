@@ -1,17 +1,21 @@
 package paths
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
 func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	var getResourcesPathFunc func() (string, error)
 	switch len(getResourcesPathFuncs) {
 	case 0:
-		getResourcesPathFunc = getResourcesPath
+		getResourcesPathFunc = func() (string, error) { return GetResourcesPath() }
 	case 1:
 		getResourcesPathFunc = getResourcesPathFuncs[0]
 	default:
@@ -47,4 +51,41 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	}
 
 	return paths, nil
+}
+
+// Return the path used to launch Rancher Desktop.
+func GetRDLaunchPath(ctx context.Context) (string, error) {
+	errs := multierror.Append(nil, errors.New("search location exhausted"))
+	appDir, err := directories.GetApplicationDirectory(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get application directory: %w", err)
+	}
+	executablePath := []string{"Contents", "MacOS", "Rancher Desktop"}
+
+	for _, dir := range []string{appDir, "/Applications/Rancher Desktop.app"} {
+		absPathParts := append([]string{dir}, executablePath...)
+		ok, err := checkUsableApplication(filepath.Join(absPathParts...), true)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			return dir, nil
+		}
+		errs = multierror.Append(errs, fmt.Errorf("%s is not suitable", dir))
+	}
+	return "", errs.ErrorOrNil()
+}
+
+// Return the path to the main Rancher Desktop executable.
+// In the case of `yarn dev`, this would be the electron executable.
+func GetMainExecutable(ctx context.Context) (string, error) {
+	appDir, err := directories.GetApplicationDirectory(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get application directory: %w", err)
+	}
+	return FindFirstExecutable(
+		filepath.Join(appDir, "Contents", "MacOS", "Rancher Desktop"),
+		filepath.Join(appDir, "node_modules", "electron", "dist",
+			"Electron.app", "Contents", "MacOS", "Electron"),
+	)
 }
