@@ -36,18 +36,21 @@ const DefaultEndpoint = "npipe:////./pipe/docker_engine"
 var ErrListenerClosed = winio.ErrPipeListenerClosed
 
 // MakeDialer computes the dial function.
-func MakeDialer(port uint32) (func() (net.Conn, error), error) {
+func MakeDialer(port uint32) (DialFunc, error) {
 	vmGUID, err := probeVMGUID(port)
 	if err != nil {
 		return nil, fmt.Errorf("could not detect WSL2 VM: %w", err)
 	}
+
 	dial := func() (net.Conn, error) {
 		conn, err := dialHvsock(vmGUID, port)
 		if err != nil {
 			return nil, err
 		}
+
 		return conn, nil
 	}
+
 	return dial, nil
 }
 
