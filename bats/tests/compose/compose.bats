@@ -27,14 +27,9 @@ verify_running_container() {
 
 @test 'verify app bound to localhost' {
     verify_running_container "http://localhost:8080" "Welcome to nginx!"
-    if is_windows && ! using_containerd; then
-        # BUG BUG BUG
-        # When binding to localhost in containerd it also binds to wildcard IP
-        # https://github.com/rancher-sandbox/rancher-desktop/issues/7825
-        skip_unless_host_ip
-        run curl --verbose --head "http://${HOST_IP}:8080"
-        assert_output --partial "curl: (7) Failed to connect"
-    fi
+    skip_unless_host_ip
+    run curl --verbose --head "http://${HOST_IP}:8080"
+    assert_output --partial "curl: (7) Failed to connect"
 }
 
 @test 'verify app bound to wildcard IP' {
