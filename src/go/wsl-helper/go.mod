@@ -1,7 +1,8 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper
 
-go 1.22.0
-toolchain go1.23.2
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	github.com/Masterminds/semver v1.5.0
