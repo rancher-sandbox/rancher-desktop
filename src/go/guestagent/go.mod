@@ -1,7 +1,8 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/guestagent
 
-go 1.23
-toolchain go1.23.2
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	github.com/Masterminds/log-go v1.0.0
