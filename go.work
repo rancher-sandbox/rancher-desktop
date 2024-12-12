@@ -14,4 +14,5 @@ use (
 	./src/go/rdctl
 	./src/go/spin-stub
 	./src/go/wsl-helper
+	./scripts
 )

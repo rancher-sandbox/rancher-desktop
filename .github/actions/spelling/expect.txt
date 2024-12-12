@@ -288,6 +288,7 @@ gcs
 GENERALIZEDTIME
 getfattr
 getwindowid
+gha
 ghp
 gitmodules
 gitrepo
