@@ -1,6 +1,6 @@
 lima: 1.0.2.rd1
 qemu: 9.1.2.rd1
-socketVMNet: 1.2.0
+socketVMNet: 1.2.1
 alpineLimaISO:
   isoVersion: 0.2.41.rd2
   alpineVersion: 3.20.3
