@@ -40,6 +40,9 @@ runs:
     if: runner.os == 'Linux'
     shell: bash
     run: |
+      sudo apt-get update
+      sudo apt-get install pass
+
       # Configure the agent to allow default passwords
       HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
       mkdir -p "${HOMEDIR}"
