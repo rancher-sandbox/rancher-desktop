@@ -89,10 +89,9 @@ func FindPidOfProcess(executable string) (int, error) {
 	return mainPid, nil
 }
 
-// Wait for the process identified by the given pid to exit, then kill all
-// processes in the same process group.  This blocks until the given process
-// exits.  If the given pid is 0, this is a no-op.
-func WaitForProcessAndKillGroup(pid int) error {
+// Kill the process group the given process belongs to.  If wait is set, block
+// until the target process exits first before doing so.
+func KillProcessGroup(pid int, wait bool) error {
 	if pid == 0 {
 		return nil
 	}
@@ -100,8 +99,10 @@ func WaitForProcessAndKillGroup(pid int) error {
 	if err != nil {
 		return fmt.Errorf("failed to get process group id for %d: %w", pid, err)
 	}
-	if err = WaitForProcess(pid); err != nil {
-		return fmt.Errorf("failed to wait for process: %w", err)
+	if wait {
+		if err = WaitForProcess(pid); err != nil {
+			return fmt.Errorf("failed to wait for process: %w", err)
+		}
 	}
 	err = unix.Kill(-pgid, unix.SIGTERM)
 	if err != nil && !errors.Is(err, unix.ESRCH) {

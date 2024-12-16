@@ -412,11 +412,10 @@ func FindPidOfProcess(executable string) (int, error) {
 	return mainPid, nil
 }
 
-// Wait for the process identified by the given pid to exit, then kill all
-// processes in the same process group.  This blocks until the given process
-// exits.
-func WaitForProcessAndKillGroup(pid int) error {
-	return errors.New("WaitForProcessAndKillGroup is not implemented on Windows")
+// Kill the process group the given process belongs to.  If wait is set, block
+// until the target process exits first before doing so.
+func KillProcessGroup(pid int, wait bool) error {
+	return errors.New("KillProcessGroup is not implemented on Windows")
 }
 
 // TerminateProcessInDirectory terminates all processes where the executable
