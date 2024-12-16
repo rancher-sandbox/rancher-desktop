@@ -428,6 +428,10 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 		if err != nil {
 			pid = 0
 		}
+		if pid == uint32(os.Getpid()) {
+			// Skip terminating the current process.
+			return nil
+		}
 		relPath, err := filepath.Rel(directory, executablePath)
 		if err != nil {
 			// This may be because they're on different drives, network shares, etc.
