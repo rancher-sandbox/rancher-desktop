@@ -246,7 +246,7 @@ func terminateRancherDesktopFunc(appDir string) func(context.Context) error {
 			if err != nil {
 				return err
 			}
-			return process.WaitForProcessAndKillGroup(pid)
+			return process.KillProcessGroup(pid, false)
 		})())
 
 		errors = multierror.Append(errors, process.TerminateProcessInDirectory(appDir, true))
