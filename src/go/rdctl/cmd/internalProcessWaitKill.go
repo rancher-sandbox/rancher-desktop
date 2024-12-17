@@ -39,7 +39,7 @@ exit, and once it does, terminates all processes within the same process group.`
 		if err != nil {
 			return fmt.Errorf("failed to get process ID: %w", err)
 		}
-		return process.WaitForProcessAndKillGroup(pid)
+		return process.KillProcessGroup(pid, true)
 	},
 }
 
