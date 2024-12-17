@@ -555,6 +555,7 @@ NONINFRINGEMENT
 noproxy
 norestart
 normaliser
+NOSETENV
 nothrow
 notifempty
 notset
