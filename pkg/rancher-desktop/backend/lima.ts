@@ -13,7 +13,6 @@ import util from 'util';
 import Electron from 'electron';
 import merge from 'lodash/merge';
 import omit from 'lodash/omit';
-import zip from 'lodash/zip';
 import semver from 'semver';
 import tar from 'tar-stream';
 import yaml from 'yaml';
@@ -1195,6 +1194,62 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     };
   }
 
+  /**
+   * Create a sudoers file that has to be byte-for-byte identical to what `limactl sudoers` would create.
+   * We can't use `limactl sudoers` because it will fail when socket_vmnet has not yet been installed at
+   * the secure path. We don't want to ask the user twice for a password: once to install socket_vmnet,
+   * and once more to update the sudoers file. So we try to predict what `limactl sudoers` would write.
+   */
+  protected sudoersFile(config: LimaNetworkConfiguration): string {
+    const host = config.networks['host'];
+    const shared = config.networks['rancher-desktop-shared'];
+
+    if (host.mode !== 'host') {
+      throw new Error('host network has wrong type');
+    }
+    if (shared.mode !== 'shared') {
+      throw new Error('shared network has wrong type');
+    }
+
+    let name = 'host';
+    let sudoers = `%everyone ALL=(root:wheel) NOPASSWD:NOSETENV: /bin/mkdir -m 775 -p /private/var/run
+
+# Manage "${ name }" network daemons
+
+%everyone ALL=(root:wheel) NOPASSWD:NOSETENV: \\
+    /opt/rancher-desktop/bin/socket_vmnet --pidfile=/private/var/run/${ name }_socket_vmnet.pid --socket-group=everyone --vmnet-mode=host --vmnet-gateway=${ host.gateway } --vmnet-dhcp-end=${ host.dhcpEnd } --vmnet-mask=${ host.netmask } /private/var/run/socket_vmnet.${ name }, \\
+    /usr/bin/pkill -F /private/var/run/${ name }_socket_vmnet.pid
+
+`;
+
+    const networks = Object.keys(config.networks).sort();
+
+    for (const name of networks) {
+      const prefix = 'rancher-desktop-bridged_';
+
+      if (!name.startsWith(prefix)) {
+        continue;
+      }
+      sudoers += `# Manage "${ name }" network daemons
+
+%everyone ALL=(root:wheel) NOPASSWD:NOSETENV: \\
+    /opt/rancher-desktop/bin/socket_vmnet --pidfile=/private/var/run/${ name }_socket_vmnet.pid --socket-group=everyone --vmnet-mode=bridged --vmnet-interface=${ name.slice(prefix.length) } /private/var/run/socket_vmnet.${ name }, \\
+    /usr/bin/pkill -F /private/var/run/${ name }_socket_vmnet.pid
+
+`;
+    }
+
+    name = 'rancher-desktop-shared';
+    sudoers += `# Manage "${ name }" network daemons
+
+%everyone ALL=(root:wheel) NOPASSWD:NOSETENV: \\
+    /opt/rancher-desktop/bin/socket_vmnet --pidfile=/private/var/run/${ name }_socket_vmnet.pid --socket-group=everyone --vmnet-mode=shared --vmnet-gateway=${ shared.gateway } --vmnet-dhcp-end=${ shared.dhcpEnd } --vmnet-mask=${ shared.netmask } /private/var/run/socket_vmnet.${ name }, \\
+    /usr/bin/pkill -F /private/var/run/${ name }_socket_vmnet.pid
+`;
+
+    return sudoers;
+  }
+
   protected async createLimaSudoersFile(this: Readonly<this> & this, randomTag: string): Promise<SudoCommand | undefined> {
     const paths: string[] = [];
     const commands: string[] = [];
@@ -1210,38 +1265,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       }
     }
 
-    // We want to generate the file via `limactl sudoers`. However, there are
-    // some limitations:
-    // - The vmnet executables may not be installed yet (because we try to make
-    //   sure the user is only prompted for credentials once).
-    // - `limactl sudoers --check` complains in situations that would be fine:
-    //   - The executable names wouldn't match the installed one.
-    //   - The application directory ("Rancher Desktop.app") contains spaces.
-    // As a workaround, we instead:
-    // 1. Run `limactl sudoers` to generate the desired output, but using the
-    //    executables in the application directory instead of `/opt/...`.
-    // 2. Do a text replace to determine the final sudoers file contents.
-    // 3. Compare the contents with the existing file, and request a write if
-    //    it's not the same.
-
-    // Rewrite the network configuration to use application directory executables.
-    await this.installCustomLimaNetworkConfig(true, true);
-    const { stdout: unsafeSudoers } = await this.limaWithCapture('sudoers');
-    const sudoers = unsafeSudoers.replaceAll(this.unsafeVMNetExecutable, this.safeVMNetExecutable);
+    const networkConfig = await this.installCustomLimaNetworkConfig(true);
+    const sudoers = this.sudoersFile(networkConfig);
     let updateSudoers = false;
 
     try {
-      const existing = await fs.promises.readFile(LIMA_SUDOERS_LOCATION, { encoding: 'utf-8' });
+      const existingSudoers = await fs.promises.readFile(LIMA_SUDOERS_LOCATION, { encoding: 'utf-8' });
 
-      const expectedLines = sudoers.split(/(?:\r?\n)+/).map(line => line.trim());
-      const actualLines = existing.split(/(?:\r?\n)+/).map(line => line.trim());
-
-      for (const [index, [expected, actual]] of Object.entries(zip(expectedLines, actualLines))) {
-        if (expected !== actual) {
-          console.log(`${ LIMA_SUDOERS_LOCATION } mismatch on line ${ index + 1 }:\nexpected ${ expected } \n but got ${ actual }`);
-          updateSudoers = true;
-          break;
-        }
+      if (sudoers !== existingSudoers) {
+        updateSudoers = true;
       }
     } catch (ex: any) {
       if (ex?.code !== 'ENOENT') {
@@ -1259,9 +1291,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       paths.push(LIMA_SUDOERS_LOCATION);
       console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } needs to be updated.`);
     }
-
-    // Rewrite network config again to use the proper executables
-    await this.installCustomLimaNetworkConfig(true, false);
 
     if (commands.length > 0) {
       return {
@@ -1378,23 +1407,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     });
   }
 
-  /** Path for the socket_vmnet executable, in the root-owned directory. */
-  protected safeVMNetExecutable = NETWORKS_CONFIG.paths.socketVMNet as string;
-
-  /**
-   * Path for the socket_vmnet executable, from the (user-writeable) application
-   * directory.  We use this temporarily for limactl to generate the sudoers
-   * file, but it is not actually executed from here.
-   */
-  protected unsafeVMNetExecutable = path.join(paths.resources, 'darwin/lima/socket_vmnet/bin/socket_vmnet');
-
   /**
    * Provide a default network config file with rancher-desktop specific settings.
    *
    * If there's an existing file, replace it if it doesn't contain a
    * paths.varRun setting for rancher-desktop
    */
-  protected async installCustomLimaNetworkConfig(allowRoot = true, useUnsafeExecutables = false) {
+  protected async installCustomLimaNetworkConfig(allowRoot = true): Promise<LimaNetworkConfiguration> {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
     let config: LimaNetworkConfiguration;
@@ -1415,15 +1434,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       config = clone(NETWORKS_CONFIG);
     }
 
-    const key = 'socketVMNet';
-
-    if (useUnsafeExecutables) {
-      if (!config.paths[key] || config.paths[key] === this.safeVMNetExecutable) {
-        config.paths[key] = this.unsafeVMNetExecutable;
-      }
-    } else if (!config.paths[key] || config.paths[key] === this.unsafeVMNetExecutable) {
-      config.paths[key] = this.safeVMNetExecutable;
-    }
+    config.paths['socketVMNet'] = '/opt/rancher-desktop/bin/socket_vmnet';
 
     if (config.group === 'staff') {
       config.group = 'everyone';
@@ -1457,6 +1468,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
 
     await fs.promises.writeFile(networkPath, yaml.stringify(config), { encoding: 'utf-8' });
+
+    return config;
   }
 
   /**
