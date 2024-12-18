@@ -21,6 +21,7 @@ package cmd
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/spf13/cobra"
@@ -38,6 +39,12 @@ exit, and once it does, terminates all processes within the same process group.`
 		pid, err := cmd.Flags().GetInt("pid")
 		if err != nil {
 			return fmt.Errorf("failed to get process ID: %w", err)
+		}
+		if runtime.GOOS == "linux" {
+			// TODO: We can't use the process group on Linux, because Electron does
+			// not always create a new one.  But for now still wait for the
+			// process to exit
+			return process.WaitForProcess(pid)
 		}
 		return process.KillProcessGroup(pid, true)
 	},
