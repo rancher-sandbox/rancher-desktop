@@ -25,6 +25,7 @@ func DeleteData(ctx context.Context, appPaths paths.Paths, removeKubernetesCache
 		appPaths.Config,
 		appPaths.Logs,
 		appPaths.ExtensionRoot,
+		appPaths.SessionData,
 	}
 	pathList = append(pathList, appHomeDirectories(appPaths)...)
 
