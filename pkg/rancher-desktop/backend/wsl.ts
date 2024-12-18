@@ -1345,9 +1345,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 try {
                   const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
                   const env = {
-                    KUBE_PLUGIN_VERSION:    DEPENDENCY_VERSIONS.spinKubePlugin,
-                    JS2WASM_PLUGIN_VERSION: DEPENDENCY_VERSIONS.js2wasmPlugin,
-                    SPIN_TEMPLATE_BRANCH:   (version ? `v${ version.major }.${ version.minor }` : 'main'),
+                    KUBE_PLUGIN_VERSION:  DEPENDENCY_VERSIONS.spinKubePlugin,
+                    SPIN_TEMPLATE_BRANCH: (version ? `v${ version.major }.${ version.minor }` : 'main'),
                   };
                   const wslenv = Object.keys(env).join(':');
 
