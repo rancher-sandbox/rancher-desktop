@@ -157,7 +157,7 @@ rdctl_factory_reset() {
 
 check_directories() {
     # Check if all expected directories are created after starting application/ are deleted after a factory reset
-    delete_dir=("$PATH_LOGS" "$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json")
+    delete_dir=("$PATH_LOGS" "$PATH_APP_HOME/credential-server.json" "$PATH_APP_HOME/rd-engine.json" "$PATH_SESSION_DATA")
     if is_unix; then
         # On Windows "$PATH_CONFIG" == "$PATH_APP_HOME"
         delete_dir+=("$HOME/.rd" "$LIMA_HOME" "$PATH_CONFIG")

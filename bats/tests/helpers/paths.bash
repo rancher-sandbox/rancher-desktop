@@ -59,6 +59,7 @@ if is_macos; then
     LIMA_HOME="$PATH_APP_HOME/lima"
     PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
     PATH_CONTAINERD_SHIMS="$PATH_APP_HOME/containerd-shims"
+    PATH_SESSION_DATA="$HOME/Library/Application Support/Rancher Desktop"
 
     ELECTRON_DIST_ARCH="mac"
     if is_macos aarch64; then
@@ -80,6 +81,7 @@ if is_linux; then
     LIMA_HOME="$PATH_APP_HOME/lima"
     PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
     PATH_CONTAINERD_SHIMS="$PATH_APP_HOME/containerd-shims"
+    PATH_SESSION_DATA="$HOME/.config/Rancher Desktop"
 
     set_path_resources \
         "/opt/rancher-desktop" \
@@ -109,6 +111,7 @@ if is_windows; then
     PATH_EXTENSIONS="$PATH_APP_HOME/extensions"
     PATH_SNAPSHOTS="$PATH_APP_HOME/snapshots"
     PATH_CONTAINERD_SHIMS="$PATH_APP_HOME/containerd-shims"
+    PATH_SESSION_DATA="$PATH_CACHE/Rancher Desktop"
 
     set_path_resources \
         "$PROGRAMFILES/Rancher Desktop" \

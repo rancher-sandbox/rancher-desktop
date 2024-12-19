@@ -41,6 +41,8 @@ type Paths struct {
 	Snapshots string `json:"snapshots,omitempty"`
 	// Directory containing user-managed containerd-shims
 	ContainerdShims string `json:"containerdShims,omitempty"`
+	// Directory containing the Electron session data (e.g. cookies)
+	SessionData string `json:"sessionData,omitempty"`
 }
 
 var rdctlPathOverride string
