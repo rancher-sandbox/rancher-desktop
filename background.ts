@@ -56,6 +56,7 @@ import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
 import { openPreferences, preferencesSetDirtyFlag } from '@pkg/window/preferences';
 
+Electron.app.setPath('userData', path.join(paths.appHome, 'electron'));
 Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 

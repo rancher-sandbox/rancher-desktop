@@ -170,5 +170,6 @@ func getDirectoriesToDelete(keepSystemImages bool, appName string) ([]string, er
 	} else {
 		logrus.Errorf("Could not get AppData (roaming) folder: %s\n", err)
 	}
+	// The OldUserData directory is already deleted by deleting the Cache directory.
 	return dirs, nil
 }

@@ -40,6 +40,7 @@ func TestGetPaths(t *testing.T) {
 			ExtensionRoot:   filepath.Join(homeDir, "AppData", "Local", appName, "extensions"),
 			Snapshots:       filepath.Join(homeDir, "AppData", "Local", appName, "snapshots"),
 			ContainerdShims: filepath.Join(homeDir, "AppData", "Local", appName, "containerd-shims"),
+			OldUserData:     filepath.Join(homeDir, "AppData", "Local", appName, "cache", "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -76,6 +77,7 @@ func TestGetPaths(t *testing.T) {
 			ExtensionRoot:   filepath.Join(environment["LOCALAPPDATA"], appName, "extensions"),
 			Snapshots:       filepath.Join(environment["LOCALAPPDATA"], appName, "snapshots"),
 			ContainerdShims: filepath.Join(environment["LOCALAPPDATA"], appName, "containerd-shims"),
+			OldUserData:     filepath.Join(environment["LOCALAPPDATA"], appName, "cache", "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
