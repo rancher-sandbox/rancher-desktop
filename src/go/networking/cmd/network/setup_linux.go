@@ -144,12 +144,14 @@ func main() {
 		logrus.Fatalf("failed to switch back to original namespace: %v", err)
 	}
 	if err := configureVethPair(WSLVeth, WSLVethIP); err != nil {
-		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", WSLVeth, err)
+		logrus.Fatalf("failed setting up veth: %s for default namespace: %v", WSLVeth, err)
 	}
 
 	if err := originNS.Close(); err != nil {
 		logrus.Errorf("failed to close original NS, ignoring error: %v", err)
 	}
+
+	logrus.Trace("Network setup complete, waiting for vm-switch")
 
 	if err := vmSwitchCmd.Wait(); err != nil {
 		logrus.Errorf("vm-switch exited with error: %v", err)
