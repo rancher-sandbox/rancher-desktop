@@ -6,8 +6,8 @@ export default {
       'llm',
     ],
     LatestVersion: {
-      Tag:                'v0.0.1',
-      ManifestListDigest: 'sha256:b51023520230fb21f5b10773bdd2dc936d320754d353c932b4f342c3b32c9394',
+      Tag:                'v0.0.2',
+      ManifestListDigest: 'sha256:4cb0b9f19152fccfacf4a74e133d7e783762de46323c0f054e20ab5d12e54a24',
       Platforms:          [
         {
           OS:      'linux',
