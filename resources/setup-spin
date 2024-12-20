@@ -7,14 +7,10 @@ resources_dir=$(dirname "$0")
 
 # We run setup-spin in the rancher-desktop distro to setup spin on the Win32 host.
 if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
-  app_data_dir=$(/bin/wslpath "$(powershell.exe -Command "Write-Output \${Env:LOCALAPPDATA}")" | tr -d "\r")
-  system_root=$(/bin/wslpath "$(powershell.exe -Command "Write-Output \${Env:SystemRoot}")" | tr -d "\r")
   spin="${resources_dir}/win32/bin/spin.exe"
 elif [ "$(uname)" = "Linux" ]; then
-  app_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}"
   spin="${resources_dir}/linux/bin/spin"
 else
-  app_data_dir="${HOME}/Library/Application Support"
   spin="${resources_dir}/darwin/bin/spin"
 fi
 
@@ -22,10 +18,6 @@ if [ ! -x "$spin" ]; then
   echo "Cannot execute '${spin}' (or does not exist)"
   exit 1
 fi
-
-# This is the WSL path, not the Win32 path, so we can't use it to set SPIN_DATA_DIR.
-# We rely on the spin/spin.exe wrapper to setup SPIN_DATA_DIR and use spin_dir only for temp files.
-spin_dir="${app_data_dir}/rancher-desktop/spin"
 
 if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
   echo "Waiting for github.com to become resolvable"
@@ -39,64 +31,13 @@ if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
   done
 fi
 
-# The reason for this complexity is to be able to run on systems without git.
-# We do need either curl or wget to be on the PATH though.
 install_templates() {
   repo=$1
   branch=$2
-  tmpdir="${spin_dir}/rancher-desktop.$$"
-  tarball="${tmpdir}/${repo}.tar.gz"
 
+  echo "Installing templates ${repo} from branch ${branch}"
   url="https://github.com/fermyon/${repo}/archive/refs/heads/${branch}.tar.gz"
-
-  if [ "${WSL_DISTRO_NAME:-}" = "rancher-desktop" ]; then
-    # Download and extract tarball on Win32 host side to avoid 9p syncing issues
-    tmpdir=$(/bin/wslpath -w "$tmpdir")
-    tarball=$(/bin/wslpath -w "$tarball")
-
-    "${system_root}/system32/cmd.exe" /c mkdir "$tmpdir"
-
-    echo "Downloading '${url}' to '${tarball}' with curl.exe"
-    "${system_root}/system32/curl.exe" --silent --location "$url" --output "$tarball"
-    rc=$?; test $rc -ne 0 && echo "curl.exe exit status is $rc"
-
-    if [ $rc -eq 0 ]; then
-      echo "Unpacking '${tarball}'"
-      "${system_root}/system32/tar.exe" xfz "$tarball" -C "$tmpdir" --strip-components 1
-      rc=$?; test $rc -ne 0 && echo "tar.exe exit status is $rc"
-
-      echo "Installing templates from '${tmpdir}'"
-      "$spin" templates install --update --dir "$tmpdir"
-      rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
-    else
-      echo "Could not download '${url}'"
-    fi
-    "${system_root}/system32/cmd.exe" /c rmdir /s /q "$tmpdir"
-    return
-  fi
-
-  mkdir -p "$tmpdir"
-  if command -v curl >/dev/null; then
-    echo "Downloading '${url}' to '${tarball}' with curl"
-    curl --silent --location "$url" --output "$tarball"
-    rc=$?; test $rc -ne 0 && echo "curl exit status is $rc"
-  elif command -v wget >/dev/null; then
-    echo "Downloading '${url}' to '${tarball}' with wget"
-    wget --no-verbose "$url" -O "$tarball"
-    rc=$?; test $rc -ne 0 && echo "wget exit status is $rc"
-  fi
-  if [ -f "$tarball" ]; then
-    echo "Unpacking '${tarball}'"
-    tar xfz "$tarball" -C "$tmpdir" --strip-components 1
-    rc=$?; test $rc -ne 0 && echo "tar exit status is $rc"
-
-    echo "Installing templates from '${tmpdir}'"
-    "$spin" templates install --update --dir "$tmpdir"
-    rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
-  else
-    echo "Could not download '${url}' (maybe no curl/wget)"
-  fi
-  rm -rf "$tmpdir"
+  "$spin" templates install --update --tar "$url"
 }
 
 install_plugin() {
