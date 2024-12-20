@@ -41,6 +41,9 @@ type Paths struct {
 	Snapshots string `json:"snapshots,omitempty"`
 	// Directory containing user-managed containerd-shims
 	ContainerdShims string `json:"containerdShims,omitempty"`
+	// Previous location of Electron user data (e.g. cookies) up to Rancher Desktop 1.16.
+	// Current location is `$AppHome/electron` and does not need special treatment.
+	OldUserData string `json:"oldUserData,omitempty"`
 }
 
 var rdctlPathOverride string

@@ -40,6 +40,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 		ExtensionRoot:           filepath.Join(appHome, "extensions"),
 		Snapshots:               filepath.Join(appHome, "snapshots"),
 		ContainerdShims:         filepath.Join(appHome, "containerd-shims"),
+		OldUserData:             filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
 	}
 	paths.Logs = os.Getenv("RD_LOGS_DIR")
 	if paths.Logs == "" {
