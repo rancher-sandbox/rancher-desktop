@@ -30,6 +30,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,23 +39,28 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
 // RequestContextValue contains things we attach to incoming requests
-type RequestContextValue map[interface{}]interface{}
+type (
+	RequestContextValue map[interface{}]interface{}
+	contextType         string
+
+	containerInspectResponseBody struct {
+		ID string `json:"Id"`
+	}
+)
 
 // requestContext is the context key for requestContextValue
-var requestContext = struct{}{}
-
-type containerInspectResponseBody struct {
-	ID string `json:"Id"`
-}
+var requestContext = contextType("requestContext")
 
 const dockerAPIVersion = "v1.41.0"
 
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
-func Serve(endpoint string, dialer func() (net.Conn, error)) error {
+func Serve(endpoint string, dialer platform.DialFunc) error {
+	proxySocket := util.NewInMemorySocket()
 	listener, err := platform.Listen(endpoint)
 	if err != nil {
 		return err
@@ -65,9 +71,15 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 	go func() {
 		<-termch
 		signal.Stop(termch)
+
 		err := listener.Close()
 		if err != nil {
 			logrus.WithError(err).Error("Error closing listener on interrupt")
+		}
+
+		err = proxySocket.Close()
+		if err != nil {
+			logrus.WithError(err).Error("Error closing proxy listener on interrupt")
 		}
 	}()
 
@@ -88,6 +100,7 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 			originalReq := *req
 			originalURL := *req.URL
 			originalReq.URL = &originalURL
+
 			err := munger.MungeRequest(req, dialer)
 			if err != nil {
 				logrus.WithError(err).
@@ -138,9 +151,33 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 
 	logrus.WithField("endpoint", endpoint).Info("Listening")
 
-	err = server.Serve(listener)
-	if err != nil {
-		logrus.WithError(err).Error("serve exited with error")
+	go func() {
+		err = server.Serve(proxySocket)
+		if err != nil {
+			logrus.WithError(err).Error("serve exited with error")
+		}
+	}()
+
+	connectionProvider := func(header []byte) (io.ReadWriteCloser, error) {
+		// attach starts a non-standard tcp "websocket"
+		if strings.Contains(string(header), "/attach") {
+			// forward directly to unix socket
+			return dialer()
+		}
+
+		// send to http munger
+		return proxySocket.Dial("", "")
+	}
+
+	// start tcp proxy
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Printf("Failed to accept connection '%s'\n", err)
+			break
+		}
+
+		go proxyTCPConn(conn, connectionProvider)
 	}
 
 	return nil
@@ -177,7 +214,7 @@ func (m *requestMunger) getRequestPath(req *http.Request) string {
 }
 
 // MungeRequest modifies a given request in-place.
-func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn, error)) error {
+func (m *requestMunger) MungeRequest(req *http.Request, dialer platform.DialFunc) error {
 	requestPath := m.getRequestPath(req)
 	logEntry := logrus.WithFields(logrus.Fields{
 		"method": req.Method,
@@ -218,7 +255,7 @@ func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn,
 	return nil
 }
 
-func (m *requestMunger) MungeResponse(resp *http.Response, dialer func() (net.Conn, error)) error {
+func (m *requestMunger) MungeResponse(resp *http.Response, dialer platform.DialFunc) error {
 	requestPath := m.getRequestPath(resp.Request)
 	logEntry := logrus.WithFields(logrus.Fields{
 		"method": resp.Request.Method,
@@ -265,7 +302,7 @@ we use the provided id path template variable to make an upstream request to the
 Fortunately it supports both id or name as the container identifier.
 The Id returned will be the full long container id that is used to lookup in docker-binds.json.
 */
-func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer func() (net.Conn, error)) (*containerInspectResponseBody, error) {
+func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer platform.DialFunc) (*containerInspectResponseBody, error) {
 	// url for inspecting container
 	inspectURL, err := req.URL.Parse(fmt.Sprintf("/%s/containers/%s/json", dockerAPIVersion, id))
 	if err != nil {
