@@ -950,23 +950,63 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         // wslinfo is missing (wsl < 2.0.4) - fall back to old behavior
       }
 
-      // We need to locate the _local_ route (netmask) for eth0, and then
-      // look it up in /proc/net/fib_trie to find the local address.
-      const routesString = await this.captureCommand('cat', '/proc/net/route');
-      const routes = routesString.split(/\r?\n/).map(line => line.split(/\s+/));
-      const route = routes.find(route => route[0] === 'eth0' && route[1] !== '00000000');
+      return this.getIPAddress();
+    })();
+  }
 
-      if (!route) {
+  // Get the IP address of the VM by reading files in /proc/net
+  // This is used to implement the `ipAddress` getter; it's only a separate
+  // method to make testing easier.
+  protected async getIPAddress(readFile?: (fileName: string) => Promise<string>): Promise<string | undefined> {
+    readFile ??= fileName => this.captureCommand('cat', fileName);
+
+    // Look at all local addresses in `/proc/net/fib_trie`, then try to find
+    // the best fit one (and blacklist `docker0`, `cni0`, `veth-rd-ns`).
+    const trieContents = await readFile('/proc/net/fib_trie');
+    const trieLines = trieContents.split(/\r?\n/).reverse();
+    // localIndices refer to the lines that say "/32 host LOCAL", i.e. interface addresses.
+    const localIndices = Array.from(trieLines.entries()).filter(([, line]) => line.includes('/32 host LOCAL')).map(([i]) => i);
+    // addresses is the actual IP addresses of the local interfaces.
+    const addresses = localIndices.map(i => trieLines[i + 1].trim().split(/\s+/).pop() ?? '127.0.0.1');
+    // masks is the network mask for each IP address.
+    const masks = localIndices.map((i) => {
+      return trieLines.find((line, j) => {
+        // Find the next line that starts with '+'.
+        return j > i && line.trim().startsWith('+');
+      })?.split(/\s+/).find(w => w.includes('/'))?.split('/')
+        .shift() ?? '127.0.0.1'; // Extract the IP address.
+    });
+
+    const routeContents = await readFile('/proc/net/route');
+    const routes = routeContents.split(/\r?\n/).map((line) => {
+      const [iface, destination] = line.trim().split(/\s+/);
+
+      if (!iface || !destination) {
         return undefined;
       }
-      const net = Array.from(route[1].matchAll(/../g)).reverse().map(n => parseInt(n.toString(), 16)).join('.');
-      const trie = await this.captureCommand('cat', '/proc/net/fib_trie');
-      const lines = _.takeWhile(trie.split(/\r?\n/).slice(1), line => /^\s/.test(line));
-      const iface = _.dropWhile(lines, line => !line.includes(`${ net }/`));
-      const addr = iface.find((_, i, array) => array[i + 1]?.includes('/32 host LOCAL'));
+      const mask = Array.from(destination.matchAll(/../g)).reverse().map(([v]) => parseInt(v, 16)).join('.');
 
-      return addr?.split(/\s+/).pop();
-    })();
+      return [mask, iface];
+    }).filter(defined);
+
+    for (const i in localIndices) {
+      const mask = masks[i];
+
+      if (!mask || mask.startsWith('127.') || mask === '0.0.0.0') {
+        // Invalid mask, localhost mask, or external.
+        continue;
+      }
+      const iface = routes.find(([routeMask]) => mask === routeMask)?.[1];
+
+      if (!iface || /^(cni\d|docker\d|veth)/.test(iface)) {
+        continue;
+      }
+      const address = addresses[i];
+
+      if (address) {
+        return address;
+      }
+    }
   }
 
   async getBackendInvalidReason(): Promise<BackendError | null> {
