@@ -5,10 +5,6 @@
 # ANSI color codes
 (?:\\(?:u00|x)1[Bb]|\x1b|\\u\{1[Bb]\})\[\d+(?:;\d+|)m
 
-# hit-count: 743 file-count: 13
-# hex runs
-\b[0-9a-fA-F]{16,}\b
-
 # hit-count: 739 file-count: 6
 # base64 encoded content, possibly wrapped in mime
 (?:^|[\s=;:?])[-a-zA-Z=;:/0-9+]{50,}(?:[\s=;:?]|$)
@@ -41,6 +37,11 @@ sha\d+:[0-9]*[a-f]{3,}[0-9a-f]*
 # hit-count: 10 file-count: 2
 # uuid:
 \b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\b
+
+# hit-count: 743 file-count: 13
+# hex runs
+\b[0-9a-fA-F]{16,}\b
+\b[0-9A-F]{8,}\b
 
 # hit-count: 10 file-count: 1
 # css url wrappings
