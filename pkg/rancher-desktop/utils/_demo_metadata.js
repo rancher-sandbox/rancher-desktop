@@ -6,20 +6,20 @@ export default {
       'llm',
     ],
     LatestVersion: {
-      Tag:                'v0.0.1',
-      ManifestListDigest: 'sha256:b51023520230fb21f5b10773bdd2dc936d320754d353c932b4f342c3b32c9394',
+      Tag:                'v0.0.2',
+      ManifestListDigest: 'sha256:4cb0b9f19152fccfacf4a74e133d7e783762de46323c0f054e20ab5d12e54a24',
       Platforms:          [
         {
           OS:      'linux',
           Arch:    'amd64',
-          Size:    24043507,
-          Created: '2024-11-28T19:17:26.91232165Z',
+          Size:    24099772,
+          Created: '2024-12-20T23:13:59.937900634Z',
         },
         {
           OS:      'linux',
           Arch:    'arm64',
-          Size:    24433856,
-          Created: '2024-11-28T19:22:42.255849506Z',
+          Size:    23803440,
+          Created: '2024-12-20T23:19:14.909876985Z',
         },
       ],
       Labels: {
