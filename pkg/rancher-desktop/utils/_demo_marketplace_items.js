@@ -8,7 +8,7 @@ export const demoMarketplace = {
       type:                  'extension',
       publisher:             { name: 'SUSE LLC' },
       created_at:            '2024-10-03T15:43:34Z',
-      updated_at:            '2024-11-28T19:17:26.91232165Z',
+      updated_at:            '2024-12-20T23:13:59.937900634Z',
       short_description:     'Open WebUI and Ollama packaged into an extension for local GenAI development',
       source:                'community',
       extension_reviewed:    false,
