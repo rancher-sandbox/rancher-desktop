@@ -90,7 +90,7 @@ export default {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
     doImageAction({ action, image }) {
-      this.imageToPull = image.trim();
+      this.imageToPull = image;
       if (action === 'pull') {
         this.doPullAnImage();
       }
