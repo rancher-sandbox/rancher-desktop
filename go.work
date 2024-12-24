@@ -3,6 +3,7 @@ go 1.23.0
 toolchain go1.23.4
 
 use (
+	./scripts
 	./src/go/docker-credential-none
 	./src/go/extension-proxy
 	./src/go/github-runner-monitor
