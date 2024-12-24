@@ -21,7 +21,7 @@ else
     git checkout -b "$BRANCH_NAME"
 fi
 
-go run ./scripts/k3s-versions.go "$MINIMUM_VERSION" >"$K3S_VERSIONS"
+go run ./scripts/k3s-versions.go >"$K3S_VERSIONS"
 
 # Exit if there are no changes
 if git diff --exit-code; then
