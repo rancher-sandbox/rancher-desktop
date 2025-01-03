@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -90,7 +91,8 @@ func FindPidOfProcess(executable string) (int, error) {
 }
 
 // Kill the process group the given process belongs to.  If wait is set, block
-// until the target process exits first before doing so.
+// until the target process exits first before doing so.  On Linux, the process
+// group is only killed if the given pid is its own process group leader.
 func KillProcessGroup(pid int, wait bool) error {
 	if pid == 0 {
 		return nil
@@ -103,6 +105,13 @@ func KillProcessGroup(pid int, wait bool) error {
 		if err = WaitForProcess(pid); err != nil {
 			return fmt.Errorf("failed to wait for process: %w", err)
 		}
+	}
+	if runtime.GOOS == "linux" && pid != pgid {
+		// On Linux, do not kill the process group if the pid is not the same as
+		// the process group id; this can happen when running from rpm/deb
+		// packaged builds (in which case killing the process group ends up
+		// killing the whole X11 session).
+		return nil
 	}
 	err = unix.Kill(-pgid, unix.SIGTERM)
 	if err != nil && !errors.Is(err, unix.ESRCH) {
