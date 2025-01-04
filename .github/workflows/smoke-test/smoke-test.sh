@@ -117,6 +117,7 @@ install_linux() {
 
     sudo mkdir -p /opt/rancher-desktop
     sudo unzip -d /opt/rancher-desktop "$archiveName"
+    sudo chmod 4755 /opt/rancher-desktop/chrome-sandbox
 
     RDCTL="/opt/rancher-desktop/resources/resources/linux/bin/rdctl"
 }
