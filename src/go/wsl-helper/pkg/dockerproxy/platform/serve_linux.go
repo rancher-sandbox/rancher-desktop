@@ -37,15 +37,15 @@ const DefaultEndpoint = "unix:///var/run/docker.sock"
 var ErrListenerClosed = net.ErrClosed
 
 // MakeDialer computes the dial function.
-func MakeDialer(proxyEndpoint string) (func() (net.Conn, error), error) {
-	dialer := func() (net.Conn, error) {
+func MakeDialer(proxyEndpoint string) (DialFunc, error) {
+	return func() (net.Conn, error) {
 		conn, err := net.Dial("unix", proxyEndpoint)
 		if err != nil {
 			return nil, err
 		}
+
 		return conn, nil
-	}
-	return dialer, nil
+	}, nil
 }
 
 // Listen on the given Unix socket endpoint.
