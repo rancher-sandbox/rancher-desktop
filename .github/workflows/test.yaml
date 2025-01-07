@@ -21,6 +21,7 @@ jobs:
       run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make -C bats lint
     - run: yarn test
+      env: { RD_LINT_SKIP_SPELLING: 1 }
   lint:
     strategy:
       matrix:
