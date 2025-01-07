@@ -7,6 +7,7 @@ import path from 'path';
 
 import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsSignToolManager';
 import defaults from 'lodash/defaultsDeep';
+import merge from 'lodash/merge';
 import yaml from 'yaml';
 
 import { simpleSpawn } from 'scripts/simple_process';
@@ -21,8 +22,8 @@ type signFileFn = (...filePath: string[]) => Promise<void>;
  * when signing the installer.
  */
 const REQUIRED_WINDOWS_CONFIG = {
-  signingHashAlgorithms: ['sha256'],
-  target:                'zip',
+  signtoolOptions: { signingHashAlgorithms: ['sha256'] },
+  target:          'zip',
 };
 
 /**
@@ -66,7 +67,7 @@ export async function sign(workDir: string): Promise<string[]> {
 
   config.win ??= {};
   defaults(config.win, DEFAULT_WINDOWS_CONFIG);
-  Object.assign(config.win, REQUIRED_WINDOWS_CONFIG);
+  merge(config.win, REQUIRED_WINDOWS_CONFIG);
   config.win.certificateSha1 = certFingerprint;
 
   const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');

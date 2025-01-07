@@ -130,29 +130,27 @@ mv resources/resources/linux/rancher-desktop.desktop share/applications/rancher-
 mv resources/resources/linux/rancher-desktop.appdata.xml share/metainfo/rancher-desktop.appdata.xml
 
 # Remove qemu binaries included in lima tarball
-rm -v resources/resources/linux/lima/bin/qemu-* 
+rm -v resources/resources/linux/lima/bin/qemu-*
 rm -rvf resources/resources/linux/lima/lib
 rm -rvf resources/resources/linux/lima/share/qemu
 
 %install
 mkdir -p "%{buildroot}%{_prefix}/bin" "%{buildroot}/opt/%{name}"
 
-cp -ra ./share "%{buildroot}%{_prefix}" 
+cp -ra ./share "%{buildroot}%{_prefix}"
 cp -ra ./* "%{buildroot}/opt/%{name}"
 
 # Link to the binary
 ln -sf "/opt/%{name}/rancher-desktop" "%{buildroot}%{_bindir}/rancher-desktop"
 
 %post
-# SUID chrome-sandbox for Electron 5+
-chmod 4755 "/opt/%{name}/chrome-sandbox"
-
 update-desktop-database %{_prefix}/share/applications || true
 
 %files
 %defattr(-,root,root,-)
 %dir /opt/%{name}
 /opt/%{name}*
+%attr(4755,root,root) /opt/%{name}/chrome-sandbox
 %{_bindir}/rancher-desktop
 %{_prefix}/share/applications/rancher-desktop.desktop
 %{_prefix}/share/icons/hicolor/*

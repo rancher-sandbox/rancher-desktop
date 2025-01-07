@@ -142,7 +142,7 @@ you'll need to `source` that file.
 Currently we build Rancher Desktop with Node 20. To install it, run:
 
 ```
-nvm install 20.17
+nvm install 20.16
 ```
 
 Next, you'll need to install the yarn package manager:

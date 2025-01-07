@@ -53,7 +53,6 @@ install_templates spin "${SPIN_TEMPLATE_BRANCH:-main}"
 install_templates spin-python-sdk main
 install_templates spin-js-sdk main
 
-install_plugin js2wasm "${JS2WASM_PLUGIN_VERSION:-0.6.1}"
 install_plugin kube "${KUBE_PLUGIN_VERSION:-0.3.1}"
 
 echo "'${spin}' setup complete"

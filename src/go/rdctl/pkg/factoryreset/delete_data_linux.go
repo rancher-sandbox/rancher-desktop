@@ -29,6 +29,7 @@ func DeleteData(ctx context.Context, appPaths paths.Paths, removeKubernetesCache
 		appPaths.AltAppHome,
 		appPaths.Config,
 		appPaths.Logs,
+		appPaths.OldUserData,
 		filepath.Join(homeDir, ".local", "state", "rancher-desktop"),
 	}
 

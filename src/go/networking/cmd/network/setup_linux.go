@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 
 	"github.com/linuxkit/virtsock/pkg/vsock"
@@ -88,6 +89,11 @@ func main() {
 	}
 	logrus.Debugf("successful connection to host on CID: %v and Port: %d: connection: %+v", vsock.CIDHost, vsockDialPort, vsockConn)
 
+	// Ensure we stay on the same OS thread so that we don't switch namespaces
+	// accidentally.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	originNS, err := netns.Get()
 	if err != nil {
 		logrus.Errorf("failed getting a handle to the current namespace: %v", err)
@@ -151,7 +157,7 @@ func main() {
 		logrus.Errorf("failed to close original NS, ignoring error: %v", err)
 	}
 
-	logrus.Trace("Network setup complete, waiting for vm-switch")
+	logrus.Debug("Network setup complete, waiting for vm-switch")
 
 	if err := vmSwitchCmd.Wait(); err != nil {
 		logrus.Errorf("vm-switch exited with error: %v", err)
@@ -250,7 +256,7 @@ func cleanupVethLink(originNS netns.NsHandle) {
 func configureVethPair(vethName, ipAddr string) error {
 	veth, err := netlink.LinkByName(vethName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get link %s: %w", vethName, err)
 	}
 
 	vethIP := net.IPNet{
@@ -260,11 +266,11 @@ func configureVethPair(vethName, ipAddr string) error {
 
 	addr := &netlink.Addr{IPNet: &vethIP, Label: ""}
 	if err := netlink.AddrAdd(veth, addr); err != nil {
-		return err
+		return fmt.Errorf("failed to add addr %s to %s: %w", addr, vethName, err)
 	}
 
 	if err := netlink.LinkSetUp(veth); err != nil {
-		return err
+		return fmt.Errorf("failed to set up link %s: %w", vethName, err)
 	}
 	return nil
 }

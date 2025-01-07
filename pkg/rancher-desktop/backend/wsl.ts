@@ -1041,15 +1041,20 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
+    const env: Record<string, string> = {
+      ...process.env,
+      WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:LOG_DIR/p:RD_DEBUG`,
+      DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
+      LOG_DIR:          paths.logs,
+    };
+
+    if (this.debug) {
+      env.RD_DEBUG = '1';
+    }
     this.process = childProcess.spawn('wsl.exe',
       ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/wsl-init'],
       {
-        env: {
-          ...process.env,
-          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:LOG_DIR/p`,
-          DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
-          LOG_DIR:          paths.logs,
-        },
+        env,
         stdio:       ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
       });
@@ -1345,9 +1350,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 try {
                   const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
                   const env = {
-                    KUBE_PLUGIN_VERSION:    DEPENDENCY_VERSIONS.spinKubePlugin,
-                    JS2WASM_PLUGIN_VERSION: DEPENDENCY_VERSIONS.js2wasmPlugin,
-                    SPIN_TEMPLATE_BRANCH:   (version ? `v${ version.major }.${ version.minor }` : 'main'),
+                    KUBE_PLUGIN_VERSION:  DEPENDENCY_VERSIONS.spinKubePlugin,
+                    SPIN_TEMPLATE_BRANCH: (version ? `v${ version.major }.${ version.minor }` : 'main'),
                   };
                   const wslenv = Object.keys(env).join(':');
 

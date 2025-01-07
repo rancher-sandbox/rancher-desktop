@@ -35,7 +35,8 @@ mac:
   - { from: dist/electron-builder.yaml, to: electron-builder.yml }
 win:
   target: [ zip ]
-  signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
+  signtoolOptions:
+    signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
   requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
   extraFiles:
   - build/wix/*
