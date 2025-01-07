@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/log-go v1.0.0
 	github.com/containerd/containerd v1.7.24
 	github.com/containerd/containerd/api v1.8.0
-	github.com/containernetworking/plugins v1.6.1
+	github.com/containernetworking/plugins v1.6.2
 	github.com/containers/gvisor-tap-vsock v0.8.1
 	github.com/docker/docker v27.4.1+incompatible
 	github.com/docker/go-connections v0.5.0
