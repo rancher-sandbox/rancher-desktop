@@ -177,7 +177,14 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return this.syncState.queued;
     }
     try {
-      const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
+      let kubeconfigPath: string | undefined;
+
+      try {
+        kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
+      } catch (ex) {
+        console.error(`Could not determine kubeconfig: ${ ex } - Kubernetes configuration will not be updated.`);
+        kubeconfigPath = undefined;
+      }
 
       await Promise.all([
         this.syncHostSocketProxy(),
@@ -208,7 +215,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
   }
 
-  async syncDistro(distro: string, kubeconfigPath: string): Promise<void> {
+  async syncDistro(distro: string, kubeconfigPath?: string): Promise<void> {
     let state = this.settings.WSL?.integrations?.[distro] === true;
 
     console.debug(`Integration sync: ${ distro } -> ${ state }`);
@@ -490,7 +497,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     console.debug(`Verified kubeconfig in the following distro: ${ distro }`);
   }
 
-  protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string, state: boolean) {
+  protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string | undefined, state: boolean) {
+    if (!kubeconfigPath) {
+      console.debug(`Skipping syncing ${ distro } kubeconfig: no kubeconfig found`);
+
+      return 'Error setting up integration';
+    }
     try {
       console.debug(`Syncing ${ distro } kubeconfig`);
       await this.execCommand(
