@@ -166,6 +166,7 @@ interface MainEventNames {
  * 'diagnostics-event' event.
  */
 type DiagnosticsEventPayload =
+  { id: 'integrations-windows', distro?: string, key: string, error?: Error } |
   { id: 'kube-versions-available', available: boolean } |
   { id: 'path-management', fileName: string; error: Error | undefined };
 
