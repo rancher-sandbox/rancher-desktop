@@ -11,9 +11,11 @@ const CheckWindowsIntegrations: DiagnosticsChecker = {
     return Promise.resolve(process.platform === 'win32');
   },
   check(): Promise<DiagnosticsCheckerSingleResult[]> {
-    return Promise.resolve(Object.entries(cachedResults).map(([id, result]) => {
+    const resultMapper = ([id, result]: [string, DiagnosticsCheckerResult]) => {
       return ({ ...result, id });
-    }));
+    };
+
+    return Promise.resolve(Object.entries(cachedResults).map(resultMapper));
   },
 };
 
