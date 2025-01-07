@@ -16,6 +16,7 @@ jobs:
     - uses: ./.github/actions/yarn-install
     - run: yarn build
     - run: yarn lint:nofix
+      env: { RD_LINT_SKIP_SPELLING: 1 }
     - name: Install shfmt
       run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make -C bats lint
@@ -41,3 +42,4 @@ jobs:
     - run: ./scripts/go-license-check.sh
       shell: bash
     - run: yarn lint:nofix
+      env: { RD_LINT_SKIP_SPELLING: 1 }

@@ -149,6 +149,8 @@ coredns
 corejs
 corepack
 coreutils
+cpanm
+cpanminus
 crds
 credfwd
 CREDHELPER
@@ -209,6 +211,7 @@ doclink
 dompurify
 donotuse
 dotfile
+dotnet
 dport
 dri
 DSL
