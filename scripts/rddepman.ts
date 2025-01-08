@@ -33,6 +33,7 @@ const dependencies: Dependency[] = [
   new tools.DockerCompose(),
   new tools.DockerProvidedCredHelpers(),
   new tools.GoLangCILint(),
+  new tools.CheckSpelling(),
   new tools.Trivy(),
   new tools.Steve(),
   new tools.RancherDashboard(),
