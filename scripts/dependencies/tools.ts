@@ -229,6 +229,31 @@ export class GoLangCILint implements Dependency, GitHubDependency {
   }
 }
 
+export class CheckSpelling implements Dependency, GitHubDependency {
+  name = 'check-spelling';
+  githubOwner = 'check-spelling';
+  githubRepo = 'check-spelling';
+
+  download(context: DownloadContext): Promise<void> {
+    // We don't download anything there; `scripts/spelling.sh` does the cloning.
+    return Promise.resolve();
+  }
+
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    const versions = await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+
+    return versions.map(v => `v${ v }`);
+  }
+
+  versionToTagName(version: string): string {
+    return version;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1.replace(/^v/, ''), version2.replace(/^v/, ''));
+  }
+}
+
 export class Trivy implements Dependency, GitHubDependency {
   name = 'trivy';
   githubOwner = 'aquasecurity';

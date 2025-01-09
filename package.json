@@ -24,7 +24,7 @@
     "lint:typescript:nofix": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 NODE_OPTIONS=--max_old_space_size=4096 eslint --ignore-path=.gitignore --ext mjs,js,ts,tsx,vue --report-unused-disable-directives --max-warnings=0 .",
     "lint:go:fix": "node scripts/ts-wrapper.js scripts/lint-go.ts --fix",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
-    "lint:spelling": "node scripts/ts-wrapper.js scripts/spelling.ts",
+    "lint:spelling": "bash scripts/spelling.sh",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 node --stack-size=16384 scripts/ts-wrapper.js scripts/build.ts",
     "package": "node scripts/ts-wrapper.js scripts/package.ts",
