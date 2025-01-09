@@ -235,7 +235,7 @@ export class CheckSpelling implements Dependency, GitHubDependency {
   githubRepo = 'check-spelling';
 
   download(context: DownloadContext): Promise<void> {
-    // We don't download anything there; the linting script does the cloning.
+    // We don't download anything there; `scripts/spelling.sh` does the cloning.
     return Promise.resolve();
   }
 

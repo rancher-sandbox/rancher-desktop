@@ -26,7 +26,7 @@ jobs:
       # note: If you use only_check_changed_files, you do not want cancel-in-progress
       cancel-in-progress: true
     env:
-      UPLOAD_SARIF_LIMITED: ''
+      UPLOAD_SARIF_LIMITED: '' # Set by `yarn lint:spelling`.
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
@@ -39,7 +39,8 @@ jobs:
     - name: Check Spelling
       run: yarn lint:spelling
       env:
-        GITHUB_TOKEN: ${{ github.token }} # for SARIF uploading
+        GITHUB_TOKEN: ${{ github.token }} # Needed to generate SARIF reports.
+        RD_LINT_SPELLING: 1
 
     - name: Upload SARIF report
       # Use the limited report since if we have more than 25k errors nobody is

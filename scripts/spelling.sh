@@ -3,7 +3,7 @@
 set -o errexit -o nounset
 
 check_prerequisites() {
-    if [[ -n ${RD_LINT_SKIP_SPELLING:-} ]]; then
+    if [[ -n ${CI:-} && -z ${RD_LINT_SPELLING:-} ]]; then
         echo "Skipping spell checking in CI."
         exit
     fi
