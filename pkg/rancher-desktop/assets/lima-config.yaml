@@ -1,5 +1,10 @@
 # Default Lima configuration; parts will be overridden in code.
 
+# Rancher Desktop ships with a patched QEMU that supports the Apple M4 CPU
+# So override Lima 1.0.3 falling back to cortex-a72.
+cpuType:
+  aarch64: host
+
 ssh:
   loadDotSSHPubKeys: false
 firmware:
