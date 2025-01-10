@@ -240,17 +240,15 @@ export class CheckSpelling implements Dependency, GitHubDependency {
   }
 
   async getAvailableVersions(includePrerelease = false): Promise<string[]> {
-    const versions = await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
-
-    return versions.map(v => `v${ v }`);
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
   }
 
   versionToTagName(version: string): string {
-    return version;
+    return `v${ version }`;
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return semver.rcompare(version1.replace(/^v/, ''), version2.replace(/^v/, ''));
+    return semver.rcompare(version1, version2);
   }
 }
 

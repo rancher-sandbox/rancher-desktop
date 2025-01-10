@@ -64,7 +64,7 @@ find_script() {
     local script=$checkout/unknown-words.sh
     local repo=https://github.com/check-spelling/check-spelling
     local version
-    version=$(yq --exit-status .check-spelling pkg/rancher-desktop/assets/dependencies.yaml)
+    version="v$(yq --exit-status .check-spelling pkg/rancher-desktop/assets/dependencies.yaml)"
 
     if [[ ! -d "$checkout" ]]; then
         git clone --branch "$version" --depth 1 "$repo" "$checkout" >&2
