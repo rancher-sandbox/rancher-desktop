@@ -627,3 +627,26 @@ export class SpinCLI implements Dependency, GitHubDependency {
     return semver.rcompare(version1, version2);
   }
 }
+
+export class SpinKubePlugin implements Dependency, GitHubDependency {
+  name = 'spinKubePlugin';
+  githubOwner = 'spinkube';
+  githubRepo = 'spin-plugin-kube';
+
+  download(context: DownloadContext): Promise<void> {
+    // We don't download anything there; `resources/setup-spin` does the installation.
+    return Promise.resolve();
+  }
+
+  async getAvailableVersions(includePrerelease = false): Promise<string[]> {
+    return await getPublishedVersions(this.githubOwner, this.githubRepo, includePrerelease);
+  }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
+
+  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+    return semver.rcompare(version1, version2);
+  }
+}

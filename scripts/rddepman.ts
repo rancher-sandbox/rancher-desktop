@@ -50,6 +50,7 @@ const dependencies: Dependency[] = [
   new tools.CertManager(),
   new tools.SpinOperator(),
   new tools.SpinCLI(),
+  new tools.SpinKubePlugin(),
 ];
 
 function git(...args: string[]): number | null {
