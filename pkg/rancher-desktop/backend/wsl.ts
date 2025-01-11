@@ -1497,7 +1497,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       if (certs && certs.length > 0) {
         const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
         const archive = tar.pack();
-        const archiveFinished = util.promisify(stream.finished)(archive);
+        const archiveFinished = util.promisify(stream.finished)(archive as any);
 
         archive.pipe(writeStream);
 

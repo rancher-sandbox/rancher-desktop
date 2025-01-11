@@ -325,7 +325,7 @@ export class NerdctlClient implements ContainerEngineClient {
 
       const tarStream = fs.createWriteStream(path.join(hostDir, archiveName));
       const archive = tar.pack();
-      const archiveFinished = util.promisify(stream.finished)(archive);
+      const archiveFinished = util.promisify(stream.finished)(archive as any);
       const newEntry = util.promisify(archive.entry.bind(archive));
       const baseHeader: Partial<tar.Headers> = {
         mode:  0o755,

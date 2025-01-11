@@ -1137,7 +1137,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       // outdated ones, since we're going to need a prompt anyway.
       const tarStream = fs.createWriteStream(tarPath);
       const archive = tar.pack();
-      const archiveFinished = util.promisify(stream.finished)(archive);
+      const archiveFinished = util.promisify(stream.finished)(archive as any);
       const newEntry = util.promisify(archive.entry.bind(archive));
       const baseHeader: Partial<tar.Headers> = {
         mode:  0o755,
@@ -1972,7 +1972,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       if (certs && certs.length > 0) {
         const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
         const archive = tar.pack();
-        const archiveFinished = util.promisify(stream.finished)(archive);
+        const archiveFinished = util.promisify(stream.finished)(archive as any);
 
         archive.pipe(writeStream);
 
