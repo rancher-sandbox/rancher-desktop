@@ -208,7 +208,7 @@ export class MobyClient implements ContainerEngineClient {
         } else {
           links[linkName] = path.posix.join(path.posix.dirname(entry.header.name), realName);
         }
-        await stream.promises.finished(entry.resume());
+        await stream.promises.finished(entry.resume() as any);
         break;
       }
       case 'directory': {
@@ -219,7 +219,7 @@ export class MobyClient implements ContainerEngineClient {
           continue;
         }
         await fs.promises.mkdir(dirName, { recursive: true });
-        await stream.promises.finished(entry.resume());
+        await stream.promises.finished(entry.resume() as any);
         console.debug(`Created directory ${ dirName }`);
 
         break;
@@ -267,7 +267,7 @@ export class MobyClient implements ContainerEngineClient {
 
       if (linkNames.length === 0) {
         // This entry isn't a link target
-        await stream.promises.finished(entry.resume());
+        await stream.promises.finished(entry.resume() as any);
         continue;
       }
       switch (entry.header.type) {
@@ -334,7 +334,7 @@ export class MobyClient implements ContainerEngineClient {
       default:
         console.info(`Ignoring unsupported file type ${ entry.header.name } (${ entry.header.type })`);
       }
-      await stream.promises.finished(entry.resume());
+      await stream.promises.finished(entry.resume() as any);
     }
 
     // Handle symlinks that were not found
