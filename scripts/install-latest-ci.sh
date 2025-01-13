@@ -204,7 +204,7 @@ install_application() {
         dest="/opt/rancher-desktop"
         sudo rm -rf "${dest:?}"
         sudo unzip -o "$zip_abspath" -d "$dest" >/dev/null
-        sudo chown 04755 "${dest}/chrome-sandbox"
+        sudo chmod 04755 "${dest}/chrome-sandbox"
         ;;
     esac
 }
