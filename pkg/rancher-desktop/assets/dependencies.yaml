@@ -11,7 +11,7 @@ dockerCLI: 27.4.1
 dockerBuildx: 0.19.3
 dockerCompose: 2.32.2
 golangci-lint: 1.63.4
-trivy: 0.58.1
+trivy: 0.58.2
 steve: 0.1.0-beta9
 rancherDashboard: desktop-v2.7.0.beta.1
 dockerProvidedCredentialHelpers: 0.8.2
