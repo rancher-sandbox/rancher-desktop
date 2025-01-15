@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import buildInstaller from './lib/installer-win32';
+import buildInstaller, { buildCustomAction } from './lib/installer-win32';
 
 async function run() {
   const distDir = path.join(process.cwd(), 'dist');
@@ -21,6 +21,10 @@ async function run() {
     process.exit(1);
   }
 
+  const customActionFile = await buildCustomAction();
+
+  await fs.promises.copyFile(customActionFile,
+    path.join(appDir, path.basename(customActionFile)));
   await buildInstaller(distDir, appDir);
 }
 
