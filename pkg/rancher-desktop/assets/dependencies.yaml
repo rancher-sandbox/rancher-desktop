@@ -20,7 +20,7 @@ mobyOpenAPISpec: "1.47"
 wix: v3.14.1
 hostSwitch: 1.2.7
 moproxy: 0.5.1
-spinShim: 0.17.0
+spinShim: 0.18.0
 spinOperator: 0.4.0
 certManager: 1.16.2
 spinCLI: 3.1.2
