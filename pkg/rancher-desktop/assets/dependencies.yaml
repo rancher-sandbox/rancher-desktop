@@ -22,7 +22,7 @@ hostSwitch: 1.2.7
 moproxy: 0.5.1
 spinShim: 0.18.0
 spinOperator: 0.4.0
-certManager: 1.16.2
+certManager: 1.16.3
 spinCLI: 3.1.2
 spinKubePlugin: 0.3.1
 js2wasmPlugin: 0.6.1
