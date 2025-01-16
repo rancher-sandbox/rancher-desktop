@@ -9,7 +9,7 @@ kuberlr: 0.5.2
 helm: 3.17.0
 dockerCLI: 27.5.0
 dockerBuildx: 0.19.3
-dockerCompose: 2.32.2
+dockerCompose: 2.32.4
 golangci-lint: 1.62.2
 trivy: 0.58.2
 steve: 0.1.0-beta9
