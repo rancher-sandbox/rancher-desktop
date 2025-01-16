@@ -107,6 +107,12 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  ignore:
+  - # We need to lock to this specific version since DNS seems
+    # be broken in the newer version. We should remove this lock
+    # once we can confirm an upcoming version that fixes the issue.
+    dependency-name: "github.com/containers/gvisor-tap-vsock"
+    versions: [">v0.7.5"]
   groups:
     golang-x:
       patterns: ["golang.org/x/*"]
@@ -159,6 +165,12 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   reviewers: ["Nino-K"]
+  ignore:
+  - # We need to lock to this specific version since DNS seems
+    # be broken in the newer version. We should remove this lock
+    # once we can confirm an upcoming version that fixes the issue.
+    dependency-name: "github.com/containers/gvisor-tap-vsock"
+    versions: [">v0.7.5"]
   groups:
     golang-x:
       patterns: ["golang.org/x/*"]

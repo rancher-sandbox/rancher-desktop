@@ -25,28 +25,25 @@ require (
 )
 
 require (
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
-	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/onsi/gomega v1.35.1 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-)
-
-require (
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20240710054256-ddd8a41251c9 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/miekg/dns v1.1.62 // indirect
+	github.com/nxadm/tail v1.4.11 // indirect
+	github.com/onsi/gomega v1.35.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect; replaced to github.com/inetaf/tcpproxy (see the bottom of this go.mod file)
 )
