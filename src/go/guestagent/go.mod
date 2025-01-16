@@ -6,11 +6,10 @@ toolchain go1.23.4
 
 require (
 	github.com/Masterminds/log-go v1.0.0
-	github.com/containerd/containerd v1.7.25
-	github.com/containerd/containerd/api v1.8.0
-	github.com/containernetworking/plugins v1.6.2
-	github.com/containers/gvisor-tap-vsock v0.8.1
-	github.com/docker/docker v27.5.0+incompatible
+	github.com/containerd/containerd v1.7.23
+	github.com/containerd/containerd/api v1.7.19
+	github.com/containers/gvisor-tap-vsock v0.7.5
+	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/lima-vm/lima v1.0.3
 	github.com/stretchr/testify v1.10.0
