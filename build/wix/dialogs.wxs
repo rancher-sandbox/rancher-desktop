@@ -14,9 +14,11 @@
 
       <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
       <Property Id="WixUI_Mode" Value="RD" />
-      <Property Id="ALLUSERS" Secure="yes" Value="2"/>
+      <Property Id="ALLUSERS" Secure="yes" Value="2" />
       <!-- MSIINSTALLPERUSER will get modified when the user advances from InstallScopeDlg -->
-      <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="0"/>
+      <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="0" />
+
+      <Error Id="100">!(loc.Error_WSLNotInstalled)</Error>
 
       <DialogRef Id="ErrorDlg" />
       <DialogRef Id="FatalError" />
