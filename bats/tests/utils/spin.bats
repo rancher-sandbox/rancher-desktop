@@ -41,8 +41,6 @@ dir_exists() {
 }
 
 @test 'plugins are installed' {
-    run dir_exists "${SPIN_DATA_DIR}/plugins/js2wasm"
-    assert_success
     run dir_exists "${SPIN_DATA_DIR}/plugins/kube"
     assert_success
 }

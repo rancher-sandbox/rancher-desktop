@@ -752,13 +752,24 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const VMNETDir = path.join(VMNET_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
     const newPath = [binDir, VMNETDir].concat(...pathList).filter(x => x);
+    const env = structuredClone(process.env);
 
-    // LD_LIBRARY_PATH is set for running from an extracted Linux zip file, that includes QEMU,
-    // to make sure QEMU dependencies are loaded from the bundled lib directory,
-    // LD_LIBRARY_PATH is ignored on macOS.
-    return {
-      ...process.env, LIMA_HOME: paths.lima, LD_LIBRARY_PATH: libDir, PATH: newPath.join(path.delimiter),
-    };
+    env.LIMA_HOME = paths.lima;
+    env.PATH = newPath.join(path.delimiter);
+
+    // Override LD_LIBRARY_PATH to pick up the QEMU libraries.
+    // - on macOS, this is not used. The macOS dynamic linker uses DYLD_ prefixed variables.
+    // - on packaged (rpm/deb) builds, we do not ship this directory, so it does nothing.
+    // - for AppImage this has no effect because the libs are moved to a dir that is already on LD_LIBRARY_PATH
+    // - this only has an effect on builds extracted from a Linux zip file (which includes a bundled
+    //   QEMU) to make sure QEMU dependencies are loaded from the bundled lib directory.
+    if (env.LD_LIBRARY_PATH) {
+      env.LD_LIBRARY_PATH = libDir + path.delimiter + env.LD_LIBRARY_PATH;
+    } else {
+      env.LD_LIBRARY_PATH = libDir;
+    }
+
+    return env;
   }
 
   protected static get qemuImgEnv() {
@@ -1501,9 +1512,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
         const env = {
           ...process.env,
-          KUBE_PLUGIN_VERSION:    DEPENDENCY_VERSIONS.spinKubePlugin,
-          JS2WASM_PLUGIN_VERSION: DEPENDENCY_VERSIONS.js2wasmPlugin,
-          SPIN_TEMPLATE_BRANCH:   (version ? `v${ version.major }.${ version.minor }` : 'main'),
+          KUBE_PLUGIN_VERSION:  DEPENDENCY_VERSIONS.spinKubePlugin,
+          SPIN_TEMPLATE_BRANCH: (version ? `v${ version.major }.${ version.minor }` : 'main'),
         };
 
         promises.push(this.spawnWithCapture(executable('setup-spin'), { env }));
