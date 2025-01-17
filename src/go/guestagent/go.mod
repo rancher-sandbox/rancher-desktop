@@ -9,10 +9,10 @@ require (
 	github.com/containerd/containerd v1.7.25
 	github.com/containerd/containerd/api v1.8.0
 	github.com/containernetworking/plugins v1.6.2
-	github.com/containers/gvisor-tap-vsock v0.8.1
+	github.com/containers/gvisor-tap-vsock v0.7.5
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/lima-vm/lima v1.0.3
+	github.com/lima-vm/lima v1.0.0-beta.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.29.0
@@ -107,3 +107,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/lima-vm/lima => github.com/rancher-sandbox/lima v1.0.3-0.20250115235144-24eb898b3a96
