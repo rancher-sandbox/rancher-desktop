@@ -32,50 +32,6 @@ func setupLogger(hInstall MSIHANDLE) *logrus.Entry {
 	})
 }
 
-// InstallWindowsFeatureImpl installs the Windows features necessary for WSL to
-// be installed.  This needs to be run elevated.
-func InstallWindowsFeatureImpl(hInstall MSIHANDLE) uint32 {
-	ctx := context.Background()
-	log := setupLogger(hInstall)
-
-	log.Infof("Installing Windows feature...")
-	err := submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
-		"", "InstalWindowsFeature", "Installing required Windows features...", "<unused>",
-	})
-	if err != nil {
-		log.WithError(err).Info("Failed to update progress")
-	}
-	if err := wslutils.DismDoInstall(ctx, log); err != nil {
-		log.WithError(err).Error("Failed to install feature")
-		return 1
-	}
-
-	return 0
-}
-
-// InstallWSLImpl installs WSL.
-// This assumes WSL was not previously installed.
-// This needs to be run as the user.
-func InstallWSLImpl(hInstall MSIHANDLE) uint32 {
-	ctx := context.Background()
-	log := setupLogger(hInstall)
-
-	log.Info("Installing WSL...")
-	err := submitMessage(hInstall, INSTALLMESSAGE_ACTIONSTART, []string{
-		"", "InstallWSL", "Installing Windows Subsystem for Linux...", "<unused>",
-	})
-	if err != nil {
-		log.WithError(err).Info("Failed to update progress")
-	}
-	if err := wslutils.InstallWSL(ctx, log); err != nil {
-		log.WithError(err).Error("Installing WSL failed")
-		return 1
-	}
-
-	log.Info("WSL successfully installed.")
-	return 0
-}
-
 // UpdateWSLImpl updates the previously installed WSL.
 // This needs to be run as the user, and may request elevation.
 func UpdateWSLImpl(hInstall MSIHANDLE) uint32 {
