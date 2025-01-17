@@ -23,7 +23,7 @@
       AllowSameVersionUpgrades="yes"
       DowngradeErrorMessage='A newer version of [ProductName] is already installed.'
       Schedule="afterInstallInitialize" />
-    <MediaTemplate CompressionLevel="{{compressionLevel}}" EmbedCab="yes" />
+    <MediaTemplate CompressionLevel="high" EmbedCab="yes" />
     <UIRef Id="WixUI_RD" />
 
     <Property Id="ApplicationFolderName" Value="Rancher Desktop" />

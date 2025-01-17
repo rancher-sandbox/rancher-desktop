@@ -69,9 +69,7 @@ export default async function buildInstaller(workDir: string, appDir: string, ou
   await writeUpdateConfig(appDir);
   const fileList = await generateFileList(appDir);
   const template = await fs.promises.readFile(path.join(process.cwd(), 'build', 'wix', 'main.wxs'), 'utf-8');
-  const output = Mustache.render(template, {
-    appVersion, fileList, compressionLevel: 'high',
-  });
+  const output = Mustache.render(template, { appVersion, fileList });
   const wixDir = path.join(process.cwd(), 'resources', 'host', 'wix');
 
   console.log('Writing out WiX definition...');
