@@ -23,7 +23,7 @@
       AllowSameVersionUpgrades="yes"
       DowngradeErrorMessage='A newer version of [ProductName] is already installed.'
       Schedule="afterInstallInitialize" />
-    <MediaTemplate CompressionLevel="{{compressionLevel}}" EmbedCab="yes" />
+    <MediaTemplate CompressionLevel="high" EmbedCab="yes" />
     <UIRef Id="WixUI_RD" />
 
     <Property Id="ApplicationFolderName" Value="Rancher Desktop" />
@@ -47,20 +47,11 @@
     <Binary Id="CustomActionBinary" SourceFile="wix-custom-action.dll" />
     <CustomAction Id="DetectWSL" BinaryKey="CustomActionBinary" DllEntry="DetectWSL"
       Execute="immediate" Return="check" />
-    <!-- Custom action to install Windows features for WSL -->
-    <CustomAction Id="InstallWindowsFeature" BinaryKey="CustomActionBinary"
-      DllEntry="InstallWindowsFeature" Execute="deferred" Return="check" Impersonate="no" />
-    <!-- Custom action to install WSL -->
-    <CustomAction Id="InstallWSL" BinaryKey="CustomActionBinary" DllEntry="InstallWSL"
-      Execute="deferred" Return="check" Impersonate="yes" />
     <!-- Custom action to update WSL -->
     <CustomAction Id="UpdateWSL" BinaryKey="CustomActionBinary" DllEntry="UpdateWSL"
       Execute="deferred" Return="check" Impersonate="yes" />
-
-    <!-- Disable the start app prompt if we need a reboot -->
-    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Sequence="ui" After="DetectWSL" Value="">
-      NOT WSLINSTALLED AND NOT Installed
-    </SetProperty>
+    <!-- Custom action to raise an error because WSL was not installed -->
+    <CustomAction Id="ErrorWSLNotInstalled" Error="100" />
 
     <InstallUISequence>
       <!--
@@ -70,23 +61,20 @@
       <Custom Action="DetectWSL" After="AppSearch">
         NOT WSLINSTALLED <!-- Skip search if user overrides -->
       </Custom>
+      <Custom Action="ErrorWSLNotInstalled" After="RDWelcomeDlg">
+        NOT WSLINSTALLED AND NOT Installed
+      </Custom>
     </InstallUISequence>
     <InstallExecuteSequence>
       <Custom Action="DetectWSL" After="AppSearch">
         NOT WSLINSTALLED <!-- Skip search if user overrides -->
       </Custom>
-      <Custom Action="InstallWindowsFeature" After="InstallFiles">
+      <Custom Action="ErrorWSLNotInstalled" After="LaunchConditions">
         NOT WSLINSTALLED AND NOT Installed
       </Custom>
-      <Custom Action="InstallWSL" After="InstallWindowsFeature">
-        NOT WSLINSTALLED AND NOT Installed
-      </Custom>
-      <Custom Action="UpdateWSL" After="InstallWSL">
+      <Custom Action="UpdateWSL" After="InstallFiles">
         WSLINSTALLED AND WSLKERNELOUTDATED
       </Custom>
-      <ScheduleReboot After="UpdateWSL">
-        NOT WSLINSTALLED AND NOT Installed
-      </ScheduleReboot>
     </InstallExecuteSequence>
 
     <!-- Check if the NSIS-based Rancher Desktop is installed, and uninstall if yes. -->

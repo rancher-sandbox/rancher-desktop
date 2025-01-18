@@ -337,7 +337,7 @@ HOSTPORT
 hoverable
 howett
 hpa
-hresult
+HRESULT
 htpasswd
 httpconfig
 Huawei
