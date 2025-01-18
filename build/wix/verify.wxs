@@ -17,18 +17,11 @@
         <Control Id="InstallText" Type="Text"
           X="25" Y="70" Width="320" Height="80" Hidden="yes" NoPrefix="yes"
           Text="!(loc.VerifyReadyDlgInstallText)">
-          <Condition Action="show">WSLINSTALLED</Condition>
-        </Control>
-        <Control Id="InstallKernelText" Type="Text"
-          X="25" Y="70" Width="320" Height="80" Hidden="yes" NoPrefix="yes"
-          Text="!(loc.VerifyReadyDlgKernelInstallText)">
-          <Condition Action="show">NOT WSLINSTALLED</Condition>
         </Control>
 
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Back" Type="PushButton" X="156" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
-          <Publish Order="1" Event="NewDialog" Value="RDInstallScopeDlg">WSLINSTALLED</Publish>
-          <Publish Order="2" Event="NewDialog" Value="RDWelcomeDlg">NOT WSLINSTALLED</Publish>
+          <Publish Order="1" Event="NewDialog" Value="RDInstallScopeDlg" />
         </Control>
 
         <Control Id="Install" Type="PushButton" ElevationShield="yes"

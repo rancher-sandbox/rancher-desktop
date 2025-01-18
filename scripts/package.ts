@@ -206,6 +206,7 @@ class Builder {
     await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);
 
     // Create the custom action for the installer
+    log.info('building Windows Installer custom action...');
     const customActionFile = await buildCustomAction();
 
     // Wait for the virus scanner to be done with the new DLL file
