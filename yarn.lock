@@ -1462,10 +1462,10 @@
   dependencies:
     tslib "2"
 
-"@formatjs/icu-messageformat-parser@2.10.0":
-  version "2.10.0"
-  resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-2.10.0.tgz#24a8aaa425fd54f771f93937239afc80278235ed"
-  integrity sha512-PDeky6nDAyHYEtmSi2X1PG9YpqE+2BRTJT7JvPix8K8JX1wBWQNao6KcPtmZpttQHUHmzMcd/rne7lFesSzUKQ==
+"@formatjs/icu-messageformat-parser@2.11.0":
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-2.11.0.tgz#28d22a735114b7309c0d3e43d39f2660917867c8"
+  integrity sha512-Hp81uTjjdTk3FLh/dggU5NK7EIsVWc5/ZDWrIldmf2rBuPejuZ13CZ/wpVE2SToyi4EiroPTQ1XJcJuZFIxTtw==
   dependencies:
     "@formatjs/ecma402-abstract" "2.3.2"
     "@formatjs/icu-skeleton-parser" "1.8.12"
@@ -8095,14 +8095,14 @@ internal-slot@^1.0.7:
     hasown "^2.0.0"
     side-channel "^1.0.4"
 
-intl-messageformat@10.7.12:
-  version "10.7.12"
-  resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-10.7.12.tgz#3e6f35a9ad8c01f83272ad5455edcbf1b6e30876"
-  integrity sha512-4HBsPDJ61jZwNikauvm0mcLvs1AfCBbihiqOX2AGs1MX7SA1H0SNKJRSWxpZpToGoNzvoYLsJJ2pURkbEDg+Dw==
+intl-messageformat@10.7.14:
+  version "10.7.14"
+  resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-10.7.14.tgz#ddcbbfdb1682afe56da094f21a4ac74fc3c91552"
+  integrity sha512-mMGnE4E1otdEutV5vLUdCxRJygHB5ozUBxsPB5qhitewssrS/qGruq9bmvIRkkGsNeK5ZWLfYRld18UHGTIifQ==
   dependencies:
     "@formatjs/ecma402-abstract" "2.3.2"
     "@formatjs/fast-memoize" "2.2.6"
-    "@formatjs/icu-messageformat-parser" "2.10.0"
+    "@formatjs/icu-messageformat-parser" "2.11.0"
     tslib "2"
 
 ip-address@^9.0.5:
