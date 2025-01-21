@@ -218,6 +218,9 @@ export class ExtensionManagerImpl implements ExtensionManager {
     this.setMainHandler('extensions/vm/http-fetch', async(event, config) => {
       const extensionId = this.getExtensionIdFromEvent(event);
 
+      if (!extensionId) {
+        return; // Sender frame has gone away, no need to fetch anymore.
+      }
       if (extensionId === EXTENSION_APP) {
         throw new Error('HTTP fetch from main app not implemented yet');
       }
@@ -426,8 +429,14 @@ export class ExtensionManagerImpl implements ExtensionManager {
   /**
    * Given an IpcMainEvent, return the extension ID associated with it.
    */
-  protected getExtensionIdFromEvent(event: IpcMainEvent | IpcMainInvokeEvent): string {
-    const origin = new URL(event.senderFrame.origin);
+  protected getExtensionIdFromEvent(event: IpcMainEvent | IpcMainInvokeEvent): string | undefined {
+    const { senderFrame } = event;
+
+    if (!senderFrame) {
+      return;
+    }
+
+    const origin = new URL(senderFrame.origin);
 
     return origin.protocol === 'app:' ? EXTENSION_APP : Buffer.from(origin.hostname, 'hex').toString();
   }
@@ -436,6 +445,9 @@ export class ExtensionManagerImpl implements ExtensionManager {
   protected async spawnHost(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
 
+    if (!extensionId) {
+      throw new Error(`spawning process from a closed window`);
+    }
     if (extensionId === EXTENSION_APP) {
       throw new Error(`spawning a process from the main application is not implemented yet: ${ options.command.join(' ') }`);
     }
@@ -467,6 +479,9 @@ export class ExtensionManagerImpl implements ExtensionManager {
   protected async spawnDockerCli(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
 
+    if (!extensionId) {
+      throw new Error(`Spawning docker client from closed sender frame`);
+    }
     if (extensionId !== EXTENSION_APP) {
       const extension = await this.getExtension(extensionId) as ExtensionImpl;
 
@@ -486,6 +501,9 @@ export class ExtensionManagerImpl implements ExtensionManager {
   protected async spawnContainer(event: IpcMainEvent | IpcMainInvokeEvent, options: SpawnOptions): Promise<ReadableChildProcess> {
     const extensionId = this.getExtensionIdFromEvent(event);
 
+    if (!extensionId) {
+      throw new Error(`Spawning docker client from closed sender frame`);
+    }
     if (extensionId === EXTENSION_APP) {
       throw new Error(`Spawning a container command is not implemented for the main app: ${ options.command.join(' ') }`);
     }

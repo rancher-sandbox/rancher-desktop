@@ -205,8 +205,8 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
  * @param focusedWindow The window that has focus
  * @param zoomLevelAdjustment The desired increment to adjust the zoom level by
  */
-function adjustZoomLevel(focusedWindow: Electron.BrowserWindow | undefined, zoomLevelAdjustment: number) {
-  if (!focusedWindow) {
+function adjustZoomLevel(focusedWindow: Electron.BaseWindow | undefined, zoomLevelAdjustment: number) {
+  if (!focusedWindow || !(focusedWindow instanceof Electron.BrowserWindow)) {
     return;
   }
 
