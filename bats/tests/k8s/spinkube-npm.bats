@@ -85,7 +85,7 @@ EOF
     local host
     host=$(traefik_hostname)
 
-    run --separate-stderr try curl --connect-timeout 5 --fail "http://${host}"
+    run --separate-stderr try curl --connect-timeout 5 --fail "http://${host}/hello/bats"
     assert_success
-    assert_output --regexp '^(Hello|hello)'
+    assert_output --regexp '^hello bats'
 }
