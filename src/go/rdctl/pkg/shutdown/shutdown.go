@@ -237,21 +237,17 @@ func terminateRancherDesktopFunc(appDir string) func(context.Context) error {
 	return func(ctx context.Context) error {
 		var errors *multierror.Error
 
-		// TODO: We can't use the process group on Linux, because Electron does
-		// not always create a new one.
-		if runtime.GOOS != "linux" {
-			errors = multierror.Append(errors, (func() error {
-				mainExe, err := p.GetMainExecutable(ctx)
-				if err != nil {
-					return err
-				}
-				pid, err := process.FindPidOfProcess(mainExe)
-				if err != nil {
-					return err
-				}
-				return process.KillProcessGroup(pid, false)
-			})())
-		}
+		errors = multierror.Append(errors, (func() error {
+			mainExe, err := p.GetMainExecutable(ctx)
+			if err != nil {
+				return err
+			}
+			pid, err := process.FindPidOfProcess(mainExe)
+			if err != nil {
+				return err
+			}
+			return process.KillProcessGroup(pid, false)
+		})())
 
 		errors = multierror.Append(errors, process.TerminateProcessInDirectory(appDir, true))
 

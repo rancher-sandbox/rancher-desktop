@@ -413,7 +413,8 @@ func FindPidOfProcess(executable string) (int, error) {
 }
 
 // Kill the process group the given process belongs to.  If wait is set, block
-// until the target process exits first before doing so.
+// until the target process exits first before doing so.  On Linux, the process
+// group is only killed if the given pid is its own process group leader.
 func KillProcessGroup(pid int, wait bool) error {
 	return errors.New("KillProcessGroup is not implemented on Windows")
 }
