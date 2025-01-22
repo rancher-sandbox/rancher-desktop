@@ -77,6 +77,7 @@ var commands = map[string]commandDefinition{
 			"--host-gateway-ip":   ignoredArgHandler,
 			"--hosts-dir":         ignoredArgHandler,
 			"--insecure-registry": nil,
+			"--kube-hide-dupe":    nil,
 			"--n":                 ignoredArgHandler,
 			"--namespace":         ignoredArgHandler,
 			"--snapshotter":       ignoredArgHandler,
@@ -141,6 +142,7 @@ var commands = map[string]commandDefinition{
 		commandPath: "build",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
+			"--add-host":      ignoredArgHandler,
 			"--allow":         ignoredArgHandler,
 			"--attest":        ignoredArgHandler,
 			"--build-arg":     ignoredArgHandler,
@@ -186,6 +188,7 @@ var commands = map[string]commandDefinition{
 		commandPath: "builder build",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
+			"--add-host":      ignoredArgHandler,
 			"--allow":         ignoredArgHandler,
 			"--attest":        ignoredArgHandler,
 			"--build-arg":     ignoredArgHandler,
@@ -588,6 +591,7 @@ var commands = map[string]commandDefinition{
 			"--no-color":                nil,
 			"--no-log-prefix":           nil,
 			"--no-recreate":             nil,
+			"--pull":                    ignoredArgHandler,
 			"--quiet-pull":              nil,
 			"--remove-orphans":          nil,
 			"--scale":                   ignoredArgHandler,
@@ -1272,6 +1276,7 @@ var commands = map[string]commandDefinition{
 		commandPath: "image build",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
+			"--add-host":      ignoredArgHandler,
 			"--allow":         ignoredArgHandler,
 			"--attest":        ignoredArgHandler,
 			"--build-arg":     ignoredArgHandler,
