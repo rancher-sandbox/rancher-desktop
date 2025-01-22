@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import { expect } from '@playwright/test';
+import which from 'which';
 
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
@@ -105,7 +106,14 @@ export class Screenshots {
     if (!windowId) {
       throw new Error(`Failed to find window ID for ${ this.windowTitle }`);
     }
-    await spawnFile('import', ['-window', windowId, outPath], { stdio: this.log });
+    // If `gm` is available, use `gm import`; otherwise, use `import`.
+    const args = ['-window', windowId, outPath];
+
+    if (await (which('gm', { nothrow: true }))) {
+      await spawnFile('gm', ['import', ...args], { stdio: this.log });
+    } else {
+      await spawnFile('import', args, { stdio: this.log });
+    }
   }
 }
 
