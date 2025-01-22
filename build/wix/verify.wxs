@@ -15,9 +15,8 @@
           X="0" Y="44" Width="370" Height="0" />
 
         <Control Id="InstallText" Type="Text"
-          X="25" Y="70" Width="320" Height="80" Hidden="yes" NoPrefix="yes"
-          Text="!(loc.VerifyReadyDlgInstallText)">
-        </Control>
+          X="25" Y="70" Width="320" Height="80" NoPrefix="yes"
+          Text="!(loc.VerifyReadyDlgInstallText)" />
 
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Back" Type="PushButton" X="156" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
