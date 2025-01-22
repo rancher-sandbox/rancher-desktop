@@ -51,6 +51,18 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
 
+    - name: Download AppImage
+      run: |
+        branch=$(cut -d. -f1,2 <<< "${RELEASE_TAG#v}")
+        read -r artifact_name < <(
+          curl "${OBS_DOWNLOAD_URL}?jsontable" \
+            | jq --raw-output ".data[].name | select(endswith(\".AppImage\")) | select(contains(\".release${branch}.\"))"
+          )
+        curl -L -o rancher-desktop.AppImage "${OBS_DOWNLOAD_URL}${artifact_name}"
+        chmod a+x rancher-desktop.AppImage
+      env:
+        OBS_DOWNLOAD_URL: https://download.opensuse.org/download/repositories/isv:/Rancher:/dev/AppImage/
+
     - name: Upload macOS aarch-64 artifacts
       uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
       with:
@@ -83,6 +95,12 @@ jobs:
         path: |
           rancher-desktop-linux-*.zip
           rancher-desktop-linux-*.zip.sha512sum
+    - name: Upload Linux AppImage
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      with:
+        name: application-linux.AppImage
+        if-no-files-found: error
+        path: rancher-desktop.AppImage
 
   smoke-test:
     name: Smoke test
@@ -131,5 +149,156 @@ jobs:
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
+        path: ${{ github.workspace }}/logs
+        if-no-files-found: warn
+
+  appimage-smoke-test:
+    name: Smoke test AppImage
+    needs: download-artifacts
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - { id: opensuse, image: "registry.opensuse.org/opensuse/tumbleweed:latest" }
+        - { id: rocky, image: "rockylinux/rockylinux:9" }
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+      options: --privileged
+    steps:
+    - name: Install dependencies
+      run: |
+        source /etc/os-release
+        for id in $ID $ID_LIKE; do
+          case $id in
+            suse|opensuse)
+              zypper --non-interactive install --recommends \
+                fuse gawk git GraphicsMagick gtk3-tools jq mozilla-nss sudo xvfb-run
+              break;;
+            rocky|rhel|centos)
+              dnf install --assumeyes \
+                https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+              /usr/bin/crb enable # spellcheck-ignore-line
+              dnf install --assumeyes \
+                at-spi2-atk cups-libs git GraphicsMagick gtk3 jq \
+                libva nss procps-ng sudo xorg-x11-server-Xvfb
+              break;;
+          esac
+        done
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false
+    - name: Set up environment
+      uses: ./.github/actions/setup-environment
+
+    - name: Set up user
+      run: |
+        useradd --create-home --user-group ci-user
+        export LOGS_DIR=$PWD/logs
+        export RD_LOGS_DIR=$LOGS_DIR/rd
+        echo "LOGS_DIR=$LOGS_DIR" >> "$GITHUB_ENV"
+        echo "RD_LOGS_DIR=$RD_LOGS_DIR" >> "$GITHUB_ENV"
+        mkdir -p $LOGS_DIR
+        chown ci-user "$LOGS_DIR"
+        sudo --user=ci-user mkdir "$RD_LOGS_DIR"
+
+    - name: Download AppImage
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      with:
+        name: application-linux.AppImage
+
+    - name: Start Rancher Desktop
+      id: start-rancher-desktop
+      run: |
+        set -o xtrace
+        chmod a+x rancher-desktop.AppImage
+        inner_command=(
+          xvfb-run
+            --auto-servernum
+            --server-args='-screen 0 1280x960x24'
+          ./rancher-desktop.AppImage
+            --no-sandbox
+            --enable-logging=stderr
+            --v=1
+            --no-modal-dialogs
+            --kubernetes.enabled
+        )
+        sudo --user=ci-user \
+          RD_DEBUG_ENABLED=1 RD_LOGS_DIR=$RD_LOGS_DIR RD_TEST=smoke \
+          script \
+            --log-out $LOGS_DIR/appimage-${{ matrix.id }}.log \
+            --command "${inner_command[*]@Q}" \
+          &
+        echo "TARGET_PID=$!" >> "$GITHUB_ENV"
+    - name: Wait for backend
+      shell: sudo --user=ci-user bash --noprofile --norc -eo pipefail {0}
+      run: |
+        deadline=$(( $(date +%s) + 10 * 60 ))
+        state=UNKNOWN
+        while [[ $(date +%s) -lt $deadline ]]; do
+          printf "Waiting for backend: (%s) %s/%s\n" "$state" "$(date)" \
+            "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
+
+          if [[ ! -d /proc/$TARGET_PID ]]; then
+            echo "Process $TARGET_PID exited" >&2
+            exit 1
+          fi
+          rd_pid=$(pidof --separator $'\n' rancher-desktop | sort -n | head -n 1 || echo missing)
+          if [[ ! -e /proc/$rd_pid/exe ]]; then
+            state=NOT_RUNNING
+            sleep 10
+            continue
+          fi
+          if [[ ! -e $HOME/.local/share/rancher-desktop/rd-engine.json ]]; then
+            state=NO_SERVER_CONFIG
+            sleep 10
+            continue
+          fi
+          rdctl=$(dirname "$(readlink /proc/$rd_pid/exe)")/resources/resources/linux/bin/rdctl
+          state=$("$rdctl" api /v1/backend_state || echo '{"vmState": "NO_RESPONSE"}')
+          state=$(jq --raw-output .vmState <<< "$state")
+          case "$state" in
+            ERROR)
+              echo "Backend reached error state." >&2
+              exit 1;;
+            STARTED|DISABLED)
+              printf "PID %s has reached state %s, accepting\n" "$rd_pid" "$state"
+              exit 0;;
+            *)
+              printf "Backend state: %s\n" "$state";;
+          esac
+          sleep 10
+        done
+
+        echo "Timed out waiting for backend to stabilize." >&2
+        printf "Current time: %s\n" "$(date)" >&2
+        printf "Deadline: %s\n" >&2 \
+            "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
+        exit 1
+
+    - name: Take screenshot
+      if: failure() && steps.start-rancher-desktop.outcome == 'success'
+      continue-on-error: true
+      shell: >-
+        sudo --user=ci-user LOGS_DIR=$LOGS_DIR
+        bash --noprofile --norc -eo pipefail {0}
+      run: |
+        set -o xtrace -o errexit
+        PID=$(pidof rancher-desktop.AppImage || echo missing)
+        if [[ ! -r /proc/$PID/environ ]]; then
+          echo "Rancher Desktop is not running" >&2
+          exit 0
+        fi
+        export $(gawk 'BEGIN { RS="\0"; FS="=" } ($1 == "DISPLAY" || $1 == "XAUTHORITY") { print }' \
+          < /proc/$PID/environ)
+        env
+        export MAGICK_DEBUG=All # spellcheck-ignore-line
+        gm import -window root -verbose $LOGS_DIR/screenshot-${{ matrix.id }}.png
+
+    - name: Upload logs
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      if: always()
+      with:
+        name: logs-appimage-${{ matrix.id }}.zip
         path: ${{ github.workspace }}/logs
         if-no-files-found: warn
