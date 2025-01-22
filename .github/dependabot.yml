@@ -32,11 +32,7 @@ updates:
     # we ignore everything higher than 11.
     dependency-name: "@nuxtjs/eslint-config-typescript"
     versions: [">11"]
-  - # Electron major bumps are too complicated; we need to do those manually.
-    dependency-name: "electron"
-    update-types: ["version-update:semver-major"]
-  - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
-    # support that. See https://github.com/electron/electron/issues/21457
+  - # node-fetch 3+ requires ECMAScript modules; we still have issues with them.
     dependency-name: "node-fetch"
     versions: [">2"]
   - # This needs to be done in lockstep with node-fetch.
