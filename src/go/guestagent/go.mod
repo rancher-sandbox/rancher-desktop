@@ -10,7 +10,7 @@ require (
 	github.com/containerd/containerd/api v1.8.0
 	github.com/containernetworking/plugins v1.6.2
 	github.com/containers/gvisor-tap-vsock v0.8.2
-	github.com/docker/docker v27.5.0+incompatible
+	github.com/docker/docker v27.5.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/lima-vm/lima v1.0.0-beta.0
 	github.com/stretchr/testify v1.10.0
@@ -72,6 +72,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
