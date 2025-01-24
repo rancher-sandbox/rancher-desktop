@@ -31,6 +31,10 @@ URL:        https://github.com/rancher-sandbox/rancher-desktop#readme
 Packager:       SUSE <containers@suse.com>
 %endif
 
+%if 0%{?fedora} || 0%{?rhel}
+%global debug_package %{nil}
+%endif
+
 AutoReqProv:    no
 
 BuildRequires:  unzip
@@ -75,11 +79,46 @@ Requires: libxkbcommon0
 Requires: libxrandr2
 %else
 Requires: qemu
-Requires: password-store
 Requires: openssh-clients
+
+%if 0%{?fedora} || 0%{?rhel}
+Requires: pass
+Requires: gnupg2
+%else
+Requires: password-store
 Requires: gpg2
+%endif
+
 Requires: glibc
 Requires: desktop-file-utils
+
+%if 0%{?fedora} || 0%{?rhel}
+Requires: libX11
+Requires: libXcomposite
+Requires: libXdamage
+Requires: libXext
+Requires: libXfixes
+Requires: libXrandr
+Requires: alsa-lib
+Requires: atk
+Requires: at-spi2-atk
+Requires: at-spi2-core
+Requires: cairo
+Requires: cups-libs
+Requires: dbus-libs
+Requires: libdrm
+Requires: expat
+Requires: mesa-libgbm
+Requires: libgcc
+Requires: gdk-pixbuf2
+Requires: glib
+Requires: gtk3
+Requires: pango
+Requires: libxcb
+Requires: libxkbcommon
+Requires: nspr
+Requires: nss
+%else
 Requires: libX11-6
 Requires: libXcomposite1
 Requires: libXdamage1
@@ -108,6 +147,8 @@ Requires: libxcb1
 Requires: libxkbcommon0
 Requires: mozilla-nspr
 Requires: mozilla-nss
+%endif
+
 %endif
 
 %description
