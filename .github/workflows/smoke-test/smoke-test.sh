@@ -202,7 +202,7 @@ wait_for_backend() {
     deadline=$(( $(date +%s) + 10 * 60 ))
 
     while [[ $(date +%s) -lt $deadline ]]; do
-        state=$("$RDCTL" api /v1/backend_state || echo '{"vmState": "UNREADY"}')
+        state=$("$RDCTL" api /v1/backend_state || echo '{"vmState": "NO_RESPONSE"}')
         state=$(jq --raw-output .vmState <<< "$state")
         case "$state" in
             ERROR)
@@ -215,7 +215,7 @@ wait_for_backend() {
         esac
 
         # if we get here, either we failed to get state or it's starting.
-        printf "Waiting for backend: %s/%s\n" "$(date)" \
+        printf "Waiting for backend: (%s) %s/%s\n" "$state" "$(date)" \
             "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
         sleep 10
     done

@@ -56,8 +56,21 @@ runs:
     if: runner.os == 'Linux'
     shell: bash
     run: |
-      sudo apt-get update
-      sudo apt-get install pass
+      source /etc/os-release
+      for id in $ID $ID_LIKE; do
+        case $id in
+          suse|opensuse)
+            sudo zypper --non-interactive install password-store
+            break;;
+          rocky|rhel|centos)
+            sudo dnf install --assumeyes pass
+            break;;
+          debian|ubuntu)
+            sudo apt-get update
+            sudo apt-get install pass
+            break;;
+        esac
+      done
 
       # Configure the agent to allow default passwords
       HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line

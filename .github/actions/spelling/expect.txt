@@ -41,6 +41,8 @@ ARPNOMODIFY
 ARPPRODUCTICON
 ARPURLINFOABOUT
 asar
+assumeyes
+atk
 authconfig
 authdata
 Authenticode
@@ -389,6 +391,7 @@ JOBOBJECT
 joycelin
 jpe
 jsmith
+jsontable
 julianb
 karl
 Kaspersky
@@ -444,6 +447,7 @@ libgtk
 libnspr
 libnss
 libpango
+libva
 libx
 libxcb
 libxcomposite
@@ -556,7 +560,9 @@ nologo
 nomount
 nonamedreturns
 NONINFRINGEMENT
+noprofile
 noproxy
+norc
 norestart
 normaliser
 NOSETENV
@@ -614,6 +620,7 @@ pgid
 pgrep
 pidfile
 pidfd
+pidof
 pids
 PII
 pikachu
@@ -651,6 +658,7 @@ Privs
 PROCARGS
 procnet
 procnettcp
+procps
 progresskey
 projectroletemplatebinding
 Prometheis
@@ -706,12 +714,14 @@ restclient
 restoretip
 resyncing
 reusecab
+rhel
 rioinfo
 rke
 RLENGTH
 rmi
 roadmap
 roboto
+rockylinux
 Roffline
 rolebinding
 roletemplate
@@ -777,6 +787,7 @@ someothername
 somepaththatshouldnevereverexist
 songgao
 sourced
+spi
 spinkube
 spinoperator
 splatform
@@ -930,6 +941,7 @@ wslutils
 WWID
 wwn
 wws
+XAUTHORITY
 Xcomposite
 Xdamage
 xdev
@@ -939,6 +951,7 @@ Xext
 Xfixes
 xfs
 xit
+xorg
 XPOST
 Xrandr
 XVar
