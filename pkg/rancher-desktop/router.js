@@ -107,7 +107,7 @@ export const routerOptions = {
     component: _20fa1c70,
     name:      'images-add',
   }, {
-    path:      '/images/scans/:image-name?',
+    path:      '/images/scans/:image-name?/:namespace?',
     component: _1165c4f2,
     name:      'images-scans-image-name',
   }, {
