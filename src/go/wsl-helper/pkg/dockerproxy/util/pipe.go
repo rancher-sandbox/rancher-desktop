@@ -17,11 +17,11 @@ limitations under the License.
 package util
 
 import (
+	"fmt"
 	"io"
 )
 
-// Pipe bidirectionally between two streams.
-func Pipe(c1, c2 io.ReadWriteCloser) error {
+func Pipe(c1, c2 HalfReadWriteCloser) error {
 	ioCopy := func(reader io.Reader, writer io.Writer) <-chan error {
 		ch := make(chan error)
 		go func() {
@@ -33,22 +33,32 @@ func Pipe(c1, c2 io.ReadWriteCloser) error {
 
 	ch1 := ioCopy(c1, c2)
 	ch2 := ioCopy(c2, c1)
-	select {
-	case err := <-ch1:
-		c1.Close()
-		c2.Close()
-		<-ch2
-		if err != io.EOF {
-			return err
-		}
-	case err := <-ch2:
-		c1.Close()
-		c2.Close()
-		<-ch1
-		if err != io.EOF {
-			return err
+	for i := 0; i < 2; i++ {
+		select {
+		case err := <-ch1:
+			cwErr := c2.CloseWrite()
+			if cwErr != nil {
+				return fmt.Errorf("error closing write end of c2: %w", cwErr)
+			}
+			if err != nil && err != io.EOF {
+				return err
+			}
+		case err := <-ch2:
+			cwErr := c1.CloseWrite()
+			if cwErr != nil {
+				return fmt.Errorf("error closing write end of c1: %w", cwErr)
+			}
+			if err != nil && err != io.EOF {
+				return err
+			}
 		}
 	}
-
 	return nil
+}
+
+type HalfReadWriteCloser interface {
+	// CloseWrite closes the write-side of the connection.
+	CloseWrite() error
+	// Write is a passthrough to the underlying connection.
+	io.ReadWriteCloser
 }

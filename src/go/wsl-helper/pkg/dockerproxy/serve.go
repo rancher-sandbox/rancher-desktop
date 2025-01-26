@@ -26,7 +26,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"os/signal"
 	"regexp"
@@ -38,6 +37,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
 // RequestContextValue contains things we attach to incoming requests
@@ -74,7 +74,10 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 	logWriter := logrus.StandardLogger().Writer()
 	defer logWriter.Close()
 	munger := newRequestMunger()
-	proxy := &httputil.ReverseProxy{
+	proxy := &util.ReverseProxy{
+		Dial: func(string, string) (net.Conn, error) {
+			return dialer()
+		},
 		Director: func(req *http.Request) {
 			logrus.WithField("request", req).
 				WithField("headers", req.Header).
@@ -95,12 +98,6 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 					WithField("modified request", req).
 					Error("could not munge request")
 			}
-		},
-		Transport: &http.Transport{
-			Dial: func(string, string) (net.Conn, error) {
-				return dialer()
-			},
-			DisableCompression: true, // for debugging
 		},
 		ModifyResponse: func(resp *http.Response) error {
 			logEntry := logrus.WithField("response", resp)
