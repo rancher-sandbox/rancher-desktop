@@ -81,7 +81,12 @@ func Listen(endpoint string) (net.Listener, error) {
 		return nil, fmt.Errorf("endpoint %s does not start with protocol %s", endpoint, prefix)
 	}
 
-	listener, err := winio.ListenPipe(endpoint[len(prefix):], nil)
+	// Configure pipe in MessageMode to support Docker's half-close semantics
+	// - Enables zero-byte writes as EOF signals (CloseWrite)
+	// - Crucial for stdin stream termination in interactive containers
+	pipeConfig := &winio.PipeConfig{MessageMode: true}
+
+	listener, err := winio.ListenPipe(endpoint[len(prefix):], pipeConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not listen on %s: %w", endpoint, err)
 	}
