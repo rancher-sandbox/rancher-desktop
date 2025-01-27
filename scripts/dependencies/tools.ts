@@ -334,11 +334,11 @@ export class Steve implements Dependency, GitHubDependency {
 export class RancherDashboard implements Dependency, GitHubDependency {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';
-  githubRepo = 'dashboard';
+  githubRepo = 'rancher-desktop-dashboard';
   versionRegex = /^desktop-v([0-9]+\.[0-9]+\.[0-9]+)\.([0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+)$/;
 
   async download(context: DownloadContext): Promise<void> {
-    const baseURL = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
+    const baseURL = `https://github.com/rancher-sandbox/${ this.githubRepo }/releases/download/${ context.versions.rancherDashboard }`;
     const executableName = 'rancher-dashboard-desktop-embed';
     const url = `${ baseURL }/${ executableName }.tar.gz`;
     const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
