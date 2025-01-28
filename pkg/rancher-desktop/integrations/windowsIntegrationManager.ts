@@ -489,7 +489,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const srcPath = await this.getLinuxToolPath(distro,
         path.join(paths.resources, 'linux', 'docker-cli-plugins'));
       const wslHelper = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
-      const args = ['wsl', 'integration', 'docker-plugin',
+      const args = ['wsl', 'integration', 'docker',
         `--plugin-dir=${ srcPath }`, `--bin-dir=${ binDir }`, `--state=${ state }`];
 
       if (this.settings.application?.debug) {

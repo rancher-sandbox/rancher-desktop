@@ -26,18 +26,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-var wslIntegrationDockerPluginViper = viper.New()
+var wslIntegrationDockerViper = viper.New()
 
-// wslIntegrationDockerPluginCmd represents the `wsl integration docker-plugin` command
-var wslIntegrationDockerPluginCmd = &cobra.Command{
-	Use:   "docker-plugin",
-	Short: "Commands for managing docker plugin WSL integration",
+// wslIntegrationDockerCmd represents the `wsl integration docker-plugin` command
+var wslIntegrationDockerCmd = &cobra.Command{
+	Use:   "docker",
+	Short: "Commands for managing docker config for WSL integration",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 
-		state := wslIntegrationDockerPluginViper.GetBool("state")
-		pluginDir := wslIntegrationDockerPluginViper.GetString("plugin-dir")
-		binDir := wslIntegrationDockerPluginViper.GetString("bin-dir")
+		state := wslIntegrationDockerViper.GetBool("state")
+		pluginDir := wslIntegrationDockerViper.GetString("plugin-dir")
+		binDir := wslIntegrationDockerViper.GetString("bin-dir")
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return fmt.Errorf("failed to locate home directory: %w", err)
@@ -56,15 +56,15 @@ var wslIntegrationDockerPluginCmd = &cobra.Command{
 }
 
 func init() {
-	wslIntegrationDockerPluginCmd.Flags().String("plugin-dir", "", "Full path to plugin directory")
-	wslIntegrationDockerPluginCmd.Flags().String("bin-dir", "", "Full path to bin directory to clean up deprecated links")
-	wslIntegrationDockerPluginCmd.Flags().Bool("state", false, "Desired state")
-	if err := wslIntegrationDockerPluginCmd.MarkFlagRequired("plugin-dir"); err != nil {
+	wslIntegrationDockerCmd.Flags().String("plugin-dir", "", "Full path to plugin directory")
+	wslIntegrationDockerCmd.Flags().String("bin-dir", "", "Full path to bin directory to clean up deprecated links")
+	wslIntegrationDockerCmd.Flags().Bool("state", false, "Desired state")
+	if err := wslIntegrationDockerCmd.MarkFlagRequired("plugin-dir"); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
-	wslIntegrationDockerPluginViper.AutomaticEnv()
-	if err := wslIntegrationDockerPluginViper.BindPFlags(wslIntegrationDockerPluginCmd.Flags()); err != nil {
+	wslIntegrationDockerViper.AutomaticEnv()
+	if err := wslIntegrationDockerViper.BindPFlags(wslIntegrationDockerCmd.Flags()); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
-	wslIntegrationCmd.AddCommand(wslIntegrationDockerPluginCmd)
+	wslIntegrationCmd.AddCommand(wslIntegrationDockerCmd)
 }
