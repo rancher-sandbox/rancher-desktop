@@ -28,7 +28,7 @@ import (
 
 var wslIntegrationDockerViper = viper.New()
 
-// wslIntegrationDockerCmd represents the `wsl integration docker-plugin` command
+// wslIntegrationDockerCmd represents the `wsl integration docker` command
 var wslIntegrationDockerCmd = &cobra.Command{
 	Use:   "docker",
 	Short: "Commands for managing docker config for WSL integration",
@@ -43,7 +43,7 @@ var wslIntegrationDockerCmd = &cobra.Command{
 			return fmt.Errorf("failed to locate home directory: %w", err)
 		}
 
-		if err := integration.SetupPluginDirConfig(homeDir, pluginDir, state); err != nil {
+		if err := integration.UpdateDockerConfig(homeDir, pluginDir, state); err != nil {
 			return err
 		}
 

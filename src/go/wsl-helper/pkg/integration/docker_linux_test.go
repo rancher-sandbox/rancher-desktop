@@ -29,13 +29,13 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/integration"
 )
 
-func TestSetupPluginDirConfig(t *testing.T) {
+func TestUpdateDockerConfig(t *testing.T) {
 	t.Parallel()
 	t.Run("create config file", func(t *testing.T) {
 		homeDir := t.TempDir()
 		pluginPath := t.TempDir()
 
-		assert.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+		assert.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
 
 		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
 		require.NoError(t, err, "error reading docker CLI config")
@@ -45,6 +45,8 @@ func TestSetupPluginDirConfig(t *testing.T) {
 		value := config["cliPluginsExtraDirs"]
 		require.Contains(t, config, "cliPluginsExtraDirs")
 		require.Contains(t, value, pluginPath, "did not contain plugin path")
+		credStore := config["credsStore"]
+		require.Equal(t, credStore, "wincred.exe")
 	})
 	t.Run("update config file", func(t *testing.T) {
 		homeDir := t.TempDir()
@@ -54,15 +56,15 @@ func TestSetupPluginDirConfig(t *testing.T) {
 		existingContents := []byte(`{"credsStore": "nothing"}`)
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+		require.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
 
 		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
 		require.NoError(t, err, "error reading docker CLI config")
 		var config map[string]any
 		require.NoError(t, json.Unmarshal(bytes, &config))
 
-		assert.Subset(t, config, map[string]any{"credsStore": "nothing"})
 		assert.Subset(t, config, map[string]any{"cliPluginsExtraDirs": []any{pluginPath}})
+		assert.Subset(t, config, map[string]any{"credsStore": "wincred.exe"})
 	})
 	t.Run("do not add multiple instances", func(t *testing.T) {
 		homeDir := t.TempDir()
@@ -77,7 +79,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 		config = make(map[string]any)
 
-		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+		require.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
 
 		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
@@ -97,7 +99,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 		config = make(map[string]any)
 
-		require.NoError(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
+		require.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, false))
 
 		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
@@ -115,7 +117,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 			existingContents := []byte(`this is not JSON`)
 			require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-			assert.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, true))
+			assert.Error(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
 
 			bytes, err := os.ReadFile(configPath)
 			require.NoError(t, err, "error reading docker CLI config")
@@ -132,7 +134,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-			require.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
+			require.Error(t, integration.UpdateDockerConfig(homeDir, pluginPath, false))
 
 			bytes, err := os.ReadFile(configPath)
 			require.NoError(t, err, "error reading docker CLI config")
@@ -152,7 +154,7 @@ func TestSetupPluginDirConfig(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-		require.Error(t, integration.SetupPluginDirConfig(homeDir, pluginPath, false))
+		require.Error(t, integration.UpdateDockerConfig(homeDir, pluginPath, false))
 
 		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
