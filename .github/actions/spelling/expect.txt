@@ -20,6 +20,7 @@ aliyunkubernetescontainerservice
 allusers
 alpl
 alpline
+alsa
 amazonec
 amazoneks
 ANamespace
@@ -290,6 +291,7 @@ fstrim
 gabcdef
 gazornaanplatt
 gcs
+gdk
 GENERALIZEDTIME
 getfattr
 getwindowid
@@ -606,6 +608,7 @@ otccce
 overlayfs
 pageload
 pagerduty
+pango
 parsesection
 pascalize
 pathspec
