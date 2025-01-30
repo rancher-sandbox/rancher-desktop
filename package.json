@@ -60,7 +60,7 @@
     "core-js": "3.25.3",
     "cross-spawn": "7.0.6",
     "dayjs": "1.11.13",
-    "dompurify": "3.2.3",
+    "dompurify": "3.2.4",
     "electron-updater": "6.3.9",
     "express": "4.21.2",
     "fs-extra": "11.3.0",
