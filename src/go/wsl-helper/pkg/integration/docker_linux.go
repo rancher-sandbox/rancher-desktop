@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"slices"
@@ -30,11 +31,14 @@ import (
 
 const (
 	pluginDirsKey = "cliPluginsExtraDirs"
+	credsStoreKey = "credsStore"
+
+	dockerCredentialWinCredExe = "wincred.exe"
 )
 
-// SetupPluginDirConfig configures docker CLI to load plugins from the directory
-// given.
-func SetupPluginDirConfig(homeDir, pluginPath string, enabled bool) error {
+// UpdateDockerConfig configures docker CLI to load plugins from the directory
+// given. It also sets the credential helper to wincred.exe.
+func UpdateDockerConfig(homeDir, pluginPath string, enabled bool) error {
 	configPath := filepath.Join(homeDir, ".docker", "config.json")
 	config := make(map[string]any)
 
@@ -50,6 +54,16 @@ func SetupPluginDirConfig(homeDir, pluginPath string, enabled bool) error {
 		if err = json.Unmarshal(configBytes, &config); err != nil {
 			return fmt.Errorf("could not parse docker CLI configuration: %w", err)
 		}
+	}
+
+	replaceCredsStore := true
+	if credsStoreRaw, ok := config[credsStoreKey]; ok {
+		if credsStore, ok := credsStoreRaw.(string); ok {
+			replaceCredsStore = !isCredHelperWorking(credsStore)
+		}
+	}
+	if replaceCredsStore {
+		config[credsStoreKey] = dockerCredentialWinCredExe
 	}
 
 	var dirs []string
@@ -107,6 +121,16 @@ func SetupPluginDirConfig(homeDir, pluginPath string, enabled bool) error {
 	}
 
 	return nil
+}
+
+// isCredHelperWorking verifies that the credential helper can be called, and doesn't need to be replaced.
+func isCredHelperWorking(credsStore string) bool {
+	// The proprietary "desktop" helper is always replaced with the default helper.
+	if credsStore == "" || credsStore == "desktop" || credsStore == "desktop.exe" {
+		return false
+	}
+	credHelper := fmt.Sprintf("docker-credential-%s", credsStore)
+	return exec.Command(credHelper, "list").Run() == nil
 }
 
 // RemoveObsoletePluginSymlinks removes symlinks in the docker CLI plugin
