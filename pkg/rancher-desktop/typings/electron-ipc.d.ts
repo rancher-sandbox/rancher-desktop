@@ -43,7 +43,7 @@ export interface IpcMainEvents {
   'confirm-do-image-deletion': (imageName: string, imageID: string) => void;
   'do-image-build': (taggedImageName: string) => void;
   'do-image-pull': (imageName: string) => void;
-  'do-image-scan': (imageName: string) => void;
+  'do-image-scan': (imageName: string, namespace: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
   'do-image-deletion': (imageName: string, imageID: string) => void;
   'do-image-deletion-batch': (images: string[]) => void;

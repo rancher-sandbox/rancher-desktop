@@ -58,6 +58,7 @@ export default {
   data() {
     return {
       image:                            this.$route.params.image,
+      namespace:                        this.$route.params.namespace,
       showImageOutput:                  true,
       imageManagerOutput:               '',
       imageOutputCuller:                null,
@@ -128,7 +129,7 @@ export default {
   methods: {
     scanImage() {
       this.startRunningCommand('trivy-image');
-      ipcRenderer.send('do-image-scan', this.image);
+      ipcRenderer.send('do-image-scan', this.image, this.namespace);
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);

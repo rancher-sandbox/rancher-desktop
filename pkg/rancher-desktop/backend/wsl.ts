@@ -13,7 +13,16 @@ import semver from 'semver';
 import tar from 'tar-stream';
 
 import {
-  BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
+  BackendError,
+  BackendEvents,
+  BackendProgress,
+  BackendSettings,
+  execOptions,
+  FailureDetails,
+  RestartReasons,
+  State,
+  VMBackend,
+  VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
 import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
@@ -904,7 +913,12 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     if (typeof optionsOrCommand === 'string') {
       args.push(optionsOrCommand);
     } else {
-      throw new TypeError('Not supported yet');
+      const options: execOptions = optionsOrCommand;
+
+      // runTrivyScan() calls spawn({root: true}, …), which we ignore because we are already running as root
+      if (options.expectFailure || options.logStream || options.env) {
+        throw new TypeError('Not supported yet');
+      }
     }
     args.push(...command);
 

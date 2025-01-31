@@ -32,7 +32,14 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     const subcommandName = args[0];
     const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
 
-    return await this.processChildOutput(spawn(executable('nerdctl'), namespacedArgs), subcommandName, sendNotifications);
+    return await this.processChildOutput(
+      spawn(executable('nerdctl'), namespacedArgs),
+      {
+        subcommandName,
+        notifications: {
+          stdout: sendNotifications, stderr: sendNotifications, ok: sendNotifications,
+        },
+      });
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
@@ -67,15 +74,14 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
       false);
   }
 
-  async scanImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runTrivyCommand(
-      [
-        '--quiet',
-        'image',
-        '--format',
-        'json',
-        taggedImageName,
-      ]);
+  scanImage(taggedImageName: string, namespace: string): Promise<imageProcessor.childResultType> {
+    return this.runTrivyScan(
+      taggedImageName,
+      {
+        CONTAINERD_ADDRESS:   '/run/k3s/containerd/containerd.sock',
+        CONTAINERD_NAMESPACE: namespace,
+      },
+    );
   }
 
   async getNamespaces(): Promise<Array<string>> {

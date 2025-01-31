@@ -176,6 +176,11 @@ provision:
     mount bpffs -t bpf /sys/fs/bpf
     mount --make-shared /sys/fs/bpf
     mount --make-shared /sys/fs/cgroup
+- # we run trivy as root now; remove any cached databases installed into the user directory by previous version
+  # trivy.db is 600M and trivy-java.db is 1.1G
+  mode: user
+  script: |
+    rm -rf "${HOME}/.cache/trivy"
 portForwards:
 - guestPortRange: [1, 65535]
   guestIPMustBeZero: true
