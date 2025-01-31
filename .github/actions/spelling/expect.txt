@@ -297,6 +297,7 @@ getfattr
 getwindowid
 gha
 ghp
+gitjob
 gitmodules
 gitrepo
 gke
