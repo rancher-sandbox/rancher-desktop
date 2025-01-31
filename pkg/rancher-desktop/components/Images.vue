@@ -361,7 +361,7 @@ export default {
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ this.imageTag(obj.tag) }`;
 
-      this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
+      this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName, namespace: this.selectedNamespace } });
     },
     imageTag(tag) {
       return tag === '<none>' ? 'latest' : `${ tag.trim() }`;

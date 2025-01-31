@@ -143,15 +143,23 @@ export class ImageEventHandler {
       event.reply('images-process-ended', code);
     });
 
-    ipcMainProxy.on('do-image-scan', async(event, imageName) => {
+    ipcMainProxy.on('do-image-scan', async(event, imageName, namespace) => {
       let taggedImageName = imageName;
       let code;
 
-      if (!imageName.includes(':')) {
+      // The containerd scanner only supports image names that include the registry name
+      if (!taggedImageName.includes('/')) {
+        taggedImageName = `library/${ imageName }`;
+      }
+      if (!taggedImageName.split('/')[0].includes('.')) {
+        taggedImageName = `docker.io/${ taggedImageName }`;
+      }
+      if (!taggedImageName.includes(':')) {
         taggedImageName += ':latest';
       }
+
       try {
-        code = (await this.imageProcessor.scanImage(taggedImageName)).code;
+        code = (await this.imageProcessor.scanImage(taggedImageName, namespace)).code;
         await this.imageProcessor.refreshImages();
       } catch (err) {
         console.error(`Failed to scan image ${ imageName }: `, err);
