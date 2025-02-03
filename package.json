@@ -109,7 +109,7 @@
     "@nuxtjs/eslint-config-typescript": "11.0.0",
     "@nuxtjs/router-extras": "1.1.1",
     "@nuxtjs/style-resources": "1.2.2",
-    "@playwright/test": "1.50.0",
+    "@playwright/test": "1.50.1",
     "@types/cross-spawn": "6.0.6",
     "@types/dompurify": "3.2.0",
     "@types/ejs": "3.1.5",
