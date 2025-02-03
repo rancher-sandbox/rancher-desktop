@@ -10,7 +10,14 @@ import semver from 'semver';
 import { download, downloadTarGZ, getResource } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, AlpineLimaISOVersion, findChecksum, getOctokit, GitHubDependency, getPublishedReleaseTagNames, GitHubRelease,
+  AlpineLimaISOVersion,
+  Dependency,
+  DownloadContext,
+  findChecksum,
+  getOctokit,
+  getPublishedReleaseTagNames,
+  GitHubDependency,
+  GitHubRelease,
 } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
@@ -58,7 +65,7 @@ export class Lima implements Dependency, GitHubDependency {
     let platform: string = context.platform;
 
     if (platform === 'darwin') {
-      platform = `macos-13.${ process.env.M1 ? 'arm64' : 'amd64' }`;
+      platform = `macos-15.${ process.env.M1 ? 'arm64' : 'amd64' }`;
     } else {
       platform = 'linux.amd64';
     }
