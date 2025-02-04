@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -55,12 +56,10 @@ func (r *wslRunnerImpl) run(ctx context.Context, args ...string) error {
 	}
 	wslPath := filepath.Join(systemDir, "wsl.exe")
 	cmd := exec.CommandContext(ctx, wslPath, args...)
-	if r.stdout != nil {
-		cmd.Stdout = &utf16Writer{r.stdout}
-	}
-	if r.stderr != nil {
-		cmd.Stderr = &utf16Writer{r.stderr}
-	}
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	cmd.Env = append(cmd.Env, "WSL_UTF8=1")
+	cmd.Stdout = r.stdout
+	cmd.Stderr = r.stderr
 	cmd.SysProcAttr = &windows.SysProcAttr{HideWindow: true}
 	err = cmd.Run()
 	if err != nil {
