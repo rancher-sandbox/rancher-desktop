@@ -2,13 +2,20 @@
   <div>
     <div class="version">
       <version />
-      <rd-checkbox
-        v-if="updatePossible"
-        v-model="updatesEnabled"
-        class="updatesEnabled"
-        label="Check for updates automatically"
-        :is-locked="autoUpdateLocked"
-      />
+      <div v-if="updatePossible" class="check-updates">
+        <rd-checkbox
+          v-model="updatesEnabled"
+          class="updatesEnabled"
+          label="Check for updates automatically"
+          :is-locked="autoUpdateLocked"
+        />
+        <button
+          class="btn btn-xs role-secondary"
+          @click="checkUpdateNow"
+        >
+          Check Now
+        </button>
+      </div>
     </div>
     <card
       v-if="hasUpdate"
@@ -200,6 +207,10 @@ class UpdateStatus extends UpdateStatusProps {
     this.$emit('apply');
   }
 
+  checkUpdateNow() {
+    this.$emit('check-update-now');
+  }
+
   get autoUpdateLocked() {
     return this.isAutoUpdateLocked;
   }
@@ -211,7 +222,8 @@ export default UpdateStatus;
 <style lang="scss" scoped>
   .version {
     display: flex;
-    justify-content: space-between
+    justify-content: space-between;
+    align-items: center;
   }
   .update-notification {
     font-weight: 900;
@@ -222,6 +234,18 @@ export default UpdateStatus;
   .release-notes > div {
     margin-left: 2em;
     margin-right: 1em;
+  }
+
+  .check-updates {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-xs {
+    min-height: 2.25rem;
+    max-height: 2.25rem;
+    line-height: 0.25rem;
   }
 </style>
 

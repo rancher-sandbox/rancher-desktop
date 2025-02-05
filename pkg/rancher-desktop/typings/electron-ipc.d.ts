@@ -32,6 +32,7 @@ export interface IpcMainEvents {
   'update-state': () => void;
   // Quit and apply the update.
   'update-apply': () => void;
+  'update-check-now': () => void;
   // #endregion
 
   // #region main/containerEvents
