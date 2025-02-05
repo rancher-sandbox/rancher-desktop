@@ -18,6 +18,7 @@ import SERVICE_CRI_DOCKERD_SCRIPT from '@pkg/assets/scripts/service-cri-dockerd.
 import SERVICE_K3S_SCRIPT from '@pkg/assets/scripts/service-k3s.initd';
 import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
+import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
@@ -335,6 +336,10 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           this.vm.noModalDialogs,
           this.vm.writeSetting.bind(this.vm));
       } catch (ex) {
+        // Locked field errors are fatal and will quit the application
+        if (ex instanceof LockedFieldError) {
+          throw ex;
+        }
         console.error(`Could not get desired version: ${ ex }`);
         available = false;
 
