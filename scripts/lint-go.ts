@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { glob } from 'glob';
 import yaml from 'yaml';
 
 import { readDependencyVersions } from './lib/dependencies';
@@ -16,11 +17,11 @@ const fix = process.argv.includes('--fix');
 
 async function format(fix: boolean): Promise<boolean> {
   if (fix) {
-    await spawnFile('gofmt', ['-w', 'src/go']);
+    await spawnFile('gofmt', ['-w', ...await getModules()]);
   } else {
     // `gofmt -d` never exits with an error; we need to check if the output is
     // empty instead.
-    const { stdout } = await spawnFile('gofmt', ['-d', 'src/go'], { stdio: 'pipe' });
+    const { stdout } = await spawnFile('gofmt', ['-d', ...await getModules()], { stdio: 'pipe' });
 
     if (stdout.trim()) {
       console.log(stdout.trim());
@@ -119,6 +120,7 @@ type dependabotConfig = {
   updates: {
     'package-ecosystem': string;
     directory: string;
+    directories: string[];
     schedule: { interval: 'daily' };
     'open-pull-requests-limit': number;
     labels: string[];
@@ -129,9 +131,12 @@ type dependabotConfig = {
 
 async function checkDependabot(fix: boolean): Promise<boolean> {
   const configs: dependabotConfig = yaml.parse(await fs.promises.readFile('.github/dependabot.yml', 'utf8'));
-  const modules = (await getModules()).map(module => `/${ module }`);
-  const dependabotDirs = configs.updates.filter(x => x['package-ecosystem'] === 'gomod').map(x => x.directory);
-  const missing = modules.filter(x => !dependabotDirs.includes(x));
+  const modules = await getModules();
+  const dependabotDirs = configs.updates.filter(x => x['package-ecosystem'] === 'gomod').flatMap(x => x.directories || x.directory);
+  const globInputs = dependabotDirs.map(d => `${ d.replace(/^\//, '') }/go.mod`);
+  const globOutputs = await glob(globInputs);
+  const dependabotModules = globOutputs.map(f => path.dirname(f.replaceAll(path.sep, '/')));
+  const missing = modules.filter(x => !dependabotModules.includes(x));
 
   if (missing.length > 0) {
     const message = ['\x1B[0;1;31m Go modules not listed in dependabot:\x1B[0m'].concat(missing);
