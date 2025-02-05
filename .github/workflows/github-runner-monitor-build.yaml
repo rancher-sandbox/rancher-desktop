@@ -36,7 +36,7 @@ jobs:
         name: github-runner-linux
         path: src/go/github-runner-monitor/github-runner-monitor
         if-no-files-found: error
-    - uses: golangci/golangci-lint-action@ec5d18412c0aeab7936cb16880d708ba2a64e1ae # v6.2.0
+    - uses: golangci/golangci-lint-action@e60da84bfae8c7920a47be973d75e15710aa8bd7 # v6.3.0
       # This is only safe because this workflow does not allow writing
       with:
         args: --config=${{ github.workspace }}/.github/workflows/config/.golangci.yaml  --verbose --timeout 3m
