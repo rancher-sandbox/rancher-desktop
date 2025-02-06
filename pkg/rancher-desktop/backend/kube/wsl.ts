@@ -13,6 +13,7 @@ import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import { BackendSettings, RestartReasons } from '@pkg/backend/backend';
 import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '@pkg/backend/backendHelper';
 import * as K8s from '@pkg/backend/k8s';
+import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
@@ -88,6 +89,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
           this.vm.noModalDialogs,
           this.vm.writeSetting.bind(this.vm));
       } catch (ex) {
+        // Locked field errors are fatal and will quit the application
+        if (ex instanceof LockedFieldError) {
+          throw ex;
+        }
         console.error(`Could not get desired version: ${ ex }`);
         available = false;
 
