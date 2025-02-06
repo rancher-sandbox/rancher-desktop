@@ -135,6 +135,7 @@ clustertemplates
 cmds
 CNCF
 cni
+cnutils
 codeql
 commandline
 commitish
