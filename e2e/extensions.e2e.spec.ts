@@ -360,12 +360,12 @@ test.describe.serial('Extensions', () => {
         });
       });
       test('can fetch from external sources', async() => {
-        const url = 'http://127.0.0.1:6120/LICENSES'; // dashboard
+        const url = 'http://127.0.0.1:6120/c/local/explorer/node'; // dashboard
 
         await retry(async() => {
           const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
 
-          await expect(result).resolves.toContain('Copyright');
+          await expect(result).resolves.toContain('<title>Rancher</title>');
         });
       });
     });
