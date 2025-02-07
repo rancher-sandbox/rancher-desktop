@@ -29,11 +29,11 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
-	containerdNamespace "github.com/containerd/containerd/namespaces"
-	"github.com/containernetworking/plugins/pkg/utils"
+	"github.com/containerd/containerd/namespaces"
+	cnutils "github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-	rdUtils "github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -57,7 +57,7 @@ func NewEventMonitor(
 	containerdSock string,
 	portTracker tracker.Tracker,
 ) (*EventMonitor, error) {
-	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
+	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(namespaces.Default))
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +311,7 @@ func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerI
 	}
 
 	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", rdUtils.ErrExecIptablesRule, errs)
+		return fmt.Errorf("%w: %+v", utils.ErrExecIptablesRule, errs)
 	}
 
 	return nil
@@ -345,7 +345,7 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 
 	// Run the rule per network
 	for _, network := range networks {
-		chainName := utils.MustFormatChainNameWithPrefix(network, cID, "DN-")
+		chainName := cnutils.MustFormatChainNameWithPrefix(network, cID, "DN-")
 
 		// Instead of modifying the existing rule, a new rule is added that overrides the previous one.
 		// The original rule only allows traffic from anywhere to localhost, but the new rule permits traffic
@@ -402,7 +402,7 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 		}
 
 		portBinding := nat.PortBinding{
-			HostIP:   rdUtils.NormalizeHostIP(port.HostIP),
+			HostIP:   utils.NormalizeHostIP(port.HostIP),
 			HostPort: strconv.Itoa(port.HostPort),
 		}
 		if pb, ok := portMap[portMapKey]; ok {
@@ -423,12 +423,12 @@ func extractIPAddress(pid string) (string, error) {
 		return "", err
 	}
 	// Regular expression pattern to match the IP address
-	rx := regexp.MustCompile(`\binet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\/\d{1,2}`)
+	rx := regexp.MustCompile(`\binet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/\d{1,2}`)
 
 	matches := rx.FindStringSubmatch(string(output))
 	segments := 2
 	if len(matches) < segments {
-		return "", rdUtils.ErrIPAddressNotFound
+		return "", utils.ErrIPAddressNotFound
 	}
 
 	return matches[1], nil
