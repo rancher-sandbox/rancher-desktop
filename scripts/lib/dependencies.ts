@@ -63,6 +63,40 @@ export type DependencyVersions = {
 };
 
 /**
+ * rcompareVersions implementation for version strings that look like 0.1.2.rd3????.
+ * Note that anything after the number after "rd" is ignored.
+ * @param version1 The first version to compare.
+ * @param version2 The second version to compare.
+ * @returns Whether version1 is higher (-1), equal to (0), or lower than (1) version2.
+ */
+export function rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
+  const semver1 = semver.coerce(version1);
+  const semver2 = semver.coerce(version2);
+
+  if (semver1 === null || semver2 === null) {
+    throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+  }
+
+  if (semver1.raw !== semver2.raw) {
+    return semver.rcompare(semver1, semver2);
+  }
+
+  // If the two versions are equal, assume we have different build suffixes
+  // e.g. "0.19.0.rd5" vs "0.19.0.rd6"
+  const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
+  const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
+
+  if (!match1 || !match2) {
+    // One or both are invalid; prefer the valid one.
+    const fallback = Math.sign(version2.localeCompare(version1, 'en')) as -1 | 0 | 1;
+
+    return match1 ? -1 : match2 ? 1 : fallback;
+  }
+
+  return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
+}
+
+/**
  * Download the given checksum file (which contains multiple checksums) and find
  * the correct checksum for the given executable name.
  * @param checksumURL The URL to download the checksum from.

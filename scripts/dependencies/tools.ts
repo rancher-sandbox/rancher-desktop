@@ -5,11 +5,22 @@ import path from 'path';
 import semver from 'semver';
 
 import {
-  download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
+  ArchiveDownloadOptions,
+  download,
+  DownloadOptions,
+  downloadTarGZ,
+  downloadZip,
+  getResource,
 } from '../lib/download';
 
 import {
-  DownloadContext, Dependency, GitHubDependency, findChecksum, getPublishedReleaseTagNames, getPublishedVersions,
+  Dependency,
+  DownloadContext,
+  findChecksum,
+  getPublishedReleaseTagNames,
+  getPublishedVersions,
+  GitHubDependency,
+  rcompareVersions,
 } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
@@ -335,10 +346,9 @@ export class RancherDashboard implements Dependency, GitHubDependency {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-dashboard';
-  versionRegex = /^desktop-v([0-9]+\.[0-9]+\.[0-9]+)\.([0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+)$/;
 
   async download(context: DownloadContext): Promise<void> {
-    const baseURL = `https://github.com/rancher-sandbox/${ this.githubRepo }/releases/download/${ context.versions.rancherDashboard }`;
+    const baseURL = `https://github.com/rancher-sandbox/${ this.githubRepo }/releases/download/desktop-v${ context.versions.rancherDashboard }`;
     const executableName = 'rancher-dashboard-desktop-embed';
     const url = `${ baseURL }/${ executableName }.tar.gz`;
     const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
@@ -386,34 +396,17 @@ export class RancherDashboard implements Dependency, GitHubDependency {
   }
 
   async getAvailableVersions(): Promise<string[]> {
-    const versions = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
+    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
 
-    // Versions that contain .plugins. exist solely for testing during
-    // plugins development. For more info please see
-    // https://github.com/rancher-sandbox/rancher-desktop/issues/3757
-    return versions.filter(version => !version.includes('.plugins.'));
+    return tagNames.map((tagName: string) => tagName.replace(/^desktop-v/, ''));
   }
 
   versionToTagName(version: string): string {
-    return version;
-  }
-
-  versionToSemver(version: string): string {
-    const match = this.versionRegex.exec(version);
-
-    if (match === null) {
-      throw new Error(`${ this.name }: ${ version } does not match version regex ${ this.versionRegex }`);
-    }
-    const [, mainVersion, prereleaseVersion] = match;
-
-    return `${ mainVersion }-${ prereleaseVersion }`;
+    return `desktop-v${ version }`;
   }
 
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semver1 = this.versionToSemver(version1);
-    const semver2 = this.versionToSemver(version2);
-
-    return semver.rcompare(semver1, semver2);
+    return rcompareVersions(version1, version2);
   }
 }
 
