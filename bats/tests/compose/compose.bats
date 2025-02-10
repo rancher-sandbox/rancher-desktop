@@ -39,6 +39,11 @@ verify_running_container() {
     verify_running_container "http://${HOST_IP}:8000" "$expected_output"
 }
 
+@test 'verify connectivity via host.docker.internal' {
+    local expected_output="Hello World!"
+    verify_running_container "http://localhost:8080/app" "$expected_output"
+}
+
 @test 'compose down' {
     run ctrctl compose --project-directory "$TESTDATA_DIR_HOST" down
     assert_success
