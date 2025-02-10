@@ -1243,27 +1243,31 @@ function newK8sManager() {
   const arch = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
 
-  mgr.on('state-changed', (state: K8s.State) => {
-    mainEvents.emit('k8s-check-state', mgr);
-    window.send('k8s-check-state', state);
-    if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
-      if (!cfg.kubernetes.version) {
-        writeSettings({ kubernetes: { version: mgr.kubeBackend.version } });
-      }
-      currentImageProcessor?.relayNamespaces();
+  mgr.on('state-changed', async(state: K8s.State) => {
+    try {
+      mainEvents.emit('k8s-check-state', mgr);
+      window.send('k8s-check-state', state);
+      if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
+        if (!cfg.kubernetes.version) {
+          writeSettings({ kubernetes: { version: mgr.kubeBackend.version } });
+        }
+        currentImageProcessor?.relayNamespaces();
 
-      if (enabledK8s) {
-        Steve.getInstance().start();
+        if (enabledK8s) {
+          await Steve.getInstance().start();
+        }
       }
-    }
 
-    if (state === K8s.State.STOPPING) {
-      Steve.getInstance().stop();
-    }
-    if (pendingRestartContext !== undefined && !backendIsBusy()) {
-      // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
-      setTimeout(doFullRestart, 2_000, pendingRestartContext);
-      pendingRestartContext = undefined;
+      if (state === K8s.State.STOPPING) {
+        Steve.getInstance().stop();
+      }
+      if (pendingRestartContext !== undefined && !backendIsBusy()) {
+        // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
+        setTimeout(doFullRestart, 2_000, pendingRestartContext);
+        pendingRestartContext = undefined;
+      }
+    } catch (ex) {
+      console.error(ex);
     }
   });
 
