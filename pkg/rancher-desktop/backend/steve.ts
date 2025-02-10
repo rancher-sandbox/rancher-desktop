@@ -2,6 +2,7 @@ import { ChildProcess, spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
 
+import K3sHelper from '@pkg/backend/k3sHelper';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
@@ -35,7 +36,7 @@ export class Steve {
   /**
    * @description Starts the Steve API if one is not already running.
    */
-  public start() {
+  public async start() {
     const { pid } = this.process || { };
 
     if (this.isRunning && pid) {
@@ -46,7 +47,13 @@ export class Steve {
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
     const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
+    const env = Object.assign({}, process.env);
 
+    try {
+      env.KUBECONFIG = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
+    } catch {
+      // do nothing
+    }
     this.process = spawn(
       stevePath,
       [
@@ -57,6 +64,7 @@ export class Steve {
         '--offline',
         'true',
       ],
+      { env },
     );
 
     const { stdout, stderr } = this.process;
