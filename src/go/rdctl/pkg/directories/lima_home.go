@@ -19,12 +19,12 @@ package directories
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
+	"runtime"
 )
 
 func SetupLimaHome(appHome string) error {
-	candidatePath := path.Join(appHome, "lima")
+	candidatePath := filepath.Join(appHome, "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
 		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)
@@ -44,5 +44,9 @@ func GetLimactlPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl"), nil
+	result := filepath.Join(filepath.Dir(filepath.Dir(execPath)), "lima", "bin", "limactl")
+	if runtime.GOOS == "windows" {
+		result += ".exe"
+	}
+	return result, nil
 }
