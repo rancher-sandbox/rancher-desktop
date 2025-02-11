@@ -28,4 +28,6 @@ fi
 if [ $# -eq 0 ]; then
   set -- /bin/sh
 fi
-exec /usr/bin/nsenter -n -p -m -t "${pid}" "$@"
+# If -w$PWD is specified on the first nsenter, then `wsl-exec pwd`
+# fails with "pwd: getcwd: No such file or directory"
+exec /usr/bin/nsenter -n -p -m -t "${pid}" /usr/bin/nsenter "-w${PWD}" "$@"
