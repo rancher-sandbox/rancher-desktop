@@ -177,9 +177,22 @@ func handleConnection(conn net.Conn, dockerPath string) {
 		return
 	}
 	defer dockerConn.Close()
-	err = util.Pipe(conn, dockerConn)
-	if err != nil {
-		logrus.Errorf("error forwarding docker connection: %s", err)
+
+	// Cast both client and docker connections to HalfReadWriteCloser for further handling.
+	xConn, ok := conn.(util.HalfReadWriteCloser)
+	if !ok {
+		logrus.Errorf("client connection does not implement HalfReadWriteCloser")
 		return
+	}
+
+	xDockerConn, ok := dockerConn.(util.HalfReadWriteCloser)
+	if !ok {
+		logrus.Errorf("docker connection does not implement HalfReadWriteCloser")
+		return
+	}
+
+	// Pipe data between the client and Docker, ensuring bidirectional data flow.
+	if err := util.Pipe(xConn, xDockerConn); err != nil {
+		logrus.Errorf("error forwarding data between client and docker: %s", err)
 	}
 }
