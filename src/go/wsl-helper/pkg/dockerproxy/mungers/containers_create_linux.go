@@ -388,7 +388,7 @@ func (b *bindManager) mungeContainersStartResponse(req *http.Response, contextVa
 			"container": templates["id"],
 			"bind":      mountDir,
 		})
-		err := unix.Unmount(mountDir, 0)
+		err := unix.Unmount(mountDir, unix.MNT_DETACH|unix.UMOUNT_NOFOLLOW)
 		if err != nil {
 			logEntry.WithError(err).Error("failed to unmount")
 			return fmt.Errorf("could not unmount bind mount %s: %w", mountDir, err)
