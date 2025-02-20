@@ -22,6 +22,15 @@ export class MobyOpenAPISpec implements Dependency {
 
     await download(url, outPath, { access: fs.constants.W_OK });
 
+    // As of 1.48 they have an example of an uint64 that's at 2^64-1 (i.e. max),
+    // but the YAML parser uses strconv.ParseInt() which only takes int64.  This
+    // causes issues with `go generate`.  Work around the issue by replacing the
+    // example string, which we don't care about anyway.
+    const originalContents = await fs.promises.readFile(outPath, 'utf-8');
+    const modifiedContents = originalContents.replace('example: 18446744073709551615', 'example: 9223372036854775807');
+
+    await fs.promises.writeFile(outPath, modifiedContents, 'utf-8');
+
     await simpleSpawn('go', ['generate', '-x', 'pkg/dockerproxy/generate.go'], { cwd: path.join(process.cwd(), 'src', 'go', 'wsl-helper') });
     console.log('Moby API swagger models generated.');
   }
