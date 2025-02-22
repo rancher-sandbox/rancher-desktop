@@ -10383,10 +10383,10 @@ mz@^2.4.0:
     object-assign "^4.0.1"
     thenify-all "^1.0.0"
 
-nan@2.22.0:
-  version "2.22.0"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.22.0.tgz#31bc433fc33213c97bad36404bb68063de604de3"
-  integrity sha512-nbajikzWTMwsW+eSsNm3QwlOs7het9gGJU5dDZzRTQGk03vyBOauxgI4VakDzE0PtsGTmXPsXTbbjVhRwR5mpw==
+nan@2.22.1:
+  version "2.22.1"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.22.1.tgz#27aacbba463b05ed7751d3c0035f73cb1afcfb75"
+  integrity sha512-pfRR4ZcNTSm2ZFHaztuvbICf+hyiG6ecA06SfAxoPmuHjvMu0KUIae7Y8GyVkbBqeEIidsmXeYooWIX9+qjfRQ==
 
 nanoid@^3.3.7:
   version "3.3.7"
