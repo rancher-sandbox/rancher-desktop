@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	Version    = "1.1.0"
 	ApiVersion = "v1"
 )
 
