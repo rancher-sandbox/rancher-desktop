@@ -1,3 +1,4 @@
+import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -24,6 +25,14 @@ type DependencyWithContext = {
  * The amount of time we allow the post-install script to run, in milliseconds.
  */
 const InstallTimeout = 10 * 60 * 1_000; // Ten minutes.
+
+/**
+ * Retrieves the application version from package.json to stamp Go binaries.
+ * This version number ensures Go utilities like WSL helpers are tagged with
+ * the same version as the main application, maintaining consistency across
+ * all components of Rancher Desktop.
+ */
+const versionToStamp = getStampVersion();
 
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).
@@ -59,7 +68,7 @@ const windowsDependencies = [
   new WSLDistroImage(),
   new Wix(),
   new goUtils.GoDependency('networking/cmd/host', 'internal/host-switch'),
-  new goUtils.WSLHelper(),
+  new goUtils.WSLHelper(versionToStamp),
   new goUtils.NerdctlStub(),
   new goUtils.SpinStub(),
 ];
@@ -72,7 +81,7 @@ const wslDependencies = [
   new goUtils.GoDependency('networking/cmd/vm', 'staging/vm-switch'),
   new goUtils.GoDependency('networking/cmd/network', 'staging/network-setup'),
   new goUtils.GoDependency('networking/cmd/proxy', 'staging/wsl-proxy'),
-  new goUtils.WSLHelper(),
+  new goUtils.WSLHelper(versionToStamp),
   new goUtils.NerdctlStub(),
 ];
 
@@ -254,3 +263,15 @@ const keepScriptAlive = setTimeout(() => { }, 24 * 3600 * 1000);
     process.exit(exitCode);
   }
 })();
+
+/**
+* Gets the version string for Go tools from git.
+* Format: {tag}-{commits}-{hash}{dirty}
+* Examples: v1.18.0, v1.18.0-39-gf46609959, v1.18.0-39-gf46609959.m
+*/
+function getStampVersion(): string {
+  const gitCommand = 'git describe --match v[0-9]* --dirty=.m --always --tags';
+  const stdout = childProcess.execSync(gitCommand, { encoding: 'utf-8' });
+
+  return stdout;
+}
