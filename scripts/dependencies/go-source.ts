@@ -15,6 +15,36 @@ type GoDependencyOptions = {
    * Additional environment for the go compiler; e.g. for GOARCH overrides.
    */
   env?: NodeJS.ProcessEnv;
+
+  /**
+   * The version string to be stamped into the binary at build time.
+   * This is typically used with `-ldflags="-X ..."` to embed version information.
+   * Example: `1.18.1`.
+   */
+  version?: string;
+
+  /**
+   * The Go module path, typically as defined in `go.mod`. This should match the
+   * import path of the module (e.g., `github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper`).
+   */
+  modulePath?: string;
+
+  /**
+   * Custom linker flags (`-ldflags`) for the Go build process.
+   * The default value includes `-s -w`, which disables symbol table and debug information
+   * to reduce binary size. Override this to add or modify linker flags.
+   * Example: `['-s', '-w']`
+   */
+  ldFlags?: string[]
+
+  /**
+   * Custom compiler flags (`-gcflags`) for the Go build process.
+   * By default, no additional compiler flags are included. Use this to pass
+   * specific flags to the Go compiler, such as optimizations or debugging options.
+   * Example: `['all=-N', '-l']` to disable optimizations and inlining for all
+   * packages, which is useful for debugging.
+   */
+  gcFlags?: string[]
 };
 
 /**
@@ -49,8 +79,29 @@ export class GoDependency implements Dependency {
     const sourceDir = path.join(process.cwd(), 'src', 'go', this.sourcePath);
     const outFile = this.outFile(context);
 
-    console.log(`Building go utility \x1B[1;33;40m${ this.name }\x1B[0m from ${ sourceDir } to ${ outFile }...`);
-    await simpleSpawn('go', ['build', '-ldflags', '-s -w', '-o', outFile, '.'], {
+    const buildArgs: string[] = ['build'];
+
+    // Handle `-ldflags`: use custom flags if provided (default: `-s -w`),
+    // append version stamp if `modulePath` and `version` exist, and skip if no flags.
+    const ldFlags: string[] = this.options.ldFlags ? [...this.options.ldFlags] : ['-s', '-w'];
+
+    if (this.options.version && this.options.modulePath) {
+      ldFlags.push(`-X ${ this.options.modulePath }/pkg/version.Version=${ this.options.version }`);
+    }
+    if (ldFlags.length > 0) {
+      buildArgs.push('-ldflags', ldFlags.join(' '));
+    }
+
+    // Handle compiler flags (`-gcflags`). Only include `-gcflags` if explicitly provided and not empty.
+    if (this.options.gcFlags && this.options.gcFlags.length > 0) {
+      buildArgs.push('-gcflags', this.options.gcFlags.join(' '));
+    }
+
+    // common args
+    buildArgs.push('-o', outFile, '.');
+
+    console.log(`Building go utility \x1B[1;33;40m${ this.name } \x1B[0m from ${ sourceDir } to ${ outFile }...`);
+    await simpleSpawn('go', buildArgs, {
       cwd: sourceDir,
       env: this.environment(context),
     });
@@ -112,8 +163,13 @@ export class RDCtl extends GoDependency {
 }
 
 export class WSLHelper extends GoDependency {
-  constructor() {
-    super('wsl-helper', { outputPath: 'internal', env: { CGO_ENABLED: '0' } });
+  constructor(version: string) {
+    super('wsl-helper', {
+      outputPath: 'internal',
+      env:        { CGO_ENABLED: '0' },
+      modulePath: 'github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper',
+      version,
+    });
   }
 
   dependencies(context: DownloadContext): string[] {
