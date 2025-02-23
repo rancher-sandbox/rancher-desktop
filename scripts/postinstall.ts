@@ -45,7 +45,7 @@ const userTouchedDependencies = [
   new tools.DockerProvidedCredHelpers(),
   new tools.ECRCredHelper(),
   new tools.SpinCLI(),
-  new goUtils.RDCtl(),
+  new goUtils.RDCtl(versionToStamp),
   new goUtils.GoDependency('docker-credential-none'),
 ];
 
@@ -76,7 +76,7 @@ const windowsDependencies = [
 // Dependencies that are specific to WSL.
 const wslDependencies = [
   new Moproxy(),
-  new goUtils.RDCtl(),
+  new goUtils.RDCtl(versionToStamp),
   new goUtils.GoDependency('guestagent', 'staging'),
   new goUtils.GoDependency('networking/cmd/vm', 'staging/vm-switch'),
   new goUtils.GoDependency('networking/cmd/network', 'staging/network-setup'),

@@ -107,8 +107,12 @@ export class GoDependency implements Dependency {
 }
 
 export class RDCtl extends GoDependency {
-  constructor() {
-    super('rdctl');
+  constructor(version: string) {
+    super('rdctl', {
+      outputPath: 'bin',
+      modulePath: 'github.com/rancher-sandbox/rancher-desktop/src/go/rdctl',
+      version,
+    });
   }
 
   dependencies(context: DownloadContext): string[] {
