@@ -287,6 +287,11 @@ export class ExtensionImpl implements Extension {
       console.error(`Ignoring error running ${ this.id } post-install script: ${ ex }`);
     }
 
+    // Since we now run extensions in a separate session, register the protocol handler there.
+    const encodedId = Buffer.from(this.id).toString('hex');
+
+    await mainEvents.invoke('extensions/register-protocol', `persist:rdx-${ encodedId }`);
+
     console.debug(`Install ${ this.id }: install complete.`);
 
     return true;

@@ -197,7 +197,7 @@ let lastOpenExtension: { id: string, relPath: string } | undefined;
 /**
  * Attaches a browser view to the main window
  */
-const createView = () => {
+function createView() {
   const mainWindow = getWindow('main');
   const hostInfo = {
     arch:     process.arch,
@@ -208,15 +208,18 @@ const createView = () => {
     throw new Error('Failed to get main window, cannot create view');
   }
 
-  view = new WebContentsView({
-    webPreferences: {
-      nodeIntegration:     false,
-      contextIsolation:    true,
-      preload:             path.join(paths.resources, 'preload.js'),
-      sandbox:             true,
-      additionalArguments: [JSON.stringify(hostInfo)],
-    },
-  });
+  const webPreferences: Electron.WebPreferences = {
+    nodeIntegration:     false,
+    contextIsolation:    true,
+    preload:             path.join(paths.resources, 'preload.js'),
+    sandbox:             true,
+    additionalArguments: [JSON.stringify(hostInfo)],
+  };
+
+  if (currentExtension?.id) {
+    webPreferences.partition = `persist:rdx-${ currentExtension.id }`;
+  }
+  view = new WebContentsView({ webPreferences });
   mainWindow.contentView.addChildView(view);
   mainWindow.contentView.addListener('bounds-changed', () => {
     setImmediate(() => mainWindow.webContents.send('extensions/getContentArea'));
@@ -225,7 +228,7 @@ const createView = () => {
   const backgroundColor = nativeTheme.shouldUseDarkColors ? '#202c33' : '#f4f4f6';
 
   view.setBackgroundColor(backgroundColor);
-};
+}
 
 /**
  * Updates the browser view size and position
