@@ -64,7 +64,7 @@ jobs:
         OBS_DOWNLOAD_URL: https://download.opensuse.org/download/repositories/isv:/Rancher:/dev/AppImage/
 
     - name: Upload macOS aarch-64 artifacts
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: application-macos-aarch64.zip
         if-no-files-found: error
@@ -72,7 +72,7 @@ jobs:
           *.aarch64.dmg
           *.aarch64.dmg.sha512sum
     - name: Upload macOS x86_64 artifacts
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: application-macos-x86_64.zip
         if-no-files-found: error
@@ -80,7 +80,7 @@ jobs:
           *.x86_64.dmg
           *.x86_64.dmg.sha512sum
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: application-win32.zip
         if-no-files-found: error
@@ -88,7 +88,7 @@ jobs:
           *.msi
           *.msi.sha512sum
     - name: Upload Linux artifacts
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: application-linux.zip
         if-no-files-found: error
@@ -96,7 +96,7 @@ jobs:
           rancher-desktop-linux-*.zip
           rancher-desktop-linux-*.zip.sha512sum
     - name: Upload Linux AppImage
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: application-linux.AppImage
         if-no-files-found: error
@@ -145,7 +145,7 @@ jobs:
     - run: ${{ env.EXEC_COMMAND }} .github/workflows/smoke-test/smoke-test.sh
       shell: bash
     - name: Upload logs
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
@@ -296,7 +296,7 @@ jobs:
         gm import -window root -verbose $LOGS_DIR/screenshot-${{ matrix.id }}.png
 
     - name: Upload logs
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       if: always()
       with:
         name: logs-appimage-${{ matrix.id }}.zip
