@@ -81,13 +81,13 @@ jobs:
         RD_ENV_SCREENSHOT_SLEEP: 5000
         RD_LOGS_DIR: logs
     - name: Upload screenshots
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: screenshots-${{ matrix.platform }}.zip
         path: screenshots/output/
         if-no-files-found: error
     - name: Upload logs
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
@@ -140,7 +140,7 @@ jobs:
         gm composite -gravity center in/darwin/light/preferences/*_kubernetes.png in/darwin/light/main/*_General.png darwin.png
         gm composite -gravity center in/win32/light/preferences/*_kubernetes.png in/win32/light/main/*_General.png win32.png
         gm convert darwin.png win32.png +append out/getting-started/introduction_preferences_tabKubernetes.png
-    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       with:
         name: screenshots.zip
         path: out
