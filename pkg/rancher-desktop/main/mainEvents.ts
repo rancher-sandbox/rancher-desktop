@@ -131,6 +131,12 @@ interface MainEventNames {
   'extensions/shutdown'(): Promise<void>;
 
   /**
+   * Register the extension protocol handler in the given webContents partition.
+   * @param partition The partition name; likely "persist:rdx-..."
+   */
+  'extensions/register-protocol'(partition: string): Promise<void>;
+
+  /**
    * Emitted on application quit, used to shut down any integrations.  This
    * requires feedback from the handler to know when all tasks are complete.
    */
