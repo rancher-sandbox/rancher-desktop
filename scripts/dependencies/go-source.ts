@@ -70,10 +70,12 @@ export class GoDependency implements Dependency {
 
     const buildArgs: string[] = ['build', '-ldflags', ldFlags.join(' '), '-o', outFile, '.'];
 
-    console.log(`Building go utility \x1B[1;33;40m${this.name}\x1B[0m from ${sourceDir} to ${outFile}...`);
+    const env = this.environment(context);
+
+    console.log(`Building go utility \x1B[1;33;40m${ this.name }\x1B[0m [${ env.GOOS }/${ env.GOARCH }] from ${ sourceDir } to ${ outFile }...`);
     await simpleSpawn('go', buildArgs, {
       cwd: sourceDir,
-      env: this.environment(context),
+      env,
     });
   }
 
