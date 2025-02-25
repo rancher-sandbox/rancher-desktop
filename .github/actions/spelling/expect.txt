@@ -291,6 +291,7 @@ fscache
 fstrim
 gabcdef
 gazornaanplatt
+gcflags
 gcs
 gdk
 GENERALIZEDTIME

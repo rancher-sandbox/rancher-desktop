@@ -19,18 +19,17 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/version"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/version"
 	"github.com/spf13/cobra"
 )
 
 // showVersionCmd represents the showVersion command
 var showVersionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Shows the CLI version.",
-	Long:  `Shows the CLI version.`,
+	Short: "Shows the wsl-helper version.",
+	Long:  `Shows the wsl-helper version.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, err := fmt.Printf("rdctl client version: %s, targeting server version: %s\n", version.Version, client.ApiVersion)
+		_, err := fmt.Printf("wsl-helper version: %s\n", version.Version)
 		return err
 	},
 }
