@@ -260,6 +260,22 @@ test.describe.serial('Extensions', () => {
           exitCodes: [0],
         }));
       });
+
+      test('bypass CORS', async() => {
+        // This is the dashboard URL; it does not have CORS set up so it would
+        // normally fail to fetch due to CORS reasons.  However, this test case
+        // checks that our CORS bypass is working.
+        const url = 'http://127.0.0.1:6120/c/local/explorer/node';
+        const script = `
+          (async () => {
+            const result = await fetch('${ url }');
+            return Object.fromEntries(result.headers.entries());
+          })()
+        `;
+        const result = await evalInView(script);
+
+        expect(result).toHaveProperty('content-type');
+      });
     });
 
     test.describe('ddClient.docker', () => {
