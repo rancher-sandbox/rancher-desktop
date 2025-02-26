@@ -52,6 +52,10 @@ export function getWindow(name: string): Electron.BrowserWindow | null {
   return (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 }
 
+function isInternalURL(url: string) {
+  return url.startsWith(`${ webRoot }/`) || url.startsWith('x-rd-extension://');
+}
+
 /**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
@@ -64,10 +68,6 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   if (restoreWindow(window)) {
     return window;
   }
-
-  const isInternalURL = (url: string) => {
-    return url.startsWith(`${ webRoot }/`) || url.startsWith('x-rd-extension://');
-  };
 
   window = new BrowserWindow(options);
   window.webContents.on('console-message', (event, level, message, line, sourceId) => {
@@ -197,7 +197,7 @@ let lastOpenExtension: { id: string, relPath: string } | undefined;
 /**
  * Attaches a browser view to the main window
  */
-const createView = () => {
+function createView() {
   const mainWindow = getWindow('main');
   const hostInfo = {
     arch:     process.arch,
@@ -208,15 +208,71 @@ const createView = () => {
     throw new Error('Failed to get main window, cannot create view');
   }
 
-  view = new WebContentsView({
-    webPreferences: {
-      nodeIntegration:     false,
-      contextIsolation:    true,
-      preload:             path.join(paths.resources, 'preload.js'),
-      sandbox:             true,
-      additionalArguments: [JSON.stringify(hostInfo)],
-    },
-  });
+  const webPreferences: Electron.WebPreferences = {
+    nodeIntegration:     false,
+    contextIsolation:    true,
+    preload:             path.join(paths.resources, 'preload.js'),
+    sandbox:             true,
+    additionalArguments: [JSON.stringify(hostInfo)],
+  };
+
+  if (currentExtension?.id) {
+    webPreferences.partition = `persist:rdx-${ currentExtension.id }`;
+    const webRequest = Electron.session.fromPartition(webPreferences.partition).webRequest;
+
+    webRequest.onBeforeSendHeaders((details, callback) => {
+      const source = details.webContents?.getURL() ?? '';
+      const requestHeaders = { ...details.requestHeaders };
+
+      if (isInternalURL(source)) {
+        // If the request is coming from the extension, remove the Origin: header
+        // because it has x-rd-extension:// nonsense (relative to the server).
+        delete requestHeaders.Origin;
+      }
+      callback({ requestHeaders });
+    });
+
+    webRequest.onHeadersReceived((details, callback) => {
+      const sourceURL = details.webContents?.getURL() ?? '';
+
+      if (!isInternalURL(sourceURL)) {
+        // Do not rewrite requests from outside the extension (e.g. iframe).
+        callback({});
+
+        return;
+      }
+
+      // Insert (or overwrite) CORS headers to pretend this was allowed.  While
+      // ideally we can just disable `webSecurity` instead, that seems to break
+      // the preload script (which breaks the extension APIs).
+      const responseHeaders: Record<string, string|string[]> = { ...details.responseHeaders };
+      // HTTP headers use case-insensitive comparison; but accents should count
+      // as different characters (even though it should be ASCII only).
+      const { compare } = new Intl.Collator('en', { sensitivity: 'accent' });
+      const overwriteHeaders = [
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods',
+        'Access-Control-Allow-Origin',
+      ];
+
+      for (const header of overwriteHeaders) {
+        const match = Object.keys(responseHeaders).find(k => compare(header, k) === 0);
+
+        responseHeaders[match ?? header] = '*';
+      }
+
+      if (details.method !== 'OPTIONS') {
+        // For any request that's not a CORS preflight, just overwrite the headers.
+        callback({ responseHeaders });
+      } else {
+        // For CORS preflights, also change the status code.
+        const prefix = /\s+/.exec(details.statusLine)?.shift() ?? 'HTTP/1.1';
+
+        callback({ responseHeaders, statusLine: `${ prefix } 204 No Content` });
+      }
+    });
+  }
+  view = new WebContentsView({ webPreferences });
   mainWindow.contentView.addChildView(view);
   mainWindow.contentView.addListener('bounds-changed', () => {
     setImmediate(() => mainWindow.webContents.send('extensions/getContentArea'));
@@ -225,7 +281,7 @@ const createView = () => {
   const backgroundColor = nativeTheme.shouldUseDarkColors ? '#202c33' : '#f4f4f6';
 
   view.setBackgroundColor(backgroundColor);
-};
+}
 
 /**
  * Updates the browser view size and position
