@@ -246,6 +246,8 @@ function createView() {
       // ideally we can just disable `webSecurity` instead, that seems to break
       // the preload script (which breaks the extension APIs).
       const responseHeaders: Record<string, string|string[]> = { ...details.responseHeaders };
+      // HTTP headers use case-insensitive comparison; but accents should count
+      // as different characters (even though it should be ASCII only).
       const { compare } = new Intl.Collator('en', { sensitivity: 'accent' });
       const overwriteHeaders = [
         'Access-Control-Allow-Headers',
@@ -266,7 +268,7 @@ function createView() {
         // For CORS preflights, also change the status code.
         const prefix = /\s+/.exec(details.statusLine)?.shift() ?? 'HTTP/1.1';
 
-        callback({ responseHeaders, statusLine: `${ prefix } 204` });
+        callback({ responseHeaders, statusLine: `${ prefix } 204 No Content` });
       }
     });
   }
