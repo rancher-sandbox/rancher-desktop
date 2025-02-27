@@ -15,6 +15,19 @@ type GoDependencyOptions = {
    * Additional environment for the go compiler; e.g. for GOARCH overrides.
    */
   env?: NodeJS.ProcessEnv;
+
+  /**
+   * The version string to be stamped into the binary at build time.
+   * This is typically used with `-ldflags="-X ..."` to embed version information.
+   * Example: `1.18.1`.
+   */
+  version?: string;
+
+  /**
+   * The Go module path, typically as defined in `go.mod`. This should match the
+   * import path of the module (e.g., `github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper`).
+   */
+  modulePath?: string;
 };
 
 /**
@@ -49,10 +62,20 @@ export class GoDependency implements Dependency {
     const sourceDir = path.join(process.cwd(), 'src', 'go', this.sourcePath);
     const outFile = this.outFile(context);
 
-    console.log(`Building go utility \x1B[1;33;40m${ this.name }\x1B[0m from ${ sourceDir } to ${ outFile }...`);
-    await simpleSpawn('go', ['build', '-ldflags', '-s -w', '-o', outFile, '.'], {
+    const ldFlags: string[] = ['-s', '-w'];
+
+    if (this.options.version && this.options.modulePath) {
+      ldFlags.push(`-X ${ this.options.modulePath }/pkg/version.Version=${ this.options.version }`);
+    }
+
+    const buildArgs: string[] = ['build', '-ldflags', ldFlags.join(' '), '-o', outFile, '.'];
+
+    const env = this.environment(context);
+
+    console.log(`Building go utility \x1B[1;33;40m${ this.name }\x1B[0m [${ env.GOOS }/${ env.GOARCH }] from ${ sourceDir } to ${ outFile }...`);
+    await simpleSpawn('go', buildArgs, {
       cwd: sourceDir,
-      env: this.environment(context),
+      env,
     });
   }
 
@@ -86,8 +109,12 @@ export class GoDependency implements Dependency {
 }
 
 export class RDCtl extends GoDependency {
-  constructor() {
-    super('rdctl');
+  constructor(version: string) {
+    super('rdctl', {
+      outputPath: 'bin',
+      modulePath: 'github.com/rancher-sandbox/rancher-desktop/src/go/rdctl',
+      version,
+    });
   }
 
   dependencies(context: DownloadContext): string[] {
@@ -112,8 +139,13 @@ export class RDCtl extends GoDependency {
 }
 
 export class WSLHelper extends GoDependency {
-  constructor() {
-    super('wsl-helper', { outputPath: 'internal', env: { CGO_ENABLED: '0' } });
+  constructor(version: string) {
+    super('wsl-helper', {
+      outputPath: 'internal',
+      env:        { CGO_ENABLED: '0' },
+      modulePath: 'github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper',
+      version,
+    });
   }
 
   dependencies(context: DownloadContext): string[] {
