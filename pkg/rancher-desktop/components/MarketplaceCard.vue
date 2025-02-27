@@ -131,9 +131,10 @@ export default {
     appInstallation(action) {
       this.loading = true;
       this.resetBanners();
+      const extensionId = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;
 
       fetch(
-        `http://localhost:${ this.credentials?.port }/v1/extensions/${ action }?id=${ this.versionedExtension }`,
+        `http://localhost:${ this.credentials?.port }/v1/extensions/${ action }?id=${ extensionId }`,
         {
           method:  'POST',
           headers: new Headers({
