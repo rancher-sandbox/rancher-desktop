@@ -100,3 +100,5 @@ ignore$
 ^\Qsrc/go/nerdctl-stub/nerdctl_commands_generated.go\E$
 ^\Q.github/workflows/config/.golangci.yaml\E$
 ^\Qsrc/go/networking/.golangci.yml\E$
+# Generated file
+^\Qpkg/rancher-desktop/assets/extension-data.yaml\E$
