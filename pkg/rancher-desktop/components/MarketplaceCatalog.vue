@@ -93,6 +93,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
 
       return available && installed && semver.gt(available.version, installed.version);
     },
+    installedVersion(slug: string) {
+      return this.installedExtensions.find(item => item.id === slug)?.version;
+    },
     isAllowed(slug: string) {
       return !this.allowedListEnabled || this.allowedExtensions.includes(slug);
     },
@@ -126,6 +129,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           :extension="item"
           :data-test="`extension-card-${item.title.toLowerCase()}`"
           :is-installed="item.installed"
+          :installed-version="installedVersion(item.slug)"
           :credentials="credentials"
           @update:extension="isInstalled"
         />
