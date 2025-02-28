@@ -15,7 +15,7 @@
     org.opencontainers.image.title: Open WebUI
     org.opencontainers.image.vendor: SUSE LLC
   title: Open WebUI
-  logo: ""
+  logo: https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/refs/tags/v0.0.4/open-webui.svg
   publisher: SUSE LLC
   short_description: Open WebUI on Rancher Desktop
 - slug: ghcr.io/rancher-sandbox/epinio-desktop-extension
