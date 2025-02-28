@@ -1,18 +1,13 @@
 <script lang="ts">
+import semver from 'semver';
 import Vue, { VueConstructor } from 'vue';
 import { mapGetters } from 'vuex';
 
-import { demoMarketplace } from '../utils/_demo_marketplace_items.js';
-
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
 import { Settings, ContainerEngine } from '@pkg/config/settings';
-import { ExtensionState } from '@pkg/store/extensions.js';
+import { ExtensionState, MarketplaceData } from '@pkg/store/extensions.js';
 
-type FilteredExtensions = typeof demoMarketplace.summaries;
-
-interface installedExtensions extends ExtensionState {
-  id: string
-}
+type ExtensionData = MarketplaceData & { installed: boolean };
 
 interface VuexBindings {
   getPreferences: Settings;
@@ -30,8 +25,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         password: '',
         port:     0,
       },
-      extensions:          demoMarketplace.summaries,
-      installedExtensions: [] as installedExtensions[],
     };
   },
   async fetch() {
@@ -47,6 +40,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences']),
+    ...mapGetters('extensions', { installedExtensions: 'list', extensions: 'marketData' }) as {
+        installedExtensions: () => ({ id: string } & ExtensionState )[],
+        extensions: () => MarketplaceData[],
+      },
     containerEngine(): string {
       return this.getPreferences.containerEngine.name;
     },
@@ -59,28 +56,21 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     allowedExtensions(): string[] {
       return this.getPreferences.application.extensions.allowed.list;
     },
-    filteredExtensions(): FilteredExtensions {
+    filteredExtensions(): ExtensionData[] {
       let tempExtensions = this.extensions
         .filter((item) => {
           return this.isAllowed(item.slug);
         })
         .map((item) => {
-          if (this.isInstalled(item.slug)) {
-            return {
-              ...item,
-              installed: true,
-            };
-          }
-
           return {
             ...item,
-            installed: false,
+            installed: this.isInstalled(item.slug),
           };
         });
 
       if (this.searchValue) {
         tempExtensions = tempExtensions.filter((item) => {
-          return item.name
+          return item.title
             .toLowerCase()
             .includes(this.searchValue.toLowerCase());
         });
@@ -89,15 +79,19 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       const collator = new Intl.Collator('en', { sensitivity: 'base' });
 
       return filteredExtensions.sort((s1, s2) => {
-        return collator.compare(s1.name, s2.name);
+        return collator.compare(s1.title, s2.title);
       });
     },
   },
   methods: {
     isInstalled(slug: string) {
-      this.installedExtensions = this.$store.getters['extensions/list'];
+      return !!this.installedExtensions.find(item => item?.id === slug);
+    },
+    isOutdated(slug: string) {
+      const available = this.extensions.find(item => item.slug === slug);
+      const installed = this.installedExtensions.find(item => item?.id === slug);
 
-      return this.installedExtensions.find(item => item?.id === slug);
+      return available && installed && semver.gt(available.version, installed.version);
     },
     isAllowed(slug: string) {
       return !this.allowedListEnabled || this.allowedExtensions.includes(slug);
@@ -130,7 +124,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       >
         <MarketplaceCard
           :extension="item"
-          :data-test="`extension-card-${item.name.toLowerCase()}`"
+          :data-test="`extension-card-${item.title.toLowerCase()}`"
           :is-installed="item.installed"
           :credentials="credentials"
           @update:extension="isInstalled"
