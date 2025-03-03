@@ -33,22 +33,42 @@
       >
         {{ error }}
       </Banner>
+      <!-- install button -->
       <button
-        v-if="!error"
+        v-if="!error && !currentAction && !installedVersion"
         data-test="button-install"
-        :class="isInstalled ? 'role-danger': 'role-primary'"
-        class="btn btn-xs"
-        :disabled="loading"
-        @click="appInstallation(installationAction)"
+        class="role-primary btn btn-xs"
+        @click="appInstallation('install')"
       >
-        <span
-          v-if="loading"
-          name="loading"
-          :is-loading="loading"
-        >
-          <loading-indicator>{{ buttonLabel }}</loading-indicator>
+        {{ t('marketplace.labels.install') }}
+      </button>
+      <!-- upgrade button -->
+      <button
+        v-if="!error && !currentAction && canUpgrade"
+        class="role-primary btn btn-xs"
+        @click="appInstallation('upgrade')"
+      >
+        {{ t('marketplace.labels.upgrade') }}
+      </button>
+      <!-- uninstall button -->
+      <button
+        v-if="!error && !currentAction && installedVersion"
+        data-test="button-uninstall"
+        class="role-danger btn btn-xs"
+        @click="appInstallation('uninstall')"
+      >
+        {{ t('marketplace.labels.uninstall') }}
+      </button>
+      <!-- "loading" fake button -->
+      <button
+        v-if="!error && currentAction"
+        data-test="button-loading"
+        class="role-primary btn btn-xs"
+        disabled="true"
+      >
+        <span name="loading" is-loading="true">
+          <loading-indicator>{{ loadingLabel }}</loading-indicator>
         </span>
-        <span v-if="!loading">{{ buttonLabel }}</span>
       </button>
     </div>
   </div>
@@ -56,11 +76,14 @@
 
 <script lang="ts">
 import { Banner } from '@rancher/components';
+import semver from 'semver';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import { MarketplaceData } from '@pkg/store/extensions.js';
 
 import type { PropType } from 'vue';
+
+type action = 'install' | 'uninstall' | 'upgrade';
 
 export default {
   components: { LoadingIndicator, Banner },
@@ -77,19 +100,21 @@ export default {
       type:     Boolean,
       required: true,
     },
+    installedVersion: {
+      type:     String,
+      required: false,
+      default:  undefined,
+    },
   },
   data() {
     return {
-      loading:      false,
-      error:        null as string | null,
-      response:     null,
-      bannerActive: false,
+      currentAction: null as null | action,
+      error:         null as string | null,
+      response:      null,
+      bannerActive:  false,
     };
   },
   computed: {
-    installationAction() {
-      return this.isInstalled ? 'uninstall' : 'install';
-    },
     versionedExtension() {
       return `${ this.extensionWithoutVersion }:${ this.extension.version }`;
     },
@@ -101,12 +126,16 @@ export default {
     extensionLink() {
       return this.extension.slug.startsWith('ghcr.io/') ? `https://${ this.extension.slug }` : `https://hub.docker.com/extensions/${ this.extension.slug }`;
     },
-    buttonLabel() {
-      if (this.loading) {
-        return this.isInstalled ? this.t('marketplace.sidebar.uninstallButton.loading') : this.t('marketplace.sidebar.installButton.loading');
-      } else {
-        return this.isInstalled ? this.t('marketplace.sidebar.uninstallButton.label') : this.t('marketplace.sidebar.installButton.label');
+    canUpgrade() {
+      try {
+        return this.installedVersion && semver.gt(this.extension.version, this.installedVersion);
+      } catch {
+        // If installed or available version is not semver.
+        return false;
       }
+    },
+    loadingLabel() {
+      return this.t(`marketplace.loading.${ this.currentAction }`);
     },
   },
 
@@ -114,19 +143,20 @@ export default {
     resetBanners() {
       this.error = null;
     },
-    async appInstallation(action: 'uninstall' | 'install') {
-      this.loading = true;
+    async appInstallation(action: action) {
+      this.currentAction = action;
       this.resetBanners();
       const id = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;
+      const verb = action === 'uninstall' ? 'uninstall' : 'install'; // upgrades are installs
 
       try {
-        const result = await this.$store.dispatch(`extensions/${ action }`, { id });
+        const result = await this.$store.dispatch(`extensions/${ verb }`, { id });
 
         if (typeof result === 'string') {
           this.error = result;
-          this.loading = false;
-        } else {
-          this.loading = !result;
+          this.currentAction = null;
+        } else if (result) {
+          this.currentAction = null;
         }
       } finally {
         this.$emit('update:extension');
@@ -193,6 +223,10 @@ export default {
 
     .banner {
       margin: 0;
+    }
+
+    button:not(:first-of-type) {
+      margin-left: 10px;
     }
   }
 
