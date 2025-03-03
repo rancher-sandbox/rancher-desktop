@@ -4864,6 +4864,7 @@ extensions:
   icon: icon-extension
   installed:
     list:
+      upgrade: Upgrade
       uninstall: Remove
     emptyState:
       icon: icon-extension

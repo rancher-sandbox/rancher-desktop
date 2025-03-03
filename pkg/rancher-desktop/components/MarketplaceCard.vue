@@ -114,39 +114,27 @@ export default {
     resetBanners() {
       this.error = null;
     },
-    appInstallation(action: 'uninstall' | 'install') {
+    async appInstallation(action: 'uninstall' | 'install') {
       this.loading = true;
       this.resetBanners();
-      const extensionId = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;
+      const id = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;
 
-      fetch(
-        `http://localhost:${ this.credentials?.port }/v1/extensions/${ action }?id=${ extensionId }`,
-        {
-          method:  'POST',
-          headers: new Headers({
-            Authorization: `Basic ${ window.btoa(
-              `${ this.credentials?.user }:${ this.credentials?.password }`,
-            ) }`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }),
-        },
-      ).then((r) => {
-        if (!r.ok) {
-          this.error = r.statusText;
+      try {
+        const result = await this.$store.dispatch(`extensions/${ action }`, { id });
+
+        if (typeof result === 'string') {
+          this.error = result;
           this.loading = false;
+        } else {
+          this.loading = !result;
         }
+      } finally {
+        this.$emit('update:extension');
 
-        if (r.status === 201) {
-          this.loading = false;
-        }
-      })
-        .finally(() => {
-          this.$emit('update:extension');
-
-          setTimeout(() => {
-            this.resetBanners();
-          }, 3000);
-        });
+        setTimeout(() => {
+          this.resetBanners();
+        }, 3_000);
+      }
     },
   },
 };

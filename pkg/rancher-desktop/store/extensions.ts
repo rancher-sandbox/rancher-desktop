@@ -12,6 +12,11 @@ export interface ExtensionState {
   labels: Record<string, string>;
 }
 
+export type ExtensionWithId = ExtensionState & {
+  /** The extension id, excluding the version (tag). */
+  id: string;
+};
+
 interface ExtensionsState {
   extensions: Record<string, ExtensionState>;
 }
@@ -50,10 +55,44 @@ export const actions = {
 
     commit('SET_EXTENSIONS', result);
   },
+
+  /**
+   * Install an extension by id.
+   * @param id The extension id; this should include the tag.
+   * @returns Error message, or `true` if extension is installed.
+   */
+  async install({ rootState, dispatch }: ExtensionsActionContext, { id }: { id: string }) {
+    const r = await fetchAPI(`/v1/extensions/install?id=${ id }`, rootState, { method: 'POST' });
+
+    await dispatch('fetch');
+
+    if (!r.ok) {
+      return r.statusText;
+    }
+
+    return r.status === 201;
+  },
+
+  /**
+   * Uninstall an extension by id.
+   * @param id The extension id; this should _not_ include the tag.
+   * @returns Error message, or `true` if extension is uninstall.
+   */
+  async uninstall({ rootState, dispatch }: ExtensionsActionContext, { id }: { id: string }) {
+    const r = await fetchAPI(`/v1/extensions/uninstall?id=${ id }`, rootState, { method: 'POST' });
+
+    await dispatch('fetch');
+
+    if (!r.ok) {
+      return r.statusText;
+    }
+
+    return r.status === 201;
+  },
 };
 
 export const getters: GetterTree<ExtensionsState, ExtensionsState> = {
-  list(state: ExtensionsState): ({ id: string } & ExtensionState )[] {
+  list(state: ExtensionsState): ExtensionWithId[] {
     return Object.entries(state.extensions).map(([id, info]) => ({ id, ...info }));
   },
   marketData(state: ExtensionsState): MarketplaceData[] {
