@@ -177,3 +177,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 
 # allow repetitive words in iptable rules
 DNAT\s+.*\s+anywhere anywhere
+
+# Image names
+\bghcr\.io/[A-Za-z0-9_/.-]+(?::[A-Za-z0-9_.-]+)?\b

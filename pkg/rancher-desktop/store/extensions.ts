@@ -3,6 +3,7 @@ import { GetterTree } from 'vuex';
 import { fetchAPI } from './credentials';
 import { ActionContext, MutationsType } from './ts-helpers';
 
+import MARKETPLACE_DATA from '@pkg/assets/extension-data.yaml';
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
 
 export interface ExtensionState {
@@ -13,6 +14,17 @@ export interface ExtensionState {
 
 interface ExtensionsState {
   extensions: Record<string, ExtensionState>;
+}
+
+export interface MarketplaceData {
+  slug: string;
+  version: string;
+  containerd_compatible: boolean;
+  labels: Record<string, string>;
+  title: string;
+  logo: string;
+  publisher: string;
+  short_description: string;
 }
 
 export const state: () => ExtensionsState = () => ({ extensions: {} });
@@ -43,5 +55,8 @@ export const actions = {
 export const getters: GetterTree<ExtensionsState, ExtensionsState> = {
   list(state: ExtensionsState): ({ id: string } & ExtensionState )[] {
     return Object.entries(state.extensions).map(([id, info]) => ({ id, ...info }));
+  },
+  marketData(state: ExtensionsState): MarketplaceData[] {
+    return MARKETPLACE_DATA;
   },
 };

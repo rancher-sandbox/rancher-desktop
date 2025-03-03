@@ -3,13 +3,13 @@
     <div class="extensions-card">
       <div class="extensions-card-header">
         <img
-          :src="extension.logo_url.small"
+          :src="extension.logo"
           alt=""
         />
         <div class="extensions-card-header-top">
-          <span class="extensions-card-header-title">{{ extension.name }}</span>
+          <span class="extensions-card-header-title">{{ extension.title }}</span>
           <span class="extensions-card-header-subtitle">{{
-            extension.publisher.name
+            extension.publisher
           }}</span>
         </div>
       </div>
@@ -54,18 +54,19 @@
   </div>
 </template>
 
-<script>
-
+<script lang="ts">
 import { Banner } from '@rancher/components';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import demoMetadata from '@pkg/utils/_demo_metadata.js';
+import { MarketplaceData } from '@pkg/store/extensions.js';
+
+import type { PropType } from 'vue';
 
 export default {
   components: { LoadingIndicator, Banner },
   props:      {
     extension: {
-      type:     Object,
+      type:     Object as PropType<MarketplaceData>,
       required: true,
     },
     credentials: {
@@ -79,11 +80,10 @@ export default {
   },
   data() {
     return {
-      loading:          false,
-      extensionDetails: null,
-      error:            null,
-      response:         null,
-      bannerActive:     false,
+      loading:      false,
+      error:        null as string | null,
+      response:     null,
+      bannerActive: false,
     };
   },
   computed: {
@@ -91,7 +91,7 @@ export default {
       return this.isInstalled ? 'uninstall' : 'install';
     },
     versionedExtension() {
-      return `${ this.extensionWithoutVersion }:${ this.extensionDetails?.version }`;
+      return `${ this.extensionWithoutVersion }:${ this.extension.version }`;
     },
     extensionWithoutVersion() {
       const index = this.extension.slug.lastIndexOf(':');
@@ -99,7 +99,7 @@ export default {
       return this.extension.slug.substring(0, index) || this.extension.slug;
     },
     extensionLink() {
-      return this.extension.slug.includes('ghcr.io') ? `https://${ this.extension.slug }` : `https://hub.docker.com/extensions/${ this.extension.slug }`;
+      return this.extension.slug.startsWith('ghcr.io/') ? `https://${ this.extension.slug }` : `https://hub.docker.com/extensions/${ this.extension.slug }`;
     },
     buttonLabel() {
       if (this.loading) {
@@ -110,25 +110,11 @@ export default {
     },
   },
 
-  mounted() {
-    this.metadata = demoMetadata[this.extensionWithoutVersion];
-
-    if (!this.metadata) {
-      return;
-    }
-
-    this.extensionDetails = {
-      name:
-        this.metadata?.LatestVersion.Labels['org.opencontainers.image.title'] ||
-        this.extensionWithoutVersion,
-      version: this.metadata?.LatestVersion.Tag || [],
-    };
-  },
   methods: {
     resetBanners() {
       this.error = null;
     },
-    appInstallation(action) {
+    appInstallation(action: 'uninstall' | 'install') {
       this.loading = true;
       this.resetBanners();
       const extensionId = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;

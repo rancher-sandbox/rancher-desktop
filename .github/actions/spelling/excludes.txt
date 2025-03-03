@@ -93,10 +93,12 @@
 ignore$
 /translations/(?!en)
 ^\Qpkg/rancher-desktop/router.js\E$
-^\Qpkg/rancher-desktop/utils/_demo_marketplace_items.js\E$
-^\Qpkg/rancher-desktop/utils/_demo_metadata.js\E$
 (?:^|/)pkg/rancher-desktop/nuxt/
 ^\Qsrc/disk-images/github-runner-linux/root/etc/sysconfig/network/ifcfg-\E
 ^\Qsrc/go/nerdctl-stub/nerdctl_commands_generated.go\E$
 ^\Q.github/workflows/config/.golangci.yaml\E$
 ^\Qsrc/go/networking/.golangci.yml\E$
+# Generated file
+^\Qpkg/rancher-desktop/assets/extension-data.yaml\E$
+# Mostly image names
+^\Qscripts/assets/extension-data.yaml\E$

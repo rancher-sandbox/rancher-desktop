@@ -26,6 +26,7 @@
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "lint:spelling": "bash scripts/spelling.sh",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
+    "generate:extension-data": "node scripts/ts-wrapper.js scripts/extension-data.ts",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 node --stack-size=16384 scripts/ts-wrapper.js scripts/build.ts",
     "package": "node scripts/ts-wrapper.js scripts/package.ts",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
