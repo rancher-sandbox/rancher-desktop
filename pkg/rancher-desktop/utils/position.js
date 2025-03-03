@@ -40,10 +40,8 @@ export function screenRect() {
   const $window = $(window);
   const width = $window.width();
   const height = $window.height();
-  // eslint-disable-next-line deprecation/deprecation
-  const top = window.pageYOffset;
-  // eslint-disable-next-line deprecation/deprecation
-  const left = window.pageXOffset;
+  const top = window.scrollY;
+  const left = window.scrollX;
 
   return {
     top,
