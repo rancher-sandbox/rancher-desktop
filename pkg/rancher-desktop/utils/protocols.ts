@@ -1,8 +1,9 @@
 import path from 'path';
 import { URL, pathToFileURL } from 'url';
 
-import { app, protocol, net } from 'electron';
+import Electron from 'electron';
 
+import mainEvents from '@pkg/main/mainEvents';
 import { isDevBuild } from '@pkg/utils/environment';
 import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
@@ -20,8 +21,8 @@ function redirectedUrl(relPath: string) {
   if (isDevBuild) {
     return `http://localhost:8888${ relPath }`;
   }
-  if (app.isPackaged) {
-    return path.join(app.getAppPath(), 'dist', 'app', relPath);
+  if (Electron.app.isPackaged) {
+    return path.join(Electron.app.getAppPath(), 'dist', 'app', relPath);
   }
 
   // Unpackaged non-dev build; this normally means E2E tests, where
@@ -41,17 +42,17 @@ export const protocolsRegistered = Latch();
  * production environments.
  */
 function setupAppProtocolHandler() {
-  protocol.handle(
+  Electron.protocol.handle(
     'app',
     (request) => {
       const relPath = new URL(request.url).pathname;
       const redirectUrl = redirectedUrl(relPath);
 
       if (isDevBuild) {
-        return net.fetch(redirectUrl);
+        return Electron.net.fetch(redirectUrl);
       }
 
-      return net.fetch(pathToFileURL(redirectUrl).toString());
+      return Electron.net.fetch(pathToFileURL(redirectUrl).toString());
     });
 }
 
@@ -62,26 +63,36 @@ function setupAppProtocolHandler() {
  * x-rd-extension://<extension id>/...
  * Where the extension id is the extension image id, hex encoded (to avoid
  * issues with slashes).  Base64 was not available in Vue.
+ * @param partition The Electron session partition name; if unset, set it up for
+ *                  the default session.
  */
-function setupExtensionProtocolHandler() {
-  protocol.handle(
-    'x-rd-extension',
-    (request) => {
-      const url = new URL(request.url);
-      // Re-encoding the extension ID here also ensures it doesn't contain any
-      // directory traversal etc. issues.
-      const extensionID = Buffer.from(url.hostname, 'hex').toString('base64url');
-      const resourcePath = path.normalize(url.pathname);
-      const filepath = path.join(paths.extensionRoot, extensionID, resourcePath);
+function setupExtensionProtocolHandler(partition?: string): Promise<void> {
+  const scheme = 'x-rd-extension';
+  const session = partition ? Electron.session.fromPartition(partition) : Electron.session.defaultSession;
 
-      return net.fetch(pathToFileURL(filepath).toString());
-    });
+  if (!session.protocol.isProtocolHandled(scheme)) {
+    session.protocol.handle(
+      scheme,
+      (request) => {
+        const url = new URL(request.url);
+        // Re-encoding the extension ID here also ensures it doesn't contain any
+        // directory traversal etc. issues.
+        const extensionID = Buffer.from(url.hostname, 'hex').toString('base64url');
+        const resourcePath = path.normalize(url.pathname);
+        const filepath = path.join(paths.extensionRoot, extensionID, resourcePath);
+
+        return Electron.net.fetch(pathToFileURL(filepath).toString());
+      });
+  }
+
+  return Promise.resolve();
 }
 
 export function setupProtocolHandlers() {
   try {
     setupAppProtocolHandler();
     setupExtensionProtocolHandler();
+    mainEvents.handle('extensions/register-protocol', setupExtensionProtocolHandler);
 
     protocolsRegistered.resolve();
   } catch (ex) {

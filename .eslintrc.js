@@ -238,6 +238,9 @@ Object.assign(module.exports.rules, {
 
   // destructuring: don't error if `a` is reassigned, but `b` is never reassigned
   'prefer-const': ['error', { destructuring: 'all' }],
+
+  // This one assumes all callbacks have errors in the first argument, which isn't likely.
+  'n/no-callback-literal': 'off',
 });
 module.exports.rules['key-spacing'][1].align.mode = 'strict';
 

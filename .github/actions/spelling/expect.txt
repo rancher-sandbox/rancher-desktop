@@ -658,6 +658,7 @@ poweroff
 PQgrl
 prakhar
 prebuilds
+preflights
 Privs
 PROCARGS
 procnet
