@@ -526,10 +526,10 @@ export class ExtensionManagerImpl implements ExtensionManager {
     let errored = false;
 
     process.stdout.on('data', (data: string | Buffer) => {
-      stdout.push(Buffer.from(data));
+      stdout.push(typeof data === 'string' ? Buffer.from(data) : data);
     });
     process.stderr.on('data', (data: string | Buffer) => {
-      stderr.push(Buffer.from(data));
+      stderr.push(typeof data === 'string' ? Buffer.from(data) : data);
     });
 
     return new Promise((resolve, reject) => {

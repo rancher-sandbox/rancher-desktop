@@ -89,7 +89,7 @@ async function getChecksum(name: string, filenameOverride?: string): Promise<ass
   const stat = await fs.promises.stat(filepath);
   const input = fs.createReadStream(filepath);
   const hasher = crypto.createHash('sha512');
-  const promise = new Promise((resolve) => {
+  const promise = new Promise<void>((resolve) => {
     input.on('end', resolve);
   });
 

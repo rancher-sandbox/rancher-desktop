@@ -1539,10 +1539,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       await new Promise<void>((resolve, reject) => {
         proc.stdout?.on('data', (chunk: Buffer | string) => {
-          stdout.push(Buffer.from(chunk));
+          stdout.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
         });
         proc.stderr?.on('data', (chunk: Buffer | string) => {
-          stderr.push(Buffer.from(chunk));
+          stderr.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
         });
         proc.on('error', reject);
         proc.on('exit', (code, signal) => {
