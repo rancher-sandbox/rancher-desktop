@@ -26,6 +26,10 @@ export default Vue.extend({
       type:     String,
       required: true,
     },
+    isProgressBarVisible: {
+      type:    Boolean,
+      default: false,
+    },
   },
   computed: {
     getSubComponent(): VueConstructor | undefined {
@@ -61,20 +65,23 @@ export default Vue.extend({
       <img
         v-if="isSvgIcon"
         class="item-icon icon-svg"
+        :class="{'make-icon-inline': isProgressBarVisible}"
         :src="svgIconPath"
       >
       <i
         v-else
         class="item-icon"
-        :class="icon"
+        :class="{'make-icon-inline': isProgressBarVisible, icon: true}"
       />
       <span
         class="item-label"
+        :class="{'make-label-invisible': isProgressBarVisible}"
       >
         <b>{{ t(data.label.bar) }}:</b>
       </span>
       <span
         class="item-value"
+        :class="{'make-value-invisible': isProgressBarVisible}"
       >
         {{ data.value }}
       </span>
@@ -84,6 +91,7 @@ export default Vue.extend({
       v-if="subComponent"
       :icon="icon"
       :is-status-bar-item="true"
+      :is-progress-bar-visible="isProgressBarVisible"
     ></component>
   </div>
 </template>
@@ -108,7 +116,7 @@ export default Vue.extend({
     }
   }
 
-  @media (max-width: 1000px) {
+  @media (max-width: 500px) {
     .item-label, ::v-deep .item-label {
       display: none;
     }
@@ -118,12 +126,32 @@ export default Vue.extend({
     }
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 450px) {
     .item-value, ::v-deep .item-value {
       display: none;
     }
 
     .item-icon, ::v-deep .item-icon {
+      display: inline;
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .make-label-invisible, ::v-deep .make-label-invisible {
+      display: none;
+    }
+
+    .make-icon-inline, ::v-deep .make-icon-inline {
+      display: inline;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .make-value-invisible, ::v-deep .make-value-invisible {
+      display: none;
+    }
+
+    .make-icon-inline, ::v-deep .make-icon-inline {
       display: inline;
     }
   }
