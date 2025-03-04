@@ -202,7 +202,7 @@ func TestParse(t *testing.T) {
 		result, err := c.parse([]string{"hello", "world"})
 		assert.NoError(t, err)
 		if assert.NotNil(t, result) {
-			assert.Equal(t, []string{"hello", "world"}, result.args)
+			assert.Equal(t, []string{"--", "hello", "world"}, result.args)
 		}
 	})
 	t.Run("subcommand handler", func(t *testing.T) {
@@ -211,6 +211,9 @@ func TestParse(t *testing.T) {
 		localCommands := make(map[string]commandDefinition)
 		localCommands[""] = commandDefinition{
 			commands: &localCommands,
+			subcommands: map[string]struct{}{
+				"subcommand": {},
+			},
 		}
 		localCommands["subcommand"] = commandDefinition{
 			commands: &localCommands,
@@ -223,5 +226,36 @@ func TestParse(t *testing.T) {
 		_, err := localCommands[""].parse([]string{"subcommand", "a", "b"})
 		assert.NoError(t, err)
 		assert.True(t, run)
+	})
+	t.Run("subcommand with mixed arguments", func(t *testing.T) {
+		t.Parallel()
+		var seenArgs []string
+		localCommands := make(map[string]commandDefinition)
+		localCommands[""] = commandDefinition{
+			commands: &localCommands,
+			subcommands: map[string]struct{}{
+				"subcommand": {},
+			},
+			options: map[string]argHandler{
+				"--foo": ignoredArgHandler,
+			},
+		}
+		localCommands["subcommand"] = commandDefinition{
+			commandPath: "subcommand",
+			commands:    &localCommands,
+			options: map[string]argHandler{
+				"--bar": ignoredArgHandler,
+			},
+			handler: func(cd *commandDefinition, s []string, argHandlers argHandlersType) (*parsedArgs, error) {
+				seenArgs = s
+				return &parsedArgs{}, nil
+			},
+		}
+		result, err := localCommands[""].parse([]string{"subcommand", "--foo", "FOO", "qq", "--bar", "BAR", "zz"})
+		if assert.NoError(t, err) {
+			assert.Equal(t, []string{"qq", "zz"}, seenArgs)
+			// Because we have a custom handler, they don't show up in result.args
+			assert.Equal(t, []string{"subcommand", "--foo", "FOO", "--bar", "BAR"}, result.args)
+		}
 	})
 }

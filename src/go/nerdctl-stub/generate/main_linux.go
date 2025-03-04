@@ -32,6 +32,8 @@ type helpData struct {
 	// (`--version`) or the short option (`-v`), and the value is whether the
 	// option takes an argument.
 	Options map[string]bool
+	// Whether this command has positional arguments.
+	hasPositionalArguments bool
 	// mergedOptions includes local options plus inherited options.
 	mergedOptions map[string]struct{}
 }
@@ -94,12 +96,21 @@ func main() {
 // writer is the file to write to for the result; it is expected that `go fmt`
 // will be run on it eventually.
 func buildSubcommand(args []string, parentData helpData, writer io.Writer) error {
-	logrus.WithField("args", args).Trace("building subcommand")
 	help, err := getHelp(args)
 	if err != nil {
 		return fmt.Errorf("error getting help for %v: %w", args, err)
 	}
 	subcommands := parseHelp(help, parentData)
+
+	fields := logrus.Fields{"args": args}
+	if subcommands.hasPositionalArguments {
+		fields["positional"] = true
+	}
+	logrus.WithFields(fields).Trace("building subcommand")
+
+	if subcommands.hasPositionalArguments && len(subcommands.Commands) > 0 {
+		return fmt.Errorf("Invalid command %v: has positional arguments, but also subcommands %+v", args, subcommands.Commands)
+	}
 
 	err = emitCommand(args, subcommands, writer)
 	if err != nil {
@@ -159,6 +170,17 @@ func parseHelp(help string, parentData helpData) helpData {
 				state = STATE_COMMANDS
 			} else if strings.HasSuffix(strings.ToUpper(line), "FLAGS:") {
 				state = STATE_OPTIONS
+			} else if strings.HasPrefix(strings.ToUpper(line), "USAGE:") {
+				// Usage is on the same line, so we have to process this now.
+				// Command is `nerdctl subcommand [flags]`; anything after `[flags]` is
+				// assumed to be positional arguments.
+				_, newArgs, _ := strings.Cut(strings.ToUpper(line), "[FLAGS]")
+				newArgs = strings.TrimSpace(newArgs)
+				// Unlike everything else, `nerdctl compose` has a usage string of
+				// `nerdctl compose [flags] COMMAND` so we need to ignore that.
+				if newArgs != "" && newArgs != "COMMAND" {
+					result.hasPositionalArguments = true
+				}
 			} else {
 				state = STATE_OTHER
 			}
