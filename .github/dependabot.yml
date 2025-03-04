@@ -19,7 +19,7 @@ updates:
   ignore:
   - # Needs to be updated along with NodeJS version.
     dependency-name: "@types/node"
-    versions: [">20"]
+    update-types: [version-update:semver-major]
   - # Need to migrate to Vue 3 before moving beyond 2.7.x.
     dependency-name: "vue"
     versions: [">2"]
