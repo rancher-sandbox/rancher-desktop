@@ -57,7 +57,7 @@ export default {
         .map(image => image.imageName);
     },
     installedExtensionImages() {
-      return this.extensions.map(image => image.id);
+      return this.installedExtensions.map(image => image.id);
     },
     protectedImages() {
       return [
@@ -69,7 +69,7 @@ export default {
     },
     ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),
     ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' }),
-    ...mapGetters('extensions', { extensions: 'list' }),
+    ...mapGetters('extensions', ['installedExtensions']),
   },
 
   watch: {
