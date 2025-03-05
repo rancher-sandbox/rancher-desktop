@@ -25,6 +25,8 @@ mac:
   hardenedRuntime: true
   gatekeeperAssess: false
   extendInfo:
+    NSBluetoothAlwaysUsageDescription: ~
+    NSBluetoothPeripheralUsageDescription: ~
     NSCameraUsageDescription: ~
     NSMicrophoneUsageDescription: ~
   icon: ./resources/icons/mac-icon.png
