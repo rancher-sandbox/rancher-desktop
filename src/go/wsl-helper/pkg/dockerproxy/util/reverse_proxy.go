@@ -107,13 +107,13 @@ func (proxy *ReverseProxy) forwardRequest(w http.ResponseWriter, r *http.Request
 	}
 
 	// Read the response from the backend
-	backendResponse, err := http.ReadResponse(bufio.NewReader(backendConn), newReq)
+	bufferedReader := bufio.NewReader(backendConn)
+	backendResponse, err := http.ReadResponse(bufferedReader, newReq)
 	if err != nil {
 		proxy.sendError(w, "failed to read the response from the backend: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 	defer backendResponse.Body.Close()
-
 	// ModifyResponse function
 	// Allows post-processing of the backend response
 	if proxy.ModifyResponse != nil {
@@ -137,7 +137,16 @@ func (proxy *ReverseProxy) forwardRequest(w http.ResponseWriter, r *http.Request
 
 	// Check if the response has a status code of 101 (Switching Protocols)
 	if backendResponse.StatusCode == http.StatusSwitchingProtocols {
-		proxy.handleUpgradedConnection(w, backendConn)
+		// When reading the response, the buffered reader may have consumed part of the body
+		// beyond the headers. We need to recover these overread bytes and ensure they are
+		// sent to the client immediately after hijacking the connection.
+		bufferedBytesLen := bufferedReader.Buffered()
+		pendingResponseBytes, err := bufferedReader.Peek(bufferedBytesLen)
+		if err != nil {
+			proxy.logf("failed to peek for buffered bytes: %v", err)
+			return
+		}
+		proxy.handleUpgradedConnection(w, backendConn, pendingResponseBytes)
 		return
 	}
 
@@ -156,9 +165,9 @@ func (proxy *ReverseProxy) forwardRequest(w http.ResponseWriter, r *http.Request
 //
 // This method:
 // - Hijacks the existing connection
-// - Manages buffered data
+// - Handling any buffered data that was overread during the initial response parsing
 // - Enables bidirectional communication after protocol upgrade
-func (proxy *ReverseProxy) handleUpgradedConnection(w http.ResponseWriter, backendConn net.Conn) {
+func (proxy *ReverseProxy) handleUpgradedConnection(w http.ResponseWriter, backendConn net.Conn, pendingResponseBytes []byte) {
 	// Cast writer to safely hijack the connection
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -199,6 +208,14 @@ func (proxy *ReverseProxy) handleUpgradedConnection(w http.ResponseWriter, backe
 			proxy.logf("failed to write buffered data to the backend: %v", err)
 			return
 		}
+	}
+
+	// After hijacking the connection, send any pending bytes that were overread by the buffered reader
+	// during the initial response parsing. This ensures no data is lost during the protocol upgrade.
+	_, err = clientConn.Write(pendingResponseBytes)
+	if err != nil {
+		proxy.logf("failed to write pending response data the client: %v", err)
+		return
 	}
 
 	// Cast backend and client connections to HalfReadWriteCloser
