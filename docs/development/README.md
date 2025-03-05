@@ -6,7 +6,6 @@ ask around!
 
 [Information About Factory Reset](factory-reset.md)  
 [Feature Tracker](features.md)  
-[GitHub Runner Setup](github-runner-setup.md)  
 [Tips for Working with OBS](obs.md)  
 [Linux Release Process](linux-release-process.md)  
 [Release Checklist](release-checklist.md)  

@@ -1,2 +1,0 @@
-BOOTPROTO='dhcp'
-STARTMODE='onboot'
