@@ -10,8 +10,8 @@
 ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.4:
   logo: https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/refs/tags/v0.0.4/open-webui.svg
 ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.23.5: {}
-julianb90/tachometer:0.0.3: {}
-docker/logs-explorer-extension:0.2.2: {}
+julianb90/tachometer:0.1.1: {}
+docker/logs-explorer-extension:0.2.5: {}
 prakhar1989/dive-in:0.0.8:
   containerd_compatible: false
 joycelin79/newman-extension:0.0.7: {}
@@ -19,8 +19,8 @@ docker/resource-usage-extension:1.0.3: {}
 anchore/docker-desktop-extension:0.5.1:
   containerd_compatible: false
 ignatandrei/blockly-automation:0.0.7: {}
-docker/disk-usage-extension:0.2.7:
+docker/disk-usage-extension:0.2.8:
   containerd_compatible: false
-harpooncorp/harpoon-ext:0.0.4: {}
-vklokun/docker-desktop-extension:0.1.0: {}
+harpooncorp/harpoon-ext:0.0.6: {}
+vklokun/docker-desktop-extension:0.1.1: {}
 caretdev/intersystems-extension:0.1.7: {}
