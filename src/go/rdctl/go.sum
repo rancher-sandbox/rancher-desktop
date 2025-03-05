@@ -8,8 +8,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/docker/cli v28.0.1+incompatible h1:g0h5NQNda3/CxIsaZfH4Tyf6vpxFth7PYl3hgCPOKzs=
 github.com/docker/cli v28.0.1+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
-github.com/docker/docker-credential-helpers v0.9.1 h1:xrekBBXJprfiFFWKrKxsFBjMl+5cG1GaNN1kZTcjXD0=
-github.com/docker/docker-credential-helpers v0.9.1/go.mod h1:T4QzRTwtu1hvhXKzeQkJm6GNMJT3bJ0S6V4LU/SZV9A=
+github.com/docker/docker-credential-helpers v0.9.2 h1:50JF7ADQiHdAVBRtg/vy883Y4U5+5GmPOBNtUU+X+6A=
+github.com/docker/docker-credential-helpers v0.9.2/go.mod h1:x+4Gbw9aGmChi3qTLZj8Dfn0TD20M/fuWy0E5+WDeCo=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
