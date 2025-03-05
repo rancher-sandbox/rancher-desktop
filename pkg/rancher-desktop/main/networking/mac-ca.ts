@@ -64,18 +64,23 @@ async function* getFilteredCertificates(workdir: string, keychain: string): Asyn
   const certIterator = getPEMCertificates(workdir, keychain);
 
   for await (const certPEM of certIterator) {
-    const cert = new crypto.X509Certificate(certPEM);
-    const certPath = path.join(workdir, 'cert.pem');
-
-    if (!cert.ca) {
-      console.debug('Skipping non-CA certificate', cert.subject);
-      continue;
-    }
-    await fs.promises.writeFile(certPath, certPEM, 'utf-8');
     try {
-      await spawnFile('/usr/bin/security', ['verify-cert', `-c${ certPath }`, '-L', '-l', '-Roffline'], { stdio: console });
+      const cert = new crypto.X509Certificate(certPEM);
+      const certPath = path.join(workdir, 'cert.pem');
+
+      if (!cert.ca) {
+        console.debug('Skipping non-CA certificate', cert.subject);
+        continue;
+      }
+      await fs.promises.writeFile(certPath, certPEM, 'utf-8');
+      try {
+        await spawnFile('/usr/bin/security', ['verify-cert', `-c${ certPath }`, '-L', '-l', '-Roffline'], { stdio: console });
+      } catch (ex) {
+        console.debug('Skipping untrusted certificate', cert.subject);
+        continue;
+      }
     } catch (ex) {
-      console.debug('Skipping untrusted certificate', cert.subject);
+      console.debug('Skipping certificate that could not be parsed', ex);
       continue;
     }
     yield certPEM;
