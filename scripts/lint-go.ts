@@ -88,8 +88,7 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
 
   const args = [
     'run', `github.com/golangci/golangci-lint/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
-    'run', '--config=.github/workflows/config/.golangci.yaml',
-    '--timeout=10m', '--verbose',
+    'run', '--timeout=10m', '--verbose',
   ];
   let success = true;
 

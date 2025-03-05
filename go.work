@@ -6,7 +6,6 @@ use (
 	./scripts
 	./src/go/docker-credential-none
 	./src/go/extension-proxy
-	./src/go/github-runner-monitor
 	./src/go/guestagent
 	./src/go/mock-wsl
 	./src/go/nerdctl-stub
