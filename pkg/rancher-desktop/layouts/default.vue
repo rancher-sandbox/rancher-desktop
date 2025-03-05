@@ -71,14 +71,29 @@ export default {
 
   computed: {
     routes() {
-      return mainRoutes.map(route => route.route === '/Diagnostics' ? { ...route, error: this.errorCount } : route);
+      const badges = {
+        '/Diagnostics': this.diagnosticsCount,
+        '/Extensions':  this.extensionUpgradeCount,
+      };
+
+      return mainRoutes.map((route) => {
+        if (route.route in badges) {
+          return { ...route, error: badges[route.route] };
+        }
+
+        return route;
+      });
     },
     paths() {
       return mainRoutes.map(r => r.route);
     },
-    /** @returns {number} The number of errors. */
-    errorCount() {
+    /** @returns {number} The number of diagnostics errors. */
+    diagnosticsCount() {
       return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
+    },
+    /** @returns {number} The number of extensions with upgrade available. */
+    extensionUpgradeCount() {
+      return this.installedExtensions.filter(ext => ext.canUpgrade).length;
     },
     ...mapState('credentials', ['credentials']),
     ...mapGetters('diagnostics', ['diagnostics']),
