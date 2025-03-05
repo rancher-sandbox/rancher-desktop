@@ -73,11 +73,11 @@ import NavItem from './NavItem.vue';
 
 import DashboardButton from '@pkg/components/DashboardOpen.vue';
 import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
-import type { ExtensionMetadata } from '@pkg/main/extensions/types';
+import type { ExtensionState } from '@pkg/store/extensions';
 import { hexEncode } from '@pkg/utils/string-encode';
 
-type ExtensionWithUI = ExtensionMetadata & {
-  ui: { 'dashboard-tab': { title: string } };
+type ExtensionWithUI = ExtensionState & {
+  metadata: { ui: { 'dashboard-tab': { title: string } } };
 };
 
 export default Vue.extend({
@@ -90,7 +90,7 @@ export default Vue.extend({
   },
   props: {
     items: {
-      type:      Array,
+      type:      Array as PropType<{route: string; error?: number; experimental?: boolean}[]>,
       required:  true,
       validator: (value: {route: string, error?: number}[]) => {
         const nuxt: NuxtApp = (global as any).$nuxt;
@@ -112,7 +112,7 @@ export default Vue.extend({
       },
     },
     extensions: {
-      type:     Array as PropType<{ id: string, metadata: ExtensionMetadata }[]>,
+      type:     Array as PropType<ExtensionState[]>,
       required: true,
     },
   },
@@ -133,10 +133,12 @@ export default Vue.extend({
     };
   },
   computed: {
-    extensionsWithUI(): { id: string, metadata: ExtensionWithUI }[] {
-      const allExtensions: { id: string, metadata: ExtensionMetadata }[] = (this as any).extensions;
+    extensionsWithUI(): ExtensionWithUI[] {
+      function hasUI(ext: ExtensionState): ext is ExtensionWithUI {
+        return !!ext.metadata.ui?.['dashboard-tab']?.title;
+      }
 
-      return allExtensions.filter(ext => ext.metadata?.ui?.['dashboard-tab']) as any;
+      return this.extensions.filter<ExtensionWithUI>(hasUI);
     },
   },
   methods: {

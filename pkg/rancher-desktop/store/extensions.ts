@@ -1,3 +1,4 @@
+import semver from 'semver';
 import { GetterTree } from 'vuex';
 
 import { fetchAPI } from './credentials';
@@ -6,15 +7,31 @@ import { ActionContext, MutationsType } from './ts-helpers';
 import MARKETPLACE_DATA from '@pkg/assets/extension-data.yaml';
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
 
-export interface ExtensionState {
+/**
+ * BackendExtensionState describes the API response from the API backend.
+ * The raw response is a record of slug (i.e. extension ID without version) to
+ * this structure.
+ */
+interface BackendExtensionState {
+  /** The installed extension version. */
   version: string;
+  /** Information from the extension's metadata.json. */
   metadata: ExtensionMetadata;
+  /** Labels on the extension image. */
   labels: Record<string, string>;
 }
 
-export type ExtensionWithId = ExtensionState & {
-  /** The extension id, excluding the version (tag). */
+/**
+ * ExtensionState describes the data this Vuex store exposes; this is the same
+ * as the backend state with the addition of a version available in the catalog.
+ */
+export type ExtensionState = BackendExtensionState & {
+  /** The extension id, excluding the version (tag). Also known as "slug". */
   id: string;
+  /** The version available in the marketplace. */
+  availableVersion?: string;
+  /** Whether this extension can be upgraded (i.e. availableVersion > version). */
+  canUpgrade: boolean;
 };
 
 interface ExtensionsState {
@@ -51,7 +68,24 @@ export const actions = {
 
       return;
     }
-    const result: Record<string, ExtensionState> = await response.json();
+    const backendState: Record<string, BackendExtensionState> = await response.json();
+    const result = Object.fromEntries(Object.entries(backendState).map(([id, data]) => {
+      const marketplaceEntry = (MARKETPLACE_DATA as MarketplaceData[]).find(ext => ext.slug === id);
+      const frontendState: ExtensionState = {
+        ...data, id, canUpgrade: false,
+      };
+
+      if (marketplaceEntry) {
+        frontendState.availableVersion = marketplaceEntry.version;
+        try {
+          frontendState.canUpgrade = semver.gt(marketplaceEntry.version, data.version);
+        } catch {
+          // Either existing version or catalog version is invalid; can't upgrade.
+        }
+      }
+
+      return [id, frontendState];
+    }));
 
     commit('SET_EXTENSIONS', result);
   },
@@ -92,8 +126,8 @@ export const actions = {
 };
 
 export const getters: GetterTree<ExtensionsState, ExtensionsState> = {
-  list(state: ExtensionsState): ExtensionWithId[] {
-    return Object.entries(state.extensions).map(([id, info]) => ({ id, ...info }));
+  installedExtensions(state: ExtensionsState): ExtensionState[] {
+    return Object.values(state.extensions);
   },
   marketData(state: ExtensionsState): MarketplaceData[] {
     return MARKETPLACE_DATA;

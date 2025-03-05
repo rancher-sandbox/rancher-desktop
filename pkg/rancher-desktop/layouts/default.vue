@@ -8,7 +8,7 @@
     <rd-nav
       class="nav"
       :items="routes"
-      :extensions="extensions"
+      :extensions="installedExtensions"
       @open-dashboard="openDashboard"
       @open-preferences="openPreferences"
     />
@@ -76,12 +76,13 @@ export default {
     paths() {
       return mainRoutes.map(r => r.route);
     },
+    /** @returns {number} The number of errors. */
     errorCount() {
       return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
     },
     ...mapState('credentials', ['credentials']),
     ...mapGetters('diagnostics', ['diagnostics']),
-    ...mapGetters('extensions', { extensions: 'list' }),
+    ...mapGetters('extensions', ['installedExtensions']),
   },
 
   beforeMount() {

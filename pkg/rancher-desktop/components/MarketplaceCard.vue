@@ -35,7 +35,7 @@
       </Banner>
       <!-- install button -->
       <button
-        v-if="!error && !currentAction && !installedVersion"
+        v-if="!error && !currentAction && !installed"
         data-test="button-install"
         class="role-primary btn btn-xs"
         @click="appInstallation('install')"
@@ -44,7 +44,7 @@
       </button>
       <!-- upgrade button -->
       <button
-        v-if="!error && !currentAction && canUpgrade"
+        v-if="!error && !currentAction && installed?.canUpgrade"
         class="role-primary btn btn-xs"
         @click="appInstallation('upgrade')"
       >
@@ -52,7 +52,7 @@
       </button>
       <!-- uninstall button -->
       <button
-        v-if="!error && !currentAction && installedVersion"
+        v-if="!error && !currentAction && installed"
         data-test="button-uninstall"
         class="role-danger btn btn-xs"
         @click="appInstallation('uninstall')"
@@ -76,10 +76,9 @@
 
 <script lang="ts">
 import { Banner } from '@rancher/components';
-import semver from 'semver';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import { MarketplaceData } from '@pkg/store/extensions.js';
+import type { ExtensionState, MarketplaceData } from '@pkg/store/extensions';
 
 import type { PropType } from 'vue';
 
@@ -92,16 +91,8 @@ export default {
       type:     Object as PropType<MarketplaceData>,
       required: true,
     },
-    credentials: {
-      type:     Object,
-      required: true,
-    },
-    isInstalled: {
-      type:     Boolean,
-      required: true,
-    },
-    installedVersion: {
-      type:     String,
+    installed: {
+      type:     Object as undefined | PropType<ExtensionState>,
       required: false,
       default:  undefined,
     },
@@ -119,20 +110,10 @@ export default {
       return `${ this.extensionWithoutVersion }:${ this.extension.version }`;
     },
     extensionWithoutVersion() {
-      const index = this.extension.slug.lastIndexOf(':');
-
-      return this.extension.slug.substring(0, index) || this.extension.slug;
+      return this.extension.slug;
     },
     extensionLink() {
       return this.extension.slug.startsWith('ghcr.io/') ? `https://${ this.extension.slug }` : `https://hub.docker.com/extensions/${ this.extension.slug }`;
-    },
-    canUpgrade() {
-      try {
-        return this.installedVersion && semver.gt(this.extension.version, this.installedVersion);
-      } catch {
-        // If installed or available version is not semver.
-        return false;
-      }
     },
     loadingLabel() {
       return this.t(`marketplace.loading.${ this.currentAction }`);
@@ -159,8 +140,6 @@ export default {
           this.currentAction = null;
         }
       } finally {
-        this.$emit('update:extension');
-
         setTimeout(() => {
           this.resetBanners();
         }, 3_000);
