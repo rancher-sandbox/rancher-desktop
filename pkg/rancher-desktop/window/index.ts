@@ -211,14 +211,20 @@ function createView() {
   const webPreferences: Electron.WebPreferences = {
     nodeIntegration:     false,
     contextIsolation:    true,
-    preload:             path.join(paths.resources, 'preload.js'),
     sandbox:             true,
     additionalArguments: [JSON.stringify(hostInfo)],
   };
 
   if (currentExtension?.id) {
     webPreferences.partition = `persist:rdx-${ currentExtension.id }`;
-    const webRequest = Electron.session.fromPartition(webPreferences.partition).webRequest;
+    const session = Electron.session.fromPartition(webPreferences.partition);
+    const { webRequest } = session;
+
+    session.registerPreloadScript({
+      id:       `rdx-preload-${ currentExtension.id }`,
+      filePath: path.join(paths.resources, 'preload.js'),
+      type:     'frame',
+    });
 
     webRequest.onBeforeSendHeaders((details, callback) => {
       const source = details.webContents?.getURL() ?? '';
