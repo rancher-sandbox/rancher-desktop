@@ -33,22 +33,42 @@
       >
         {{ error }}
       </Banner>
+      <!-- install button -->
       <button
-        v-if="!error"
+        v-if="!error && !currentAction && !installed"
         data-test="button-install"
-        :class="isInstalled ? 'role-danger': 'role-primary'"
-        class="btn btn-xs"
-        :disabled="loading"
-        @click="appInstallation(installationAction)"
+        class="role-primary btn btn-xs"
+        @click="appInstallation('install')"
       >
-        <span
-          v-if="loading"
-          name="loading"
-          :is-loading="loading"
-        >
-          <loading-indicator>{{ buttonLabel }}</loading-indicator>
+        {{ t('marketplace.labels.install') }}
+      </button>
+      <!-- upgrade button -->
+      <button
+        v-if="!error && !currentAction && installed?.canUpgrade"
+        class="role-primary btn btn-xs"
+        @click="appInstallation('upgrade')"
+      >
+        {{ t('marketplace.labels.upgrade') }}
+      </button>
+      <!-- uninstall button -->
+      <button
+        v-if="!error && !currentAction && installed"
+        data-test="button-uninstall"
+        class="role-danger btn btn-xs"
+        @click="appInstallation('uninstall')"
+      >
+        {{ t('marketplace.labels.uninstall') }}
+      </button>
+      <!-- "loading" fake button -->
+      <button
+        v-if="!error && currentAction"
+        data-test="button-loading"
+        class="role-primary btn btn-xs"
+        disabled="true"
+      >
+        <span name="loading" is-loading="true">
+          <loading-indicator>{{ loadingLabel }}</loading-indicator>
         </span>
-        <span v-if="!loading">{{ buttonLabel }}</span>
       </button>
     </div>
   </div>
@@ -58,9 +78,11 @@
 import { Banner } from '@rancher/components';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import { MarketplaceData } from '@pkg/store/extensions.js';
+import type { ExtensionState, MarketplaceData } from '@pkg/store/extensions';
 
 import type { PropType } from 'vue';
+
+type action = 'install' | 'uninstall' | 'upgrade';
 
 export default {
   components: { LoadingIndicator, Banner },
@@ -69,44 +91,32 @@ export default {
       type:     Object as PropType<MarketplaceData>,
       required: true,
     },
-    credentials: {
-      type:     Object,
-      required: true,
-    },
-    isInstalled: {
-      type:     Boolean,
-      required: true,
+    installed: {
+      type:     Object as undefined | PropType<ExtensionState>,
+      required: false,
+      default:  undefined,
     },
   },
   data() {
     return {
-      loading:      false,
-      error:        null as string | null,
-      response:     null,
-      bannerActive: false,
+      currentAction: null as null | action,
+      error:         null as string | null,
+      response:      null,
+      bannerActive:  false,
     };
   },
   computed: {
-    installationAction() {
-      return this.isInstalled ? 'uninstall' : 'install';
-    },
     versionedExtension() {
       return `${ this.extensionWithoutVersion }:${ this.extension.version }`;
     },
     extensionWithoutVersion() {
-      const index = this.extension.slug.lastIndexOf(':');
-
-      return this.extension.slug.substring(0, index) || this.extension.slug;
+      return this.extension.slug;
     },
     extensionLink() {
       return this.extension.slug.startsWith('ghcr.io/') ? `https://${ this.extension.slug }` : `https://hub.docker.com/extensions/${ this.extension.slug }`;
     },
-    buttonLabel() {
-      if (this.loading) {
-        return this.isInstalled ? this.t('marketplace.sidebar.uninstallButton.loading') : this.t('marketplace.sidebar.installButton.loading');
-      } else {
-        return this.isInstalled ? this.t('marketplace.sidebar.uninstallButton.label') : this.t('marketplace.sidebar.installButton.label');
-      }
+    loadingLabel() {
+      return this.t(`marketplace.loading.${ this.currentAction }`);
     },
   },
 
@@ -114,39 +124,26 @@ export default {
     resetBanners() {
       this.error = null;
     },
-    appInstallation(action: 'uninstall' | 'install') {
-      this.loading = true;
+    async appInstallation(action: action) {
+      this.currentAction = action;
       this.resetBanners();
-      const extensionId = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;
+      const id = action === 'uninstall' ? this.extensionWithoutVersion : this.versionedExtension;
+      const verb = action === 'uninstall' ? 'uninstall' : 'install'; // upgrades are installs
 
-      fetch(
-        `http://localhost:${ this.credentials?.port }/v1/extensions/${ action }?id=${ extensionId }`,
-        {
-          method:  'POST',
-          headers: new Headers({
-            Authorization: `Basic ${ window.btoa(
-              `${ this.credentials?.user }:${ this.credentials?.password }`,
-            ) }`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }),
-        },
-      ).then((r) => {
-        if (!r.ok) {
-          this.error = r.statusText;
-          this.loading = false;
+      try {
+        const result = await this.$store.dispatch(`extensions/${ verb }`, { id });
+
+        if (typeof result === 'string') {
+          this.error = result;
+          this.currentAction = null;
+        } else if (result) {
+          this.currentAction = null;
         }
-
-        if (r.status === 201) {
-          this.loading = false;
-        }
-      })
-        .finally(() => {
-          this.$emit('update:extension');
-
-          setTimeout(() => {
-            this.resetBanners();
-          }, 3000);
-        });
+      } finally {
+        setTimeout(() => {
+          this.resetBanners();
+        }, 3_000);
+      }
     },
   },
 };
@@ -205,6 +202,10 @@ export default {
 
     .banner {
       margin: 0;
+    }
+
+    button:not(:first-of-type) {
+      margin-left: 10px;
     }
   }
 

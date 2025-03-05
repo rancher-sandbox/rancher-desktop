@@ -190,13 +190,14 @@ marketplace:
   banners:
     install: Extension {name} has been installed.
     uninstall: Extension {name} has been removed.
-  sidebar:
-    installButton:
-      label: Install
-      loading: Installing...
-    uninstallButton:
-      label: Remove
-      loading: Removing...
+  labels:
+    install: Install
+    uninstall: Remove
+    upgrade: Upgrade
+  loading:
+    install: Installing...
+    uninstall: Removing...
+    upgrade: Upgrading...
   moreInfo: More information
 containers:
   title: Containers
@@ -4864,6 +4865,7 @@ extensions:
   icon: icon-extension
   installed:
     list:
+      upgrade: Upgrade
       uninstall: Remove
     emptyState:
       icon: icon-extension
