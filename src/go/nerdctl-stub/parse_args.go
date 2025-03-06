@@ -47,6 +47,10 @@ type commandDefinition struct {
 	// options for this (sub) command.  If the handler is null, the option does
 	// not take arguments.
 	options map[string]argHandler
+	// if set, this command can include foreign flags that should not be parsed.
+	// This should be set for things like `nerdctl run` where flags can be passed
+	// to the command to be run.
+	hasForeignFlags bool
 	// handler for any positional arguments and subcommands.  This should not
 	// include the name of the subcommand itself.  If this is not given, all
 	// subcommands are searched for, and positional arguments are ignored.
@@ -138,8 +142,14 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 	// - At each command level, short options (-x) at that level can be parsed.
 	// - At each command level, long options from the current or any previous level can be parsed.
 	// - If a command contains positional arguments, it may not contain any subcommands.
-	//   (We check this in ./generate to make sure this stays true.)
+	//   (We check this in `./generate` to make sure this stays true.)
 	// - Positional arguments can be intermixed with (both long and short) options.
+	// - If a command can have foreign flags (e.g. `nerdctl run`), we stop parsing
+	//   options on first positional argument.  This means we parse the flag in
+	//   `nerdctl run --env foo=bar image sh -c ...` but not the `--env` flag in
+	//   `nerdctl run image --env foo=bar sh -c ...`.
+	// - Having foreign flags is mutually exclusive with having subcommands; this
+	//   is also checked in `./generate`.
 	// - `--` stops parsing of options.
 	var result parsedArgs
 	var positionalArgs []string
@@ -196,9 +206,17 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 			}
 			break
 		} else {
-			// This command doesn't have subcommands; everything is positional arguments.
-			// We still have to parse other arguments for flags, though.
-			positionalArgs = append(positionalArgs, arg)
+			if c.hasForeignFlags {
+				// If we have foreign flags, assume the rest of the arguments starting
+				// from the first positional argument is foreign.
+				positionalArgs = append(positionalArgs, args[argIndex:]...)
+				break
+			} else {
+				// This command doesn't have subcommands, nor foreign arguments.
+				// Everything is positional arguments; we still have to parse other
+				// arguments for flags, though.
+				positionalArgs = append(positionalArgs, arg)
+			}
 		}
 	}
 	// At this point, `result` is filled with options, and `positionalArgs`
