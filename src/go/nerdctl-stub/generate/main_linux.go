@@ -32,8 +32,11 @@ type helpData struct {
 	// (`--version`) or the short option (`-v`), and the value is whether the
 	// option takes an argument.
 	Options map[string]bool
-	// Whether this command has positional arguments.
-	hasPositionalArguments bool
+	// If set, this command can have subcommands; this alters argument parsing.
+	canHaveSubcommands bool
+	// If set, this command can pass flags to foreign commands, as in `nerdctl run`.
+	// This alters argument parsing by letting us ignore unknown flags.
+	HasForeignFlags bool
 	// mergedOptions includes local options plus inherited options.
 	mergedOptions map[string]struct{}
 }
@@ -103,13 +106,18 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 	subcommands := parseHelp(help, parentData)
 
 	fields := logrus.Fields{"args": args}
-	if subcommands.hasPositionalArguments {
-		fields["positional"] = true
+	if subcommands.HasForeignFlags {
+		fields["type"] = "arguments"
+	} else if !subcommands.canHaveSubcommands {
+		fields["type"] = "positional"
 	}
 	logrus.WithFields(fields).Trace("building subcommand")
 
-	if subcommands.hasPositionalArguments && len(subcommands.Commands) > 0 {
+	if !subcommands.canHaveSubcommands && len(subcommands.Commands) > 0 {
 		return fmt.Errorf("Invalid command %v: has positional arguments, but also subcommands %+v", args, subcommands.Commands)
+	}
+	if subcommands.canHaveSubcommands && subcommands.HasForeignFlags {
+		return fmt.Errorf("Invalid command %v: has subcommands and foreign flags", args)
 	}
 
 	err = emitCommand(args, subcommands, writer)
@@ -178,8 +186,10 @@ func parseHelp(help string, parentData helpData) helpData {
 				newArgs = strings.TrimSpace(newArgs)
 				// Unlike everything else, `nerdctl compose` has a usage string of
 				// `nerdctl compose [flags] COMMAND` so we need to ignore that.
-				if newArgs != "" && newArgs != "COMMAND" {
-					result.hasPositionalArguments = true
+				if newArgs == "" || newArgs == "COMMAND" {
+					result.canHaveSubcommands = true
+				} else if strings.Contains(newArgs, "COMMAND") && strings.Contains(newArgs, "...") {
+					result.HasForeignFlags = true
 				}
 			} else {
 				state = STATE_OTHER
@@ -245,6 +255,9 @@ const commandTemplate = `
 				{{- printf "%q" $k -}}: {{ if $v -}} ignoredArgHandler {{- else -}} nil {{- end -}},
 			{{ end }}
 		},
+		{{- if .Data.HasForeignFlags }}
+			hasForeignFlags: true,
+		{{- end }}
 	},
 `
 

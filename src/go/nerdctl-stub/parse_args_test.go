@@ -258,4 +258,36 @@ func TestParse(t *testing.T) {
 			assert.Equal(t, []string{"subcommand", "--foo", "FOO", "--bar", "BAR"}, result.args)
 		}
 	})
+	t.Run("subcommand with foreign flags", func(t *testing.T) {
+		t.Parallel()
+		var seenArgs []string
+		localCommands := make(map[string]commandDefinition)
+		localCommands[""] = commandDefinition{
+			commands: &localCommands,
+			subcommands: map[string]struct{}{
+				"subcommand": {},
+			},
+			options: map[string]argHandler{
+				"--foo": ignoredArgHandler,
+			},
+		}
+		localCommands["subcommand"] = commandDefinition{
+			commandPath: "subcommand",
+			commands:    &localCommands,
+			options: map[string]argHandler{
+				"--bar": ignoredArgHandler,
+			},
+			hasForeignFlags: true,
+			handler: func(cd *commandDefinition, s []string, argHandlers argHandlersType) (*parsedArgs, error) {
+				seenArgs = s
+				return &parsedArgs{}, nil
+			},
+		}
+		result, err := localCommands[""].parse([]string{"subcommand", "--foo", "FOO", "qq", "--bar", "BAR", "zz"})
+		if assert.NoError(t, err) {
+			assert.Equal(t, []string{"qq", "--bar", "BAR", "zz"}, seenArgs)
+			// Because we have a custom handler, they don't show up in result.args
+			assert.Equal(t, []string{"subcommand", "--foo", "FOO"}, result.args)
+		}
+	})
 }
