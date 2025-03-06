@@ -14,7 +14,7 @@ golangci-lint: 1.64.6
 trivy: 0.59.1
 steve: 0.1.0-beta9
 rancherDashboard: 2.11.0.rd2
-dockerProvidedCredentialHelpers: 0.9.1
+dockerProvidedCredentialHelpers: 0.9.2
 ECRCredentialHelper: 0.9.1
 mobyOpenAPISpec: "1.48"
 wix: v3.14.1
