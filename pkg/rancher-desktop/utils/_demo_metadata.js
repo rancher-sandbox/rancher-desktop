@@ -6,20 +6,20 @@ export default {
       'llm',
     ],
     LatestVersion: {
-      Tag:                'v0.0.5',
-      ManifestListDigest: 'sha256:9529ccde9e8ec9eb168380aa943008441c47240668bb9fda1c4bc4a324837f25',
+      Tag:                'v0.0.6',
+      ManifestListDigest: 'sha256:fa4ee6ad7b787bc42b37cddb93019ef4556a5bb1e94b4a68a98bb180134d4359',
       Platforms:          [
         {
           OS:      'linux',
           Arch:    'amd64',
-          Size:    24198807,
-          Created: '2025-03-05T04:18:20.781961497Z',
+          Size:    24198806,
+          Created: '2025-03-06T18:10:05.984712275Z',
         },
         {
           OS:      'linux',
           Arch:    'arm64',
-          Size:    23892859,
-          Created: '2025-03-05T04:24:50.002753152Z',
+          Size:    23892858,
+          Created: '2025-03-06T18:16:37.498708394Z',
         },
       ],
       Labels: {
@@ -37,6 +37,37 @@ export default {
       },
     },
     PreviousVersions: [
+      {
+        Tag:                'v0.0.5',
+        ManifestListDigest: 'sha256:9529ccde9e8ec9eb168380aa943008441c47240668bb9fda1c4bc4a324837f25',
+        Platforms:          [
+          {
+            OS:      'linux',
+            Arch:    'amd64',
+            Size:    24198807,
+            Created: '2025-03-05T04:18:20.781961497Z',
+          },
+          {
+            OS:      'linux',
+            Arch:    'arm64',
+            Size:    23892859,
+            Created: '2025-03-05T04:24:50.002753152Z',
+          },
+        ],
+        Labels: {
+          'com.docker.desktop.extension.api.version':  '0.3.4',
+          'com.docker.desktop.extension.icon':         '',
+          'com.docker.extension.additional-urls':      '',
+          'com.docker.extension.categories':           '',
+          'com.docker.extension.changelog':            '',
+          'com.docker.extension.detailed-description': '',
+          'com.docker.extension.publisher-url':        '',
+          'com.docker.extension.screenshots':          '',
+          'org.opencontainers.image.description':      'Open WebUI on Rancher Desktop',
+          'org.opencontainers.image.title':            'Open WebUI',
+          'org.opencontainers.image.vendor':           'SUSE LLC',
+        },
+      },
       {
         Tag:                'v0.0.4',
         ManifestListDigest: 'sha256:c248c374ed7b8bb8a553704b9b6e7eae942935abcda87dc2f323da729733e6a1',
