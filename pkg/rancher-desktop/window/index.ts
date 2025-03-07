@@ -219,12 +219,15 @@ function createView() {
     webPreferences.partition = `persist:rdx-${ currentExtension.id }`;
     const session = Electron.session.fromPartition(webPreferences.partition);
     const { webRequest } = session;
+    const id = `rdx-preload-${ currentExtension.id }`;
 
-    session.registerPreloadScript({
-      id:       `rdx-preload-${ currentExtension.id }`,
-      filePath: path.join(paths.resources, 'preload.js'),
-      type:     'frame',
-    });
+    if (!session.getPreloadScripts().some(script => script.id === id)) {
+      session.registerPreloadScript({
+        id,
+        filePath: path.join(paths.resources, 'preload.js'),
+        type:     'frame',
+      });
+    }
 
     webRequest.onBeforeSendHeaders((details, callback) => {
       const source = details.webContents?.getURL() ?? '';
