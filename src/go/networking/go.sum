@@ -2,8 +2,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/apparentlymart/go-cidr v1.1.0 h1:2mAhrMoF+nhXqxTzSZMUzDHkLjmIHC+Zzn4tdgBZjnU=
 github.com/apparentlymart/go-cidr v1.1.0/go.mod h1:EBcsNrHc3zQeuaeCeCtQruQm+n9/YjEn/vI25Lg7Gwc=
-github.com/containers/gvisor-tap-vsock v0.8.3 h1:Am3VdjXTn8Mn+dNhgkiRcCFOTSM8u9aWKLW3KTHOGjk=
-github.com/containers/gvisor-tap-vsock v0.8.3/go.mod h1:46MvrqNuRNbjV4ZsZ3mHVJjR2Eh+fpyRh72EvWWFFjU=
+github.com/containers/gvisor-tap-vsock v0.8.4 h1:z7MqcldnXYGaU6uTaKVl7RFxTmbhNsd2UL0CyM3fdBs=
+github.com/containers/gvisor-tap-vsock v0.8.4/go.mod h1:Guh8d/SiuJ9jlnuIyUjcKkFKQ2qpLhNKPGD1jMoIt2Q=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
