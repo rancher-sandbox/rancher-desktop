@@ -23,7 +23,7 @@ linters-settings:
       - wrapperFunc
   gocyclo:
     min-complexity: 15
-  gomnd:
+  mnd:
     # don't include the "operation" and "assign"
     checks:
       - argument
