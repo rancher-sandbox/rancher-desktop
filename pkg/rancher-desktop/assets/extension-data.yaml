@@ -41,18 +41,21 @@
   publisher: Rancher by SUSE
   short_description: Push from source to Kubernetes in one step
 - slug: julianb90/tachometer
-  version: 0.0.3
+  version: 0.1.1
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: 0.3.4
     com.docker.desktop.extension.icon: https://raw.githubusercontent.com/julian-b90/tachometer/main/speedometer.png
     com.docker.extension.additional-urls: '[{"title":"Issues","url":"https://github.com/julian-b90/tachometer/issues"}]'
     com.docker.extension.categories: development,utility-tools
-    com.docker.extension.changelog: ""
+    com.docker.extension.changelog: "<p>V 0.1.1 <br /> ### Changed <ul><li>update
+      dependencies</li><li>update node to latest LTS 20.17.0</li></ul></p>"
     com.docker.extension.detailed-description: Extension shows real-time cpu and memory usage of containers
     com.docker.extension.publisher-url: https://github.com/julian-b90/tachometer
     com.docker.extension.screenshots: '[{"alt":"tachometer",
-      "url":"https://raw.githubusercontent.com/julian-b90/tachometer/main/screenshot.png"}]'
+      "url":"https://raw.githubusercontent.com/julian-b90/tachometer/main/screenshot.png"},
+      {"alt":"details view",
+      "url":"https://raw.githubusercontent.com/julian-b90/tachometer/main/screenshot_2.png"}]'
     org.opencontainers.image.description: Extension shows real-time cpu and memory usage of containers
     org.opencontainers.image.title: Tachometer
     org.opencontainers.image.vendor: julian-b90
@@ -61,17 +64,14 @@
   publisher: julian-b90
   short_description: Extension shows real-time cpu and memory usage of containers
 - slug: docker/logs-explorer-extension
-  version: 0.2.2
+  version: 0.2.5
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: ">= 0.2.3"
     com.docker.desktop.extension.icon: https://docker-extension-screenshots.s3.amazonaws.com/logs-explorer-extension/icon.svg
     com.docker.extension.additional-urls: "[]"
     com.docker.extension.categories: utility-tools
-    com.docker.extension.changelog: "We have added small UI fixes to improve the
-      experience with the new Docker Desktop version:     <ul>     <li>Changed
-      button sizes and logs font family to match our new Design
-      System.</li>     </ul>"
+    com.docker.extension.changelog: "     <ul>     <li>Fix missing logs on Windows.</li>     </ul>"
     com.docker.extension.detailed-description: "<p>Logs Explorer provides deeper
       insight into your logs.</p>     <h2 id=-features>✨ Key
       features</h2>     <ul>     <li><strong>Multiple filters</strong>: You can
@@ -109,7 +109,7 @@
       "Dark mode"     }     ]'
     org.opencontainers.image.description: View all your container logs in one place
       so you can debug and troubleshoot faster.
-    org.opencontainers.image.revision: 5fda69b839b46d67093280481b4135e1ef16d254
+    org.opencontainers.image.revision: 8351516879c55dae0d7324ce49214568307306da
     org.opencontainers.image.source: https://github.com/docker/logs-explorer-extension
     org.opencontainers.image.title: Logs Explorer
     org.opencontainers.image.vendor: Docker Inc.
@@ -255,16 +255,14 @@
   publisher: Andrei Ignat
   short_description: A extension that displays lowCode with Blockly for any Docker command
 - slug: docker/disk-usage-extension
-  version: 0.2.7
+  version: 0.2.8
   containerd_compatible: false
   labels:
     com.docker.desktop.extension.api.version: ">= 0.2.3"
     com.docker.desktop.extension.icon: https://docker-extension-screenshots.s3.us-east-1.amazonaws.com/disk-usage-extension/hard-drive.svg
     com.docker.extension.additional-urls: "[]"
-    com.docker.extension.changelog: <ul>     <li>Fixes pruning named volumes in
-      addition to anonymous ones when Docker client API version is >= 1.42. See
-      <a
-      href=https://github.com/moby/moby/pull/44259>moby/moby#44259</a>.</li>     </ul>
+    com.docker.extension.changelog: <ul>     <li>Adding 'Select all' button for
+      reclaimable space options.</li>     </ul>
     com.docker.extension.detailed-description: "<p>Disk Usage displays and
       categorizes the disk space used by Docker. It also shows you how much of
       the disk space is reclaimable and provides an easy one-click experience to
@@ -287,7 +285,7 @@
       "https://docker-extension-screenshots.s3.amazonaws.com/disk-usage-extension/3-space-reclaimed.png",
       "alt": "Space reclaimed successfully"}     ]'
     org.opencontainers.image.description: Optimize your disk space by removing unused objects from Docker Desktop.
-    org.opencontainers.image.revision: 4b13d9f3ae62bf4cf355af701d9491bd8a7e81b8
+    org.opencontainers.image.revision: 929ff4d90be404fdf4325537286603d6c7c515ae
     org.opencontainers.image.source: https://github.com/docker/disk-usage-extension
     org.opencontainers.image.title: Disk Usage
     org.opencontainers.image.vendor: Docker Inc.
@@ -296,7 +294,7 @@
   publisher: Docker Inc.
   short_description: Optimize your disk space by removing unused objects from Docker Desktop.
 - slug: harpooncorp/harpoon-ext
-  version: 0.0.4
+  version: 0.0.6
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: ">=0.2.3"
@@ -331,7 +329,7 @@
   publisher: harpoon Corp
   short_description: Docker Extension for the No Code Kubernetes platform
 - slug: vklokun/docker-desktop-extension
-  version: 0.1.0
+  version: 0.1.1
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: ">= 0.2.3"
@@ -339,7 +337,9 @@
     com.docker.extension.account-info: required
     com.docker.extension.additional-urls: ""
     com.docker.extension.categories: kubernetes,security
-    com.docker.extension.changelog: ""
+    com.docker.extension.changelog: <p>Extension changelog<ul> <li>Support access
+      key required by ARMO platform</li><li>Update Kubescape helm chart
+      name</li></ul></p>
     com.docker.extension.detailed-description: <h1>Kubescape Extension for Docker
       Desktop</h1> <p>Kubescape helps harden your Kubernetes cluster by
       providing insight into your cluster's security posture. Some of the
