@@ -32,6 +32,11 @@ type helpData struct {
 	// (`--version`) or the short option (`-v`), and the value is whether the
 	// option takes an argument.
 	Options map[string]bool
+	// If set, this command can have subcommands; this alters argument parsing.
+	canHaveSubcommands bool
+	// If set, this command can pass flags to foreign commands, as in `nerdctl run`.
+	// This alters argument parsing by letting us ignore unknown flags.
+	HasForeignFlags bool
 	// mergedOptions includes local options plus inherited options.
 	mergedOptions map[string]struct{}
 }
@@ -94,7 +99,6 @@ func main() {
 // writer is the file to write to for the result; it is expected that `go fmt`
 // will be run on it eventually.
 func buildSubcommand(args []string, parentData helpData, writer io.Writer) error {
-	logrus.WithField("args", args).Trace("building subcommand")
 	help, err := getHelp(args)
 	if err != nil {
 		return fmt.Errorf("Error getting help for %v: %w", args, err)
@@ -102,6 +106,21 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 	subcommands, err := parseHelp(args, help, parentData)
 	if err != nil {
 		return fmt.Errorf("Error parsing help for %v: %w", args, err)
+	}
+
+	fields := logrus.Fields{"args": args}
+	if subcommands.HasForeignFlags {
+		fields["type"] = "arguments"
+	} else if !subcommands.canHaveSubcommands {
+		fields["type"] = "positional"
+	}
+	logrus.WithFields(fields).Trace("building subcommand")
+
+	if !subcommands.canHaveSubcommands && len(subcommands.Commands) > 0 {
+		return fmt.Errorf("Invalid command %v: has positional arguments, but also subcommands %+v", args, subcommands.Commands)
+	}
+	if subcommands.canHaveSubcommands && subcommands.HasForeignFlags {
+		return fmt.Errorf("Invalid command %v: has subcommands and foreign flags", args)
 	}
 
 	err = emitCommand(args, subcommands, writer)
@@ -162,6 +181,19 @@ func parseHelp(args []string, help string, parentData helpData) (helpData, error
 				state = STATE_COMMANDS
 			} else if strings.HasSuffix(strings.ToUpper(line), "FLAGS:") {
 				state = STATE_OPTIONS
+			} else if strings.HasPrefix(strings.ToUpper(line), "USAGE:") {
+				// Usage is on the same line, so we have to process this now.
+				// Command is `nerdctl subcommand [flags]`; anything after `[flags]` is
+				// assumed to be positional arguments.
+				_, newArgs, _ := strings.Cut(strings.ToUpper(line), "[FLAGS]")
+				newArgs = strings.TrimSpace(newArgs)
+				// Unlike everything else, `nerdctl compose` has a usage string of
+				// `nerdctl compose [flags] COMMAND` so we need to ignore that.
+				if newArgs == "" || newArgs == "COMMAND" {
+					result.canHaveSubcommands = true
+				} else if strings.Contains(newArgs, "COMMAND") && strings.Contains(newArgs, "...") {
+					result.HasForeignFlags = true
+				}
 			} else {
 				state = STATE_OTHER
 			}
@@ -226,6 +258,9 @@ const commandTemplate = `
 				{{- printf "%q" $k -}}: {{ if $v -}} ignoredArgHandler {{- else -}} nil {{- end -}},
 			{{ end }}
 		},
+		{{- if .Data.HasForeignFlags }}
+			hasForeignFlags: true,
+		{{- end }}
 	},
 `
 
