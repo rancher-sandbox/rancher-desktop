@@ -49,7 +49,7 @@ func uninstallExtension(args []string) error {
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 	imageID := args[0]
-	endpoint := fmt.Sprintf("/%s/extensions/uninstall?id=%s", client.ApiVersion, imageID)
+	endpoint := fmt.Sprintf("/%s/extensions/uninstall?id=%s", client.APIVersion, imageID)
 	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("POST", endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult(result, errorPacket, err)

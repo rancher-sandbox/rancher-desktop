@@ -50,7 +50,7 @@ func installExtension(args []string) error {
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 	imageID := args[0]
-	endpoint := fmt.Sprintf("/%s/extensions/install?id=%s", client.ApiVersion, imageID)
+	endpoint := fmt.Sprintf("/%s/extensions/install?id=%s", client.APIVersion, imageID)
 	// https://stackoverflow.com/questions/20847357/golang-http-client-always-escaped-the-url
 	// Looks like http.NewRequest(method, url) escapes the URL
 

@@ -153,7 +153,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 	case reflect.String:
 		return []string{fmt.Sprintf(`"%s"="%s"`, jsonTag, escape(value.String()))}, nil
 	}
-	return nil, fmt.Errorf("convertToRegFormat: don't know how to process %s kind: %q, (%T), value: %v for var %q\n", path, kind, structType, value, jsonTag)
+	return nil, fmt.Errorf("convertToRegFormat: don't know how to process %s kind: %q, (%T), value: %v for var %q", path, kind, structType, value, jsonTag)
 }
 
 // Encode multi-stringSZ settings in comma-separated ucs2 little-endian bytes
@@ -175,12 +175,12 @@ func stringToMultiStringHexBytes(values []string) string {
 	return strings.Join(hexChars, ",") + ",00,00,00,00"
 }
 
-// JsonToReg - convert the json settings to a reg file
+// JSONToReg - convert the json settings to a reg file
 // @param hiveType: "hklm" or "hkcu"
 // @param profileType: "defaults" or "locked"
 // @param settingsBodyAsJSON - options marshaled as JSON
 // @returns: array of strings, intended for writing to a reg file
-func JsonToReg(hiveType string, profileType string, settingsBodyAsJSON string) ([]string, error) {
+func JSONToReg(hiveType string, profileType string, settingsBodyAsJSON string) ([]string, error) {
 	var actualSettingsJSON map[string]interface{}
 
 	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]

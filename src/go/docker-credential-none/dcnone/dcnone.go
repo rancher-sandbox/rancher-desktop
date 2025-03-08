@@ -114,7 +114,7 @@ func (p DCNone) List() (map[string]string, error) {
 	if ok {
 		auths, ok := authsInterface.(map[string]interface{})
 		if !ok {
-			return entries, fmt.Errorf("Unexpected data: %v: not a hash\n", authsInterface)
+			return entries, fmt.Errorf("unexpected data: %v: not a hash", authsInterface)
 		}
 		for url := range auths {
 			username, _, err := getRecordForServerURL(&config, url)

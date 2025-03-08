@@ -157,8 +157,8 @@ func xmlEscapeText(s string) (string, error) {
 	return recvBuffer.String(), nil
 }
 
-// JsonToPlist converts the json settings to plist-compatible xml text.
-func JsonToPlist(settingsBodyAsJSON string) (string, error) {
+// JSONToPlist converts the json settings to plist-compatible xml text.
+func JSONToPlist(settingsBodyAsJSON string) (string, error) {
 	var actualSettingsJSON map[string]interface{}
 
 	if err := json.Unmarshal([]byte(settingsBodyAsJSON), &actualSettingsJSON); err != nil {

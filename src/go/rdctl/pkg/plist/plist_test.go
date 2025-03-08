@@ -8,7 +8,7 @@ import (
 
 func TestJsonToPlistFormat(t *testing.T) {
 	t.Run("handles empty bodies", func(t *testing.T) {
-		s, err := JsonToPlist("{}")
+		s, err := JSONToPlist("{}")
 		assert.NoError(t, err)
 		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -26,7 +26,7 @@ func TestJsonToPlistFormat(t *testing.T) {
         "enabled": false,
         "list": ["wink", "blink", "drink"]
      } } }, "containerEngine": { "name": "beatrice" }}`
-		s, err := JsonToPlist(jsonBody)
+		s, err := JSONToPlist(jsonBody)
 		assert.NoError(t, err)
 		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -160,7 +160,7 @@ func TestJsonToPlistFormat(t *testing.T) {
   }
 }
 `
-		s, err := JsonToPlist(jsonBody)
+		s, err := JSONToPlist(jsonBody)
 		assert.NoError(t, err)
 		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -356,7 +356,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 									}
 							}
 `
-		s, err := JsonToPlist(jsonBody)
+		s, err := JSONToPlist(jsonBody)
 		assert.NoError(t, err)
 		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

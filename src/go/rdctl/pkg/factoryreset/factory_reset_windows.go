@@ -43,14 +43,14 @@ func CheckProcessWindows() (bool, error) {
 	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, fmt.Errorf("Failed to run %q: %w", cmd, err)
+		return false, fmt.Errorf("failed to run %q: %w", cmd, err)
 	}
 	r := csv.NewReader(bytes.NewReader(allOutput))
 	for {
 		record, err := r.Read()
 		if err != nil {
 			if !errors.Is(err, io.EOF) {
-				return false, fmt.Errorf("Failed to csv-read the output for tasklist: %w", err)
+				return false, fmt.Errorf("failed to csv-read the output for tasklist: %w", err)
 			}
 			break
 		}

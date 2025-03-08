@@ -18,13 +18,13 @@ normal circumstances.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return exitWithJsonOrErrorCondition(unlockSnapshot())
+		return exitWithJSONOrErrorCondition(unlockSnapshot())
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotUnlockCmd)
-	snapshotUnlockCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
+	snapshotUnlockCmd.Flags().BoolVarP(&outputJSONFormat, "json", "", false, "output json format")
 }
 
 func unlockSnapshot() error {

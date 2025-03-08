@@ -97,11 +97,11 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 	logrus.WithField("args", args).Trace("building subcommand")
 	help, err := getHelp(args)
 	if err != nil {
-		return fmt.Errorf("Error getting help for %v: %w", args, err)
+		return fmt.Errorf("error getting help for %v: %w", args, err)
 	}
 	subcommands, err := parseHelp(args, help, parentData)
 	if err != nil {
-		return fmt.Errorf("Error parsing help for %v: %w", args, err)
+		return fmt.Errorf("error parsing help for %v: %w", args, err)
 	}
 
 	err = emitCommand(args, subcommands, writer)

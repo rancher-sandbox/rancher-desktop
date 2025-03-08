@@ -18,13 +18,13 @@ var snapshotRestoreCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return exitWithJsonOrErrorCondition(restoreSnapshot(cmd, args))
+		return exitWithJSONOrErrorCondition(restoreSnapshot(cmd, args))
 	},
 }
 
 func init() {
 	snapshotCmd.AddCommand(snapshotRestoreCmd)
-	snapshotRestoreCmd.Flags().BoolVarP(&outputJsonFormat, "json", "", false, "output json format")
+	snapshotRestoreCmd.Flags().BoolVarP(&outputJSONFormat, "json", "", false, "output json format")
 }
 
 func restoreSnapshot(cmd *cobra.Command, args []string) error {
@@ -39,7 +39,7 @@ func restoreSnapshot(cmd *cobra.Command, args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
 	defer stop()
 	stopAfterFunc := context.AfterFunc(ctx, func() {
-		if !outputJsonFormat {
+		if !outputJSONFormat {
 			fmt.Println("Cancelling snapshot restoration...")
 		}
 	})

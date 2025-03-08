@@ -394,7 +394,9 @@ JOBOBJECT
 joycelin
 jpe
 jsmith
+JSONOr
 jsontable
+JSONTo
 julianb
 karl
 Kaspersky
