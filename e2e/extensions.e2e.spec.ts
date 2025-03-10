@@ -384,6 +384,13 @@ test.describe.serial('Extensions', () => {
           await expect(result).resolves.toContain('<title>Rancher</title>');
         });
       });
+      test('can post values', async() => {
+        await retry(async() => {
+          const result = evalInView(`ddClient.extension.vm.service.post("/foo", "hello")`);
+
+          await expect(result).resolves.toEqual('hello');
+        });
+      });
     });
   });
 });

@@ -68,6 +68,7 @@ basedisk
 bassano
 batslib
 bcdfghjklmnpqrstvwxz
+bci
 bellingham
 bindir
 binfmt
