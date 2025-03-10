@@ -105,6 +105,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 
 	args = append(args,
 		fmt.Sprintf("--host=unix://%s", dockerSocket),
+		"--host=unix:///var/run/docker.sock.raw",
 		"--host=unix:///var/run/docker.sock")
 	cmd := exec.Command(dockerd, args...)
 	cmd.Stdout = os.Stdout
