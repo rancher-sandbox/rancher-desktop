@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -39,7 +40,21 @@ func listen() (net.Listener, error) {
 
 // Handle HTTP POST requests
 func handlePost(w http.ResponseWriter, req *http.Request) {
-	_, _ = io.Copy(w, req.Body)
+	data := map[string]any{"headers": req.Header}
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = io.WriteString(w, fmt.Sprintf("failed to read body: %s", err))
+		return
+	}
+	data["body"] = string(body)
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(data); err != nil {
+		// This ends up after partially written JSON, but that's the best we can do
+		// and should still show up in the result.
+		_, _ = io.WriteString(w, fmt.Sprintf("failed to encode response: %w", err))
+	}
 }
 
 func main() {

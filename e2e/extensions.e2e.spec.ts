@@ -384,11 +384,26 @@ test.describe.serial('Extensions', () => {
           await expect(result).resolves.toContain('<title>Rancher</title>');
         });
       });
-      test('can post values', async() => {
-        await retry(async() => {
-          const result = evalInView(`ddClient.extension.vm.service.post("/foo", "hello")`);
+      test.describe('can post values', () => {
+        test('with string body', async() => {
+          await retry(async() => {
+            const result = evalInView(`ddClient.extension.vm.service.post("/foo", "hello")`);
 
-          await expect(result).resolves.toEqual('hello');
+            await expect(result).resolves.toMatchObject({
+              headers: { 'Content-Type': expect.arrayContaining([expect.stringMatching(/^text\/plain\b/)]) },
+              body:    'hello',
+            });
+          });
+        });
+        test('with JSON body', async() => {
+          await retry(async() => {
+            const result = evalInView(`ddClient.extension.vm.service.post("/foo", {foo: 'bar'})`);
+
+            await expect(result).resolves.toMatchObject({
+              headers: { 'Content-Type': expect.arrayContaining([expect.stringMatching(/^application\/json\b/)]) },
+              body:    JSON.stringify({ foo: 'bar' }),
+            });
+          });
         });
       });
     });
