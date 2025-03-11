@@ -1,5 +1,4 @@
 <script lang="ts">
-import semver from 'semver';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -7,7 +6,7 @@ import EmptyState from '@pkg/components/EmptyState.vue';
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import NavIconExtension from '@pkg/components/NavIconExtension.vue';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
-import type { ExtensionWithId, MarketplaceData } from '@pkg/store/extensions';
+import type { ExtensionState } from '@pkg/store/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
@@ -47,9 +46,8 @@ export default Vue.extend({
     emptyStateBody(): string {
       return this.t('extensions.installed.emptyState.body', { }, true);
     },
-    ...mapGetters('extensions', { extensionsList: 'list', marketData: 'marketData' }) as {
-      extensionsList: () => ExtensionWithId[],
-      marketData: () => MarketplaceData[],
+    ...mapGetters('extensions', ['installedExtensions']) as {
+      installedExtensions: () => ExtensionState[],
     },
   },
   async beforeMount() {
@@ -66,7 +64,7 @@ export default Vue.extend({
     extensionTitle(ext: {id: string, labels: Record<string, string>}): string {
       return ext.labels?.['org.opencontainers.image.title'] ?? ext.id;
     },
-    async uninstall(installed: ExtensionWithId) {
+    async uninstall(installed: ExtensionState) {
       this.$set(this.busy, installed.id, true);
       try {
         await this.$store.dispatch('extensions/uninstall', { id: installed.id });
@@ -74,27 +72,13 @@ export default Vue.extend({
         this.$delete(this.busy, installed.id);
       }
     },
-    canUpgrade(installed: ExtensionWithId) {
-      const available = this.marketData.find(item => item.slug === installed.id);
+    async upgrade(installed: ExtensionState) {
+      const id = `${ installed.id }:${ installed.availableVersion }`;
 
-      try {
-        return available && semver.gt(available.version, installed.version, { loose: true });
-      } catch (ex) {
-        // If there is invalid semver, don't allow upgrades.
-        return false;
-      }
-    },
-    async upgrade(installed: ExtensionWithId) {
-      const available = this.marketData.find(item => item.slug === installed.id);
-
-      if (!available) {
-        console.error(`Failed to upgrade ${ installed.id }: no version found in catalog`);
-
+      if (!installed.availableVersion) {
+        // Should not have reached here.
         return;
       }
-
-      const id = `${ available.slug }:${ available.version }`;
-
       this.$set(this.busy, installed.id, true);
       try {
         await this.$store.dispatch('extensions/install', { id });
@@ -112,7 +96,7 @@ export default Vue.extend({
       key-field="description"
       :loading="loading"
       :headers="headers"
-      :rows="extensionsList"
+      :rows="installedExtensions"
       :search="false"
       :table-actions="false"
       :row-actions="false"
@@ -156,7 +140,7 @@ export default Vue.extend({
               <loading-indicator></loading-indicator>
             </span>
             <button
-              v-if="!busy[row.id] && canUpgrade(row)"
+              v-if="!busy[row.id] && row.canUpgrade"
               class="btn btn-sm role-primary"
               @click="upgrade(row)"
             >
