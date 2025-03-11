@@ -309,8 +309,16 @@ class Client implements v1.DockerDesktopClient {
    * that wraps ddClient.extension.vm.service.request().
    */
   protected makeRequest(method: string, url: string, data?: any): Promise<unknown> {
+    const headers: Record<string, string> = {};
+
+    if (typeof data === 'object') {
+      // For objects, pass the value as JSON.
+      headers['Content-Type'] = 'application/json';
+      data = JSON.stringify(data);
+    }
+
     return this.request({
-      method, url, data, headers: {},
+      method, url, data, headers,
     });
   }
 
