@@ -1,3 +1,5 @@
+# bats file_tags=opensuse
+
 load '../helpers/load'
 
 local_setup() {
