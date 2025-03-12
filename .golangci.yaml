@@ -65,6 +65,7 @@ linters:
     - stylecheck
     - typecheck
     - unconvert
+    - unparam
     - unused
     - whitespace
 issues:

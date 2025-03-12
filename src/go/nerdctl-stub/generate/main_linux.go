@@ -99,10 +99,7 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 	if err != nil {
 		return fmt.Errorf("error getting help for %v: %w", args, err)
 	}
-	subcommands, err := parseHelp(args, help, parentData)
-	if err != nil {
-		return fmt.Errorf("error parsing help for %v: %w", args, err)
-	}
+	subcommands := parseHelp(help, parentData)
 
 	err = emitCommand(args, subcommands, writer)
 	if err != nil {
@@ -144,7 +141,7 @@ const (
 
 // parseHelp consumes the output of `nerdctl help` (possibly for a subcommand)
 // and returns the available subcommands and options.
-func parseHelp(args []string, help string, parentData helpData) (helpData, error) {
+func parseHelp(help string, parentData helpData) helpData {
 	result := helpData{Options: make(map[string]bool), mergedOptions: make(map[string]struct{})}
 	for k := range parentData.mergedOptions {
 		result.mergedOptions[k] = struct{}{}
@@ -209,7 +206,7 @@ func parseHelp(args []string, help string, parentData helpData) (helpData, error
 		}
 	}
 	sort.Strings(result.Commands)
-	return result, nil
+	return result
 }
 
 // commandTemplate is the text/template template for a single subcommand.

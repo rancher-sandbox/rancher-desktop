@@ -98,11 +98,8 @@ var (
 )
 
 // errorFromWin32 wraps a Win32 return value into an error, with a message in
-// the form of: {msg}: {rv}: {error}
-func errorFromWin32(msg string, rv uintptr, err error) error {
-	if err != nil {
-		return fmt.Errorf("%s: %w: %w", msg, windows.Errno(rv), err)
-	}
+// the form of: {msg}: {rv}
+func errorFromWin32(msg string, rv uintptr) error {
 	return fmt.Errorf("%s: %w", msg, windows.Errno(rv))
 }
 
@@ -282,7 +279,7 @@ func getInboxWSLInfo(ctx context.Context, log *logrus.Entry) (bool, *PackageVers
 		case uintptr(windows.ERROR_NO_MORE_ITEMS):
 			// kernel is not installed
 		default:
-			err = errorFromWin32("error querying Windows Installer database", rv, nil)
+			err = errorFromWin32("error querying Windows Installer database", rv)
 			allErrors = append(allErrors, err)
 		}
 	}
@@ -314,10 +311,10 @@ func getMSIVersion(productCode []uint16, log *logrus.Entry) (*PackageVersion, er
 		wideBuf = make([]uint16, bufSize+1) // Add space for null terminator
 		bufSize = len(wideBuf)
 	case uintptr(windows.ERROR_BAD_CONFIGURATION):
-		err = errorFromWin32("Windows Installer configuration data is corrupt", rv, nil)
+		err = errorFromWin32("Windows Installer configuration data is corrupt", rv)
 		return nil, err
 	default:
-		return nil, errorFromWin32("failed to get WSL kernel MSI version", rv, nil)
+		return nil, errorFromWin32("failed to get WSL kernel MSI version", rv)
 	}
 
 	rv, _, _ = msiGetProductInfo.Call(
@@ -334,12 +331,12 @@ func getMSIVersion(productCode []uint16, log *logrus.Entry) (*PackageVersion, er
 		}
 		return &version, nil
 	case uintptr(windows.ERROR_MORE_DATA):
-		return nil, errorFromWin32("allocated buffer was too small", rv, nil)
+		return nil, errorFromWin32("allocated buffer was too small", rv)
 	case uintptr(windows.ERROR_BAD_CONFIGURATION):
-		err = errorFromWin32("Windows Installer configuration data is corrupt", rv, nil)
+		err = errorFromWin32("Windows Installer configuration data is corrupt", rv)
 		return nil, err
 	default:
-		return nil, errorFromWin32("failed to get WSL kernel MSI version", rv, nil)
+		return nil, errorFromWin32("failed to get WSL kernel MSI version", rv)
 	}
 }
 
