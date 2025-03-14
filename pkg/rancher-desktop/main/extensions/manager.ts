@@ -1,4 +1,5 @@
 import { ChildProcessByStdio, spawn } from 'child_process';
+import http from 'http';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -219,7 +220,10 @@ export class ExtensionManagerImpl implements ExtensionManager {
       const extensionId = this.getExtensionIdFromEvent(event);
 
       if (!extensionId) {
-        return; // Sender frame has gone away, no need to fetch anymore.
+        // Sender frame has gone away, no need to fetch anymore.
+        return {
+          statusCode: -1, name: 'Request aborted', message: 'Request aborted',
+        };
       }
       if (extensionId === EXTENSION_APP) {
         throw new Error('HTTP fetch from main app not implemented yet');
@@ -254,7 +258,9 @@ export class ExtensionManagerImpl implements ExtensionManager {
       };
       const response = await fetch(url.toString(), options);
 
-      return await response.text();
+      return {
+        statusCode: response.status, name: http.STATUS_CODES[response.status] ?? 'Unknown', message: await response.text(),
+      };
     });
 
     // Import image for port forwarding

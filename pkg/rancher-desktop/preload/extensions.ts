@@ -326,12 +326,26 @@ class Client implements v1.DockerDesktopClient {
     try {
       const result = await ipcRenderer.invoke('extensions/vm/http-fetch', config);
 
-      // Parse as JSON if possible (API is unclear).
-      try {
-        return JSON.parse(result);
-      } catch {
-        return result;
+      if (!result) {
+        return;
       }
+
+      // Parse as JSON if possible (API is unclear).
+      let { statusCode, message } = result;
+
+      try {
+        if (message) {
+          message = JSON.parse(message);
+        }
+      } catch {
+        // Body is not JSON, return it as-is.
+      }
+
+      if (statusCode >= 200 && statusCode < 300) {
+        return message;
+      }
+
+      return Promise.reject(result);
     } catch (ex) {
       console.debug(`${ config.method } ${ config.url } error:`, ex);
       throw ex;

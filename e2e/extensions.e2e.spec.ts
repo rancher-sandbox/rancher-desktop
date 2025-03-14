@@ -182,10 +182,22 @@ test.describe.serial('Extensions', () => {
     });
 
     /** evaluate a short snippet in the extension context. */
-    function evalInView(script: string): Promise<any> {
-      return view.evaluate((v, { script }) => {
-        return v.webContents.executeJavaScript(script);
+    async function evalInView(script: string): Promise<any> {
+      // view.evaluate doesn't pass rejections correctly; instead, we convert it
+      // to a resolved object, and convert it back to an rejection on the other end.
+      const { rejected, result } = await view.evaluate(async(v, { script }) => {
+        try {
+          return { rejected: false, result: await v.webContents.executeJavaScript(script) };
+        } catch (ex) {
+          return { rejected: true, result: ex };
+        }
       }, { script });
+
+      if (rejected) {
+        throw result;
+      }
+
+      return result;
     }
 
     test('exposes API endpoint', async() => {
@@ -367,7 +379,7 @@ test.describe.serial('Extensions', () => {
 
     test.describe('ddClient.extension.vm.service', () => {
       test('can fetch from the backend', async() => {
-        const url = '/etc/os-release';
+        const url = '/get/etc/os-release';
 
         await retry(async() => {
           const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
@@ -387,7 +399,7 @@ test.describe.serial('Extensions', () => {
       test.describe('can post values', () => {
         test('with string body', async() => {
           await retry(async() => {
-            const result = evalInView(`ddClient.extension.vm.service.post("/foo", "hello")`);
+            const result = evalInView(`ddClient.extension.vm.service.post("/post", "hello")`);
 
             await expect(result).resolves.toMatchObject({
               headers: { 'Content-Type': expect.arrayContaining([expect.stringMatching(/^text\/plain\b/)]) },
@@ -397,13 +409,27 @@ test.describe.serial('Extensions', () => {
         });
         test('with JSON body', async() => {
           await retry(async() => {
-            const result = evalInView(`ddClient.extension.vm.service.post("/foo", {foo: 'bar'})`);
+            const result = evalInView(`ddClient.extension.vm.service.post("/post", {foo: 'bar'})`);
 
             await expect(result).resolves.toMatchObject({
               headers: { 'Content-Type': expect.arrayContaining([expect.stringMatching(/^application\/json\b/)]) },
               body:    JSON.stringify({ foo: 'bar' }),
             });
           });
+        });
+        test.describe('throws with error status', () => {
+          for (const statusCode of [400, 401, 403, 404, 451, 500, 503, 504]) {
+            for (const method of ['get', 'post']) {
+              test(`${ method } ${ statusCode }`, async() => {
+                const result = evalInView(`ddClient.extension.vm.service.${ method }("/status/${ statusCode }", {})`);
+
+                await expect(result).rejects.toMatchObject({
+                  statusCode,
+                  message: expect.stringContaining(`${ statusCode }`),
+                });
+              });
+            }
+          }
         });
       });
     });
