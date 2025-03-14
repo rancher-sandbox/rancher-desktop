@@ -1,4 +1,5 @@
 # Test case 11 & 12
+# bats file_tags=opensuse
 
 load '../helpers/load'
 RD_FILE_RAMDISK_SIZE=12 # We need more disk to run the Rancher image.
