@@ -200,7 +200,7 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
 
       console.debug(`spawn/blocking got result:`, process.env.RD_TEST === 'e2e' ? JSON.stringify(response) : response);
 
-      return {
+      const result = {
         cmd:    response.cmd,
         signal: typeof response.result === 'string' ? response.result : undefined,
         code:   typeof response.result === 'number' ? response.result : undefined,
@@ -216,6 +216,12 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
           return JSON.parse(response.stdout);
         },
       };
+
+      if (result.signal || result.code) {
+        throw result;
+      }
+
+      return result;
     })();
   }
 

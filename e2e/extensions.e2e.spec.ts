@@ -364,16 +364,43 @@ test.describe.serial('Extensions', () => {
 
     test.describe('ddClient.extension.vm.cli.exec', () => {
       test('capturing output', async() => {
-        const script = `
+        // `.exec()` returns an object that has methods, which cannot be passed
+        // via `webContents.executeJavaScript`; serialize it as JSON and
+        // deserialize instead.
+        const result = evalInView(`
           ddClient.extension.vm.cli.exec("/bin/echo", ["xyzzy"])
-          .then(v => JSON.stringify(v))
-        `;
-        const result = JSON.parse(await evalInView(script));
+          .then(v => JSON.parse(JSON.stringify(v)))
+        `);
 
-        expect(result).toEqual(expect.objectContaining({
+        await expect(result).resolves.toMatchObject({
           stdout: 'xyzzy\n',
           code:   0,
-        }));
+        });
+      });
+    });
+    test.describe('ddClient.extension.host.cli.exec', () => {
+      test('reject when command is not found', async() => {
+        // Errors cannot be round-tripped correctly.
+        const result = evalInView(`
+          ddClient.extension.host.cli.exec('command-not-found', [])
+          .catch(v => Promise.reject(v instanceof Error ? v.toString() : JSON.stringify(v)))
+        `);
+
+        await expect(result).rejects.toMatch(/ENOENT|The system cannot find the file specified/);
+      });
+      test('reject when command fails', async() => {
+        const command = process.platform === 'win32' ? 'dummy.exe' : 'dummy.sh';
+        // The returned exception has methods, which cannot be cloned across
+        // evalInView; we serialize it as JSON and deserialize again to remove them.
+        const result = evalInView(`
+          ddClient.extension.host.cli.exec("${ command }", ["false"])
+          .catch(v => Promise.reject(JSON.parse(JSON.stringify(v))))
+        `);
+
+        await expect(result).rejects.toMatchObject({
+          code: 1,
+          cmd:  expect.stringMatching(/dummy.*false/),
+        });
       });
     });
 
