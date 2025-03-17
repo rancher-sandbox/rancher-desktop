@@ -2,11 +2,11 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/docker-credential-none
 
 go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.24.1
 
 require (
 	github.com/docker/cli v28.0.1+incompatible
-	github.com/docker/docker-credential-helpers v0.9.2
+	github.com/docker/docker-credential-helpers v0.9.3
 )
 
 require (
