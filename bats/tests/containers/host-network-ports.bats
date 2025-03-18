@@ -1,3 +1,5 @@
+# bats file_tags=opensuse
+
 load '../helpers/load'
 
 LOCALHOST="127.0.0.1"

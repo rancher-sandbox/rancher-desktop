@@ -2,6 +2,7 @@
 # On Windows, You need to create a firewall rule to allow communication
 # between the host and the container. Please check the below link for instructions.
 # https://docs.rancherdesktop.io/faq#q-can-containers-reach-back-to-host-services-via-hostdockerinternal
+# bats file_tags=opensuse
 
 load '../helpers/load'
 

@@ -1,4 +1,5 @@
 # verify that running a container with --init is working
+# bats file_tags=opensuse
 
 load '../helpers/load'
 

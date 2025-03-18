@@ -55,6 +55,14 @@ cd bats
 RD_CONTAINER_RUNTIME=moby RD_USE_IMAGE_ALLOW_LIST=false ./bats-core/bin/bats tests/registry/creds.bats
 ```
 
+There is an experimental subset of BATS tests that pass with an under-construction openSUSE based
+distribution; that can be selected via the `opensuse` tag:
+
+```sh
+cd bats
+./bats-core/bin/bats --filter-tags opensuse tests/*/
+```
+
 ### On Windows:
 
 BATS must be executed from within a WSL distribution. (You have to cd into `/mnt/c/REPOSITORY_LOCATION` from your unix shell.)
