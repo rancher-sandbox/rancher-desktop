@@ -10,6 +10,7 @@ linters:
     - goconst
     - gocritic
     - goprintffuncname
+    - gosec
     - govet
     - ineffassign
     - misspell
@@ -48,6 +49,9 @@ linters:
         - style
     gocyclo:
       min-complexity: 15
+    gosec:
+      config:
+        G306: "0644"
     mnd:
       # don't include the "operation" and "assign"
       checks:

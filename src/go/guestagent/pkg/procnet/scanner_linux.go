@@ -152,6 +152,7 @@ func (p *ProcNetScanner) execLoopbackIPtablesRule(bindings []nat.PortBinding, po
 	for _, binding := range bindings {
 		if binding.HostIP == "127.0.0.1" {
 			// iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
+			//nolint:gosec // None of the arguments are user-supplied.
 			iptablesCmd := exec.CommandContext(p.context,
 				"iptables",
 				"--table", "nat",

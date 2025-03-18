@@ -336,6 +336,7 @@ func deleteComposeNetworkIPv6Rule(ctx context.Context, portMappings nat.PortMap)
 	for portProto, portBindings := range portMappings {
 		for _, portBinding := range portBindings {
 			if portBinding.HostIP == "127.0.0.1" {
+				//nolint:gosec // Inputs are fixed strings or numbers.
 				iptableComposeDeleteCmd := exec.CommandContext(ctx,
 					"iptables",
 					"--table", "nat",

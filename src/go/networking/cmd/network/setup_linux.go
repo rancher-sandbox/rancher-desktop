@@ -265,6 +265,7 @@ func configureVMSwitch(
 		args = append(args, "-debug")
 	}
 
+	//nolint:gosec // Arguments are ultimately controlled by our configs.
 	vmSwitchCmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	vmSwitchCmd.Stdout = os.Stdout
 	vmSwitchCmd.Stderr = os.Stderr

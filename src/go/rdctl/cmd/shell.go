@@ -146,6 +146,7 @@ func checkLimaIsRunning(commandName string) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
+	//nolint:gosec // The command name is auto-detected, and the instance name is constant.
 	cmd := exec.Command(commandName, "ls", lima.InstanceName, "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
