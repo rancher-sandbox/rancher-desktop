@@ -19,7 +19,9 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
@@ -34,7 +36,7 @@ The <image-id> is an image reference, e.g. splatform/epinio-docker-desktop:lates
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return uninstallExtension(args)
+		return uninstallExtension(cmd.Context(), args)
 	},
 }
 
@@ -42,7 +44,7 @@ func init() {
 	extensionCmd.AddCommand(uninstallCmd)
 }
 
-func uninstallExtension(args []string) error {
+func uninstallExtension(ctx context.Context, args []string) error {
 	connectionInfo, err := config.GetConnectionInfo(false)
 	if err != nil {
 		return fmt.Errorf("failed to get connection info: %w", err)
@@ -50,7 +52,7 @@ func uninstallExtension(args []string) error {
 	rdClient := client.NewRDClient(connectionInfo)
 	imageID := args[0]
 	endpoint := fmt.Sprintf("/%s/extensions/uninstall?id=%s", client.APIVersion, imageID)
-	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("POST", endpoint))
+	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest(ctx, http.MethodPost, endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult(result, errorPacket, err)
 	}

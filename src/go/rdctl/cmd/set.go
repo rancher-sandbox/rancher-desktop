@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
@@ -67,7 +68,7 @@ func doSetCommand(cmd *cobra.Command) error {
 
 	command := client.VersionCommand("", "settings")
 	buf := bytes.NewBuffer(jsonBuffer)
-	result, err := client.ProcessRequestForUtility(rdClient.DoRequestWithPayload("PUT", command, buf))
+	result, err := client.ProcessRequestForUtility(rdClient.DoRequestWithPayload(cmd.Context(), http.MethodPut, command, buf))
 	if err != nil {
 		return err
 	}

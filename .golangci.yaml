@@ -15,6 +15,7 @@ linters:
     - misspell
     - mnd
     - nakedret
+    - noctx
     - staticcheck
     - unconvert
     - unparam

@@ -58,7 +58,7 @@ func init() {
  * If Rancher Desktop is currently running, treat this like a `set` command, and pass all the args to that.
  */
 func doStartOrSetCommand(cmd *cobra.Command) error {
-	_, err := getListSettings()
+	_, err := getListSettings(cmd.Context())
 	if err == nil {
 		// Unavoidable race condition here.
 		// There's no system-wide mutex that will let us guarantee that if rancher desktop is running when

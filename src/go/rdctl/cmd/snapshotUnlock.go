@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
@@ -18,7 +19,7 @@ normal circumstances.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return exitWithJSONOrErrorCondition(unlockSnapshot())
+		return exitWithJSONOrErrorCondition(unlockSnapshot(cmd.Context()))
 	},
 }
 
@@ -27,10 +28,10 @@ func init() {
 	snapshotUnlockCmd.Flags().BoolVarP(&outputJSONFormat, "json", "", false, "output json format")
 }
 
-func unlockSnapshot() error {
+func unlockSnapshot(ctx context.Context) error {
 	manager, err := snapshot.NewManager()
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot manager: %w", err)
 	}
-	return manager.Unlock(manager.Paths, false)
+	return manager.Unlock(ctx, manager.Paths, false)
 }

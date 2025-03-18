@@ -17,8 +17,10 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
@@ -62,7 +64,7 @@ can be imported into the Windows registry using the "eg import FILE" command.`,
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
-		result, err := createProfile()
+		result, err := createProfile(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -81,7 +83,7 @@ func init() {
 	createProfileCmd.Flags().BoolVar(&UseCurrentSettings, "from-settings", false, "Use current settings")
 }
 
-func createProfile() (string, error) {
+func createProfile(ctx context.Context) (string, error) {
 	err := validateProfileFormatFlags()
 	if err != nil {
 		return "", err
@@ -107,7 +109,7 @@ func createProfile() (string, error) {
 		}
 		rdClient := client.NewRDClient(connectionInfo)
 		command := client.VersionCommand("", "settings")
-		output, err = client.ProcessRequestForUtility(rdClient.DoRequest("GET", command))
+		output, err = client.ProcessRequestForUtility(rdClient.DoRequest(ctx, http.MethodGet, command))
 	}
 	if err != nil {
 		return "", err

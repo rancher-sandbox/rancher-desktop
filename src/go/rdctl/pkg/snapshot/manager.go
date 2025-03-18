@@ -130,14 +130,14 @@ func (manager *Manager) Create(ctx context.Context, name, description string) (S
 		Description: description,
 	}
 	action := fmt.Sprintf("Creating snapshot %q", name)
-	if err := manager.Lock(manager.Paths, action); err != nil {
+	if err := manager.Lock(ctx, manager.Paths, action); err != nil {
 		return snapshot, err
 	}
 	defer func() {
 		if err != nil {
 			os.RemoveAll(manager.SnapshotDirectory(snapshot))
 		}
-		unlockErr := manager.Unlock(manager.Paths, true)
+		unlockErr := manager.Unlock(ctx, manager.Paths, true)
 		if err == nil {
 			err = unlockErr
 		}
@@ -211,12 +211,12 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 	}
 
 	action := fmt.Sprintf("Restoring snapshot %q", name)
-	if err := manager.Lock(manager.Paths, action); err != nil {
+	if err := manager.Lock(ctx, manager.Paths, action); err != nil {
 		return err
 	}
 	defer func() {
 		// Restart the backend only if a data reset occurred
-		unlockErr := manager.Unlock(manager.Paths, !errors.Is(err, ErrDataReset))
+		unlockErr := manager.Unlock(ctx, manager.Paths, !errors.Is(err, ErrDataReset))
 		if err == nil {
 			err = unlockErr
 		}

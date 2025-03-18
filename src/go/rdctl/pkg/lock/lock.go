@@ -1,6 +1,7 @@
 package lock
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +18,8 @@ import (
 const backendLockName = "backend.lock"
 
 type BackendLocker interface {
-	Lock(appPaths *paths.Paths, action string) error
-	Unlock(appPaths *paths.Paths, restart bool) error
+	Lock(ctx context.Context, appPaths *paths.Paths, action string) error
+	Unlock(ctx context.Context, appPaths *paths.Paths, restart bool) error
 }
 
 type BackendLock struct {
@@ -30,7 +31,7 @@ type LockData struct {
 
 // Lock the backend by creating the lock file and shutting down the VM.
 // The lock file will be deleted if Lock returns an error (e.g. the backend couldn't be stopped).
-func (lock *BackendLock) Lock(appPaths *paths.Paths, action string) error {
+func (lock *BackendLock) Lock(ctx context.Context, appPaths *paths.Paths, action string) error {
 	if err := os.MkdirAll(appPaths.AppHome, 0o755); err != nil {
 		return fmt.Errorf("failed to create backend lock parent directory %q: %w", appPaths.AppHome, err)
 	}
@@ -57,7 +58,7 @@ func (lock *BackendLock) Lock(appPaths *paths.Paths, action string) error {
 	if err := file.Close(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to close backend lock file descriptor: %s", err)
 	}
-	err = ensureBackendStopped(action)
+	err = ensureBackendStopped(ctx, action)
 	if err != nil {
 		_ = os.Remove(lockPath)
 	}
@@ -65,16 +66,16 @@ func (lock *BackendLock) Lock(appPaths *paths.Paths, action string) error {
 }
 
 // Unlock the backend by removing the lock file. Restart the VM if the file was deleted and `restart` is true.
-func (lock *BackendLock) Unlock(appPaths *paths.Paths, restart bool) error {
+func (lock *BackendLock) Unlock(ctx context.Context, appPaths *paths.Paths, restart bool) error {
 	lockPath := filepath.Join(appPaths.AppHome, backendLockName)
 	err := os.RemoveAll(lockPath)
 	if err == nil && restart {
-		err = ensureBackendStarted()
+		err = ensureBackendStarted(ctx)
 	}
 	return err
 }
 
-func ensureBackendStarted() error {
+func ensureBackendStarted(ctx context.Context) error {
 	connectionInfo, err := config.GetConnectionInfo(true)
 	if err != nil || connectionInfo == nil {
 		return err
@@ -84,14 +85,14 @@ func ensureBackendStarted() error {
 		VMState: "STARTED",
 		Locked:  false,
 	}
-	err = rdClient.UpdateBackendState(desiredState)
+	err = rdClient.UpdateBackendState(ctx, desiredState)
 	if err != nil && !errors.Is(err, client.ErrConnectionRefused) {
 		return fmt.Errorf("failed to restart backend: %w", err)
 	}
 	return nil
 }
 
-func ensureBackendStopped(action string) error {
+func ensureBackendStopped(ctx context.Context, action string) error {
 	connectionInfo, err := config.GetConnectionInfo(true)
 	if err != nil || connectionInfo == nil {
 		return err
@@ -99,7 +100,7 @@ func ensureBackendStopped(action string) error {
 
 	// Ensure backend is running if the main process is running at all
 	rdClient := client.NewRDClient(connectionInfo)
-	state, err := rdClient.GetBackendState()
+	state, err := rdClient.GetBackendState(ctx)
 	if errors.Is(err, client.ErrConnectionRefused) {
 		// If we cannot connect to the server, assume that the main
 		// process is not running.
@@ -116,10 +117,10 @@ func ensureBackendStopped(action string) error {
 		VMState: "STOPPED",
 		Locked:  true,
 	}
-	if err := rdClient.UpdateBackendState(desiredState); err != nil {
+	if err := rdClient.UpdateBackendState(ctx, desiredState); err != nil {
 		return fmt.Errorf("failed to stop backend: %w", err)
 	}
-	if err := waitForVMState(rdClient, []string{"STOPPED"}); err != nil {
+	if err := waitForVMState(ctx, rdClient, []string{"STOPPED"}); err != nil {
 		return fmt.Errorf("error waiting for backend to stop: %w", err)
 	}
 
@@ -127,11 +128,11 @@ func ensureBackendStopped(action string) error {
 }
 
 // Normally snapshots can be created at state STARTED or DISABLED
-func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
+func waitForVMState(ctx context.Context, rdClient client.RDClient, desiredStates []string) error {
 	interval := 1 * time.Second
 	numIntervals := 120
 	for range numIntervals {
-		state, err := rdClient.GetBackendState()
+		state, err := rdClient.GetBackendState(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to poll backend state: %w", err)
 		}

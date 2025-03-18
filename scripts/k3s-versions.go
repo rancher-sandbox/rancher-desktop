@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,8 +15,12 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-// golang.org/x/mod/semver *requires* a leading 'v' on versions, and will add missing minor/patch numbers.
-const minimumVersion = "v1.21"
+const (
+	// golang.org/x/mod/semver *requires* a leading 'v' on versions, and will add missing minor/patch numbers.
+	minimumVersion = "v1.21"
+	// The K3s channels endpoint
+	k3sChannelsEndpoint = "https://update.k3s.io/v1-release/channels"
+)
 
 type Channels struct {
 	Data []Channel `json:"data"`
@@ -27,8 +32,12 @@ type Channel struct {
 
 // getK3sChannels returns a map of all non-prerelease channels, plus "latest" and "stable".
 // The values are the latest release for each channel.
-func getK3sChannels() (map[string]string, error) {
-	resp, err := http.Get("https://update.k3s.io/v1-release/channels")
+func getK3sChannels(ctx context.Context) (map[string]string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, k3sChannelsEndpoint, http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k3s channels: %w", err)
 	}
@@ -76,9 +85,9 @@ type GithubRelease struct {
 
 // getGithubReleasesPage fetches a single page of GitHub releases and returns a list
 // of all non-draft, non-prerelease releases higher than the minimumVersion.
-func getGithubReleasesPage(page int) ([]GithubRelease, error) {
+func getGithubReleasesPage(ctx context.Context, page int) ([]GithubRelease, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/k3s-io/k3s/releases?page=%d", page)
-	req, err := http.NewRequest("GET", url, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request for %q: %w", url, err)
 	}
@@ -120,10 +129,10 @@ func getGithubReleasesPage(page int) ([]GithubRelease, error) {
 }
 
 // getGithubReleases returns a sorted list of all matching GitHub releases.
-func getGithubReleases() ([]string, error) {
+func getGithubReleases(ctx context.Context) ([]string, error) {
 	releaseMap := make(map[string]string)
 	for page := 1; ; page++ {
-		releases, err := getGithubReleasesPage(page)
+		releases, err := getGithubReleasesPage(ctx, page)
 		if err != nil {
 			return nil, err
 		}
@@ -147,13 +156,13 @@ func getGithubReleases() ([]string, error) {
 	return slices.SortedFunc(maps.Values(releaseMap), semver.Compare), nil
 }
 
-func getK3sVersions() (string, error) {
-	k3sChannels, err := getK3sChannels()
+func getK3sVersions(ctx context.Context) (string, error) {
+	k3sChannels, err := getK3sChannels(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error fetching k3s channels: %w", err)
 	}
 
-	githubReleases, err := getGithubReleases()
+	githubReleases, err := getGithubReleases(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error fetching GitHub releases: %w", err)
 	}
@@ -173,7 +182,7 @@ func getK3sVersions() (string, error) {
 }
 
 func main() {
-	versions, err := getK3sVersions()
+	versions, err := getK3sVersions(context.Background())
 	if err != nil {
 		panic(err)
 	}

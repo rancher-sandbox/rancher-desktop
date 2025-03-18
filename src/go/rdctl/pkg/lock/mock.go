@@ -1,14 +1,18 @@
 package lock
 
-import "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+import (
+	"context"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+)
 
 type MockBackendLock struct {
 }
 
-func (lock *MockBackendLock) Lock(appPaths *paths.Paths, action string) error {
+func (lock *MockBackendLock) Lock(ctx context.Context, appPaths *paths.Paths, action string) error {
 	return nil
 }
 
-func (lock *MockBackendLock) Unlock(appPaths *paths.Paths, restart bool) error {
+func (lock *MockBackendLock) Unlock(ctx context.Context, appPaths *paths.Paths, restart bool) error {
 	return nil
 }
