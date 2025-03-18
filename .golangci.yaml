@@ -16,6 +16,7 @@ linters:
     - mnd
     - nakedret
     - noctx
+    - nolintlint
     - staticcheck
     - unconvert
     - unparam

@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 SUSE LLC
+Copyright © 2025 SUSE LLC
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -131,9 +131,8 @@ func (i *Iptables) ForwardPorts() error {
 // comparePorts compares the old and new ports to find those added or removed.
 // This function is mostly lifted from lima (github.com/lima-vm/lima) which is
 // licensed under the Apache 2.
-//
-//nolint:nonamedreturns
-func comparePorts(oldPorts, newPorts []limaiptables.Entry) (added, removed []limaiptables.Entry) {
+func comparePorts(oldPorts, newPorts []limaiptables.Entry) ([]limaiptables.Entry, []limaiptables.Entry) {
+	var added, removed []limaiptables.Entry
 	oldPortMap := make(map[string]limaiptables.Entry, len(oldPorts))
 	portExistMap := make(map[string]bool, len(oldPorts))
 	for _, oldPort := range oldPorts {
@@ -155,7 +154,7 @@ func comparePorts(oldPorts, newPorts []limaiptables.Entry) (added, removed []lim
 			}
 		}
 	}
-	return
+	return added, removed
 }
 
 func entryToString(ip limaiptables.Entry) string {
