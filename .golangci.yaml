@@ -13,6 +13,7 @@ linters:
     - govet
     - ineffassign
     - misspell
+    - mnd
     - staticcheck
     - unconvert
     - unparam
@@ -59,9 +60,15 @@ linters:
         - "2"
         - "3"
       ignored-functions:
-        - ^strings\.SplitN$
+        - ^make$
+        - ^net\.IPv4$
         - ^os\.FileMode$
         - ^os\.Mkdir(?:All)?$
+        - ^os\.(?:Open|Write)File$
+        - ^s\.waitForAppToDieOrKillIt$
+        - ^strings\.SplitN$
+        - ^tabwriter\.NewWriter$
+        - ^utils\.GetParentDir$
     nolintlint:
       allow-unused: false # report any unused nolint directives
       require-explanation: true

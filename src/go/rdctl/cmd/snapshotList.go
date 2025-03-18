@@ -13,6 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// The maximum number of runes to output for tabular output.
+	tableMaxRunes = 63
+)
+
 // SortableSnapshots are []snapshot.Snapshot sortable by date created.
 type SortableSnapshots []snapshot.Snapshot
 
@@ -81,7 +86,7 @@ func tabularOutput(snapshots []snapshot.Snapshot) error {
 	fmt.Fprintf(writer, "NAME\tCREATED\tDESCRIPTION\n")
 	for _, aSnapshot := range snapshots {
 		prettyCreated := aSnapshot.Created.Format(time.RFC1123)
-		desc := truncateAtNewlineOrMaxRunes(aSnapshot.Description, 63)
+		desc := truncateAtNewlineOrMaxRunes(aSnapshot.Description, tableMaxRunes)
 		fmt.Fprintf(writer, "%s\t%s\t%s\n", aSnapshot.Name, prettyCreated, desc)
 	}
 	writer.Flush()
