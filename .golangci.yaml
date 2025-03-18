@@ -45,8 +45,6 @@ linters:
         - style
     gocyclo:
       min-complexity: 15
-    lll:
-      line-length: 140
     mnd:
       # don't include the "operation" and "assign"
       checks:
