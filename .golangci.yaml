@@ -14,6 +14,7 @@ linters:
     - ineffassign
     - misspell
     - mnd
+    - nakedret
     - staticcheck
     - unconvert
     - unparam
