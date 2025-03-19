@@ -82,14 +82,20 @@ async function syncModules(fix: boolean): Promise<boolean> {
   return true;
 }
 
-async function goLangCILint(fix: boolean): Promise<boolean> {
+async function goLangCILintSingle(fix: boolean, os: string): Promise<boolean> {
   const depVersionsPath = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
   const dependencyVersions = await readDependencyVersions(depVersionsPath);
 
-  const args = [
-    'run', `github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
+  const args = ['run'];
+
+  if (process.platform !== 'win32') {
+    // On non-Windows, we can run with different GOOS.
+    args.push('-exec', `/usr/bin/env GOOS=${ os }`);
+  }
+  args.push(
+    `github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
     'run', '--timeout=10m', '--verbose',
-  ];
+  );
   let success = true;
 
   if (fix) {
@@ -109,6 +115,30 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
   }
 
   return success;
+}
+
+async function goLangCILint(fix: boolean): Promise<boolean> {
+  if (!process.env.CI && process.platform !== 'win32') {
+    // On non-Windows, we can run with different GOOS.
+    // Run them in series, because it avoids producing confusing output (and
+    // when fix is on, avoids multiple processes opening the same files for
+    // writing).  On go toolchain 1.24+ this is only compiled once.
+    for (const os of ['darwin', 'linux', 'windows']) {
+      if (!(await goLangCILintSingle(fix, os))) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  const platform = {
+    darwin: 'darwin',
+    linux:  'linux',
+    win32:  'windows',
+  }[process.platform as 'darwin' | 'linux' | 'win32'];
+
+  return goLangCILintSingle(fix, platform);
 }
 
 type dependabotConfig = {
