@@ -139,7 +139,7 @@ jobs:
         >> "$GITHUB_ENV"
 
     - name: Download artifacts
-      uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+      uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765 # v4.2.0
       with:
         name: application-${{ matrix.platform }}.zip
     - run: ${{ env.EXEC_COMMAND }} .github/workflows/smoke-test/smoke-test.sh
@@ -203,7 +203,7 @@ jobs:
         sudo --user=ci-user mkdir "$RD_LOGS_DIR"
 
     - name: Download AppImage
-      uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+      uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765 # v4.2.0
       with:
         name: application-linux.AppImage
 
