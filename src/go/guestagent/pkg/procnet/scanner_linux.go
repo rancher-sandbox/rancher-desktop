@@ -54,10 +54,10 @@ type ProcNetScanner struct {
 	scanInterval  time.Duration
 }
 
-func NewProcNetScanner(ctx context.Context, tracker tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
+func NewProcNetScanner(ctx context.Context, t tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
 	return &ProcNetScanner{
 		context:      ctx,
-		tracker:      tracker,
+		tracker:      t,
 		scanInterval: scanInterval,
 	}, enableLocalnetRouting()
 }

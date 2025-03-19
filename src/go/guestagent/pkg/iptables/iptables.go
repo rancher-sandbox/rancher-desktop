@@ -43,10 +43,10 @@ type Iptables struct {
 	updateInterval time.Duration
 }
 
-func New(ctx context.Context, tracker tracker.Tracker, iptablesScanner Scanner, listenerIP net.IP, updateInterval time.Duration) *Iptables {
+func New(ctx context.Context, apiTracker tracker.Tracker, iptablesScanner Scanner, listenerIP net.IP, updateInterval time.Duration) *Iptables {
 	return &Iptables{
 		context:        ctx,
-		apiTracker:     tracker,
+		apiTracker:     apiTracker,
 		scanner:        iptablesScanner,
 		listenerIP:     listenerIP,
 		updateInterval: updateInterval,

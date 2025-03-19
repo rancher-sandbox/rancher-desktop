@@ -24,7 +24,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
+	containerapi "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -145,7 +145,7 @@ func (e *EventMonitor) Info(ctx context.Context) error {
 }
 
 func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
-	containers, err := e.dockerClient.ContainerList(ctx, container.ListOptions{
+	containers, err := e.dockerClient.ContainerList(ctx, containerapi.ListOptions{
 		Filters: filters.NewArgs(filters.Arg("status", "running")),
 	})
 	if err != nil {
@@ -177,7 +177,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 	return nil
 }
 
-func createPortMapping(ports []container.Port) (nat.PortMap, error) {
+func createPortMapping(ports []containerapi.Port) (nat.PortMap, error) {
 	portMap := make(nat.PortMap)
 
 	for _, port := range ports {
@@ -271,7 +271,7 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 	return nil
 }
 
-func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container container.InspectResponse) {
+func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container containerapi.InspectResponse) {
 	// If the container's NetworkSettings.Networks map is not empty, it indicates that the container
 	// is connected to a Docker Compose network. In this case, we should inspect the map and
 	// configure the loopback address for each container's assigned IP address.

@@ -35,7 +35,6 @@ linters:
       disabled-checks:
         - dupImport # https://github.com/go-critic/go-critic/issues/845
         - ifElseChain
-        - importShadow # "forwarder", "tracker", etc. -- to be resolved later.
         - octalLiteral
         - unnamedResult
         - whyNoLint

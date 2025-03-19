@@ -147,6 +147,7 @@ conflist
 connectaddress
 connectport
 constrainttemplate
+containerapi
 CONTAINERENGINE
 containernetworking
 copypac
