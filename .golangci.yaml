@@ -140,6 +140,12 @@ linters:
           - gocritic
         path: src/go/rdctl/pkg/reg/reg.go
         text: 'sprintfQuotedString:'
+      - # This seems inconsistent across platforms
+        path: src/go/nerdctl-stub/main_shared.go
+        linters: [ unparam ]
+        text: \bresult\b.*\bis always nil\b
+        source: func mountArgProcessor
+
 formatters:
   enable:
     - gofmt
