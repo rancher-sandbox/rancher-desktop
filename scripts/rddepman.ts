@@ -4,6 +4,7 @@ import { spawnSync } from 'child_process';
 import path from 'path';
 
 import { Octokit } from 'octokit';
+import semver from 'semver';
 
 import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
@@ -12,6 +13,7 @@ import { Wix } from 'scripts/dependencies/wix';
 import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
 import {
   DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit,
+  IsGitHubDependency,
 } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
@@ -86,9 +88,87 @@ function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, l
   return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 }
 
-async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
-  const title = getTitle(name, currentVersion, latestVersion);
-  const branchName = getBranchName(name, currentVersion, latestVersion);
+// Helper function to make iterating through Octokit pagination easier.
+// Pass in a pagination iterator, plus a function to convert one page to a list of results.
+async function *iterateIterator<T, U>(input: AsyncIterableIterator<T>, fn: (_: T) => U[]) {
+  for await (const list of input) {
+    yield * fn(list);
+  }
+}
+
+async function getBody(dependency: Dependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<string> {
+  if (!IsGitHubDependency(dependency) || typeof currentVersion !== 'string' || typeof latestVersion !== 'string') {
+    // If the dependency is not on GitHub, we don't have any additional information yet.
+    return '';
+  }
+  const currentSemver = semver.parse(currentVersion, true);
+  const latestSemver = semver.parse(latestVersion, true);
+
+  if (!currentSemver || !latestSemver) {
+    console.log(`Can't parse ${ dependency.name } current or latest version ${ currentVersion } / ${ latestVersion }`);
+
+    return '';
+  }
+
+  type releaseType = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][number];
+  const releaseIterator = getOctokit().paginate.iterator(
+    getOctokit().rest.repos.listReleases,
+    { owner: dependency.githubOwner, repo: dependency.githubRepo });
+  const releaseNotes: [semver.SemVer, releaseType][] = [];
+
+  for await (const release of iterateIterator(releaseIterator, r => r.data)) {
+    const version = semver.parse(release.tag_name, true);
+
+    if (!version) {
+      if (release.tag_name === dependency.versionToTagName(currentVersion)) {
+        // Version cannot be parsed, but it's the current version.
+        break;
+      }
+      console.log(`Ignoring non-semver ${ dependency.name } version ${ release.tag_name }`);
+      continue;
+    }
+    if (semver.eq(version, currentSemver)) {
+      // Found the current version, don't look at anything older.
+      break;
+    }
+    if (semver.lt(version, currentSemver)) {
+      // Found a patch release of the previous version, or similar.
+      continue;
+    }
+    if (semver.gt(version, latestSemver)) {
+      // Found a version after the latest version (alpha or similar).
+      continue;
+    }
+    if (version.prerelease.length && !latestSemver.prerelease.length) {
+      // This is a pre-release, but the release we're picking is not a pre-release.
+      continue;
+    }
+    releaseNotes.push([version, release]);
+  }
+
+  releaseNotes.sort(([a], [b]) => semver.compare(a, b));
+
+  return releaseNotes.map(([, release]) => {
+    const body = release.body || `Release ${ release.name } does not have release notes.`;
+
+    if (releaseNotes.length > 1) {
+      // Make sure we don't have leading spaces or this turns into <pre>.
+      return [
+        '<details>',
+        `<summary><h3>${ release.name } (${ release.tag_name })</h3></summary>`,
+        '',
+        body,
+        '</details>',
+      ].join('\n');
+    }
+
+    return `## ${ release.name } (${ release.tag_name })\n${ body }\n`;
+  }).join('\n');
+}
+
+async function createDependencyBumpPR(dependency: Dependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
+  const title = getTitle(dependency.name, currentVersion, latestVersion);
+  const branchName = getBranchName(dependency.name, currentVersion, latestVersion);
 
   console.log(`Creating PR "${ title }".`);
   try {
@@ -96,6 +176,7 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
       owner: GITHUB_OWNER,
       repo:  GITHUB_REPO,
       title,
+      body:  await getBody(dependency, currentVersion, latestVersion),
       base:  MAIN_BRANCH,
       head:  branchName,
     });
@@ -233,7 +314,7 @@ async function checkDependencies(): Promise<void> {
     git('add', DEP_VERSIONS_PATH);
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
-    await createDependencyBumpPR(dependency.name, currentVersion, latestVersion);
+    await createDependencyBumpPR(dependency, currentVersion, latestVersion);
   }
 }
 
