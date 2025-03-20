@@ -349,7 +349,7 @@ func unshareCmd(ctx context.Context, ns netns.NsHandle, args string) error {
 func writeWSLInitPid(pid int) error {
 	unsharePID := strconv.Itoa(pid)
 
-	writePermission := 0600
+	writePermission := 0o600
 	err := os.WriteFile("/run/wsl-init.pid", []byte(unsharePID), fs.FileMode(writePermission))
 	if err != nil {
 		return err

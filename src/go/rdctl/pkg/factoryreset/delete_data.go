@@ -83,7 +83,7 @@ func clearDockerContext() error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(scratchFile.Name(), contents, 0600)
+	err = os.WriteFile(scratchFile.Name(), contents, 0o600)
 	scratchFile.Close()
 	if err != nil {
 		return err
