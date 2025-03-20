@@ -14,6 +14,7 @@ import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
 import {
   DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit,
   IsGitHubDependency,
+  iterateIterator,
 } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
@@ -101,14 +102,6 @@ function getBranchName(name: string, currentVersion: string | AlpineLimaISOVersi
 
 function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
   return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
-}
-
-// Helper function to make iterating through Octokit pagination easier.
-// Pass in a pagination iterator, plus a function to convert one page to a list of results.
-async function *iterateIterator<T, U>(input: AsyncIterableIterator<T>, fn: (_: T) => U[]) {
-  for await (const list of input) {
-    yield * fn(list);
-  }
 }
 
 async function getBody(dependency: Dependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<string> {
@@ -205,11 +198,12 @@ type PRSearchFn = ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>
 
 async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['items']> {
   const queryString = `type:pr repo:${ GITHUB_OWNER }/${ GITHUB_REPO } head:rddepman/${ name } sort:updated`;
-  const response = await getOctokit().rest.search.issuesAndPullRequests({ q: queryString });
+  const pullsIterator = getOctokit().paginate.iterator(
+    getOctokit().rest.search.issuesAndPullRequests,
+    { q: queryString });
+  const results: Awaited<PRSearchFn>['data']['items'] = [];
 
-  const results: typeof response.data.items = [];
-
-  for (const item of response.data.items) {
+  for await (const item of iterateIterator(pullsIterator, p => p.data)) {
     if (!item.pull_request) {
       continue;
     }
