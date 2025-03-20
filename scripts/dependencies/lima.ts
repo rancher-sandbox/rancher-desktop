@@ -11,7 +11,6 @@ import { download, downloadTarGZ, getResource } from '../lib/download';
 
 import {
   AlpineLimaISOVersion,
-  Dependency,
   DownloadContext,
   findChecksum,
   getOctokit,
@@ -22,7 +21,7 @@ import {
 } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
-export class Lima implements Dependency, GitHubDependency {
+export class Lima implements GitHubDependency {
   name = 'lima';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-lima';
@@ -78,7 +77,7 @@ export class Lima implements Dependency, GitHubDependency {
   }
 }
 
-export class Qemu implements Dependency, GitHubDependency {
+export class Qemu implements GitHubDependency {
   name = 'qemu';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-qemu';
@@ -115,7 +114,7 @@ export class Qemu implements Dependency, GitHubDependency {
   }
 }
 
-export class SocketVMNet implements Dependency, GitHubDependency {
+export class SocketVMNet implements GitHubDependency {
   name = 'socketVMNet';
   githubOwner = 'lima-vm';
   githubRepo = 'socket_vmnet';
@@ -153,7 +152,7 @@ export class SocketVMNet implements Dependency, GitHubDependency {
   }
 }
 
-export class AlpineLimaISO implements Dependency, GitHubDependency {
+export class AlpineLimaISO implements GitHubDependency {
   name = 'alpineLimaISO';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'alpine-lima';

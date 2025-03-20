@@ -147,12 +147,26 @@ export interface Dependency {
 /**
  * A Dependency that is hosted in a GitHub repo.
  */
-export interface GitHubDependency {
+export interface GitHubDependency extends Dependency {
   githubOwner: string
   githubRepo: string
   // Converts a version (of the format that is stored in dependencies.yaml)
   // to a tag that is used in a GitHub release.
   versionToTagName(version: string | AlpineLimaISOVersion): string
+}
+
+export function IsGitHubDependency(dependency: Dependency): dependency is GitHubDependency {
+  if (!('githubOwner' in dependency) || typeof dependency.githubOwner !== 'string') {
+    return false;
+  }
+  if (!('githubRepo' in dependency) || typeof dependency.githubRepo !== 'string') {
+    return false;
+  }
+  if (!('versionToTagName' in dependency) || typeof dependency.versionToTagName !== 'function') {
+    return false;
+  }
+
+  return true;
 }
 
 export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
