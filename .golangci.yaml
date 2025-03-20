@@ -25,9 +25,6 @@ linters:
   settings:
     dupl:
       threshold: 100
-    funlen:
-      lines: 100
-      statements: 50
     goconst:
       min-len: 2
       min-occurrences: 3
@@ -36,16 +33,12 @@ linters:
         - dupImport # https://github.com/go-critic/go-critic/issues/845
         - ifElseChain
         - unnamedResult
-        - whyNoLint
-        - wrapperFunc
       enabled-tags:
         - diagnostic
         - experimental
         - opinionated
         - performance
         - style
-    gocyclo:
-      min-complexity: 15
     gosec:
       config:
         G306: "0644"
