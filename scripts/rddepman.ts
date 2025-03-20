@@ -111,6 +111,7 @@ async function getBody(dependency: Dependency, currentVersion: string | AlpineLi
   }
   const currentSemver = semver.parse(currentVersion, true);
   const latestSemver = semver.parse(latestVersion, true);
+  const { githubOwner: owner, githubRepo: repo } = dependency;
 
   if (!currentSemver || !latestSemver) {
     console.log(`Can't parse ${ dependency.name } current or latest version ${ currentVersion } / ${ latestVersion }`);
@@ -121,7 +122,7 @@ async function getBody(dependency: Dependency, currentVersion: string | AlpineLi
   type releaseType = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][number];
   const releaseIterator = getOctokit().paginate.iterator(
     getOctokit().rest.repos.listReleases,
-    { owner: dependency.githubOwner, repo: dependency.githubRepo });
+    { owner, repo });
   const releaseNotes: [semver.SemVer, releaseType][] = [];
 
   for await (const release of iterateIterator(releaseIterator, r => r.data)) {
@@ -155,10 +156,16 @@ async function getBody(dependency: Dependency, currentVersion: string | AlpineLi
   }
 
   releaseNotes.sort(([a], [b]) => semver.compare(a, b));
+  let lastVersion = dependency.versionToTagName(currentVersion);
 
   return releaseNotes.map(([, release]) => {
     const body = release.body || `Release ${ release.name } does not have release notes.`;
+    const compareLink = [
+      `[Compare between ${ lastVersion } and ${ release.tag_name }]`,
+      `(https://github.com/${ owner }/${ repo }/compare/${ lastVersion }...${ release.tag_name })`,
+    ].join('');
 
+    lastVersion = release.tag_name;
     if (releaseNotes.length > 1) {
       // Make sure we don't have leading spaces or this turns into <pre>.
       return [
@@ -167,10 +174,12 @@ async function getBody(dependency: Dependency, currentVersion: string | AlpineLi
         '',
         body,
         '</details>',
+        '',
+        compareLink,
       ].join('\n');
     }
 
-    return `## ${ release.name } (${ release.tag_name })\n${ body }\n`;
+    return `## ${ release.name } (${ release.tag_name })\n${ body }\n${ compareLink }\n`;
   }).join('\n');
 }
 
