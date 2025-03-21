@@ -1,18 +1,22 @@
 /**
- * This script is a wrapper to run TypeScript scripts via node.  This wrapper is
- * necessary as ts-node by default doesn't override the tsconfig.json at all,
- * which means that the `module` compiler option will be ESNext, which works
- * fine elsewhere, but not on the command line.
+ * This script is a wrapper to run TypeScript scripts via tsx.  This is mostly
+ * to set defaults for our tools, such as disabling BrowsersList updates and
+ * showing deprecations.
  */
 
-// Load tsconfig-paths so that ts-node can resolve files based on the 'paths'
-// compiler options key in tsconfig.json.
-require('tsconfig-paths/register');
-
-const { main: tsNodeMain } = require('ts-node/dist/bin');
+const { spawnSync } = require('child_process');
 
 function main(args) {
-  return tsNodeMain(args, { '--compiler-options': { module: 'commonjs' } });
+  const childArgs = [
+    '--trace-warnings',
+    '--trace-deprecation',
+    'node_modules/tsx/dist/cli.mjs',
+  ];
+
+  const finalArgs = [...childArgs, ...args];
+
+  console.log(process.argv0, ...finalArgs);
+  spawnSync(process.argv0, finalArgs, { stdio: 'inherit' });
 }
 
 if (require.main === module) {
