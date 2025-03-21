@@ -160,7 +160,7 @@ func wslifyConfigDir() (string, error) {
 	var outBuf bytes.Buffer
 	cmd := exec.Command("/bin/wslpath", path)
 	cmd.Stdout = &outBuf
-	if err = cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		return "", err
 	}
 	return strings.TrimRight(outBuf.String(), "\r\n"), err

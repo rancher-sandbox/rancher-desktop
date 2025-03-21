@@ -38,7 +38,8 @@ func iterProcesses(callback func(pid int, executable string) error) error {
 	if err != nil {
 		return fmt.Errorf("failed to list processes: %w", err)
 	}
-	for _, proc := range procs {
+	for procIndex := range procs {
+		proc := &procs[procIndex]
 		pid := int(proc.Proc.P_pid)
 		buf, err := unix.SysctlRaw(CTL_KERN, KERN_PROCARGS, pid)
 		if err != nil {
@@ -54,7 +55,7 @@ func iterProcesses(callback func(pid int, executable string) error) error {
 			// If we have unexpected data, don't fall over.
 			continue
 		}
-		if err = callback(pid, string(buf[:index])); err != nil {
+		if err := callback(pid, string(buf[:index])); err != nil {
 			return err
 		}
 	}

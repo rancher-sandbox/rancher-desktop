@@ -78,7 +78,7 @@ type GithubRelease struct {
 // of all non-draft, non-prerelease releases higher than the minimumVersion.
 func getGithubReleasesPage(page int) ([]GithubRelease, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/k3s-io/k3s/releases?page=%d", page)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request for %q: %w", url, err)
 	}

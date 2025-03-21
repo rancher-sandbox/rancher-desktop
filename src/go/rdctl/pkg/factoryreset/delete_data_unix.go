@@ -40,7 +40,7 @@ import (
 // that need to be preserved across a factory reset, so if any of
 // those exist and are non-empty, then a list of all files/directories
 // that don't match the exclusion list will be returned instead.
-func appHomeDirectories(appPaths paths.Paths) []string {
+func appHomeDirectories(appPaths *paths.Paths) []string {
 	// Use lowercase names for comparison in case the user created the subdirectory manually
 	// with the wrong case on a case-preserving filesystem (default on macOS).
 	excludeDir := map[string]string{
@@ -77,7 +77,7 @@ func appHomeDirectories(appPaths paths.Paths) []string {
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
 // or pull the path settings out of the shell profile files.
-func deleteUnixLikeData(appPaths paths.Paths, pathList []string) error {
+func deleteUnixLikeData(appPaths *paths.Paths, pathList []string) error {
 	if err := deleteLimaVM(); err != nil {
 		logrus.Errorf("Error trying to delete the Lima VM: %s\n", err)
 	}
@@ -188,7 +188,7 @@ func removePathManagement(dotFiles []string) error {
 		preMarkerNewlineIndex := ptn.SubexpIndex("preMarkerNewlines")
 		postMarkerNewlineIndex := ptn.SubexpIndex("postMarkerNewlines")
 		postMarkerTextIndex := ptn.SubexpIndex("postMarkerText")
-		if len(parts[preMarkerTextIndex]) == 0 && len(parts[postMarkerTextIndex]) == 0 {
+		if parts[preMarkerTextIndex] == "" && parts[postMarkerTextIndex] == "" {
 			// Nothing of interest left in this file, so delete it
 			err = os.RemoveAll(dotFile)
 			if err != nil {
@@ -208,7 +208,7 @@ func removePathManagement(dotFiles []string) error {
 			// One of the newlines was inserted by the dotfile manager, but keep the others
 			newParts = append(newParts, preMarkerNewlines[1:])
 		}
-		if len(parts[postMarkerTextIndex]) > 0 {
+		if parts[postMarkerTextIndex] != "" {
 			if len(postMarkerNewlines) > 1 {
 				// Either there was a newline before the marker block, and we have copied
 				// it into the new file,

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func VersionCommand(version string, command string) string {
+func VersionCommand(version, command string) string {
 	if version == "" {
 		version = APIVersion
 	}

@@ -124,6 +124,7 @@ functionLoop:
 			hostPathIndex := i
 			switch result {
 			case hostPathNeither:
+				//nolint:gocritic // We break the loop once we are done appending
 				resultArgs = append(resultArgs, paths...)
 				break functionLoop
 			case hostPathUnknown:
@@ -143,6 +144,7 @@ functionLoop:
 				return nil, err
 			}
 			paths[hostPathIndex] = newPath
+			//nolint:gocritic // We break the loop once we are done appending
 			resultArgs = append(resultArgs, paths...)
 			break functionLoop
 		}

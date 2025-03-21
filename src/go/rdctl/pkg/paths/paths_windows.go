@@ -12,20 +12,20 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
-func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
+func GetPaths(getResourcesPathFuncs ...func() (string, error)) (*Paths, error) {
 	var getResourcesPathFunc func() (string, error)
 	switch len(getResourcesPathFuncs) {
 	case 0:
-		getResourcesPathFunc = func() (string, error) { return GetResourcesPath() }
+		getResourcesPathFunc = GetResourcesPath
 	case 1:
 		getResourcesPathFunc = getResourcesPathFuncs[0]
 	default:
-		return Paths{}, errors.New("you can only pass one function in getResourcesPathFuncs arg")
+		return nil, errors.New("you can only pass one function in getResourcesPathFuncs arg")
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return Paths{}, fmt.Errorf("failed to get user home directory: %w", err)
+		return nil, fmt.Errorf("failed to get user home directory: %w", err)
 	}
 	localAppData := os.Getenv("LOCALAPPDATA")
 	if localAppData == "" {
@@ -50,10 +50,10 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (Paths, error) {
 	}
 	paths.Resources, err = getResourcesPathFunc()
 	if err != nil {
-		return Paths{}, fmt.Errorf("failed to find resources directory: %w", err)
+		return nil, fmt.Errorf("failed to find resources directory: %w", err)
 	}
 
-	return paths, nil
+	return &paths, nil
 }
 
 // Given a list of paths, return the first one that is a valid executable.

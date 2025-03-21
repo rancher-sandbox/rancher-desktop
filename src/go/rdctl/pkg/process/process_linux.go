@@ -41,11 +41,12 @@ func iterProcesses(callback func(pid int, executable string) error) error {
 		if err != nil {
 			continue
 		}
+		//nolint:gocritic // filepathJoin doesn't like absolute paths
 		procPath, err := os.Readlink(filepath.Join("/proc", pidfd.Name(), "exe"))
 		if err != nil {
 			continue
 		}
-		if err = callback(pid, procPath); err != nil {
+		if err := callback(pid, procPath); err != nil {
 			return err
 		}
 	}

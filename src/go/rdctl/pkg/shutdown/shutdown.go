@@ -124,7 +124,7 @@ func FinishShutdown(ctx context.Context, waitForShutdown bool, initiatingCommand
 		"the app")
 }
 
-func (s *shutdownData) waitForAppToDieOrKillIt(ctx context.Context, checkFunc func() (bool, error), killFunc func(context.Context) error, retryCount int, retryWait int, operation string) error {
+func (s *shutdownData) waitForAppToDieOrKillIt(ctx context.Context, checkFunc func() (bool, error), killFunc func(context.Context) error, retryCount, retryWait int, operation string) error {
 	for iter := 0; s.waitForShutdown && iter < retryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)

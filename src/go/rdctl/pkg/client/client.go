@@ -63,7 +63,7 @@ func (client *RDClientImpl) makeURL(host string, port int, command string) strin
 	return fmt.Sprintf("http://%s:%d/%s", host, port, command)
 }
 
-func (client *RDClientImpl) DoRequest(method string, command string) (*http.Response, error) {
+func (client *RDClientImpl) DoRequest(method, command string) (*http.Response, error) {
 	req, err := client.getRequestObject(method, command)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (client *RDClientImpl) DoRequest(method string, command string) (*http.Resp
 	return http.DefaultClient.Do(req)
 }
 
-func (client *RDClientImpl) DoRequestWithPayload(method string, command string, payload io.Reader) (*http.Response, error) {
+func (client *RDClientImpl) DoRequestWithPayload(method, command string, payload io.Reader) (*http.Response, error) {
 	url := client.makeURL(client.connectionInfo.Host, client.connectionInfo.Port, command)
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
@@ -83,9 +83,9 @@ func (client *RDClientImpl) DoRequestWithPayload(method string, command string, 
 	return http.DefaultClient.Do(req)
 }
 
-func (client *RDClientImpl) getRequestObject(method string, command string) (*http.Request, error) {
+func (client *RDClientImpl) getRequestObject(method, command string) (*http.Request, error) {
 	url := client.makeURL(client.connectionInfo.Host, client.connectionInfo.Port, command)
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, url, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

@@ -28,7 +28,15 @@ type snapshotFile struct {
 	FileMode os.FileMode
 }
 
-func (snapshotter SnapshotterImpl) Files(appPaths paths.Paths, snapshotDir string) []snapshotFile {
+// SnapshotterImpl also works as a *Manager receiver
+type SnapshotterImpl struct {
+}
+
+func NewSnapshotterImpl() Snapshotter {
+	return SnapshotterImpl{}
+}
+
+func (snapshotter SnapshotterImpl) Files(appPaths *paths.Paths, snapshotDir string) []snapshotFile {
 	files := []snapshotFile{
 		{
 			WorkingPath:  filepath.Join(appPaths.Config, "settings.json"),
@@ -83,15 +91,7 @@ func (snapshotter SnapshotterImpl) Files(appPaths paths.Paths, snapshotDir strin
 	return files
 }
 
-// SnapshotterImpl also works as a *Manager receiver
-type SnapshotterImpl struct {
-}
-
-func NewSnapshotterImpl() Snapshotter {
-	return SnapshotterImpl{}
-}
-
-func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
+func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths *paths.Paths, snapshotDir string) error {
 	taskRunner := runner.NewTaskRunner(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {
@@ -121,7 +121,7 @@ func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths pat
 
 // Restores the files from their location in a snapshot directory
 // to their working location.
-func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths paths.Paths, snapshotDir string) error {
+func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths *paths.Paths, snapshotDir string) error {
 	taskRunner := runner.NewTaskRunner(ctx)
 	files := snapshotter.Files(appPaths, snapshotDir)
 	for _, file := range files {

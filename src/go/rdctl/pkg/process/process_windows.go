@@ -282,13 +282,13 @@ func SpawnProcessInRDJob(pid uint32, command []string) (*os.ProcessState, error)
 	if !errors.Is(err, os.ErrExist) {
 		// The job was newly created.
 
-		if err = configureJobLimits(job); err != nil {
+		if err := configureJobLimits(job); err != nil {
 			return nil, err
 		}
 
 		// Duplicate the job into the given process (but leaking it).  This way when
 		// the target process exits, it will shut down the job.
-		if err = injectHandleInProcess(pid, job); err != nil {
+		if err := injectHandleInProcess(pid, job); err != nil {
 			return nil, err
 		}
 	}
@@ -366,7 +366,7 @@ func iterProcesses(callback func(proc windows.Handle, executable string) error) 
 				return nil
 			}
 
-			if err = callback(hProc, executablePath); err != nil {
+			if err := callback(hProc, executablePath); err != nil {
 				return err
 			}
 			return nil
