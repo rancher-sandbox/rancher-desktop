@@ -70,11 +70,11 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   }
 
   window = new BrowserWindow(options);
-  window.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    const levelNum = level === 0 ? 0 : level === 1 ? 1 : level === 2 ? 2 : level === 3 ? 3 : 0;
-    const key = ['debug', 'info', 'warn', 'error'] as const;
+  window.webContents.on('console-message', (event) => {
+    const { level, lineNumber, message } = event;
+    const method = level === 'warning' ? 'warn' : level;
 
-    console[key[levelNum]](`${ name }@${ line }: ${ message }`);
+    console[method](`${ name }@${ lineNumber }: ${ message }`);
   });
   window.webContents.on('will-navigate', (event, input) => {
     if (isInternalURL(input)) {
