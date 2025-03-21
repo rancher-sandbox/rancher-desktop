@@ -155,12 +155,12 @@ async function copyFileExtendedAttributes(fromPath: string, toPath: string): Pro
   try {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
     // @ts-ignore // fs-xattr is not available on Windows
-    const { list, get, set } = await import('fs-xattr');
+    const { listAttributes, getAttribute, setAttribute } = await import('fs-xattr');
 
-    for (const attr of await list(fromPath)) {
-      const value = await get(fromPath, attr);
+    for (const attr of await listAttributes(fromPath)) {
+      const value = await getAttribute(fromPath, attr);
 
-      await set(toPath, attr, value);
+      await setAttribute(toPath, attr, value);
     }
   } catch (cause) {
     if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
