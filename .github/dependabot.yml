@@ -52,9 +52,6 @@ updates:
   - # fs-xattr 0.4.0 later are esm-only.
     dependency-name: "fs-xattr"
     versions: [">0.3"]
-  - # octokit 4 and later are esm-only.
-    dependency-name: "octokit"
-    versions: [">3"]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"
