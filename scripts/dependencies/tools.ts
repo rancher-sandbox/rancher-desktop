@@ -14,7 +14,6 @@ import {
 } from '../lib/download';
 
 import {
-  Dependency,
   DownloadContext,
   findChecksum,
   getPublishedReleaseTagNames,
@@ -30,7 +29,7 @@ function exeName(context: DownloadContext, name: string) {
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
-export class KuberlrAndKubectl implements Dependency {
+export class KuberlrAndKubectl implements GitHubDependency {
   name = 'kuberlr';
   githubOwner = 'flavio';
   githubRepo = 'kuberlr';
@@ -94,9 +93,13 @@ export class KuberlrAndKubectl implements Dependency {
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
     return semver.rcompare(version1, version2);
   }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
 }
 
-export class Helm implements Dependency {
+export class Helm implements GitHubDependency {
   name = 'helm';
   githubOwner = 'helm';
   githubRepo = 'helm';
@@ -119,9 +122,13 @@ export class Helm implements Dependency {
   rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
     return semver.rcompare(version1, version2);
   }
+
+  versionToTagName(version: string): string {
+    return `v${ version }`;
+  }
 }
 
-export class DockerCLI implements Dependency, GitHubDependency {
+export class DockerCLI implements GitHubDependency {
   name = 'dockerCLI';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-docker-cli';
@@ -152,7 +159,7 @@ export class DockerCLI implements Dependency, GitHubDependency {
   }
 }
 
-export class DockerBuildx implements Dependency, GitHubDependency {
+export class DockerBuildx implements GitHubDependency {
   name = 'dockerBuildx';
   githubOwner = 'docker';
   githubRepo = 'buildx';
@@ -187,7 +194,7 @@ export class DockerBuildx implements Dependency, GitHubDependency {
   }
 }
 
-export class DockerCompose implements Dependency, GitHubDependency {
+export class DockerCompose implements GitHubDependency {
   name = 'dockerCompose';
   githubOwner = 'docker';
   githubRepo = 'compose';
@@ -216,7 +223,7 @@ export class DockerCompose implements Dependency, GitHubDependency {
   }
 }
 
-export class GoLangCILint implements Dependency, GitHubDependency {
+export class GoLangCILint implements GitHubDependency {
   name = 'golangci-lint';
   githubOwner = 'golangci';
   githubRepo = 'golangci-lint';
@@ -240,7 +247,7 @@ export class GoLangCILint implements Dependency, GitHubDependency {
   }
 }
 
-export class CheckSpelling implements Dependency, GitHubDependency {
+export class CheckSpelling implements GitHubDependency {
   name = 'check-spelling';
   githubOwner = 'check-spelling';
   githubRepo = 'check-spelling';
@@ -263,7 +270,7 @@ export class CheckSpelling implements Dependency, GitHubDependency {
   }
 }
 
-export class Trivy implements Dependency, GitHubDependency {
+export class Trivy implements GitHubDependency {
   name = 'trivy';
   githubOwner = 'aquasecurity';
   githubRepo = 'trivy';
@@ -303,7 +310,7 @@ export class Trivy implements Dependency, GitHubDependency {
   }
 }
 
-export class Steve implements Dependency, GitHubDependency {
+export class Steve implements GitHubDependency {
   name = 'steve';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-steve';
@@ -342,7 +349,7 @@ export class Steve implements Dependency, GitHubDependency {
   }
 }
 
-export class RancherDashboard implements Dependency, GitHubDependency {
+export class RancherDashboard implements GitHubDependency {
   name = 'rancherDashboard';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-dashboard';
@@ -410,7 +417,7 @@ export class RancherDashboard implements Dependency, GitHubDependency {
   }
 }
 
-export class DockerProvidedCredHelpers implements Dependency, GitHubDependency {
+export class DockerProvidedCredHelpers implements GitHubDependency {
   name = 'dockerProvidedCredentialHelpers';
   githubOwner = 'docker';
   githubRepo = 'docker-credential-helpers';
@@ -462,7 +469,7 @@ export class DockerProvidedCredHelpers implements Dependency, GitHubDependency {
   }
 }
 
-export class ECRCredHelper implements Dependency, GitHubDependency {
+export class ECRCredHelper implements GitHubDependency {
   name = 'ECRCredentialHelper';
   githubOwner = 'awslabs';
   githubRepo = 'amazon-ecr-credential-helper';
@@ -499,7 +506,7 @@ export class ECRCredHelper implements Dependency, GitHubDependency {
   }
 }
 
-export class WasmShims implements Dependency, GitHubDependency {
+export class WasmShims implements GitHubDependency {
   name = 'spinShim';
   githubOwner = 'spinkube';
   githubRepo = 'containerd-shim-spin';
@@ -527,7 +534,7 @@ export class WasmShims implements Dependency, GitHubDependency {
   }
 }
 
-export class CertManager implements Dependency, GitHubDependency {
+export class CertManager implements GitHubDependency {
   name = 'certManager';
   githubOwner = 'cert-manager';
   githubRepo = 'cert-manager';
@@ -556,7 +563,7 @@ export class CertManager implements Dependency, GitHubDependency {
   }
 }
 
-export class SpinOperator implements Dependency, GitHubDependency {
+export class SpinOperator implements GitHubDependency {
   name = 'spinOperator';
   githubOwner = 'spinkube';
   githubRepo = 'spin-operator';
@@ -584,7 +591,7 @@ export class SpinOperator implements Dependency, GitHubDependency {
   }
 }
 
-export class SpinCLI implements Dependency, GitHubDependency {
+export class SpinCLI implements GitHubDependency {
   name = 'spinCLI';
   githubOwner = 'fermyon';
   githubRepo = 'spin';
@@ -619,7 +626,7 @@ export class SpinCLI implements Dependency, GitHubDependency {
   }
 }
 
-export class SpinKubePlugin implements Dependency, GitHubDependency {
+export class SpinKubePlugin implements GitHubDependency {
   name = 'spinKubePlugin';
   githubOwner = 'spinkube';
   githubRepo = 'spin-plugin-kube';

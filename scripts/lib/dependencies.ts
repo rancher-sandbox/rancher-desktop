@@ -147,12 +147,26 @@ export interface Dependency {
 /**
  * A Dependency that is hosted in a GitHub repo.
  */
-export interface GitHubDependency {
+export interface GitHubDependency extends Dependency {
   githubOwner: string
   githubRepo: string
   // Converts a version (of the format that is stored in dependencies.yaml)
   // to a tag that is used in a GitHub release.
   versionToTagName(version: string | AlpineLimaISOVersion): string
+}
+
+export function IsGitHubDependency(dependency: Dependency): dependency is GitHubDependency {
+  if (!('githubOwner' in dependency) || typeof dependency.githubOwner !== 'string') {
+    return false;
+  }
+  if (!('githubRepo' in dependency) || typeof dependency.githubRepo !== 'string') {
+    return false;
+  }
+  if (!('versionToTagName' in dependency) || typeof dependency.versionToTagName !== 'function') {
+    return false;
+  }
+
+  return true;
 }
 
 export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
@@ -212,6 +226,14 @@ export function getOctokit(personalAccessToken?: string): Octokit {
   _octokitAuthToken = personalAccessToken;
 
   return _octokit;
+}
+
+// Helper function to make iterating through Octokit pagination easier.
+// Pass in a pagination iterator, plus a function to convert one page to a list of results.
+export async function *iterateIterator<T, U>(input: AsyncIterableIterator<T>, fn: (_: T) => U[]) {
+  for await (const list of input) {
+    yield * fn(list);
+  }
 }
 
 export type IssueOrPullRequest = Awaited<ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>>['data']['items'][0];

@@ -3,7 +3,7 @@ import path from 'path';
 
 import semver from 'semver';
 
-import { Dependency, DownloadContext, GitHubDependency, getOctokit } from '../lib/dependencies';
+import { DownloadContext, GitHubDependency, getOctokit } from '../lib/dependencies';
 import { download } from '../lib/download';
 
 import { simpleSpawn } from 'scripts/simple_process';
@@ -11,7 +11,7 @@ import { simpleSpawn } from 'scripts/simple_process';
 /**
  * Wix downloads the latest build of WiX3.
  */
-export class Wix implements Dependency, GitHubDependency {
+export class Wix implements GitHubDependency {
   readonly name = 'wix';
 
   // Wix4 is packaged really oddly (involves NuGet), and while there's a sketchy

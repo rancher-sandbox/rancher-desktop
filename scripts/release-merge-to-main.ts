@@ -13,7 +13,7 @@ import fs from 'fs';
 
 import { RequestError } from 'octokit';
 
-import { getOctokit } from './lib/dependencies';
+import { getOctokit, iterateIterator } from './lib/dependencies';
 
 /**
  * Valid value for an environment variable.
@@ -106,9 +106,11 @@ async function ensureBranch(owner: string, repo: string, branchName: string, tag
 async function findExisting(owner: string, repo: string, branch: string) {
   const fullRepo = `${ owner }/${ repo }`;
   const query = `type:pr is:open repo:${ fullRepo } base:${ base } head:${ branch } sort:updated`;
-  const result = await getOctokit(getEnv('GITHUB_WRITE_TOKEN')).rest.search.issuesAndPullRequests({ q: query });
+  const pullsIterator = getOctokit(getEnv('GITHUB_WRITE_TOKEN')).paginate.iterator(
+    getOctokit(getEnv('GITHUB_WRITE_TOKEN')).rest.search.issuesAndPullRequests,
+    { q: query });
 
-  for (const item of result.data.items) {
+  for await (const item of iterateIterator(pullsIterator, r => r.data.items)) {
     // Must be an open item, and that item must be a pull request.
     if (item.state !== 'open' || !item.pull_request) {
       continue;
