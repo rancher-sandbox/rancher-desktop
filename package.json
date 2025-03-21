@@ -105,7 +105,7 @@
     "@babel/plugin-proposal-private-property-in-object": "7.21.11",
     "@electron/asar": "3.3.1",
     "@electron/fuses": "^1.8.0",
-    "@electron/notarize": "2.5.0",
+    "@electron/notarize": "3.0.0",
     "@nuxt/types": "2.18.1",
     "@nuxtjs/eslint-config-typescript": "11.0.0",
     "@nuxtjs/router-extras": "1.1.1",
