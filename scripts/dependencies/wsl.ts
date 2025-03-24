@@ -6,11 +6,9 @@ import semver from 'semver';
 import { download } from '../lib/download';
 import { simpleSpawn } from '../simple_process';
 
-import {
-  DownloadContext, Dependency, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions,
-} from 'scripts/lib/dependencies';
+import { DownloadContext, GitHubDependency, getPublishedReleaseTagNames, getPublishedVersions } from 'scripts/lib/dependencies';
 
-export class Moproxy implements Dependency, GitHubDependency {
+export class Moproxy implements GitHubDependency {
   name = 'moproxy';
   githubOwner = 'sorz';
   githubRepo = 'moproxy';
@@ -47,7 +45,7 @@ export class Moproxy implements Dependency, GitHubDependency {
   }
 }
 
-export class WSLDistro implements Dependency, GitHubDependency {
+export class WSLDistro implements GitHubDependency {
   name = 'WSLDistro';
   githubOwner = 'rancher-sandbox';
   githubRepo = 'rancher-desktop-wsl-distro';
