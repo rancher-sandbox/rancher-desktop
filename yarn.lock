@@ -1361,13 +1361,12 @@
     fs-extra "^9.0.1"
     promise-retry "^2.0.1"
 
-"@electron/notarize@3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@electron/notarize/-/notarize-3.0.0.tgz#25d43cafab1bf35dc2a183bd5fe0d1cf1c4b7a07"
-  integrity sha512-4MRxovhZrVfm7wc6nqv5ZId1LM379b7vUJThLvwJjCmqgf+cHMoH3RrBOg8WMS8tgL6g1RwVv6cbTbpcSXJVog==
+"@electron/notarize@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@electron/notarize/-/notarize-3.0.1.tgz#ad766f1ed6c2fd4cd4520f91c116fa93949555ca"
+  integrity sha512-5xzcOwvMGNjkSk7s0sPx4XcKWei9FYk4f2S5NkSorWW0ce5yktTOtlPa0W5yQHcREILh+C3JdH+t+M637g9TmQ==
   dependencies:
     debug "^4.4.0"
-    graceful-fs "^4.2.11"
     promise-retry "^2.0.1"
 
 "@electron/osx-sign@1.3.1":
