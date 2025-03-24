@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -57,14 +58,28 @@ func handlePost(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Handle POST returning given status
+func handleWithStatus(w http.ResponseWriter, req *http.Request) {
+	statusText := req.PathValue("status")
+	statusCode, err := strconv.Atoi(statusText)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprintf(w, "failed to parse status %s", statusText)
+		return
+	}
+	w.WriteHeader(statusCode)
+	_, _ = fmt.Fprintf(w, "returning status code %d", statusCode)
+}
+
 func main() {
 	listener, err := listen()
 	if err != nil {
 		slog.Error("failed to listen", "error", err)
 		os.Exit(1)
 	}
-	http.DefaultServeMux.Handle("GET /", http.FileServer(http.Dir("/")))
-	http.DefaultServeMux.HandleFunc("POST /", handlePost)
+	http.DefaultServeMux.Handle("GET /get/", http.StripPrefix("/get/", http.FileServer(http.Dir("/"))))
+	http.DefaultServeMux.HandleFunc("POST /post", handlePost)
+	http.DefaultServeMux.HandleFunc("/status/{status}", handleWithStatus)
 
 	server := &http.Server{}
 	ch := make(chan os.Signal)

@@ -135,8 +135,8 @@ export interface IpcMainInvokeEvents {
   /** Execute the given command and return the results. */
   'extensions/spawn/blocking': (options: import('@pkg/main/extensions/types').SpawnOptions) => import('@pkg/main/extensions/types').SpawnResult;
   'extensions/ui/show-open': (options: import('electron').OpenDialogOptions) => import('electron').OpenDialogReturnValue;
-  /** Fetch data from the backend, or arbitrary host ignoring CORS. */
-  'extensions/vm/http-fetch': (config: import('@docker/extension-api-client-types').v1.RequestConfig) => any;
+  /* Fetch data from the backend, or arbitrary host ignoring CORS. */
+  'extensions/vm/http-fetch': (config: import('@docker/extension-api-client-types').v1.RequestConfig) => import('@docker/extension-api-client-types').v1.ServiceError;
   // #endregion
 
   // #region Versions
