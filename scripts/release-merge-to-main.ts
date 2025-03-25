@@ -110,7 +110,7 @@ async function findExisting(owner: string, repo: string, branch: string) {
     getOctokit(getEnv('GITHUB_WRITE_TOKEN')).rest.search.issuesAndPullRequests,
     { q: query });
 
-  for await (const item of iterateIterator(pullsIterator, r => r.data.items)) {
+  for await (const item of iterateIterator(pullsIterator, r => r.data)) {
     // Must be an open item, and that item must be a pull request.
     if (item.state !== 'open' || !item.pull_request) {
       continue;

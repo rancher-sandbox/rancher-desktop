@@ -230,7 +230,7 @@ export function getOctokit(personalAccessToken?: string): Octokit {
 
 // Helper function to make iterating through Octokit pagination easier.
 // Pass in a pagination iterator, plus a function to convert one page to a list of results.
-export async function *iterateIterator<T, U>(input: AsyncIterableIterator<T>, fn: (_: T) => U[]) {
+export async function *iterateIterator<T, U>(input: AsyncIterable<T>, fn: (_: T) => U[]) {
   for await (const list of input) {
     yield * fn(list);
   }
