@@ -33,7 +33,7 @@ func TestManager(t *testing.T) {
 		if err := manager.ValidateName(snapshotName); err == nil {
 			t.Fatalf("name validation failed to return error when complete snapshot with name %q exists", snapshotName)
 		}
-		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
+		completeFilePath := filepath.Join(manager.Snapshots, snapshot.ID, completeFileName)
 		if err := os.Remove(completeFilePath); err != nil {
 			t.Fatalf("failed to remove %q from first snapshot: %s", completeFileName, err)
 		}
@@ -224,7 +224,7 @@ func TestManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to create snapshot: %s", err)
 		}
-		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
+		completeFilePath := filepath.Join(manager.Snapshots, snapshot.ID, completeFileName)
 		if err := os.Remove(completeFilePath); err != nil {
 			t.Fatalf("failed to remove %q: %s", completeFileName, err)
 		}
