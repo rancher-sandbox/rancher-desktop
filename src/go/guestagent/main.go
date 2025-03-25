@@ -175,8 +175,7 @@ func main() {
 	if *enableKubernetes {
 		k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
 
-		if k8sServiceListenerIP == nil || !(k8sServiceListenerIP.Equal(net.IPv4zero) ||
-			k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) {
+		if k8sServiceListenerIP == nil || (!k8sServiceListenerIP.Equal(net.IPv4zero) && !k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) {
 			log.Fatalf("empty or invalid input for Kubernetes service listener IP address %s. "+
 				"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
 		}

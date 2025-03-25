@@ -188,7 +188,7 @@ func (proxy *ReverseProxy) handleUpgradedConnection(w http.ResponseWriter, backe
 
 	// Flush any buffered data in the writer to ensure no data is lost
 	if bufferedClientConn.Writer.Buffered() > 0 {
-		if err := bufferedClientConn.Writer.Flush(); err != nil {
+		if err := bufferedClientConn.Flush(); err != nil {
 			proxy.logf("failed to flush client connection: %v", err)
 			return
 		}
@@ -198,7 +198,7 @@ func (proxy *ReverseProxy) handleUpgradedConnection(w http.ResponseWriter, backe
 	// This prevents losing any data that might have been read but not yet processed
 	if bufferedLen := bufferedClientConn.Reader.Buffered(); bufferedLen > 0 {
 		bufferedData := make([]byte, bufferedLen)
-		_, err := bufferedClientConn.Reader.Read(bufferedData)
+		_, err := bufferedClientConn.Read(bufferedData)
 		if err != nil {
 			proxy.logf("failed to read buffered data from the client: %v", err)
 			return
