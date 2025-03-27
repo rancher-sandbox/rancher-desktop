@@ -19,7 +19,7 @@ require (
 	github.com/rancher-sandbox/rancher-desktop/src/go/rdctl v0.0.0-20241129182547-3cfd26786896
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/viper v1.20.0
+	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sys v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
