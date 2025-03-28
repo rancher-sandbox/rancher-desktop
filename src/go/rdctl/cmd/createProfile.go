@@ -112,13 +112,14 @@ func createProfile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if outputSettingsFlags.Format == regFormat {
+	switch outputSettingsFlags.Format {
+	case regFormat:
 		lines, err := reg.JSONToReg(outputSettingsFlags.RegistryHive, outputSettingsFlags.RegistryProfileType, string(output))
 		if err != nil {
 			return "", err
 		}
 		return strings.Join(lines, "\n"), nil
-	} else if outputSettingsFlags.Format == plistFormat {
+	case plistFormat:
 		return plist.JSONToPlist(string(output))
 	}
 	return "", fmt.Errorf(`internal error: expecting an output format of %q or %q, got %q`, regFormat, plistFormat, outputSettingsFlags.Format)

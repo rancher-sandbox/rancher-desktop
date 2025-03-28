@@ -57,7 +57,7 @@ func (manager *Manager) Snapshot(name string) (Snapshot, error) {
 }
 
 func (manager *Manager) SnapshotDirectory(snapshot Snapshot) string {
-	return filepath.Join(manager.Paths.Snapshots, snapshot.ID)
+	return filepath.Join(manager.Snapshots, snapshot.ID)
 }
 
 // ValidateName checks that name is a valid snapshot name and that
@@ -156,7 +156,7 @@ func (manager *Manager) Create(ctx context.Context, name, description string) (s
 // true, includes snapshots that are currently being created, are currently
 // being deleted, or are otherwise incomplete and cannot be restored from.
 func (manager *Manager) List(includeIncomplete bool) ([]Snapshot, error) {
-	dirEntries, err := os.ReadDir(manager.Paths.Snapshots)
+	dirEntries, err := os.ReadDir(manager.Snapshots)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return []Snapshot{}, fmt.Errorf("failed to read snapshots directory: %w", err)
 	}
@@ -166,7 +166,7 @@ func (manager *Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 			continue
 		}
 		snapshot := Snapshot{}
-		metadataPath := filepath.Join(manager.Paths.Snapshots, dirEntry.Name(), "metadata.json")
+		metadataPath := filepath.Join(manager.Snapshots, dirEntry.Name(), "metadata.json")
 		contents, err := os.ReadFile(metadataPath)
 		if err != nil {
 			return []Snapshot{}, fmt.Errorf("failed to read %q: %w", metadataPath, err)
@@ -177,7 +177,7 @@ func (manager *Manager) List(includeIncomplete bool) ([]Snapshot, error) {
 		// TODO this should be done by the caller
 		snapshot.Created = snapshot.Created.Local()
 
-		completeFilePath := filepath.Join(manager.Paths.Snapshots, snapshot.ID, completeFileName)
+		completeFilePath := filepath.Join(manager.Snapshots, snapshot.ID, completeFileName)
 		_, err = os.Stat(completeFilePath)
 		completeFileExists := err == nil
 
