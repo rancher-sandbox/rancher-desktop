@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
@@ -129,15 +130,13 @@ func ensureBackendStopped(action string) error {
 func waitForVMState(rdClient client.RDClient, desiredStates []string) error {
 	interval := 1 * time.Second
 	numIntervals := 120
-	for i := 0; i < numIntervals; i++ {
+	for range numIntervals {
 		state, err := rdClient.GetBackendState()
 		if err != nil {
 			return fmt.Errorf("failed to poll backend state: %w", err)
 		}
-		for _, desiredState := range desiredStates {
-			if state.VMState == desiredState {
-				return nil
-			}
+		if slices.Contains(desiredStates, state.VMState) {
+			return nil
 		}
 		time.Sleep(interval)
 	}

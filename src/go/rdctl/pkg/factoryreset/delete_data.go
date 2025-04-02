@@ -27,7 +27,7 @@ import (
 	dockerconfig "github.com/docker/cli/cli/config"
 )
 
-type dockerConfigType map[string]interface{}
+type dockerConfigType map[string]any
 
 type PartialMeta struct {
 	Metadata struct {

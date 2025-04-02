@@ -43,7 +43,7 @@ type structFieldWithString struct {
 func SortStructFields(structType reflect.Type) []structFieldWithString {
 	numTypedFields := structType.NumField()
 	newInterimFields := make([]structFieldWithString, numTypedFields)
-	for i := 0; i < numTypedFields; i++ {
+	for i := range numTypedFields {
 		fieldTag := structType.Field(i).Tag.Get("json")
 		fieldName, _, _ := strings.Cut(fieldTag, ",")
 		newInterimFields[i] = structFieldWithString{structType.Field(i), fieldName, strings.ToLower(fieldName)}

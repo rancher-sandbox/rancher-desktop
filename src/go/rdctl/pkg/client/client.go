@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
@@ -38,10 +39,8 @@ type RDClient interface {
 
 func validateBackendState(state BackendState) error {
 	validStates := []string{"STOPPED", "STARTING", "STARTED", "STOPPING", "ERROR", "DISABLED"}
-	for _, validState := range validStates {
-		if state.VMState == validState {
-			return nil
-		}
+	if slices.Contains(validStates, state.VMState) {
+		return nil
 	}
 	return fmt.Errorf("invalid backend state %q", state.VMState)
 }
