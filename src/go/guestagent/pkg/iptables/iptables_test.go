@@ -103,18 +103,18 @@ func TestForwardPorts(t *testing.T) {
 				cancel()
 			}()
 
-			for i := 0; i < len(tt.expectedEntries); i++ {
+			for _, expectedEntry := range tt.expectedEntries {
 				id := <-testTracker.receivedID
-				expectedID := utils.GenerateID(entryToString(tt.expectedEntries[i]))
+				expectedID := utils.GenerateID(entryToString(expectedEntry))
 				require.Equal(t, expectedID, id)
 
 				pm := <-testTracker.receivedPortMapping
-				portProto, err := nat.NewPort("tcp", strconv.Itoa(tt.expectedEntries[i].Port))
+				portProto, err := nat.NewPort("tcp", strconv.Itoa(expectedEntry.Port))
 				require.NoError(t, err)
 
 				expectedPortBinding := nat.PortBinding{
 					HostIP:   tt.listenerIP.String(),
-					HostPort: strconv.Itoa(tt.expectedEntries[i].Port),
+					HostPort: strconv.Itoa(expectedEntry.Port),
 				}
 				require.Contains(t, pm[portProto], expectedPortBinding)
 			}
@@ -124,12 +124,12 @@ func TestForwardPorts(t *testing.T) {
 
 				// Collect all removed IDs.
 				var actualRemovedIDs []string
-				for i := 0; i < len(tt.removedEntries); i++ {
+				for _, removedEntry := range tt.removedEntries {
 					select {
 					case id := <-testTracker.receivedRemoveID:
 						actualRemovedIDs = append(actualRemovedIDs, id)
 					case <-time.After(5 * time.Second):
-						t.Fatalf("Timeout waiting for remove ID for entry %v", tt.removedEntries[i])
+						t.Fatalf("Timeout waiting for remove ID for entry %v", removedEntry)
 					}
 				}
 
@@ -205,26 +205,26 @@ func TestForwardPortsSamePortDifferentIP(t *testing.T) {
 				cancel()
 			}()
 
-			for i := 0; i < len(tt.expectedEntries); i++ {
+			for _, expectedEntry := range tt.expectedEntries {
 				id := <-testTracker.receivedID
-				expectedID := utils.GenerateID(entryToString(tt.expectedEntries[i]))
+				expectedID := utils.GenerateID(entryToString(expectedEntry))
 				require.Equal(t, expectedID, id)
 
 				pm := <-testTracker.receivedPortMapping
-				portProto, err := nat.NewPort("tcp", strconv.Itoa(tt.expectedEntries[i].Port))
+				portProto, err := nat.NewPort("tcp", strconv.Itoa(expectedEntry.Port))
 				require.NoError(t, err)
 
 				// Port bindings for the same port on different IP addresses should appear only once
 				// in the port mapping. This is because the HostIP is always controlled by the
 				// k8sServiceListenerAddr, which means that duplicate entries with the same port
 				// but different IPs are unnecessary and should not be handled.
-				if tt.expectedEntries[i].Port == duplicatedPort {
+				if expectedEntry.Port == duplicatedPort {
 					require.Len(t, pm[portProto], 1)
 				}
 
 				expectedPortBinding := nat.PortBinding{
 					HostIP:   tt.listenerIP.String(),
-					HostPort: strconv.Itoa(tt.expectedEntries[i].Port),
+					HostPort: strconv.Itoa(expectedEntry.Port),
 				}
 				require.Contains(t, pm[portProto], expectedPortBinding)
 			}

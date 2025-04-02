@@ -34,7 +34,7 @@ func init() {
 
 // Add stores a new credentials or updates an existing one.
 func (p DCNone) Add(creds *credentials.Credentials) error {
-	var auths map[string]interface{}
+	var auths map[string]any
 
 	if creds == nil {
 		return errors.New("missing credentials")
@@ -45,11 +45,11 @@ func (p DCNone) Add(creds *credentials.Credentials) error {
 	}
 	authsInterface, ok := config["auths"]
 	if ok {
-		auths, ok = authsInterface.(map[string]interface{})
+		auths, ok = authsInterface.(map[string]any)
 	}
 	if !ok {
 		// Either config['auths'] doesn't exist or it isn't a hash
-		auths = map[string]interface{}{}
+		auths = map[string]any{}
 		config["auths"] = auths
 	}
 	payload := fmt.Sprintf("%s:%s", creds.Username, creds.Secret)
@@ -73,7 +73,7 @@ func (p DCNone) Delete(serverURL string) error {
 		// Not an error if there's no URL (or auths)
 		return nil
 	}
-	auths, ok := authsInterface.(map[string]interface{})
+	auths, ok := authsInterface.(map[string]any)
 	if !ok {
 		// Same as above -- if we can't get the hash we don't have a URL entry to remove
 		return nil
@@ -112,7 +112,7 @@ func (p DCNone) List() (map[string]string, error) {
 	}
 	authsInterface, ok := config["auths"]
 	if ok {
-		auths, ok := authsInterface.(map[string]interface{})
+		auths, ok := authsInterface.(map[string]any)
 		if !ok {
 			return entries, fmt.Errorf("unexpected data: %v: not a hash", authsInterface)
 		}

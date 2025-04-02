@@ -33,7 +33,7 @@ func Pipe(c1, c2 HalfReadWriteCloser) error {
 
 	ch1 := ioCopy(c1, c2)
 	ch2 := ioCopy(c2, c1)
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		select {
 		case err := <-ch1:
 			cwErr := c2.CloseWrite()

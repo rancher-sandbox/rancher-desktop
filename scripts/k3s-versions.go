@@ -158,7 +158,7 @@ func getK3sVersions() (string, error) {
 		return "", fmt.Errorf("error fetching GitHub releases: %w", err)
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"cacheVersion": 2,
 		"channels":     k3sChannels,
 		"versions":     githubReleases,
