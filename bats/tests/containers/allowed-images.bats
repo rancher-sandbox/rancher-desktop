@@ -24,9 +24,14 @@ RD_USE_IMAGE_ALLOW_LIST=true
     ctrctl pull --quiet "$IMAGE_PYTHON"
 }
 
+assert_pull_fails() {
+    run ctrctl pull "$1" || return
+    assert_failure || return
+    assert_output --regexp "(UNAUTHORIZED|Forbidden)"
+}
+
 @test 'verify pull ruby fails' {
-    run ctrctl pull "$IMAGE_RUBY"
-    assert_failure
+    try --max 9 --delay 10 assert_pull_fails "$IMAGE_RUBY"
 }
 
 @test 'drop python from the allowed-image list, add ruby' {
@@ -40,8 +45,7 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 @test 'verify pull python fails' {
-    run ctrctl pull --quiet "$IMAGE_PYTHON"
-    assert_failure
+    try --max 9 --delay 10 assert_pull_fails "$IMAGE_PYTHON"
 }
 
 @test 'verify pull ruby succeeds' {
