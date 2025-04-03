@@ -40,7 +40,7 @@ func (wsl WSLImpl) UnregisterDistros() error {
 	wsls := strings.Split(actualOutput, "\n")
 	wslsToKill := []string{}
 	for _, s := range wsls {
-		if s == "rancher-desktop" || s == "rancher-desktop-data" {
+		if s == "rancher-desktop" || s == "rancher-desktop-data" || s == "lima-0" {
 			wslsToKill = append(wslsToKill, s)
 		}
 	}
