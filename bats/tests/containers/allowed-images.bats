@@ -45,7 +45,8 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 @test 'verify pull ruby succeeds' {
-    ctrctl pull --quiet "$IMAGE_RUBY"
+    # when using VZ and when traefik is enabled, then pulling the image does not always succeed on the first attempt
+    try --max 9 --delay 10 ctrctl pull --quiet "$IMAGE_RUBY"
 }
 
 @test 'clear all patterns' {
@@ -71,5 +72,6 @@ verify_no_nginx() {
 }
 
 @test 'verify pull python succeeds because allowedImages filter is disabled' {
-    ctrctl pull --quiet "$IMAGE_PYTHON"
+    # when using VZ and when traefik is enabled, then pulling the image does not always succeed on the first attempt
+    try --max 9 --delay 10 ctrctl pull --quiet "$IMAGE_PYTHON"
 }
