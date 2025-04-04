@@ -1,6 +1,11 @@
 wait_for_shell() {
     if is_windows; then
-        try --max 48 --delay 5 rdctl shell true
+        try --max 48 --delay 5 rdctl shell grep ID= /etc/os-release
+        if [[ $(get_os_type) == opensuse ]]; then
+            try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
+            try --max 24 --delay 5 rdctl shell systemctl is-active rancher-desktop.target
+            try --max 48 --delay 5 rdctl shell sudo systemctl is-system-running --wait
+        fi
     else
         # Be at the root directory to avoid issues with limactl automatic
         # changing to the current directory, which might not exist.
@@ -23,7 +28,7 @@ pkill_by_path() {
 clear_iptables_chain() {
     local chain=$1
     local rule
-    wsl sudo iptables -L | awk '/^Chain ${chain}/ {print $2}' | while IFS= read -r rule; do
+    wsl sudo iptables -L | awk "/^Chain ${chain}/ {print \$2}" | while IFS= read -r rule; do
         wsl sudo iptables -X "$rule"
     done
 }
@@ -320,9 +325,51 @@ docker_context_exists() {
     assert_output "$RD_DOCKER_CONTEXT"
 }
 
+RD_VM_OS=
+get_os_type() {
+    [[ -n ${RD_VM_OS:-} ]] || load_var RD_VM_OS || true
+    if [[ -z ${RD_VM_OS:-} ]]; then
+        local id is_rd=false
+        for id in $(rdctl shell cat /etc/os-release | tr -d '"' | awk -F= '/^ID/ { print $2 }'); do
+            case "$id" in
+            opensuse | suse) RD_VM_OS=opensuse ;;
+            alpine) RD_VM_OS=alpine ;;
+            rancher-desktop-wsl-distro) is_rd=true ;;
+            esac
+        done
+        if [[ -z ${RD_VM_OS:-} ]] && $is_rd; then
+            RD_VM_OS=alpine # The existing Alpine-based distribution
+        fi
+        save_var RD_VM_OS
+    fi
+    if [[ -z ${RD_VM_OS:-} ]]; then
+        fail "Failed to detect OS"
+    fi
+    echo "${RD_VM_OS}"
+}
+
+service_control() { # service action
+    local if_started=
+    if [[ ${1:-} == "--ifstarted" ]]; then
+        if_started=$1
+        shift
+    fi
+    local service=$1 action=$2
+    if [[ $(get_os_type) == opensuse ]]; then
+        if [[ -n $ifstarted && $action == restart ]]; then
+            rdsudo systemctl try-restart "$service"
+        else
+            rdsudo systemctl "$action" "$service"
+        fi
+    else
+        # shellcheck disable=2086 # the argument may expand to nothing.
+        rdsudo rc-service ${if_started:-} "$service" "$action"
+    fi
+}
+
 get_service_pid() {
     local service_name=$1
-    if [[ ${RD_OS:-} == opensuse ]]; then
+    if [[ $(get_os_type) == opensuse ]]; then
         RD_TIMEOUT=10s run rdshell systemctl show --property MainPID --value "$service_name.service"
         assert_success || return
         echo "$output"
@@ -356,7 +403,7 @@ assert_service_status() {
     local service_name=$1
     local expect=$2
 
-    if [[ ${RD_OS:-} == opensuse ]]; then
+    if [[ $(get_os_type) == opensuse ]]; then
         local mapped_status
         case $expect in
         started) mapped_status=active ;;
