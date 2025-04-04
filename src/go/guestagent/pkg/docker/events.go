@@ -90,13 +90,13 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 			log.Debugf("received an event: {Status: %+v ContainerID: %+v Ports: %+v}",
 				event.Action,
 				event.ID,
-				container.NetworkSettings.NetworkSettingsBase.Ports)
+				container.NetworkSettings.Ports)
 
 			switch event.Action {
 			case events.ActionStart:
-				if len(container.NetworkSettings.NetworkSettingsBase.Ports) != 0 {
-					validatePortMapping(container.NetworkSettings.NetworkSettingsBase.Ports)
-					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
+				if len(container.NetworkSettings.Ports) != 0 {
+					validatePortMapping(container.NetworkSettings.Ports)
+					err = e.portTracker.Add(container.ID, container.NetworkSettings.Ports)
 					if err != nil {
 						log.Errorf("adding port mapping to tracker failed: %s", err)
 					}
@@ -276,7 +276,7 @@ func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, conta
 	// configure the loopback address for each container's assigned IP address.
 	if len(container.NetworkSettings.Networks) != 0 {
 		// delete the IPv6 rule first
-		if err := deleteComposeNetworkIPv6Rule(ctx, container.NetworkSettings.NetworkSettingsBase.Ports); err != nil {
+		if err := deleteComposeNetworkIPv6Rule(ctx, container.NetworkSettings.Ports); err != nil {
 			log.Errorf("removing docker compose IPv6 rule from DOCKER chain failed: %v", err)
 		}
 		for networkName, network := range container.NetworkSettings.Networks {
@@ -284,7 +284,7 @@ func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, conta
 				ctx,
 				container.ID,
 				network.IPAddress,
-				container.NetworkSettings.NetworkSettingsBase.Ports)
+				container.NetworkSettings.Ports)
 			if err != nil {
 				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain for docker compose network: %s failed: %v", networkName, err)
 			}
@@ -293,8 +293,8 @@ func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, conta
 		err := e.createLoopbackIPtablesRules(
 			ctx,
 			container.ID,
-			container.NetworkSettings.DefaultNetworkSettings.IPAddress,
-			container.NetworkSettings.NetworkSettingsBase.Ports)
+			container.NetworkSettings.IPAddress,
+			container.NetworkSettings.Ports)
 		if err != nil {
 			log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
 		}

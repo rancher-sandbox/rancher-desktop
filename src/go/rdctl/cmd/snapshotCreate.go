@@ -84,7 +84,7 @@ func createSnapshot(args []string) error {
 	if runtime.GOOS != "darwin" {
 		return nil
 	}
-	execCmd := exec.Command("tmutil", "addexclusion", manager.Paths.Snapshots)
+	execCmd := exec.Command("tmutil", "addexclusion", manager.Snapshots)
 	output, err := execCmd.CombinedOutput()
 	if err != nil {
 		msg := fmt.Errorf("`tmutil addexclusion` failed to add exclusion to TimeMachine: %w: %s", err, output)

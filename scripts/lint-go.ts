@@ -87,7 +87,7 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
   const dependencyVersions = await readDependencyVersions(depVersionsPath);
 
   const args = [
-    'run', `github.com/golangci/golangci-lint/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
+    'run', `github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
     'run', '--timeout=10m', '--verbose',
   ];
   let success = true;
