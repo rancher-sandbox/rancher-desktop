@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 SUSE LLC
+Copyright © 2025 SUSE LLC
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -11,6 +11,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Command setup-network initializes the network namespace created by the
+// systemd unit `network-namespace.service` and forwards traffic.
 package main
 
 import (
@@ -23,9 +25,11 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"reflect"
 	"runtime"
 	"strconv"
 
+	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/linuxkit/virtsock/pkg/vsock"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
@@ -41,26 +45,30 @@ var options struct {
 	debug            bool
 	vmSwitchPath     string
 	unshareArg       string
-	logFile          string
 	vmSwitchLogFile  string
+	dhcpScript       string
+	logFile          string
+	namespaceService string
 	tapIface         string
 	subnet           string
 	tapDeviceMacAddr string
 }
 
 const (
-	nsenter             = "/usr/bin/nsenter"
-	unshare             = "/usr/bin/unshare"
-	vsockHandshakePort  = 6669
-	vsockDialPort       = 6656
-	defaultTapDevice    = "eth0"
-	WSLVeth             = "veth-rd-wsl"
-	WSLVethIP           = "192.168.143.2"
-	namespaceVeth       = "veth-rd-ns"
-	namespaceVethIP     = "192.168.143.1"
-	defaultNamespacePID = 1
-	cidrOnes            = 24
-	cidrBits            = 32
+	nsenter                 = "/usr/bin/nsenter"
+	unshare                 = "/usr/bin/unshare"
+	vsockHandshakePort      = 6669
+	vsockDialPort           = 6656
+	defaultTapDevice        = "eth0"
+	WSLVeth                 = "veth-rd-wsl"
+	WSLVethIP               = "192.168.143.2"
+	namespaceVeth           = "veth-rd-ns"
+	namespaceVethIP         = "192.168.143.1"
+	defaultNamespaceService = "network-namespace.service"
+	defaultNamespacePID     = 1
+	cidrOnes                = 24
+	cidrBits                = 32
+	stdout                  = "/dev/stdout"
 )
 
 func main() {
@@ -75,9 +83,13 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGTERM, unix.SIGHUP, unix.SIGQUIT)
 	defer cancel()
 
-	if options.unshareArg == "" {
-		logrus.Fatal("unshare program arg must be provided")
+	originNS, err := netns.Get()
+	if err != nil {
+		logrus.Errorf("failed getting a handle to the current namespace: %v", err)
 	}
+
+	// Remove any existing veth devices (before we set up network namespaces)
+	cleanupVethLink(originNS)
 
 	// listenForHandshake blocks until a successful handshake is established.
 	listenForHandshake(ctx)
@@ -89,51 +101,51 @@ func main() {
 	}
 	logrus.Debugf("successful connection to host on CID: %v and Port: %d: connection: %+v", vsock.CIDHost, vsockDialPort, vsockConn)
 
-	// Ensure we stay on the same OS thread so that we don't switch namespaces
-	// accidentally.
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	originNS, err := netns.Get()
-	if err != nil {
-		logrus.Errorf("failed getting a handle to the current namespace: %v", err)
-	}
-
-	// Remove any existing veth devices (before we set up network namespaces)
-	cleanupVethLink(originNS)
-
-	// setup network namespace
-	ns, err := configureNamespace()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
-	if err := unshareCmd(ctx, ns, options.unshareArg); err != nil {
-		logrus.Fatal(err)
-	}
-
 	connFile, err := vsockConn.File()
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	vmSwitchCmd := configureVMSwitch(
-		ctx,
-		ns,
-		options.vmSwitchLogFile,
-		options.vmSwitchPath,
-		options.tapIface,
-		options.subnet,
-		options.tapDeviceMacAddr,
-		connFile)
+	// Ensure we stay on the same OS thread so that we don't switch namespaces
+	// accidentally.  This must happen before we change any namespaces.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
-	if err := vmSwitchCmd.Start(); err != nil {
-		logrus.Fatalf("could not start the vm-switch process: %v", err)
+	var peerNS netns.NsHandle
+	if os.Getenv("SYSTEMD_EXEC_PID") != "" {
+		// Running under systemd
+		if options.unshareArg != "" {
+			logrus.Warnf("Using systemd, ignoring --unshare-arg=%q", options.unshareArg)
+		}
+
+		namespacePID, err := getNamespacePID(ctx)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+
+		peerNS, err = netns.GetFromPid(namespacePID)
+		if err != nil {
+			logrus.Fatalf("failed to get network namespace: %v", err)
+		}
+	} else {
+		// Running under OpenRC
+		if options.unshareArg == "" {
+			logrus.Fatal("unshare program arg must be provided")
+		}
+
+		peerNS, err = configureNamespace()
+		if err != nil {
+			logrus.Fatal(err)
+		}
+
+		if err := unshareCmd(ctx, peerNS, options.unshareArg); err != nil {
+			logrus.Fatal(err)
+		}
 	}
-	logrus.Infof("successfully started the vm-switch running with a PID: %v", vmSwitchCmd.Process.Pid)
 
-	err = createVethPair(defaultNamespacePID,
-		vmSwitchCmd.Process.Pid,
+	err = createVethPair(
+		originNS,
+		peerNS,
 		WSLVeth,
 		namespaceVeth)
 	if err != nil {
@@ -141,36 +153,52 @@ func main() {
 	}
 	defer cleanupVethLink(originNS)
 
-	if err := configureVethPair(namespaceVeth, namespaceVethIP); err != nil {
-		logrus.Fatalf("failed setting up veth: %s for rancher desktop namespace: %v", namespaceVeth, err)
-	}
-
-	// switch back to the original namespace to configure veth0
-	if err := netns.Set(originNS); err != nil {
-		logrus.Fatalf("failed to switch back to original namespace: %v", err)
-	}
 	if err := configureVethPair(WSLVeth, WSLVethIP); err != nil {
 		logrus.Fatalf("failed setting up veth: %s for default namespace: %v", WSLVeth, err)
 	}
 
-	if err := originNS.Close(); err != nil {
-		logrus.Errorf("failed to close original NS, ignoring error: %v", err)
+	// Enter the network namespace to set up its network interface, and to run
+	// vm-switch.  We no longer need to use the original network namespace after
+	// this point.
+	if err := netns.Set(peerNS); err != nil {
+		logrus.Fatalf("failed to set network namespace: %v", err)
+	}
+	if err := configureVethPair(namespaceVeth, namespaceVethIP); err != nil {
+		logrus.Fatalf("%s for Rancher Desktop namespace: %v", namespaceVeth, err)
 	}
 
-	logrus.Debug("Network setup complete, waiting for vm-switch")
+	logrus.Debug("Starting vm-switch...")
+
+	vmSwitchCmd := configureVMSwitch(
+		ctx,
+		options.vmSwitchLogFile,
+		options.vmSwitchPath,
+		options.tapIface,
+		options.subnet,
+		options.tapDeviceMacAddr,
+		options.dhcpScript,
+		connFile)
+	if err := vmSwitchCmd.Start(); err != nil {
+		logrus.Fatalf("vm-switch failed to start: %v", err)
+	}
+
+	// Use vmSwitchCmd.Start() + Run() so we can get better messages about whether
+	// the start failed or if it started then exited.
 
 	if err := vmSwitchCmd.Wait(); err != nil {
-		logrus.Errorf("vm-switch exited with error: %v", err)
+		logrus.Fatalf("vm-switch exited with error: %v", err)
 	}
 }
 
 func initializeFlags() {
 	flag.BoolVar(&options.debug, "debug", false, "enable additional debugging")
+	flag.StringVar(&options.namespaceService, "namespace-service", defaultNamespaceService, "systemd service which creates the network namespace")
 	flag.StringVar(&options.tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
 	flag.StringVar(&options.subnet, "subnet", config.DefaultSubnet,
 		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
 	flag.StringVar(&options.tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
 		"MAC address that is associated to the tap interface")
+	flag.StringVar(&options.dhcpScript, "dhcp-script", "", "script to run on DHCP events")
 	flag.StringVar(&options.vmSwitchPath, "vm-switch-path", "", "the path to the vm-switch binary that will run in a new namespace")
 	flag.StringVar(&options.vmSwitchLogFile, "vm-switch-logfile", "", "path to the logfile for vm-switch process")
 	flag.StringVar(&options.unshareArg, "unshare-arg", "", "the command argument to pass to the unshare program")
@@ -179,8 +207,14 @@ func initializeFlags() {
 }
 
 func setupLogging(logFile string) {
-	if err := log.SetOutputFile(logFile, logrus.StandardLogger()); err != nil {
-		logrus.Fatalf("setting logger's output file failed: %v", err)
+	if logFile == stdout {
+		// Use the stdout handle instead of `/dev/stdout` because the latter does
+		// not work correctly inside a systemd service.
+		logrus.StandardLogger().SetOutput(os.Stdout)
+	} else {
+		if err := log.SetOutputFile(logFile, logrus.StandardLogger()); err != nil {
+			logrus.Fatalf("setting logger's output file failed: %v", err)
+		}
 	}
 
 	if options.debug {
@@ -188,21 +222,18 @@ func setupLogging(logFile string) {
 	}
 }
 
+// Set up the vm-switch process, but do not start it.  This is run from the same
+// network namespace as the current process.
 func configureVMSwitch(
 	ctx context.Context,
-	ns netns.NsHandle,
 	vmSwitchLogFile,
 	vmSwitchPath,
 	tapIface,
 	subnet,
-	tapDevMacAddr string,
+	tapDevMacAddr,
+	dhcpScript string,
 	connFile *os.File) *exec.Cmd {
-	// Start the vm-switch process in the new namespace; we do
-	// this as the golang runtime can switch threads at will, so it
-	// is safer to have a whole process in a consistent namespace.
 	args := []string{
-		fmt.Sprintf("-n/proc/%d/fd/%d", os.Getpid(), ns),
-		"-F",
 		vmSwitchPath,
 		"-tap-interface",
 		tapIface,
@@ -210,6 +241,8 @@ func configureVMSwitch(
 		subnet,
 		"-tap-mac-address",
 		tapDevMacAddr,
+		"-dhcp-script",
+		dhcpScript,
 	}
 	if vmSwitchLogFile != "" {
 		args = append(args, "-logfile", vmSwitchLogFile)
@@ -217,22 +250,24 @@ func configureVMSwitch(
 	if options.debug {
 		args = append(args, "-debug")
 	}
-	vmSwitchCmd := exec.CommandContext(ctx, nsenter, args...)
 
-	// pass in the vsock connection as a FD to the
-	// vm-switch process in the newly created namespace
+	vmSwitchCmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	vmSwitchCmd.Stdout = os.Stdout
+	vmSwitchCmd.Stderr = os.Stderr
+
+	// Pass in the vsock connection as a FD to the vm-switch process.
 	vmSwitchCmd.ExtraFiles = []*os.File{connFile}
 	return vmSwitchCmd
 }
 
-func createVethPair(defaultNsPid, peerNsPid int, defaultNSVeth, rancherDesktopNSVeth string) error {
+func createVethPair(defaultNS, peerNS netns.NsHandle, defaultNSVeth, rancherDesktopNSVeth string) error {
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{
 			Name:      defaultNSVeth,
-			Namespace: netlink.NsPid(defaultNsPid),
+			Namespace: netlink.NsFd(defaultNS),
 		},
 		PeerName:      rancherDesktopNSVeth,
-		PeerNamespace: netlink.NsPid(peerNsPid),
+		PeerNamespace: netlink.NsFd(peerNS),
 	}
 	if err := netlink.LinkAdd(veth); err != nil {
 		return fmt.Errorf("failed to add veth link %+v: %w", veth, err)
@@ -253,6 +288,8 @@ func cleanupVethLink(originNS netns.NsHandle) {
 	}
 }
 
+// Configure the address of the given network interface.  The interface must
+// be visible in the current network namespace.
 func configureVethPair(vethName, ipAddr string) error {
 	veth, err := netlink.LinkByName(vethName)
 	if err != nil {
@@ -340,12 +377,44 @@ func listenForHandshake(ctx context.Context) {
 	logrus.Info("listenForHandshake successful handshake with host-switch")
 }
 
-func configureNamespace() (netns.NsHandle, error) {
-	ns, err := netns.New()
+// Create a new network namespace, and return the new handle.
+// The thread will be left in the original namespace.
+func configureNamespace() (ns netns.NsHandle, err error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	oldNS, err := netns.Get()
 	if err != nil {
-		return netns.None(), fmt.Errorf("creating new namespace failed")
+		return netns.None(), err
+	}
+	defer func() {
+		if err2 := netns.Set(oldNS); err == nil && err2 != nil {
+			err = err2
+		}
+	}()
+	ns, err = netns.New()
+	if err != nil {
+		return netns.None(), fmt.Errorf("creating new namespace failed: %w", err)
 	}
 
 	logrus.Infof("created a new namespace %v %v", ns, ns.String())
 	return ns, nil
+}
+
+// Find the PID of the systemd unit `network-namespace.service` and return it.
+func getNamespacePID(ctx context.Context) (int, error) {
+	conn, err := dbus.NewSystemConnectionContext(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to connect to systemd system bus: %w", err)
+	}
+	defer conn.Close()
+	prop, err := conn.GetServicePropertyContext(ctx, options.namespaceService, "MainPID")
+	if err != nil {
+		return 0, fmt.Errorf("failed to get namespace service %s main pid: %w", options.namespaceService, err)
+	}
+	pid, ok := prop.Value.Value().(uint32)
+	if !ok {
+		fmt.Printf("debug: prop is %+v (%v)", prop.Value.Value(), reflect.ValueOf(prop.Value.Value()))
+		return 0, fmt.Errorf("failed to look up main pid of service %s: got value %+v", options.namespaceService, prop)
+	}
+	return int(pid), nil
 }
