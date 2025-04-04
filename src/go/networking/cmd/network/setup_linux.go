@@ -37,7 +37,7 @@ import (
 	rdvsock "github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/vsock"
 )
 
-var (
+var options struct {
 	debug            bool
 	vmSwitchPath     string
 	unshareArg       string
@@ -46,7 +46,7 @@ var (
 	tapIface         string
 	subnet           string
 	tapDeviceMacAddr string
-)
+}
 
 const (
 	nsenter             = "/usr/bin/nsenter"
@@ -66,16 +66,16 @@ const (
 func main() {
 	initializeFlags()
 
-	setupLogging(logFile)
+	setupLogging(options.logFile)
 
-	if vmSwitchPath == "" {
+	if options.vmSwitchPath == "" {
 		logrus.Fatal("path to the vm-switch process must be provided")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGTERM, unix.SIGHUP, unix.SIGQUIT)
 	defer cancel()
 
-	if unshareArg == "" {
+	if options.unshareArg == "" {
 		logrus.Fatal("unshare program arg must be provided")
 	}
 
@@ -108,7 +108,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	if err := unshareCmd(ctx, ns, unshareArg); err != nil {
+	if err := unshareCmd(ctx, ns, options.unshareArg); err != nil {
 		logrus.Fatal(err)
 	}
 
@@ -120,11 +120,11 @@ func main() {
 	vmSwitchCmd := configureVMSwitch(
 		ctx,
 		ns,
-		vmSwitchLogFile,
-		vmSwitchPath,
-		tapIface,
-		subnet,
-		tapDeviceMacAddr,
+		options.vmSwitchLogFile,
+		options.vmSwitchPath,
+		options.tapIface,
+		options.subnet,
+		options.tapDeviceMacAddr,
 		connFile)
 
 	if err := vmSwitchCmd.Start(); err != nil {
@@ -165,16 +165,16 @@ func main() {
 }
 
 func initializeFlags() {
-	flag.BoolVar(&debug, "debug", false, "enable additional debugging")
-	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
-	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
+	flag.BoolVar(&options.debug, "debug", false, "enable additional debugging")
+	flag.StringVar(&options.tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
+	flag.StringVar(&options.subnet, "subnet", config.DefaultSubnet,
 		fmt.Sprintf("Subnet range with CIDR suffix that is associated to the tap interface, e,g: %s", config.DefaultSubnet))
-	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
+	flag.StringVar(&options.tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
 		"MAC address that is associated to the tap interface")
-	flag.StringVar(&vmSwitchPath, "vm-switch-path", "", "the path to the vm-switch binary that will run in a new namespace")
-	flag.StringVar(&vmSwitchLogFile, "vm-switch-logfile", "", "path to the logfile for vm-switch process")
-	flag.StringVar(&unshareArg, "unshare-arg", "", "the command argument to pass to the unshare program")
-	flag.StringVar(&logFile, "logfile", "/var/log/network-setup.log", "path to the logfile for network setup process")
+	flag.StringVar(&options.vmSwitchPath, "vm-switch-path", "", "the path to the vm-switch binary that will run in a new namespace")
+	flag.StringVar(&options.vmSwitchLogFile, "vm-switch-logfile", "", "path to the logfile for vm-switch process")
+	flag.StringVar(&options.unshareArg, "unshare-arg", "", "the command argument to pass to the unshare program")
+	flag.StringVar(&options.logFile, "logfile", "/var/log/network-setup.log", "path to the logfile for network setup process")
 	flag.Parse()
 }
 
@@ -183,7 +183,7 @@ func setupLogging(logFile string) {
 		logrus.Fatalf("setting logger's output file failed: %v", err)
 	}
 
-	if debug {
+	if options.debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 }
@@ -214,7 +214,7 @@ func configureVMSwitch(
 	if vmSwitchLogFile != "" {
 		args = append(args, "-logfile", vmSwitchLogFile)
 	}
-	if debug {
+	if options.debug {
 		args = append(args, "-debug")
 	}
 	vmSwitchCmd := exec.CommandContext(ctx, nsenter, args...)
