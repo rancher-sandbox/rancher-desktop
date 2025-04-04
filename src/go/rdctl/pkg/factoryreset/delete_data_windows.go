@@ -14,6 +14,9 @@ func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCach
 	if err := autostart.EnsureAutostart(ctx, false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
+	if err := deleteLimaVM(); err != nil {
+		logrus.Errorf("Failed to delete Lima VM: %s", err)
+	}
 	w := wsl.WSLImpl{}
 	if err := w.UnregisterDistros(); err != nil {
 		logrus.Errorf("could not unregister WSL: %s", err)
