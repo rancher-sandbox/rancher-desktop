@@ -40,6 +40,8 @@ import (
 
 var (
 	debug            bool
+	vsockFD          int
+	dhcpScript       string
 	tapIface         string
 	logFile          string
 	subnet           string
@@ -48,12 +50,15 @@ var (
 
 const (
 	defaultTapDevice = "eth0"
+	defaultVsockFD   = 3
 	maxMTU           = 4000
 )
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable debug flag")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
+	flag.IntVar(&vsockFD, "vsock-fd", defaultVsockFD, "file descriptor for vsock connection")
+	flag.StringVar(&dhcpScript, "dhcp-script", "", "script to run on DHCP events")
 	flag.StringVar(&tapDeviceMacAddr, "tap-mac-address", config.TapDeviceMacAddr,
 		"MAC address that is associated to the tap interface")
 	flag.StringVar(&subnet, "subnet", config.DefaultSubnet,
@@ -75,7 +80,7 @@ func main() {
 	// network namespace, the logic behind this approach is because
 	// AF_VSOCK is affected by network namespaces, therefore we need
 	// to open it before entering a new namespace (via unshare/nsenter)
-	connFile := os.NewFile(uintptr(3), "vsock connection")
+	connFile := os.NewFile(uintptr(vsockFD), "vsock connection")
 
 	logrus.Debugf("using a AF_VSOCK connection file from default namespace: %v", connFile)
 
@@ -88,8 +93,6 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	// try every second until we get DHCP
-	retryTicker := time.NewTicker(time.Second)
 	for {
 		ctx, cancel := context.WithCancel(context.Background())
 		select {
@@ -98,10 +101,12 @@ func main() {
 			cancel()
 			connFile.Close()
 			os.Exit(1)
-		case <-retryTicker.C:
+		default:
 			if err := run(ctx, cancel, connFile); err != nil {
 				logrus.Error(err)
 			}
+			// Wait one second before attempting to re-establish connection.
+			time.Sleep(time.Second)
 		}
 	}
 }
@@ -176,13 +181,11 @@ func linkUp(iface, mac string) error {
 }
 
 func dhcp(ctx context.Context, iface string) error {
-	if _, err := exec.LookPath("udhcpc"); err == nil { // busybox dhcp client
-		cmd := exec.CommandContext(ctx, "udhcpc", "-f", "-q", "-i", iface, "-v")
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		return cmd.Run()
+	args := []string{"-f", "-i", iface}
+	if dhcpScript != "" {
+		args = append(args, "-s", dhcpScript)
 	}
-	cmd := exec.CommandContext(ctx, "dhclient", "-4", "-d", "-v", iface)
+	cmd := exec.CommandContext(ctx, "udhcpc", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
