@@ -179,19 +179,19 @@ verify_default_credStore() {
     # https://github.com/rancher-sandbox/rancher-desktop/issues/7146
     # BUG BUG BUG
     if is_windows && using_containerd; then
-        rdsudo rc-service rancher-desktop-guestagent stop
+        service_control rancher-desktop-guestagent stop
     fi
 
-    rdsudo rc-service "$CONTAINER_ENGINE_SERVICE" restart
+    service_control "$CONTAINER_ENGINE_SERVICE" restart
 
     # BUG BUG BUG
     # Second part of the workaround
     # BUG BUG BUG
     if is_windows && using_containerd; then
-        rdsudo rc-service rancher-desktop-guestagent start
+        service_control rancher-desktop-guestagent start
     fi
 
-    rdsudo rc-service --ifstarted rd-openresty restart
+    service_control --ifstarted rd-openresty restart
 
     wait_for_container_engine
     # when Moby is stopped, the containers are stopped as well
