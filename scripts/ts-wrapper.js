@@ -17,7 +17,20 @@ function main(args) {
   const finalArgs = [...childArgs, ...args];
 
   console.log(process.argv0, ...finalArgs);
-  spawnSync(process.argv0, finalArgs, { stdio: 'inherit' });
+  const result = spawnSync(process.argv0, finalArgs, { stdio: 'inherit' });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if (typeof result.status === 'number') {
+    process.exit(result.status);
+  }
+
+  if (result.signal) {
+    console.log(`Process exited with signal ${ result.signal }`);
+    process.exit(-1);
+  }
 }
 
 if (require.main === module) {
