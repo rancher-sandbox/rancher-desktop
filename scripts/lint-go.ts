@@ -95,9 +95,6 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
   if (fix) {
     args.push('--fix');
   }
-  if (process.env.GITHUB_ACTIONS) {
-    args.push('--out-format=colored-line-number');
-  }
   // golangci-lint blocks running in parallel by default (and it's unclear _why_
   // this is necessary).  To be safe, just pass in all of the modules at once
   // and let it go at its own pace.
