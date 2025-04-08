@@ -88,10 +88,19 @@ export default class MsiUpdater extends NsisUpdater {
   protected doInstall(options: InstallOptions): boolean {
     const systemRoot = process.env.SystemRoot ?? 'C:\\Windows';
     const msiexec = path.join(systemRoot, 'system32', 'msiexec.exe');
+    const installerPath = this.installerPath;
+
+    if (!installerPath) {
+      this._logger.error('doInstall() called without a installer path');
+      this.dispatchError(new Error("No valid update available, can't quit and install"));
+
+      return false;
+    }
+
     const args: string[] = [
       '/norestart',
       '/lv*', path.join(paths.logs, 'msiexec.log'),
-      '/i', options.installerPath,
+      '/i', installerPath,
     ];
     const elevate = options.isAdminRightsRequired || this.shouldElevate;
 
