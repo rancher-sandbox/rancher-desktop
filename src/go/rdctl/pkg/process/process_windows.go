@@ -115,9 +115,10 @@ func buildCommandLine(args []string) string {
 		slashes := 0
 		_, _ = builder.WriteString(" \"")
 		for _, ch := range []byte(word) {
-			if ch == '\\' {
+			switch ch {
+			case '\\':
 				slashes += 1
-			} else if ch == '"' {
+			case '"':
 				// If a run of backslashes is followed by a quote, each backslash needs
 				// to be escaped by another backslash, and then the quote must be
 				// itself escaped.
@@ -126,7 +127,7 @@ func buildCommandLine(args []string) string {
 				}
 				_, _ = builder.WriteString("\\\"")
 				slashes = 0
-			} else {
+			default:
 				// If a run of backslashes is followed by a non-quote character, all of
 				// the backslashes are treated literally.
 				for i := 0; i < slashes; i++ {
