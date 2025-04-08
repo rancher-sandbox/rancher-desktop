@@ -183,7 +183,7 @@ export class HttpCommandServer {
       this.listEndpoints('', req, resp);
     });
     // Set up catch-all handler for customized HTTP 404 message.
-    this.app.all('*missing', ({ method, path }, resp) => {
+    this.app.all('*', ({ method, path }, resp) => {
       console.log(`404: No handler for URL ${ method } ${ path }.`);
       resp.status(404).type('txt').send(`Unknown command: ${ method } ${ path }`);
     });

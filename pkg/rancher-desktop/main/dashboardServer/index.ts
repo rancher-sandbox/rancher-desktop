@@ -10,7 +10,7 @@ import { proxyWsOpts, proxyOpts } from './proxyUtils';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
-const ProxyKeys = ['/k8s', '/pp', '/api', '/apis', '/v1', '/v3', '/v3-public', '/api-ui', '/meta', '/v1-*etc'] as const;
+const ProxyKeys = ['/k8s', '/pp', '/api', '/apis', '/v1', '/v3', '/v3-public', '/api-ui', '/meta', '/v1-*'] as const;
 
 type ProxyKeys = typeof ProxyKeys[number];
 
@@ -39,7 +39,7 @@ export class DashboardServer {
       '/api-ui':    proxyOpts, // Browser API UI
       '/v3-public': proxyOpts, // Rancher Unauthed API
       '/meta':      proxyOpts, // Browser API UI
-      '/v1-*etc':   proxyOpts, // SAML, KDM, etc
+      '/v1-*':      proxyOpts, // SAML, KDM, etc
     };
     const entries = Object.entries(proxy).map(([key, options]) => {
       return [key, createProxyMiddleware({ ...options, target: this.api + key })] as const;
@@ -83,7 +83,7 @@ export class DashboardServer {
        * Vue router take over.
        */
       .get(
-        '*missing',
+        '*',
         (_req, res) => {
           res.sendFile(
             path.resolve(paths.resources, 'rancher-dashboard', 'index.html'),
