@@ -120,7 +120,7 @@ verify_default_credStore() {
     run ctrctl pull --quiet "$IMAGE_BUSYBOX"
     if using_image_allow_list; then
         assert_failure
-        assert_output --regexp "(unauthorized|Forbidden)"
+        assert_output --regexp "(UNAUTHORIZED|Forbidden)"
     else
         assert_success
     fi
