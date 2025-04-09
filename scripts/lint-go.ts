@@ -13,25 +13,9 @@ import { readDependencyVersions } from './lib/dependencies';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
+type SupportedPlatform = Extract<NodeJS.Platform, 'darwin' | 'linux' | 'win32'>;
+
 const fix = process.argv.includes('--fix');
-
-async function format(fix: boolean): Promise<boolean> {
-  if (fix) {
-    await spawnFile('gofmt', ['-w', ...await getModules()]);
-  } else {
-    // `gofmt -d` never exits with an error; we need to check if the output is
-    // empty instead.
-    const { stdout } = await spawnFile('gofmt', ['-d', ...await getModules()], { stdio: 'pipe' });
-
-    if (stdout.trim()) {
-      console.log(stdout.trim());
-
-      return false;
-    }
-  }
-
-  return true;
-}
 
 async function listFiles(...globs: string[]): Promise<string[]> {
   const { stdout } = await spawnFile('git', ['ls-files', ...globs], { stdio: 'pipe' });
@@ -82,63 +66,77 @@ async function syncModules(fix: boolean): Promise<boolean> {
   return true;
 }
 
-async function goLangCILintSingle(fix: boolean, os: string): Promise<boolean> {
+// Run golangci-lint with the given arguments for the given OS, and return
+// whether the command succeeded.
+async function runGoLangCILint(platform: SupportedPlatform, ...args: string[]): Promise<boolean> {
   const depVersionsPath = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
   const dependencyVersions = await readDependencyVersions(depVersionsPath);
+  const commandLine = ['go', 'run'];
 
-  const args = ['run'];
+  if (process.platform !== platform) {
+    // We are emulating a different platform.
+    const os = ({
+      darwin: 'darwin',
+      linux:  'linux',
+      win32:  'windows',
+    } as const)[platform];
 
-  if (process.platform !== 'win32') {
-    // On non-Windows, we can run with different GOOS.
-    args.push('-exec', `/usr/bin/env GOOS=${ os }`);
+    commandLine.push('-exec', `/usr/bin/env GOOS=${ os }`);
   }
-  args.push(
+  commandLine.push(
     `github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v${ dependencyVersions['golangci-lint'] }`,
-    'run', '--timeout=10m', '--verbose',
-  );
-  let success = true;
-
-  if (fix) {
-    args.push('--fix');
-  }
-  // golangci-lint blocks running in parallel by default (and it's unclear _why_
-  // this is necessary).  To be safe, just pass in all of the modules at once
-  // and let it go at its own pace.
-  const modules = await getModules();
-  const commandLine = ['go', ...args, ...modules.map(m => `${ m }/...`)];
+    ...args,
+    ...(await getModules()).map(m => `${ m }/...`));
 
   try {
     console.log(commandLine.join(' '));
     await spawnFile(commandLine[0], commandLine.slice(1), { stdio: 'inherit' });
+
+    return true;
   } catch (ex) {
-    success = false;
+    return false;
+  }
+}
+
+function getGoLangCISupportedPlatforms(): SupportedPlatform[] {
+  // On Windows, we can't pretend to be other platforms (due to a lack of
+  // /usr/bin/env).  Also don't do that in CI, because we run all platforms
+  // natively.
+  if (!process.env.CI && process.platform !== 'win32') {
+    return ['darwin', 'linux', 'win32'];
   }
 
-  return success;
+  return [process.platform] as SupportedPlatform[];
+}
+
+function goLangCIFormat(fix: boolean): Promise<boolean> {
+  const args = ['fmt', '--verbose'];
+
+  if (!fix) {
+    // When not fixing, provide `--diff`; this causes the process to exit with
+    // and error when a fix is required.
+    args.push('--diff');
+  }
+
+  // We don't need to run fmt for all platforms, since it seems to format files
+  // whether they would be built.
+  return runGoLangCILint(process.platform as SupportedPlatform, ...args);
 }
 
 async function goLangCILint(fix: boolean): Promise<boolean> {
-  if (!process.env.CI && process.platform !== 'win32') {
-    // On non-Windows, we can run with different GOOS.
-    // Run them in series, because it avoids producing confusing output (and
-    // when fix is on, avoids multiple processes opening the same files for
-    // writing).  On go toolchain 1.24+ this is only compiled once.
-    for (const os of ['darwin', 'linux', 'windows']) {
-      if (!(await goLangCILintSingle(fix, os))) {
-        return false;
-      }
-    }
+  const args = ['run', '--timeout=10m', '--allow-serial-runners', '--verbose'];
 
-    return true;
+  if (fix) {
+    args.push('--fix');
   }
 
-  const platform = {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
-  }[process.platform as 'darwin' | 'linux' | 'win32'];
+  for (const platform of getGoLangCISupportedPlatforms()) {
+    if (!(await runGoLangCILint(platform, ...args))) {
+      return false;
+    }
+  }
 
-  return goLangCILintSingle(fix, platform);
+  return true;
 }
 
 type dependabotConfig = {
@@ -154,6 +152,11 @@ type dependabotConfig = {
     reviewers?: string[];
   }[];
 };
+
+// Run lint and format in series, for better output.
+async function lintAndFormat(fix: boolean): Promise<boolean> {
+  return await goLangCIFormat(fix) && await goLangCILint(fix);
+}
 
 async function checkDependabot(fix: boolean): Promise<boolean> {
   const configs: dependabotConfig = yaml.parse(await fs.promises.readFile('.github/dependabot.yml', 'utf8'));
@@ -175,7 +178,7 @@ async function checkDependabot(fix: boolean): Promise<boolean> {
   return true;
 }
 
-Promise.all([format, syncModules, goLangCILint, checkDependabot].map(fn => fn(fix))).then((successes) => {
+Promise.all([syncModules, lintAndFormat, checkDependabot].map(fn => fn(fix))).then((successes) => {
   if (!successes.every(x => x)) {
     process.exit(1);
   }
