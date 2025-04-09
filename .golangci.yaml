@@ -1,6 +1,5 @@
 version: "2"
 linters:
-  default: none
   enable:
     - bodyclose
     - copyloopvar
