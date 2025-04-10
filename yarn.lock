@@ -8156,10 +8156,10 @@ http-proxy-agent@^7.0.0, http-proxy-agent@^7.0.1:
     agent-base "^7.1.0"
     debug "^4.3.4"
 
-http-proxy-middleware@3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-3.0.3.tgz#dc1313c75bd00d81e103823802551ee30130ebd1"
-  integrity sha512-usY0HG5nyDUwtqpiZdETNbmKtw3QQ1jwYFZ9wi5iHzX2BcILwQKtYDJPo7XHTsu5Z0B2Hj3W9NNnbd+AjFWjqg==
+http-proxy-middleware@3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-3.0.4.tgz#f755c799b8cf31a9e3e0ba12952919efae58fe5d"
+  integrity sha512-LRX3BKgdEyHjLMz608kicoz5E6zGdkSpDwLYVBsJlDpQ3wcqh/Wdsopf2KrysXnNeM7jJJk4KXCV14u8SCLZzQ==
   dependencies:
     "@types/http-proxy" "^1.17.15"
     debug "^4.3.6"
