@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -32,7 +33,7 @@ type argHandlersType struct {
 
 // commandHandlerType is the type of commandDefinition.handler, which is used
 // to handle positional arguments (and special subcommands).
-// The passed-in arguments include any flags given after positional arguments.
+// The passed-in arguments excludes any flags given after positional arguments.
 type commandHandlerType func(*commandDefinition, []string, argHandlersType) (*parsedArgs, error)
 
 type commandDefinition struct {
@@ -46,6 +47,10 @@ type commandDefinition struct {
 	// options for this (sub) command.  If the handler is null, the option does
 	// not take arguments.
 	options map[string]argHandler
+	// if set, this command can include foreign flags that should not be parsed.
+	// This should be set for things like `nerdctl run` where flags can be passed
+	// to the command to be run.
+	hasForeignFlags bool
 	// handler for any positional arguments and subcommands.  This should not
 	// include the name of the subcommand itself.  If this is not given, all
 	// subcommands are searched for, and positional arguments are ignored.
@@ -133,10 +138,28 @@ func (c *commandDefinition) parseOption(arg, next string) ([]string, bool, []cle
 // parse arguments for this command; this includes options (--long, -x) as well
 // as subcommands and positional arguments.
 func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
+	// Parsing rules:
+	// - At each command level, short options (-x) at that level can be parsed.
+	// - At each command level, long options from the current or any previous level can be parsed.
+	// - If a command contains positional arguments, it may not contain any subcommands.
+	//   (We check this in `./generate` to make sure this stays true.)
+	// - Positional arguments can be intermixed with (both long and short) options.
+	// - If a command can have foreign flags (e.g. `nerdctl run`), we stop parsing
+	//   options on first positional argument.  This means we parse the flag in
+	//   `nerdctl run --env foo=bar image sh -c ...` but not the `--env` flag in
+	//   `nerdctl run image --env foo=bar sh -c ...`.
+	// - Having foreign flags is mutually exclusive with having subcommands; this
+	//   is also checked in `./generate`.
+	// - `--` stops parsing of options.
 	var result parsedArgs
+	var positionalArgs []string
 	for argIndex := 0; argIndex < len(args); argIndex++ {
 		arg := args[argIndex]
-		if strings.HasPrefix(arg, "-") {
+		if arg == "--" {
+			// No more options, only positional arguments.
+			positionalArgs = append(positionalArgs, args[argIndex+1:]...)
+			break
+		} else if strings.HasPrefix(arg, "-") {
 			next := ""
 			if argIndex+1 < len(args) {
 				next = args[argIndex+1]
@@ -157,18 +180,9 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 			if consumed {
 				argIndex++
 			}
-		} else {
-			// Handler positional arguments and subcommands.
-			if c.handler != nil {
-				childResult, err := c.handler(&c, args[argIndex:], argHandlers)
-				if err != nil {
-					return nil, err
-				}
-				result.args = append(result.args, childResult.args...)
-				result.cleanup = append(result.cleanup, childResult.cleanup...)
-				break
-			}
-			// No custom handler; look for subcommands.
+		} else if len(c.subcommands) > 0 {
+			// This command has subcommands; assume any non-flags are subcommands.
+			// Hand off argument parsing to the subcommand.
 			subcommandPath := c.commandPath
 			if subcommandPath != "" {
 				subcommandPath += " "
@@ -187,10 +201,38 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 				result.args = append(result.args, childResult.args...)
 				result.cleanup = append(result.cleanup, childResult.cleanup...)
 			} else {
-				// No subcommand; ignore positional arguments.
+				// Invalid subcommand; ignore positional arguments.
 				result.args = append(result.args, args[argIndex:]...)
 			}
 			break
+		} else {
+			if c.hasForeignFlags {
+				// If we have foreign flags, assume the rest of the arguments starting
+				// from the first positional argument is foreign.
+				positionalArgs = append(positionalArgs, args[argIndex:]...)
+				break
+			} else {
+				// This command doesn't have subcommands, nor foreign arguments.
+				// Everything is positional arguments; we still have to parse other
+				// arguments for flags, though.
+				positionalArgs = append(positionalArgs, arg)
+			}
+		}
+	}
+	// At this point, `result` is filled with options, and `positionalArgs`
+	// contains the unparsed positional arguments.
+	if c.handler != nil {
+		childResult, err := c.handler(&c, positionalArgs, argHandlers)
+		if err != nil {
+			return nil, err
+		}
+		result.args = append(result.args, childResult.args...)
+		result.cleanup = append(result.cleanup, childResult.cleanup...)
+	} else {
+		if len(positionalArgs) > 0 && !slices.Contains(result.args, "--") {
+			result.args = slices.Concat(result.args, []string{"--"}, positionalArgs)
+		} else {
+			result.args = append(result.args, positionalArgs...)
 		}
 	}
 	return &result, nil
