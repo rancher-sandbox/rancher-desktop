@@ -27,7 +27,7 @@ func SetupLimaHome(appHome string) error {
 	candidatePath := filepath.Join(appHome, "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
-		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)
+		return fmt.Errorf("can't find the lima-home directory at %q: %w", candidatePath, err)
 	}
 	if !stat.Mode().IsDir() {
 		return fmt.Errorf("path %q exists but isn't a directory", candidatePath)

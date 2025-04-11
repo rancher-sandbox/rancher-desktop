@@ -28,8 +28,10 @@ import (
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lima"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/encoding/unicode"
@@ -71,12 +73,12 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if runtime.GOOS == "windows" {
-		distroNames := []string{"rancher-desktop"}
+		distroNames := []string{wsl.DistributionName}
 		found := false
 
 		if _, err = os.Stat(commandName); err == nil {
 			// If limactl is available, try the lima distribution first.
-			distroNames = append([]string{"lima-0"}, distroNames...)
+			distroNames = append([]string{lima.InstanceFullName}, distroNames...)
 		}
 
 		for _, distroName := range distroNames {
@@ -113,7 +115,7 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 			// No further output wanted, so just exit with the desired status.
 			os.Exit(1)
 		}
-		args = append([]string{"shell", "0"}, args...)
+		args = append([]string{"shell", lima.InstanceName}, args...)
 	}
 	shellCommand := exec.Command(commandName, args...)
 	shellCommand.Stdin = os.Stdin
@@ -143,7 +145,7 @@ func checkLimaIsRunning(commandName string) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
+	cmd := exec.Command(commandName, "ls", lima.InstanceName, "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -161,7 +163,7 @@ func checkLimaIsRunning(commandName string) bool {
 		return false
 	}
 	errorMsg := stderr.String()
-	if strings.Contains(errorMsg, "No instance matching 0 found.") {
+	if strings.Contains(errorMsg, fmt.Sprintf("No instance matching %s found.", lima.InstanceName)) {
 		logrus.Errorf("The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
 	} else if errorMsg != "" {
 		fmt.Fprintln(os.Stderr, errorMsg)
