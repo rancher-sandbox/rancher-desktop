@@ -540,11 +540,29 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
     }
   });
 
-  window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
-    if (os.platform() === 'linux') {
+  window.webContents.on('preferred-size-changed', async(_event, { width, height }) => {
+    switch (process.platform) {
+    case 'linux':
       resizeWindow(window, width, height);
-    } else {
-      window.setContentSize(width, height, true);
+      break;
+    case 'win32': {
+      // On Windows, if the primary display DPI is not the same as the current
+      // display DPI, or if the DPI has been change since Rancher Desktop
+      // started, we end up getting successively larger heights.  To work around
+      // this, check for the actual height of the element and jump to the
+      // desired height directly, but only if the body is shorter than the
+      // document.  Note that all the units here are already affected by DPI
+      // scaling, so we don't need to do that manually.
+      const scripts = [{ code: `[document.documentElement.offsetHeight, document.body.offsetHeight]` }];
+      const [docHeight, bodyHeight] = await window.webContents.executeJavaScriptInIsolatedWorld(0, scripts);
+
+      if (docHeight < bodyHeight) {
+        window.setContentSize(width, Math.max(height, bodyHeight));
+      }
+      break;
+    }
+    default:
+      window.setContentSize(width, height);
     }
   });
 
