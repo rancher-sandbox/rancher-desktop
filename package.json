@@ -65,7 +65,7 @@
     "electron-updater": "6.3.9",
     "express": "5.1.0",
     "fs-extra": "11.3.0",
-    "http-proxy-middleware": "3.0.4",
+    "http-proxy-middleware": "3.0.5",
     "intl-messageformat": "10.7.16",
     "jquery": "3.7.1",
     "jsonpath": "1.1.1",
