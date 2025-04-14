@@ -114,10 +114,10 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 	logrus.WithFields(fields).Trace("building subcommand")
 
 	if !subcommands.canHaveSubcommands && len(subcommands.Commands) > 0 {
-		return fmt.Errorf("Invalid command %v: has positional arguments, but also subcommands %+v", args, subcommands.Commands)
+		return fmt.Errorf("invalid command %v: has positional arguments, but also subcommands %+v", args, subcommands.Commands)
 	}
 	if subcommands.canHaveSubcommands && subcommands.HasForeignFlags {
-		return fmt.Errorf("Invalid command %v: has subcommands and foreign flags", args)
+		return fmt.Errorf("invalid command %v: has subcommands and foreign flags", args)
 	}
 
 	err = emitCommand(args, subcommands, writer)
