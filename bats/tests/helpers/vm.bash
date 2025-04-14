@@ -327,22 +327,24 @@ docker_context_exists() {
 
 # Check if the VM is using systemd (instead of OpenRC).
 using_systemd() {
-    [[ -n ${RD_USING_SYSTEMD:-} ]] || load_var RD_USING_SYSTEMD || true
-    if [[ -z ${RD_USING_SYSTEMD:-} ]]; then
+    [[ -n ${_RD_USING_SYSTEMD:-} ]] || load_var _RD_USING_SYSTEMD || true
+    if [[ -z ${_RD_USING_SYSTEMD:-} ]]; then
         # `systemctl whoami` contacts the systemd init to check things, so if
         # it succeeds we're using systemd.  On alpine-based systems, the
         # `systemctl` command would be missing so this still applies.
         if rdctl shell /usr/bin/systemctl whoami &>/dev/null; then
-            RD_USING_SYSTEMD=true
+            _RD_USING_SYSTEMD=true
         else
-            RD_USING_SYSTEMD=false
+            _RD_USING_SYSTEMD=false
         fi
-        save_var RD_USING_SYSTEMD
+        save_var _RD_USING_SYSTEMD
     fi
-    "${RD_USING_SYSTEMD}"
+    is_true "${_RD_USING_SYSTEMD}"
 }
 
-service_control() { # service action
+# Manage a service in the vm.
+# service_control [--ifstarted] $SERVICE start|stop|restart
+service_control() {
     local if_started
     if [[ ${1:-} == "--ifstarted" ]]; then
         if_started=$1

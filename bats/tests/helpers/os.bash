@@ -85,11 +85,8 @@ sudo_needs_password() {
 supports_vz_emulation() {
     if is_macos; then
         if [[ -n ${_RD_SUPPORTS_VZ_EMULATION:-} ]] || load_var _RD_SUPPORTS_VZ_EMULATION; then
-            if is_true _RD_SUPPORTS_VZ_EMULATION; then
-                return 0
-            else
-                return 1
-            fi
+            run is_true "$_RD_SUPPORTS_VZ_EMULATION"
+            return "$status"
         fi
         local version
         version=$(semver "$(/usr/bin/sw_vers -productVersion)")
