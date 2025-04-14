@@ -23,7 +23,7 @@ const fileMode = 0666
 
 // SetOutputFile sets the logger output with a given file
 func SetOutputFile(filePath string, logger *logrus.Logger) error {
-	logFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, fileMode)
+	logFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		return err
 	}

@@ -451,9 +451,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   protected async runWslProxy() {
     const debug = this.debug ? 'true' : 'false';
+    const logDir = await this.wslify(paths.logs);
+    const logfile = path.posix.join(logDir, 'wsl-proxy.log');
 
     try {
-      await this.execCommand('/usr/local/bin/wsl-proxy', '-debug', debug);
+      await this.execCommand('/usr/local/bin/wsl-proxy', `-debug=${ debug }`, `-logfile=${ logfile }`);
     } catch (err: any) {
       console.log('Error trying to start wsl-proxy in default namespace:', err);
     }
