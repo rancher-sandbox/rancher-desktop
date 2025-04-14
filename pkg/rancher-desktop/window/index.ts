@@ -549,15 +549,16 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
       // On Windows, if the primary display DPI is not the same as the current
       // display DPI, or if the DPI has been change since Rancher Desktop
       // started, we end up getting successively larger heights.  To work around
-      // this, check for the actual height of the element and jump to the
-      // desired height directly, but only if the body is shorter than the
-      // document.  Note that all the units here are already affected by DPI
+      // this, check for the actual height of the body element and jump to the
+      // desired height directly, but only if the current content height is
+      // smaller.  Note that all the units here are already affected by DPI
       // scaling, so we don't need to do that manually.
-      const scripts = [{ code: `[document.documentElement.offsetHeight, document.body.offsetHeight]` }];
-      const [docHeight, bodyHeight] = await window.webContents.executeJavaScriptInIsolatedWorld(0, scripts);
+      const scripts = [{ code: `document.body.offsetHeight` }];
+      const bodyHeight = await window.webContents.executeJavaScriptInIsolatedWorld(0, scripts);
+      const [, currentHeight] = window.getContentSize();
 
-      if (docHeight < bodyHeight) {
-        window.setContentSize(width, Math.max(height, bodyHeight));
+      if (currentHeight < bodyHeight) {
+        window.setContentSize(width, bodyHeight);
       }
       break;
     }
