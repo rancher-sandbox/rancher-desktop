@@ -71,13 +71,15 @@ const (
 	stdout                  = "/dev/stdout"
 )
 
-func main() {
+func run() error {
 	initializeFlags()
 
-	setupLogging(options.logFile)
+	if err := setupLogging(options.logFile); err != nil {
+		return err
+	}
 
 	if options.vmSwitchPath == "" {
-		logrus.Fatal("path to the vm-switch process must be provided")
+		return fmt.Errorf("path to the vm-switch process must be provided")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGTERM, unix.SIGHUP, unix.SIGQUIT)
@@ -85,25 +87,27 @@ func main() {
 
 	originNS, err := netns.Get()
 	if err != nil {
-		logrus.Errorf("failed getting a handle to the current namespace: %v", err)
+		return fmt.Errorf("failed getting a handle to the current namespace: %w", err)
 	}
 
 	// Remove any existing veth devices (before we set up network namespaces)
 	cleanupVethLink(originNS)
 
 	// listenForHandshake blocks until a successful handshake is established.
-	listenForHandshake(ctx)
+	if err := listenForHandshake(ctx); err != nil {
+		return fmt.Errorf("failed to handshake with host-switch: %w", err)
+	}
 
 	logrus.Debugf("attempting to connect to the host on CID: %v and Port: %d", vsock.CIDHost, vsockDialPort)
 	vsockConn, err := vsock.Dial(vsock.CIDHost, vsockDialPort)
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
 	logrus.Debugf("successful connection to host on CID: %v and Port: %d: connection: %+v", vsock.CIDHost, vsockDialPort, vsockConn)
 
 	connFile, err := vsockConn.File()
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
 
 	// Ensure we stay on the same OS thread so that we don't switch namespaces
@@ -120,26 +124,26 @@ func main() {
 
 		namespacePID, err := getNamespacePID(ctx)
 		if err != nil {
-			logrus.Fatal(err)
+			return err
 		}
 
 		peerNS, err = netns.GetFromPid(namespacePID)
 		if err != nil {
-			logrus.Fatalf("failed to get network namespace: %v", err)
+			return fmt.Errorf("failed to get network namespace: %w", err)
 		}
 	} else {
 		// Running under OpenRC
 		if options.unshareArg == "" {
-			logrus.Fatal("unshare program arg must be provided")
+			return fmt.Errorf("unshare program arg must be provided")
 		}
 
 		peerNS, err = configureNamespace()
 		if err != nil {
-			logrus.Fatal(err)
+			return err
 		}
 
 		if err := unshareCmd(ctx, peerNS, options.unshareArg); err != nil {
-			logrus.Fatal(err)
+			return err
 		}
 	}
 
@@ -149,22 +153,22 @@ func main() {
 		WSLVeth,
 		namespaceVeth)
 	if err != nil {
-		logrus.Fatalf("failed to create veth pair: %v", err)
+		return fmt.Errorf("failed to create veth pair: %w", err)
 	}
 	defer cleanupVethLink(originNS)
 
 	if err := configureVethPair(WSLVeth, WSLVethIP); err != nil {
-		logrus.Fatalf("failed setting up veth: %s for default namespace: %v", WSLVeth, err)
+		return fmt.Errorf("failed setting up veth %q for default namespace: %w", WSLVeth, err)
 	}
 
 	// Enter the network namespace to set up its network interface, and to run
-	// vm-switch.  We no longer need to use the original network namespace after
-	// this point.
+	// vm-switch.  We will only switch back to the default namespace on teardown
+	// after this point.
 	if err := netns.Set(peerNS); err != nil {
-		logrus.Fatalf("failed to set network namespace: %v", err)
+		return fmt.Errorf("failed to set network namespace: %w", err)
 	}
 	if err := configureVethPair(namespaceVeth, namespaceVethIP); err != nil {
-		logrus.Fatalf("%s for Rancher Desktop namespace: %v", namespaceVeth, err)
+		return fmt.Errorf("failed to set up veth %q for Rancher Desktop namespace: %w", namespaceVeth, err)
 	}
 
 	logrus.Debug("Starting vm-switch...")
@@ -179,14 +183,22 @@ func main() {
 		options.dhcpScript,
 		connFile)
 	if err := vmSwitchCmd.Start(); err != nil {
-		logrus.Fatalf("vm-switch failed to start: %v", err)
+		return fmt.Errorf("vm-switch failed to start: %w", err)
 	}
 
 	// Use vmSwitchCmd.Start() + Run() so we can get better messages about whether
 	// the start failed or if it started then exited.
 
 	if err := vmSwitchCmd.Wait(); err != nil {
-		logrus.Fatalf("vm-switch exited with error: %v", err)
+		return fmt.Errorf("vm-switch exited with error: %w", err)
+	}
+
+	return nil
+}
+
+func main() {
+	if err := run(); err != nil {
+		logrus.Fatal(err)
 	}
 }
 
@@ -206,20 +218,22 @@ func initializeFlags() {
 	flag.Parse()
 }
 
-func setupLogging(logFile string) {
+func setupLogging(logFile string) error {
 	if logFile == stdout {
 		// Use the stdout handle instead of `/dev/stdout` because the latter does
 		// not work correctly inside a systemd service.
 		logrus.StandardLogger().SetOutput(os.Stdout)
 	} else {
 		if err := log.SetOutputFile(logFile, logrus.StandardLogger()); err != nil {
-			logrus.Fatalf("setting logger's output file failed: %v", err)
+			return fmt.Errorf("setting logger's output file failed: %w", err)
 		}
 	}
 
 	if options.debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+
+	return nil
 }
 
 // Set up the vm-switch process, but do not start it.  This is run from the same
@@ -276,8 +290,8 @@ func createVethPair(defaultNS, peerNS netns.NsHandle, defaultNSVeth, rancherDesk
 	return nil
 }
 
-// Tear down the veth in the default namespace if it exists; normally
-// this should happen when the network namespace goes away.
+// Switch to the given (default) namespace, and tear down the veth if it exists.
+// Normally this should happen when the network namespace goes away.
 func cleanupVethLink(originNS netns.NsHandle) {
 	// First, though, switch back to the default namespace if available.
 	// This would fail if we already switched to it (and closed the handle).
@@ -342,11 +356,11 @@ func writeWSLInitPid(pid int) error {
 	return nil
 }
 
-func listenForHandshake(ctx context.Context) {
+func listenForHandshake(ctx context.Context) error {
 	logrus.Info("starting handshake process with host-switch")
 	l, err := vsock.Listen(vsock.CIDAny, vsockHandshakePort)
 	if err != nil {
-		logrus.Error(err)
+		return fmt.Errorf("failed to listen on handshake port: %w", err)
 	}
 	defer l.Close()
 	go func() {
@@ -375,6 +389,7 @@ func listenForHandshake(ctx context.Context) {
 		conn.Close()
 	}
 	logrus.Info("listenForHandshake successful handshake with host-switch")
+	return nil
 }
 
 // Create a new network namespace, and return the new handle.
