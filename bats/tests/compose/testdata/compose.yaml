@@ -1,13 +1,18 @@
 services:
   nginx:
     container_name: nginx
-    image: nginx
+    build:
+      args:
+      - IMAGE_NGINX
+      dockerfile: Dockerfile.nginx
     volumes:
     - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
     - '127.0.0.1:8080:80'
   web:
     build:
+      args:
+      - IMAGE_PYTHON
       context: app
     # flask requires SIGINT to stop gracefully
     # (default stop signal from Compose is SIGTERM)
