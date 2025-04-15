@@ -12,6 +12,10 @@ export default Vue.extend({
       type:    Boolean,
       default: false,
     },
+    isProgressBarVisible: {
+      type:    Boolean,
+      default: false,
+    },
   },
   data() {
     return { version: this.t('product.versionChecking') };
@@ -42,15 +46,17 @@ export default Vue.extend({
     <i
       v-if="icon"
       class="item-icon"
-      :class="icon"
+      :class="{'make-icon-inline': isProgressBarVisible, icon: true}"
     />
     <span
       class="item-label"
+      :class="{'make-label-invisible': isProgressBarVisible}"
     >
       <b>{{ t('product.version') }}:</b>
     </span>
     <span
       class="item-value"
+      :class="{'make-value-invisible': isProgressBarVisible}"
     >
       {{ version }}
     </span>
