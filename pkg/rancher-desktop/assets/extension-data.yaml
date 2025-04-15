@@ -4,7 +4,7 @@
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: 0.3.4
-    com.docker.desktop.extension.icon: https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/refs/tags/v0.0.4/open-webui.svg
+    com.docker.desktop.extension.icon: https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/refs/tags/v0.0.6/open-webui.svg
     com.docker.extension.additional-urls: ""
     com.docker.extension.categories: ""
     com.docker.extension.changelog: ""
@@ -15,11 +15,11 @@
     org.opencontainers.image.title: Open WebUI
     org.opencontainers.image.vendor: SUSE LLC
   title: Open WebUI
-  logo: https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/refs/tags/v0.0.4/open-webui.svg
+  logo: https://raw.githubusercontent.com/rancher-sandbox/rancher-desktop-rdx-open-webui/refs/tags/v0.0.6/open-webui.svg
   publisher: SUSE LLC
   short_description: Open WebUI on Rancher Desktop
-- slug: ghcr.io/rancher-sandbox/epinio-desktop-extension
-  version: 0.0.23.5
+- slug: splatform/epinio-docker-desktop
+  version: 0.1.0
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: ">= 0.2.0"
@@ -35,10 +35,10 @@
       "https://epinio.io/images/epinio-docker-desktop-screenshot.png"}]'
     org.opencontainers.image.description: Push from source to Kubernetes in one step
     org.opencontainers.image.title: Epinio
-    org.opencontainers.image.vendor: Rancher by SUSE
+    org.opencontainers.image.vendor: Epinio by Krumware and SUSE
   title: Epinio
   logo: https://epinio.io/images/icon-epinio.svg
-  publisher: Rancher by SUSE
+  publisher: Epinio by Krumware and SUSE
   short_description: Push from source to Kubernetes in one step
 - slug: julianb90/tachometer
   version: 0.1.1
