@@ -327,7 +327,7 @@ get_service_pid() {
         assert_success || return
         echo "$output"
     else
-        RD_TIMEOUT=10s run rdshell sh -c "RC_SVCNAME=$service_name /lib/rc/bin/service_get_value pidfile"
+        RD_TIMEOUT=10s run rdshell sh -c "RC_SVCNAME=$service_name /usr/libexec/rc/bin/service_get_value pidfile"
         assert_success || return
         RD_TIMEOUT=10s rdshell cat "$output"
     fi
