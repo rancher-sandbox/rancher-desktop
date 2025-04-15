@@ -8,13 +8,13 @@
 # TODO TODO TODO
 
 # Any time you add an image here you need to re-run the mirror script!
-IMAGES=(busybox nginx python ruby tonistiigi/binfmt registry:2.8.1)
+IMAGES=(busybox nginx python python:3.9-slim ruby tonistiigi/binfmt registry:2.8.1)
 
 GHCR_REPO=ghcr.io/rancher-sandbox/bats
 
-# Create IMAGE_FOO_BAR=foo/bar:tag variables
+# Create IMAGE_FOO_BAR_TAG=foo/bar:tag variables
 for IMAGE in "${IMAGES[@]}"; do
-    VAR="IMAGE_$(echo "$IMAGE" | sed 's/:.*//' | tr '[:lower:]' '[:upper:]' | tr / _)"
+    VAR="IMAGE_$(echo "$IMAGE" | tr '[:lower:]' '[:upper:]' | tr -C '[:alnum:][:space:]' _)"
     # file may be loaded outside BATS environment
     if [ "$(type -t using_ghcr_images)" = "function" ] && using_ghcr_images; then
         eval "$VAR=$GHCR_REPO/$IMAGE"
@@ -22,3 +22,6 @@ for IMAGE in "${IMAGES[@]}"; do
         eval "$VAR=$IMAGE"
     fi
 done
+
+# shellcheck disable=2034 # The registry image doesn't really need the tag
+IMAGE_REGISTRY=$IMAGE_REGISTRY_2_8_1
