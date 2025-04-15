@@ -60,11 +60,11 @@ func getK3sChannels(ctx context.Context) (map[string]string, error) {
 	for _, channel := range channels.Data {
 		switch {
 		case channel.Name == "latest" || channel.Name == "stable":
-			break
+			// process this channel.
 		case semver.Prerelease(channel.Latest) != "":
 			continue
 		case semver.IsValid(channel.Latest) && semver.Compare(channel.Latest, minimumVersion) >= 0:
-			break
+			// process this channel.
 		default:
 			continue
 		}
@@ -99,8 +99,7 @@ func getGithubReleasesPage(ctx context.Context, page int) ([]GithubRelease, erro
 		req.Header.Set("Authorization", "token "+token)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request for %q: %w", url, err)
 	}
