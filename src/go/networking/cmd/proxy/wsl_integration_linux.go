@@ -91,5 +91,7 @@ func setupLogging(logFile string) {
 
 	if debug {
 		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
 	}
 }
