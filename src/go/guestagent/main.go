@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2025 SUSE LLC
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -42,25 +42,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-//nolint:gochecknoglobals
-var (
-	debug            = flag.Bool("debug", false, "display debug output")
-	configPath       = flag.String("kubeconfig", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
-	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
-	enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
-	enableContainerd = flag.Bool("containerd", false, "enable Containerd event monitoring")
-	containerdSock   = flag.String("containerdSock",
-		containerdSocketFile,
-		"file path for Containerd socket address")
-	k8sServiceListenerAddr = flag.String("k8sServiceListenerAddr", net.IPv4zero.String(),
-		"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
-	adminInstall = flag.Bool("adminInstall", false, "indicates if Rancher Desktop is installed as admin or not")
-	k8sAPIPort   = flag.String("k8sAPIPort", "6443",
-		"K8sAPI port number to forward to rancher-desktop wsl-proxy as a static portMapping event")
-	tapIfaceIP = flag.String("tap-interface-ip", "192.168.127.2",
-		"IP address for the tap interface eth0 in network namespace")
-)
-
 const (
 	iptablesUpdateInterval = 3 * time.Second
 	procNetScanInterval    = 3 * time.Second
@@ -71,6 +52,24 @@ const (
 )
 
 func main() {
+	var (
+		debug            = flag.Bool("debug", false, "display debug output")
+		configPath       = flag.String("kubeconfig", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
+		enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
+		enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
+		enableContainerd = flag.Bool("containerd", false, "enable Containerd event monitoring")
+		containerdSock   = flag.String("containerdSock",
+			containerdSocketFile,
+			"file path for Containerd socket address")
+		k8sServiceListenerAddr = flag.String("k8sServiceListenerAddr", net.IPv4zero.String(),
+			"address to bind Kubernetes services to on the host, valid options are 0.0.0.0 or 127.0.0.1")
+		adminInstall = flag.Bool("adminInstall", false, "indicates if Rancher Desktop is installed as admin or not")
+		k8sAPIPort   = flag.String("k8sAPIPort", "6443",
+			"K8sAPI port number to forward to rancher-desktop wsl-proxy as a static portMapping event")
+		tapIfaceIP = flag.String("tap-interface-ip", "192.168.127.2",
+			"IP address for the tap interface eth0 in network namespace")
+	)
+
 	// Setup logging with debug and trace levels
 	logger := log.NewStandard()
 
