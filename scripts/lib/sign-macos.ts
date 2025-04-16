@@ -259,13 +259,17 @@ async function isBundleExecutable(fullPath: string): Promise<boolean> {
       const infoPlist = path.sep + path.join(...parts.slice(2).reverse(), 'Info.plist');
 
       try {
-        const { stdout } = await spawnFile('/usr/bin/plutil',
-          ['-extract', 'CFBundleExecutable', 'raw', '-expect', 'string', infoPlist],
-          { stdio: 'pipe' });
+        const executableKey = 'CFBundleExecutable';
+        const plistContents = await fs.promises.readFile(infoPlist, 'utf-8');
+        const value = plist.parse(plistContents);
 
-        return stdout.trimEnd() === parts[0];
-      } catch {
-        log.info({ infoPlist }, 'Failed to read Info.plist, assuming not the bundle executable.');
+        if (typeof value !== 'object' || !(executableKey in value)) {
+          return false;
+        }
+
+        return value[executableKey] === parts[0];
+      } catch (ex) {
+        log.info({ ex, infoPlist }, 'Failed to read Info.plist, assuming not the bundle executable.');
 
         return false;
       }

@@ -24,11 +24,6 @@ mac:
   darkModeSupport: true
   hardenedRuntime: true
   gatekeeperAssess: false
-  extendInfo:
-    NSBluetoothAlwaysUsageDescription: ~
-    NSBluetoothPeripheralUsageDescription: ~
-    NSCameraUsageDescription: ~
-    NSMicrophoneUsageDescription: ~
   icon: ./resources/icons/mac-icon.png
   target: [ dmg, zip ]
   identity: ~ # We sign in a separate step
