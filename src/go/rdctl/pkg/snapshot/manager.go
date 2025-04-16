@@ -118,38 +118,38 @@ func (manager *Manager) writeMetadataFile(snapshot Snapshot) error {
 }
 
 // Create a new snapshot.
-func (manager *Manager) Create(ctx context.Context, name, description string) (snapshot Snapshot, err error) {
+func (manager *Manager) Create(ctx context.Context, name, description string) (Snapshot, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return snapshot, fmt.Errorf("failed to generate ID for snapshot: %w", err)
+		return Snapshot{}, fmt.Errorf("failed to generate ID for snapshot: %w", err)
 	}
-	snapshot = Snapshot{
+	snapshot := Snapshot{
 		Created:     time.Now(),
 		Name:        name,
 		ID:          id.String(),
 		Description: description,
 	}
 	action := fmt.Sprintf("Creating snapshot %q", name)
-	if err = manager.Lock(manager.Paths, action); err != nil {
-		return
+	if err := manager.Lock(ctx, manager.Paths, action); err != nil {
+		return snapshot, err
 	}
 	defer func() {
 		if err != nil {
 			os.RemoveAll(manager.SnapshotDirectory(snapshot))
 		}
-		unlockErr := manager.Unlock(manager.Paths, true)
+		unlockErr := manager.Unlock(ctx, manager.Paths, true)
 		if err == nil {
 			err = unlockErr
 		}
 	}()
 	// (Re)validate the name after acquiring the lock in case another process created a snapshot with the same name
-	if err = manager.ValidateName(name); err != nil {
-		return
+	if err := manager.ValidateName(name); err != nil {
+		return snapshot, err
 	}
 	if err = manager.writeMetadataFile(snapshot); err == nil {
 		err = manager.CreateFiles(ctx, manager.Paths, manager.SnapshotDirectory(snapshot))
 	}
-	return
+	return snapshot, err
 }
 
 // List snapshots that are present on the system. If includeIncomplete is
@@ -211,12 +211,12 @@ func (manager *Manager) Restore(ctx context.Context, name string) (err error) {
 	}
 
 	action := fmt.Sprintf("Restoring snapshot %q", name)
-	if err := manager.Lock(manager.Paths, action); err != nil {
+	if err := manager.Lock(ctx, manager.Paths, action); err != nil {
 		return err
 	}
 	defer func() {
 		// Restart the backend only if a data reset occurred
-		unlockErr := manager.Unlock(manager.Paths, !errors.Is(err, ErrDataReset))
+		unlockErr := manager.Unlock(ctx, manager.Paths, !errors.Is(err, ErrDataReset))
 		if err == nil {
 			err = unlockErr
 		}

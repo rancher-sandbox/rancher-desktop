@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,10 +32,10 @@ type APIError struct {
 }
 
 type RDClient interface {
-	DoRequest(method string, command string) (*http.Response, error)
-	DoRequestWithPayload(method string, command string, payload io.Reader) (*http.Response, error)
-	GetBackendState() (BackendState, error)
-	UpdateBackendState(state BackendState) error
+	DoRequest(ctx context.Context, method string, command string) (*http.Response, error)
+	DoRequestWithPayload(ctx context.Context, method string, command string, payload io.Reader) (*http.Response, error)
+	GetBackendState(ctx context.Context) (BackendState, error)
+	UpdateBackendState(ctx context.Context, state BackendState) error
 }
 
 func validateBackendState(state BackendState) error {
@@ -62,17 +63,17 @@ func (client *RDClientImpl) makeURL(host string, port int, command string) strin
 	return fmt.Sprintf("http://%s:%d/%s", host, port, command)
 }
 
-func (client *RDClientImpl) DoRequest(method, command string) (*http.Response, error) {
-	req, err := client.getRequestObject(method, command)
+func (client *RDClientImpl) DoRequest(ctx context.Context, method, command string) (*http.Response, error) {
+	req, err := client.getRequestObject(ctx, method, command)
 	if err != nil {
 		return nil, err
 	}
 	return http.DefaultClient.Do(req)
 }
 
-func (client *RDClientImpl) DoRequestWithPayload(method, command string, payload io.Reader) (*http.Response, error) {
+func (client *RDClientImpl) DoRequestWithPayload(ctx context.Context, method, command string, payload io.Reader) (*http.Response, error) {
 	url := client.makeURL(client.connectionInfo.Host, client.connectionInfo.Port, command)
-	req, err := http.NewRequest(method, url, payload)
+	req, err := http.NewRequestWithContext(ctx, method, url, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +83,9 @@ func (client *RDClientImpl) DoRequestWithPayload(method, command string, payload
 	return http.DefaultClient.Do(req)
 }
 
-func (client *RDClientImpl) getRequestObject(method, command string) (*http.Request, error) {
+func (client *RDClientImpl) getRequestObject(ctx context.Context, method, command string) (*http.Request, error) {
 	url := client.makeURL(client.connectionInfo.Host, client.connectionInfo.Port, command)
-	req, err := http.NewRequest(method, url, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +95,9 @@ func (client *RDClientImpl) getRequestObject(method, command string) (*http.Requ
 	return req, nil
 }
 
-func (client *RDClientImpl) GetBackendState() (BackendState, error) {
-	body, err := ProcessRequestForUtility(client.DoRequest("GET", VersionCommand("", "backend_state")))
+func (client *RDClientImpl) GetBackendState(ctx context.Context) (BackendState, error) {
+	command := VersionCommand("", "backend_state")
+	body, err := ProcessRequestForUtility(client.DoRequest(ctx, http.MethodGet, command))
 	if err != nil {
 		return BackendState{}, err
 	}
@@ -109,13 +111,14 @@ func (client *RDClientImpl) GetBackendState() (BackendState, error) {
 	return state, nil
 }
 
-func (client *RDClientImpl) UpdateBackendState(state BackendState) error {
+func (client *RDClientImpl) UpdateBackendState(ctx context.Context, state BackendState) error {
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
 	if err := encoder.Encode(state); err != nil {
 		return fmt.Errorf("failed to marshal backend state: %w", err)
 	}
-	_, err := ProcessRequestForUtility(client.DoRequestWithPayload("PUT", VersionCommand("", "backend_state"), buf))
+	command := VersionCommand("", "backend_state")
+	_, err := ProcessRequestForUtility(client.DoRequestWithPayload(ctx, http.MethodPut, command, buf))
 	if err != nil {
 		return err
 	}

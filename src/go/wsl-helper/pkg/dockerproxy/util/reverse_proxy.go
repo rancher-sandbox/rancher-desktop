@@ -14,6 +14,8 @@ import (
 const (
 	hostHeaderValue = "api.moby.localhost"
 	targetProtocol  = "http://"
+	// The amount of time between flushes for a flushWriter
+	flushInterval = 100 * time.Millisecond
 )
 
 // ReverseProxy is a custom reverse proxy specifically designed for Rancher Desktop's
@@ -278,7 +280,7 @@ func newFlushedWriter(ctx context.Context, w io.Writer) *flushedWriter {
 
 	// periodicFlusher runs a loop that periodically flushes the writer
 	periodicFlusher := func(flusher http.Flusher) {
-		ticker := time.NewTicker(100 * time.Millisecond)
+		ticker := time.NewTicker(flushInterval)
 		defer ticker.Stop()
 
 		for {

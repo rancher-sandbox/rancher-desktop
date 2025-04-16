@@ -19,6 +19,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
@@ -65,7 +66,7 @@ func doShutdown(ctx context.Context, shutdownSettings *shutdownSettingsStruct, i
 	if err == nil && connectionInfo != nil {
 		rdClient := client.NewRDClient(connectionInfo)
 		command := client.VersionCommand("", "shutdown")
-		output, _ = client.ProcessRequestForUtility(rdClient.DoRequest("PUT", command))
+		output, _ = client.ProcessRequestForUtility(rdClient.DoRequest(ctx, http.MethodPut, command))
 		logrus.WithError(err).Trace("Shut down requested")
 	}
 	err = shutdown.FinishShutdown(ctx, shutdownSettings.WaitForShutdown, initiatingCommand)

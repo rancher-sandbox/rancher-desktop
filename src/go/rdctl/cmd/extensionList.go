@@ -19,8 +19,10 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -38,7 +40,7 @@ var listCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return listExtensions()
+		return listExtensions(cmd.Context())
 	},
 }
 
@@ -46,14 +48,14 @@ func init() {
 	extensionCmd.AddCommand(listCmd)
 }
 
-func listExtensions() error {
+func listExtensions(ctx context.Context) error {
 	connectionInfo, err := config.GetConnectionInfo(false)
 	if err != nil {
 		return fmt.Errorf("failed to get connection info: %w", err)
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 	endpoint := fmt.Sprintf("/%s/extensions", client.APIVersion)
-	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest("GET", endpoint))
+	result, errorPacket, err := client.ProcessRequestForAPI(rdClient.DoRequest(ctx, http.MethodGet, endpoint))
 	if errorPacket != nil || err != nil {
 		return displayAPICallResult([]byte{}, errorPacket, err)
 	}

@@ -24,10 +24,13 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+// The initial buffer size for use with InvokeWin32WithBuffer
+const initialBufferSize = 256
+
 // InvokeWin32WithBuffer calls the given function with increasing buffer sizes
 // until it does not return ERROR_INSUFFICIENT_BUFFER.
 func InvokeWin32WithBuffer(cb func(size int) error) error {
-	size := 256
+	size := initialBufferSize
 	for {
 		err := cb(size)
 		if err == nil {

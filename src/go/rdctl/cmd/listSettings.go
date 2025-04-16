@@ -17,7 +17,9 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
@@ -34,7 +36,7 @@ var listSettingsCmd = &cobra.Command{
 			return err
 		}
 		cmd.SilenceUsage = true
-		result, err := getListSettings()
+		result, err := getListSettings(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -47,12 +49,12 @@ func init() {
 	rootCmd.AddCommand(listSettingsCmd)
 }
 
-func getListSettings() ([]byte, error) {
+func getListSettings(ctx context.Context) ([]byte, error) {
 	connectionInfo, err := config.GetConnectionInfo(false)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get connection info: %w", err)
 	}
 	rdClient := client.NewRDClient(connectionInfo)
 	command := client.VersionCommand("", "settings")
-	return client.ProcessRequestForUtility(rdClient.DoRequest("GET", command))
+	return client.ProcessRequestForUtility(rdClient.DoRequest(ctx, http.MethodGet, command))
 }

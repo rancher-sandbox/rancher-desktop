@@ -13,6 +13,9 @@ linters:
     - govet
     - ineffassign
     - misspell
+    - mnd
+    - nakedret
+    - noctx
     - staticcheck
     - unconvert
     - unparam
@@ -44,8 +47,6 @@ linters:
         - style
     gocyclo:
       min-complexity: 15
-    lll:
-      line-length: 140
     mnd:
       # don't include the "operation" and "assign"
       checks:
@@ -59,9 +60,15 @@ linters:
         - "2"
         - "3"
       ignored-functions:
-        - ^strings\.SplitN$
+        - ^make$
+        - ^net\.IPv4$
         - ^os\.FileMode$
         - ^os\.Mkdir(?:All)?$
+        - ^os\.(?:Open|Write)File$
+        - ^s\.waitForAppToDieOrKillIt$
+        - ^strings\.SplitN$
+        - ^tabwriter\.NewWriter$
+        - ^utils\.GetParentDir$
     nolintlint:
       allow-unused: false # report any unused nolint directives
       require-explanation: true
