@@ -15,6 +15,7 @@ import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
 } from 'electron-builder';
 import _ from 'lodash';
+import plist from 'plist';
 import yaml from 'yaml';
 
 import buildUtils from './lib/build-utils';
@@ -98,9 +99,41 @@ class Builder {
     await helper.writeDesktopEntry(options, context.packager.executableName, destination);
   }
 
+  /**
+   * Edit the application's `Info.plist` file to remove the UsageDescription
+   * keys; there is no reason for the application to get any of those permissions.
+   */
+  protected async removeMacUsageDescriptions(context: AfterPackContext) {
+    const { MacPackager } = await import('app-builder-lib/out/macPackager');
+    const { packager } = context;
+    const config = packager.config.mac;
+
+    if (!(packager instanceof MacPackager) || !config) {
+      return;
+    }
+
+    const { productFilename } = packager.appInfo;
+    const plistPath = path.join(context.appOutDir, `${ productFilename }.app`, 'Contents', 'Info.plist');
+    const plistContents = await fs.promises.readFile(plistPath, 'utf-8');
+    const plistData = plist.parse(plistContents);
+
+    if (typeof plistData !== 'object' || !('CFBundleName' in plistData)) {
+      return;
+    }
+    const plistCopy: Record<string, plist.PlistValue> = structuredClone(plistData);
+
+    for (const key in plistData) {
+      if (/^NS.*UsageDescription$/.test(key)) {
+        delete plistCopy[key];
+      }
+    }
+    await fs.promises.writeFile(plistPath, plist.build(plistCopy), 'utf-8');
+  }
+
   protected async afterPack(context: AfterPackContext) {
     await this.flipFuses(context);
     await this.writeLinuxDesktopFile(context);
+    await this.removeMacUsageDescriptions(context);
   }
 
   async package(): Promise<CliOptions> {
