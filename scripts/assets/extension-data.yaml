@@ -7,8 +7,8 @@
 # - `containerd_compatible`: defaults to true.
 # - `logo`: Overrides the logo URL.
 
-ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.6:
-ghcr.io/rancher-sandbox/epinio-desktop-extension:0.0.23.5: {}
+ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.6: {}
+splatform/epinio-docker-desktop:0.1.0: {}
 julianb90/tachometer:0.1.1: {}
 docker/logs-explorer-extension:0.2.5: {}
 prakhar1989/dive-in:0.0.8:
