@@ -1,6 +1,11 @@
 wait_for_shell() {
     if is_windows; then
-        try --max 48 --delay 5 rdctl shell true
+        try --max 48 --delay 5 rdctl shell grep ID= /etc/os-release
+        if using_systemd; then
+            try --max 24 --delay 5 rdctl shell test -f /var/run/lima-boot-done
+            try --max 24 --delay 5 rdctl shell systemctl is-active rancher-desktop.target
+            try --max 48 --delay 5 rdctl shell sudo systemctl is-system-running --wait
+        fi
     else
         # Be at the root directory to avoid issues with limactl automatic
         # changing to the current directory, which might not exist.
@@ -23,7 +28,7 @@ pkill_by_path() {
 clear_iptables_chain() {
     local chain=$1
     local rule
-    wsl sudo iptables -L | awk '/^Chain ${chain}/ {print $2}' | while IFS= read -r rule; do
+    wsl sudo iptables -L | awk "/^Chain ${chain}/ {print \$2}" | while IFS= read -r rule; do
         wsl sudo iptables -X "$rule"
     done
 }
@@ -320,9 +325,47 @@ docker_context_exists() {
     assert_output "$RD_DOCKER_CONTEXT"
 }
 
+# Check if the VM is using systemd (instead of OpenRC).
+using_systemd() {
+    [[ -n ${_RD_USING_SYSTEMD:-} ]] || load_var _RD_USING_SYSTEMD || true
+    if [[ -z ${_RD_USING_SYSTEMD:-} ]]; then
+        # `systemctl whoami` contacts the systemd init to check things, so if
+        # it succeeds we're using systemd.  On alpine-based systems, the
+        # `systemctl` command would be missing so this still applies.
+        if rdctl shell /usr/bin/systemctl whoami &>/dev/null; then
+            _RD_USING_SYSTEMD=true
+        else
+            _RD_USING_SYSTEMD=false
+        fi
+        save_var _RD_USING_SYSTEMD
+    fi
+    is_true "${_RD_USING_SYSTEMD}"
+}
+
+# Manage a service in the vm.
+# service_control [--ifstarted] $SERVICE start|stop|restart
+service_control() {
+    local if_started
+    if [[ ${1:-} == "--ifstarted" ]]; then
+        if_started=$1
+        shift
+    fi
+    local service=$1 action=$2
+    if using_systemd; then
+        if [[ -n $ifstarted && $action == restart ]]; then
+            rdsudo systemctl try-restart "$service"
+        else
+            rdsudo systemctl "$action" "$service"
+        fi
+    else
+        # shellcheck disable=2086 # the argument may expand to nothing.
+        rdsudo rc-service ${if_started:-} "$service" "$action"
+    fi
+}
+
 get_service_pid() {
     local service_name=$1
-    if [[ ${RD_OS:-} == opensuse ]]; then
+    if using_systemd; then
         RD_TIMEOUT=10s run rdshell systemctl show --property MainPID --value "$service_name.service"
         assert_success || return
         echo "$output"
@@ -356,7 +399,7 @@ assert_service_status() {
     local service_name=$1
     local expect=$2
 
-    if [[ ${RD_OS:-} == opensuse ]]; then
+    if using_systemd; then
         local mapped_status
         case $expect in
         started) mapped_status=active ;;

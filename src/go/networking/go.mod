@@ -7,6 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/containers/gvisor-tap-vsock v0.8.5
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
@@ -27,6 +28,7 @@ require (
 require (
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475 // indirect
 	github.com/kr/pretty v0.3.1 // indirect

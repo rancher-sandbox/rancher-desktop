@@ -83,17 +83,23 @@ sudo_needs_password() {
 }
 
 supports_vz_emulation() {
-    if is_macos; then
+    if ! is_macos; then
+        return 1
+    fi
+    [[ -n ${_RD_SUPPORTS_VZ_EMULATION:-} ]] || load_var _RD_SUPPORTS_VZ_EMULATION || true
+    if [[ -z ${_RD_SUPPORTS_VZ_EMULATION:-} ]]; then
         local version
         version=$(semver "$(/usr/bin/sw_vers -productVersion)")
         trace "macOS version is $version"
         if semver_gte "$version" 13.3.0; then
-            return 0
+            _RD_SUPPORTS_VZ_EMULATION=true
+        elif [[ $ARCH == x86_64 ]] && semver_gte "$version" 13.0.0; then
+            # Versions 13.0.x .. 13.2.x work only on x86_64, not aarch64
+            _RD_SUPPORTS_VZ_EMULATION=true
+        else
+            _RD_SUPPORTS_VZ_EMULATION=false
         fi
-        # Versions 13.0.x .. 13.2.x work only on x86_64, not aarch64
-        if [[ $ARCH == x86_64 ]] && semver_gte "$version" 13.0.0; then
-            return 0
-        fi
+        save_var _RD_SUPPORTS_VZ_EMULATION
     fi
-    return 1
+    is_true "${_RD_SUPPORTS_VZ_EMULATION}"
 }

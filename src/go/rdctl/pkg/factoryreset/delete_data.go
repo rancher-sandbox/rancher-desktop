@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2025 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,9 +22,12 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path"
 
 	dockerconfig "github.com/docker/cli/cli/config"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 type dockerConfigType map[string]any
@@ -85,4 +88,19 @@ func clearDockerContext() error {
 		return err
 	}
 	return os.Rename(scratchFile.Name(), configFilePath)
+}
+
+func deleteLimaVM() error {
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return err
+	}
+	if err := directories.SetupLimaHome(appPaths.AppHome); err != nil {
+		return err
+	}
+	limactl, err := directories.GetLimactlPath()
+	if err != nil {
+		return err
+	}
+	return exec.Command(limactl, "delete", "-f", "0").Run()
 }

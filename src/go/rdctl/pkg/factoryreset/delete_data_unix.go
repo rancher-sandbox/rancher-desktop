@@ -1,7 +1,7 @@
 //go:build unix
 
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2025 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,14 +23,12 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	dockerconfig "github.com/docker/cli/cli/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 )
@@ -114,26 +112,6 @@ func deleteUnixLikeData(appPaths *paths.Paths, pathList []string) error {
 	rawPaths = append(rawPaths, path.Join(homeDir, ".config", "fish", "config.fish"))
 
 	return removePathManagement(rawPaths)
-}
-
-func deleteLimaVM() error {
-	appPaths, err := paths.GetPaths()
-	if err != nil {
-		return err
-	}
-	if err := directories.SetupLimaHome(appPaths.AppHome); err != nil {
-		return err
-	}
-	execPath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	execPath, err = filepath.EvalSymlinks(execPath)
-	if err != nil {
-		return err
-	}
-	limactl := path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl")
-	return exec.Command(limactl, "delete", "-f", "0").Run()
 }
 
 func removeDockerCliPlugins(altAppHomePath string) error {

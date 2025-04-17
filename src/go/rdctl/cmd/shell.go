@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2025 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,12 +21,17 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lima"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/encoding/unicode"
@@ -61,18 +66,40 @@ func init() {
 
 func doShellCommand(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
-	var commandName string
+
+	commandName, err := directories.GetLimactlPath()
+	if err != nil {
+		return err
+	}
+
 	if runtime.GOOS == "windows" {
-		commandName = "wsl"
-		distroName := "rancher-desktop"
-		if !checkWSLIsRunning(distroName) {
+		distroNames := []string{wsl.DistributionName}
+		found := false
+
+		if _, err = os.Stat(commandName); err == nil {
+			// If limactl is available, try the lima distribution first.
+			distroNames = append([]string{lima.InstanceFullName}, distroNames...)
+		}
+
+		for _, distroName := range distroNames {
+			if !checkWSLIsRunning(distroName) {
+				continue
+			}
+
+			commandName = "wsl"
+			args = append([]string{
+				"--distribution", distroName,
+				"--exec", "/usr/local/bin/wsl-exec",
+			}, args...)
+			found = true
+			break
+		}
+
+		if !found {
+			// We did not find a running distribution that we can use.
 			// No further output wanted, so just exit with the desired status.
 			os.Exit(1)
 		}
-		args = append([]string{
-			"--distribution", distroName,
-			"--exec", "/usr/local/bin/wsl-exec"},
-			args...)
 	} else {
 		paths, err := p.GetPaths()
 		if err != nil {
@@ -81,15 +108,14 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 		if err := directories.SetupLimaHome(paths.AppHome); err != nil {
 			return err
 		}
-		commandName, err = directories.GetLimactlPath()
-		if err != nil {
+		if err := setupPathEnvVar(paths); err != nil {
 			return err
 		}
 		if !checkLimaIsRunning(commandName) {
 			// No further output wanted, so just exit with the desired status.
 			os.Exit(1)
 		}
-		args = append([]string{"shell", "0"}, args...)
+		args = append([]string{"shell", lima.InstanceName}, args...)
 	}
 	shellCommand := exec.Command(commandName, args...)
 	shellCommand.Stdin = os.Stdin
@@ -98,13 +124,28 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 	return shellCommand.Run()
 }
 
+// Set up the PATH environment variable for limactl.
+func setupPathEnvVar(paths *p.Paths) error {
+	if runtime.GOOS != "windows" {
+		// This is only needed on Windows.
+		return nil
+	}
+	msysDir := filepath.Join(utils.GetParentDir(paths.Resources, 2), "msys")
+	pathList := filepath.SplitList(os.Getenv("PATH"))
+	if slices.Contains(pathList, msysDir) {
+		return nil
+	}
+	pathList = append([]string{msysDir}, pathList...)
+	return os.Setenv("PATH", strings.Join(pathList, string(os.PathListSeparator)))
+}
+
 const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop application first"
 
 func checkLimaIsRunning(commandName string) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
+	cmd := exec.Command(commandName, "ls", lima.InstanceName, "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -122,7 +163,7 @@ func checkLimaIsRunning(commandName string) bool {
 		return false
 	}
 	errorMsg := stderr.String()
-	if strings.Contains(errorMsg, "No instance matching 0 found.") {
+	if strings.Contains(errorMsg, fmt.Sprintf("No instance matching %s found.", lima.InstanceName)) {
 		logrus.Errorf("The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
 	} else if errorMsg != "" {
 		fmt.Fprintln(os.Stderr, errorMsg)

@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 SUSE LLC
+Copyright © 2025 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@ package directories
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
+	"runtime"
 )
 
 func SetupLimaHome(appHome string) error {
-	candidatePath := path.Join(appHome, "lima")
+	candidatePath := filepath.Join(appHome, "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
-		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)
+		return fmt.Errorf("can't find the lima-home directory at %q: %w", candidatePath, err)
 	}
 	if !stat.Mode().IsDir() {
 		return fmt.Errorf("path %q exists but isn't a directory", candidatePath)
@@ -44,5 +44,9 @@ func GetLimactlPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl"), nil
+	result := filepath.Join(filepath.Dir(filepath.Dir(execPath)), "lima", "bin", "limactl")
+	if runtime.GOOS == "windows" {
+		result += ".exe"
+	}
+	return result, nil
 }
