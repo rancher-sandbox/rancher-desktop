@@ -416,6 +416,7 @@ var commands = map[string]commandDefinition{
 			"-u":           ignoredArgHandler,
 			"-w":           ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"compose images": {
@@ -549,6 +550,7 @@ var commands = map[string]commandDefinition{
 			"-v":               ignoredArgHandler,
 			"-w":               ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"compose start": {
@@ -780,6 +782,7 @@ var commands = map[string]commandDefinition{
 			"-v":                                      ignoredArgHandler,
 			"-w":                                      ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"container diff": {
@@ -807,6 +810,7 @@ var commands = map[string]commandDefinition{
 			"-u":            ignoredArgHandler,
 			"-w":            ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"container inspect": {
@@ -1028,6 +1032,7 @@ var commands = map[string]commandDefinition{
 			"-v":                                      ignoredArgHandler,
 			"-w":                                      ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"container start": {
@@ -1214,6 +1219,7 @@ var commands = map[string]commandDefinition{
 			"-v":                                      ignoredArgHandler,
 			"-w":                                      ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"diff": {
@@ -1251,6 +1257,7 @@ var commands = map[string]commandDefinition{
 			"-u":            ignoredArgHandler,
 			"-w":            ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"help": {
@@ -1994,6 +2001,7 @@ var commands = map[string]commandDefinition{
 			"-v":                                      ignoredArgHandler,
 			"-w":                                      ignoredArgHandler,
 		},
+		hasForeignFlags: true,
 	},
 
 	"save": {
