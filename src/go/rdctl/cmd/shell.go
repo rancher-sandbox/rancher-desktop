@@ -82,22 +82,22 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		for _, distroName := range distroNames {
-			if !checkWSLIsRunning(distroName) {
-				continue
+			err = assertWSLIsRunning(distroName)
+			if err == nil {
+				commandName = "wsl"
+				args = append([]string{
+					"--distribution", distroName,
+					"--exec", "/usr/local/bin/wsl-exec",
+				}, args...)
+				found = true
+				break
 			}
-
-			commandName = "wsl"
-			args = append([]string{
-				"--distribution", distroName,
-				"--exec", "/usr/local/bin/wsl-exec",
-			}, args...)
-			found = true
-			break
 		}
 
 		if !found {
 			// We did not find a running distribution that we can use.
 			// No further output wanted, so just exit with the desired status.
+			fmt.Fprintf(os.Stderr, "%s", err)
 			os.Exit(1)
 		}
 	} else {
@@ -173,18 +173,18 @@ func checkLimaIsRunning(commandName string) bool {
 	return false
 }
 
-func checkWSLIsRunning(distroName string) bool {
+// Check that WSL is running the given distribution; if not, an error will be
+// returned with a message suitable for printing to the user.
+func assertWSLIsRunning(distroName string) error {
 	// Ignore error messages; none are expected here
 	rawOutput, err := exec.Command("wsl", "--list", "--verbose").CombinedOutput()
 	if err != nil {
-		logrus.Errorf("Failed to run 'wsl --list --verbose': %s\n", err)
-		return false
+		return fmt.Errorf("failed to run `wsl --list --verbose: %w", err)
 	}
 	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
 	output, err := decoder.Bytes(rawOutput)
 	if err != nil {
-		logrus.Errorf("Failed to read WSL output ([% q]...); error: %s\n", rawOutput[:12], err)
-		return false
+		return fmt.Errorf("failed to read WSL output ([% q]...); error: %w", rawOutput[:12], err)
 	}
 	isListed := false
 	targetState := ""
@@ -199,15 +199,12 @@ func checkWSLIsRunning(distroName string) bool {
 			break
 		}
 	}
-	if targetState == "Running" {
-		return true
+	const desiredState = "Running"
+	if targetState == desiredState {
+		return nil
 	}
 	if !isListed {
-		fmt.Fprintf(os.Stderr,
-			"The Rancher Desktop WSL needs to be running in order to execute 'rdctl shell', but it currently is not.\n%s.\n", restartDirective)
-		return false
+		return fmt.Errorf("the Rancher Desktop WSL distribution needs to be running in order to execute 'rdctl shell', but it currently is not.\n%s", restartDirective)
 	}
-	fmt.Fprintf(os.Stderr,
-		"The Rancher Desktop WSL needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", targetState, restartDirective)
-	return false
+	return fmt.Errorf("the Rancher Desktop WSL distribution needs to be in state %q in order to execute 'rdctl shell', but it is currently in state %q.\n%s", desiredState, targetState, restartDirective)
 }
