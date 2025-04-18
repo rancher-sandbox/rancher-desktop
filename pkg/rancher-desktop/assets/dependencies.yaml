@@ -7,7 +7,7 @@ alpineLimaISO:
 WSLDistro: "0.81"
 kuberlr: 0.6.0
 helm: 3.17.3
-dockerCLI: 28.1.0
+dockerCLI: 28.1.1
 dockerBuildx: 0.23.0
 dockerCompose: 2.35.1
 golangci-lint: 2.1.2
