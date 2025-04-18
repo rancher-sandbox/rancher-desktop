@@ -1512,8 +1512,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
         const env = {
           ...process.env,
-          KUBE_PLUGIN_VERSION:  DEPENDENCY_VERSIONS.spinKubePlugin,
-          SPIN_TEMPLATE_BRANCH: (version ? `v${ version.major }.${ version.minor }` : 'main'),
+          KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin,
+          SPIN_TEMPLATES_TAG:  (version ? `spin/templates/v${ version.major }.${ version.minor }` : 'unknown'),
         };
 
         promises.push(this.spawnWithCapture(executable('setup-spin'), { env }));

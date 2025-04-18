@@ -33,11 +33,14 @@ fi
 
 install_templates() {
   repo=$1
-  branch=$2
 
-  echo "Installing templates ${repo} from branch ${branch}"
-  url="https://github.com/fermyon/${repo}/archive/refs/heads/${branch}.tar.gz"
-  "$spin" templates install --update --tar "$url"
+  echo "Installing ${repo} templates from tag ${SPIN_TEMPLATES_TAG}"
+  url="https://github.com/spinframework/${repo}/archive/refs/tags/${SPIN_TEMPLATES_TAG}.tar.gz"
+  if ! "$spin" templates install --update --tar "$url"; then
+    echo "Install failed, falling back to main branch"
+    url="https://github.com/spinframework/${repo}/archive/refs/heads/main.tar.gz"
+    "$spin" templates install --update --tar "$url"
+  fi
 }
 
 install_plugin() {
@@ -49,9 +52,9 @@ install_plugin() {
   rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
 }
 
-install_templates spin "${SPIN_TEMPLATE_BRANCH:-main}"
-install_templates spin-python-sdk main
-install_templates spin-js-sdk main
+install_templates spin
+install_templates spin-python-sdk
+install_templates spin-js-sdk
 
 install_plugin kube "${KUBE_PLUGIN_VERSION:-0.3.1}"
 

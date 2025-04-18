@@ -593,7 +593,7 @@ export class SpinOperator implements GitHubDependency {
 
 export class SpinCLI implements GitHubDependency {
   name = 'spinCLI';
-  githubOwner = 'fermyon';
+  githubOwner = 'spinframework';
   githubRepo = 'spin';
 
   async download(context: DownloadContext): Promise<void> {

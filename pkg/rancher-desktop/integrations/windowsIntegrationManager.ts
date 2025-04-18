@@ -587,8 +587,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       if (state && this.settings.experimental?.containerEngine?.webAssembly) {
         const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
         const env = {
-          KUBE_PLUGIN_VERSION:  DEPENDENCY_VERSIONS.spinKubePlugin,
-          SPIN_TEMPLATE_BRANCH: (version ? `v${ version.major }.${ version.minor }` : 'main'),
+          KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin,
+          SPIN_TEMPLATES_TAG:  (version ? `spin/templates/v${ version.major }.${ version.minor }` : 'unknown'),
         };
         const wslenv = Object.keys(env).join(':');
 
