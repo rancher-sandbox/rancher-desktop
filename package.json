@@ -174,7 +174,7 @@
     "typescript": "5.8.3",
     "vue-eslint-parser": "10.1.3",
     "vue-template-compiler": "2.7.16",
-    "webpack": "5.99.5"
+    "webpack": "5.99.6"
   },
   "resolutions": {
     "string-width": "^4"
