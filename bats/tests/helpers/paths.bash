@@ -83,7 +83,7 @@ if is_linux; then
 
     set_path_resources \
         "/opt/rancher-desktop" \
-        "/no user location on linux" \
+        "$HOME/opt/rancher-desktop" \
         "$PATH_REPO_ROOT/dist/linux-unpacked" \
         "resources/resources"
 fi

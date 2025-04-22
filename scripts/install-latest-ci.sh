@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Download the latest CI build and install it.
-# NOTE On Linux, this always installs to /opt (ignoring RD_LOCATION).
+# NOTE On Linux, "user" installs to `~/opt/rancher-desktop`
 
 set -o errexit -o nounset -o pipefail
 set -o xtrace
@@ -197,14 +197,22 @@ install_application() {
         esac
         ;;
     linux)
-        # Linux doesn't support per-user installs
-        if [[ "$RD_LOCATION" != "system" ]]; then
-            printf "Installing to %s is not supported on Linux; will install into /opt instead.\n" "$RD_LOCATION" >&2
-        fi
-        dest="/opt/rancher-desktop"
-        sudo rm -rf "${dest:?}"
-        sudo unzip -o "$zip_abspath" -d "$dest" >/dev/null
-        sudo chmod 04755 "${dest}/chrome-sandbox"
+        case $RD_LOCATION in
+        system)
+            dest="/opt/rancher-desktop"
+            sudo rm -rf "${dest:?}"
+            sudo unzip -o "$zip_abspath" -d "$dest" >/dev/null
+            sudo chmod 04755 "${dest}/chrome-sandbox"
+            ;;
+        user)
+            dest="$HOME/opt/rancher-desktop"
+            mkdir -p "${dest:?}" # Ensure the parent directory exists.
+            rm -rf "${dest:?}"
+            unzip -o "$zip_abspath" -d "$dest" >/dev/null
+            sudo chown root:root "${dest}/chrome-sandbox"
+            sudo chmod 04755 "${dest}/chrome-sandbox"
+            ;;
+        esac
         ;;
     esac
 }
