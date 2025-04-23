@@ -69,7 +69,7 @@ create_registry() {
 
 wait_for_registry() {
     # registry port is forwarded to host
-    try --max 10 --delay 5 curl -k --silent --show-error "https://localhost:$REGISTRY_PORT/v2/_catalog"
+    try --max 20 --delay 5 curl -k --silent --show-error "https://localhost:$REGISTRY_PORT/v2/_catalog"
 }
 
 using_insecure_registry() {
@@ -194,10 +194,7 @@ verify_default_credStore() {
     service_control --ifstarted rd-openresty restart
 
     wait_for_container_engine
-    # when Moby is stopped, the containers are stopped as well
-    if using_docker; then
-        wait_for_registry
-    fi
+    wait_for_registry
 }
 
 @test 'expect push image to registry to succeed now' {
