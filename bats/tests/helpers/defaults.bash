@@ -201,10 +201,10 @@ using_dev_mode() {
 # Kubernetes versions
 
 # The main Kubernetes version to test.
-: "${RD_KUBERNETES_VERSION:=1.23.6}"
+: "${RD_KUBERNETES_VERSION:=1.29.6}"
 
 # A secondary Kubernetes version; this is used for testing upgrades.
-: "${RD_KUBERNETES_ALT_VERSION:=1.22.7}"
+: "${RD_KUBERNETES_ALT_VERSION:=1.25.7}"
 
 # RD_K3S_VERSIONS specifies a list of k3s versions. foreach_k3s_version()
 # can dynamically register a test to run once for each version in the
@@ -215,7 +215,7 @@ using_dev_mode() {
 # "all" will fetch the list of all k3s releases from GitHub
 # "latest" will fetch the list of latest versions from the release channel
 
-: "${RD_K3S_MIN:=1.21.0}"
+: "${RD_K3S_MIN:=1.25.3}"
 : "${RD_K3S_MAX:=1.99.0}"
 : "${RD_K3S_VERSIONS:=$RD_KUBERNETES_VERSION}"
 

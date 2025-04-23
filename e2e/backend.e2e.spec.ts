@@ -90,7 +90,7 @@ test.describe.serial('KubernetesBackend', () => {
         // The Kubernetes version could be empty if it's previously disabled.
         // Set something.
         const updatedSettings: RecursivePartial<Settings> = {
-          kubernetes: { version: '1.23.4' },
+          kubernetes: { version: '1.29.4' },
           version:    10 as Settings['version'],
         };
 
@@ -100,7 +100,7 @@ test.describe.serial('KubernetesBackend', () => {
       const newSettings: RecursivePartial<Settings> = {
         containerEngine: { name: getAlternateSetting(currentSettings, 'containerEngine.name', ContainerEngine.CONTAINERD, ContainerEngine.MOBY) },
         kubernetes:      {
-          version: getAlternateSetting(currentSettings, 'kubernetes.version', '1.23.6', '1.23.5'),
+          version: getAlternateSetting(currentSettings, 'kubernetes.version', '1.29.6', '1.29.5'),
           port:    getAlternateSetting(currentSettings, 'kubernetes.port', 6443, 6444),
           enabled: getAlternateSetting(currentSettings, 'kubernetes.enabled', true, false),
           options: {

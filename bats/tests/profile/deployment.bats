@@ -11,7 +11,7 @@ local_setup() {
     ALLOWED_EXTENSION_TAG="0.0.7"
     FORBIDDEN_EXTENSION_TAG="0.0.5"
     FORBIDDEN_EXTENSION="ignatandrei/blockly-automation" # spellcheck-ignore-line
-    KUBERNETES_RANDOM_VERSION="1.23.5"
+    KUBERNETES_RANDOM_VERSION="1.29.5"
 
     # profile settings should be the opposite of the default config
     if using_docker; then

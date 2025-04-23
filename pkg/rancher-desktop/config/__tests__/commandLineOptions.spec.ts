@@ -26,7 +26,7 @@ describe('commandLineOptions', () => {
         name: settings.ContainerEngine.MOBY,
       },
       kubernetes: {
-        version: '1.23.5',
+        version: '1.29.5',
         port:    6443,
         enabled: true,
         options: {
@@ -72,17 +72,17 @@ describe('commandLineOptions', () => {
     });
 
     test('one option with embedded equal sign should change only one value', () => {
-      const newPrefs = updateFromCommandLine(prefs, lockedSettings, ['--kubernetes.version=1.23.6']);
+      const newPrefs = updateFromCommandLine(prefs, lockedSettings, ['--kubernetes.version=1.29.6']);
 
-      expect(newPrefs.kubernetes.version).toBe('1.23.6');
+      expect(newPrefs.kubernetes.version).toBe('1.29.6');
       newPrefs.kubernetes.version = origPrefs.kubernetes.version;
       expect(newPrefs).toEqual(origPrefs);
     });
 
     test('one option over two args should change only one value', () => {
-      const newPrefs = updateFromCommandLine(prefs, lockedSettings, ['--kubernetes.version', '1.23.7']);
+      const newPrefs = updateFromCommandLine(prefs, lockedSettings, ['--kubernetes.version', '1.29.7']);
 
-      expect(newPrefs.kubernetes.version).toBe('1.23.7');
+      expect(newPrefs.kubernetes.version).toBe('1.29.7');
       newPrefs.kubernetes.version = origPrefs.kubernetes.version;
       expect(newPrefs).toEqual(origPrefs);
     });

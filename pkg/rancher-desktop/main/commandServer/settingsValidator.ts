@@ -378,12 +378,6 @@ export default class SettingsValidator {
 
         return false;
       }
-      if (mergedSettings.kubernetes.version === '' || semver.gt('1.22.0', mergedSettings.kubernetes.version)) {
-        errors.push(`Setting ${ fqname } requires Kubernetes 1.22 or later`);
-        this.isFatal = true;
-
-        return false;
-      }
     }
 
     return currentValue !== desiredValue;

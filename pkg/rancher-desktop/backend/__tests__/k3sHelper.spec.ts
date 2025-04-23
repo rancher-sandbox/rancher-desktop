@@ -8,12 +8,7 @@ import util from 'util';
 import fetch from 'node-fetch';
 import semver from 'semver';
 
-import K3sHelper, {
-  buildVersion,
-  ChannelMapping,
-  NoCachedK3sVersionsError,
-  ReleaseAPIEntry,
-} from '../k3sHelper';
+import K3sHelper, { buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry } from '../k3sHelper';
 
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import paths from '@pkg/utils/paths';
@@ -415,7 +410,7 @@ describe(K3sHelper, () => {
       ['finds the oldest newer major version', 'v3.1.2+k3s3',
         ['v1.2.9+k3s1', 'v1.2.9+k3s4', 'v4.2.8+k3s1', 'v4.3.0+k3s1'], 'v4.2.8+k3s1'],
       ['finds the oldest newer minor version', 'v1.12.2+k3s3',
-        ['v1.2.9+k3s1', 'v1.7.0+k3s1', 'v1.23.9+k3s4', 'v2.12.8+k3s1'], 'v1.23.9+k3s4'],
+        ['v1.2.9+k3s1', 'v1.7.0+k3s1', 'v1.29.9+k3s4', 'v2.12.8+k3s1'], 'v1.29.9+k3s4'],
       ['finds the oldest newer patch version at the start of the list', 'v1.12.2+k3s3',
         ['v1.12.4+k3s1', 'v1.12.4+k3s4', 'v1.12.8+k3s1', 'v1.12.9+k3s4'], 'v1.12.4+k3s4'],
       ['finds the oldest newer patch version inside the list', 'v1.12.10+k3s99',

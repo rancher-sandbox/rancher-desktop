@@ -208,7 +208,7 @@ test.describe('Command server', () => {
     const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
     const desiredEngine = 'flip';
-    const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
+    const desiredVersion = /1.29.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.29.4';
     const requestedSettings = _.merge({}, settings, {
       version:         CURRENT_SETTINGS_VERSION,
       containerEngine: {

@@ -17,7 +17,7 @@ import (
 
 const (
 	// golang.org/x/mod/semver *requires* a leading 'v' on versions, and will add missing minor/patch numbers.
-	minimumVersion = "v1.21"
+	minimumVersion = "v1.25.3"
 	// The K3s channels endpoint
 	k3sChannelsEndpoint = "https://update.k3s.io/v1-release/channels"
 )
