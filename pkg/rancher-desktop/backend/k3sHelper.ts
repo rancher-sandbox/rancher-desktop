@@ -138,7 +138,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly resourcesPath = path.join(paths.resources, 'k3s-versions.json');
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
-  protected readonly minimumVersion = new semver.SemVer('1.21.0');
+  protected readonly minimumVersion = new semver.SemVer('1.25.3');
   /**
    * versionFromChannel is a mapping from the channel name to the latest (short)
    * version in that channel.

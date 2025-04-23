@@ -80,13 +80,13 @@ async function createDefaultUserRegistryProfileWithIncorrectTypes() {
 async function createDefaultUserRegistryProfileWithValidDataButNoVersion() {
   const base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults\\kubernetes';
 
-  await addRegistryEntry(base, 'version', 'REG_SZ', '1.21.0');
+  await addRegistryEntry(base, 'version', 'REG_SZ', '1.29.0');
 }
 
 async function createLockedUserRegistryProfileWithValidDataButNoVersion() {
   const base = 'HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Locked\\kubernetes';
 
-  await addRegistryEntry(base, 'version', 'REG_SZ', '1.21.0');
+  await addRegistryEntry(base, 'version', 'REG_SZ', '1.29.0');
 }
 
 test.describe.serial('starting up with profiles', () => {

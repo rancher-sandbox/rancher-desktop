@@ -102,7 +102,7 @@ describe('settings', () => {
       name: 'moby',
     },
     kubernetes: {
-      version: '1.23.15',
+      version: '1.29.15',
       enabled: true,
     },
     WSL: {

@@ -18,7 +18,7 @@ const cfg = _.merge(
   {},
   settings.defaultSettings,
   {
-    kubernetes:  { version: '1.23.4' },
+    kubernetes:  { version: '1.29.4' },
     application: { pathManagementStrategy: PathManagementStrategy.Manual },
   });
 const subject = new SettingsValidator();
@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 cfg.virtualMachine.memoryInGB ||= getDefaultMemory();
-subject.k8sVersions = ['1.23.4', '1.0.0'];
+subject.k8sVersions = ['1.29.4', '1.0.0'];
 describe(SettingsValidator, () => {
   it('should do nothing when given existing settings', () => {
     const [needToUpdate, errors] = subject.validateSettings(cfg, cfg);
