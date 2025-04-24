@@ -8,7 +8,6 @@ import { mapGetters, mapState } from 'vuex';
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
-import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 import { MountType, Settings, VMType } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
@@ -22,7 +21,6 @@ interface VuexBindings {
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-virtual-machine-emulation',
   components: {
-    TooltipIcon,
     IncompatiblePreferencesAlert,
     RadioGroup,
     RdFieldset,
@@ -38,17 +36,14 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     ...mapState('transientSettings', ['macOsVersion', 'isArm']),
-    options(): { label: string, value: VMType, description: string, experimental: boolean, disabled: boolean,
+    options(): { label: string, value: VMType, description: string, disabled: boolean,
       compatiblePrefs: CompatiblePrefs | [] }[] {
-      const defaultOption = VMType.QEMU;
-
       return Object.values(VMType)
         .map((x) => {
           return {
             label:           this.t(`virtualMachine.type.options.${ x }.label`),
             value:           x,
             description:     this.t(`virtualMachine.type.options.${ x }.description`, {}, true),
-            experimental:    x !== defaultOption, // Mark experimental option
             disabled:        x === VMType.VZ && this.vzDisabled,
             compatiblePrefs: this.getCompatiblePrefs(x),
           };
@@ -149,9 +144,6 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                 >
                   <template #label>
                     {{ option.label }}
-                    <tooltip-icon
-                      v-if="option.experimental"
-                    />
                   </template>
                   <template #description>
                     {{ option.description }}

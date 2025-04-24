@@ -3,7 +3,7 @@ export const mainRoutes = [
   { route: '/Containers', experimental: true },
   { route: '/PortForwarding' },
   { route: '/Images' },
-  { route: '/Snapshots', experimental: true },
+  { route: '/Snapshots' },
   { route: '/Troubleshooting' },
   { route: '/Diagnostics' },
   { route: '/Extensions' },
