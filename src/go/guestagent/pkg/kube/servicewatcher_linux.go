@@ -89,7 +89,8 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			if errors.As(err, &statusError) {
 				log.Debugw("kubernetes: got status error", log.Fields{
 					"status": statusError.Status(),
-					"debug":  fmt.Sprintf(statusError.DebugError()),
+					//nolint:govet // .DebugError() returns a format string plus fields.
+					"debug": fmt.Sprintf(statusError.DebugError()),
 				})
 			}
 			log.Errorw("kubernetes: unexpected error watching", log.Fields{
