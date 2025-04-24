@@ -245,7 +245,7 @@ func (proxy *ReverseProxy) handleUpgradedConnection(w http.ResponseWriter, backe
 }
 
 func (proxy *ReverseProxy) sendError(w http.ResponseWriter, msg string, statusCode int) {
-	proxy.logf(msg)
+	proxy.logf("%s", msg)
 	http.Error(w, msg, statusCode)
 }
 

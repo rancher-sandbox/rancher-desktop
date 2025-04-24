@@ -1,8 +1,8 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.24.1
+toolchain go1.24.2
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -23,7 +23,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sys v0.32.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/client-go v0.32.3
+	k8s.io/client-go v0.33.0
 )
 
 require (
@@ -43,6 +43,7 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
