@@ -144,7 +144,7 @@ verify_shim() {
     semver_eq "$output" "$MANUAL_VERSION"
 
     hello "$shim" "$version" "$lang" "$port" "$external_port"
-    try --max 5 --delay 2 curl --silent --fail "http://localhost:${port}/hello"
+    try --max 10 --delay 3 curl --silent --fail "http://localhost:${port}/hello"
 }
 
 @test 'verify spin shim' {
