@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { updateTable } from '../settingsImpl';
 
-import { defaultSettings } from '@pkg/config/settings';
+import { defaultSettings, VMType } from '@pkg/config/settings';
 
 describe('settings migrations', () => {
   describe('step 9', () => {
@@ -77,6 +77,17 @@ describe('settings migrations', () => {
 
       updateTable[10](testSettings, true);
       expect(testSettings).toHaveProperty('experimental.containerEngine.webAssembly.enabled', false);
+    });
+  });
+
+  describe('step 14', () => {
+    it('should migrate experimental.virtualMachine.type (and useRosetta) to virtualMachine.*', () => {
+      const testSettings = { experimental: { virtualMachine: { type: VMType.VZ, useRosetta: true } } };
+
+      updateTable[14](testSettings, false);
+      expect(testSettings).not.toHaveProperty('experimental.virtualMachine');
+      expect(testSettings).toHaveProperty('virtualMachine.type', VMType.VZ);
+      expect(testSettings).toHaveProperty('virtualMachine.useRosetta', true);
     });
   });
 });
