@@ -43,24 +43,35 @@ get_platform() {
     esac
 }
 
-download_artifact() {
-    local filename="$1"
-    local basename
-    basename=$(basename "$1")
-
-    # Get the artifact id for the package
-    API="repos/$OWNER/$REPO/actions/runs/$ID/artifacts"
-    FILTER=".artifacts[] | select(.name == \"$basename\").id"
-
-    ARTIFACT_ID=$(gh api "$API" --jq "$FILTER")
-    if [ -z "$ARTIFACT_ID" ]; then
-        echo "No download url for '$basename' from $WORKFLOW run $ID"
+# Get the run ID and store it into the global environment variable $ID.
+# May also update $BRANCH for pull requests.
+determine_run_id() {
+    if [[ -n $ID ]]; then
+        return 0
+    fi
+    local args=(
+        --repo "$OWNER/$REPO"
+        run list
+        --status success
+        --workflow "$WORKFLOW"
+        --limit 1
+        --json databaseId
+        --jq '.[].databaseId'
+    )
+    if [[ -n $PR ]]; then
+        BRANCH=$(gh pr view --repo "$OWNER/$REPO" --json headRefName --jq .headRefName "$PR")
+        args+=(--event pull_request)
+    fi
+    if [[ -z $BRANCH ]]; then
+        echo "Failed to find relevant branch to download from" >&2
         exit 1
     fi
-
-    # Download the package. It requires authentication, so use gh instead of curl.
-    API="repos/$OWNER/$REPO/actions/artifacts/$ARTIFACT_ID/zip"
-    gh api "$API" > "$filename"
+    args+=(--branch "$BRANCH")
+    ID=$(gh "${args[@]}")
+    if [[ -z $ID ]]; then
+        echo "Failed to find run ID to download from" >&2
+        exit 1
+    fi
 }
 
 wslpath_from_win32_env() {
@@ -82,49 +93,55 @@ wslpath_from_win32_env() {
 }
 
 install_application() {
-    local archive
+    local archive workdir
 
+    # While the artifact has a consistent name, the single file inside the
+    # artifact does not.  Create a temporary directory that `gh run download`
+    # will download into, so we can pick out the file that it creates.
+    workdir=$(mktemp --directory "$TMPDIR/rd-install.XXXXXXXXXX")
+    if [[ -z "$workdir" || ! -d "$workdir" ]]; then
+        echo "Failed to create temporary directory" >&2
+        exit 1
+    fi
     case "$(get_platform)" in
     darwin)
         ARCH=x86_64
         if [ "$(uname -m)" = "arm64" ]; then
             ARCH=aarch64
         fi
-        archive="$TMPDIR/Rancher Desktop-mac.$ARCH.zip"
+        archive="Rancher Desktop-mac.$ARCH.zip"
         ;;
     win32)
         case $INSTALL_MODE in
         zip)
-            archive="$TMPDIR/Rancher Desktop-win.zip"
+            archive="Rancher Desktop-win.zip"
             ;;
         installer)
-            archive="$TMPDIR/Rancher Desktop Setup.msi"
+            archive="Rancher Desktop Setup.msi"
             ;;
         esac
         ;;
     linux)
-        archive="$TMPDIR/Rancher Desktop-linux.zip"
+        archive="Rancher Desktop-linux.zip"
         ;;
     esac
-    download_artifact "$archive"
+    gh run download --repo "$OWNER/$REPO" "$ID" --dir "$workdir" --name "$archive"
 
-    # Artifacts are zipped, so extract inner zip file from outer wrapper.
-    # The outer zip has a predictable name like "Rancher Desktop-mac.x86_64.zip"
-    # but the inner one has a version string: "Rancher Desktop-1.7.0-1061-g91ab3831-mac.zip"
-    # Run unzip in "zipinfo" mode, which can print just the file name.
-    local zip
-    zip="$(unzip -Z -1 "$archive" | head -n1)"
-    if [ -z "$zip" ]; then
-        echo "Cannot find inner archive in $(basename "$archive")"
+    # `gh run download` extracts the artifact into the provided directory.
+    local zip=("$workdir"/*)
+    if [[ "${#zip[@]}" -ne 1 ]]; then
+        echo "Cannot find artifact from $archive"
+        rm -rf "$workdir"
         exit 1
     fi
-    local zip_abspath="$TMPDIR/$zip"
+    local zip_abspath="$TMPDIR/${zip[0]##*/}"
+    mv "${zip[0]}" "$zip_abspath"
+    rm -rf "$workdir"
 
     if [[ -n $ZIP_NAME ]]; then
-        echo "$zip" > "$ZIP_NAME"
+        echo "${zip_abspath##*/}" > "$ZIP_NAME"
     fi
 
-    unzip -o "$archive" "$zip" -d "$TMPDIR"
     local dest
 
     case "$(get_platform)" in
@@ -218,12 +235,10 @@ install_application() {
 }
 
 download_bats() {
-    download_artifact "$TMPDIR/bats.tar.gz"
-
-    # GitHub always wraps the artifact in a zip file, so the downloaded file
-    # actually has an incorrect name; extract it in place.
-    mv "$TMPDIR/bats.tar.gz" "$TMPDIR/bats.tar.gz.zip"
-    unzip -o "$TMPDIR/bats.tar.gz.zip" -d "$TMPDIR" bats.tar.gz
+    # Download the BATS archive; it's automatically extracted one level, i.e.
+    # the wrapper zip file.
+    rm -f "$TMPDIR/bats.tar.gz"
+    gh run download --repo "$OWNER/$REPO" "$ID" --dir "$TMPDIR" --name bats.tar.gz
 
     # Unpack bats into $BATS_DIR
     rm -rf "$BATS_DIR"
@@ -236,24 +251,7 @@ download_bats() {
     )
 }
 
-if [[ -z $ID ]]; then
-    # Get branch name for PR (even if this refers to a fork, the run is still in the
-    # target repo with that branch name).
-    if [[ -n $PR ]]; then
-        BRANCH=$(gh api "repos/$OWNER/$REPO/pulls/$PR" --jq .head.ref)
-        API_ARGS="&event=pull_request"
-    fi
-
-    # Get the latest workflow run that succeeded in this repo.
-    API="repos/$OWNER/$REPO/actions/workflows/$WORKFLOW/runs?branch=$BRANCH&status=success&per_page=1${API_ARGS:-}"
-    FILTER=".workflow_runs[0].id"
-
-    ID=$(gh api "$API" --jq "$FILTER")
-    if [ -z "$ID" ]; then
-        echo "No successful $WORKFLOW run found for $OWNER/$REPO branch $BRANCH"
-        exit 1
-    fi
-fi
+determine_run_id
 
 if [[ "$INSTALL_MODE" != "skip" ]]; then
     install_application
