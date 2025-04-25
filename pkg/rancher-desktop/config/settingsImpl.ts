@@ -8,8 +8,12 @@ import { dirname, join } from 'path';
 import _ from 'lodash';
 
 import {
-  CURRENT_SETTINGS_VERSION, defaultSettings, DeploymentProfileType,
-  LockedSettingsType, Settings, SettingsError,
+  CURRENT_SETTINGS_VERSION,
+  defaultSettings,
+  DeploymentProfileType,
+  LockedSettingsType,
+  Settings,
+  SettingsError,
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
@@ -488,6 +492,17 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
   13: (settings) => {
     _.unset(settings, 'virtualMachine.hostResolver');
     _.unset(settings, 'experimental.virtualMachine.networkingTunnel');
+  },
+  14: (settings) => {
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'experimental.virtualMachine.type', newPath: 'virtualMachine.type' },
+      { oldPath: 'experimental.virtualMachine.useRosetta', newPath: 'virtualMachine.useRosetta' },
+    ];
+
+    processReplacements(settings, replacements);
+    if (_.isEmpty(_.get(settings, 'experimental.virtualMachine'))) {
+      _.unset(settings, 'experimental.virtualMachine');
+    }
   },
 };
 

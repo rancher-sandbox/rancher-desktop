@@ -10,14 +10,14 @@ local_setup() {
 
 @test 'mac-specific failure for unacceptable start setting' {
     if ! is_macos; then
-        skip 'need a mac for the --experimental.virtual-machine.type setting'
+        skip 'need a mac for the --virtual-machine.type setting'
     elif supports_vz_emulation; then
-        skip 'no error setting experimental.virtualMachine.type to "vz" on this platform'
+        skip 'no error setting virtualMachine.type to "vz" on this platform'
     fi
-    RD_NO_MODAL_DIALOGS=1 launch_the_application --experimental.virtual-machine.type vz
+    RD_NO_MODAL_DIALOGS=1 launch_the_application --virtual-machine.type vz
     try --max 36 --delay 5 assert_file_contains \
         "$PATH_LOGS/background.log" \
-        'Setting experimental.virtualMachine.type to "vz" on Intel requires macOS 13.0 (Ventura) or later.'
+        'Setting virtualMachine.type to "vz" on Intel requires macOS 13.0 (Ventura) or later.'
     rdctl shutdown
 }
 

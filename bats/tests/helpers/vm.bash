@@ -192,9 +192,9 @@ start_container_engine() {
         )
     fi
     if using_vz_emulation; then
-        args+=(--experimental.virtual-machine.type vz)
+        args+=(--virtual-machine.type vz)
         if is_macos aarch64; then
-            args+=(--experimental.virtual-machine.use-rosetta)
+            args+=(--virtual-machine.use-rosetta)
         fi
     fi
 

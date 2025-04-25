@@ -105,6 +105,11 @@ export default class SettingsValidator {
       virtualMachine: {
         memoryInGB: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
         numberCPUs: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
+        useRosetta: this.checkPlatform('darwin', this.checkRosetta),
+        type:       this.checkPlatform('darwin', this.checkMulti(
+          this.checkEnum(...Object.values(VMType)),
+          this.checkVMType),
+        ),
       },
       experimental: {
         containerEngine: { webAssembly: { enabled: this.checkBoolean } },
@@ -122,11 +127,6 @@ export default class SettingsValidator {
               cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
           },
-          useRosetta: this.checkPlatform('darwin', this.checkRosetta),
-          type:       this.checkPlatform('darwin', this.checkMulti(
-            this.checkEnum(...Object.values(VMType)),
-            this.checkVMType),
-          ),
           proxy: {
             enabled:  this.checkPlatform('win32', this.checkBoolean),
             address:  this.checkPlatform('win32', this.checkString),
@@ -296,8 +296,8 @@ export default class SettingsValidator {
 
   protected checkRosetta(mergedSettings: Settings, currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
     if (desiredValue && !currentValue) {
-      if (mergedSettings.experimental.virtualMachine.type !== VMType.VZ) {
-        errors.push(`Setting ${ fqname } can only be enabled when experimental.virtual-machine.type is "${ VMType.VZ }".`);
+      if (mergedSettings.virtualMachine.type !== VMType.VZ) {
+        errors.push(`Setting ${ fqname } can only be enabled when virtual-machine.type is "${ VMType.VZ }".`);
         this.isFatal = true;
 
         return false;
@@ -348,20 +348,20 @@ export default class SettingsValidator {
   }
 
   protected checkMountType(mergedSettings: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
-    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.VZ && os.platform() === 'darwin') {
-      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.VZ }".`);
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.virtualMachine.type !== VMType.VZ && os.platform() === 'darwin') {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that virtual-machine.type is "${ VMType.VZ }".`);
       this.isFatal = true;
 
       return false;
     }
-    if (desiredValue === MountType.VIRTIOFS && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU && os.platform() === 'linux') {
-      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
+    if (desiredValue === MountType.VIRTIOFS && mergedSettings.virtualMachine.type !== VMType.QEMU && os.platform() === 'linux') {
+      errors.push(`Setting ${ fqname } to "${ MountType.VIRTIOFS }" requires that virtual-machine.type is "${ VMType.QEMU }".`);
       this.isFatal = true;
 
       return false;
     }
-    if (desiredValue === MountType.NINEP && mergedSettings.experimental.virtualMachine.type !== VMType.QEMU) {
-      errors.push(`Setting ${ fqname } to "${ MountType.NINEP }" requires that experimental.virtual-machine.type is "${ VMType.QEMU }".`);
+    if (desiredValue === MountType.NINEP && mergedSettings.virtualMachine.type !== VMType.QEMU) {
+      errors.push(`Setting ${ fqname } to "${ MountType.NINEP }" requires that virtual-machine.type is "${ VMType.QEMU }".`);
       this.isFatal = true;
 
       return false;

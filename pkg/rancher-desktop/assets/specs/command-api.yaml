@@ -609,6 +609,13 @@ components:
               minimum: 1
               x-rd-platforms: [darwin, linux]
               x-rd-usage: reserved number of CPUs
+            type:
+              type: string
+              enum: [qemu, vz]
+              x-rd-platforms: [darwin]
+            useRosetta:
+              type: boolean
+              x-rd-platforms: [darwin]
         kubernetes:
           type: object
           properties:
@@ -688,13 +695,6 @@ components:
                         cacheMode:
                           type: string
                           enum: [none, loose, fscache, mmap]
-                type:
-                  type: string
-                  enum: [qemu, vz]
-                  x-rd-platforms: [darwin]
-                useRosetta:
-                  type: boolean
-                  x-rd-platforms: [darwin]
                 proxy:
                   type: object
                   x-rd-platforms: [win32]

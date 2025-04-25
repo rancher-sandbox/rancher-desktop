@@ -15,7 +15,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>14</integer>
+    <integer>15</integer>
   </dict>
 </plist>
 `, s)
@@ -33,7 +33,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>14</integer>
+    <integer>15</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -101,7 +101,10 @@ func TestJsonToPlistFormat(t *testing.T) {
   },
   "virtualMachine": {
     "memoryInGB": 4,
-    "numberCPUs": 2
+    "numberCPUs": 2,
+    "type": "qemu",
+    "useRosetta": false
+
   },
   "WSL": {
     "integrations": {
@@ -138,8 +141,6 @@ func TestJsonToPlistFormat(t *testing.T) {
   },
   "experimental": {
     "virtualMachine": {
-      "type": "qemu",
-      "useRosetta": false,
       "mount": {
         "type": "reverse-sshfs",
         "9p": {
@@ -234,6 +235,10 @@ func TestJsonToPlistFormat(t *testing.T) {
       <integer>4</integer>
       <key>numberCPUs</key>
       <integer>2</integer>
+      <key>type</key>
+      <string>qemu</string>
+      <key>useRosetta</key>
+      <false/>
     </dict>
     <key>kubernetes</key>
     <dict>
@@ -276,10 +281,6 @@ func TestJsonToPlistFormat(t *testing.T) {
             <string>mmap</string>
           </dict>
         </dict>
-        <key>type</key>
-        <string>qemu</string>
-        <key>useRosetta</key>
-        <false/>
         <key>proxy</key>
         <dict>
           <key>enabled</key>
@@ -363,7 +364,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>14</integer>
+    <integer>15</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>

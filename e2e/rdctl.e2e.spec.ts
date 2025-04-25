@@ -687,18 +687,18 @@ test.describe('Command server', () => {
           ['experimental.virtual-machine.mount.9p.protocol-version', ProtocolVersion.NINEP2000_L],
           ['experimental.virtual-machine.mount.9p.security-model', SecurityModel.NONE],
           ['experimental.virtual-machine.mount.type', MountType.NINEP],
-          ['experimental.virtual-machine.use-rosetta', true],
-          ['experimental.virtual-machine.type', VMType.VZ],
           ['virtual-machine.memory-in-gb', 10],
           ['virtual-machine.number-cpus', 10],
+          ['virtual-machine.type', VMType.VZ],
+          ['virtual-machine.use-rosetta', true],
         ],
         darwin: [
           ['kubernetes.ingress.localhost-only', true],
         ],
         linux: [
-          ['experimental.virtual-machine.use-rosetta', true],
-          ['experimental.virtual-machine.type', VMType.VZ],
           ['experimental.virtual-machine.proxy.enabled', true],
+          ['virtual-machine.type', VMType.VZ],
+          ['virtual-machine.use-rosetta', true],
         ],
       };
       const unsupportedOptions = unsupportedPrefsByPlatform[os.platform()] ?? [];
