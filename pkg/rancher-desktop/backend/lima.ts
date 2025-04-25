@@ -18,7 +18,17 @@ import tar from 'tar-stream';
 import yaml from 'yaml';
 
 import {
-  Architecture, BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
+  Architecture,
+  BackendError,
+  BackendEvents,
+  BackendProgress,
+  BackendSettings,
+  execOptions,
+  FailureDetails,
+  RestartReasons,
+  State,
+  VMBackend,
+  VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
 import { ContainerEngineClient, MobyClient, NerdctlClient } from './containerClient';
@@ -612,10 +622,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // We use {} as the first argument because merge() modifies
     // it, and it would be less safe to modify baseConfig.
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
-      vmType:  this.cfg?.experimental.virtualMachine.type,
+      vmType:  this.cfg?.virtualMachine.type,
       rosetta: {
-        enabled: this.cfg?.experimental.virtualMachine.useRosetta,
-        binfmt:  this.cfg?.experimental.virtualMachine.useRosetta,
+        enabled: this.cfg?.virtualMachine.useRosetta,
+        binfmt:  this.cfg?.virtualMachine.useRosetta,
       },
       images: [{
         location: this.baseDiskImage,
@@ -666,7 +676,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         } else {
           console.log('Could not find any acceptable host networks for bridging.');
         }
-      } else if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
+      } else if (this.cfg?.virtualMachine.type === VMType.VZ) {
         console.log('Using vzNAT networking stack');
         config.networks = [{
           interface: 'vznat',
@@ -1651,7 +1661,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       }
       console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
     }
-    if (this.cfg?.experimental.virtualMachine.type === VMType.VZ) {
+    if (this.cfg?.virtualMachine.type === VMType.VZ) {
       const vznatIP = await this.getInterfaceAddr('vznat');
 
       if (vznatIP) {
@@ -1810,7 +1820,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         let isVMAlreadyRunning = vmStatus?.status === 'Running';
 
         // Virtualization Framework only supports RAW disks
-        if (vmStatus && config.experimental.virtualMachine.type === VMType.VZ) {
+        if (vmStatus && config.virtualMachine.type === VMType.VZ) {
           const diffdisk = path.join(paths.lima, MACHINE_NAME, 'diffdisk');
           const { format } = await this.imageInfo(diffdisk);
 
@@ -2131,8 +2141,8 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
       'experimental.virtualMachine.mount.type':               undefined,
-      'experimental.virtualMachine.useRosetta':               undefined,
-      'experimental.virtualMachine.type':                     undefined,
+      'virtualMachine.type':                                  undefined,
+      'virtualMachine.useRosetta':                            undefined,
     }));
     if (limaConfig) {
       Object.assign(reasons, await this.kubeBackend.requiresRestartReasons(this.cfg, cfg, {

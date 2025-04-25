@@ -4,7 +4,7 @@
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 14 as const;
+export const CURRENT_SETTINGS_VERSION = 15 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -88,6 +88,10 @@ export const defaultSettings = {
   virtualMachine: {
     memoryInGB: 2,
     numberCPUs: 2,
+    /** can only be set to VMType.VZ on macOS Ventura and later */
+    type:       VMType.QEMU,
+    /** can only be used when type is VMType.VZ, and only on aarch64 */
+    useRosetta: false,
   },
   WSL:        { integrations: {} as Record<string, boolean> },
   kubernetes: {
@@ -119,11 +123,7 @@ export const defaultSettings = {
     /** can only be enabled if containerEngine.webAssembly.enabled is true */
     kubernetes:      { options: { spinkube: false } },
     virtualMachine:  {
-      /** can only be set to VMType.VZ on macOS Ventura and later */
-      type:       VMType.QEMU,
-      /** can only be used when type is VMType.VZ, and only on aarch64 */
-      useRosetta: false,
-      mount:      {
+      mount: {
         type: MountType.REVERSE_SSHFS,
         '9p': {
           securityModel:   SecurityModel.NONE,

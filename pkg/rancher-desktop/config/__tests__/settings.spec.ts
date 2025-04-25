@@ -353,8 +353,6 @@ describe('settings', () => {
                 name: settings.ContainerEngine.MOBY,
               },
               experimental: {
-                virtualMachine: {
-                },
               },
               kubernetes: {
                 version: '1.25.9',
@@ -583,8 +581,6 @@ describe('settings', () => {
           name: settings.ContainerEngine.MOBY,
         },
         experimental: {
-          virtualMachine: {
-          },
         },
         kubernetes:     {},
         virtualMachine: {

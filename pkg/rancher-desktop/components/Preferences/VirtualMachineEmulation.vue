@@ -8,7 +8,6 @@ import { mapGetters, mapState } from 'vuex';
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
-import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 import { MountType, Settings, VMType } from '@pkg/config/settings';
 import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
@@ -22,7 +21,6 @@ interface VuexBindings {
 export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   name:       'preferences-virtual-machine-emulation',
   components: {
-    TooltipIcon,
     IncompatiblePreferencesAlert,
     RadioGroup,
     RdFieldset,
@@ -38,17 +36,14 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     ...mapState('transientSettings', ['macOsVersion', 'isArm']),
-    options(): { label: string, value: VMType, description: string, experimental: boolean, disabled: boolean,
+    options(): { label: string, value: VMType, description: string, disabled: boolean,
       compatiblePrefs: CompatiblePrefs | [] }[] {
-      const defaultOption = VMType.QEMU;
-
       return Object.values(VMType)
         .map((x) => {
           return {
             label:           this.t(`virtualMachine.type.options.${ x }.label`),
             value:           x,
             description:     this.t(`virtualMachine.type.options.${ x }.description`, {}, true),
-            experimental:    x !== defaultOption, // Mark experimental option
             disabled:        x === VMType.VZ && this.vzDisabled,
             compatiblePrefs: this.getCompatiblePrefs(x),
           };
@@ -58,7 +53,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return 'vmType';
     },
     vZSelected(): boolean {
-      return this.preferences.experimental.virtualMachine.type === VMType.VZ;
+      return this.preferences.virtualMachine.type === VMType.VZ;
     },
     vzDisabled(): boolean {
       return semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0'));
@@ -124,7 +119,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         <rd-fieldset
           data-test="vmType"
           :legend-text="t('virtualMachine.type.legend')"
-          :is-locked="isPreferenceLocked('experimental.virtualMachine.type')"
+          :is-locked="isPreferenceLocked('virtualMachine.type')"
         >
           <template #default="{ isLocked }">
             <radio-group
@@ -141,22 +136,19 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                   :key="groupName+'-'+index"
                   v-tooltip="disabledVmTypeTooltip(option.disabled)"
                   :name="groupName"
-                  :value="preferences.experimental.virtualMachine.type"
+                  :value="preferences.virtualMachine.type"
                   :val="option.value"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
-                  @input="onChange('experimental.virtualMachine.type', $event)"
+                  @input="onChange('virtualMachine.type', $event)"
                 >
                   <template #label>
                     {{ option.label }}
-                    <tooltip-icon
-                      v-if="option.experimental"
-                    />
                   </template>
                   <template #description>
                     {{ option.description }}
                     <incompatible-preferences-alert
-                      v-if="option.value === preferences.experimental.virtualMachine.type"
+                      v-if="option.value === preferences.virtualMachine.type"
                       :compatible-prefs="option.compatiblePrefs"
                     />
                   </template>
@@ -176,9 +168,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         >
           <rd-checkbox
             :label="t('virtualMachine.useRosetta.label')"
-            :value="preferences.experimental.virtualMachine.useRosetta"
-            :is-locked="isPreferenceLocked('experimental.virtualMachine.useRosetta')"
-            @input="onChange('experimental.virtualMachine.useRosetta', $event)"
+            :value="preferences.virtualMachine.useRosetta"
+            :is-locked="isPreferenceLocked('virtualMachine.useRosetta')"
+            @input="onChange('virtualMachine.useRosetta', $event)"
           />
         </rd-fieldset>
       </div>

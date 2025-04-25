@@ -78,11 +78,11 @@ describe(SettingsValidator, () => {
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'securityModel'],
       ['experimental', 'virtualMachine', 'mount', 'type'],
-      ['experimental', 'virtualMachine', 'type'],
-      ['experimental', 'virtualMachine', 'useRosetta'],
       ['experimental', 'virtualMachine', 'proxy', 'noproxy'],
       ['kubernetes', 'version'],
       ['version'],
+      ['virtualMachine', 'type'],
+      ['virtualMachine', 'useRosetta'],
       ['WSL', 'integrations'],
     ];
 
@@ -801,7 +801,7 @@ describe(SettingsValidator, () => {
     ]);
   });
 
-  describe('experimental.virtualMachine.type', () => {
+  describe('virtualMachine.type', () => {
     let spyArch: jest.SpiedFunction<typeof os.arch>;
     let spyMacOsVersion: jest.SpiedFunction<typeof osVersion.getMacOsVersion>;
 
@@ -826,10 +826,8 @@ describe(SettingsValidator, () => {
 
     function getVMTypeSetting(vmType: VMType) {
       return {
-        experimental: {
-          virtualMachine: {
-            type: vmType,
-          },
+        virtualMachine: {
+          type: vmType,
         },
       };
     }
@@ -854,7 +852,7 @@ describe(SettingsValidator, () => {
 
       checkForError(
         needToUpdate, errors,
-        'Setting experimental.virtualMachine.type to \"vz\" on ARM requires macOS 13.3 (Ventura) or later.',
+        'Setting virtualMachine.type to \"vz\" on ARM requires macOS 13.3 (Ventura) or later.',
       );
     });
 
@@ -866,7 +864,7 @@ describe(SettingsValidator, () => {
 
       checkForError(
         needToUpdate, errors,
-        'Setting experimental.virtualMachine.type to \"vz\" on Intel requires macOS 13.0 (Ventura) or later.',
+        'Setting virtualMachine.type to \"vz\" on Intel requires macOS 13.0 (Ventura) or later.',
       );
     });
 
@@ -877,7 +875,7 @@ describe(SettingsValidator, () => {
 
       checkForError(
         needToUpdate, errors,
-        'Setting experimental.virtualMachine.type to \"vz\" requires that ' +
+        'Setting virtualMachine.type to \"vz\" requires that ' +
         'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"virtiofs\".',
       );
     });
@@ -888,7 +886,7 @@ describe(SettingsValidator, () => {
 
       checkForError(
         needToUpdate, errors,
-        'Setting experimental.virtualMachine.type to \"qemu\" requires that ' +
+        'Setting virtualMachine.type to \"qemu\" requires that ' +
         'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"9p\".',
       );
     });
