@@ -69,14 +69,14 @@ describe('settings migrations', () => {
       const testSettings = {};
 
       updateTable[10](testSettings, false);
-      expect(!_.has(testSettings, 'experimental.containerEngine.webAssembly.enabled'));
+      expect(testSettings).not.toHaveProperty('experimental.containerEngine.webAssembly.enabled', false);
     });
 
     it('should disable wasm in locked profiles', () => {
       const testSettings = {};
 
       updateTable[10](testSettings, true);
-      expect(_.has(testSettings, 'experimental.containerEngine.webAssembly.enabled'));
+      expect(testSettings).toHaveProperty('experimental.containerEngine.webAssembly.enabled', false);
     });
   });
 });
