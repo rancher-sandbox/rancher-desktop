@@ -77,7 +77,12 @@ describe('manageLinesInFile', () => {
       await fs.promises.writeFile(rcFilePath, unmanagedContents);
       await set(rcFilePath, attributeKey, attributeValue);
       await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).resolves.not.toThrow();
-      await expect(list(rcFilePath)).resolves.toEqual([attributeKey]);
+
+      const allAttrs: string[] = await list(rcFilePath);
+      // filter out attributes like com.apple.provenance that the OS might add
+      const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
+
+      expect(filteredAttrs).toEqual([attributeKey]);
       await expect(get(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
     });
 
@@ -104,8 +109,11 @@ describe('manageLinesInFile', () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
         // @ts-ignore // fs-xattr is not available on Windows.
         const { list } = await import('fs-xattr');
+        const allAttrs: string[] = await list(rcFilePath);
+        // filter out attributes like com.apple.provenance that the OS might add
+        const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
 
-        await expect(list(rcFilePath)).resolves.toHaveLength(0);
+        expect(filteredAttrs).toHaveLength(0);
       }
     });
 
