@@ -54,7 +54,7 @@
   "main": "dist/app/background.js",
   "dependencies": {
     "@docker/extension-api-client-types": "0.3.4",
-    "@kubernetes/client-node": "0.18.1",
+    "@kubernetes/client-node": "1.1.2",
     "@rancher/components": "0.1.4",
     "async-mutex": "^0.5.0",
     "cookie-universal": "2.2.2",
