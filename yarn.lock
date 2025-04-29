@@ -6057,10 +6057,10 @@ electron-updater@6.6.2:
     semver "^7.6.3"
     tiny-typed-emitter "^2.1.0"
 
-electron@35.2.1:
-  version "35.2.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-35.2.1.tgz#9aa91840e6f72c58cbccf7d17d52da0f479fc35c"
-  integrity sha512-LO4xXLpzkPPUVLvAbdHMlW7N9Z+Qqz+7QsmSWXluTIQMeJk+v7o36nUTZghyA2I1s//tlMvuaCtle6Qo2W0Ktg==
+electron@36.0.0:
+  version "36.0.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-36.0.0.tgz#ffbe7ca9edecaee53617f29a088be10bbed9a45f"
+  integrity sha512-MhBL5tgzqLsiw++YXxzXRvF5s90gelcEZP4Upz/aaRmmoscmCw/EtimxMSH6EPnKt+8KwBY9RVAdlcffFPYkyw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^22.7.7"
@@ -10226,12 +10226,12 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-node-abi@^3.45.0:
-  version "3.74.0"
-  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-3.74.0.tgz#5bfb4424264eaeb91432d2adb9da23c63a301ed0"
-  integrity sha512-c5XK0MjkGBrQPGYG24GBADZud0NCbznxNx0ZkS+ebUTrmV1qTDxPxSL8zEAPURXSbLRWVexxmP4986BziahL5w==
+node-abi@>=4, node-abi@^3.45.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-4.4.0.tgz#f17a2880a556337030a02b7f92e308946cdbbfc9"
+  integrity sha512-+sBEWs/HZ3ZDBtPSPKfYndkTF9ebr1BJm/z2TBDJj/upiOx9J6BeGXRtFyOXz1r6vUqzsCRM5pUr+K83i64agg==
   dependencies:
-    semver "^7.3.5"
+    semver "^7.6.3"
 
 node-addon-api@8:
   version "8.3.1"
