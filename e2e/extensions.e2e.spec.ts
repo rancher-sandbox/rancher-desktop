@@ -172,9 +172,11 @@ test.describe.serial('Extensions', () => {
       });
 
       await view.evaluate((v, { window }) => {
-        v.webContents.addListener('console-message', (event, level, message, line, source) => {
-          const levelName = (['verbose', 'info', 'warning', 'error'])[level];
-          const outputMessage = `[${ levelName }] ${ message } @${ source }:${ line }`;
+        v.webContents.addListener('console-message', (event) => {
+          const {
+            message, level, lineNumber, sourceId,
+          } = event;
+          const outputMessage = `[${ level }] ${ message } @${ sourceId }:${ lineNumber }`;
 
           window.webContents.executeJavaScript(`console.log(${ JSON.stringify(outputMessage) })`);
         });
