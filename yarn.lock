@@ -10219,12 +10219,12 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-node-abi@^3.45.0:
-  version "3.74.0"
-  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-3.74.0.tgz#5bfb4424264eaeb91432d2adb9da23c63a301ed0"
-  integrity sha512-c5XK0MjkGBrQPGYG24GBADZud0NCbznxNx0ZkS+ebUTrmV1qTDxPxSL8zEAPURXSbLRWVexxmP4986BziahL5w==
+node-abi@>=4, node-abi@^3.45.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-4.4.0.tgz#f17a2880a556337030a02b7f92e308946cdbbfc9"
+  integrity sha512-+sBEWs/HZ3ZDBtPSPKfYndkTF9ebr1BJm/z2TBDJj/upiOx9J6BeGXRtFyOXz1r6vUqzsCRM5pUr+K83i64agg==
   dependencies:
-    semver "^7.3.5"
+    semver "^7.6.3"
 
 node-addon-api@8:
   version "8.3.1"

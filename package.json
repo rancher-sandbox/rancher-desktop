@@ -179,6 +179,7 @@
     "webpack": "5.99.6"
   },
   "resolutions": {
+    "node-abi": ">=4",
     "string-width": "^4"
   },
   "optionalDependencies": {
