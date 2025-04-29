@@ -71,7 +71,8 @@ source "$PATH_BATS_HELPERS/profile.bash"
 # rdctl from commands.bash, and jq_output from utils.bash
 source "$PATH_BATS_HELPERS/vm.bash"
 
-# Use Linux utilities (like jq) on WSL
+# Add BATS helper executables to $PATH.  On Windows, we use the Linux version
+# from WSL.
 export PATH="$PATH_BATS_ROOT/bin/${OS/windows/linux}:$PATH"
 
 # If called from foo() this function will call local_foo() if it exist.
