@@ -2,7 +2,7 @@ import path from 'path';
 
 import { app, dialog } from 'electron';
 
-import { webRoot, createWindow } from '.';
+import { webRoot, createWindow, getWindow } from '.';
 
 import { Help } from '@pkg/config/help';
 import paths from '@pkg/utils/paths';
@@ -25,6 +25,7 @@ export function openPreferences() {
     minimizable:     false,
     show:            false,
     icon:            path.join(paths.resources, 'icons', 'logo-square-512.png'),
+    parent:          getWindow('main') ?? undefined,
     webPreferences:  {
       devTools:         !app.isPackaged,
       nodeIntegration:  true,
