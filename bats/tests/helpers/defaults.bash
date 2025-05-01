@@ -233,3 +233,14 @@ if ! load_var RD_K3S_VERSIONS; then
 
     save_var RD_K3S_VERSIONS
 fi
+
+########################################################################
+# RD_VPN_TEST_IMAGE specifies the URL used by the split DNS test to access
+# the private registry. Defaults to empty. Can be set via environment
+# variable when running tests.
+
+: "${RD_VPN_TEST_IMAGE:=}"
+
+using_vpn_test_image() {
+    [[ -n $RD_VPN_TEST_IMAGE ]]
+}

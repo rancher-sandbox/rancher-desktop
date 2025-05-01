@@ -51,7 +51,7 @@ docker() {
 docker_exe() {
     # Add path to bundled credential helpers to the front of the PATH; also
     # ensure that on Windows, it gets exported.
-    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" WSLENV="PATH/l:$WSLENV" \
+    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" WSLENV="PATH/l:${WSLENV:-}" \
         "$PATH_RESOURCES/$PLATFORM/bin/docker$EXE" "$@" | no_cr
 }
 helm() {
@@ -70,7 +70,7 @@ limactl() {
 nerdctl() {
     # Add path to bundled credential helpers to the front of the PATH; also
     # ensure that on Windows, it gets exported.
-    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" WSLENV="PATH/l:$WSLENV" \
+    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" WSLENV="PATH/l:${WSLENV:-}" \
         "$PATH_RESOURCES/$PLATFORM/bin/nerdctl$EXE" --namespace "$CONTAINERD_NAMESPACE" "$@" | no_cr
 }
 # Run `rdctl`; if $RD_TIMEOUT is set, the value is used as the first argument to
