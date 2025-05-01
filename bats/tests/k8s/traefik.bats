@@ -1,9 +1,9 @@
 load '../helpers/load'
 
 local_setup() {
-    if using_networking_tunnel && ! using_windows_exe; then
+    if is_windows && ! using_windows_exe; then
         # BUG BUG BUG not yet implemented
-        skip "Test does not yet work from inside a WSL distro when using networking tunnel, since it requires WSL integration"
+        skip "Test does not yet work from inside a WSL distro, since it requires WSL integration"
     fi
     needs_port 80
 }
@@ -63,9 +63,9 @@ refute_traefik() {
 }
 
 assert_traefik_on_localhost() {
-    if using_networking_tunnel && ! using_windows_exe; then
+    if is_windows && ! using_windows_exe; then
         # BUG BUG BUG not yet implemented
-        skip "Test does not yet work from inside a WSL distro when using networking tunnel"
+        skip "Test does not yet work from inside a WSL distro"
     fi
     try --max 10 assert_traefik localhost
 }

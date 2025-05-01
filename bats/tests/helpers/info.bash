@@ -38,7 +38,6 @@ show_info() { # @test
         fi
         if is_windows; then
             printf "$format" "Using Windows executables:" "$(bool using_windows_exe)"
-            printf "$format" "Using networking tunnel:" "$(bool using_networking_tunnel)"
         fi
         echo "#"
         printf "$format" "Capturing logs:" "$(bool capturing_logs)"

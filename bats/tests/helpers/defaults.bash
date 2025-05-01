@@ -112,17 +112,6 @@ if using_windows_exe && ! is_windows; then
 fi
 
 ########################################################################
-: "${RD_USE_NETWORKING_TUNNEL:=$(bool is_windows)}"
-
-using_networking_tunnel() {
-    is_true "$RD_USE_NETWORKING_TUNNEL"
-}
-
-if using_networking_tunnel && ! is_windows; then
-    fatal "RD_USE_NETWORKING_TUNNEL only works on Windows"
-fi
-
-########################################################################
 if is_unix; then
     : "${RD_MOUNT_TYPE:=reverse-sshfs}"
 
