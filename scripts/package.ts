@@ -21,6 +21,7 @@ import yaml from 'yaml';
 import buildUtils from './lib/build-utils';
 import buildInstaller, { buildCustomAction } from './lib/installer-win32';
 
+import { spawnFile } from '@pkg/utils/childProcess';
 import { ReadWrite } from '@pkg/utils/typeUtils';
 
 class Builder {
@@ -113,7 +114,8 @@ class Builder {
     }
 
     const { productFilename } = packager.appInfo;
-    const plistPath = path.join(context.appOutDir, `${ productFilename }.app`, 'Contents', 'Info.plist');
+    const appPath = path.join(context.appOutDir, `${ productFilename }.app`);
+    const plistPath = path.join(appPath, 'Contents', 'Info.plist');
     const plistContents = await fs.promises.readFile(plistPath, 'utf-8');
     const plistData = plist.parse(plistContents);
 
@@ -128,6 +130,13 @@ class Builder {
       }
     }
     await fs.promises.writeFile(plistPath, plist.build(plistCopy), 'utf-8');
+
+    // Because we modified the Info.plist, we need to re-sign the app.  This is
+    // just using ad-hoc signing.  Note that this will fail on x86_64, so ignore
+    // it there.
+    if (context.arch !== Arch.x64) {
+      await spawnFile('codesign', ['--sign', '-', '--force', '--verbose', appPath], { stdio: 'inherit' });
+    }
   }
 
   protected async afterPack(context: AfterPackContext) {
