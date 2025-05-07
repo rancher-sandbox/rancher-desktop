@@ -1,4 +1,4 @@
-import { ChildProcessByStdio, spawn } from 'child_process';
+import { ChildProcessByStdio, spawn, SpawnOptionsWithStdioTuple } from 'child_process';
 import http from 'http';
 import path from 'path';
 import { Readable } from 'stream';
@@ -465,6 +465,15 @@ export class ExtensionManagerImpl implements ExtensionManager {
     }
 
     const command = [...options.command];
+    const finalOptions: SpawnOptionsWithStdioTuple<'ignore', 'pipe', 'pipe'> = {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env:   {},
+      ..._.pick(options, ['cwd', 'env']),
+    };
+    const binDir = path.join(paths.resources, process.platform, 'bin');
+
+    finalOptions.env = _.merge({}, process.env, finalOptions.env);
+    finalOptions.env.PATH = finalOptions.env.PATH + path.delimiter + binDir;
 
     command[0] = path.join(extension.dir, 'bin', command[0]);
     if (process.platform === 'win32') {
@@ -472,13 +481,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
       command.unshift(executable('wsl-helper'), 'process', 'spawn', `--parent=${ process.pid }`, '--');
     }
 
-    return spawn(
-      command[0],
-      command.slice(1),
-      {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        ..._.pick(options, ['cwd', 'env']),
-      });
+    return spawn(command[0], command.slice(1), finalOptions);
   }
 
   /** Spawn a process in the docker-cli context. */
