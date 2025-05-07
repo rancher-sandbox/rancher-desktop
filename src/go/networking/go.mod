@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
-	github.com/containers/gvisor-tap-vsock v0.8.5
+	github.com/containers/gvisor-tap-vsock v0.8.6
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
@@ -30,13 +30,11 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
-	github.com/miekg/dns v1.1.63 // indirect
+	github.com/miekg/dns v1.1.65 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/onsi/gomega v1.37.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
