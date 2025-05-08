@@ -19,7 +19,7 @@ In general, the process involves:
     yarn sign path/to/archive.zip
     ```
 
-4. Look in `dist/` for the signed files (`Rancher Desktop Setup.exe`, etc.).
+4. Look in `dist/` for the signed files (`Rancher.Desktop.Setup.msi`, etc.).
 
 ## Windows
 
