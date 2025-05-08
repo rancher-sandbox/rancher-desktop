@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/Masterminds/log-go v1.0.0
 	github.com/containerd/containerd v1.7.27
-	github.com/containerd/containerd/api v1.8.0
+	github.com/containerd/containerd/api v1.9.0
 	github.com/containernetworking/plugins v1.7.1
 	github.com/containers/gvisor-tap-vsock v0.8.6
 	github.com/docker/docker v28.1.1+incompatible
@@ -72,7 +72,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/opencontainers/selinux v1.12.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
