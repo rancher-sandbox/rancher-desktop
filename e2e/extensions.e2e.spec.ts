@@ -396,6 +396,7 @@ test.describe.serial('Extensions', () => {
         // evalInView; we serialize it as JSON and deserialize again to remove them.
         const result = evalInView(`
           ddClient.extension.host.cli.exec("${ command }", ["false"])
+          .then(v => Promise.resolve(JSON.parse(JSON.stringify(v))))
           .catch(v => Promise.reject(JSON.parse(JSON.stringify(v))))
         `);
 
