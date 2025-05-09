@@ -8,7 +8,7 @@
 # - `logo`: Overrides the logo URL.
 
 rancher/application-collection-extension:0.2.1: {}
-ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.6: {}
+ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.7: {}
 splatform/epinio-docker-desktop:0.1.0: {}
 julianb90/tachometer:0.1.1: {}
 docker/logs-explorer-extension:0.2.5: {}
