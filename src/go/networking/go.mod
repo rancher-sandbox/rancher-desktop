@@ -17,7 +17,7 @@ require (
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/stretchr/testify v1.10.0
-	github.com/vishvananda/netlink v1.3.1-0.20250303224720-0e7078ed04c8
+	github.com/vishvananda/netlink v1.3.1
 	github.com/vishvananda/netns v0.0.5
 	golang.org/x/net v0.40.0
 	golang.org/x/sync v0.14.0
