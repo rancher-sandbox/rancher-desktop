@@ -6,9 +6,12 @@
 # They may have properties; the current known properties are:
 # - `containerd_compatible`: defaults to true.
 # - `logo`: Overrides the logo URL.
+# - `github_repo`: GitHub repository, used for version updates.
 
-rancher/application-collection-extension:0.2.1: {}
-ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.7: {}
+rancher/application-collection-extension:0.2.1:
+  github_repo: rancherlabs/application-collection-extension
+ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.7:
+  github_repo: rancher-sandbox/rancher-desktop-rdx-open-webui
 splatform/epinio-docker-desktop:0.1.0: {}
 julianb90/tachometer:0.1.1: {}
 docker/logs-explorer-extension:0.2.5: {}

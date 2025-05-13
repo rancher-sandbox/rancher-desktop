@@ -292,12 +292,14 @@ export abstract class GitHubDependency extends VersionedDependency {
     return `v${ version }`;
   }
 
-  getAvailableVersions(): Promise<Version[]> {
+  async getAvailableVersions(): Promise<Version[]> {
     if (this.releaseFilter === 'custom') {
       throw new Error('class does not override getAvailableVersions()');
     }
 
-    return getPublishedReleaseTagNames(this.githubOwner, this.githubRepo, this.releaseFilter);
+    const tags = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo, this.releaseFilter);
+
+    return tags.map(tag => tag.replace(/^v/, ''));
   }
 }
 
@@ -409,7 +411,7 @@ export class RancherDesktopRepository {
 
 /**
  * For a GitHub repository, get a list of published releases and return their
- * tags (excluding any `v` prefix).
+ * tags (including any `v` prefix).
  */
 export async function getPublishedReleaseTagNames(owner: string, repo: string, releaseFilter: Exclude<ReleaseFilter, 'custom'> = 'semver', githubToken?: string): Promise<string[]> {
   const response = await getOctokit(githubToken).rest.repos.listReleases({ owner, repo });
@@ -422,7 +424,7 @@ export async function getPublishedReleaseTagNames(owner: string, repo: string, r
   if (releaseFilter !== 'published-pre') {
     releases = releases.filter(release => !release.prerelease);
   }
-  let tagNames = releases.map(release => release.tag_name.replace(/^v/, ''));
+  let tagNames = releases.map(release => release.tag_name);
 
   if (releaseFilter === 'semver') {
     tagNames = tagNames.filter(tag => !semver.coerce(tag)?.prerelease?.length);

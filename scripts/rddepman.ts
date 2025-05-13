@@ -5,6 +5,8 @@ import { spawnSync } from 'child_process';
 import { Octokit } from 'octokit';
 import semver from 'semver';
 
+import { getExtensions } from './lib/extension-data';
+
 import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -53,6 +55,7 @@ const dependencies: VersionedDependency[] = [
   new tools.SpinOperator(),
   new tools.SpinCLI(),
   new tools.SpinKubePlugin(),
+  ...getExtensions(true),
 ];
 
 /**
