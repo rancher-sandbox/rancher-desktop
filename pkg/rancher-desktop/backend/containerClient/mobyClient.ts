@@ -65,7 +65,8 @@ export class MobyClient implements ContainerEngineClient {
   }
 
   async waitForReady(): Promise<void> {
-    let successCount = 0; let failureCount = 0;
+    let successCount = 0;
+    let failureCount = 0;
     let lastOutput = { stdout: '', stderr: '' };
 
     // Wait for ten consecutive successes, clearing out successCount whenever we
@@ -81,21 +82,19 @@ export class MobyClient implements ContainerEngineClient {
       } catch (ex) {
         successCount = 0;
         failureCount++;
-        if (failureCount > 10) {
-          // If we've been error for a while, log the output.
-          if (ex && typeof ex === 'object') {
-            const output = { stdout: '', stderr: '' };
+        // If we've been erroring for a while, log the output.
+        if (failureCount > 10 && ex && typeof ex === 'object') {
+          const output = { stdout: '', stderr: '' };
 
-            if ('stdout' in ex && typeof ex.stdout === 'string') {
-              output.stdout = ex.stdout;
-            }
-            if ('stderr' in ex && typeof ex.stderr === 'string') {
-              output.stderr = ex.stderr;
-            }
-            if (output.stdout !== lastOutput.stdout || output.stderr !== lastOutput.stderr) {
-              console.error('Failed to run docker system info (will retry):', output);
-              lastOutput = output;
-            }
+          if ('stdout' in ex && typeof ex.stdout === 'string') {
+            output.stdout = ex.stdout;
+          }
+          if ('stderr' in ex && typeof ex.stderr === 'string') {
+            output.stderr = ex.stderr;
+          }
+          if (output.stdout !== lastOutput.stdout || output.stderr !== lastOutput.stderr) {
+            console.error(`Failed to run docker system info after ${ failureCount } failures (will retry):`, output);
+            lastOutput = output;
           }
         }
       }
