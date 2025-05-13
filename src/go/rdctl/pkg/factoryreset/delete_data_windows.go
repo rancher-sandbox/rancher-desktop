@@ -3,7 +3,7 @@ package factoryreset
 import (
 	"context"
 	"errors"
-	"os/exec"
+	"os"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
@@ -16,7 +16,7 @@ func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCach
 	if err := autostart.EnsureAutostart(ctx, false); err != nil {
 		logrus.Errorf("Failed to remove autostart configuration: %s", err)
 	}
-	if err := deleteLimaVM(); err != nil && !errors.Is(err, exec.ErrNotFound) {
+	if err := deleteLimaVM(); err != nil && !errors.Is(err, os.ErrNotExist) {
 		logrus.Errorf("Failed to delete Lima VM: %s", err)
 	}
 	w := wsl.WSLImpl{}
