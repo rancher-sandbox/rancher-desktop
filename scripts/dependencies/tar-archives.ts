@@ -6,10 +6,10 @@ import stream from 'stream';
 
 import tar from 'tar-stream';
 
-import { AlpineLimaISOVersion, Dependency, DownloadContext } from 'scripts/lib/dependencies';
+import { Dependency, DownloadContext } from 'scripts/lib/dependencies';
 
 export class ExtensionProxyImage implements Dependency {
-  name = 'rdx-proxy.tar';
+  readonly name = 'rdx-proxy.tar';
   dependencies(context: DownloadContext) {
     return [`extension-proxy:linux`];
   }
@@ -111,18 +111,10 @@ export class ExtensionProxyImage implements Dependency {
       await fs.promises.rm(workDir, { recursive: true });
     }
   }
-
-  getAvailableVersions(includePrerelease?: boolean | undefined): Promise<string[] | AlpineLimaISOVersion[]> {
-    throw new Error('extension-proxy does not have versions.');
-  }
-
-  rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): 0 | 1 | -1 {
-    throw new Error('extension-proxy does not have versions.');
-  }
 }
 
 export class WSLDistroImage implements Dependency {
-  name = 'WSLDistroImage';
+  readonly name = 'WSLDistroImage';
   dependencies(context: DownloadContext): string[] {
     return [
       'WSLDistro:win32',
@@ -184,13 +176,5 @@ export class WSLDistroImage implements Dependency {
     packer.finalize();
     await stream.promises.finished(packer as any);
     console.log('Built WSLDistro image.');
-  }
-
-  getAvailableVersions(includePrerelease?: boolean | undefined): Promise<string[] | AlpineLimaISOVersion[]> {
-    throw new Error('WSLDistroImage does not have versions.');
-  }
-
-  rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): 0 | 1 | -1 {
-    throw new Error('WSLDistroImage does not have versions.');
   }
 }

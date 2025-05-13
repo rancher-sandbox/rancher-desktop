@@ -1,7 +1,6 @@
 // A cross-platform script to create PRs that bump versions of dependencies.
 
 import { spawnSync } from 'child_process';
-import path from 'path';
 
 import { Octokit } from 'octokit';
 import semver from 'semver';
@@ -12,23 +11,23 @@ import * as tools from 'scripts/dependencies/tools';
 import { Wix } from 'scripts/dependencies/wix';
 import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
 import {
-  DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit,
-  IsGitHubDependency,
+  AlpineLimaISOVersion, getOctokit,
   iterateIterator,
+  GitHubDependency,
+  VersionedDependency,
 } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
-const DEP_VERSIONS_PATH = path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml');
 
 type VersionComparison = {
-  dependency: Dependency;
+  dependency: VersionedDependency;
   currentVersion: string | AlpineLimaISOVersion;
   latestVersion: string | AlpineLimaISOVersion;
 };
 
-const dependencies: Dependency[] = [
+const dependencies: VersionedDependency[] = [
   new tools.KuberlrAndKubectl(),
   new tools.Helm(),
   new tools.DockerCLI(),
@@ -104,8 +103,8 @@ function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, l
   return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 }
 
-async function getBody(dependency: Dependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<string> {
-  if (!IsGitHubDependency(dependency) || typeof currentVersion !== 'string' || typeof latestVersion !== 'string') {
+async function getBody(dependency: VersionedDependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<string> {
+  if (!(dependency instanceof GitHubDependency) || typeof currentVersion !== 'string' || typeof latestVersion !== 'string') {
     // If the dependency is not on GitHub, we don't have any additional information yet.
     return '';
   }
@@ -183,7 +182,7 @@ async function getBody(dependency: Dependency, currentVersion: string | AlpineLi
   }).join('\n');
 }
 
-async function createDependencyBumpPR(dependency: Dependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
+async function createDependencyBumpPR(dependency: VersionedDependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
   const title = getTitle(dependency.name, currentVersion, latestVersion);
   const branchName = getBranchName(dependency.name, currentVersion, latestVersion);
 
@@ -231,41 +230,25 @@ async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['item
 }
 
 async function determineUpdatesAvailable(): Promise<VersionComparison[]> {
-  // load current versions of dependencies
-  const currentVersions = await readDependencyVersions(DEP_VERSIONS_PATH);
+  const results = await Promise.all(dependencies.map(async dependency => ({
+    dependency,
+    currentVersion: await dependency.currentVersion,
+    latestVersion:  await dependency.latestVersion,
+    canUpgrade:     await dependency.canUpgrade,
+  })));
 
-  // get a list of dependencies' version comparisons
-  const versionComparisons: VersionComparison[] = await Promise.all(dependencies.map(async(dependency) => {
-    const availableVersions = await dependency.getAvailableVersions();
-
-    const sortedVersions = availableVersions.sort((version1, version2) => {
-      return dependency.rcompareVersions(version1, version2);
-    });
-    const latestVersion = sortedVersions[0];
-
-    return {
-      dependency,
-      currentVersion: currentVersions[dependency.name as keyof DependencyVersions],
-      latestVersion,
-    };
-  }));
-
-  // filter comparisons down to the ones that need an update
-  const updatesAvailable = versionComparisons.filter(({ dependency, currentVersion, latestVersion }) => {
-    const comparison = dependency.rcompareVersions(currentVersion, latestVersion);
-
-    if (comparison < 0) {
-      console.warn(`Latest version ${ JSON.stringify(latestVersion) } of ${ dependency.name } is earlier than current version ${ JSON.stringify(currentVersion) }`);
-    } else if (comparison === 0) {
-      console.log(`${ dependency.name } is up to date.`);
-    } else {
-      console.log(`Can update ${ dependency.name } from ${ JSON.stringify(currentVersion) } to ${ JSON.stringify(latestVersion) }`);
+  for (const {
+    dependency, currentVersion, latestVersion, canUpgrade,
+  } of results) {
+    if (!canUpgrade) {
+      console.log(`${ dependency.name } is up to date (${ JSON.stringify(currentVersion) }).`);
+      continue;
     }
 
-    return comparison > 0;
-  });
+    console.log(`Can update ${ dependency.name } from ${ JSON.stringify(currentVersion) } to ${ JSON.stringify(latestVersion) }`);
+  }
 
-  return updatesAvailable;
+  return results.filter(x => x.canUpgrade);
 }
 
 async function checkDependencies(): Promise<void> {
@@ -330,11 +313,7 @@ async function checkDependencies(): Promise<void> {
     const commitMessage = `Bump ${ dependency.name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
-    const depVersions = await readDependencyVersions(DEP_VERSIONS_PATH);
-
-    depVersions[dependency.name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
-    await writeDependencyVersions(DEP_VERSIONS_PATH, depVersions);
-    git('add', DEP_VERSIONS_PATH);
+    git('add', ...await dependency.updateManifest(latestVersion));
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
     await createDependencyBumpPR(dependency, currentVersion, latestVersion);

@@ -38,11 +38,7 @@ async function getExistingIssuesFor(dependencyName: string): Promise<Issue[]> {
  * changes that have not been released.
  */
 export async function hasUnreleasedChanges(dependency: GitHubDependency): Promise<HasUnreleasedChangesResult> {
-  const availableVersions = await dependency.getAvailableVersions();
-  const sortedVersions = availableVersions.sort((version1, version2) => {
-    return dependency.rcompareVersions(version1, version2);
-  });
-  const latestVersion = sortedVersions[0];
+  const latestVersion = await dependency.latestVersion;
   const latestTagName = dependency.versionToTagName(latestVersion);
 
   // Get the date of the commit that the tag points to.

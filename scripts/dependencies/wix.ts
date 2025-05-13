@@ -3,7 +3,7 @@ import path from 'path';
 
 import semver from 'semver';
 
-import { DownloadContext, GitHubDependency, getOctokit } from '../lib/dependencies';
+import { DownloadContext, GitHubDependency, GlobalDependency, getOctokit } from '../lib/dependencies';
 import { download } from '../lib/download';
 
 import { simpleSpawn } from 'scripts/simple_process';
@@ -11,7 +11,7 @@ import { simpleSpawn } from 'scripts/simple_process';
 /**
  * Wix downloads the latest build of WiX3.
  */
-export class Wix implements GitHubDependency {
+export class Wix extends GlobalDependency(GitHubDependency) {
   readonly name = 'wix';
 
   // Wix4 is packaged really oddly (involves NuGet), and while there's a sketchy
@@ -19,6 +19,7 @@ export class Wix implements GitHubDependency {
   // outdated (and has since-fixed bugs).
   readonly githubOwner = 'wixtoolset';
   readonly githubRepo = 'wix3';
+  readonly releaseFilter = 'custom';
 
   async download(context: DownloadContext): Promise<void> {
     // WiX doesn't appear to believe in checksum files...
@@ -61,9 +62,5 @@ export class Wix implements GitHubDependency {
     const versions = publishedReleases.map(r => (/^WiX Toolset (v\d+\.\d+\.\d+)/.exec(r.name ?? '') ?? [])[1]);
 
     return versions.filter(version => version);
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return semver.rcompare(version1, version2);
   }
 }

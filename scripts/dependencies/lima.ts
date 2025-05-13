@@ -5,26 +5,27 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import semver from 'semver';
+import yaml from 'yaml';
 
 import { download, downloadTarGZ, getResource } from '../lib/download';
 
 import {
   AlpineLimaISOVersion,
+  DEP_VERSIONS_PATH,
+  DependencyVersions,
   DownloadContext,
   findChecksum,
   getOctokit,
-  getPublishedReleaseTagNames,
   GitHubDependency,
   GitHubRelease,
-  rcompareVersions,
+  GlobalDependency,
 } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
-export class Lima implements GitHubDependency {
-  name = 'lima';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'rancher-desktop-lima';
+export class Lima extends GlobalDependency(GitHubDependency) {
+  readonly name = 'lima';
+  readonly githubOwner = 'rancher-sandbox';
+  readonly githubRepo = 'rancher-desktop-lima';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
@@ -61,26 +62,12 @@ export class Lima implements GitHubDependency {
       });
     });
   }
-
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
-  }
-
-  versionToTagName(version: string): string {
-    return `v${ version }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return rcompareVersions(version1, version2);
-  }
 }
 
-export class Qemu implements GitHubDependency {
-  name = 'qemu';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'rancher-desktop-qemu';
+export class Qemu extends GlobalDependency(GitHubDependency) {
+  readonly name = 'qemu';
+  readonly githubOwner = 'rancher-sandbox';
+  readonly githubRepo = 'rancher-desktop-qemu';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
@@ -98,26 +85,12 @@ export class Qemu implements GitHubDependency {
 
     await simpleSpawn('/usr/bin/tar', ['-xf', tarPath], { cwd: limaDir });
   }
-
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
-  }
-
-  versionToTagName(version: string): string {
-    return `v${ version }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    return rcompareVersions(version1, version2);
-  }
 }
 
-export class SocketVMNet implements GitHubDependency {
-  name = 'socketVMNet';
-  githubOwner = 'lima-vm';
-  githubRepo = 'socket_vmnet';
+export class SocketVMNet extends GlobalDependency(GitHubDependency) {
+  readonly name = 'socketVMNet';
+  readonly githubOwner = 'lima-vm';
+  readonly githubRepo = 'socket_vmnet';
 
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'x86_64';
@@ -129,33 +102,13 @@ export class SocketVMNet implements GitHubDependency {
       path.join(context.resourcesDir, context.platform, 'lima', 'socket_vmnet', 'bin', 'socket_vmnet'),
       { expectedChecksum, entryName: './opt/socket_vmnet/bin/socket_vmnet' });
   }
-
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo);
-
-    return tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
-  }
-
-  versionToTagName(version: string): string {
-    return `v${ version }`;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semver1 = semver.coerce(version1);
-    const semver2 = semver.coerce(version2);
-
-    if (semver1 === null || semver2 === null) {
-      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
-    }
-
-    return semver.rcompare(semver1, semver2);
-  }
 }
 
-export class AlpineLimaISO implements GitHubDependency {
-  name = 'alpineLimaISO';
-  githubOwner = 'rancher-sandbox';
-  githubRepo = 'alpine-lima';
+export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
+  readonly name = 'alpineLimaISO';
+  readonly githubOwner = 'rancher-sandbox';
+  readonly githubRepo = 'alpine-lima';
+  readonly releaseFilter = 'custom';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
@@ -207,6 +160,19 @@ export class AlpineLimaISO implements GitHubDependency {
   }
 
   rcompareVersions(version1: AlpineLimaISOVersion, version2: AlpineLimaISOVersion): -1 | 0 | 1 {
-    return rcompareVersions(version1.isoVersion, version2.isoVersion);
+    return super.rcompareVersions(version1.isoVersion, version2.isoVersion);
+  }
+
+  async updateManifest(newVersion: string | AlpineLimaISOVersion): Promise<Set<string>> {
+    if (typeof newVersion === 'string') {
+      throw new TypeError(`AlpineLimaISO.updateManifest does not support string version ${ newVersion }`);
+    }
+
+    const depVersions: DependencyVersions = yaml.parse(await fs.promises.readFile(DEP_VERSIONS_PATH, 'utf8'));
+
+    depVersions.alpineLimaISO = newVersion;
+    await fs.promises.writeFile(DEP_VERSIONS_PATH, yaml.stringify(depVersions), 'utf-8');
+
+    return new Set([DEP_VERSIONS_PATH]);
   }
 }
