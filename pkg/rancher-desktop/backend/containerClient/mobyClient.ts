@@ -66,6 +66,8 @@ export class MobyClient implements ContainerEngineClient {
 
   async waitForReady(): Promise<void> {
     let successCount = 0;
+    let failureCount = 0;
+    let lastOutput = { stdout: '', stderr: '' };
 
     // Wait for ten consecutive successes, clearing out successCount whenever we
     // hit an error.  In the ideal case this is a ten-second delay in startup
@@ -74,10 +76,27 @@ export class MobyClient implements ContainerEngineClient {
     // fails to do so).
     while (successCount < 10) {
       try {
-        await this.runClient(['system', 'info'], 'ignore');
+        await this.runClient(['system', 'info'], 'pipe');
         successCount++;
+        failureCount = 0;
       } catch (ex) {
         successCount = 0;
+        failureCount++;
+        // If we've been erroring for a while, log the output.
+        if (failureCount > 10 && ex && typeof ex === 'object') {
+          const output = { stdout: '', stderr: '' };
+
+          if ('stdout' in ex && typeof ex.stdout === 'string') {
+            output.stdout = ex.stdout;
+          }
+          if ('stderr' in ex && typeof ex.stderr === 'string') {
+            output.stderr = ex.stderr;
+          }
+          if (output.stdout !== lastOutput.stdout || output.stderr !== lastOutput.stderr) {
+            console.error(`Failed to run docker system info after ${ failureCount } failures (will retry):`, output);
+            lastOutput = output;
+          }
+        }
       }
       await util.promisify(setTimeout)(1_000);
     }
