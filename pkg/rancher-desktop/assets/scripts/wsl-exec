@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/ash
 
 # wsl-exec is used to execute user-issued shell commands from
 # rdctl shell ... in a correct namespace. If the experimental
@@ -8,6 +8,16 @@
 # in the default namespace.
 
 set -o errexit -o nounset
+
+# We may have WSLENV set to override PATH; however, that causes the default entries to be missing.
+str="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:"
+while [ -n "$str" ]; do
+  dir=${str%%:*}
+  if ! [[ ":${PATH}:" =~ :${dir}: ]]; then
+    export PATH="${PATH%:}:${dir}"
+  fi
+  str=${str#*:}
+done
 
 pid="$(cat /run/wsl-init.pid)"
 
