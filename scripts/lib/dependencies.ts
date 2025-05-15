@@ -35,6 +35,8 @@ export type AlpineLimaISOVersion = {
   alpineVersion: string
 };
 
+type Version = string | AlpineLimaISOVersion;
+
 export type DependencyVersions = {
   lima: string;
   qemu: string;
@@ -60,41 +62,11 @@ export type DependencyVersions = {
   certManager: string;
   spinOperator: string;
   spinCLI: string;
+  spinKubePlugin: string;
+  'check-spelling': string;
 };
 
-/**
- * rcompareVersions implementation for version strings that look like 0.1.2.rd3????.
- * Note that anything after the number after "rd" is ignored.
- * @param version1 The first version to compare.
- * @param version2 The second version to compare.
- * @returns Whether version1 is higher (-1), equal to (0), or lower than (1) version2.
- */
-export function rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-  const semver1 = semver.coerce(version1);
-  const semver2 = semver.coerce(version2);
-
-  if (semver1 === null || semver2 === null) {
-    throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
-  }
-
-  if (semver1.raw !== semver2.raw) {
-    return semver.rcompare(semver1, semver2);
-  }
-
-  // If the two versions are equal, assume we have different build suffixes
-  // e.g. "0.19.0.rd5" vs "0.19.0.rd6"
-  const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
-  const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
-
-  if (!match1 || !match2) {
-    // One or both are invalid; prefer the valid one.
-    const fallback = Math.sign(version2.localeCompare(version1, 'en')) as -1 | 0 | 1;
-
-    return match1 ? -1 : match2 ? 1 : fallback;
-  }
-
-  return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
-}
+export const DEP_VERSIONS_PATH = 'pkg/rancher-desktop/assets/dependencies.yaml';
 
 /**
  * Download the given checksum file (which contains multiple checksums) and find
@@ -128,45 +100,207 @@ export async function writeDependencyVersions(path: string, depVersions: Depende
   await fs.promises.writeFile(path, rawContents, { encoding: 'utf-8' });
 }
 
+/**
+ * A dependency is some binary that we need to track.  Generally this is some
+ * third-party software, but it may also be things we build in an external
+ * repository, or some binary we build from them.
+ */
 export interface Dependency {
-  name: string,
+  /** The name of this dependency. */
+  get name(): string,
   /**
    * Other dependencies this one requires.
    * This must be in the form <name>:<platform>, e.g. "kuberlr:linux"
    */
   dependencies?: (context: DownloadContext) => string[],
+  /**
+   * Download this dependency.  Note that for some dependencies, this actually
+   * builds from source.
+   */
   download(context: DownloadContext): Promise<void>
-  // Returns the available versions of the Dependency.
-  // Includes prerelease versions if includePrerelease is true.
-  getAvailableVersions(includePrerelease?: boolean): Promise<string[] | AlpineLimaISOVersion[]>
-  // Returns -1 if version1 is higher, 0 if version1 and version2 are equal,
-  // and 1 if version2 is higher.
-  rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): -1 | 0 | 1
 }
 
 /**
- * A Dependency that is hosted in a GitHub repo.
+ * A VersionedDependency is a {@link Dependency} where we track a version and
+ * can be automatically upgraded (i.e. a pull request made to bump the version).
  */
-export interface GitHubDependency extends Dependency {
-  githubOwner: string
-  githubRepo: string
-  // Converts a version (of the format that is stored in dependencies.yaml)
-  // to a tag that is used in a GitHub release.
-  versionToTagName(version: string | AlpineLimaISOVersion): string
+export abstract class VersionedDependency implements Dependency {
+  abstract get name(): string;
+  abstract download(context: DownloadContext): Promise<void>;
+  /**
+   * Returns the available versions of the Dependency.
+   */
+  abstract getAvailableVersions(): Promise<Version[]>;
+
+  /** The current version. */
+  abstract get currentVersion(): Promise<Version>;
+
+  /** The newest version that can be upgraded to. */
+  get latestVersion(): Promise<Version> {
+    return (async() => {
+      const availableVersions = await this.getAvailableVersions();
+
+      return availableVersions.reduce((version1, version2) => {
+        return this.rcompareVersions(version1, version2) < 0 ? version1 : version2;
+      });
+    })();
+  }
+
+  /** Whether we can upgrade. */
+  get canUpgrade(): Promise<boolean> {
+    return (async() => {
+      const current = await this.currentVersion;
+      const latest = await this.latestVersion;
+      const compare = this.rcompareVersions(current, latest);
+
+      if (compare < 0) {
+        throw new Error(`${ this.name } at ${ current }, higher than latest version ${ latest }`);
+      }
+
+      return compare > 0;
+    })();
+  }
+
+  /**
+   * Update the version manifest (e.g. `dependencies.yaml`) for this dependency,
+   * in preparation for making a pull request.
+   * @returns The set of files that have been modified.
+   */
+  abstract updateManifest(newVersion: Version): Promise<Set<string>>;
+
+  /**
+   * Compare the two versions.  The return value is:
+   * Value | Description
+   * --- | ---
+   * -1 | `version1` is higher
+   * 0 | `version1` and `version2` are equal
+   * 1 | `version2` is higher
+   *
+   * The default implementation compares version strings that look like `0.1.2.rd3????`.
+   * Note that anything after the number after `rd` is ignored.
+   */
+  rcompareVersions(version1: Version, version2: Version): -1 | 0 | 1 {
+    if (typeof version1 !== 'string' || typeof version2 !== 'string') {
+      throw new TypeError(`default rcompareVersions only handles string versions (got ${ version1 } / ${ version2 })`);
+    }
+
+    const semver1 = semver.coerce(version1);
+    const semver2 = semver.coerce(version2);
+
+    if (semver1 === null || semver2 === null) {
+      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
+    }
+
+    if (semver1.raw !== semver2.raw) {
+      return semver.rcompare(semver1, semver2);
+    }
+
+    // If the two versions are equal, assume we have different build suffixes
+    // e.g. "0.19.0.rd5" vs "0.19.0.rd6"
+    const [, match1] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version1) ?? [];
+    const [, match2] = /^\d+\.\d+\.\d+\.rd(\d+)$/.exec(version2) ?? [];
+
+    if (!match1 && !match2) {
+      // Neither have .rd suffix; treat as equal.
+      return 0;
+    }
+    if (!match1 || !match2) {
+      // One of the two is invalid; prefer the valid one.
+      return match1 ? -1 : match2 ? 1 : 0;
+    }
+
+    return Math.sign(parseInt(match2, 10) - parseInt(match1, 10)) as -1 | 0 | 1;
+  }
+
+  /** Format the version as a string for display. */
+  static versionString(v: Version): string {
+    return typeof v === 'string' ? v : v.isoVersion;
+  }
 }
 
-export function IsGitHubDependency(dependency: Dependency): dependency is GitHubDependency {
-  if (!('githubOwner' in dependency) || typeof dependency.githubOwner !== 'string') {
-    return false;
-  }
-  if (!('githubRepo' in dependency) || typeof dependency.githubRepo !== 'string') {
-    return false;
-  }
-  if (!('versionToTagName' in dependency) || typeof dependency.versionToTagName !== 'function') {
-    return false;
+/**
+ * A GlobalDependency is a dependency where the version is managed in the file
+ * {@link DEP_VERSIONS_PATH}.
+ */
+export function GlobalDependency<T extends abstract new(...args: any[]) => VersionedDependency>(Base: T) {
+  abstract class GlobalDependency extends Base {
+    /** The name of this dependency; it must be a key in DEP_VERSIONS_PATH. */
+    abstract get name(): keyof DependencyVersions;
+    /** Cache of the loaded {@link DependencyVersions}; should not be used directly. */
+    static #depVersionsCache: Promise<DependencyVersions> | undefined;
+    /** Get the {@link DependencyVersions} as found on disk. */
+    static depVersions(): Promise<DependencyVersions> {
+      GlobalDependency.#depVersionsCache ||= (async() => {
+        return YAML.parse(await fs.promises.readFile(DEP_VERSIONS_PATH, 'utf-8'));
+      })();
+
+      return GlobalDependency.#depVersionsCache;
+    }
+
+    get currentVersion(): Promise<Version> {
+      return GlobalDependency.depVersions().then(v => v[this.name]);
+    }
+
+    async updateManifest(newVersion: string): Promise<Set<string>> {
+      // Make a copy of the read depVersions to not affect other dependencies.
+      const depVersions = structuredClone(await GlobalDependency.depVersions());
+      const name = this.name;
+
+      if (name === 'alpineLimaISO') {
+        throw new Error(`Default updateManifest does not handle ${ name }`);
+      }
+      depVersions[name] = newVersion;
+      const rawContents = YAML.stringify(depVersions);
+
+      await fs.promises.writeFile(DEP_VERSIONS_PATH, rawContents, { encoding: 'utf-8' });
+
+      return new Set([DEP_VERSIONS_PATH]);
+    }
   }
 
-  return true;
+  return GlobalDependency;
+}
+
+/**
+ * A filter for GitHub releases.  Available options are:
+ * Value | Description
+ * --- | ---
+ * `published` | Get GitHub releases (excluding versions marked as *pre-release* on GitHub).
+ * `published-pre` | Get GitHub releases (including those marked as *pre-release* on GitHub).
+ * `semver` | GitHub releases, excluding those marked as *pre-release*, or those with semver pre-release parts.
+ * `custom` | The implementation must override `getAvailableVersions()`.
+ */
+type ReleaseFilter = 'published' | 'published-pre' | 'semver' | 'custom';
+
+/**
+ * A {@link VersionedDependency} using GitHub releases.
+ */
+export abstract class GitHubDependency extends VersionedDependency {
+  /** The owner / organization on GitHub. */
+  abstract get githubOwner(): string;
+  /** The repository name (without the owner) on GitHub. */
+  abstract get githubRepo(): string;
+
+  /** Control how to get available releases; defaults to semver. */
+  readonly releaseFilter: ReleaseFilter = 'semver';
+  /**
+   * Converts a version (of the format that is stored in dependencies.yaml)
+   * to a tag that is used in a GitHub release.
+   * The default implementation adds a `v` prefix to the version string.
+   */
+  versionToTagName(version: Version): string {
+    return `v${ version }`;
+  }
+
+  async getAvailableVersions(): Promise<Version[]> {
+    if (this.releaseFilter === 'custom') {
+      throw new Error('class does not override getAvailableVersions()');
+    }
+
+    const tags = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo, this.releaseFilter);
+
+    return tags.map(tag => tag.replace(/^v/, ''));
+  }
 }
 
 export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
@@ -275,29 +409,26 @@ export class RancherDesktopRepository {
   }
 }
 
-// For a GitHub repository, get a list of releases that are published
-// and return the tags that they were made off of.
-export async function getPublishedReleaseTagNames(owner: string, repo: string, githubToken?: string) {
+/**
+ * For a GitHub repository, get a list of published releases and return their
+ * tags (including any `v` prefix).
+ */
+export async function getPublishedReleaseTagNames(owner: string, repo: string, releaseFilter: Exclude<ReleaseFilter, 'custom'> = 'semver', githubToken?: string): Promise<string[]> {
   const response = await getOctokit(githubToken).rest.repos.listReleases({ owner, repo });
-  const releases = response.data;
-  const publishedReleases = releases.filter(release => release.published_at !== null);
+  let releases = response.data;
 
-  return publishedReleases.map(publishedRelease => publishedRelease.tag_name);
-}
+  // Filter for non-draft releases
+  releases = releases.filter(release => release.published_at !== null);
 
-// Dependencies that adhere to the following criteria may use this function
-// to get a list of available versions:
-// - The dependency is hosted at a GitHub repository.
-// - Versions are gathered from the tag that is on each GitHub release.
-// - Versions are in semver format.
-export async function getPublishedVersions(githubOwner: string, githubRepo: string, includePrerelease: boolean, githubToken?: string): Promise<string[]> {
-  const tagNames = await getPublishedReleaseTagNames(githubOwner, githubRepo, githubToken);
-  let versions = tagNames.map((tagName: string) => tagName.replace(/^v/, ''));
+  // Filter out pre-releases
+  if (releaseFilter !== 'published-pre') {
+    releases = releases.filter(release => !release.prerelease);
+  }
+  let tagNames = releases.map(release => release.tag_name);
 
-  versions = versions.filter(version => semver.valid(version));
-  if (!includePrerelease) {
-    versions = versions.filter(version => !semver.prerelease(version));
+  if (releaseFilter === 'semver') {
+    tagNames = tagNames.filter(tag => !semver.coerce(tag)?.prerelease?.length);
   }
 
-  return versions;
+  return tagNames;
 }

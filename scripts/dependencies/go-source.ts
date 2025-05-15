@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { AlpineLimaISOVersion, Dependency, DownloadContext } from 'scripts/lib/dependencies';
+import { Dependency, DownloadContext } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
 type GoDependencyOptions = {
@@ -97,14 +97,6 @@ export class GoDependency implements Dependency {
     }
 
     return path.join(context.resourcesDir, context.platform, outputPath);
-  }
-
-  getAvailableVersions(includePrerelease?: boolean | undefined): Promise<string[]> {
-    throw new Error('Go dependencies do not have available versions.');
-  }
-
-  rcompareVersions(version1: string | AlpineLimaISOVersion, version2: string): 0 | 1 | -1 {
-    throw new Error('Go dependencies do not have available versions.');
   }
 }
 

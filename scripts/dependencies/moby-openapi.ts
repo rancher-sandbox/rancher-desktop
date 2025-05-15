@@ -1,19 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 
-import semver from 'semver';
-
 import { download } from '../lib/download';
 
-import { DownloadContext, Dependency, getOctokit } from 'scripts/lib/dependencies';
+import { DownloadContext, getOctokit, VersionedDependency, GlobalDependency } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
 // This downloads the moby openAPI specification (for WSL-helper) and generates
 // ./src/go/wsl-helper/pkg/dockerproxy/models/...
-export class MobyOpenAPISpec implements Dependency {
-  name = 'mobyOpenAPISpec';
-  githubOwner = 'moby';
-  githubRepo = 'moby';
+export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
+  readonly name = 'mobyOpenAPISpec';
+  readonly githubOwner = 'moby';
+  readonly githubRepo = 'moby';
+  readonly releaseFilter = 'custom';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://raw.githubusercontent.com/${ this.githubOwner }/${ this.githubRepo }/master/docs/api`;
@@ -58,16 +57,5 @@ export class MobyOpenAPISpec implements Dependency {
     }
 
     return versions;
-  }
-
-  rcompareVersions(version1: string, version2: string): -1 | 0 | 1 {
-    const semver1 = semver.coerce(version1);
-    const semver2 = semver.coerce(version2);
-
-    if (semver1 === null || semver2 === null) {
-      throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
-    }
-
-    return semver.rcompare(semver1, semver2);
   }
 }
