@@ -18,7 +18,7 @@ const EXTENSION_OUTPUT_PATH = 'pkg/rancher-desktop/assets/extension-data.yaml';
  * Information about an extension we manage in the bundled marketplace.
  * This is loaded from `scripts/assets/extension-data.yaml`.
  */
-export interface extensionInfo {
+interface ExtensionInfo {
   /** Whether this extension is compatible with containerd; defaults to true. */
   containerd_compatible?: boolean;
   /** Override for the logo. */
@@ -28,7 +28,7 @@ export interface extensionInfo {
 }
 
 export class Extension extends VersionedDependency {
-  constructor(ref: string, info: extensionInfo) {
+  constructor(ref: string, info: ExtensionInfo) {
     super();
     const [name, tag] = ref.split(':', 2);
 
@@ -37,10 +37,10 @@ export class Extension extends VersionedDependency {
     this.info = info;
   }
 
-  /** The extension name, i.e. the image name, including the tag. */
+  /** The extension name, i.e. the image name, excluding the tag. */
   readonly name: string;
   readonly currentVersion: Promise<string>;
-  readonly info: extensionInfo;
+  readonly info: ExtensionInfo;
 
   download(context: DownloadContext): Promise<void> {
     // There is no download for marketplace extension data.
@@ -61,7 +61,7 @@ export class Extension extends VersionedDependency {
     const fileContents = await fs.promises.readFile(EXTENSION_PATH, 'utf-8');
     const oldRef = `${ this.name }:${ await this.currentVersion }`;
     const newRef = `${ this.name }:${ newVersion }`;
-    const newContents = fileContents.replace(oldRef, newRef);
+    const newContents = fileContents.replaceAll(oldRef, newRef);
 
     await fs.promises.writeFile(EXTENSION_PATH, newContents, 'utf-8');
     await generateExtensionMarketplaceData();
@@ -97,7 +97,7 @@ export class Extension extends VersionedDependency {
 }
 
 export function getExtensions(withGitHubRepo = false): Extension[] {
-  const infoData: Record<string, extensionInfo> = yaml.parse(fs.readFileSync(EXTENSION_PATH, 'utf-8'));
+  const infoData: Record<string, ExtensionInfo> = yaml.parse(fs.readFileSync(EXTENSION_PATH, 'utf-8'));
   let entries = Object.entries(infoData);
 
   if (withGitHubRepo) {

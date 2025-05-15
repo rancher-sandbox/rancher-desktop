@@ -107,7 +107,7 @@ export async function writeDependencyVersions(path: string, depVersions: Depende
  */
 export interface Dependency {
   /** The name of this dependency. */
-  readonly name: string,
+  get name(): string,
   /**
    * Other dependencies this one requires.
    * This must be in the form <name>:<platform>, e.g. "kuberlr:linux"
@@ -125,7 +125,7 @@ export interface Dependency {
  * can be automatically upgraded (i.e. a pull request made to bump the version).
  */
 export abstract class VersionedDependency implements Dependency {
-  abstract readonly name: string;
+  abstract get name(): string;
   abstract download(context: DownloadContext): Promise<void>;
   /**
    * Returns the available versions of the Dependency.
@@ -133,7 +133,7 @@ export abstract class VersionedDependency implements Dependency {
   abstract getAvailableVersions(): Promise<Version[]>;
 
   /** The current version. */
-  abstract currentVersion: Promise<Version>;
+  abstract get currentVersion(): Promise<Version>;
 
   /** The newest version that can be upgraded to. */
   get latestVersion(): Promise<Version> {
@@ -225,7 +225,7 @@ export abstract class VersionedDependency implements Dependency {
 export function GlobalDependency<T extends abstract new(...args: any[]) => VersionedDependency>(Base: T) {
   abstract class GlobalDependency extends Base {
     /** The name of this dependency; it must be a key in DEP_VERSIONS_PATH. */
-    readonly abstract name: keyof DependencyVersions;
+    abstract get name(): keyof DependencyVersions;
     /** Cache of the loaded {@link DependencyVersions}; should not be used directly. */
     static #depVersionsCache: Promise<DependencyVersions> | undefined;
     /** Get the {@link DependencyVersions} as found on disk. */
@@ -277,9 +277,9 @@ type ReleaseFilter = 'published' | 'published-pre' | 'semver' | 'custom';
  */
 export abstract class GitHubDependency extends VersionedDependency {
   /** The owner / organization on GitHub. */
-  readonly abstract githubOwner: string;
+  abstract get githubOwner(): string;
   /** The repository name (without the owner) on GitHub. */
-  readonly abstract githubRepo: string;
+  abstract get githubRepo(): string;
 
   /** Control how to get available releases; defaults to semver. */
   readonly releaseFilter: ReleaseFilter = 'semver';
