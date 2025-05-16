@@ -6057,10 +6057,10 @@ electron-updater@6.6.2:
     semver "^7.6.3"
     tiny-typed-emitter "^2.1.0"
 
-electron@36.2.0:
-  version "36.2.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-36.2.0.tgz#05bb179eb4c5de0412fc6d49628abc949fd679c1"
-  integrity sha512-5yldoRjBKxPQfI0QMX+qq750o3Nl8N1SZnJqOPMq0gZ6rIJ+7y4ZLp808GrFwjfTm05TYgq3GSD8FGuKQZqwEw==
+electron@36.2.1:
+  version "36.2.1"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-36.2.1.tgz#7c9d7c6c7076a3ddb7b1c326a851cb92c775b0b1"
+  integrity sha512-mm1Y+Ms46xcOTA69h8hpqfX392HfV4lga9aEkYkd/Syx1JBStvcACOIouCgGrnZpxNZPVS1jM8NTcMkNjuK6BQ==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^22.7.7"
