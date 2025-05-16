@@ -37,7 +37,7 @@
       "url":"https://raw.githubusercontent.com/rancherlabs/application-collection-extension/refs/heads/main/assets/02_application-details.png"},         {"alt":"Workloads",
       "url":"https://raw.githubusercontent.com/rancherlabs/application-collection-extension/refs/heads/main/assets/03_workloads.png"}    ]'
     com.suse.bci.micro.authors: https://github.com/SUSE/bci/discussions
-    com.suse.bci.micro.created: 2025-04-13T11:01:46.668489640Z
+    com.suse.bci.micro.created: 2025-04-13T11:02:06.462631958Z
     com.suse.bci.micro.description: A micro environment for containers based on the SLE Base Container Image.
     com.suse.bci.micro.disturl: obs://build.suse.de/SUSE:SLE-15-SP6:Update:CR/images/4dff20f436d0a27c61d0bc502dd3b085-micro-image
     com.suse.bci.micro.eula: sle-bci
@@ -61,9 +61,9 @@
     io.artifacthub.package.readme-url: ""
     org.openbuildservice.disturl: obs://build.suse.de/Devel:Orchid:Containers/containers/a732b7e6f33275f6589b9cd4962ab52a-nodejs-22
     org.opencontainers.image.authors: ""
-    org.opencontainers.image.base.digest: sha256:62ae2cc827912e01814c447d172885052342dc966c228b63eeaac919755190a3
+    org.opencontainers.image.base.digest: sha256:1565fe8f47e399a778db22c2e26b8f00c2205a1f43a9635483c2689ee7ac80e0
     org.opencontainers.image.base.name: registry.suse.com/bci/bci-micro:15.6.30.5
-    org.opencontainers.image.created: 2025-05-05T16:40:34.533822840Z
+    org.opencontainers.image.created: 2025-05-05T16:41:42.417219632Z
     org.opencontainers.image.description: Integrate the Application Collection into your development lifecycle
     org.opencontainers.image.ref.name: 22.15.0-10.35
     org.opencontainers.image.source: ""
@@ -77,7 +77,7 @@
   publisher: SUSE LLC
   short_description: Integrate the Application Collection into your development lifecycle
 - slug: ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui
-  version: v0.0.7
+  version: v0.0.8
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: 0.3.4
