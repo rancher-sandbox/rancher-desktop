@@ -143,7 +143,7 @@
     "cross-env": "7.0.3",
     "css-loader": "7.1.2",
     "ejs": "3.1.10",
-    "electron": "36.2.0",
+    "electron": "36.2.1",
     "electron-builder": "26.0.12",
     "eslint": "8.57.1",
     "eslint-plugin-deprecation": "3.0.0",
