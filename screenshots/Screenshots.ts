@@ -77,7 +77,7 @@ export class Screenshots {
     if (!windowId) {
       throw new Error(`Failed to find window ID for ${ this.windowTitle }: ${ stderr || '(no stderr)' }`);
     }
-    await spawnFile('screencapture', ['-o', '-l', windowId.trim(), outPath], { stdio: this.log });
+    await spawnFile('screencapture', ['-o', '-a', '-l', windowId.trim(), outPath], { stdio: this.log });
   }
 
   protected async screenshotWindows(outPath: string) {
