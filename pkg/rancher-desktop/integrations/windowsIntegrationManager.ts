@@ -469,6 +469,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       config.cliPluginsExtraDirs ??= [];
       config.cliPluginsExtraDirs.push(binDir);
 
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify(config), 'utf-8');
       this.diagnostic({ key: 'docker-plugins' });
     } catch (error) {
