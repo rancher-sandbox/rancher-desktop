@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 )
 
 var snapshotUnlockCmd = &cobra.Command{

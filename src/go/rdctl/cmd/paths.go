@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/spf13/cobra"
+
+	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 var pathsCmd = &cobra.Command{

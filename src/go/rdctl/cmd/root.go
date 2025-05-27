@@ -20,8 +20,9 @@ package cmd
 import (
 	"os"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 )
 
 // rootCmd represents the base command when called without any subcommands

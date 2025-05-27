@@ -29,8 +29,9 @@ import (
 	"strings"
 
 	dockerconfig "github.com/docker/cli/cli/config"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 // appHomeDirectories() returns the path to the AppHome directory,

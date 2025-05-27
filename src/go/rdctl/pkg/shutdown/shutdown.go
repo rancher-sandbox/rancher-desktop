@@ -29,12 +29,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/sirupsen/logrus"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
-	"github.com/sirupsen/logrus"
 )
 
 type shutdownData struct {

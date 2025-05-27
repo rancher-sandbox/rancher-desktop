@@ -24,9 +24,10 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
 type JOBOBJECT_BASIC_LIMIT_INFORMATION struct {

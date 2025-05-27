@@ -26,6 +26,7 @@ import (
 	"path"
 
 	dockerconfig "github.com/docker/cli/cli/config"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )

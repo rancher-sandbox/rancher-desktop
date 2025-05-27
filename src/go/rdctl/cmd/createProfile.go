@@ -24,11 +24,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/plist"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/reg"
-	"github.com/spf13/cobra"
 )
 
 const plistFormat = "plist"
