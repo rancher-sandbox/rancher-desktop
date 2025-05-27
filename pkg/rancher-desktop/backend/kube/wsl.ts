@@ -216,6 +216,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
     this.cfg = config;
 
+    // Clean up kubernetes cgroups before we start, as Kubernetes 1.31.0+ fails
+    // to start if these are left over.  We need to remove all cgroups named
+    // "kubepods" as well as their descendants (which are expected to all be
+    // empty).
     await this.progressTracker.action('Removing stale state', 50,
       this.vm.execCommand('busybox', 'find', '/sys/fs/cgroup', '-name', 'kubepods', '-exec',
         'busybox', 'find', '{}', '-type', 'd', '-delete', ';', '-prune'));

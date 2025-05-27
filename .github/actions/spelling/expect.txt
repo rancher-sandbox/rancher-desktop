@@ -425,6 +425,7 @@ KONTANIER
 kotlin
 ksh
 Kubectx
+kubepods
 kuberlr
 Kubewarden
 kurrent
