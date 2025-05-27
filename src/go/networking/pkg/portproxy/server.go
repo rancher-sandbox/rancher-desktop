@@ -24,9 +24,10 @@ import (
 
 	gvisorTypes "github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
+	"github.com/sirupsen/logrus"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/utils"
-	"github.com/sirupsen/logrus"
 )
 
 type ProxyConfig struct {

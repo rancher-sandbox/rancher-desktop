@@ -32,12 +32,13 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 )
 
 // watcherState is an enumeration to track the state of the watcher.

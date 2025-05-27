@@ -24,9 +24,10 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/spf13/cobra"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
-	"github.com/spf13/cobra"
 )
 
 var apiSettings struct {

@@ -4,9 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 )
 
 func TestFindPidOfProcess(t *testing.T) {
