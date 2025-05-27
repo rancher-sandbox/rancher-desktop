@@ -150,6 +150,12 @@ linters:
 formatters:
   enable:
     - gofmt
-    - goimports
+    - gci
   exclusions:
     generated: lax
+  settings:
+    gci:
+      sections:
+      - standard
+      - default
+      - prefix(github.com/rancher-sandbox/rancher-desktop) # localmodule for go.work
