@@ -216,6 +216,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
     this.cfg = config;
 
+    await this.progressTracker.action('Removing stale state', 50,
+      this.vm.execCommand('busybox', 'find', '/sys/fs/cgroup', '-name', 'kubepods', '-exec',
+        'busybox', 'find', '{}', '-type', 'd', '-delete', ';', '-prune'));
+
     const executable = config.containerEngine.name === ContainerEngine.MOBY ? 'docker' : 'nerdctl';
 
     await this.vm.verifyReady(executable, 'images');
