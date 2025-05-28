@@ -74,6 +74,7 @@ func WaitForProcess(pid int) error {
 		}
 	}()
 	change := unix.Kevent_t{
+		//nolint:gosec // pids must be positive.
 		Ident:  uint64(pid),
 		Filter: unix.EVFILT_PROC,
 		Flags:  unix.EV_ADD | unix.EV_ENABLE | unix.EV_ONESHOT,

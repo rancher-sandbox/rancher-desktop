@@ -25,7 +25,7 @@ import (
 
 type ProcNetScanner struct{}
 
-func NewProcNetScanner(ctx context.Context, tracker tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
+func NewProcNetScanner(context.Context, tracker.Tracker, time.Duration) (*ProcNetScanner, error) {
 	panic("only implemented for Linux")
 }
 

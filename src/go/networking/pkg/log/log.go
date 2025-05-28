@@ -19,7 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const fileMode = 0666
+const fileMode = 0o666
 
 // SetOutputFile sets the logger output with a given file
 func SetOutputFile(filePath string, logger *logrus.Logger) error {

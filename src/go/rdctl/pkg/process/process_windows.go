@@ -314,7 +314,7 @@ func iterProcesses(callback func(proc windows.Handle, executable string) error) 
 	var pids []uint32
 	// Try EnumProcesses until the number of pids returned is less than the
 	// buffer size.
-	err := directories.InvokeWin32WithBuffer(func(size int) error {
+	err := directories.InvokeWin32WithBuffer(func(size uint32) error {
 		pids = make([]uint32, size)
 		var bytesReturned uint32
 		err := windows.EnumProcesses(pids, &bytesReturned)
@@ -349,15 +349,15 @@ func iterProcesses(callback func(proc windows.Handle, executable string) error) 
 			}()
 
 			var executablePath string
-			err = directories.InvokeWin32WithBuffer(func(size int) error {
+			err = directories.InvokeWin32WithBuffer(func(size uint32) error {
 				nameBuf := make([]uint16, size)
-				charsWritten := uint32(size)
+				charsWritten := size
 				err := windows.QueryFullProcessImageName(hProc, 0, &nameBuf[0], &charsWritten)
 				if err != nil {
 					logrus.Tracef("failed to get image name for pid %d: %s", pid, err)
 					return err
 				}
-				if charsWritten >= uint32(size)-1 {
+				if charsWritten >= size-1 {
 					return windows.ERROR_INSUFFICIENT_BUFFER
 				}
 				executablePath = windows.UTF16ToString(nameBuf)
@@ -430,6 +430,7 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 		if err != nil {
 			pid = 0
 		}
+		//nolint:gosec // pids cannot be negative
 		if pid == uint32(os.Getpid()) {
 			// Skip terminating the current process.
 			return nil

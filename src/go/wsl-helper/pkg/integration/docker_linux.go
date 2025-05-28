@@ -33,6 +33,8 @@ const (
 	pluginDirsKey = "cliPluginsExtraDirs"
 	credsStoreKey = "credsStore"
 
+	//nolint:gosec // This is not a credential, it's a file name.
+	// The file name of the docker Windows credential helper.
 	dockerCredentialWinCredExe = "wincred.exe"
 )
 

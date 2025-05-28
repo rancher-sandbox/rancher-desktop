@@ -79,7 +79,7 @@ func prepareParseArgs() error {
 		return err
 	}
 	rundir := path.Join(mountPoint, "rancher-desktop/run/")
-	err = os.MkdirAll(rundir, 0755)
+	err = os.MkdirAll(rundir, 0o755)
 	if err != nil {
 		return err
 	}

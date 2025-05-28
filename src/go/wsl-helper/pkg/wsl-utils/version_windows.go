@@ -122,26 +122,26 @@ func (v *PackageVersion) UnmarshalText(text []byte) error {
 		return fmt.Errorf("could not parse version %q", string(text))
 	}
 	var allErrors []error
-	if part, err := strconv.ParseInt(groups[1], 10, 16); err == nil {
+	if part, err := strconv.ParseUint(groups[1], 10, 16); err == nil {
 		v.Major = uint16(part)
 	} else {
 		err = fmt.Errorf("version %q has invalid major part: %w", string(text), err)
 		allErrors = append(allErrors, err)
 	}
-	if part, err := strconv.ParseInt(groups[2], 10, 16); err == nil {
+	if part, err := strconv.ParseUint(groups[2], 10, 16); err == nil {
 		v.Minor = uint16(part)
 	} else {
 		err = fmt.Errorf("version %q has invalid minor part: %w", string(text), err)
 		allErrors = append(allErrors, err)
 	}
-	if part, err := strconv.ParseInt(groups[3], 10, 16); err == nil {
+	if part, err := strconv.ParseUint(groups[3], 10, 16); err == nil {
 		v.Build = uint16(part)
 	} else {
 		err = fmt.Errorf("version %q has invalid build part: %w", string(text), err)
 		allErrors = append(allErrors, err)
 	}
 	if groups[4] != "" {
-		if part, err := strconv.ParseInt(groups[4], 10, 16); err == nil {
+		if part, err := strconv.ParseUint(groups[4], 10, 16); err == nil {
 			v.Revision = uint16(part)
 		} else {
 			err = fmt.Errorf("version %q has invalid revision part: %w", string(text), err)
