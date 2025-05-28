@@ -5,6 +5,8 @@
   Take a screenshot of the active window and output it to a PNG file.
 .PARAMETER FilePath
   The name of the file to write to.  The file will be a PNG.
+.PARAMETER Foreground
+  If set, make the window foreground or otherwise visible first.
 .PARAMETER Title
   The title of the window to capture; defaults to the active window.
 #>
@@ -12,6 +14,7 @@ Param(
   [Parameter(
     Mandatory = $true
   )][string]$FilePath,
+  [switch]$Foreground,
   [string]$Title
 )
 
@@ -24,10 +27,10 @@ using System.Runtime.InteropServices;
 
 namespace Screenshot {
   public class Screenshot {
-    public void Take(string filePath, string title) {
+    public void Take(string filePath, string title, bool foreground) {
       Image img;
       if (title != "") {
-        img = CaptureWindowWithTitle(title);
+        img = CaptureWindowWithTitle(title, foreground);
       } else {
         img = CaptureActiveWindow();
       }
@@ -38,8 +41,11 @@ namespace Screenshot {
       return CaptureWindow(User32.GetForegroundWindow());
     }
 
-    public Image CaptureWindowWithTitle(string title) {
+    public Image CaptureWindowWithTitle(string title, bool foreground) {
       IntPtr hwnd = User32.FindWindow(null, title);
+      if (!foreground) {
+        return CaptureWindow(hwnd);
+      }
       if (User32.SetForegroundWindow(hwnd) != 0) {
         return CaptureWindow(hwnd);
       }
@@ -139,4 +145,4 @@ namespace Screenshot {
 
 Add-Type $cSharpSource -ReferencedAssemblies 'System.Drawing'
 
-(New-Object Screenshot.Screenshot).Take($FilePath, $Title)
+(New-Object Screenshot.Screenshot).Take($FilePath, $Title, $Foreground)
