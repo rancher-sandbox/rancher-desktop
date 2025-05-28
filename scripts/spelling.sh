@@ -17,18 +17,14 @@ check_prerequisites() {
 }
 
 check_prerequisites_darwin() {
-    if ! command -v cpanm &>/dev/null; then
-        echo "Please install cpanminus first:" >&2
-        if command -v brew &>/dev/null; then
-            echo "brew install cpanminus" >&2
-        fi
-        exit 1
+    if command -v cpanm &>/dev/null; then
+        return
     fi
-    # On macOS, the spell checker fails to skip expected long words.
-    # Disable spell checking there until check-spelling releases v0.0.25.
-    # https://github.com/check-spelling/check-spelling/issues/84
-    echo "Skipping spell checking, macOS has false positives."
-    exit
+    echo "Please install cpanminus first:" >&2
+    if command -v brew &>/dev/null; then
+        echo "brew install cpanminus" >&2
+    fi
+    exit 1
 }
 
 check_prerequisites_linux() {
@@ -121,5 +117,10 @@ EOF
 )
 
 export INPUTS
+
+if [[ -z "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    # check-spelling falls over without this set; it writes to this file.
+    export GITHUB_STEP_SUMMARY=/dev/null
+fi
 
 exec "$script"
