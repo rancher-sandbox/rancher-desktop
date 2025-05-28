@@ -873,6 +873,7 @@ udhcpc
 UEFI
 Unauthed
 UNCONFIGURED
+Undici
 unexpose
 unexposing
 unfetch
