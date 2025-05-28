@@ -11,6 +11,7 @@
           <span class="extensions-card-header-subtitle">{{
             extension.publisher
           }}</span>
+          <span class="extensions-card-header-version">{{ extension.version }}</span>
         </div>
       </div>
       <div class="extensions-card-content">
@@ -19,6 +20,7 @@
 
       <a
         :href="extensionLink"
+        :title="extensionLink"
         target="_blank"
       >
         {{ t('marketplace.moreInfo') }}
@@ -113,7 +115,20 @@ export default {
       return this.extension.slug;
     },
     extensionLink() {
-      return this.extension.slug.startsWith('ghcr.io/') ? `https://${ this.extension.slug }` : `https://hub.docker.com/extensions/${ this.extension.slug }`;
+      // Try to use labels, if available.
+      const preferredLabel = 'io.rancherdesktop.extension.more-info';
+
+      const preferredURL = this.extension.labels[preferredLabel]?.trim();
+
+      if (preferredURL) {
+        return preferredURL;
+      }
+
+      if (!/^[^./]+\//.test(this.extension.slug)) {
+        return `https://${ this.extension.slug }`;
+      }
+
+      return `https://hub.docker.com/extensions/${ this.extension.slug }`;
     },
     loadingLabel() {
       return this.t(`marketplace.loading.${ this.currentAction }`);
@@ -174,17 +189,29 @@ export default {
       gap: 10px;
 
       &-top {
-        display: flex;
-        flex-direction: column;
+        flex: 1;
+        display: grid;
+        grid-template:
+          "title title title"
+          "subtitle . version"
+          / max-content 1fr max-content;
         gap: 5px;
       }
 
       &-title {
+        grid-area: title;
         font-size: 1.2rem;
         font-weight: 600;
       }
 
       &-subtitle {
+        grid-area: subtitle;
+        font-size: 0.8rem;
+        font-weight: 400;
+      }
+
+      &-version {
+        grid-area: version;
         font-size: 0.8rem;
         font-weight: 400;
       }
