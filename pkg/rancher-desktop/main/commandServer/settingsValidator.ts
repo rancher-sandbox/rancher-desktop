@@ -135,6 +135,7 @@ export default class SettingsValidator {
             username: this.checkPlatform('win32', this.checkString),
             noproxy:  this.checkPlatform('win32', this.checkUniqueStringArray),
           },
+          sshPortForwarder: this.checkLima(this.checkBoolean),
         },
       },
       WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },

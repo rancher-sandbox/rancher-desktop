@@ -719,6 +719,10 @@ components:
                       type: array
                       x-rd-usage: list of hostname to exclude from using the proxy
                       items: { type: string }
+                sshPortForwarder:
+                  type: boolean
+                  x-rd-platforms: [darwin, linux]
+                  x-rd-usage: use SSH for port forwarding instead of gRPC
         WSL:
           type: object
           x-rd-platforms: [win32]
