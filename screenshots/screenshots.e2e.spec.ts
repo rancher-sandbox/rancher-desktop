@@ -367,4 +367,36 @@ test.describe.serial('Main App Test', () => {
       await prefScreenshot.take('kubernetes', 'lockedFields');
     });
   });
+
+  test('Intro Image', async({ colorScheme }) => {
+    await navPage.navigateTo('General');
+    const bounds = await navPage.page.evaluate(() => {
+      window.resizeTo(1024, 768);
+
+      return {
+        top: window.screenTop, left: window.screenLeft, width: window.outerWidth, height: window.outerHeight,
+      };
+    });
+
+    await navPage.preferencesButton.click();
+    await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+    const preferencesPage = electronApp.windows()[1];
+
+    await preferencesPage.evaluate((bounds) => {
+      const {
+        top, left, width, height,
+      } = bounds;
+
+      window.moveTo(left + (width - window.outerWidth) / 2, top + (height - window.outerHeight) / 2);
+    }, bounds);
+
+    try {
+      await preferencesPage.emulateMedia({ colorScheme });
+      await preferencesPage.waitForTimeout(250);
+      await preferencesPage.bringToFront();
+      await screenshot.take('intro', true);
+    } finally {
+      preferencesPage.close({ runBeforeUnload: true });
+    }
+  });
 });
