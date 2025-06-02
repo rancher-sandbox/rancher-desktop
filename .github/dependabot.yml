@@ -26,12 +26,6 @@ updates:
   - # @vue/test-utils v2 is for Vue 3; we're on Vue 2 for now
     dependency-name: "@vue/test-utils"
     versions: [">1"]
-  - # Since we no longer pull in Nuxt (i.e. we have "ejected"), newer
-    # versions of this package mis-detect and think we're using Nuxt 3 (with
-    # Vue 3), and uses the wrong set of linters.  This happened in v12, so
-    # we ignore everything higher than 11.
-    dependency-name: "@nuxtjs/eslint-config-typescript"
-    versions: [">11"]
   - # node-fetch 3+ requires ECMAScript modules; we still have issues with them.
     dependency-name: "node-fetch"
     versions: [">2"]
@@ -42,13 +36,6 @@ updates:
     # ignore until we arrive a solution that uses it.
     dependency-name: "@rancher/shell"
     versions: [">0.1"]
-  - # unfetch release 5.0.0 dropped necessary files.
-    # See https://github.com/developit/unfetch/issues/ 162, 163, 167, 172, 176
-    # Not the best-maintained library out there.
-    # It's used only by the nuxt pseudo-submodule
-    # Assume the next release will fix it.
-    dependency-name: "unfetch"
-    versions: ["5.0.0"]
   - # fs-xattr 0.4.0 later are esm-only.
     dependency-name: "fs-xattr"
     versions: [">0.3"]
