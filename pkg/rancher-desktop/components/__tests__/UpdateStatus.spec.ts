@@ -1,4 +1,5 @@
-import { mount } from '@vue/test-utils';
+import { createLocalVue, mount } from '@vue/test-utils';
+import vTooltip from 'v-tooltip';
 
 import UpdateStatus from '../UpdateStatus.vue';
 
@@ -13,8 +14,13 @@ jest.mock('@pkg/utils/ipcRenderer', () => {
   };
 });
 
+const localVue = createLocalVue();
+
+localVue.use(vTooltip);
+
 function wrap(props: UpdateStatus['$props']) {
   return mount(UpdateStatus, {
+    localVue,
     propsData: props,
     mocks:     { t: jest.fn() },
   });
