@@ -30,9 +30,6 @@ export default Vue.extend({
       required: true,
     },
   },
-  async fetch() {
-    await this.$store.dispatch('credentials/fetchCredentials');
-  },
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
     ...mapGetters('transientSettings', ['getActiveTab']),
@@ -40,6 +37,9 @@ export default Vue.extend({
     activeTab(): string {
       return this.getActiveTab || 'behavior';
     },
+  },
+  async beforeMount() {
+    await this.$store.dispatch('credentials/fetchCredentials');
   },
   methods: {
     async tabSelected({ tab }: { tab: Vue.Component }) {

@@ -297,7 +297,7 @@ test.describe.serial('Main App Test', () => {
       expect(preferencesWindow).toBeDefined();
       // Wait for the window to actually load (i.e. transition from
       // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-      await preferencesWindow.waitForURL(/Preferences/);
+      await preferencesWindow.waitForURL(/Preferences#/i);
       const { containerEngine } = new PreferencesPage(preferencesWindow);
 
       await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');

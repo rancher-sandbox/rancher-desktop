@@ -17,7 +17,7 @@
     class="wrapper"
     open
   >
-    <Nuxt class="body" />
+    <RouterView class="body" />
   </div>
 </template>
 
@@ -36,6 +36,7 @@ export default Vue.extend({
     return { bodyAttrs: { class: 'theme-dark' } };
   },
   mounted() {
+    this.$store.dispatch('i18n/init').catch(ex => console.error(ex));
     // The page component is mounted before the layout (because the layout
     // contains the page component); so we can safely send `dialog/load` here
     // and assume the page has already been mounted.
@@ -58,9 +59,8 @@ export default Vue.extend({
   }
 </style>
 
+<style lang="scss" src="@pkg/assets/styles/app.scss"></style>
 <style lang="scss" scoped>
-@import "@pkg/assets/styles/app.scss";
-
 .wrapper {
   background-color: var(--body-bg);
   border: none;

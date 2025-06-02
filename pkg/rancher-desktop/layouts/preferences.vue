@@ -14,6 +14,7 @@ export default Vue.extend({
     return { bodyAttrs: { class: 'theme-dark' } };
   },
   mounted() {
+    this.$store.dispatch('i18n/init').catch(ex => console.error(ex));
     ipcRenderer.send('preferences/load');
   },
 });
@@ -21,13 +22,12 @@ export default Vue.extend({
 
 <template>
   <div class="wrapper">
-    <Nuxt />
+    <RouterView />
   </div>
 </template>
 
-<style lang="scss">
-  @import "@pkg/assets/styles/app.scss";
-
+<style lang="scss" src="@pkg/assets/styles/app.scss"></style>
+<style lang="scss" scoped>
   .wrapper {
     background-color: var(--body-bg);
   }
