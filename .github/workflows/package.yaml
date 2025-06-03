@@ -45,7 +45,7 @@ jobs:
           arch: aarch64
           runs-on: macos-latest
         - platform: win
-          runs-on: windows-2019
+          runs-on: windows-latest
         - platform: linux
           runs-on: ubuntu-22.04
     runs-on: ${{ matrix.runs-on }}
