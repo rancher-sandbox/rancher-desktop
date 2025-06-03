@@ -372,6 +372,11 @@ virtualMachine:
         virtiofs:
           label: virtiofs
           description: Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+    inotify:
+      label: Enable filesystem event monitoring
+      tooltip: >-
+        Only works with writable mounts, with a limited set of events.
+        File deletions are not notified.
   proxy:
     legend: WSL Proxy
     label: Enable the proxy used by rancher-desktop
