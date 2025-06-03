@@ -311,3 +311,28 @@ known_failure_on_mount_type() {
     assert_success
     "${assert}_output" -rwxr-xr-x # spellcheck-ignore-line
 }
+
+@test 'filesystem monitoring' {
+    skip_on_windows
+    # wait for API
+    RD_TIMEOUT=10s try --max 30 --delay 5 rdctl api /settings
+    rdctl set --experimental.virtual-machine.mount.inotify
+    wait_for_container_engine
+    # Build an image that will monitor for changes.
+    ctrctl build --file - --tag rd_bats_volume_inotify "$HOST_WORK_PATH" <<<"
+        FROM $IMAGE_REGISTRY_2_8_1
+        RUN apk add --update-cache --no-interactive inotify-tools
+        ENTRYPOINT /usr/bin/inotifywait --recursive --quiet --timeout 30 /mount
+    "
+    # Schedule a change to be triggered.
+    {
+        sleep 10
+        date >"$HOST_WORK_PATH/foo"
+    } &
+    # Run the container, which should pick up the change and report it.
+    run ctrctl run \
+        --volume "$HOST_WORK_PATH:/mount:rw" --pull never \
+        rd_bats_volume_inotify
+    assert_output --regexp "/mount.*foo"
+    assert_success
+}
