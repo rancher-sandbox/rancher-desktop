@@ -3019,10 +3019,10 @@
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.12.tgz#bc2cab12e87978eee89fb21576b670350d6d86ab"
   integrity sha512-bTHG8fcxEqv1M9+TD14P8ok8hjxoOCkfKc8XXLaaD05kI7ohpeI956jtDOD3XHKBQrlyPughUtzm1jtVhHpA5Q==
 
-"@types/tar-stream@3.1.3":
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/@types/tar-stream/-/tar-stream-3.1.3.tgz#f61427229691eda1b7d5719f34acdc4fc8a558ce"
-  integrity sha512-Zbnx4wpkWBMBSu5CytMbrT5ZpMiF55qgM+EpHzR4yIDu7mv52cej8hTkOc6K+LzpkOAbxwn/m7j3iO+/l42YkQ==
+"@types/tar-stream@3.1.4":
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/@types/tar-stream/-/tar-stream-3.1.4.tgz#7eca21004291f8d4803437fe20cc01b0744782a8"
+  integrity sha512-921gW0+g29mCJX0fRvqeHzBlE/XclDaAG0Ousy1LCghsOhvaKacDeRGEVzQP9IPfKn8Vysy7FEXAIxycpc/CMg==
   dependencies:
     "@types/node" "*"
 
