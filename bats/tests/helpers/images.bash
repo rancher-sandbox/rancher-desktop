@@ -8,7 +8,7 @@
 # TODO TODO TODO
 
 # Any time you add an image here you need to re-run the mirror script!
-IMAGES=(busybox nginx python python:3.9-slim ruby tonistiigi/binfmt registry:2.8.1)
+IMAGES=(alpine busybox nginx python python:3.9-slim ruby tonistiigi/binfmt registry:2.8.1)
 
 GHCR_REPO=ghcr.io/rancher-sandbox/bats
 
