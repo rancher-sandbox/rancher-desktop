@@ -6,7 +6,7 @@ import flattenDeep from 'lodash/flattenDeep';
 import isEqual from 'lodash/isEqual';
 import isObject from 'lodash/isObject';
 import transform from 'lodash/transform';
-import { set as VueSet } from 'vue';
+import Vue from 'vue';
 
 const quotedKey = /['"]/;
 const quotedMatch = /[^."']+|"([^"]*)"|'([^']*)'/g;
@@ -31,10 +31,10 @@ export function set(obj, path, value) {
     const key = parts[i];
 
     if ( i === parts.length - 1 ) {
-      VueSet(ptr, key, value);
+      Vue.set(ptr, key, value);
     } else if ( !ptr[key] ) {
       // Make sure parent keys exist
-      VueSet(ptr, key, {});
+      Vue.set(ptr, key, {});
     }
 
     ptr = ptr[key];
