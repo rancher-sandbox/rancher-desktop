@@ -89,7 +89,7 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
-.checkbox::v-deep .checkbox-outer-container-description {
+.checkbox :deep(.checkbox-outer-container-description) {
   font-size: 11px;
 }
 .tooltip-icon {

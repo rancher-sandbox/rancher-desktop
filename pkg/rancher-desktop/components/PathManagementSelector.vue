@@ -105,13 +105,13 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
-.path-management::v-deep code {
+.path-management :deep(code) {
   user-select: text;
   cursor: text;
   padding: 2px;
 }
 
-.path-management::v-deep label {
+.path-management :deep(label) {
   color: var(--input-label);
 }
 </style>

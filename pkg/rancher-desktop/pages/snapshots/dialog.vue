@@ -380,7 +380,7 @@ export default Vue.extend({
     }
   }
 
-  .info-banner::v-deep code {
+  .info-banner :deep(code) {
     padding: 2px;
   }
 </style>

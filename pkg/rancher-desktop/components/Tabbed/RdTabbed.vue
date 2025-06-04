@@ -26,11 +26,11 @@ export default Vue.extend({
     flex-direction: column;
     max-height: 100%;
 
-    ::v-deep .tabs:focus .tab.active {
+    :deep(.tabs:focus .tab.active) {
       text-decoration: none;
     }
 
-    ::v-deep .tabs {
+    :deep(.tabs) {
       border-bottom: 1px solid var(--border);
 
       a {
@@ -38,13 +38,13 @@ export default Vue.extend({
       }
     }
 
-    ::v-deep .tab-container {
+    :deep(.tab-container) {
       max-height: 100%;
       overflow: auto;
       background-color: transparent;
     }
 
-    ::v-deep li.tab {
+    :deep(li.tab) {
       margin-right: 0;
       padding-right: 0;
       border-bottom: 1px solid var(--border);

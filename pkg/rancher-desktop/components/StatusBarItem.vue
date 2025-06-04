@@ -91,7 +91,7 @@ export default Vue.extend({
 
 <style scoped lang="scss">
 .status-bar-item {
-  .item-icon, ::v-deep .item-icon {
+  .item-icon, :deep(.item-icon) {
     padding-right: 2px;
     vertical-align: middle;
     display: none;
@@ -110,21 +110,21 @@ export default Vue.extend({
   }
 
   @media (max-width: 1000px) {
-    .item-label, ::v-deep .item-label {
+    .item-label, :deep(.item-label) {
       display: none;
     }
 
-    .item-icon, ::v-deep .item-icon {
+    .item-icon, :deep(.item-icon) {
       display: inline;
     }
   }
 
   @media (max-width: 900px) {
-    .item-value, ::v-deep .item-value {
+    .item-value, :deep(.item-value) {
       display: none;
     }
 
-    .item-icon, ::v-deep .item-icon {
+    .item-icon, :deep(.item-icon) {
       display: inline;
     }
   }

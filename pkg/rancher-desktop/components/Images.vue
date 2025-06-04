@@ -436,10 +436,10 @@ export default {
     margin-bottom: 12px;
   }
 
-  .imagesTable::v-deep .search-box {
+  .imagesTable :deep(.search-box) {
     align-self: flex-end;
   }
-  .imagesTable::v-deep .bulk {
+  .imagesTable :deep(.bulk) {
     align-self: flex-end;
   }
 </style>

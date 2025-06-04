@@ -279,7 +279,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       }
 
       &:not([aria-expanded]) {
-        &::v-deep ~ .main-row {
+        :deep(~ .main-row) {
           visibility: collapse;
           .toggle-container {
             /* When using visibility:collapse, the toggle switch produces some
@@ -293,7 +293,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       }
     }
 
-    .mute-toggle::v-deep .label {
+    .mute-toggle :deep(.label) {
       /* We have no labels on the mute toggles; force them to not exist so that
          the two sides of the table have equal padding. */
       display: none;
