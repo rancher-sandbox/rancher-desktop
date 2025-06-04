@@ -27,7 +27,7 @@
       "./node_modules",
       "./node_modules/@types",
       "./node_modules/@rancher/shell/types"
-    ],    
+    ],
     "types": [
       "@types/node",
       "@types/jest"
@@ -35,7 +35,6 @@
   },
   "exclude": [
     "node_modules",
-    ".nuxt",
     "dist",
     "scripts/lib/installer-*.tsx",
     "scripts/lib/installer-win32-gen.tsx"

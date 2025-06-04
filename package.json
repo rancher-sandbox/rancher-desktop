@@ -104,7 +104,6 @@
     "@electron/asar": "4.0.0",
     "@electron/fuses": "^1.8.0",
     "@electron/notarize": "3.0.1",
-    "@nuxt/types": "2.18.1",
     "@playwright/test": "1.52.0",
     "@types/cross-spawn": "6.0.6",
     "@types/dompurify": "3.2.0",
