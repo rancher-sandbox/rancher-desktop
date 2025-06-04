@@ -60,7 +60,7 @@ export default {
 </template>
 
 <style lang="scss" scoped>
-.container-engine::v-deep label {
+.container-engine :deep(label) {
   color: var(--input-label);
 }
 </style>

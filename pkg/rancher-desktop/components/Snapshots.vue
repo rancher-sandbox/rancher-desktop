@@ -154,7 +154,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
       .banner {
         margin: 0;
-        ::v-deep .banner__content {
+        :deep(.banner__content) {
           margin-top: 8px;
           margin-bottom: 15px;
 

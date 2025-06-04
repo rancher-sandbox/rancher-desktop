@@ -221,7 +221,7 @@ a {
     text-decoration: none;
   }
 
-  &:is(.router-link-active, .rd-link-active)::v-deep div {
+  &:is(.router-link-active, .rd-link-active) :deep(div) {
     background-color: var(--nav-active);
   }
 }

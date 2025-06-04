@@ -73,7 +73,7 @@ export default Vue.extend({
 </template>
 
 <style scoped lang="scss">
-  ::v-deep .banner__content {
+  :deep(.banner__content) {
     flex-wrap: wrap;
   }
 </style>

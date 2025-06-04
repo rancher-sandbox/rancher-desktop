@@ -574,10 +574,10 @@ export default Vue.extend({
   min-width: 8rem;
 }
 
-.containersTable::v-deep .search-box {
+.containersTable :deep(.search-box) {
   align-self: flex-end;
 }
-.containersTable::v-deep .bulk {
+.containersTable :deep(.bulk) {
   align-self: flex-end;
 }
 

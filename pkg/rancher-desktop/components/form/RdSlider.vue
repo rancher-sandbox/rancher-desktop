@@ -113,27 +113,27 @@ export default Vue.extend({
   flex: 1;
 }
 
-.vue-slider::v-deep .vue-slider-rail {
+.vue-slider :deep(.vue-slider-rail) {
   background-color: var(--progress-bg);
 }
 
-.vue-slider::v-deep .vue-slider-mark-step {
+.vue-slider :deep(.vue-slider-mark-step) {
   background-color: var(--checkbox-tick-disabled);
   opacity: 0.5;
 }
 
-.vue-slider::v-deep .vue-slider-dot-handle {
+.vue-slider :deep(.vue-slider-dot-handle) {
   background-color: var(--scrollbar-thumb);
   box-shadow: 0.5px 0.5px 2px 1px var(--darker);
 }
 
 @media screen and (prefers-color-scheme: dark) {
-  .vue-slider::v-deep .vue-slider-dot-handle {
+  .vue-slider :deep(.vue-slider-dot-handle) {
     background-color: var(--checkbox-tick-disabled);
   }
 }
 
-.vue-slider::v-deep .vue-slider-process {
+.vue-slider :deep(.vue-slider-process) {
   background-color: var(--error);
 }
 

@@ -153,17 +153,17 @@ export default Vue.extend({
     gap: 1rem;
     width: 50%;
 
-    .string-list::v-deep {
-      .string-list-box {
+    .string-list {
+      :deep(.string-list-box) {
         min-height: unset;
         height: 195px;
       }
 
-      .string-list-footer {
+      :deep(.string-list-footer) {
         padding-right: 2rem;
       }
 
-      &.readonly {
+      :deep(.readonly) {
         background-color: var(--input-disabled-bg);
         color: var(--input-disabled-text);
         opacity: 1;
