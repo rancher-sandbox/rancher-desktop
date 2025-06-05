@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { VTooltip } from 'v-tooltip';
+import { VTooltip } from 'floating-vue';
 import Vue, { DirectiveHook } from 'vue';
 
 const ALLOWED_TAGS = [
@@ -18,12 +18,12 @@ const ALLOWED_TAGS = [
   'strong',
 ];
 
-const bind: DirectiveHook<HTMLElement, any, any> = (el, binding, vnode, prevVNode) => {
+const bind: DirectiveHook<HTMLElement, any, any> = (el, binding) => {
   let { value } = binding;
 
   value = DOMPurify.sanitize(value, { ALLOWED_TAGS });
 
-  return VTooltip.bind?.(el, { ...binding, value }, vnode, prevVNode);
+  return VTooltip.bind?.(el, { ...binding, value });
 };
 
 Vue.directive('clean-tooltip', {
