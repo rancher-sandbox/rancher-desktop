@@ -11,7 +11,7 @@
       class="details"
       :title="progressDetails"
     >{{ progressDetails }}</label>
-    <CustomProgress
+    <RdProgress
       class="progress-bar"
       :indeterminate="progressIndeterminate"
       :value="progress.current"
@@ -27,12 +27,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-import CustomProgress from '@pkg/components/Progress.vue';
+import RdProgress from '@pkg/components/RdProgress.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default defineComponent({
-  name: 'backend-progress',
-  components: { CustomProgress },
+  name:       'backend-progress',
+  components: { RdProgress },
   data() {
     return {
       /** Current Kubernetes backend action progress. */
