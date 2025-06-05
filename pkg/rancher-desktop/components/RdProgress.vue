@@ -2,7 +2,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 export default defineComponent({
-  name: 'progress',
+  name:  'rd-progress',
   props: {
     indeterminate: {
       type:    Boolean,
