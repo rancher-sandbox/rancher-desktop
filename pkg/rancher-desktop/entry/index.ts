@@ -3,21 +3,16 @@
  */
 
 import Cookies from 'cookie-universal';
-import { createApp } from 'vue';
+import { createApp, configureCompat } from 'vue';
 
 import router from './router';
 import store from './store';
-import '../plugins/clean-html-directive';
-import '../plugins/clean-tooltip-directive';
-import '../plugins/directives';
-import '../plugins/i18n';
-import '../plugins/shortkey';
-import '../plugins/tooltip';
-import '../plugins/trim-whitespace';
-import '../plugins/v-select';
+import usePlugins from './plugins';
 
 // This does just the Vuex part of cookie-universal-nuxt, which is all we need.
 (store as any).$cookies = Cookies();
+
+configureCompat({ RENDER_FUNCTION: false });
 
 // Emulate Nuxt layouts by poking making the router match the main component we
 // will load, and then inspect it for the layout we set.
@@ -32,5 +27,6 @@ const app = createApp(layout);
 
 app.use(store);
 app.use(router);
+await usePlugins(app, store);
 
 app.mount('#app');
