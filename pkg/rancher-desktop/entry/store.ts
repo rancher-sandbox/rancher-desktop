@@ -1,5 +1,4 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 
 import * as ActionMenu from '../store/action-menu';
 import * as ApplicationSettings from '../store/applicationSettings';
@@ -15,9 +14,7 @@ import * as Prefs from '../store/prefs';
 import * as Snapshots from '../store/snapshots';
 import * as TransientSettings from '../store/transientSettings';
 
-Vue.use(Vuex);
-
-export default new Vuex.Store<any>({
+export default createStore<any>({
   modules: {
     'action-menu':       { namespaced: true, ...ActionMenu },
     applicationSettings: { namespaced: true, ...ApplicationSettings },

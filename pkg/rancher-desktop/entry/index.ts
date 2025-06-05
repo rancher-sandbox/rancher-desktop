@@ -29,6 +29,8 @@ const component = matched?.components.default;
 const layoutName: string = component?.layout ?? 'default';
 const { default: layout } = await import(`../layouts/${ layoutName }.vue`);
 
-const app = createApp({...layout, store, router});
+const app = createApp({...layout, router});
+
+app.use(store);
 
 app.mount('#app');
