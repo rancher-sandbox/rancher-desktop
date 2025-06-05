@@ -93,7 +93,6 @@
 ignore$
 /translations/(?!en)
 ^\Qpkg/rancher-desktop/router.js\E$
-(?:^|/)pkg/rancher-desktop/nuxt/
 ^\Qsrc/go/nerdctl-stub/nerdctl_commands_generated.go\E$
 ^\Q.golangci.yaml\E$
 ^\Qsrc/go/networking/.golangci.yml\E$

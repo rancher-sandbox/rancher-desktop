@@ -24,13 +24,13 @@ export const withCredentials = (component: WithCredentialsComponent) => {
         },
       };
     },
-    async fetch() {
-      this.credentials = await this.$store.dispatch('credentials/fetchCredentials');
-    },
     computed: {
       hasCredentials(): boolean {
         return !!this.credentials.user || !!this.credentials.password || !!this.credentials.port;
       },
+    },
+    async beforeMount() {
+      this.credentials = await this.$store.dispatch('credentials/fetchCredentials');
     },
     /**
      * Aliasing createElement to h is a common convention you’ll see in the Vue

@@ -14,7 +14,7 @@
     />
     <the-title ref="title" />
     <main ref="body" class="body">
-      <Nuxt />
+      <RouterView />
     </main>
     <!-- The extension area is used for sizing the extension view. -->
     <div id="extension-spacer" class="extension" />
@@ -47,17 +47,6 @@ export default {
 
   data() {
     return { blur: false };
-  },
-
-  async fetch() {
-    await this.$store.dispatch('credentials/fetchCredentials');
-    if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
-      console.log(`Credentials aren't ready for getting diagnostics -- will try later`);
-
-      return;
-    }
-    await this.$store.dispatch('preferences/fetchPreferences', this.credentials);
-    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
   },
 
   head() {
@@ -104,6 +93,9 @@ export default {
     // The window title isn't set correctly in E2E; as a workaround, force set
     // it here again.
     document.title ||= 'Rancher Desktop';
+
+    this.fetch().catch(ex => console.error(ex));
+
     initExtensions();
     ipcRenderer.on('window/blur', (event, blur) => {
       this.blur = blur;
@@ -149,6 +141,10 @@ export default {
     });
   },
 
+  mounted() {
+    this.$store.dispatch('i18n/init').catch(ex => console.error(ex));
+  },
+
   beforeDestroy() {
     ipcRenderer.off('k8s-check-state');
     ipcRenderer.off('extensions/getContentArea');
@@ -158,6 +154,17 @@ export default {
   },
 
   methods: {
+    async fetch() {
+      await this.$store.dispatch('credentials/fetchCredentials');
+      if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
+        console.log(`Credentials aren't ready for getting diagnostics -- will try later`);
+
+        return;
+      }
+      await this.$store.dispatch('preferences/fetchPreferences', this.credentials);
+      await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
+    },
+
     openDashboard() {
       ipcRenderer.send('dashboard-open');
     },
@@ -202,9 +209,8 @@ export default {
 };
 </script>
 
+<style lang="scss" src="@pkg/assets/styles/app.scss"></style>
 <style lang="scss" scoped>
-@import "@pkg/assets/styles/app.scss";
-
 .wrapper {
   display: grid;
   grid-template:

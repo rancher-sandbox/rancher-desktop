@@ -21,7 +21,7 @@ export default Vue.extend({
 
 <template>
   <div>
-    <nuxt-child />
+    <RouterView />
     <Snapshots
       data-test="snapshotsPage"
       class="snapshots-page"

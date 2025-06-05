@@ -29,7 +29,15 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   data() {
     return { preferencesLoaded: false };
   },
-  async fetch() {
+  computed: {
+    ...mapGetters('preferences', ['getPreferences', 'hasError']),
+    ...mapGetters('transientSettings', ['getCurrentNavItem']),
+    ...mapState('credentials', ['credentials']),
+    navItems(): string[] {
+      return preferencesNavItems.map(({ name }) => name);
+    },
+  },
+  async beforeMount() {
     await this.$store.dispatch('credentials/fetchCredentials');
     await this.$store.dispatch('preferences/fetchPreferences', this.credentials as ServerState);
     await this.$store.dispatch('preferences/fetchLocked', this.credentials as ServerState);
@@ -43,16 +51,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     ipcRenderer.send('k8s-integrations');
 
     this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
-  },
-  computed: {
-    ...mapGetters('preferences', ['getPreferences', 'hasError']),
-    ...mapGetters('transientSettings', ['getCurrentNavItem']),
-    ...mapState('credentials', ['credentials']),
-    navItems(): string[] {
-      return preferencesNavItems.map(({ name }) => name);
-    },
-  },
-  beforeMount() {
+
     ipcRenderer.on('route', async(event, args) => {
       await this.navigateToTab(args);
     });

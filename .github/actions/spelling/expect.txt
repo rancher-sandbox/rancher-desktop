@@ -920,6 +920,7 @@ vnc
 vnd
 vnode
 vsock
+VTooltip
 vtun
 vtunnel
 vtunneltracker
