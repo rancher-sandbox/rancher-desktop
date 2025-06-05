@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { StringList } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import RdInput from '@pkg/components/RdInput.vue';
@@ -12,7 +12,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-wsl-proxy',
   components: {
     RdCheckbox, RdFieldset, RdInput, StringList,

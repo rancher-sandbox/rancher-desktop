@@ -22,12 +22,12 @@
 
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'image-add-tabs',
 
   components: {

@@ -63,7 +63,7 @@
 import os from 'os';
 
 import { BadgeState } from '@rancher/components';
-import Vue, { PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavIconExtension from './NavIconExtension.vue';
@@ -79,7 +79,8 @@ type ExtensionWithUI = ExtensionState & {
   metadata: { ui: { 'dashboard-tab': { title: string } } };
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'Nav',
   components: {
     BadgeState,
     NavItem,

@@ -86,7 +86,7 @@
 import { Card } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import Version from '@pkg/components/Version.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
@@ -94,7 +94,8 @@ import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'update-status',
   components: {
     Version, Card, RdCheckbox,
   },

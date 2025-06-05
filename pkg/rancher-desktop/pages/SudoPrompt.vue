@@ -47,7 +47,7 @@
 
 <script lang="ts">
 import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -70,7 +70,8 @@ const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: s
   },
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'sudo-prompt-dialog',
   components: { Checkbox },
   layout:     'dialog',
   data() {

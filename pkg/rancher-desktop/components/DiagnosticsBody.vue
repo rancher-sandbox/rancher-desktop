@@ -1,6 +1,6 @@
 <script lang="ts">
 import { ToggleSwitch } from '@rancher/components';
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
@@ -11,11 +11,7 @@ import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 
-interface VuexBindings {
-  showMuted: boolean;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'DiagnosticsBody',
   components: {
     DiagnosticsButtonRun,

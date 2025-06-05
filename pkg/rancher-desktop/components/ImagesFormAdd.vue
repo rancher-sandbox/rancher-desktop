@@ -22,9 +22,9 @@
 
 <script lang="ts">
 import { LabeledInput } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'images-form-add',
 
   components: { LabeledInput },

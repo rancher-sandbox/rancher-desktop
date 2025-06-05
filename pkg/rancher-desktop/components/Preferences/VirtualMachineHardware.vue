@@ -1,7 +1,7 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import SystemPreferences from '@pkg/components/SystemPreferences.vue';
@@ -10,7 +10,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-virtual-machine-hardware',
   components: { SystemPreferences },
   props:      {

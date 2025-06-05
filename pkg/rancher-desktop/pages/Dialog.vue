@@ -2,11 +2,11 @@
 import os from 'os';
 
 import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-dialog',
   components: { Checkbox },
   layout:     'dialog',

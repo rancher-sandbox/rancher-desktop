@@ -100,7 +100,7 @@
 <script>
 import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
@@ -114,8 +114,8 @@ let containerCheckInterval = null;
  * @property Id {string} The container id
  */
 
-export default Vue.extend({
-  name:       'Containers',
+export default defineComponent({
+  name:       'containers',
   title:      'Containers',
   components: { SortableTable, BadgeState },
   data() {
@@ -163,7 +163,8 @@ export default Vue.extend({
         return [];
       }
 
-      const containers = structuredClone(this.containersList);
+      // `this.containersList` is a Proxy; so we can't use structedClone.
+      const containers = JSON.parse(JSON.stringify(this.containersList));
 
       return containers.map((container) => {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);

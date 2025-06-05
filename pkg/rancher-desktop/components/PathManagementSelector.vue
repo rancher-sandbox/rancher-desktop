@@ -1,6 +1,6 @@
 <script lang="ts">
 import { RadioButton, RadioGroup } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 
@@ -10,7 +10,8 @@ interface pathManagementOptions {
   description: string
 }
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'path-management-selector',
   components: {
     RadioGroup,
     RadioButton,

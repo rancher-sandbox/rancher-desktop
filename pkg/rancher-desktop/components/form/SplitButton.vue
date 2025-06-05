@@ -12,7 +12,7 @@
   -->
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import type { PropType } from 'vue';
 
@@ -25,7 +25,8 @@ type Option = {
   icon?: string;
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:  'split-button',
   props: {
     /** The main button text */
     label: {
