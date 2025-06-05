@@ -16,7 +16,6 @@ import '../plugins/shortkey';
 import '../plugins/tooltip';
 import '../plugins/trim-whitespace';
 import '../plugins/v-select';
-import '../plugins/vue-js-modal';
 
 Vue.config.productionTip = false;
 
