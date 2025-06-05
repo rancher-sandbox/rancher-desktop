@@ -6,6 +6,7 @@ import EmptyState from '@pkg/components/EmptyState.vue';
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import NavIconExtension from '@pkg/components/NavIconExtension.vue';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
+import useCredentials from '@pkg/hocs/withCredentials';
 import type { ExtensionState } from '@pkg/store/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -13,6 +14,9 @@ export default defineComponent({
   name:       'extensions-installed',
   components: {
     LoadingIndicator, NavIconExtension, SortableTable, EmptyState,
+  },
+  setup() {
+    useCredentials();
   },
   data() {
     return {

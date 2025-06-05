@@ -33,10 +33,7 @@ import MarketplaceCatalog from '@pkg/components/MarketplaceCatalog.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import { defaultSettings } from '@pkg/config/settings';
-import { withCredentials } from '@pkg/hocs/withCredentials';
 import ExtensionsInstalled from '@pkg/pages/extensions/installed.vue';
-
-const ExtensionsInstalledWithCredentials = withCredentials(ExtensionsInstalled);
 
 export default {
   title:      'Marketplace',
@@ -44,7 +41,7 @@ export default {
     RdTabbed,
     Tab,
     MarketplaceCatalog,
-    ExtensionsInstalled: ExtensionsInstalledWithCredentials,
+    ExtensionsInstalled,
   },
   data() {
     return {
