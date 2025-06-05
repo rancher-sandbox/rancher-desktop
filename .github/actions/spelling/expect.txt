@@ -779,6 +779,7 @@ shazbat
 shortkey
 shortlived
 showmuted
+shuf
 sigch
 sigevent
 signtool
