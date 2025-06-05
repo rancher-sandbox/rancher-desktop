@@ -86,7 +86,7 @@
     "semver": "7.7.2",
     "tar-stream": "3.1.7",
     "vue": "3.4.14",
-    "vue-router": "3.6.5",
+    "vue-router": "4.5.1",
     "vue-select": "3.20.4",
     "vue-shortkey": "3.1.7",
     "vue-slider-component": "3.2.24",

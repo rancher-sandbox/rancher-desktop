@@ -10,7 +10,6 @@ import store from './store';
 import '../plugins/clean-html-directive';
 import '../plugins/clean-tooltip-directive';
 import '../plugins/directives';
-import '../plugins/extend-router';
 import '../plugins/i18n';
 import '../plugins/shortkey';
 import '../plugins/tooltip';
@@ -24,13 +23,14 @@ import '../plugins/v-select';
 // will load, and then inspect it for the layout we set.
 // Because we're always using the hash mode for the router, get the correct
 // route based on the hash.
-const matched = router.match(location.hash.substring(1)).matched.find(r => r);
-const component = matched?.components.default;
-const layoutName: string = component?.layout ?? 'default';
+const matched = router.resolve(location.hash.substring(1)).matched.find(r => r);
+const component = matched?.components?.default;
+const layoutName: string = (component as any)?.layout ?? 'default';
 const { default: layout } = await import(`../layouts/${ layoutName }.vue`);
 
-const app = createApp({...layout, router});
+const app = createApp(layout);
 
 app.use(store);
+app.use(router);
 
 app.mount('#app');
