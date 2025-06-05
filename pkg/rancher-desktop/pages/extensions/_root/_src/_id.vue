@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { ipcRenderer } from 'electron';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import ExtensionsError from '@pkg/components/ExtensionsError.vue';
 import ExtensionsUninstalled from '@pkg/components/ExtensionsUninstalled.vue';
@@ -12,7 +12,8 @@ interface ExtensionsData {
   isExtensionGone: boolean;
 }
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'extension-ui',
   components: { ExtensionsError, ExtensionsUninstalled },
   beforeRouteEnter(to, _from, next) {
     const { params: { root, src, id } } = to;

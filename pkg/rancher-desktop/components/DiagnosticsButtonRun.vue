@@ -1,11 +1,11 @@
 <script lang="ts">
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import Vue, { PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 
 dayjs.extend(relativeTime);
 
-export default Vue.extend({
+export default defineComponent({
   name:  'diagnostics-button-run',
   props: { timeLastRun: Date as PropType<Date> },
   data() {

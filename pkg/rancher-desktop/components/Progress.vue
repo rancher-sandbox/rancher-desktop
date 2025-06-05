@@ -1,7 +1,8 @@
 <!-- A progress bar, with support for indeterminate progress -->
 <script lang="ts">
-import Vue from 'vue';
-export default Vue.extend({
+import { defineComponent } from 'vue';
+export default defineComponent({
+  name: 'progress',
   props: {
     indeterminate: {
       type:    Boolean,

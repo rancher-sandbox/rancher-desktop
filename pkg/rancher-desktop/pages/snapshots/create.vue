@@ -2,7 +2,7 @@
 
 import { Banner, LabeledInput, TextAreaAutoGrow } from '@rancher/components';
 import dayjs from 'dayjs';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
@@ -16,7 +16,8 @@ const defaultName = () => {
   return `Snap_${ dateString }`;
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'snapshots-create',
   components: {
     Banner,
     LabeledInput,

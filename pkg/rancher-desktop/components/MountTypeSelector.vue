@@ -3,7 +3,7 @@ import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
 import semver from 'semver';
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
@@ -18,12 +18,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-interface VuexBindings {
-  macOsVersion: semver.SemVer;
-  isArm: boolean;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   components: {
     TooltipIcon,
     IncompatiblePreferencesAlert,

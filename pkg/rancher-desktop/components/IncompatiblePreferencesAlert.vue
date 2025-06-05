@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
-import Vue, { PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 
 import type { NavItemName } from '@pkg/config/transientSettings';
 
@@ -13,7 +13,8 @@ export type CompatiblePrefs = {
   tabName?: string,
 }[];
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'incompatible-preferences-alert',
   components: { Banner },
   props:      {
     compatiblePrefs: {

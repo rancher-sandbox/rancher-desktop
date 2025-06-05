@@ -25,12 +25,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import CustomProgress from '@pkg/components/Progress.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name: 'backend-progress',
   components: { CustomProgress },
   data() {
     return {

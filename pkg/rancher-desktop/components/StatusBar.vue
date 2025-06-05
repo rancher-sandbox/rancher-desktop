@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import BackendProgress from '@pkg/components/BackendProgress.vue';
@@ -12,7 +12,8 @@ type BarItem = {
   data?: StatusBarItemData,
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'status-bar',
   components: { BackendProgress, StatusBarItem },
   computed:   {
     ...mapGetters('preferences', ['getPreferences']),

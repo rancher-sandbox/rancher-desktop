@@ -1,7 +1,7 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
@@ -9,18 +9,13 @@ import PreferencesBody from '@pkg/components/Preferences/ModalBody.vue';
 import PreferencesFooter from '@pkg/components/Preferences/ModalFooter.vue';
 import PreferencesHeader from '@pkg/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@pkg/components/Preferences/ModalNav.vue';
-import type { NavItemName, TransientSettings } from '@pkg/config/transientSettings';
+import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
 
-interface VuexBindings {
-  credentials: Omit<ServerState, 'pid'>;
-  getCurrentNavItem: NavItemName;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'preferences-modal',
   components: {
     PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesFooter, EmptyState,

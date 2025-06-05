@@ -1,10 +1,10 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapState } from 'vuex';
 
 const componentCache: { [key: string]: any } = {};
 
-export default Vue.extend({
+export default defineComponent({
   name: 'the-title',
   data() {
     return {

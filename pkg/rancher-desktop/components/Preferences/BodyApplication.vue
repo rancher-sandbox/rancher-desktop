@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesApplicationBehavior from '@pkg/components/Preferences/ApplicationBehavior.vue';
@@ -15,7 +15,7 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-body-application',
   components: {
     RdTabbed,

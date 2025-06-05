@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
 import isEmpty from 'lodash/isEmpty';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
@@ -16,16 +16,8 @@ interface Data {
   isEmpty: boolean;
 }
 
-interface Methods {
-  pollingStart: () => void,
-  escapeHtml: (name: string|undefined) => string,
-}
-
-interface Computed {
-  snapshots: Snapshot[],
-}
-
-export default Vue.extend<Data, Methods, Computed, never>({
+export default defineComponent({
+  name:       'snapshots',
   components: {
     Banner,
     EmptyState,

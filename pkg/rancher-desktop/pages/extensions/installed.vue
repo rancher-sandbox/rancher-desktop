@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
@@ -9,7 +9,7 @@ import SortableTable from '@pkg/components/SortableTable/index.vue';
 import type { ExtensionState } from '@pkg/store/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'extensions-installed',
   components: {
     LoadingIndicator, NavIconExtension, SortableTable, EmptyState,

@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { Component, defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesContainerEngineAllowedImages from '@pkg/components/Preferences/ContainerEngineAllowedImages.vue';
@@ -14,7 +14,7 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-body-container-engine',
   components: {
     PreferencesContainerEngineAllowedImages,
@@ -36,7 +36,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    async tabSelected({ tab }: { tab: Vue.Component }) {
+    async tabSelected({ tab }: { tab: Component }) {
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }

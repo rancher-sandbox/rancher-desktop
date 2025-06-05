@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue, { PropType, VueConstructor } from 'vue';
+import { PropType, Component, defineComponent } from 'vue';
 
 import NetworkStatus from '@pkg/components/NetworkStatus.vue';
 import Version from '@pkg/components/Version.vue';
@@ -12,7 +12,8 @@ export type StatusBarItemData = {
   },
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:  'status-bar-item',
   props: {
     data: {
       type:    Object as PropType<StatusBarItemData>,
@@ -28,7 +29,7 @@ export default Vue.extend({
     },
   },
   computed: {
-    getSubComponent(): VueConstructor | undefined {
+    getSubComponent(): Component | undefined {
       if (this.subComponent) {
         return this.subComponent === 'Version' ? Version : NetworkStatus;
       }

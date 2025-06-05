@@ -1,13 +1,13 @@
 <script lang="ts">
-import Vue from 'vue';
 import VueSlider from 'vue-slider-component';
+import { defineComponent } from 'vue';
 
 import RdInput from '@pkg/components/RdInput.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 
 import 'vue-slider-component/theme/default.css';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-slider',
   components: {
     VueSlider, RdFieldset, RdInput,

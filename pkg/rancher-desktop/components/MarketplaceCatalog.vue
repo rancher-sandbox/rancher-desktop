@@ -1,18 +1,14 @@
 <script lang="ts">
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
-import { Settings, ContainerEngine } from '@pkg/config/settings';
+import { ContainerEngine } from '@pkg/config/settings';
 import type { ExtensionState, MarketplaceData } from '@pkg/store/extensions';
 
 type ExtensionData = MarketplaceData;
 
-interface VuexBindings {
-  getPreferences: Settings;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'marketplace-catalog',
   components: { MarketplaceCard },
   data() {
