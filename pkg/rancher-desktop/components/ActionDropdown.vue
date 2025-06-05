@@ -46,7 +46,7 @@ export default {
 
   methods: {
     hasSlot(name = 'default') {
-      return !!this.$slots[name] || !!this.$scopedSlots[name];
+      return !!this.$slots[name];
     },
 
     // allows parent components to programmatically open the dropdown
