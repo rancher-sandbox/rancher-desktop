@@ -191,7 +191,7 @@ export default defineComponent({
       this.$data.pathManagementSelectorLocked = _.get(lockedFields, 'application.pathManagementStrategy');
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('beforeunload', this.close);
   },
   methods: {

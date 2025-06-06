@@ -61,7 +61,7 @@ export default defineComponent({
     };
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.snapshotsPollingInterval) {
       clearInterval(this.snapshotsPollingInterval);
     }

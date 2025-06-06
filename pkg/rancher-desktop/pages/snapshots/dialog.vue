@@ -82,7 +82,7 @@ export default defineComponent({
     ipcRenderer.send('dialog/mounted');
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('dialog/error');
     ipcRenderer.removeAllListeners('dialog/options');
     ipcRenderer.removeAllListeners('dialog/close');

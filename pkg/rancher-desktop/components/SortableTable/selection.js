@@ -21,7 +21,7 @@ export default {
     $table.on('contextmenu', '> TBODY > TR', this._onRowContextBound);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     const $table = $('> TABLE', this.$el);
 
     $table.off('click', '> TBODY > TR', this._onRowClickBound);

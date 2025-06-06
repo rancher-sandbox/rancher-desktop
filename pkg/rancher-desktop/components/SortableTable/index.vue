@@ -464,7 +464,7 @@ export default {
     this.updateLiveAndDelayed();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     clearTimeout(this.loadingDelayTimer);
     clearTimeout(this._scrollTimer);
     clearTimeout(this._loadingDelayTimer);

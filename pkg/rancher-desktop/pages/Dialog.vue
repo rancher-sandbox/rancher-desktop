@@ -36,7 +36,7 @@ export default defineComponent({
     ipcRenderer.send('dialog/mounted');
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('dialog/options');
   },
 
