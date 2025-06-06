@@ -140,7 +140,7 @@
     "electron": "36.4.0",
     "electron-builder": "26.0.12",
     "eslint": "8.57.1",
-    "eslint-import-resolver-typescript": "4.4.2",
+    "eslint-import-resolver-typescript": "4.4.3",
     "eslint-plugin-deprecation": "3.0.0",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-node": "11.1.0",
