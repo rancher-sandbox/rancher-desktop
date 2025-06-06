@@ -6100,7 +6100,7 @@ eslint-config-standard@^17.0.0:
   resolved "https://registry.yarnpkg.com/eslint-config-standard/-/eslint-config-standard-17.1.0.tgz#40ffb8595d47a6b242e07cbfd49dc211ed128975"
   integrity sha512-IwHwmaBNtDK4zDHQukFDW5u/aTb8+meQWZvNFWkiGmbWjD6bqyuSSBxxXKkCftCUzc1zwCH2m/baCNDLGmuO5Q==
 
-eslint-import-context@^0.1.5:
+eslint-import-context@^0.1.8:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/eslint-import-context/-/eslint-import-context-0.1.8.tgz#4098b659f4c1a3b3cc3bc896c3baee7907ca636d"
   integrity sha512-bq+F7nyc65sKpZGT09dY0S0QrOnQtuDVIfyTGQ8uuvtMIF7oHp6CEP3mouN0rrnYF3Jqo6Ke0BfU/5wASZue1w==
@@ -6125,18 +6125,18 @@ eslint-import-resolver-node@^0.3.6, eslint-import-resolver-node@^0.3.9:
     is-core-module "^2.13.0"
     resolve "^1.22.4"
 
-eslint-import-resolver-typescript@4.4.2:
-  version "4.4.2"
-  resolved "https://registry.yarnpkg.com/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-4.4.2.tgz#7d29b4663e13540354fe8c094c854b1a512a8e4e"
-  integrity sha512-GdSOy0PwLYpQCrmnEQujvA+X0NKrdnVCICEbZq1zlmjjD12NHOHCN9MYyrGFR9ydCs4wJwHEV9tts44ajSlGeA==
+eslint-import-resolver-typescript@4.4.3:
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-4.4.3.tgz#7fdd06f8fd7cdb05656980e3fe9d2c246365b2a2"
+  integrity sha512-elVDn1eWKFrWlzxlWl9xMt8LltjKl161Ix50JFC50tHXI5/TRP32SNEqlJ/bo/HV+g7Rou/tlPQU2AcRtIhrOg==
   dependencies:
     debug "^4.4.1"
-    eslint-import-context "^0.1.5"
+    eslint-import-context "^0.1.8"
     get-tsconfig "^4.10.1"
     is-bun-module "^2.0.0"
-    stable-hash "^0.0.5"
+    stable-hash-x "^0.1.1"
     tinyglobby "^0.2.14"
-    unrs-resolver "^1.7.2"
+    unrs-resolver "^1.7.11"
 
 eslint-module-utils@^2.12.0:
   version "2.12.0"
@@ -12095,11 +12095,6 @@ stable-hash-x@^0.1.1:
   resolved "https://registry.yarnpkg.com/stable-hash-x/-/stable-hash-x-0.1.1.tgz#1dc602f65183ef049a44a9be4fce249a4c71fc84"
   integrity sha512-l0x1D6vhnsNUGPFVDx45eif0y6eedVC8nm5uACTrVFJFtl2mLRW17aWtVyxFCpn5t94VUPkjU8vSLwIuwwqtJQ==
 
-stable-hash@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/stable-hash/-/stable-hash-0.0.5.tgz#94e8837aaeac5b4d0f631d2972adef2924b40269"
-  integrity sha512-+L3ccpzibovGXFK+Ap/f8LOS0ahMrHTf3xu7mMLSpEGU0EO9ucaysSylKo9eRDFNhWve/y275iPmIZ4z39a9iA==
-
 stable@^0.1.8:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/stable/-/stable-0.1.8.tgz#836eb3c8382fe2936feaf544631017ce7d47a3cf"
@@ -12952,7 +12947,7 @@ unpipe@1.0.0, unpipe@~1.0.0:
   resolved "https://registry.yarnpkg.com/unpipe/-/unpipe-1.0.0.tgz#b2bf4ee8514aae6165b4817829d21b2ef49904ec"
   integrity sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==
 
-unrs-resolver@^1.7.2:
+unrs-resolver@^1.7.11:
   version "1.7.11"
   resolved "https://registry.yarnpkg.com/unrs-resolver/-/unrs-resolver-1.7.11.tgz#c8615311785eb1bc7a454270468066e8a8778cf3"
   integrity sha512-OhuAzBImFPjKNgZ2JwHMfGFUA6NSbRegd1+BPjC1Y0E6X9Y/vJ4zKeGmIMqmlYboj6cMNEwKI+xQisrg4J0HaQ==
