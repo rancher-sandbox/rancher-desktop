@@ -53,7 +53,7 @@ export default defineComponent({
     ipcRenderer.on('err:extensions/open', this.extensionError);
     ipcRenderer.on('ok:extensions/uninstall', this.extensionUninstalled);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.off('err:extensions/open', this.extensionError);
   },
   methods: {

@@ -285,7 +285,7 @@ export default defineComponent({
     this.checkContainers().catch(console.error);
     containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');

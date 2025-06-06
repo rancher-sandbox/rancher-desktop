@@ -36,7 +36,7 @@ export default defineComponent({
       this.currentTime = dayjs();
     }, 1000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     clearInterval(this.lastRunInterval);
   },
   methods: {

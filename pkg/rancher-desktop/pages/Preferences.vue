@@ -59,7 +59,7 @@ export default defineComponent({
       this.$store.dispatch('transientSettings/setIsArm', isArm);
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     /**
      * Removing the listeners resolves the issue of receiving duplicated messages from 'route' channel.
      * Originated by: https://github.com/rancher-sandbox/rancher-desktop/issues/3232
