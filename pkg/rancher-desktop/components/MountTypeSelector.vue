@@ -124,14 +124,14 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       if (os.platform() === 'darwin') {
         switch (mountType) {
         case MountType.NINEP:
-          if (this.preferences.experimental.virtualMachine.type === VMType.VZ) {
+          if (this.preferences.virtualMachine.type === VMType.VZ) {
             compatiblePrefs.push( {
               title: VMType.QEMU, navItemName: 'Virtual Machine', tabName: 'emulation',
             } );
           }
           break;
         case MountType.VIRTIOFS:
-          if (this.preferences.experimental.virtualMachine.type === VMType.QEMU) {
+          if (this.preferences.virtualMachine.type === VMType.QEMU) {
             compatiblePrefs.push( {
               title: VMType.VZ, navItemName: 'Virtual Machine', tabName: 'emulation',
             } );
