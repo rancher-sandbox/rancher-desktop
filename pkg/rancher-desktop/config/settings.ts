@@ -1,6 +1,8 @@
 // This file contains exportable types and constants used for managing preferences
 // All the actual data and functions are in settingsImpl.ts
 
+import os from 'os';
+
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
@@ -89,7 +91,7 @@ export const defaultSettings = {
     memoryInGB: 2,
     numberCPUs: 2,
     /** can only be set to VMType.VZ on macOS Ventura and later */
-    type:       VMType.QEMU,
+    type:       process.platform === 'darwin' && parseInt(os.release(), 10) >= 22 ? VMType.VZ : VMType.QEMU,
     /** can only be used when type is VMType.VZ, and only on aarch64 */
     useRosetta: false,
   },

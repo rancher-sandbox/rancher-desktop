@@ -154,7 +154,7 @@ test.describe.serial('Main App Test', () => {
       await expect(virtualMachine.vz).toBeDisabled();
     } else {
       await expect(virtualMachine.vz).not.toBeDisabled();
-      await virtualMachine.vz.click();
+      await virtualMachine.vz.click({ position: { x: 10, y: 10 } });
       await expect(virtualMachine.useRosetta).toBeVisible();
 
       if (os.arch() === 'arm64') {
