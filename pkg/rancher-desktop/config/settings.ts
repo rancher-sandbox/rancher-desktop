@@ -6,7 +6,7 @@ import os from 'os';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 15 as const;
+export const CURRENT_SETTINGS_VERSION = 16 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -94,6 +94,10 @@ export const defaultSettings = {
     type:       process.platform === 'darwin' && parseInt(os.release(), 10) >= 22 ? VMType.VZ : VMType.QEMU,
     /** can only be used when type is VMType.VZ, and only on aarch64 */
     useRosetta: false,
+    mount:      {
+      // Mount type defaults to virtiofs when using VZ.
+      type: process.platform === 'darwin' && parseInt(os.release(), 10) >= 22 ? MountType.VIRTIOFS : MountType.REVERSE_SSHFS,
+    },
   },
   WSL:        { integrations: {} as Record<string, boolean> },
   kubernetes: {
@@ -126,7 +130,6 @@ export const defaultSettings = {
     kubernetes:      { options: { spinkube: false } },
     virtualMachine:  {
       mount: {
-        type: MountType.REVERSE_SSHFS,
         '9p': {
           securityModel:   SecurityModel.NONE,
           protocolVersion: ProtocolVersion.NINEP2000_L,

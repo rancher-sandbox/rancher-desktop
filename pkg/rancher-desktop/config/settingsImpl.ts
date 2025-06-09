@@ -504,6 +504,13 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       _.unset(settings, 'experimental.virtualMachine');
     }
   },
+  15: (settings) => {
+    const replacements: ReplacementDirective[] = [
+      { oldPath: 'experimental.virtualMachine.mount.type', newPath: 'virtualMachine.mount.type' },
+    ];
+
+    processReplacements(settings, replacements);
+  },
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {

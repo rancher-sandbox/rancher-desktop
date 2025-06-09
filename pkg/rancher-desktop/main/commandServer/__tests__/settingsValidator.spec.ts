@@ -24,6 +24,12 @@ const cfg = _.merge(
 const subject = new SettingsValidator();
 let spyPlatform: jest.SpiedFunction<typeof os.platform>;
 
+beforeAll(async() => {
+  if (process.platform === 'darwin') {
+    await osVersion.fetchMacOsVersion();
+  }
+});
+
 beforeEach(() => {
   spyPlatform = jest.spyOn(os, 'platform');
 });
@@ -77,10 +83,10 @@ describe(SettingsValidator, () => {
       ['experimental', 'virtualMachine', 'mount', '9p', 'msizeInKib'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'securityModel'],
-      ['experimental', 'virtualMachine', 'mount', 'type'],
       ['experimental', 'virtualMachine', 'proxy', 'noproxy'],
       ['kubernetes', 'version'],
       ['version'],
+      ['virtualMachine', 'mount', 'type'],
       ['virtualMachine', 'type'],
       ['virtualMachine', 'useRosetta'],
       ['WSL', 'integrations'],
@@ -824,7 +830,7 @@ describe(SettingsValidator, () => {
       ]);
     }
 
-    function getVMTypeSetting(vmType: VMType) {
+    function getVMTypeSetting(vmType: VMType): RecursivePartial<settings.Settings> {
       return {
         virtualMachine: {
           type: vmType,
@@ -832,13 +838,11 @@ describe(SettingsValidator, () => {
       };
     }
 
-    function getMountTypeSetting(mountType: MountType) {
+    function getMountTypeSetting(mountType: MountType): RecursivePartial<settings.Settings> {
       return {
-        experimental: {
-          virtualMachine: {
-            mount: {
-              type: mountType,
-            },
+        virtualMachine: {
+          mount: {
+            type: mountType,
           },
         },
       };
@@ -876,7 +880,7 @@ describe(SettingsValidator, () => {
       checkForError(
         needToUpdate, errors,
         'Setting virtualMachine.type to \"vz\" requires that ' +
-        'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"virtiofs\".',
+        'virtual-machine.mount.type is \"reverse-sshfs\" or \"virtiofs\".',
       );
     });
 
@@ -887,7 +891,7 @@ describe(SettingsValidator, () => {
       checkForError(
         needToUpdate, errors,
         'Setting virtualMachine.type to \"qemu\" requires that ' +
-        'experimental.virtual-machine.mount.type is \"reverse-sshfs\" or \"9p\".',
+        'virtual-machine.mount.type is \"reverse-sshfs\" or \"9p\".',
       );
     });
   });

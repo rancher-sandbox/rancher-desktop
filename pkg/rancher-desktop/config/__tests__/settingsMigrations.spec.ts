@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { updateTable } from '../settingsImpl';
 
-import { defaultSettings, VMType } from '@pkg/config/settings';
+import { defaultSettings, MountType, VMType } from '@pkg/config/settings';
 
 describe('settings migrations', () => {
   describe('step 9', () => {
@@ -88,6 +88,16 @@ describe('settings migrations', () => {
       expect(testSettings).not.toHaveProperty('experimental.virtualMachine');
       expect(testSettings).toHaveProperty('virtualMachine.type', VMType.VZ);
       expect(testSettings).toHaveProperty('virtualMachine.useRosetta', true);
+    });
+  });
+
+  describe('step 15', () => {
+    it('should migrate experimental.virtualMachine.mount.type to virtualMachine.*', () => {
+      const testSettings = { experimental: { virtualMachine: { mount: { type: MountType.REVERSE_SSHFS } } } };
+
+      updateTable[15](testSettings, false);
+      expect(testSettings).not.toHaveProperty('experimental.virtualMachine.mount.type');
+      expect(testSettings).toHaveProperty('virtualMachine.mount.type', MountType.REVERSE_SSHFS);
     });
   });
 });

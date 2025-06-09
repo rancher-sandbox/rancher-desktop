@@ -7,11 +7,11 @@ import { Log } from '@pkg/utils/logging';
 
 let macOsVersion: semver.SemVer;
 
-export async function fetchMacOsVersion(console: Log) {
+export async function fetchMacOsVersion(console?: Log) {
   let versionString = process.env.RD_MOCK_MACOS_VERSION;
 
   if (!versionString) {
-    const { stdout } = await spawnFile('/usr/bin/sw_vers', ['-productVersion'], { stdio: ['ignore', 'pipe', console] });
+    const { stdout } = await spawnFile('/usr/bin/sw_vers', ['-productVersion'], { stdio: ['ignore', 'pipe', console ?? 'ignore'] });
 
     versionString = stdout.trimEnd();
   }
