@@ -33,8 +33,8 @@ github.com/go-openapi/swag v0.23.1 h1:lpsStH0n2ittzTnbaSloVZLuB5+fvSY/+hnagBjSNZ
 github.com/go-openapi/swag v0.23.1/go.mod h1:STZs8TbRvEQQKUA+JZNAm3EWlgaOBGpyFDqQnDHMef0=
 github.com/go-openapi/validate v0.24.0 h1:LdfDKwNbpB6Vn40xhTdNZAnfLECL81w+VX3BumrGD58=
 github.com/go-openapi/validate v0.24.0/go.mod h1:iyeX1sEufmv3nPbBdX3ieNviWnOZaJ1+zquzJEf2BAQ=
-github.com/go-swagger/go-swagger v0.32.1 h1:/1y7jY4h+Orij3gVTtYdMf1C/Al1w7wlJlcggOIXpdk=
-github.com/go-swagger/go-swagger v0.32.1/go.mod h1:lAwO1nKff3qNRJYVQeTCl1am5pcNiiA2VyDf8TqzS24=
+github.com/go-swagger/go-swagger v0.32.3 h1:bhAfZ4WaFXyPuw2OrXg34rOcUBR++fpVdonRRYzBK1c=
+github.com/go-swagger/go-swagger v0.32.3/go.mod h1:lAwO1nKff3qNRJYVQeTCl1am5pcNiiA2VyDf8TqzS24=
 github.com/go-viper/mapstructure/v2 v2.2.1 h1:ZAaOCxANMuZx5RCeg0mBdEZk7DZasvvZIxtHqx8aGss=
 github.com/go-viper/mapstructure/v2 v2.2.1/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
