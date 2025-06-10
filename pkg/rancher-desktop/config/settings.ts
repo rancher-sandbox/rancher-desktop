@@ -91,12 +91,12 @@ export const defaultSettings = {
     memoryInGB: 2,
     numberCPUs: 2,
     /** can only be set to VMType.VZ on macOS Ventura and later */
-    type:       process.platform === 'darwin' && parseInt(os.release(), 10) >= 22 ? VMType.VZ : VMType.QEMU,
+    type:       process.platform === 'darwin' && parseInt(os.release(), 10) >= 23 ? VMType.VZ : VMType.QEMU,
     /** can only be used when type is VMType.VZ, and only on aarch64 */
     useRosetta: false,
     mount:      {
       // Mount type defaults to virtiofs when using VZ.
-      type: process.platform === 'darwin' && parseInt(os.release(), 10) >= 22 ? MountType.VIRTIOFS : MountType.REVERSE_SSHFS,
+      type: process.platform === 'darwin' && parseInt(os.release(), 10) >= 23 ? MountType.VIRTIOFS : MountType.REVERSE_SSHFS,
     },
   },
   WSL:        { integrations: {} as Record<string, boolean> },
