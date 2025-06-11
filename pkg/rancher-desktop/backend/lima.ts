@@ -596,7 +596,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     for (const location of locations) {
       const mount: LimaMount = { location, writable: true };
 
-      if (this.cfg?.experimental.virtualMachine.mount.type === MountType.NINEP) {
+      if (this.cfg?.virtualMachine.mount.type === MountType.NINEP) {
         const nineP = this.cfg.experimental.virtualMachine.mount['9p'];
 
         mount['9p'] = {
@@ -634,7 +634,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       cpus:         this.cfg?.virtualMachine.numberCPUs || 4,
       memory:       (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:       this.getMounts(),
-      mountType:    this.cfg?.experimental.virtualMachine.mount.type,
+      mountType:    this.cfg?.virtualMachine.mount.type,
       ssh:          { localPort: await this.sshPort },
       hostResolver: {
         hosts: {
@@ -2154,7 +2154,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.msizeInKib':      undefined,
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
-      'experimental.virtualMachine.mount.type':               undefined,
+      'virtualMachine.mount.type':                            undefined,
       'experimental.virtualMachine.sshPortForwarder':         undefined,
       'virtualMachine.type':                                  undefined,
       'virtualMachine.useRosetta':                            undefined,
