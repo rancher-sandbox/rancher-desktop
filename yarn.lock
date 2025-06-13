@@ -1062,10 +1062,10 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
 
-"@docker/extension-api-client-types@0.3.4":
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/@docker/extension-api-client-types/-/extension-api-client-types-0.3.4.tgz#0393c98ecad937f95ea805615a917060358aa384"
-  integrity sha512-cDdD+dNSE0XCvQiw0R4j9aHpK+p6E7vi+z7RbKXfxwuQpfEMoeNCKFlp4W7K3XT78iWmoPz3DxQtZEAe4VJ1oQ==
+"@docker/extension-api-client-types@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@docker/extension-api-client-types/-/extension-api-client-types-0.4.0.tgz#2da590409c767b68de4ec8e5ad072fdfc3fa17ad"
+  integrity sha512-eoqPJOGtGPJxWy7mESQiqTxdSb1VmUeSoFmJ+icd/QdGOwsOeYfJBWLJZA8A6ZP5OhVwVqfKV3wat4Ej6fnj5A==
 
 "@electron/asar@3.2.18":
   version "3.2.18"
