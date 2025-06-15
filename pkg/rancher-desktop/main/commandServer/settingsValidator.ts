@@ -128,6 +128,7 @@ export default class SettingsValidator {
               msizeInKib:      this.checkLima(this.check9P(this.checkNumber(4, Number.POSITIVE_INFINITY))),
               cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
+            inotify: this.checkLima(this.checkBoolean),
           },
           proxy: {
             enabled:  this.checkPlatform('win32', this.checkBoolean),
