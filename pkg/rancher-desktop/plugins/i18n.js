@@ -97,10 +97,6 @@ const i18n = {
           type:    Boolean,
           default: true,
         },
-        class: {
-          type:    String,
-          default: '',
-        },
       },
       setup(props, ctx) {
         const msg = ref('');
@@ -117,12 +113,12 @@ const i18n = {
         if (this.raw) {
           return h(
             this.tag,
-            { class: this.class, innerHTML: this.msg },
+            { innerHTML: this.msg },
           );
         } else {
           return h(
             this.tag,
-            { class: this.class },
+            { },
             [this.msg],
           );
         }

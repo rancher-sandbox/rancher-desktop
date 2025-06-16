@@ -52,10 +52,10 @@ const unbindValue = (value, el) => {
   }
 };
 
-ShortKey.install = (Vue, options) => {
+ShortKey.install = (VueApp, options) => {
   elementAvoided = [...(options && options.prevent ? options.prevent : [])];
   containerAvoided = [...(options && options.preventContainer ? options.preventContainer : [])];
-  Vue.directive('shortkey', {
+  VueApp.directive('shortkey', {
     beforeMount: (el, binding, vnode) => {
       // Mapping the commands
       const value = parseValue(binding.value);
