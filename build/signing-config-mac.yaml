@@ -25,7 +25,7 @@ entitlements:
     - com.apple.security.cs.allow-jit
     - com.apple.security.hypervisor
   - paths:
-    - Contents/Resources/resources/darwin/bin/spin
+    - Contents/Resources/resources/darwin/internal/spin
     entitlements:
     - com.apple.security.cs.allow-unsigned-executable-memory
   - paths:
