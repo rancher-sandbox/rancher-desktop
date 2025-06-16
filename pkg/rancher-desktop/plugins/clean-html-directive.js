@@ -1,5 +1,4 @@
 import DOMPurify from 'dompurify';
-import Vue from 'vue';
 
 const ALLOWED_TAGS = [
   'code',
@@ -19,16 +18,19 @@ const ALLOWED_TAGS = [
 
 const purifyHTML = value => DOMPurify.sanitize(value, { ALLOWED_TAGS });
 
-export const cleanHtmlDirective = {
-  mounted(el, binding) {
-    el.innerHTML = purifyHTML(binding.value);
-  },
-  updated(el, binding) {
-    el.innerHTML = purifyHTML(binding.value);
-  },
-  unmounted(el) {
-    el.innerHTML = '';
+export default {
+  name: 'clean-html-directive',
+  install(app) {
+    app.directive('clean-html', {
+      mounted(el, binding) {
+        el.innerHTML = purifyHTML(binding.value);
+      },
+      updated(el, binding) {
+        el.innerHTML = purifyHTML(binding.value);
+      },
+      unmounted(el) {
+        el.innerHTML = '';
+      },
+    });
   },
 };
-
-Vue.directive('clean-html', cleanHtmlDirective);
