@@ -2,7 +2,7 @@ module.exports = {
   transform: {
     '^.+\\.js$':  'babel-jest',
     '^.+\\.ts$':  'ts-jest',
-    '^.+\\.vue$': '@vue/vue2-jest',
+    '^.+\\.vue$': '@vue/vue3-jest',
   },
   transformIgnorePatterns: [
     '/node_modules/(?!(yaml|jsonpath-plus|@kubernetes/client-node)/)',
@@ -31,6 +31,12 @@ module.exports = {
     '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupElectron.ts',
   ],
   testEnvironment:        'jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: [
+      'node',
+      'node-addons'
+    ],
+  },
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/pkg/rancher-desktop/sudo-prompt/',

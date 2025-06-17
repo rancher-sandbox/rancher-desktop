@@ -33,5 +33,12 @@
     "node_modules",
     "dist",
     "babel.config.js"
+  ],
+  "include": [
+    "**/*",
+    "**/*.ts",
+    "**/*.d.ts",
+    "**/*.tsx",
+    "**/*.vue"
   ]
 }
