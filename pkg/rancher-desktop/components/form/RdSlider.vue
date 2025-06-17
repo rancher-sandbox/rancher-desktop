@@ -100,6 +100,7 @@ export default defineComponent({
   flex-direction: row;
   align-items: center;
   gap: 2rem;
+  margin-bottom: 1rem;
 }
 
 .rd-slider-rail {

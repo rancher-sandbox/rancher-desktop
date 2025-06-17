@@ -94,7 +94,7 @@ export default defineComponent({
     gap: 1rem;
 
     .string-list {
-      height: 220px;
+      flex: 1;
     }
   }
 

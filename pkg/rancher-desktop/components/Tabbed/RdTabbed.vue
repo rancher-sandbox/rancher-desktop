@@ -52,6 +52,9 @@ export default defineComponent({
       max-height: 100%;
       overflow: auto;
       background-color: transparent;
+      &.no-content {
+        border: none;
+      }
     }
 
     :deep(li.tab) {

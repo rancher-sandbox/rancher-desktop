@@ -1999,6 +1999,7 @@ export default {
       grid-area: search;
       text-align: right;
       justify-content: flex-end;
+      margin-top: 1px;
     }
 
     .bulk-actions-dropdown {
