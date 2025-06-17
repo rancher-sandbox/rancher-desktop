@@ -74,7 +74,7 @@ export default defineComponent({
         </template>
       </rd-input>
       <vue-slider
-        ref="memory"
+        ref="slider"
         class="rd-slider-rail"
         :modelValue="value"
         :min="min"

@@ -1,5 +1,3 @@
-import Vue from 'vue';
-
 import { STEVE } from '@pkg/config/types';
 import { clone } from '@pkg/utils/object';
 

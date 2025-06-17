@@ -68,6 +68,7 @@ export default defineComponent({
         :sub-component="item.component"
         :data="item.data"
         :icon="item.icon"
+        :ref="item.name"
         class="status-bar-item"
       >
       </status-bar-item>
