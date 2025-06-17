@@ -56,7 +56,6 @@
     "@docker/extension-api-client-types": "0.4.2",
     "@kubernetes/client-node": "0.18.1",
     "@rancher/components": "0.3.0-alpha.1",
-    "@vue/compat": "3.4.13",
     "@xterm/addon-fit": "0.10.0",
     "@xterm/addon-search": "0.15.0",
     "@xterm/addon-web-links": "0.11.0",

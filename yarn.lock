@@ -3813,15 +3813,6 @@
     semver "^7.3.4"
     strip-ansi "^6.0.0"
 
-"@vue/compat@3.4.13":
-  version "3.4.13"
-  resolved "https://registry.yarnpkg.com/@vue/compat/-/compat-3.4.13.tgz#229e5f63e71870c4faeb77a5fdc26ffefda2ad9c"
-  integrity sha512-8w03omVn5a8gcgP6dorRzT5jsBsRkfedhe5dhw3Zi02dLTJrxgdNmOf1XgUee9B4dpraX8+sQyODHT6JLUxqlA==
-  dependencies:
-    "@babel/parser" "^7.23.6"
-    estree-walker "^2.0.2"
-    source-map-js "^1.0.2"
-
 "@vue/compiler-core@3.4.14":
   version "3.4.14"
   resolved "https://registry.yarnpkg.com/@vue/compiler-core/-/compiler-core-3.4.14.tgz#c3efdf3be8b0c4bf30830063d505c8c7945b6f0d"

@@ -21,7 +21,6 @@ module.exports = {
   chainWebpack: (config) => {
     config.target('electron-renderer');
     config.resolve.alias.set('@pkg', path.resolve(rootDir, 'pkg', 'rancher-desktop'));
-    config.resolve.alias.set('vue', '@vue/compat');
     config.resolve.extensions.add('.ts');
 
     config.module.rule('ts')
@@ -58,7 +57,6 @@ module.exports = {
 
     config.module.rule('vue').use('vue-loader').tap((options) => {
       _.set(options, 'loaders.ts', 'ts-loader');
-      _.set(options, 'compilerOptions.compatConfig.MODE', 2);
 
       return options;
     });
