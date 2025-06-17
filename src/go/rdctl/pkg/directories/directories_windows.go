@@ -25,11 +25,11 @@ import (
 )
 
 // The initial buffer size for use with InvokeWin32WithBuffer
-const initialBufferSize = 256
+const initialBufferSize = uint32(256)
 
 // InvokeWin32WithBuffer calls the given function with increasing buffer sizes
 // until it does not return ERROR_INSUFFICIENT_BUFFER.
-func InvokeWin32WithBuffer(cb func(size int) error) error {
+func InvokeWin32WithBuffer(cb func(size uint32) error) error {
 	size := initialBufferSize
 	for {
 		err := cb(size)

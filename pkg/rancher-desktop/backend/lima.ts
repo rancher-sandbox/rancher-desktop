@@ -596,7 +596,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     for (const location of locations) {
       const mount: LimaMount = { location, writable: true };
 
-      if (this.cfg?.experimental.virtualMachine.mount.type === MountType.NINEP) {
+      if (this.cfg?.virtualMachine.mount.type === MountType.NINEP) {
         const nineP = this.cfg.experimental.virtualMachine.mount['9p'];
 
         mount['9p'] = {
@@ -634,7 +634,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       cpus:         this.cfg?.virtualMachine.numberCPUs || 4,
       memory:       (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:       this.getMounts(),
-      mountType:    this.cfg?.experimental.virtualMachine.mount.type,
+      mountType:    this.cfg?.virtualMachine.mount.type,
       ssh:          { localPort: await this.sshPort },
       hostResolver: {
         hosts: {
@@ -789,11 +789,20 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   /**
    * Run `limactl` with the given arguments.
    */
-  async lima(this: Readonly<this>, ...args: string[]): Promise<void> {
+  async lima(this: Readonly<this>, env: NodeJS.ProcessEnv, ...args: string[]): Promise<void>;
+  async lima(this: Readonly<this>, ...args: string[]): Promise<void>;
+  async lima(this: Readonly<this>, envOrArg: NodeJS.ProcessEnv | string, ...args: string[]): Promise<void> {
+    const env = LimaBackend.limaEnv;
+
+    if (typeof envOrArg === 'string') {
+      args = [envOrArg].concat(args);
+    } else {
+      Object.assign(env, envOrArg);
+    }
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
       const { stdout, stderr } = await childProcess.spawnFile(LimaBackend.limactl, args,
-        { env: LimaBackend.limaEnv, stdio: ['ignore', 'pipe', 'pipe'] });
+        { env, stdio: ['ignore', 'pipe', 'pipe'] });
       const formatBreak = stderr || stdout ? '\n' : '';
 
       console.log(`> limactl ${ args.join(' ') }${ formatBreak }${ stderr }${ stdout }`);
@@ -1773,7 +1782,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     await this.progressTracker.action('Starting virtual machine', 100, async() => {
       try {
-        await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
+        const env: NodeJS.ProcessEnv = {};
+
+        if (this.cfg?.experimental.virtualMachine.sshPortForwarder) {
+          env.LIMA_SSH_PORT_FORWARDER = 'true';
+        }
+        await this.lima(env, 'start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
       } finally {
         // Symlink the logs (especially if start failed) so the users can find them
         const machineDir = path.join(paths.lima, MACHINE_NAME);
@@ -2140,7 +2154,8 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.msizeInKib':      undefined,
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
-      'experimental.virtualMachine.mount.type':               undefined,
+      'virtualMachine.mount.type':                            undefined,
+      'experimental.virtualMachine.sshPortForwarder':         undefined,
       'virtualMachine.type':                                  undefined,
       'virtualMachine.useRosetta':                            undefined,
     }));

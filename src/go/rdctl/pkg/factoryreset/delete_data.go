@@ -26,6 +26,7 @@ import (
 	"path"
 
 	dockerconfig "github.com/docker/cli/cli/config"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
@@ -82,7 +83,7 @@ func clearDockerContext() error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(scratchFile.Name(), contents, 0600)
+	err = os.WriteFile(scratchFile.Name(), contents, 0o600)
 	scratchFile.Close()
 	if err != nil {
 		return err

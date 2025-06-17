@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"golang.org/x/sys/windows/registry"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 const relativeKey = `Software\Microsoft\Windows\CurrentVersion\Run`

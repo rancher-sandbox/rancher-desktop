@@ -1175,8 +1175,8 @@ function showErrorDialog(title: string, message: string, fatal?: boolean) {
 }
 
 async function handleFailure(payload: any) {
-  let titlePart = 'Error Starting Kubernetes';
-  let message = 'There was an unknown error starting Kubernetes';
+  let titlePart = 'Error Starting Rancher Desktop';
+  let message = 'There was an unknown error starting Rancher Desktop';
   let secondaryMessage = '';
 
   if (payload instanceof K8s.KubernetesError) {
@@ -1196,12 +1196,12 @@ async function handleFailure(payload: any) {
   } else if (payload instanceof Error) {
     secondaryMessage = payload.toString();
   } else if (typeof payload === 'number') {
-    message = `Kubernetes was unable to start with the following exit code: ${ payload }`;
+    message = `Rancher Desktop was unable to start with the following exit code: ${ payload }`;
   } else if ('errorCode' in payload) {
     message = payload.message || message;
     titlePart = payload.context || titlePart;
   }
-  console.log(`Kubernetes was unable to start:`, payload);
+  console.log(`Rancher Desktop was unable to start:`, payload);
   try {
     // getFailureDetails is going to read from existing log files.
     // Wait 1 second before reading them to allow recent writes to appear in them.

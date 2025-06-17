@@ -633,7 +633,7 @@ export async function openUnmetPrerequisitesDialog(reasonId: reqMessageId, ...ar
  */
 export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
   const window = openDialog('KubernetesError', {
-    title:  `Rancher Desktop - Kubernetes Error`,
+    title:  `Rancher Desktop - Error`,
     width:  800,
     height: 494,
     parent: getWindow('main') ?? undefined,

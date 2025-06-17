@@ -32,9 +32,10 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	cnutils "github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
-	"google.golang.org/protobuf/proto"
 )
 
 const (

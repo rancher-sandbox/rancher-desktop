@@ -15,7 +15,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>15</integer>
+    <integer>16</integer>
   </dict>
 </plist>
 `, s)
@@ -33,7 +33,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>15</integer>
+    <integer>16</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -101,10 +101,12 @@ func TestJsonToPlistFormat(t *testing.T) {
   },
   "virtualMachine": {
     "memoryInGB": 4,
+    "mount": {
+      "type": "reverse-sshfs"
+    },
     "numberCPUs": 2,
     "type": "qemu",
     "useRosetta": false
-
   },
   "WSL": {
     "integrations": {
@@ -142,7 +144,6 @@ func TestJsonToPlistFormat(t *testing.T) {
   "experimental": {
     "virtualMachine": {
       "mount": {
-        "type": "reverse-sshfs",
         "9p": {
           "securityModel": "none",
           "protocolVersion": "9p2000.L",
@@ -239,6 +240,11 @@ func TestJsonToPlistFormat(t *testing.T) {
       <string>qemu</string>
       <key>useRosetta</key>
       <false/>
+      <key>mount</key>
+      <dict>
+        <key>type</key>
+        <string>reverse-sshfs</string>
+      </dict>
     </dict>
     <key>kubernetes</key>
     <dict>
@@ -267,8 +273,6 @@ func TestJsonToPlistFormat(t *testing.T) {
       <dict>
         <key>mount</key>
         <dict>
-          <key>type</key>
-          <string>reverse-sshfs</string>
           <key>9p</key>
           <dict>
             <key>securityModel</key>
@@ -364,7 +368,7 @@ func TestJsonToPlistFormat(t *testing.T) {
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>15</integer>
+    <integer>16</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>

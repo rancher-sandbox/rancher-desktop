@@ -9,7 +9,7 @@ import semver from 'semver';
 import { NavPage } from './pages/nav-page';
 import { getAlternateSetting, startSlowerDesktop, teardown } from './utils/TestUtils';
 
-import { Settings, ContainerEngine } from '@pkg/config/settings';
+import { Settings, ContainerEngine, VMType } from '@pkg/config/settings';
 import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
@@ -112,7 +112,7 @@ test.describe.serial('KubernetesBackend', () => {
       /** Platform-specific changes to `newSettings`. */
       const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
         win32:  { kubernetes: { ingress: { localhostOnly: getAlternateSetting(currentSettings, 'kubernetes.ingress.localhostOnly', true, false) } } },
-        darwin: { virtualMachine: { useRosetta: getAlternateSetting(currentSettings, 'virtualMachine.useRosetta', true, false) } },
+        darwin: { virtualMachine: { type: getAlternateSetting(currentSettings, 'virtualMachine.type', VMType.VZ, VMType.QEMU) } },
       };
 
       _.merge(newSettings, platformSettings[process.platform] ?? {});
@@ -145,7 +145,7 @@ test.describe.serial('KubernetesBackend', () => {
       /** Platform-specific additions to `expectedDefinition`. */
       const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, ExpectedDefinition>> = {
         win32:  { 'kubernetes.ingress.localhostOnly': false },
-        darwin: { 'virtualMachine.useRosetta': false },
+        darwin: { 'virtualMachine.type': false },
       };
 
       _.merge(expectedDefinition, platformExpectedDefinitions[process.platform] ?? {});

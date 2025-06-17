@@ -75,7 +75,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     },
 
     featureFixes(): boolean {
-      return !!this.$config.featureDiagnosticsFixes;
+      return !!process.env.RD_ENV_DIAGNOSTICS_FIXES;
     },
   },
   methods: {

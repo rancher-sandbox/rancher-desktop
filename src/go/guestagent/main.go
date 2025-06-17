@@ -31,6 +31,8 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
@@ -39,7 +41,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/procnet"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -111,8 +112,8 @@ func main() {
 
 	var portTracker tracker.Tracker
 
-	forwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
-	portTracker = tracker.NewAPITracker(ctx, forwarder, tracker.GatewayBaseURL, *tapIfaceIP, *adminInstall)
+	wslProxyForwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
+	portTracker = tracker.NewAPITracker(ctx, wslProxyForwarder, tracker.GatewayBaseURL, *tapIfaceIP, *adminInstall)
 	// Manually register the port for K8s API, we would
 	// only want to send this manual port mapping if both
 	// of the following conditions are met:
@@ -134,7 +135,7 @@ func main() {
 				},
 			},
 		}
-		if err := forwarder.Send(k8sAPIPortMapping); err != nil {
+		if err := wslProxyForwarder.Send(k8sAPIPortMapping); err != nil {
 			log.Fatalf("failed to send a static portMapping event to wsl-proxy: %v", err)
 		}
 		log.Debugf("successfully forwarded k8s API port [%s] to wsl-proxy", *k8sAPIPort)

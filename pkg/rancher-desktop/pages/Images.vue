@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nuxt-child />
+    <RouterView />
     <Images
       class="content"
       data-test="imagesTable"

@@ -154,7 +154,7 @@ test.describe.serial('Main App Test', () => {
       await expect(virtualMachine.vz).toBeDisabled();
     } else {
       await expect(virtualMachine.vz).not.toBeDisabled();
-      await virtualMachine.vz.click();
+      await virtualMachine.vz.click({ position: { x: 10, y: 10 } });
       await expect(virtualMachine.useRosetta).toBeVisible();
 
       if (os.arch() === 'arm64') {
@@ -297,7 +297,7 @@ test.describe.serial('Main App Test', () => {
       expect(preferencesWindow).toBeDefined();
       // Wait for the window to actually load (i.e. transition from
       // app://index.html/#/preferences to app://index.html/#/Preferences#general)
-      await preferencesWindow.waitForURL(/Preferences/);
+      await preferencesWindow.waitForURL(/Preferences#/i);
       const { containerEngine } = new PreferencesPage(preferencesWindow);
 
       await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');

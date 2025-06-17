@@ -35,7 +35,7 @@ export default Vue.extend({
     };
   },
 
-  async fetch() {
+  async beforeMount() {
     this.credentials = await this.$store.dispatch(
       'credentials/fetchCredentials',
     );

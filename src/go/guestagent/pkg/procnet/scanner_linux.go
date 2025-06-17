@@ -33,6 +33,7 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
 	"github.com/lima-vm/lima/pkg/guestagent/procnettcp"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
@@ -53,10 +54,10 @@ type ProcNetScanner struct {
 	scanInterval  time.Duration
 }
 
-func NewProcNetScanner(ctx context.Context, tracker tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
+func NewProcNetScanner(ctx context.Context, t tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
 	return &ProcNetScanner{
 		context:      ctx,
-		tracker:      tracker,
+		tracker:      t,
 		scanInterval: scanInterval,
 	}, enableLocalnetRouting()
 }
@@ -151,6 +152,7 @@ func (p *ProcNetScanner) execLoopbackIPtablesRule(bindings []nat.PortBinding, po
 	for _, binding := range bindings {
 		if binding.HostIP == "127.0.0.1" {
 			// iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
+			//nolint:gosec // None of the arguments are user-supplied.
 			iptablesCmd := exec.CommandContext(p.context,
 				"iptables",
 				"--table", "nat",

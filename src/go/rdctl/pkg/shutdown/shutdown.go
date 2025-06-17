@@ -29,12 +29,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/sirupsen/logrus"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
-	"github.com/sirupsen/logrus"
 )
 
 type shutdownData struct {
@@ -46,6 +47,10 @@ type InitiatingCommand string
 const (
 	Shutdown     InitiatingCommand = "shutdown"
 	FactoryReset InitiatingCommand = "factory-reset"
+	// When killing an application, the number of times to retry.
+	appKillRetryCount = 15
+	// When killing an application, time interval between retries.
+	appKillWaitInterval = 2 * time.Second
 )
 
 var limaCtlPath string
@@ -60,7 +65,7 @@ func newShutdownData(waitForShutdown bool) *shutdownData {
 func FinishShutdown(ctx context.Context, waitForShutdown bool, initiatingCommand InitiatingCommand) error {
 	s := newShutdownData(waitForShutdown)
 	if runtime.GOOS == "windows" {
-		return s.waitForAppToDieOrKillIt(ctx, factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, 15, 2, "the app")
+		return s.waitForAppToDieOrKillIt(ctx, factoryreset.CheckProcessWindows, factoryreset.KillRancherDesktop, false, "the app")
 	}
 	paths, err := p.GetPaths()
 	if err != nil {
@@ -74,17 +79,17 @@ func FinishShutdown(ctx context.Context, waitForShutdown bool, initiatingCommand
 		} else {
 			switch initiatingCommand {
 			case Shutdown:
-				err = s.waitForAppToDieOrKillIt(ctx, checkLima, stopLima, 15, 2, "lima")
+				err = s.waitForAppToDieOrKillIt(ctx, checkLima, stopLima, false, "lima")
 				if err != nil {
 					logrus.Errorf("Ignoring error trying to stop lima: %s", err)
 				}
 				// Check once more to see if lima is still running, and if so, run `limactl stop --force 0`
-				err = s.waitForAppToDieOrKillIt(ctx, checkLima, stopLimaWithForce, 1, 0, "lima")
+				err = s.waitForAppToDieOrKillIt(ctx, checkLima, stopLimaWithForce, true, "lima")
 				if err != nil {
 					logrus.Errorf("Ignoring error trying to force-stop lima: %s", err)
 				}
 			case FactoryReset:
-				err = s.waitForAppToDieOrKillIt(ctx, checkLima, deleteLima, 15, 2, "lima")
+				err = s.waitForAppToDieOrKillIt(ctx, checkLima, deleteLima, false, "lima")
 				if err != nil {
 					logrus.Errorf("Ignoring error trying to delete lima subtree: %s", err)
 				}
@@ -101,8 +106,7 @@ func FinishShutdown(ctx context.Context, waitForShutdown bool, initiatingCommand
 		ctx,
 		isExecutableRunningFunc(qemuExecutable),
 		terminateExecutableFunc(qemuExecutable),
-		15,
-		2,
+		false,
 		"qemu")
 	if err != nil {
 		logrus.Errorf("Ignoring error trying to kill qemu: %s", err)
@@ -119,27 +123,33 @@ func FinishShutdown(ctx context.Context, waitForShutdown bool, initiatingCommand
 		ctx,
 		isExecutableRunningFunc(mainExecutablePath),
 		terminateRancherDesktopFunc(appDir),
-		5,
-		1,
+		false,
 		"the app")
 }
 
-func (s *shutdownData) waitForAppToDieOrKillIt(ctx context.Context, checkFunc func() (bool, error), killFunc func(context.Context) error, retryCount, retryWait int, operation string) error {
-	for iter := 0; s.waitForShutdown && iter < retryCount; iter++ {
+// Run the given check function to detect if an application has exited, every
+// appKillWaitInterval for appKillRetryCount times.  After all the checks have
+// expired, run killFunc to terminate the application forcefully.  If skipRetry
+// is true, do not wait at all and just kill immediately.
+func (s *shutdownData) waitForAppToDieOrKillIt(ctx context.Context, checkFunc func() (bool, error), killFunc func(context.Context) error, skipRetry bool, description string) error {
+	for iter := 0; s.waitForShutdown && iter < appKillRetryCount; iter++ {
 		if iter > 0 {
-			logrus.Debugf("checking %s showed it's still running; sleeping %d seconds\n", operation, retryWait)
-			time.Sleep(time.Duration(retryWait) * time.Second)
+			logrus.Debugf("checking %s showed it's still running; sleeping for %s\n", description, appKillWaitInterval)
+			time.Sleep(appKillWaitInterval)
 		}
 		status, err := checkFunc()
 		if err != nil {
-			return fmt.Errorf("while checking %s, found error: %w", operation, err)
+			return fmt.Errorf("while checking %s, found error: %w", description, err)
 		}
 		if !status {
-			logrus.Debugf("%s is no longer running\n", operation)
+			logrus.Debugf("%s is no longer running\n", description)
 			return nil
 		}
+		if skipRetry {
+			break
+		}
 	}
-	logrus.Debugf("About to force-kill %s\n", operation)
+	logrus.Debugf("About to force-kill %s\n", description)
 	return killFunc(ctx)
 }
 
@@ -235,9 +245,9 @@ func deleteLima(ctx context.Context) error {
 
 func terminateRancherDesktopFunc(appDir string) func(context.Context) error {
 	return func(ctx context.Context) error {
-		var errors *multierror.Error
+		var errs *multierror.Error
 
-		errors = multierror.Append(errors, (func() error {
+		errs = multierror.Append(errs, (func() error {
 			mainExe, err := p.GetMainExecutable(ctx)
 			if err != nil {
 				return err
@@ -249,8 +259,8 @@ func terminateRancherDesktopFunc(appDir string) func(context.Context) error {
 			return process.KillProcessGroup(pid, false)
 		})())
 
-		errors = multierror.Append(errors, process.TerminateProcessInDirectory(appDir, true))
+		errs = multierror.Append(errs, process.TerminateProcessInDirectory(appDir, true))
 
-		return errors.ErrorOrNil()
+		return errs.ErrorOrNil()
 	}
 }

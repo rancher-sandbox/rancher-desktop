@@ -180,7 +180,7 @@ start_container_engine() {
             --application.admin-access="$admin_access"
             --application.path-management-strategy rcfiles
             --virtual-machine.memory-in-gb 6
-            --experimental.virtual-machine.mount.type="$RD_MOUNT_TYPE"
+            --virtual-machine.mount.type="$RD_MOUNT_TYPE"
         )
     fi
     if [ "$RD_MOUNT_TYPE" = "9p" ]; then

@@ -50,7 +50,7 @@ func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
 	if autostartDesired {
 		// ensure LaunchAgent directory is created
 		launchAgentDir := filepath.Dir(launchAgentFilePath)
-		err := os.MkdirAll(launchAgentDir, 0755)
+		err := os.MkdirAll(launchAgentDir, 0o755)
 		if err != nil {
 			return fmt.Errorf("failed to create LaunchAgent directory: %w", err)
 		}
@@ -69,7 +69,7 @@ func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
 
 		// update LaunchAgent file if contents differ
 		if !bytes.Equal(currentContents, desiredContents) {
-			err = os.WriteFile(launchAgentFilePath, desiredContents, 0644)
+			err = os.WriteFile(launchAgentFilePath, desiredContents, 0o644)
 			if err != nil {
 				return fmt.Errorf("failed to write LaunchAgent file: %w", err)
 			}

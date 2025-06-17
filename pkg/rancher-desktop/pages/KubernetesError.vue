@@ -8,7 +8,7 @@
         />
         <span>
           <h2 data-test="k8s-error-header">
-            Kubernetes Error
+            {{ t('app.name') }} Error
           </h2>
           <h5>{{ versionString }}</h5>
         </span>
@@ -20,7 +20,7 @@
         </div>
         <div
           v-if="lastCommand"
-          class="error-part"
+          class="error-part command"
         >
           <h4>Last command run:</h4>
           <p>{{ lastCommand }}</p>
@@ -163,6 +163,10 @@ export default Vue.extend({
     margin-bottom: 1.5rem;
     h4 {
       margin-top: auto;
+    }
+    &.command p {
+      font-family: monospace;
+      white-space: pre-wrap;
     }
     &.grow {
       display: flex;

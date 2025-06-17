@@ -27,10 +27,11 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/portproxy"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/nettest"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/portproxy"
 )
 
 func TestNewPortProxyUDP(t *testing.T) {

@@ -13,9 +13,11 @@ module.exports = {
   extends: [
     'standard',
     'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/errors',
+    'plugin:import/warnings',
+    'plugin:import/typescript',
     'plugin:vue/recommended',
-    '@nuxtjs/eslint-config-typescript',
-    'plugin:nuxt/recommended',
   ],
   // add your custom rules here
   rules: {
@@ -29,7 +31,6 @@ module.exports = {
     'no-new':                   'off',
     'no-plusplus':              'off',
     'no-useless-escape':        'off',
-    'nuxt/no-cjs-in-config':    'off',
     'semi-spacing':             'off',
     'space-in-parens':          'off',
     strict:                     'off',
@@ -163,14 +164,7 @@ Object.assign(module.exports.parserOptions, {
   project:             ['./tsconfig.json', './pkg/rancher-desktop/tsconfig.json'],
   extraFileExtensions: ['.vue', '.mjs'],
 });
-module.exports.plugins = ['@typescript-eslint', 'deprecation'];
-// Insert the TypeScript recommended changes, but do it right after the default
-// ESLint one so that Nuxt things can still override it.
-module.exports.extends.splice(
-  module.exports.extends.indexOf('eslint:recommended') + 1,
-  0,
-  'plugin:@typescript-eslint/recommended');
-module.exports.extends.push('plugin:import/typescript');
+module.exports.plugins = ['@typescript-eslint', 'deprecation', 'unicorn', 'vue'];
 
 Object.assign(module.exports.rules, {
   // Allow console.log &c.
@@ -236,6 +230,32 @@ Object.assign(module.exports.rules, {
   'valid-typeof':                    'error',
   '@typescript-eslint/no-namespace': 'error',
 
+  // Rules from nuxt
+  'arrow-parens':                           ['error', 'as-needed', { requireForBlockBody: true }],
+  curly:                                    ['error', 'all'],
+  'generator-star-spacing':                 'off',
+  'import/no-mutable-exports':              'error',
+  'import/no-unresolved':                   'off',
+  'object-shorthand':                       'error',
+  'no-lonely-if':                           'error',
+  'no-useless-rename':                      'error',
+  'no-var':                                 'error',
+  'require-await':                          'error',
+  'unicorn/error-message':                  'error',
+  'unicorn/escape-case':                    'error',
+  'unicorn/no-array-instanceof':            'error',
+  'unicorn/no-new-buffer':                  'error',
+  'unicorn/no-unsafe-regex':                'off',
+  'unicorn/number-literal-case':            'error',
+  'unicorn/prefer-exponentiation-operator': 'error',
+  'unicorn/prefer-includes':                'error',
+  'unicorn/prefer-starts-ends-with':        'error',
+  'unicorn/prefer-text-content':            'error',
+  'unicorn/prefer-type-error':              'error',
+  'unicorn/throw-new-error':                'error',
+  'vue/no-parsing-error':                   ['error', { 'x-invalid-end-tag': false }],
+  'vue/max-attributes-per-line':            ['error', { singleline: 5 }],
+
   // destructuring: don't error if `a` is reassigned, but `b` is never reassigned
   'prefer-const': ['error', { destructuring: 'all' }],
 
@@ -243,6 +263,15 @@ Object.assign(module.exports.rules, {
   'n/no-callback-literal': 'off',
 });
 module.exports.rules['key-spacing'][1].align.mode = 'strict';
+
+module.exports.settings ??= {};
+Object.assign(module.exports.settings, {
+  'import/parsers':  { '@typescript-eslint/parser': ['.ts', '.tsx'] },
+  'import/resolver': {
+    node:       { extensions: ['.js', '.mjs'] },
+    typescript: {},
+  },
+});
 
 module.exports.overrides = [
   {

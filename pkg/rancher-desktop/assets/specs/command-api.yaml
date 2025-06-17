@@ -616,6 +616,14 @@ components:
             useRosetta:
               type: boolean
               x-rd-platforms: [darwin]
+            mount:
+              type: object
+              x-rd-platforms: [darwin, linux]
+              properties:
+                type:
+                  type: string
+                  enum: [reverse-sshfs, 9p, virtiofs]
+                  x-rd-usage: how directories are shared; 9p is experimental.
         kubernetes:
           type: object
           properties:
@@ -675,10 +683,6 @@ components:
                   type: object
                   x-rd-platforms: [darwin, linux]
                   properties:
-                    type:
-                      type: string
-                      enum: [reverse-sshfs, 9p, virtiofs]
-                      x-rd-usage: how directories are shared
                     9p:
                       type: object
                       properties:
@@ -719,6 +723,10 @@ components:
                       type: array
                       x-rd-usage: list of hostname to exclude from using the proxy
                       items: { type: string }
+                sshPortForwarder:
+                  type: boolean
+                  x-rd-platforms: [darwin, linux]
+                  x-rd-usage: use SSH for port forwarding instead of gRPC
         WSL:
           type: object
           x-rd-platforms: [win32]

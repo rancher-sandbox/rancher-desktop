@@ -74,9 +74,6 @@ jobs:
         if: always()
       - name: End stray processes
         run: |
-          for x in nuxt qemu ; do
-           echo $x
-           ps auxww | grep $x
-          done
+          ps auxww | grep qemu
           ps auxww | grep rancher | grep -vi -e goland
         if: always()

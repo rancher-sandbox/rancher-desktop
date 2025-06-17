@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
 )
 
 var processSpawnViper = viper.New()

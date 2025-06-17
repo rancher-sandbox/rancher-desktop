@@ -7,9 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lima"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lima"
 )
 
 type WSL interface {

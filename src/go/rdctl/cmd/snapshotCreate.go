@@ -11,10 +11,11 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/runner"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 )
 
 var snapshotDescription string
@@ -84,6 +85,7 @@ func createSnapshot(args []string) error {
 	if runtime.GOOS != "darwin" {
 		return nil
 	}
+	//nolint:gosec // manager.Snapshots is not a user input
 	execCmd := exec.Command("tmutil", "addexclusion", manager.Snapshots)
 	output, err := execCmd.CombinedOutput()
 	if err != nil {

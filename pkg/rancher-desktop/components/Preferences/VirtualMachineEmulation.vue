@@ -83,7 +83,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
 
       switch (vmType) {
       case VMType.QEMU:
-        if (this.preferences.experimental.virtualMachine.mount.type === MountType.VIRTIOFS) {
+        if (this.preferences.virtualMachine.mount.type === MountType.VIRTIOFS) {
           compatiblePrefs.push(
             {
               title: MountType.REVERSE_SSHFS, navItemName: 'Virtual Machine', tabName: 'volumes',
@@ -94,7 +94,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         }
         break;
       case VMType.VZ:
-        if (this.preferences.experimental.virtualMachine.mount.type === MountType.NINEP) {
+        if (this.preferences.virtualMachine.mount.type === MountType.NINEP) {
           compatiblePrefs.push(
             {
               title: MountType.REVERSE_SSHFS, navItemName: 'Virtual Machine', tabName: 'volumes',
