@@ -50,10 +50,7 @@ export default defineComponent({
 <template>
   <div class="title">
     <div class="title-top">
-      <transition-group
-        name="fade-group"
-        class="title-group"
-      >
+      <transition-group name="fade-group">
         <button
           v-if="isChild"
           key="back-btn"
@@ -125,14 +122,15 @@ export default defineComponent({
   }
 
   .fade-group-item {
+    display: inherit;
     transition: all 0.25s ease-out;
   }
 
-  .fade-actions{
+  .fade-actions {
     transition: opacity 0.25s ease-out;
   }
 
-  .fade-group-item-enter, .fade-group-leave-to
+  .fade-group-item-enter-from, .fade-group-leave-to
   {
     opacity: 0;
   }
@@ -147,10 +145,6 @@ export default defineComponent({
 
   .fade-active {
     transition: all 0.25s ease-in;
-  }
-
-  .title-group {
-    display: inherit;
   }
 
   .main-title-icon {
