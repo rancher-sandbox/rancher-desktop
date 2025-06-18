@@ -50,12 +50,10 @@ interface execProcess {
   [stream]: v1.ExecStreamOptions;
 }
 
-// eslint-disable-next-line import/namespace -- it doesn't understand TypeScript
 interface RDXExecOptions extends v1.ExecOptions {
   namespace?: string;
 }
 
-// eslint-disable-next-line import/namespace -- it doesn't understand TypeScript
 interface RDXSpawnOptions extends v1.SpawnOptions {
   namespace?: string;
 }
@@ -304,7 +302,7 @@ ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
 });
 
 // During the nuxt removal, import/namespace started failing
-// eslint-disable-next-line import/namespace
+
 class Client implements v1.DockerDesktopClient {
   constructor(info: {arch: string, hostname: string}) {
     Object.assign(this.host, info);
