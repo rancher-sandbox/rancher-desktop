@@ -85,9 +85,11 @@ export class DashboardServer {
       .get(
         '*missing',
         (_req, res) => {
-          res.sendFile(
-            path.resolve(paths.resources, 'rancher-dashboard', 'index.html'),
-          );
+          // Send the dashboard index file relative to the resources path, to
+          // avoid Express checking the (not in our case) user-controlled path
+          // containing hidden directories.  We do not need a rate limit here
+          // because this is all the local user triggering requests.
+          res.sendFile('rancher-dashboard/index.html', { root: paths.resources });
         })
       .listen(this.port, this.host)
       .on('upgrade', (req, socket, head) => {
