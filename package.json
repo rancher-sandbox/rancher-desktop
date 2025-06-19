@@ -137,7 +137,7 @@
     "cross-env": "7.0.3",
     "css-loader": "7.1.2",
     "ejs": "3.1.10",
-    "electron": "36.4.0",
+    "electron": "36.5.0",
     "electron-builder": "26.0.12",
     "eslint": "8.57.1",
     "eslint-import-resolver-typescript": "4.4.3",
