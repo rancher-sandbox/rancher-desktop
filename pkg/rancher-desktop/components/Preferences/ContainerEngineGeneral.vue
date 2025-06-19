@@ -75,7 +75,7 @@ export default defineComponent({
         :description="t('webAssembly.description')"
         :value="preferences.experimental.containerEngine.webAssembly.enabled"
         :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
-        @input="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
+        @update:value="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
       >
         <template v-if="webAssemblyIncompatible" #below>
           <banner color="warning">

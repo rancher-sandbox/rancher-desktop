@@ -137,7 +137,7 @@ export default defineComponent({
         <label>{{ t('snapshots.create.name.label') }}</label>
         <LabeledInput
           ref="nameInput"
-          v-model="name"
+          v-model:value="name"
           v-focus
           data-test="createSnapshotNameInput"
           class="input"
@@ -149,7 +149,7 @@ export default defineComponent({
         <label>{{ t('snapshots.create.description.label') }}</label>
         <TextAreaAutoGrow
           ref="descriptionInput"
-          v-model="description"
+          v-model:value="description"
           data-test="createSnapshotDescInput"
           class="input"
           :disabled="creating"

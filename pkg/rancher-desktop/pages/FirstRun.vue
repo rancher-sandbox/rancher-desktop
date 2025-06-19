@@ -8,7 +8,7 @@
       :value="hasVersions && settings.kubernetes.enabled"
       :is-locked="kubernetesLocked"
       :disabled="!hasVersions"
-      @input="handleDisableKubernetesCheckbox"
+      @update:value="handleDisableKubernetesCheckbox"
     />
     <rd-fieldset
       :legend-text="t('firstRun.kubernetesVersion.legend') + offlineCheck()"

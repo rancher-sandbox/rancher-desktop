@@ -27,7 +27,7 @@
               :value="showAll"
               :label="t('images.manager.table.label')"
               :disabled="!supportsShowAll"
-              @input="handleShowAllCheckbox"
+              @update:value="handleShowAllCheckbox"
             />
             <div v-if="supportsNamespaces">
               <label>Namespace</label>
@@ -266,6 +266,7 @@ export default {
           this.hideMenu();
         }
       },
+      deep: true,
     },
   },
 

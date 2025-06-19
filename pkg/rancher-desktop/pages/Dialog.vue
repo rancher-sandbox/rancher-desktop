@@ -78,7 +78,7 @@ export default defineComponent({
     >
       <slot name="checkbox">
         <checkbox
-          v-model="checkboxChecked"
+          v-model:value="checkboxChecked"
           :label="checkboxLabel"
         />
       </slot>

@@ -61,7 +61,7 @@ export default defineComponent({
         label="Allow to acquire administrative credentials (sudo access)"
         :value="isSudoAllowed"
         :is-locked="isPreferenceLocked('application.adminAccess')"
-        @input="onChange('application.adminAccess', $event)"
+        @update:value="onChange('application.adminAccess', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -73,7 +73,7 @@ export default defineComponent({
         label="Check for updates automatically"
         :value="canAutoUpdate"
         :is-locked="isPreferenceLocked('application.updater.enabled')"
-        @input="onChange('application.updater.enabled', $event)"
+        @update:value="onChange('application.updater.enabled', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -84,7 +84,7 @@ export default defineComponent({
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
         :value="preferences.application.telemetry.enabled"
         :is-locked="isPreferenceLocked('application.telemetry.enabled')"
-        @input="onChange('application.telemetry.enabled', $event)"
+        @update:value="onChange('application.telemetry.enabled', $event)"
       />
     </rd-fieldset>
   </div>

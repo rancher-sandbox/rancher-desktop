@@ -169,7 +169,7 @@ export default defineComponent({
                   :val="option.value"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
-                  @input="updateValue('virtualMachine.mount.type', $event)"
+                  @update:value="updateValue('virtualMachine.mount.type', $event)"
                 >
                   <template #label>
                     {{ option.label }}
@@ -200,7 +200,7 @@ export default defineComponent({
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.cacheMode.tooltip')"
         >
           <rd-select
-            :value="preferences.experimental.virtualMachine.mount['9p'].cacheMode"
+            :model-value="preferences.experimental.virtualMachine.mount['9p'].cacheMode"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.cacheMode')"
             @change="updateValue('experimental.virtualMachine.mount.9p.cacheMode', $event.target.value)"
           >
@@ -233,7 +233,7 @@ export default defineComponent({
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.protocolVersion.tooltip')"
         >
           <rd-select
-            :value="preferences.experimental.virtualMachine.mount['9p'].protocolVersion"
+            :model-value="preferences.experimental.virtualMachine.mount['9p'].protocolVersion"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.protocolVersion')"
             @change="updateValue('experimental.virtualMachine.mount.9p.protocolVersion', $event.target.value)"
           >
@@ -253,7 +253,7 @@ export default defineComponent({
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.securityModel.tooltip')"
         >
           <rd-select
-            :value="preferences.experimental.virtualMachine.mount['9p'].securityModel"
+            :model-value="preferences.experimental.virtualMachine.mount['9p'].securityModel"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.securityModel')"
             @change="updateValue('experimental.virtualMachine.mount.9p.securityModel', $event.target.value)"
           >

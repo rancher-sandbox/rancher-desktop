@@ -135,7 +135,7 @@ export default defineComponent({
                   :val="option.value"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
-                  @input="onChange('virtualMachine.type', $event)"
+                  @update:value="onChange('virtualMachine.type', $event)"
                 >
                   <template #label>
                     {{ option.label }}
@@ -165,7 +165,7 @@ export default defineComponent({
             :label="t('virtualMachine.useRosetta.label')"
             :value="preferences.virtualMachine.useRosetta"
             :is-locked="isPreferenceLocked('virtualMachine.useRosetta')"
-            @input="onChange('virtualMachine.useRosetta', $event)"
+            @update:value="onChange('virtualMachine.useRosetta', $event)"
           />
         </rd-fieldset>
       </div>

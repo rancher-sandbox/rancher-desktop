@@ -8,7 +8,7 @@
       :disabled="isInputDisabled"
       :placeholder="inputPlaceholder"
       :label="inputLabel"
-      @keyup.enter.native="submit"
+      @keyup.enter="submit"
     />
     <button
       class="btn role-primary btn-lg"
