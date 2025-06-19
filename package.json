@@ -21,7 +21,7 @@
     "lint:fix": "yarn lint:typescript:fix && yarn lint:go:fix && yarn lint:spelling",
     "lint:nofix": "yarn lint:typescript:nofix && yarn lint:go:nofix && yarn lint:spelling",
     "lint:typescript:fix": "yarn lint:typescript:nofix --fix",
-    "lint:typescript:nofix": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 NODE_OPTIONS='--max_old_space_size=8192 --experimental-strip-types' eslint --flag unstable_native_nodejs_ts_config --report-unused-disable-directives --max-warnings=0",
+    "lint:typescript:nofix": "node scripts/ts-wrapper.js scripts/lint-typescript.ts",
     "lint:go:fix": "node scripts/ts-wrapper.js scripts/lint-go.ts --fix",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "lint:spelling": "bash scripts/spelling.sh",
