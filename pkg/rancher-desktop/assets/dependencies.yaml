@@ -6,9 +6,9 @@ alpineLimaISO:
   alpineVersion: 3.21.3
 WSLDistro: "0.84"
 kuberlr: 0.6.0
-helm: 3.18.0
+helm: 3.18.3
 dockerCLI: 28.1.1
-dockerBuildx: 0.24.0
+dockerBuildx: 0.25.0
 dockerCompose: 2.37.1
 golangci-lint: 2.1.6
 trivy: 0.62.1
@@ -23,6 +23,6 @@ moproxy: 0.5.1
 spinShim: 0.19.0
 spinOperator: 0.5.0
 certManager: 1.17.2
-spinCLI: 3.3.0
+spinCLI: 3.3.1
 spinKubePlugin: 0.4.0
 check-spelling: 0.0.24
