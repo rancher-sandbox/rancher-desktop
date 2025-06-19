@@ -18,10 +18,8 @@ jest.mock('electron', () => {
   };
 });
 
-// eslint-disable-next-line import/first -- Need to mock first
 import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
-// eslint-disable-next-line import/first -- Need to mock first
 import paths from '@pkg/utils/paths';
 
 // Mock fs.promises.readdir() for the default export.

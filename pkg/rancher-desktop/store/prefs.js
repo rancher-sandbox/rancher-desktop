@@ -319,21 +319,18 @@ export const actions = {
         changed(fromClock());
       }
 
-      // eslint-disable-next-line deprecation/deprecation
       watchDark.addListener((e) => {
         if ( e.matches ) {
           changed('dark');
         }
       });
 
-      // eslint-disable-next-line deprecation/deprecation
       watchLight.addListener((e) => {
         if ( e.matches ) {
           changed('light');
         }
       });
 
-      // eslint-disable-next-line deprecation/deprecation
       watchNone.addListener((e) => {
         if ( e.matches ) {
           changed(fromClock());

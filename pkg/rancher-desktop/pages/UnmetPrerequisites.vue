@@ -19,7 +19,6 @@
 </template>
 
 <script lang="ts">
-/* eslint-disable no-redeclare -- Conflicts with TypeScript overloading */
 import Vue from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';

@@ -590,7 +590,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   /**
    * Copy a file from Windows to the WSL distribution.
    */
-  protected async wslInstall(windowsPath: string, targetDirectory: string, targetBasename: string = ''): Promise<void> {
+  protected async wslInstall(windowsPath: string, targetDirectory: string, targetBasename = ''): Promise<void> {
     const wslSourcePath = await this.wslify(windowsPath);
     const basename = path.basename(windowsPath);
     // Don't use `path.join` or the backslashes will come back.

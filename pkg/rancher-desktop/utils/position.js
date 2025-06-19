@@ -72,7 +72,6 @@ export function fitOnScreen(contentElem, triggerElemOrEvent, opt) {
   let trigger;
 
   if ( triggerElemOrEvent instanceof Event ) {
-    // eslint-disable-next-line deprecation/deprecation
     trigger = fakeRectFor(event);
   } else {
     trigger = boundingRect(triggerElemOrEvent);
