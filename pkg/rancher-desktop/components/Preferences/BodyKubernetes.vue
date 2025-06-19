@@ -106,7 +106,7 @@ export default defineComponent({
         label="Enable Kubernetes"
         :value="preferences.kubernetes.enabled"
         :is-locked="isPreferenceLocked('kubernetes.enabled')"
-        @input="onChange('kubernetes.enabled', $event)"
+        @update:value="onChange('kubernetes.enabled', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -116,7 +116,7 @@ export default defineComponent({
     >
       <rd-select
         class="select-k8s-version"
-        :value="kubernetesVersion"
+        :model-value="kubernetesVersion"
         :disabled="isKubernetesDisabled"
         :is-locked="isPreferenceLocked('kubernetes.version')"
         @change="onChange('kubernetes.version', $event.target.value)"
@@ -175,7 +175,7 @@ export default defineComponent({
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.options.traefik"
         :is-locked="isPreferenceLocked('kubernetes.options.traefik')"
-        @input="onChange('kubernetes.options.traefik', $event)"
+        @update:value="onChange('kubernetes.options.traefik', $event)"
       />
       <!-- Don't disable Spinkube option when Wasm is disabled; let validation deal with it  -->
       <rd-checkbox
@@ -184,7 +184,7 @@ export default defineComponent({
         :value="preferences.experimental.kubernetes.options.spinkube"
         :is-locked="isPreferenceLocked('experimental.kubernetes.options.spinkube')"
         :is-experimental="true"
-        @input="onChange('experimental.kubernetes.options.spinkube', $event)"
+        @update:value="onChange('experimental.kubernetes.options.spinkube', $event)"
       >
         <template v-if="spinOperatorIncompatible" #below>
           <banner color="warning">

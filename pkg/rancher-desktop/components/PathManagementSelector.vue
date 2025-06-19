@@ -78,7 +78,7 @@ export default defineComponent({
     :disabled="isLocked"
     :class="{ 'locked-radio' : isLocked }"
     class="path-management"
-    @input="updateVal"
+    @update:value="updateVal"
   >
     <template
       v-if="showLabel"
@@ -96,6 +96,7 @@ export default defineComponent({
         :disabled="isDisabled"
         :mode="mode"
         v-on="$listeners"
+        @update:value="updateVal(option.value)"
       >
         <template #description>
           <span v-html="option.description" />

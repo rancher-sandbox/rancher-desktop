@@ -29,7 +29,7 @@
             :label="'Include Kubernetes services'"
             :value="includeKubernetesServices"
             :disabled="!isRunning || kubernetesIsDisabled"
-            @input="handleCheckbox"
+            @update:value="handleCheckbox"
           />
         </div>
       </template>

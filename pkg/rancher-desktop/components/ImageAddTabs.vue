@@ -39,6 +39,8 @@ export default defineComponent({
     return { activeTab: 'pull' };
   },
 
+  emits: ['click'],
+
   methods: {
     tabSelected({ tab }: { tab: any }) {
       this.activeTab = tab.name;

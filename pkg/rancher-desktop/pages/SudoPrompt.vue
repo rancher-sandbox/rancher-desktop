@@ -32,7 +32,7 @@
     <p>{{ t('sudoPrompt.messageSecondPart') }}</p>
     <checkbox
       id="suppress"
-      v-model="suppress"
+      v-model:value="suppress"
       label="Always run without administrative access"
     />
     <button

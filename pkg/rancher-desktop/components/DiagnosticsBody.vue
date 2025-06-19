@@ -81,10 +81,15 @@ export default defineComponent({
       return `${ count } ${ units } ago`;
     },
     muteRow(isMuted: boolean, row: DiagnosticsResult) {
+      if (typeof isMuted !== 'boolean') {
+        // Because <toggle-switch> doesn't define an explicit list of events,
+        // it triggers from the underlying component too; ignore it.
+        return;
+      }
       this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {
-      this.$store.dispatch('preferences/setShowMuted', !this.showMuted as boolean);
+      this.$store.dispatch('preferences/setShowMuted', !this.showMuted);
     },
     toggleExpand(group: DiagnosticsCategory) {
       this.expanded[group] = !this.expanded[group];
@@ -106,7 +111,7 @@ export default defineComponent({
         <toggle-switch
           off-label="Show Muted"
           :value="showMuted"
-          @input="toggleMute"
+          @update:value="toggleMute"
         />
       </div>
       <div class="spacer" />
@@ -119,6 +124,7 @@ export default defineComponent({
       key-field="id"
       :headers="headers"
       :rows="filteredRows"
+      :paging="true"
       group-by="category"
       :search="false"
       :table-actions="false"
@@ -196,7 +202,7 @@ export default defineComponent({
             class="mute-toggle"
             :data-test="`diagnostics-mute-row-${row.id}`"
             :value="row.mute"
-            @input="muteRow($event, row)"
+            @update:value="muteRow($event, row)"
           />
         </td>
       </template>

@@ -2630,10 +2630,10 @@
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.29.tgz#5a40109a1ab5f84d6fd8fc928b19f367cbe7e7b1"
   integrity sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==
 
-"@rancher/components@0.1.4":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@rancher/components/-/components-0.1.4.tgz#12a85f7a2f3b8c609a2f2749bf909c22b3545ab6"
-  integrity sha512-i6v7ZM7AUl6TzTl+c0oz3+bjJDl2TdPirqxHeMoZSvERd9OkX+gmGYGTdD32mq5X5XatiWdlrfzd89nU7EwGAg==
+"@rancher/components@0.3.0-alpha.1":
+  version "0.3.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@rancher/components/-/components-0.3.0-alpha.1.tgz#86f570be89f84ab271bd3ca392b7bc57827e33c1"
+  integrity sha512-wqplnnHD4RUY1KO1zl9IZ8pZvVfY2MhgRWHsNaqAd17Y0Chylk9egsFveRJb0VBPOCwa3iu0ttFvl9mLIjvpHw==
   dependencies:
     lodash.debounce "4.0.8"
 

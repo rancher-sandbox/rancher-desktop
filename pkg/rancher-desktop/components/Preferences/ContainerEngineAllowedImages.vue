@@ -68,7 +68,7 @@ export default defineComponent({
         :label="t('allowedImages.enable')"
         :value="isAllowedImagesEnabled"
         :is-locked="isPreferenceLocked('containerEngine.allowedImages.enabled')"
-        @input="onChange('containerEngine.allowedImages.enabled', $event)"
+        @update:value="onChange('containerEngine.allowedImages.enabled', $event)"
       />
     </rd-fieldset>
     <string-list
@@ -76,9 +76,9 @@ export default defineComponent({
       :case-sensitive="false"
       :placeholder="t('allowedImages.patterns.placeholder')"
       :readonly="isPatternsFieldLocked"
-      :actions-position="'left'"
+      actions-position="left"
       :error-messages="patternsErrorMessages"
-      @change="onChange('containerEngine.allowedImages.patterns', $event)"
+      @change="Array.isArray($event) && onChange('containerEngine.allowedImages.patterns', $event)"
       @type:item="onType($event)"
       @errors="onDuplicate($event.duplicate)"
     />

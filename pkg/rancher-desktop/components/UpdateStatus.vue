@@ -4,7 +4,7 @@
       <version />
       <rd-checkbox
         v-if="updatePossible"
-        v-model="updatesEnabled"
+        v-model:value="updatesEnabled"
         class="updatesEnabled"
         label="Check for updates automatically"
         :is-locked="autoUpdateLocked"

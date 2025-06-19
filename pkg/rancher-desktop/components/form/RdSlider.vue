@@ -76,7 +76,7 @@ export default defineComponent({
       <vue-slider
         ref="memory"
         class="rd-slider-rail"
-        :value="value"
+        :modelValue="value"
         :min="min"
         :max="max"
         :interval="interval"

@@ -38,7 +38,7 @@ export default defineComponent({
         :label="t('application.behavior.autoStart.label')"
         :value="preferences.application.autoStart"
         :is-locked="isPreferenceLocked('application.autoStart')"
-        @input="onChange('application.autoStart', $event)"
+        @update:value="onChange('application.autoStart', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -51,13 +51,13 @@ export default defineComponent({
         :label="t('application.behavior.startInBackground.label')"
         :value="preferences.application.startInBackground"
         :is-locked="isPreferenceLocked('application.startInBackground')"
-        @input="onChange('application.startInBackground', $event)"
+        @update:value="onChange('application.startInBackground', $event)"
       />
       <rd-checkbox
         :label="t('application.behavior.windowQuitOnClose.label')"
         :value="preferences.application.window.quitOnClose"
         :is-locked="isPreferenceLocked('application.window.quitOnClose')"
-        @input="onChange('application.window.quitOnClose', $event)"
+        @update:value="onChange('application.window.quitOnClose', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -68,7 +68,7 @@ export default defineComponent({
         :label="t('application.behavior.notificationIcon.label')"
         :value="preferences.application.hideNotificationIcon"
         :is-locked="isPreferenceLocked('application.hideNotificationIcon')"
-        @input="onChange('application.hideNotificationIcon', $event)"
+        @update:value="onChange('application.hideNotificationIcon', $event)"
       />
     </rd-fieldset>
   </div>
