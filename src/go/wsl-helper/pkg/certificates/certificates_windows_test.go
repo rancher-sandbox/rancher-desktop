@@ -6,9 +6,10 @@ import (
 	"encoding/pem"
 	"testing"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/certificates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/certificates"
 )
 
 // Test that we don't use memory that we don't own

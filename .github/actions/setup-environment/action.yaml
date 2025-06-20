@@ -42,15 +42,28 @@ runs:
         chmod a+x "$bindir/yq.exe"
       fi
 
+  - name: "Linux: Determine whether sudo is required"
+    if: runner.os == 'Linux'
+    shell: bash
+    id: sudo
+    run: |
+      if [[ $(id --user) -eq 0 ]]; then
+        echo "sudo=exec" >> "$GITHUB_OUTPUT"
+        # Fix for https://github.com/rocky-linux/sig-cloud-instance-images/issues/56
+        chmod u+r /etc/shadow
+      else
+        echo "sudo=sudo" >> "$GITHUB_OUTPUT"
+      fi
+
   - name: "Linux: Enable KVM access"
     if: runner.os == 'Linux'
     shell: bash
-    run: sudo chmod a+rwx /dev/kvm
+    run: ${{ steps.sudo.outputs.sudo }} chmod a+rwx /dev/kvm
 
   - name: "Linux: Set unprivileged port start to 80"
     if: runner.os == 'Linux'
     shell: bash
-    run: sudo sysctl -w net.ipv4.ip_unprivileged_port_start=80
+    run: ${{ steps.sudo.outputs.sudo }} sysctl -w net.ipv4.ip_unprivileged_port_start=80
 
   - name: "Linux: Initialize pass"
     if: runner.os == 'Linux'
@@ -60,14 +73,14 @@ runs:
       for id in $ID $ID_LIKE; do
         case $id in
           suse|opensuse)
-            sudo zypper --non-interactive install password-store
+            ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install password-store
             break;;
           rocky|rhel|centos)
-            sudo dnf install --assumeyes pass
+            ${{ steps.sudo.outputs.sudo }} dnf install --assumeyes pass
             break;;
           debian|ubuntu)
-            sudo apt-get update
-            sudo apt-get install pass
+            ${{ steps.sudo.outputs.sudo }} apt-get update
+            ${{ steps.sudo.outputs.sudo }} apt-get install pass
             break;;
         esac
       done

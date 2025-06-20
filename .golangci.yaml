@@ -1,6 +1,5 @@
 version: "2"
 linters:
-  default: none
   enable:
     - bodyclose
     - copyloopvar
@@ -10,6 +9,7 @@ linters:
     - goconst
     - gocritic
     - goprintffuncname
+    - gosec
     - govet
     - ineffassign
     - misspell
@@ -25,9 +25,6 @@ linters:
   settings:
     dupl:
       threshold: 100
-    funlen:
-      lines: 100
-      statements: 50
     goconst:
       min-len: 2
       min-occurrences: 3
@@ -35,19 +32,16 @@ linters:
       disabled-checks:
         - dupImport # https://github.com/go-critic/go-critic/issues/845
         - ifElseChain
-        - importShadow # "forwarder", "tracker", etc. -- to be resolved later.
-        - octalLiteral
         - unnamedResult
-        - whyNoLint
-        - wrapperFunc
       enabled-tags:
         - diagnostic
         - experimental
         - opinionated
         - performance
         - style
-    gocyclo:
-      min-complexity: 15
+    gosec:
+      config:
+        G306: "0644"
     mnd:
       # don't include the "operation" and "assign"
       checks:
@@ -66,7 +60,6 @@ linters:
         - ^os\.FileMode$
         - ^os\.Mkdir(?:All)?$
         - ^os\.(?:Open|Write)File$
-        - ^s\.waitForAppToDieOrKillIt$
         - ^strings\.SplitN$
         - ^tabwriter\.NewWriter$
         - ^utils\.GetParentDir$
@@ -150,6 +143,12 @@ linters:
 formatters:
   enable:
     - gofmt
-    - goimports
+    - gci
   exclusions:
     generated: lax
+  settings:
+    gci:
+      sections:
+      - standard
+      - default
+      - prefix(github.com/rancher-sandbox/rancher-desktop) # localmodule for go.work

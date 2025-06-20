@@ -7,7 +7,6 @@
 /e2e/reports/
 /go.work.sum
 /node_modules/
-/pkg/rancher-desktop/nuxt/
 /resources/cert-manager*
 /resources/darwin/
 /resources/host/

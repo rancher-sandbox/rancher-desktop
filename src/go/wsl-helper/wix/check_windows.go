@@ -19,8 +19,9 @@ package main
 import (
 	"context"
 
-	wslutils "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/wsl-utils"
 	"github.com/sirupsen/logrus"
+
+	wslutils "github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/wsl-utils"
 )
 
 const (

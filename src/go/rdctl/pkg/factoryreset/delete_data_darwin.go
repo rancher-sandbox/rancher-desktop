@@ -5,10 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/process"
-	"github.com/sirupsen/logrus"
 )
 
 func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCache bool) error {

@@ -29,9 +29,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 // ConnectionInfo stores the parameters needed to connect to an HTTP server

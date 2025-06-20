@@ -13,7 +13,6 @@ export default Vue.extend({
   <tabbed
     v-bind="$attrs"
     class="action-tabs"
-    :no-content="true"
     v-on="$listeners"
   >
     <slot name="tabs"></slot>

@@ -265,6 +265,7 @@ func configureVMSwitch(
 		args = append(args, "-debug")
 	}
 
+	//nolint:gosec // Arguments are ultimately controlled by our configs.
 	vmSwitchCmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	vmSwitchCmd.Stdout = os.Stdout
 	vmSwitchCmd.Stderr = os.Stderr
@@ -348,7 +349,7 @@ func unshareCmd(ctx context.Context, ns netns.NsHandle, args string) error {
 func writeWSLInitPid(pid int) error {
 	unsharePID := strconv.Itoa(pid)
 
-	writePermission := 0600
+	writePermission := 0o600
 	err := os.WriteFile("/run/wsl-init.pid", []byte(unsharePID), fs.FileMode(writePermission))
 	if err != nil {
 		return err

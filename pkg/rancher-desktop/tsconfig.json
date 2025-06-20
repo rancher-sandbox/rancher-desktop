@@ -23,16 +23,14 @@
     "typeRoots": [
       "../../node_modules",
       "../../node_modules/@types",
-    ],    
+    ],
     "types": [
-      "@nuxt/types",
       "@types/node",
       "@types/jest"
     ]
   },
   "exclude": [
     "node_modules",
-    ".nuxt",
     "dist",
     "babel.config.js"
   ]

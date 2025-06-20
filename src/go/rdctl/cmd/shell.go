@@ -27,14 +27,15 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"golang.org/x/text/encoding/unicode"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/lima"
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/wsl"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"golang.org/x/text/encoding/unicode"
 )
 
 // shellCmd represents the shell command
@@ -145,6 +146,7 @@ func checkLimaIsRunning(commandName string) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
+	//nolint:gosec // The command name is auto-detected, and the instance name is constant.
 	cmd := exec.Command(commandName, "ls", lima.InstanceName, "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

@@ -23,9 +23,10 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
 func TestGetApplicationDirectory(t *testing.T) {

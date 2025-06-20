@@ -17,6 +17,7 @@ import (
 	"text/template"
 
 	"github.com/adrg/xdg"
+
 	p "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
@@ -51,7 +52,7 @@ func init() {
 }
 
 func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
-	err := os.MkdirAll(autostartDirPath, 0755)
+	err := os.MkdirAll(autostartDirPath, 0o755)
 	if err != nil {
 		return err
 	}
@@ -66,7 +67,7 @@ func EnsureAutostart(ctx context.Context, autostartDesired bool) error {
 			return fmt.Errorf("failed to get desired contents of autostart .desktop file: %w", err)
 		}
 		if !bytes.Equal(currentContents, desiredContents) {
-			err = os.WriteFile(autostartFilePath, desiredContents, 0644)
+			err = os.WriteFile(autostartFilePath, desiredContents, 0o644)
 			if err != nil {
 				return fmt.Errorf("failed to write autostart .desktop file: %w", err)
 			}

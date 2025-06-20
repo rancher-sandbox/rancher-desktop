@@ -19,8 +19,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/version"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/version"
 )
 
 // showVersionCmd represents the showVersion command

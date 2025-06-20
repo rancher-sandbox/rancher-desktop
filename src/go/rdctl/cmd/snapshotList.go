@@ -9,8 +9,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/snapshot"
 )
 
 const (

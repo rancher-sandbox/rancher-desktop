@@ -9,13 +9,13 @@ export default Vue.extend({
   name:       'diagnostics',
   components: { DiagnosticsBody },
 
-  async fetch() {
+  computed: mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
+  async beforeMount() {
     const credentials = await this.$store.dispatch('credentials/fetchCredentials');
 
     await this.$store.dispatch('preferences/fetchPreferences', credentials);
     await this.$store.dispatch('diagnostics/fetchDiagnostics', credentials);
   },
-  computed: mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
   mounted() {
     this.$store.dispatch(
       'page/setHeader',

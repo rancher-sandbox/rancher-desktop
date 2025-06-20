@@ -24,6 +24,7 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
 	limaiptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
@@ -42,10 +43,10 @@ type Iptables struct {
 	updateInterval time.Duration
 }
 
-func New(ctx context.Context, tracker tracker.Tracker, iptablesScanner Scanner, listenerIP net.IP, updateInterval time.Duration) *Iptables {
+func New(ctx context.Context, apiTracker tracker.Tracker, iptablesScanner Scanner, listenerIP net.IP, updateInterval time.Duration) *Iptables {
 	return &Iptables{
 		context:        ctx,
-		apiTracker:     tracker,
+		apiTracker:     apiTracker,
 		scanner:        iptablesScanner,
 		listenerIP:     listenerIP,
 		updateInterval: updateInterval,

@@ -6,8 +6,8 @@
         :key="item.route"
         :item="item.route"
       >
-        <NuxtLink
-          :class="{'nuxt-link-active': isRouteActive(item.route) }"
+        <RouterLink
+          :class="{'rd-link-active': isRouteActive(item.route) }"
           :to="item.route"
         >
           {{ routes[item.route].name }}
@@ -25,13 +25,13 @@
             }"
             :class="`icon icon-flask`"
           />
-        </NuxtLink>
+        </RouterLink>
       </li>
     </ul>
     <hr v-if="extensionsWithUI.length">
     <div class="nav-extensions">
       <template v-for="extension in extensionsWithUI">
-        <nuxt-link
+        <RouterLink
           :key="extension.id"
           :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
           :to="extensionRoute(extension)"
@@ -42,7 +42,7 @@
             </template>
             {{ extension.metadata.ui['dashboard-tab'].title }}
           </nav-item>
-        </nuxt-link>
+        </RouterLink>
       </template>
     </div>
     <div class="nav-button-container">
@@ -63,7 +63,6 @@
 <script lang="ts">
 import os from 'os';
 
-import { NuxtApp } from '@nuxt/types/app';
 import { BadgeState } from '@rancher/components';
 import Vue, { PropType } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
@@ -73,6 +72,7 @@ import NavItem from './NavItem.vue';
 
 import DashboardButton from '@pkg/components/DashboardOpen.vue';
 import PreferencesButton from '@pkg/components/Preferences/ButtonOpen.vue';
+import router from '@pkg/entry/router';
 import type { ExtensionState } from '@pkg/store/extensions';
 import { hexEncode } from '@pkg/utils/string-encode';
 
@@ -93,8 +93,7 @@ export default Vue.extend({
       type:      Array as PropType<{route: string; error?: number; experimental?: boolean}[]>,
       required:  true,
       validator: (value: {route: string, error?: number}[]) => {
-        const nuxt: NuxtApp = (global as any).$nuxt;
-        const routes = nuxt.$router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
+        const routes = router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
           paths[route.path] = route;
 
           return paths;
@@ -117,12 +116,10 @@ export default Vue.extend({
     },
   },
   data() {
-    const nuxt: NuxtApp = (this as any).$nuxt;
-
     return {
       // Generate a route (path) to route entry mapping, so that we can pick out
       // their names based on the paths given.
-      routes: nuxt.$router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
+      routes: this.$router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
         paths[route.path] = route;
         if (route.name === 'Supporting Utilities' && os.platform() === 'win32') {
           route.name = 'WSL Integrations';
@@ -156,15 +153,13 @@ export default Vue.extend({
     },
     isRouteActive(route: string): boolean {
       // It is needed e.g. for sub-route /images/add not matching /Images
-      const nuxt: NuxtApp = (this as any).$nuxt;
-
       // Prevents the parent item "Extensions" to be shown as active if an extension child (e.g. Epinio, Logs Explorer,
       // ...) is selected.
-      if (nuxt.$route.name !== 'rdx-root-src-id') {
-        return nuxt.$route.path.split('/')[1] === route.substring(1).toLowerCase();
+      if (this.$route.name === 'rdx-root-src-id') {
+        return false;
       }
 
-      return false;
+      return this.$route.path.toLowerCase().startsWith(route.toLowerCase());
     },
     openPreferences(): void {
       this.$emit('open-preferences');
@@ -216,7 +211,7 @@ ul {
             outline: none;
         }
 
-        a.nuxt-link-active {
+        a:is(.router-link-active, .rd-link-active) {
             background-color: var(--nav-active);
         }
     }
@@ -227,7 +222,7 @@ a {
     text-decoration: none;
   }
 
-  &.nuxt-link-active::v-deep div {
+  &:is(.router-link-active, .rd-link-active)::v-deep div {
     background-color: var(--nav-active);
   }
 }

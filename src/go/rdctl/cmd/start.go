@@ -23,10 +23,11 @@ import (
 	"runtime"
 	"strings"
 
-	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 // startCmd represents the start command

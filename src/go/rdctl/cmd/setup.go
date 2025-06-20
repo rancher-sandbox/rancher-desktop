@@ -3,8 +3,9 @@ package cmd
 import (
 	"errors"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/autostart"
 )
 
 var setupSettings struct {

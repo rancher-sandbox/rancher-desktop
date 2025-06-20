@@ -126,6 +126,9 @@ jobs:
           if [[ $name =~ ^[0-9]+_ ]]; then
               name="${name#*_}"
           fi
+          if [[ name == "intro" ]]; then
+            continue
+          fi
           out="out/${window}/${platform}_${name}"
           mkdir -p "$(dirname "$out")"
           cp "$line" "$out"
@@ -137,9 +140,7 @@ jobs:
         # image on the right, each showing Kubernetes settings.
         sudo DEBIAN_FRONTEND=noninteractive apt-get install graphicsmagick # spellcheck-ignore-line
         mkdir -p out/getting-started
-        gm composite -gravity center in/darwin/light/preferences/*_kubernetes.png in/darwin/light/main/*_General.png darwin.png
-        gm composite -gravity center in/win32/light/preferences/*_kubernetes.png in/win32/light/main/*_General.png win32.png
-        gm convert darwin.png win32.png +append out/getting-started/introduction_preferences_tabKubernetes.png
+        gm convert in/darwin/light/main/*_intro.png in/win32/light/main/*_intro.png +append out/getting-started/introduction_preferences_tabKubernetes.png
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: screenshots.zip

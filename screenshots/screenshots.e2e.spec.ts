@@ -59,7 +59,7 @@ test.describe.serial('Main App Test', () => {
     await page.waitForTimeout(2500);
 
     await retry(async() => {
-      await tool('rdctl', 'extension', 'install', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
+      await tool('rdctl', 'extension', 'install', 'splatform/epinio-docker-desktop');
     }, { tries: 5 });
     await retry(async() => {
       await tool('rdctl', 'extension', 'install', 'docker/logs-explorer-extension');
@@ -72,7 +72,7 @@ test.describe.serial('Main App Test', () => {
 
   test.afterAll(async({ colorScheme }, testInfo) => {
     await clearUserProfile();
-    await tool('rdctl', 'extension', 'uninstall', 'ghcr.io/rancher-sandbox/epinio-desktop-extension');
+    await tool('rdctl', 'extension', 'uninstall', 'splatform/epinio-docker-desktop');
     await tool('rdctl', 'extension', 'uninstall', 'docker/logs-explorer-extension');
 
     return teardown(electronApp, testInfo);
@@ -366,5 +366,37 @@ test.describe.serial('Main App Test', () => {
       await preferencesPage.waitForTimeout(250);
       await prefScreenshot.take('kubernetes', 'lockedFields');
     });
+  });
+
+  test('Intro Image', async({ colorScheme }) => {
+    await navPage.navigateTo('General');
+    const bounds = await navPage.page.evaluate(() => {
+      window.resizeTo(1024, 768);
+
+      return {
+        top: window.screenTop, left: window.screenLeft, width: window.outerWidth, height: window.outerHeight,
+      };
+    });
+
+    await navPage.preferencesButton.click();
+    await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+    const preferencesPage = electronApp.windows()[1];
+
+    await preferencesPage.evaluate((bounds) => {
+      const {
+        top, left, width, height,
+      } = bounds;
+
+      window.moveTo(left + (width - window.outerWidth) / 2, top + (height - window.outerHeight) / 2);
+    }, bounds);
+
+    try {
+      await preferencesPage.emulateMedia({ colorScheme });
+      await preferencesPage.waitForTimeout(250);
+      await preferencesPage.bringToFront();
+      await screenshot.take('intro', true);
+    } finally {
+      preferencesPage.close({ runBeforeUnload: true });
+    }
   });
 });
