@@ -4,7 +4,7 @@ import { uniq } from '@pkg/utils/array';
 /**
  * Always sort by something, this is the best guess on properties
  *
- * Can be overriden
+ * Can be overridden
  */
 const DEFAULT_MANDATORY_SORT = ['nameSort', 'id'];
 

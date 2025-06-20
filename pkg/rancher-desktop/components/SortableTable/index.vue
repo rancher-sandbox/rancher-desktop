@@ -314,7 +314,7 @@ export default {
       default: false
     },
     /**
-     * Manaul force the update of live and delayed cells. Change this number to kick off the update
+     * Manually force the update of live and delayed cells. Change this number to kick off the update
      */
     forceUpdateLiveAndDelayed: {
       type:    Number,
@@ -472,7 +472,7 @@ export default {
           if (neu) {
             this._altLoadingDelayTimer = setTimeout(() => {
               this.isLoading = true;
-            }, 200); // this should be higher than the targetted quick response
+            }, 200); // this should be higher than the targeted quick response
           } else {
             clearTimeout(this._altLoadingDelayTimer);
             this.isLoading = false;
@@ -579,7 +579,7 @@ export default {
 
       // handle cols visibility and filtering if there is advanced filtering
       if (this.hasAdvancedFiltering) {
-        const cols = this.handleColsVisibilyAndFiltering(out);
+        const cols = this.handleColsVisibilityAndFiltering(out);
 
         return cols;
       }
@@ -619,12 +619,12 @@ export default {
     },
 
     hasDelayedColumns() {
-      const delaeydColumns = this.columns.find((c) => c.delayLoading);
+      const delayedColumns = this.columns.find((c) => c.delayLoading);
 
-      return !!delaeydColumns;
+      return !!delayedColumns;
     },
 
-    columnFormmatterIDs() {
+    columnFormatterIDs() {
       const columnsIds = {};
 
       this.columns.forEach((c) => {
@@ -640,7 +640,7 @@ export default {
     // ensures we only call methods like `valueFor` once
     displayRows() {
       const rows = [];
-      const columnFormmatterIDs = this.columnFormmatterIDs;
+      const columnFormatterIDs = this.columnFormatterIDs;
 
       this.groupedRows.forEach((grp) => {
         const group = {
@@ -697,7 +697,7 @@ export default {
               delayed:   c.delayLoading,
               live:      c.formatter?.startsWith('Live') || c.liveUpdates,
               label:     this.labelFor(c),
-              dasherize: columnFormmatterIDs[c.formatter] || '',
+              dasherize: columnFormatterIDs[c.formatter] || '',
             });
           });
         });
@@ -958,7 +958,7 @@ export default {
     handleActionButtonClick(i, event) {
       // Each row in the table gets its own ref with
       // a number based on its index. If you are using
-      // an ActionMenu that doen't have a dependency on Vuex,
+      // an ActionMenu that doesn't have a dependency on Vuex,
       // these refs are useful because you can reuse the
       // same ActionMenu component on a page with many different
       // target elements in a list,

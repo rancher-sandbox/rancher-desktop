@@ -23,8 +23,8 @@ export function onClickOption(option, e) {
   }
 }
 
-// This is a simpler positionner for the dropdown for a select control
-// We used to use popper for these, but it does not suppotr fractional pixel placements which
+// This is a simpler positioner for the dropdown for a select control
+// We used to use popper for these, but it does not support fractional pixel placements which
 // means the dropdown does not appear aligned to the control when placed in a column-based layout
 export function calculatePosition(dropdownList, component, width, placement) {
   const selectEl = component.$parent.$el;

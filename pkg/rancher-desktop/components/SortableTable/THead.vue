@@ -102,7 +102,7 @@ export default {
         // check if user clicked outside the table cols options box
         window.addEventListener('click', this.onClickOutside);
 
-        // update filtering options and toggable cols every time dropdown is open
+        // update filtering options and toggleable cols every time dropdown is open
         this.$emit('update-cols-options');
       } else {
         // unregister click event
