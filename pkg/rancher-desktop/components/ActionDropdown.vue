@@ -5,18 +5,18 @@ export default {
   props: {
     size: {
       type:    String,
-      default: '', // possible values are xs, sm, lg. empty is default .btn
+      default: '' // possible values are xs, sm, lg. empty is default .btn
     },
     // whether this is a button and dropdown (default) or dropdown that looks like a button/dropdown
     dualAction: {
       type:    Boolean,
-      default: true,
+      default: true
     },
 
     disableButton: {
       type:    Boolean,
-      default: false,
-    },
+      default: false
+    }
   },
 
   computed: {
@@ -41,28 +41,28 @@ export default {
       }
 
       return out;
-    },
+    }
   },
 
   methods: {
     hasSlot(name = 'default') {
-      return !!this.$slots[name];
+      return !!this.$slots[name] || !!this.$slots.name();
     },
 
     // allows parent components to programmatically open the dropdown
     togglePopover() {
       // this.$refs.popoverButton.click();
     },
-  },
+  }
 };
 </script>
 <template>
   <div class="dropdown-button-group">
     <div
-      class="dropdown-button bg-primary btn-role-primary"
+      class="dropdown-button bg-primary"
       :class="{'one-action':!dualAction, [buttonSize]:true, 'disabled': disableButton}"
     >
-      <v-popover
+      <v-dropdown
         placement="bottom"
         :container="false"
         :disabled="disableButton"
@@ -70,7 +70,7 @@ export default {
       >
         <slot
           name="button-content"
-          :button-size="buttonSize"
+          :buttonSize="buttonSize"
         >
           <button
             ref="popoverButton"
@@ -85,7 +85,7 @@ export default {
         <template #popover>
           <slot name="popover-content" />
         </template>
-      </v-popover>
+      </v-dropdown>
     </div>
   </div>
 </template>

@@ -1,8 +1,7 @@
-import $ from 'jquery';
-
-import { filterBy } from '@pkg/utils/array';
-import { get } from '@pkg/utils/object';
 import { isMore, isRange, suppressContextMenu, isAlternate } from '@pkg/utils/platform';
+import { get } from '@pkg/utils/object';
+import { filterBy } from '@pkg/utils/array';
+import { getParent } from '@pkg/utils/dom';
 
 export const ALL = 'all';
 export const SOME = 'some';
@@ -10,23 +9,23 @@ export const NONE = 'none';
 
 export default {
   mounted() {
-    const $table = $('> TABLE', this.$el);
+    const table = this.$el.querySelector('TABLE');
 
     this._onRowClickBound = this.onRowClick.bind(this);
     this._onRowMousedownBound = this.onRowMousedown.bind(this);
     this._onRowContextBound = this.onRowContext.bind(this);
 
-    $table.on('click', '> TBODY > TR', this._onRowClickBound);
-    $table.on('mousedown', '> TBODY > TR', this._onRowMousedownBound);
-    $table.on('contextmenu', '> TBODY > TR', this._onRowContextBound);
+    table.addEventListener('click', this._onRowClickBound);
+    table.addEventListener('mousedown', this._onRowMousedownBound);
+    table.addEventListener('contextmenu', this._onRowContextBound);
   },
 
-  beforeUnmount() {
-    const $table = $('> TABLE', this.$el);
+  beforeDestroy() {
+    const table = this.$el.querySelector('TABLE');
 
-    $table.off('click', '> TBODY > TR', this._onRowClickBound);
-    $table.off('mousedown', '> TBODY > TR', this._onRowMousedownBound);
-    $table.off('contextmenu', '> TBODY > TR', this._onRowContextBound);
+    table.removeEventListener('click', this._onRowClickBound);
+    table.removeEventListener('mousedown', this._onRowMousedownBound);
+    table.removeEventListener('contextmenu', this._onRowContextBound);
   },
 
   computed: {
@@ -47,9 +46,10 @@ export default {
     // NOTE: The logic here could be simplified and made more performant
     bulkActionsForSelection() {
       let disableAll = false;
+
       // pagedRows is all rows in the current page
       const all = this.pagedRows;
-      const allRows = this.arrangedRows;
+      const allRows = this.arrangedRows || all;
       let selected = this.selectedRows;
 
       // Nothing is selected
@@ -100,14 +100,14 @@ export default {
         const actionEnabledForSomeSelected = this.selectedRows.some((node) => {
           const availableActions = node.availableActions || [];
 
-          return availableActions.some(action => action.action === bulkAction.action && action.enabled);
+          return availableActions.some((action) => action.action === bulkAction.action && action.enabled);
         });
 
         bulkAction.enabled = this.selectedRows.length > 0 && actionEnabledForSomeSelected;
       });
 
       return out.sort((a, b) => (b.weight || 0) - (a.weight || 0));
-    },
+    }
   },
 
   data() {
@@ -134,7 +134,7 @@ export default {
       }
 
       this.update([], toRemove);
-    },
+    }
   },
 
   methods: {
@@ -157,31 +157,31 @@ export default {
     },
 
     onRowMouseEnter(e) {
-      const tr = $(e.target).closest('TR');
+      const tr = e.target.closest('TR');
 
-      if (tr.hasClass('sub-row')) {
-        const trMainRow = tr.prev('TR');
+      if (tr.classList.contains('sub-row')) {
+        const trMainRow = tr.previousElementSibling;
 
-        trMainRow.toggleClass('sub-row-hovered', true);
+        trMainRow.classList.add('sub-row-hovered');
       }
     },
 
     onRowMouseLeave(e) {
-      const tr = $(e.target).closest('TR');
+      const tr = e.target.closest('TR');
 
-      if (tr.hasClass('sub-row')) {
-        const trMainRow = tr.prev('TR');
+      if (tr.classList.contains('sub-row')) {
+        const trMainRow = tr.previousElementSibling;
 
-        trMainRow.toggleClass('sub-row-hovered', false);
+        trMainRow.classList.remove('sub-row-hovered');
       }
     },
 
     nodeForEvent(e) {
       const tagName = e.target.tagName;
-      const tgt = $(e.target);
-      const actionElement = tgt.closest('.actions')[0];
+      const tgt = e.target;
+      const actionElement = tgt.closest('.actions');
 
-      if ( tgt.hasClass('select-all-check') ) {
+      if ( tgt.classList.contains('select-all-check') ) {
         return;
       }
 
@@ -189,52 +189,52 @@ export default {
         if (
           tagName === 'A' ||
           tagName === 'BUTTON' ||
-          tgt.parents('.btn').length
+          getParent(tgt, '.btn')
         ) {
           return;
         }
       }
 
-      const tgtRow = $(e.currentTarget);
+      const tgtRow = e.target.closest('TR');
 
       return this.nodeForRow(tgtRow);
     },
 
     nodeForRow(tgtRow) {
-      if ( tgtRow?.hasClass('separator-row') ) {
+      if ( tgtRow?.classList.contains('separator-row') ) {
         return;
       }
 
-      while ( tgtRow && tgtRow.length && !tgtRow.hasClass('main-row') ) {
-        tgtRow = tgtRow.prev();
+      while ( tgtRow && !tgtRow.classList.contains('main-row') ) {
+        tgtRow = tgtRow.previousElementSibling;
       }
 
-      if ( !tgtRow || !tgtRow.length ) {
+      if ( !tgtRow ) {
         return;
       }
 
-      const nodeId = tgtRow.data('node-id');
+      const nodeId = tgtRow.dataset.nodeId;
 
       if ( !nodeId ) {
         return;
       }
 
-      const node = this.pagedRows.find( x => get(x, this.keyField) === nodeId );
+      const node = this.pagedRows.find( (x) => get(x, this.keyField) === nodeId );
 
       return node;
     },
 
     async onRowClick(e) {
       const node = this.nodeForEvent(e);
-      const td = $(e.target).closest('TD');
-      const skipSelect = td.hasClass('skip-select');
+      const td = e.target.closest('TD');
+      const skipSelect = td?.classList.contains('skip-select');
 
       if (skipSelect) {
         return;
       }
       const selection = this.selectedRows;
-      const isCheckbox = this.isSelectionCheckbox(e.target) || td.hasClass('row-check');
-      const isExpand = td.hasClass('row-expand');
+      const isCheckbox = this.isSelectionCheckbox(e.target) || td?.classList.contains('row-check');
+      const isExpand = td?.classList.contains('row-expand');
       const content = this.pagedRows;
 
       this.$emit('rowClick', e);
@@ -249,28 +249,31 @@ export default {
         return;
       }
 
-      const actionElement = $(e.target).closest('.actions')[0];
+      const actionElement = e.target.closest('.actions');
 
       if ( actionElement ) {
         let resources = [node];
 
         if ( this.mangleActionResources ) {
-          const i = $('i', actionElement);
+          const i = actionElement.querySelector('i');
 
-          i.removeClass('icon-actions');
-          i.addClass(['icon-spinner', 'icon-spin']);
+          i.classList.remove('icon-actions');
+          i.classList.add('icon-spinner');
+          i.classList.add('icon-spin');
 
           try {
             resources = await this.mangleActionResources(resources);
           } finally {
-            i.removeClass(['icon-spinner', 'icon-spin']);
-            i.addClass('icon-actions');
+            i.classList.remove('icon-spinner');
+            i.classList.remove('icon-spin');
+            i.classList.add('icon-actions');
           }
         }
 
         this.$store.commit(`action-menu/show`, {
           resources,
-          event: e.originalEvent || e, // Handle jQuery event and raw event
+          event: e,
+          elem:  actionElement
         });
 
         return;
@@ -332,7 +335,7 @@ export default {
 
       this.$store.commit(`action-menu/show`, {
         resources,
-        event: e.originalEvent,
+        event: e,
       });
     },
 
@@ -356,7 +359,7 @@ export default {
     isSelectionCheckbox(element) {
       return element.tagName === 'INPUT' &&
         element.type === 'checkbox' &&
-        ($(element).closest('.selection-checkbox').length > 0);
+        element.closest('.selection-checkbox') !== null;
     },
 
     nodesBetween(a, b) {
@@ -398,6 +401,9 @@ export default {
         toToggle = content.slice(from, to + 1);
       }
 
+      // check if there is already duplicate content selected (selectedRows) on the list to toggle...
+      toToggle = toToggle.filter((item) => !this.selectedRows.includes(item));
+
       return toToggle;
     },
 
@@ -411,7 +417,7 @@ export default {
           if ( rows[j] === node ) {
             return {
               group: i,
-              item:  j,
+              item:  j
             };
           }
         }
@@ -435,14 +441,16 @@ export default {
 
     update(toAdd, toRemove) {
       toRemove.forEach((row) => {
-        const index = this.selectedRows.findIndex(r => r === row);
+        const index = this.selectedRows.findIndex((r) => r === row);
 
         if (index !== -1) {
           this.selectedRows.splice(index, 1);
         }
       });
 
-      this.selectedRows.push(...toAdd);
+      if ( toAdd ) {
+        this.selectedRows.push(...toAdd);
+      }
 
       // Uncheck and check the checkboxes of nodes that have been added/removed
       if (toRemove.length) {
@@ -471,20 +479,24 @@ export default {
 
       if ( id ) {
         // Note: This is looking for the checkbox control for the row
-        const input = $(`div[data-checkbox-ctrl][data-node-id="${ id }"]`);
+        const input = this.$el.querySelector(`div[data-checkbox-ctrl][data-node-id="${ id }"]`);
 
-        if ( input && input.length && !input[0].disabled ) {
-          const label = $(input[0]).find('label');
+        if ( input && !input.disabled ) {
+          const label = input.querySelector('label');
 
           if (label) {
-            label.prop('value', on);
+            label.value = on;
           }
           let tr = input.closest('tr');
           let first = true;
 
-          while ( tr && (first || tr.hasClass('sub-row') ) ) {
-            tr.toggleClass('row-selected', on);
-            tr = tr.next();
+          while ( tr && (first || tr.classList.contains('sub-row') ) ) {
+            if (on) {
+              tr.classList.add('row-selected');
+            } else {
+              tr.classList.remove('row-selected');
+            }
+            tr = tr.nextElementSibling;
             first = false;
           }
         }
@@ -494,23 +506,23 @@ export default {
     select(nodes) {
       nodes.forEach((node) => {
         const id = get(node, this.keyField);
-        const input = $(`label[data-node-id="${ id }"]`);
+        const input = this.$el.querySelector(`label[data-node-id="${ id }"]`);
 
-        input.trigger('click');
+        input.dispatchEvent(new Event('click'));
       });
     },
 
     applyTableAction(action, args, event) {
-      const opts = { alt: event && isAlternate(event) };
+      const opts = { alt: event && isAlternate(event), event };
 
       // Go through the table selection and filter out those actions that can't run the chosen action
       const executableSelection = this.selectedRows.filter((row) => {
-        const matchingResourceAction = row.availableActions.find(a => a.action === action.action);
+        const matchingResourceAction = row.availableActions.find((a) => a.action === action.action);
 
         return matchingResourceAction?.enabled;
       });
 
-      _execute(executableSelection, action, args, opts);
+      _execute(executableSelection, action, args, opts, this);
 
       this.actionOfInterest = null;
     },
@@ -519,7 +531,7 @@ export default {
       this.update([], this.selectedRows);
     },
 
-  },
+  }
 };
 
 // ---------------------------------------------------------------------
@@ -544,14 +556,14 @@ function _add(map, act, incrementCounts = true) {
     obj.allEnabled = false;
   }
 
-  if ( act.enabled === false ) {
+  if ( !act.enabled ) {
     obj.allEnabled = false;
   } else {
     obj.anyEnabled = true;
   }
 
   if ( incrementCounts ) {
-    obj.available = (obj.available || 0) + (act.enabled === false ? 0 : 1 );
+    obj.available = (obj.available || 0) + (!act.enabled ? 0 : 1 );
     obj.total = (obj.total || 0) + 1;
   }
 
@@ -572,8 +584,20 @@ function _filter(map, disableAll = false) {
   return out;
 }
 
-function _execute(resources, action, args, opts = {}) {
+function _execute(resources, action, args, opts = {}, ctx) {
   args = args || [];
+
+  // New pattern for extensions - always call invoke
+  if (action.invoke) {
+    const actionOpts = {
+      action,
+      event: opts.event,
+      isAlt: !!opts.alt,
+    };
+
+    return action.invoke.apply(ctx, [actionOpts, resources || [], args]);
+  }
+
   if ( resources.length > 1 && action.bulkAction && !opts.alt ) {
     const fn = resources[0][action.bulkAction];
 

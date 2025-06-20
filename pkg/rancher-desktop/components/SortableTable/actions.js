@@ -13,10 +13,12 @@ export default {
       bulkActionAvailabilityClass: 'action-availability',
 
       hiddenActions: [],
+
+      updateHiddenBulkActions: debounce(this.protectedUpdateHiddenBulkActions, 10)
     };
   },
 
-  beforeUnmount() {
+  beforeDestroy() {
     window.removeEventListener('resize', this.onWindowResize);
   },
 
@@ -36,11 +38,11 @@ export default {
 
   computed: {
     availableActions() {
-      return this.bulkActionsForSelection.filter(act => !act.external);
+      return this.bulkActionsForSelection.filter((act) => !act.external);
     },
 
     keyedAvailableActions() {
-      return this.availableActions.map(aa => aa.action);
+      return this.availableActions.map((aa) => aa.action);
     },
 
     selectedRowsText() {
@@ -79,7 +81,7 @@ export default {
     /**
      * Determine if any actions wrap over to a new line, if so group them into a dropdown instead
      */
-    updateHiddenBulkActions: debounce(function() {
+    protectedUpdateHiddenBulkActions() {
       if (!this.$refs.container) {
         return;
       }
@@ -137,7 +139,7 @@ export default {
             // Collate the actions in an array and hide in the normal row
             const id = ba.attributes.getNamedItem('id').value;
 
-            this.hiddenActions.push(this.availableActions.find(aa => aa.action === id));
+            this.hiddenActions.push(this.availableActions.find((aa) => aa.action === id));
             ba.style.display = 'none';
           }
         }
@@ -146,6 +148,6 @@ export default {
       if (!showActionsDropdown) {
         actionsDropdown.style.display = 'none';
       }
-    }, 10),
-  },
+    }
+  }
 };
