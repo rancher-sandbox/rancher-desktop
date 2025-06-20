@@ -11,6 +11,7 @@ import * as K8sManager from '../store/k8sManager';
 import * as Page from '../store/page';
 import * as Preferences from '../store/preferences';
 import * as Prefs from '../store/prefs';
+import * as ResourceFetch from '../store/resource-fetch';
 import * as Snapshots from '../store/snapshots';
 import * as TransientSettings from '../store/transientSettings';
 
@@ -27,6 +28,7 @@ export default createStore<any>({
     page:                { namespaced: true, ...Page },
     preferences:         { namespaced: true, ...Preferences },
     prefs:               { namespaced: true, ...Prefs },
+    'resource-fetch':    { namespaced: true, ...ResourceFetch },
     snapshots:           { namespaced: true, ...Snapshots },
     transientSettings:   { namespaced: true, ...TransientSettings },
   },
