@@ -1,7 +1,7 @@
 <template>
   <div class="image-input">
     <labeled-input
-      v-model="image"
+      v-model:value="image"
       v-focus
       type="text"
       class="image"

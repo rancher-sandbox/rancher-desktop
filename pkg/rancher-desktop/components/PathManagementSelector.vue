@@ -34,6 +34,7 @@ export default defineComponent({
       default: false,
     },
   },
+  emits: ['input'],
   computed: {
     options(): pathManagementOptions[] {
       return [
@@ -86,16 +87,17 @@ export default defineComponent({
     >
       <slot name="label" />
     </template>
-    <template #1="{ option, index, isDisabled, mode }">
+    <template #1="{ option, isDisabled, mode }">
       <radio-button
-        :key="groupName+'-'+index"
+        v-bind="$attrs"
+        :key="groupName+'-'+option.value"
         :name="groupName"
         :value="value"
         :label="option.label"
+        :description="option.description"
         :val="option.value"
         :disabled="isDisabled"
         :mode="mode"
-        v-on="$listeners"
         @update:value="updateVal(option.value)"
       >
         <template #description>

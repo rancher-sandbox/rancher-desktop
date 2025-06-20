@@ -22,13 +22,12 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="rd-input-container">
+  <div class="rd-input-container" :class="$attrs.class">
     <input
+      v-bind="$attrs"
       :value="value"
       :class="{ 'locked' : isLocked && !$attrs.disabled }"
-      :disabled="$attrs.disabled || isLocked"
-      v-bind="$attrs"
-      v-on="$listeners"
+      :disabled="!!$attrs.disabled || isLocked"
     />
     <slot name="after">
       <i

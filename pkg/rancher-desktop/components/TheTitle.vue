@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, markRaw } from 'vue';
 import { mapState } from 'vuex';
 
 const componentCache: { [key: string]: any } = {};
@@ -33,7 +33,7 @@ export default defineComponent({
       async handler(componentName) {
         if (componentName) {
           componentCache[componentName] ||= (await import(`@pkg/components/${ componentName }.vue`)).default;
-          this.dynamicComponent = componentCache[componentName];
+          this.dynamicComponent = markRaw(componentCache[componentName]);
         }
       },
       immediate: true,

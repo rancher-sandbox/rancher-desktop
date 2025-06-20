@@ -65,9 +65,9 @@ export default defineComponent({
   <div class="preferences-body">
     <slot>
       <component
+        v-bind="$attrs"
         :is="componentFromNavItem"
         :preferences="preferences"
-        v-on="$listeners"
       />
     </slot>
     <preferences-help class="help" />

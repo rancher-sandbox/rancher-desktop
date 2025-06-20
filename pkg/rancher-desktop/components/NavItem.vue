@@ -8,9 +8,9 @@ export default defineComponent({
 
 <template>
   <div
+    v-bind="$attrs"
     class="nav-item"
     :data-id="id"
-    v-on="$listeners"
   >
     <div
       v-if="$slots.before"

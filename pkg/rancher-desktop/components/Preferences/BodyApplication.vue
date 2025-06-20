@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import { defineComponent } from 'vue';
+import { defineComponent, Component, PropType } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesApplicationBehavior from '@pkg/components/Preferences/ApplicationBehavior.vue';
@@ -12,8 +12,6 @@ import { Settings } from '@pkg/config/settings';
 import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
-
-import type { PropType } from 'vue';
 
 export default defineComponent({
   name:       'preferences-body-application',
@@ -42,7 +40,7 @@ export default defineComponent({
     await this.$store.dispatch('credentials/fetchCredentials');
   },
   methods: {
-    async tabSelected({ tab }: { tab: Vue.Component }) {
+    async tabSelected({ tab }: { tab: Component }) {
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }
@@ -88,9 +86,9 @@ export default defineComponent({
     </template>
     <div class="application-content">
       <component
+        v-bind="$attrs"
         :is="`preferences-application-${ activeTab }`"
         :preferences="preferences"
-        v-on="$listeners"
       />
     </div>
   </rd-tabbed>

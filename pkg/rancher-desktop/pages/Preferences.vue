@@ -163,10 +163,10 @@ export default defineComponent({
       @nav-changed="navChanged"
     />
     <preferences-body
+      v-bind="$attrs"
       class="preferences-body"
       :current-nav-item="getCurrentNavItem"
       :preferences="getPreferences"
-      v-on="$listeners"
     >
       <div
         v-if="hasError"

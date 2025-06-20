@@ -12,8 +12,8 @@ export default defineComponent({
 <template>
   <tabbed
     v-bind="$attrs"
+    :use-hash="true"
     class="action-tabs"
-    v-on="$listeners"
   >
     <slot name="tabs"></slot>
     <slot></slot>
@@ -31,10 +31,20 @@ export default defineComponent({
     }
 
     :deep(.tabs) {
+      border: none;
       border-bottom: 1px solid var(--border);
 
-      a {
-        text-decoration: none;
+      &:focus {
+        outline: none;
+        .tab.active a span {
+          text-decoration: none;
+        }
+      }
+      .tab a:hover {
+        color: var(--link);
+        span {
+          text-decoration: none;
+        }
       }
     }
 
@@ -46,6 +56,7 @@ export default defineComponent({
 
     :deep(li.tab) {
       margin-right: 0;
+      margin-bottom: -1px;
       padding-right: 0;
       border-bottom: 1px solid var(--border);
 
