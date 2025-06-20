@@ -103,6 +103,12 @@ export default {
       const searchText = (this.searchQuery || '').trim().toLowerCase();
       let out;
 
+      if ( searchText === this.previousFilter && this.previousResult ) {
+        // If the search hasn't changed at all, just return the previous results
+        // since otherwise we get into a loop due to Vue proxying everything.
+        return this.previousResult;
+      }
+
       if ( searchText && this.previousResult && searchText.startsWith(this.previousFilter) ) {
         // If the new search is an addition to the last one, we can start with the same set of results as last time
         // and filter those down, since adding more searchText can only reduce the number of results.

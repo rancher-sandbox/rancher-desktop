@@ -10,7 +10,7 @@
       :row-actions="true"
       :paging="true"
       :rows-per-page="10"
-      :has-advanced-filtering="true"
+      :has-advanced-filtering="false"
       :loading="!containersList"
     >
       <template #header-middle>

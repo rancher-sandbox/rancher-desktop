@@ -428,6 +428,7 @@ export default {
 
       .table-header-container {
         display: flex;
+        align-items: baseline;
 
         .content {
           display: flex;

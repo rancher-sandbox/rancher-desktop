@@ -55,23 +55,23 @@
       </template>
       <template #row-actions="{row}">
         <div
-          v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)"
+          v-if="row.listenPort === undefined && !serviceBeingEditedIs(row)"
           class="action-div"
         >
           <button
             class="btn btn-sm role-tertiary"
-            @click="emitEditPortForward(row.row)"
+            @click="emitEditPortForward(row)"
           >
             Forward
           </button>
         </div>
         <div
-          v-else-if="serviceBeingEditedIs(row.row)"
+          v-else-if="serviceBeingEditedIs(row)"
           class="action-div"
         >
           <button
             class="btn btn-sm role-tertiary btn-icon"
-            @click="emitCancelEditPortForward(row.row)"
+            @click="emitCancelEditPortForward(row)"
           >
             <span class="icon icon-x icon-lg" />
           </button>
@@ -88,7 +88,7 @@
         >
           <button
             class="btn btn-sm role-tertiary"
-            @click="emitCancelPortForward(row.row)"
+            @click="emitCancelPortForward(row)"
           >
             Cancel
           </button>

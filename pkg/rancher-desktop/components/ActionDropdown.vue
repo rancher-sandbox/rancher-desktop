@@ -1,6 +1,9 @@
 <script>
+import { Dropdown as VDropdown } from 'floating-vue';
+
 export default {
   name: 'ActionDropdown',
+  components: { VDropdown },
 
   props: {
     size: {
@@ -59,7 +62,7 @@ export default {
 <template>
   <div class="dropdown-button-group">
     <div
-      class="dropdown-button bg-primary"
+      class="dropdown-button bg-primary btn-role-primary"
       :class="{'one-action':!dualAction, [buttonSize]:true, 'disabled': disableButton}"
     >
       <v-dropdown
