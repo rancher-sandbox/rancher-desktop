@@ -1,12 +1,13 @@
 <script>
 import head from 'lodash/head';
-import isEmpty from 'lodash/isEmpty';
 import { addObject, removeObject, findBy } from '@pkg/utils/array';
 import { sortBy } from '@pkg/utils/sort';
 import findIndex from 'lodash/findIndex';
 
 export default {
   name: 'Tabbed',
+
+  emits: ['changed', 'addTab', 'removeTab'],
 
   props: {
     defaultTab: {
@@ -99,29 +100,32 @@ export default {
   },
 
   watch: {
-    sortedTabs(tabs) {
-      const {
-        defaultTab,
-        useHash
-      } = this;
-      const activeTab = tabs.find((t) => t.active);
+    sortedTabs: {
+      handler(tabs) {
+        const {
+          defaultTab,
+          useHash
+        } = this;
+        const activeTab = tabs.find((t) => t.active);
 
-      const hash = useHash ? this.$route.hash : undefined;
-      const windowHash = useHash ? hash.slice(1) : undefined;
-      const windowHashTabMatch = tabs.find((t) => t.name === windowHash && !t.active);
-      const firstTab = head(tabs) || null;
+        const hash = useHash ? this.$route.hash : undefined;
+        const windowHash = useHash ? hash.slice(1) : undefined;
+        const windowHashTabMatch = tabs.find((t) => t.name === windowHash && !t.active);
+        const firstTab = head(tabs) || null;
 
-      if (isEmpty(activeTab)) {
-        if (useHash && !isEmpty(windowHashTabMatch)) {
-          this.select(windowHashTabMatch.name);
-        } else if (!isEmpty(defaultTab) && !isEmpty(tabs.find((t) => t.name === defaultTab))) {
-          this.select(defaultTab);
-        } else if (firstTab?.name) {
-          this.select(firstTab.name);
+        if (!activeTab) {
+          if (useHash && windowHashTabMatch) {
+            this.select(windowHashTabMatch.name);
+          } else if (defaultTab && tabs.find((t) => t.name === defaultTab)) {
+            this.select(defaultTab);
+          } else if (firstTab?.name) {
+            this.select(firstTab.name);
+          }
+        } else if (useHash && activeTab?.name === windowHash) {
+          this.select(activeTab.name);
         }
-      } else if (useHash && activeTab?.name === windowHash) {
-        this.select(activeTab.name);
-      }
+      },
+      deep: true,
     },
   },
 
