@@ -2,7 +2,7 @@
 
 // =========================================================================================
 // Debug helper
-// Adds a bunch of watches to help dignose computed properties bring re-evaluated
+// Adds a bunch of watches to help diagnose computed properties bring re-evaluated
 // =========================================================================================
 
 export default {
