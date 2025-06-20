@@ -66,6 +66,7 @@ export default defineComponent({
       // virtiofs should only be disabled on macOS WITHOUT the possibility to select the VM type VZ. VZ doesn't need to
       // be selected, yet. We're going to show a warning banner in that case.
       return os.platform() === 'darwin' &&
+        this.macOsVersion &&
         (semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0')));
     },
     arch(): string {

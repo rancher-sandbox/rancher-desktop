@@ -40,10 +40,9 @@ export default defineComponent({
 <template>
   <div class="rd-checkbox-container">
     <checkbox
+      v-bind="$attrs"
       class="checkbox"
       :disabled="$attrs.disabled || isLocked"
-      v-bind="$attrs"
-      v-on="$listeners"
     >
       <template #label>
         <slot name="label">

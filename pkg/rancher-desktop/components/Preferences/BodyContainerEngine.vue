@@ -76,9 +76,9 @@ export default defineComponent({
     </template>
     <div class="container-engine-content">
       <component
+        v-bind="$attrs"
         :is="`preferences-container-engine-${ activeTab }`"
         :preferences="preferences"
-        v-on="$listeners"
       />
     </div>
   </rd-tabbed>

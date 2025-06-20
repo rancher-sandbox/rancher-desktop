@@ -20,13 +20,13 @@ const ALLOWED_TAGS = [
 const purifyHTML = value => DOMPurify.sanitize(value, { ALLOWED_TAGS });
 
 export const cleanHtmlDirective = {
-  inserted(el, binding) {
+  mounted(el, binding) {
     el.innerHTML = purifyHTML(binding.value);
   },
-  componentUpdated(el, binding) {
+  updated(el, binding) {
     el.innerHTML = purifyHTML(binding.value);
   },
-  unbind(el) {
+  unmounted(el) {
     el.innerHTML = '';
   },
 };

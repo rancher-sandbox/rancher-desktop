@@ -19,6 +19,7 @@
 
 <script lang="ts">
 
+import clone from 'lodash/cloneDeep';
 import { defineComponent } from 'vue';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
@@ -40,14 +41,17 @@ export default defineComponent({
   },
 
   watch: {
-    services(newServices: ServiceEntry[]): void {
-      if (this.serviceBeingEdited) {
-        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as ServiceEntry, service));
+    services: {
+      handler(newServices: ServiceEntry[]): void {
+        if (this.serviceBeingEdited) {
+          const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as ServiceEntry, service));
 
-        if (newService) {
-          this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
+          if (newService) {
+            this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
+          }
         }
-      }
+      },
+      deep: true,
     },
   },
 
@@ -138,7 +142,7 @@ export default defineComponent({
     handleUpdatePortForward(): void {
       this.errorMessage = null;
       if (this.serviceBeingEdited) {
-        ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+        ipcRenderer.invoke('service-forward', clone(this.serviceBeingEdited), true);
       }
       this.serviceBeingEdited = null;
     },

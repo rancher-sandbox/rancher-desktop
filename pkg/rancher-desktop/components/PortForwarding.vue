@@ -116,7 +116,7 @@ export default defineComponent({
   },
   directives: {
     focus: {
-      inserted(element) {
+      mounted(element) {
         element.focus();
       },
     },
