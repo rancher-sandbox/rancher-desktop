@@ -4,6 +4,7 @@ import Containers from '../pages/Containers.vue';
 import DenyRoot from '../pages/DenyRoot.vue';
 import Volumes from '../pages/Volumes.vue';
 import Diagnostics from '../pages/Diagnostics.vue';
+import Dialog from '../pages/Dialog.vue';
 import Extensions from '../pages/Extensions.vue';
 import FirstRun from '../pages/FirstRun.vue';
 import General from '../pages/General.vue';
@@ -85,6 +86,9 @@ export default createRouter({
     },
     {
       path: '/preferences', component: Preferences, name: 'Preferences',
+    },
+    {
+      path: '/Dialog', component: Dialog, name: 'Dialog',
     },
     {
       path: '/SudoPrompt', component: SudoPrompt, name: 'SudoPrompt',
