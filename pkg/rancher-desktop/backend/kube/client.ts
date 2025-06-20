@@ -472,7 +472,7 @@ export class KubeClient extends events.EventEmitter {
 
       // check if server is still valid
       if (!this.servers.has(namespace, endpoint, k8sPort)) {
-        new Error('Server is no longer valid');
+        throw new Error('Server is no longer valid');
       }
 
       // forward the port

@@ -17,7 +17,6 @@ import * as TransientSettings from '../store/transientSettings';
 
 Vue.use(Vuex);
 
-// eslint-disable-next-line import/no-named-as-default-member -- This is intended.
 export default new Vuex.Store<any>({
   modules: {
     'action-menu':       { namespaced: true, ...ActionMenu },

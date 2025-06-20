@@ -33,7 +33,7 @@ export default Vue.extend({
      * entire vnode emits when using v-model.
      * TODO: Issue #5544 Don't use Function as a type
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     computedListeners(): Record<string, Function | Function[]> & { input: (e: any) => any; } {
       return Object.assign(
         {},

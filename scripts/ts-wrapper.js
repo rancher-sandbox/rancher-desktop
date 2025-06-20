@@ -8,9 +8,11 @@ const { spawnSync } = require('node:child_process');
 
 function main(args) {
   const childArgs = [
+    'node_modules/tsx/dist/cli.mjs',
     '--trace-warnings',
     '--trace-deprecation',
-    'node_modules/tsx/dist/cli.mjs',
+    '--max_old_space_size=4096',
+    '--stack-size=16384',
     '--conditions=import',
   ];
 

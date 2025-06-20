@@ -90,12 +90,12 @@
 </template>
 
 <script>
-import SortableTable from '@pkg/components/SortableTable';
 import { Card, Checkbox } from '@rancher/components';
 import _ from 'lodash';
 import { mapState, mapMutations } from 'vuex';
 
 import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
+import SortableTable from '@pkg/components/SortableTable';
 import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { parseSi } from '@pkg/utils/units';

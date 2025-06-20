@@ -1960,8 +1960,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         if (kubernetesVersion) {
           await this.kubeBackend.start(config, kubernetesVersion);
         }
-        if (config.containerEngine.name === ContainerEngine.MOBY) {
-        }
 
         await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);
       } catch (err) {

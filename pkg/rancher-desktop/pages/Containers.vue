@@ -98,12 +98,12 @@
 </template>
 
 <script>
-import SortableTable from '@pkg/components/SortableTable';
 import { BadgeState } from '@rancher/components';
 import { shell } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import SortableTable from '@pkg/components/SortableTable';
 import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
