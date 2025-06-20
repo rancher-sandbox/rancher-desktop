@@ -43,6 +43,8 @@ export default {
     },
   },
 
+  emits: ['active'],
+
   data() {
     return { active: null };
   },

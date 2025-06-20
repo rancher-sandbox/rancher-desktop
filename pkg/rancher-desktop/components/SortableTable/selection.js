@@ -20,7 +20,7 @@ export default {
     table.addEventListener('contextmenu', this._onRowContextBound);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     const table = this.$el.querySelector('TABLE');
 
     table.removeEventListener('click', this._onRowClickBound);
