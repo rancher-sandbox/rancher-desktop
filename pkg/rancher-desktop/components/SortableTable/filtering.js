@@ -1,5 +1,9 @@
-import { addObject, addObjects, isArray, removeAt } from '@pkg/utils/array';
 import { get } from '@pkg/utils/object';
+import { addObject, addObjects, isArray, removeAt } from '@pkg/utils/array';
+
+export const ADV_FILTER_ALL_COLS_VALUE = 'allcols';
+export const ADV_FILTER_ALL_COLS_LABEL = 'All Columns';
+const LABEL_IDENTIFIER = ':::islabel';
 
 export default {
   data() {
@@ -29,6 +33,73 @@ export default {
     }),
     */
     filteredRows() {
+      if (this.externalPaginationEnabled) {
+        return;
+      }
+
+      // PROP hasAdvancedFiltering comes from Advanced Filtering mixin (careful changing data var there...)
+      if (!this.hasAdvancedFiltering) {
+        return this.handleFiltering();
+      } else {
+        return this.handleAdvancedFiltering();
+      }
+    },
+  },
+
+  methods: {
+    handleAdvancedFiltering() {
+      this.subMatches = null;
+
+      if (this.searchQuery.length) {
+        const out = (this.arrangedRows || []).slice();
+
+        const res = out.filter((row) => {
+          return this.searchQuery.every((f) => {
+            if (f.prop === ADV_FILTER_ALL_COLS_VALUE) {
+              // advFilterSelectOptions comes from Advanced Filtering mixin
+              // remove the All Columns option from the list so that we don't iterate over it
+              const allCols = this.advFilterSelectOptions.slice(1);
+              let searchFields = [];
+
+              allCols.forEach((col) => {
+                if (col.value.includes('[') && col.value.includes(']')) {
+                  searchFields = searchFields.concat(JSON.parse(col.value));
+                } else {
+                  // this means we are on the presence of a label, which should be dealt
+                // carefully because of object path such row.metadata.labels."app.kubernetes.io/managed-by
+                  const value = col.isLabel ? `${ col.label }${ LABEL_IDENTIFIER }` : col.value;
+
+                  searchFields.push(value);
+                }
+              });
+
+              return handleStringSearch(searchFields, [f.value], row);
+            } else {
+              if (f.prop.includes('[') && f.prop.includes(']')) {
+                return handleStringSearch(JSON.parse(f.prop), [f.value], row);
+              }
+
+              let prop = f.prop;
+
+              // this means we are on the presence of a label, which should be dealt
+              // carefully because of object path such row.metadata.labels."app.kubernetes.io/managed-by"
+              if (f.prop.includes('metadata.labels')) {
+                prop = `${ f.label }${ LABEL_IDENTIFIER }`;
+              }
+
+              return handleStringSearch([prop], [f.value], row);
+            }
+          });
+        });
+
+        return res;
+      }
+
+      // return arrangedRows array if we don't have anything to search for...
+      return this.arrangedRows;
+    },
+
+    handleFiltering() {
       const searchText = (this.searchQuery || '').trim().toLowerCase();
       let out;
 
@@ -61,20 +132,7 @@ export default {
         let hits = 0;
         let mainFound = true;
 
-        for ( let j = 0 ; j < searchTokens.length ; j++ ) {
-          let expect = true;
-          let token = searchTokens[j];
-
-          if ( token.substr(0, 1) === '!' ) {
-            expect = false;
-            token = token.substr(1);
-          }
-
-          if ( token && matches(searchFields, token, row) !== expect ) {
-            mainFound = false;
-            break;
-          }
-        }
+        mainFound = handleStringSearch(searchFields, searchTokens, row);
 
         if ( subFields && subSearch) {
           const subRows = row[subSearch] || [];
@@ -82,20 +140,7 @@ export default {
           for ( let k = subRows.length - 1 ; k >= 0 ; k-- ) {
             let subFound = true;
 
-            for ( let l = 0 ; l < searchTokens.length ; l++ ) {
-              let expect = true;
-              let token = searchTokens[l];
-
-              if ( token.substr(0, 1) === '!' ) {
-                expect = false;
-                token = token.substr(1);
-              }
-
-              if ( matches(subFields, token, subRows[k]) !== expect ) {
-                subFound = false;
-                break;
-              }
-            }
+            subFound = handleStringSearch(subFields, searchTokens, row);
 
             if ( subFound ) {
               hits++;
@@ -114,13 +159,17 @@ export default {
       this.previousResult = out;
 
       return out;
-    },
+    }
   },
 
   watch: {
     arrangedRows(q) {
       // The rows changed so the old filter result is no longer useful
       this.previousResult = null;
+    },
+
+    searchQuery() {
+      this.debouncedPaginationChanged();
     },
   },
 };
@@ -145,14 +194,39 @@ function columnsToSearchField(columns) {
     }
   });
 
-  return out.filter(x => !!x);
+  return out.filter((x) => !!x);
 }
 
 const ipLike = /^[0-9a-f\.:]+$/i;
 
+function handleStringSearch(searchFields, searchTokens, row) {
+  for ( let j = 0 ; j < searchTokens.length ; j++ ) {
+    let expect = true;
+    let token = searchTokens[j];
+
+    if ( token.substr(0, 1) === '!' ) {
+      expect = false;
+      token = token.substr(1);
+    }
+
+    if ( token && matches(searchFields, token, row) !== expect ) {
+      return false;
+    }
+
+    return true;
+  }
+}
+
 function matches(fields, token, item) {
   for ( let field of fields ) {
     if ( !field ) {
+      continue;
+    }
+
+    // some items might not even have metadata.labels or metadata.labels.something... ignore those items. Nothing to filter by
+    if (typeof field !== 'function' &&
+    field.includes(LABEL_IDENTIFIER) &&
+    (!item.metadata.labels || !item.metadata.labels[field.replace(LABEL_IDENTIFIER, '')])) {
       continue;
     }
 
@@ -161,6 +235,8 @@ function matches(fields, token, item) {
 
     if (typeof field === 'function') {
       val = field(item);
+    } else if (field.includes(LABEL_IDENTIFIER)) {
+      val = item.metadata.labels[field.replace(LABEL_IDENTIFIER, '')];
     } else {
       const idx = field.indexOf(':');
 
@@ -186,7 +262,7 @@ function matches(fields, token, item) {
     }
 
     if ( !modifier ) {
-      if ( val.includes(token) ) {
+      if ( val.includes((`${ token }`).toLowerCase()) ) {
         return true;
       }
     } else if ( modifier === 'exact' ) {
