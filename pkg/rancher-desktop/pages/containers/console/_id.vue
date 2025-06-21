@@ -57,18 +57,9 @@
         class="logs-container"
       >
         <div
-          v-if="logs"
-          ref="consoleOutput"
-          class="console-output"
-          @scroll="onUserScroll"
-          v-html="formattedLogs"
+          ref="terminalContainer"
+          class="terminal-container"
         />
-        <div
-          v-else
-          class="console-output console-placeholder"
-        >
-          {{ t('containers.console.noLogs') }}
-        </div>
       </div>
     </div>
   </div>
@@ -78,6 +69,9 @@
 import { BadgeState, Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import { ContainerEngine } from '@pkg/config/settings';
@@ -97,13 +91,15 @@ export default Vue.extend({
     return {
       settings: undefined,
       ddClient: null,
-      logs: '',
       isLoading: true,
       error: null,
       containerName: '',
       containerState: '',
       isContainerRunning: false,
-      autoScroll: true,
+      terminal: null,
+      fitAddon: null,
+      lastLogTimestamp: null,
+      pendingLogs: '',
     };
   },
   computed: {
@@ -116,16 +112,6 @@ export default Vue.extend({
     },
     selectedNamespace() {
       return this.settings?.containers?.namespace;
-    },
-    formattedLogs() {
-      return this.convertAnsiToHtml(this.logs);
-    },
-  },
-  watch: {
-    formattedLogs() {
-      if (this.autoScroll) {
-        this.scrollToBottom();
-      }
     },
   },
   async mounted() {
@@ -144,6 +130,9 @@ export default Vue.extend({
   },
   beforeDestroy() {
     this.stopStreaming();
+    if (this.terminal) {
+      this.terminal.dispose();
+    }
     ipcRenderer.removeAllListeners('settings-read');
   },
   methods: {
@@ -207,9 +196,6 @@ export default Vue.extend({
           args.push('-f');
         }
 
-        if (!follow) {
-          args.push('--tail', '100');
-        }
 
         args.push('-t');
 
@@ -226,19 +212,45 @@ export default Vue.extend({
         }
 
         if (follow) {
-          this.logs += stdout || '';
-          if (this.autoScroll) {
-            this.scrollToBottom();
+          if (stdout && this.terminal) {
+            this.terminal.write(stdout);
           }
         } else {
-          this.logs = stdout || '';
-          this.scrollToBottom();
+          if (stdout) {
+            let truncatedLogs = stdout;
+            if (stdout.length > 1000000) {
+              const truncatePoint = stdout.length - 1000000;
+              const newlineIndex = stdout.indexOf('\n', truncatePoint);
+              if (newlineIndex !== -1) {
+                truncatedLogs = stdout.substring(newlineIndex + 1);
+              }
+            }
+
+            if (this.terminal) {
+              this.terminal.write(truncatedLogs);
+            } else {
+              this.pendingLogs = truncatedLogs;
+            }
+
+            const lines = truncatedLogs.trim().split('\n');
+            if (lines.length > 0) {
+              const lastLine = lines[lines.length - 1];
+              const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
+              if (timestampMatch) {
+                this.lastLogTimestamp = timestampMatch[1];
+              }
+            }
+          } else {
+          }
         }
       } catch (error) {
         console.error('Error fetching logs:', error);
         this.error = error.message || this.t('containers.console.fetchError');
       } finally {
         this.isLoading = false;
+        if (!this.terminal) {
+          this.initializeTerminal();
+        }
       }
     },
     async refreshLogs() {
@@ -259,7 +271,13 @@ export default Vue.extend({
             options.namespace = this.selectedNamespace;
           }
 
-          const args = ['--since', '1s', '-t', this.containerId];
+          const args = [];
+          if (this.lastLogTimestamp) {
+            args.push('--since', this.lastLogTimestamp);
+          } else {
+            args.push('--since', '5s'); // Fallback to recent logs
+          }
+          args.push('-t', this.containerId);
 
           const { stdout } = await this.ddClient.docker.cli.exec(
             'logs',
@@ -267,10 +285,16 @@ export default Vue.extend({
             options
           );
 
-          if (stdout) {
-            this.logs += stdout;
-            if (this.autoScroll) {
-              this.scrollToBottom();
+          if (stdout && this.terminal) {
+            this.terminal.write(stdout);
+
+            const lines = stdout.trim().split('\n');
+            if (lines.length > 0) {
+              const lastLine = lines[lines.length - 1];
+              const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
+              if (timestampMatch) {
+                this.lastLogTimestamp = timestampMatch[1];
+              }
             }
           }
         } catch (error) {
@@ -284,187 +308,73 @@ export default Vue.extend({
         logInterval = null;
       }
     },
-    scrollToBottom() {
+    initializeTerminal() {
       this.$nextTick(() => {
-        this.$nextTick(() => {
-          if (this.$refs.consoleOutput) {
-            this.$refs.consoleOutput.scrollTop = this.$refs.consoleOutput.scrollHeight;
-          }
-        });
-      });
-    },
-    onUserScroll() {
-      if (this.$refs.consoleOutput) {
-        const element = this.$refs.consoleOutput;
-        const isAtBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 10;
+        if (this.$refs.terminalContainer) {
 
-        this.autoScroll = isAtBottom;
-      }
+          this.terminal = new Terminal({
+            theme: {
+              background: '#1a1a1a',
+              foreground: '#e0e0e0',
+              cursor: '#8be9fd',
+              selection: 'rgba(139, 233, 253, 0.3)',
+              black: '#000000',
+              red: '#ff5555',
+              green: '#50fa7b',
+              yellow: '#f1fa8c',
+              blue: '#8be9fd',
+              magenta: '#ff79c6',
+              cyan: '#8be9fd',
+              white: '#f8f8f2',
+              brightBlack: '#6272a4',
+              brightRed: '#ff6e6e',
+              brightGreen: '#69ff94',
+              brightYellow: '#ffffa5',
+              brightBlue: '#d6acff',
+              brightMagenta: '#ff92df',
+              brightCyan: '#a4ffff',
+              brightWhite: '#ffffff'
+            },
+            fontSize: 12,
+            fontFamily: '\'Courier New\', \'Monaco\', monospace',
+            cursorBlink: false,
+            disableStdin: true,
+            convertEol: true,
+            scrollback: 10000
+          });
+
+          this.fitAddon = new FitAddon();
+          this.terminal.loadAddon(this.fitAddon);
+
+          this.terminal.loadAddon(new WebLinksAddon());
+
+          this.terminal.open(this.$refs.terminalContainer);
+          this.fitAddon.fit();
+
+          if (this.pendingLogs) {
+            this.terminal.write(this.pendingLogs);
+            this.pendingLogs = '';
+          }
+
+          window.addEventListener('resize', () => {
+            if (this.fitAddon) {
+              this.fitAddon.fit();
+            }
+          });
+        }
+      });
     },
     goBack() {
       this.$router.push('/Containers');
-    },
-    convertAnsiToHtml(text) {
-      if (!text) return '';
-
-      const ansiColors = {
-        '30': '#000000', // black
-        '31': '#ff5555', // red
-        '32': '#50fa7b', // green
-        '33': '#f1fa8c', // yellow
-        '34': '#8be9fd', // blue
-        '35': '#ff79c6', // magenta
-        '36': '#8be9fd', // cyan
-        '37': '#f8f8f2', // white
-        '90': '#6272a4', // bright black
-        '91': '#ff6e6e', // bright red
-        '92': '#69ff94', // bright green
-        '93': '#ffffa5', // bright yellow
-        '94': '#d6acff', // bright blue
-        '95': '#ff92df', // bright magenta
-        '96': '#a4ffff', // bright cyan
-        '97': '#ffffff', // bright white
-      };
-
-      const ansiBgColors = {
-        '40': '#282a36', '41': '#ff5555', '42': '#50fa7b', '43': '#f1fa8c',
-        '44': '#8be9fd', '45': '#ff79c6', '46': '#8be9fd', '47': '#f8f8f2',
-        '100': '#6272a4', '101': '#ff6e6e', '102': '#69ff94', '103': '#ffffa5',
-        '104': '#d6acff', '105': '#ff92df', '106': '#a4ffff', '107': '#ffffff'
-      };
-
-      let html = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-
-      const spans = [];
-      let currentState = {
-        color: '',
-        background: '',
-        bold: false,
-        dim: false,
-        italic: false,
-        underline: false,
-        strikethrough: false
-      };
-
-      html = html.replace(/\x1b\[([0-9;]*)([a-zA-Z])/g, (match, codes, command) => {
-        if (command !== 'm') return match;
-
-        const codeList = codes ? codes.split(';').map(c => c || '0') : ['0'];
-        let result = '';
-
-        if (spans.length > 0) {
-          result += '</span>';
-          spans.pop();
-        }
-
-        for (let i = 0; i < codeList.length; i++) {
-          const code = codeList[i];
-
-          switch (code) {
-            case '0': // reset
-              currentState = { color: '', background: '', bold: false, dim: false, italic: false, underline: false, strikethrough: false };
-              break;
-            case '1': currentState.bold = true; break;
-            case '2': currentState.dim = true; break;
-            case '3': currentState.italic = true; break;
-            case '4': currentState.underline = true; break;
-            case '9': currentState.strikethrough = true; break;
-            case '22': currentState.bold = false; currentState.dim = false; break;
-            case '23': currentState.italic = false; break;
-            case '24': currentState.underline = false; break;
-            case '29': currentState.strikethrough = false; break;
-            case '38': // Extended foreground
-              if (codeList[i + 1] === '5' && codeList[i + 2]) {
-                currentState.color = this.get256Color(parseInt(codeList[i + 2]));
-                i += 2;
-              } else if (codeList[i + 1] === '2' && codeList[i + 4]) {
-                const r = parseInt(codeList[i + 2]) || 0;
-                const g = parseInt(codeList[i + 3]) || 0;
-                const b = parseInt(codeList[i + 4]) || 0;
-                currentState.color = `rgb(${r}, ${g}, ${b})`;
-                i += 4;
-              }
-              break;
-            case '48':
-              if (codeList[i + 1] === '5' && codeList[i + 2]) {
-                currentState.background = this.get256Color(parseInt(codeList[i + 2]));
-                i += 2;
-              } else if (codeList[i + 1] === '2' && codeList[i + 4]) {
-                const r = parseInt(codeList[i + 2]) || 0;
-                const g = parseInt(codeList[i + 3]) || 0;
-                const b = parseInt(codeList[i + 4]) || 0;
-                currentState.background = `rgb(${r}, ${g}, ${b})`;
-                i += 4;
-              }
-              break;
-            default:
-              if (ansiColors[code]) {
-                currentState.color = ansiColors[code];
-              } else if (ansiBgColors[code]) {
-                currentState.background = ansiBgColors[code];
-              }
-          }
-        }
-
-        const styles = [];
-        if (currentState.color) styles.push(`color: ${currentState.color}`);
-        if (currentState.background) styles.push(`background-color: ${currentState.background}`);
-        if (currentState.bold) styles.push('font-weight: bold');
-        if (currentState.dim) styles.push('opacity: 0.6');
-        if (currentState.italic) styles.push('font-style: italic');
-        if (currentState.underline && currentState.strikethrough) {
-          styles.push('text-decoration: underline line-through');
-        } else if (currentState.underline) {
-          styles.push('text-decoration: underline');
-        } else if (currentState.strikethrough) {
-          styles.push('text-decoration: line-through');
-        }
-
-        if (styles.length > 0) {
-          result += `<span style="${styles.join('; ')}">`;
-          spans.push(true);
-        }
-
-        return result;
-      });
-
-      while (spans.length > 0) {
-        html += '</span>';
-        spans.pop();
-      }
-
-      return html;
-    },
-    get256Color(index) {
-      if (index < 16) {
-        const colors = ['#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0',
-                       '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff'];
-        return colors[index] || '#ffffff';
-      } else if (index < 232) {
-        const n = index - 16;
-        const r = Math.floor(n / 36);
-        const g = Math.floor((n % 36) / 6);
-        const b = n % 6;
-        const toRgb = (c) => c === 0 ? 0 : 55 + c * 40;
-        return `rgb(${toRgb(r)}, ${toRgb(g)}, ${toRgb(b)})`;
-      } else {
-        const gray = 8 + (index - 232) * 10;
-        return `rgb(${gray}, ${gray}, ${gray})`;
-      }
     },
   },
 });
 </script>
 
 <style lang="scss" scoped>
+@import 'xterm/css/xterm.css';
 .container-console {
-  height: 100%;
-  max-height: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -543,35 +453,24 @@ export default Vue.extend({
   min-height: 0;
 }
 
-.console-output {
+.terminal-container {
   flex: 1;
   width: 100%;
-  font-family: 'Courier New', 'Monaco', monospace;
-  font-size: 12px;
-  line-height: 1.4;
-  background: #1a1a1a !important;
-  color: #e0e0e0 !important;
-  border: 1px solid #444 !important;
+  border: 1px solid #444;
   border-radius: var(--border-radius);
-  padding: 15px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  user-select: text;
-  cursor: text;
+  background: #1a1a1a;
+  overflow: hidden;
 
-  &:focus {
-    outline: none;
-    border-color: #8be9fd !important;
+  :deep(.xterm) {
+    padding: 15px;
   }
 
-  &.console-placeholder {
-    color: #6272a4 !important;
-    font-style: italic;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
+  :deep(.xterm-viewport) {
+    background: transparent !important;
+  }
+
+  :deep(.xterm-screen) {
+    background: transparent !important;
   }
 }
 </style>
