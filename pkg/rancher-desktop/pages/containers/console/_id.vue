@@ -56,14 +56,19 @@
         v-else
         class="logs-container"
       >
-        <textarea
+        <div
+          v-if="logs"
           ref="consoleOutput"
-          v-model="logs"
           class="console-output"
-          readonly
-          :placeholder="t('containers.console.noLogs')"
           @scroll="onUserScroll"
+          v-html="formattedLogs"
         />
+        <div
+          v-else
+          class="console-output console-placeholder"
+        >
+          {{ t('containers.console.noLogs') }}
+        </div>
       </div>
     </div>
   </div>
@@ -111,6 +116,9 @@ export default Vue.extend({
     },
     selectedNamespace() {
       return this.settings?.containers?.namespace;
+    },
+    formattedLogs() {
+      return this.convertAnsiToHtml(this.logs);
     },
   },
   async mounted() {
@@ -295,6 +303,119 @@ export default Vue.extend({
     goBack() {
       this.$router.push('/Containers');
     },
+    convertAnsiToHtml(text) {
+      if (!text) return '';
+      
+      const ansiColors = {
+        '30': '#000000', // black
+        '31': '#e74c3c', // red
+        '32': '#2ecc71', // green
+        '33': '#f39c12', // yellow
+        '34': '#3498db', // blue
+        '35': '#9b59b6', // magenta
+        '36': '#1abc9c', // cyan
+        '37': '#ecf0f1', // white
+        '90': '#7f8c8d', // bright black (gray)
+        '91': '#ff6b6b', // bright red
+        '92': '#51c785', // bright green
+        '93': '#ffd93d', // bright yellow
+        '94': '#74b9ff', // bright blue
+        '95': '#a29bfe', // bright magenta
+        '96': '#00cec9', // bright cyan
+        '97': '#ffffff', // bright white
+      };
+      
+      const ansiBgColors = {
+        '40': '#000000', '41': '#e74c3c', '42': '#2ecc71', '43': '#f39c12',
+        '44': '#3498db', '45': '#9b59b6', '46': '#1abc9c', '47': '#ecf0f1',
+        '100': '#7f8c8d', '101': '#ff6b6b', '102': '#51c785', '103': '#ffd93d',
+        '104': '#74b9ff', '105': '#a29bfe', '106': '#00cec9', '107': '#ffffff'
+      };
+      
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+      
+      const styleStack = [];
+      let currentStyles = { color: '', background: '', bold: false, dim: false, italic: false, underline: false };
+      
+      html = html.replace(/\x1b\[([0-9;]*)m/g, (match, codes) => {
+        if (!codes) codes = '0';
+        const codeList = codes.split(';').map(c => c || '0');
+        
+        let result = '';
+        
+        for (const code of codeList) {
+          switch (code) {
+            case '0': // reset
+              if (styleStack.length > 0) {
+                result += '</span>';
+                styleStack.pop();
+              }
+              currentStyles = { color: '', background: '', bold: false, dim: false, italic: false, underline: false };
+              break;
+            case '1':
+              currentStyles.bold = true;
+              break;
+            case '2':
+              currentStyles.dim = true;
+              break;
+            case '3':
+              currentStyles.italic = true;
+              break;
+            case '4':
+              currentStyles.underline = true;
+              break;
+            case '22':
+              currentStyles.bold = false;
+              currentStyles.dim = false;
+              break;
+            case '23':
+              currentStyles.italic = false;
+              break;
+            case '24':
+              currentStyles.underline = false;
+              break;
+            default:
+              if (ansiColors[code]) {
+                currentStyles.color = ansiColors[code];
+              } else if (ansiBgColors[code]) {
+                currentStyles.background = ansiBgColors[code];
+              }
+          }
+        }
+        
+        if (styleStack.length > 0) {
+          result += '</span>';
+          styleStack.pop();
+        }
+        
+        const styles = [];
+        if (currentStyles.color) styles.push(`color: ${currentStyles.color}`);
+        if (currentStyles.background) styles.push(`background-color: ${currentStyles.background}`);
+        if (currentStyles.bold) styles.push('font-weight: bold');
+        if (currentStyles.dim) styles.push('opacity: 0.6');
+        if (currentStyles.italic) styles.push('font-style: italic');
+        if (currentStyles.underline) styles.push('text-decoration: underline');
+        
+        if (styles.length > 0) {
+          result += `<span style="${styles.join('; ')}">`;
+          styleStack.push(true);
+        }
+        
+        return result;
+      });
+      
+      while (styleStack.length > 0) {
+        html += '</span>';
+        styleStack.pop();
+      }
+      
+      return html;
+    },
   },
 });
 </script>
@@ -391,19 +512,24 @@ export default Vue.extend({
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
   padding: 15px;
-  resize: none;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  user-select: text;
+  cursor: text;
 
   &:focus {
     outline: none;
     border-color: var(--primary);
   }
 
-  &::placeholder {
+  &.console-placeholder {
     color: var(--muted);
     font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
   }
 }
 
