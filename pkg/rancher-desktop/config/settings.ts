@@ -136,6 +136,7 @@ export const defaultSettings = {
           msizeInKib:      128,
           cacheMode:       CacheMode.MMAP,
         },
+        inotify: false,
       },
       proxy: {
         enabled:  false,
