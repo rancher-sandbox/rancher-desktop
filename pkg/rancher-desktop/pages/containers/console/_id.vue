@@ -302,8 +302,10 @@ export default Vue.extend({
 <style lang="scss" scoped>
 .container-console {
   height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .console-header {
@@ -361,6 +363,7 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .loading-container,
@@ -381,7 +384,6 @@ export default Vue.extend({
 .console-output {
   flex: 1;
   width: 100%;
-  min-height: 400px;
   font-family: 'Courier New', 'Monaco', monospace;
   font-size: 12px;
   line-height: 1.4;
