@@ -58,7 +58,11 @@ class BackendProgress extends Vue {
   }
 
   get progressBusy(): boolean {
-    return this.progressIndeterminate || this.progress.current < this.progress.max;
+    const busy = this.progressIndeterminate || this.progress.current < this.progress.max;
+
+    this.$emit('progressBarisOpen', busy);
+
+    return busy;
   }
 
   /** Return a string describing the elapsed time or progress. */
