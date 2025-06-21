@@ -340,13 +340,17 @@ export default Vue.extend({
             cursorBlink: false,
             disableStdin: true,
             convertEol: true,
-            scrollback: 10000
+            scrollback: 10000,
+            wordWrap: true
           });
 
           this.fitAddon = new FitAddon();
           this.terminal.loadAddon(this.fitAddon);
 
-          this.terminal.loadAddon(new WebLinksAddon());
+          this.terminal.loadAddon(new WebLinksAddon((event, uri) => {
+            event.preventDefault();
+            window.open(uri, '_blank');
+          }));
 
           this.terminal.open(this.$refs.terminalContainer);
           this.fitAddon.fit();
