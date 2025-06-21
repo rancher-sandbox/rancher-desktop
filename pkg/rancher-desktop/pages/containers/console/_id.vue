@@ -145,7 +145,7 @@ export default Vue.extend({
         this.ddClient = window.ddClient;
         await this.getContainerInfo();
         await this.fetchLogs();
-        
+
         if (this.isContainerRunning) {
           this.startStreaming();
         }
@@ -154,15 +154,15 @@ export default Vue.extend({
     async getContainerInfo() {
       try {
         const listOptions = { all: true };
-        
+
         if (this.isNerdCtl && this.selectedNamespace) {
           listOptions.namespace = this.selectedNamespace;
         }
-        
+
         const containers = await this.ddClient?.docker.listContainers(listOptions);
-        
+
         const container = containers.find(c => c.Id === this.containerId || c.Id.startsWith(this.containerId));
-        
+
         if (container) {
           const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
           this.containerName = names[0]?.replace(/_[a-z0-9-]{36}_[0-9]+/, '') || container.Id.substring(0, 12);
@@ -197,17 +197,17 @@ export default Vue.extend({
         }
 
         const args = [];
-        
+
         if (follow) {
           args.push('-f');
         }
-        
+
         if (!follow) {
           args.push('--tail', '100');
         }
-        
+
         args.push('-t');
-        
+
         args.push(this.containerId);
 
         console.log('Docker logs command args:', args);
@@ -249,7 +249,7 @@ export default Vue.extend({
       if (!this.isContainerRunning) {
         return;
       }
-      
+
       logInterval = setInterval(async () => {
         try {
           const options = {
@@ -305,116 +305,156 @@ export default Vue.extend({
     },
     convertAnsiToHtml(text) {
       if (!text) return '';
-      
+
       const ansiColors = {
         '30': '#000000', // black
-        '31': '#e74c3c', // red
-        '32': '#2ecc71', // green
-        '33': '#f39c12', // yellow
-        '34': '#3498db', // blue
-        '35': '#9b59b6', // magenta
-        '36': '#1abc9c', // cyan
-        '37': '#ecf0f1', // white
-        '90': '#7f8c8d', // bright black (gray)
-        '91': '#ff6b6b', // bright red
-        '92': '#51c785', // bright green
-        '93': '#ffd93d', // bright yellow
-        '94': '#74b9ff', // bright blue
-        '95': '#a29bfe', // bright magenta
-        '96': '#00cec9', // bright cyan
+        '31': '#ff5555', // red
+        '32': '#50fa7b', // green
+        '33': '#f1fa8c', // yellow
+        '34': '#8be9fd', // blue
+        '35': '#ff79c6', // magenta
+        '36': '#8be9fd', // cyan
+        '37': '#f8f8f2', // white
+        '90': '#6272a4', // bright black
+        '91': '#ff6e6e', // bright red
+        '92': '#69ff94', // bright green
+        '93': '#ffffa5', // bright yellow
+        '94': '#d6acff', // bright blue
+        '95': '#ff92df', // bright magenta
+        '96': '#a4ffff', // bright cyan
         '97': '#ffffff', // bright white
       };
-      
+
       const ansiBgColors = {
-        '40': '#000000', '41': '#e74c3c', '42': '#2ecc71', '43': '#f39c12',
-        '44': '#3498db', '45': '#9b59b6', '46': '#1abc9c', '47': '#ecf0f1',
-        '100': '#7f8c8d', '101': '#ff6b6b', '102': '#51c785', '103': '#ffd93d',
-        '104': '#74b9ff', '105': '#a29bfe', '106': '#00cec9', '107': '#ffffff'
+        '40': '#282a36', '41': '#ff5555', '42': '#50fa7b', '43': '#f1fa8c',
+        '44': '#8be9fd', '45': '#ff79c6', '46': '#8be9fd', '47': '#f8f8f2',
+        '100': '#6272a4', '101': '#ff6e6e', '102': '#69ff94', '103': '#ffffa5',
+        '104': '#d6acff', '105': '#ff92df', '106': '#a4ffff', '107': '#ffffff'
       };
-      
+
       let html = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-      
-      const styleStack = [];
-      let currentStyles = { color: '', background: '', bold: false, dim: false, italic: false, underline: false };
-      
-      html = html.replace(/\x1b\[([0-9;]*)m/g, (match, codes) => {
-        if (!codes) codes = '0';
-        const codeList = codes.split(';').map(c => c || '0');
-        
+
+      const spans = [];
+      let currentState = {
+        color: '',
+        background: '',
+        bold: false,
+        dim: false,
+        italic: false,
+        underline: false,
+        strikethrough: false
+      };
+
+      html = html.replace(/\x1b\[([0-9;]*)([a-zA-Z])/g, (match, codes, command) => {
+        if (command !== 'm') return match;
+
+        const codeList = codes ? codes.split(';').map(c => c || '0') : ['0'];
         let result = '';
-        
-        for (const code of codeList) {
+
+        if (spans.length > 0) {
+          result += '</span>';
+          spans.pop();
+        }
+
+        for (let i = 0; i < codeList.length; i++) {
+          const code = codeList[i];
+
           switch (code) {
             case '0': // reset
-              if (styleStack.length > 0) {
-                result += '</span>';
-                styleStack.pop();
+              currentState = { color: '', background: '', bold: false, dim: false, italic: false, underline: false, strikethrough: false };
+              break;
+            case '1': currentState.bold = true; break;
+            case '2': currentState.dim = true; break;
+            case '3': currentState.italic = true; break;
+            case '4': currentState.underline = true; break;
+            case '9': currentState.strikethrough = true; break;
+            case '22': currentState.bold = false; currentState.dim = false; break;
+            case '23': currentState.italic = false; break;
+            case '24': currentState.underline = false; break;
+            case '29': currentState.strikethrough = false; break;
+            case '38': // Extended foreground
+              if (codeList[i + 1] === '5' && codeList[i + 2]) {
+                currentState.color = this.get256Color(parseInt(codeList[i + 2]));
+                i += 2;
+              } else if (codeList[i + 1] === '2' && codeList[i + 4]) {
+                const r = parseInt(codeList[i + 2]) || 0;
+                const g = parseInt(codeList[i + 3]) || 0;
+                const b = parseInt(codeList[i + 4]) || 0;
+                currentState.color = `rgb(${r}, ${g}, ${b})`;
+                i += 4;
               }
-              currentStyles = { color: '', background: '', bold: false, dim: false, italic: false, underline: false };
               break;
-            case '1':
-              currentStyles.bold = true;
-              break;
-            case '2':
-              currentStyles.dim = true;
-              break;
-            case '3':
-              currentStyles.italic = true;
-              break;
-            case '4':
-              currentStyles.underline = true;
-              break;
-            case '22':
-              currentStyles.bold = false;
-              currentStyles.dim = false;
-              break;
-            case '23':
-              currentStyles.italic = false;
-              break;
-            case '24':
-              currentStyles.underline = false;
+            case '48':
+              if (codeList[i + 1] === '5' && codeList[i + 2]) {
+                currentState.background = this.get256Color(parseInt(codeList[i + 2]));
+                i += 2;
+              } else if (codeList[i + 1] === '2' && codeList[i + 4]) {
+                const r = parseInt(codeList[i + 2]) || 0;
+                const g = parseInt(codeList[i + 3]) || 0;
+                const b = parseInt(codeList[i + 4]) || 0;
+                currentState.background = `rgb(${r}, ${g}, ${b})`;
+                i += 4;
+              }
               break;
             default:
               if (ansiColors[code]) {
-                currentStyles.color = ansiColors[code];
+                currentState.color = ansiColors[code];
               } else if (ansiBgColors[code]) {
-                currentStyles.background = ansiBgColors[code];
+                currentState.background = ansiBgColors[code];
               }
           }
         }
-        
-        if (styleStack.length > 0) {
-          result += '</span>';
-          styleStack.pop();
-        }
-        
+
         const styles = [];
-        if (currentStyles.color) styles.push(`color: ${currentStyles.color}`);
-        if (currentStyles.background) styles.push(`background-color: ${currentStyles.background}`);
-        if (currentStyles.bold) styles.push('font-weight: bold');
-        if (currentStyles.dim) styles.push('opacity: 0.6');
-        if (currentStyles.italic) styles.push('font-style: italic');
-        if (currentStyles.underline) styles.push('text-decoration: underline');
-        
+        if (currentState.color) styles.push(`color: ${currentState.color}`);
+        if (currentState.background) styles.push(`background-color: ${currentState.background}`);
+        if (currentState.bold) styles.push('font-weight: bold');
+        if (currentState.dim) styles.push('opacity: 0.6');
+        if (currentState.italic) styles.push('font-style: italic');
+        if (currentState.underline && currentState.strikethrough) {
+          styles.push('text-decoration: underline line-through');
+        } else if (currentState.underline) {
+          styles.push('text-decoration: underline');
+        } else if (currentState.strikethrough) {
+          styles.push('text-decoration: line-through');
+        }
+
         if (styles.length > 0) {
           result += `<span style="${styles.join('; ')}">`;
-          styleStack.push(true);
+          spans.push(true);
         }
-        
+
         return result;
       });
-      
-      while (styleStack.length > 0) {
+
+      while (spans.length > 0) {
         html += '</span>';
-        styleStack.pop();
+        spans.pop();
       }
-      
+
       return html;
+    },
+    get256Color(index) {
+      if (index < 16) {
+        const colors = ['#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0',
+                       '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff'];
+        return colors[index] || '#ffffff';
+      } else if (index < 232) {
+        const n = index - 16;
+        const r = Math.floor(n / 36);
+        const g = Math.floor((n % 36) / 6);
+        const b = n % 6;
+        const toRgb = (c) => c === 0 ? 0 : 55 + c * 40;
+        return `rgb(${toRgb(r)}, ${toRgb(g)}, ${toRgb(b)})`;
+      } else {
+        const gray = 8 + (index - 232) * 10;
+        return `rgb(${gray}, ${gray}, ${gray})`;
+      }
     },
   },
 });
@@ -508,8 +548,9 @@ export default Vue.extend({
   font-family: 'Courier New', 'Monaco', monospace;
   font-size: 12px;
   line-height: 1.4;
-  background: var(--body-bg);
-  border: 1px solid var(--border);
+  background: #1a1a1a !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #444 !important;
   border-radius: var(--border-radius);
   padding: 15px;
   overflow-y: auto;
@@ -520,25 +561,16 @@ export default Vue.extend({
 
   &:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: #8be9fd !important;
   }
 
   &.console-placeholder {
-    color: var(--muted);
+    color: #6272a4 !important;
     font-style: italic;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 200px;
-  }
-}
-
-// Dark theme adjustments
-.theme-dark {
-  .console-output {
-    background: #1a1a1a;
-    color: #e0e0e0;
-    border-color: #444;
   }
 }
 </style>
