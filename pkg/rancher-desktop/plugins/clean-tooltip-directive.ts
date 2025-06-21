@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
-import { VTooltip } from 'v-tooltip';
-import Vue, { DirectiveHook } from 'vue';
+import { vTooltip } from 'floating-vue';
+import { App, DirectiveHook } from 'vue';
 
 const ALLOWED_TAGS = [
   'code',
@@ -18,16 +18,21 @@ const ALLOWED_TAGS = [
   'strong',
 ];
 
-const bind: DirectiveHook<HTMLElement, any, any> = (el, binding, vnode, prevVNode) => {
-  let { value } = binding;
+export default ({
+  name: 'clean-tooltip-directive',
+  install(app: App, ..._options: any) {
+    const fn: DirectiveHook<HTMLElement, any, any> = (el, binding) => {
+      let { value } = binding;
 
-  value = DOMPurify.sanitize(value, { ALLOWED_TAGS });
+      value = DOMPurify.sanitize(value, { ALLOWED_TAGS });
 
-  return VTooltip.bind?.(el, { ...binding, value }, vnode, prevVNode);
-};
+      return vTooltip.beforeMount(el, { ...binding, value });
+    };
 
-Vue.directive('clean-tooltip', {
-  ...VTooltip,
-  bind,
-  update: bind,
+    app.directive('clean-tooltip', {
+      ...vTooltip,
+      beforeMount: fn,
+      updated:     fn,
+    });
+  },
 });

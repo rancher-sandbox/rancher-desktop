@@ -5,7 +5,9 @@ import SystemPreferences from '../SystemPreferences.vue';
 const deepmerge = require('deepmerge');
 
 function createWrappedPage(props) {
-  return mount(SystemPreferences, { propsData: props });
+  return mount(SystemPreferences, { props, global: {
+    directives: { tooltip: {} },
+  } });
 }
 
 const baseProps = {
@@ -145,9 +147,9 @@ describe('SystemPreferences.vue', () => {
     it('the sliders detect invalid values', async() => {
       const wrapper = createWrappedPage(baseProps);
 
-      const div1 = wrapper.find('#memoryInGBWrapper');
-      const slider1 = div1.find('div.vue-slider');
-      const span1 = slider1.find('div.vue-slider-dot');
+      const div1 = wrapper.getComponent('#memoryInGBWrapper');
+      const slider1 = div1.getComponent({ref: 'slider'});
+      const span1 = slider1.get('div.vue-slider-dot');
       const slider1vm = slider1.vm;
 
       for (let i = 2; i <= baseProps.availMemoryInGB; i++) {
@@ -163,10 +165,10 @@ describe('SystemPreferences.vue', () => {
         slider1vm.setValue(baseProps.availMemoryInGB + 1);
       }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
 
-      const div2 = wrapper.find('#numCPUWrapper');
-      const slider2 = div2.find('div.vue-slider');
+      const div2 = wrapper.getComponent('#numCPUWrapper');
+      const slider2 = div2.getComponent({ref: 'slider'});
       const slider2vm = slider2.vm;
-      const span2 = slider2.find('div.vue-slider-dot');
+      const span2 = slider2.get('div.vue-slider-dot');
 
       for (let i = 1; i <= baseProps.availNumCPUs; i++) {
         await slider2vm.setValue(i);
@@ -187,8 +189,8 @@ describe('SystemPreferences.vue', () => {
   it('emits events', async() => {
     const wrapper = createWrappedPage(baseProps);
 
-    const div1 = wrapper.find('#memoryInGBWrapper');
-    const slider1 = div1.find('div.vue-slider');
+    const div1 = wrapper.getComponent('#memoryInGBWrapper');
+    const slider1 = div1.getComponent({ref: 'slider'});
     const slider1vm = slider1.vm;
 
     await slider1vm.setValue(3);
@@ -202,8 +204,8 @@ describe('SystemPreferences.vue', () => {
     expect(updateMemoryEmitter[0]).toEqual([3]);
     expect(updateMemoryEmitter[1]).toEqual([5]);
 
-    const div2 = wrapper.find('#numCPUWrapper');
-    const slider2 = div2.find('div.vue-slider');
+    const div2 = wrapper.getComponent('#numCPUWrapper');
+    const slider2 = div2.getComponent({ref: 'slider'});
     const slider2vm = slider2.vm;
 
     await slider2vm.setValue(2);

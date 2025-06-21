@@ -1,10 +1,11 @@
 <script>
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { networkStatus } from '@pkg/utils/networks';
 
-export default Vue.extend({
+export default defineComponent({
+  name:  'network-status',
   props: {
     icon: {
       type:    String,
@@ -24,9 +25,10 @@ export default Vue.extend({
     },
     getTooltip() {
       return {
-        content:   `<b>${ this.t('product.networkStatus') }</b>: ${ this.networkStatusLabel }`,
-        placement: 'top',
-        classes:   'tooltip-footer',
+        content:     `<b>${ this.t('product.networkStatus') }</b>: ${ this.networkStatusLabel }`,
+        html:        true,
+        placement:   'top',
+        popperClass: 'tooltip-footer',
       };
     },
   },

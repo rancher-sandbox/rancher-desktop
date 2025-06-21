@@ -137,7 +137,7 @@ export default {
     margin-left: 1px;
   }
 
-  .image-input::v-deep .labeled-input {
+  .image-input :deep(.labeled-input) {
     min-height: 42px;
     padding: 8px;
   }

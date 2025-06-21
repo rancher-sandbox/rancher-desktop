@@ -2,11 +2,11 @@
 import os from 'os';
 
 import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-dialog',
   components: { Checkbox },
   layout:     'dialog',
@@ -36,7 +36,7 @@ export default Vue.extend({
     ipcRenderer.send('dialog/mounted');
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('dialog/options');
   },
 
@@ -78,7 +78,7 @@ export default Vue.extend({
     >
       <slot name="checkbox">
         <checkbox
-          v-model="checkboxChecked"
+          v-model:value="checkboxChecked"
           :label="checkboxLabel"
         />
       </slot>

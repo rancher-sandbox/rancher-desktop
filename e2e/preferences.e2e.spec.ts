@@ -131,7 +131,11 @@ test.describe.serial('Main App Test', () => {
       }
     }
 
-    await expect(virtualMachine.reverseSshFs).toBeChecked();
+    if (os.platform() === 'darwin' && parseInt(os.release()) >= 23) {
+      await expect(virtualMachine.virtiofs).toBeChecked();
+    } else {
+      await expect(virtualMachine.reverseSshFs).toBeChecked();
+    }
 
     await virtualMachine.ninep.click();
     await expect(virtualMachine.cacheMode).toBeVisible();

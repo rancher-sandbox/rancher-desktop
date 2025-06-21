@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapState } from 'vuex';
 
 import PreferencesBodyApplication from '@pkg/components/Preferences/BodyApplication.vue';
@@ -13,7 +13,7 @@ import { Settings } from '@pkg/config/settings';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-body',
   components: {
     PreferencesBodyApplication,
@@ -65,9 +65,9 @@ export default Vue.extend({
   <div class="preferences-body">
     <slot>
       <component
+        v-bind="$attrs"
         :is="componentFromNavItem"
         :preferences="preferences"
-        v-on="$listeners"
       />
     </slot>
     <preferences-help class="help" />

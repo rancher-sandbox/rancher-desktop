@@ -1,9 +1,9 @@
 <script lang="ts">
 
 import { shell } from 'electron';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:  'help',
   props: {
     url: {
