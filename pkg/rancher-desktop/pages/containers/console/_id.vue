@@ -121,6 +121,13 @@ export default Vue.extend({
       return this.convertAnsiToHtml(this.logs);
     },
   },
+  watch: {
+    formattedLogs() {
+      if (this.autoScroll) {
+        this.scrollToBottom();
+      }
+    },
+  },
   async mounted() {
     this.$store.dispatch('page/setHeader', {
       title: this.t('containers.console.title'),
@@ -185,8 +192,6 @@ export default Vue.extend({
         this.isLoading = true;
         this.error = null;
 
-        console.log('Fetching logs for container:', this.containerId);
-
         const options = {
           cwd: '/',
         };
@@ -210,17 +215,11 @@ export default Vue.extend({
 
         args.push(this.containerId);
 
-        console.log('Docker logs command args:', args);
-        console.log('Options:', options);
-
         const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           'logs',
           args,
           options
         );
-
-        console.log('Docker logs stdout:', stdout);
-        console.log('Docker logs stderr:', stderr);
 
         if (stderr && !stdout) {
           throw new Error(stderr);
@@ -287,9 +286,11 @@ export default Vue.extend({
     },
     scrollToBottom() {
       this.$nextTick(() => {
-        if (this.$refs.consoleOutput) {
-          this.$refs.consoleOutput.scrollTop = this.$refs.consoleOutput.scrollHeight;
-        }
+        this.$nextTick(() => {
+          if (this.$refs.consoleOutput) {
+            this.$refs.consoleOutput.scrollTop = this.$refs.consoleOutput.scrollHeight;
+          }
+        });
       });
     },
     onUserScroll() {
