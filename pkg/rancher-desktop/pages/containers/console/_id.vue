@@ -54,8 +54,16 @@
             class="terminal-container"
           />
           <div class="search-toolbar">
-            <div class="search-panel" :class="{ 'expanded': isSearchExpanded }">
-              <div class="search-expanded-content" v-if="isSearchExpanded">
+            <div class="search-widget" :class="{ 'expanded': isSearchExpanded }">
+              <button
+                class="search-toggle-btn"
+                @click="toggleSearch"
+                :class="{ 'active': isSearchExpanded }"
+                title="Search"
+              >
+                <i class="icon icon-search" />
+              </button>
+              <div class="search-bar" v-if="isSearchExpanded">
                 <input
                   ref="searchInput"
                   v-model="searchTerm"
@@ -66,7 +74,7 @@
                   @keydown="handleSearchKeydown"
                 />
                 <div class="search-controls">
-                  <button 
+                  <button
                     class="search-btn"
                     @click="searchPrevious"
                     :disabled="!searchTerm"
@@ -74,7 +82,7 @@
                   >
                     <i class="icon icon-chevron-up" />
                   </button>
-                  <button 
+                  <button
                     class="search-btn"
                     @click="searchNext"
                     :disabled="!searchTerm"
@@ -82,19 +90,15 @@
                   >
                     <i class="icon icon-chevron-down" />
                   </button>
-                </div>
-                <div class="search-results" v-if="searchResults">
-                  {{ searchResults }}
+                  <button
+                    class="search-close-btn"
+                    @click="toggleSearch"
+                    title="Close search"
+                  >
+                    <i class="icon icon-x" />
+                  </button>
                 </div>
               </div>
-              <button 
-                class="search-toggle-btn"
-                @click="toggleSearch"
-                :class="{ 'active': isSearchExpanded }"
-                title="Search"
-              >
-                <i class="icon icon-search" />
-              </button>
             </div>
           </div>
         </div>
@@ -142,7 +146,6 @@ export default Vue.extend({
       pendingLogs: '',
       isSearchExpanded: false,
       searchTerm: '',
-      searchResults: null,
     };
   },
   computed: {
@@ -421,7 +424,6 @@ export default Vue.extend({
         });
       } else {
         this.searchTerm = '';
-        this.searchResults = null;
         if (this.searchAddon) {
           this.searchAddon.clearDecorations();
         }
@@ -429,40 +431,34 @@ export default Vue.extend({
     },
     performSearch() {
       if (!this.searchAddon || !this.searchTerm) {
-        this.searchResults = null;
         if (this.searchAddon) {
           this.searchAddon.clearDecorations();
         }
         return;
       }
 
-      const results = this.searchAddon.findNext(this.searchTerm);
-      if (results) {
-        this.updateSearchResults();
-      } else {
-        this.searchResults = 'No matches';
+      try {
+        this.searchAddon.clearDecorations();
+
+        this.searchAddon.findNext(this.searchTerm);
+      } catch (error) {
+        console.error('Search error:', error);
       }
     },
     searchNext() {
       if (!this.searchAddon || !this.searchTerm) return;
-      this.searchAddon.findNext(this.searchTerm);
-      this.updateSearchResults();
+      try {
+        this.searchAddon.findNext(this.searchTerm);
+      } catch (error) {
+        console.error('Search next error:', error);
+      }
     },
     searchPrevious() {
       if (!this.searchAddon || !this.searchTerm) return;
-      this.searchAddon.findPrevious(this.searchTerm);
-      this.updateSearchResults();
-    },
-    updateSearchResults() {
-      if (!this.searchAddon) return;
-      
-      const resultIndex = this.searchAddon.currentIndex;
-      const totalResults = this.searchAddon.resultCount;
-      
-      if (totalResults > 0) {
-        this.searchResults = `${resultIndex + 1} of ${totalResults}`;
-      } else {
-        this.searchResults = 'No matches';
+      try {
+        this.searchAddon.findPrevious(this.searchTerm);
+      } catch (error) {
+        console.error('Search previous error:', error);
       }
     },
     handleSearchKeydown(event) {
@@ -488,7 +484,7 @@ export default Vue.extend({
 <style lang="scss" scoped>
 @import 'xterm/css/xterm.css';
 .container-console {
-  height: auto;
+  height: 87vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -598,12 +594,13 @@ export default Vue.extend({
   display: flex;
   align-items: flex-start;
   padding-top: 15px;
-  
+
   button,
   .search-btn,
-  .search-toggle-btn {
+  .search-toggle-btn,
+  .search-close-btn {
     outline: none !important;
-    
+
     &:focus,
     &:active,
     &:focus-visible,
@@ -611,35 +608,33 @@ export default Vue.extend({
       outline: none !important;
       box-shadow: none !important;
     }
-    
+
     * {
       outline: none !important;
     }
   }
 }
 
-.search-panel {
+.search-widget {
   display: flex;
   align-items: center;
   background: var(--nav-bg);
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
   &.expanded {
-    background: var(--primary-bg);
+    background: var(--nav-bg);
     border-color: var(--primary);
   }
 }
 
-.search-expanded-content {
+.search-bar {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  min-width: 200px;
+  align-items: center;
+  background: transparent;
+  padding: 0;
 }
 
 .search-toggle-btn {
@@ -647,22 +642,36 @@ export default Vue.extend({
   border: none;
   padding: 12px;
   cursor: pointer;
-  color: white;
+  color: var(--muted);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   outline: none !important;
-  
+  min-width: 44px;
+  min-height: 44px;
+
+  .search-widget:not(.expanded) & {
+    border-right: none;
+  }
+
+  .search-widget.expanded & {
+    border-right: 1px solid var(--border);
+    padding: 8px 10px;
+    min-width: auto;
+    min-height: auto;
+  }
+
   &:hover {
     background: var(--primary-hover-bg);
-    color: var(--primary);
+    color: var(--primary-text);
   }
-  
+
   &.active {
     color: var(--primary);
+    background: var(--primary-bg);
   }
-  
+
   &:focus,
   &:active,
   &:focus-visible,
@@ -671,63 +680,74 @@ export default Vue.extend({
     box-shadow: none !important;
     border-style: solid !important;
   }
-  
+
   * {
     outline: none !important;
   }
-  
+
   .icon {
     font-size: 16px;
     outline: none !important;
+
+    .search-widget.expanded & {
+      font-size: 14px;
+    }
   }
 }
 
 .search-input {
   border: 1px solid var(--border);
-  background: var(--input-bg);
-  color: var(--primary-text);
-  font-size: 12px;
-  padding: 6px 8px;
-  border-radius: 4px;
+  background: var(--body-bg);
+  color: var(--body-text);
+  font-size: 13px;
+  padding: 8px 12px;
   outline: none;
-  width: 100%;
-  
-  &:focus {
-    border-color: var(--primary);
-  }
-  
+  min-width: 120px;
+  font-family: var(--font-family-mono);
+  border-radius: 4px;
+  margin: 2px;
+
   &::placeholder {
     color: var(--muted);
   }
+
+  &:focus {
+    border-color: var(--primary);
+    background: var(--body-bg);
+    color: var(--body-text);
+  }
 }
+
 
 .search-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
-  justify-content: center;
+  gap: 0;
 }
 
 .search-btn {
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 6px 8px;
+  border: none;
+  border-left: 1px solid var(--border);
+  padding: 8px 8px;
   cursor: pointer;
-  color: var(--primary-text);
+  color: var(--muted);
   transition: all 0.2s ease;
   outline: none !important;
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   &:hover:not(:disabled) {
     background: var(--primary-hover-bg);
-    border-color: var(--primary);
+    color: var(--primary-text);
   }
-  
+
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
   }
-  
+
   &:focus,
   &:active,
   &:focus-visible,
@@ -736,21 +756,50 @@ export default Vue.extend({
     box-shadow: none !important;
     border-style: solid !important;
   }
-  
+
   * {
     outline: none !important;
   }
-  
+
   .icon {
     font-size: 12px;
     outline: none !important;
   }
 }
 
-.search-results {
-  font-size: 11px;
+.search-close-btn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  padding: 8px 10px;
+  cursor: pointer;
   color: var(--muted);
-  text-align: center;
-  padding: 2px 0;
+  transition: all 0.2s ease;
+  outline: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--primary-hover-bg);
+    color: var(--primary-text);
+  }
+
+  &:focus,
+  &:active,
+  &:focus-visible,
+  &:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  * {
+    outline: none !important;
+  }
+
+  .icon {
+    font-size: 12px;
+    outline: none !important;
+  }
 }
 </style>
