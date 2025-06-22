@@ -21,14 +21,6 @@
         </div>
       </div>
       <div class="header-right">
-        <button
-          class="btn role-secondary"
-          @click="refreshLogs"
-          :disabled="isLoading"
-        >
-          <i class="icon icon-refresh" />
-          {{ t('containers.console.refresh') }}
-        </button>
       </div>
     </div>
 
@@ -252,9 +244,6 @@ export default Vue.extend({
           this.initializeTerminal();
         }
       }
-    },
-    async refreshLogs() {
-      await this.fetchLogs(false);
     },
     startStreaming() {
       if (!this.isContainerRunning) {
