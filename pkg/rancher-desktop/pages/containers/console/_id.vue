@@ -59,9 +59,11 @@
                 class="search-toggle-btn"
                 @click="toggleSearch"
                 :class="{ 'active': isSearchExpanded }"
+                :aria-label="isSearchExpanded ? 'Close search' : 'Open search'"
+                :aria-expanded="isSearchExpanded"
                 title="Search"
               >
-                <i class="icon icon-search" />
+                <i class="icon icon-search" aria-hidden="true" />
               </button>
               <div class="search-bar" v-if="isSearchExpanded">
                 <input
@@ -70,6 +72,7 @@
                   type="text"
                   class="search-input"
                   placeholder="Search..."
+                  aria-label="Search in logs"
                   @input="performSearch"
                   @keydown="handleSearchKeydown"
                 />
@@ -78,24 +81,27 @@
                     class="search-btn"
                     @click="searchPrevious"
                     :disabled="!searchTerm"
+                    aria-label="Previous match"
                     title="Previous match"
                   >
-                    <i class="icon icon-chevron-up" />
+                    <i class="icon icon-chevron-up" aria-hidden="true" />
                   </button>
                   <button
                     class="search-btn"
                     @click="searchNext"
                     :disabled="!searchTerm"
+                    aria-label="Next match"
                     title="Next match"
                   >
-                    <i class="icon icon-chevron-down" />
+                    <i class="icon icon-chevron-down" aria-hidden="true" />
                   </button>
                   <button
                     class="search-close-btn"
                     @click="toggleSearch"
+                    aria-label="Close search"
                     title="Close search"
                   >
-                    <i class="icon icon-x" />
+                    <i class="icon icon-x" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -111,9 +117,9 @@
 import { BadgeState, Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { WebLinksAddon } from 'xterm-addon-web-links';
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import { SearchAddon } from '@xterm/addon-search';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
@@ -173,6 +179,9 @@ export default Vue.extend({
 
     ipcRenderer.send('settings-read');
     this.initializeConsole();
+    
+    // Add global keyboard shortcut for search
+    window.addEventListener('keydown', this.handleGlobalKeydown);
   },
   beforeDestroy() {
     this.stopStreaming();
@@ -180,6 +189,7 @@ export default Vue.extend({
       this.terminal.dispose();
     }
     ipcRenderer.removeAllListeners('settings-read');
+    window.removeEventListener('keydown', this.handleGlobalKeydown);
   },
   methods: {
     async initializeConsole() {
@@ -474,6 +484,15 @@ export default Vue.extend({
         event.preventDefault();
       }
     },
+    handleGlobalKeydown(event) {
+      // Ctrl+F or Cmd+F to open search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault();
+        if (!this.isSearchExpanded) {
+          this.toggleSearch();
+        }
+      }
+    },
     goBack() {
       this.$router.push('/Containers');
     },
@@ -482,7 +501,7 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
-@import 'xterm/css/xterm.css';
+@import '@xterm/xterm/css/xterm.css';
 .container-console {
   height: 87vh;
   display: flex;
@@ -595,22 +614,10 @@ export default Vue.extend({
   align-items: flex-start;
   padding-top: 15px;
 
-  button,
-  .search-btn,
-  .search-toggle-btn,
-  .search-close-btn {
-    outline: none !important;
-
-    &:focus,
-    &:active,
-    &:focus-visible,
-    &:focus-within {
-      outline: none !important;
-      box-shadow: none !important;
-    }
-
-    * {
-      outline: none !important;
+  button {
+    &:focus-visible {
+      outline: 1px solid var(--primary);
+      outline-offset: -1px;
     }
   }
 }
@@ -647,7 +654,6 @@ export default Vue.extend({
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: none !important;
   min-width: 44px;
   min-height: 44px;
 
@@ -672,22 +678,9 @@ export default Vue.extend({
     background: var(--primary-bg);
   }
 
-  &:focus,
-  &:active,
-  &:focus-visible,
-  &:focus-within {
-    outline: none !important;
-    box-shadow: none !important;
-    border-style: solid !important;
-  }
-
-  * {
-    outline: none !important;
-  }
 
   .icon {
     font-size: 16px;
-    outline: none !important;
 
     .search-widget.expanded & {
       font-size: 14px;
@@ -701,7 +694,6 @@ export default Vue.extend({
   color: var(--body-text);
   font-size: 13px;
   padding: 8px 12px;
-  outline: none;
   min-width: 120px;
   font-family: var(--font-family-mono);
   border-radius: 4px;
@@ -733,10 +725,10 @@ export default Vue.extend({
   cursor: pointer;
   color: var(--muted);
   transition: all 0.2s ease;
-  outline: none !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  outline: none !important;
 
   &:hover:not(:disabled) {
     background: var(--primary-hover-bg);
@@ -747,23 +739,16 @@ export default Vue.extend({
     opacity: 0.3;
     cursor: not-allowed;
   }
-
+  
   &:focus,
   &:active,
-  &:focus-visible,
-  &:focus-within {
+  &:focus-visible {
     outline: none !important;
     box-shadow: none !important;
-    border-style: solid !important;
-  }
-
-  * {
-    outline: none !important;
   }
 
   .icon {
     font-size: 12px;
-    outline: none !important;
   }
 }
 
@@ -775,10 +760,10 @@ export default Vue.extend({
   cursor: pointer;
   color: var(--muted);
   transition: all 0.2s ease;
-  outline: none !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  outline: none !important;
 
   &:hover {
     background: var(--primary-hover-bg);
@@ -787,19 +772,13 @@ export default Vue.extend({
 
   &:focus,
   &:active,
-  &:focus-visible,
-  &:focus-within {
+  &:focus-visible {
     outline: none !important;
     box-shadow: none !important;
   }
 
-  * {
-    outline: none !important;
-  }
-
   .icon {
     font-size: 12px;
-    outline: none !important;
   }
 }
 </style>
