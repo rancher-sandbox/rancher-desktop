@@ -48,10 +48,56 @@
         v-else
         class="logs-container"
       >
-        <div
-          ref="terminalContainer"
-          class="terminal-container"
-        />
+        <div class="terminal-wrapper">
+          <div
+            ref="terminalContainer"
+            class="terminal-container"
+          />
+          <div class="search-toolbar">
+            <div class="search-panel" :class="{ 'expanded': isSearchExpanded }">
+              <div class="search-expanded-content" v-if="isSearchExpanded">
+                <input
+                  ref="searchInput"
+                  v-model="searchTerm"
+                  type="text"
+                  class="search-input"
+                  placeholder="Search..."
+                  @input="performSearch"
+                  @keydown="handleSearchKeydown"
+                />
+                <div class="search-controls">
+                  <button 
+                    class="search-btn"
+                    @click="searchPrevious"
+                    :disabled="!searchTerm"
+                    title="Previous match"
+                  >
+                    <i class="icon icon-chevron-up" />
+                  </button>
+                  <button 
+                    class="search-btn"
+                    @click="searchNext"
+                    :disabled="!searchTerm"
+                    title="Next match"
+                  >
+                    <i class="icon icon-chevron-down" />
+                  </button>
+                </div>
+                <div class="search-results" v-if="searchResults">
+                  {{ searchResults }}
+                </div>
+              </div>
+              <button 
+                class="search-toggle-btn"
+                @click="toggleSearch"
+                :class="{ 'active': isSearchExpanded }"
+                title="Search"
+              >
+                <i class="icon icon-search" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -64,6 +110,7 @@ import { mapGetters } from 'vuex';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
+import { SearchAddon } from '@xterm/addon-search';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import { ContainerEngine } from '@pkg/config/settings';
@@ -90,8 +137,12 @@ export default Vue.extend({
       isContainerRunning: false,
       terminal: null,
       fitAddon: null,
+      searchAddon: null,
       lastLogTimestamp: null,
       pendingLogs: '',
+      isSearchExpanded: false,
+      searchTerm: '',
+      searchResults: null,
     };
   },
   computed: {
@@ -336,6 +387,9 @@ export default Vue.extend({
           this.fitAddon = new FitAddon();
           this.terminal.loadAddon(this.fitAddon);
 
+          this.searchAddon = new SearchAddon();
+          this.terminal.loadAddon(this.searchAddon);
+
           this.terminal.loadAddon(new WebLinksAddon((event, uri) => {
             event.preventDefault();
             window.open(uri, '_blank');
@@ -356,6 +410,73 @@ export default Vue.extend({
           });
         }
       });
+    },
+    toggleSearch() {
+      this.isSearchExpanded = !this.isSearchExpanded;
+      if (this.isSearchExpanded) {
+        this.$nextTick(() => {
+          if (this.$refs.searchInput) {
+            this.$refs.searchInput.focus();
+          }
+        });
+      } else {
+        this.searchTerm = '';
+        this.searchResults = null;
+        if (this.searchAddon) {
+          this.searchAddon.clearDecorations();
+        }
+      }
+    },
+    performSearch() {
+      if (!this.searchAddon || !this.searchTerm) {
+        this.searchResults = null;
+        if (this.searchAddon) {
+          this.searchAddon.clearDecorations();
+        }
+        return;
+      }
+
+      const results = this.searchAddon.findNext(this.searchTerm);
+      if (results) {
+        this.updateSearchResults();
+      } else {
+        this.searchResults = 'No matches';
+      }
+    },
+    searchNext() {
+      if (!this.searchAddon || !this.searchTerm) return;
+      this.searchAddon.findNext(this.searchTerm);
+      this.updateSearchResults();
+    },
+    searchPrevious() {
+      if (!this.searchAddon || !this.searchTerm) return;
+      this.searchAddon.findPrevious(this.searchTerm);
+      this.updateSearchResults();
+    },
+    updateSearchResults() {
+      if (!this.searchAddon) return;
+      
+      const resultIndex = this.searchAddon.currentIndex;
+      const totalResults = this.searchAddon.resultCount;
+      
+      if (totalResults > 0) {
+        this.searchResults = `${resultIndex + 1} of ${totalResults}`;
+      } else {
+        this.searchResults = 'No matches';
+      }
+    },
+    handleSearchKeydown(event) {
+      if (event.key === 'Enter') {
+        if (event.shiftKey) {
+          this.searchPrevious();
+        } else {
+          this.searchNext();
+        }
+        event.preventDefault();
+      } else if (event.key === 'Escape') {
+        this.toggleSearch();
+        event.preventDefault();
+      }
     },
     goBack() {
       this.$router.push('/Containers');
@@ -446,9 +567,15 @@ export default Vue.extend({
   min-height: 0;
 }
 
+.terminal-wrapper {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  gap: 10px;
+}
+
 .terminal-container {
   flex: 1;
-  width: 100%;
   border: 1px solid #444;
   border-radius: var(--border-radius);
   background: #1a1a1a;
@@ -465,5 +592,165 @@ export default Vue.extend({
   :deep(.xterm-screen) {
     background: transparent !important;
   }
+}
+
+.search-toolbar {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 15px;
+  
+  button,
+  .search-btn,
+  .search-toggle-btn {
+    outline: none !important;
+    
+    &:focus,
+    &:active,
+    &:focus-visible,
+    &:focus-within {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    
+    * {
+      outline: none !important;
+    }
+  }
+}
+
+.search-panel {
+  display: flex;
+  align-items: center;
+  background: var(--nav-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  &.expanded {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+  }
+}
+
+.search-expanded-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  min-width: 200px;
+}
+
+.search-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 12px;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none !important;
+  
+  &:hover {
+    background: var(--primary-hover-bg);
+    color: var(--primary);
+  }
+  
+  &.active {
+    color: var(--primary);
+  }
+  
+  &:focus,
+  &:active,
+  &:focus-visible,
+  &:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border-style: solid !important;
+  }
+  
+  * {
+    outline: none !important;
+  }
+  
+  .icon {
+    font-size: 16px;
+    outline: none !important;
+  }
+}
+
+.search-input {
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--primary-text);
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  
+  &:focus {
+    border-color: var(--primary);
+  }
+  
+  &::placeholder {
+    color: var(--muted);
+  }
+}
+
+.search-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+
+.search-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  color: var(--primary-text);
+  transition: all 0.2s ease;
+  outline: none !important;
+  
+  &:hover:not(:disabled) {
+    background: var(--primary-hover-bg);
+    border-color: var(--primary);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  &:focus,
+  &:active,
+  &:focus-visible,
+  &:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border-style: solid !important;
+  }
+  
+  * {
+    outline: none !important;
+  }
+  
+  .icon {
+    font-size: 12px;
+    outline: none !important;
+  }
+}
+
+.search-results {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  padding: 2px 0;
 }
 </style>

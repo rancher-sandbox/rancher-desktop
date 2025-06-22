@@ -56,6 +56,7 @@
     "@docker/extension-api-client-types": "0.4.2",
     "@kubernetes/client-node": "0.18.1",
     "@rancher/components": "0.1.4",
+    "@xterm/addon-search": "^0.15.0",
     "async-mutex": "^0.5.0",
     "cookie-universal": "2.2.2",
     "core-js": "3.25.3",
