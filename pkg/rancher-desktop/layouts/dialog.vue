@@ -22,11 +22,12 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name: 'dialog-layout',
   head() {
     // If dark-mode is set to auto (follow system-prefs) this is all we need
     // In a possible future with a three-way pref

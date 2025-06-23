@@ -2,7 +2,7 @@
 
 import { Banner, LabeledInput, TextAreaAutoGrow } from '@rancher/components';
 import dayjs from 'dayjs';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import { Snapshot, SnapshotEvent } from '@pkg/main/snapshots/types';
@@ -16,7 +16,8 @@ const defaultName = () => {
   return `Snap_${ dateString }`;
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'snapshots-create',
   components: {
     Banner,
     LabeledInput,
@@ -136,7 +137,7 @@ export default Vue.extend({
         <label>{{ t('snapshots.create.name.label') }}</label>
         <LabeledInput
           ref="nameInput"
-          v-model="name"
+          v-model:value="name"
           v-focus
           data-test="createSnapshotNameInput"
           class="input"
@@ -148,7 +149,7 @@ export default Vue.extend({
         <label>{{ t('snapshots.create.description.label') }}</label>
         <TextAreaAutoGrow
           ref="descriptionInput"
-          v-model="description"
+          v-model:value="description"
           data-test="createSnapshotDescInput"
           class="input"
           :disabled="creating"

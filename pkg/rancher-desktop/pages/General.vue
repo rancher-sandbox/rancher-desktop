@@ -1,6 +1,3 @@
-<router lang="yaml">
-  name: General
-</router>
 <template>
   <div class="general">
     <div>
@@ -82,7 +79,7 @@ export default {
     });
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.off('settings-update', this.onSettingsUpdate);
     ipcRenderer.off('update-state', this.onUpdateState);
   },

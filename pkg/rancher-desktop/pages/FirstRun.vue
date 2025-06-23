@@ -8,7 +8,7 @@
       :value="hasVersions && settings.kubernetes.enabled"
       :is-locked="kubernetesLocked"
       :disabled="!hasVersions"
-      @input="handleDisableKubernetesCheckbox"
+      @update:value="handleDisableKubernetesCheckbox"
     />
     <rd-fieldset
       :legend-text="t('firstRun.kubernetesVersion.legend') + offlineCheck()"
@@ -90,7 +90,7 @@
 import os from 'os';
 
 import _ from 'lodash';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EngineSelector from '@pkg/components/EngineSelector.vue';
@@ -105,7 +105,8 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { highestStableVersion, VersionEntry } from '@pkg/utils/kubeVersions';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'first-run-dialog',
   components: {
     RdFieldset,
     RdCheckbox,
@@ -190,7 +191,7 @@ export default Vue.extend({
       this.$data.pathManagementSelectorLocked = _.get(lockedFields, 'application.pathManagementStrategy');
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('beforeunload', this.close);
   },
   methods: {

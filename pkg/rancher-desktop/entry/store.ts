@@ -1,5 +1,4 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 
 import * as ActionMenu from '../store/action-menu';
 import * as ApplicationSettings from '../store/applicationSettings';
@@ -12,12 +11,11 @@ import * as K8sManager from '../store/k8sManager';
 import * as Page from '../store/page';
 import * as Preferences from '../store/preferences';
 import * as Prefs from '../store/prefs';
+import * as ResourceFetch from '../store/resource-fetch';
 import * as Snapshots from '../store/snapshots';
 import * as TransientSettings from '../store/transientSettings';
 
-Vue.use(Vuex);
-
-export default new Vuex.Store<any>({
+export default createStore<any>({
   modules: {
     'action-menu':       { namespaced: true, ...ActionMenu },
     applicationSettings: { namespaced: true, ...ApplicationSettings },
@@ -30,6 +28,7 @@ export default new Vuex.Store<any>({
     page:                { namespaced: true, ...Page },
     preferences:         { namespaced: true, ...Preferences },
     prefs:               { namespaced: true, ...Prefs },
+    'resource-fetch':    { namespaced: true, ...ResourceFetch },
     snapshots:           { namespaced: true, ...Snapshots },
     transientSettings:   { namespaced: true, ...TransientSettings },
   },

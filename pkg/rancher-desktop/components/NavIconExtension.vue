@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { hexEncode } from '@pkg/utils/string-encode';
 
@@ -11,7 +11,7 @@ const knownMonochromeIcons = [
   'ivancurkovic046/excalidraw-docker-extension', // spellcheck-ignore-line
 ];
 
-export default Vue.extend({
+export default defineComponent({
   name:  'nav-icon-extension',
   props: {
     extensionId: {

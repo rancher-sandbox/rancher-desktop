@@ -1,5 +1,3 @@
-import { set } from 'vue';
-
 import { STEVE } from '@pkg/config/types';
 import { clone } from '@pkg/utils/object';
 
@@ -219,7 +217,7 @@ export const getters = {
 
 export const mutations = {
   load(state, { key, value }) {
-    set(state.data, key, value);
+    state.data[key] = value;
   },
 
   cookiesLoaded(state) {
@@ -257,9 +255,9 @@ export const actions = {
           }
 
           if ( definition.parseJSON ) {
-            set(server.data, key, JSON.stringify(value));
+            server.data[key] = JSON.stringify(value);
           } else {
-            set(server.data, key, value);
+            server.data[key] = value;
           }
 
           await server.save({ redirectUnauthorized: false });

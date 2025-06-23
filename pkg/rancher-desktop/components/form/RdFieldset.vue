@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
@@ -8,7 +8,7 @@ import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 /**
  * Groups several controls as well as labels
  */
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-fieldset',
   components: { TooltipIcon, LabeledBadge },
   props:      {
@@ -59,13 +59,17 @@ export default Vue.extend({
           v-if="isLocked"
           v-tooltip="{
             content: lockedTooltip,
+            html: true,
             placement: 'right'
           }"
           class="icon icon-lock"
         />
         <i
           v-else-if="legendTooltip"
-          v-tooltip="legendTooltip"
+          v-tooltip="{
+            content: legendTooltip,
+            html: true,
+          }"
           class="icon icon-info-circle icon-lg"
         />
       </slot>

@@ -59,11 +59,12 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name:   'kubernetes-error-dialog',
   layout: 'dialog',
   data() {
     return {

@@ -66,7 +66,7 @@ const { toString } = Object.prototype;
 
   Examples:
 
-  import { typeOf } from '@pkg/utils/type-of';
+  import { typeOf } from '@shell/utils/type-of';
 
   typeOf();                       // 'undefined'
   typeOf(null);                   // 'null'
@@ -184,7 +184,7 @@ export function sortBy(ary, keys, desc) {
     keys = [keys];
   }
 
-  return ary.slice().sort((objA, objB) => {
+  return (ary || []).slice().sort((objA, objB) => {
     for ( let i = 0 ; i < keys.length ; i++ ) {
       const parsed = parseField(keys[i]);
       const a = get(objA, parsed.field);
@@ -209,12 +209,17 @@ export function sortBy(ary, keys, desc) {
 }
 
 // Turn foo1-bar2 into foo0000000001-bar0000000002 so that the numbers sort numerically
-export function sortableNumericSuffix(str) {
-  str = str || '';
+const splitRegex = /([^\d]+)/;
+const notNumericRegex = /^[0-9]+$/;
 
-  return str.split(/([^\d]+)/).map(x => isNumeric(x) ? strPad(x, 10, '0') : x).join('').trim();
+export function sortableNumericSuffix(str) {
+  if ( typeof str !== 'string' ) {
+    return str;
+  }
+
+  return str.split(splitRegex).map((x) => x.match(notNumericRegex) ? strPad(x, 10, '0') : x).join('').trim();
 }
 
 export function isNumeric(num) {
-  return !!`${ num }`.match(/^[0-9]+$/);
+  return !!`${ num }`.match(notNumericRegex);
 }
