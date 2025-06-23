@@ -57,8 +57,8 @@
             <div class="search-widget" :class="{ 'expanded': isSearchExpanded }">
               <button
                 class="search-toggle-btn"
+                :class="{ 'active': isSearchExpanded, 'role-tertiary': isSearchExpanded }"
                 @click="toggleSearch"
-                :class="{ 'active': isSearchExpanded }"
                 :aria-label="isSearchExpanded ? 'Close search' : 'Open search'"
                 :aria-expanded="isSearchExpanded"
                 title="Search"
@@ -78,7 +78,7 @@
                 />
                 <div class="search-controls">
                   <button
-                    class="search-btn"
+                    class="search-btn role-tertiary"
                     @click="searchPrevious"
                     :disabled="!searchTerm"
                     aria-label="Previous match"
@@ -87,7 +87,7 @@
                     <i class="icon icon-chevron-up" aria-hidden="true" />
                   </button>
                   <button
-                    class="search-btn"
+                    class="search-btn role-tertiary"
                     @click="searchNext"
                     :disabled="!searchTerm"
                     aria-label="Next match"
@@ -96,7 +96,7 @@
                     <i class="icon icon-chevron-down" aria-hidden="true" />
                   </button>
                   <button
-                    class="search-close-btn"
+                    class="search-close-btn role-tertiary"
                     @click="toggleSearch"
                     aria-label="Close search"
                     title="Close search"
@@ -179,7 +179,7 @@ export default Vue.extend({
 
     ipcRenderer.send('settings-read');
     this.initializeConsole();
-    
+
     // Add global keyboard shortcut for search
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
@@ -739,11 +739,10 @@ export default Vue.extend({
     opacity: 0.3;
     cursor: not-allowed;
   }
-  
+
   &:focus,
   &:active,
   &:focus-visible {
-    outline: none !important;
     box-shadow: none !important;
   }
 
@@ -763,7 +762,6 @@ export default Vue.extend({
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: none !important;
 
   &:hover {
     background: var(--primary-hover-bg);
@@ -773,7 +771,6 @@ export default Vue.extend({
   &:focus,
   &:active,
   &:focus-visible {
-    outline: none !important;
     box-shadow: none !important;
   }
 
