@@ -10,7 +10,7 @@
 
 rancher/application-collection-extension:0.3.0:
   github_repo: rancherlabs/application-collection-extension
-ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:v0.0.8:
+ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:0.0.9:
   github_repo: rancher-sandbox/rancher-desktop-rdx-open-webui
 splatform/epinio-docker-desktop:0.1.3:
   github_repo: epinio/extension-docker-desktop
