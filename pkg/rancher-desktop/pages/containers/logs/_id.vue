@@ -126,8 +126,6 @@ import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-let logInterval = null;
-
 export default Vue.extend({
   name: 'ContainerLogs',
   title: 'Container Logs',
@@ -148,7 +146,7 @@ export default Vue.extend({
       terminal: null,
       fitAddon: null,
       searchAddon: null,
-      lastLogTimestamp: null,
+      streamProcess: null,
       pendingLogs: '',
       isSearchExpanded: false,
       searchTerm: '',
@@ -180,7 +178,6 @@ export default Vue.extend({
     ipcRenderer.send('settings-read');
     this.initializeLogs();
 
-    // Add global keyboard shortcut for search
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
   beforeDestroy() {
@@ -199,7 +196,7 @@ export default Vue.extend({
         await this.fetchLogs();
 
         if (this.isContainerRunning) {
-          this.startStreaming();
+          await this.startStreaming();
         }
       }
     },
@@ -232,7 +229,7 @@ export default Vue.extend({
         this.isContainerRunning = false;
       }
     },
-    async fetchLogs(follow = false) {
+    async fetchLogs() {
       try {
         this.isLoading = true;
         this.error = null;
@@ -246,16 +243,7 @@ export default Vue.extend({
           options.namespace = this.selectedNamespace;
         }
 
-        const args = [];
-
-        if (follow) {
-          args.push('-f');
-        }
-
-
-        args.push('-t');
-
-        args.push(this.containerId);
+        const args = ['--timestamps', this.containerId];
 
         const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           'logs',
@@ -267,36 +255,20 @@ export default Vue.extend({
           throw new Error(stderr);
         }
 
-        if (follow) {
-          if (stdout && this.terminal) {
-            this.terminal.write(stdout);
+        if (stdout) {
+          let truncatedLogs = stdout;
+          if (stdout.length > 1000000) {
+            const truncatePoint = stdout.length - 1000000;
+            const newlineIndex = stdout.indexOf('\n', truncatePoint);
+            if (newlineIndex !== -1) {
+              truncatedLogs = stdout.substring(newlineIndex + 1);
+            }
           }
-        } else {
-          if (stdout) {
-            let truncatedLogs = stdout;
-            if (stdout.length > 1000000) {
-              const truncatePoint = stdout.length - 1000000;
-              const newlineIndex = stdout.indexOf('\n', truncatePoint);
-              if (newlineIndex !== -1) {
-                truncatedLogs = stdout.substring(newlineIndex + 1);
-              }
-            }
 
-            if (this.terminal) {
-              this.terminal.write(truncatedLogs);
-            } else {
-              this.pendingLogs = truncatedLogs;
-            }
-
-            const lines = truncatedLogs.trim().split('\n');
-            if (lines.length > 0) {
-              const lastLine = lines[lines.length - 1];
-              const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
-              if (timestampMatch) {
-                this.lastLogTimestamp = timestampMatch[1];
-              }
-            }
+          if (this.terminal) {
+            this.terminal.write(truncatedLogs);
           } else {
+            this.pendingLogs = truncatedLogs;
           }
         }
       } catch (error) {
@@ -309,56 +281,58 @@ export default Vue.extend({
         }
       }
     },
-    startStreaming() {
+    async startStreaming() {
       if (!this.isContainerRunning) {
         return;
       }
 
-      logInterval = setInterval(async () => {
-        try {
-          const options = {
-            cwd: '/',
-          };
-
-          if (this.isNerdCtl && this.selectedNamespace) {
-            options.namespace = this.selectedNamespace;
-          }
-
-          const args = [];
-          if (this.lastLogTimestamp) {
-            args.push('--since', this.lastLogTimestamp);
-          } else {
-            args.push('--since', '5s'); // Fallback to recent logs
-          }
-          args.push('-t', this.containerId);
-
-          const { stdout } = await this.ddClient.docker.cli.exec(
-            'logs',
-            args,
-            options
-          );
-
-          if (stdout && this.terminal) {
-            this.terminal.write(stdout);
-
-            const lines = stdout.trim().split('\n');
-            if (lines.length > 0) {
-              const lastLine = lines[lines.length - 1];
-              const timestampMatch = lastLine.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)/);
-              if (timestampMatch) {
-                this.lastLogTimestamp = timestampMatch[1];
+      try {
+        const options = {
+          cwd: '/',
+          stream: {
+            onOutput: (data) => {
+              if (this.terminal && (data.stdout || data.stderr)) {
+                const output = data.stdout || data.stderr;
+                this.terminal.write(output);
               }
-            }
-          }
-        } catch (error) {
-          console.error('Error streaming logs:', error);
+            },
+            onError: (error) => {
+              console.error('Stream error:', error);
+              this.error = 'Streaming error: ' + error.message;
+            },
+            onClose: (code) => {
+              console.log('Stream closed with code:', code);
+              this.streamProcess = null;
+            },
+            splitOutputLines: false,
+          },
+        };
+
+        if (this.isNerdCtl && this.selectedNamespace) {
+          options.namespace = this.selectedNamespace;
         }
-      }, 500);
+
+        const args = ['--follow', '--timestamps', this.containerId];
+
+        // Start true streaming with docker logs --follow
+        this.streamProcess = this.ddClient.docker.cli.exec('logs', args, options);
+
+        console.log('Started streaming logs for container:', this.containerId);
+
+      } catch (error) {
+        console.error('Error starting log stream:', error);
+        this.error = 'Failed to start log streaming: ' + error.message;
+      }
     },
     stopStreaming() {
-      if (logInterval) {
-        clearInterval(logInterval);
-        logInterval = null;
+      if (this.streamProcess) {
+        try {
+          console.log('Stopping log stream...');
+          this.streamProcess.close();
+        } catch (error) {
+          console.error('Error stopping log stream:', error);
+        }
+        this.streamProcess = null;
       }
     },
     initializeTerminal() {
