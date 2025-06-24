@@ -1,17 +1,17 @@
 <template>
-  <div class="container-console">
-    <div class="console-header">
+  <div class="container-logs">
+    <div class="logs-header">
       <div class="header-left">
         <button
           class="btn role-secondary"
           @click="goBack"
         >
           <i class="icon icon-chevron-left" />
-          {{ t('containers.console.back') }}
+          {{ t('containers.logs.back') }}
         </button>
       </div>
       <div class="header-center">
-        <h1>{{ t('containers.console.title') }}</h1>
+        <h1>{{ t('containers.logs.title') }}</h1>
         <div class="container-info">
           <span class="container-name">{{ containerName }}</span>
           <badge-state
@@ -24,13 +24,13 @@
       </div>
     </div>
 
-    <div class="console-content">
+    <div class="logs-content">
       <div
         v-if="isLoading"
         class="loading-container"
       >
         <loading-indicator>
-          {{ t('containers.console.loading') }}
+          {{ t('containers.logs.loading') }}
         </loading-indicator>
       </div>
 
@@ -129,8 +129,8 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 let logInterval = null;
 
 export default Vue.extend({
-  name: 'ContainerConsole',
-  title: 'Container Console',
+  name: 'ContainerLogs',
+  title: 'Container Logs',
   components: {
     BadgeState,
     Banner,
@@ -168,17 +168,17 @@ export default Vue.extend({
   },
   async mounted() {
     this.$store.dispatch('page/setHeader', {
-      title: this.t('containers.console.title'),
+      title: this.t('containers.logs.title'),
       description: '',
     });
 
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
-      this.initializeConsole();
+      this.initializeLogs();
     });
 
     ipcRenderer.send('settings-read');
-    this.initializeConsole();
+    this.initializeLogs();
 
     // Add global keyboard shortcut for search
     window.addEventListener('keydown', this.handleGlobalKeydown);
@@ -192,7 +192,7 @@ export default Vue.extend({
     window.removeEventListener('keydown', this.handleGlobalKeydown);
   },
   methods: {
-    async initializeConsole() {
+    async initializeLogs() {
       if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
         await this.getContainerInfo();
@@ -301,7 +301,7 @@ export default Vue.extend({
         }
       } catch (error) {
         console.error('Error fetching logs:', error);
-        this.error = error.message || this.t('containers.console.fetchError');
+        this.error = error.message || this.t('containers.logs.fetchError');
       } finally {
         this.isLoading = false;
         if (!this.terminal) {
@@ -502,14 +502,14 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 @import '@xterm/xterm/css/xterm.css';
-.container-console {
+.container-logs {
   height: 87vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.console-header {
+.logs-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -558,7 +558,7 @@ export default Vue.extend({
   }
 }
 
-.console-content {
+.logs-content {
   flex: 1;
   padding: 20px;
   display: flex;

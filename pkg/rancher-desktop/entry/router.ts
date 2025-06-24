@@ -20,7 +20,7 @@ import ImagesAdd from '../pages/images/add.vue';
 import ImagesScan from '../pages/images/scans/_image-name.vue';
 import SnapshotsCreate from '../pages/snapshots/create.vue';
 import SnapshotsDialog from '../pages/snapshots/dialog.vue';
-import ContainerConsole from '../pages/containers/console/_id.vue';
+import ContainerConsole from '../pages/containers/logs/_id.vue';
 
 Vue.use(VueRouter);
 
