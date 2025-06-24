@@ -13,7 +13,7 @@ dockerCompose: 2.37.2
 golangci-lint: 2.1.6
 trivy: 0.63.0
 steve: 0.1.0-beta9
-rancherDashboard: 2.11.0.rd2
+rancherDashboard: 2.11.1.rd1
 dockerProvidedCredentialHelpers: 0.9.3
 ECRCredentialHelper: 0.10.0
 mobyOpenAPISpec: "1.51"
