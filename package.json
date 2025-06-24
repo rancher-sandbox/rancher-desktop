@@ -121,7 +121,7 @@
     "@types/tar-stream": "3.1.4",
     "@types/which": "3.0.4",
     "@typescript-eslint/eslint-plugin": "8.34.1",
-    "@typescript-eslint/parser": "8.34.1",
+    "@typescript-eslint/parser": "8.35.0",
     "@vue/cli-plugin-babel": "5.0.8",
     "@vue/cli-plugin-router": "5.0.8",
     "@vue/cli-plugin-unit-jest": "5.0.8",
