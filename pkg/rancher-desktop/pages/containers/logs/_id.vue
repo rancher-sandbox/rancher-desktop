@@ -529,6 +529,10 @@ export default Vue.extend({
   :deep(.xterm-screen) {
     background: transparent !important;
   }
+
+  :deep(.xterm-selection) {
+    overflow: hidden;
+  }
 }
 
 
