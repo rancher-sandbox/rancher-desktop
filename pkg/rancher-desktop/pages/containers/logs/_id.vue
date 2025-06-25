@@ -11,43 +11,43 @@
     </div>
 
     <div class="search-widget">
-      <i class="icon icon-search search-icon" aria-hidden="true" />
+      <i aria-hidden="true" class="icon icon-search search-icon"/>
       <input
         ref="searchInput"
         v-model="searchTerm"
-        type="text"
+        aria-label="Search in logs"
         class="search-input"
         placeholder="Search logs..."
-        aria-label="Search in logs"
+        type="text"
         @input="performSearch"
         @keydown="handleSearchKeydown"
       />
       <button
-        class="search-btn role-tertiary"
-        @click="searchPrevious"
         :disabled="!searchTerm"
         aria-label="Previous match"
+        class="search-btn role-tertiary"
         title="Previous match"
+        @click="searchPrevious"
       >
-        <i class="icon icon-chevron-up" aria-hidden="true" />
+        <i aria-hidden="true" class="icon icon-chevron-up"/>
       </button>
       <button
-        class="search-btn role-tertiary"
-        @click="searchNext"
         :disabled="!searchTerm"
         aria-label="Next match"
+        class="search-btn role-tertiary"
         title="Next match"
+        @click="searchNext"
       >
-        <i class="icon icon-chevron-down" aria-hidden="true" />
+        <i aria-hidden="true" class="icon icon-chevron-down"/>
       </button>
       <button
-        class="search-close-btn role-tertiary"
-        @click="clearSearch"
         :disabled="!searchTerm"
         aria-label="Clear search"
+        class="search-close-btn role-tertiary"
         title="Clear search"
+        @click="clearSearch"
       >
-        <i class="icon icon-x" aria-hidden="true" />
+        <i aria-hidden="true" class="icon icon-x"/>
       </button>
     </div>
 
@@ -60,10 +60,10 @@
 
     <banner
       v-else-if="error"
-      color="error"
       class="content-state"
+      color="error"
     >
-      <span class="icon icon-info-circle icon-lg" />
+      <span class="icon icon-info-circle icon-lg"/>
       {{ error }}
     </banner>
 
@@ -76,17 +76,17 @@
 </template>
 
 <script>
-import { BadgeState, Banner } from '@rancher/components';
+import {BadgeState, Banner} from '@rancher/components';
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
-import { SearchAddon } from '@xterm/addon-search';
+import {mapGetters} from 'vuex';
+import {Terminal} from '@xterm/xterm';
+import {FitAddon} from '@xterm/addon-fit';
+import {WebLinksAddon} from '@xterm/addon-web-links';
+import {SearchAddon} from '@xterm/addon-search';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import { ContainerEngine } from '@pkg/config/settings';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import {ContainerEngine} from '@pkg/config/settings';
+import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
 export default Vue.extend({
   name: 'ContainerLogs',
@@ -114,7 +114,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
+    ...mapGetters('k8sManager', {isK8sReady: 'isReady'}),
     containerId() {
       return this.$route.params.id;
     },
@@ -163,7 +163,7 @@ export default Vue.extend({
     },
     async getContainerInfo() {
       try {
-        const listOptions = { all: true };
+        const listOptions = {all: true};
 
         if (this.isNerdCtl && this.selectedNamespace) {
           listOptions.namespace = this.selectedNamespace;
@@ -206,7 +206,7 @@ export default Vue.extend({
 
         const args = ['--timestamps', this.containerId];
 
-        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
+        const {stderr, stdout} = await this.ddClient.docker.cli.exec(
           'logs',
           args,
           options
@@ -350,6 +350,17 @@ export default Vue.extend({
             this.terminal.write(this.pendingLogs);
             this.pendingLogs = '';
           }
+          this.terminal.attachCustomKeyEventHandler((event) => {
+            if (event.key === '/') {
+              event.preventDefault();
+              if (this.$refs.searchInput) {
+                this.$refs.searchInput.focus();
+                this.$refs.searchInput.select();
+              }
+              return false;
+            }
+            return true;
+          });
 
           window.addEventListener('resize', () => {
             if (this.fitAddon) {
@@ -554,7 +565,7 @@ export default Vue.extend({
   font-size: 13px;
   padding: 6px 10px;
   min-width: 200px;
-  font-family: var(--font-family-mono),monospace;
+  font-family: var(--font-family-mono), monospace;
   height: 32px;
   outline: none;
 
