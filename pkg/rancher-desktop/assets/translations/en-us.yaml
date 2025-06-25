@@ -205,7 +205,6 @@ containers:
     noRows: There are no containers to show
   logs:
     title: Container Logs
-    back: Back to Containers
     loading: Loading container logs...
     noLogs: No logs available
     refresh: Refresh
