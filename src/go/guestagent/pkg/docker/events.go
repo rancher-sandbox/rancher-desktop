@@ -81,16 +81,16 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 			return
 		case event := <-msgCh:
-			container, err := e.dockerClient.ContainerInspect(ctx, event.ID)
+			container, err := e.dockerClient.ContainerInspect(ctx, event.Actor.ID)
 			if err != nil {
-				log.Errorf("inspecting container [%v] failed: %s", event.ID, err)
+				log.Errorf("inspecting container [%v] failed: %s", event.Actor.ID, err)
 
 				continue
 			}
 
 			log.Debugf("received an event: {Status: %+v ContainerID: %+v Ports: %+v}",
 				event.Action,
-				event.ID,
+				event.Actor.ID,
 				container.NetworkSettings.Ports)
 
 			switch event.Action {
