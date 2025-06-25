@@ -40,7 +40,7 @@ $contrasted-light: $lightest !default;
 // The terminal alway uses a light background, so okay to use a fixed color
 $selected: rgba(#3D98D3, .5);
 
-BODY, .theme-light {
+:root {
 
   --primary                    : #{$primary};
   --primary-text               : #{contrast-color($primary)};
