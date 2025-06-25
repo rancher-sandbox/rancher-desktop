@@ -118,11 +118,8 @@ export default Vue.extend({
     containerId() {
       return this.$route.params.id;
     },
-    isNerdCtl() {
-      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
-    },
-    selectedNamespace() {
-      return this.settings?.containers?.namespace;
+    hasNamespaceSelected() {
+      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD && this.settings?.containers?.namespace;
     },
   },
   async mounted() {
@@ -165,8 +162,8 @@ export default Vue.extend({
       try {
         const listOptions = {all: true};
 
-        if (this.isNerdCtl && this.selectedNamespace) {
-          listOptions.namespace = this.selectedNamespace;
+        if (this.hasNamespaceSelected) {
+          listOptions.namespace = this.hasNamespaceSelected;
         }
 
         const containers = await this.ddClient?.docker.listContainers(listOptions);
@@ -199,9 +196,8 @@ export default Vue.extend({
           cwd: '/',
         };
 
-        // Only add namespace for containerd/nerdctl, not Docker
-        if (this.isNerdCtl && this.selectedNamespace) {
-          options.namespace = this.selectedNamespace;
+        if (this.hasNamespaceSelected) {
+          options.namespace = this.hasNamespaceSelected;
         }
 
         const args = ['--timestamps', this.containerId];
@@ -269,8 +265,8 @@ export default Vue.extend({
           },
         };
 
-        if (this.isNerdCtl && this.selectedNamespace) {
-          options.namespace = this.selectedNamespace;
+        if (this.hasNamespaceSelected) {
+          options.namespace = this.hasNamespaceSelected;
         }
 
         const args = ['--follow', '--timestamps', this.containerId];
