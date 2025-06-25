@@ -140,9 +140,7 @@ export default Vue.extend({
   },
   beforeDestroy() {
     this.stopStreaming();
-    if (this.terminal) {
-      this.terminal.dispose();
-    }
+    this.terminal?.dispose();
     ipcRenderer.removeAllListeners('settings-read');
     window.removeEventListener('keydown', this.handleGlobalKeydown);
   },
@@ -160,19 +158,21 @@ export default Vue.extend({
     },
     async getContainerInfo() {
       try {
-        const listOptions = {all: true};
+        const listOptions = {
+          all: true,
+          filters: `id=${this.containerId}`,
+        };
 
         if (this.hasNamespaceSelected) {
           listOptions.namespace = this.hasNamespaceSelected;
         }
 
         const containers = await this.ddClient?.docker.listContainers(listOptions);
-
-        const container = containers.find(c => c.Id === this.containerId || c.Id.startsWith(this.containerId));
+        const container = containers[0];
 
         if (container) {
-          const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
-          this.containerName = names[0]?.replace(/_[a-z0-9-]{36}_[0-9]+/, '') || container.Id.substring(0, 12);
+          const name = Array.isArray(container.Names) ? container.Names[0] : container.Names.split(/\s+/)?.[0];
+          this.containerName = name?.replace(/_[a-z0-9-]{36}_[0-9]+/, '') || container.Id.substring(0, 12);
           this.containerState = container.State || container.Status;
           this.isContainerRunning = container.State === 'running' || container.Status === 'Up';
         } else {
@@ -200,7 +200,7 @@ export default Vue.extend({
           options.namespace = this.hasNamespaceSelected;
         }
 
-        const args = ['--timestamps', this.containerId];
+        const args = ['--timestamps', '--tail', '1000', this.containerId];
 
         const {stderr, stdout} = await this.ddClient.docker.cli.exec(
           'logs',
@@ -213,19 +213,10 @@ export default Vue.extend({
         }
 
         if (stdout) {
-          let truncatedLogs = stdout;
-          if (stdout.length > 1000000) {
-            const truncatePoint = stdout.length - 1000000;
-            const newlineIndex = stdout.indexOf('\n', truncatePoint);
-            if (newlineIndex !== -1) {
-              truncatedLogs = stdout.substring(newlineIndex + 1);
-            }
-          }
-
           if (this.terminal) {
-            this.terminal.write(truncatedLogs);
+            this.terminal.write(stdout);
           } else {
-            this.pendingLogs = truncatedLogs;
+            this.pendingLogs = stdout;
           }
         }
       } catch (error) {
@@ -271,7 +262,6 @@ export default Vue.extend({
 
         const args = ['--follow', '--timestamps', this.containerId];
 
-        // Start true streaming with docker logs --follow
         this.streamProcess = this.ddClient.docker.cli.exec('logs', args, options);
 
         console.log('Started streaming logs for container:', this.containerId);
