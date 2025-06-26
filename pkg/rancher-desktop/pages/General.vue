@@ -1,6 +1,3 @@
-<router lang="yaml">
-  name: General
-</router>
 <template>
   <div class="general">
     <div>

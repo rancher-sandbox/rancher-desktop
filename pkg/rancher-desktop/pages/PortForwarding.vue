@@ -1,6 +1,3 @@
-<router lang="yaml">
-  name: Port Forwarding
-</router>
 <template>
   <PortForwarding
     class="content"
