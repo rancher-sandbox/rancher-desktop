@@ -24,9 +24,10 @@ export default Vue.extend({
     },
     getTooltip() {
       return {
-        content:   `<b>${ this.t('product.networkStatus') }</b>: ${ this.networkStatusLabel }`,
-        placement: 'top',
-        classes:   'tooltip-footer',
+        content:     `<b>${ this.t('product.networkStatus') }</b>: ${ this.networkStatusLabel }`,
+        html:        true,
+        placement:   'top',
+        popperClass: 'tooltip-footer',
       };
     },
   },

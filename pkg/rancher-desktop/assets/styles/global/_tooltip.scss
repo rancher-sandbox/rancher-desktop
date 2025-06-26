@@ -1,4 +1,4 @@
-.tooltip {
+.v-popper__popper.v-popper--theme-tooltip {
   $triangle-size: 8px;
   $triangle-inner-size: $triangle-size - 1px;
   $center: calc(50% - #{$triangle-size});
@@ -7,130 +7,127 @@
   z-index: z-index('tooltip');
   max-width: 50vw;
 
-  .tooltip-inner {
+  .v-popper__inner {
     background: var(--tooltip-bg);
     color: var(--tooltip-text);
     border-radius: var(--border-radius);
     padding: 8px;
   }
 
-  .tooltip-arrow {
-    width: 0;
-    height: 0;
+  .v-popper__arrow-container {
     border: 0 solid transparent;
-    position: absolute;
     z-index: 1;
+    position: absolute;
+    width: $triangle-size;
+    height: $triangle-size;
 
-    &:after {
-      position: absolute;
+    .v-popper__arrow-outer {
+      border-radius: 0;
+      border: $triangle-size solid transparent;
+      width: 0;
+      height: 0;
+      box-sizing: content-box;
+      margin-left: -2px;
+    }
+    .v-popper__arrow-inner {
       border: $triangle-inner-size solid transparent;
-      content: '';
+      border-radius: 0;
+      width: 0;
+      height: 0;
+      box-sizing: content-box;
+      margin-left: -1px;
     }
   }
 
-  &[x-placement^="top"] {
-    margin-bottom: $triangle-size;
-
-    .tooltip-arrow {
-      border-width: 5px 5px 0 5px;
-      bottom: -4px;
-    }
-
-    margin-bottom: $triangle-size;
-
-    .tooltip-arrow {
-      bottom: -$triangle-inner-size;
-
-      &:after {
-        border-bottom-width: 0;
-        border-top-color: var(--tooltip-bg);
-        bottom: 1px;
-        left: -$triangle-inner-size;
-      }
+  :is(&[data-popper-placement^="top"], &[data-popper-placement^="bottom"]) {
+    .v-popper__arrow-inner {
+      margin-top: -$triangle-size;
     }
   }
 
+  :is(&[data-popper-placement^="left"], &[data-popper-placement^="right"]) {
+    .v-popper__arrow-inner {
+      margin-top: calc(-2 * $triangle-size);
+    }
+  }
 
-  &[x-placement^="bottom"] {
-    margin-top: $triangle-size;
+  &[data-popper-placement^="top"] {
+    .v-popper__wrapper {
+      margin-bottom: $triangle-size;
+    }
+    .v-popper__arrow-container > * {
+      border-top-color: var(--tooltip-bg);
+      border-bottom-width: 0;
+    }
+  }
 
-    .tooltip-arrow {
-      top: -$triangle-inner-size;
-
-      &:after {
-        border-top-width: 0;
+  &[data-popper-placement^="bottom"] {
+    .v-popper__inner {
+      margin-top: $triangle-size;
+    }
+    .v-popper__arrow-container {
+      top: 0;
+      & > * {
         border-bottom-color: var(--tooltip-bg);
-        top: 1px;
-        left: -$triangle-inner-size;
-        background: transparent;
+        border-top-width: 0;
       }
     }
   }
 
-  &[x-placement^="right"] {
-    margin-left: $triangle-size;
-
-    .tooltip-arrow {
-      left: -$triangle-inner-size;
-
-      &:after {
-        border-left-width: 0;
-        border-right-color: var(--tooltip-bg);
-        left: 1px;
-        top: -$triangle-inner-size;
-      }
+  &[data-popper-placement^="right"] {
+    .v-popper__inner {
+      margin-left: calc(#{$triangle-size} - 2px);
+    }
+    .v-popper__arrow-container > * {
+      border-right-color: var(--tooltip-bg);
+      border-left-width: 0;
     }
   }
 
-  &[x-placement^="left"] {
-    margin-right: $triangle-size;
-
-    .tooltip-arrow {
-      right: -$triangle-inner-size;
-
-      &:after {
-        border-right-width: 0;
-        border-left-color: var(--tooltip-bg);
-        right: 1px;
-        top: -$triangle-inner-size;
-      }
+  &[data-popper-placement^="left"] {
+    .v-popper__inner {
+      margin-right: $triangle-size;
+    }
+    .v-popper__arrow-container > * {
+      border-left-color: var(--tooltip-bg);
+      border-right-width: 0;
     }
   }
 
   &.tooltip-warning {
-    .tooltip-inner {
+    .v-popper__inner {
       background: var(--tooltip-bg-warning);
       color: var(--tooltip-text-warning);
     }
 
-    &[x-placement^="top"] {
-      .tooltip-arrow {
-        &:after {
+    &[data-popper-placement^="top"] {
+      .v-popper__arrow-container {
+        .v-popper__arrow-outer {
           border-top-color: var(--tooltip-bg-warning);
         }
       }
     }
 
 
-    &[x-placement^="bottom"] {
-      .tooltip-arrow {
-        &:after {
+    &[data-popper-placement^="bottom"] {
+      .v-popper__arrow-container {
+        .v-popper__arrow-outer {
           border-bottom-color: var(--body-bg);
         }
       }
     }
 
-    &[x-placement^="right"] {
-      .tooltip-arrow {
-        &:after {
+    &[data-popper-placement^="right"] {
+      .v-popper__arrow-container {
+        .v-popper__arrow-outer {
           border-right-color: var(--tooltip-bg-warning);
         }
       }
     }
 
-    &[x-placement^="left"] {
-      .tooltip-arrow {
-        &:after {
+    &[data-popper-placement^="left"] {
+      .v-popper__arrow-container {
+        .v-popper__arrow-outer {
           border-left-color: var(--tooltip-bg-warning);
         }
       }
@@ -138,43 +135,47 @@
   }
 }
 
-.popover {
+.v-popper__popper {
   $color: var(--popover-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
+  top: 0;
+  left: 0;
 
-  .popover-inner {
+  .v-popper__inner {
     background: $color;
     color: var(--popover-text);
     padding: 10px;
-    border-radius: var(--border-radius);
-    box-shadow: 0 5px 20px var(--shadow);
+    border-radius: var(--border-radius-lg);
+    border: none;
 
     a {
       color: var(--popover-text);
     }
   }
 
-  .popover-arrow {
+  .v-popper__arrow-container {
     border-color: transparent;
-  }
-
-  &[x-placement^="bottom"] {
-    .popover-arrow {
-      &:after {
-        // border-bottom-color: var(--popover-bg);
-        border-bottom-width: 0;
-      }
+    .v-popper__arrow-outer {
+      border-color: transparent;
     }
   }
-
 }
 
-.v-popover {
+.v-popper__popper.v-popper--theme-dropdown {
+  z-index: z-index('tooltip');
+
+  &.containerLogsDropdown, &.fleet-summary-tooltip{
+    .v-popper__arrow-container {
+      display: none;
+    }
+  }
+}
+
+.v-popper {
   display: inline;
 }
 
-.tooltip, .popover {
+.v-popper__popper.v-popper--theme-tooltip,
+.v-popper {
   &[aria-hidden='true'] {
     // This removes it from the layout of ButtondropDown (so it doesn't render huge for SSR) but
     // still allows it to maintain it's dimensions for v-tooltip to calculate the appropriate position.
@@ -192,14 +193,15 @@
 }
 
 //icon tooltip
-.icon-info-circle.has-tooltip {
+.icon-info.v-popper--has-tooltip {
   font-size: 14px;
 }
 
 .tooltip-footer {
+  top: 0;
   font-size: 12px;
 
-  .tooltip-inner {
+  .v-popper__inner {
     font-size: 12px;
   }
 }

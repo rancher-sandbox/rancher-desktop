@@ -35,11 +35,12 @@ export default Vue.extend({
 
       return undefined;
     },
-    getTooltip(): { content: string, placement: string, classes: string } {
+    getTooltip(): { content: string, placement: string, popperClass: string } {
       return {
-        content:   `<b>${ this.t(this.data.label.tooltip) }</b>: ${ this.data.value }`,
-        placement: 'top',
-        classes:   'tooltip-footer',
+        content:     `<b>${ this.t(this.data.label.tooltip) }</b>: ${ this.data.value }`,
+        html:        true,
+        placement:   'top',
+        popperClass: 'tooltip-footer',
       };
     },
     isSvgIcon(): boolean {

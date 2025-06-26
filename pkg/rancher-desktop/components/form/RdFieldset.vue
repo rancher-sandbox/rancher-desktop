@@ -59,13 +59,17 @@ export default Vue.extend({
           v-if="isLocked"
           v-tooltip="{
             content: lockedTooltip,
+            html: true,
             placement: 'right'
           }"
           class="icon icon-lock"
         />
         <i
           v-else-if="legendTooltip"
-          v-tooltip="legendTooltip"
+          v-tooltip="{
+            content: legendTooltip,
+            html: true,
+          }"
           class="icon icon-info-circle icon-lg"
         />
       </slot>
