@@ -4,72 +4,72 @@
     <div class="container-info">
       <span class="container-name">{{ containerName }}</span>
       <badge-state
-        :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
-        :label="containerState"
+          :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
+          :label="containerState"
       />
     </div>
 
     <div class="search-widget">
       <i aria-hidden="true" class="icon icon-search search-icon"/>
       <input
-        ref="searchInput"
-        v-model="searchTerm"
-        aria-label="Search in logs"
-        class="search-input"
-        placeholder="Search logs..."
-        type="text"
-        @input="performSearch"
-        @keydown="handleSearchKeydown"
+          ref="searchInput"
+          v-model="searchTerm"
+          aria-label="Search in logs"
+          class="search-input"
+          placeholder="Search logs..."
+          type="search"
+          @input="performSearch"
+          @keydown="handleSearchKeydown"
       />
       <button
-        :disabled="!searchTerm"
-        aria-label="Previous match"
-        class="search-btn role-tertiary"
-        title="Previous match"
-        @click="searchPrevious"
+          :disabled="!searchTerm"
+          aria-label="Previous match"
+          class="search-btn role-tertiary"
+          title="Previous match"
+          @click="searchPrevious"
       >
         <i aria-hidden="true" class="icon icon-chevron-up"/>
       </button>
       <button
-        :disabled="!searchTerm"
-        aria-label="Next match"
-        class="search-btn role-tertiary"
-        title="Next match"
-        @click="searchNext"
+          :disabled="!searchTerm"
+          aria-label="Next match"
+          class="search-btn role-tertiary"
+          title="Next match"
+          @click="searchNext"
       >
         <i aria-hidden="true" class="icon icon-chevron-down"/>
       </button>
       <button
-        :disabled="!searchTerm"
-        aria-label="Clear search"
-        class="search-close-btn role-tertiary"
-        title="Clear search"
-        @click="clearSearch"
+          :disabled="!searchTerm"
+          aria-label="Clear search"
+          class="search-close-btn role-tertiary"
+          title="Clear search"
+          @click="clearSearch"
       >
         <i aria-hidden="true" class="icon icon-x"/>
       </button>
     </div>
 
     <loading-indicator
-      v-if="isLoading"
-      class="content-state"
+        v-if="isLoading"
+        class="content-state"
     >
       {{ t('containers.logs.loading') }}
     </loading-indicator>
 
     <banner
-      v-else-if="error"
-      class="content-state"
-      color="error"
+        v-else-if="error"
+        class="content-state"
+        color="error"
     >
       <span class="icon icon-info-circle icon-lg"/>
       {{ error }}
     </banner>
 
     <div
-      v-else
-      ref="terminalContainer"
-      class="terminal-container"
+        v-else
+        ref="terminalContainer"
+        class="terminal-container"
     />
   </div>
 </template>
@@ -121,16 +121,13 @@ export default Vue.extend({
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD && this.settings?.containers?.namespace;
     },
   },
-  async mounted() {
+  mounted() {
     this.$store.dispatch('page/setHeader', {
       title: this.t('containers.logs.title'),
       description: '',
     });
 
-    ipcRenderer.on('settings-read', (event, settings) => {
-      this.settings = settings;
-      this.initializeLogs();
-    });
+    ipcRenderer.on('settings-read', this.onSettingsRead);
 
     ipcRenderer.send('settings-read');
     this.initializeLogs();
@@ -140,19 +137,19 @@ export default Vue.extend({
   beforeDestroy() {
     this.stopStreaming();
     this.terminal?.dispose();
-    ipcRenderer.removeAllListeners('settings-read');
+    ipcRenderer.off('settings-read', this.onSettingsRead);
     window.removeEventListener('keydown', this.handleGlobalKeydown);
   },
   methods: {
+    async onSettingsRead(event, settings) {
+      this.settings = settings;
+      await this.initializeLogs();
+    },
     async initializeLogs() {
       if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
         await this.getContainerInfo();
-        await this.fetchLogs();
-
-        if (this.isContainerRunning) {
-          await this.startStreaming();
-        }
+        await this.startStreaming();
       }
     },
     async getContainerInfo() {
@@ -167,7 +164,7 @@ export default Vue.extend({
         }
 
         const containers = await this.ddClient?.docker.listContainers(listOptions);
-        const container = containers[0];
+        const container = containers?.[0];
 
         if (container) {
           const name = Array.isArray(container.Names) ? container.Names[0] : container.Names.split(/\s+/)?.[0];
@@ -186,25 +183,25 @@ export default Vue.extend({
         this.isContainerRunning = false;
       }
     },
-    async fetchLogs() {
+    async startStreaming() {
       try {
         this.isLoading = true;
         this.error = null;
 
-        const options = {
+        const initialOptions = {
           cwd: '/',
         };
 
         if (this.hasNamespaceSelected) {
-          options.namespace = this.hasNamespaceSelected;
+          initialOptions.namespace = this.hasNamespaceSelected;
         }
 
-        const args = ['--timestamps', '--tail', '1000', this.containerId];
+        const initialArgs = ['--timestamps', '--tail', '1000', this.containerId];
 
         const {stderr, stdout} = await this.ddClient.docker.cli.exec(
-          'logs',
-          args,
-          options
+            'logs',
+            initialArgs,
+            initialOptions
         );
 
         if (stderr && !stdout) {
@@ -218,23 +215,17 @@ export default Vue.extend({
             this.pendingLogs = stdout;
           }
         }
-      } catch (error) {
-        console.error('Error fetching logs:', error);
-        this.error = error.message || this.t('containers.logs.fetchError');
-      } finally {
+
         this.isLoading = false;
         if (!this.terminal) {
           this.initializeTerminal();
         }
-      }
-    },
-    async startStreaming() {
-      if (!this.isContainerRunning) {
-        return;
-      }
 
-      try {
-        const options = {
+        if (!this.isContainerRunning) {
+          return;
+        }
+
+        const streamOptions = {
           cwd: '/',
           stream: {
             onOutput: (data) => {
@@ -256,18 +247,22 @@ export default Vue.extend({
         };
 
         if (this.hasNamespaceSelected) {
-          options.namespace = this.hasNamespaceSelected;
+          streamOptions.namespace = this.hasNamespaceSelected;
         }
 
-        const args = ['--follow', '--timestamps', this.containerId];
+        const streamArgs = ['--follow', '--timestamps', this.containerId];
 
-        this.streamProcess = this.ddClient.docker.cli.exec('logs', args, options);
+        this.streamProcess = this.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
 
         console.log('Started streaming logs for container:', this.containerId);
 
       } catch (error) {
         console.error('Error starting log stream:', error);
-        this.error = 'Failed to start log streaming: ' + error.message;
+        this.error = error.message || this.t('containers.logs.fetchError');
+        this.isLoading = false;
+        if (!this.terminal) {
+          this.initializeTerminal();
+        }
       }
     },
     stopStreaming() {
@@ -445,31 +440,23 @@ export default Vue.extend({
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr;
   grid-template-areas:
-    "title info search"
+    "info info search"
     "content content content";
-  gap: 15px;
+  gap: 1rem;
   padding: 20px;
   overflow: hidden;
   min-height: 0;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto 1fr;
     grid-template-areas:
-      "title"
       "info"
       "search"
       "content";
   }
 }
 
-.title {
-  grid-area: title;
-  align-self: center;
-  margin: 0;
-  font-size: 1.5em;
-  white-space: nowrap;
-}
 
 .container-info {
   grid-area: info;
@@ -507,14 +494,6 @@ export default Vue.extend({
     height: 100%;
   }
 
-  :deep(.xterm-viewport) {
-    background: transparent !important;
-  }
-
-  :deep(.xterm-screen) {
-    background: transparent !important;
-  }
-
   :deep(.xterm-selection) {
     overflow: hidden;
   }
@@ -529,7 +508,6 @@ export default Vue.extend({
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 0 4px;
   justify-self: end;
 
