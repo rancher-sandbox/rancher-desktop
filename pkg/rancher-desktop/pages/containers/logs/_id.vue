@@ -1,6 +1,5 @@
 <template>
   <div class="container-logs">
-    <h1 class="title">{{ t('containers.logs.title') }}</h1>
 
     <div class="container-info">
       <span class="container-name">{{ containerName }}</span>
