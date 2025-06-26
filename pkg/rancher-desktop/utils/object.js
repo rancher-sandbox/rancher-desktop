@@ -1,12 +1,12 @@
-import cloneDeep from 'lodash/cloneDeep';
-import flattenDeep from 'lodash/flattenDeep';
-import compact from 'lodash/compact';
+import cloneDeep from 'lodash/cloneDeep.js';
+import flattenDeep from 'lodash/flattenDeep.js';
+import compact from 'lodash/compact.js';
 import { JSONPath } from 'jsonpath-plus';
-import transform from 'lodash/transform';
-import isObject from 'lodash/isObject';
-import isArray from 'lodash/isArray';
-import isEqual from 'lodash/isEqual';
-import difference from 'lodash/difference';
+import transform from 'lodash/transform.js';
+import isObject from 'lodash/isObject.js';
+import isArray from 'lodash/isArray.js';
+import isEqual from 'lodash/isEqual.js';
+import difference from 'lodash/difference.js';
 import { splitObjectPath, joinObjectPath } from '@pkg/utils/string';
 import { addObject } from '@pkg/utils/array';
 

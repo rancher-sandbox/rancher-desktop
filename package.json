@@ -10,6 +10,7 @@
   "engines": {
     "node": "^22.14.0"
   },
+  "type": "module",
   "packageManager": "yarn@1.22.21",
   "repository": {
     "type": "git",

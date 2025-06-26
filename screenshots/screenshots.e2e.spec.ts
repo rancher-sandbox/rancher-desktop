@@ -46,7 +46,7 @@ test.describe.serial('Main App Test', () => {
     );
 
     electronApp = await startRancherDesktop(testInfo, { mock: false });
-    console = new Log(path.basename(__filename, '.ts'), reportAsset(testInfo, 'log'));
+    console = new Log(path.basename(import.meta.filename, '.ts'), reportAsset(testInfo, 'log'));
 
     page = await electronApp.firstWindow();
     navPage = new NavPage(page);

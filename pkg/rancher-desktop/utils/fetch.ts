@@ -4,9 +4,12 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import _fetch, { RequestInit } from 'node-fetch';
+import _fetch from 'node-fetch';
 
-export { Headers, RequestInit } from 'node-fetch';
+export { Headers } from 'node-fetch';
+
+import type { RequestInit } from 'node-fetch';
+export type { RequestInit } from 'node-fetch';
 
 /**
  * CertificateVerificationError is a custom Error class that describes a TLS

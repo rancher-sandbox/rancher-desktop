@@ -88,7 +88,7 @@ class E2ETestRunner extends events.EventEmitter {
    * Start the renderer process.
    */
   buildRenderer(): Promise<void> {
-    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
+    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.mjs';
 
     return buildUtils.spawn(
       process.execPath,

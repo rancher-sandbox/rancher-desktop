@@ -43,12 +43,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-import forge, { asn1 } from 'node-forge';
+import forge from 'node-forge';
 
 import Logging from '@pkg/utils/logging';
 import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.background;
+const { asn1 } = forge;
 
 const x509CertificateValidityValidator = {
   name:        'Certificate',

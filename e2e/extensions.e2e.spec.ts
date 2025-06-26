@@ -22,7 +22,7 @@ import { Log } from '@pkg/utils/logging';
 import type { BrowserWindow, WebContentsView } from 'electron';
 
 /** The top level source directory, assuming we're always running from the tree */
-const srcDir = path.dirname(path.dirname(__filename));
+const srcDir = path.dirname(import.meta.dirname);
 const rdctl = getFullPathForTool('rdctl');
 
 // On Windows there's an eval routine that treats backslashes as escape-sequence leaders,
@@ -65,7 +65,7 @@ test.describe.serial('Extensions', () => {
       containerEngine: { name: ContainerEngine.MOBY },
       kubernetes:      { enabled: false },
     });
-    console = new Log(path.basename(__filename, '.ts'), reportAsset(testInfo, 'log'));
+    console = new Log(path.basename(import.meta.filename, '.ts'), reportAsset(testInfo, 'log'));
   });
 
   test.afterAll(({ colorScheme }, testInfo) => teardown(app, testInfo));

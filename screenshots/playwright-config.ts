@@ -4,8 +4,8 @@ import * as path from 'path';
 
 import type { Config, PlaywrightTestOptions } from '@playwright/test';
 
-const outputDir = path.join(__dirname, 'test-results');
-const testDir = path.join(__dirname, '..', 'screenshots');
+const outputDir = path.join(import.meta.dirname, 'test-results');
+const testDir = path.join(import.meta.dirname, '..', 'screenshots');
 const timeScale = process.env.CI ? 2 : 1;
 const colorScheme = (process.env.THEME || 'light') as PlaywrightTestOptions['colorScheme'];
 

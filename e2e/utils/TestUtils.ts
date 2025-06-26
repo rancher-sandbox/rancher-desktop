@@ -178,7 +178,7 @@ export function reportAsset(testInfo: TestInfo, type: 'trace' | 'log' = 'trace')
     log:   'logs',
   }[type];
 
-  return path.join(__dirname, '..', 'reports', name);
+  return path.join(import.meta.dirname, '..', 'reports', name);
 }
 
 /**
@@ -254,7 +254,7 @@ export async function teardown(app: ElectronApplication, testInfo: TestInfo) {
 }
 
 export function getResourceBinDir(): string {
-  const srcDir = path.dirname(__dirname);
+  const srcDir = path.dirname(import.meta.dirname);
 
   return path.join(srcDir, '..', 'resources', os.platform(), 'bin');
 }
@@ -355,9 +355,9 @@ export async function startRancherDesktop(testInfo: TestInfo, options: startRanc
   currentTest = {
     file: testInfo.file, options, startTime: Date.now(),
   };
-  const packageMeta = require('../../package.json');
+  const { default: packageMeta } = await import('../../package.json', { with: { type: 'json' } });
   const args = [
-    path.join(__dirname, '../..', packageMeta.main),
+    path.join(import.meta.dirname, '../..', packageMeta.main),
     '--disable-gpu',
     '--whitelisted-ips=',
     // See pkg/rancher-desktop/utils/commandLine.ts before changing the next item as the final option.
