@@ -56,7 +56,6 @@
     "@docker/extension-api-client-types": "0.4.2",
     "@kubernetes/client-node": "0.18.1",
     "@rancher/components": "0.1.4",
-    "@xterm/addon-search": "^0.15.0",
     "async-mutex": "^0.5.0",
     "cookie-universal": "2.2.2",
     "core-js": "3.25.3",
@@ -93,10 +92,10 @@
     "vue-slider-component": "3.2.24",
     "vuex": "3.6.2",
     "which": "5.0.0",
-    "@xterm/xterm": "^5.5.0",
-    "@xterm/addon-fit": "^0.10.0",
-    "@xterm/addon-web-links": "^0.11.0",
-    "@xterm/addon-search": "^0.15.0",
+    "@xterm/xterm": "5.5.0",
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/addon-web-links": "0.11.0",
+    "@xterm/addon-search": "0.15.0",
     "yaml": "2.8.0"
   },
   "devDependencies": {
