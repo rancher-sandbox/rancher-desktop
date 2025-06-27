@@ -275,24 +275,23 @@ export default Vue.extend({
         const streamArgs = ['--follow', '--timestamps', '--tail', '0', this.containerId];
 
         this.streamProcess = this.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
-        
-        // Reset reconnect attempts on successful connection
+
         this.reconnectAttempts = 0;
 
         console.log('Started streaming logs for container:', this.containerId);
 
       } catch (error) {
         console.error('Error starting log stream:', error);
-        
+
         const errorMessages = {
           'No such container': 'Container not found. It may have been removed.',
           'permission denied': 'Permission denied. Check Docker access permissions.',
           'connection refused': 'Cannot connect to Docker. Is Docker running?'
         };
-        
+
         const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
         this.error = errorKey ? errorMessages[errorKey] : (error.message || this.t('containers.logs.fetchError'));
-        
+
         this.isLoading = false;
         if (!this.terminal) {
           this.initializeTerminal();
@@ -314,10 +313,10 @@ export default Vue.extend({
       if (this.reconnectAttempts < this.maxReconnectAttempts && this.isContainerRunning) {
         this.reconnectAttempts++;
         console.log(`Attempting to reconnect stream (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-        
+
         // Exponential backoff: 1s, 2s, 4s, 8s, 16s
         const delay = Math.pow(2, this.reconnectAttempts - 1) * 1000;
-        
+
         setTimeout(() => {
           this.startStreaming();
         }, delay);
@@ -326,7 +325,6 @@ export default Vue.extend({
       }
     },
     startContainerChecking() {
-      // Check container status every 30 seconds
       this.containerCheckInterval = setInterval(() => {
         this.getContainerInfo();
       }, 30000);
@@ -364,7 +362,7 @@ export default Vue.extend({
               brightCyan: '#a4ffff',
               brightWhite: '#ffffff'
             },
-            fontSize: 12,
+            fontSize: 14,
             fontFamily: '\'Courier New\', \'Monaco\', monospace',
             cursorBlink: false,
             disableStdin: true,
@@ -429,11 +427,10 @@ export default Vue.extend({
       });
     },
     performSearch() {
-      // Debounce search to avoid performance issues with large logs
       if (this.searchDebounceTimer) {
         clearTimeout(this.searchDebounceTimer);
       }
-      
+
       this.searchDebounceTimer = setTimeout(() => {
         if (!this.searchAddon || !this.searchTerm) {
           if (this.searchAddon) {
@@ -448,7 +445,7 @@ export default Vue.extend({
         } catch (error) {
           console.error('Search error:', error);
         }
-      }, 300); // 300ms debounce
+      }, 300);
     },
     searchNext() {
       if (!this.searchAddon || !this.searchTerm) return;
@@ -504,7 +501,7 @@ export default Vue.extend({
     "info info search"
     "content content content";
   gap: 1rem;
-  padding: 20px;
+  padding: 1.25rem;
   overflow: hidden;
   min-height: 0;
 
@@ -523,8 +520,9 @@ export default Vue.extend({
   grid-area: info;
   display: flex;
   align-items: center;
-  gap: 10px;
-  justify-self: center;
+  gap: 0.625rem;
+  justify-self: start;
+  padding-left: 0.625rem;
 
   .container-name {
     font-family: monospace;
@@ -538,7 +536,7 @@ export default Vue.extend({
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: 2.5rem;
 }
 
 .terminal-container {
@@ -551,7 +549,7 @@ export default Vue.extend({
   flex-direction: column;
 
   :deep(.xterm) {
-    padding: 15px;
+    padding: 1rem;
     height: 100%;
   }
 
@@ -569,7 +567,7 @@ export default Vue.extend({
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
   overflow: hidden;
-  padding: 0 4px;
+  padding: 0 0.25rem;
   justify-self: end;
 
   button {
@@ -583,7 +581,7 @@ export default Vue.extend({
 .search-icon {
   color: var(--muted);
   font-size: 14px;
-  margin: 0 8px;
+  margin: 0 0.5rem;
 }
 
 .search-input {
@@ -591,7 +589,7 @@ export default Vue.extend({
   background: transparent;
   color: var(--body-text);
   font-size: 13px;
-  padding: 6px 10px;
+  padding: 0.375rem 0.625rem;
   min-width: 200px;
   font-family: var(--font-family-mono), monospace;
   height: 32px;
@@ -616,7 +614,7 @@ export default Vue.extend({
 .search-btn {
   background: transparent;
   border: none;
-  padding: 6px 8px;
+  padding: 0.375rem 0.5rem;
   cursor: pointer;
   color: var(--muted);
   transition: all 0.2s ease;
@@ -654,7 +652,7 @@ export default Vue.extend({
 .search-close-btn {
   background: transparent;
   border: none;
-  padding: 6px 8px;
+  padding: 0.375rem 0.5rem;
   cursor: pointer;
   color: var(--muted);
   transition: all 0.2s ease;
