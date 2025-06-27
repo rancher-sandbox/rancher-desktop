@@ -87,7 +87,6 @@ import { Card } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
-import Component from 'vue-class-component';
 
 import Version from '@pkg/components/Version.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
@@ -95,7 +94,11 @@ import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
 
-const UpdateStatusProps = Vue.extend({
+export default Vue.extend({
+  components: {
+    Version, Card, RdCheckbox,
+  },
+
   props: {
     enabled: {
       type:    Boolean,
@@ -114,98 +117,97 @@ const UpdateStatusProps = Vue.extend({
       default: false,
     },
   },
+
+  data() {
+    return { applying: false };
+  },
+
+  computed: {
+    updatesEnabled: {
+      get(): boolean {
+        return this.enabled;
+      },
+      set(value: boolean) {
+        // We emit an event, but _don't_ set the prop here; we let the containing
+        // page update our prop instead.
+        this.$emit('enabled', value);
+      },
+    },
+
+    updatePossible(): boolean {
+      return !!this.updateState?.configured;
+    },
+
+    hasUpdate(): boolean {
+      return this.updatesEnabled && !!this.updateState?.available;
+    },
+
+    updateReady(): boolean {
+      return this.hasUpdate && !!this.updateState?.downloaded && !this.updateState?.error;
+    },
+
+    statusMessage(): string {
+      if (this.updateState?.error) {
+        return 'There was an error checking for updates.';
+      }
+      if (!this.updateState?.info) {
+        return '';
+      }
+
+      const { info, progress } = this.updateState;
+      const prefix = `An update to version ${ info.version } is available`;
+
+      if (!progress) {
+        return `${ prefix }.`;
+      }
+
+      const percent = Math.floor(progress.percent);
+      const speed = Intl.NumberFormat(this.locale, {
+        style:       'unit',
+        unit:        'byte-per-second',
+        unitDisplay: 'narrow',
+        notation:    'compact',
+      }).format(progress.bytesPerSecond);
+
+      return `${ prefix }; downloading... (${ percent }%, ${ speed })`;
+    },
+
+    detailsMessage(): string | undefined {
+      const markdown = this.updateState?.info?.releaseNotes;
+
+      if (typeof markdown !== 'string') {
+        return undefined;
+      }
+      // Here's the explanation of the following unorthodox typecast:
+      // The signature of `marked.marked` is, with version 11:
+      // marked(src: string, options?: MarkedOptions): string | Promise<string>
+      // It returns a Promise<string> if `options.async` is true, otherwise a string.
+      const unsanitized = marked(markdown) as string;
+
+      return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });
+    },
+
+    applyMessage(): string {
+      return this.applying ? 'Applying update...' : 'Restart Now';
+    },
+
+    unsupportedUpdateAvailable(): boolean {
+      return !this.hasUpdate && !!this.updateState?.info?.unsupportedUpdateAvailable;
+    },
+
+    autoUpdateLocked(): boolean {
+      return this.isAutoUpdateLocked;
+    },
+  },
+
+  methods: {
+    applyUpdate() {
+      this.applying = true;
+      this.$emit('apply');
+    },
+  },
 });
 
-@Component({
-  components: {
-    Version, Card, RdCheckbox,
-  },
-})
-class UpdateStatus extends UpdateStatusProps {
-  applying = false;
-
-  get updatesEnabled() {
-    return this.enabled;
-  }
-
-  set updatesEnabled(value: boolean) {
-    // We emit an event, but _don't_ set the prop here; we let the containing
-    // page update our prop instead.
-    this.$emit('enabled', value);
-  }
-
-  get updatePossible() {
-    return !!this.updateState?.configured;
-  }
-
-  get hasUpdate() {
-    return this.updatesEnabled && !!this.updateState?.available;
-  }
-
-  get updateReady() {
-    return this.hasUpdate && !!this.updateState?.downloaded && !this.updateState?.error;
-  }
-
-  get statusMessage(): string {
-    if (this.updateState?.error) {
-      return 'There was an error checking for updates.';
-    }
-    if (!this.updateState?.info) {
-      return '';
-    }
-
-    const { info, progress } = this.updateState;
-    const prefix = `An update to version ${ info.version } is available`;
-
-    if (!progress) {
-      return `${ prefix }.`;
-    }
-
-    const percent = Math.floor(progress.percent);
-    const speed = Intl.NumberFormat(this.locale, {
-      style:       'unit',
-      unit:        'byte-per-second',
-      unitDisplay: 'narrow',
-      notation:    'compact',
-    }).format(progress.bytesPerSecond);
-
-    return `${ prefix }; downloading... (${ percent }%, ${ speed })`;
-  }
-
-  get detailsMessage() {
-    const markdown = this.updateState?.info?.releaseNotes;
-
-    if (typeof markdown !== 'string') {
-      return undefined;
-    }
-    // Here's the explanation of the following unorthodox typecast:
-    // The signature of `marked.marked` is, with version 11:
-    // marked(src: string, options?: MarkedOptions): string | Promise<string>
-    // It returns a Promise<string> if `options.async` is true, otherwise a string.
-    const unsanitized = marked(markdown) as string;
-
-    return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });
-  }
-
-  get applyMessage() {
-    return this.applying ? 'Applying update...' : 'Restart Now';
-  }
-
-  get unsupportedUpdateAvailable() {
-    return !this.hasUpdate && this.updateState?.info?.unsupportedUpdateAvailable;
-  }
-
-  applyUpdate() {
-    this.applying = true;
-    this.$emit('apply');
-  }
-
-  get autoUpdateLocked() {
-    return this.isAutoUpdateLocked;
-  }
-}
-
-export default UpdateStatus;
 </script>
 
 <style lang="scss" scoped>

@@ -21,13 +21,14 @@
 </template>
 
 <script lang="ts">
-import { Banner, Card, Checkbox } from '@rancher/components';
+import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
-import Component from 'vue-class-component';
 
 import type { PropType } from 'vue';
 
-const WSLIntegrationProps = Vue.extend({
+export default Vue.extend({
+  components: { Checkbox },
+
   props: {
     title: {
       type:    String,
@@ -39,52 +40,52 @@ const WSLIntegrationProps = Vue.extend({
     },
     integrations: {
       type:    Object as PropType<Record<string, boolean | string>>,
-      default: () => ({}),
+      default: () => ({} as Record<string, boolean | string>),
+    },
+  },
+
+  data() {
+    return {
+      name: 'wsl-integration',
+      /**
+       * A mapping to temporarily disable a selection while work happens
+       * asynchronously, to prevent the user from retrying to toggle too quickly.
+       */
+      busy: {} as Record<string, boolean>,
+    };
+  },
+
+  computed: {
+    integrationsList() {
+      const results: {name: string, value: boolean, disabled: boolean, description: string}[] = [];
+
+      for (const [name, value] of Object.entries(this.integrations)) {
+        if (typeof value === 'boolean') {
+          if (value === this.busy[name]) {
+            this.$delete(this.busy, name);
+          }
+          results.push({
+            name, value, disabled: name in this.busy, description: '',
+          });
+        } else {
+          results.push({
+            name, value: false, disabled: true, description: value,
+          });
+          this.$delete(this.busy, name);
+        }
+      }
+
+      return results.sort((x, y) => x.name.localeCompare(y.name));
+    },
+  },
+
+  methods: {
+    toggleIntegration(name: string, value: boolean) {
+      this.$set(this.busy, name, value);
+      this.$emit('integration-set', name, value);
     },
   },
 });
-
-@Component({
-  components: {
-    Banner, Card, Checkbox,
-  },
-})
-class WSLIntegration extends WSLIntegrationProps {
-  name = 'wsl-integration';
-  /**
-   * A mapping to temporarily disable a selection while work happens
-   * asynchronously, to prevent the user from retrying to toggle too quickly.
-   */
-  protected busy: Record<string, boolean> = {};
-
-  get integrationsList() {
-    const results: {name: string, value: boolean, disabled: boolean, description: string}[] = [];
-
-    for (const [name, value] of Object.entries(this.integrations)) {
-      if (typeof value === 'boolean') {
-        if (value === this.busy[name]) {
-          this.$delete(this.busy, name);
-        }
-        results.push({
-          name, value, disabled: name in this.busy, description: '',
-        });
-      } else {
-        results.push({
-          name, value: false, disabled: true, description: value,
-        });
-        this.$delete(this.busy, name);
-      }
-    }
-
-    return results.sort((x, y) => x.name.localeCompare(y.name));
-  }
-
-  toggleIntegration(name: string, value: boolean) {
-    this.$set(this.busy, name, value);
-    this.$emit('integration-set', name, value);
-  }
-}
-export default WSLIntegration;
 </script>
 
 <style lang="scss" scoped>

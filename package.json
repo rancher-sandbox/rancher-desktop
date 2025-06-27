@@ -81,7 +81,6 @@
     "semver": "7.7.2",
     "tar-stream": "3.1.7",
     "vue": "2.7.16",
-    "vue-class-component": "7.2.6",
     "vue-client-only": "2.1.0",
     "vue-meta": "2.4.0",
     "vue-no-ssr": "1.1.1",
