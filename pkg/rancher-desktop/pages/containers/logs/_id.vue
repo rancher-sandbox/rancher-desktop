@@ -108,7 +108,6 @@ export default Vue.extend({
       fitAddon: null,
       searchAddon: null,
       streamProcess: null,
-      pendingLogs: '',
       searchTerm: '',
       resizeHandler: null,
       reconnectAttempts: 0,
@@ -203,45 +202,10 @@ export default Vue.extend({
     },
     async startStreaming() {
       try {
-        this.isLoading = true;
         this.error = null;
 
-        const initialOptions = {
-          cwd: '/',
-        };
-
-        if (this.hasNamespaceSelected) {
-          initialOptions.namespace = this.hasNamespaceSelected;
-        }
-
-        const initialArgs = ['--timestamps', '--tail', '10000', this.containerId];
-
-        const {stderr, stdout} = await this.ddClient.docker.cli.exec(
-            'logs',
-            initialArgs,
-            initialOptions
-        );
-
-        if (stderr && !stdout) {
-          throw new Error(stderr);
-        }
-
-        if (stdout) {
-          if (this.terminal) {
-            this.terminal.write(stdout);
-            this.terminal.scrollToBottom();
-          } else {
-            this.pendingLogs = stdout;
-          }
-        }
-
-        this.isLoading = false;
         if (!this.terminal) {
-          this.initializeTerminal();
-        }
-
-        if (!this.isContainerRunning) {
-          return;
+          await this.initializeTerminal();
         }
 
         const streamOptions = {
@@ -251,6 +215,14 @@ export default Vue.extend({
               if (this.terminal && (data.stdout || data.stderr)) {
                 const output = data.stdout || data.stderr;
                 this.terminal.write(output);
+
+                const buffer = this.terminal.buffer.active;
+                const viewport = this.terminal.rows;
+                const isAtBottom = buffer.viewportY >= buffer.length - viewport;
+
+                if (isAtBottom) {
+                  this.terminal.scrollToBottom();
+                }
               }
             },
             onError: (error) => {
@@ -258,7 +230,6 @@ export default Vue.extend({
               this.handleStreamError(error);
             },
             onClose: (code) => {
-              console.log('Stream closed with code:', code);
               this.streamProcess = null;
               if (code !== 0 && this.isContainerRunning) {
                 this.handleStreamError(new Error(`Stream closed with code ${code}`));
@@ -272,13 +243,12 @@ export default Vue.extend({
           streamOptions.namespace = this.hasNamespaceSelected;
         }
 
-        const streamArgs = ['--follow', '--timestamps', '--tail', '0', this.containerId];
+        const streamArgs = ['--follow', '--timestamps', '--tail', '10000', this.containerId];
 
         this.streamProcess = this.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
 
         this.reconnectAttempts = 0;
 
-        console.log('Started streaming logs for container:', this.containerId);
 
       } catch (error) {
         console.error('Error starting log stream:', error);
@@ -292,16 +262,11 @@ export default Vue.extend({
         const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
         this.error = errorKey ? errorMessages[errorKey] : (error.message || this.t('containers.logs.fetchError'));
 
-        this.isLoading = false;
-        if (!this.terminal) {
-          this.initializeTerminal();
-        }
       }
     },
     stopStreaming() {
       if (this.streamProcess) {
         try {
-          console.log('Stopping log stream...');
           this.streamProcess.close();
         } catch (error) {
           console.error('Error stopping log stream:', error);
@@ -312,11 +277,7 @@ export default Vue.extend({
     handleStreamError(error) {
       if (this.reconnectAttempts < this.maxReconnectAttempts && this.isContainerRunning) {
         this.reconnectAttempts++;
-        console.log(`Attempting to reconnect stream (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-
-        // Exponential backoff: 1s, 2s, 4s, 8s, 16s
         const delay = Math.pow(2, this.reconnectAttempts - 1) * 1000;
-
         setTimeout(() => {
           this.startStreaming();
         }, delay);
@@ -335,8 +296,11 @@ export default Vue.extend({
         this.containerCheckInterval = null;
       }
     },
-    initializeTerminal() {
-      this.$nextTick(() => {
+    async initializeTerminal() {
+      this.isLoading = false;
+      await this.$nextTick();
+
+      return new Promise((resolve) => {
         if (this.$refs.terminalContainer) {
 
           this.terminal = new Terminal({
@@ -385,15 +349,8 @@ export default Vue.extend({
           this.terminal.open(this.$refs.terminalContainer);
           this.fitAddon.fit();
 
-          let hideCursorEscapeCode = '\x1b[?25l'
+          this.terminal.write('\x1b[?25l');
 
-          this.terminal.write(hideCursorEscapeCode);
-
-          if (this.pendingLogs) {
-            this.terminal.write(this.pendingLogs);
-            this.terminal.scrollToBottom();
-            this.pendingLogs = '';
-          }
           this.terminal.attachCustomKeyEventHandler((event) => {
             if (event.key === '/') {
               event.preventDefault();
@@ -412,6 +369,10 @@ export default Vue.extend({
             }
           };
           window.addEventListener('resize', this.resizeHandler);
+
+          resolve();
+        } else {
+          resolve();
         }
       });
     },
@@ -432,35 +393,31 @@ export default Vue.extend({
       }
 
       this.searchDebounceTimer = setTimeout(() => {
-        if (!this.searchAddon || !this.searchTerm) {
-          if (this.searchAddon) {
-            this.searchAddon.clearDecorations();
-          }
-          return;
-        }
+        if (!this.searchAddon) return;
 
-        try {
-          this.searchAddon.clearDecorations();
-          this.searchAddon.findNext(this.searchTerm);
-        } catch (error) {
-          console.error('Search error:', error);
+        this.searchAddon.clearDecorations();
+        if (this.searchTerm) {
+          try {
+            this.searchAddon.findNext(this.searchTerm);
+          } catch (error) {
+            console.error('Search error:', error);
+          }
         }
       }, 300);
     },
     searchNext() {
       if (!this.searchAddon || !this.searchTerm) return;
-      try {
-        this.searchAddon.findNext(this.searchTerm);
-      } catch (error) {
-        console.error('Search next error:', error);
-      }
+      this.executeSearch(() => this.searchAddon.findNext(this.searchTerm));
     },
     searchPrevious() {
       if (!this.searchAddon || !this.searchTerm) return;
+      this.executeSearch(() => this.searchAddon.findPrevious(this.searchTerm));
+    },
+    executeSearch(searchFn) {
       try {
-        this.searchAddon.findPrevious(this.searchTerm);
+        searchFn();
       } catch (error) {
-        console.error('Search previous error:', error);
+        console.error('Search error:', error);
       }
     },
     handleSearchKeydown(event) {
@@ -495,11 +452,11 @@ export default Vue.extend({
 .container-logs {
   flex: 1;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   grid-template-rows: auto 1fr;
   grid-template-areas:
-    "info info search"
-    "content content content";
+    "info search"
+    "content content";
   gap: 1rem;
   padding: 1.25rem;
   overflow: hidden;
@@ -605,50 +562,7 @@ export default Vue.extend({
 }
 
 
-.search-controls {
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.search-btn {
-  background: transparent;
-  border: none;
-  padding: 0.375rem 0.5rem;
-  cursor: pointer;
-  color: var(--muted);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none !important;
-  height: 32px;
-
-  &:first-child {
-    border-left: 1px solid var(--border);
-  }
-
-  &:hover:not(:disabled) {
-    background: var(--primary-hover-bg);
-    color: var(--primary-text);
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  &:focus,
-  &:active,
-  &:focus-visible {
-    box-shadow: none !important;
-  }
-
-  .icon {
-    font-size: 12px;
-  }
-}
-
+.search-btn,
 .search-close-btn {
   background: transparent;
   border: none;
@@ -679,6 +593,12 @@ export default Vue.extend({
 
   .icon {
     font-size: 12px;
+  }
+}
+
+.search-btn {
+  &:first-child {
+    border-left: 1px solid var(--border);
   }
 }
 </style>

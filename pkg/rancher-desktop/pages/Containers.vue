@@ -189,8 +189,8 @@ export default Vue.extend({
 
         container.availableActions = [
           {
-            label:      'Console',
-            action:     'viewConsole',
+            label:      'Logs',
+            action:     'viewLogs',
             enabled:    true,
             bulkable:   false,
           },
@@ -235,9 +235,9 @@ export default Vue.extend({
           };
         }
 
-        if (!container.viewConsole) {
-          container.viewConsole = () => {
-            this.viewConsole(container);
+        if (!container.viewLogs) {
+          container.viewLogs = () => {
+            this.viewLogs(container);
           };
         }
 
@@ -384,8 +384,8 @@ export default Vue.extend({
     async deleteContainer(container) {
       await this.execCommand('rm', container);
     },
-    viewConsole(container) {
-      this.$router.push(`/containers/console/${container.Id}`);
+    viewLogs(container) {
+      this.$router.push(`/containers/logs/${container.Id}`);
     },
     isRunning(container) {
       return container.State === 'running' || container.Status === 'Up';
