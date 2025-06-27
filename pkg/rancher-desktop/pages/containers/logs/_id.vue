@@ -110,12 +110,22 @@ export default Vue.extend({
       streamProcess: null,
       pendingLogs: '',
       searchTerm: '',
+      resizeHandler: null,
+      reconnectAttempts: 0,
+      maxReconnectAttempts: 5,
+      searchDebounceTimer: null,
+      containerCheckInterval: null,
     };
   },
   computed: {
     ...mapGetters('k8sManager', {isK8sReady: 'isReady'}),
     containerId() {
-      return this.$route.params.id;
+      const id = this.$route.params.id;
+      // Validate container ID format (alphanumeric + hyphens/underscores only)
+      if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+        throw new Error('Invalid container ID format');
+      }
+      return id;
     },
     hasNamespaceSelected() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD && this.settings?.containers?.namespace;
@@ -130,15 +140,22 @@ export default Vue.extend({
     ipcRenderer.on('settings-read', this.onSettingsRead);
 
     ipcRenderer.send('settings-read');
-    this.initializeLogs();
+    // Don't call initializeLogs here - wait for settings to load
 
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
   beforeDestroy() {
     this.stopStreaming();
+    this.stopContainerChecking();
     this.terminal?.dispose();
     ipcRenderer.off('settings-read', this.onSettingsRead);
     window.removeEventListener('keydown', this.handleGlobalKeydown);
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
   },
   methods: {
     async onSettingsRead(event, settings) {
@@ -150,6 +167,7 @@ export default Vue.extend({
         this.ddClient = window.ddClient;
         await this.getContainerInfo();
         await this.startStreaming();
+        this.startContainerChecking();
       }
     },
     async getContainerInfo() {
@@ -237,11 +255,14 @@ export default Vue.extend({
             },
             onError: (error) => {
               console.error('Stream error:', error);
-              this.error = 'Streaming error: ' + error.message;
+              this.handleStreamError(error);
             },
             onClose: (code) => {
               console.log('Stream closed with code:', code);
               this.streamProcess = null;
+              if (code !== 0 && this.isContainerRunning) {
+                this.handleStreamError(new Error(`Stream closed with code ${code}`));
+              }
             },
             splitOutputLines: false,
           },
@@ -254,12 +275,24 @@ export default Vue.extend({
         const streamArgs = ['--follow', '--timestamps', '--tail', '0', this.containerId];
 
         this.streamProcess = this.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
+        
+        // Reset reconnect attempts on successful connection
+        this.reconnectAttempts = 0;
 
         console.log('Started streaming logs for container:', this.containerId);
 
       } catch (error) {
         console.error('Error starting log stream:', error);
-        this.error = error.message || this.t('containers.logs.fetchError');
+        
+        const errorMessages = {
+          'No such container': 'Container not found. It may have been removed.',
+          'permission denied': 'Permission denied. Check Docker access permissions.',
+          'connection refused': 'Cannot connect to Docker. Is Docker running?'
+        };
+        
+        const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
+        this.error = errorKey ? errorMessages[errorKey] : (error.message || this.t('containers.logs.fetchError'));
+        
         this.isLoading = false;
         if (!this.terminal) {
           this.initializeTerminal();
@@ -275,6 +308,33 @@ export default Vue.extend({
           console.error('Error stopping log stream:', error);
         }
         this.streamProcess = null;
+      }
+    },
+    handleStreamError(error) {
+      if (this.reconnectAttempts < this.maxReconnectAttempts && this.isContainerRunning) {
+        this.reconnectAttempts++;
+        console.log(`Attempting to reconnect stream (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+        
+        // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+        const delay = Math.pow(2, this.reconnectAttempts - 1) * 1000;
+        
+        setTimeout(() => {
+          this.startStreaming();
+        }, delay);
+      } else {
+        this.error = 'Streaming error: ' + error.message + (this.reconnectAttempts >= this.maxReconnectAttempts ? ' (max retries exceeded)' : '');
+      }
+    },
+    startContainerChecking() {
+      // Check container status every 30 seconds
+      this.containerCheckInterval = setInterval(() => {
+        this.getContainerInfo();
+      }, 30000);
+    },
+    stopContainerChecking() {
+      if (this.containerCheckInterval) {
+        clearInterval(this.containerCheckInterval);
+        this.containerCheckInterval = null;
       }
     },
     initializeTerminal() {
@@ -327,7 +387,7 @@ export default Vue.extend({
           this.terminal.open(this.$refs.terminalContainer);
           this.fitAddon.fit();
 
-          let hideCursorEscapeCode = '\x1b[?25l\''
+          let hideCursorEscapeCode = '\x1b[?25l'
 
           this.terminal.write(hideCursorEscapeCode);
 
@@ -348,11 +408,12 @@ export default Vue.extend({
             return true;
           });
 
-          window.addEventListener('resize', () => {
+          this.resizeHandler = () => {
             if (this.fitAddon) {
               this.fitAddon.fit();
             }
-          });
+          };
+          window.addEventListener('resize', this.resizeHandler);
         }
       });
     },
@@ -368,20 +429,26 @@ export default Vue.extend({
       });
     },
     performSearch() {
-      if (!this.searchAddon || !this.searchTerm) {
-        if (this.searchAddon) {
-          this.searchAddon.clearDecorations();
+      // Debounce search to avoid performance issues with large logs
+      if (this.searchDebounceTimer) {
+        clearTimeout(this.searchDebounceTimer);
+      }
+      
+      this.searchDebounceTimer = setTimeout(() => {
+        if (!this.searchAddon || !this.searchTerm) {
+          if (this.searchAddon) {
+            this.searchAddon.clearDecorations();
+          }
+          return;
         }
-        return;
-      }
 
-      try {
-        this.searchAddon.clearDecorations();
-
-        this.searchAddon.findNext(this.searchTerm);
-      } catch (error) {
-        console.error('Search error:', error);
-      }
+        try {
+          this.searchAddon.clearDecorations();
+          this.searchAddon.findNext(this.searchTerm);
+        } catch (error) {
+          console.error('Search error:', error);
+        }
+      }, 300); // 300ms debounce
     },
     searchNext() {
       if (!this.searchAddon || !this.searchTerm) return;
