@@ -196,7 +196,7 @@ export default Vue.extend({
           initialOptions.namespace = this.hasNamespaceSelected;
         }
 
-        const initialArgs = ['--timestamps', '--tail', '1000', this.containerId];
+        const initialArgs = ['--timestamps', '--tail', '10000', this.containerId];
 
         const {stderr, stdout} = await this.ddClient.docker.cli.exec(
             'logs',
@@ -211,6 +211,7 @@ export default Vue.extend({
         if (stdout) {
           if (this.terminal) {
             this.terminal.write(stdout);
+            this.terminal.scrollToBottom();
           } else {
             this.pendingLogs = stdout;
           }
@@ -250,7 +251,7 @@ export default Vue.extend({
           streamOptions.namespace = this.hasNamespaceSelected;
         }
 
-        const streamArgs = ['--follow', '--timestamps', this.containerId];
+        const streamArgs = ['--follow', '--timestamps', '--tail', '0', this.containerId];
 
         this.streamProcess = this.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
 
@@ -308,7 +309,7 @@ export default Vue.extend({
             cursorBlink: false,
             disableStdin: true,
             convertEol: true,
-            scrollback: 10000,
+            scrollback: 50000,
             wordWrap: true
           });
 
@@ -326,8 +327,13 @@ export default Vue.extend({
           this.terminal.open(this.$refs.terminalContainer);
           this.fitAddon.fit();
 
+          let hideCursorEscapeCode = '\x1b[?25l\''
+
+          this.terminal.write(hideCursorEscapeCode);
+
           if (this.pendingLogs) {
             this.terminal.write(this.pendingLogs);
+            this.terminal.scrollToBottom();
             this.pendingLogs = '';
           }
           this.terminal.attachCustomKeyEventHandler((event) => {
@@ -421,18 +427,6 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 @import '@xterm/xterm/css/xterm.css';
-
-:global(.body) {
-  display: flex !important;
-  flex-direction: column !important;
-
-  > div {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-}
 
 .container-logs {
   flex: 1;
