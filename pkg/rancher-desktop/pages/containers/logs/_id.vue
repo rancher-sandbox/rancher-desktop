@@ -214,11 +214,12 @@ export default Vue.extend({
             onOutput: (data) => {
               if (this.terminal && (data.stdout || data.stderr)) {
                 const output = data.stdout || data.stderr;
-                this.terminal.write(output);
 
                 const buffer = this.terminal.buffer.active;
                 const viewport = this.terminal.rows;
                 const isAtBottom = buffer.viewportY >= buffer.length - viewport;
+
+                this.terminal.write(output);
 
                 if (isAtBottom) {
                   this.terminal.scrollToBottom();
@@ -299,82 +300,74 @@ export default Vue.extend({
     async initializeTerminal() {
       this.isLoading = false;
       await this.$nextTick();
+      if (this.$refs.terminalContainer) {
+        this.terminal = new Terminal({
+          theme: {
+            background: '#1a1a1a',
+            foreground: '#e0e0e0',
+            cursor: '#8be9fd',
+            selection: 'rgba(139, 233, 253, 0.3)',
+            black: '#000000',
+            red: '#ff5555',
+            green: '#50fa7b',
+            yellow: '#f1fa8c',
+            blue: '#8be9fd',
+            magenta: '#ff79c6',
+            cyan: '#8be9fd',
+            white: '#f8f8f2',
+            brightBlack: '#6272a4',
+            brightRed: '#ff6e6e',
+            brightGreen: '#69ff94',
+            brightYellow: '#ffffa5',
+            brightBlue: '#d6acff',
+            brightMagenta: '#ff92df',
+            brightCyan: '#a4ffff',
+            brightWhite: '#ffffff'
+          },
+          fontSize: 14,
+          fontFamily: '\'Courier New\', \'Monaco\', monospace',
+          cursorBlink: false,
+          disableStdin: true,
+          convertEol: true,
+          scrollback: 50000,
+          wordWrap: true
+        });
 
-      return new Promise((resolve) => {
-        if (this.$refs.terminalContainer) {
+        this.fitAddon = new FitAddon();
+        this.terminal.loadAddon(this.fitAddon);
 
-          this.terminal = new Terminal({
-            theme: {
-              background: '#1a1a1a',
-              foreground: '#e0e0e0',
-              cursor: '#8be9fd',
-              selection: 'rgba(139, 233, 253, 0.3)',
-              black: '#000000',
-              red: '#ff5555',
-              green: '#50fa7b',
-              yellow: '#f1fa8c',
-              blue: '#8be9fd',
-              magenta: '#ff79c6',
-              cyan: '#8be9fd',
-              white: '#f8f8f2',
-              brightBlack: '#6272a4',
-              brightRed: '#ff6e6e',
-              brightGreen: '#69ff94',
-              brightYellow: '#ffffa5',
-              brightBlue: '#d6acff',
-              brightMagenta: '#ff92df',
-              brightCyan: '#a4ffff',
-              brightWhite: '#ffffff'
-            },
-            fontSize: 14,
-            fontFamily: '\'Courier New\', \'Monaco\', monospace',
-            cursorBlink: false,
-            disableStdin: true,
-            convertEol: true,
-            scrollback: 50000,
-            wordWrap: true
-          });
+        this.searchAddon = new SearchAddon();
+        this.terminal.loadAddon(this.searchAddon);
 
-          this.fitAddon = new FitAddon();
-          this.terminal.loadAddon(this.fitAddon);
+        this.terminal.loadAddon(new WebLinksAddon((event, uri) => {
+          event.preventDefault();
+          window.open(uri, '_blank');
+        }));
 
-          this.searchAddon = new SearchAddon();
-          this.terminal.loadAddon(this.searchAddon);
+        this.terminal.open(this.$refs.terminalContainer);
+        this.fitAddon.fit();
 
-          this.terminal.loadAddon(new WebLinksAddon((event, uri) => {
+        this.terminal.write('\x1b[?25l');
+
+        this.terminal.attachCustomKeyEventHandler((event) => {
+          if (event.key === '/') {
             event.preventDefault();
-            window.open(uri, '_blank');
-          }));
-
-          this.terminal.open(this.$refs.terminalContainer);
-          this.fitAddon.fit();
-
-          this.terminal.write('\x1b[?25l');
-
-          this.terminal.attachCustomKeyEventHandler((event) => {
-            if (event.key === '/') {
-              event.preventDefault();
-              if (this.$refs.searchInput) {
-                this.$refs.searchInput.focus();
-                this.$refs.searchInput.select();
-              }
-              return false;
+            if (this.$refs.searchInput) {
+              this.$refs.searchInput.focus();
+              this.$refs.searchInput.select();
             }
-            return true;
-          });
+            return false;
+          }
+          return true;
+        });
 
-          this.resizeHandler = () => {
-            if (this.fitAddon) {
-              this.fitAddon.fit();
-            }
-          };
-          window.addEventListener('resize', this.resizeHandler);
-
-          resolve();
-        } else {
-          resolve();
-        }
-      });
+        this.resizeHandler = () => {
+          if (this.fitAddon) {
+            this.fitAddon.fit();
+          }
+        };
+        window.addEventListener('resize', this.resizeHandler);
+      }
     },
     clearSearch() {
       this.searchTerm = '';
