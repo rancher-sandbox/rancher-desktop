@@ -114,6 +114,7 @@ export type LimaConfiguration = {
   disk?: number;
   mounts?: LimaMount[];
   mountType: 'reverse-sshfs' | '9p' | 'virtiofs';
+  mountInotify?: boolean;
   ssh: {
     localPort: number;
     loadDotSSHPubKeys?: boolean;
@@ -635,6 +636,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       memory:       (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:       this.getMounts(),
       mountType:    this.cfg?.virtualMachine.mount.type,
+      mountInotify: this.cfg?.experimental.virtualMachine.mount.inotify,
       ssh:          { localPort: await this.sshPort },
       hostResolver: {
         hosts: {
@@ -2152,8 +2154,9 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.msizeInKib':      undefined,
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
-      'virtualMachine.mount.type':                            undefined,
+      'experimental.virtualMachine.mount.inotify':            undefined,
       'experimental.virtualMachine.sshPortForwarder':         undefined,
+      'virtualMachine.mount.type':                            undefined,
       'virtualMachine.type':                                  undefined,
       'virtualMachine.useRosetta':                            undefined,
     }));
