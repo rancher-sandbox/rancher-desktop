@@ -203,6 +203,12 @@ containers:
   title: Containers
   sortableTables:
     noRows: There are no containers to show
+  logs:
+    title: Container Logs
+    loading: Loading container logs...
+    noLogs: No logs available
+    refresh: Refresh
+    fetchError: Failed to fetch container logs
   manage:
     table:
       header:

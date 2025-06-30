@@ -232,9 +232,9 @@ export default {
   }
 
   .body {
-    display: grid;
     grid-area: body;
-    grid-template-rows: auto 1fr;
+    display: flex;
+    flex-direction: column;
     padding: 0 20px 20px 20px;
     overflow: auto;
   }
