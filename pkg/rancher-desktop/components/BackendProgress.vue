@@ -91,34 +91,34 @@ export default Vue.extend({
       if (this.progress.max > 0) {
         // If we have numbers, give a description about that.
         const units = ['', 'K', 'M', 'G', 'T'];
-        let remaining = this.progress.max - this.progress.current;
+        const scales = [2**0, 2**10, 2**20, 2**30, 2**40];
+        const remaining = this.progress.max - this.progress.current;
 
-        while (remaining > 512 && units.length > 0) {
-          remaining /= 1024;
-          units.shift();
-        }
-        if (remaining > 0) {
-          remaining = Math.round(remaining);
-        } else {
-          remaining = Math.round(remaining * 10) / 10;
-        }
-
-        return `${ remaining }${ units[0] } left`;
+        const unitIndex = scales.findLastIndex((scale) => remaining * 2 >= scale);
+        const fraction = remaining / scales[unitIndex];
+        // If the fraction is 0.5...0.9999 display it as single significant figure.
+        const display = fraction > 1 ? Math.round(fraction) : Math.round(fraction * 10) / 10;
+        return `${ display }${ units[unitIndex] } left`;
       }
       if (!since) {
         return '';
       }
-      let remaining = Math.floor((Date.now() - since) / 1000);
-      const parts: [number, string][] = [];
+      // We have a starting time; describe how much time has elapsed since.
+      // Start from the smallest unit, and modify `remaining` to be the next
+      // unit up at every iteration.
+      let remaining = Math.floor((Date.now() - since) / 1000); // Elapsed time, in seconds.
+      const scales: [number, string][] = [[60, 's'], [60, 'm'], [24, 'h'], [Number.POSITIVE_INFINITY, 'd']];
+      let label = '';
 
-      parts.unshift([remaining % 60, 's']);
-      remaining = Math.floor(remaining / 60);
-      parts.unshift([remaining % 60, 'm']);
-      remaining = Math.floor(remaining / 60);
-      parts.unshift([remaining % 24, 'h']);
-      parts.unshift([Math.floor(remaining / 24), 'd']);
+      for (const [scale, unit] of scales) {
+        if (remaining % scale > 0) {
+          // Add the part, but only if it's non-zero.
+          label = `${ remaining % scale }${ unit }${ label }`;
+        }
+        remaining = Math.floor(remaining / scale);
+      }
 
-      return parts.filter(([n, s]) => n > 0).map(([n, s]) => `${ n }${ s }`).join('');
+      return label;
     },
   },
 });
