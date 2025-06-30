@@ -757,6 +757,7 @@ scinfo
 sconfig
 screencapture
 screenshots
+scrollback
 scriptdir
 scriptname
 scriptpath

@@ -189,6 +189,12 @@ export default Vue.extend({
 
         container.availableActions = [
           {
+            label:      'Logs',
+            action:     'viewLogs',
+            enabled:    true,
+            bulkable:   false,
+          },
+          {
             label:      'Stop',
             action:     'stopContainer',
             enabled:    this.isRunning(container),
@@ -226,6 +232,12 @@ export default Vue.extend({
         if (!container.deleteContainer) {
           container.deleteContainer = (...args) => {
             this.deleteContainer(...(args?.length > 0 ? args : [container]));
+          };
+        }
+
+        if (!container.viewLogs) {
+          container.viewLogs = () => {
+            this.viewLogs(container);
           };
         }
 
@@ -371,6 +383,9 @@ export default Vue.extend({
     },
     async deleteContainer(container) {
       await this.execCommand('rm', container);
+    },
+    viewLogs(container) {
+      this.$router.push(`/containers/logs/${container.Id}`);
     },
     isRunning(container) {
       return container.State === 'running' || container.Status === 'Up';
