@@ -17,6 +17,7 @@
       :is-auto-update-locked="autoUpdateLocked"
       @enabled="onUpdateEnabled"
       @apply="onUpdateApply"
+      @check-update-now="onCheckUpdateNow"
     />
     <hr>
     <telemetry-opt-in
@@ -96,6 +97,9 @@ export default {
     },
     onUpdateState(event, state) {
       this.$data.updateState = state;
+    },
+    onCheckUpdateNow() {
+      ipcRenderer.send('update-check-now');
     },
     updateTelemetry(value) {
       ipcRenderer.invoke('settings-write', { application: { telemetry: { enabled: value } } });
