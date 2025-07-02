@@ -3,6 +3,7 @@ import VueRouter, { RouteConfig } from 'vue-router';
 
 import Containers from '../pages/Containers.vue';
 import DenyRoot from '../pages/DenyRoot.vue';
+import Volumes from '../pages/Volumes.vue';
 import Diagnostics from '../pages/Diagnostics.vue';
 import Extensions from '../pages/Extensions.vue';
 import FirstRun from '../pages/FirstRun.vue';
@@ -31,6 +32,9 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/Containers', component: Containers, name: 'Containers',
+  },
+  {
+    path: '/Volumes', component: Volumes, name: 'Volumes',
   },
   {
     path: '/containers/logs/:id', component: ContainerLogs, name: 'containers-logs-id',

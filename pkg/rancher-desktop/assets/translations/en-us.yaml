@@ -219,6 +219,22 @@ containers:
         started: Uptime
         actions: Actions
 
+volumes:
+  title: Volumes
+  sortableTables:
+    noRows: There are no volumes to show
+  manage:
+    table:
+      header:
+        volumeName: Volume Name
+        driver: Driver
+        mountpoint: Mount Point
+        created: Created
+  manager:
+    table:
+      action:
+        delete: Delete
+
 images:
   title: Images
   sortableTables:
