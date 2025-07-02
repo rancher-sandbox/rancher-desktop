@@ -13,6 +13,27 @@
       :has-advanced-filtering="true"
       :loading="!volumesList"
     >
+      <template #header-middle>
+        <div class="header-middle">
+          <div v-if="supportsNamespaces">
+            <label>Namespace</label>
+            <select
+              :value="selectedNamespace"
+              class="select-namespace"
+              @change="onChangeNamespace($event)"
+            >
+              <option
+                v-for="item in volumesNamespaces"
+                :key="item"
+                :selected="item === selectedNamespace"
+                :value="item"
+              >
+                {{ item }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </template>
       <template #col:volumeName="{row}">
         <td>
           <span v-tooltip="getTooltipConfig(row.volumeName)">
@@ -27,8 +48,8 @@
       </template>
       <template #col:mountpoint="{row}">
         <td>
-          <span v-tooltip="getTooltipConfig(row.Mountpoint)">
-            {{ shortSha(row.Mountpoint) }}
+          <span v-tooltip="getTooltipConfig(row.mountpoint)">
+            {{ shortPath(row.mountpoint) }}
           </span>
         </td>
       </template>
@@ -38,10 +59,11 @@
 
 <script>
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import {mapGetters} from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import {ContainerEngine} from '@pkg/config/settings';
+import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
 let volumeCheckInterval = null;
 
@@ -51,9 +73,10 @@ export default Vue.extend({
   components: { SortableTable },
   data() {
     return {
-      settings:     undefined,
-      ddClient:     null,
-      volumesList:  null,
+      settings: undefined,
+      ddClient: null,
+      volumesList: null,
+      volumesNamespaces: [],
       headers:      [
         {
           name:  'volumeName',
@@ -90,7 +113,9 @@ export default Vue.extend({
 
       return volumes.map((volume) => {
         volume.volumeName = volume.Name;
-        volume.created = volume.CreatedAt || '';
+        volume.created = volume.CreatedAt ? new Date(volume.Created).toLocaleDateString() : '';
+        volume.mountpoint = volume.Mountpoint || '';
+        volume.driver = volume.Driver || '';
 
         volume.availableActions = [
           {
@@ -111,6 +136,15 @@ export default Vue.extend({
         return volume;
       });
     },
+    isNerdCtl() {
+      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
+    },
+    supportsNamespaces() {
+      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
+    },
+    selectedNamespace() {
+      return this.supportsNamespaces ? this.settings?.containers.namespace : undefined;
+    },
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
@@ -128,6 +162,7 @@ export default Vue.extend({
     ipcRenderer.on('settings-update', (_event, settings) => {
       this.settings = settings;
       this.volumesList = [];
+      this.checkSelectedNamespace();
     });
 
     this.checkVolumes().catch(console.error);
@@ -143,6 +178,13 @@ export default Vue.extend({
         this.ddClient = window.ddClient;
 
         try {
+          if (this.supportsNamespaces) {
+            await this.getNamespaces();
+          }
+        } catch (error) {
+          console.error('There was a problem fetching namespaces:', {error});
+        }
+        try {
           await this.getVolumes();
           clearInterval(volumeCheckInterval);
         } catch (error) {
@@ -150,11 +192,43 @@ export default Vue.extend({
         }
       }
     },
+    checkSelectedNamespace() {
+      if (!this.supportsNamespaces || this.volumesNamespaces.length === 0) {
+        return;
+      }
+      if (!this.volumesNamespaces.includes(this.selectedNamespace)) {
+        const K8S_NAMESPACE = 'k8s.io';
+        const defaultNamespace = this.volumesNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.volumesNamespaces[0];
+
+        ipcRenderer.invoke('settings-write',
+          {containers: {namespace: defaultNamespace}});
+      }
+    },
+    async onChangeNamespace(value) {
+      if (value !== this.selectedNamespace) {
+        await ipcRenderer.invoke('settings-write',
+          {containers: {namespace: value.target.value}});
+        this.getVolumes();
+      }
+    },
+    async getNamespaces() {
+      this.volumesNamespaces = await this.ddClient?.docker.listNamespaces();
+      this.checkSelectedNamespace();
+    },
     async getVolumes() {
-      // Placeholder for volume fetching logic
-      // This would typically use something like:
-      // const volumes = await this.ddClient?.docker.listVolumes();
-      this.volumesList = [];
+      try {
+        const options = {};
+
+        if (this.supportsNamespaces && this.selectedNamespace) {
+          options.namespace = this.selectedNamespace;
+        }
+
+        const volumes = await this.ddClient?.docker.listVolumes(options);
+        this.volumesList = volumes || [];
+      } catch (error) {
+        console.error('Failed to fetch volumes:', error);
+        this.volumesList = [];
+      }
     },
     async deleteVolume(volume) {
       await this.execCommand('volume rm', volume);
@@ -162,19 +236,28 @@ export default Vue.extend({
     async execCommand(command, _ids) {
       try {
         const ids = Array.isArray(_ids) ? _ids.map(v => v.Name) : [_ids.Name];
+        const [baseCommand, ...subCommands] = command.split(' ');
 
         console.info(`Executing command ${ command } on volume ${ ids }`);
 
-        // SOmething like this needs to happen here
-        // const { stderr, stdout } = await this.ddClient.docker.cli.exec(
-        //   command,
-        //   [...ids],
-        //   { cwd: '/' },
-        // );
+        const execOptions = {cwd: '/'};
+        if (this.supportsNamespaces && this.selectedNamespace) {
+          execOptions.namespace = this.selectedNamespace;
+        }
+
+        const {stderr, stdout} = await this.ddClient.docker.cli.exec(
+          baseCommand,
+          [...subCommands, ...ids],
+          execOptions,
+        );
+
+        if (stderr) {
+          throw new Error(stderr);
+        }
 
         await this.getVolumes();
 
-        return '';
+        return stdout;
       } catch (error) {
         window.alert(error.message);
         console.error(`Error executing command ${ command }`, error.message);
@@ -192,12 +275,24 @@ export default Vue.extend({
 
       return sha || '';
     },
+    shortPath(path) {
+      if (!path || path.length <= 40) {
+        return path || '';
+      }
+
+      return `${path.slice(0, 20)}...${path.slice(-17)}`;
+    },
     getTooltipConfig(text) {
-      if (!text || !text.includes('sha256:')) {
+      if (!text) {
         return { content: undefined };
       }
 
-      return { content: text };
+      // Show tooltip for sha256 hashes or long paths
+      if (text.includes('sha256:') || text.length > 40) {
+        return {content: text};
+      }
+
+      return {content: undefined};
     },
   },
 });
@@ -209,6 +304,12 @@ export default Vue.extend({
     padding: 8px 5px;
   }
 }
+
+.select-namespace {
+  max-width: 24rem;
+  min-width: 8rem;
+}
+
 
 .volumesTable::v-deep .search-box {
   align-self: flex-end;

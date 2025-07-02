@@ -5,11 +5,11 @@
 
 import Electron from 'electron';
 
-import type { SpawnOptions } from '@pkg/main/extensions/types';
+import type {SpawnOptions} from '@pkg/main/extensions/types';
 import clone from '@pkg/utils/clone';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
-import type { v1 } from '@docker/extension-api-client-types';
+import type {v1} from '@docker/extension-api-client-types';
 
 // We use a bunch of symbols for names of properties we do not want to reflect
 // over.
@@ -38,6 +38,15 @@ interface DockerListImagesOptions {
   all?: boolean;
   filters?: string;
   digests?: boolean;
+  namespace?: string;
+}
+
+/**
+ * DockerListVolumesOptions describes the arguments for
+ * ddClient.docker.listVolumes()
+ */
+interface DockerListVolumesOptions {
+  filters?: string;
   namespace?: string;
 }
 
@@ -551,6 +560,38 @@ class Client implements v1.DockerDesktopClient {
           VirtualSize: i.VirtualSize ?? i.Size,
           Labels:      i.Config?.Labels ?? {},
           Containers:  isNaN(containers) ? -1 : containers,
+        };
+      });
+    },
+    listVolumes: async (options: DockerListVolumesOptions = {}) => {
+      const lsArgs = ['ls', '--format={{json .}}'];
+
+      if (options.filters !== undefined) {
+        lsArgs.push(`--filter=${options.filters}`);
+      }
+      if (options.namespace) {
+        lsArgs.unshift(`--namespace=${options.namespace}`);
+      }
+
+      const lsResult = await this.docker.cli.exec('volume', lsArgs);
+
+      if (lsResult.code || lsResult.signal) {
+        throw new Error(`failed to list volumes: ${lsResult.stderr}`);
+      }
+
+      const lsVolumes = lsResult.parseJsonLines();
+
+      return lsVolumes.map((v) => {
+        return {
+          Name: v.Name,
+          Driver: v.Driver,
+          Mountpoint: v.Mountpoint,
+          Labels: v.Labels ?? {},
+          Scope: v.Scope,
+          Options: v.Options ?? {},
+          UsageData: v.UsageData ?? {},
+          CreatedAt: v.CreatedAt,
+          Created: v.CreatedAt ? Date.parse(v.CreatedAt).valueOf() : 0,
         };
       });
     },
