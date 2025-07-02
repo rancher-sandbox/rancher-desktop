@@ -172,7 +172,7 @@
     "tsconfig-paths": "4.2.0",
     "tsx": "4.20.3",
     "typescript": "5.8.3",
-    "vue-eslint-parser": "10.1.4",
+    "vue-eslint-parser": "10.2.0",
     "vue-template-compiler": "2.7.16",
     "webpack": "5.99.9"
   },
