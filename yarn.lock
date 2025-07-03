@@ -6379,10 +6379,10 @@ eslint-plugin-unicorn@59.0.1:
     semver "^7.7.1"
     strip-indent "^4.0.0"
 
-eslint-plugin-vue@10.2.0:
-  version "10.2.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-vue/-/eslint-plugin-vue-10.2.0.tgz#0c0bae71683d78e99736c5f3c500bf3d7d9c7c0d"
-  integrity sha512-tl9s+KN3z0hN2b8fV2xSs5ytGl7Esk1oSCxULLwFcdaElhZ8btYYZFrWxvh4En+czrSDtuLCeCOGa8HhEZuBdQ==
+eslint-plugin-vue@10.3.0:
+  version "10.3.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-vue/-/eslint-plugin-vue-10.3.0.tgz#d8fb96d06bc71829177fe81590489117b9540c17"
+  integrity sha512-A0u9snqjCfYaPnqqOaH6MBLVWDUIN4trXn8J3x67uDcXvR7X6Ut8p16N+nYhMCQ9Y7edg2BIRGzfyZsY0IdqoQ==
   dependencies:
     "@eslint-community/eslint-utils" "^4.4.0"
     natural-compare "^1.4.0"
