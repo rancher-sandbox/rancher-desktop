@@ -13,7 +13,6 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import Component from 'vue-class-component';
 
 import type { PropType } from 'vue';
 
@@ -26,7 +25,7 @@ type Option = {
   icon?: string;
 };
 
-const SplitButtonProps = Vue.extend({
+export default Vue.extend({
   props: {
     /** The main button text */
     label: {
@@ -51,97 +50,99 @@ const SplitButtonProps = Vue.extend({
       default: false,
     },
   },
-});
 
-@Component
-class SplitButton extends SplitButtonProps {
-  /** Whether the popup is open */
-  protected showing = false;
+  data() {
+    return {
+      /** Whether the popup is open */
+      showing:    false,
+      suppressed: false,
+    };
+  },
 
-  /**
-   * Because everything is inside the top <button>, we need to suppress any
-   * click events that are fired on it when its children (e.g. the dropdown) are
-   * clicked.  Call this to do so.
-   * @returns true if suppression is active.
-   */
-  protected suppress() {
-    if (this.suppressed) {
-      return true;
-    }
-    this.suppressed = true;
-    Promise.resolve().then(() => (this.suppressed = false));
+  computed: {
+    computedOptions(): Option[] {
+      return this.options.map((option) => {
+        if (typeof (option) === 'string') {
+          return { label: option, id: option };
+        }
 
-    return false;
-  }
+        return option;
+      });
+    },
+  },
 
-  protected suppressed = false;
+  methods: {
+    /**
+     * Because everything is inside the top <button>, we need to suppress any
+     * click events that are fired on it when its children (e.g. the dropdown) are
+     * clicked.  Call this to do so.
+     * @returns true if suppression is active.
+     */
+    suppress(): boolean {
+      if (this.suppressed) {
+        return true;
+      }
+      this.suppressed = true;
+      Promise.resolve().then(() => (this.suppressed = false));
 
-  get computedOptions(): Option[] {
-    return this.options.map((option) => {
-      if (typeof (option) === 'string') {
-        return { label: option, id: option };
+      return false;
+    },
+
+    show() {
+      this.showing = !this.disabled;
+      this.$nextTick(() => this.popupFocus(1));
+    },
+
+    hide() {
+      // Call suppress here, in case user clicked on .background to close the popup.
+      this.suppress();
+      this.showing = false;
+      (this.$el as HTMLElement).focus();
+    },
+
+    execute(id?: string) {
+      if (this.suppress()) {
+        return;
       }
 
-      return option;
-    });
-  }
+      this.$emit('input', typeof id === 'undefined' ? this.value : id);
+      this.hide();
+    },
 
-  show() {
-    this.showing = !this.disabled;
-    this.$nextTick(() => this.popupFocus(1));
-  }
+    popupUp(event: KeyboardEvent) {
+      const elem = event.target as Element | null;
+      const prev = elem?.previousElementSibling as HTMLElement | null;
 
-  hide() {
-    // Call suppress here, in case user clicked on .background to close the popup.
-    this.suppress();
-    this.showing = false;
-    (this.$el as HTMLElement).focus();
-  }
+      prev?.focus();
+    },
 
-  execute(id?: string) {
-    if (this.suppress()) {
-      return;
-    }
+    popupDown(event: KeyboardEvent) {
+      const elem = event.target as Element | null;
+      const next = elem?.nextElementSibling as HTMLElement | null;
 
-    this.$emit('input', typeof id === 'undefined' ? this.value : id);
-    this.hide();
-  }
+      next?.focus();
+    },
 
-  popupUp(event: KeyboardEvent) {
-    const elem = event.target as Element | null;
-    const prev = elem?.previousElementSibling as HTMLElement | null;
+    popupFocus(n: number) {
+      if (n < 0) {
+        n += this.computedOptions.length + 1;
+      }
+      const elem = this.$el.querySelector(`.menu > li:nth-child(${ n })`) as HTMLElement | null;
 
-    prev?.focus();
-  }
+      elem?.focus();
+    },
 
-  popupDown(event: KeyboardEvent) {
-    const elem = event.target as Element | null;
-    const next = elem?.nextElementSibling as HTMLElement | null;
+    popupHover(event: MouseEvent) {
+      (event.target as HTMLElement | null)?.focus();
+    },
 
-    next?.focus();
-  }
+    popupTrigger(event: KeyboardEvent) {
+      const newEvent = new MouseEvent('click');
 
-  popupFocus(n: number) {
-    if (n < 0) {
-      n += this.computedOptions.length + 1;
-    }
-    const elem = this.$el.querySelector(`.menu > li:nth-child(${ n })`) as HTMLElement | null;
-
-    elem?.focus();
-  }
-
-  popupHover(event: MouseEvent) {
-    (event.target as HTMLElement | null)?.focus();
-  }
-
-  popupTrigger(event: KeyboardEvent) {
-    const newEvent = new MouseEvent('click');
-
-    event.target?.dispatchEvent(newEvent);
-  }
-}
-
-export default SplitButton;
+      event.target?.dispatchEvent(newEvent);
+    },
+  },
+});
 </script>
 
 <template>
