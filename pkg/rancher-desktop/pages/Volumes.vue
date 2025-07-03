@@ -119,6 +119,12 @@ export default Vue.extend({
 
         volume.availableActions = [
           {
+            label: this.t('volumes.manager.table.action.browse'),
+            action: 'browseFiles',
+            enabled: true,
+            bulkable: false,
+          },
+          {
             label:      this.t('volumes.manager.table.action.delete'),
             action:     'deleteVolume',
             enabled:    true,
@@ -130,6 +136,12 @@ export default Vue.extend({
         if (!volume.deleteVolume) {
           volume.deleteVolume = (...args) => {
             this.deleteVolume(...(args?.length > 0 ? args : [volume]));
+          };
+        }
+
+        if (!volume.browseFiles) {
+          volume.browseFiles = () => {
+            this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
           };
         }
 

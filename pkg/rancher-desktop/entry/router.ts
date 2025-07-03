@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import VueRouter, { RouteConfig } from 'vue-router';
+import VueRouter, {RouteConfig} from 'vue-router';
 
 import Containers from '../pages/Containers.vue';
 import DenyRoot from '../pages/DenyRoot.vue';
@@ -22,6 +22,7 @@ import ImagesScan from '../pages/images/scans/_image-name.vue';
 import SnapshotsCreate from '../pages/snapshots/create.vue';
 import SnapshotsDialog from '../pages/snapshots/dialog.vue';
 import ContainerLogs from '../pages/containers/logs/_id.vue';
+import VolumeFiles from '../pages/volumes/files/_name.vue';
 
 Vue.use(VueRouter);
 
@@ -38,6 +39,9 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/containers/logs/:id', component: ContainerLogs, name: 'containers-logs-id',
+  },
+  {
+    path: '/volumes/files/:name', component: VolumeFiles, name: 'volumes-files-name',
   },
   {
     path: '/PortForwarding', component: PortForwarding, name: 'Port Forwarding',
