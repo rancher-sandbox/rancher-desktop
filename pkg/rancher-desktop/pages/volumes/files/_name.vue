@@ -18,7 +18,8 @@
         <span
           :key="`path-${index}`"
           class="breadcrumb-item"
-          @click="navigateToPath(getPathUpTo(index))"
+          :class="{ 'is-current': index === pathSegments.length - 1 }"
+          @click="index < pathSegments.length - 1 ? navigateToPath(getPathUpTo(index)) : null"
         >
           {{ segment }}
         </span>
@@ -299,11 +300,19 @@ export default Vue.extend({
       });
     },
     navigateToPath(path) {
+      if (this.currentPath === path) {
+        return;
+      }
+
       // Use router to create history entry for directory navigation
       this.$router.push({
         name: 'volumes-files-name',
         params: {name: this.volumeName},
         query: {path: path}
+      }).catch(err => {
+        if (err.name !== 'NavigationDuplicated') {
+          console.error('Navigation error:', err);
+        }
       });
     },
     handleFileClick(file) {
@@ -429,9 +438,15 @@ export default Vue.extend({
     cursor: pointer;
     white-space: nowrap;
 
-    &:hover {
+    &:hover:not(.is-current) {
       color: var(--link-hover);
       text-decoration: underline;
+    }
+
+    &.is-current {
+      color: var(--body-text);
+      cursor: default;
+      font-weight: 500;
     }
 
     .icon {
