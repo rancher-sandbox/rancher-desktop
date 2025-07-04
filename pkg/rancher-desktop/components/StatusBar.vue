@@ -61,18 +61,15 @@ export default Vue.extend({
 <template>
   <footer>
     <div class="left-column">
-      <template
+      <status-bar-item
         v-for="item in items"
+        :key="item.name"
+        :sub-component="item.component"
+        :data="item.data"
+        :icon="item.icon"
+        class="status-bar-item"
       >
-        <status-bar-item
-          :key="item.name"
-          :sub-component="item.component"
-          :data="item.data"
-          :icon="item.icon"
-          class="status-bar-item"
-        >
-        </status-bar-item>
-      </template>
+      </status-bar-item>
     </div>
     <div class="right-column">
       <BackendProgress class="progress" />
