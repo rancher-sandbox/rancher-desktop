@@ -248,6 +248,15 @@ volumes:
         size: Size
         modified: Modified
         permissions: Permissions
+  editor:
+    title: File Editor
+    save: Save
+    saving: Saving...
+    loading: Loading file...
+    modified: Modified
+    readError: 'Error reading file: {error}'
+    saveSuccess: File saved successfully
+    saveError: 'Error saving file: {error}'
 
 images:
   title: Images

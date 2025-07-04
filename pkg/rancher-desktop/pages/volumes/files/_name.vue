@@ -56,9 +56,9 @@
         <template #col:name="{row}">
           <td>
             <span
-              :class="{ 'is-directory': row.isDirectory, 'is-clickable': row.isDirectory }"
+              :class="{ 'is-directory': row.isDirectory, 'is-clickable': row.isDirectory || isEditableFile(row) }"
               class="file-name"
-              @click="row.isDirectory ? navigateToPath(row.path) : null"
+              @click="handleFileClick(row)"
             >
               <i :class="getFileIcon(row)" class="file-icon"></i>
               {{ row.name }}
@@ -105,7 +105,7 @@ export default Vue.extend({
       isLoading: true,
       error: null,
       volumeExists: false,
-      currentPath: '/',
+      currentPath: this.$route.query.path || this.$route.query.initialPath || '/',
       files: [],
       refreshInterval: null,
       headers: [
@@ -152,6 +152,21 @@ export default Vue.extend({
         .split('/')
         .filter(segment => segment !== '');
     },
+  },
+  watch: {
+    '$route.query.path': {
+      handler(newPath) {
+        const path = newPath || '/';
+        if (this.currentPath !== path) {
+          this.currentPath = path;
+          if (this.ddClient && this.volumeExists) {
+            this.isLoading = true;
+            this.listFiles();
+          }
+        }
+      },
+      immediate: false
+    }
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
@@ -284,9 +299,45 @@ export default Vue.extend({
       });
     },
     navigateToPath(path) {
-      this.currentPath = path;
-      this.isLoading = true;
-      this.listFiles();
+      // Use router to create history entry for directory navigation
+      this.$router.push({
+        name: 'volumes-files-name',
+        params: {name: this.volumeName},
+        query: {path: path}
+      });
+    },
+    handleFileClick(file) {
+      if (file.isDirectory) {
+        this.navigateToPath(file.path);
+      } else if (this.isEditableFile(file)) {
+        this.openFileEditor(file);
+      }
+    },
+    isEditableFile(file) {
+      // Check if file is editable based on extension and size
+      const ext = file.name.split('.').pop().toLowerCase();
+      const editableExtensions = [
+        'txt', 'log', 'json', 'yaml', 'yml', 'xml', 'html', 'css', 'js', 'ts',
+        'md', 'conf', 'config', 'ini', 'properties', 'sh', 'bash', 'py', 'rb',
+        'php', 'sql', 'csv', 'env', 'dockerfile', 'makefile', 'gitignore'
+      ];
+
+      // Don't allow editing very large files (> 10MB)
+      const maxEditableSize = 1024 * 1024 * 10; // 10MB
+
+      return (
+        editableExtensions.includes(ext) ||
+        !file.name.includes('.') // Files without extensions (like config files)
+      ) && file.size <= maxEditableSize;
+    },
+    openFileEditor(file) {
+      this.$router.push({
+        name: 'volumes-files-editor',
+        query: {
+          volume: this.volumeName,
+          path: file.path
+        }
+      });
     },
     getPathUpTo(index) {
       const segments = this.pathSegments.slice(0, index + 1);
@@ -426,6 +477,14 @@ export default Vue.extend({
     &:hover {
       color: var(--link-hover);
       text-decoration: underline;
+    }
+
+    &:not(.is-directory) {
+      color: var(--body-text);
+
+      &:hover {
+        color: var(--primary);
+      }
     }
   }
 }
