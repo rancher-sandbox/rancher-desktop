@@ -377,6 +377,7 @@ indentless
 ine
 Infof
 Infoln
+inotifywait
 installable
 INSTALLMESSAGE
 INSTALLPROPERTY
