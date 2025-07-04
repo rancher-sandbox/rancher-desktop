@@ -30,20 +30,19 @@
     </ul>
     <hr v-if="extensionsWithUI.length">
     <div class="nav-extensions">
-      <template v-for="extension in extensionsWithUI">
-        <RouterLink
-          :key="extension.id"
-          :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
-          :to="extensionRoute(extension)"
-        >
-          <nav-item :id="`extension:${extension.id}`">
-            <template #before>
-              <nav-icon-extension :extension-id="extension.id" />
-            </template>
-            {{ extension.metadata.ui['dashboard-tab'].title }}
-          </nav-item>
-        </RouterLink>
-      </template>
+      <RouterLink
+        v-for="extension in extensionsWithUI"
+        :key="extension.id"
+        :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
+        :to="extensionRoute(extension)"
+      >
+        <nav-item :id="`extension:${extension.id}`">
+          <template #before>
+            <nav-icon-extension :extension-id="extension.id" />
+          </template>
+          {{ extension.metadata.ui['dashboard-tab'].title }}
+        </nav-item>
+      </RouterLink>
     </div>
     <div class="nav-button-container">
       <dashboard-button
