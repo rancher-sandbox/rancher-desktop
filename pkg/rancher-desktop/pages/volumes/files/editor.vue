@@ -162,7 +162,7 @@ export default Vue.extend({
           execOptions
         );
 
-        if (stderr) {
+        if (stderr && !stderr.includes('level=warning')) {
           throw new Error(stderr);
         }
 
@@ -209,7 +209,7 @@ mv /volume/${tempFileName} ${containerFilePath}`
           execOptions
         );
 
-        if (stderr) {
+        if (stderr && !stderr.includes('level=warning')) {
           throw new Error(stderr);
         }
 
