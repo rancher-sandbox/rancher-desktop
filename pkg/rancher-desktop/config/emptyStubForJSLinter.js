@@ -1,4 +1,5 @@
 // See https://stackoverflow.com/questions/39418555/syntaxerror-with-jest-and-react-and-importing-css-files
 // to continue to use jest-based unit-testing with CSS import statements.
 
-module.exports = {};
+/** @type any */
+export default {};

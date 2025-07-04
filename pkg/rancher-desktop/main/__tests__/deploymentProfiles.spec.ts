@@ -13,10 +13,6 @@ const [describeWindows, describeNotWindows] = process.platform === 'win32' ? [de
 
 describe('deployment profiles', () => {
   describeWindows('windows deployment profiles', () => {
-    // for some reason `import nativeReg...` => undefined when run in jest on Windows
-    // import nativeReg from 'native-reg';
-    const nativeReg = require('native-reg');
-
     let testDir = '';
     let regFilePath = '';
 
@@ -206,6 +202,7 @@ describe('deployment profiles', () => {
     }
 
     beforeEach(async() => {
+      const nativeReg = await import('native-reg');
       nativeReg.deleteTree(nativeReg.HKCU, path.join(...(REGISTRY_PROFILE_PATHS[0])));
       testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'regtest-'));
       regFilePath = path.join(testDir, 'import.reg');

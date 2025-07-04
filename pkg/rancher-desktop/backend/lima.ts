@@ -372,7 +372,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   debug = false;
 
-  emit: VMBackend['emit'] = this.emit;
+  emit: VMBackend['emit'] = events.EventEmitter.prototype.emit;
 
   get backend(): 'lima' {
     return 'lima';

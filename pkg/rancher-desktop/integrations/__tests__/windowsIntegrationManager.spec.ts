@@ -1,10 +1,11 @@
 /** @jest-environment node */
 
+import { jest } from '@jest/globals';
 import WindowsIntegrationManager, { WSLDistro } from '@pkg/integrations/windowsIntegrationManager';
 
 describe('WindowsIntegrationManager', () => {
   let integrationManager: WindowsIntegrationManager;
-  let captureCommandMock: jest.SpyInstance<void, any>;
+  let captureCommandMock: jest.Spied<WindowsIntegrationManager['captureCommand']>;
   const wslOutput = `  NAME                    STATE           VERSION
 * Ubuntu                  Stopped         2
   OtherDistro             Running         1

@@ -214,7 +214,7 @@ type HandlerType<eventName extends keyof MainEventNames> =
   ? (...args: HandlerParams<eventName>) => Promise<HandlerReturn<eventName>>
   : never;
 
-interface MainEvents extends EventEmitter {
+export interface MainEvents extends EventEmitter {
   emit<eventName extends keyof MainEventNames>(
     event: IsHandler<eventName> extends false ? eventName : never,
     ...args: Parameters<MainEventNames[eventName]>

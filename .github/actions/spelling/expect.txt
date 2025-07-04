@@ -791,7 +791,7 @@ servicemonitor
 servicewatcher
 setfattr
 setproxy
-SFC
+sfc
 sharedscripts
 sharkanodo
 shasta

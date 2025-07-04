@@ -2,9 +2,16 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { jest } from '@jest/globals';
+
 import { START_LINE, END_LINE } from '@pkg/integrations/manageLinesInFile';
-import { RcFilePathManager } from '@pkg/integrations/pathManagerImpl';
-jest.mock('../../main/mainEvents');
+jest.unstable_mockModule('@pkg/main/mainEvents', () => ({
+  __esModule: true,
+  default:    {
+    emit:   jest.fn(),
+    invoke: jest.fn(),
+  },
+}));
 
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
 let testDir = '';
@@ -24,9 +31,11 @@ function readdirRecursive(dirPath: string): string[] {
 }
 
 describeUnix('RcFilePathManager', () => {
-  let pathManager: RcFilePathManager;
+  let pathManager: import('@pkg/integrations/pathManagerImpl').RcFilePathManager;
 
   beforeEach(async() => {
+    const { RcFilePathManager } = await import('@pkg/integrations/pathManagerImpl');
+
     pathManager = new RcFilePathManager();
     testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));
     const spy = jest.spyOn(os, 'homedir');

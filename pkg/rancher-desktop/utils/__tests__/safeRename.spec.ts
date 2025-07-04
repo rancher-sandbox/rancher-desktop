@@ -1,14 +1,30 @@
 import childProcess from 'child_process';
 import fs from 'fs';
+import { rename } from 'fs/promises';
 import os from 'os';
 import { join, resolve } from 'path';
 
-import { remove as extraRemove } from 'fs-extra';
+import { jest } from '@jest/globals';
+import { copy as extraCopy, remove as extraRemove } from 'fs-extra';
 
-import safeRename from '../safeRename';
+import mockModules from '../testUtils/mockModules';
 
-const fsPromises = fs.promises;
 const assetsDir = resolve('./pkg/rancher-desktop/utils/__tests__/assets/safeRename');
+
+const modules = mockModules({
+  fs: {
+    ...fs,
+    promises: {
+      ...fs.promises,
+      copyFile: jest.spyOn(fs.promises, 'copyFile'),
+      rename: jest.spyOn(fs.promises, 'rename'),
+      unlink: jest.spyOn(fs.promises, 'unlink'),
+    }
+  },
+  'fs-extra': {
+    copy: jest.fn(extraCopy),
+  },
+});
 
 /* input tar file contents:
  * rename1.txt
@@ -29,6 +45,8 @@ function fileExists(path: string) {
   }
 }
 
+const { default: safeRename } = await import('../safeRename');
+
 describe('safeRename', () => {
   let tarDir: string;
   let targetDir: string;
@@ -39,6 +57,8 @@ describe('safeRename', () => {
     tarDir = fs.mkdtempSync(join(os.tmpdir(), 'renameS-'));
     childProcess.execFileSync(tar, ['xf', join(assetsDir, 'safeRename.tar'), '-C', tarDir], { cwd: assetsDir });
     targetDir = fs.mkdtempSync(join(os.tmpdir(), 'renameD-'));
+
+    modules.fs.promises.rename.mockImplementation(rename);
   });
   afterEach(async() => {
     // cleanup
@@ -54,16 +74,13 @@ describe('safeRename', () => {
   });
 
   describe('rename fails', () => {
-    const renameMockFunc = jest.fn().mockImplementation(() => {
-      throw new Error('EXDEV: cross-device link not permitted');
-    });
-    const renameFunc = fsPromises.rename;
-
     beforeEach(() => {
-      fsPromises.rename = renameMockFunc;
+      modules.fs.promises.rename.mockImplementation(() => {
+        throw new Error('EXDEV: cross-device link not permitted');
+      });
     });
     afterEach(() => {
-      fsPromises.rename = renameFunc;
+      modules.fs.promises.rename.mockReset();
     });
 
     test('can rename a file, specifying the full dest path', async() => {
@@ -71,6 +88,8 @@ describe('safeRename', () => {
       const destPath = join(targetDir, 'newname1.txt');
 
       await safeRename(srcPath, destPath);
+      expect(modules.fs.promises.copyFile).toHaveBeenCalled();
+      expect(modules.fs.promises.unlink).toHaveBeenCalled();
       expect(fileExists(destPath)).toBeTruthy();
       expect(fileExists(srcPath)).toBeFalsy();
     });
@@ -80,6 +99,7 @@ describe('safeRename', () => {
       const destPath = join(targetDir, 'new_a');
 
       await safeRename(srcPath, destPath);
+      expect(modules['fs-extra'].copy).toHaveBeenCalled();
       expect(fileExists(destPath)).toBeTruthy();
       expect(fileExists(srcPath)).toBeFalsy();
       expect(fileExists(join(destPath, 'a1.txt'))).toBeTruthy();
@@ -89,19 +109,17 @@ describe('safeRename', () => {
   });
 
   describe('rename works', () => {
-    const nonExceptionMockFunc = jest.fn().mockImplementation(() => {
+    const nonExceptionMockFunc = () => {
       throw new Error('Should not have failed when using standard rename');
-    });
-    const copyFileFunc = fsPromises.copyFile;
-    const unlinkFunc = fsPromises.unlink;
+    };
 
     beforeEach(() => {
-      fsPromises.copyFile = nonExceptionMockFunc;
-      fsPromises.unlink = nonExceptionMockFunc;
+      modules.fs.promises.copyFile.mockImplementation(nonExceptionMockFunc);
+      modules.fs.promises.unlink.mockImplementation(nonExceptionMockFunc);
     });
     afterEach(() => {
-      fsPromises.copyFile = copyFileFunc;
-      fsPromises.unlink = unlinkFunc;
+      modules.fs.promises.copyFile.mockRestore();
+      modules.fs.promises.unlink.mockRestore();
     });
 
     test('can rename a file, specifying the full dest path', async() => {

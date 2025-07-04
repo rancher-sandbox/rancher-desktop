@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "Node",
+    "moduleDetection": "force",
     "jsx": "react",
     "lib": [
       "ESNext",

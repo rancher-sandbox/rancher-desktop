@@ -4,13 +4,28 @@ import fs from 'fs';
 import path from 'path';
 import stream from 'stream';
 
+import { jest } from '@jest/globals';
 import { findHomeDir } from '@kubernetes/client-node';
 
-import runCommand, { list } from '@pkg/main/credentialServer/credentialUtils';
-import { spawnFile } from '@pkg/utils/childProcess';
+import type { spawnFile as spawnFileType } from '@pkg/utils/childProcess';
 import paths from '@pkg/utils/paths';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+const modules = mockModules({
+  fs: {
+    ...fs,
+    promises: {
+      ...fs.promises,
+      readFile: jest.spyOn(fs.promises, 'readFile'),
+    },
+  },
+  '@pkg/utils/childProcess': { spawnFile: jest.fn<(command: string, args: string[], options: object) => Promise<{ stdout?: string }>>() },
+});
 
 jest.mock('@pkg/utils/childProcess');
+
+const { default: runCommand, list } = await import('@pkg/main/credentialServer/credentialUtils');
+const spawnFile = modules['@pkg/utils/childProcess'].spawnFile;
 
 describe('runCommand', () => {
   afterEach(() => {
@@ -21,14 +36,14 @@ describe('runCommand', () => {
   it('runs the command', async() => {
     const expected = `Some output`;
 
-    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath) => {
+    modules.fs.promises.readFile.mockImplementation((filepath) => {
       const home = findHomeDir() ?? '';
 
       expect(filepath).toEqual(path.join(home, '.docker', 'config.json'));
 
       return Promise.resolve(JSON.stringify({ credsStore: 'pikachu' }));
     });
-    jest.mocked(spawnFile).mockImplementation((command, args, options) => {
+    spawnFile.mockImplementation((command, args, options) => {
       const resourcesPath = path.join(paths.resources, process.platform, 'bin');
 
       expect(command).toEqual('docker-credential-pikachu');
@@ -46,7 +61,7 @@ describe('runCommand', () => {
   it('errors out on failing to read config', async() => {
     const error = new Error('Some error');
 
-    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath) => {
+    modules.fs.promises.readFile.mockImplementation((filepath) => {
       const home = findHomeDir() ?? '';
 
       expect(filepath).toEqual(path.join(home, '.docker', 'config.json'));
@@ -54,10 +69,10 @@ describe('runCommand', () => {
       return Promise.reject(error);
     });
 
-    jest.mocked(spawnFile).mockImplementation(() => Promise.resolve({}));
+    spawnFile.mockImplementation(() => Promise.resolve({}));
 
     await expect(runCommand('pika')).rejects.toBe(error);
-    expect(jest.mocked(spawnFile)).not.toHaveBeenCalled();
+    expect(spawnFile).not.toHaveBeenCalled();
   });
 
   // Check managing credentials, for the case where there's a per-host override
@@ -72,7 +87,7 @@ describe('runCommand', () => {
     },
   ])('helper $description', ({ host, executable }) => {
     beforeEach(() => {
-      jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath) => {
+      modules.fs.promises.readFile.mockImplementation((filepath) => {
         const home = findHomeDir() ?? '';
 
         expect(filepath).toEqual(path.join(home, '.docker', 'config.json'));
@@ -96,7 +111,7 @@ describe('runCommand', () => {
     ])('on $command', async({ command, input, override }) => {
       const expected = 'password';
 
-      jest.mocked(spawnFile).mockImplementation((file, args, options) => {
+      spawnFile.mockImplementation((file, args, options) => {
         expect(file).toEqual(`docker-credential-${ override ?? executable }`);
         expect(args).toEqual([command]);
         expect(options).toMatchObject({ stdio: [expect.any(stream.Readable), expect.anything(), expect.anything()] });
@@ -114,14 +129,14 @@ describe('list', () => {
   let helpers: Record<string, any> = {};
 
   beforeEach(() => {
-    jest.spyOn(fs.promises, 'readFile').mockImplementation((filepath) => {
+    modules.fs.promises.readFile.mockImplementation((filepath) => {
       const home = findHomeDir() ?? '';
 
       expect(filepath).toEqual(path.join(home, '.docker', 'config.json'));
 
       return Promise.resolve(JSON.stringify(config));
     });
-    jest.mocked(spawnFile).mockImplementation((file, args) => {
+    spawnFile.mockImplementation((file, args) => {
       const helper = file.replace(/^docker-credential-/, '');
 
       expect(file).toMatch(/^docker-credential-/);

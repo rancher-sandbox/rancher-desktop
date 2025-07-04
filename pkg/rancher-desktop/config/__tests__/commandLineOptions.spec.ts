@@ -1,13 +1,18 @@
 import fs from 'fs';
 import os from 'os';
 
+import { jest } from '@jest/globals';
 import _ from 'lodash';
 
-import { getObjectRepresentation, LockedFieldError, updateFromCommandLine } from '@pkg/config/commandLineOptions';
 import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import clone from '@pkg/utils/clone';
 import { RecursiveKeys } from '@pkg/utils/typeUtils';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+mockModules({ '@pkg/utils/logging': undefined });
+
+const { getObjectRepresentation, LockedFieldError, updateFromCommandLine } = await import('@pkg/config/commandLineOptions');
 
 describe('commandLineOptions', () => {
   let prefs: settings.Settings;

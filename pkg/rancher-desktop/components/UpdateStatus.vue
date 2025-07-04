@@ -83,7 +83,7 @@
 </template>
 
 <script lang="ts">
-import { Card } from '@rancher/components';
+import * as Components from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { defineComponent } from 'vue';
@@ -93,6 +93,8 @@ import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
+
+const { Card } = (Components as any).default ?? Components;
 
 export default defineComponent({
   name:       'update-status',

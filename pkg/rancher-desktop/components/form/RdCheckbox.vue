@@ -1,8 +1,10 @@
 <script lang="ts">
-import { Checkbox } from '@rancher/components';
+import * as Components from '@rancher/components';
 import { defineComponent } from 'vue';
 
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
+
+const { Checkbox } = (Components as any).default ?? Components;
 
 export default defineComponent({
   name:         'rd-checkbox',
