@@ -10,9 +10,7 @@
 
     <div class="path-breadcrumb">
       <span class="breadcrumb-item" @click="navigateToPath('/')">
-        <i class="icon icon-folder-open"></i>
-        root
-      </span>
+        <i class="icon icon-folder-open"></i>root</span>
       <template v-for="(segment, index) in pathSegments">
         <span :key="`sep-${index}`" class="breadcrumb-separator">/</span>
         <span
