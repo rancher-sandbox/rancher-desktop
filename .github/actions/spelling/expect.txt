@@ -81,6 +81,7 @@ bottlesofbeeronthewall
 bpf
 bpffs
 brucebean
+breadcrumb
 bsd
 bsdextrautils
 bsdtar
