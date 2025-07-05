@@ -23,7 +23,6 @@ import SnapshotsCreate from '../pages/snapshots/create.vue';
 import SnapshotsDialog from '../pages/snapshots/dialog.vue';
 import ContainerLogs from '../pages/containers/logs/_id.vue';
 import VolumeFiles from '../pages/volumes/files/_name.vue';
-import VolumeFileEditor from '../pages/volumes/files/editor.vue';
 
 Vue.use(VueRouter);
 
@@ -40,9 +39,6 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/containers/logs/:id', component: ContainerLogs, name: 'containers-logs-id',
-  },
-  {
-    path: '/volumes/files/editor', component: VolumeFileEditor, name: 'volumes-files-editor',
   },
   {
     path: '/volumes/files/:name', component: VolumeFiles, name: 'volumes-files-name',

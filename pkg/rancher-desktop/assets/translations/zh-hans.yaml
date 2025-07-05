@@ -895,21 +895,6 @@ containers:
   sortableTables:
     noRows: 没有要显示的容器
 
-volumes:
-  title: 数据卷
-  sortableTables:
-    noRows: 当前没有可显示的数据卷
-  manage:
-    table:
-      header:
-        volumeName: 数据卷名称
-        driver: 驱动程序
-        mountpoint: 挂载点
-        created: 创建时间
-  manager:
-    table:
-      action:
-        delete: 删除
 
 images:
   title: Images

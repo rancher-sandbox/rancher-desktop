@@ -55,9 +55,9 @@
         <template #col:name="{row}">
           <td>
             <span
-              :class="{ 'is-directory': row.isDirectory, 'is-clickable': row.isDirectory || isEditableFile(row) }"
+              :class="{ 'is-directory': row.isDirectory, 'is-clickable': row.isDirectory }"
               class="file-name"
-              @click="handleFileClick(row)"
+              @click="row.isDirectory ? navigateToPath(row.path) : null"
             >
               <i :class="getFileIcon(row)" class="file-icon"></i>
               {{ row.name }}
@@ -313,39 +313,6 @@ export default Vue.extend({
         }
       });
     },
-    handleFileClick(file) {
-      if (file.isDirectory) {
-        this.navigateToPath(file.path);
-      } else if (this.isEditableFile(file)) {
-        this.openFileEditor(file);
-      }
-    },
-    isEditableFile(file) {
-      // Check if file is editable based on extension and size
-      const ext = file.name.split('.').pop().toLowerCase();
-      const editableExtensions = [
-        'txt', 'log', 'json', 'yaml', 'yml', 'xml', 'html', 'css', 'js', 'ts',
-        'md', 'conf', 'config', 'ini', 'properties', 'sh', 'bash', 'py', 'rb',
-        'php', 'sql', 'csv', 'env', 'dockerfile', 'makefile', 'gitignore'
-      ];
-
-      // Don't allow editing very large files (> 10MB)
-      const maxEditableSize = 1024 * 1024 * 10; // 10MB
-
-      return (
-        editableExtensions.includes(ext) ||
-        !file.name.includes('.') // Files without extensions (like config files)
-      ) && file.size <= maxEditableSize;
-    },
-    openFileEditor(file) {
-      this.$router.push({
-        name: 'volumes-files-editor',
-        query: {
-          volume: this.volumeName,
-          path: file.path
-        }
-      });
-    },
     getPathUpTo(index) {
       const segments = this.pathSegments.slice(0, index + 1);
       return '/' + segments.join('/');
@@ -490,14 +457,6 @@ export default Vue.extend({
     &:hover {
       color: var(--link-hover);
       text-decoration: underline;
-    }
-
-    &:not(.is-directory) {
-      color: var(--body-text);
-
-      &:hover {
-        color: var(--primary);
-      }
     }
   }
 }
