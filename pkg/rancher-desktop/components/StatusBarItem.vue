@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue, { PropType, VueConstructor } from 'vue';
+import { PropType, Component, defineComponent } from 'vue';
 
 import NetworkStatus from '@pkg/components/NetworkStatus.vue';
 import Version from '@pkg/components/Version.vue';
@@ -12,7 +12,8 @@ export type StatusBarItemData = {
   },
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:  'status-bar-item',
   props: {
     data: {
       type:    Object as PropType<StatusBarItemData>,
@@ -28,7 +29,7 @@ export default Vue.extend({
     },
   },
   computed: {
-    getSubComponent(): VueConstructor | undefined {
+    getSubComponent(): Component | undefined {
       if (this.subComponent) {
         return this.subComponent === 'Version' ? Version : NetworkStatus;
       }
@@ -91,7 +92,7 @@ export default Vue.extend({
 
 <style scoped lang="scss">
 .status-bar-item {
-  .item-icon, ::v-deep .item-icon {
+  .item-icon, :deep(.item-icon) {
     padding-right: 2px;
     vertical-align: middle;
     display: none;
@@ -110,21 +111,21 @@ export default Vue.extend({
   }
 
   @media (max-width: 1000px) {
-    .item-label, ::v-deep .item-label {
+    .item-label, :deep(.item-label) {
       display: none;
     }
 
-    .item-icon, ::v-deep .item-icon {
+    .item-icon, :deep(.item-icon) {
       display: inline;
     }
   }
 
   @media (max-width: 900px) {
-    .item-value, ::v-deep .item-value {
+    .item-value, :deep(.item-value) {
       display: none;
     }
 
-    .item-icon, ::v-deep .item-icon {
+    .item-icon, :deep(.item-icon) {
       display: inline;
     }
   }

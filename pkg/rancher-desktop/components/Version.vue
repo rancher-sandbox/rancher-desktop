@@ -1,8 +1,9 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-export default Vue.extend({
+export default defineComponent({
+  name:  'version',
   props: {
     icon: {
       type:    String,

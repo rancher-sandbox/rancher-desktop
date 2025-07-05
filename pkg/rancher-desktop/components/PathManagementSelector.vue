@@ -1,6 +1,6 @@
 <script lang="ts">
 import { RadioButton, RadioGroup } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 
@@ -10,7 +10,8 @@ interface pathManagementOptions {
   description: string
 }
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'path-management-selector',
   components: {
     RadioGroup,
     RadioButton,
@@ -33,6 +34,7 @@ export default Vue.extend({
       default: false,
     },
   },
+  emits: ['input'],
   computed: {
     options(): pathManagementOptions[] {
       return [
@@ -77,7 +79,7 @@ export default Vue.extend({
     :disabled="isLocked"
     :class="{ 'locked-radio' : isLocked }"
     class="path-management"
-    @input="updateVal"
+    @update:value="updateVal"
   >
     <template
       v-if="showLabel"
@@ -85,16 +87,18 @@ export default Vue.extend({
     >
       <slot name="label" />
     </template>
-    <template #1="{ option, index, isDisabled, mode }">
+    <template #1="{ option, isDisabled, mode }">
       <radio-button
-        :key="groupName+'-'+index"
+        v-bind="$attrs"
+        :key="groupName+'-'+option.value"
         :name="groupName"
         :value="value"
         :label="option.label"
+        :description="option.description"
         :val="option.value"
         :disabled="isDisabled"
         :mode="mode"
-        v-on="$listeners"
+        @update:value="updateVal(option.value)"
       >
         <template #description>
           <span v-html="option.description" />
@@ -105,13 +109,13 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
-.path-management::v-deep code {
+.path-management :deep(code) {
   user-select: text;
   cursor: text;
   padding: 2px;
 }
 
-.path-management::v-deep label {
+.path-management :deep(label) {
   color: var(--input-label);
 }
 </style>

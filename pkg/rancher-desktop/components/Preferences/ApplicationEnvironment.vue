@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import PathManagementSelector from '@pkg/components/PathManagementSelector.vue';
@@ -11,7 +11,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-application-environment',
   components: { PathManagementSelector, RdFieldset },
   props:      {

@@ -142,7 +142,7 @@ export default {
     ipcRenderer.on('extensions/changed', this.fetchExtensions);
     this.$store.dispatch('extensions/fetch');
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.invoke('images-mounted', false);
     ipcRenderer.removeAllListeners('images-mounted');
     ipcRenderer.removeAllListeners('images-changed');

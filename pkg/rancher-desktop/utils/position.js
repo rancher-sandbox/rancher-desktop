@@ -1,5 +1,4 @@
 // @TODO replace this with popper.js...
-import $ from 'jquery';
 
 export const LEFT = 'left';
 export const RIGHT = 'right';
@@ -10,10 +9,9 @@ export const BOTTOM = 'bottom';
 export const AUTO = 'auto';
 
 export function boundingRect(elem) {
-  const $elem = $(elem);
-  const pos = $elem.offset();
-  const width = $elem.outerWidth(false);
-  const height = $elem.outerHeight(false);
+  const pos = elem.getBoundingClientRect();
+  const width = elem.offsetWidth;
+  const height = elem.offsetHeight;
 
   return {
     top:    pos.top,
@@ -37,11 +35,10 @@ export function fakeRectFor(event) {
 }
 
 export function screenRect() {
-  const $window = $(window);
-  const width = $window.width();
-  const height = $window.height();
-  const top = window.scrollY;
-  const left = window.scrollX;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const top = window.pageYOffset;
+  const left = window.pageXOffset;
 
   return {
     top,
@@ -53,13 +50,11 @@ export function screenRect() {
   };
 }
 
-export function fitOnScreen(contentElem, triggerElemOrEvent, opt) {
+export function fitOnScreen(contentElem, triggerElemOrEvent, opt, useDefaults) {
   let {
     positionX = AUTO, // Preferred horizontal position
     positionY = AUTO, // Preferred vertical position
   } = opt || {};
-
-  // console.log(positionX, positionY);
 
   const {
     fudgeX = 0,
@@ -72,12 +67,27 @@ export function fitOnScreen(contentElem, triggerElemOrEvent, opt) {
   let trigger;
 
   if ( triggerElemOrEvent instanceof Event ) {
-    trigger = fakeRectFor(event);
+    trigger = fakeRectFor(triggerElemOrEvent);
   } else {
     trigger = boundingRect(triggerElemOrEvent);
   }
 
-  const content = boundingRect(contentElem);
+  let content = {};
+
+  if (contentElem) {
+    content = boundingRect(contentElem);
+  }
+
+  if (useDefaults) {
+    content = {
+      top:    0,
+      right:  147,
+      bottom: 163,
+      left:   0,
+      width:  147,
+      height: 80
+    };
+  }
 
   // console.log('screen', screen);
   // console.log('trigger', trigger);

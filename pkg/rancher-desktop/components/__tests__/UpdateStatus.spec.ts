@@ -1,4 +1,4 @@
-import { createLocalVue, mount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils';
 import FloatingVue from 'floating-vue';
 
 import UpdateStatus from '../UpdateStatus.vue';
@@ -14,15 +14,18 @@ jest.mock('@pkg/utils/ipcRenderer', () => {
   };
 });
 
-const localVue = createLocalVue();
-
-localVue.use(FloatingVue);
-
-function wrap(props: UpdateStatus['$props']) {
+function wrap(props: typeof UpdateStatus['$props']) {
   return mount(UpdateStatus, {
-    localVue,
-    propsData: props,
-    mocks:     { t: jest.fn() },
+    props,
+    global: {
+      mocks:   { t: jest.fn() },
+      stubs:   {
+        T: { template: '<span> {{ k }} </span>' },
+        RdCheckbox: { template: '<input type="checkbox">' },
+        Version: { template: '<span />'},
+      },
+    },
+    plugins: [FloatingVue],
   });
 }
 
@@ -65,7 +68,7 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.findComponent({ ref: 'updateStatus' }).text())
+      expect(wrapper.get({ ref: 'updateStatus' }).text())
         .toEqual('There was an error checking for updates.');
       expect(wrapper.element.querySelector('.update-notification'))
         .toBeFalsy();
@@ -77,7 +80,7 @@ describe('UpdateStatus.vue', () => {
         updateState: { available: true } as UpdateState,
       });
 
-      expect(wrapper.findComponent({ ref: 'updateStatus' }).text())
+      expect(wrapper.get({ ref: 'updateStatus' }).text())
         .toEqual('');
     });
 
@@ -89,11 +92,10 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.findComponent({ ref: 'updateStatus' }).text().replace(/\s+/g, ' '))
+      expect(wrapper.get({ ref: 'updateStatus' }).text().replace(/\s+/g, ' '))
         .toEqual('An update to version v1.2.3 is available. Restart the application to apply the update.');
 
-      expect(wrapper.findComponent({ ref: 'applyButton' }).exists()).toBeTruthy();
-      expect(wrapper.findComponent({ ref: 'applyButton' }).attributes('disabled')).toBeFalsy();
+      expect(wrapper.get({ ref: 'applyButton' }).attributes()).not.toHaveProperty('disabled');
     });
 
     it('does not allow applying again', async() => {
@@ -105,7 +107,7 @@ describe('UpdateStatus.vue', () => {
       });
 
       await wrapper.setData({ applying: true });
-      expect(wrapper.getComponent({ ref: 'applyButton' }).attributes('disabled')).toBeTruthy();
+      expect(wrapper.get({ ref: 'applyButton' }).attributes()).toHaveProperty('disabled');
     });
 
     it('shows download progress', () => {
@@ -135,9 +137,9 @@ describe('UpdateStatus.vue', () => {
         locale: 'en',
       });
 
-      expect(wrapper.findComponent({ ref: 'updateStatus' }).text())
+      expect(wrapper.get({ ref: 'updateStatus' }).text())
         .toMatch(/^An update to version v1\.2\.3 is available; downloading... \(12%, 1\.2MB\/s(?:ec\.?)?\)$/);
-      expect(wrapper.findComponent({ ref: 'updateReady' }).exists()).toBeFalsy();
+      expect(wrapper.find({ ref: 'applyButton' }).exists()).toBeFalsy();
     });
   });
 
@@ -145,7 +147,7 @@ describe('UpdateStatus.vue', () => {
     it('should not be displayed if there are none', () => {
       const wrapper = wrap({ enabled: true, updateState: { info: { version: 'v1.2.3' } } as UpdateState });
 
-      expect(wrapper.findComponent({ ref: 'releaseNotes' }).exists()).toBeFalsy();
+      expect(wrapper.find({ ref: 'releaseNotes' }).exists()).toBeFalsy();
     });
 
     it('should render plain text', () => {
@@ -157,7 +159,7 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.findComponent({ ref: 'releaseNotes' }).text())
+      expect(wrapper.get({ ref: 'releaseNotes' }).text())
         .toEqual('hello');
     });
 
@@ -170,7 +172,7 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.findComponent({ ref: 'releaseNotes' }).html())
+      expect(wrapper.get({ ref: 'releaseNotes' }).html())
         .toContain('<strong>hello</strong>');
     });
 
@@ -186,7 +188,7 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.findComponent({ ref: 'releaseNotes' }).html())
+      expect(wrapper.get({ ref: 'releaseNotes' }).html())
         .not.toContain('alert');
     });
   });
