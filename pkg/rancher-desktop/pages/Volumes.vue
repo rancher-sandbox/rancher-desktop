@@ -1,7 +1,6 @@
 <template>
   <div class="volumes">
     <SortableTable
-      ref="sortableTableRef"
       class="volumesTable"
       :headers="headers"
       key-field="Name"
@@ -10,7 +9,7 @@
       :row-actions="true"
       :paging="true"
       :rows-per-page="10"
-      :has-advanced-filtering="true"
+      :has-advanced-filtering="false"
       :loading="!volumesList"
     >
       <template #header-middle>
@@ -57,15 +56,13 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import Vue from 'vue';
 import {mapGetters} from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
 import {ContainerEngine} from '@pkg/config/settings';
 import {ipcRenderer} from '@pkg/utils/ipcRenderer';
-
-let volumeCheckInterval = null;
 
 export default Vue.extend({
   name:       'Volumes',
@@ -77,6 +74,8 @@ export default Vue.extend({
       ddClient: null,
       volumesList: null,
       volumesNamespaces: [],
+      // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
+      volumeCheckInterval: null,
       headers:      [
         {
           name:  'volumeName',
@@ -109,43 +108,35 @@ export default Vue.extend({
         return [];
       }
 
-      const volumes = structuredClone(this.volumesList);
-
-      return volumes.map((volume) => {
-        volume.volumeName = volume.Name;
-        volume.created = volume.CreatedAt ? new Date(volume.Created).toLocaleDateString() : '';
-        volume.mountpoint = volume.Mountpoint || '';
-        volume.driver = volume.Driver || '';
-
-        volume.availableActions = [
-          {
-            label: this.t('volumes.manager.table.action.browse'),
-            action: 'browseFiles',
-            enabled: true,
-            bulkable: false,
-          },
-          {
-            label:      this.t('volumes.manager.table.action.delete'),
-            action:     'deleteVolume',
-            enabled:    true,
-            bulkable:   true,
-            bulkAction: 'deleteVolume',
-          },
-        ];
-
-        if (!volume.deleteVolume) {
-          volume.deleteVolume = (...args) => {
+      return this.volumesList.map((volume) => {
+        return {
+          ...volume,
+          volumeName: volume.Name,
+          created: volume.CreatedAt ? new Date(volume.Created).toLocaleDateString() : '',
+          mountpoint: volume.Mountpoint || '',
+          driver: volume.Driver || '',
+          availableActions: [
+            {
+              label: this.t('volumes.manager.table.action.browse'),
+              action: 'browseFiles',
+              enabled: true,
+              bulkable: false,
+            },
+            {
+              label: this.t('volumes.manager.table.action.delete'),
+              action: 'deleteVolume',
+              enabled: true,
+              bulkable: true,
+              bulkAction: 'deleteVolume',
+            },
+          ],
+          deleteVolume: (...args) => {
             this.deleteVolume(...(args?.length > 0 ? args : [volume]));
-          };
-        }
-
-        if (!volume.browseFiles) {
-          volume.browseFiles = () => {
+          },
+          browseFiles: () => {
             this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
-          };
-        }
-
-        return volume;
+          },
+        };
       });
     },
     isNerdCtl() {
@@ -178,11 +169,11 @@ export default Vue.extend({
     });
 
     this.checkVolumes().catch(console.error);
-    volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
+    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
   },
   beforeDestroy() {
     ipcRenderer.removeAllListeners('settings-update');
-    clearInterval(volumeCheckInterval);
+    clearInterval(this.volumeCheckInterval);
   },
   methods: {
     async checkVolumes() {
@@ -198,7 +189,7 @@ export default Vue.extend({
         }
         try {
           await this.getVolumes();
-          clearInterval(volumeCheckInterval);
+          clearInterval(this.volumeCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching volumes:', { error });
         }
@@ -235,7 +226,7 @@ export default Vue.extend({
           options.namespace = this.selectedNamespace;
         }
 
-        const volumes = await this.ddClient?.docker.listVolumes(options);
+        const volumes = await this.ddClient?.docker.rdListVolumes(options);
         this.volumesList = volumes || [];
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
@@ -278,7 +269,7 @@ export default Vue.extend({
     shortSha(sha) {
       const prefix = 'sha256:';
 
-      if (sha && sha.includes(prefix)) {
+      if (sha && sha.startsWith(prefix)) {
         const startIndex = sha.indexOf(prefix) + prefix.length;
         const actualSha = sha.slice(startIndex);
 
@@ -300,7 +291,7 @@ export default Vue.extend({
       }
 
       // Show tooltip for sha256 hashes or long paths
-      if (text.includes('sha256:') || text.length > 40) {
+      if (text.startsWith('sha256:') || text.length > 40) {
         return {content: text};
       }
 

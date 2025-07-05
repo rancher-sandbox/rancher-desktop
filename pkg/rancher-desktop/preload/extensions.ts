@@ -43,7 +43,7 @@ interface DockerListImagesOptions {
 
 /**
  * DockerListVolumesOptions describes the arguments for
- * ddClient.docker.listVolumes()
+ * ddClient.docker.rdListVolumes()
  */
 interface DockerListVolumesOptions {
   filters?: string;
@@ -563,7 +563,7 @@ class Client implements v1.DockerDesktopClient {
         };
       });
     },
-    listVolumes: async (options: DockerListVolumesOptions = {}) => {
+    rdListVolumes: async (options: DockerListVolumesOptions = {}) => {
       const lsArgs = ['ls', '--format={{json .}}'];
 
       if (options.filters !== undefined) {

@@ -78,7 +78,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import {BadgeState, Banner} from '@rancher/components';
 import Vue from 'vue';
 import {mapGetters} from 'vuex';
@@ -209,7 +209,7 @@ export default Vue.extend({
           options.namespace = this.hasNamespaceSelected;
         }
 
-        const volumes = await this.ddClient?.docker.listVolumes(options);
+        const volumes = await this.ddClient?.docker.rdListVolumes(options);
         this.volumeExists = volumes?.some(v => v.Name === this.volumeName) || false;
 
         if (!this.volumeExists) {
@@ -230,8 +230,8 @@ export default Vue.extend({
           'run', '--rm',
           '-v', `${this.volumeName}:/volume:ro`,
           'busybox',
-          'sh', '-c',
-          `cd "${containerPath}" && ls -la | tail -n +2`
+          'ls', '-la', '--full-time', '--group-directories-first',
+          containerPath
         ];
 
         const execOptions = {cwd: '/'};
@@ -245,7 +245,16 @@ export default Vue.extend({
           execOptions
         );
 
-        if (stderr && !stderr.includes('level=warning')) {
+        // Only treat stderr as an error if it's not a warning or pull progress
+        if (stderr &&
+          !stderr.includes('level=warning') &&
+          !stderr.includes('Pulling from') &&
+          !stderr.includes('Pull complete') &&
+          !stderr.includes('Downloaded') &&
+          !stderr.includes('Downloading') &&
+          !stderr.includes('Waiting') &&
+          !stderr.includes('Verifying') &&
+          !stderr.includes('Extracting')) {
           throw new Error(stderr);
         }
 
@@ -262,9 +271,13 @@ export default Vue.extend({
       const files = [];
 
       for (const line of lines) {
-        const match = line.match(/^([drwxst-]+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(\w+\s+\d+\s+\d+:\d+)\s+(.+)$/);
-        if (match) {
-          const [, permissions, , owner, group, size, dateTime, name] = match;
+        // Skip the "total" line
+        if (line.startsWith('total ')) {
+          continue;
+        }
+        const match = line.match(/^(?<permissions>[drwxst-]+)\s+(?<links>\d+)\s+(?<owner>\S+)\s+(?<group>\S+)\s+(?<size>\d+)\s+(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})\s+(?<timezone>[+-]\d{4})\s+(?<name>.+)$/);
+        if (match && match.groups) {
+          const {permissions, owner, group, size, date, time, name} = match.groups;
 
           if (name === '.' || name === '..') {
             continue;
@@ -275,8 +288,7 @@ export default Vue.extend({
             ? `/${name}`
             : `${this.currentPath}/${name}`;
 
-          const currentYear = new Date().getFullYear();
-          const modified = new Date(`${dateTime} ${currentYear}`);
+          const modified = new Date(`${date}T${time}`);
 
           files.push({
             name,
@@ -291,11 +303,7 @@ export default Vue.extend({
         }
       }
 
-      return files.sort((a, b) => {
-        if (a.isDirectory && !b.isDirectory) return -1;
-        if (!a.isDirectory && b.isDirectory) return 1;
-        return a.name.localeCompare(b.name);
-      });
+      return files;
     },
     navigateToPath(path) {
       if (this.currentPath === path) {
