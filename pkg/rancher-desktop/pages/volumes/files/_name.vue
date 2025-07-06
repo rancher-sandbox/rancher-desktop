@@ -137,11 +137,11 @@ export default Vue.extend({
   computed: {
     ...mapGetters('k8sManager', {isK8sReady: 'isReady'}),
     volumeName() {
-      const name = this.$route.params.name;
-      if (!name || !/^[a-zA-Z0-9._-]+$/.test(name)) {
-        throw new Error('Invalid volume name format');
-      }
-      return name;
+      return this.$route.params.name || '';
+    },
+    isValidVolumeName() {
+      const name = this.volumeName;
+      return name && /^[a-zA-Z0-9._-]+$/.test(name);
     },
     hasNamespaceSelected() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD && this.settings?.containers?.namespace;
@@ -154,13 +154,17 @@ export default Vue.extend({
   },
   watch: {
     '$route.query.path': {
-      handler(newPath) {
+      async handler(newPath) {
         const path = newPath || '/';
         if (this.currentPath !== path) {
           this.currentPath = path;
           if (this.ddClient && this.volumeExists) {
             this.isLoading = true;
-            this.listFiles();
+            try {
+              await this.listFiles();
+            } catch (error) {
+              console.error('Error in path watcher:', error);
+            }
           }
         }
       },
@@ -168,6 +172,11 @@ export default Vue.extend({
     }
   },
   mounted() {
+    if (!this.isValidVolumeName) {
+      this.error = this.t('volumes.files.invalidVolumeName', {name: this.volumeName});
+      return;
+    }
+
     this.$store.dispatch('page/setHeader', {
       title: this.t('volumes.files.title'),
       description: this.volumeName,
@@ -246,23 +255,28 @@ export default Vue.extend({
         );
 
         // Only treat stderr as an error if it's not a warning or pull progress
-        if (stderr &&
-          !stderr.includes('level=warning') &&
-          !stderr.includes('Pulling from') &&
-          !stderr.includes('Pull complete') &&
-          !stderr.includes('Downloaded') &&
-          !stderr.includes('Downloading') &&
-          !stderr.includes('Waiting') &&
-          !stderr.includes('Verifying') &&
-          !stderr.includes('Extracting')) {
+        const nonErrorPatterns = [
+          'level=warning', 'Pulling from', 'Pull complete',
+          'Downloaded', 'Downloading', 'Waiting', 'Verifying', 'Extracting'
+        ];
+        const isRealError = stderr && !nonErrorPatterns.some(pattern => stderr.includes(pattern));
+        if (isRealError) {
           throw new Error(stderr);
         }
 
         this.files = this.parseLsOutput(stdout);
         this.isLoading = false;
       } catch (error) {
+        const errorSources = [
+          error?.message,
+          error?.stderr,
+          error?.error,
+          typeof error === 'string' ? error : null,
+          'Failed to list files'
+        ];
+
         console.error('Error listing files:', error);
-        this.error = this.t('volumes.files.listError', {error: error.message});
+        this.error = this.t('volumes.files.listError', {error: errorSources.find(msg => msg)});
         this.isLoading = false;
       }
     },
@@ -330,31 +344,7 @@ export default Vue.extend({
         return 'icon icon-folder';
       }
 
-      const ext = file.name.split('.').pop().toLowerCase();
-      const iconMap = {
-        txt: 'icon-file-text',
-        log: 'icon-file-text',
-        json: 'icon-file-code',
-        yaml: 'icon-file-code',
-        yml: 'icon-file-code',
-        xml: 'icon-file-code',
-        html: 'icon-file-code',
-        js: 'icon-file-code',
-        ts: 'icon-file-code',
-        css: 'icon-file-code',
-        sh: 'icon-terminal',
-        bash: 'icon-terminal',
-        zip: 'icon-file-zip',
-        tar: 'icon-file-zip',
-        gz: 'icon-file-zip',
-        jpg: 'icon-image',
-        jpeg: 'icon-image',
-        png: 'icon-image',
-        gif: 'icon-image',
-        svg: 'icon-image',
-      };
-
-      return `icon ${iconMap[ext] || 'icon-file'}`;
+      return 'icon icon-file';
     },
     formatSize(bytes) {
       if (bytes === 0) return '0 B';

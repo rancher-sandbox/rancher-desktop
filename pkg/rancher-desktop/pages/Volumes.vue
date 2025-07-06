@@ -72,6 +72,8 @@ import SortableTable from '@pkg/components/SortableTable';
 import {ContainerEngine} from '@pkg/config/settings';
 import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
+const MAX_PATH_LENGTH = 40;
+
 export default Vue.extend({
   name:       'Volumes',
   title:      'Volumes',
@@ -121,7 +123,7 @@ export default Vue.extend({
         return {
           ...volume,
           volumeName: volume.Name,
-          created: volume.CreatedAt ? new Date(volume.Created).toLocaleDateString() : '',
+          created: volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
           mountpoint: volume.Mountpoint || '',
           driver: volume.Driver || '',
           availableActions: [
@@ -139,20 +141,19 @@ export default Vue.extend({
               bulkAction: 'deleteVolume',
             },
           ],
-          deleteVolume: (...args) => {
-            this.deleteVolume(...(args?.length > 0 ? args : [volume]));
-          },
-          browseFiles: () => {
-            this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
-          },
+          deleteVolume: this.createDeleteVolumeHandler(volume),
+          browseFiles: this.createBrowseFilesHandler(volume),
         };
       });
     },
-    isNerdCtl() {
+    isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
     },
+    isNerdCtl() {
+      return this.isContainerdEngine;
+    },
     supportsNamespaces() {
-      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
+      return this.isContainerdEngine;
     },
     selectedNamespace() {
       return this.supportsNamespaces ? this.settings?.containers.namespace : undefined;
@@ -283,20 +284,24 @@ export default Vue.extend({
         console.error(`Error executing command ${command}`, error);
       }
     },
+    createDeleteVolumeHandler(volume) {
+      return (...args) => {
+        this.deleteVolume(...(args?.length > 0 ? args : [volume]));
+      };
+    },
+    createBrowseFilesHandler(volume) {
+      return () => {
+        this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
+      };
+    },
     shortSha(sha) {
-      const prefix = 'sha256:';
+      if (!sha?.startsWith('sha256:')) return sha || '';
 
-      if (sha && sha.startsWith(prefix)) {
-        const startIndex = sha.indexOf(prefix) + prefix.length;
-        const actualSha = sha.slice(startIndex);
-
-        return `${ sha.slice(0, startIndex) }${ actualSha.slice(0, 3) }..${ actualSha.slice(-3) }`;
-      }
-
-      return sha || '';
+      const hash = sha.replace('sha256:', '');
+      return `sha256:${hash.slice(0, 3)}..${hash.slice(-3)}`;
     },
     shortPath(path) {
-      if (!path || path.length <= 40) {
+      if (!path || path.length <= MAX_PATH_LENGTH) {
         return path || '';
       }
 
@@ -308,7 +313,7 @@ export default Vue.extend({
       }
 
       // Show tooltip for sha256 hashes or long paths
-      if (text.startsWith('sha256:') || text.length > 40) {
+      if (text.startsWith('sha256:') || text.length > MAX_PATH_LENGTH) {
         return {content: text};
       }
 
