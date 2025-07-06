@@ -1,5 +1,12 @@
 <template>
   <div class="volumes">
+    <banner
+      v-if="error"
+      color="error"
+      @close="error = null"
+    >
+      {{ error }}
+    </banner>
     <SortableTable
       class="volumesTable"
       :headers="headers"
@@ -60,6 +67,7 @@
 import Vue from 'vue';
 import {mapGetters} from 'vuex';
 
+import {Banner} from '@rancher/components';
 import SortableTable from '@pkg/components/SortableTable';
 import {ContainerEngine} from '@pkg/config/settings';
 import {ipcRenderer} from '@pkg/utils/ipcRenderer';
@@ -67,7 +75,7 @@ import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 export default Vue.extend({
   name:       'Volumes',
   title:      'Volumes',
-  components: { SortableTable },
+  components: {SortableTable, Banner},
   data() {
     return {
       settings: undefined,
@@ -76,6 +84,7 @@ export default Vue.extend({
       volumesNamespaces: [],
       // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
       volumeCheckInterval: null,
+      error: null,
       headers:      [
         {
           name:  'volumeName',
@@ -262,8 +271,22 @@ export default Vue.extend({
 
         return stdout;
       } catch (error) {
-        window.alert(error.message);
-        console.error(`Error executing command ${ command }`, error.message);
+        // Extract meaningful error message
+        let errorMessage = `Failed to execute command: ${command}`;
+        if (error && typeof error === 'object') {
+          if (error.message) {
+            errorMessage = error.message;
+          } else if (error.stderr) {
+            errorMessage = error.stderr;
+          } else if (error.error) {
+            errorMessage = error.error;
+          }
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+
+        this.error = errorMessage;
+        console.error(`Error executing command ${command}`, error);
       }
     },
     shortSha(sha) {
