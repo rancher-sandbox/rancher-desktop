@@ -271,21 +271,15 @@ export default Vue.extend({
 
         return stdout;
       } catch (error) {
-        // Extract meaningful error message
-        let errorMessage = `Failed to execute command: ${command}`;
-        if (error && typeof error === 'object') {
-          if (error.message) {
-            errorMessage = error.message;
-          } else if (error.stderr) {
-            errorMessage = error.stderr;
-          } else if (error.error) {
-            errorMessage = error.error;
-          }
-        } else if (typeof error === 'string') {
-          errorMessage = error;
-        }
+        const errorSources = [
+          error?.message,
+          error?.stderr,
+          error?.error,
+          typeof error === 'string' ? error : null,
+          `Failed to execute command: ${command}`
+        ];
 
-        this.error = errorMessage;
+        this.error = errorSources.find(msg => msg);
         console.error(`Error executing command ${command}`, error);
       }
     },
