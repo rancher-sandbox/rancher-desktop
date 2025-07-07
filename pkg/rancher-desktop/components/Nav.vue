@@ -205,9 +205,9 @@ ul {
             gap: 0.25rem;
             color: var(--body-text);
             text-decoration: none;
-            line-height: 24px;
-            padding: 7.5px 10px;
-            letter-spacing: 1.4px;
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+            padding: 0.5rem 0.75rem;
             outline: none;
         }
 
