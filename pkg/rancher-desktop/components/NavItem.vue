@@ -27,9 +27,9 @@ export default Vue.extend({ props: { id: { type: String, default: '' } } });
   .nav-item {
     color: var(--body-text);
     text-decoration: none;
-    line-height: 24px;
-    padding: 7.5px 10px;
-    letter-spacing: 1.4px;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    padding: 0.5rem 0.75rem;
     display: flex;
     gap: 0.5rem;
     align-items: center;
