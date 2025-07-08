@@ -219,6 +219,36 @@ containers:
         started: Uptime
         actions: Actions
 
+volumes:
+  title: Volumes
+  sortableTables:
+    noRows: There are no volumes to show
+  manage:
+    table:
+      header:
+        volumeName: Volume Name
+        driver: Driver
+        mountpoint: Mount Point
+        created: Created
+  manager:
+    table:
+      action:
+        browse: Browse Files
+        delete: Delete
+  files:
+    title: Volume Files
+    loading: Loading volume files...
+    volumeNotFound: 'Volume "{name}" not found'
+    checkError: Error checking volume status
+    listError: 'Error listing files: {error}'
+    noFiles: This volume is empty
+    table:
+      header:
+        name: Name
+        size: Size
+        modified: Modified
+        permissions: Permissions
+
 images:
   title: Images
   sortableTables:

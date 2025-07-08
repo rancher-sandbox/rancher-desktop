@@ -252,7 +252,7 @@ authConfig:
         topPrivateDomain: '顶级域'
       2:
         title: '第二步：导航到 "Credentials"标签，创建你的OAuth客户端ID。'
-        body: 
+        body:
           1: '选择 "Create Credentials"下拉菜单，选择 "OAuth clientID"，然后选择 "Web application"。'
           2: 'Authorized JavaScript origins:'
           3: 'Authorized redirect URIs:'
@@ -320,16 +320,16 @@ authConfig:
     UID: UID字段
     adfs: 配置AD FS 账户
     api: Rancher API Host
-    cert: 
+    cert:
       label: 证书
       placeholder: 粘贴证书，以-----BEGIN CERTIFICATE----- 开始。
     displayName: 显示名称字段
     groups: 用户组字段
-    key: 
+    key:
       label: 私钥
       placeholder: 粘贴私钥，一般以-----RSA PRIVATE KEY----- 开始。
     keycloak: 配置Keycloak账户
-    metadata: 
+    metadata:
       label: Metadata XML
       placeholder: 粘贴IDP Metadata XML
     okta: 配置Okta账户
@@ -373,7 +373,7 @@ asyncButton:
   apply:
     action:  '应用'
     success: '已应用'
-    waiting: '正在应用&hellip;'   
+    waiting: '正在应用&hellip;'
   continue:
     action:  '继续'
     success: '已保存'
@@ -389,7 +389,7 @@ asyncButton:
     action: 正在执行
     error: 错误
     success: 成功
-    waiting: 等待中   
+    waiting: 等待中
   delete:
     action:  '删除'
     success: '已删除'
@@ -474,10 +474,10 @@ backupRestoreOperator:
           label: 存储类
         tip: '配置一个默认保存所有备份的存储位置。您可以选择对每个备份进行覆盖，但仅限于使用与 S3 兼容的对象存储。'
         warning: '此 {type} 没有将其回收策略设置为 "保留"。 如果卷被更改或未绑定，您的备份可能会丢失。'
-  encryption: '这个{type}没有将其回收策略设置为 "保留"。 如果该卷被改变或变得不受约束，你的备份可能会丢失。' 
+  encryption: '这个{type}没有将其回收策略设置为 "保留"。 如果该卷被改变或变得不受约束，你的备份可能会丢失。'
   encryptionConfigName:
     backuptip: '<code>cattle-resource-system</code>命名空间中具有<code>encryption-provider-config.yaml</code>密钥的任何秘密。<br/>此文件的内容是从此备份中执行还原所必需的，Rancher Backup 不会存储这些内容。'
-    label: 加密配置密钥 
+    label: 加密配置密钥
     options:
       none: 存储未加密的备份内容。
       secret: '使用 <a target="_blank" rel="noopener noreferrer nofollow" href="https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/#understanding-the-encryption-at-rest-configuration">加密配置秘密</a>（推荐）对备份进行加密。'
@@ -668,7 +668,7 @@ cis:
   alertNeeded: Alerting must be enabled within the CIS chart questions.yaml. This requires that <a tabindex="0" aria-label="Link to Rancher's Monitoring" href="{link}"> Rancher's Monitoring and Alerting app</a> is installed and the Receivers and Routes are <a target="_blank" rel='noopener nofollow' href='https://rancher.com/docs/rancher/v2.x/en/monitoring-alerting/v2.5/configuration/#alertmanager-config'> configured to send out alerts.</a>
   alertOnComplete: 扫描完成告警
   alertOnFailure: 扫描失败告警
-  benchmarkVersion: Benchmark 版本  
+  benchmarkVersion: Benchmark 版本
   clusterProvider: 提供集群的厂商
   cronSchedule:
     label: 定时调度
@@ -706,7 +706,7 @@ cis:
     scanReport: 扫描报告
     skip: 跳过
     total: 总共
-    warn: 警告  
+    warn: 警告
   scheduling:
     enable: 定时运行扫描
     disable: 运行单次扫描
@@ -895,6 +895,7 @@ containers:
   sortableTables:
     noRows: 没有要显示的容器
 
+
 images:
   title: Images
   sortableTables:
@@ -1026,7 +1027,7 @@ gatekeeperConstraint:
     title: 匹配
   tab:
     enforcementAction:
-      title: 执行动作 
+      title: 执行动作
     rules:
       title: 规则
       sub:
@@ -1050,7 +1051,7 @@ gatekeeperConstraint:
       title: 参数
   template: 模板
   violations:
-    title: 违反规定 
+    title: 违反规定
 
 gatekeeperIndex:
   #poweredBy: OPA Gatekeeper
@@ -1077,7 +1078,7 @@ glance:
   reload: 重新加载
   grafana: Grafana
 
-graphOptions: 
+graphOptions:
   detail: 详情
   summary: 概述
   refresh: 刷新
@@ -1258,7 +1259,7 @@ labels:
 landing:
   clusters: 集群
 # taken from Ember: https://github.com/rancher/ui/blob/master/app/components/modal-home/template.hbs
-  releaseNotes: 
+  releaseNotes:
     '<ul class="list-unstyled">
       <li class="mb-10">
         <b>Cluster Explorer:</b> 新的仪表盘提供了对Rancher管理的集群的更深入理解。
@@ -1748,7 +1749,7 @@ monitoringReceiver:
       label: 代理URL
       placeholder: 例如：http://my-proxy/
     sendResolved:
-      label: 启用发送已解决的警报   
+      label: 启用发送已解决的警报
 
 monitoringRoute:
   groups:
@@ -1888,33 +1889,33 @@ persistentVolume:
       label: 驱动
       placeholder: 例如：driver.longhorn.io
     volumeHandle:
-      #label: Volume Handle 
+      #label: Volume Handle
       placeholder: 例如：pvc-xxxx
     volumeAttributes:
       add: 添加卷参数
     nodePublishSecretName:
-      #label: Node Publish Secret Name 
+      #label: Node Publish Secret Name
       placeholder: 例如：secret
     nodePublishSecretNamespace:
-      #label: Node Publish Secret Namespace 
+      #label: Node Publish Secret Namespace
       placeholder: 例如：default
     nodeStageSecretName:
-      #label: Node Stage Secret Name 
+      #label: Node Stage Secret Name
       placeholder: 例如：secret
     nodeStageSecretNamespace:
-      #label: Node Stage Secret Namespace 
+      #label: Node Stage Secret Namespace
       placeholder: 例如：default
     controllerExpandSecretName:
-      #label: Controller Expand Secret Name 
+      #label: Controller Expand Secret Name
       placeholder: 例如：secret
     controllerExpandSecretNamespace:
-      #label: Controller Expand Secret Namespace 
+      #label: Controller Expand Secret Namespace
       placeholder: 例如：default
     controllerPublishSecretName:
-      #label: Controller Publish Secret Name 
+      #label: Controller Publish Secret Name
       placeholder: 例如：secret
     controllerPublishSecretNamespace:
-      #label: Controller Publish Secret Namespace 
+      #label: Controller Publish Secret Namespace
       placeholder: 例如：default
   cephfs:
     label: Ceph Filesystem（不支持）
@@ -1962,7 +1963,7 @@ persistentVolume:
     datasetName:
       label: 数据集名称
       placeholder: 例如：dataset
-    datasetUUID: 
+    datasetUUID:
       label: 数据集 UUID
       placeholder: 例如：uuid
   glusterfs:
@@ -2046,13 +2047,13 @@ persistentVolume:
       label: 系统
       placeholder: 例如：scaleio
     sslEnabled:
-      label: 启用SSL 
+      label: 启用SSL
   storageos:
     label: StorageOS（不支持）
-    volumeName: 
+    volumeName:
       label: 卷名称
       placeholder: 例如：vol
-    volumeNamespace: 
+    volumeNamespace:
       label: 卷命名空间
       placeholder: 例如：default
   nfs:
@@ -2323,7 +2324,7 @@ rbac:
       yes: '是：新的绑定不允许使用这个角色'
       no: 否
     tabs:
-      grantResources: 
+      grantResources:
         label: 授予资源
         tableHeaders:
           verbs: 操作
@@ -2585,7 +2586,7 @@ secret:
     'istio.io/key-and-cert': 'Ist'
     'helm.sh/release.v1': 'Helm'
     'fleet.cattle.io/cluster-registration-values': 'F'
-    'provisioning.cattle.io/cloud-credential': 'CC'    
+    'provisioning.cattle.io/cloud-credential': 'CC'
   relatedWorkloads: 相关的工作负载
 
 selectOrCreateAuthSecret:
@@ -2874,7 +2875,7 @@ storageClass:
     availabilityZone:
       label: 可用区
       automatic: "自动选择：选择节点所在区域作为可用区"
-      manual: 
+      manual:
         label: "手动选择：自行指定一个可用区"
         placeholder: 例如：nova
   rbd:
@@ -2917,7 +2918,7 @@ storageClass:
     quobyteApiServer:
       label: Quobyte API Server
       placeholder: 例如：http://138.68.74.142:7860
-    registry: 
+    registry:
       label: 仓库IP地址
       placeholder: 例如：138.68.74.142:7861
     adminSecretNamespace:
@@ -3260,7 +3261,7 @@ validation:
   required: '"{key}"是必填项'
   requiredOrOverride: '"{key}" 是必须的或必须允许覆盖的'
   roleTemplate:
-    roleTemplateRules: 
+    roleTemplateRules:
       missingVerb: 你必须为每个资源授予指定至少一个动作
       missingResource: 你必须为每个资源授予至少指定一个资源、非资源URL或API组
       missingApiGroup: 你必须为每个资源授予指定一个API组
@@ -3548,7 +3549,7 @@ workload:
       placeholder: 例如：web
   validation:
     containers: 容器
-    containerImage: 容器{{name} - “容器镜像 "是必需的。  
+    containerImage: 容器{{name} - “容器镜像 "是必需的。
   replicas: 副本
   showTabs: '显示高级选项'
   scheduling:
@@ -4095,7 +4096,7 @@ featureFlags:
   promptActivate: 请确认您要激活功能标志"{flag}"。
   promptDeactivate: 请确认你想停用功能标志"{flag}"。
   restartRequired: "注意：更新该功能标志需要重新启动"
-  
+
 ##############################
 ### Support Page
 ##############################

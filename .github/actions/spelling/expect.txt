@@ -81,6 +81,7 @@ bottlesofbeeronthewall
 bpf
 bpffs
 brucebean
+breadcrumb
 bsd
 bsdextrautils
 bsdtar
@@ -114,6 +115,7 @@ chirico
 cidata
 cidfile
 Cim
+clickable
 clientcmd
 clientset
 clonefile
