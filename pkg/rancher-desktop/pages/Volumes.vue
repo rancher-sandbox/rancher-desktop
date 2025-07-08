@@ -246,9 +246,9 @@ export default Vue.extend({
     async deleteVolume(volume) {
       await this.execCommand('volume rm', volume);
     },
-    async execCommand(command, _ids) {
+    async execCommand(command, volumes) {
       try {
-        const ids = Array.isArray(_ids) ? _ids.map(v => v.Name) : [_ids.Name];
+        const ids = Array.isArray(volumes) ? volumes.map(v => v.Name) : [volumes.Name];
         const [baseCommand, ...subCommands] = command.split(' ');
 
         console.info(`Executing command ${ command } on volume ${ ids }`);
