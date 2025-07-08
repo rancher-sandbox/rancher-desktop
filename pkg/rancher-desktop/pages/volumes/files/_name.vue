@@ -236,7 +236,7 @@ export default Vue.extend({
 
         const containerPath = `/volume${this.currentPath}`;
         const lsCommand = [
-          'run', '--rm',
+          'run', '--rm', '--quiet',
           '-v', `${this.volumeName}:/volume:ro`,
           'busybox',
           'ls', '-la', '--full-time', '--group-directories-first',
@@ -254,13 +254,7 @@ export default Vue.extend({
           execOptions
         );
 
-        // Only treat stderr as an error if it's not a warning or pull progress
-        const nonErrorPatterns = [
-          'level=warning', 'Pulling from', 'Pull complete',
-          'Downloaded', 'Downloading', 'Waiting', 'Verifying', 'Extracting'
-        ];
-        const isRealError = stderr && !nonErrorPatterns.some(pattern => stderr.includes(pattern));
-        if (isRealError) {
+        if (stderr && !stderr.includes('level=warning')) {
           throw new Error(stderr);
         }
 

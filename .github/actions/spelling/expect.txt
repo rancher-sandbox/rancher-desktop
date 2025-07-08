@@ -115,6 +115,7 @@ chirico
 cidata
 cidfile
 Cim
+clickable
 clientcmd
 clientset
 clonefile
