@@ -1,5 +1,12 @@
 <template>
   <div class="containers">
+    <banner
+      v-if="error"
+      color="error"
+      @close="error = null"
+    >
+      {{ error }}
+    </banner>
     <SortableTable
       ref="sortableTableRef"
       class="containersTable"
@@ -98,14 +105,14 @@
 </template>
 
 <script>
-import { BadgeState } from '@rancher/components';
-import { shell } from 'electron';
+import {BadgeState, Banner} from '@rancher/components';
+import {shell} from 'electron';
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import {mapGetters} from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
-import { ContainerEngine } from '@pkg/config/settings';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import {ContainerEngine} from '@pkg/config/settings';
+import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
 let containerCheckInterval = null;
 
@@ -117,7 +124,7 @@ let containerCheckInterval = null;
 export default Vue.extend({
   name:       'Containers',
   title:      'Containers',
-  components: { SortableTable, BadgeState },
+  components: {SortableTable, BadgeState, Banner},
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
@@ -126,6 +133,7 @@ export default Vue.extend({
       containersList:       null,
       showRunning:          false,
       containersNamespaces: [],
+      error: null,
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
@@ -418,8 +426,34 @@ export default Vue.extend({
 
         return stdout;
       } catch (error) {
-        window.alert(error.message);
-        console.error(`Error executing command ${ command }`, error.message);
+        const extractErrorMessage = (err) => {
+          const rawMessage = err?.message || err?.stderr || err || '';
+
+          if (typeof rawMessage === 'string') {
+            // Extract message from fatal/error format: time="..." level=fatal msg="actual message"
+            const msgMatch = rawMessage.match(/msg="([^"]+)"/);
+            if (msgMatch) {
+              return msgMatch[1].replace(/\\n/g, ' '); // Replace \n with spaces
+            }
+
+            // Fallback: remove timestamp and level prefixes
+            const cleanedMessage = rawMessage
+              .replace(/time="[^"]*"\s*/g, '')
+              .replace(/level=(fatal|error|info)\s*/g, '')
+              .replace(/msg="/g, '')
+              .replace(/"\s*Error: exit status \d+/g, '')
+              .trim();
+
+            if (cleanedMessage) {
+              return cleanedMessage;
+            }
+          }
+
+          return `Failed to execute command: ${command}`;
+        };
+
+        this.error = extractErrorMessage(error);
+        console.error(`Error executing command ${command}`, error);
       }
     },
     shortSha(sha) {
