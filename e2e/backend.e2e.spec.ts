@@ -9,7 +9,7 @@ import semver from 'semver';
 import { NavPage } from './pages/nav-page';
 import { getAlternateSetting, startSlowerDesktop, teardown } from './utils/TestUtils';
 
-import { Settings, ContainerEngine, VMType } from '@pkg/config/settings';
+import { Settings, ContainerEngine, VMType, MountType } from '@pkg/config/settings';
 import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
@@ -21,7 +21,13 @@ test.describe.serial('KubernetesBackend', () => {
   let page: Page;
 
   test.beforeAll(async({ colorScheme }, testInfo) => {
-    [electronApp, page] = await startSlowerDesktop(testInfo);
+    [electronApp, page] = await startSlowerDesktop(testInfo, {
+      virtualMachine: {
+        mount: {
+          type: MountType.REVERSE_SSHFS,
+        }
+      }
+    });
   });
 
   test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));

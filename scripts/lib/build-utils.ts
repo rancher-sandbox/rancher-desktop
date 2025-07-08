@@ -147,7 +147,7 @@ export default {
             test: /\.ts$/,
             use:  {
               loader:  'ts-loader',
-              options: { transpileOnly: this.isDevelopment },
+              options: { transpileOnly: this.isDevelopment, onlyCompileBundledFiles: true },
             },
           },
           {
@@ -197,17 +197,27 @@ export default {
     };
 
     const result = Object.assign({}, this.webpackConfig, overrides);
-    const rules = result.module?.rules ?? [];
-
-    const uses = rules.filter(
-      (rule): rule is webpack.RuleSetRule => typeof rule !== 'boolean' && typeof rule !== 'string',
+    const rules = (result.module?.rules ?? []).filter(
+      (rule): rule is webpack.RuleSetRule => !!rule && typeof rule === 'object',
     );
+    const tsLoader = rules.find((rule) => {
+      const { use } = rule;
 
-    const tsLoader = uses.find(u => u.loader === 'ts-loader');
+      if (!use || typeof use !== 'object' || Array.isArray(use)) {
+        return false;
+      }
 
-    if (tsLoader) {
-      tsLoader.options = _.merge({}, tsLoader.options, { compilerOptions: { noEmit: false } });
+      return use.loader === 'ts-loader';
+    });
+
+    if (!tsLoader) {
+      console.log('rules', util.inspect(rules, false, null, true));
+      throw new Error('failed to find TS loader');
+    } else if (!tsLoader.use || typeof tsLoader.use !== 'object' || Array.isArray(tsLoader.use)) {
+      throw new Error(`Unexpected TS loader config ${ util.inspect(tsLoader, false, null, true) }`);
     }
+
+    tsLoader.use.options = _.merge({}, tsLoader.use.options, { compilerOptions: { noEmit: false } });
 
     result.entry = { preload: path.resolve(this.rendererSrcDir, 'preload', 'index.ts') };
 
