@@ -4,9 +4,8 @@
       v-if="error"
       color="error"
       @close="error = null"
-    >
-      {{ error }}
-    </banner>
+      v-text="error"
+    />
     <SortableTable
       ref="sortableTableRef"
       class="containersTable"
@@ -431,9 +430,9 @@ export default Vue.extend({
 
           if (typeof rawMessage === 'string') {
             // Extract message from fatal/error format: time="..." level=fatal msg="actual message"
-            const msgMatch = rawMessage.match(/msg="([^"]+)"/);
+            const msgMatch = rawMessage.match(/msg="((?:[^"\\]|\\.)*)"/);
             if (msgMatch) {
-              return msgMatch[1].replace(/\\n/g, ' '); // Replace \n with spaces
+              return msgMatch[1];
             }
 
             // Fallback: remove timestamp and level prefixes
