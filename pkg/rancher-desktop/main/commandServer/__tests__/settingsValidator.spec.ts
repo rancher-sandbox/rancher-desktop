@@ -94,15 +94,16 @@ describe(SettingsValidator, () => {
 
     // Fields that can only be set on specific platforms.
     const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
-      'application.adminAccess':                    'linux',
-      'experimental.virtualMachine.proxy.enabled':  'win32',
-      'experimental.virtualMachine.proxy.address':  'win32',
-      'experimental.virtualMachine.proxy.password': 'win32',
-      'experimental.virtualMachine.proxy.port':     'win32',
-      'experimental.virtualMachine.proxy.username': 'win32',
-      'kubernetes.ingress.localhostOnly':           'win32',
-      'virtualMachine.memoryInGB':                  'darwin',
-      'virtualMachine.numberCPUs':                  'linux',
+      'application.adminAccess':                      'linux',
+      'experimental.virtualMachine.proxy.enabled':    'win32',
+      'experimental.virtualMachine.proxy.address':    'win32',
+      'experimental.virtualMachine.proxy.password':   'win32',
+      'experimental.virtualMachine.proxy.port':       'win32',
+      'experimental.virtualMachine.proxy.username':   'win32',
+      'experimental.virtualMachine.sshPortForwarder': 'darwin',
+      'kubernetes.ingress.localhostOnly':             'win32',
+      'virtualMachine.memoryInGB':                    'darwin',
+      'virtualMachine.numberCPUs':                    'linux',
     };
 
     const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
