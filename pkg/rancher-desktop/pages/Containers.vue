@@ -4,8 +4,9 @@
       v-if="error"
       color="error"
       @close="error = null"
-      v-text="error"
-    />
+    >
+      {{ error }}
+    </banner>
     <SortableTable
       ref="sortableTableRef"
       class="containersTable"
