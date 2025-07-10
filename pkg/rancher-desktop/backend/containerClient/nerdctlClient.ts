@@ -538,7 +538,7 @@ export class NerdctlClient implements ContainerEngineClient {
   runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
   runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
   runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: ContainerRunClientOptions) {
-    const opts = options ?? {};
+    const opts = _.merge({ env: process.env }, options);
 
     if (opts.namespace) {
       args = ['--namespace', opts.namespace].concat(args);

@@ -502,7 +502,7 @@ export class MobyClient implements ContainerEngineClient {
       dirsToAdd.push(executableDir);
     }
 
-    const opts = _.merge({}, options ?? {}, {
+    const opts = _.merge({ env: process.env }, options ?? {}, {
       env: {
         DOCKER_HOST: this.endpoint,
         PATH:        `${ process.env.PATH }${ path.delimiter }${ dirsToAdd.join(path.delimiter) }`,
