@@ -10,6 +10,7 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import mainEvents from '@pkg/main/mainEvents';
 
 const console = Logging.background;
 
@@ -143,7 +144,7 @@ export class DockerDirManager {
    * @param currentContext The current context.
    * @returns Undefined for default context; string containing context name for other contexts.
    */
-  protected async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
+  async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
@@ -318,6 +319,13 @@ export class DockerDirManager {
   }
 
   /**
+   * Return the current docker context.
+   */
+  get currentDockerContext(): Promise<string| undefined> {
+    return this.readDockerConfig().then(cfg => cfg.currentContext);
+  }
+
+  /**
    * Clear the docker context if we changed it for running without admin privileges
    */
   async clearDockerContext(): Promise<void> {
@@ -364,6 +372,9 @@ export class DockerDirManager {
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
       await this.writeDockerConfig(newConfig);
     }
+
+    // Trigger diagnostics, ignoring results.
+    mainEvents.invoke('diagnostics-trigger', 'DOCKER_CONTEXT').catch(e => console.error(e));
   }
 
   /**
