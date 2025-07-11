@@ -41,7 +41,7 @@ import { Tray } from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
 import { spawnFile } from '@pkg/utils/childProcess';
 import getCommandLineArgs from '@pkg/utils/commandLine';
-import DockerDirManager from '@pkg/utils/dockerDirManager';
+import dockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging, { clearLoggingDirectory, setLogLevel } from '@pkg/utils/logging';
 import { fetchMacOsVersion, getMacOsVersion } from '@pkg/utils/osVersion';
@@ -82,7 +82,6 @@ clearLoggingDirectory();
 const SNAPSHOT_OPERATION = 'Snapshot operation in progress';
 
 const ipcMainProxy = getIpcMainProxy(console);
-const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
 const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
@@ -1250,7 +1249,7 @@ async function getExtensionManager() {
 
 function newK8sManager() {
   const arch = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
-  const mgr = K8sFactory(arch, dockerDirManager);
+  const mgr = K8sFactory(arch);
 
   mgr.on('state-changed', async(state: K8s.State) => {
     try {
