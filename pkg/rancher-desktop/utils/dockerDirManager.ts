@@ -40,7 +40,7 @@ interface PartialDockerConfig {
  * Manages everything under the docker CLI config directory (except, at
  * the time of writing, docker CLI plugins).
  */
-export default class DockerDirManager {
+export class DockerDirManager {
   protected readonly dockerDirPath:        string;
   protected readonly dockerContextDirPath: string;
   /**
@@ -385,3 +385,8 @@ export default class DockerDirManager {
     }
   }
 }
+
+/**
+ * Export a singleton instance of the docker dir manager by default.
+ */
+export default new DockerDirManager(path.join(os.homedir(), '.docker'));
