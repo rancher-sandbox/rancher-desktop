@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/vishvananda/netlink v1.3.1
 	github.com/vishvananda/netns v0.0.5
-	golang.org/x/net v0.41.0
+	golang.org/x/net v0.42.0
 	golang.org/x/sync v0.16.0
 	golang.org/x/sys v0.34.0
 	gvisor.dev/gvisor v0.0.0-20240916094835-a174eb65023f
@@ -40,9 +40,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/mod v0.26.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
