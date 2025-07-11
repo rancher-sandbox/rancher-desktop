@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 
 import * as childProcess from '@pkg/utils/childProcess';
-import DockerDirManager from '@pkg/utils/dockerDirManager';
+import { DockerDirManager } from '@pkg/utils/dockerDirManager';
 import { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
