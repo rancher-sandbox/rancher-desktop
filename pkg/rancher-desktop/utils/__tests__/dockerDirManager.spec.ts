@@ -19,6 +19,7 @@ const modules = mockModules({
   '@pkg/utils/logging': {
     background: {
       debug: jest.fn(),
+      error: jest.fn(),
       /** Mocked console.log() to check messages. */
       log:   jest.fn(),
     },
