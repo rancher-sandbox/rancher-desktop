@@ -50,7 +50,7 @@ export default {
       :options="options"
       :row="row"
       :disabled="isLocked"
-      @input="updateEngine"
+      @update:value="updateEngine"
     >
       <template #label>
         <slot name="label" />
@@ -60,7 +60,7 @@ export default {
 </template>
 
 <style lang="scss" scoped>
-.container-engine::v-deep label {
+.container-engine :deep(label) {
   color: var(--input-label);
 }
 </style>

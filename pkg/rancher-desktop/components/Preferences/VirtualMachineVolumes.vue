@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import MountTypeSelector from '@pkg/components/MountTypeSelector.vue';
 import { Settings } from '@pkg/config/settings';
@@ -8,7 +8,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-virtual-machine-volumes',
   components: { MountTypeSelector },
   props:      {

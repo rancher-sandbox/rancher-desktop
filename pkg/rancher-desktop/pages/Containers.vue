@@ -17,7 +17,7 @@
       :row-actions="true"
       :paging="true"
       :rows-per-page="10"
-      :has-advanced-filtering="true"
+      :has-advanced-filtering="false"
       :loading="!containersList"
     >
       <template #header-middle>
@@ -105,10 +105,10 @@
 </template>
 
 <script>
-import {BadgeState, Banner} from '@rancher/components';
-import {shell} from 'electron';
-import Vue from 'vue';
-import {mapGetters} from 'vuex';
+import { BadgeState, Banner } from '@rancher/components';
+import { shell } from 'electron';
+import { defineComponent } from 'vue';
+import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
 import {ContainerEngine} from '@pkg/config/settings';
@@ -121,7 +121,7 @@ let containerCheckInterval = null;
  * @property Id {string} The container id
  */
 
-export default Vue.extend({
+export default defineComponent({
   name:       'Containers',
   title:      'Containers',
   components: {SortableTable, BadgeState, Banner},
@@ -171,7 +171,8 @@ export default Vue.extend({
         return [];
       }
 
-      const containers = structuredClone(this.containersList);
+      // `this.containersList` is a Proxy; so we can't use structedClone.
+      const containers = JSON.parse(JSON.stringify(this.containersList));
 
       return containers.map((container) => {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
@@ -284,7 +285,7 @@ export default Vue.extend({
     this.checkContainers().catch(console.error);
     containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
@@ -574,10 +575,10 @@ export default Vue.extend({
   min-width: 8rem;
 }
 
-.containersTable::v-deep .search-box {
+.containersTable :deep(.search-box) {
   align-self: flex-end;
 }
-.containersTable::v-deep .bulk {
+.containersTable :deep(.bulk) {
   align-self: flex-end;
 }
 

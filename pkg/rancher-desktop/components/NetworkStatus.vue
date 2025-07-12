@@ -1,10 +1,11 @@
 <script>
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { networkStatus } from '@pkg/utils/networks';
 
-export default Vue.extend({
+export default defineComponent({
+  name:  'network-status',
   props: {
     icon: {
       type:    String,

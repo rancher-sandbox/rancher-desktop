@@ -64,7 +64,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {mapGetters} from 'vuex';
 
 import {Banner} from '@rancher/components';
@@ -74,7 +74,7 @@ import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
 const MAX_PATH_LENGTH = 40;
 
-export default Vue.extend({
+export default defineComponent({
   name:       'Volumes',
   title:      'Volumes',
   components: {SortableTable, Banner},

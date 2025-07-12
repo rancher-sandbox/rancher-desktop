@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'alert',
   components: { Banner },
   props:      {

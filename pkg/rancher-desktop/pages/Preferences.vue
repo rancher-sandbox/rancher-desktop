@@ -1,7 +1,7 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
@@ -9,18 +9,13 @@ import PreferencesBody from '@pkg/components/Preferences/ModalBody.vue';
 import PreferencesFooter from '@pkg/components/Preferences/ModalFooter.vue';
 import PreferencesHeader from '@pkg/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@pkg/components/Preferences/ModalNav.vue';
-import type { NavItemName, TransientSettings } from '@pkg/config/transientSettings';
+import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { Direction, RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
 
-interface VuexBindings {
-  credentials: Omit<ServerState, 'pid'>;
-  getCurrentNavItem: NavItemName;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'preferences-modal',
   components: {
     PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesFooter, EmptyState,
@@ -64,7 +59,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       this.$store.dispatch('transientSettings/setIsArm', isArm);
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     /**
      * Removing the listeners resolves the issue of receiving duplicated messages from 'route' channel.
      * Originated by: https://github.com/rancher-sandbox/rancher-desktop/issues/3232
@@ -168,10 +163,10 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       @nav-changed="navChanged"
     />
     <preferences-body
+      v-bind="$attrs"
       class="preferences-body"
       :current-nav-item="getCurrentNavItem"
       :preferences="getPreferences"
-      v-on="$listeners"
     >
       <div
         v-if="hasError"

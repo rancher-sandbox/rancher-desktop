@@ -22,11 +22,12 @@
 
 <script lang="ts">
 import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'wsl-integration',
   components: { Checkbox },
 
   props: {
