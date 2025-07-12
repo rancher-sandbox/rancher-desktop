@@ -756,6 +756,7 @@ export default {
                   <button
                     ref="actionDropDown"
                     class="btn btn-role-primary bg-primary mr-0"
+                    data-testid="bulk-action-button"
                     :disabled="!selectedRows.length"
                   >
                     <i class="icon icon-gear" />
@@ -815,6 +816,7 @@ export default {
             v-model="eventualSearchQuery"
             type="search"
             class="input-sm search-box"
+            data-testid="search-input"
             :placeholder="t('sortableTable.search')"
           >
           <slot name="header-button" />
@@ -943,6 +945,7 @@ export default {
                     class="selection-checkbox"
                     :data-node-id="row.key"
                     :value="selectedRows.includes(row.row)"
+                    data-testid="row-selection-checkbox"
                   />
                 </td>
                 <td
@@ -1036,6 +1039,7 @@ export default {
                       aria-expanded="false"
                       type="button"
                       class="btn btn-sm role-multi-action actions"
+                      data-testid="row-action-button"
                       @click="handleActionButtonClick(i, $event)"
                     >
                       <i class="icon icon-actions" />
