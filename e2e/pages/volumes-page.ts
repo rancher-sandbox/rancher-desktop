@@ -30,14 +30,13 @@ export class VolumesPage {
     const actionButton = volumeRow.locator('.btn.role-multi-action');
     await actionButton.click();
 
-    await this.page.waitForSelector('.list-unstyled', {state: 'visible', timeout: 2000});
-
     const actionText = {
       browse: 'Browse Files',
       delete: 'Delete',
     }[action] ?? action;
 
-    const actionLocator = this.page.getByTestId("actionmenu").getByText(actionText, {exact: true});
+    const actionMenu = this.page.getByTestId("actionmenu");
+    const actionLocator = actionMenu.getByText(actionText, {exact: true});
     await actionLocator.click();
   }
 
@@ -120,17 +119,13 @@ export class VolumesPage {
   async clickBulkAction(action: string) {
     if (action === 'delete') {
       const deleteButton = this.page.getByRole('button', {name: 'Delete'}).first();
-      await deleteButton.waitFor({state: 'visible', timeout: 5000});
       await deleteButton.click();
     } else {
       const bulkActionButton = this.page.locator('.bulk .btn.role-multi-action');
       await bulkActionButton.click();
 
-      await this.page.waitForSelector('.list-unstyled', {state: 'visible', timeout: 2000});
-
-      const actionText = action;
-      const actionLocator = this.page.locator('.list-unstyled').getByText(actionText, {exact: true}).last();
-      await actionLocator.waitFor({state: 'visible', timeout: 5000});
+      const actionMenu = this.page.getByTestId('actionmenu');
+      const actionLocator = actionMenu.getByText(action, {exact: true});
       await actionLocator.click();
     }
   }
