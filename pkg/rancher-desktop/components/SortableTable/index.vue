@@ -1041,7 +1041,7 @@ export default {
                 <template #button-content>
                   <button
                     ref="actionDropDown"
-                    class="btn bg-primary mr-0"
+                    class="btn btn-role-primary bg-primary mr-0"
                     :disabled="!selectedRows.length"
                   >
                     <i class="icon icon-gear" />
@@ -1181,6 +1181,7 @@ export default {
             :value="eventualSearchQuery"
             type="search"
             class="input-sm search-box"
+            data-testid="search-input"
             :placeholder="t('sortableTable.search')"
             @input="($plainInputEvent) => eventualSearchQuery = $plainInputEvent.target.value"
           >
@@ -1322,6 +1323,7 @@ export default {
                     :data-node-id="row.key"
                     :data-testid="componentTestid + '-' + i + '-checkbox'"
                     :value="selectedRows.includes(row.row)"
+                    data-testid="row-selection-checkbox"
                   />
                 </td>
                 <td
@@ -1421,6 +1423,7 @@ export default {
                       aria-expanded="false"
                       type="button"
                       class="btn btn-sm role-multi-action actions"
+                      data-testid="row-action-button"
                       @click="handleActionButtonClick(i, $event)"
                     >
                       <i class="icon icon-actions" />

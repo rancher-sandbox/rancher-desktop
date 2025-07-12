@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import {expect} from '@playwright/test';
 
 export class ContainerLogsPage {
   readonly page: Page;
@@ -17,25 +18,25 @@ export class ContainerLogsPage {
   constructor(page: Page) {
     this.page = page;
 
-    this.terminal = page.locator('.xterm');
+    this.terminal = page.getByTestId('terminal');
 
-    this.containerInfo = page.locator('.container-info');
-    this.containerName = page.locator('.container-name');
-    this.containerState = this.containerInfo.locator('.badge-state');
+    this.containerInfo = page.getByTestId('container-info');
+    this.containerName = page.getByTestId('container-name');
+    this.containerState = page.getByTestId('container-state');
 
-    this.searchWidget = page.locator('.search-widget');
-    this.searchInput = page.locator('.search-input');
+    this.searchWidget = page.getByTestId('search-widget');
+    this.searchInput = page.getByTestId('search-input');
     this.searchPrevButton = page.getByTestId('search-prev-btn');
     this.searchNextButton = page.getByTestId('search-next-btn');
-    this.searchClearButton = page.locator('.search-close-btn');
+    this.searchClearButton = page.getByTestId('search-clear-btn');
 
-    this.loadingIndicator = page.locator('loading-indicator.content-state');
-    this.errorMessage = page.locator('banner.content-state');
+    this.loadingIndicator = page.getByTestId('loading-indicator');
+    this.errorMessage = page.getByTestId('error-message');
   }
 
   async waitForLogsToLoad() {
-    await this.terminal.waitFor({state: 'visible'});
-    await this.loadingIndicator.waitFor({state: 'hidden', timeout: 30000});
+    await expect(this.terminal).toBeVisible();
+    await expect(this.loadingIndicator).toBeHidden({ timeout: 30000 });
   }
 
   async searchLogs(searchTerm: string) {
