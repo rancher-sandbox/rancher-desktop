@@ -14,7 +14,7 @@ test.describe.serial('Volumes Tests', () => {
   test.beforeAll(async ({}, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
       kubernetes: {enabled: false},
-      application: {security: {allowedImages: {enabled: false}}}
+      containerEngine: {allowedImages: {enabled: false}}
     });
 
     const navPage = new NavPage(page);

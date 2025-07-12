@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import {expect} from '@playwright/test';
 
 export class VolumesPage {
   readonly page: Page;
@@ -16,12 +17,12 @@ export class VolumesPage {
   }
 
   getVolumeRow(volumeName: string) {
-    return this.page.locator('tr.main-row').filter({hasText: volumeName});
+    return this.page.locator(`tr.main-row[data-node-id="${volumeName}"]`);
   }
 
   async waitForVolumeToAppear(volumeName: string, timeout = 30000) {
     const volumeRow = this.getVolumeRow(volumeName);
-    await volumeRow.waitFor({state: 'visible', timeout});
+    await expect(volumeRow).toBeVisible();
   }
 
   async clickVolumeAction(volumeName: string, action: string) {
@@ -31,11 +32,12 @@ export class VolumesPage {
 
     await this.page.waitForSelector('.list-unstyled', {state: 'visible', timeout: 2000});
 
-    const actionText = action === 'browse' ? 'Browse Files' :
-        action === 'delete' ? 'Delete' : action;
+    const actionText = {
+      browse: 'Browse Files',
+      delete: 'Delete',
+    }[action] ?? action;
 
-    const actionLocator = this.page.locator('.list-unstyled').getByText(actionText, {exact: true});
-    await actionLocator.waitFor({state: 'visible', timeout: 5000});
+    const actionLocator = this.page.getByTestId("actionmenu").getByText(actionText, {exact: true});
     await actionLocator.click();
   }
 
