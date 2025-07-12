@@ -25,6 +25,7 @@
           :disabled="!searchTerm"
           aria-label="Previous match"
           class="search-btn role-tertiary"
+          data-testid="search-prev-btn"
           title="Previous match"
           @click="searchPrevious"
       >
@@ -34,6 +35,7 @@
           :disabled="!searchTerm"
           aria-label="Next match"
           class="search-btn role-tertiary"
+          data-testid="search-next-btn"
           title="Next match"
           @click="searchNext"
       >

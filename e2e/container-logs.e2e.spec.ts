@@ -76,13 +76,11 @@ test.describe.serial('Container Logs Tests', () => {
     await expect(containerLogsPage.containerInfo).toBeVisible();
 
     if (await containerLogsPage.containerName.count() > 0) {
-      const containerName = await containerLogsPage.getContainerName();
-      expect(containerName).toContain(testContainerName);
+      await expect(containerLogsPage.containerName).toContainText(testContainerName);
     }
 
     if (await containerLogsPage.containerState.count() > 0) {
-      const containerState = await containerLogsPage.getContainerState();
-      expect(containerState).toBeTruthy();
+      await expect(containerLogsPage.containerState).not.toBeEmpty();
     }
   });
 
@@ -117,11 +115,11 @@ test.describe.serial('Container Logs Tests', () => {
 
       await expect(containerLogsPage.searchNextButton).toBeVisible();
       {
-        await containerLogsPage.navigateSearchNext();
+        await containerLogsPage.searchNextButton.click();
       }
 
       if (await containerLogsPage.searchPrevButton.count() > 0) {
-        await containerLogsPage.navigateSearchPrevious();
+        await containerLogsPage.searchPrevButton.click();
       }
 
       await containerLogsPage.clearSearch();
