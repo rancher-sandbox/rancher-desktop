@@ -21,12 +21,12 @@ export class ContainerLogsPage {
 
     this.containerInfo = page.locator('.container-info');
     this.containerName = page.locator('.container-name');
-    this.containerState = page.locator('.container-info .badge-state');
+    this.containerState = this.containerInfo.locator('.badge-state');
 
     this.searchWidget = page.locator('.search-widget');
     this.searchInput = page.locator('.search-input');
-    this.searchPrevButton = page.locator('.search-btn').first();
-    this.searchNextButton = page.locator('.search-btn').nth(1);
+    this.searchPrevButton = page.getByTestId('search-prev-btn');
+    this.searchNextButton = page.getByTestId('search-next-btn');
     this.searchClearButton = page.locator('.search-close-btn');
 
     this.loadingIndicator = page.locator('loading-indicator.content-state');
@@ -44,38 +44,13 @@ export class ContainerLogsPage {
   }
 
   async clearSearch() {
-    await this.searchInput.clear();
     await this.searchInput.press('Escape');
   }
 
-  async navigateSearchNext() {
-    await this.searchNextButton.click();
-  }
-
-  async navigateSearchPrevious() {
-    await this.searchPrevButton.click();
-  }
-
-  async getContainerName(): Promise<string> {
-    return await this.containerName.textContent() || '';
-  }
-
-  async getContainerState(): Promise<string> {
-    return await this.containerState.textContent() || '';
-  }
-
-  async waitForContainerInfo() {
-    await this.containerInfo.waitFor({state: 'visible'});
-  }
 
   async getTerminalContent(): Promise<string> {
     const terminalRows = this.page.locator('.xterm-rows');
     return await terminalRows.textContent() || '';
-  }
-
-  async hasLogsContent(): Promise<boolean> {
-    const content = await this.getTerminalContent();
-    return content.trim().length > 0;
   }
 
   async scrollToBottom() {
