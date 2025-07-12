@@ -75,13 +75,8 @@ test.describe.serial('Container Logs Tests', () => {
 
     await expect(containerLogsPage.containerInfo).toBeVisible();
 
-    if (await containerLogsPage.containerName.count() > 0) {
-      await expect(containerLogsPage.containerName).toContainText(testContainerName);
-    }
-
-    if (await containerLogsPage.containerState.count() > 0) {
-      await expect(containerLogsPage.containerState).not.toBeEmpty();
-    }
+    await expect(containerLogsPage.containerName).toContainText(testContainerName);
+    await expect(containerLogsPage.containerState).not.toBeEmpty();
   });
 
   test('should display logs content', async () => {
@@ -104,29 +99,21 @@ test.describe.serial('Container Logs Tests', () => {
     await expect(containerLogsPage.searchNextButton).toBeVisible();
 
     const terminalRows = page.locator('.xterm-rows');
-    await expect(terminalRows.locator(':has-text("Line 1: Hello")').first()).toBeVisible();
-    await expect(terminalRows.locator(':has-text("Line 2: Hello")').first()).toBeVisible();
-    await page.waitForTimeout(1000);
+    const line1Match = terminalRows.getByText('Line 1: Hello world message', { exact: false });
+    const line2Match = terminalRows.getByText('Line 2: Hello world message', { exact: false });
 
-    const line1Match = terminalRows.locator(':has-text("Line 1: Hello")').first();
-    const line2Match = terminalRows.locator(':has-text("Line 2: Hello")').first();
     await expect(line1Match).toBeVisible();
-    await page.waitForTimeout(1000);
+    await expect(line2Match).toBeVisible();
 
     await containerLogsPage.searchNextButton.click();
-    await page.waitForTimeout(1000);
 
     await expect(line2Match).toBeVisible();
-    await page.waitForTimeout(1000);
 
     await containerLogsPage.searchPrevButton.click();
-    await page.waitForTimeout(1000);
 
     await expect(line1Match).toBeVisible();
-    await page.waitForTimeout(1000);
 
     await containerLogsPage.searchInput.press('Escape');
-    await page.waitForTimeout(1000);
     await expect(containerLogsPage.searchInput).toBeEmpty();
   });
 
@@ -155,30 +142,29 @@ test.describe.serial('Container Logs Tests', () => {
       await containerLogsPage.waitForLogsToLoad();
 
       const terminalRows = page.locator('.xterm-rows');
-      await expect(terminalRows.locator(':has-text("Scroll test line 100")').first()).toBeVisible({timeout: 10_000});
-      await page.waitForTimeout(2_000); // Give time for auto-scroll to complete
+      const lastLine = terminalRows.getByText('Scroll test line 100', { exact: false });
+      const firstLine = terminalRows.getByText('Scroll test line 1', { exact: false });
+
+      await expect(lastLine).toBeVisible({timeout: 10_000});
 
       const initialScrollPos = await containerLogsPage.getScrollPosition();
       expect(initialScrollPos).toBeGreaterThan(0);
-      await page.waitForTimeout(1_000);
 
       await containerLogsPage.scrollToTop();
-      await page.waitForTimeout(1_000);
 
       const topScrollPos = await containerLogsPage.getScrollPosition();
       expect(topScrollPos).toBe(0);
       expect(topScrollPos).not.toBe(initialScrollPos);
 
-      await expect(terminalRows.locator(':has-text("Scroll test line 1")').first()).toBeVisible();
+      await expect(firstLine).toBeVisible();
 
       await containerLogsPage.scrollToBottom();
-      await page.waitForTimeout(1_000);
 
       const bottomScrollPos = await containerLogsPage.getScrollPosition();
       expect(bottomScrollPos).toBeGreaterThan(topScrollPos); // Should have scrolled down significantly
       expect(bottomScrollPos).toBeGreaterThan(initialScrollPos - 100); // Should be near or at initial bottom position
 
-      await expect(terminalRows.locator(':has-text("Scroll test line 100")').first()).toBeVisible();
+      await expect(lastLine).toBeVisible();
 
     } finally {
       if (scrollTestContainerId) {

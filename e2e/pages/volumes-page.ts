@@ -10,24 +10,24 @@ export class VolumesPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.table = page.locator('.volumesTable');
-    this.namespaceSelector = page.locator('.select-namespace');
-    this.searchBox = page.locator('.search-box input');
-    this.errorBanner = page.locator('.banner.error');
+    this.table = page.getByTestId('volumes-table');
+    this.namespaceSelector = page.getByTestId('namespace-selector');
+    this.searchBox = page.getByTestId('search-input');
+    this.errorBanner = page.getByTestId('error-banner');
   }
 
   getVolumeRow(volumeName: string) {
     return this.page.locator(`tr.main-row[data-node-id="${volumeName}"]`);
   }
 
-  async waitForVolumeToAppear(volumeName: string, timeout = 30000) {
+  async waitForVolumeToAppear(volumeName: string) {
     const volumeRow = this.getVolumeRow(volumeName);
     await expect(volumeRow).toBeVisible();
   }
 
   async clickVolumeAction(volumeName: string, action: string) {
     const volumeRow = this.getVolumeRow(volumeName);
-    const actionButton = volumeRow.locator('.btn.role-multi-action');
+    const actionButton = volumeRow.getByTestId('row-action-button');
     await actionButton.click();
 
     const actionText = {
@@ -54,65 +54,57 @@ export class VolumesPage {
   }
 
   async waitForTableToLoad() {
-    await this.table.waitFor({state: 'visible'});
+    await expect(this.table).toBeVisible();
   }
 
   async isVolumePresent(volumeName: string): Promise<boolean> {
     const row = this.getVolumeRow(volumeName);
-    return await row.count() > 0;
+    return await row.isVisible().catch(() => false);
   }
 
   async searchVolumes(searchTerm: string) {
-    if (await this.searchBox.count() > 0) {
-      await this.searchBox.fill(searchTerm);
-    }
+    await this.searchBox.fill(searchTerm);
   }
 
   async getVolumeInfo(volumeName: string) {
     const volumeRow = this.getVolumeRow(volumeName);
 
-    await volumeRow.waitFor({state: 'visible'});
+    await expect(volumeRow).toBeVisible();
 
-    const cells = volumeRow.locator('td');
-
-    // The columns after checkbox are:
-    // 0. Checkbox (skip)
-    // 1. Volume name
-    // 2. Driver
-    // 3. Mount point
-    // 4. Created date
-    const volumeNameText = await cells.nth(1).textContent();
-    const driverText = await cells.nth(2).textContent();
-    const mountpointText = await cells.nth(3).textContent();
-    const createdText = await cells.nth(4).textContent();
+    const volumeNameCell = volumeRow.getByTestId('volume-name-cell');
+    const driverCell = volumeRow.getByTestId('volume-driver-cell');
+    const mountpointCell = volumeRow.getByTestId('volume-mountpoint-cell');
+    const createdCell = volumeRow.getByTestId('volume-created-cell');
 
     return {
-      name: volumeNameText?.trim() || '',
-      driver: driverText?.trim() || '',
-      mountpoint: mountpointText?.trim() || '',
-      created: createdText?.trim() || ''
+      name: await volumeNameCell.textContent().then(t => t?.trim() || ''),
+      driver: await driverCell.textContent().then(t => t?.trim() || ''),
+      mountpoint: await mountpointCell.textContent().then(t => t?.trim() || ''),
+      created: await createdCell.textContent().then(t => t?.trim() || '')
     };
   }
 
   async isErrorDisplayed(): Promise<boolean> {
-    return await this.errorBanner.count() > 0;
+    return await this.errorBanner.isVisible().catch(() => false);
   }
 
   async getErrorMessage(): Promise<string | null> {
-    if (await this.isErrorDisplayed()) {
+    try {
+      await expect(this.errorBanner).toBeVisible({ timeout: 1000 });
       return await this.errorBanner.textContent();
+    } catch {
+      return null;
     }
-    return null;
   }
 
 
   async selectBulkVolumes(volumeNames: string[]) {
     for (const volumeName of volumeNames) {
       const volumeRow = this.getVolumeRow(volumeName);
-      const checkboxSpan = volumeRow.locator('span.checkbox-custom');
+      const checkbox = volumeRow.getByTestId('row-selection-checkbox');
 
-      await checkboxSpan.click();
-      await checkboxSpan.waitFor({state: 'attached'});
+      await checkbox.click();
+      await expect(volumeRow.locator('input[type="checkbox"]')).toBeChecked();
     }
   }
 
@@ -121,7 +113,7 @@ export class VolumesPage {
       const deleteButton = this.page.getByRole('button', {name: 'Delete'}).first();
       await deleteButton.click();
     } else {
-      const bulkActionButton = this.page.locator('.bulk .btn.role-multi-action');
+      const bulkActionButton = this.page.getByTestId('bulk-action-button');
       await bulkActionButton.click();
 
       const actionMenu = this.page.getByTestId('actionmenu');

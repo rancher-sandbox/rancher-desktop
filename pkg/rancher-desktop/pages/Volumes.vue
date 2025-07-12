@@ -3,12 +3,14 @@
     <banner
       v-if="error"
       color="error"
+      data-testid="error-banner"
       @close="error = null"
     >
       {{ error }}
     </banner>
     <SortableTable
       class="volumesTable"
+      data-testid="volumes-table"
       :headers="headers"
       key-field="Name"
       :rows="rows"
@@ -26,6 +28,7 @@
             <select
               :value="selectedNamespace"
               class="select-namespace"
+              data-testid="namespace-selector"
               @change="onChangeNamespace($event)"
             >
               <option
@@ -41,22 +44,27 @@
         </div>
       </template>
       <template #col:volumeName="{row}">
-        <td>
+        <td data-testid="volume-name-cell">
           <span v-tooltip="getTooltipConfig(row.volumeName)">
             {{ shortSha(row.volumeName) }}
           </span>
         </td>
       </template>
       <template #col:driver="{row}">
-        <td>
+        <td data-testid="volume-driver-cell">
           {{ row.Driver }}
         </td>
       </template>
       <template #col:mountpoint="{row}">
-        <td>
+        <td data-testid="volume-mountpoint-cell">
           <span v-tooltip="getTooltipConfig(row.mountpoint)">
             {{ shortPath(row.mountpoint) }}
           </span>
+        </td>
+      </template>
+      <template #col:created="{row}">
+        <td data-testid="volume-created-cell">
+          {{ row.created }}
         </td>
       </template>
     </SortableTable>

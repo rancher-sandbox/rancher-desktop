@@ -88,24 +88,20 @@ test.describe.serial('Volumes Tests', () => {
   test('should delete volume', async () => {
     const volumesPage = new VolumesPage(page);
 
+    await volumesPage.waitForVolumeToAppear(testVolumeName);
+
     const initialCount = await volumesPage.getVolumeCount();
+    expect(initialCount).toBeGreaterThan(0);
 
     await volumesPage.deleteVolume(testVolumeName);
 
-    await page.waitForFunction(
-      (volumeName) => {
-        const rows = document.querySelectorAll('tr.main-row');
-        return ![...rows].some(row => row.textContent?.includes(volumeName));
-      },
-      testVolumeName,
-      {timeout: 10000}
-    );
+    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10000 });
 
     const isPresent = await volumesPage.isVolumePresent(testVolumeName);
     expect(isPresent).toBe(false);
 
-    const finalCount = await volumesPage.getVolumeCount();
-    expect(finalCount).toBe(initialCount - 1);
+    const expectedCount = Math.max(0, initialCount - 1);
+    await expect(volumesPage.page.locator('tr.main-row')).toHaveCount(expectedCount);
 
     testVolumeName = '';
   });
@@ -132,16 +128,9 @@ test.describe.serial('Volumes Tests', () => {
 
       await volumesPage.deleteBulkVolumes(volumeNames);
 
-      await page.waitForFunction(
-        (volumeNames) => {
-          const rows = document.querySelectorAll('tr.main-row');
-          return !volumeNames.some(name =>
-            [...rows].some(row => row.textContent?.includes(name))
-          );
-        },
-        volumeNames,
-        {timeout: 10000}
-      );
+      for (const volumeName of volumeNames) {
+        await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden({ timeout: 10000 });
+      }
 
       await page.reload();
       await volumesPage.waitForTableToLoad();
@@ -175,13 +164,7 @@ test.describe.serial('Volumes Tests', () => {
 
       await volumesPage.searchVolumes('search-test');
 
-      await page.waitForFunction(
-        () => {
-          const rows = document.querySelectorAll('tr.main-row');
-          return rows.length > 0;
-        },
-        {timeout: 5000}
-      );
+      await expect(volumesPage.getVolumeRow(searchVolumeName)).toBeVisible();
 
       const isPresent = await volumesPage.isVolumePresent(searchVolumeName);
       expect(isPresent).toBe(true);
