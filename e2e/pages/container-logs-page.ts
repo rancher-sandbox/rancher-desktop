@@ -43,21 +43,28 @@ export class ContainerLogsPage {
     await this.searchInput.press('Enter');
   }
 
-  async clearSearch() {
-    await this.searchInput.press('Escape');
-  }
-
-
-  async getTerminalContent(): Promise<string> {
-    const terminalRows = this.page.locator('.xterm-rows');
-    return await terminalRows.textContent() || '';
-  }
-
   async scrollToBottom() {
-    await this.terminal.press('End');
+    await this.page.evaluate(() => {
+      const viewport = document.querySelector('.xterm-viewport');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    });
   }
 
   async scrollToTop() {
-    await this.terminal.press('Home');
+    await this.page.evaluate(() => {
+      const viewport = document.querySelector('.xterm-viewport');
+      if (viewport) {
+        viewport.scrollTop = 0;
+      }
+    });
+  }
+
+  async getScrollPosition(): Promise<number> {
+    return await this.page.evaluate(() => {
+      const viewport = document.querySelector('.xterm-viewport');
+      return viewport ? viewport.scrollTop : 0;
+    });
   }
 }

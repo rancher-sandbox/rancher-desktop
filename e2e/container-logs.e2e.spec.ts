@@ -44,7 +44,7 @@ test.describe.serial('Container Logs Tests', () => {
     testContainerName = `test-logs-container-${Date.now()}`;
 
     const output = await tool('docker', 'run', '-d', '--name', testContainerName,
-      'alpine', 'sh', '-c', 'echo "Starting container"; echo "Hello from container logs"; sleep 5; echo "Container finished"');
+      'alpine', 'sh', '-c', 'echo "Starting container"; for i in $(seq 1 10); do echo "Line $i: Hello world message $i"; done; echo "Container finished"');
     testContainerId = output.trim();
 
     expect(testContainerId).toMatch(/^[a-f0-9]{64}$/);
@@ -89,51 +89,105 @@ test.describe.serial('Container Logs Tests', () => {
 
     await containerLogsPage.waitForLogsToLoad();
 
-    await expect(containerLogsPage.terminal).toContainText('Hello from container logs');
-
-    const terminalContent = await containerLogsPage.getTerminalContent();
-    expect(terminalContent).toContain('Hello from container logs');
+    await expect(containerLogsPage.terminal).toContainText('Line 1: Hello world message');
   });
 
   test('should support log search', async () => {
     const containerLogsPage = new ContainerLogsPage(page);
 
     await expect(containerLogsPage.searchInput).toBeVisible();
-    {
-      const searchTerm = 'Hello';
-      await containerLogsPage.searchLogs(searchTerm);
 
-      await page.waitForFunction(
-        () => {
-          const searchInput = document.querySelector('input[type="search"], input.search-input') as HTMLInputElement;
-          return searchInput && searchInput.value === 'Hello';
-        },
-        {timeout: 5000}
-      );
+    const searchTerm = 'Hello';
+    await containerLogsPage.searchLogs(searchTerm);
 
-      await expect(containerLogsPage.searchInput).toHaveValue(searchTerm);
+    await expect(containerLogsPage.searchInput).toHaveValue(searchTerm);
+    await expect(containerLogsPage.searchNextButton).toBeVisible();
 
-      await expect(containerLogsPage.searchNextButton).toBeVisible();
-      {
-        await containerLogsPage.searchNextButton.click();
-      }
+    const terminalRows = page.locator('.xterm-rows');
+    await expect(terminalRows.locator(':has-text("Line 1: Hello")').first()).toBeVisible();
+    await expect(terminalRows.locator(':has-text("Line 2: Hello")').first()).toBeVisible();
+    await page.waitForTimeout(1000);
 
-      if (await containerLogsPage.searchPrevButton.count() > 0) {
-        await containerLogsPage.searchPrevButton.click();
-      }
+    const line1Match = terminalRows.locator(':has-text("Line 1: Hello")').first();
+    const line2Match = terminalRows.locator(':has-text("Line 2: Hello")').first();
+    await expect(line1Match).toBeVisible();
+    await page.waitForTimeout(1000);
 
-      await containerLogsPage.clearSearch();
-      await expect(containerLogsPage.searchInput).toBeEmpty();
-    }
+    await containerLogsPage.searchNextButton.click();
+    await page.waitForTimeout(1000);
+
+    await expect(line2Match).toBeVisible();
+    await page.waitForTimeout(1000);
+
+    await containerLogsPage.searchPrevButton.click();
+    await page.waitForTimeout(1000);
+
+    await expect(line1Match).toBeVisible();
+    await page.waitForTimeout(1000);
+
+    await containerLogsPage.searchInput.press('Escape');
+    await page.waitForTimeout(1000);
+    await expect(containerLogsPage.searchInput).toBeEmpty();
   });
 
   test('should handle terminal scrolling', async () => {
-    const containerLogsPage = new ContainerLogsPage(page);
+    const scrollTestContainerName = `test-scroll-container-${Date.now()}`;
+    let scrollTestContainerId: string;
 
-    await containerLogsPage.scrollToTop();
-    await containerLogsPage.scrollToBottom();
+    try {
+      const output = await tool('docker', 'run', '-d', '--name', scrollTestContainerName,
+        'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Scroll test line $i with content"; done; sleep 1');
+      scrollTestContainerId = output.trim();
 
-    await expect(containerLogsPage.terminal).toBeVisible();
+      const navPage = new NavPage(page);
+      const containersPage = await navPage.navigateTo('Containers');
+      await containersPage.waitForTableToLoad();
+
+      await page.reload();
+      await containersPage.waitForTableToLoad();
+
+      await containersPage.waitForContainerToAppear(scrollTestContainerId);
+      await containersPage.viewContainerLogs(scrollTestContainerId);
+
+      await page.waitForURL(`**/containers/logs/${scrollTestContainerId}`, {timeout: 10_000});
+
+      const containerLogsPage = new ContainerLogsPage(page);
+      await containerLogsPage.waitForLogsToLoad();
+
+      const terminalRows = page.locator('.xterm-rows');
+      await expect(terminalRows.locator(':has-text("Scroll test line 100")').first()).toBeVisible({timeout: 10_000});
+      await page.waitForTimeout(2_000); // Give time for auto-scroll to complete
+
+      const initialScrollPos = await containerLogsPage.getScrollPosition();
+      expect(initialScrollPos).toBeGreaterThan(0);
+      await page.waitForTimeout(1_000);
+
+      await containerLogsPage.scrollToTop();
+      await page.waitForTimeout(1_000);
+
+      const topScrollPos = await containerLogsPage.getScrollPosition();
+      expect(topScrollPos).toBe(0);
+      expect(topScrollPos).not.toBe(initialScrollPos);
+
+      await expect(terminalRows.locator(':has-text("Scroll test line 1")').first()).toBeVisible();
+
+      await containerLogsPage.scrollToBottom();
+      await page.waitForTimeout(1_000);
+
+      const bottomScrollPos = await containerLogsPage.getScrollPosition();
+      expect(bottomScrollPos).toBeGreaterThan(topScrollPos); // Should have scrolled down significantly
+      expect(bottomScrollPos).toBeGreaterThan(initialScrollPos - 100); // Should be near or at initial bottom position
+
+      await expect(terminalRows.locator(':has-text("Scroll test line 100")').first()).toBeVisible();
+
+    } finally {
+      if (scrollTestContainerId) {
+        try {
+          await tool('docker', 'rm', '-f', scrollTestContainerId);
+        } catch (cleanupError) {
+        }
+      }
+    }
   });
 
   test('should display real-time logs', async () => {
