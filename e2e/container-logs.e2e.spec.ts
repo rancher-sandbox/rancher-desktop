@@ -15,7 +15,7 @@ test.describe.serial('Container Logs Tests', () => {
   test.beforeAll(async ({}, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
       kubernetes: {enabled: false},
-      application: {security: {allowedImages: {enabled: false}}}
+      containerEngine: {allowedImages: {enabled: false}}
     });
 
     const navPage = new NavPage(page);
@@ -64,11 +64,10 @@ test.describe.serial('Container Logs Tests', () => {
   test('should display container logs page', async () => {
     const containerLogsPage = new ContainerLogsPage(page);
 
-    await containerLogsPage.waitForContainerInfo();
     await expect(containerLogsPage.containerInfo).toBeVisible();
 
-    await containerLogsPage.waitForLogsToLoad();
     await expect(containerLogsPage.terminal).toBeVisible();
+    await expect(containerLogsPage.loadingIndicator).not.toBeVisible();
   });
 
   test('should show container information', async () => {
@@ -92,8 +91,7 @@ test.describe.serial('Container Logs Tests', () => {
 
     await containerLogsPage.waitForLogsToLoad();
 
-    const hasContent = await containerLogsPage.hasLogsContent();
-    expect(hasContent).toBe(true);
+    await expect(containerLogsPage.terminal).toContainText('Hello from container logs');
 
     const terminalContent = await containerLogsPage.getTerminalContent();
     expect(terminalContent).toContain('Hello from container logs');
@@ -102,7 +100,8 @@ test.describe.serial('Container Logs Tests', () => {
   test('should support log search', async () => {
     const containerLogsPage = new ContainerLogsPage(page);
 
-    if (await containerLogsPage.searchInput.count() > 0) {
+    await expect(containerLogsPage.searchInput).toBeVisible();
+    {
       const searchTerm = 'Hello';
       await containerLogsPage.searchLogs(searchTerm);
 
@@ -114,10 +113,10 @@ test.describe.serial('Container Logs Tests', () => {
         {timeout: 5000}
       );
 
-      const inputValue = await containerLogsPage.searchInput.inputValue();
-      expect(inputValue).toBe(searchTerm);
+      await expect(containerLogsPage.searchInput).toHaveValue(searchTerm);
 
-      if (await containerLogsPage.searchNextButton.count() > 0) {
+      await expect(containerLogsPage.searchNextButton).toBeVisible();
+      {
         await containerLogsPage.navigateSearchNext();
       }
 
@@ -126,17 +125,7 @@ test.describe.serial('Container Logs Tests', () => {
       }
 
       await containerLogsPage.clearSearch();
-
-      await page.waitForFunction(
-        () => {
-          const searchInput = document.querySelector('input[type="search"], input.search-input') as HTMLInputElement;
-          return searchInput && searchInput.value === '';
-        },
-        {timeout: 5000}
-      );
-
-      const clearedValue = await containerLogsPage.searchInput.inputValue();
-      expect(clearedValue).toBe('');
+      await expect(containerLogsPage.searchInput).toBeEmpty();
     }
   });
 
@@ -173,30 +162,19 @@ test.describe.serial('Container Logs Tests', () => {
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();
 
-      await page.waitForFunction(
-        () => {
-          const terminal = document.querySelector('.xterm-screen');
-          const content = terminal?.textContent || '';
-          return (content.match(/Log message/g) || []).length >= 2;
-        },
-        {timeout: 10000}
-      );
+      const locator = page.locator('.xterm-screen');
+      await expect(locator.getByText(/Log message/).nth(1)).toBeVisible();
 
-      const hasContent = await containerLogsPage.hasLogsContent();
-      expect(hasContent).toBe(true);
-
-      const terminalContent = await containerLogsPage.getTerminalContent();
-      expect(terminalContent).toContain('Log message');
+      await expect(containerLogsPage.terminal).toContainText('Log message');
 
       await tool('docker', 'rm', '-f', longRunningContainerId);
-    } catch (error) {
+    } finally {
       if (longRunningContainerId) {
         try {
           await tool('docker', 'rm', '-f', longRunningContainerId);
         } catch (cleanupError) {
         }
       }
-      throw error;
     }
   });
 });
