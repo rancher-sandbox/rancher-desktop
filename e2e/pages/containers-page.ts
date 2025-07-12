@@ -1,5 +1,7 @@
 import type {Locator, Page} from '@playwright/test';
 
+type ActionString = 'logs' | 'stop' | 'start' | 'delete';
+
 export class ContainersPage {
   readonly page: Page;
   readonly table: Locator;
@@ -12,27 +14,28 @@ export class ContainersPage {
   }
 
   getContainerRow(containerId: string) {
-    return this.page.locator(`tr.main-row[data-node-id="${containerId}"]`);
+    return this.table.locator(`tr.main-row[data-node-id="${containerId}"]`);
   }
 
-  async waitForContainerToAppear(containerId: string, timeout = 30000) {
+  async waitForContainerToAppear(containerId: string, timeout = 30_000) {
     const containerRow = this.getContainerRow(containerId);
     await containerRow.waitFor({state: 'visible', timeout});
   }
 
-  async clickContainerAction(containerId: string, action: string) {
+  async clickContainerAction(containerId: string, action: ActionString) {
     const containerRow = this.getContainerRow(containerId);
     // The action button is in the actions column with class 'btn role-multi-action'
     await containerRow.locator('.btn.role-multi-action').click();
 
     // Wait for the action menu to appear and click the action by text
-    const actionText = action === 'logs' ? 'Logs' :
-      action === 'stop' ? 'Stop' :
-        action === 'start' ? 'Start' :
-          action === 'delete' ? 'Delete' : action;
+    const actionText = {
+      logs: 'Logs',
+      stop: 'Stop',
+      start: 'Start',
+      delete: 'Delete',
+    }[action] ?? action;
 
-    const actionLocator = this.page.getByText(actionText, {exact: true});
-    await actionLocator.waitFor({state: 'visible', timeout: 5000});
+    const actionLocator = this.page.getByTestId("actionmenu").getByText(actionText, {exact: true});
     await actionLocator.click();
   }
 
@@ -53,7 +56,7 @@ export class ContainersPage {
   }
 
   async getContainerCount(): Promise<number> {
-    const rows = this.page.locator('tr.main-row');
+    const rows = this.table.locator('tr.main-row');
     return await rows.count();
   }
 
@@ -61,8 +64,4 @@ export class ContainersPage {
     await this.table.waitFor({state: 'visible'});
   }
 
-  async isContainerPresent(containerId: string): Promise<boolean> {
-    const row = this.getContainerRow(containerId);
-    return await row.count() > 0;
-  }
 }
