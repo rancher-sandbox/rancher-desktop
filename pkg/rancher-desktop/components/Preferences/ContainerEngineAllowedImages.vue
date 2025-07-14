@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { StringList } from '@rancher/components';
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
@@ -11,11 +11,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-interface VuexBindings {
-  isPreferenceLocked(path: string): boolean;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'preferences-container-engine-allowed-images',
   components: {
     RdFieldset,
@@ -72,7 +68,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         :label="t('allowedImages.enable')"
         :value="isAllowedImagesEnabled"
         :is-locked="isPreferenceLocked('containerEngine.allowedImages.enabled')"
-        @input="onChange('containerEngine.allowedImages.enabled', $event)"
+        @update:value="onChange('containerEngine.allowedImages.enabled', $event)"
       />
     </rd-fieldset>
     <string-list
@@ -80,9 +76,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       :case-sensitive="false"
       :placeholder="t('allowedImages.patterns.placeholder')"
       :readonly="isPatternsFieldLocked"
-      :actions-position="'left'"
+      actions-position="left"
       :error-messages="patternsErrorMessages"
-      @change="onChange('containerEngine.allowedImages.patterns', $event)"
+      @change="Array.isArray($event) && onChange('containerEngine.allowedImages.patterns', $event)"
       @type:item="onType($event)"
       @errors="onDuplicate($event.duplicate)"
     />
@@ -98,7 +94,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     gap: 1rem;
 
     .string-list {
-      height: 220px;
+      flex: 1;
     }
   }
 

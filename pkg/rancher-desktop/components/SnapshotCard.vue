@@ -1,6 +1,6 @@
 <script lang="ts">
 import dayjs from 'dayjs';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import { State as EngineStates } from '@pkg/backend/k8s';
@@ -23,7 +23,7 @@ function formatDate(value: string) {
   };
 }
 
-export default Vue.extend({
+export default defineComponent({
   name:  'snapshot-card',
   props: {
     value: {

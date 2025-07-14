@@ -22,11 +22,12 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name: 'dialog-layout',
   mounted() {
     this.$store.dispatch('i18n/init').catch(ex => console.error(ex));
     // The page component is mounted before the layout (because the layout

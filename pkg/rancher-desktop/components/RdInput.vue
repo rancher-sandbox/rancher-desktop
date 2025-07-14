@@ -1,7 +1,7 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:         'rd-input',
   inheritAttrs: false,
   props:        {
@@ -22,13 +22,12 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="rd-input-container">
+  <div class="rd-input-container" :class="$attrs.class">
     <input
+      v-bind="$attrs"
       :value="value"
       :class="{ 'locked' : isLocked && !$attrs.disabled }"
-      :disabled="$attrs.disabled || isLocked"
-      v-bind="$attrs"
-      v-on="$listeners"
+      :disabled="!!$attrs.disabled || isLocked"
     />
     <slot name="after">
       <i

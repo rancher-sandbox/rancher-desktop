@@ -11,10 +11,9 @@
     <div class="path-breadcrumb">
       <span class="breadcrumb-item" @click="navigateToPath('/')">
         <i class="icon icon-folder-open"></i>root</span>
-      <template v-for="(segment, index) in pathSegments">
-        <span :key="`sep-${index}`" class="breadcrumb-separator">/</span>
+      <template v-for="(segment, index) in pathSegments" :key="`path-${ index }`">
+        <span class="breadcrumb-separator">/</span>
         <span
-          :key="`path-${index}`"
           class="breadcrumb-item"
           :class="{ 'is-current': index === pathSegments.length - 1 }"
           @click="index < pathSegments.length - 1 ? navigateToPath(getPathUpTo(index)) : null"
@@ -80,7 +79,7 @@
 
 <script lang="ts">
 import {BadgeState, Banner} from '@rancher/components';
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {mapGetters} from 'vuex';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
@@ -88,7 +87,7 @@ import SortableTable from '@pkg/components/SortableTable';
 import {ContainerEngine} from '@pkg/config/settings';
 import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'VolumeFiles',
   title: 'Volume Files',
   components: {

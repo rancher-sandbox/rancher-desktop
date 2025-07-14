@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
 import isEmpty from 'lodash/isEmpty';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
@@ -16,16 +16,8 @@ interface Data {
   isEmpty: boolean;
 }
 
-interface Methods {
-  pollingStart: () => void,
-  escapeHtml: (name: string|undefined) => string,
-}
-
-interface Computed {
-  snapshots: Snapshot[],
-}
-
-export default Vue.extend<Data, Methods, Computed, never>({
+export default defineComponent({
+  name:       'snapshots',
   components: {
     Banner,
     EmptyState,
@@ -69,7 +61,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
     };
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.snapshotsPollingInterval) {
       clearInterval(this.snapshotsPollingInterval);
     }
@@ -154,7 +146,7 @@ export default Vue.extend<Data, Methods, Computed, never>({
 
       .banner {
         margin: 0;
-        ::v-deep .banner__content {
+        :deep(.banner__content) {
           margin-top: 8px;
           margin-bottom: 15px;
 

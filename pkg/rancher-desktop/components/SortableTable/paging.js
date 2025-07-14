@@ -2,27 +2,45 @@ import { ROWS_PER_PAGE } from '@pkg/store/prefs';
 
 export default {
   computed: {
+    totalRows() {
+      if (this.externalPaginationEnabled) {
+        return this.externalPaginationResult?.count || 0;
+      }
+
+      return this.filteredRows.length;
+    },
+
     indexFrom() {
       return Math.max(0, 1 + this.perPage * (this.page - 1));
     },
 
     indexTo() {
-      return Math.min(this.filteredRows.length, this.indexFrom + this.perPage - 1);
+      return Math.min(this.totalRows, this.indexFrom + this.perPage - 1);
     },
 
     totalPages() {
-      return Math.ceil(this.filteredRows.length / this.perPage );
+      return Math.ceil(this.totalRows / this.perPage );
     },
 
     showPaging() {
-      return !this.loading && this.paging && this.totalPages > 1;
+      if (!this.paging) {
+        return false;
+      }
+
+      const havePages = this.totalPages > 1;
+
+      if (this.altLoading) {
+        return havePages;
+      }
+
+      return !this.loading && havePages;
     },
 
     pagingDisplay() {
       const opt = {
         ...(this.pagingParams || {}),
 
-        count: this.filteredRows.length,
+        count: this.totalRows,
         pages: this.totalPages,
         from:  this.indexFrom,
         to:    this.indexTo,
@@ -32,12 +50,14 @@ export default {
     },
 
     pagedRows() {
-      if ( this.paging ) {
+      if (this.externalPaginationEnabled) {
+        return this.rows;
+      } else if ( this.paging ) {
         return this.filteredRows.slice(this.indexFrom - 1, this.indexTo);
       } else {
         return this.filteredRows;
       }
-    },
+    }
   },
 
   data() {
@@ -51,22 +71,21 @@ export default {
       // Go to the last page if we end up "past" the last page because the table changed
 
       const from = this.indexFrom;
-      const last = this.filteredRows.length;
+      const last = this.totalRows;
 
-      if ( this.page > 1 && from > last ) {
+      if ( this.totalPages > 0 && this.page > 1 && from > last ) {
         this.setPage(this.totalPages);
       }
     },
 
-    sortFields(old, neu) {
-      if ( old.join(',') === neu.join(',') ) {
-        // Nothing really changed
-
-      }
-
-      // Go back to the first page when sort changes
-      this.setPage(1);
+    page() {
+      this.debouncedPaginationChanged();
     },
+
+    perPage() {
+      this.debouncedPaginationChanged();
+    },
+
   },
 
   methods: {
@@ -114,5 +133,15 @@ export default {
 
       this.setPage(page);
     },
-  },
+
+    getPageByRow(rowId, getRowId = (x) => x) {
+      const pos = this.filteredRows.map(getRowId).indexOf(rowId);
+
+      if (pos === -1) {
+        return null;
+      }
+
+      return Math.ceil(pos / this.perPage);
+    }
+  }
 };

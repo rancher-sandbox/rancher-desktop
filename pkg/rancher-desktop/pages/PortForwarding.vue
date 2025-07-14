@@ -19,14 +19,16 @@
 
 <script lang="ts">
 
-import Vue from 'vue';
+import clone from 'lodash/cloneDeep';
+import { defineComponent } from 'vue';
 
 import type { ServiceEntry } from '@pkg/backend/k8s';
 import PortForwarding from '@pkg/components/PortForwarding.vue';
 import { defaultSettings, Settings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'port-forwarding',
   components: { PortForwarding },
   data() {
     return {
@@ -39,14 +41,17 @@ export default Vue.extend({
   },
 
   watch: {
-    services(newServices: ServiceEntry[]): void {
-      if (this.serviceBeingEdited) {
-        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as ServiceEntry, service));
+    services: {
+      handler(newServices: ServiceEntry[]): void {
+        if (this.serviceBeingEdited) {
+          const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as ServiceEntry, service));
 
-        if (newService) {
-          this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
+          if (newService) {
+            this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
+          }
         }
-      }
+      },
+      deep: true,
     },
   },
 
@@ -137,7 +142,7 @@ export default Vue.extend({
     handleUpdatePortForward(): void {
       this.errorMessage = null;
       if (this.serviceBeingEdited) {
-        ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+        ipcRenderer.invoke('service-forward', clone(this.serviceBeingEdited), true);
       }
       this.serviceBeingEdited = null;
     },

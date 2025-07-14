@@ -1,14 +1,14 @@
 <template>
   <div class="image-input">
     <labeled-input
-      v-model="image"
+      v-model:value="image"
       v-focus
       type="text"
       class="image"
       :disabled="isInputDisabled"
       :placeholder="inputPlaceholder"
       :label="inputLabel"
-      @keyup.enter.native="submit"
+      @keyup.enter="submit"
     />
     <button
       class="btn role-primary btn-lg"
@@ -22,9 +22,9 @@
 
 <script lang="ts">
 import { LabeledInput } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'images-form-add',
 
   components: { LabeledInput },
