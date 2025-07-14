@@ -2,15 +2,22 @@ import path from 'path';
 
 import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
-import pluginVueStandard from '@vue/eslint-config-standard-with-typescript';
+import { standardTypeChecked } from '@vue/eslint-config-standard-with-typescript';
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
 import pluginVue from 'eslint-plugin-vue';
 import globals from 'globals';
 
 export default defineConfigWithVueTs(
   eslint.configs.recommended,
-  pluginVue.configs['flat/vue2-recommended'],
-  pluginVueStandard,
+  pluginVue.configs['flat/recommended'],
+  standardTypeChecked.map(entry => {
+    // Avoid issues with redefining plugins:
+    // `Config "typescript-eslint/base": Key "plugins": Cannot redefine plugin "@typescript-eslint".`
+    if (entry.plugins) {
+      delete entry.plugins['@typescript-eslint'];
+    }
+    return entry;
+  }),
   vueTsConfigs.recommendedTypeChecked,
   vueTsConfigs.stylisticTypeChecked,
   includeIgnoreFile(path.resolve('.gitignore')),
