@@ -699,6 +699,10 @@ components:
                         cacheMode:
                           type: string
                           enum: [none, loose, fscache, mmap]
+                    inotify:
+                      type: boolean
+                      x-rd-platforms: [darwin, linux]
+                      x-rd-usage: file modification notification support, only for writable mounts
                 proxy:
                   type: object
                   x-rd-platforms: [win32]
