@@ -1,4 +1,4 @@
-import type {Locator, Page} from '@playwright/test';
+import {Locator, Page, expect} from '@playwright/test';
 
 type ActionString = 'logs' | 'stop' | 'start' | 'delete';
 
@@ -19,7 +19,7 @@ export class ContainersPage {
 
   async waitForContainerToAppear(containerId: string, timeout = 30_000) {
     const containerRow = this.getContainerRow(containerId);
-    await containerRow.waitFor({state: 'visible', timeout});
+    await expect(containerRow).toBeVisible({timeout});
   }
 
   async clickContainerAction(containerId: string, action: ActionString) {
@@ -33,7 +33,7 @@ export class ContainersPage {
       stop: 'Stop',
       start: 'Start',
       delete: 'Delete',
-    }[action] ?? action;
+    }[action];
 
     const actionLocator = this.page.getByTestId("actionmenu").getByText(actionText, {exact: true});
     await actionLocator.click();
