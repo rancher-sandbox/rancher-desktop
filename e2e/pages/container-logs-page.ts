@@ -36,7 +36,7 @@ export class ContainerLogsPage {
 
   async waitForLogsToLoad() {
     await expect(this.terminal).toBeVisible();
-    await expect(this.loadingIndicator).toBeHidden({ timeout: 30000 });
+    await expect(this.loadingIndicator).toBeHidden({ timeout: 30_000 });
   }
 
   async searchLogs(searchTerm: string) {

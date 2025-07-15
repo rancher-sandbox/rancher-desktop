@@ -58,7 +58,7 @@ test.describe.serial('Container Logs Tests', () => {
     await containersPage.waitForContainerToAppear(testContainerId);
     await containersPage.viewContainerLogs(testContainerId);
 
-    await page.waitForURL(`**/containers/logs/${testContainerId}`, {timeout: 10000});
+    await page.waitForURL(`**/containers/logs/${testContainerId}`, {timeout: 10_000});
   });
 
   test('should display container logs page', async () => {
@@ -95,26 +95,36 @@ test.describe.serial('Container Logs Tests', () => {
     const searchTerm = 'Hello';
     await containerLogsPage.searchLogs(searchTerm);
 
-    await expect(containerLogsPage.searchInput).toHaveValue(searchTerm);
-    await expect(containerLogsPage.searchNextButton).toBeVisible();
+    await page.waitForTimeout(300);
 
-    const terminalRows = page.locator('.xterm-rows');
-    const line1Match = terminalRows.getByText('Line 1: Hello world message', { exact: false });
-    const line2Match = terminalRows.getByText('Line 2: Hello world message', { exact: false });
+    const searchHighlight = page.locator('span.xterm-decoration-top');
+    await expect(searchHighlight).toBeVisible();
 
-    await expect(line1Match).toBeVisible();
-    await expect(line2Match).toBeVisible();
+    const initialPosition = await searchHighlight.boundingBox();
+    expect(initialPosition).not.toBeNull();
 
     await containerLogsPage.searchNextButton.click();
+    await page.waitForTimeout(300);
 
-    await expect(line2Match).toBeVisible();
+    await expect(searchHighlight).toBeVisible();
+    const nextPosition = await searchHighlight.boundingBox();
+    expect(nextPosition).not.toBeNull();
+
+    expect(nextPosition?.y).not.toBe(initialPosition?.y);
 
     await containerLogsPage.searchPrevButton.click();
+    await page.waitForTimeout(300);
 
-    await expect(line1Match).toBeVisible();
+    await expect(searchHighlight).toBeVisible();
+    const previousPosition = await searchHighlight.boundingBox();
+    expect(previousPosition?.y).toBe(initialPosition?.y);
 
-    await containerLogsPage.searchInput.press('Escape');
+    await containerLogsPage.searchClearButton.click();
     await expect(containerLogsPage.searchInput).toBeEmpty();
+
+    await containerLogsPage.terminal.click();
+
+    await expect(searchHighlight).not.toBeVisible();
   });
 
   test('should handle terminal scrolling', async () => {
@@ -123,12 +133,11 @@ test.describe.serial('Container Logs Tests', () => {
 
     try {
       const output = await tool('docker', 'run', '-d', '--name', scrollTestContainerName,
-        'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Scroll test line $i with content"; done; sleep 1');
+        'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Scroll test line $i: with content"; done; sleep 1');
       scrollTestContainerId = output.trim();
 
       const navPage = new NavPage(page);
       const containersPage = await navPage.navigateTo('Containers');
-      await containersPage.waitForTableToLoad();
 
       await page.reload();
       await containersPage.waitForTableToLoad();
@@ -142,30 +151,24 @@ test.describe.serial('Container Logs Tests', () => {
       await containerLogsPage.waitForLogsToLoad();
 
       const terminalRows = page.locator('.xterm-rows');
-      const lastLine = terminalRows.getByText('Scroll test line 100', { exact: false });
-      const firstLine = terminalRows.getByText('Scroll test line 1', { exact: false });
+      const lastLine = terminalRows.getByText('Scroll test line 100: with content', { exact: false });
+      const firstLine = terminalRows.getByText('Scroll test line 1: with content', { exact: false });
 
-      await expect(lastLine).toBeVisible({timeout: 10_000});
+      await expect(lastLine).toBeVisible();
+      await expect(firstLine).not.toBeVisible();
 
       const initialScrollPos = await containerLogsPage.getScrollPosition();
       expect(initialScrollPos).toBeGreaterThan(0);
 
       await containerLogsPage.scrollToTop();
 
-      const topScrollPos = await containerLogsPage.getScrollPosition();
-      expect(topScrollPos).toBe(0);
-      expect(topScrollPos).not.toBe(initialScrollPos);
-
       await expect(firstLine).toBeVisible();
+      await expect(lastLine).not.toBeVisible();
 
       await containerLogsPage.scrollToBottom();
 
-      const bottomScrollPos = await containerLogsPage.getScrollPosition();
-      expect(bottomScrollPos).toBeGreaterThan(topScrollPos); // Should have scrolled down significantly
-      expect(bottomScrollPos).toBeGreaterThan(initialScrollPos - 100); // Should be near or at initial bottom position
-
       await expect(lastLine).toBeVisible();
-
+      await expect(firstLine).not.toBeVisible();
     } finally {
       if (scrollTestContainerId) {
         try {
@@ -176,8 +179,8 @@ test.describe.serial('Container Logs Tests', () => {
     }
   });
 
-  test('should display real-time logs', async () => {
-    const longRunningContainerName = `test-realtime-logs-${Date.now()}`;
+  test('should output logs if container not exited', async () => {
+    const longRunningContainerName = `test-not-exited-logs-${Date.now()}`;
     let longRunningContainerId: string;
 
     try {
