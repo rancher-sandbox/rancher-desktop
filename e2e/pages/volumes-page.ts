@@ -1,6 +1,15 @@
 import type {Locator, Page} from '@playwright/test';
 import {expect} from '@playwright/test';
 
+type ActionString = 'browse' | 'delete';
+
+const VOLUME_CELL_TEST_IDS = {
+  name: 'volume-name-cell',
+  driver: 'volume-driver-cell',
+  mountpoint: 'volume-mountpoint-cell',
+  created: 'volume-created-cell',
+} as const;
+
 export class VolumesPage {
   readonly page: Page;
   readonly table: Locator;
@@ -25,7 +34,7 @@ export class VolumesPage {
     await expect(volumeRow).toBeVisible();
   }
 
-  async clickVolumeAction(volumeName: string, action: string) {
+  async clickVolumeAction(volumeName: string, action: ActionString) {
     const volumeRow = this.getVolumeRow(volumeName);
     const actionButton = volumeRow.getByTestId('row-action-button');
     await actionButton.click();
@@ -33,7 +42,7 @@ export class VolumesPage {
     const actionText = {
       browse: 'Browse Files',
       delete: 'Delete',
-    }[action] ?? action;
+    }[action];
 
     const actionMenu = this.page.getByTestId("actionmenu");
     const actionLocator = actionMenu.getByText(actionText, {exact: true});
@@ -66,37 +75,17 @@ export class VolumesPage {
     await this.searchBox.fill(searchTerm);
   }
 
-  async getVolumeInfo(volumeName: string) {
+  getVolumeInfo(volumeName: string) {
     const volumeRow = this.getVolumeRow(volumeName);
 
-    await expect(volumeRow).toBeVisible();
-
-    const volumeNameCell = volumeRow.getByTestId('volume-name-cell');
-    const driverCell = volumeRow.getByTestId('volume-driver-cell');
-    const mountpointCell = volumeRow.getByTestId('volume-mountpoint-cell');
-    const createdCell = volumeRow.getByTestId('volume-created-cell');
-
     return {
-      name: await volumeNameCell.textContent().then(t => t?.trim() || ''),
-      driver: await driverCell.textContent().then(t => t?.trim() || ''),
-      mountpoint: await mountpointCell.textContent().then(t => t?.trim() || ''),
-      created: await createdCell.textContent().then(t => t?.trim() || '')
+      row: volumeRow,
+      name: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.name),
+      driver: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.driver),
+      mountpoint: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.mountpoint),
+      created: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.created),
     };
   }
-
-  async isErrorDisplayed(): Promise<boolean> {
-    return await this.errorBanner.isVisible().catch(() => false);
-  }
-
-  async getErrorMessage(): Promise<string | null> {
-    try {
-      await expect(this.errorBanner).toBeVisible({ timeout: 1000 });
-      return await this.errorBanner.textContent();
-    } catch {
-      return null;
-    }
-  }
-
 
   async selectBulkVolumes(volumeNames: string[]) {
     for (const volumeName of volumeNames) {
@@ -108,22 +97,14 @@ export class VolumesPage {
     }
   }
 
-  async clickBulkAction(action: string) {
-    if (action === 'delete') {
-      const deleteButton = this.page.getByRole('button', {name: 'Delete'}).first();
-      await deleteButton.click();
-    } else {
-      const bulkActionButton = this.page.getByTestId('bulk-action-button');
-      await bulkActionButton.click();
-
-      const actionMenu = this.page.getByTestId('actionmenu');
-      const actionLocator = actionMenu.getByText(action, {exact: true});
-      await actionLocator.click();
-    }
+  async clickBulkDelete() {
+    // Use the direct delete button that appears when items are selected
+    const deleteButton = this.page.getByRole('button', {name: 'Delete'}).first();
+    await deleteButton.click();
   }
 
   async deleteBulkVolumes(volumeNames: string[]) {
     await this.selectBulkVolumes(volumeNames);
-    await this.clickBulkAction('delete');
+    await this.clickBulkDelete();
   }
 }

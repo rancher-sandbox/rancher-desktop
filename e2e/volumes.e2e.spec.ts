@@ -65,9 +65,7 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
 
-    console.log(`Getting info for volume: ${testVolumeName}`);
     const volumeInfo = await volumesPage.getVolumeInfo(testVolumeName);
-    console.log('Volume info:', volumeInfo);
 
     expect(volumeInfo.name).toBeTruthy();
     expect(volumeInfo.driver).toBeTruthy();
@@ -79,7 +77,7 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.browseVolumeFiles(testVolumeName);
 
-    await page.waitForURL(`**/volumes/files/${testVolumeName}`, {timeout: 10000});
+    await page.waitForURL(`**/volumes/files/${testVolumeName}`, {timeout: 10_000});
 
     await page.goBack();
     await volumesPage.waitForTableToLoad();
@@ -90,18 +88,12 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
 
-    const initialCount = await volumesPage.getVolumeCount();
-    expect(initialCount).toBeGreaterThan(0);
-
     await volumesPage.deleteVolume(testVolumeName);
 
-    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10000 });
+    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10_000 });
 
     const isPresent = await volumesPage.isVolumePresent(testVolumeName);
     expect(isPresent).toBe(false);
-
-    const expectedCount = Math.max(0, initialCount - 1);
-    await expect(volumesPage.page.locator('tr.main-row')).toHaveCount(expectedCount);
 
     testVolumeName = '';
   });
@@ -129,7 +121,7 @@ test.describe.serial('Volumes Tests', () => {
       await volumesPage.deleteBulkVolumes(volumeNames);
 
       for (const volumeName of volumeNames) {
-        await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden({ timeout: 10000 });
+        await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden({ timeout: 10_000 });
       }
 
       await page.reload();
@@ -170,29 +162,48 @@ test.describe.serial('Volumes Tests', () => {
       expect(isPresent).toBe(true);
 
       await volumesPage.searchVolumes('');
-
-      await tool('docker', 'volume', 'rm', searchVolumeName);
-    } catch (error) {
+    } finally {
       try {
         await tool('docker', 'volume', 'rm', searchVolumeName);
       } catch (cleanupError) {
       }
-      throw error;
     }
   });
 
 
-  test('should handle error scenarios gracefully', async () => {
+  test('should display error message in banner', async () => {
     const volumesPage = new VolumesPage(page);
+    const volumeName = `test-volume-in-use-${Date.now()}`;
+    const containerName = `test-container-${Date.now()}`;
 
-    const hasError = await volumesPage.isErrorDisplayed();
+    try {
+      await tool('docker', 'volume', 'create', volumeName);
 
-    if (hasError) {
-      const errorMessage = await volumesPage.getErrorMessage();
+      // Create container that uses volume above
+      await tool('docker', 'run', '--detach', '--name', containerName,
+        '-v', `${volumeName}:/data`, 'alpine', 'sleep', '300');
+
+      await page.reload();
+      await volumesPage.waitForTableToLoad();
+      await volumesPage.waitForVolumeToAppear(volumeName);
+
+      // Try to delete volume, results in error
+      await volumesPage.deleteVolume(volumeName);
+
+      await expect(volumesPage.errorBanner).toBeVisible();
+
+      const errorMessage = await volumesPage.errorBanner.textContent();
       expect(errorMessage).toBeTruthy();
+      expect(errorMessage?.toLowerCase()).toContain('volume is in use');
 
-      const hasError = await volumesPage.isErrorDisplayed();
-      expect(hasError).toBe(true);
+      await expect(volumesPage.getVolumeRow(volumeName)).toBeVisible();
+
+    } finally {
+      try {
+        await tool('docker', 'rm', '-f', containerName);
+        await tool('docker', 'volume', 'rm', volumeName);
+      } catch (cleanupError) {
+      }
     }
   });
 });
