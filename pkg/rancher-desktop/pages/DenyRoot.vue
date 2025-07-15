@@ -20,11 +20,12 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name:   'page-deny-root',
   layout: 'dialog',
   mounted() {
     ipcRenderer.send('dialog/ready');

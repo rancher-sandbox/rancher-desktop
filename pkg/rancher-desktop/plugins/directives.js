@@ -1,19 +1,14 @@
-import Vue from 'vue';
+export default {
+  name: 'directives',
+  install(app) {
+    app.directive('focus', {
+      mounted(_el, _binding, vnode) {
+        const { components, refs } = vnode.ctx;
 
-Vue.directive('focus', {
-  inserted(_el, _binding, vnode) {
-    const element = getElement(vnode);
-
-    if (element) {
-      element.focus();
-    }
+        if ('LabeledTooltip' in components) {
+          refs.value?.focus();
+        }
+      },
+    });
   },
-});
-
-const getElement = (vnode) => {
-  const { componentInstance, componentOptions: { tag } } = vnode;
-
-  if (tag === 'labeled-input') {
-    return componentInstance.$refs.value;
-  }
 };

@@ -1,11 +1,11 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import { State as K8sState } from '@pkg/backend/backend';
 
-export default Vue.extend({
-  name:     'dashboard-button',
+export default defineComponent({
+  name:     'dashboard-open',
   computed: {
     ...mapGetters('preferences', ['getPreferences']),
     ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),

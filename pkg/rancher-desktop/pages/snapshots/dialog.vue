@@ -2,12 +2,12 @@
 import os from 'os';
 
 import { Banner } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import BackendProgress from '@pkg/components/BackendProgress.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'snapshots-dialog',
   components: { Banner, BackendProgress },
   layout:     'dialog',
@@ -82,7 +82,7 @@ export default Vue.extend({
     ipcRenderer.send('dialog/mounted');
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('dialog/error');
     ipcRenderer.removeAllListeners('dialog/options');
     ipcRenderer.removeAllListeners('dialog/close');
@@ -380,7 +380,7 @@ export default Vue.extend({
     }
   }
 
-  .info-banner::v-deep code {
+  .info-banner :deep(code) {
     padding: 2px;
   }
 </style>

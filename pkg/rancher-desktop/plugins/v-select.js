@@ -1,4 +1,8 @@
-import Vue from 'vue';
 import vSelect from 'vue-select';
 
-Vue.component('v-select', vSelect);
+export default {
+  name: 'v-select',
+  install(app) {
+    app.component('v-select', vSelect);
+  },
+};

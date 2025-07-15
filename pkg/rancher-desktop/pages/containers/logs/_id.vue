@@ -84,7 +84,7 @@
 
 <script>
 import {BadgeState, Banner} from '@rancher/components';
-import Vue from 'vue';
+import {defineComponent} from 'vue';
 import {mapGetters} from 'vuex';
 import {Terminal} from '@xterm/xterm';
 import {FitAddon} from '@xterm/addon-fit';
@@ -95,7 +95,7 @@ import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import {ContainerEngine} from '@pkg/config/settings';
 import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'ContainerLogs',
   title: 'Container Logs',
   components: {

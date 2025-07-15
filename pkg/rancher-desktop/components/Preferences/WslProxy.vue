@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { StringList } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import RdInput from '@pkg/components/RdInput.vue';
@@ -12,7 +12,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-wsl-proxy',
   components: {
     RdCheckbox, RdFieldset, RdInput, StringList,
@@ -153,17 +153,17 @@ export default Vue.extend({
     gap: 1rem;
     width: 50%;
 
-    .string-list::v-deep {
-      .string-list-box {
+    .string-list {
+      :deep(.string-list-box) {
         min-height: unset;
         height: 195px;
       }
 
-      .string-list-footer {
+      :deep(.string-list-footer) {
         padding-right: 2rem;
       }
 
-      &.readonly {
+      :deep(.readonly) {
         background-color: var(--input-disabled-bg);
         color: var(--input-disabled-text);
         opacity: 1;

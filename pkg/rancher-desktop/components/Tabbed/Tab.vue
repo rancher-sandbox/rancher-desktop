@@ -5,31 +5,45 @@ export default {
   props: {
     label: {
       default: null,
-      type:    String,
+      type:    String
     },
     labelKey: {
       default: null,
-      type:    String,
+      type:    String
     },
     name: {
       required: true,
-      type:     String,
+      type:     String
     },
     tooltip: {
       default: null,
-      type:    [String, Object],
+      type:    [String, Object]
     },
     weight: {
       default:  0,
       required: false,
-      type:     Number,
+      type:     Number
     },
-
     showHeader: {
       type:    Boolean,
       default: null, // Default true for side-tabs, false for top.
     },
+    displayAlertIcon: {
+      type:    Boolean,
+      default: null
+    },
+    error: {
+      type:    Boolean,
+      default: false
+    },
+    badge: {
+      default:  0,
+      required: false,
+      type:     Number
+    },
   },
+
+  emits: ['active'],
 
   data() {
     return { active: null };
@@ -54,7 +68,7 @@ export default {
       }
 
       return this.sideTabs || false;
-    },
+    }
   },
 
   watch: {
@@ -62,16 +76,16 @@ export default {
       if (neu) {
         this.$emit('active');
       }
-    },
+    }
   },
 
   mounted() {
     this.addTab(this);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.removeTab(this);
-  },
+  }
 };
 </script>
 
@@ -82,14 +96,34 @@ export default {
     :aria-hidden="!active"
     role="tabpanel"
   >
-    <h2 v-if="shouldShowHeader">
-      {{ label }}
-      <i
-        v-if="tooltip"
-        v-tooltip="tooltip"
-        class="icon icon-info-circle icon-lg"
-      />
-    </h2>
+    <div
+      v-if="shouldShowHeader"
+      class="tab-header"
+    >
+      <h2>
+        {{ labelDisplay }}
+        <i
+          v-if="tooltip"
+          v-clean-tooltip="tooltip"
+          class="icon icon-info icon-lg"
+        />
+      </h2>
+      <slot name="tab-header-right" />
+    </div>
     <slot v-bind="{active}" />
   </section>
 </template>
+
+<style lang="scss" scoped>
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  align-items: center;
+
+  h2 {
+    margin: 0;
+
+  }
+}
+</style>

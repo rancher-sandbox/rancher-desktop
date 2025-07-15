@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent, Component, PropType } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import PreferencesApplicationBehavior from '@pkg/components/Preferences/ApplicationBehavior.vue';
@@ -13,9 +13,7 @@ import type { TransientSettings } from '@pkg/config/transientSettings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-import type { PropType } from 'vue';
-
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-body-application',
   components: {
     RdTabbed,
@@ -42,7 +40,7 @@ export default Vue.extend({
     await this.$store.dispatch('credentials/fetchCredentials');
   },
   methods: {
-    async tabSelected({ tab }: { tab: Vue.Component }) {
+    async tabSelected({ tab }: { tab: Component }) {
       if (this.activeTab !== tab.name) {
         await this.commitPreferences(tab.name || '');
       }
@@ -88,9 +86,9 @@ export default Vue.extend({
     </template>
     <div class="application-content">
       <component
+        v-bind="$attrs"
         :is="`preferences-application-${ activeTab }`"
         :preferences="preferences"
-        v-on="$listeners"
       />
     </div>
   </rd-tabbed>

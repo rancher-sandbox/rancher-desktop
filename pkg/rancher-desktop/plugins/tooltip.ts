@@ -1,4 +1,9 @@
 import FloatingVue from 'floating-vue';
-import Vue from 'vue';
+import { App } from 'vue';
 
-Vue.use(FloatingVue);
+export default ({
+  name: 'tooltip',
+  install(app: App, ..._options: any) {
+    app.use(FloatingVue);
+  },
+});

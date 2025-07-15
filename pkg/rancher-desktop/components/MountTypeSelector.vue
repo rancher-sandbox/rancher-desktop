@@ -3,7 +3,7 @@ import os from 'os';
 
 import { RadioButton, RadioGroup } from '@rancher/components';
 import semver from 'semver';
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
@@ -18,12 +18,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-interface VuexBindings {
-  macOsVersion: semver.SemVer;
-  isArm: boolean;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   components: {
     TooltipIcon,
     IncompatiblePreferencesAlert,
@@ -71,6 +66,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       // virtiofs should only be disabled on macOS WITHOUT the possibility to select the VM type VZ. VZ doesn't need to
       // be selected, yet. We're going to show a warning banner in that case.
       return os.platform() === 'darwin' &&
+        this.macOsVersion &&
         (semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0')));
     },
     arch(): string {
@@ -174,7 +170,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                   :val="option.value"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
-                  @input="updateValue('virtualMachine.mount.type', $event)"
+                  @update:value="updateValue('virtualMachine.mount.type', $event)"
                 >
                   <template #label>
                     {{ option.label }}
@@ -205,7 +201,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.cacheMode.tooltip')"
         >
           <rd-select
-            :value="preferences.experimental.virtualMachine.mount['9p'].cacheMode"
+            :model-value="preferences.experimental.virtualMachine.mount['9p'].cacheMode"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.cacheMode')"
             @change="updateValue('experimental.virtualMachine.mount.9p.cacheMode', $event.target.value)"
           >
@@ -238,7 +234,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.protocolVersion.tooltip')"
         >
           <rd-select
-            :value="preferences.experimental.virtualMachine.mount['9p'].protocolVersion"
+            :model-value="preferences.experimental.virtualMachine.mount['9p'].protocolVersion"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.protocolVersion')"
             @change="updateValue('experimental.virtualMachine.mount.9p.protocolVersion', $event.target.value)"
           >
@@ -258,7 +254,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           :legend-tooltip="t('virtualMachine.mount.type.options.9p.options.securityModel.tooltip')"
         >
           <rd-select
-            :value="preferences.experimental.virtualMachine.mount['9p'].securityModel"
+            :model-value="preferences.experimental.virtualMachine.mount['9p'].securityModel"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.mount.9p.securityModel')"
             @change="updateValue('experimental.virtualMachine.mount.9p.securityModel', $event.target.value)"
           >

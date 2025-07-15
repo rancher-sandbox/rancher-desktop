@@ -1,11 +1,9 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for side effect.
-import Vue from 'vue';
+// Ensure this augments the package, instead of overwriting it.
+// See https://vuejs.org/guide/typescript/options-api.html#type-augmentation-placement
+export {}
 
-// This is required to keep typescript from complaining. It is required for
-// our i18n plugin. For more info see:
-// https://v2.vuejs.org/v2/guide/typescript.html?redirect=true#Augmenting-Types-for-Use-with-Plugins
-declare module 'vue/types/vue' {
-  interface Vue {
+declare module 'vue' {
+  interface ComponentCustomProperties {
       /**
        * Lookup a given string with the given arguments
        * @param raw if set, do not do HTML escaping.

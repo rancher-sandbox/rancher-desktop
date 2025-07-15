@@ -1,9 +1,10 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import Snapshots from '@pkg/components/Snapshots.vue';
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'snapshots',
   components: { Snapshots },
 
   mounted() {

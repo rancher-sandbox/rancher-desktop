@@ -210,7 +210,6 @@ export default {
 .system-preferences {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   padding-right: 1rem;
 }
 </style>

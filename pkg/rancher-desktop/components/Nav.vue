@@ -30,20 +30,19 @@
     </ul>
     <hr v-if="extensionsWithUI.length">
     <div class="nav-extensions">
-      <template v-for="extension in extensionsWithUI">
-        <RouterLink
-          :key="extension.id"
-          :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
-          :to="extensionRoute(extension)"
-        >
-          <nav-item :id="`extension:${extension.id}`">
-            <template #before>
-              <nav-icon-extension :extension-id="extension.id" />
-            </template>
-            {{ extension.metadata.ui['dashboard-tab'].title }}
-          </nav-item>
-        </RouterLink>
-      </template>
+      <RouterLink
+        v-for="extension in extensionsWithUI"
+        :key="extension.id"
+        :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
+        :to="extensionRoute(extension)"
+      >
+        <nav-item :id="`extension:${extension.id}`">
+          <template #before>
+            <nav-icon-extension :extension-id="extension.id" />
+          </template>
+          {{ extension.metadata.ui['dashboard-tab'].title }}
+        </nav-item>
+      </RouterLink>
     </div>
     <div class="nav-button-container">
       <dashboard-button
@@ -64,7 +63,7 @@
 import os from 'os';
 
 import { BadgeState } from '@rancher/components';
-import Vue, { PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
 
 import NavIconExtension from './NavIconExtension.vue';
@@ -80,7 +79,8 @@ type ExtensionWithUI = ExtensionState & {
   metadata: { ui: { 'dashboard-tab': { title: string } } };
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'Nav',
   components: {
     BadgeState,
     NavItem,
@@ -222,7 +222,7 @@ a {
     text-decoration: none;
   }
 
-  &:is(.router-link-active, .rd-link-active)::v-deep div {
+  &:is(.router-link-active, .rd-link-active) :deep(div) {
     background-color: var(--nav-active);
   }
 }
