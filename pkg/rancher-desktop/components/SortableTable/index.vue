@@ -1042,6 +1042,7 @@ export default {
                   <button
                     ref="actionDropDown"
                     class="btn btn-role-primary bg-primary mr-0"
+                    data-testid="bulk-action-button"
                     :disabled="!selectedRows.length"
                   >
                     <i class="icon icon-gear" />
