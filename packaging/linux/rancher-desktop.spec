@@ -49,7 +49,6 @@ Requires: qemu-utils
 Requires: qemu-system-x86
 Requires: pass
 Requires: openssh-client
-Requires: gnupg
 Requires: libasound2
 Requires: libatk1.0-0
 Requires: libatk-bridge2.0-0
@@ -82,11 +81,9 @@ Requires: qemu
 Requires: openssh-clients
 
 %if 0%{?fedora} || 0%{?rhel}
-Requires: pass
-Requires: gnupg2
+Requires: (pass or libsecret)
 %else
-Requires: password-store
-Requires: gpg2
+Requires: (password-store or libsecret-1-0)
 %endif
 
 Requires: glibc
