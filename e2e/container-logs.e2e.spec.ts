@@ -43,7 +43,7 @@ test.describe.serial('Container Logs Tests', () => {
   test('should create and display test container', async () => {
     testContainerName = `test-logs-container-${Date.now()}`;
 
-    const output = await tool('docker', 'run', '-d', '--name', testContainerName,
+    const output = await tool('docker', 'run', '--detach', '--name', testContainerName,
       'alpine', 'sh', '-c', 'echo "Starting container"; for i in $(seq 1 10); do echo "Line $i: Hello world message $i"; done; echo "Container finished"');
     testContainerId = output.trim();
 
@@ -132,7 +132,7 @@ test.describe.serial('Container Logs Tests', () => {
     let scrollTestContainerId: string;
 
     try {
-      const output = await tool('docker', 'run', '-d', '--name', scrollTestContainerName,
+      const output = await tool('docker', 'run', '--detach', '--name', scrollTestContainerName,
         'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Scroll test line $i: with content"; done; sleep 1');
       scrollTestContainerId = output.trim();
 
@@ -184,7 +184,7 @@ test.describe.serial('Container Logs Tests', () => {
     let longRunningContainerId: string;
 
     try {
-      const output = await tool('docker', 'run', '-d', '--name', longRunningContainerName,
+      const output = await tool('docker', 'run', '--detach', '--name', longRunningContainerName,
         'alpine', 'sh', '-c', 'while true; do echo "Log message $(date)"; sleep 2; done');
       longRunningContainerId = output.trim();
 
