@@ -52,7 +52,7 @@ import mainEvents from '@pkg/main/mainEvents';
 import { exec as sudo } from '@pkg/sudo-prompt';
 import * as childProcess from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
-import DockerDirManager from '@pkg/utils/dockerDirManager';
+import dockerDirManager from '@pkg/utils/dockerDirManager';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
@@ -272,10 +272,9 @@ const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-l
 // [1]: https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
 // [2]: https://github.com/microsoft/TypeScript/issues/46802
 export default class LimaBackend extends events.EventEmitter implements VMBackend, VMExecutor {
-  constructor(arch: Architecture, dockerDirManager: DockerDirManager, kubeFactory: (backend: LimaBackend) => K8s.KubernetesBackend) {
+  constructor(arch: Architecture, kubeFactory: (backend: LimaBackend) => K8s.KubernetesBackend) {
     super();
     this.arch = arch;
-    this.dockerDirManager = dockerDirManager;
     this.kubeBackend = kubeFactory(this);
 
     this.progressTracker = new ProgressTracker((progress) => {
@@ -310,9 +309,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   /** The current architecture. */
   protected readonly arch: Architecture;
-
-  /** Used to manage the docker CLI config directory. */
-  protected readonly dockerDirManager: DockerDirManager;
 
   /** The version of Kubernetes currently running. */
   protected activeVersion: semver.SemVer | null = null;
@@ -1945,7 +1941,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         switch (config.containerEngine.name) {
         case ContainerEngine.MOBY:
           this.#containerEngineClient = new MobyClient(this, `unix://${ path.join(paths.altAppHome, 'docker.sock') }`);
-          await this.dockerDirManager.ensureDockerContextConfigured(
+          await dockerDirManager.ensureDockerContextConfigured(
             this.#adminAccess,
             path.join(paths.altAppHome, 'docker.sock'));
           break;
@@ -2099,7 +2095,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
               throw ex;
             }
           }
-          await this.dockerDirManager.clearDockerContext();
+          await dockerDirManager.clearDockerContext();
         }
         await this.setState(State.STOPPED);
       } catch (ex) {
