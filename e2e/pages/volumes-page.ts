@@ -44,7 +44,7 @@ export class VolumesPage {
       delete: 'Delete',
     }[action];
 
-    const actionMenu = this.page.getByTestId("actionmenu");
+    const actionMenu = this.page.getByTestId('actionmenu');
     const actionLocator = actionMenu.getByText(actionText, {exact: true});
     await actionLocator.click();
   }

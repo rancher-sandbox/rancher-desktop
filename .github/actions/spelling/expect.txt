@@ -1,5 +1,6 @@
 aarch
 abbrv
+actionmenu
 ACTIONSTART
 activedirectory
 addexclusion

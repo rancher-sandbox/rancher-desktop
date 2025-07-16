@@ -55,9 +55,6 @@ test.describe.serial('Volumes Tests', () => {
     await volumesPage.waitForTableToLoad();
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
-
-    const isPresent = await volumesPage.isVolumePresent(testVolumeName);
-    expect(isPresent).toBe(true);
   });
 
   test('should show volume information', async () => {
@@ -65,11 +62,11 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
 
-    const volumeInfo = await volumesPage.getVolumeInfo(testVolumeName);
+    const volumeInfo = volumesPage.getVolumeInfo(testVolumeName);
 
-    expect(volumeInfo.name).toBeTruthy();
-    expect(volumeInfo.driver).toBeTruthy();
-    expect(volumeInfo.mountpoint).toBeTruthy();
+    await expect(volumeInfo.name).not.toBeEmpty();
+    await expect(volumeInfo.driver).not.toBeEmpty();
+    await expect(volumeInfo.mountpoint).not.toBeEmpty();
   });
 
   test('should browse volume files', async () => {
@@ -91,9 +88,6 @@ test.describe.serial('Volumes Tests', () => {
     await volumesPage.deleteVolume(testVolumeName);
 
     await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10_000 });
-
-    const isPresent = await volumesPage.isVolumePresent(testVolumeName);
-    expect(isPresent).toBe(false);
 
     testVolumeName = '';
   });

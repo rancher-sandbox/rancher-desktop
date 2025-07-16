@@ -95,29 +95,24 @@ test.describe.serial('Container Logs Tests', () => {
     const searchTerm = 'Hello';
     await containerLogsPage.searchLogs(searchTerm);
 
-    await page.waitForTimeout(300);
-
     const searchHighlight = page.locator('span.xterm-decoration-top');
     await expect(searchHighlight).toBeVisible();
 
-    const initialPosition = await searchHighlight.boundingBox();
-    expect(initialPosition).not.toBeNull();
+    const highlightedRow = containerLogsPage.terminal.locator('.xterm-rows div', {
+      has: page.locator('.xterm-decoration-top')
+    });
+
+    await expect(highlightedRow).toContainText('Line 1: Hello');
 
     await containerLogsPage.searchNextButton.click();
-    await page.waitForTimeout(300);
 
     await expect(searchHighlight).toBeVisible();
-    const nextPosition = await searchHighlight.boundingBox();
-    expect(nextPosition).not.toBeNull();
-
-    expect(nextPosition?.y).not.toBe(initialPosition?.y);
+    await expect(highlightedRow).toContainText('Line 2: Hello');
 
     await containerLogsPage.searchPrevButton.click();
-    await page.waitForTimeout(300);
 
     await expect(searchHighlight).toBeVisible();
-    const previousPosition = await searchHighlight.boundingBox();
-    expect(previousPosition?.y).toBe(initialPosition?.y);
+    await expect(highlightedRow).toContainText('Line 1: Hello');
 
     await containerLogsPage.searchClearButton.click();
     await expect(containerLogsPage.searchInput).toBeEmpty();
@@ -150,15 +145,12 @@ test.describe.serial('Container Logs Tests', () => {
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();
 
-      const terminalRows = page.locator('.xterm-rows');
+      const terminalRows = containerLogsPage.terminal.locator('.xterm-rows');
       const lastLine = terminalRows.getByText('Scroll test line 100: with content', { exact: false });
       const firstLine = terminalRows.getByText('Scroll test line 1: with content', { exact: false });
 
       await expect(lastLine).toBeVisible();
       await expect(firstLine).not.toBeVisible();
-
-      const initialScrollPos = await containerLogsPage.getScrollPosition();
-      expect(initialScrollPos).toBeGreaterThan(0);
 
       await containerLogsPage.scrollToTop();
 
@@ -190,7 +182,6 @@ test.describe.serial('Container Logs Tests', () => {
 
       const navPage = new NavPage(page);
       const containersPage = await navPage.navigateTo('Containers');
-      await containersPage.waitForTableToLoad();
 
       await page.reload();
       await containersPage.waitForTableToLoad();
@@ -203,7 +194,7 @@ test.describe.serial('Container Logs Tests', () => {
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();
 
-      const locator = page.locator('.xterm-screen');
+      const locator = containerLogsPage.terminal.locator('.xterm-screen');
       await expect(locator.getByText(/Log message/).nth(1)).toBeVisible();
 
       await expect(containerLogsPage.terminal).toContainText('Log message');
