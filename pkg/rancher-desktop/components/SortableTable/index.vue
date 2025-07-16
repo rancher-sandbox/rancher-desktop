@@ -1323,7 +1323,6 @@ export default {
                     :data-node-id="row.key"
                     :data-testid="componentTestid + '-' + i + '-checkbox'"
                     :value="selectedRows.includes(row.row)"
-                    data-testid="row-selection-checkbox"
                   />
                 </td>
                 <td
@@ -1423,7 +1422,6 @@ export default {
                       aria-expanded="false"
                       type="button"
                       class="btn btn-sm role-multi-action actions"
-                      data-testid="row-action-button"
                       @click="handleActionButtonClick(i, $event)"
                     >
                       <i class="icon icon-actions" />

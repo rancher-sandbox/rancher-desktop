@@ -36,7 +36,7 @@ export class VolumesPage {
 
   async clickVolumeAction(volumeName: string, action: ActionString) {
     const volumeRow = this.getVolumeRow(volumeName);
-    const actionButton = volumeRow.getByTestId('row-action-button');
+    const actionButton = volumeRow.locator('.btn.role-multi-action');
     await actionButton.click();
 
     const actionText = {
@@ -90,7 +90,7 @@ export class VolumesPage {
   async selectBulkVolumes(volumeNames: string[]) {
     for (const volumeName of volumeNames) {
       const volumeRow = this.getVolumeRow(volumeName);
-      const checkbox = volumeRow.getByTestId('row-selection-checkbox');
+      const checkbox = volumeRow.locator('.selection-checkbox');
 
       await checkbox.click();
       await expect(volumeRow.locator('input[type="checkbox"]')).toBeChecked();
