@@ -1041,8 +1041,7 @@ export default {
                 <template #button-content>
                   <button
                     ref="actionDropDown"
-                    class="btn btn-role-primary bg-primary mr-0"
-                    data-testid="bulk-action-button"
+                    class="btn bg-primary mr-0"
                     :disabled="!selectedRows.length"
                   >
                     <i class="icon icon-gear" />
