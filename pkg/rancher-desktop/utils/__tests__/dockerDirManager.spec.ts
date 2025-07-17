@@ -15,7 +15,7 @@ const spawnFile = childProcess.spawnFile;
 const modules = mockModules({
   '@pkg/utils/childProcess': {
     ...childProcess,
-    spawnFile: jest.fn<(command: string, args: string[], options: any) => Promise<{}>>(),
+    spawnFile: jest.fn<(command: string, args: string[], options: any) => Promise<unknown>>(),
   },
   '@pkg/utils/logging': {
     background: {
