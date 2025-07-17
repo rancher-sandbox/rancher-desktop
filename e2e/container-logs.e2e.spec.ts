@@ -44,8 +44,7 @@ test.describe.serial('Container Logs Tests', () => {
     testContainerName = `test-logs-container-${Date.now()}`;
 
     const output = await tool('docker', 'run', '--detach', '--name', testContainerName,
-      'alpine', 'sh', '-c', 'echo "Starting container"; for i in $(seq 1 10); do echo "Line $i: Hello world message $i"; done; echo "Container finished"');
-    testContainerId = output.trim();
+      'alpine', 'sh', '-c', 'echo "Starting"; for i in $(seq 1 10); do echo "L$i: msg$i"; done; echo "Finished"');    testContainerId = output.trim();
 
     expect(testContainerId).toMatch(/^[a-f0-9]{64}$/);
 
@@ -84,8 +83,8 @@ test.describe.serial('Container Logs Tests', () => {
 
     await containerLogsPage.waitForLogsToLoad();
 
-    await expect(containerLogsPage.terminal).toContainText('Line 1: Hello world message');
-  });
+    await expect(containerLogsPage.terminal).toContainText('L1: msg1');
+});
 
   test('should support log search', async () => {
     const containerLogsPage = new ContainerLogsPage(page);
@@ -128,7 +127,7 @@ test.describe.serial('Container Logs Tests', () => {
 
     try {
       const output = await tool('docker', 'run', '--detach', '--name', scrollTestContainerName,
-        'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Scroll test line $i: with content"; done; sleep 1');
+        'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Line $i:"; done; sleep 1');
       scrollTestContainerId = output.trim();
 
       const navPage = new NavPage(page);
@@ -146,8 +145,8 @@ test.describe.serial('Container Logs Tests', () => {
       await containerLogsPage.waitForLogsToLoad();
 
       const terminalRows = containerLogsPage.terminal.locator('.xterm-rows');
-      const lastLine = terminalRows.getByText('Scroll test line 100: with content', { exact: false });
-      const firstLine = terminalRows.getByText('Scroll test line 1: with content', { exact: false });
+      const lastLine = terminalRows.getByText('Line 100:', { exact: false });
+      const firstLine = terminalRows.getByText('Line 1:', { exact: false });
 
       await expect(lastLine).toBeVisible();
       await expect(firstLine).not.toBeVisible();
