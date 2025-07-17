@@ -1,4 +1,4 @@
-import xor from 'lodash/xor';
+import xor from 'lodash/xor.js';
 import { get, isEqual } from '@pkg/utils/object';
 
 export function removeObject<T>(ary: T[], obj: T): T[] {

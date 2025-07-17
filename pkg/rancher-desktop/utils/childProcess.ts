@@ -1,13 +1,12 @@
 import {
   spawn, CommonOptions, IOType, MessagingOptions, StdioOptions, StdioNull, StdioPipe,
-} from 'child_process';
-import stream from 'stream';
+} from 'node:child_process';
+import stream from 'node:stream';
 
 import { Log } from '@pkg/utils/logging';
 
-export {
-  ChildProcess, CommonOptions, SpawnOptions, exec, execFile, spawn,
-} from 'child_process';
+export { ChildProcess, exec, execFile, spawn } from 'node:child_process';
+export type { CommonOptions, SpawnOptions } from 'node:child_process';
 
 /**
  * ErrorCommand is a symbol we attach to any exceptions thrown to describe the

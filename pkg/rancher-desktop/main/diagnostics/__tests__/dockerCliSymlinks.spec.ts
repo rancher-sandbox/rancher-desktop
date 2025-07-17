@@ -1,36 +1,44 @@
 import fs from 'fs';
+import { mkdtemp, rm } from 'fs/promises';
 import os from 'os';
 import path from 'path';
+
+import { jest } from '@jest/globals';
+
+import paths from '@pkg/utils/paths';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 
 // The (mock) application directory.
 let appDir = process.cwd();
 
-// Mock Electron.app.getAppPath() to return appDir.
-jest.mock('electron', () => {
-  return {
-    __esModule: true,
-    default:    {
-      app: {
-        isPackaged: false,
-        getAppPath: () => appDir,
-      },
+const modules = mockModules({
+  // Mock Electron.app.getAppPath() to return appDir.
+  electron: {
+    app: {
+      isPackaged: false,
+      getAppPath: () => appDir,
+    }
+  },
+  // Mock fs.promises.readdir() for the default export.
+  fs: {
+    ...fs,
+    promises: {
+      ...fs.promises,
+      readdir: jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
+        expect(dir).toEqual(path.join(modules['@pkg/utils/paths'].resources, os.platform(), 'docker-cli-plugins'));
+        expect(encoding).toEqual('utf-8');
+
+        return Promise.resolve([]);
+      }),
     },
-  };
+  },
+  '@pkg/utils/paths': {
+    ...paths,
+    resources: '',
+  }
 });
 
-import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
-
-import paths from '@pkg/utils/paths';
-
-// Mock fs.promises.readdir() for the default export.
-jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
-  expect(dir).toEqual(path.join(appDir, 'resources', os.platform(), 'docker-cli-plugins'));
-  expect(encoding).toEqual('utf-8');
-
-  return Promise.resolve([]);
-});
-
-const { mkdtemp, rm } = jest.requireActual('fs/promises');
+const { CheckerDockerCLISymlink } = await import('../dockerCliSymlinks');
 const describeUnix = process.platform === 'win32' ? describe.skip : describe;
 const describeWin32 = process.platform === 'win32' ? describe : describe.skip;
 
@@ -40,7 +48,6 @@ describeUnix(CheckerDockerCLISymlink, () => {
   const rdBinDir = path.join(os.homedir(), '.rd', 'bin');
   const rdBinExecutable = path.join(rdBinDir, executable);
   let appDirExecutable = '';
-  let replacedPathsResources: jest.ReplaceProperty<string>;
 
   beforeAll(async() => {
     appDir = await mkdtemp(path.join(os.tmpdir(), 'rd-diag-'));
@@ -48,10 +55,9 @@ describeUnix(CheckerDockerCLISymlink, () => {
 
     await fs.promises.mkdir(resourcesDir);
     appDirExecutable = path.join(resourcesDir, os.platform(), 'docker-cli-plugins', executable);
-    replacedPathsResources = jest.replaceProperty(paths, 'resources', resourcesDir);
+    modules['@pkg/utils/paths'].resources = resourcesDir;
   });
   afterAll(async() => {
-    replacedPathsResources.restore();
     await rm(appDir, { recursive: true, force: true });
   });
 

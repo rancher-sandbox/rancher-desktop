@@ -118,11 +118,11 @@ const httpCredentialHelperServer = new HttpCredentialHelperServer();
 if (process.platform === 'linux') {
   // On Linux, put Electron into a new process group so that we can more
   // reliably kill processes we spawn from extensions.
-  try {
-    require('posix-node').setpgid(0, 0);
-  } catch (ex) {
+  import('posix-node').then(({ default: { setpgid }}) => {
+    setpgid?.(0, 0);
+  }).catch(ex => {
     console.error(`Ignoring error setting process group: ${ ex }`);
-  }
+  });
 }
 
 // Scheme must be registered before the app is ready

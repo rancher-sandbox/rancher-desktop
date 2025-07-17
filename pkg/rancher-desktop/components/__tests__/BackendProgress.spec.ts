@@ -1,6 +1,7 @@
+import { jest } from '@jest/globals';
 import { shallowMount } from '@vue/test-utils';
 
-import BackendProgress from '../BackendProgress.vue';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 
 type Progress = {
   current: number;
@@ -15,19 +16,23 @@ function wrap(props: Record<string, any>) {
 
 const progress: Progress = { current: 0, max: 0 };
 let callback: (event: Event | undefined, progress: Progress) => void = () => {};
-jest.mock('@pkg/utils/ipcRenderer', () => ({
-  __esModule: true,
-  ipcRenderer: {
-    on(name: string, cb: typeof callback) {
-      expect(name).toEqual('k8s-progress');
-      callback = cb;
+
+mockModules({
+  '@pkg/utils/ipcRenderer': {
+    ipcRenderer: {
+      on(name: string, cb: typeof callback) {
+        expect(name).toEqual('k8s-progress');
+        callback = cb;
+      },
+      invoke(name: string) {
+        expect(name).toEqual('k8s-progress');
+        return Promise.resolve(progress);
+      }
     },
-    invoke(name: string) {
-      expect(name).toEqual('k8s-progress');
-      return Promise.resolve(progress);
-    }
-  },
-}));
+  }
+})
+
+const { default: BackendProgress } = await import('../BackendProgress.vue');
 
 describe('BackendProgress', () => {
   beforeAll(() => {

@@ -1,10 +1,11 @@
+import { jest } from '@jest/globals';
 import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import StatusBar from '@pkg/components/StatusBar.vue';
 import StatusBarItem from '@pkg/components/StatusBarItem.vue';
 
 describe('StatusBar.vue', () => {
-  let wrapper: VueWrapper<any>;
+  let wrapper: VueWrapper<InstanceType<typeof StatusBar>>;
 
   beforeEach(() => {
     wrapper = shallowMount(StatusBar, {

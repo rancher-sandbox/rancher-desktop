@@ -2,9 +2,22 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import manageLinesInFile, { START_LINE, END_LINE } from '@pkg/integrations/manageLinesInFile';
+import { jest } from '@jest/globals';
+
 import * as childProcess from '@pkg/utils/childProcess';
 import { withResource } from '@pkg/utils/testUtils/mockResources';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+const modules = mockModules({
+  fs: {
+    ...fs,
+    promises:{
+      ...fs.promises,
+      rename: jest.fn(fs.promises.rename),
+      writeFile: jest.fn(fs.promises.writeFile),
+    },
+  },
+});
 
 const describeUnix = process.platform === 'win32' ? describe.skip : describe;
 const testUnix = process.platform === 'win32' ? test.skip : test;
@@ -12,6 +25,8 @@ const testUnix = process.platform === 'win32' ? test.skip : test;
 const FILE_NAME = 'fakercfile';
 const TEST_LINE_1 = 'this is test line 1';
 const TEST_LINE_2 = 'this is test line 2';
+
+const { default: manageLinesInFile, START_LINE, END_LINE } = await import('@pkg/integrations/manageLinesInFile');
 
 let testDir: string;
 let rcFilePath: string;
@@ -173,8 +188,8 @@ describe('manageLinesInFile', () => {
 
       await fs.promises.writeFile(rcFilePath, unmanagedContents, { mode: 0o600 });
 
-      using spyWriteFile = withResource(jest.spyOn(fs.promises, 'writeFile'));
-      using spyRename = withResource(jest.spyOn(fs.promises, 'rename'));
+      using spyWriteFile = withResource(modules.fs.promises.writeFile);
+      using spyRename = withResource(modules.fs.promises.rename);
 
       await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
       expect(spyWriteFile).not.toHaveBeenCalledWith(rcFilePath, expect.anything());
@@ -191,7 +206,7 @@ describe('manageLinesInFile', () => {
       await fs.promises.writeFile(rcFilePath, unmanagedContents, { mode: 0o600 });
       const originalWriteFile = fs.promises.writeFile;
 
-      using spyWriteFile = withResource(jest.spyOn(fs.promises, 'writeFile'))
+      using spyWriteFile = withResource(modules.fs.promises.writeFile)
         .mockImplementation(async(file, data, options) => {
           if (file.toString() === tempFilePath) {
             throw new SystemError('EACCESS', {
@@ -311,7 +326,7 @@ describe('manageLinesInFile', () => {
       await fs.promises.writeFile(rcFilePath, unmanagedContents, { mode: 0o600 });
       const originalWriteFile = fs.promises.writeFile;
 
-      using spyWriteFile = withResource(jest.spyOn(fs.promises, 'writeFile'))
+      using spyWriteFile = withResource(modules.fs.promises.writeFile)
         .mockImplementation(async(file, data, options) => {
           if (file !== rcFilePath) {
             // Don't fail when writing to any other files.

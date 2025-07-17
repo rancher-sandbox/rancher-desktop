@@ -2,6 +2,7 @@
 import { defineComponent } from 'vue';
 export default defineComponent({
   name:    'preferences-button',
+  emits: ['open-preferences'],
   methods: {
     openPreferences() {
       this.$emit('open-preferences');

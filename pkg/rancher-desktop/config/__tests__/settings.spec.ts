@@ -1,3 +1,4 @@
+/** @jest-environment node */
 /* eslint object-curly-newline: ["error", {"consistent": true}] */
 
 import fs from 'fs';
@@ -5,14 +6,15 @@ import path from 'path';
 
 import _ from 'lodash';
 import plist from 'plist';
+import { jest } from '@jest/globals';
 
 import * as settings from '../settings';
 import * as settingsImpl from '../settingsImpl';
 
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
-import { readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 
 class FakeFSError extends Error {
   public message = '';
@@ -29,6 +31,16 @@ enum ProfileTypes {
   Unlocked = 'unlocked',
   Locked = 'locked'
 }
+
+const actualSyncReader = fs.readFileSync;
+const modules = mockModules({
+  fs: {
+    ...fs,
+    readFileSync: jest.spyOn(fs, 'readFileSync'),
+  }
+});
+
+const { readDeploymentProfiles } = await import('@pkg/main/deploymentProfiles');
 
 describe('settings', () => {
   describe('merge', () => {
@@ -169,15 +181,13 @@ describe('settings', () => {
 
   describeNotWindows('profiles', () => {
     const lockedAccessors = ['containerEngine.allowedImages.enabled', 'containerEngine.allowedImages.patterns'];
-    let mock: jest.SpiedFunction<typeof fs['readFileSync']>;
-    const actualSyncReader = fs.readFileSync;
 
     beforeEach(() => {
       jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
       settingsImpl.clearSettings();
     });
     afterEach(() => {
-      mock.mockRestore();
+      modules.fs.readFileSync.mockRestore();
     });
 
     /**
@@ -270,12 +280,12 @@ describe('settings', () => {
         return new RegExp(`Error parsing deployment profile from .*/\\.config/rancher-desktop.${ basename }.json: SyntaxError: Unterminated string in JSON at position`);
       }
       test('complains about invalid default values', async() => {
-        mock = jest.spyOn(fs, 'readFileSync')
+        modules.fs.readFileSync
           .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked, 'defaults'));
         await expect(readDeploymentProfiles()).rejects.toThrow(invalidProfileMessage('defaults'));
       });
       test('complains about invalid locked values', async() => {
-        mock = jest.spyOn(fs, 'readFileSync')
+        modules.fs.readFileSync
           .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Locked, 'locked'));
         await expect(readDeploymentProfiles()).rejects.toThrow(invalidProfileMessage('locked'));
       });
@@ -296,7 +306,7 @@ describe('settings', () => {
 
       describe('when there is no profile', () => {
         beforeEach(() => {
-          mock = jest.spyOn(fs, 'readFileSync')
+          modules.fs.readFileSync
             .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.None));
         });
         test('all fields are unlocked', async() => {
@@ -328,7 +338,7 @@ describe('settings', () => {
           }
           test.each(testCases)('system profile $system user profile $user $msg',
             async({ system, user, shouldLock }) => {
-              mock = jest.spyOn(fs, 'readFileSync')
+              modules.fs.readFileSync
                 .mockImplementation(createMocker(system, user));
               const profiles = await readDeploymentProfiles();
 
@@ -343,7 +353,7 @@ describe('settings', () => {
         });
         describe('check profile reading', () => {
           it('preserves hash-like settings', async() => {
-            mock = jest.spyOn(fs, 'readFileSync')
+            modules.fs.readFileSync
               .mockImplementation(createMocker(ProfileTypes.None, ProfileTypes.Unlocked));
             const profiles = await readDeploymentProfiles();
             const expectedDefaults = _.omit(fullDefaults, ['debug', 'ignorableTestSettings', 'diagnostics.locked']);

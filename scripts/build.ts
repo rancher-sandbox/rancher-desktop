@@ -50,7 +50,7 @@ class Builder {
   }
 
   async buildRenderer() {
-    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.js';
+    process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.mjs';
     await simpleSpawn(
       process.execPath,
       [

@@ -41,7 +41,7 @@ import type { ElectronApplication, Page } from '@playwright/test';
 test.describe('Locked fields', () => {
   let electronApp: ElectronApplication;
   let page: Page;
-  const appPath = path.join(__dirname, '../');
+  const appPath = path.dirname(import.meta.dirname);
   let deploymentProfile: DeploymentProfileType|null = null;
 
   function rdctlPath() {

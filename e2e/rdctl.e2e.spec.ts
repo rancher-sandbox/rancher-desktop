@@ -24,7 +24,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import _ from 'lodash';
-import fetch, { RequestInit } from 'node-fetch';
+import fetch from 'node-fetch';
 import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
@@ -50,13 +50,14 @@ import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, Page } from '@playwright/test';
+import type { RequestInit } from 'node-fetch';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
   let serverState: ServerState;
   let page: Page;
   const ENOENTMessage = os.platform() === 'win32' ? 'The system cannot find the file specified' : 'no such file or directory';
-  const appPath = path.join(__dirname, '../');
+  const appPath = path.dirname(import.meta.dirname);
 
   async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
@@ -1185,7 +1186,7 @@ test.describe('Command server', () => {
 
       test.describe('getting endpoints', () => {
         async function getEndpoints() {
-          const apiSpecPath = path.join(path.dirname(__filename), '../pkg/rancher-desktop/assets/specs/command-api.yaml');
+          const apiSpecPath = path.join(import.meta.dirname, '../pkg/rancher-desktop/assets/specs/command-api.yaml');
           const apiSpec = await fs.promises.readFile(apiSpecPath, 'utf-8');
           const specPaths = yaml.parse(apiSpec).paths;
 

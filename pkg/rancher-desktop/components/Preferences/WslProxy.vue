@@ -28,14 +28,6 @@ export default defineComponent({
     isFieldDisabled() {
       return !(this.preferences.experimental.virtualMachine.proxy.enabled);
     },
-    noProxyText: {
-      get() {
-        return this.preferences.experimental.virtualMachine.proxy.noproxy.join('\n');
-      },
-      set(value: string) {
-        this.$store.dispatch('preferences/updatePreferencesData', { property: 'experimental.virtualMachine.proxy.noproxy', value: value.trim().split('\n') });
-      },
-    },
     noproxyErrorMessages(): { duplicate: string } {
       return { duplicate: this.t('virtualMachine.proxy.noproxy.errors.duplicate') };
     },

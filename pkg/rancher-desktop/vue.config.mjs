@@ -1,18 +1,11 @@
-const path = require('path');
+import path from 'node:path';
 
-const _ = require('lodash');
-const webpack = require('webpack');
+import _ from 'lodash';
+import webpack from 'webpack';
 
-const babelConfig = require('../../babel.config');
-const packageMeta = require('../../package.json');
+const rootDir = path.resolve(import.meta.dirname, '..', '..');
 
-const rootDir = path.resolve(__dirname, '..', '..');
-const corejsVersion = parseFloat(/\d+\.\d+/.exec(packageMeta.dependencies['core-js']));
-const modifiedBabelConfig = _.cloneDeep(babelConfig);
-
-modifiedBabelConfig.presets.unshift(['@vue/cli-plugin-babel/preset', { corejs: { version: corejsVersion } }]);
-
-module.exports = {
+export default {
   publicPath:          '/',
   outputDir:           path.resolve(rootDir, 'dist', 'app'),
   productionSourceMap: false,
@@ -88,8 +81,8 @@ module.exports = {
 
   pages: {
     index: {
-      entry:    path.join(__dirname, 'entry', 'index.ts'),
-      template: path.join(__dirname, 'public', 'index.html'),
+      entry:    path.join(import.meta.dirname, 'entry', 'index.ts'),
+      template: path.join(import.meta.dirname, 'public', 'index.html'),
     },
   },
 };

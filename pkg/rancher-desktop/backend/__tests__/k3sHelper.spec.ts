@@ -5,23 +5,30 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import fetch from 'node-fetch';
+import { jest } from '@jest/globals';
+import fetch, { Response as FetchResponse } from 'node-fetch';
+import * as nodeFetch from 'node-fetch';
 import semver from 'semver';
-
-import K3sHelper, { buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry } from '../k3sHelper';
 
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import paths from '@pkg/utils/paths';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+import type { ReleaseAPIEntry } from '../k3sHelper';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
-const { Response: FetchResponse } = jest.requireActual('node-fetch');
 
-// Mock fetch to ensure we never make an actual request.
-jest.mock('node-fetch', () => {
-  return jest.fn((...args) => {
-    throw new Error('Unexpected network traffic');
-  });
+const modules = mockModules({
+  'node-fetch': {
+    ...nodeFetch,
+    default: jest.fn<(...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>>((...args) => {
+      throw new Error('Unexpected network traffic');
+    }),
+  },
+  '@pkg/utils/logging': undefined,
 });
+
+const { default: K3sHelper, buildVersion, ChannelMapping, NoCachedK3sVersionsError } = await import('../k3sHelper');
 
 let cacheData: Buffer | null;
 
@@ -41,7 +48,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  jest.mocked(fetch).mockReset();
+  modules['node-fetch'].default.mockReset();
 });
 
 describe(buildVersion, () => {
@@ -56,7 +63,7 @@ describe(buildVersion, () => {
 
 describe(K3sHelper, () => {
   describe('processVersion', () => {
-    let subject: K3sHelper;
+    let subject: InstanceType<typeof K3sHelper>;
     const process = (name: string, existing: string[] = [], hasAssets = false) => {
       const assets: ReleaseAPIEntry['assets'] = [];
 
@@ -166,9 +173,9 @@ describe(K3sHelper, () => {
     // Override cache reading to return a fake existing cache.
     // The first read returns nothing to trigger a synchronous update;
     // the rest of the reads return mocked values.
-    subject['readCache'] = jest.fn()
+    jest.spyOn(subject, 'readCache' as any)
       .mockResolvedValueOnce(undefined)
-      .mockImplementation(function(this: K3sHelper) {
+      .mockImplementation(function(this: InstanceType<typeof K3sHelper>) {
         const result = new ChannelMapping();
 
         for (const [version, tags] of Object.entries({
@@ -190,7 +197,7 @@ describe(K3sHelper, () => {
     subject['delayForWaitLimiting'] = jest.fn(() => Promise.resolve());
 
     // Fake out the results
-    jest.mocked(fetch)
+    modules['node-fetch'].default
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['channelApiUrl']);
 
@@ -224,7 +231,7 @@ describe(K3sHelper, () => {
         expect(url).toEqual('url');
 
         return Promise.resolve(new FetchResponse(
-          null,
+          undefined,
           { status: 403, headers: { 'X-RateLimit-Remaining': '0' } },
         ));
       })
@@ -247,7 +254,7 @@ describe(K3sHelper, () => {
     subject.networkReady();
 
     await subject.initialize();
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(modules['node-fetch'].default).toHaveBeenCalledTimes(4);
     expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);
     expect(await subject.availableVersions).toEqual([
       new SemanticVersionEntry(new semver.SemVer('v1.99.3+k3s3'), ['stable']),
@@ -269,9 +276,9 @@ describe(K3sHelper, () => {
     // Override cache reading to return a fake existing cache.
     // The first read returns nothing to trigger a synchronous update;
     // the rest of the reads return mocked values.
-    subject['readCache'] = jest.fn()
+    jest.spyOn(subject, 'readCache' as any)
       .mockResolvedValueOnce(undefined)
-      .mockImplementation(function(this: K3sHelper) {
+      .mockImplementation(function(this: InstanceType<typeof K3sHelper>) {
         const result = new ChannelMapping();
 
         for (const [version, tags] of Object.entries({
@@ -305,7 +312,7 @@ describe(K3sHelper, () => {
     subject['writeCache'] = jest.fn(() => Promise.resolve());
 
     // Fake out the results
-    jest.mocked(fetch)
+    modules['node-fetch'].default
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['channelApiUrl']);
 
@@ -354,7 +361,7 @@ describe(K3sHelper, () => {
     subject.networkReady();
 
     await subject.initialize();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(modules['node-fetch'].default).toHaveBeenCalledTimes(2);
     const availableVersions = await subject.availableVersions;
 
     expect(availableVersions).toEqual([

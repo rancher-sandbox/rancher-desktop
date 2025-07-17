@@ -32,7 +32,7 @@ export class Screenshots {
     this.page = page;
     const { directory, log } = opt;
 
-    this.directory = path.resolve(__dirname, 'output', os.platform(), directory);
+    this.directory = path.resolve(import.meta.dirname, 'output', os.platform(), directory);
     this.log = log;
   }
 
@@ -83,7 +83,7 @@ export class Screenshots {
   }
 
   protected async screenshotWindows(outPath: string, includeAll: boolean) {
-    const script = path.resolve(__dirname, 'screenshot.ps1');
+    const script = path.resolve(import.meta.dirname, 'screenshot.ps1');
     const args = [script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`];
 
     if (!includeAll) {

@@ -30,7 +30,7 @@ test.describe('WSL Integrations', () => {
   let preferencesWindow: Page;
 
   test.beforeAll(async() => {
-    const stubDir = path.resolve(__dirname, '..', 'src', 'go', 'mock-wsl');
+    const stubDir = path.resolve(import.meta.dirname, '..', 'src', 'go', 'mock-wsl');
 
     workdir = await fs.promises.mkdtemp(
       path.join(os.tmpdir(), 'rd-test-wsl-integration-'));
