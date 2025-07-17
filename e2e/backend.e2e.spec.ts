@@ -25,8 +25,8 @@ test.describe.serial('KubernetesBackend', () => {
       virtualMachine: {
         mount: {
           type: MountType.REVERSE_SSHFS,
-        }
-      }
+        },
+      },
     });
   });
 
@@ -163,7 +163,7 @@ test.describe.serial('KubernetesBackend', () => {
         expectedDefinition['virtualMachine.memoryInGB'] = false;
       }
 
-      const expected: Record<string, {current: any, desired: any, severity: 'reset' | 'restart'}> = {};
+      const expected: Record<string, { current: any, desired: any, severity: 'reset' | 'restart' }> = {};
 
       for (const [key, reset] of Object.entries(expectedDefinition)) {
         const entry = {

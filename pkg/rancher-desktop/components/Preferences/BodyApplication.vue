@@ -87,7 +87,7 @@ export default defineComponent({
     <div class="application-content">
       <component
         v-bind="$attrs"
-        :is="`preferences-application-${ activeTab }`"
+        :is="`preferences-application-${activeTab}`"
         :preferences="preferences"
       />
     </div>

@@ -24,7 +24,7 @@ export class Element {
     return new Element(tag, attribs ?? {}, ...children.flat().filter(x => x));
   }
 
-  tag: string;
+  tag:     string;
   attribs: Record<string, string>;
 
   children: (Element | string)[];
@@ -79,16 +79,16 @@ const ShortcutProperty = 'ShortcutProperty';
 /**
  * A structure representing the files and subdirectories within a directory.
  */
-type directory = {
+interface directory {
   /** The identifier for this directory. */
-  id: string;
+  id:          string;
   /** The name of this directory, as the path relative to appDir. */
-  name: string;
+  name:        string;
   /** Child directories. */
   directories: directory[];
   /** The regular files within this directory */
-  files: { name: string, id: string }[];
-};
+  files:       { name: string, id: string }[];
+}
 
 /** Walk the given directory, determining what files exist. */
 function walk(root: string): Promise<directory> {

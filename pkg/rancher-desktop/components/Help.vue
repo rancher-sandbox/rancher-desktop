@@ -38,11 +38,11 @@ export default defineComponent({
     <i
       v-tooltip="{
         content: tooltip,
-        placement: 'left'
+        placement: 'left',
       }"
       class="icon icon-question-mark"
       :class="{
-        disabled
+        disabled,
       }"
       @click="openUrl"
     />

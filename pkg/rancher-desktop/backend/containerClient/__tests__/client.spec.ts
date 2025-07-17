@@ -13,7 +13,7 @@ const modules = mockModules({
   '@pkg/backend/containerClient/registry': {
     default: {
       getTags: jest.fn((_name: string) => Promise.resolve<string[]>([])),
-    }
+    },
   },
 });
 

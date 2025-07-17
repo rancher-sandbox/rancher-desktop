@@ -11,9 +11,9 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { escapeHtml } from '@pkg/utils/string';
 
 interface Data {
-  snapshotEvent: SnapshotEvent | null;
+  snapshotEvent:            SnapshotEvent | null;
   snapshotsPollingInterval: ReturnType<typeof setInterval> | null;
-  isEmpty: boolean;
+  isEmpty:                  boolean;
 }
 
 export default defineComponent({
@@ -89,10 +89,10 @@ export default defineComponent({
         class="banner"
         :color="snapshotEvent.result"
         :closable="true"
-        @close="snapshotEvent=null"
+        @close="snapshotEvent = null"
       >
         <span
-          v-clean-html="t(`snapshots.info.${ snapshotEvent.type }.${ snapshotEvent.result }`,
+          v-clean-html="t(`snapshots.info.${snapshotEvent.type}.${snapshotEvent.result}`,
                           { snapshot: escapeHtml(snapshotEvent.snapshotName), error: snapshotEvent.error }, true)"
           class="event-message"
         />
@@ -121,8 +121,7 @@ export default defineComponent({
           :icon="t('snapshots.empty.icon')"
           :heading="t('snapshots.empty.heading')"
           :body="t('snapshots.empty.body')"
-        >
-        </empty-state>
+        />
       </div>
     </div>
   </div>

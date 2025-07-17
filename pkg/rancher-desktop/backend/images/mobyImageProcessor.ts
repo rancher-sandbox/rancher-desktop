@@ -86,7 +86,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
     return Promise.resolve();
   }
 
-  getNamespaces(): Promise<Array<string>> {
+  getNamespaces(): Promise<string[]> {
     throw new Error("docker doesn't support namespaces");
   }
 
@@ -99,7 +99,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
    */
 
   parse(data: string): imageProcessor.imageType[] {
-    const images: Array<imageProcessor.imageType> = [];
+    const images: imageProcessor.imageType[] = [];
     const records = data
       .split(/\r?\n/)
       .filter(line => line.trim().length > 0)

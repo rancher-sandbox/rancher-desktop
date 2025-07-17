@@ -166,9 +166,7 @@ export class Log {
   }
 }
 
-interface Module {
-  [topic: string]: Log;
-}
+type Module = Record<string, Log>;
 
 const logs = new Map<string, Log>();
 

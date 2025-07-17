@@ -1,14 +1,14 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class ContainerEngineNav {
-  readonly page: Page;
-  readonly nav: Locator;
-  readonly tabGeneral: Locator;
-  readonly tabAllowedImages: Locator;
-  readonly containerEngine: Locator;
-  readonly allowedImages: Locator;
+  readonly page:                  Page;
+  readonly nav:                   Locator;
+  readonly tabGeneral:            Locator;
+  readonly tabAllowedImages:      Locator;
+  readonly containerEngine:       Locator;
+  readonly allowedImages:         Locator;
   readonly allowedImagesCheckbox: Locator;
-  readonly enabledLockedField: Locator;
+  readonly enabledLockedField:    Locator;
 
   constructor(page: Page) {
     this.page = page;

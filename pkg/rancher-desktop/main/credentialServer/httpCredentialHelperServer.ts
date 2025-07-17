@@ -10,12 +10,12 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 
-export type ServerState = {
-  user: string;
+export interface ServerState {
+  user:     string;
   password: string;
-  port: number;
-  pid: number;
-};
+  port:     number;
+  pid:      number;
+}
 
 const SERVER_PORT = 6109;
 const console = Logging.server;
@@ -49,7 +49,7 @@ export function getServerCredentialsPath(): string {
 }
 
 function ensureEndsWithNewline(s: string) {
-  return !s || /\n$/.test(s) ? s : `${ s }\n`;
+  return !s || s.endsWith('\n') ? s : `${ s }\n`;
 }
 
 export class HttpCredentialHelperServer {
@@ -153,7 +153,7 @@ export class HttpCredentialHelperServer {
       erase: requireNoOutput,
       store: requireNoOutput,
     };
-    const checkerFn: checkerFnType|undefined = checkers[commandName];
+    const checkerFn: checkerFnType | undefined = checkers[commandName];
 
     if (request.method !== 'POST') {
       requestCheckError = `Expecting a POST method for the credential-server list request, received ${ request.method }`;

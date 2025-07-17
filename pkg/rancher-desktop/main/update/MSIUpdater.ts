@@ -65,7 +65,7 @@ export default class MsiUpdater extends NsisUpdater {
   // Verify that the given file is signed by the expected entity (as configured
   // in electron-builder.yml).
   private async verifySignature_(destinationFile: string): Promise<string | null> {
-    let publisherName: string | Array<string> | null;
+    let publisherName: string | string[] | null;
 
     try {
       const configOnDisk: Lazy<any> = (this as any).configOnDisk;

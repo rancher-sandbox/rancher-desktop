@@ -130,8 +130,8 @@ describe(K3sHelper, () => {
     const subject = new K3sHelper('x86_64');
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
     const versions: Record<string, SemanticVersionEntry> = {
-      '1.99.3': new SemanticVersionEntry(semver.parse('1.99.3+k3s1') as semver.SemVer, ['stable']),
-      '2.3.4':  new SemanticVersionEntry(semver.parse('2.3.4+k3s3') as semver.SemVer),
+      '1.99.3': new SemanticVersionEntry(semver.parse('1.99.3+k3s1')!, ['stable']),
+      '2.3.4':  new SemanticVersionEntry(semver.parse('2.3.4+k3s3')!),
     };
     const versionStrings = Object.values(versions)
       .map(v => v.version)
@@ -145,7 +145,7 @@ describe(K3sHelper, () => {
       await subject['writeCache']();
 
       const actual = JSON.parse(await fs.promises.readFile(subject['cachePath'], 'utf8'));
-      const { versions: actualStrings, channels }: {versions: string[], channels: {[k: string]: string}} = actual;
+      const { versions: actualStrings, channels }: { versions: string[], channels: Record<string, string> } = actual;
 
       expect(actual).toHaveProperty('cacheVersion');
       expect(semver.sort(actualStrings)).toEqual(versionStrings);
@@ -436,7 +436,7 @@ describe(K3sHelper, () => {
 
     test.each(table)('%s', (title: string, desiredVersion: string, cachedFilenames: readonly [string, string, string, string], expected: string) => {
       const desiredSemver = new semver.SemVer(desiredVersion);
-      const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames as unknown as Array<string>);
+      const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames as unknown as string[]);
 
       expect(selectedSemVer).toHaveProperty('raw', expected);
     });

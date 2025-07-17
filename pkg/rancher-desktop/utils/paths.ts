@@ -10,35 +10,35 @@ import electron from 'electron';
 
 export interface Paths {
   /** appHome: the location of the main appdata directory. */
-  appHome: string;
+  appHome:                 string;
   /** altAppHome is a secondary directory for application data. */
-  altAppHome: string;
+  altAppHome:              string;
   /** Directory which holds configuration. */
-  config: string;
+  config:                  string;
   /** Directory which holds logs. */
-  logs: string;
+  logs:                    string;
   /** Directory which holds caches that may be removed. */
-  cache: string;
+  cache:                   string;
   /** Directory that holds resource files in the RD installation. */
-  resources: string;
+  resources:               string;
   /** Directory holding Lima state (Unix-specific). */
-  lima: string;
+  lima:                    string;
   /** Directory holding provided binary resources */
-  integration: string;
+  integration:             string;
   /** Deployment Profile System-wide startup settings path. */
   deploymentProfileSystem: string;
   /** Deployment Profile User startup settings path. */
-  deploymentProfileUser: string;
+  deploymentProfileUser:   string;
   /** Directory that will hold extension data. */
-  readonly extensionRoot: string;
+  readonly extensionRoot:  string;
   /** Directory holding the WSL distribution (Windows-specific). */
-  wslDistro: string;
+  wslDistro:               string;
   /** Directory holding the WSL data distribution (Windows-specific). */
-  wslDistroData: string;
+  wslDistroData:           string;
   /** Directory that holds snapshots. */
-  snapshots: string;
+  snapshots:               string;
   /** Directory that holds user-managed containerd-shims. */
-  containerdShims: string;
+  containerdShims:         string;
 }
 
 export class UnixPaths implements Paths {
@@ -125,7 +125,7 @@ export function getRdctlPath(): string | null {
 
 function getPaths(): Paths {
   const rdctlPath = getRdctlPath();
-  let pathsData: Partial<Paths>|undefined;
+  let pathsData: Partial<Paths> | undefined;
   let errorMsg = '';
 
   if (rdctlPath) {

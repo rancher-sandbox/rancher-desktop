@@ -5,9 +5,9 @@
 import Cookies from 'cookie-universal';
 import { createApp } from 'vue';
 
+import usePlugins from './plugins';
 import router from './router';
 import store from './store';
-import usePlugins from './plugins';
 
 // This does just the Vuex part of cookie-universal-nuxt, which is all we need.
 (store as any).$cookies = Cookies();

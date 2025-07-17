@@ -1,8 +1,9 @@
 <script>
+import findIndex from 'lodash/findIndex';
 import head from 'lodash/head';
+
 import { addObject, removeObject, findBy } from '@pkg/utils/array';
 import { sortBy } from '@pkg/utils/sort';
-import findIndex from 'lodash/findIndex';
 
 export default {
   name: 'Tabbed',
@@ -17,23 +18,23 @@ export default {
 
     sideTabs: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     hideSingleTab: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     showTabsAddRemove: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     // whether or not to scroll to the top of the new tab on tab change. This is particularly ugly with side tabs
     scrollOnChange: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     useHash: {
@@ -55,7 +56,7 @@ export default {
     tabsOnly: {
       type:    Boolean,
       default: false,
-    }
+    },
   },
 
   provide() {
@@ -76,7 +77,7 @@ export default {
 
       removeTab(tab) {
         removeObject(tabs, tab);
-      }
+      },
     };
   },
 
@@ -96,7 +97,7 @@ export default {
     // hide tabs based on tab count IF flag is active
     hideTabs() {
       return this.hideSingleTab && this.sortedTabs.length === 1;
-    }
+    },
   },
 
   watch: {
@@ -104,7 +105,7 @@ export default {
       handler(tabs) {
         const {
           defaultTab,
-          useHash
+          useHash,
         } = this;
         const activeTab = tabs.find((t) => t.active);
 
@@ -236,7 +237,7 @@ export default {
 
 <template>
   <div
-    :class="{'side-tabs': !!sideTabs, 'tabs-only': tabsOnly }"
+    :class="{ 'side-tabs': !!sideTabs, 'tabs-only': tabsOnly }"
     data-testid="tabbed"
   >
     <ul
@@ -244,7 +245,7 @@ export default {
       ref="tablist"
       role="tablist"
       class="tabs"
-      :class="{'clearfix':!sideTabs, 'vertical': sideTabs, 'horizontal': !sideTabs}"
+      :class="{ clearfix: !sideTabs, vertical: sideTabs, horizontal: !sideTabs }"
       tabindex="0"
       data-testid="tabbed-block"
       @keydown.right.prevent="selectNext(1)"
@@ -257,7 +258,7 @@ export default {
         :id="tab.name"
         :key="tab.name"
         :data-testid="tab.name"
-        :class="{tab: true, active: tab.active, disabled: tab.disabled, error: (tab.error)}"
+        :class="{ tab: true, active: tab.active, disabled: tab.disabled, error: (tab.error) }"
         role="presentation"
       >
         <a

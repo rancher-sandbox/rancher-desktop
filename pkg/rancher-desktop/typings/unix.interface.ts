@@ -1,7 +1,7 @@
 export interface UnixError {
-  stdout: string;
-  stderr: string;
-  code: string;
+  stdout:  string;
+  stderr:  string;
+  code:    string;
   message: string;
 }
 
@@ -14,10 +14,10 @@ export const isUnixError = (val: any): val is UnixError => {
 
 export interface NodeError {
   syscall: string;
-  path: string;
-  code: string;
+  path:    string;
+  code:    string;
   message: string;
-  errno: number;
+  errno:   number;
 }
 
 export const isNodeError = (val: any): val is NodeError => {

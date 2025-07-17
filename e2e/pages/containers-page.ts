@@ -1,10 +1,10 @@
-import {Locator, Page, expect} from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 type ActionString = 'logs' | 'stop' | 'start' | 'delete';
 
 export class ContainersPage {
-  readonly page: Page;
-  readonly table: Locator;
+  readonly page:              Page;
+  readonly table:             Locator;
   readonly namespaceSelector: Locator;
 
   constructor(page: Page) {
@@ -14,12 +14,12 @@ export class ContainersPage {
   }
 
   getContainerRow(containerId: string) {
-    return this.table.locator(`tr.main-row[data-node-id="${containerId}"]`);
+    return this.table.locator(`tr.main-row[data-node-id="${ containerId }"]`);
   }
 
   async waitForContainerToAppear(containerId: string, timeout = 30_000) {
     const containerRow = this.getContainerRow(containerId);
-    await expect(containerRow).toBeVisible({timeout});
+    await expect(containerRow).toBeVisible({ timeout });
   }
 
   async clickContainerAction(containerId: string, action: ActionString) {
@@ -29,13 +29,13 @@ export class ContainersPage {
 
     // Wait for the action menu to appear and click the action by text
     const actionText = {
-      logs: 'Logs',
-      stop: 'Stop',
-      start: 'Start',
+      logs:   'Logs',
+      stop:   'Stop',
+      start:  'Start',
       delete: 'Delete',
     }[action];
 
-    const actionLocator = this.page.getByTestId("actionmenu").getByText(actionText, {exact: true});
+    const actionLocator = this.page.getByTestId('actionmenu').getByText(actionText, { exact: true });
     await actionLocator.click();
   }
 
@@ -61,7 +61,6 @@ export class ContainersPage {
   }
 
   async waitForTableToLoad() {
-    await this.table.waitFor({state: 'visible'});
+    await this.table.waitFor({ state: 'visible' });
   }
-
 }

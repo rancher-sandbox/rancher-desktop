@@ -7,25 +7,25 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import logging from '@pkg/utils/logging';
 import { executable } from '@pkg/utils/resources';
 
-export type WSLVersionInfo = {
-    installed: boolean;
-    inbox: boolean;
+export interface WSLVersionInfo {
+  installed: boolean;
+  inbox:     boolean;
 
-    has_kernel: boolean;
-    outdated_kernel: boolean;
-    version: {
-        major: number;
-        minor: number;
-        build: number;
-        revision: number;
-    };
-    kernel_version: {
-      major: number;
-      minor: number;
-      build: number;
-      revision: number;
-    }
-};
+  has_kernel:      boolean;
+  outdated_kernel: boolean;
+  version: {
+    major:    number;
+    minor:    number;
+    build:    number;
+    revision: number;
+  };
+  kernel_version: {
+    major:    number;
+    minor:    number;
+    build:    number;
+    revision: number;
+  }
+}
 
 const console = logging['wsl-version'];
 

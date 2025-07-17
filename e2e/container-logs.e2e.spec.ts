@@ -1,8 +1,8 @@
-import {expect, test, ElectronApplication, Page} from '@playwright/test';
+import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
-import {NavPage} from './pages/nav-page';
-import {ContainerLogsPage} from './pages/container-logs-page';
-import {startSlowerDesktop, teardown, tool} from './utils/TestUtils';
+import { ContainerLogsPage } from './pages/container-logs-page';
+import { NavPage } from './pages/nav-page';
+import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 let page: Page;
 
@@ -13,8 +13,8 @@ test.describe.serial('Container Logs Tests', () => {
 
   test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
-      kubernetes: {enabled: false},
-      containerEngine: {allowedImages: {enabled: false}}
+      kubernetes:      { enabled: false },
+      containerEngine: { allowedImages: { enabled: false } },
     });
 
     const navPage = new NavPage(page);
@@ -31,7 +31,7 @@ test.describe.serial('Container Logs Tests', () => {
     await teardown(electronApp, testInfo);
   });
 
-  test('should navigate to containers page', async () => {
+  test('should navigate to containers page', async() => {
     const navPage = new NavPage(page);
     const containersPage = await navPage.navigateTo('Containers');
 
@@ -39,11 +39,11 @@ test.describe.serial('Container Logs Tests', () => {
     await containersPage.waitForTableToLoad();
   });
 
-  test('should create and display test container', async () => {
-    testContainerName = `test-logs-container-${Date.now()}`;
+  test('should create and display test container', async() => {
+    testContainerName = `test-logs-container-${ Date.now() }`;
 
     const output = await tool('docker', 'run', '--detach', '--name', testContainerName,
-      'alpine', 'sh', '-c', 'echo "Starting"; for i in $(seq 1 10); do echo "L$i: msg$i"; done; echo "Finished"');    testContainerId = output.trim();
+      'alpine', 'sh', '-c', 'echo "Starting"; for i in $(seq 1 10); do echo "L$i: msg$i"; done; echo "Finished"'); testContainerId = output.trim();
 
     expect(testContainerId).toMatch(/^[a-f0-9]{64}$/);
 
@@ -56,10 +56,10 @@ test.describe.serial('Container Logs Tests', () => {
     await containersPage.waitForContainerToAppear(testContainerId);
     await containersPage.viewContainerLogs(testContainerId);
 
-    await page.waitForURL(`**/containers/logs/${testContainerId}`, {timeout: 10_000});
+    await page.waitForURL(`**/containers/logs/${ testContainerId }`, { timeout: 10_000 });
   });
 
-  test('should display container logs page', async () => {
+  test('should display container logs page', async() => {
     const containerLogsPage = new ContainerLogsPage(page);
 
     await expect(containerLogsPage.containerInfo).toBeVisible();
@@ -68,7 +68,7 @@ test.describe.serial('Container Logs Tests', () => {
     await expect(containerLogsPage.loadingIndicator).not.toBeVisible();
   });
 
-  test('should show container information', async () => {
+  test('should show container information', async() => {
     const containerLogsPage = new ContainerLogsPage(page);
 
     await expect(containerLogsPage.containerInfo).toBeVisible();
@@ -77,15 +77,15 @@ test.describe.serial('Container Logs Tests', () => {
     await expect(containerLogsPage.containerState).not.toBeEmpty();
   });
 
-  test('should display logs content', async () => {
+  test('should display logs content', async() => {
     const containerLogsPage = new ContainerLogsPage(page);
 
     await containerLogsPage.waitForLogsToLoad();
 
     await expect(containerLogsPage.terminal).toContainText('L1: msg1');
-});
+  });
 
-  test('should support log search', async () => {
+  test('should support log search', async() => {
     const containerLogsPage = new ContainerLogsPage(page);
 
     await expect(containerLogsPage.searchInput).toBeVisible();
@@ -97,7 +97,7 @@ test.describe.serial('Container Logs Tests', () => {
     await expect(searchHighlight).toBeVisible();
 
     const highlightedRow = containerLogsPage.terminal.locator('.xterm-rows div', {
-      has: page.locator('.xterm-decoration-top')
+      has: page.locator('.xterm-decoration-top'),
     });
 
     await expect(highlightedRow).toContainText('L1: msg1');
@@ -120,8 +120,8 @@ test.describe.serial('Container Logs Tests', () => {
     await expect(searchHighlight).not.toBeVisible();
   });
 
-  test('should handle terminal scrolling', async () => {
-    const scrollTestContainerName = `test-scroll-container-${Date.now()}`;
+  test('should handle terminal scrolling', async() => {
+    const scrollTestContainerName = `test-scroll-container-${ Date.now() }`;
     let scrollTestContainerId: string;
 
     try {
@@ -138,7 +138,7 @@ test.describe.serial('Container Logs Tests', () => {
       await containersPage.waitForContainerToAppear(scrollTestContainerId);
       await containersPage.viewContainerLogs(scrollTestContainerId);
 
-      await page.waitForURL(`**/containers/logs/${scrollTestContainerId}`, {timeout: 10_000});
+      await page.waitForURL(`**/containers/logs/${ scrollTestContainerId }`, { timeout: 10_000 });
 
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();
@@ -169,8 +169,8 @@ test.describe.serial('Container Logs Tests', () => {
     }
   });
 
-  test('should output logs if container not exited', async () => {
-    const longRunningContainerName = `test-not-exited-logs-${Date.now()}`;
+  test('should output logs if container not exited', async() => {
+    const longRunningContainerName = `test-not-exited-logs-${ Date.now() }`;
     let longRunningContainerId: string;
 
     try {
@@ -187,7 +187,7 @@ test.describe.serial('Container Logs Tests', () => {
       await containersPage.waitForContainerToAppear(longRunningContainerId);
       await containersPage.viewContainerLogs(longRunningContainerId);
 
-      await page.waitForURL(`**/containers/logs/${longRunningContainerId}`, {timeout: 10000});
+      await page.waitForURL(`**/containers/logs/${ longRunningContainerId }`, { timeout: 10000 });
 
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();

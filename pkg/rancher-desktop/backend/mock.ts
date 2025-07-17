@@ -34,8 +34,8 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
   readonly kubeBackend: KubernetesBackend = new MockKubernetesBackend();
   readonly executor = this;
   readonly backend = 'mock';
-  cfg: BackendSettings | undefined;
-  state: State = State.STOPPED;
+  cfg:                  BackendSettings | undefined;
+  state:                State = State.STOPPED;
   readonly cpus = Promise.resolve(1);
   readonly memory = Promise.resolve(1);
   progress = { current: 0, max: 0 };
@@ -167,8 +167,8 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
   // #endregion
 
   // #region Events
-  eventNames(): Array<keyof BackendEvents> {
-    return super.eventNames() as Array<keyof BackendEvents>;
+  eventNames(): (keyof BackendEvents)[] {
+    return super.eventNames() as (keyof BackendEvents)[];
   }
 
   listeners<eventName extends keyof BackendEvents>(
@@ -241,8 +241,8 @@ class MockKubernetesBackend extends events.EventEmitter implements KubernetesBac
   }
 
   // #region Events
-  eventNames(): Array<keyof KubernetesBackendEvents> {
-    return super.eventNames() as Array<keyof KubernetesBackendEvents>;
+  eventNames(): (keyof KubernetesBackendEvents)[] {
+    return super.eventNames() as (keyof KubernetesBackendEvents)[];
   }
 
   listeners<eventName extends keyof KubernetesBackendEvents>(

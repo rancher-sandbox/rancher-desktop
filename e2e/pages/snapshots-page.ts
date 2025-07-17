@@ -1,9 +1,9 @@
 import { Locator, Page } from '@playwright/test';
 
 export class SnapshotsPage {
-  readonly page: Page;
-  readonly snapshotsPage: Locator;
-  readonly createSnapshotButton: Locator;
+  readonly page:                    Page;
+  readonly snapshotsPage:           Locator;
+  readonly createSnapshotButton:    Locator;
   readonly createSnapshotNameInput: Locator;
   readonly createSnapshotDescInput: Locator;
 

@@ -31,8 +31,8 @@ import { RecursiveReadonly } from '@pkg/utils/typeUtils';
 const schemaPath = 'pkg/rancher-desktop/assets/specs/command-api.yaml';
 
 interface schemaObject {
-  type: 'object';
-  properties?: Record<string, schemaNode>;
+  type:                  'object';
+  properties?:           Record<string, schemaNode>;
   additionalProperties?: boolean;
 }
 interface schemaString {
@@ -45,7 +45,7 @@ interface schemaBoolean {
   type: 'boolean';
 }
 interface schemaArray {
-  type: 'array';
+  type:  'array';
   items: schemaNode;
 }
 interface schemaMissing {
@@ -112,7 +112,7 @@ function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: 
       }
       break;
     }
-    const schemaProps = schema.properties ?? <Record<string, schemaNode>>{};
+    const schemaProps = schema.properties ?? {} as Record<string, schemaNode>;
 
     for (const prop in setting) {
       const propSchema = schemaProps[prop] ?? { type: '<missing>' };

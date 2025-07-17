@@ -22,29 +22,29 @@ import { defined } from '@pkg/utils/typeUtils';
  * ComposeFile describes the contents of a compose file.
  * @note The typing here is incomplete.
  */
-type ComposeFile = {
-  name?: string;
+interface ComposeFile {
+  name?:    string;
   services: Record<string, {
-    image?: string;
+    image?:       string;
     environment?: string[];
-    command?: string;
+    command?:     string;
     volumes?: (string | {
-      type: string;
-      source?: string;
-      target: string;
+      type:       string;
+      source?:    string;
+      target:     string;
       read_only?: boolean;
       bind?: {
-        propagation?: string;
+        propagation?:      string;
         create_host_path?: boolean;
-        selinux?: 'z' | 'Z';
+        selinux?:          'z' | 'Z';
       };
-      volume?: { nocopy?: boolean };
-      tmpfs?: { size?: number | string; mode?: number };
+      volume?:      { nocopy?: boolean };
+      tmpfs?:       { size?: number | string; mode?: number };
       consistency?: string;
     })[];
   }>;
   volumes?: Record<string, any>;
-};
+}
 
 // ScriptType is any key in ExtensionMetadata.host that starts with `x-rd-`.
 type ScriptType = keyof {
@@ -95,14 +95,14 @@ export class ExtensionImpl implements Extension {
   }
 
   /** The extension ID (the image ID), excluding the tag */
-  id: string;
+  id:                        string;
   /** The extension image tag */
-  version: string;
+  version:                   string;
   /** The directory this extension will be installed into */
-  readonly dir: string;
+  readonly dir:              string;
   protected readonly client: ContainerEngineClient;
-  protected _metadata: Promise<ExtensionMetadata> | undefined;
-  protected _labels: Promise<Record<string, string>> | undefined;
+  protected _metadata:       Promise<ExtensionMetadata> | undefined;
+  protected _labels:         Promise<Record<string, string>> | undefined;
   /** The (nerdctl) namespace to use; shared with ExtensionManagerImpl */
   static readonly extensionNamespace = 'rancher-desktop-extensions';
   protected readonly VERSION_FILE = 'version.txt';
@@ -137,7 +137,7 @@ export class ExtensionImpl implements Extension {
       throw new ExtensionErrorImpl(ExtensionErrorCode.INVALID_METADATA, 'Invalid extension: missing icon');
     })();
 
-    return this._metadata as Promise<ExtensionMetadata>;
+    return this._metadata;
   }
 
   /** Extension image labels */
@@ -163,7 +163,7 @@ export class ExtensionImpl implements Extension {
       }
     })();
 
-    return this._labels as Promise<Record<string, string>>;
+    return this._labels;
   }
 
   protected _iconName: Promise<string> | undefined;
@@ -174,7 +174,7 @@ export class ExtensionImpl implements Extension {
       return `icon${ path.extname((await this.metadata).icon) }`;
     })();
 
-    return this._iconName as Promise<string>;
+    return this._iconName;
   }
 
   /**
@@ -589,7 +589,7 @@ export class ExtensionImpl implements Extension {
       return yaml.parse(await fs.promises.readFile(filePath, 'utf-8'));
     })();
 
-    return this._composeFile as Promise<any>;
+    return this._composeFile;
   }
 
   async getBackendPort() {

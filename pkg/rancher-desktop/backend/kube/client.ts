@@ -26,8 +26,8 @@ function isClientError(val: any): val is clientError {
  * just break silently.
  */
 class ErrorSuppressingStdin extends stream.Readable {
-  #socket: net.Socket;
-  #listeners: { [s: string]: (...args: any[]) => void; } = {};
+  #socket:    net.Socket;
+  #listeners: Record<string, (...args: any[]) => void> = {};
   /**
    * @param socket The underlying socket to forward to.
    */
@@ -117,7 +117,7 @@ class ForwardingMap {
   /**
    * Iterate through the entries.
    */
-  *[Symbol.iterator](): IterableIterator<[string, string, number | string, net.Server]> {
+  * [Symbol.iterator](): IterableIterator<[string, string, number | string, net.Server]> {
     const iter = this.map[Symbol.iterator]();
 
     for (const [key, server] of iter) {
@@ -161,18 +161,18 @@ class WrappedWatch extends k8s.Watch {
 }
 
 /** A single port in a service returned by KubeClient.listServices() */
-export type ServiceEntry = {
+export interface ServiceEntry {
   /** The namespace the service is within. */
-  namespace?: string;
+  namespace?:  string;
   /** The name of the service. */
-  name: string;
+  name:        string;
   /** The name of the port within the service. */
-  portName?: string;
+  portName?:   string;
   /** The internal port number (or name) of the service. */
-  port: number | string;
+  port:        number | string;
   /** The forwarded port on localhost (on the host), if any. */
   listenPort?: number;
-};
+}
 
 /**
  * KubeClient is a Kubernetes client that will _only_ manage the cluster we spin
@@ -337,7 +337,7 @@ export class KubeClient extends events.EventEmitter {
     const address = addresses.find(address => address.targetRef?.kind === 'Pod');
     const target = address?.targetRef;
 
-    if (!target || !target.name || !target.namespace) {
+    if (!target?.name || !target.namespace) {
       return null;
     }
 

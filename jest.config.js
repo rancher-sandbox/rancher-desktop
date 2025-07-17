@@ -4,12 +4,12 @@ import { TS_EXT_TO_TREAT_AS_ESM, ESM_TS_TRANSFORM_PATTERN } from 'ts-jest';
 /** @type {import('jest').Config} */
 export default {
   transform: {
-    [ESM_TS_TRANSFORM_PATTERN]: ['ts-jest', { useESM: true } ],
-    '^.+\\.vue$': './pkg/rancher-desktop/utils/testUtils/vue-jest.js',
+    [ESM_TS_TRANSFORM_PATTERN]: ['ts-jest', { useESM: true }],
+    '^.+\\.vue$':               './pkg/rancher-desktop/utils/testUtils/vue-jest.js',
   },
   transformIgnorePatterns: [],
-  extensionsToTreatAsEsm: [...TS_EXT_TO_TREAT_AS_ESM, '.vue'],
-  moduleFileExtensions: [
+  extensionsToTreatAsEsm:  [...TS_EXT_TO_TREAT_AS_ESM, '.vue'],
+  moduleFileExtensions:    [
     'js',
     'json',
     'node', // For native modules, e.g. fs-xattr
@@ -36,7 +36,7 @@ export default {
   testEnvironmentOptions: {
     customExportConditions: [
       'node',
-      'node-addons'
+      'node-addons',
     ],
   },
   testPathIgnorePatterns: [

@@ -42,7 +42,7 @@ test.describe('Locked fields', () => {
   let electronApp: ElectronApplication;
   let page: Page;
   const appPath = path.dirname(import.meta.dirname);
-  let deploymentProfile: DeploymentProfileType|null = null;
+  let deploymentProfile: DeploymentProfileType | null = null;
 
   function rdctlPath() {
     return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
