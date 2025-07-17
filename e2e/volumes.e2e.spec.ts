@@ -10,7 +10,7 @@ test.describe.serial('Volumes Tests', () => {
   let electronApp: ElectronApplication;
   let testVolumeName: string;
 
-  test.beforeAll(async ({}, testInfo) => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
       kubernetes: {enabled: false},
       containerEngine: {allowedImages: {enabled: false}}
@@ -20,7 +20,7 @@ test.describe.serial('Volumes Tests', () => {
     await navPage.progressBecomesReady();
   });
 
-  test.afterAll(async ({}, testInfo) => {
+  test.afterAll(async({ colorScheme }, testInfo) => {
     if (testVolumeName) {
       try {
         await tool('docker', 'volume', 'rm', testVolumeName);

@@ -11,7 +11,7 @@ test.describe.serial('Container Logs Tests', () => {
   let testContainerId: string;
   let testContainerName: string;
 
-  test.beforeAll(async ({}, testInfo) => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
       kubernetes: {enabled: false},
       containerEngine: {allowedImages: {enabled: false}}
@@ -21,7 +21,7 @@ test.describe.serial('Container Logs Tests', () => {
     await navPage.progressBecomesReady();
   });
 
-  test.afterAll(async ({}, testInfo) => {
+  test.afterAll(async({ colorScheme }, testInfo) => {
     if (testContainerId) {
       try {
         await tool('docker', 'rm', '-f', testContainerId);
