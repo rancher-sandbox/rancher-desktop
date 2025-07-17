@@ -1,5 +1,4 @@
-import type {ElectronApplication, Page} from '@playwright/test';
-import {expect, test} from '@playwright/test';
+import {ElectronApplication, Page, expect, test} from '@playwright/test';
 
 import {NavPage} from './pages/nav-page';
 import {VolumesPage} from './pages/volumes-page';
@@ -186,9 +185,7 @@ test.describe.serial('Volumes Tests', () => {
 
       await expect(volumesPage.errorBanner).toBeVisible();
 
-      const errorMessage = await volumesPage.errorBanner.textContent();
-      expect(errorMessage).toBeTruthy();
-      expect(errorMessage?.toLowerCase()).toContain('volume is in use');
+      await expect(volumesPage.errorBanner).toContainText(/volume is in use/i);
 
       await expect(volumesPage.getVolumeRow(volumeName)).toBeVisible();
 
