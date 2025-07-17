@@ -1,5 +1,4 @@
-import type {ElectronApplication, Page} from '@playwright/test';
-import {expect, test} from '@playwright/test';
+import {expect, test, ElectronApplication, Page} from '@playwright/test';
 
 import {NavPage} from './pages/nav-page';
 import {ContainerLogsPage} from './pages/container-logs-page';
@@ -91,7 +90,7 @@ test.describe.serial('Container Logs Tests', () => {
 
     await expect(containerLogsPage.searchInput).toBeVisible();
 
-    const searchTerm = 'Hello';
+    const searchTerm = 'msg';
     await containerLogsPage.searchLogs(searchTerm);
 
     const searchHighlight = page.locator('span.xterm-decoration-top');
@@ -101,17 +100,17 @@ test.describe.serial('Container Logs Tests', () => {
       has: page.locator('.xterm-decoration-top')
     });
 
-    await expect(highlightedRow).toContainText('Line 1: Hello');
+    await expect(highlightedRow).toContainText('L1: msg1');
 
     await containerLogsPage.searchNextButton.click();
 
     await expect(searchHighlight).toBeVisible();
-    await expect(highlightedRow).toContainText('Line 2: Hello');
+    await expect(highlightedRow).toContainText('L2: msg2');
 
     await containerLogsPage.searchPrevButton.click();
 
     await expect(searchHighlight).toBeVisible();
-    await expect(highlightedRow).toContainText('Line 1: Hello');
+    await expect(highlightedRow).toContainText('L1: msg1');
 
     await containerLogsPage.searchClearButton.click();
     await expect(containerLogsPage.searchInput).toBeEmpty();
@@ -176,7 +175,7 @@ test.describe.serial('Container Logs Tests', () => {
 
     try {
       const output = await tool('docker', 'run', '--detach', '--name', longRunningContainerName,
-        'alpine', 'sh', '-c', 'while true; do echo "Log message $(date)"; sleep 2; done');
+        'alpine', 'sh', '-c', 'while true; do echo "Log $(date +%s)"; sleep 2; done');
       longRunningContainerId = output.trim();
 
       const navPage = new NavPage(page);
@@ -194,9 +193,9 @@ test.describe.serial('Container Logs Tests', () => {
       await containerLogsPage.waitForLogsToLoad();
 
       const locator = containerLogsPage.terminal.locator('.xterm-screen');
-      await expect(locator.getByText(/Log message/).nth(1)).toBeVisible();
+      await expect(locator.getByText(/Log \d+/).nth(1)).toBeVisible();
 
-      await expect(containerLogsPage.terminal).toContainText('Log message');
+      await expect(containerLogsPage.terminal).toContainText('Log ');
 
       await tool('docker', 'rm', '-f', longRunningContainerId);
     } finally {
