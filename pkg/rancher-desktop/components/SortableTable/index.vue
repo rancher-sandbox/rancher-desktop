@@ -1181,6 +1181,7 @@ export default {
             :value="eventualSearchQuery"
             type="search"
             class="input-sm search-box"
+            data-testid="search-input"
             :placeholder="t('sortableTable.search')"
             @input="($plainInputEvent) => eventualSearchQuery = $plainInputEvent.target.value"
           >

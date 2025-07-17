@@ -1,21 +1,23 @@
 <template>
   <div class="container-logs">
 
-    <div class="container-info">
-      <span class="container-name">{{ containerName }}</span>
+    <div class="container-info" data-testid="container-info">
+      <span class="container-name" data-testid="container-name">{{ containerName }}</span>
       <badge-state
           :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
           :label="containerState"
+          data-testid="container-state"
       />
     </div>
 
-    <div class="search-widget">
+    <div class="search-widget" data-testid="search-widget">
       <i aria-hidden="true" class="icon icon-search search-icon"/>
       <input
           ref="searchInput"
           v-model="searchTerm"
           aria-label="Search in logs"
           class="search-input"
+          data-testid="search-input"
           placeholder="Search logs..."
           type="search"
           @input="performSearch"
@@ -25,6 +27,7 @@
           :disabled="!searchTerm"
           aria-label="Previous match"
           class="search-btn role-tertiary"
+          data-testid="search-prev-btn"
           title="Previous match"
           @click="searchPrevious"
       >
@@ -34,6 +37,7 @@
           :disabled="!searchTerm"
           aria-label="Next match"
           class="search-btn role-tertiary"
+          data-testid="search-next-btn"
           title="Next match"
           @click="searchNext"
       >
@@ -43,6 +47,7 @@
           :disabled="!searchTerm"
           aria-label="Clear search"
           class="search-close-btn role-tertiary"
+          data-testid="search-clear-btn"
           title="Clear search"
           @click="clearSearch"
       >
@@ -53,6 +58,7 @@
     <loading-indicator
         v-if="isLoading"
         class="content-state"
+        data-testid="loading-indicator"
     >
       {{ t('containers.logs.loading') }}
     </loading-indicator>
@@ -61,6 +67,7 @@
         v-else-if="error"
         class="content-state"
         color="error"
+        data-testid="error-message"
     >
       <span class="icon icon-info-circle icon-lg"/>
       {{ error }}
@@ -70,6 +77,7 @@
         v-else
         ref="terminalContainer"
         class="terminal-container"
+        data-testid="terminal"
     />
   </div>
 </template>

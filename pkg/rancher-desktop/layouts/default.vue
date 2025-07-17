@@ -20,7 +20,7 @@
     <div id="extension-spacer" class="extension" />
     <status-bar class="status-bar"></status-bar>
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
-    <ActionMenu />
+    <ActionMenu data-testid="actionmenu" />
   </div>
 </template>
 
