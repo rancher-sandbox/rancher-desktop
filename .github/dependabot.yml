@@ -36,9 +36,6 @@ updates:
     # ignore until we arrive a solution that uses it.
     dependency-name: "@rancher/shell"
     versions: [">0.1"]
-  - # fs-xattr 0.4.0 later are esm-only.
-    dependency-name: "fs-xattr"
-    versions: [">0.3"]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"
