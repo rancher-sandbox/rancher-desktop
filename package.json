@@ -175,7 +175,7 @@
   },
   "optionalDependencies": {
     "dmg-license": "1.0.11",
-    "fs-xattr": "0.3.1",
+    "fs-xattr": "0.4.0",
     "posix-node": "0.12.0"
   },
   "browserslist": [
