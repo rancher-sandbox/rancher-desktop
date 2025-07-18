@@ -10,7 +10,6 @@ import { NavPage } from './pages/nav-page';
 import { getAlternateSetting, startSlowerDesktop, teardown } from './utils/TestUtils';
 
 import { Settings, ContainerEngine, VMType, MountType } from '@pkg/config/settings';
-import fetch from '@pkg/utils/fetch';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveKeys } from '@pkg/utils/typeUtils';
 

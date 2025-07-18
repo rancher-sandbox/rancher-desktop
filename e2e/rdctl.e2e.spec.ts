@@ -24,7 +24,6 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import _ from 'lodash';
-import fetch from 'node-fetch';
 import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
@@ -50,7 +49,6 @@ import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, Page } from '@playwright/test';
-import type { RequestInit } from 'node-fetch';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
@@ -190,13 +188,13 @@ test.describe('Command server', () => {
 
   test('setting existing settings should be a no-op', async() => {
     let resp = await doRequest('/v1/settings');
-    const rawSettings = resp.body.read().toString();
+    const rawSettings = await resp.text();
 
     resp = await doRequest('/v1/settings', rawSettings, 'PUT');
     expect({
       ok:     resp.ok,
       status: resp.status,
-      body:   resp.body.read().toString(),
+      body:   await resp.text(),
     }).toEqual({
       ok:     true,
       status: 202,
@@ -249,7 +247,7 @@ test.describe('Command server', () => {
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    const body = resp2.body.read().toString();
+    const body = await resp2.text();
     const expectedWSL = {
       win32: `Proposed field "WSL.integrations" should be an object, got <ceci n'est pas un objet>.`,
       lima:  `Changing field "WSL.integrations" via the API isn't supported.`,
@@ -275,9 +273,7 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
-    const body = resp.body.read().toString();
-
-    expect(body).toContain('error processing JSON request block');
+    await expect(resp.text()).resolves.toContain('error processing JSON request block');
   });
 
   test('should reject empty payload, settings request', async() => {
@@ -285,9 +281,7 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
-    const body = resp.body.read().toString();
-
-    expect(body).toContain('no settings specified in the request');
+    await expect(resp.text()).resolves.toContain('no settings specified in the request');
   });
 
   test('version-only path of a nonexistent version should 404', async() => {
@@ -295,9 +289,7 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(404);
-    const body = resp.body.read().toString();
-
-    expect(body).toContain('Unknown command: GET /v99bottlesofbeeronthewall');
+    await expect(resp.text()).resolves.toContain('Unknown command: GET /v99bottlesofbeeronthewall');
   });
 
   test('should not restart on unrelated changes', async() => {
@@ -393,13 +385,13 @@ test.describe('Command server', () => {
 
   test('setting existing transient settings should be a no-op', async() => {
     let resp = await doRequest('/v1/transient_settings');
-    const rawSettings = resp.body.read().toString();
+    const rawSettings = await resp.text();
 
     resp = await doRequest('/v1/transient_settings', rawSettings, 'PUT');
     expect({
       ok:     resp.ok,
       status: resp.status,
-      body:   resp.body.read().toString(),
+      body:   await resp.text(),
     }).toEqual({
       ok:     true,
       status: 202,
@@ -526,9 +518,7 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
-    const body = resp.body.read().toString();
-
-    expect(body).toContain('error processing JSON request block');
+    await expect(resp.text()).resolves.toContain('error processing JSON request block');
   });
 
   test('should reject empty payload, transient settings request', async() => {
@@ -536,9 +526,7 @@ test.describe('Command server', () => {
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
-    const body = resp.body.read().toString();
-
-    expect(body).toContain('no settings specified in the request');
+    await expect(resp.text()).resolves.toContain('no settings specified in the request');
   });
 
   test.describe('v0 API', () => {
@@ -556,7 +544,7 @@ test.describe('Command server', () => {
           expect({
             ok:     resp.ok,
             status: resp.status,
-            body:   resp.body.read().toString(),
+            body:   await resp.text(),
           }).toEqual({
             ok:     false,
             status: 400,

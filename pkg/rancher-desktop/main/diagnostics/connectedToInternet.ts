@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import { net } from 'electron';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
@@ -33,7 +33,7 @@ async function checkNetworkConnectivity(): Promise<boolean> {
 
   try {
     // Using HTTP request that returns a 301 redirect response instead of a 20+ kB web page
-    const resp = await fetch('http://docs.rancherdesktop.io/', { signal: controller.signal, redirect: 'manual' });
+    const resp = await net.fetch('http://docs.rancherdesktop.io/', { signal: controller.signal, redirect: 'manual' });
     const location = resp.headers.get('Location') || '';
 
     // Verify that we get the original redirect and not a captive portal

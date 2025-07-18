@@ -11,8 +11,8 @@ import {
   CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir, ApiException,
 } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
+import { net } from 'electron';
 import _ from 'lodash';
-import { Response } from 'node-fetch';
 import semver from 'semver';
 import yaml from 'yaml';
 
@@ -25,7 +25,6 @@ import mainEvents from '@pkg/main/mainEvents';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
 import * as childProcess from '@pkg/utils/childProcess';
-import fetch from '@pkg/utils/fetch';
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
@@ -384,7 +383,7 @@ export default class K3sHelper extends events.EventEmitter {
       let channelResponse: Response;
 
       try {
-        channelResponse = await fetch(this.channelApiUrl,
+        channelResponse = await net.fetch(this.channelApiUrl,
           { headers: { Accept: this.channelApiAccept } });
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
@@ -435,7 +434,7 @@ export default class K3sHelper extends events.EventEmitter {
         if (process.env.GITHUB_TOKEN) {
           headers.Authorization = `Bearer ${ process.env.GITHUB_TOKEN }`;
         }
-        const response = await fetch(url, { headers });
+        const response = await net.fetch(url, { headers });
 
         console.debug(`Fetching releases from ${ url } -> ${ response.statusText }`);
         if (!response.ok) {
@@ -789,14 +788,14 @@ export default class K3sHelper extends events.EventEmitter {
         const namearray = Array.isArray(filename) ? filename : [filename];
 
         let outPath;
-        let response;
+        let response: Response | undefined;
 
         for (const name of namearray) {
           const fileURL = `${ this.downloadUrl }/${ version.raw }/${ name }`;
 
           outPath = path.join(workDir, name);
           console.log(`Will attempt to download ${ filekey } ${ fileURL } to ${ outPath }`);
-          response = await fetch(fileURL);
+          response = await net.fetch(fileURL);
           if (response.ok) {
             break;
           }
@@ -804,6 +803,14 @@ export default class K3sHelper extends events.EventEmitter {
 
         if (!response || !outPath) {
           throw new Error(`Error downloading ${ filename } ${ version }: No ${ filekey }s found`);
+        }
+
+        // response.body implements ReadableStream, but it uses a different set
+        // of typings so TypeScript doesn't understand it natively.
+        const body: NodeJS.ReadableStream | null = response.body as any;
+
+        if (!body) {
+          throw new Error(`Error downloading ${ filename } ${ version }: No response body`);
         }
 
         const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
@@ -814,7 +821,7 @@ export default class K3sHelper extends events.EventEmitter {
         const writeStream = fs.createWriteStream(outPath);
 
         status.max = parseInt(response.headers.get('Content-Length') || '0');
-        await util.promisify(stream.pipeline)(response.body, progress, writeStream);
+        await util.promisify(stream.pipeline)(body, progress, writeStream);
       }));
 
       const error = await verifyChecksums(workDir);

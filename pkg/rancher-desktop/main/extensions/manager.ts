@@ -3,7 +3,7 @@ import http from 'http';
 import path from 'path';
 import { Readable } from 'stream';
 
-import Electron, { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import Electron, { IpcMainEvent, IpcMainInvokeEvent, net } from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
 
@@ -19,7 +19,6 @@ import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import type { IpcMainEvents, IpcMainInvokeEvents, IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import { parseImageReference } from '@pkg/utils/dockerUtils';
-import fetch, { RequestInit } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
@@ -256,7 +255,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
         headers: config.headers ?? {},
         body:    config.data,
       };
-      const response = await fetch(url.toString(), options);
+      const response = await net.fetch(url.toString(), options);
 
       return {
         statusCode: response.status, name: http.STATUS_CODES[response.status] ?? 'Unknown', message: await response.text(),

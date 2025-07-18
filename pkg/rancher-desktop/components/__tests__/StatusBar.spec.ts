@@ -1,8 +1,12 @@
 import { jest } from '@jest/globals';
 import { shallowMount, VueWrapper } from '@vue/test-utils';
 
-import StatusBar from '@pkg/components/StatusBar.vue';
-import StatusBarItem from '@pkg/components/StatusBarItem.vue';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+mockModules({ electron: undefined });
+
+const { default: StatusBar } = await import('@pkg/components/StatusBar.vue');
+const { default: StatusBarItem } = await import('@pkg/components/StatusBarItem.vue');
 
 describe('StatusBar.vue', () => {
   let wrapper: VueWrapper<InstanceType<typeof StatusBar>>;
