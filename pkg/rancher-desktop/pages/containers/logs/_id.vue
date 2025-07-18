@@ -122,8 +122,11 @@ export default defineComponent({
       maxReconnectAttempts: 5,
       searchDebounceTimer: null,
       containerCheckInterval: null,
+      /** Controls terminal visibility - true hides terminal until logs arrive to prevent fast scroll */
       waitingForInitialLogs: true,
+      /** Timeout ID for 200ms delay before revealing terminal after initial logs */
       revealTimeout: null,
+      /** Tracks if any log output has been received - used with fallback timer to ensure terminal reveals even without logs */
       hasReceivedLogs: false,
     };
   },
@@ -534,10 +537,9 @@ export default defineComponent({
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  opacity: 1;
 
   &.terminal-hidden {
-    opacity: 0;
+    visibility: hidden;
   }
 
   :deep(.xterm) {
