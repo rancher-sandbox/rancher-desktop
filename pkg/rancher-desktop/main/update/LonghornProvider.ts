@@ -5,12 +5,11 @@ import { URL } from 'url';
 import util from 'util';
 
 import { newError, CustomPublishOptions } from 'builder-util-runtime';
-import Electron from 'electron';
+import Electron, { net } from 'electron';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
 import semver from 'semver';
 
-import fetch from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 import { getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
@@ -296,7 +295,7 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
     };
 
   console.debug(`Checking ${ url } for updates`);
-  const responseRaw = await fetch(url, requestOptions);
+  const responseRaw = await net.fetch(url, requestOptions);
   const response = await responseRaw.json() as LonghornUpgraderResponse;
 
   console.debug(`Upgrade Responder response:`, util.inspect(response, true, null));
@@ -354,7 +353,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
    * @returns Base64-encoded checksum.
    */
   protected async getSha512Sum(checksumURL: string): Promise<string> {
-    const contents = await (await fetch(checksumURL)).text();
+    const contents = await (await net.fetch(checksumURL)).text();
     const buffer = Buffer.from(contents.split(/\s+/)[0], 'hex');
 
     return buffer.toString('base64');
@@ -389,7 +388,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     const { owner, repo, vPrefixedTagName } = this.configuration;
     const tag = (vPrefixedTagName ? 'v' : '') + latest.Name.replace(/^v/, '');
     const infoURL = `https://api.github.com/repos/${ owner }/${ repo }/releases/tags/${ tag }`;
-    const releaseInfoRaw = await fetch(infoURL,
+    const releaseInfoRaw = await net.fetch(infoURL,
       { headers: { Accept: 'application/vnd.github.v3+json' } });
     const releaseInfo = await releaseInfoRaw.json() as GitHubReleaseInfo;
     const assetFilter: (asset: GitHubReleaseAsset) => boolean = (() => {

@@ -6,8 +6,6 @@ import path from 'path';
 import util from 'util';
 
 import { jest } from '@jest/globals';
-import fetch, { Response as FetchResponse } from 'node-fetch';
-import * as nodeFetch from 'node-fetch';
 import semver from 'semver';
 
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
@@ -19,13 +17,8 @@ import type { ReleaseAPIEntry } from '../k3sHelper';
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
 
 const modules = mockModules({
-  'node-fetch': {
-    ...nodeFetch,
-    default: jest.fn<(...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>>((...args) => {
-      throw new Error('Unexpected network traffic');
-    }),
-  },
   '@pkg/utils/logging': undefined,
+  electron:             undefined,
 });
 
 const { default: K3sHelper, buildVersion, ChannelMapping, NoCachedK3sVersionsError } = await import('../k3sHelper');
@@ -48,7 +41,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  modules['node-fetch'].default.mockReset();
+  modules.electron.net.fetch.mockReset();
 });
 
 describe(buildVersion, () => {
@@ -173,7 +166,7 @@ describe(K3sHelper, () => {
     // Override cache reading to return a fake existing cache.
     // The first read returns nothing to trigger a synchronous update;
     // the rest of the reads return mocked values.
-    jest.spyOn(subject, 'readCache' as any)
+    jest.spyOn(subject as any, 'readCache')
       .mockResolvedValueOnce(undefined)
       .mockImplementation(function(this: InstanceType<typeof K3sHelper>) {
         const result = new ChannelMapping();
@@ -197,11 +190,11 @@ describe(K3sHelper, () => {
     subject['delayForWaitLimiting'] = jest.fn(() => Promise.resolve());
 
     // Fake out the results
-    modules['node-fetch'].default
+    modules.electron.net.fetch
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['channelApiUrl']);
 
-        return Promise.resolve(new FetchResponse(
+        return Promise.resolve(new Response(
           JSON.stringify({
             resourceType: 'channels',
             data:         [{
@@ -215,7 +208,7 @@ describe(K3sHelper, () => {
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['releaseApiUrl']);
 
-        return Promise.resolve(new FetchResponse(
+        return Promise.resolve(new Response(
           JSON.stringify([
             { tag_name: 'v1.99.3+k3s2', assets: validAssets },
             { tag_name: 'v1.99.3+k3s3', assets: validAssets },
@@ -230,7 +223,7 @@ describe(K3sHelper, () => {
       .mockImplementationOnce((url) => {
         expect(url).toEqual('url');
 
-        return Promise.resolve(new FetchResponse(
+        return Promise.resolve(new Response(
           undefined,
           { status: 403, headers: { 'X-RateLimit-Remaining': '0' } },
         ));
@@ -238,7 +231,7 @@ describe(K3sHelper, () => {
       .mockImplementationOnce((url) => {
         expect(url).toEqual('url');
 
-        return Promise.resolve(new FetchResponse(
+        return Promise.resolve(new Response(
           JSON.stringify([
             { tag_name: 'Invalid tag name', assets: validAssets },
             { tag_name: 'v1.99.0+k3s5', assets: validAssets },
@@ -254,7 +247,7 @@ describe(K3sHelper, () => {
     subject.networkReady();
 
     await subject.initialize();
-    expect(modules['node-fetch'].default).toHaveBeenCalledTimes(4);
+    expect(modules.electron.net.fetch).toHaveBeenCalledTimes(4);
     expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);
     expect(await subject.availableVersions).toEqual([
       new SemanticVersionEntry(new semver.SemVer('v1.99.3+k3s3'), ['stable']),
@@ -312,11 +305,11 @@ describe(K3sHelper, () => {
     subject['writeCache'] = jest.fn(() => Promise.resolve());
 
     // Fake out the results
-    modules['node-fetch'].default
+    modules.electron.net.fetch
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['channelApiUrl']);
 
-        return Promise.resolve(new FetchResponse(
+        return Promise.resolve(new Response(
           JSON.stringify({
             resourceType: 'channels',
             data:         [
@@ -342,7 +335,7 @@ describe(K3sHelper, () => {
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['releaseApiUrl']);
 
-        return Promise.resolve(new FetchResponse(
+        return Promise.resolve(new Response(
           JSON.stringify([
             { tag_name: 'v1.98.3+k3s2', assets: validAssets },
             { tag_name: 'v1.98.2+k3s2', assets: validAssets },
@@ -361,7 +354,7 @@ describe(K3sHelper, () => {
     subject.networkReady();
 
     await subject.initialize();
-    expect(modules['node-fetch'].default).toHaveBeenCalledTimes(2);
+    expect(modules.electron.net.fetch).toHaveBeenCalledTimes(2);
     const availableVersions = await subject.availableVersions;
 
     expect(availableVersions).toEqual([

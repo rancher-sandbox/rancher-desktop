@@ -10,6 +10,7 @@ const modules = mockModules({
     ...childProcess,
     spawnFile: jest.fn(childProcess.spawnFile),
   },
+  electron: undefined,
 });
 
 const { default: RegistryAuth } = await import('@pkg/backend/containerClient/auth');

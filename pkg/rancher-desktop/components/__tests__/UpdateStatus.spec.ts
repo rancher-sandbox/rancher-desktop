@@ -2,18 +2,20 @@ import { jest } from '@jest/globals';
 import { mount } from '@vue/test-utils';
 import FloatingVue from 'floating-vue';
 
-import UpdateStatus from '../UpdateStatus.vue';
+import type { UpdateState } from '@pkg/main/update';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 
-import { UpdateState } from '@pkg/main/update';
-
-jest.mock('@pkg/utils/ipcRenderer', () => {
-  return {
+mockModules({
+  '@pkg/utils/ipcRenderer': {
     ipcRenderer: {
       on:   jest.fn(),
       send: jest.fn(),
     },
-  };
+  },
+  electron: undefined,
 });
+
+const { default: UpdateStatus } = await import('../UpdateStatus.vue');
 
 function wrap(props: typeof UpdateStatus['$props']) {
   return mount(UpdateStatus, {
