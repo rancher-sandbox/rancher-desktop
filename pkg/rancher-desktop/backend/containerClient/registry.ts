@@ -38,7 +38,7 @@ class DockerRegistry {
         throw new Error(`Failed to fetch ${ endpoint }: ${ resp.status } ${ resp.statusText }`);
       }
 
-      const result: { name: string, tags: string[] } = await resp.json();
+      const result = await resp.json() as { name: string, tags: string[] };
 
       if (result.name !== info.name) {
         throw new Error(`Invalid tags: incorrect response name ${ result.name } from ${ endpoint }`);

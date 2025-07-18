@@ -26,12 +26,6 @@ updates:
   - # @vue/test-utils v2 is for Vue 3; we're on Vue 2 for now
     dependency-name: "@vue/test-utils"
     versions: [">1"]
-  - # node-fetch 3+ requires ECMAScript modules; we still have issues with them.
-    dependency-name: "node-fetch"
-    versions: [">2"]
-  - # This needs to be done in lockstep with node-fetch.
-    dependency-name: "@types/node-fetch"
-    versions: [">2"]
   - # We don't utilize @rancher/shell in a meaningful way. It is safe to
     # ignore until we arrive a solution that uses it.
     dependency-name: "@rancher/shell"

@@ -407,7 +407,7 @@ export default class K3sHelper extends events.EventEmitter {
             latest: string;
           }[];
         };
-        const channels: ChannelResponse = await channelResponse.json();
+        const channels = await channelResponse.json() as ChannelResponse;
 
         console.debug(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
         if (!ValidResourceTypes.includes(channels.resourceType)) {
@@ -806,13 +806,18 @@ export default class K3sHelper extends events.EventEmitter {
 
         const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
         const status = this.progress[progresskey];
+        const { body } = response;
+
+        if (!body ) {
+          throw new Error(`Error downloading ${ filename } ${ version }: No response body`);
+        }
 
         status.current = 0;
         const progress = new DownloadProgressListener(status);
         const writeStream = fs.createWriteStream(outPath);
 
         status.max = parseInt(response.headers.get('Content-Length') || '0');
-        await util.promisify(stream.pipeline)(response.body, progress, writeStream);
+        await util.promisify(stream.pipeline)(body, progress, writeStream);
       }));
 
       const error = await verifyChecksums(workDir);
